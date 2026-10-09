@@ -1,0 +1,280 @@
+{
+  "root": "C:\\temp\\weftmate-m2f-mimo-d8accd65-da90-4eb4-abe6-6f049418057e",
+  "reason": "Initial scenario runner was started before taking its own atomic LAN lease; only warmup happened while the existing PF-1b eight-step runner owned LAN. The initial process tree was identified by command and creation time and terminated before running the matrix; restarting the full unchanged matrix through pf1b-regression.mjs under its own lease. No scores attributed to interrupted work.",
+  "sensitiveFilesRemoved": 9,
+  "requests": [
+    {
+      "id": "37124-1",
+      "at": "2026-10-09T04:01:51.109Z",
+      "elapsedMs": 0,
+      "kind": "lease",
+      "origin": "http://127.0.0.1:51129",
+      "phase": "start"
+    },
+    {
+      "id": "37124-1",
+      "at": "2026-10-09T04:01:51.113Z",
+      "elapsedMs": 4,
+      "kind": "lease",
+      "origin": "http://127.0.0.1:51129",
+      "phase": "headers",
+      "status": 200
+    },
+    {
+      "id": "scheduler-2",
+      "at": "2026-10-09T04:01:51.114Z",
+      "elapsedMs": 1,
+      "kind": "scheduler",
+      "phase": "closed",
+      "queue": {
+        "active": null,
+        "foregroundPending": 0,
+        "backgroundPending": 0
+      }
+    },
+    {
+      "id": "37124-1",
+      "at": "2026-10-09T04:01:51.114Z",
+      "elapsedMs": 5,
+      "kind": "lease",
+      "origin": "http://127.0.0.1:51129",
+      "phase": "first-chunk"
+    },
+    {
+      "id": "37124-2",
+      "at": "2026-10-09T04:01:51.117Z",
+      "elapsedMs": 0,
+      "kind": "lease",
+      "origin": "http://127.0.0.1:51129",
+      "phase": "start"
+    },
+    {
+      "id": "37124-2",
+      "at": "2026-10-09T04:01:51.124Z",
+      "elapsedMs": 7,
+      "kind": "lease",
+      "origin": "http://127.0.0.1:51129",
+      "phase": "headers",
+      "status": 204
+    },
+    {
+      "id": "scheduler-3",
+      "at": "2026-10-09T04:01:51.994Z",
+      "elapsedMs": 874,
+      "kind": "scheduler",
+      "phase": "closed",
+      "queue": {
+        "active": null,
+        "foregroundPending": 0,
+        "backgroundPending": 0
+      }
+    },
+    {
+      "id": "37124-3",
+      "at": "2026-10-09T04:01:52.040Z",
+      "elapsedMs": 0,
+      "kind": "model",
+      "origin": "https://api.xiaomimimo.com",
+      "phase": "start",
+      "requestChars": 7828,
+      "requestedModel": "mimo-v2.6-flash",
+      "stream": true
+    },
+    {
+      "id": "scheduler-5",
+      "at": "2026-10-09T04:01:52.413Z",
+      "elapsedMs": 1288,
+      "kind": "scheduler",
+      "phase": "closed",
+      "queue": {
+        "active": null,
+        "foregroundPending": 0,
+        "backgroundPending": 0
+      }
+    },
+    {
+      "id": "37124-4",
+      "at": "2026-10-09T04:01:52.417Z",
+      "elapsedMs": 0,
+      "kind": "model",
+      "origin": "https://api.xiaomimimo.com",
+      "phase": "start",
+      "requestChars": 569,
+      "requestedModel": "mimo-v2.6-flash",
+      "stream": true
+    },
+    {
+      "id": "37124-4",
+      "at": "2026-10-09T04:01:53.803Z",
+      "elapsedMs": 1386,
+      "kind": "model",
+      "origin": "https://api.xiaomimimo.com",
+      "phase": "headers",
+      "status": 200
+    },
+    {
+      "id": "37124-4",
+      "at": "2026-10-09T04:01:53.805Z",
+      "elapsedMs": 1388,
+      "kind": "model",
+      "origin": "https://api.xiaomimimo.com",
+      "phase": "first-chunk"
+    },
+    {
+      "id": "37124-4",
+      "at": "2026-10-09T04:01:53.849Z",
+      "elapsedMs": 1432,
+      "kind": "model",
+      "origin": "https://api.xiaomimimo.com",
+      "phase": "first-reasoning"
+    },
+    {
+      "id": "37124-4",
+      "at": "2026-10-09T04:01:54.554Z",
+      "elapsedMs": 2137,
+      "kind": "model",
+      "origin": "https://api.xiaomimimo.com",
+      "phase": "end",
+      "chunks": 21,
+      "bytes": 6059,
+      "reasoningChars": 163,
+      "contentChars": 0,
+      "usage": {
+        "completion_tokens": 39,
+        "prompt_tokens": 147,
+        "total_tokens": 186,
+        "completion_tokens_details": {
+          "reasoning_tokens": 38
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      }
+    },
+    {
+      "id": "37124-3",
+      "at": "2026-10-09T04:01:54.755Z",
+      "elapsedMs": 2715,
+      "kind": "model",
+      "origin": "https://api.xiaomimimo.com",
+      "phase": "headers",
+      "status": 200
+    },
+    {
+      "id": "37124-3",
+      "at": "2026-10-09T04:01:54.756Z",
+      "elapsedMs": 2716,
+      "kind": "model",
+      "origin": "https://api.xiaomimimo.com",
+      "phase": "first-chunk"
+    },
+    {
+      "id": "37124-3",
+      "at": "2026-10-09T04:01:54.835Z",
+      "elapsedMs": 2795,
+      "kind": "model",
+      "origin": "https://api.xiaomimimo.com",
+      "phase": "first-reasoning"
+    },
+    {
+      "id": "scheduler-7",
+      "at": "2026-10-09T04:01:55.024Z",
+      "elapsedMs": 1,
+      "kind": "scheduler",
+      "phase": "closed",
+      "queue": {
+        "active": null,
+        "foregroundPending": 0,
+        "backgroundPending": 0
+      }
+    },
+    {
+      "id": "scheduler-6",
+      "at": "2026-10-09T04:01:55.025Z",
+      "elapsedMs": 470,
+      "kind": "scheduler",
+      "phase": "closed",
+      "queue": {
+        "active": null,
+        "foregroundPending": 0,
+        "backgroundPending": 0
+      }
+    },
+    {
+      "id": "37124-3",
+      "at": "2026-10-09T04:01:55.973Z",
+      "elapsedMs": 3933,
+      "kind": "model",
+      "origin": "https://api.xiaomimimo.com",
+      "phase": "first-content"
+    },
+    {
+      "id": "scheduler-8",
+      "at": "2026-10-09T04:01:55.975Z",
+      "elapsedMs": 0,
+      "kind": "scheduler",
+      "phase": "closed",
+      "queue": {
+        "active": null,
+        "foregroundPending": 0,
+        "backgroundPending": 0
+      }
+    },
+    {
+      "id": "37124-3",
+      "at": "2026-10-09T04:01:57.064Z",
+      "elapsedMs": 5024,
+      "kind": "model",
+      "origin": "https://api.xiaomimimo.com",
+      "phase": "end",
+      "chunks": 46,
+      "bytes": 13587,
+      "reasoningChars": 280,
+      "contentChars": 67,
+      "usage": {
+        "completion_tokens": 98,
+        "prompt_tokens": 2042,
+        "total_tokens": 2140,
+        "completion_tokens_details": {
+          "reasoning_tokens": 53
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 1536
+        }
+      }
+    },
+    {
+      "id": "scheduler-9",
+      "at": "2026-10-09T04:01:57.567Z",
+      "elapsedMs": 501,
+      "kind": "scheduler",
+      "phase": "closed",
+      "queue": {
+        "active": null,
+        "foregroundPending": 0,
+        "backgroundPending": 0
+      }
+    },
+    {
+      "id": "37124-1",
+      "at": "2026-10-09T04:01:57.568Z",
+      "elapsedMs": 6459,
+      "kind": "lease",
+      "origin": "http://127.0.0.1:51129",
+      "phase": "cancel",
+      "chunks": 1,
+      "bytes": 8
+    },
+    {
+      "id": "7456-1",
+      "at": "2026-10-09T04:01:59.345Z",
+      "elapsedMs": 1,
+      "kind": "model",
+      "origin": "https://api.xiaomimimo.com",
+      "phase": "start",
+      "requestChars": 10773,
+      "requestedModel": "mimo-v2.6-flash",
+      "stream": false
+    }
+  ]
+}

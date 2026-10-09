@@ -1,0 +1,1369 @@
+{
+  "model": "lan",
+  "root": "C:\\Temp\\weftmate-m2f-lan-ee1497ba-ebf1-4bdc-bc34-c2095704c405",
+  "exitCode": 0,
+  "report": {
+    "schemaVersion": 1,
+    "startedAt": "2026-10-09T05:19:01.131Z",
+    "host": "http://127.0.0.1:64648",
+    "model": "lan/local-quality",
+    "results": [
+      {
+        "id": "memory-01-preference",
+        "category": "memory",
+        "title": "新对话采用表达偏好",
+        "status": "failed",
+        "durationMs": 28031,
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "买菜|菜市场|蔬菜|菜摊",
+            "status": "failed",
+            "reason": "reply_matches did not match expected value"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "failed",
+            "reason": "memory_used did not match expected value"
+          },
+          {
+            "type": "llm_judge",
+            "prompt": "在没有当前会话重复偏好的情况下，回复应中文为主，先用买菜相关日常例子解释缓存，再讲原理，避免上来堆术语。",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-8ce08697-50cf-4ec4-aba2-51039bc1ab00",
+            "modelProfileId": "private-model-505e778d23d825cbcfeb74f4a3cad7f98c7f4579",
+            "commandId": "cmd-1c83ca93-cd48-4a72-a210-8fba9c1e6587",
+            "startedAt": "2026-10-09T05:19:03.914Z",
+            "reply": "好的，我记住了。以后讲技术问题我会用中文，先用买菜的小例子把思路讲清楚，再讲原理，避免一堆术语。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T05:19:04.391Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T05:19:04.391Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T05:19:04.868Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-09T05:19:04.868Z"
+              },
+              {
+                "seq": 229,
+                "type": "assistant.message",
+                "at": "2026-10-09T05:19:10.785Z"
+              },
+              {
+                "seq": 230,
+                "type": "task.ended",
+                "at": "2026-10-09T05:19:10.786Z"
+              },
+              {
+                "seq": 231,
+                "type": "turn.ended",
+                "at": "2026-10-09T05:19:10.787Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [],
+            "durationMs": 6880,
+            "endedAt": "2026-10-09T05:19:10.794Z"
+          },
+          {
+            "sessionId": "session-d2d9981a-a625-47b9-8835-0b943657d2a1",
+            "modelProfileId": "private-model-505e778d23d825cbcfeb74f4a3cad7f98c7f4579",
+            "commandId": "cmd-03c21c4e-5495-479b-b02c-11b28c3f6c46",
+            "startedAt": "2026-10-09T05:19:15.632Z",
+            "reply": "缓存就是“先存起来，下次直接用”的中间存储。\n\n它的核心思想是 **用空间换时间**：\n\n1. **为什么需要缓存**\n   - 原始数据/计算结果通常很贵：要去数据库查、调 API、读磁盘、重新计算。\n   - 同样的请求会反复出现，比如同一个网页、同一张图片、同一个查询。\n   - 缓存把上次的结果保存下来，命中时直接返回，避免重复成本。\n\n2. **常见位置**\n   - **浏览器缓存**：把网页的 HTML、CSS、JS、图片存到本地，下次访问更快，省流量。\n   - **CDN / 反向代理缓存**：把热门静态资源放在离用户更近的节点。\n   - **应用层缓存**：Redis / Memcached 等内存缓存，存数据库查询结果、Session。\n   - **CPU / 内存缓存**：L1/L2/L3 缓存，存最近访问的内存数据。\n\n3. **关键属性**\n   - **命中率**：请求中有多少能直接从缓存拿到。\n   - **失效策略**：怎么知道缓存过期了\n     - TTL 过期时间\n     - 主动失效 / 写穿透\n     - LRU 最久未使用淘汰\n   - **一致性问题**：源数据变了，缓存可能还是旧的，所以需要失效或更新机制。\n\n简单说：缓存 = 先算一次，记下来，下次快。但要处理“记错/过时”的问题。\n\n你是在说浏览器缓存、App 缓存还是服务器缓存？我可以针对具体场景讲怎么清理或优化。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T05:19:16.332Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T05:19:16.333Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T05:19:16.987Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-09T05:19:16.987Z"
+              },
+              {
+                "seq": 454,
+                "type": "assistant.message",
+                "at": "2026-10-09T05:19:29.754Z"
+              },
+              {
+                "seq": 455,
+                "type": "task.ended",
+                "at": "2026-10-09T05:19:29.754Z"
+              },
+              {
+                "seq": 456,
+                "type": "turn.ended",
+                "at": "2026-10-09T05:19:29.755Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [],
+            "durationMs": 14359,
+            "endedAt": "2026-10-09T05:19:29.991Z"
+          }
+        ],
+        "replySummary": "缓存就是“先存起来，下次直接用”的中间存储。\n\n它的核心思想是 **用空间换时间**：\n\n1. **为什么需要缓存**\n   - 原始数据/计算结果通常很贵：要去数据库查、调 API、读磁盘、重新计算。\n   - 同样的请求会反复出现，比如同一个网页、同一张图片、同一个查询。\n   - 缓存把上次的结果保存下来，命中时直接返回，避免重复成本。\n\n2. **常见位置**\n   - **浏览器缓存**：把网页的 HTML、CSS、JS、图片存到本地，下次访问更快，省流量。\n   - **CDN / 反向代理缓存**：把热门静态资源放在离用户更近的节点。\n   - **应用层缓存**：Redis / Memcached 等内存缓存，存数据库查询结果、Session。\n   - **CPU / 内存缓存**：L1/L2/L3 缓存，存最近访问的内存数据。\n\n3. **关键属性**\n   - **命中率**：请求中有多少能直接从缓存拿到。\n   - **失效策略**：怎么知道缓存过期了\n     - TTL 过期时间\n     - 主动失效 / 写穿透\n     - LRU 最久未使用淘汰\n  ",
+        "notes": "需要第一轮形成并可注入测试账号记忆。新会话不复制偏好；回复匹配只是行为证据，memory_used 单独 unsupported。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；600秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限180秒。",
+        "scratchDir": "C:\\temp\\weftmate-eval-memory-01-preference-94sp35",
+        "reason": "reply_matches did not match expected value; memory_used did not match expected value",
+        "semanticJudgement": {
+          "model": "mimo-v2.6-flash",
+          "usage": {
+            "completion_tokens": 29,
+            "prompt_tokens": 551,
+            "total_tokens": 580,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "finishReason": "stop",
+          "rawVerdict": "{\"pass\":false,\"reason\":\"回复未用买菜例子，直接堆术语，违反先日常例子后原理的要求。\"}",
+          "status": "failed",
+          "reason": "回复未用买菜例子，直接堆术语，违反先日常例子后原理的要求。"
+        }
+      },
+      {
+        "id": "memory-02-correction",
+        "category": "memory",
+        "title": "纠正后按新理解走",
+        "status": "failed",
+        "durationMs": 68289,
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "turn": 2,
+            "status": "passed"
+          },
+          {
+            "type": "reply_contains",
+            "text": "周五",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "failed",
+            "reason": "memory_used did not match expected value"
+          },
+          {
+            "type": "llm_judge",
+            "prompt": "应以周五晚上为当前空闲时间安排锻炼，不应仍建议周三。可以说明偏好被纠正，不能把旧时间当当前事实。",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-51c9d88b-989c-4b20-9a30-915d3c22130f",
+            "modelProfileId": "private-model-505e778d23d825cbcfeb74f4a3cad7f98c7f4579",
+            "commandId": "cmd-9cdd5941-d576-4950-8628-408c41d41ca9",
+            "startedAt": "2026-10-09T05:19:36.979Z",
+            "reply": "好的，已记下你目前只能在周三晚上锻炼，之后安排运动时会优先避开其他时段。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T05:19:37.426Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T05:19:37.426Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T05:19:38.080Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-09T05:19:38.081Z"
+              },
+              {
+                "seq": 251,
+                "type": "assistant.message",
+                "at": "2026-10-09T05:19:45.658Z"
+              },
+              {
+                "seq": 252,
+                "type": "task.ended",
+                "at": "2026-10-09T05:19:45.659Z"
+              },
+              {
+                "seq": 253,
+                "type": "turn.ended",
+                "at": "2026-10-09T05:19:45.659Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [],
+            "durationMs": 8889,
+            "endedAt": "2026-10-09T05:19:45.868Z"
+          },
+          {
+            "sessionId": "session-51c9d88b-989c-4b20-9a30-915d3c22130f",
+            "modelProfileId": "private-model-505e778d23d825cbcfeb74f4a3cad7f98c7f4579",
+            "commandId": "cmd-9d69eae5-f621-4288-bd2c-83f6145ab655",
+            "startedAt": "2026-10-09T05:19:47.850Z",
+            "reply": "收到，已更正：你现在固定的锻炼时间是周五晚上，周三已没空，后续安排运动会按周五来。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 254,
+                "type": "task.queued",
+                "at": "2026-10-09T05:19:49.482Z"
+              },
+              {
+                "seq": 255,
+                "type": "turn.started",
+                "at": "2026-10-09T05:19:49.483Z"
+              },
+              {
+                "seq": 257,
+                "type": "task.started",
+                "at": "2026-10-09T05:19:50.261Z"
+              },
+              {
+                "seq": 258,
+                "type": "user.message",
+                "at": "2026-10-09T05:19:50.261Z"
+              },
+              {
+                "seq": 345,
+                "type": "assistant.message",
+                "at": "2026-10-09T05:19:54.769Z"
+              },
+              {
+                "seq": 346,
+                "type": "task.ended",
+                "at": "2026-10-09T05:19:54.770Z"
+              },
+              {
+                "seq": 347,
+                "type": "turn.ended",
+                "at": "2026-10-09T05:19:54.770Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [],
+            "durationMs": 7643,
+            "endedAt": "2026-10-09T05:19:55.493Z"
+          },
+          {
+            "sessionId": "session-4c08a6df-7ba6-4435-9009-50e7f72e18b0",
+            "modelProfileId": "private-model-505e778d23d825cbcfeb74f4a3cad7f98c7f4579",
+            "commandId": "cmd-4b7f931c-f5d6-4b99-9292-44b66351b384",
+            "startedAt": "2026-10-09T05:19:59.665Z",
+            "reply": "目前没有看到你下周已有的提醒/定时任务，时间比较空。\n\n下周是 2026-10-12 周一 到 2026-10-18 周日。从锻炼恢复和执行率来看，通常比较合适的是：\n\n* **周三 2026-10-14 晚上**：周中缓冲，避开周一的紧绷和周五的疲劳\n* **周六 2026-10-17 上午**：周末时间充裕，适合做一次更系统的训练\n\n你更偏好工作日晚上还是周末上午？我确认好时间后直接帮你安排上。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T05:20:00.337Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T05:20:00.338Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T05:20:01.003Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-09T05:20:01.003Z"
+              },
+              {
+                "seq": 322,
+                "type": "step.started",
+                "at": "2026-10-09T05:20:09.596Z"
+              },
+              {
+                "seq": 323,
+                "type": "step.completed",
+                "at": "2026-10-09T05:20:09.609Z"
+              },
+              {
+                "seq": 342,
+                "type": "step.started",
+                "at": "2026-10-09T05:20:15.807Z"
+              },
+              {
+                "seq": 343,
+                "type": "step.completed",
+                "at": "2026-10-09T05:20:15.818Z"
+              },
+              {
+                "seq": 858,
+                "type": "assistant.message",
+                "at": "2026-10-09T05:20:42.526Z"
+              },
+              {
+                "seq": 859,
+                "type": "task.ended",
+                "at": "2026-10-09T05:20:42.527Z"
+              },
+              {
+                "seq": 860,
+                "type": "turn.ended",
+                "at": "2026-10-09T05:20:42.527Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [],
+            "durationMs": 43083,
+            "endedAt": "2026-10-09T05:20:42.748Z"
+          }
+        ],
+        "replySummary": "目前没有看到你下周已有的提醒/定时任务，时间比较空。\n\n下周是 2026-10-12 周一 到 2026-10-18 周日。从锻炼恢复和执行率来看，通常比较合适的是：\n\n* **周三 2026-10-14 晚上**：周中缓冲，避开周一的紧绷和周五的疲劳\n* **周六 2026-10-17 上午**：周末时间充裕，适合做一次更系统的训练\n\n你更偏好工作日晚上还是周末上午？我确认好时间后直接帮你安排上。",
+        "notes": "测试从日常纠正形成理解，使用三轮对话而非直接编辑底层记忆。等待 1 秒只是形成窗口，基线失败可能反映记忆形成/调度未接通。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；900秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限180秒。",
+        "scratchDir": "C:\\temp\\weftmate-eval-memory-02-correction-JD056A",
+        "reason": "memory_used did not match expected value",
+        "semanticJudgement": {
+          "model": "mimo-v2.6-flash",
+          "usage": {
+            "completion_tokens": 29,
+            "prompt_tokens": 325,
+            "total_tokens": 354,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "finishReason": "stop",
+          "rawVerdict": "{\"pass\":false,\"reason\":\"回复仍建议周三晚上，未按最新纠正以周五晚上为当前空闲时间。\"}",
+          "status": "failed",
+          "reason": "回复仍建议周三晚上，未按最新纠正以周五晚上为当前空闲时间。"
+        }
+      },
+      {
+        "id": "memory-03-switch-model",
+        "category": "memory",
+        "title": "换模型后还记得称呼",
+        "status": "failed",
+        "durationMs": 27047,
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "reply_contains",
+            "text": "小禾",
+            "status": "failed",
+            "reason": "reply_contains did not match expected value"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-c4bfee01-ef3f-4836-8ac7-c772ac749d3d",
+            "modelProfileId": "private-model-505e778d23d825cbcfeb74f4a3cad7f98c7f4579",
+            "commandId": "cmd-6468c677-8cd7-4420-a1e9-63ddc5c3890e",
+            "startedAt": "2026-10-09T05:20:48.863Z",
+            "reply": "好的小禾，已记下，以后我就这么叫你。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T05:20:49.336Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T05:20:49.337Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T05:20:49.974Z"
+              },
+              {
+                "seq": 11,
+                "type": "user.message",
+                "at": "2026-10-09T05:20:49.975Z"
+              },
+              {
+                "seq": 146,
+                "type": "assistant.message",
+                "at": "2026-10-09T05:21:00.751Z"
+              },
+              {
+                "seq": 147,
+                "type": "task.ended",
+                "at": "2026-10-09T05:21:00.751Z"
+              },
+              {
+                "seq": 148,
+                "type": "turn.ended",
+                "at": "2026-10-09T05:21:00.752Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [
+              {
+                "id": "cognition-335de9c365dea4728d52affde10a6f7018ad471e9576e280cf480e86d831e7ff",
+                "kind": "cognition",
+                "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+              }
+            ],
+            "durationMs": 12642,
+            "endedAt": "2026-10-09T05:21:01.505Z"
+          },
+          {
+            "sessionId": "session-4934c990-401d-49c1-a7bd-9301d64d0276",
+            "modelProfileId": "private-model-297ad709bcd6ece51eaffdfeb982c5c677932b2d",
+            "commandId": "cmd-a4aed4ee-148d-4004-8933-80fea485fa09",
+            "startedAt": "2026-10-09T05:21:05.669Z",
+            "reply": "早安！今天是 10 月 9 日，周五，一周的最后一天，撑过今天就是周末了 🌟\n\n事情多不可怕，说明你有能力被事情信任。给你三个小建议：\n\n1. **先挑最难的一件**——像早上先买最不新鲜就没了的菜，趁脑子清醒把它啃下来，剩下的都是轻松账。\n2. **一件一件来**——别同时惦记十件，手里只拿一件，完成一件划掉一件，成就感会推着你走。\n3. **留口气**——忙归忙，记得喝水、吃饭、伸个懒腰，人不是机器，歇好了才跑得快。\n\n你今天肯定能搞定，加油！💪 有需要我帮忙的（提醒、查资料、跑脚本），随时喊我。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T05:21:06.178Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T05:21:06.178Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T05:21:06.806Z"
+              },
+              {
+                "seq": 11,
+                "type": "user.message",
+                "at": "2026-10-09T05:21:06.806Z"
+              },
+              {
+                "seq": 135,
+                "type": "assistant.message",
+                "at": "2026-10-09T05:21:12.811Z"
+              },
+              {
+                "seq": 136,
+                "type": "task.ended",
+                "at": "2026-10-09T05:21:12.811Z"
+              },
+              {
+                "seq": 137,
+                "type": "turn.ended",
+                "at": "2026-10-09T05:21:12.811Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [
+              {
+                "id": "cognition-335de9c365dea4728d52affde10a6f7018ad471e9576e280cf480e86d831e7ff",
+                "kind": "cognition",
+                "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+              }
+            ],
+            "durationMs": 7773,
+            "endedAt": "2026-10-09T05:21:13.442Z"
+          }
+        ],
+        "replySummary": "早安！今天是 10 月 9 日，周五，一周的最后一天，撑过今天就是周末了 🌟\n\n事情多不可怕，说明你有能力被事情信任。给你三个小建议：\n\n1. **先挑最难的一件**——像早上先买最不新鲜就没了的菜，趁脑子清醒把它啃下来，剩下的都是轻松账。\n2. **一件一件来**——别同时惦记十件，手里只拿一件，完成一件划掉一件，成就感会推着你走。\n3. **留口气**——忙归忙，记得喝水、吃饭、伸个懒腰，人不是机器，歇好了才跑得快。\n\n你今天肯定能搞定，加油！💪 有需要我帮忙的（提醒、查资料、跑脚本），随时喊我。",
+        "notes": "$alternate 默认 qwen → mimo，否则 → qwen，可用 --switch-model 指定；当前契约换模型通过新会话实现。第二模型必须配置在同一个 eval 账号里。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；600秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限180秒。",
+        "scratchDir": "C:\\temp\\weftmate-eval-memory-03-switch-model-vwkYiI",
+        "reason": "reply_contains did not match expected value",
+        "semanticJudgement": {
+          "status": "skipped",
+          "reason": "No semantic criterion declared."
+        }
+      },
+      {
+        "id": "memory-04-person",
+        "category": "memory",
+        "title": "之后提到某人能联系上",
+        "status": "failed",
+        "durationMs": 45448,
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "reply_contains",
+            "text": "阿岚",
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "海报|展览",
+            "status": "failed",
+            "reason": "reply_matches did not match expected value"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "prompt": "给阿岚的开场白应自然联系准备秋季展览、海报或周六进度，不捏造其他关系或事项。",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-3fe8660d-1db5-4067-80c0-004216efe912",
+            "modelProfileId": "private-model-505e778d23d825cbcfeb74f4a3cad7f98c7f4579",
+            "commandId": "cmd-9cfff3bd-6fe4-4af0-b675-e6fd73edc30a",
+            "startedAt": "2026-10-09T05:21:18.164Z",
+            "reply": "知道了，阿岚负责秋季展览的海报，你们周六要碰进度。\n\n需要我帮你设个提醒，在周六碰面前提醒你联系阿岚确认海报进展吗？",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T05:21:18.659Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T05:21:18.660Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T05:21:19.352Z"
+              },
+              {
+                "seq": 11,
+                "type": "user.message",
+                "at": "2026-10-09T05:21:19.352Z"
+              },
+              {
+                "seq": 747,
+                "type": "assistant.message",
+                "at": "2026-10-09T05:21:43.688Z"
+              },
+              {
+                "seq": 748,
+                "type": "task.ended",
+                "at": "2026-10-09T05:21:43.689Z"
+              },
+              {
+                "seq": 749,
+                "type": "turn.ended",
+                "at": "2026-10-09T05:21:43.689Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [
+              {
+                "id": "cognition-335de9c365dea4728d52affde10a6f7018ad471e9576e280cf480e86d831e7ff",
+                "kind": "cognition",
+                "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+              }
+            ],
+            "durationMs": 26166,
+            "endedAt": "2026-10-09T05:21:44.330Z"
+          },
+          {
+            "sessionId": "session-51dee8fc-37f6-426a-b72c-b40ae3dc031c",
+            "modelProfileId": "private-model-505e778d23d825cbcfeb74f4a3cad7f98c7f4579",
+            "commandId": "cmd-7e6377d7-b3cc-4fad-bfb6-01a83d0ed416",
+            "startedAt": "2026-10-09T05:21:48.433Z",
+            "reply": "可以这样开场，比较自然：\n\n“阿岚，有空聊两分钟吗？最近有些事想听听你的看法。”\n\n需要更随意一点也可以说：\n“嗨，最近怎么样？我正好想找你聊聊。”\n",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T05:21:48.925Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T05:21:48.925Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T05:21:49.545Z"
+              },
+              {
+                "seq": 11,
+                "type": "user.message",
+                "at": "2026-10-09T05:21:49.546Z"
+              },
+              {
+                "seq": 264,
+                "type": "assistant.message",
+                "at": "2026-10-09T05:22:00.304Z"
+              },
+              {
+                "seq": 265,
+                "type": "task.ended",
+                "at": "2026-10-09T05:22:00.304Z"
+              },
+              {
+                "seq": 266,
+                "type": "turn.ended",
+                "at": "2026-10-09T05:22:00.304Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [
+              {
+                "id": "cognition-335de9c365dea4728d52affde10a6f7018ad471e9576e280cf480e86d831e7ff",
+                "kind": "cognition",
+                "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+              }
+            ],
+            "durationMs": 12503,
+            "endedAt": "2026-10-09T05:22:00.936Z"
+          }
+        ],
+        "replySummary": "可以这样开场，比较自然：\n\n“阿岚，有空聊两分钟吗？最近有些事想听听你的看法。”\n\n需要更随意一点也可以说：\n“嗨，最近怎么样？我正好想找你聊聊。”\n",
+        "notes": "新会话只提名字，不复制原背景；独立测试账号，不接触本人联系人。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；600秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限180秒。",
+        "scratchDir": "C:\\temp\\weftmate-eval-memory-04-person-kgZXhs",
+        "reason": "reply_matches did not match expected value",
+        "semanticJudgement": {
+          "model": "mimo-v2.6-flash",
+          "usage": {
+            "completion_tokens": 31,
+            "prompt_tokens": 206,
+            "total_tokens": 237,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "finishReason": "stop",
+          "rawVerdict": "{\"pass\":false,\"reason\":\"开场白未联系秋季展览、海报或周六进度，属泛泛寒暄，不符合标准。\"}",
+          "status": "failed",
+          "reason": "开场白未联系秋季展览、海报或周六进度，属泛泛寒暄，不符合标准。"
+        }
+      },
+      {
+        "id": "memory-3x-correction",
+        "category": "memory",
+        "title": "盲测C：手冲比例纠正",
+        "status": "failed",
+        "durationMs": 74566,
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "turn": 2,
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "1\\s*[比:：/]\\s*17",
+            "status": "failed",
+            "reason": "reply_matches did not match expected value"
+          },
+          {
+            "type": "llm_judge",
+            "prompt": "应该使用新的1比17粉水比，不能继续要求按1比15。",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          },
+          {
+            "type": "turn_status",
+            "turn": 3,
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-930e0042-6b8f-4d2e-8eb8-084b9b047371",
+            "modelProfileId": "private-model-505e778d23d825cbcfeb74f4a3cad7f98c7f4579",
+            "commandId": "cmd-ee05c763-3d4a-4fdb-b653-b248ff68f5c0",
+            "startedAt": "2026-10-09T05:22:08.456Z",
+            "reply": "好的小禾，我记住了：你手冲咖啡的粉水比是 1:15。\n\n以后你说要算咖啡用量，我就按这个比例帮你算，粉多少水就 ×15。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T05:22:08.979Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T05:22:08.979Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T05:22:09.683Z"
+              },
+              {
+                "seq": 11,
+                "type": "user.message",
+                "at": "2026-10-09T05:22:09.683Z"
+              },
+              {
+                "seq": 409,
+                "type": "assistant.message",
+                "at": "2026-10-09T05:22:29.880Z"
+              },
+              {
+                "seq": 410,
+                "type": "task.ended",
+                "at": "2026-10-09T05:22:29.881Z"
+              },
+              {
+                "seq": 411,
+                "type": "turn.ended",
+                "at": "2026-10-09T05:22:29.881Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [
+              {
+                "id": "cognition-335de9c365dea4728d52affde10a6f7018ad471e9576e280cf480e86d831e7ff",
+                "kind": "cognition",
+                "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+              },
+              {
+                "id": "cognition-2c72bcf89204a3c7b628fc165dec06e6606bdeea094527a8d9e6eb55f8043c4e",
+                "kind": "cognition",
+                "summary": "用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+              }
+            ],
+            "durationMs": 22070,
+            "endedAt": "2026-10-09T05:22:30.526Z"
+          },
+          {
+            "sessionId": "session-420e912f-03f3-47d4-ae4f-8ab03647ecc9",
+            "modelProfileId": "private-model-505e778d23d825cbcfeb74f4a3cad7f98c7f4579",
+            "commandId": "cmd-e9f78f85-7b07-4559-93d8-5605044a4cf6",
+            "startedAt": "2026-10-09T05:22:34.643Z",
+            "reply": "好的小禾，已更正，后续统一用 1 比 17，原来的 1 比 15 停用。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T05:22:36.267Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T05:22:36.268Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T05:22:36.983Z"
+              },
+              {
+                "seq": 11,
+                "type": "user.message",
+                "at": "2026-10-09T05:22:36.983Z"
+              },
+              {
+                "seq": 451,
+                "type": "assistant.message",
+                "at": "2026-10-09T05:23:01.023Z"
+              },
+              {
+                "seq": 452,
+                "type": "task.ended",
+                "at": "2026-10-09T05:23:01.024Z"
+              },
+              {
+                "seq": 453,
+                "type": "turn.ended",
+                "at": "2026-10-09T05:23:01.025Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [
+              {
+                "id": "cognition-335de9c365dea4728d52affde10a6f7018ad471e9576e280cf480e86d831e7ff",
+                "kind": "cognition",
+                "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+              },
+              {
+                "id": "cognition-2c72bcf89204a3c7b628fc165dec06e6606bdeea094527a8d9e6eb55f8043c4e",
+                "kind": "cognition",
+                "summary": "用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+              }
+            ],
+            "durationMs": 27075,
+            "endedAt": "2026-10-09T05:23:01.718Z"
+          },
+          {
+            "sessionId": "session-f0a53f2d-b929-438c-86a6-4b078bde7445",
+            "modelProfileId": "private-model-505e778d23d825cbcfeb74f4a3cad7f98c7f4579",
+            "commandId": "cmd-bf7ad1e1-5b8e-411d-b975-fef59e8f7568",
+            "startedAt": "2026-10-09T05:23:06.298Z",
+            "reply": "小禾，你现在手冲一直用的就是粉水比 **1:15**。\n\n按这个比例来就行，比如 15g 咖啡粉配 225g 水，20g 粉配 300g 水，都在这个比例上。需要我帮你按这个 1:15 具体算一杯的粉水克数吗？",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T05:23:06.765Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T05:23:06.766Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T05:23:07.429Z"
+              },
+              {
+                "seq": 11,
+                "type": "user.message",
+                "at": "2026-10-09T05:23:07.430Z"
+              },
+              {
+                "seq": 396,
+                "type": "assistant.message",
+                "at": "2026-10-09T05:23:18.808Z"
+              },
+              {
+                "seq": 397,
+                "type": "task.ended",
+                "at": "2026-10-09T05:23:18.809Z"
+              },
+              {
+                "seq": 398,
+                "type": "turn.ended",
+                "at": "2026-10-09T05:23:18.810Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [
+              {
+                "id": "cognition-44c64d584148e6378c702df641eba0ada5113de4b5162f52ca42a478971ffab7",
+                "kind": "cognition",
+                "summary": "用户做手冲咖啡一直按粉水比1比15，之后帮我照这个比例算。"
+              },
+              {
+                "id": "cognition-335de9c365dea4728d52affde10a6f7018ad471e9576e280cf480e86d831e7ff",
+                "kind": "cognition",
+                "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+              },
+              {
+                "id": "cognition-2c72bcf89204a3c7b628fc165dec06e6606bdeea094527a8d9e6eb55f8043c4e",
+                "kind": "cognition",
+                "summary": "用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+              }
+            ],
+            "durationMs": 13191,
+            "endedAt": "2026-10-09T05:23:19.489Z"
+          }
+        ],
+        "replySummary": "小禾，你现在手冲一直用的就是粉水比 **1:15**。\n\n按这个比例来就行，比如 15g 咖啡粉配 225g 水，20g 粉配 300g 水，都在这个比例上。需要我帮你按这个 1:15 具体算一杯的粉水克数吗？",
+        "notes": "M2f返工盲测C；改代码前独立提交封存，只在固定候选最终验证运行。原话、当前正式项采用、独立会话、零审批、纠正旧项失效严格核对。",
+        "scratchDir": "C:\\temp\\weftmate-eval-memory-3x-correction-xdJRGE",
+        "reason": "reply_matches did not match expected value; holdout must adopt its own current formal memory",
+        "holdoutVerification": {
+          "distinctSessions": true,
+          "noUndeclaredApprovals": true
+        },
+        "semanticJudgement": {
+          "model": "mimo-v2.6-flash",
+          "usage": {
+            "completion_tokens": 30,
+            "prompt_tokens": 255,
+            "total_tokens": 285,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "finishReason": "stop",
+          "rawVerdict": "{\"pass\":false,\"reason\":\"回复仍按旧的1:15计算，未采用更正后的1:17\"}",
+          "status": "failed",
+          "reason": "回复仍按旧的1:15计算，未采用更正后的1:17"
+        }
+      },
+      {
+        "id": "memory-3x-person",
+        "category": "memory",
+        "title": "盲测C：展馆志愿者关系",
+        "status": "failed",
+        "durationMs": 29152,
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "reply_contains",
+            "text": "顾遥",
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "博物馆|志愿|展厅|导览",
+            "status": "failed",
+            "reason": "reply_matches did not match expected value"
+          },
+          {
+            "type": "llm_judge",
+            "prompt": "招呼应联系博物馆志愿服务同组伙伴或展厅导览，不捏造其他关系。",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          },
+          {
+            "type": "turn_status",
+            "turn": 2,
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-81ef6a01-8bcc-41c2-9f34-cbda577d6b88",
+            "modelProfileId": "private-model-505e778d23d825cbcfeb74f4a3cad7f98c7f4579",
+            "commandId": "cmd-5740cac0-5482-43df-bf38-2ab08e796a33",
+            "startedAt": "2026-10-09T05:23:25.594Z",
+            "reply": "好的小禾，记下了，顾遥是你在博物馆志愿服务同组的伙伴，每月一起负责展厅导览。\n\n要不要我在以后涉及博物馆志愿服务或展厅导览安排相关时，提醒你联系顾遥？",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T05:23:26.045Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T05:23:26.045Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T05:23:26.641Z"
+              },
+              {
+                "seq": 11,
+                "type": "user.message",
+                "at": "2026-10-09T05:23:26.641Z"
+              },
+              {
+                "seq": 465,
+                "type": "assistant.message",
+                "at": "2026-10-09T05:23:37.145Z"
+              },
+              {
+                "seq": 466,
+                "type": "task.ended",
+                "at": "2026-10-09T05:23:37.145Z"
+              },
+              {
+                "seq": 467,
+                "type": "turn.ended",
+                "at": "2026-10-09T05:23:37.147Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [
+              {
+                "id": "cognition-335de9c365dea4728d52affde10a6f7018ad471e9576e280cf480e86d831e7ff",
+                "kind": "cognition",
+                "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+              },
+              {
+                "id": "cognition-2c72bcf89204a3c7b628fc165dec06e6606bdeea094527a8d9e6eb55f8043c4e",
+                "kind": "cognition",
+                "summary": "用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+              }
+            ],
+            "durationMs": 12149,
+            "endedAt": "2026-10-09T05:23:37.743Z"
+          },
+          {
+            "sessionId": "session-ba8a6055-1d31-4ff2-91fb-84d09d126845",
+            "modelProfileId": "private-model-505e778d23d825cbcfeb74f4a3cad7f98c7f4579",
+            "commandId": "cmd-f4dd77fc-80c9-4bc4-b69e-f3a5d36492b0",
+            "startedAt": "2026-10-09T05:23:42.060Z",
+            "reply": "给顾遥的下次碰面招呼，可以这样说：\n\n“顾遥，下次见面再好好聊聊，最近有些想法想跟你当面请教。”",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T05:23:42.530Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T05:23:42.530Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T05:23:43.191Z"
+              },
+              {
+                "seq": 11,
+                "type": "user.message",
+                "at": "2026-10-09T05:23:43.192Z"
+              },
+              {
+                "seq": 279,
+                "type": "assistant.message",
+                "at": "2026-10-09T05:23:50.920Z"
+              },
+              {
+                "seq": 280,
+                "type": "task.ended",
+                "at": "2026-10-09T05:23:50.921Z"
+              },
+              {
+                "seq": 281,
+                "type": "turn.ended",
+                "at": "2026-10-09T05:23:50.921Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [
+              {
+                "id": "cognition-335de9c365dea4728d52affde10a6f7018ad471e9576e280cf480e86d831e7ff",
+                "kind": "cognition",
+                "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+              },
+              {
+                "id": "cognition-2c72bcf89204a3c7b628fc165dec06e6606bdeea094527a8d9e6eb55f8043c4e",
+                "kind": "cognition",
+                "summary": "用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+              }
+            ],
+            "durationMs": 9578,
+            "endedAt": "2026-10-09T05:23:51.638Z"
+          }
+        ],
+        "replySummary": "给顾遥的下次碰面招呼，可以这样说：\n\n“顾遥，下次见面再好好聊聊，最近有些想法想跟你当面请教。”",
+        "notes": "M2f返工盲测C；改代码前独立提交封存，只在固定候选最终验证运行。原话、当前正式项采用、独立会话、零审批、纠正旧项失效严格核对。",
+        "scratchDir": "C:\\temp\\weftmate-eval-memory-3x-person-tzHqTy",
+        "reason": "reply_matches did not match expected value; holdout must adopt its own current formal memory",
+        "holdoutVerification": {
+          "distinctSessions": true,
+          "noUndeclaredApprovals": true
+        },
+        "semanticJudgement": {
+          "model": "mimo-v2.6-flash",
+          "usage": {
+            "completion_tokens": 27,
+            "prompt_tokens": 173,
+            "total_tokens": 200,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "finishReason": "stop",
+          "rawVerdict": "{\"pass\":true,\"reason\":\"招呼内容未捏造其他关系，符合与同组伙伴打招呼的设定。\"}",
+          "status": "passed",
+          "reason": "招呼内容未捏造其他关系，符合与同组伙伴打招呼的设定。"
+        }
+      },
+      {
+        "id": "memory-3x-preference",
+        "category": "memory",
+        "title": "盲测C：骑行路线偏好",
+        "status": "failed",
+        "durationMs": 32403,
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "平缓|沿河|避开.*陡坡|不要.*陡坡",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "prompt": "路线要求应采用沿河平缓或避开陡坡的长期偏好，不能推荐陡坡。",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          },
+          {
+            "type": "turn_status",
+            "turn": 2,
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-aef62e32-a9c2-46ff-b3d1-4b88efbeb380",
+            "modelProfileId": "private-model-505e778d23d825cbcfeb74f4a3cad7f98c7f4579",
+            "commandId": "cmd-2cc7f028-181a-4515-8f49-040ea10782ff",
+            "startedAt": "2026-10-09T05:24:03.201Z",
+            "reply": "好的小禾，记下了。你选骑行路线偏好避开陡坡，更喜欢沿河的平缓路段，以后给你推荐路线时我会优先考虑这类路线。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T05:24:03.749Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T05:24:03.749Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T05:24:04.379Z"
+              },
+              {
+                "seq": 11,
+                "type": "user.message",
+                "at": "2026-10-09T05:24:04.379Z"
+              },
+              {
+                "seq": 377,
+                "type": "assistant.message",
+                "at": "2026-10-09T05:24:13.932Z"
+              },
+              {
+                "seq": 378,
+                "type": "task.ended",
+                "at": "2026-10-09T05:24:13.933Z"
+              },
+              {
+                "seq": 379,
+                "type": "turn.ended",
+                "at": "2026-10-09T05:24:13.933Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [
+              {
+                "id": "cognition-335de9c365dea4728d52affde10a6f7018ad471e9576e280cf480e86d831e7ff",
+                "kind": "cognition",
+                "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+              },
+              {
+                "id": "cognition-2c72bcf89204a3c7b628fc165dec06e6606bdeea094527a8d9e6eb55f8043c4e",
+                "kind": "cognition",
+                "summary": "用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+              }
+            ],
+            "durationMs": 11590,
+            "endedAt": "2026-10-09T05:24:14.791Z"
+          },
+          {
+            "sessionId": "session-d109a0e8-da38-4f99-8a2f-d3176fb517da",
+            "modelProfileId": "private-model-505e778d23d825cbcfeb74f4a3cad7f98c7f4579",
+            "commandId": "cmd-6a3c75ea-7db1-4738-b3c2-9db671fce982",
+            "startedAt": "2026-10-09T05:24:20.440Z",
+            "reply": "小禾，这句可以作为挑选标准：\n\n周末单车路线要平缓好骑、风景好、车流少、补给点充足且总里程控制在 30 公里以内，适合轻松骑行放松。\n",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T05:24:20.974Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T05:24:20.975Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T05:24:21.677Z"
+              },
+              {
+                "seq": 11,
+                "type": "user.message",
+                "at": "2026-10-09T05:24:21.678Z"
+              },
+              {
+                "seq": 309,
+                "type": "assistant.message",
+                "at": "2026-10-09T05:24:32.368Z"
+              },
+              {
+                "seq": 310,
+                "type": "task.ended",
+                "at": "2026-10-09T05:24:32.368Z"
+              },
+              {
+                "seq": 311,
+                "type": "turn.ended",
+                "at": "2026-10-09T05:24:32.369Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [
+              {
+                "id": "cognition-335de9c365dea4728d52affde10a6f7018ad471e9576e280cf480e86d831e7ff",
+                "kind": "cognition",
+                "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+              },
+              {
+                "id": "cognition-2c72bcf89204a3c7b628fc165dec06e6606bdeea094527a8d9e6eb55f8043c4e",
+                "kind": "cognition",
+                "summary": "用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+              }
+            ],
+            "durationMs": 12360,
+            "endedAt": "2026-10-09T05:24:32.800Z"
+          }
+        ],
+        "replySummary": "小禾，这句可以作为挑选标准：\n\n周末单车路线要平缓好骑、风景好、车流少、补给点充足且总里程控制在 30 公里以内，适合轻松骑行放松。\n",
+        "notes": "M2f返工盲测C；改代码前独立提交封存，只在固定候选最终验证运行。原话、当前正式项采用、独立会话、零审批、纠正旧项失效严格核对。",
+        "scratchDir": "C:\\temp\\weftmate-eval-memory-3x-preference-tQNinv",
+        "holdoutVerification": {
+          "distinctSessions": true,
+          "noUndeclaredApprovals": true
+        },
+        "reason": "holdout must adopt its own current formal memory",
+        "semanticJudgement": {
+          "model": "mimo-v2.6-flash",
+          "usage": {
+            "completion_tokens": 42,
+            "prompt_tokens": 188,
+            "total_tokens": 230,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "finishReason": "stop",
+          "rawVerdict": "{\"pass\":false,\"reason\":\"回复未体现沿河平缓或避开陡坡的长期偏好，仅泛泛提平缓，未明确避开陡坡/沿河要求。\"}",
+          "status": "failed",
+          "reason": "回复未体现沿河平缓或避开陡坡的长期偏好，仅泛泛提平缓，未明确避开陡坡/沿河要求。"
+        }
+      }
+    ],
+    "summary": {
+      "passed": 0,
+      "failed": 7,
+      "manual": 0,
+      "unsupported": 0,
+      "skippedChecks": 6,
+      "passRate": 0,
+      "coverage": 0
+    }
+  }
+}

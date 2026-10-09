@@ -1,0 +1,7 @@
+[
+  {
+    "state": "applied",
+    "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:86e313bf3ff56dff7bebf90777d1ce01:90eee11b3ebde61f0b49e59ef0f6e25155a29268d455d4803bef72fce5dfcefd\",\"cognitions\":[{\"action\":\"form\",\"cognition_id\":\"cognition-a8ef5b4fe1492d392413fe70b288efa08ca0d964affc3c6ceb376ae409072642\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":4}",
+    "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u6211\\u4e60\\u60ef\\u5927\\u5bb6\\u53eb\\u6211\\u5c0f\\u79be\\uff0c\\u4e0d\\u7528\\u53eb\\u5168\\u540d\\uff0c\\u4ee5\\u540e\\u4f60\\u4e5f\\u8fd9\\u4e48\\u53eb\\u6211\\u5427\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"74119a94-bfac-4c7f-9f5f-0a3e5cef0df7\\\",\\\"sentence_id\\\":\\\"t0\\\"}]}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":821,\"completion_tokens_details\":{\"reasoning_tokens\":715},\"prompt_tokens\":4904,\"prompt_tokens_details\":{\"cached_tokens\":4288},\"total_tokens\":5725}}"
+  }
+]

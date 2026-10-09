@@ -1,0 +1,309 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-09T06:44:26.995Z",
+  "model": "mimo",
+  "revision": {
+    "weftmate": "7ec481b4031f24627f13cb103bdf41091146c8d1",
+    "core": "5d91823a36d8154531e62db1eb76165a1f479cbb"
+  },
+  "electron": true,
+  "steps": [
+    {
+      "id": "08",
+      "title": "Core 真进程停止且无法重启、普通聊天和提示",
+      "status": "passed",
+      "checks": {
+        "actualCoreStopped": true,
+        "unavailable": true,
+        "chatCompleted": true,
+        "noMemoryInjected": true,
+        "chatNotice": true,
+        "memoryPageNotice": true,
+        "mobileWebNotice": true,
+        "recoveryClearsNotice": true,
+        "semanticAccepted": true
+      },
+      "startedAt": "2026-10-09T06:44:56.699Z",
+      "killedCoreProcesses": 1,
+      "memory": {
+        "ownerId": "owner-c30a939d-e0d7-4baf-a0a1-3127febe5e36",
+        "state": "unavailable",
+        "worldRevision": null,
+        "capabilities": {
+          "list": false,
+          "source": false,
+          "inject": false,
+          "correct": false,
+          "mute": false,
+          "deleteEvidence": false,
+          "deleteWorldItem": false
+        },
+        "pendingBoundaryCount": null,
+        "blockedBoundaryCount": null,
+        "discardedBoundaryCount": null,
+        "lastFailureCode": "MEMORY_PROCESS_UNAVAILABLE",
+        "reasonCode": "MEMORY_PROCESS_UNAVAILABLE"
+      },
+      "chatNotice": "WeftMate\n新对话\nCtrl N\nCtrl K\n\n未分组\n新对话\ne\neval-f4b54903-b861-40f9-95ae-7c49b10fcff7\n新对话\n输出与来源\n本对话用量\n\n记忆暂时不可用，这次对话不会用到或记住新内容\n\n你好，请用一句中文打个招呼。\n\n你好！很高兴见到你，有什么我可以帮你的吗？\n\n你好，请用一句中文打个招呼。\n\n你好！很高兴在这里见到你，随时告诉我需要帮忙什么。\n\n输入消息\n自动\nmimo",
+      "memoryNotice": "记忆服务暂时不可用，请稍后刷新。",
+      "semantic": {
+        "type": "llm_judge",
+        "prompt": "记忆服务故障时普通问候仍可用。",
+        "turn": 2,
+        "model": "mimo-v2.6-flash",
+        "usage": {
+          "completion_tokens": 20,
+          "prompt_tokens": 116,
+          "total_tokens": 136,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "finishReason": "stop",
+        "rawVerdict": "{\"pass\":true,\"reason\":\"回复为一句中文问候，符合标准问候要求。\"}",
+        "status": "passed",
+        "reason": "回复为一句中文问候，符合标准问候要求。"
+      },
+      "finishedAt": "2026-10-09T06:45:15.454Z"
+    }
+  ],
+  "turns": [
+    {
+      "sessionId": "session-4f823d34-d5fe-40ed-915d-4af30a1ccc1b",
+      "model": "mimo",
+      "modelProfileId": "private-model-7111ca107189e491d3226719f15df71b15e19216",
+      "user": "你好，请用一句中文打个招呼。",
+      "reply": "你好！很高兴见到你，有什么我可以帮你的吗？",
+      "status": "completed",
+      "memoryUsed": [],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-09T06:44:44.614Z",
+          "data": {
+            "taskId": "cmd-1cc5b327-579d-4f21-839b-599e386ff7aa",
+            "receiptId": "f2fef678-936b-434d-87b5-c06cd711aacb",
+            "text": "你好，请用一句中文打个招呼。",
+            "commandId": "cmd-1cc5b327-579d-4f21-839b-599e386ff7aa",
+            "requestId": "0e7862cb-886c-4c7a-9ccc-48f30eeb00de"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-09T06:44:44.615Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-09T06:44:45.116Z",
+          "data": {
+            "taskId": "cmd-1cc5b327-579d-4f21-839b-599e386ff7aa",
+            "turn": 1,
+            "receiptId": "f2fef678-936b-434d-87b5-c06cd711aacb",
+            "commandId": "cmd-1cc5b327-579d-4f21-839b-599e386ff7aa",
+            "requestId": "0e7862cb-886c-4c7a-9ccc-48f30eeb00de",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-09T06:44:45.117Z",
+          "data": {
+            "text": "你好，请用一句中文打个招呼。",
+            "receiptId": "f2fef678-936b-434d-87b5-c06cd711aacb"
+          }
+        },
+        {
+          "seq": 37,
+          "type": "assistant.message",
+          "at": "2026-10-09T06:44:49.324Z",
+          "data": {
+            "text": "你好！很高兴见到你，有什么我可以帮你的吗？",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 38,
+          "type": "task.ended",
+          "at": "2026-10-09T06:44:49.324Z",
+          "data": {
+            "taskId": "cmd-1cc5b327-579d-4f21-839b-599e386ff7aa",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 39,
+            "receiptId": "f2fef678-936b-434d-87b5-c06cd711aacb",
+            "commandId": "cmd-1cc5b327-579d-4f21-839b-599e386ff7aa",
+            "requestId": "0e7862cb-886c-4c7a-9ccc-48f30eeb00de",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 39,
+          "type": "turn.ended",
+          "at": "2026-10-09T06:44:49.325Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 6915,
+      "steps": 0
+    },
+    {
+      "sessionId": "session-4f823d34-d5fe-40ed-915d-4af30a1ccc1b",
+      "model": "mimo",
+      "modelProfileId": "private-model-7111ca107189e491d3226719f15df71b15e19216",
+      "user": "你好，请用一句中文打个招呼。",
+      "reply": "你好！很高兴在这里见到你，随时告诉我需要帮忙什么。",
+      "status": "completed",
+      "memoryUsed": [],
+      "events": [
+        {
+          "seq": 40,
+          "type": "task.queued",
+          "at": "2026-10-09T06:44:59.453Z",
+          "data": {
+            "taskId": "cmd-3e7f00e0-921e-4998-a92a-6dab6a488e5b",
+            "receiptId": "61b53d4d-2aee-4b56-95e2-9611c7ca9e3e",
+            "text": "你好，请用一句中文打个招呼。",
+            "commandId": "cmd-3e7f00e0-921e-4998-a92a-6dab6a488e5b",
+            "requestId": "9c8f71c5-2022-4302-8b8a-15193419e36d"
+          }
+        },
+        {
+          "seq": 41,
+          "type": "turn.started",
+          "at": "2026-10-09T06:44:59.453Z",
+          "data": {
+            "turn": 2
+          }
+        },
+        {
+          "seq": 43,
+          "type": "task.started",
+          "at": "2026-10-09T06:44:59.880Z",
+          "data": {
+            "taskId": "cmd-3e7f00e0-921e-4998-a92a-6dab6a488e5b",
+            "turn": 2,
+            "receiptId": "61b53d4d-2aee-4b56-95e2-9611c7ca9e3e",
+            "commandId": "cmd-3e7f00e0-921e-4998-a92a-6dab6a488e5b",
+            "requestId": "9c8f71c5-2022-4302-8b8a-15193419e36d",
+            "turnTaskId": "turn-2"
+          }
+        },
+        {
+          "seq": 44,
+          "type": "user.message",
+          "at": "2026-10-09T06:44:59.880Z",
+          "data": {
+            "text": "你好，请用一句中文打个招呼。",
+            "receiptId": "61b53d4d-2aee-4b56-95e2-9611c7ca9e3e"
+          }
+        },
+        {
+          "seq": 63,
+          "type": "assistant.message",
+          "at": "2026-10-09T06:45:04.446Z",
+          "data": {
+            "text": "你好！很高兴在这里见到你，随时告诉我需要帮忙什么。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 64,
+          "type": "task.ended",
+          "at": "2026-10-09T06:45:04.446Z",
+          "data": {
+            "taskId": "cmd-3e7f00e0-921e-4998-a92a-6dab6a488e5b",
+            "turn": 2,
+            "reason": "completed",
+            "nativeTurnEndSeq": 65,
+            "receiptId": "61b53d4d-2aee-4b56-95e2-9611c7ca9e3e",
+            "commandId": "cmd-3e7f00e0-921e-4998-a92a-6dab6a488e5b",
+            "requestId": "9c8f71c5-2022-4302-8b8a-15193419e36d",
+            "turnTaskId": "turn-2"
+          }
+        },
+        {
+          "seq": 65,
+          "type": "turn.ended",
+          "at": "2026-10-09T06:45:04.447Z",
+          "data": {
+            "reason": "completed",
+            "turn": 2
+          }
+        }
+      ],
+      "durationMs": 8243,
+      "steps": 0
+    }
+  ],
+  "initialMemory": {
+    "ownerId": "owner-c30a939d-e0d7-4baf-a0a1-3127febe5e36",
+    "state": "ready",
+    "version": "2.0.0",
+    "worldRevision": 0,
+    "capabilities": {
+      "list": true,
+      "source": true,
+      "inject": true,
+      "correct": true,
+      "mute": true,
+      "deleteEvidence": true,
+      "deleteWorldItem": true
+    },
+    "pendingBoundaryCount": 0,
+    "blockedBoundaryCount": 0,
+    "discardedBoundaryCount": 0,
+    "lastFailureCode": null
+  },
+  "directJudgements": [
+    {
+      "model": "mimo-v2.6-flash",
+      "usage": {
+        "completion_tokens": 20,
+        "prompt_tokens": 116,
+        "total_tokens": 136,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "finishReason": "stop",
+      "rawVerdict": "{\"pass\":true,\"reason\":\"回复为一句中文问候，符合标准问候要求。\"}",
+      "status": "passed",
+      "reason": "回复为一句中文问候，符合标准问候要求。"
+    }
+  ],
+  "finishedAt": "2026-10-09T06:45:15.904Z",
+  "summary": {
+    "passed": 1,
+    "failed": 0,
+    "eightStepGate": false
+  },
+  "mimoUsage": {
+    "requests": 6,
+    "returnedUsage": 6,
+    "missingUsage": 0,
+    "input": 13791,
+    "cached": 11904,
+    "output": 145,
+    "knownCnyLowerBound": 0.00241508
+  },
+  "credentialScan": {
+    "scanned": 221,
+    "matches": 0
+  }
+}

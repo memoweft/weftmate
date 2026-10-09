@@ -1,0 +1,20 @@
+[
+  {
+    "foreground": true,
+    "firstTextMs": 2705.1906,
+    "firstDeltaMs": 1294.5506999999998,
+    "turnFirstTextMs": 3454.8668,
+    "turnFirstDeltaMs": 2044.2268999999997,
+    "totalMs": 4113.6454,
+    "text": "你好！今天是 2026-10-09，周末整理笔记正是好时候。需要我用简洁中文帮你梳理笔记，或安排散步阅读相关的提醒，随时说。",
+    "tools": [],
+    "usage": {
+      "completion_tokens": 103,
+      "prompt_tokens": 2441,
+      "total_tokens": 2544,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  }
+]
