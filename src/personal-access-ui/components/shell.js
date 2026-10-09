@@ -172,6 +172,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
     }
     function updateAvailability() {
         const value = core.composerState(ui.readMessageDraft());
+        ui.renderConversationUsage?.();
         ui.byId('show-phone').hidden = true;
         ui.byId('rail-phone').hidden = true;
         ui.byId('chat-intro').hidden = value.phoneChat || ui.byId('transcript').children.length > 0;

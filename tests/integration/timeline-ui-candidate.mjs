@@ -11,7 +11,8 @@ import { createDshSessionAdapter } from '../../src/runtime/dsh-adapter/sessions.
 const hash = value => createHash('sha256').update(value).digest('hex')
 const ok = value => ({ result: { ok: true, value } })
 export async function startTimelineCandidate(options = {}) {
-  const root = mkdtempSync(join(tmpdir(), 'weftmate-m0-3-')), events = []
+  const root = mkdtempSync(join(tmpdir(), 'weftmate-m0-3-')); let events = [];
+  const dailySessions = new Map();
   let sessionId, taskId, running = true, artifact, service, questionFrame, processing = {phase: 'loading', modelName: '合成模型'}
   let contextUsage=options.composer?{usedTokens:713000,contextWindow:828000}:null;
   const receiptId = 'timeline-synthetic-receipt', runtimeId = randomUUID(), approvalId = randomUUID()
@@ -31,9 +32,18 @@ export async function startTimelineCandidate(options = {}) {
       return {ok:true};
     }} : {}),
     getStatus: async () => ({ runtime: 'ready', referenceScan: 'ready', capabilities: { chat: { available: true, inferenceVerified: false } } }), listModels: async () => [{ id: 'local', name: '合成会话', model: options.usageSamples ? 'mimo-v2.6-flash' : 'synthetic', sourceKind: options.usageSamples ? 'cloud' : 'local', configured: true }], preflight: async () => ({ ok: true }),
-    createSession: async input => { operations.push({ kind: 'create' }); sessionId = input.sessionId; return { sessionId } },
+    createSession: async input => { operations.push({ kind: 'create' });
+      if(options.daily){if(sessionId)dailySessions.get(sessionId).running=running;events=[];running=false;dailySessions.set(input.sessionId,{events,running:false,title:'新对话'});}
+      sessionId = input.sessionId; return { sessionId } },
     sendMessage: async input => {
       operations.push({ kind: 'message', mode: input.mode, text: input.text })
+      if(options.daily){
+        const row=dailySessions.get(input.sessionId);assert.ok(row);sessionId=input.sessionId;events=row.events;
+        const rpc='synthetic-'+randomUUID();row.title=input.text===goal?'项目进度报告':input.text;
+        if(row.running&&input.mode==='queue')append('agent/inbox/spliced',{target:'next-turn',start:0,inserted:[{id:rpc,source:{kind:'user',rpcId:rpc},content:[{type:'text',text:input.text}]}]});
+        else{if(input.text===goal)for(let n=0;n<(options.historyCount??0);n++)append('assistant/message',{content:[{type:'text',text:`历史记录 ${n+1}：已核对项目资料。`}]});append('turn/start',{turn:1});append('user/message',{source:{kind:'user',rpcId:rpc},content:[{type:'text',text:input.text}]});append('step/start',{turn:1,step:1});}
+        row.running=running=true;return {accepted:true,receiptId:rpc};
+      }
       if (events.length && options.interactive) {
         const rpc = `synthetic-${randomUUID()}`
         if(options.windowChrome && input.mode==='queue') append('agent/inbox/spliced', {target:'next-turn',start:events.filter(event=>event.type==='agent/inbox/spliced').length,
@@ -55,10 +65,13 @@ export async function startTimelineCandidate(options = {}) {
       call('pwsh', 'write-1', { command: 'node scripts/report.mjs' })
       return { accepted: true, receiptId }
     },
-    stopTask: async ({ receiptIds }) => { operations.push({ kind: 'cancel' }); if (options.interactive) { append('turn/end', { turn: 1, reason: { kind: 'aborted' } }); running = false; } return { status: 'stopped', receiptIds, jobs: [], executionCancelled: true }; },
+    stopTask: async ({ sessionId:id, receiptIds, queuedOnly }) => { operations.push({ kind: 'cancel' });
+      if(options.daily){const row=dailySessions.get(id);assert.ok(row);if(!queuedOnly&&row.running){for(const [type,data]of [['step/end',{turn:1,step:1}],['turn/end',{turn:1,reason:{kind:'aborted'}}]])row.events.push({seq:row.events.length,time:baseTime+row.events.length*500,type,data});row.running=false;if(id===sessionId)running=false;}
+        return {outcomes:receiptIds.map(receiptId=>({receiptId,status:queuedOnly?'queue_removed':'cancel_requested',backgroundJobs:[]}))};}
+      if (options.interactive) { append('turn/end', { turn: 1, reason: { kind: 'aborted' } }); running = false; } return { status: 'stopped', receiptIds, jobs: [], executionCancelled: true }; },
     cancelSession: async () => { operations.push({ kind: 'cancel' }); if (options.interactive) { append('turn/end', { turn: 1, reason: { kind: 'aborted' } }); running = false } return { accepted: true } },
-    describeSession: async id => id === sessionId ? { sessionId, running, processing, agentPreset: 'personal-remote', modelProfileId: 'local', title: '项目进度报告', ...(contextUsage ? {contextUsage} : {}) } : null,
-    readEvents: async ({ sessionId: id, ...options }) => adapter.historyPage(id, options),
+    describeSession: async id => options.daily && dailySessions.has(id) ? {sessionId:id,running:id===sessionId?running:dailySessions.get(id).running,processing,agentPreset:'personal-remote',modelProfileId:'local',title:dailySessions.get(id).title} : id === sessionId ? { sessionId, running, processing, agentPreset: 'personal-remote', modelProfileId: 'local', title: '项目进度报告', ...(contextUsage ? {contextUsage} : {}) } : null,
+    readEvents: async ({ sessionId: id, ...options }) => {if(dailySessions.has(id))return createDshSessionAdapter({sessions:{list:async()=>ok({items:[...dailySessions.keys()].map(sessionId=>({sessionId,origin:'user'}))})},events:{}},{readLog:async()=>dailySessions.get(id).events}).historyPage(id,options);return adapter.historyPage(id, options)},
     readEventDetail: async ({ sessionId: id, seq }) => adapter.historyDetail(id, seq),
     getTaskReplyEvidence: async () => ({ status: running ? 'waiting' : 'completed', turn: 1,
       assistantChunks: 0, textChunks: 0, reasoningChunks: 0, assistantMessages: running ? 1 : 2, toolSaveObserved: !!artifact }),
@@ -75,7 +88,8 @@ export async function startTimelineCandidate(options = {}) {
     restore: async id => {backupOperations.push('restore:'+id);return {accepted:true}},
   } : null;
   service = await createPersonalAccessService({ root, port: 0, backend, backupManager, uiHandler: servePersonalAccessUi })
-  const { origin, hostId } = await service.start(), grant = await service.issueSetupGrant()
+  const started = await service.start(); let origin = started.origin;
+  const { hostId } = started, grant = await service.issueSetupGrant()
   const credentials = { username: 'TimelineFixture', password: `isolated-${randomUUID()}`, deviceName: '隔离测试浏览器' }
   const setup = await fetch(origin + '/personal/v1/auth/setup', { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify({ grant: grant.grant, ...credentials }) })
   assert.equal(setup.status, 201); const auth = await setup.json(), cookie = setup.headers.get('set-cookie').split(';')[0]
@@ -134,6 +148,12 @@ export async function startTimelineCandidate(options = {}) {
   const handler = server.listeners('request')[0];server.removeAllListeners('request');server.on('request',(req,res)=>{if(req.url==='/bridge.js'){res.writeHead(200,{'content-type':'text/javascript'});res.end(bridgeCode)}else handler(req,res)})
   await new Promise(done => server.listen(0,'127.0.0.1',done))
   return { root, origin,
+    restartWithCloud: async cloudIdentity => {
+      await service.close();
+      service = await createPersonalAccessService({root,port:0,backend,backupManager,uiHandler:servePersonalAccessUi,cloudIdentity});
+      const started = await service.start(); origin = started.origin; assert.equal(started.hostId,hostId);
+      return origin;
+    },
     progress: {
       context: value=>{contextUsage=value},
       call, result,
