@@ -1,17 +1,26 @@
 /** Decorate the native pi-ai adapter; its protocols, settings and credentials remain native. */
-import { Config, apply as applyPiAi } from '@deepseek-ai/dsh-llm-pi-ai';
+import { Config as NativeConfig, apply as applyPiAi } from '@deepseek-ai/dsh-llm-pi-ai';
+import Schema from '@deepseek-ai/schemastery';
 import { LlmError, CONTEXT_WINDOW_EXCEEDED_CODE } from '@deepseek-ai/dsh-llm';
 import { readModelCapacity, modelCapacityFor, outputBudget, messagesForModelInput } from '../model-budget.mjs';
 import { acquireModelSlot, isBackgroundPurpose } from '../model-scheduler-client.mjs';
 import { meteredNativeStream, usageSessionId } from '../personal-access/usage-native.mjs';
 
-export { Config };
+// Keep every native field/validation. Leave this one default to the host's
+// projection, otherwise native schema resolution inserts 300000 before get().
+export const Config = new Schema(JSON.parse(JSON.stringify(NativeConfig)));
+delete Config.dict.providers.inner.dict.streamIdleTimeoutMs.meta.default;
 export const name = 'llm-pi-ai';
 export const inject = ['llm', 'tokenMeter'];
+
+// Native DSH cancels and retries a stalled stream. Ninety seconds accommodates
+// model startup while avoiding QA3-07's five-minute wait without any increments.
+export const DEFAULT_STREAM_IDLE_TIMEOUT_MS = 90_000;
 
 export function apply(ctx, config) {
   const probes = new Map();
   const capacities = new Map();
+  const slowRetries = new Set();
   let rawSource = () => config;
   let lastRaw, lastVersion, projected;
   let version = 0;
@@ -53,8 +62,9 @@ export function apply(ctx, config) {
     if (raw === lastRaw && lastVersion === version) return projected;
     lastRaw = raw; lastVersion = version;
     projected = { ...raw, providers: Object.fromEntries(Object.entries(raw.providers ?? {}).map(([provider, row]) => {
-      if (!compatible(row) || !row.models) return [provider, row];
-      return [provider, { ...row, models: row.models.map(model => {
+      const streamIdleTimeoutMs = row.streamIdleTimeoutMs ?? Number(process.env.WEFTMATE_STREAM_IDLE_TIMEOUT_MS || DEFAULT_STREAM_IDLE_TIMEOUT_MS);
+      if (!compatible(row) || !row.models) return [provider, { ...row, streamIdleTimeoutMs }];
+      return [provider, { ...row, streamIdleTimeoutMs, models: row.models.map(model => {
         const value = capacities.get(identity(provider, row, model)) ?? modelCapacityFor({
           baseUrl: row.baseURL, modelId: model.id, contextWindow: model.contextWindow, maxTokens: model.maxTokens });
         return { ...model, contextWindow: value.contextWindow, maxTokens: value.maxTokens };
@@ -69,6 +79,7 @@ export function apply(ctx, config) {
     return new Proxy(target.settings, { get(settings, method) {
       if (method !== 'register') return Reflect.get(settings, method);
       return (...args) => {
+        if (args[1] === NativeConfig) args[1] = Config;
         const scope = settings.register(...args);
         rawSource = () => scope.get();
         scope.watch(() => { probes.clear(); capacities.clear(); version++; return refresh(); });
@@ -103,6 +114,10 @@ export function apply(ctx, config) {
           const release = await acquireModelSlot(background ? 'background' : 'foreground', options.signal,
             scheduler, { profileId: options.provider, ...(background ? {} : { sessionId: options.sessionId ?? '' }) });
           try {
+          if (slowRetries.delete(options.sessionId) && scheduler && !background) {
+            await fetch(`${scheduler}/progress`, { method: 'POST', headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ sessionId: options.sessionId, phase: 'retrying' }), signal: AbortSignal.timeout(1000) }).catch(() => {});
+          }
           const modelInfo = await target.resolveModel(options.provider, options.model, options.signal);
           options = { ...options, messages: messagesForModelInput(options.messages, modelInfo.inputModalities) };
           const row = rawSource().providers?.[options.provider];
@@ -159,6 +174,14 @@ export function apply(ctx, config) {
     return Reflect.get(target, prop);
   } });
   applyPiAi(nativeContext, config);
+  ctx.on('session/event', (session, event) => {
+    if (event.type === 'turn/end') { slowRetries.delete(session.id); return; }
+    if (event.type !== 'llm/retry' || event.data?.failure?.code !== 'TIMEOUT') return;
+    slowRetries.add(session.id);
+    const scheduler = process.env.WEFTMATE_MODEL_SCHEDULER_URL;
+    if (scheduler) void fetch(`${scheduler}/progress`, { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sessionId: session.id, phase: 'retrying' }), signal: AbortSignal.timeout(1000) }).catch(() => {});
+  });
 }
 
 export default { name, inject, Config, apply };

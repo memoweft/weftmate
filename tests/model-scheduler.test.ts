@@ -108,6 +108,8 @@ test('session progress uses actual queue position, observed switcher and stream 
     assert.deepEqual(await bridge.progress('two'), { phase: 'queued', ahead: 1, modelName: 'Synthetic Muse' });
     switching = false;
     assert.equal((await bridge.progress('one')).phase, 'waiting');
+    await fetch(`${bridge.url}/progress`, { method: 'POST', body: JSON.stringify({ sessionId: 'one', phase: 'retrying' }) });
+    assert.equal((await bridge.progress('one')).phase, 'retrying');
     await fetch(`${bridge.url}/progress`, { method: 'POST', body: JSON.stringify({ sessionId: 'one', phase: 'reasoning' }) });
     assert.equal((await bridge.progress('one')).phase, 'reasoning');
     await fetch(`${bridge.url}/progress`, { method: 'POST', body: JSON.stringify({ sessionId: 'one', phase: 'answering' }) });

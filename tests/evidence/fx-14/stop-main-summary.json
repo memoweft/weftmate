@@ -1,0 +1,17 @@
+{
+  "cycles": 30,
+  "passed": 30,
+  "medianMs": 835.5,
+  "p95Ms": 859,
+  "maxMs": 872,
+  "over2s": 0,
+  "durationMs": 880158,
+  "p99EventLoopMs": 21.839871,
+  "maxEventLoopMs": 80.871423,
+  "errors": [],
+  "cleaned": true,
+  "nativeSnapshotClockPreserved": true,
+  "nativeCreationReadinessAwaited": true,
+  "quantile": "nearest rank",
+  "sourceProductCommit": "8decd15f"
+}

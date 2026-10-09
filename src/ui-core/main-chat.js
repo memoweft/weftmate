@@ -63,6 +63,10 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             next = await core.accessApi('/chats?' + new URLSearchParams({ archived: 'all', cursor: next.nextCursor }));
             core.state.chats.push(...next.items);
         }
+        // Keep the native snapshot clock when projecting logical chats. The
+        // composer compares newer native turn events against this clock so a
+        // sidebar poll is not a prerequisite for showing the stop button.
+        core.state.sessionSnapshotAt = sessions.snapshotAt ?? null;
         core.state.sessions = (sessions.sessions || []).map(row => ({ ...row, ...core.state.chats.find(chat => chat.kind === 'side' && chat.activeSessionId === row.sessionId) }));
         core.state.sessionGroups = sessions.groups || []; installMain(main.chat);
         await core.refreshSessionProjects(); effects.renderSessions(); effects.paintSelectedSession(core.state.selectedSessionId); notify();

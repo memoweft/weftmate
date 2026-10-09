@@ -1,0 +1,17 @@
+{
+  "cycles": 30,
+  "passed": 30,
+  "medianMs": 868.5,
+  "p95Ms": 1379,
+  "maxMs": 1974,
+  "over2s": 0,
+  "durationMs": 789656,
+  "errors": [],
+  "p99EventLoopMs": 33.783807,
+  "maxEventLoopMs": 72.810495,
+  "quantile": "nearest rank",
+  "productionStopPathChanged": false,
+  "sourceProductCommit": "34f731a6",
+  "mergedMainCompatibilityBatchPlanned": true,
+  "cleaned": true
+}
