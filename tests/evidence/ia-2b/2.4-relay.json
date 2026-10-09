@@ -1,0 +1,1225 @@
+{
+  "realElectron": true,
+  "fixedDsh": true,
+  "model": "mimo-v2.6-flash",
+  "turns": [
+    {
+      "commandId": "cmd-72d6f3d2-4ef0-4505-a023-71a278536dbd",
+      "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+      "activeSessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da"
+    },
+    {
+      "commandId": "cmd-1c5333be-523e-449b-ac41-a12380afd2af",
+      "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+      "activeSessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da"
+    },
+    {
+      "commandId": "cmd-87913d51-f2ca-45d0-a77b-2f570bb1abf6",
+      "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+      "activeSessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da"
+    },
+    {
+      "commandId": "cmd-793bbd1a-4f69-4a0a-b7ce-fb8de64ce63b",
+      "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+      "activeSessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da"
+    },
+    {
+      "commandId": "cmd-1d844c88-2853-4889-afac-22c808b655ed",
+      "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+      "activeSessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da"
+    },
+    {
+      "commandId": "cmd-4e0484d1-281a-4675-9afc-023999c327e2",
+      "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+      "activeSessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da"
+    },
+    {
+      "commandId": "cmd-56d3b1f7-1885-4123-8105-994c11e59977",
+      "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+      "activeSessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da"
+    },
+    {
+      "commandId": "cmd-6465d29d-c7ce-4ee6-bf2d-39aa1982af2a",
+      "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+      "activeSessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828"
+    },
+    {
+      "commandId": "cmd-9722f43c-4477-46e0-b9de-ff16e4bc419b",
+      "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+      "activeSessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828"
+    },
+    {
+      "commandId": "cmd-b303d09f-7f7c-45cc-ad6d-22b776449f76",
+      "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+      "activeSessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828"
+    },
+    {
+      "commandId": "cmd-50f86aea-ab6b-4a96-95aa-d01f59133156",
+      "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+      "activeSessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828"
+    },
+    {
+      "commandId": "cmd-27209e8a-1910-419c-b066-1217d699ac85",
+      "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+      "activeSessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828"
+    },
+    {
+      "commandId": "cmd-0cbba4e8-cf12-4b6f-9949-5c5d9c6c2513",
+      "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+      "activeSessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828"
+    },
+    {
+      "commandId": "cmd-4a49113d-7efc-41d5-afba-36cbc49f0455",
+      "sessionId": "session-ef43a2bb-9de1-499e-97c0-9647c36fe7c5",
+      "activeSessionId": "session-ef43a2bb-9de1-499e-97c0-9647c36fe7c5"
+    },
+    {
+      "commandId": "cmd-eff90117-a4d9-4c69-a3fb-81056e66f02a",
+      "sessionId": "session-ef43a2bb-9de1-499e-97c0-9647c36fe7c5",
+      "activeSessionId": "session-ef43a2bb-9de1-499e-97c0-9647c36fe7c5"
+    },
+    {
+      "commandId": "cmd-a17f0d77-6b3b-4b7f-a9b0-d7588aef77a3",
+      "sessionId": "session-ef43a2bb-9de1-499e-97c0-9647c36fe7c5",
+      "activeSessionId": "session-ef43a2bb-9de1-499e-97c0-9647c36fe7c5"
+    }
+  ],
+  "switches": [
+    "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+    "session-ef43a2bb-9de1-499e-97c0-9647c36fe7c5"
+  ],
+  "segments": [
+    {
+      "segmentId": "segment-753ca802-e29f-4d62-ae7a-006c49e202b9",
+      "chatId": "chat-9fa7bc54-88ac-47e9-810d-2ef752788ef9",
+      "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+      "hostId": "host-aaad9a4a-7616-4a28-873a-0e6b5032713a",
+      "ordinal": 0,
+      "state": "sealed",
+      "startedAt": "2026-10-09T18:43:37.844Z",
+      "sealedAt": "2026-10-09T18:44:07.733Z"
+    },
+    {
+      "segmentId": "segment-6f0a5d05-cf74-4335-810e-0cb7ac89f90a",
+      "chatId": "chat-9fa7bc54-88ac-47e9-810d-2ef752788ef9",
+      "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+      "hostId": "host-aaad9a4a-7616-4a28-873a-0e6b5032713a",
+      "ordinal": 1,
+      "state": "sealed",
+      "startedAt": "2026-10-09T18:44:07.733Z",
+      "handoffSourceRefs": [
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 170
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 168
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 169
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 147
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 145
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 146
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 9
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 10
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 11
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 12
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 13
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 34
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 16
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 17
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 18
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 19
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 20
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 21
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 22
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 23
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 24
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 25
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 26
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 27
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 28
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 29
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 30
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 31
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 32
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 33
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 41
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 42
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 43
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 55
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 44
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 45
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 46
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 47
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 48
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 49
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 50
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 51
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 52
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 53
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 54
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 62
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 63
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 64
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 76
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 65
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 66
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 67
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 68
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 69
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 70
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 71
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 72
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 73
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 74
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 75
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 83
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 84
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 85
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 97
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 86
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 87
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 88
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 89
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 90
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 91
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 92
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 93
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 94
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 95
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 96
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 104
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 105
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 106
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 119
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 107
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 108
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 109
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 110
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 111
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 112
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 113
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 114
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 115
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 116
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 117
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 118
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 126
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 127
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 128
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 139
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 129
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 130
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 131
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 132
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 133
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 134
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 135
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 136
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 137
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 138
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 150
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 151
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 152
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 153
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 165
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 154
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 155
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 156
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 157
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 158
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 159
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 160
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 161
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 162
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 163
+        },
+        {
+          "sessionId": "session-658b02be-66b1-41e5-ba1f-d0fdca47f1da",
+          "seq": 164
+        }
+      ],
+      "sealedAt": "2026-10-09T18:44:41.714Z"
+    },
+    {
+      "segmentId": "segment-0d6b35eb-8426-4111-8e99-5d2d15a84482",
+      "chatId": "chat-9fa7bc54-88ac-47e9-810d-2ef752788ef9",
+      "sessionId": "session-ef43a2bb-9de1-499e-97c0-9647c36fe7c5",
+      "hostId": "host-aaad9a4a-7616-4a28-873a-0e6b5032713a",
+      "ordinal": 2,
+      "state": "active",
+      "startedAt": "2026-10-09T18:44:41.714Z",
+      "handoffSourceRefs": [
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 140
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 138
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 139
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 119
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 117
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 118
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 5
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 10
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 11
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 12
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 13
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 14
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 28
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 17
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 18
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 19
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 20
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 21
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 22
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 23
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 24
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 25
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 26
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 27
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 35
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 36
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 37
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 50
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 38
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 39
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 40
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 41
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 42
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 43
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 44
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 45
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 46
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 47
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 48
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 49
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 57
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 58
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 59
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 70
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 60
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 61
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 62
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 63
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 64
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 65
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 66
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 67
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 68
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 69
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 77
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 78
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 79
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 91
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 80
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 81
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 82
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 83
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 84
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 85
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 86
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 87
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 88
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 89
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 90
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 98
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 99
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 100
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 111
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 101
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 102
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 103
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 104
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 105
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 106
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 107
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 108
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 109
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 110
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 122
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 123
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 124
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 125
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 135
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 126
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 127
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 128
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 129
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 130
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 131
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 132
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 133
+        },
+        {
+          "sessionId": "session-322d8dd5-9667-4fa4-afb7-a5ab215ad828",
+          "seq": 134
+        }
+      ]
+    }
+  ],
+  "zeroResidueAfterTwoRelays": {
+    "files": 108,
+    "decodedFrames": 7,
+    "hits": 0
+  },
+  "usage": [
+    {
+      "completion_tokens": 48,
+      "prompt_tokens": 2126,
+      "total_tokens": 2174,
+      "completion_tokens_details": {
+        "reasoning_tokens": 44
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    {
+      "completion_tokens": 16,
+      "prompt_tokens": 4304,
+      "total_tokens": 4320,
+      "completion_tokens_details": {
+        "reasoning_tokens": 12
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 2112
+      }
+    },
+    {
+      "completion_tokens": 13,
+      "prompt_tokens": 6500,
+      "total_tokens": 6513,
+      "completion_tokens_details": {
+        "reasoning_tokens": 9
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 4288
+      }
+    },
+    {
+      "completion_tokens": 13,
+      "prompt_tokens": 8723,
+      "total_tokens": 8736,
+      "completion_tokens_details": {
+        "reasoning_tokens": 9
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 6464
+      }
+    },
+    {
+      "completion_tokens": 14,
+      "prompt_tokens": 10946,
+      "total_tokens": 10960,
+      "completion_tokens_details": {
+        "reasoning_tokens": 10
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 8704
+      }
+    },
+    {
+      "completion_tokens": 14,
+      "prompt_tokens": 13170,
+      "total_tokens": 13184,
+      "completion_tokens_details": {
+        "reasoning_tokens": 10
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 10944
+      }
+    },
+    {
+      "completion_tokens": 854,
+      "prompt_tokens": 7038,
+      "total_tokens": 7892,
+      "completion_tokens_details": {
+        "reasoning_tokens": 8
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 6464
+      }
+    },
+    {
+      "completion_tokens": 15,
+      "prompt_tokens": 11505,
+      "total_tokens": 11520,
+      "completion_tokens_details": {
+        "reasoning_tokens": 11
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1600
+      }
+    },
+    {
+      "completion_tokens": 945,
+      "prompt_tokens": 12027,
+      "total_tokens": 12972,
+      "completion_tokens_details": {
+        "reasoning_tokens": 6
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 11456
+      }
+    },
+    {
+      "completion_tokens": 14,
+      "prompt_tokens": 5048,
+      "total_tokens": 5062,
+      "completion_tokens_details": {
+        "reasoning_tokens": 10
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1600
+      }
+    },
+    {
+      "completion_tokens": 17,
+      "prompt_tokens": 7272,
+      "total_tokens": 7289,
+      "completion_tokens_details": {
+        "reasoning_tokens": 13
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 4992
+      }
+    },
+    {
+      "completion_tokens": 14,
+      "prompt_tokens": 9499,
+      "total_tokens": 9513,
+      "completion_tokens_details": {
+        "reasoning_tokens": 10
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 7232
+      }
+    },
+    {
+      "completion_tokens": 14,
+      "prompt_tokens": 11723,
+      "total_tokens": 11737,
+      "completion_tokens_details": {
+        "reasoning_tokens": 10
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 9472
+      }
+    },
+    {
+      "completion_tokens": 14,
+      "prompt_tokens": 14017,
+      "total_tokens": 14031,
+      "completion_tokens_details": {
+        "reasoning_tokens": 10
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 11712
+      }
+    },
+    {
+      "completion_tokens": 926,
+      "prompt_tokens": 7814,
+      "total_tokens": 8740,
+      "completion_tokens_details": {
+        "reasoning_tokens": 9
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 7232
+      }
+    },
+    {
+      "completion_tokens": 14,
+      "prompt_tokens": 11717,
+      "total_tokens": 11731,
+      "completion_tokens_details": {
+        "reasoning_tokens": 10
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1600
+      }
+    },
+    {
+      "completion_tokens": 961,
+      "prompt_tokens": 12239,
+      "total_tokens": 13200,
+      "completion_tokens_details": {
+        "reasoning_tokens": 6
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 11712
+      }
+    },
+    {
+      "completion_tokens": 11,
+      "prompt_tokens": 5134,
+      "total_tokens": 5145,
+      "completion_tokens_details": {
+        "reasoning_tokens": 7
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    {
+      "completion_tokens": 13,
+      "prompt_tokens": 5471,
+      "total_tokens": 5484,
+      "completion_tokens_details": {
+        "reasoning_tokens": 6
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 5120
+      }
+    },
+    {
+      "completion_tokens": 11,
+      "prompt_tokens": 4752,
+      "total_tokens": 4763,
+      "completion_tokens_details": {
+        "reasoning_tokens": 7
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1536
+      }
+    }
+  ]
+}

@@ -27,6 +27,11 @@ export function continuationState(ctx, agent) {
 export default class WeftMateCompaction extends BasicCompactionEngine {
   constructor(ctx, config) {
     super(ctx, config);
+    // The preset deliberately isolates compaction from the host context. Expose
+    // its actual native engine on the owned session for idle relay maintenance.
+    ctx.on('agent/status', ({ agent }) => {
+      if (agent.session.header.agentPreset === 'personal-remote') agent.session[Symbol.for('weftmate.chatCompaction')] = this;
+    });
     ctx.on('agent/request-error', async ({ agent, failure, signal }, next) => {
       if (failure.code !== 'TIMEOUT' || signal.aborted ||
           !researchPressure(agent.session, ctx.tokenMeter.measure(agent.session))) return next();
