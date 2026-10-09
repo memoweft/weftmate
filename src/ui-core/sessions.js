@@ -21,7 +21,8 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         return { title: session.title || '新对话', location: [project?.name, group?.name].filter(Boolean).join(' / ') || '未分组',
             activity: session.updatedAt || session.lastMessageAt || session.createdAt || session.attachedAt, device: device?.name || session.deviceName || '当前连接的电脑' };
     }
-    async function refreshSessions() {
+    async function refreshSessions(legacy = false) {
+        if (!legacy && core.refreshLogicalSessions) return core.refreshLogicalSessions();
         const identity = core.state.identityGeneration;
         const payload = await core.accessApi('/sessions?archived=all');
         if (identity !== core.state.identityGeneration) return;
@@ -48,7 +49,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
             effects.renderTurnStatus();
         effects.updateAvailability();
     }
-    function sessionList(archived = false) { return core.state.sessions.filter(item => (item.archived === true) === archived).sort((a,b) => Number(b.pinned) - Number(a.pinned)); }
+    function sessionList(archived = false) { return core.state.sessions.filter(item => item.kind !== 'main' && (item.archived === true) === archived).sort((a,b) => Number(b.pinned) - Number(a.pinned)); }
     async function refreshSessionProjects() {
         const identity = core.state.identityGeneration;
         try {
