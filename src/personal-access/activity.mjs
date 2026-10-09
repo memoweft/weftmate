@@ -1,5 +1,6 @@
 /** Observation of DSH history, not a scheduler. All actions retain native receipts. */
 import { digest, exactKeys, failure, validTime } from './common.mjs';
+import { randomUUID } from 'node:crypto';
 import { REQUEST_ID } from './constants.mjs';
 import { hasPrivateContent } from './temporary-chats.mjs';
 import { ACTIVITY_TYPES, activityState, activityCounts, activitySource, putActivity, activityToken, readActivityToken, activityMatches, nativeTaskActivity } from './activity-store.mjs';
@@ -35,7 +36,7 @@ export function observeActivityEvents(account,sessionId,events,nextSeq,observeRe
 }
 
 export function createActivity(context) {
-  const flights=new Map();let timer,closed=false;
+  const flights=new Map(), bootId=randomUUID();let timer,closed=false;
   async function refresh(ownerId){
     if(flights.has(ownerId))return flights.get(ownerId);
     const work=(async()=>{
@@ -44,10 +45,13 @@ export function createActivity(context) {
         const status=await context.callBackend(()=>context.backend.getStatus({ownerId}));
         await context.serial(()=>context.mutate(ownerId,next=>{
           const state=activityState(next);
-          if(status.runtime==='ready'&&state.runtimeOfflineAt){putActivity(next,`reconnected:${state.runtimeOfflineAt}`,{at:new Date(context.timestamp()).toISOString(),type:'system.reconnected',title:'电脑已恢复连接',summary:'可以继续查看结果和处理电脑上的任务。',level:'silent'});delete state.runtimeOfflineAt;}
-          else if(status.runtime!=='ready')state.runtimeOfflineAt??=new Date(context.timestamp()).toISOString();
+          if(status.runtime==='ready'){
+            if(state.runtimeWasReady&&(state.bootId!==bootId||state.runtimeOfflineAt))putActivity(next,`reconnected:${state.bootId!==bootId?bootId:state.runtimeOfflineAt}`,{
+              at:new Date(context.timestamp()).toISOString(),type:'system.reconnected',title:'电脑已恢复连接',summary:'可以继续查看结果和处理电脑上的任务。',level:'silent',source:{hostId:next.hostId}});
+            state.bootId=bootId;state.runtimeWasReady=true;delete state.runtimeOfflineAt;
+          }else if(state.runtimeWasReady)state.runtimeOfflineAt??=new Date(context.timestamp()).toISOString();
         }));
-      } catch {await context.serial(()=>context.mutate(ownerId,next=>{activityState(next).runtimeOfflineAt??=new Date(context.timestamp()).toISOString();}));}
+      } catch {await context.serial(()=>context.mutate(ownerId,next=>{const state=activityState(next);if(state.runtimeWasReady)state.runtimeOfflineAt??=new Date(context.timestamp()).toISOString();}));}
       for(const [sessionId,session] of Object.entries(account.sessions)){
         if(session.origin!=='personal-remote'||session.deleting)continue;
         try{

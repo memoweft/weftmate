@@ -1158,7 +1158,7 @@ Apple（苹果端）接线：新建入口发送 `/sessions/temporary`；侧栏/�
 
 读取要求原 `sessions:read`，写入要求原 `commands:write` 与 CSRF（跨站请求伪造防护）；按账户认证隔离，不接收客户端传入账户ID。游标签名绑定账户、用途、分页筛选与删除代次；无效或跨账户409 `CURSOR_RESET_REQUIRED`。删除代次使旧列表 / 已读快照失效；增量游标仍能读出无正文删除ID。客户端收到重置先清旧正文再重读，身份 / 筛选变化的迟到响应不得填回。
 
-每项 `Activity={id,at,type,title,summary,source,actions,state,read,revision,attentionRevision,createdSequence,notification,temporary?}`。`id` 与首次 `at` 稳定；同项正文或状态变化增加版本与注意水位。`summary` 最多160字符；`state=pending|completed|unavailable` 是待办状态，任务成功 / 失败 / 停止由 `type` 区分。`source` 按真实可用来源携带 `chatId,chatKind,sessionId,projectId,taskId,eventId,seq,messageId,scheduleId`，不暴露路径、工具参数、凭据或私有推理。主对话结果与动态复用同一根任务 `activityId`；正文显式分享不是任务成功事实。
+每项 `Activity={id,at,type,title,summary,source,actions,state,read,revision,attentionRevision,createdSequence,notification,temporary?}`。`id` 与首次 `at` 稳定；同项正文或状态变化增加版本与注意水位。`summary` 最多160字符；`state=pending|completed|unavailable` 是待办状态，任务成功 / 失败 / 停止由 `type` 区分。`source` 按真实可用来源携带 `hostId,chatId,chatKind,sessionId,projectId,taskId,eventId,seq,messageId,scheduleId`，不暴露路径、工具参数、凭据或私有推理。主对话结果与动态复用同一根任务 `activityId`；正文显式分享不是任务成功事实。
 
 `actions=[{kind,label,target}]` 只描述实际存在的类型化动作，不是可执行网址。TB-1 支持 `open_chat`（原对话 / 旁聊及消息定位）、`respond_approval`（原 `sessionId,taskId,approvalId`）、`answer_question`（原 `sessionId,taskId,questionRpcId`）、`view_memory`。批准 / 拒绝仍直接走3.7的原审批路径、原回执校验与持久请求身份；问题打开原问题条，整批回答仍走3.7。动态没有通用任意执行接口，也不会因标读而完成待办。有效回执后原审批条与动态同时收为已处理；外部回答、取消、失效与重启都沿原生终态同步。未知动作不提供按钮。
 
@@ -1174,7 +1174,7 @@ Apple（苹果端）接线：新建入口发送 `/sessions/temporary`；侧栏/�
 | `memory.submission.completed` | `silent`（静默） | M3-A离线对话补交已受理；只称“已同步”，不称正式记忆形成 |
 | `memory.report` | `normal` | 类型与接缝预留，MEM-3尚未生成周报 |
 | `system.update.available` | `normal` | 现有更新状态确实提供新版本；不暴露更新源或增加安装授权 |
-| `system.reconnected` | `silent` | 已观察运行时不可用后再次就绪；不凭单个会话读取失败断言电脑离线 |
+| `system.reconnected` | `silent` | 已观察就绪的宿主重启后再次就绪，或运行时不可用后恢复；首次安装启动不伪造恢复事件，不凭单个会话读取失败断言电脑离线 |
 
 `notification={level,type}` 的 `type` 是 ST-6（通知设置）的按类型开关接缝；ST-6未实施前维持现有系统通知行为。等级不是权限，重要不跳过未来勿扰或主动打扰限制。桌面用现有原生通知，每条动态ID最多一份系统通知，内容修订不重复弹出；点击带对应 `activityId` 打开动态并聚焦条目。通知去重仅持久保存账户与条目ID，无标题 / 正文。删除增量关闭对应已显示通知。S3a后续消费同一ID、等级与类型接安卓后台通知，约15分钟以上延迟的边界仍按D41说明；不得创建第二个提醒调度器。
 
