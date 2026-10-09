@@ -18,6 +18,8 @@ private struct Drafts: AppleDraftPersisting {
 }
 private actor ReadOnlyHTTP: HTTPTransport {
     private var writes = 0
+    private var restricted = false
+    func restrict() { restricted = true }
     func mutationCount() -> Int { writes }
     func send(_ request: URLRequest) async throws -> HTTPResponse {
         let path = request.url!.path
@@ -35,7 +37,7 @@ private actor ReadOnlyHTTP: HTTPTransport {
         case "/personal/v1/session-groups": object = ["groups": []]
         case "/personal/v1/sessions":
             object = ["sessions": [
-                ["sessionId": "session-remote", "title": "From another device", "running": false, "sendAvailable": true],
+                ["sessionId": "session-remote", "title": "From another device", "running": false, "sendAvailable": true, "taskAvailable": !restricted],
                 ["sessionId": "session-other", "title": "Other", "running": false, "sendAvailable": true]]]
         case "/personal/v1/sessions/session-remote/events", "/personal/v1/sessions/session-other/events":
             object = ["events": [], "nextSeq": -1, "hasMore": false]
@@ -68,6 +70,11 @@ private actor ReadOnlyHTTP: HTTPTransport {
         await model.open(other)
         try check(model.taskSessionID(for: original, accountEpoch: epoch) == nil &&
             model.taskSessionID(for: other, accountEpoch: epoch) == "session-other", "Task entry retargeted stale selected conversation")
+        await http.restrict(); await model.refresh()
+        let limited = model.conversations.first { $0.sessionId == "session-remote" }!
+        await model.open(limited)
+        try check(!model.tasksAvailable(limited) && model.taskSessionID(for: limited, accountEpoch: epoch) == nil, "Restricted session exposed task controls")
+        await model.stopActiveTask()
         model.closeConversation()
         try check(model.taskSessionID(for: other, accountEpoch: epoch) == nil, "Closed conversation retained task navigation eligibility")
         try check(await http.mutationCount() == 0, "Read-only navigation wrote a command or adopted model")

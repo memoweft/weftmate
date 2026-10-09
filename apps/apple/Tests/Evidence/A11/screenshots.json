@@ -1,0 +1,210 @@
+[
+  {
+    "file": "iphone-dark/a11-iphone-move-project-dark.png",
+    "sha256": "9c9cbdb01150ef83e3f56552e191d49bacba43669a945ca54b95c6ebe263c2b9"
+  },
+  {
+    "file": "iphone-dark/a11-iphone-project-moved-dark.png",
+    "sha256": "7ed02831867ec16efdbb91c8c7ae323b29c4b294f2916b399e12a7b261d47cb7"
+  },
+  {
+    "file": "iphone-dark/a11-iphone-project-new-conversation-dark.png",
+    "sha256": "2317841e6a35d2f2fc3899f8df19cef004c9f11c0da8100e43f374010618ee8c"
+  },
+  {
+    "file": "iphone-dark/a11-iphone-project-sent-dark.png",
+    "sha256": "3d26f02be8a9f810c3fa024ca044b2117a0fba4cd3a5bc78ea39e2aff152a7d9"
+  },
+  {
+    "file": "iphone-dark/a11-iphone-projects-list-dark.png",
+    "sha256": "d9327130a052bd5ee2fb39f92d7524129395ccd3e1728210154b457779a658c4"
+  },
+  {
+    "file": "iphone-dark/a11-iphone-restricted-sent-dark.png",
+    "sha256": "dbe6f142fa8fe3cae7c685fd3815c715eb09ad5927f3020efd00e4bf7871c48d"
+  },
+  {
+    "file": "iphone-dark/a11-iphone-restricted-session-dark.png",
+    "sha256": "2e2950cbfa29a2a382f574ec0d208dc5bc86eb95806e3bd1a5b5484a1933dc83"
+  },
+  {
+    "file": "iphone-light/a11-iphone-move-project-light.png",
+    "sha256": "3248dc5bee62def1edcf407ef5a845565b585c93728eba923e6ae04bd8f4f5b2"
+  },
+  {
+    "file": "iphone-light/a11-iphone-project-moved-light.png",
+    "sha256": "b6db4671a41f64b50421ef3fd33bd56c14835fbdc518ef19b71b162033623299"
+  },
+  {
+    "file": "iphone-light/a11-iphone-project-new-conversation-light.png",
+    "sha256": "87453f2a28b0146fdd05f96674cd95d5f2c93230ea53e93e478753a3b6fe3163"
+  },
+  {
+    "file": "iphone-light/a11-iphone-project-sent-light.png",
+    "sha256": "b2f487aa6f803a1dd3c6a1f956ea28a787f577a4c608677a774a4f0fedf2550d"
+  },
+  {
+    "file": "iphone-light/a11-iphone-projects-list-light.png",
+    "sha256": "8ab6c060682aff588ede3d526941b75ed19d3eedce3e673876f4931dbf0fb99a"
+  },
+  {
+    "file": "iphone-light/a11-iphone-restricted-sent-light.png",
+    "sha256": "ca297acf78e936f95a76acf1bd1de3a8d99cacff6cdbf8a10b961e91658d8025"
+  },
+  {
+    "file": "iphone-light/a11-iphone-restricted-session-light.png",
+    "sha256": "bf80ba0dc952a9f60f846a584721d2637b6792f07af0c10cce5f10da12f0aaab"
+  },
+  {
+    "file": "mac-dark/move-project.png",
+    "sha256": "06f7583b15171807a26d542cee69338e472b15ef0b21913b11b78eeb604eaf8f"
+  },
+  {
+    "file": "mac-dark/project-create.png",
+    "sha256": "b9beb13d8db1c71a38151103eea37050879baf64da0d3e11ef76ee65d559bd0d"
+  },
+  {
+    "file": "mac-dark/project-moved.png",
+    "sha256": "79dee76e6780ff3ded3dbe5faa6ec4e8a8ec3b6fca7f7b1d7a7045077590965f"
+  },
+  {
+    "file": "mac-dark/project-new-conversation.png",
+    "sha256": "2621b4e90787ab7edd5f20be12e228a3d0075390589dd6c7c93c41dd9a728a6b"
+  },
+  {
+    "file": "mac-dark/project-remove.png",
+    "sha256": "5c2ab1c1f0cb072c4abf063bd76ed4a44c6af8ca17a1d2e47abf8d7d68d78a0e"
+  },
+  {
+    "file": "mac-dark/project-removed.png",
+    "sha256": "7aa783216166b04c4e4d2d37412f04efd2023cef583fc0182f3c15d614039f5a"
+  },
+  {
+    "file": "mac-dark/project-send-ready.png",
+    "sha256": "bf0fb3c9b727ecfb2abf4468b02bce10f240a81bdb68d8de29f6ad083b6ff025"
+  },
+  {
+    "file": "mac-dark/project-sent.png",
+    "sha256": "862ab6257182716e8084af2c9dbd44688ce03419d5d0c219d1986a97b389a425"
+  },
+  {
+    "file": "mac-dark/project-settings.png",
+    "sha256": "f8899e1ee5dfc3af7a4d7e7f94fec50008fdf1f9ba2f4ed14108b8e007f9478e"
+  },
+  {
+    "file": "mac-dark/projects-created.png",
+    "sha256": "4769a81f9cbf6655c60610f12a361fecfc652a5d479440a4def77dbbed5f4f9c"
+  },
+  {
+    "file": "mac-dark/projects-list.png",
+    "sha256": "bab2a5a73f7adf1067eb79efd88d217e7a36467a7d5feee94e59cbb5a2212b69"
+  },
+  {
+    "file": "mac-dark/restricted-session.png",
+    "sha256": "fcf68bd1830283c64bab76f6ba6df198ffb7d2c65c168e86717470a733202478"
+  },
+  {
+    "file": "mac-light/move-project.png",
+    "sha256": "94294b2833917a56eb09849309f698cb8b4d9a411a4aac9ec8cacb1a0b857491"
+  },
+  {
+    "file": "mac-light/project-create.png",
+    "sha256": "7ea4236aaf1e880d144a87f7e7b3ea0484b5ec8aaae85235c67fdfa2325834ed"
+  },
+  {
+    "file": "mac-light/project-moved.png",
+    "sha256": "95cc33b749a5c3571acbd3096ee9bf1602a7cbaa1d6308d3356a9d5ebd6637a9"
+  },
+  {
+    "file": "mac-light/project-new-conversation.png",
+    "sha256": "065ca9b253a03752aeffcde4c46c1f6a30e063246b86f7ae0794fdb2f870eafa"
+  },
+  {
+    "file": "mac-light/project-remove.png",
+    "sha256": "29083d440d66754c3ed354ac722320210b4ecb278c09d4b8a792bdf5925f1a04"
+  },
+  {
+    "file": "mac-light/project-removed.png",
+    "sha256": "ae1a9feb5f470af1b566320b0d83bcef6f174a6ace3873577204d56f1f0f78ae"
+  },
+  {
+    "file": "mac-light/project-send-ready.png",
+    "sha256": "7cb55c81a849bcceda5b99b12790734243eda21d5c77819c0322079678fc3f9e"
+  },
+  {
+    "file": "mac-light/project-sent.png",
+    "sha256": "d9bc067b2025d510b6e98418199a282766b8e12e639f8609272bc4f431a40918"
+  },
+  {
+    "file": "mac-light/project-settings.png",
+    "sha256": "881ecc005d46b6f52322bad4b0c7f4f97ba056f8e0defd2d0b3a8fc54974b984"
+  },
+  {
+    "file": "mac-light/projects-created.png",
+    "sha256": "5d8448a9a95977c13fa549468e5e4ea4f0b00cecf7bbf5d3d3b4b2fa65c51404"
+  },
+  {
+    "file": "mac-light/projects-list.png",
+    "sha256": "a941f3b998867827ae3fec692a5400b9bab9909dfefa5a3627bb35db414d046f"
+  },
+  {
+    "file": "mac-light/restricted-session.png",
+    "sha256": "9d15820e2e924353dfb46f19d38138a7e02343e36f7ddccd1cd3c2d1593df653"
+  },
+  {
+    "file": "mac-remote-dark/move-project.png",
+    "sha256": "b0ac8cbcc0db4f52917811083ec4d0778ca44c7131d4a9e64052b9016e53a908"
+  },
+  {
+    "file": "mac-remote-dark/project-moved.png",
+    "sha256": "0c47b22744fa53bfa7561a97965fd86d66aa6234c2492e69dded3262e4057ab4"
+  },
+  {
+    "file": "mac-remote-dark/project-new-conversation.png",
+    "sha256": "857672233833c98db003da60e117abee36c75ade802c6148df9cd8a94b35f976"
+  },
+  {
+    "file": "mac-remote-dark/project-send-ready.png",
+    "sha256": "2ff37148c4da186c0f9c3ab19b423717dc5234b27b79608301250cd46f30e715"
+  },
+  {
+    "file": "mac-remote-dark/project-sent.png",
+    "sha256": "23614b74dbcbd6145b742534f29904daba1f133f2b890b53068b6a8157287b2c"
+  },
+  {
+    "file": "mac-remote-dark/projects-list.png",
+    "sha256": "ae13db99e53e349396caa81e4097b6a4838d09f7752516c98a329399ab8985c7"
+  },
+  {
+    "file": "mac-remote-dark/restricted-session.png",
+    "sha256": "58c8fd4507ad936b7d7ea4e0d58a13aca6ed779b3ef673de60d7fe0382a104f7"
+  },
+  {
+    "file": "mac-remote-light/move-project.png",
+    "sha256": "c359b8ce09be9c14c8c4aca2109ffc5c89218b693a23f1f034b2479215c27b79"
+  },
+  {
+    "file": "mac-remote-light/project-moved.png",
+    "sha256": "13e9bc977a4916f6a1b2fa4a9b8a2021a76cadb000d5dfbcabd841a2c7715b13"
+  },
+  {
+    "file": "mac-remote-light/project-new-conversation.png",
+    "sha256": "e022c533002648347930bc04d7c58aa661d25da0519111cd73ea537733df2ff2"
+  },
+  {
+    "file": "mac-remote-light/project-send-ready.png",
+    "sha256": "3881d005819ecb3f6640c5f7655242ef2ff0aad5c954d893205f456d892ebe91"
+  },
+  {
+    "file": "mac-remote-light/project-sent.png",
+    "sha256": "d53a33b776edc32901358356690013f649791a5ee412dbba6330c149babed3e0"
+  },
+  {
+    "file": "mac-remote-light/projects-list.png",
+    "sha256": "d487b2f6ae78242f364c3642b1fc530ae16e85dddbeff765a759e396d6ef7e6a"
+  },
+  {
+    "file": "mac-remote-light/restricted-session.png",
+    "sha256": "9c3daf58019e5e0a643741fca662fedf885bf5224b53412c124d2b8bd7a559da"
+  }
+]
