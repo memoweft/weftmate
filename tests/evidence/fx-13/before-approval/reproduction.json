@@ -1,0 +1,34 @@
+{
+  "root": "<synthetic>",
+  "originalScriptOutput": "dirname(fileURLToPath(import.meta.url))/result.json",
+  "firstOutput": {
+    "subtotals": {
+      "茶": 25,
+      "咖啡": 24
+    },
+    "total": 49,
+    "小计": {
+      "茶": 25,
+      "咖啡": 24
+    },
+    "合计": 49
+  },
+  "observedFiles": [],
+  "createdFiles": [],
+  "rerunRisk": [
+    "overwrite"
+  ],
+  "rerunOutput": {
+    "subtotals": {
+      "茶": 25,
+      "咖啡": 24
+    },
+    "total": 49,
+    "小计": {
+      "茶": 25,
+      "咖啡": 24
+    },
+    "合计": 49
+  },
+  "otherDirectoryFiles": []
+}

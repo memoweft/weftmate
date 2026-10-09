@@ -1,0 +1,13 @@
+{
+  "runnerPid": 47664,
+  "startedAt": "2026-10-09T16:54:21.218Z",
+  "realMain": true,
+  "realDsh": true,
+  "syntheticModel": true,
+  "checks": [],
+  "errors": [],
+  "requestCount": 186,
+  "fatal": "locator.click: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '离线使用这台电脑', exact: true })\u001b[22m\n",
+  "cleaned": true,
+  "root": "C:/Temp/weftmate-fx13-desktop-b1lYbN"
+}

@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {mkdtemp,writeFile,readFile,mkdir} from 'node:fs/promises';
+import {tmpdir} from 'node:os';import {join,resolve} from 'node:path';import {execFile} from 'node:child_process';import {promisify} from 'node:util';
+import {trackNativeFiles,appendNativeArtifacts,conversationCreatedFiles} from '../../../../src/plugins/personal-native-files.mjs';
+import {classifyPersonalRisk} from '../../../../src/plugins/personal-approval-policy.mjs';
+const out=resolve('tests/evidence/fx-13/'+(process.env.FX13_PHASE||'before')+'-approval');await mkdir(out,{recursive:true});
+const root=await mkdtemp('C:/Temp/weftmate-fx13-approval-'),cwd=join(root,'conversation'),scriptDir=join(root,'requested'),other=join(root,'other');for(const p of [cwd,scriptDir,other])await mkdir(p);
+const original=await readFile(new URL('../before-approval/qa2-original-sum.mjs',import.meta.url),'utf8');await writeFile(join(out,'qa2-original-sum.mjs'),original);
+await writeFile(join(scriptDir,'sum.mjs'),original);await writeFile(join(scriptDir,'sales.csv'),'商品,单价,数量\n茶,12.5,2\n咖啡,8,3\n');
+const session={header:{agentPreset:'personal-remote',cwd},events:[]};const frames=[];const bridge={request:async frame=>{frames.push(frame.filePath);return {artifactId:'synthetic-'+frames.length};}};
+const exec={name:'pwsh',arguments:{command:`node "${join(scriptDir,'sum.mjs')}"`},agent:{session}};const native={content:[{type:'text',text:'executed'}]};
+await trackNativeFiles(bridge,exec,async()=>{await promisify(execFile)(process.execPath,[join(scriptDir,'sum.mjs')],{cwd});return native;},()=>({sessionId:'synthetic'}));
+const enriched=await appendNativeArtifacts(exec,native,async()=>({kind:'accept'}));session.events.push({type:'tool/result',data:{message:{content:[{type:'tool-result',content:enriched.content??native.content}]}}});
+const created=conversationCreatedFiles(session);const rerun=`Set-Location "${other}"; node "${join(scriptDir,'sum.mjs')}"`;
+const report={root:"<synthetic>",originalScriptOutput:'dirname(fileURLToPath(import.meta.url))/result.json',firstOutput:JSON.parse(await readFile(join(scriptDir,'result.json'),'utf8')),observedFiles:frames.map(p=>p.replace(root,'<synthetic>')),createdFiles:[...created].map(p=>p.replace(root,'<synthetic>')),rerunRisk:classifyPersonalRisk('pwsh',{command:rerun},cwd,new Set(),{createdFiles:created})};
+await promisify(execFile)(process.execPath,[join(scriptDir,'sum.mjs')],{cwd:other});report.rerunOutput=JSON.parse(await readFile(join(scriptDir,'result.json'),'utf8'));report.otherDirectoryFiles=(await import('node:fs/promises')).readdir?await (await import('node:fs/promises')).readdir(other):[];
+await writeFile(join(out,'reproduction.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));

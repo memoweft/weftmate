@@ -1,0 +1,205 @@
+{
+  "id": "action-04-research-script",
+  "category": "action",
+  "title": "查资料写脚本并实际运行",
+  "status": "failed",
+  "durationMs": 66807,
+  "checks": [],
+  "turns": [
+    {
+      "sessionId": "session-82d8cc2f-2ec1-44e1-b0ec-47a7c8b06800",
+      "modelProfileId": "private-model-d3cb47833aa8488a4266d1d597b23d3def6fef46",
+      "commandId": "cmd-779a7b87-1e18-4a4e-960a-c1f442ac92e5",
+      "startedAt": "2026-10-09T14:14:41.298Z",
+      "reply": "资料已查到（Node.js 官方 `fs` 文档页，下面写脚本用其中的 `readFileSync`）。现在写脚本：",
+      "status": "running",
+      "approvals": [],
+      "timeline": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-09T14:14:41.342Z"
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-09T14:14:41.342Z"
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-09T14:14:41.367Z"
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-09T14:14:41.367Z"
+        },
+        {
+          "seq": 49,
+          "type": "step.started",
+          "at": "2026-10-09T14:14:43.510Z"
+        },
+        {
+          "seq": 50,
+          "type": "step.completed",
+          "at": "2026-10-09T14:14:43.514Z"
+        },
+        {
+          "seq": 74,
+          "type": "step.started",
+          "at": "2026-10-09T14:14:45.810Z"
+        },
+        {
+          "seq": 75,
+          "type": "step.completed",
+          "at": "2026-10-09T14:14:45.890Z"
+        },
+        {
+          "seq": 124,
+          "type": "step.started",
+          "at": "2026-10-09T14:14:47.846Z"
+        },
+        {
+          "seq": 125,
+          "type": "step.started",
+          "at": "2026-10-09T14:14:47.859Z"
+        },
+        {
+          "seq": 126,
+          "type": "step.completed",
+          "at": "2026-10-09T14:14:54.779Z"
+        },
+        {
+          "seq": 127,
+          "type": "step.completed",
+          "at": "2026-10-09T14:14:54.780Z"
+        },
+        {
+          "seq": 210,
+          "type": "step.started",
+          "at": "2026-10-09T14:14:58.065Z"
+        },
+        {
+          "seq": 211,
+          "type": "step.completed",
+          "at": "2026-10-09T14:14:58.069Z"
+        },
+        {
+          "seq": 315,
+          "type": "step.started",
+          "at": "2026-10-09T14:15:05.416Z"
+        },
+        {
+          "seq": 316,
+          "type": "step.completed",
+          "at": "2026-10-09T14:15:05.466Z"
+        },
+        {
+          "seq": 542,
+          "type": "step.started",
+          "at": "2026-10-09T14:15:14.862Z"
+        },
+        {
+          "seq": 543,
+          "type": "step.completed",
+          "at": "2026-10-09T14:15:14.914Z"
+        },
+        {
+          "seq": 544,
+          "type": "step.started",
+          "at": "2026-10-09T14:15:14.914Z"
+        },
+        {
+          "seq": 545,
+          "type": "step.completed",
+          "at": "2026-10-09T14:15:14.970Z"
+        },
+        {
+          "seq": 633,
+          "type": "step.started",
+          "at": "2026-10-09T14:15:20.447Z"
+        },
+        {
+          "seq": 634,
+          "type": "step.completed",
+          "at": "2026-10-09T14:15:20.500Z"
+        },
+        {
+          "seq": 635,
+          "type": "step.started",
+          "at": "2026-10-09T14:15:20.500Z"
+        },
+        {
+          "seq": 636,
+          "type": "step.completed",
+          "at": "2026-10-09T14:15:20.556Z"
+        },
+        {
+          "seq": 1172,
+          "type": "assistant.message",
+          "at": "2026-10-09T14:15:39.730Z"
+        },
+        {
+          "seq": 1173,
+          "type": "step.started",
+          "at": "2026-10-09T14:15:39.730Z"
+        },
+        {
+          "seq": 1174,
+          "type": "artifact.created",
+          "at": "2026-10-09T14:15:40.453Z"
+        },
+        {
+          "seq": 1208,
+          "type": "step.started",
+          "at": "2026-10-09T14:15:42.355Z"
+        },
+        {
+          "seq": 1209,
+          "type": "step.completed",
+          "at": "2026-10-09T14:15:42.847Z"
+        },
+        {
+          "seq": 1240,
+          "type": "step.started",
+          "at": "2026-10-09T14:15:44.460Z"
+        },
+        {
+          "seq": 1241,
+          "type": "step.completed",
+          "at": "2026-10-09T14:15:44.509Z"
+        },
+        {
+          "seq": 1297,
+          "type": "step.started",
+          "at": "2026-10-09T14:15:47.590Z"
+        },
+        {
+          "seq": 1298,
+          "type": "approval.requested",
+          "at": "2026-10-09T14:15:47.598Z"
+        }
+      ],
+      "memoryUsedSupported": true,
+      "memoryUsed": [],
+      "unexpectedApproval": {
+        "approvalId": "b6d1115d-36b6-4dfb-be4a-b15c142d0e8f",
+        "toolName": "pwsh",
+        "reason": "[weftmate:overwrite] 修改或覆盖已有文件，恢复需要原内容或备份。操作：pwsh\n{\"command\":\"Set-Location C:\\\\; node \\\"C:\\\\temp\\\\weftmate-eval-action-04-research-script-x9IP9l\\\\sum.mjs\\\"\",\"description\":\"Re-run script from another working directory\"}",
+        "riskCategories": [
+          "overwrite"
+        ],
+        "status": "pending"
+      },
+      "durationMs": 66455
+    }
+  ],
+  "replySummary": "资料已查到（Node.js 官方 `fs` 文档页，下面写脚本用其中的 `readFileSync`）。现在写脚本：",
+  "notes": "需要联网和宿主 Node；输出数字字符串检查配合回复检查，实际脚本可在 Windows 复查。本地 Qwen 27B 首轮 300 秒到期时仍在网页读取和命令执行，调整为 600 秒；修复 web_fetch 提供方后重跑。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；900秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限600秒。",
+  "scratchDir": "C:\\temp\\weftmate-eval-action-04-research-script-x9IP9l",
+  "reason": "Unexpected approval; scenario has no matching decision (left pending)",
+  "timedOut": false,
+  "cleanup": "cancel requested; stopping side effects is unconfirmed",
+  "source": "tests/evidence/qa-2/m1-mimo/results.json"
+}

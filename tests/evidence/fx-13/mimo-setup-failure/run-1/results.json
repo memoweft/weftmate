@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-09T17:28:48.429Z",
+  "host": "http://127.0.0.1:51337",
+  "model": "mimo",
+  "results": [
+    {
+      "id": "action-04-research-script",
+      "title": "查资料写脚本并实际运行",
+      "category": "action",
+      "status": "failed",
+      "reason": "Credentials must belong to an eval- account on this host",
+      "durationMs": 0,
+      "checks": [],
+      "turns": [],
+      "replySummary": "",
+      "notes": "需要联网和宿主 Node；输出数字字符串检查配合回复检查，实际脚本可在 Windows 复查。本地 Qwen 27B 首轮 300 秒到期时仍在网页读取和命令执行，调整为 600 秒；修复 web_fetch 提供方后重跑。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；900秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限600秒。",
+      "toolDetails": []
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 1,
+    "manual": 0,
+    "unsupported": 0,
+    "skippedChecks": 0,
+    "passRate": 0,
+    "coverage": 0
+  }
+}
