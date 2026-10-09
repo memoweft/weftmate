@@ -6,6 +6,7 @@ import { rm, readFile, cp } from 'node:fs/promises'
 import { eraseSessionMemoryArtifact, shadowForgottenSurface } from './memory-erasure.mjs'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { readNativeTaskStopState } from './task-stop-state.mjs'
+import { nativeRelayState, prepareNativeHandoff, installNativeHandoff } from './chat-handoff.mjs'
 
 /** Own native AgentHandles so deletion drains precisely one DSH lifecycle. */
 export function nativeSessionLifecycle(ctx) {
@@ -46,6 +47,14 @@ export function nativeSessionLifecycle(ctx) {
     handles.set(sessionId, handle)
   }
   return {
+    chatHandoff: (sessionId, action, handoff) => serial(sessionId, async () => {
+      await ensure({ sessionId }, true);
+      const agent = handles.get(sessionId).agent;
+      const scoped = agent.ctx ?? ctx;
+      if (action === 'state') return nativeRelayState(scoped, agent);
+      if (action === 'prepare') return prepareNativeHandoff(scoped, agent);
+      return installNativeHandoff(scoped, agent, handoff, createUserMessage);
+    }),
     taskStopState: input => readNativeTaskStopState(ctx, runtimeStartedAt, input),
     async flushIdle({ stage, deadline }) {
       const agents = ctx.agents.list();

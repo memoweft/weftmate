@@ -43,14 +43,28 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
   const artifact = await persistence.readRaw(sessionId)
   if (!artifact) throw Object.assign(new Error('source unavailable'), { code: 'internal' })
   let changed = false
-  const clean = value => {
+  const lines = artifact.content.split('\n').map(line => line ? JSON.parse(line) : null);
+  const turns = new Map(), affected = new Set(); let turn = null;
+  for (const row of lines) {
+    if (!row) continue;
+    if (row.type === 'turn/start') turn = row.data.turn;
+    turns.set(row, turn);
+    if (turn !== null && options.sourceTexts?.some(text => text && JSON.stringify(row).includes(text))) affected.add(turn);
+    if (row.type === 'turn/end') turn = null;
+  }
+  const clean = (value, redact = false, key = '') => {
     if (typeof value === 'string') {
       if (!options.deleteConversationSnippets) return value
+      if (redact && ['text','content','delta','arguments','output','summary','rawOutput'].includes(key)) { changed = true; return ''; }
       for (const text of options.sourceTexts) if (value.includes(text)) { value = value.replaceAll(text, '[已遗忘的原话]'); changed = true }
       return value
     }
-    if (Array.isArray(value)) return value.map(clean)
+    if (Array.isArray(value)) return value.map(child => clean(child, redact, key))
     if (!value || typeof value !== 'object') return value
+    if (value.type === 'todo/write' && value.data?.todos?.length) {
+      changed = true;
+      return { ...value, data: { ...value.data, todos: [] } };
+    }
     if (Array.isArray(value.memoryUsed) && value.memoryUsed.length) {
       value = { ...value, memoryUsed: [] }; changed = true
     }
@@ -66,9 +80,9 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
       changed = true
       return { ...value, content: [], source: { ...value.source, sections: [] } }
     }
-    return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, clean(child)]))
+    return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, clean(child, redact, key)]))
   }
-  const content = artifact.content.split('\n').map(line => line ? JSON.stringify(clean(JSON.parse(line))) : '').join('\n')
+  const content = lines.map(row => row ? JSON.stringify(clean(row, affected.has(turns.get(row)))) : '').join('\n')
   if (changed) {
     const location = persistence.locate(artifact.meta)
     const inside = relative(resolve(persistence.config.root), resolve(location.path))

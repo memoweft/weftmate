@@ -48,6 +48,7 @@ import { reconcileChatIdentity } from './chat-identity.mjs';
 import { createChatOperations } from './chats.mjs';
 import { createChatTimeline } from './chat-timeline.mjs';
 import { eraseChatCopies } from './chat-erasure.mjs';
+import { createMainChat } from './main-chat.mjs';
 import { createSideChats } from './side-chats.mjs';
 export { explicitNotepadOpenIntent } from './command-policy.mjs';
 export { uniqueSessionOwner } from './store.mjs';
@@ -118,6 +119,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get chats() { return chats; },
     get chatTimeline() { return chatTimeline; },
     get sideChats() { return sideChats; },
+    get mainChat() { return mainChat; },
     eraseChatCopies,
     get offline() { return offline; },
     get backupManager() { return backupManager; },
@@ -257,6 +259,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const chats = createChatOperations(context);
   const chatTimeline = createChatTimeline(context);
   const sideChats = createSideChats(context);
+  const mainChat = createMainChat(context);
   const {
     requireOriginalAttachments, commandReferencesOriginal, publicHistoryEvent,
     conversationSnapshot, conversationProjection, verifiedSyncUserEvent, sourceDevicesUpgraded,
@@ -560,6 +563,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const service = {
     async cleanupMemoryCopies(ownerId, { sourceTexts = [], deleteConversationSnippets = false }) {
       await serial(() => mutate(ownerId, next => { next.memoryCleanupPending = true; }));
+      await mainChat.drain(ownerId);
       await offline.invalidate(ownerId);
       // This managed migration preimage is included in new profile backups.
       // Once erasure occurs it must not retain an older access-store copy.
@@ -568,7 +572,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         for (const chatId of eraseChatCopies(next, { forgotten: true })) chatTimeline.invalidate(ownerId, chatId);
       }));
       const account = accountState(ownerId);
-      for (const sessionId of Object.keys(account.sessions)) {
+      const pendingSegment = account.chatIdentity.chats[account.chatIdentity.mainChatId].relay?.sessionId;
+      for (const sessionId of new Set([...Object.keys(account.sessions), ...(pendingSegment ? [pendingSegment] : [])])) {
         const cleaned = await callBackend(() => backend.cleanupMemoryCopies({ sessionId, ownerId, sourceTexts, deleteConversationSnippets }));
         if (cleaned?.forgottenSeqs?.length) await serial(() => mutate(ownerId, next => {
           const session = next.sessions[sessionId];
@@ -689,7 +694,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       if (!match) throw failure('SESSION_UNAVAILABLE', 404);
       const account = accountState(match.ownerId), session = account.sessions[sessionId];
       const project = account.projects?.[session.projectId];
-      return { conversationWorkspace: sessionWorkspace(path.join(path.dirname(root), 'conversations'), match.ownerId, sessionId),
+      return { conversationWorkspace: sessionWorkspace(path.join(path.dirname(root), 'conversations'), match.ownerId, session.workspaceChatId ?? sessionId),
         mode: session.approvalMode ?? account.defaultApprovalMode ?? 'auto',
         allowedCategories: session.allowedApprovalCategories ?? [],
         ...(project && !project.revoked ? { project: { projectId: project.projectId,
