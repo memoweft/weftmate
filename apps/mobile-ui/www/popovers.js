@@ -5,9 +5,13 @@
   function position(menu, trigger, { side = 'top', align = 'start' } = {}) {
     if (!menu || !trigger || menu.hidden) return;
     const viewport = window.visualViewport;
-    const left = (viewport?.offsetLeft || 0) + 8, top = (viewport?.offsetTop || 0) + 8;
+    const left = (viewport?.offsetLeft || 0) + 8;
+    const viewportTop = viewport?.offsetTop || 0;
+    const captionBottom = document.documentElement.dataset.nativePlatform === 'win32'
+      ? document.querySelector('.desktop-titlebar')?.getBoundingClientRect().bottom || 0 : 0;
+    const top = Math.max(viewportTop, captionBottom) + 8;
     const right = left + (viewport?.width || window.innerWidth) - 16;
-    const bottom = top + (viewport?.height || window.innerHeight) - 16;
+    const bottom = viewportTop + (viewport?.height || window.innerHeight) - 8;
     // The top layer escapes overflow and transformed ancestors without reparenting
     // controls (outside-click containment and keyboard handlers keep working).
     if (menu.showPopover) {
