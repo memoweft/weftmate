@@ -147,6 +147,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         if (!top?.isConnected) { top = ui.element('li', 'chat-spacer'); bottom = ui.element('li', 'chat-spacer'); top.setAttribute('aria-hidden', 'true'); bottom.setAttribute('aria-hidden', 'true'); list().replaceChildren(top, bottom); list().setAttribute('aria-live','off'); mounted.clear(); }
         measureOffsets(); restoreAnchor(saved); renderVisible();
         ui.byId('chat-intro').hidden = rows.length > 0;
+        if (core.state.chatWindow.hasNewer) {ui.byId('jump-latest').hidden=false;ui.byId('jump-latest').textContent='回到最近内容';}
         const search = core.state.chatWindow.search;
         const status = searchPanel.querySelector('[role=status]');
         status.textContent = search.query ? `${search.hits.length ? `${search.index + 1} / ${search.hits.length}` : core.state.chatWindow.indexState === 'building' ? '仍在整理历史' : core.state.chatWindow.indexState === 'failed' ? '历史整理失败，请重新打开主对话' : '没有匹配记录'}${search.hasMore ? ' · 还有更多结果' : ''}` : '';
@@ -217,6 +218,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         document.addEventListener('keydown', event => { if (event.key === 'Escape' && searchPanel.open) { searchPanel.open = false; searchPanel.hidden = true; void core.searchMainChat(''); } });
     }
     return { mountMainChat, renderMainChat, focusMainEvent, resetMainChatView, renderChatOrigin,
+        mainChatAnchor: () => {const saved=rememberAnchor();const index=rows.findIndex(row=>row.key===saved?.key);const row=rows.slice(Math.max(0,index)).find(row=>row.event?.eventId||row.events?.length);return row?.event?.eventId||row?.events?.[0]?.eventId||null;},
         restoreMainChatDraft: text => { ui.byId('message-text').value = text; ui.updateAvailability(); },
         renderSessions: () => { original.renderSessions(); if (sidebar) { sidebar.hidden = !core.state.mainChat; const label = ui.byId('new-session'); label.childNodes.forEach(node => { if (node.nodeType === Node.TEXT_NODE) node.textContent = core.state.mainChat ? '新旁聊' : '新对话'; }); } renderMainChat(); },
         paintSelectedSession: id => { original.paintSelectedSession(id); if (main()) ui.byId('assistant-title').textContent = 'WeftMate'; else ui.byId('chat-intro').querySelector('h1').textContent = '今天想做什么？'; },

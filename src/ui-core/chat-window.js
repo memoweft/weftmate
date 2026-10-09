@@ -15,10 +15,10 @@
     };
     function create(limit = 1000) {
         const state = { events: new Map(), syncCursor: null, olderCursor: null, newerCursor: null, hasOlder: false, hasNewer: false,
-            contentRevision: null, timeZone: 'UTC', indexState: 'building', expanded: new Set(), collapsed: new Set(), dayCounts: new Map(), search: { query: '', hits: [], index: -1 }, generation: 0 };
+            contentRevision: null, timeZone: 'UTC', indexState: 'building', anchorId: null, expanded: new Set(), collapsed: new Set(), dayCounts: new Map(), search: { query: '', hits: [], index: -1 }, generation: 0 };
         const reset = () => { state.events.clear(); state.syncCursor = state.olderCursor = state.newerCursor = null;
             state.hasOlder = state.hasNewer = false; state.contentRevision = null; state.search = { query: '', hits: [], index: -1 };
-            state.expanded.clear(); state.collapsed.clear(); state.dayCounts.clear(); state.generation++; };
+            state.anchorId=null;state.expanded.clear(); state.collapsed.clear(); state.dayCounts.clear(); state.generation++; };
         const ordered = () => [...state.events.values()].sort((a, b) => a.orderKey.localeCompare(b.orderKey));
         function merge(page, direction = 'tail') {
             if (state.contentRevision !== null && page.contentRevision !== undefined && state.contentRevision !== page.contentRevision) reset();
@@ -38,9 +38,11 @@
             }
             const events = ordered();
             if (events.length > limit) {
-                const removed = direction === 'older' ? events.slice(limit) : events.slice(0, events.length - limit);
+                const anchorIndex=events.findIndex(event=>event.eventId===state.anchorId);
+                const preserveOlder=direction==='older'||direction==='changes'&&anchorIndex>=0&&anchorIndex<events.length-limit;
+                const removed = preserveOlder ? events.slice(limit) : events.slice(0, events.length - limit);
                 removed.forEach(event => state.events.delete(event.eventId));
-                if (direction === 'older') { state.hasNewer = true; state.newerCursor = null; }
+                if (preserveOlder) { state.hasNewer = true; state.newerCursor = null; }
                 else { state.hasOlder = true; state.olderCursor = null; }
             }
             return ordered();

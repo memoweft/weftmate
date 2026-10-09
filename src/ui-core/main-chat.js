@@ -135,6 +135,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             const page = await core.readChatChanges(core.state.selectedChatId, historyWindow.state.syncCursor, 200);
             if (token !== scope() || generation !== historyWindow.state.generation) return;
             if (historyWindow.state.contentRevision !== page.contentRevision) { clearLogical(true); notify(); return readPage({}, 'tail'); }
+            historyWindow.state.anchorId=effects.mainChatAnchor?.() || null;
             historyWindow.merge(page, 'changes'); core.observeOptimistic(page.upserts || []); notify();
         for (const row of pending.values()) if (row.ownerId === core.state.ownerId && row.status === 'sending') await checkMainRequest(row);
             const main = await core.readMainChat(); if (token === scope()) { installMain(main.chat); notify(); }
