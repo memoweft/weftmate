@@ -59,7 +59,7 @@ try {
       await check(page, page.getByRole('button', { name: '设置', exact: true }).locator('..'), 'account', size, enforce); await page.keyboard.press('Escape');
       if(enforce){
         await page.getByRole('button',{name:'账户菜单'}).click();await page.getByRole('button',{name:'设置',exact:true}).click();
-        await page.getByRole('navigation',{name:'设置分类'}).getByRole('button',{name:'常规',exact:true}).click();
+        await page.getByRole('navigation',{name:'设置分类'}).getByRole('button',{name:'助手',exact:true}).click();
         const mode=page.getByRole('combobox',{name:'回复进行中时发送的消息',exact:true});await mode.click();
         await check(page,page.getByRole('listbox',{name:'回复进行中时发送的消息'}).locator('..'),'message-mode-setting',size);
         await page.getByRole('option',{name:'排队',exact:true}).click();assert.match(await mode.textContent(),/排队/);
@@ -106,7 +106,7 @@ try {
     phone = await app.firstWindow(); await app.evaluate(({BrowserWindow}) => BrowserWindow.getAllWindows()[0].show()); await phone.setViewportSize({width:390,height:844});
   } else { browser=await chromium.launch({headless:true,...(process.argv.includes('--chrome')?{channel:'chrome'}:{})});phone=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true}); }
   phone.setDefaultTimeout(15000);phone.on('pageerror',e=>errors.push(e.message));
-  await phone.addInitScript(()=>{window.weftNative={postMessage(raw){const message=JSON.parse(raw);const result=message.method==='app.bootstrap'?{loggedIn:false}:message.method==='models.list'?{models:[{source:'phone',modelId:'fixture',displayName:'MiMo 定时验收',selected:true}]}:message.method==='models.host'?{models:[]}:{};queueMicrotask(()=>window.weftNative.onmessage({data:JSON.stringify({id:message.id,ok:true,result})}));}};});
+  await phone.addInitScript(()=>{window.weftNative={postMessage(raw){const message=JSON.parse(raw);const result=message.method==='host.business'&&message.params?.path==='/personal/v1/settings/personalization'?{settings:{...WeftPersonalization.defaults,...message.params.body},updatedAt:'2026-10-10T00:00:00.000Z',synced:true}:message.method==='app.bootstrap'?{loggedIn:false}:message.method==='models.list'?{models:[{source:'phone',modelId:'fixture',displayName:'MiMo 定时验收',selected:true}]}:message.method==='models.host'?{models:[]}:{};queueMicrotask(()=>window.weftNative.onmessage({data:JSON.stringify({id:message.id,ok:true,result})}));}};});
   for(phase of capture?['before','after']:['after']) {
     await phone.goto(`http://127.0.0.1:${server.address().port}/`);await phone.waitForFunction(()=>typeof state!=='undefined'&&state.booted);
     await phone.evaluate(()=>{state.loggedIn=true;state.owner='synthetic-fix5';state.deviceId='synthetic-phone';state.transitionPending=false;state.chatSource='phone';state.restorePending=false;page('chat');updateComposer();});
@@ -118,7 +118,7 @@ try {
     if(phase==='after') {
       await phone.evaluate(()=>{state.chatSource='host';state.sharedRunning=true;state.sharedSessionId='synthetic-session';state.sharedSessions=[{sessionId:'synthetic-session',sendAvailable:true}];updateComposer();});
       await phone.getByRole('button',{name:'返回',exact:true}).click();await phone.getByRole('button',{name:'打开导航',exact:true}).click();
-      await phone.getByRole('button',{name:'设置',exact:true}).click();await phone.getByRole('button',{name:/^常规/}).click();
+      await phone.getByRole('button',{name:'设置',exact:true}).click();await phone.getByRole('navigation',{name:'设置分类'}).getByRole('button',{name:/^助手/}).click();
       await phone.getByRole('combobox',{name:'回复进行中时发送的消息'}).click();await check(phone,phone.getByRole('listbox',{name:'回复进行中时发送的消息'}).locator('..'),'message-mode-setting','390x844');
       await phone.getByRole('option',{name:'排队',exact:true}).click();
       assert.match(await phone.getByRole('combobox',{name:'回复进行中时发送的消息'}).textContent(),/排队/);
