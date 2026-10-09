@@ -147,6 +147,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
             backups: () => ui.showSettingsBackups(),
             schedules: () => ui.showSettingsSchedules(),
             usage: options => ui.showSettingsUsage(options),
+            archived: () => ui.showSettingsArchived(panels.get('archived')),
             about: () => { version.textContent = core.state.system?.host?.version || '版本未知'; void renderSettingsUpdates(); },
         });
         search.addEventListener('input', renderSettingsNavigation); picker.addEventListener('change', () => selectSettings(picker.value));

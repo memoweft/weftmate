@@ -6,6 +6,7 @@ function scheduleSharedPoll(){stopSharedPoll();if(state.chatSource!=='host'||sta
     await Promise.all([loadSharedHistory(),listSharedSessions()]);if(state.chatSource==='host')scheduleSharedPoll()},state.sharedRunning?3000:12000)}
 
 function selectSharedSession(sessionId){if(!state.sharedSessions.some(item=>item.sessionId===sessionId))return;
+  uiCore.syncMobileIdentity();void uiCore.updateSession(sessionId,{unread:false}).catch(error=>toast(safeError(error),true));
   const listed=state.sharedSessions.find(item=>item.sessionId===sessionId);
   const linked=state.conversations.find(item=>item.id===listed?.conversationId||item.binding?.sessionId===sessionId||
     state.handoffViews.get(item.id)?.binding?.sessionId===sessionId);
@@ -289,14 +290,15 @@ function handoffCard(id){const view=state.handoffViews.get(id),binding=selectedB
 
 function listSharedSessions(){uiCore.syncMobileIdentity();return uiCore.listMobileSessions()}
 
-let archivedSessionView=false;
+const collapsedMobileGroups=new Set();
+let archivedMobileRedraw;
 function mobileSessionMenu(session,confirming=false){
   const dialog=el('dialog','session-action-dialog');dialog.setAttribute('aria-label',confirming?'删除对话':'对话操作');
   dialog.append(el('h2','',confirming?'删除对话？':session.title||'新对话'));
   const notice=el('p','message-state');notice.setAttribute('role','alert');
   const close=()=>dialog.close();
   const run=async(button,action)=>{button.disabled=true;notice.textContent='';try{uiCore.syncMobileIdentity();await action();
-    await listSharedSessions();if(!state.sharedSessions.some(item=>item.sessionId===state.sharedSessionId))page('home');close();
+    await listSharedSessions();if(state.page==='archived')archivedMobileRedraw?.();if(!state.sharedSessions.some(item=>item.sessionId===state.sharedSessionId))page('home');close();
   }catch(error){notice.textContent=uiCore.sessionLifecycleMessage(error)}finally{button.disabled=false}};
   if(confirming){dialog.append(el('p','','这会永久删除对话、工作目录与经验，无法恢复。运行中的对话会先停止。'));
     const label=el('label','session-forget'),check=el('input');check.type='checkbox';label.append(check,document.createTextNode('同时忘掉从这段对话形成的记忆'));dialog.append(label);
@@ -313,27 +315,36 @@ function mobileSessionMenu(session,confirming=false){
       }catch(error){if(current!==generation||!dialog.open)return;summary.textContent='';notice.textContent='无法读取遗忘范围，请取消勾选或重新打开确认框。'}});
     remove.addEventListener('click',()=>{if(check.checked&&!preview)return;
       void run(remove,()=>uiCore.deleteSession(session.sessionId,check.checked,{deleteConversationSnippets:snippets.checked,worldRevision:preview?.worldRevision}))});dialog.append(remove);
-  }else{const archive=el('button','secondary',session.archived?'恢复对话':'归档对话');archive.type='button';
-    archive.addEventListener('click',()=>{void run(archive,()=>uiCore.archiveSession(session.sessionId,!session.archived))});
-    const remove=el('button','danger','删除对话');remove.type='button';remove.addEventListener('click',()=>{close();mobileSessionMenu(session,true)});dialog.append(archive,remove)}
+  }else{
+    dialog.classList.add('session-action-sheet');dialog.setAttribute('role','dialog');
+    const add=(label,action,danger=false,separator=false)=>{if(separator){const line=el('hr','session-menu-separator');dialog.append(line)}
+      const button=el('button',danger?'danger':'session-menu-item',label);button.type='button';button.addEventListener('click',()=>{void run(button,action)});dialog.append(button);return button};
+    const rename=()=>{close();mobileEditName('重命名对话',session.title,async name=>{await uiCore.updateSession(session.sessionId,{title:name});await listSharedSessions()})};
+    const group=async()=>{close();mobileSessionGroups(session)};
+    const actions={pin:()=>uiCore.updateSession(session.sessionId,{pinned:!session.pinned}),unread:()=>uiCore.updateSession(session.sessionId,{unread:!session.unread}),
+      rename,group,fork:async()=>{const child=await uiCore.forkSession(session.sessionId);if(!child)return;await listSharedSessions();selectSharedSession(child.sessionId)},
+      archive:()=>uiCore.archiveSession(session.sessionId,!session.archived),delete:()=>{close();mobileSessionMenu(session,true)}};
+    for(const item of WeftUiCore.sessionMenuItems(session))add(item.label,actions[item.id],item.danger,item.separator);
+  }
   const cancel=el('button','secondary','取消');cancel.type='button';cancel.addEventListener('click',close);dialog.append(notice,cancel);
   dialog.addEventListener('close',()=>dialog.remove());document.body.append(dialog);dialog.showModal();globalThis.WeftMobileMotion?.reveal(dialog,'base');cancel.focus();
 }
 function renderConversationList(){const target=$('conversation-list'),previousScroll=target.scrollTop;clear(target);const filter=$('conversation-search').value.trim().toLocaleLowerCase();
-  const toggle=el('button','secondary',archivedSessionView?'返回最近对话':'已归档');toggle.type='button';toggle.addEventListener('click',()=>{archivedSessionView=!archivedSessionView;renderConversationList()});target.append(toggle);
   target.setAttribute('aria-label','最近对话');
-  const phone=state.conversations.filter(v=>!archivedSessionView&&typeof v?.id==='string'&&typeof v?.title==='string')
+  const phone=state.conversations.filter(v=>typeof v?.id==='string'&&typeof v?.title==='string')
     .map(item=>({source:'phone',id:item.id,title:item.title,createdAt:item.updatedAt||item.createdAt,
       model:item.modelName||item.modelDisplayName||null,record:item}));
   const linkedIds=new Set(phone.map(item=>state.handoffViews.get(item.id)?.binding?.sessionId||
     item.record?.binding?.sessionId).filter(Boolean));
-  const host=state.sharedSessions.filter(v=>(v.archived===true)===archivedSessionView&&v?.source==='host'&&typeof v.sessionId==='string'&&
+  const host=state.sharedSessions.filter(v=>v.archived!==true&&v?.source==='host'&&typeof v.sessionId==='string'&&
     !linkedIds.has(v.sessionId)&&!phone.some(item=>item.id===v.conversationId))
     .map(item=>({source:'host',id:item.sessionId,title:item.title||'对话',createdAt:item.updatedAt||item.createdAt||item.attachedAt,
-      model:item.modelName||item.modelDisplayName||item.modelProfileId||null,record:item}));
+      model:item.modelName||item.modelDisplayName||null,record:item}));
   const entries=[...phone,...host].filter(item=>!filter||`${item.title} ${item.model||''} ${item.source==='phone'?'手机':'电脑'}`.toLocaleLowerCase().includes(filter));
-  entries.sort((a,b)=>{const at=Date.parse(a.createdAt||'')||0,bt=Date.parse(b.createdAt||'')||0;return bt-at});
-  for(const item of entries){const selected=item.source==='phone'?state.chatSource==='phone'&&state.conversationId===item.id:
+  entries.sort((a,b)=>WeftUiCore.compareSessionGroups(a.record||{},b.record||{})||(Date.parse(b.createdAt)||0)-(Date.parse(a.createdAt)||0));let previousGroup;
+  for(const item of entries){const groupId=item.record?.pinned?'pinned':item.record?.groupId||'ungrouped',groupName=item.record?.pinned?'置顶':(uiCore.state.sessionGroups||[]).find(g=>g.id===groupId)?.name||'未分组';
+    if(groupId!==previousGroup){const toggle=el('button','session-group-toggle',groupName);toggle.setAttribute('aria-expanded',String(!collapsedMobileGroups.has(groupId)));toggle.onclick=()=>{collapsedMobileGroups.has(groupId)?collapsedMobileGroups.delete(groupId):collapsedMobileGroups.add(groupId);renderConversationList()};target.append(toggle);previousGroup=groupId;}
+    if(collapsedMobileGroups.has(groupId)&&!filter)continue;const selected=item.source==='phone'?state.chatSource==='phone'&&state.conversationId===item.id:
       state.chatSource==='host'&&state.sharedSessionId===item.id;
     const b=el('button',selected?'active':'');
     if(item.source==='phone')b.dataset.conversationId=item.id;else b.dataset.sessionId=item.id;
@@ -349,8 +360,8 @@ function renderConversationList(){const target=$('conversation-list'),previousSc
       b.addEventListener('contextmenu',event=>{event.preventDefault();clearTimeout(pressTimer);longPressed=true;mobileSessionMenu(item.record)});
     }
     b.addEventListener('click',()=>{if(longPressed){longPressed=false;return}item.source==='phone'?selectConversation(item.id):selectSharedSession(item.id)});
-    const row=el('div','session-row');row.append(b);
-    if(item.source==='host'){const more=el('button','session-more','更多');more.type='button';more.setAttribute('aria-label',`更多操作 ${item.title}`);more.addEventListener('click',()=>mobileSessionMenu(item.record));row.append(more)}target.append(row)}
+    const row=el('div','session-row'+(item.record?.unread?' is-unread':''));row.append(b);
+    if(item.source==='host'){const more=el('button','session-more');const icon=el('img');icon.src='icons/more.svg';icon.alt='';more.append(icon);more.type='button';more.setAttribute('aria-label',`更多操作 ${item.title}`);more.addEventListener('click',()=>mobileSessionMenu(item.record));row.append(more)}target.append(row)}
   if(!entries.length)target.append(el('p','muted',filter?'没有匹配的对话':state.loggedIn?'还没有对话':'登录后查看对话'));
   target.scrollTop=previousScroll;
   if(state.page==='home')renderHome();
@@ -369,19 +380,19 @@ function pendingApprovalFor(sessionId){if(toolApprovals.owner!==state.owner||too
 
 function renderHome(){const target=$('home-conversations'),top=target.scrollTop;clear(target);
   const filter=$('home-search').value.trim().toLocaleLowerCase(),entries=[],linked=new Set();
-  if(state.loggedIn){const toggle=el('button','secondary',archivedSessionView?'返回最近对话':'已归档');toggle.type='button';
-    toggle.addEventListener('click',()=>{archivedSessionView=!archivedSessionView;renderConversationList()});target.append(toggle)}
   for(const item of state.conversations){const sessionId=state.handoffViews.get(item.id)?.binding?.sessionId||item.binding?.sessionId;
-    if(archivedSessionView)continue;
     if(sessionId)linked.add(sessionId);entries.push({id:item.id,source:'phone',sessionId,title:item.title||'新对话',at:item.updatedAt||item.createdAt,
       running:!!item.running||state.busy&&state.conversationId===item.id||!!state.sharedSessions.find(s=>s.sessionId===sessionId)?.running})}
-  for(const item of state.sharedSessions){if((item.archived===true)!==archivedSessionView||linked.has(item.sessionId)||state.conversations.some(c=>c.id===item.conversationId))continue;
+  for(const item of state.sharedSessions){if(item.archived===true||linked.has(item.sessionId)||state.conversations.some(c=>c.id===item.conversationId))continue;
     entries.push({id:item.sessionId,sessionId:item.sessionId,source:'host',record:item,title:item.title||'新对话',at:item.updatedAt||item.createdAt||item.attachedAt,running:!!item.running})}
-  entries.sort((a,b)=>(Date.parse(b.at)||0)-(Date.parse(a.at)||0));let lastGroup='';
+  entries.sort((a,b)=>WeftUiCore.compareSessionGroups(a.record||{},b.record||{})||(Date.parse(b.at)||0)-(Date.parse(a.at)||0));let lastGroup='';
   for(const item of entries.filter(item=>item.title.toLocaleLowerCase().includes(filter))){
     const date=new Date(item.at),today=new Date(),group=Number.isFinite(date.getTime())?
       date.toDateString()===today.toDateString()?'今天':date.toDateString()===new Date(today.getFullYear(),today.getMonth(),today.getDate()-1).toDateString()?'昨天':'更早':'会话';
-    if(group!==lastGroup){target.append(el('h2','home-group',group));lastGroup=group}
+    const section=item.record?.pinned?'置顶':(uiCore.state.sessionGroups||[]).find(g=>g.id===item.record?.groupId)?.name||'未分组';
+    const sectionKey=item.record?.pinned?'pinned':item.record?.groupId||'ungrouped';
+    if(sectionKey!==lastGroup){const toggle=el('button','home-group session-group-toggle',section);toggle.type='button';toggle.setAttribute('aria-expanded',String(!collapsedMobileGroups.has(sectionKey)));toggle.onclick=()=>{collapsedMobileGroups.has(sectionKey)?collapsedMobileGroups.delete(sectionKey):collapsedMobileGroups.add(sectionKey);renderHome()};target.append(toggle);lastGroup=sectionKey}
+    if(collapsedMobileGroups.has(sectionKey)&&!filter)continue;
     const button=el('button','home-conversation');button.type='button';button.dataset.source=item.source;button.dataset.id=item.id;
     const copy=el('span','home-conversation-copy');copy.append(el('strong','',item.title));
     if(Number.isFinite(date.getTime()))copy.append(el('small','',timeLabel(item.at)));button.append(copy);
@@ -395,8 +406,8 @@ function renderHome(){const target=$('home-conversations'),top=target.scrollTop;
       button.addEventListener('contextmenu',event=>{event.preventDefault();clearTimeout(timer);if(!longPressed){longPressed=true;mobileSessionMenu(item.record)}});
     }
     button.addEventListener('click',()=>{if(longPressed){longPressed=false;return}item.source==='phone'?selectConversation(item.id):selectSharedSession(item.id)});
-    const row=el('div','session-row');row.append(button);
-    if(item.source==='host'){const more=el('button','session-more','更多');more.type='button';more.setAttribute('aria-label',`更多操作 ${item.title}`);more.addEventListener('click',()=>mobileSessionMenu(item.record));row.append(more)}target.append(row)}
+    const row=el('div','session-row'+(item.record?.unread?' is-unread':''));row.append(button);
+    if(item.source==='host'){const more=el('button','session-more');const icon=el('img');icon.src='icons/more.svg';icon.alt='';more.append(icon);more.type='button';more.setAttribute('aria-label',`更多操作 ${item.title}`);more.addEventListener('click',()=>mobileSessionMenu(item.record));row.append(more)}target.append(row)}
   if(!lastGroup){const empty=el('div','home-empty');empty.append(el('h2','',filter?'没有匹配的会话':state.loggedIn?'开始第一段对话':'欢迎使用 WeftMate'),
     el('p','',filter?'换个关键词试试。':state.loggedIn?'点右上角，聊聊你想做的事。':'登录后，在这里接着聊。'));
     if(!state.loggedIn){const login=el('button','primary','登录或连接');login.addEventListener('click',()=>page('connect'));empty.append(login)}target.append(empty)}target.scrollTop=top;
@@ -409,4 +420,37 @@ async function refreshHome(){if(state.page!=='home'||!state.loggedIn||document.v
   await uiCore.mobileDecisions.refreshHomeApprovals();
   if(state.page!=='home'||owner!==state.owner||epoch!==state.authEpoch||generation!==state.generation)return;
   renderHome();state.homePollTimer=setTimeout(()=>{void refreshHome()},12000);
+}
+
+function mobileEditName(title,value,save){
+  const dialog=el('dialog','session-action-dialog');dialog.setAttribute('aria-label',title);const form=el('form');form.append(el('h2','',title));
+  const input=el('input');input.value=value||'';input.required=true;input.maxLength=256;input.setAttribute('aria-label',title);const notice=el('p','message-state');notice.setAttribute('role','alert');
+  const submit=el('button','primary','保存');submit.type='submit';const cancel=el('button','secondary','取消');cancel.type='button';cancel.onclick=()=>dialog.close();
+  form.append(input,notice,submit,cancel);form.onsubmit=async event=>{event.preventDefault();submit.disabled=true;try{uiCore.syncMobileIdentity();await save(input.value);dialog.close()}catch(error){notice.textContent=safeError(error);submit.disabled=false}};
+  dialog.append(form);dialog.onclose=()=>dialog.remove();document.body.append(dialog);dialog.showModal();input.focus();input.select();
+}
+function mobileSessionGroups(session){
+  const dialog=el('dialog','session-action-dialog session-action-sheet');dialog.setAttribute('aria-label','移至分组');dialog.append(el('h2','','移至分组'));
+  const notice=el('p','message-state');notice.setAttribute('role','alert');
+  const add=(label,run)=>{const button=el('button','session-menu-item',label);button.type='button';button.onclick=async()=>{button.disabled=true;try{uiCore.syncMobileIdentity();await run();await listSharedSessions();dialog.close()}catch(error){notice.textContent=safeError(error);button.disabled=false}};dialog.append(button)};
+  for(const group of uiCore.state.sessionGroups||[])add(group.name,()=>uiCore.updateSession(session.sessionId,{groupId:group.id}));
+  add('新建分组…',()=>{dialog.close();mobileEditName('新建分组','',async name=>{const result=await uiCore.sessionGroupAction('POST',null,name);if(result)await uiCore.updateSession(session.sessionId,{groupId:result.group.id});await listSharedSessions()})});
+  add('移出分组',()=>uiCore.updateSession(session.sessionId,{groupId:null}));add('管理分组',()=>{dialog.close();mobileManageGroups()});add('取消',()=>{});dialog.append(notice);dialog.onclose=()=>dialog.remove();document.body.append(dialog);dialog.showModal();
+}
+async function archivedSettingsPage(target){
+  target.append(heading('已归档'));const search=el('input','settings-search');search.type='search';search.placeholder='搜索已归档对话';search.setAttribute('aria-label','搜索已归档对话');
+  const list=el('div'),notice=el('p','message-state');notice.setAttribute('role','status');target.append(search,list,notice);
+  const draw=()=>{clear(list);for(const session of state.sharedSessions.filter(item=>item.archived&&item.title.toLocaleLowerCase().includes(search.value.trim().toLocaleLowerCase()))){
+    const item=el('div','archived-session-row');item.append(el('span','',session.title));const restore=el('button','secondary','恢复');restore.onclick=async()=>{restore.disabled=true;try{uiCore.syncMobileIdentity();await uiCore.archiveSession(session.sessionId,false);await listSharedSessions();draw()}catch(error){notice.textContent=safeError(error);restore.disabled=false}};
+    const remove=el('button','danger','删除');remove.onclick=()=>mobileSessionMenu(session,true);item.append(restore,remove);list.append(item)}notice.textContent=list.children.length?'':'没有已归档对话。'};
+  archivedMobileRedraw=()=>{if(target.isConnected&&state.page==='archived')draw()};search.oninput=draw;try{await listSharedSessions();draw()}catch(error){notice.textContent=safeError(error)}
+}
+
+function mobileManageGroups(){
+  const dialog=el('dialog','session-action-dialog');dialog.setAttribute('aria-label','管理分组');dialog.append(el('h2','','管理分组'));
+  const notice=el('p','message-state');notice.setAttribute('role','alert');
+  for(const group of uiCore.state.sessionGroups||[]){const row=el('div','archived-session-row');row.append(el('span','',group.name));
+    const rename=el('button','secondary','重命名');rename.setAttribute('aria-label',`重命名分组 ${group.name}`);rename.onclick=()=>{dialog.close();mobileEditName('重命名分组',group.name,async name=>{await uiCore.sessionGroupAction('PATCH',group.id,name);await listSharedSessions()})};
+    const remove=el('button','danger','删除');remove.setAttribute('aria-label',`删除分组 ${group.name}`);remove.onclick=async()=>{remove.disabled=true;try{await uiCore.sessionGroupAction('DELETE',group.id);await listSharedSessions();row.remove()}catch(error){notice.textContent=safeError(error);remove.disabled=false}};row.append(rename,remove);dialog.append(row)}
+  const close=el('button','secondary','关闭');close.onclick=()=>dialog.close();dialog.append(notice,close);dialog.onclose=()=>dialog.remove();document.body.append(dialog);dialog.showModal();
 }

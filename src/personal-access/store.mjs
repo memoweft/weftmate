@@ -211,6 +211,12 @@ export function validateSingleStore(store) {
     if (!validId(sessionId) || !plainObject(session) || session.ownerId !== store.ownerId ||
         (session.archived !== undefined && typeof session.archived !== 'boolean') ||
         (session.deleting !== undefined && typeof session.deleting !== 'boolean') ||
+        (session.pinned !== undefined && typeof session.pinned !== 'boolean') ||
+        (session.unread !== undefined && typeof session.unread !== 'boolean') ||
+        (session.readMessageSeq !== undefined && (!Number.isSafeInteger(session.readMessageSeq) || session.readMessageSeq < -1)) ||
+        (session.title !== undefined && (typeof session.title !== 'string' || !session.title.trim() || session.title.length > 256)) ||
+        (session.parentSessionId !== undefined && !validId(session.parentSessionId)) ||
+        (session.groupId !== undefined && session.groupId !== null && !Object.hasOwn(store.sessionGroups ?? {}, session.groupId)) ||
         (session.forgetEvidenceIds !== undefined && (!Array.isArray(session.forgetEvidenceIds) ||
           session.forgetEvidenceIds.some(value => typeof value !== 'string' || !/^[A-Za-z0-9._:-]{1,512}$/.test(value)))) ||
         (session.origin !== undefined && !['personal-remote', 'shared-chat', 'legacy-local', 'local-attached'].includes(session.origin)) ||
@@ -233,6 +239,8 @@ export function validateSingleStore(store) {
       throw failure('STORE_CORRUPT', 500);
     }
   }
+  if (store.sessionGroups !== undefined && (!plainObject(store.sessionGroups) || Object.entries(store.sessionGroups).some(([key, group]) =>
+      !validId(key) || !plainObject(group) || group.id !== key || typeof group.name !== 'string' || !group.name.trim() || group.name.length > 256))) throw failure('STORE_CORRUPT', 500);
   if (store.projects !== undefined && (!plainObject(store.projects) ||
       Object.keys(store.projects).length > MAX_PROJECTS)) throw failure('STORE_CORRUPT', 500);
   for (const [projectId, project] of Object.entries(store.projects ?? {})) {

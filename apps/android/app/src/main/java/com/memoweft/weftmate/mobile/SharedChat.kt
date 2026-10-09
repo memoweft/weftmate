@@ -14,10 +14,11 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
         val owner = Endpoints.ownerKey(host.origin, host.ownerId)
         return try {
             api.me(host)
-            val rows = api.remoteSessions(host).getJSONArray("sessions")
+            val result = api.remoteSessions(host)
+            val rows = result.getJSONArray("sessions")
             for (i in 0 until rows.length()) rows.getJSONObject(i).put("source", "host")
             store.saveSharedSessions(owner, host.hostId, rows)
-            JSONObject().put("source", "host").put("hostAvailable", true).put("sessions", rows)
+            JSONObject().put("source", "host").put("hostAvailable", true).put("sessions", rows).put("groups", result.optJSONArray("groups") ?: JSONArray())
         } catch (error: Exception) {
             if (error is ApiFailure && error.status in 400..499) throw error
             JSONObject().put("source", "host").put("hostAvailable", false)
