@@ -136,6 +136,8 @@
   for(const name of ['pointerup','pointercancel'])transcript.addEventListener(name,()=>clearTimeout(timer));
   transcript.addEventListener('click',event=>{if(event.target.closest('button,a,summary,details'))return;const row=event.target.closest('.main-chat-row.message');
     for(const active of transcript.querySelectorAll('.actions-visible'))if(active!==row)active.classList.remove('actions-visible');row?.classList.toggle('actions-visible');});
+  transcript.addEventListener('contextmenu',event=>{const row=event.target.closest('.main-chat-row.message'),menu=row?.querySelector('.chat-message-menu');if(!menu)return;
+    event.preventDefault();row.classList.add('actions-visible');menu.open=true;menu.querySelector('summary')?.focus({preventScroll:true});});
   const viewport=()=>{if(main()&&state.scrollPinned)requestAnimationFrame(()=>mobileEffects.scrollToLatest());};
   window.visualViewport?.addEventListener('resize',viewport);
 })();
