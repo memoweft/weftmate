@@ -1,0 +1,105 @@
+{
+  "realApplication": true,
+  "isolatedData": true,
+  "themes": [
+    {
+      "phase": "before",
+      "theme": "light",
+      "opened": {
+        "color": "rgb(255, 255, 255)",
+        "symbolColor": "rgb(39, 39, 36)",
+        "height": 44
+      },
+      "restored": {
+        "color": "rgb(255, 255, 255)",
+        "symbolColor": "rgb(39, 39, 36)",
+        "height": 44
+      },
+      "base": {
+        "color": "rgb(255, 255, 255)",
+        "symbolColor": "rgb(39, 39, 36)"
+      },
+      "mixed": {
+        "color": "rgb(190, 194, 201)",
+        "symbolColor": "rgb(35, 39, 43)"
+      },
+      "scrim": "rgba(24, 38, 62, 0.28)"
+    },
+    {
+      "phase": "before",
+      "theme": "dark",
+      "opened": {
+        "color": "rgb(38, 39, 36)",
+        "symbolColor": "rgb(232, 233, 227)",
+        "height": 44
+      },
+      "restored": {
+        "color": "rgb(38, 39, 36)",
+        "symbolColor": "rgb(232, 233, 227)",
+        "height": 44
+      },
+      "base": {
+        "color": "rgb(38, 39, 36)",
+        "symbolColor": "rgb(232, 233, 227)"
+      },
+      "mixed": {
+        "color": "rgb(34, 39, 43)",
+        "symbolColor": "rgb(174, 178, 181)"
+      },
+      "scrim": "rgba(24, 38, 62, 0.28)"
+    },
+    {
+      "phase": "after",
+      "theme": "light",
+      "opened": {
+        "color": "rgb(190, 194, 201)",
+        "symbolColor": "rgb(35, 39, 43)",
+        "height": 44
+      },
+      "restored": {
+        "color": "rgb(255, 255, 255)",
+        "symbolColor": "rgb(39, 39, 36)",
+        "height": 44
+      },
+      "base": {
+        "color": "rgb(255, 255, 255)",
+        "symbolColor": "rgb(39, 39, 36)"
+      },
+      "mixed": {
+        "color": "rgb(190, 194, 201)",
+        "symbolColor": "rgb(35, 39, 43)"
+      },
+      "scrim": "rgba(24, 38, 62, 0.28)"
+    },
+    {
+      "phase": "after",
+      "theme": "dark",
+      "opened": {
+        "color": "rgb(34, 39, 43)",
+        "symbolColor": "rgb(174, 178, 181)",
+        "height": 44
+      },
+      "restored": {
+        "color": "rgb(38, 39, 36)",
+        "symbolColor": "rgb(232, 233, 227)",
+        "height": 44
+      },
+      "base": {
+        "color": "rgb(38, 39, 36)",
+        "symbolColor": "rgb(232, 233, 227)"
+      },
+      "mixed": {
+        "color": "rgb(34, 39, 43)",
+        "symbolColor": "rgb(174, 178, 181)"
+      },
+      "scrim": "rgba(24, 38, 62, 0.28)"
+    }
+  ],
+  "appId": "com.memoweft.weftmate",
+  "notification": {
+    "title": "WeftMate · 任务完成",
+    "body": "打开对话查看结果。",
+    "iconEmpty": false
+  },
+  "notificationShown": true
+}
