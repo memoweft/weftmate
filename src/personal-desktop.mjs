@@ -4,7 +4,9 @@ import { app, BrowserWindow, ipcMain, Notification, screen, shell, session, nati
 import { hostname } from 'node:os';
 import { createHash, X509Certificate } from 'node:crypto';
 import { desktopAuthStorage } from './personal-desktop-auth.mjs';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { createLatestFileWriter } from './latest-file-writer.mjs';
 import { join } from 'node:path';
 import { validArtifactFileName } from './personal-artifacts/index.mjs';
 import { windowIcon, notificationIcon } from './app-icons.mjs';
@@ -162,9 +164,9 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
     const fileName = encodedName ? decodeURIComponent(encodedName) : /filename="([^"]+)"/.exec(disposition)?.[1];
     if (!validArtifactFileName(fileName)) throw new Error('Invalid artifact name');
     const directory = join(app.getPath('userData'), 'desktop-artifacts', artifactId);
-    mkdirSync(directory, { recursive: true });
+    await mkdir(directory, { recursive: true });
     const file = join(directory, fileName);
-    writeFileSync(file, Buffer.from(await response.arrayBuffer()));
+    await writeFile(file, Buffer.from(await response.arrayBuffer()));
     if (action === 'show') shell.showItemInFolder(file);
     else { const error = await shell.openPath(file); if (error) throw new Error('Default application unavailable'); }
     return { opened: true };
@@ -182,7 +184,7 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
     const exported = await response.json();
     if (exported.ownerId !== ownerId || exported.format !== format || typeof exported.content !== 'string')
       throw new Error('Memory export owner mismatch');
-    writeFileSync(selected.filePath, exported.content, { encoding: 'utf8', mode: 0o600 });
+    await writeFile(selected.filePath, exported.content, { encoding: 'utf8', mode: 0o600 });
     return { exported: true };
   });
   let pendingConversation = null, clientReady = false, maximizeOnShow = saved.maximized === true;
@@ -209,15 +211,20 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
     }
   };
   nativeTheme.on('updated', updatePalette);
+  const writeBounds = createLatestFileWriter(stateFile);
+  let boundsTimer;
   const save = () => {
-    if (!win.isDestroyed()) writeFileSync(stateFile, JSON.stringify({ bounds: win.getNormalBounds(), maximized: maximizeOnShow || win.isMaximized() }));
+    clearTimeout(boundsTimer);
+    if (!win.isDestroyed()) return writeBounds(JSON.stringify({ bounds: win.getNormalBounds(), maximized: maximizeOnShow || win.isMaximized() })).catch(() => {});
   };
-  win.on('close', event => { save(); if (!isQuitting()) { event.preventDefault(); win.hide(); } });
-  win.on('resized', save); win.on('moved', save);
+  const scheduleSave = () => { clearTimeout(boundsTimer); boundsTimer = setTimeout(save, 200); };
+  win.on('close', event => { void save(); if (!isQuitting()) { event.preventDefault(); win.hide(); } });
+  win.on('resized', scheduleSave); win.on('moved', scheduleSave);
   // Poll authenticated history in main so hidden windows and other conversations still notify.
   // Watermarks prevent replay of completed historical turns after login/restart.
   const watermarks = new Map(), notifications = new Set(), reminderOnlySessions = new Set();
   const reminderNotificationsFile = join(app.getPath('userData'), 'desktop-reminder-notifications.json');
+  const writeReminders = createLatestFileWriter(reminderNotificationsFile);
   let reminderNotified = new Set();
   try { reminderNotified = new Set(JSON.parse(readFileSync(reminderNotificationsFile, 'utf8'))); } catch { /* first use */ }
   let timer, stopped = false, ownerId = null, initialized = false;
@@ -252,7 +259,7 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
             notification.show();
             if (reminder) {
               reminderNotified.add(reminderKey);
-              writeFileSync(reminderNotificationsFile, JSON.stringify([...reminderNotified]));
+              await writeReminders(JSON.stringify([...reminderNotified]));
             }
             // Native event for integration tests/diagnostics; no conversation content.
             app.emit('weftmate-desktop-notification', { sessionId: row.sessionId, type: event.type });
@@ -276,6 +283,6 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
     nativeTheme.removeListener('updated', updatePalette);
     for (const request of networkRequests.values()) request.abort();
     for (const channel of ['wm:desktop:settings', 'wm:desktop:identity', 'wm:desktop:credentials', 'wm:desktop:key', 'wm:desktop:key-reset', 'wm:desktop:proof', 'wm:desktop:connect-host', 'wm:desktop:activate-host', 'wm:desktop:fetch', 'wm:desktop:fetch-abort', 'wm:desktop:clear-sessions', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);
-    save(); await desktopSession.cookies.flushStore(); desktopSession.flushStorageData();
+    await save(); await desktopSession.cookies.flushStore(); desktopSession.flushStorageData();
   } };
 }

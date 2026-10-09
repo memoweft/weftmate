@@ -1,8 +1,8 @@
 import { enterProfileWrite } from '../personal-backup/write-barrier.mjs';
 import { scheduledCommandSource } from './schedules-authorization.mjs';
 import { randomUUID } from 'node:crypto';
-import { open, rename, rm } from 'node:fs/promises';
-import { ensurePrivateFile } from '../private-host-storage.mjs';
+import { open, rm } from 'node:fs/promises';
+import { ensurePrivateFile, forgetPrivateFile, openPrivateFile, renamePrivateFile } from '../private-host-storage.mjs';
 import { canonicalAccountBaseUrl, digest, failure, plainObject, validId, validProjectName, validTime } from './common.mjs';
 import path from 'node:path';
 import {
@@ -49,7 +49,7 @@ export async function durableWrite(file, state, shouldCommit = () => true) {
   const tmp = `${file}.${randomUUID()}.tmp`;
   let handle;
   try {
-    handle = await open(tmp, 'wx', 0o600);
+    handle = await openPrivateFile(tmp);
     await handle.writeFile(JSON.stringify(state), 'utf8');
     await handle.sync();
     await handle.close();
@@ -57,7 +57,7 @@ export async function durableWrite(file, state, shouldCommit = () => true) {
     await ensurePrivateFile(tmp);
     for (let attempt = 0; ; attempt++) {
       if (!shouldCommit()) throw failure('SERVICE_CLOSING', 503);
-      try { await rename(tmp, file); break; }
+      try { await renamePrivateFile(tmp, file); break; }
       catch (error) {
         if (process.platform !== 'win32' || !['EPERM', 'EACCES', 'EBUSY'].includes(error?.code) || attempt >= 3) throw error;
         await new Promise((resolve) => setTimeout(resolve, 25 * (attempt + 1)));
@@ -73,6 +73,7 @@ export async function durableWrite(file, state, shouldCommit = () => true) {
   } finally {
     await handle?.close().catch(() => {});
     await rm(tmp, { force: true }).catch(() => {});
+    forgetPrivateFile(tmp);
     releaseWrite();
   }
 }
