@@ -56,6 +56,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { modelRouteFingerprint } from '../model-route-fingerprint.mjs';
 import { openAICompatibleEndpoint } from '../openai-compatible-client.ts';
 import { inspectProjectRoot } from '../personal-projects/index.mjs';
+import { createProjectOperations, projectSettings } from '../personal-projects/projects.mjs';
 import { canonicalCompletion, projectCompletion } from './model-completion.mjs';
 import {
   invalidateToolApproval,
@@ -926,7 +927,7 @@ export function createHttpHandler(context) {
       if (request.method === 'GET' && pathname === '/personal/v1/projects') {
         if (url.search) throw failure('INVALID_REQUEST');
         const current = context.authenticate(request, 'sessions:read');
-        return context.json(response, 200, { projects: Object.values(state.projects ?? {}).map(publicProject)
+        return context.json(response, 200, { projects: Object.values(state.projects ?? {}).filter(project => !project.removed).map(publicProject)
           .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
           canManage: context.hostOwner(ownerId) && current.via === 'cookie' && current.device.scopes.includes('account:manage') });
       }
@@ -943,9 +944,12 @@ export function createHttpHandler(context) {
         const current = context.authenticate(request, 'account:manage');
         if (!context.hostOwner(ownerId)) throw failure('FORBIDDEN', 403);
         const body = await context.readJson(request);
-        exactKeys(body, ['requestId', 'name', 'rootPath'], ['requestId', 'name', 'rootPath']);
+        exactKeys(body, ['requestId', 'name', 'rootPath', 'instructions', 'permission'], ['requestId', 'name', 'rootPath']);
+        const settings = projectSettings(body);
         if (!REQUEST_ID.test(body.requestId ?? '') || !validProjectName(body.name)) throw failure('INVALID_REQUEST');
-        const hash = digest(JSON.stringify({ name: body.name, rootPath: body.rootPath }));
+        const hash = digest(JSON.stringify({ name: body.name, rootPath: body.rootPath,
+          ...(body.instructions !== undefined ? { instructions: body.instructions } : {}),
+          ...(body.permission !== undefined ? { permission: body.permission } : {}) }));
         if (context.interactionRequestIdUsed(state, body.requestId)) throw failure('REQUEST_CONFLICT', 409);
         const prior = state.projectOperations?.[body.requestId];
         if (prior) {
@@ -972,12 +976,24 @@ export function createHttpHandler(context) {
           const projectId = `project-${randomUUID()}`;
           const now = new Date(context.timestamp()).toISOString();
           next.projects[projectId] = { projectId, ownerId, name: body.name, ...inspected,
+            instructions: '', permission: 'read-only', ...settings,
             fileSecret: randomBytes(32).toString('hex'), revision: 1, revoked: false,
             createdAt: now, updatedAt: now, files: {} };
           next.projectOperations[body.requestId] = { kind: 'register', projectId, payloadHash: hash, at: now };
           return publicProject(next.projects[projectId]);
         }));
         return context.json(response, 201, { project });
+      }
+      const projectSettingsMatch = /^\/personal\/v1\/projects\/([A-Za-z0-9_-]+)$/.exec(pathname);
+      if (projectSettingsMatch && ['PATCH', 'DELETE'].includes(request.method)) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const current = context.authenticate(request, 'account:manage');
+        if (!context.hostOwner(ownerId)) throw failure('FORBIDDEN', 403);
+        const body = await context.readJson(request);
+        return context.json(response, 200, await createProjectOperations(context)(ownerId, projectSettingsMatch[1], request.method, body, () => {
+          const latest = context.authenticate(request, 'account:manage');
+          if (latest.ownerId !== ownerId || latest.deviceId !== current.deviceId) throw failure('UNAUTHORIZED', 401);
+        }));
       }
       const projectRevokeMatch = /^\/personal\/v1\/projects\/([A-Za-z0-9_-]+)\/revoke$/.exec(pathname);
       if (request.method === 'POST' && projectRevokeMatch) {
@@ -1108,6 +1124,7 @@ export function createHttpHandler(context) {
               ...await context.sessionOperations.summary(ownerId, sessionId),
               running: described.running === true,
               taskAvailable: state.sessions[sessionId].origin === 'personal-remote',
+              ...(state.sessions[sessionId].projectNotice ? { projectNotice: state.sessions[sessionId].projectNotice } : {}),
               ...(described.contextUsage ? {contextUsage: described.contextUsage} : {}),
               ...(described.running === true && described.processing ? { processing: described.processing } : {}),
               ...(state.sessions[sessionId].workspaceKind ? {

@@ -3,6 +3,7 @@ import { readSourceEvents } from './source-history.mjs';
 import { exactKeys, failure, validId, withDeadline } from './common.mjs';
 import { sourceMessageHash } from './command-policy.mjs';
 import { approvalCategories } from '../plugins/personal-approval-policy.mjs';
+import { redactProjectPath } from '../personal-projects/projects.mjs';
 import {
   approvalDecisionReceipt,
   invalidateToolApproval,
@@ -219,6 +220,10 @@ export function createApprovalOperations(context) {
         }
       }
       const { source } = personalExecutionSource(context.accountState(ownerId), input);
+      if (action === 'register_approval') {
+        const project = context.accountState(ownerId).projects?.[source.payload.projectId];
+        input = { ...input, reason: redactProjectPath(input.reason, project?.rootPath) };
+      }
       const prior = toolApprovals(context.accountState(ownerId)).find(row => row.approvalId === approvalId);
       if (prior && (!approvalMatches(prior, input, source) || action === 'register_approval' && prior.reason !== input.reason)) {
         throw failure('REQUEST_CONFLICT', 409);

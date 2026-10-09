@@ -133,7 +133,7 @@ export function createArtifactOperations(context) {
               (item.dshTurn !== undefined && item.dshTurn !== turn) ||
               !Number.isSafeInteger(item.sourceAuthEpoch)) return false;
           const device = next.devices[item.sourceDeviceId];
-          return device?.authKind === 'password' && !device.revoked &&
+          return ['password', 'cloud'].includes(device?.authKind) && !device.revoked &&
             device.authEpoch === item.sourceAuthEpoch && (scheduledCommandSource(next, item) || Date.parse(device.expiresAt) > context.timestamp());
         });
         if (eligible.length !== 1) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
@@ -181,6 +181,7 @@ export function createArtifactOperations(context) {
           ...(projectSession || browserSession ? { sourceReceiptId: receiptId, sourceSnapshotIds } : {}) }, next.hostId, true);
         const now = new Date(context.timestamp()).toISOString();
         next.commands[commandId] = { commandId, ownerId, requestId,
+          ...(nativeFile !== undefined ? { nativeFileObserved: true } : {}),
           payloadHash: digest(JSON.stringify(payload)), payload,
           sourceDeviceId: source.sourceDeviceId, sourceAuthEpoch: source.sourceAuthEpoch,
           targetDeviceId: next.hostId, kind: INTERNAL_ARTIFACT_KIND, sessionId,

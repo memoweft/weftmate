@@ -1,3 +1,63 @@
+
+const collapsedMobileProjects = new Set();
+function renderMobileProjects(target, filter = '') {
+  if (!state.loggedIn) return;
+  if (uiCore.state.ownerId !== state.owner) uiCore.syncMobileIdentity();
+  const section = el('section', 'mobile-projects'); section.setAttribute('aria-label', '项目'); section.append(el('h2', 'home-group', '项目'));
+  const projects = (uiCore.state.projects || []).filter(project => !project.revoked);
+  if (!projects.length) section.append(el('p', 'muted', uiCore.state.projectsError || '在电脑上添加项目后，可在这里开始对话。'));
+  for (const project of projects) {
+    const conversations = state.sharedSessions.filter(session => !session.archived && session.projectId === project.projectId);
+    if (filter && !project.name.toLocaleLowerCase().includes(filter) && !conversations.some(session => (session.title || '新对话').toLocaleLowerCase().includes(filter))) continue;
+    const row = el('div', 'mobile-project-heading');
+    const toggle = el('button', 'mobile-project-toggle'); toggle.type = 'button'; toggle.setAttribute('aria-expanded', String(!collapsedMobileProjects.has(project.projectId)));
+    const icon = el('img'); icon.src = 'icons/folder.svg'; icon.alt = ''; toggle.append(icon, el('span', '', project.name));
+    toggle.onclick = () => { collapsedMobileProjects.has(project.projectId) ? collapsedMobileProjects.delete(project.projectId) : collapsedMobileProjects.add(project.projectId); renderConversationList(); };
+    const create = el('button', 'session-more'); create.type = 'button'; create.setAttribute('aria-label', `在项目 ${project.name} 新建对话`); const plus = el('img'); plus.src = 'icons/plus.svg'; plus.alt = ''; create.append(plus); create.onclick = () => mobileNewProjectConversation(project); row.append(toggle, create); section.append(row);
+    if (!collapsedMobileProjects.has(project.projectId) || filter) {
+      for (const session of conversations) {
+        if (filter && !project.name.toLocaleLowerCase().includes(filter) && !(session.title || '新对话').toLocaleLowerCase().includes(filter)) continue;
+        const row = el('div', 'session-row mobile-project-conversation');
+        const button = el('button', state.sharedSessionId === session.sessionId ? 'active' : '', session.title || '新对话'); button.type = 'button'; let longPressed = false; button.onclick = () => { if (longPressed) { longPressed = false; return; } selectSharedSession(session.sessionId); };
+        const more = el('button', 'session-more'); more.type = 'button'; more.setAttribute('aria-label', `更多操作 ${session.title || '新对话'}`); const icon = el('img'); icon.src = 'icons/more.svg'; icon.alt = ''; more.append(icon); more.onclick = () => mobileSessionMenu(session);
+        let timer; button.onpointerdown = () => { longPressed = false; timer = setTimeout(() => { timer = null; longPressed = true; mobileSessionMenu(session); }, 500); }; button.onpointerup = button.onpointercancel = () => clearTimeout(timer);
+        row.append(button, more); section.append(row);
+      }
+      if (!conversations.length) section.append(el('p', 'muted mobile-project-empty', '还没有项目对话，点加号开始。'));
+    }
+  }
+  target.append(section);
+}
+async function mobileNewProjectConversation(project) {
+  const dialog = el('dialog', 'session-action-dialog'); dialog.setAttribute('aria-label', '新建项目对话');
+  dialog.append(el('h2', '', `在「${project.name}」新建对话`), el('p', 'muted', '任务将在电脑上的项目文件夹执行。手机只显示项目与对话。'));
+  const notice = el('p', 'message-state', '正在读取电脑模型…'); notice.setAttribute('role', 'status');
+  const select = el('select'); select.setAttribute('aria-label', '项目对话使用的电脑模型'); select.disabled = true;
+  const start = el('button', 'primary', '新建对话'); start.disabled = true;
+  const close = el('button', 'secondary', '取消'); close.onclick = () => dialog.close();
+  dialog.append(select, notice, start, close); dialog.onclose = () => dialog.remove(); document.body.append(dialog); dialog.showModal();
+  const owner = state.owner, epoch = state.authEpoch;
+  try {
+    const result = await call('models.host'); if (!dialog.open || state.owner !== owner || state.authEpoch !== epoch) return;
+    for (const model of (result.models || []).filter(model => model.configured)) { const option = el('option', '', model.displayName); option.value = model.profileId; select.append(option); }
+    select.disabled = !select.options.length; start.disabled = select.disabled; notice.textContent = select.disabled ? '请先在电脑配置可用模型。' : project.permission === 'read-only' ? '此项目只读，可阅读与分析资料。' : '可读写项目文件，危险操作仍需审批。';
+  } catch { notice.textContent = '电脑暂不可达，请重新连接后再试。'; }
+  start.onclick = async () => { start.disabled = true; notice.textContent = '正在创建，原请求编号已保留…';
+    try { uiCore.syncMobileIdentity(); const sessionId = await uiCore.createProjectConversation(project, select.value);
+      if (state.owner !== owner || state.authEpoch !== epoch) return; await listSharedSessions(); dialog.close(); selectSharedSession(sessionId); }
+    catch (error) { notice.textContent = safeError(error); start.disabled = false; }
+  };
+}
+async function mobileSessionProjects(session) {
+  uiCore.syncMobileIdentity(); await uiCore.refreshSessionProjects();
+  const dialog = el('dialog', 'session-action-dialog session-action-sheet'); dialog.setAttribute('aria-label', '移至项目'); dialog.append(el('h2', '', '移至项目'), el('p', 'muted', '从下一回合使用项目文件夹，之前的文件与经验保留在原目录。'));
+  const notice = el('p', 'message-state'); notice.setAttribute('role', 'alert');
+  const add = (label, projectId) => { const button = el('button', 'session-menu-item', label); button.onclick = async () => { button.disabled = true;
+    try { uiCore.syncMobileIdentity(); await uiCore.updateSession(session.sessionId, { projectId }); await listSharedSessions(); dialog.close(); }
+    catch (error) { notice.textContent = safeError(error); button.disabled = false; } }; dialog.append(button); };
+  for (const project of uiCore.state.projects.filter(project => !project.revoked)) add(project.name, project.projectId);
+  add('移出项目', null); const close = el('button', 'secondary', '取消'); close.onclick = () => dialog.close(); dialog.append(notice, close); dialog.onclose = () => dialog.remove(); document.body.append(dialog); dialog.showModal();
+}
 /* Mobile sessions presentation and named ui-core actions. */
 function stopSharedPoll(){clearTimeout(state.sharedPollTimer);state.sharedPollTimer=null}
 
@@ -10,7 +70,7 @@ function selectSharedSession(sessionId){if(!state.sharedSessions.some(item=>item
   const listed=state.sharedSessions.find(item=>item.sessionId===sessionId);
   const linked=state.conversations.find(item=>item.id===listed?.conversationId||item.binding?.sessionId===sessionId||
     state.handoffViews.get(item.id)?.binding?.sessionId===sessionId);
-  if(linked){selectConversation(linked.id);return}
+  if(linked&&!listed?.projectId){selectConversation(linked.id);return}
   closeImagePreview({restoreFocus:false});invalidateLiveProgress();stopSharedPoll();clearTimeout(state.linkedPollTimer);state.linkedPollTimer=null;state.sharedGeneration++;state.chatSource='host';state.restorePending=false;state.sharedSessionId=sessionId;state.scrollPinned=true;
   try{localStorage.setItem(chatSourceKey(),JSON.stringify({source:'host',sessionId}))}catch{}status('');closeToast();
   state.sharedEvents=[];state.sharedNextSeq=-1;state.sharedHasOlder=false;state.sharedNextBeforeSeq=null;state.sharedOlderLoading=false;state.sharedLoading=false;state.sharedRunning=!!selectedSharedSession()?.running;
@@ -29,6 +89,7 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
   const session=selectedSharedSession();updatePageHeader();olderControl(content);
   if(session?.taskAvailable===false)content.append(el('div','shared-notice',
     '这台电脑已有执行账号。当前账号仅可聊天，不能操作电脑或读取原账号资料；请在电脑退出后登录原账号。'));
+  if (session?.projectNotice || session?.projectName) content.append(el('p','shared-notice',session.projectNotice || `项目：${session.projectName}`));
   if(state.sharedError)content.append(el('div','shared-notice',state.sharedError));
   else if(!state.sharedHostAvailable)content.append(el('div','shared-notice','电脑暂不可达。已读取的内容仅供查看，新消息可能进入待核对状态。'));
   let lastTurn='',lastEndReasonKind='';for(const event of state.sharedEvents){
@@ -313,7 +374,7 @@ function mobileSessionMenu(session,confirming=false){
   const run=async(button,action)=>{button.disabled=true;notice.textContent='';try{uiCore.syncMobileIdentity();await action();
     await listSharedSessions();if(state.page==='archived')archivedMobileRedraw?.();if(!state.sharedSessions.some(item=>item.sessionId===state.sharedSessionId))page('home');close();
   }catch(error){notice.textContent=uiCore.sessionLifecycleMessage(error)}finally{button.disabled=false}};
-  if(confirming){dialog.append(el('p','','这会永久删除对话、工作目录与经验，无法恢复。运行中的对话会先停止。'));
+  if(confirming){dialog.append(el('p','',session.projectId ? '这会永久删除对话与执行记录，项目文件夹里的文件不会删除。运行中的对话会先停止。' : '这会永久删除对话、工作目录与经验，无法恢复。运行中的对话会先停止。'));
     const label=el('label','session-forget'),check=el('input');check.type='checkbox';label.append(check,document.createTextNode('同时忘掉从这段对话形成的记忆'));dialog.append(label);
     const snippetsLabel=el('label','session-forget'),snippets=el('input');snippets.type='checkbox';snippetsLabel.hidden=true;
     snippetsLabel.append(snippets,document.createTextNode('同时删除对话里含这句话的原话'));
@@ -334,7 +395,7 @@ function mobileSessionMenu(session,confirming=false){
       const button=el('button',danger?'danger':'session-menu-item',label);button.type='button';button.addEventListener('click',()=>{void run(button,action)});dialog.append(button);return button};
     const rename=()=>{close();mobileEditName('重命名对话',session.title,async name=>{await uiCore.updateSession(session.sessionId,{title:name});await listSharedSessions()})};
     const group=async()=>{close();mobileSessionGroups(session)};
-    const actions={pin:()=>uiCore.updateSession(session.sessionId,{pinned:!session.pinned}),unread:()=>uiCore.updateSession(session.sessionId,{unread:!session.unread}),
+    const actions={project:()=>{close();void mobileSessionProjects(session);},pin:()=>uiCore.updateSession(session.sessionId,{pinned:!session.pinned}),unread:()=>uiCore.updateSession(session.sessionId,{unread:!session.unread}),
       rename,group,fork:async()=>{const child=await uiCore.forkSession(session.sessionId);if(!child)return;await listSharedSessions();selectSharedSession(child.sessionId)},
       archive:()=>uiCore.archiveSession(session.sessionId,!session.archived),delete:()=>{close();mobileSessionMenu(session,true)}};
     for(const item of WeftUiCore.sessionMenuItems(session))add(item.label,actions[item.id],item.danger,item.separator);
@@ -344,7 +405,8 @@ function mobileSessionMenu(session,confirming=false){
 }
 function renderConversationList(){const target=$('conversation-list'),previousScroll=target.scrollTop;clear(target);const filter=$('conversation-search').value.trim().toLocaleLowerCase();
   target.setAttribute('aria-label','最近对话');
-  const phone=state.conversations.filter(v=>typeof v?.id==='string'&&typeof v?.title==='string')
+  const phone=state.conversations.filter(v=>typeof v?.id==='string'&&typeof v?.title==='string'&&
+      !state.sharedSessions.find(session=>session.sessionId===(state.handoffViews.get(v.id)?.binding?.sessionId||v.binding?.sessionId))?.projectId)
     .map(item=>({source:'phone',id:item.id,title:item.title,createdAt:item.updatedAt||item.createdAt,
       model:item.modelName||item.modelDisplayName||null,record:item}));
   const linkedIds=new Set(phone.map(item=>state.handoffViews.get(item.id)?.binding?.sessionId||
@@ -355,7 +417,7 @@ function renderConversationList(){const target=$('conversation-list'),previousSc
       model:item.modelName||item.modelDisplayName||null,record:item}));
   const entries=[...phone,...host].filter(item=>!filter||`${item.title} ${item.model||''} ${item.source==='phone'?'手机':'电脑'}`.toLocaleLowerCase().includes(filter));
   entries.sort((a,b)=>WeftUiCore.compareSessionGroups(a.record||{},b.record||{})||(Date.parse(b.createdAt)||0)-(Date.parse(a.createdAt)||0));let previousGroup;
-  for(const item of entries){const groupId=item.record?.pinned?'pinned':item.record?.groupId||'ungrouped',groupName=item.record?.pinned?'置顶':(uiCore.state.sessionGroups||[]).find(g=>g.id===groupId)?.name||'未分组';
+  for(const item of entries.filter(item=>!item.record?.projectId)){const groupId=item.record?.pinned?'pinned':item.record?.groupId||'ungrouped',groupName=item.record?.pinned?'置顶':(uiCore.state.sessionGroups||[]).find(g=>g.id===groupId)?.name||'未分组';
     if(groupId!==previousGroup){const toggle=el('button','session-group-toggle',groupName);toggle.setAttribute('aria-expanded',String(!collapsedMobileGroups.has(groupId)));toggle.onclick=()=>{collapsedMobileGroups.has(groupId)?collapsedMobileGroups.delete(groupId):collapsedMobileGroups.add(groupId);renderConversationList()};target.append(toggle);previousGroup=groupId;}
     if(collapsedMobileGroups.has(groupId)&&!filter)continue;const selected=item.source==='phone'?state.chatSource==='phone'&&state.conversationId===item.id:
       state.chatSource==='host'&&state.sharedSessionId===item.id;
@@ -375,6 +437,7 @@ function renderConversationList(){const target=$('conversation-list'),previousSc
     b.addEventListener('click',()=>{if(longPressed){longPressed=false;return}item.source==='phone'?selectConversation(item.id):selectSharedSession(item.id)});
     const row=el('div','session-row'+(item.record?.unread?' is-unread':''));row.append(b);
     if(item.source==='host'){const more=el('button','session-more');const icon=el('img');icon.src='icons/more.svg';icon.alt='';more.append(icon);more.type='button';more.setAttribute('aria-label',`更多操作 ${item.title}`);more.addEventListener('click',()=>mobileSessionMenu(item.record));row.append(more)}target.append(row)}
+  renderMobileProjects(target,filter);
   if(!entries.length)target.append(el('p','muted',filter?'没有匹配的对话':state.loggedIn?'还没有对话':'登录后查看对话'));
   target.scrollTop=previousScroll;
   if(state.page==='home')renderHome();
@@ -394,12 +457,13 @@ function pendingApprovalFor(sessionId){if(toolApprovals.owner!==state.owner||too
 function renderHome(){const target=$('home-conversations'),top=target.scrollTop;clear(target);
   const filter=$('home-search').value.trim().toLocaleLowerCase(),entries=[],linked=new Set();
   for(const item of state.conversations){const sessionId=state.handoffViews.get(item.id)?.binding?.sessionId||item.binding?.sessionId;
+    if(state.sharedSessions.find(session=>session.sessionId===sessionId)?.projectId)continue;
     if(sessionId)linked.add(sessionId);entries.push({id:item.id,source:'phone',sessionId,title:item.title||'新对话',at:item.updatedAt||item.createdAt,
       running:!!item.running||state.busy&&state.conversationId===item.id||!!state.sharedSessions.find(s=>s.sessionId===sessionId)?.running})}
   for(const item of state.sharedSessions){if(item.archived===true||linked.has(item.sessionId)||state.conversations.some(c=>c.id===item.conversationId))continue;
     entries.push({id:item.sessionId,sessionId:item.sessionId,source:'host',record:item,title:item.title||'新对话',at:item.updatedAt||item.createdAt||item.attachedAt,running:!!item.running})}
   entries.sort((a,b)=>WeftUiCore.compareSessionGroups(a.record||{},b.record||{})||(Date.parse(b.at)||0)-(Date.parse(a.at)||0));let lastGroup='';
-  for(const item of entries.filter(item=>item.title.toLocaleLowerCase().includes(filter))){
+  for(const item of entries.filter(item=>!item.record?.projectId && item.title.toLocaleLowerCase().includes(filter))){
     const date=new Date(item.at),today=new Date(),group=Number.isFinite(date.getTime())?
       date.toDateString()===today.toDateString()?'今天':date.toDateString()===new Date(today.getFullYear(),today.getMonth(),today.getDate()-1).toDateString()?'昨天':'更早':'会话';
     const section=item.record?.pinned?'置顶':(uiCore.state.sessionGroups||[]).find(g=>g.id===item.record?.groupId)?.name||'未分组';
@@ -421,7 +485,8 @@ function renderHome(){const target=$('home-conversations'),top=target.scrollTop;
     button.addEventListener('click',()=>{if(longPressed){longPressed=false;return}item.source==='phone'?selectConversation(item.id):selectSharedSession(item.id)});
     const row=el('div','session-row'+(item.record?.unread?' is-unread':''));row.append(button);
     if(item.source==='host'){const more=el('button','session-more');const icon=el('img');icon.src='icons/more.svg';icon.alt='';more.append(icon);more.type='button';more.setAttribute('aria-label',`更多操作 ${item.title}`);more.addEventListener('click',()=>mobileSessionMenu(item.record));row.append(more)}target.append(row)}
-  if(!lastGroup){const empty=el('div','home-empty');empty.append(el('h2','',filter?'没有匹配的会话':state.loggedIn?'开始第一段对话':'欢迎使用 WeftMate'),
+  renderMobileProjects(target,filter);
+  if(!lastGroup && !(uiCore.state.projects||[]).length){const empty=el('div','home-empty');empty.append(el('h2','',filter?'没有匹配的会话':state.loggedIn?'开始第一段对话':'欢迎使用 WeftMate'),
     el('p','',filter?'换个关键词试试。':state.loggedIn?'点右上角，聊聊你想做的事。':'登录后，在这里接着聊。'));
     if(!state.loggedIn){const login=el('button','primary','登录或连接');login.addEventListener('click',()=>page('connect'));empty.append(login)}target.append(empty)}target.scrollTop=top;
 }

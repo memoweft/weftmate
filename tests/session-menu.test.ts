@@ -51,7 +51,7 @@ test('all metadata, groups and forks deny another account; fork leaves source an
 test('menu names, shortcuts and archived taxonomy are shared across renderers',()=>{
   const context:any={WeftUiCore:{factories:{}}};for(const file of ['sessions.js','settings-registry.js'])runInNewContext(readFileSync(new URL('../src/ui-core/'+file,import.meta.url),'utf8'),context);
   const core=context.WeftUiCore;
-  assert.deepEqual(Array.from(core.sessionMenuItems({}), (item:any)=>item.id),['pin','unread','rename','fork','group','archive','delete']);
+  assert.deepEqual(Array.from(core.sessionMenuItems({}), (item:any)=>item.id),['pin','unread','rename','fork','project','group','archive','delete']);
   for(const [key,action] of Object.entries({P:'pin',U:'unread',R:'rename',F:'fork',A:'archive',D:'delete'})){assert.equal(core.sessionMenuKey(key),action);assert.equal(core.sessionMenuKey(key.toLowerCase()),action);}
   assert.equal(core.sessionMenuKey('x'),undefined);assert.equal(core.sessionMenuItems({unread:true})[1].label,'标记为已读');
   assert.equal(core.settingsRegistry().list({query:'已归档'})[0].id,'archived');
