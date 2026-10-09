@@ -1,0 +1,40 @@
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	﻿2026-10-09T07:45:45.9186466Z ##[group]Run uv run mypy --strict src tests
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:45.9186965Z ^[[36;1muv run mypy --strict src tests^[[0m
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:45.9223208Z shell: /usr/bin/bash -e {0}
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:45.9223563Z env:
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:45.9223952Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:45.9224398Z   UV_PYTHON: 3.11
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:45.9224935Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:45.9225345Z ##[endgroup]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:53.0741334Z tests/test_recent_evidence.py:34: error: Argument "subject_id" to "QueryService" has incompatible type "str | None"; expected "str"  [arg-type]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:53.0745521Z tests/test_recent_evidence.py:35: error: Unused "type: ignore[return-value]" comment  [unused-ignore]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:53.0746913Z tests/test_recent_evidence.py:35: error: Returning Any from function declared to return "list[Any]"  [no-any-return]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:53.0748470Z tests/test_recent_evidence.py:35: note: Error code "no-any-return" not covered by "type: ignore[index, return-value]" comment
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:53.0750048Z tests/test_recent_evidence.py:50: error: Argument 1 to "WorldJobWorker" has incompatible type "Path | None"; expected "Path"  [arg-type]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:53.0751505Z tests/test_recent_evidence.py:53: error: Value of type "object" is not indexable  [index]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:53.0752798Z tests/test_recent_evidence.py:53: error: Argument 1 to "QueryService" has incompatible type "Path | None"; expected "Path | str"  [arg-type]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:53.0754509Z tests/test_recent_evidence.py:53: error: Argument "subject_id" to "QueryService" has incompatible type "str | None"; expected "str"  [arg-type]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:53.0756639Z tests/test_recent_evidence.py:64: error: Argument 1 to "connect" has incompatible type "Path | None"; expected "str | bytes | PathLike[str] | PathLike[bytes]"  [arg-type]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:53.0758492Z tests/test_recent_evidence.py:79: error: Argument 1 to "connect" has incompatible type "Path | None"; expected "str | bytes | PathLike[str] | PathLike[bytes]"  [arg-type]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:53.0760486Z tests/test_recent_evidence.py:82: error: Argument "subject_id" to "erase_conversation_context" has incompatible type "str | None"; expected "str"  [arg-type]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:53.0762282Z tests/test_recent_evidence.py:92: error: Argument 1 to "connect" has incompatible type "Path | None"; expected "str | bytes | PathLike[str] | PathLike[bytes]"  [arg-type]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:53.0764175Z tests/test_recent_evidence.py:129: error: Argument 1 to "CommandService" has incompatible type "Path | None"; expected "Path | str"  [arg-type]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:53.0766001Z tests/test_recent_evidence.py:129: error: Argument "subject_id" to "CommandService" has incompatible type "str | None"; expected "str"  [arg-type]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:53.0767726Z tests/test_recent_evidence.py:129: error: Argument "host_id" to "CommandService" has incompatible type "str | None"; expected "str"  [arg-type]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:53.0769181Z tests/test_recent_evidence.py:137: error: Item "None" of "Path | None" has no attribute "read_bytes"  [union-attr]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:53.0770758Z tests/test_recent_evidence.py:150: error: Argument 1 to "connect" has incompatible type "Path | None"; expected "str | bytes | PathLike[str] | PathLike[bytes]"  [arg-type]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:53.0772673Z tests/test_recent_evidence.py:162: error: Argument 1 to "connect" has incompatible type "Path | None"; expected "str | bytes | PathLike[str] | PathLike[bytes]"  [arg-type]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:53.0774517Z tests/test_recent_evidence.py:171: error: Argument 1 to "connect" has incompatible type "Path | None"; expected "str | bytes | PathLike[str] | PathLike[bytes]"  [arg-type]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:53.0776603Z tests/test_recent_evidence.py:175: error: Argument 1 to "QueryService" has incompatible type "Path | None"; expected "Path | str"  [arg-type]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:53.0778460Z tests/test_recent_evidence.py:175: error: Argument "subject_id" to "QueryService" has incompatible type "str | None"; expected "str"  [arg-type]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:53.6488236Z Found 20 errors in 1 file (checked 216 source files)
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-09T07:45:53.6603892Z ##[error]Process completed with exit code 1.
+CI Gate	Verify required jobs	﻿2026-10-09T07:46:55.6989615Z ##[group]Run test "success" = "success"
+CI Gate	Verify required jobs	2026-10-09T07:46:55.6990114Z ^[[36;1mtest "success" = "success"^[[0m
+CI Gate	Verify required jobs	2026-10-09T07:46:55.6990589Z ^[[36;1mtest "success" = "success"^[[0m
+CI Gate	Verify required jobs	2026-10-09T07:46:55.6991042Z ^[[36;1mtest "success" = "success"^[[0m
+CI Gate	Verify required jobs	2026-10-09T07:46:55.6991443Z ^[[36;1mtest "success" = "success"^[[0m
+CI Gate	Verify required jobs	2026-10-09T07:46:55.6991833Z ^[[36;1mtest "failure" = "success"^[[0m
+CI Gate	Verify required jobs	2026-10-09T07:46:55.7633960Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+CI Gate	Verify required jobs	2026-10-09T07:46:55.7634774Z ##[endgroup]
+CI Gate	Verify required jobs	2026-10-09T07:46:55.7810909Z ##[error]Process completed with exit code 1.

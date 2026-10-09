@@ -126,7 +126,7 @@ jobs:
         with:
           repository: memoweft/memoweft
           # MF-1 recent-evidence candidate; replace after Claude squash.
-          ref: ef1965d13bfee50d7b8000f5288bc67bc6cc8bfc
+          ref: 234f2a50d8f646ae699e6a7791421d8216ad969e
           path: memoweft-core
           persist-credentials: false
       - name: Setup Node
