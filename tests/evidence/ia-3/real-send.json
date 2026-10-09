@@ -10,19 +10,19 @@
     "native-receipt"
   ],
   "command": {
-    "commandId": "cmd-8e0dc052-40b7-4e40-8342-44325e1110f3",
-    "requestId": "attachment-send-47e727d1-0cb5-4361-928c-c78a24a1d60c",
-    "chatId": "chat-0343147a-e2ae-4015-8cca-9499a4a8b315",
-    "sessionId": "session-8ba5e94e-96c1-404e-88e0-17a66dbd85b7",
-    "receiptId": "98f5f9fd-b3ed-47c4-8f18-7892e119a353"
+    "commandId": "cmd-59851100-16f9-4faf-8dd3-e057136373eb",
+    "requestId": "attachment-send-87bd828d-6402-48a2-98a0-ecb9d77b2a12",
+    "chatId": "chat-fb0639be-8cd6-4dba-9399-71d521ea310a",
+    "sessionId": "session-37457c7e-289c-4fed-acc5-010f729d5655",
+    "receiptId": "02affd52-bbb0-4fbf-9aed-3a18c3937a1e"
   },
   "usage": [
     {
-      "completion_tokens": 46,
-      "prompt_tokens": 2281,
-      "total_tokens": 2327,
+      "completion_tokens": 6,
+      "prompt_tokens": 2284,
+      "total_tokens": 2290,
       "completion_tokens_details": {
-        "reasoning_tokens": 39
+        "reasoning_tokens": 0
       },
       "prompt_tokens_details": {
         "cached_tokens": 0
