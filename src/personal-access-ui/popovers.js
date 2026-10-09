@@ -125,7 +125,7 @@
     list.id = menu.id + '-list'; trigger.setAttribute('aria-controls', list.id);
     select.after(trigger, menu); select.hidden = true; select.tabIndex = -1; select.setAttribute('aria-hidden', 'true');
     settingsSelects.set(select, trigger);
-    const sync = () => { text.textContent = select.selectedOptions[0]?.textContent || label; trigger.disabled = select.disabled; trigger.hidden = select.dataset.controlHidden === 'true' || select.classList.contains('settings-category-picker') && innerWidth >= 720; };
+    const sync = () => { menu.dataset.presentation = innerWidth <= 600 ? 'sheet' : 'popover'; text.textContent = select.selectedOptions[0]?.textContent || label; trigger.disabled = select.disabled; trigger.hidden = select.dataset.controlHidden === 'true' || select.classList.contains('settings-category-picker') && innerWidth >= 720; };
     const close = (focus = false) => { menu.hidden = true; trigger.setAttribute('aria-expanded', 'false'); if (menu.matches(':popover-open')) menu.hidePopover(); if (focus) trigger.focus({ preventScroll: true }); };
     let search;
     const options = () => [...list.querySelectorAll('[role=option]')];
