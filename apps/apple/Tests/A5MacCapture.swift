@@ -28,8 +28,9 @@ import Security
         let scene = CommandLine.arguments[3], theme = CommandLine.arguments[4], host = CommandLine.arguments[5], cloud = CommandLine.arguments[6]
         let service = "com.weftmate.apple.ui-tests." + name
         // Keep synthetic local state inside the signed app's sandbox container.
+        let bundleID = scene == "a12-login" ? "com.weftmate.apple.a12loginitem" : "com.weftmate.apple.weftmatemac"
         let root = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Containers/com.weftmate.apple.weftmatemac/Data/Library/Application Support/WeftMate/UITests", isDirectory: true)
+            .appendingPathComponent("Library/Containers/" + bundleID + "/Data/Library/Application Support/WeftMate/UITests", isDirectory: true)
             .appendingPathComponent(name, isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         let app = Process(); app.executableURL = executable
@@ -62,7 +63,7 @@ import Security
                 let line = String(decoding: pending[..<newline], as: UTF8.self)
                 pending.removeSubrange(...newline)
                 if line.hasPrefix("A11_STEP:") { FileHandle.standardOutput.write(Data((line + "\n").utf8)) }
-                if ["a10-all", "a11-all", "a11-remote"].contains(scene), line.hasPrefix("A10_CAPTURE:") {
+                if ["a10-all", "a11-all", "a11-remote", "a12-login"].contains(scene), line.hasPrefix("A10_CAPTURE:") {
                     let parts = line.split(separator: ":", maxSplits: 2)
                     guard parts.count == 3, let png = Data(base64Encoded: String(parts[2])) else { throw CocoaError(.fileReadCorruptFile) }
                     try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
@@ -72,7 +73,7 @@ import Security
             }
         }
         app.waitUntilExit()
-        if ["a10-all", "a11-all", "a11-remote"].contains(scene), let text = String(data: bytes, encoding: .utf8), app.terminationStatus == 0 {
+        if ["a10-all", "a11-all", "a11-remote", "a12-login"].contains(scene), let text = String(data: bytes, encoding: .utf8), app.terminationStatus == 0 {
             try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
             for line in text.split(separator: "\n") where line.hasPrefix("A10_CAPTURE:") {
                 let parts = line.split(separator: ":", maxSplits: 2)

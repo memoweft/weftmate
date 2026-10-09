@@ -22,7 +22,9 @@ final class PhoneWatchTimelineBridge: NSObject, WCSessionDelegate, @unchecked Se
             guard let model = self?.model else { reply.call(["error": "手机尚未打开 WeftMate"]); return }
             if action == "approval", let sessionID, let approvalID, let outcome {
                 let success = await model.respondFromWatch(sessionID: sessionID, approvalID: approvalID, outcome: outcome)
-                reply.call(success ? ["registered": true] : ["error": "决定待核对，请在手机中查看"])
+                var result: [String: Any] = success ? ["registered": true] : ["error": "决定待核对，请在手机中查看"]
+                if let bytes = await model.watchSnapshotBytes() { result["snapshot"] = bytes }
+                reply.call(result)
             } else { reply.call(await model.watchSnapshotBytes().map { ["snapshot": $0] } ?? ["error": "当前没有可读取的任务"]) }
         }
     }

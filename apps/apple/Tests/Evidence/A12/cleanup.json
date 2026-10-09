@@ -1,0 +1,14 @@
+{
+  "generatedAt": "2026-10-09T15:42:12.404719+00:00",
+  "status": "已清理",
+  "simctlShutdownAll": true,
+  "bootedSimulatorCount": 0,
+  "createdDeviceCount": 2,
+  "createdDevicesDeleted": true,
+  "createdPairDeleted": true,
+  "existingPairsPreserved": true,
+  "isolatedMacLoginItemState": "notRegistered",
+  "testAppsAndHostsRemaining": 0,
+  "isolatedHostDataDirectoriesRemaining": 0,
+  "dailyDataTouched": false
+}

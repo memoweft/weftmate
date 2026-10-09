@@ -1306,6 +1306,11 @@ final class AppleAppModel: ObservableObject {
         }
         if permitsSyntheticLoopback && fixtureArguments.contains("--a5-local-server") {
             await authenticate(username: "a5-tester", password: "synthetic-test-only", displayName: nil, register: false)
+            if let index = fixtureArguments.firstIndex(of: "--a12-live-session"), index + 1 < fixtureArguments.count,
+               let conversation = conversations.first(where: { $0.sessionId == fixtureArguments[index + 1] }) {
+                await open(conversation)
+                openedSessionID = conversation.id
+            }
             return
         }
         #endif
@@ -1600,6 +1605,7 @@ final class AppleAppModel: ObservableObject {
     }
     #if os(iOS)
     private lazy var watchBridge = PhoneWatchTimelineBridge(model: self)
+    private var watchDecisionsInFlight = Set<String>()
     func watchSnapshotBytes() async -> Data? {
         let actionEpoch = epoch
         guard let session, session.verification == .verified, selectedConversation.map({ tasksAvailable($0) }) != false else { return nil }
@@ -1616,22 +1622,36 @@ final class AppleAppModel: ObservableObject {
             guard actionEpoch == epoch else { return nil }
             let entries = TimelineProjection.entries(page.events)
             let current = entries.last(where: { !$0.steps.isEmpty })
-            let completed = page.events.filter { $0.type == "task.ended" }.compactMap { $0.data["taskId"]?.string }
+            let completed = WatchTimelineProjection.successfulTaskIDs(in: page.events)
             let running = TimelineProjection.taskRunning(page.events, fallback: currentSession.running)
             let ending = page.events.last(where: { $0.type == "task.ended" || $0.type == "turn.ended" })?.data["reason"]?.string
             let endLabel = ending == "completed" ? "已完成" : ending == "aborted" ? "已停止" : ending == "error" || ending == "blocked" ? "需要处理" : "结果待核对"
             let account = try LocalAccountScope(server: session.server, ownerId: session.account.ownerId)
+            var watchApprovals: [WatchApproval] = []
+            for approval in approvals.approvals.filter(\.canDecide) {
+                var summary = approval.actionHeadline
+                if let event = page.events.first(where: { $0.data["callId"]?.string == approval.callId && $0.data["detailRef"]?["seq"]?.int != nil }),
+                   let seq = event.data["detailRef"]?["seq"]?.int,
+                   let detail = try? await client.timelineDetail(sessionID: sessionID, seq: seq) {
+                    summary = "要" + ToolProgressSummary.readable(tool: approval.toolName, raw: detail.text)
+                }
+                watchApprovals.append(WatchApproval(id: approval.id, summary: summary))
+            }
+            guard actionEpoch == epoch else { return nil }
             let snapshot = WatchTimelineSnapshot(accountKey: account.cacheKey, sessionID: sessionID,
                 taskID: current?.steps.last?.taskID, progress: running ? current?.steps.last?.summary ?? "正在处理" : ending == nil && current == nil ? "等待新任务" : endLabel,
                 running: running,
                 assistantSummary: "",
-                approvals: approvals.approvals.filter(\.canDecide).map { WatchApproval(id: $0.id, summary: $0.actionHeadline) }, completedTaskIDs: completed)
+                approvals: watchApprovals, completedTaskIDs: completed)
             watchBridge.publish(snapshot); return try JSONEncoder().encode(snapshot)
         } catch { return nil }
     }
     func respondFromWatch(sessionID: String, approvalID: String, outcome: String) async -> Bool {
         let actionEpoch = epoch
-        guard let value = ApprovalDecisionOutcome(rawValue: outcome) else { return false }
+        guard session?.verification == .verified, let value = ApprovalDecisionOutcome(rawValue: outcome),
+              !watchDecisionsInFlight.contains(approvalID) else { return false }
+        watchDecisionsInFlight.insert(approvalID)
+        defer { watchDecisionsInFlight.remove(approvalID) }
         let responder = TaskInteractionModel(client: client, account: session, epoch: epoch, stateDirectory: assistantStateDirectory,
             currentEpoch: { [weak self] in self?.accountEpoch ?? UUID() }, currentSession: { [weak self] in self?.session })
         await responder.refreshTimeline(sessionID: sessionID)
@@ -1644,7 +1664,7 @@ final class AppleAppModel: ObservableObject {
         else { await responder.decide(approval, outcome: value, decisionScope: value == .allowedOnce ? .once : nil) }
         guard actionEpoch == epoch else { return false }
         _ = await watchSnapshotBytes()
-        return responder.errors[key] == nil && responder.hasSaved(key)
+        return responder.errors[key] == nil && responder.isRegistered(key)
     }
     #endif
 
