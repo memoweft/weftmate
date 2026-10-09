@@ -18,7 +18,7 @@ for (const [name, scope] of [['MIMO_API_KEY', 'Machine'], ['WEFTMATE_LAN_MODEL_K
     `[Console]::Out.Write([Environment]::GetEnvironmentVariable('${name}','${scope}'))`], { windowsHide: true })).stdout.trim();
   assert.ok(value, `${name} absent`); privateValues.push(value);
 }
-privateValues.push(new URL(privateValues[2]).host);
+privateValues.push(new URL(privateValues[2]).host, new URL(privateValues[2]).hostname);
 const redact = value => privateValues.reduce((text, value) => text.replaceAll(value, '[private]'), String(value));
 const save = (file, data) => writeFileSync(file, redact(JSON.stringify(data, null, 2)) + '\n');
 while (true) {
