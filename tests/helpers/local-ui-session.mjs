@@ -13,13 +13,5 @@ export async function localUiSession(page, credentials, deviceName = 'Synthetic 
     return response.status;
   }, { ...credentials, deviceName });
   assert.equal(result, 200); await page.reload();
-  // Legacy feature scenarios still exercise their seeded native side conversation.
-  // IA-3 explicitly requests the product's new main-chat landing surface.
-  if (!mainChat) {
-    const sessions = await page.evaluate(async () => (await (await fetch('/personal/v1/sessions')).json()).sessions || []);
-    if (sessions.length) {
-      const title = sessions.find(row => !row.archived)?.title;
-      if (title) await page.getByRole('button', { name: new RegExp('^' + title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) }).first().click();
-    }
-  }
+  // Hosts without IA capabilities use their existing native-session landing flow.
 }
