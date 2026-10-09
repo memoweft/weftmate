@@ -108,7 +108,7 @@ test('D29 real browser: in-app login → device approval → remembered session 
       await settings.click();
     }
     const picker = page.getByRole('combobox', { name: '设置分类', exact: true });
-    if (await picker.isVisible()) await picker.selectOption('devices');
+    if (await picker.isVisible()) { await picker.click(); await page.getByRole('option', { name: '设置 · 设备', exact: true }).click(); }
     else await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '设备', exact: true }).click();
     await page.getByRole('heading', { name: '设备', exact: true, level: 1 }).waitFor();
   }
