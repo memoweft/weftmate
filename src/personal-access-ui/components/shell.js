@@ -324,7 +324,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         ui.byId('rail-account').append(ui.element('kbd', 'account-menu-key', 'Ctrl+,'));
         ui.byId('rail-account').setAttribute('aria-label', '设置');
         const add = (label, icon, run) => { const button = ui.element('button', 'rail-link'); button.type = 'button';
-            button.append(WeftIcons.create(icon, 16), ui.element('span', '', label));
+            button.append(globalThis.WeftIcons.create(icon, 16), ui.element('span', '', label));
             button.onclick = () => { closeAccountMenu(); run(); }; menu.append(button); return button; };
         add('用量详情', 'chart', () => ui.openSettings('usage'));
         add('帮助与反馈', 'info', () => ui.openSettings('about'));
