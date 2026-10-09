@@ -1,0 +1,11 @@
+{
+  "purpose": "Compatibility smoke after merging IA-2a and PF-2; supplements and does not replace the full 30-minute clean baseline.",
+  "commit": "47694578",
+  "elapsedMs": 148421,
+  "cycles": 5,
+  "passed": 5,
+  "failed": 0,
+  "p95Ms": 901,
+  "maxMs": 901,
+  "cleaned": true
+}
