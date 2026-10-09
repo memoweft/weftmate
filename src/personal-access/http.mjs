@@ -1095,10 +1095,18 @@ export function createHttpHandler(context) {
           throw failure('INVALID_REQUEST');
         const archived = url.searchParams.get('archived') ?? 'false';
         const sessions = [];
+        let descriptions;
+        if (typeof context.backend.describeSessions === 'function') {
+          try { descriptions = new Map((await context.callBackend(() => context.backend.describeSessions(Object.keys(state.sessions), ownerId)))
+            .map(item => [item.sessionId, item])); }
+          catch { /* Preserve the existing individual unavailable-session projection. */ }
+        }
         for (const sessionId of Object.keys(state.sessions).sort()) {
           if (archived !== 'all' && (state.sessions[sessionId].archived === true) !== (archived === 'true')) continue;
           try {
-            const described = await context.callBackend(() => context.backend.describeSession(sessionId, ownerId));
+            const described = descriptions ? descriptions.get(sessionId)
+              : await context.callBackend(() => context.backend.describeSession(sessionId, ownerId));
+            if (!described) throw failure('SESSION_UNAVAILABLE');
             if (described?.sessionId === sessionId) sessions.push({
               sessionId,
               archived: state.sessions[sessionId].archived === true,

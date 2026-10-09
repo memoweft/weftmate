@@ -5,6 +5,22 @@ import { createPersonalAccessBackend } from '../src/personal-access-backend.mjs'
 
 const ok = (value: unknown) => ({ result: { ok: true, value } })
 
+test('FX-10 describing many requested sessions uses one native list and preserves individual descriptor facts', async () => {
+  let scans=0
+  const items=Array.from({length:80},(_,i)=>({sessionId:`session-${i}`,title:`Synthetic ${i}`,running:i===3,
+    agentPreset:i===79?'standard':'personal-remote',contextUsage:{usedTokens:i,contextWindow:10000}}))
+  const backend=createPersonalAccessBackend({currentOrigin:()=> 'http://127.0.0.1:1',
+    listSessions:async()=>{scans++;return {items}},resolveSession:async()=>({profile:{id:'model-synthetic'}}),
+    processingStatus:async()=>({phase:'reasoning'})} as any)
+  const ids=items.slice(0,79).map(row=>row.sessionId)
+  const bulk=await backend.describeSessions([...ids,'missing-session'])
+  assert.equal(scans,1)
+  assert.equal(bulk.length,79)
+  assert.ok(!bulk.some(row=>row.sessionId==='session-79'))
+  assert.deepEqual(bulk.find(row=>row.sessionId==='session-3'),await backend.describeSession('session-3'))
+  assert.deepEqual(bulk.find(row=>row.sessionId==='session-4'),await backend.describeSession('session-4'))
+})
+
 test('durable history pagination keeps sparse DSH seq and excludes tools, injected context, paths and secrets', async () => {
   const entries = [
     { event: { seq: 2, type: 'user/message', data: { source: { kind: 'user' }, message: { content: [{ type: 'text', text: 'hello' }] } } } },
