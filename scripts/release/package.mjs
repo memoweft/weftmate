@@ -10,7 +10,7 @@ import { publishMobileUi } from '../../src/personal-access/mobile-ui-release.mjs
 /** A full immutable version and a changed-file tree; clients also diff against their own hashes. */
 export async function packageRelease({ layer, version, outputDir, sourceDir, channel = 'stable',
   minAppVersion = '0.1.0', minHostVersion = '0.1.0', minNativeVersion = '0.0.0',
-  minNativeVersionCode = 22, bridgeVersion = 1, previousManifest = null, privateKey = null,
+  minNativeVersionCode = 23, bridgeVersion = 1, previousManifest = null, privateKey = null,
   resources = null }) {
   privateKey ||= await signingKeyFromEnvironment();
   const publicKey = createPublicKey(privateKey).export({ type: 'spki', format: 'pem' });

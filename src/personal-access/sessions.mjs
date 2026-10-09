@@ -4,6 +4,7 @@ import { uniqueSessionOwner } from './store.mjs';
 import { validConversationContext } from '../personal-conversations/context.mjs';
 import { rm } from 'node:fs/promises';
 import path from 'node:path';
+import { createSessionMetadata } from './session-metadata.mjs';
 
 export function createSessionOperations(context) {
   const deletions = new Set();
@@ -153,6 +154,7 @@ export function createSessionOperations(context) {
   }
 
   return {
+    ...createSessionMetadata(context),
     async archiveSession(ownerId, sessionId, archived) {
       id(sessionId);
       await context.serial(() => context.mutate(ownerId, next => {

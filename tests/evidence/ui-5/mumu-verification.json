@@ -1,0 +1,12 @@
+{
+  "surface": "mumu",
+  "realHost": true,
+  "realNativeBridge": true,
+  "longPress": true,
+  "sameMenu": true,
+  "unread": true,
+  "groups": true,
+  "groupOrder": true,
+  "archiveRestore": true,
+  "errors": []
+}

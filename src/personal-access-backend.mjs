@@ -3,7 +3,7 @@ import { discoverOpenAICompatibleModels, openAICompatibleEndpoint } from './open
 import { modelTierFor } from './model-tier.ts'
 import { modelRouteFingerprint } from './model-route-fingerprint.mjs'
 import path from 'node:path'
-import { mkdir, rm } from 'node:fs/promises'
+import { mkdir, rm, cp, access } from 'node:fs/promises'
 import { sessionWorkspace } from './personal-access/session-workspace.mjs'
 const idPattern = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/
 const fail = (code) => { const error = new Error(code); error.code = code; throw error }
@@ -175,6 +175,33 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
             ...(profile.reasoningEffort && profile.reasoningEffort !== 'off' ? { reasoningEffort: profile.reasoningEffort } : {}) }) })
         return { sessionId }
       })
+    },
+    async renameSession({ sessionId, ownerId, title }) {
+      await requireSession(sessionId, ownerId)
+      return gateway(`/sessions/${encodeURIComponent(sessionId)}/rename`, { method: 'POST', body: JSON.stringify({ title }) })
+    },
+    async forkSession({ sessionId, ownerId, childId, modelProfileId, title: sourceTitle }) {
+      requireRuntime()
+      const source = await requireSession(sessionId, ownerId)
+      const profile = modelProfile(modelProfileId ?? source.profile.id)
+      requireModelAllowed(ownerId, profile.id, 'new')
+      const cwd = sessionWorkspace(sessionWorkspaceRoot, ownerId ?? 'fixture', childId)
+      const sourceCwd = sessionWorkspace(sessionWorkspaceRoot, ownerId ?? 'fixture', sessionId)
+      await mkdir(cwd, { recursive: true, mode: 0o700 })
+      try {
+        try { await access(sourceCwd); await cp(sourceCwd, cwd, { recursive: true }) } catch (error) { if (error.code !== 'ENOENT') throw error }
+        const result = await gateway(`/sessions/${encodeURIComponent(sessionId)}/fork`, { method: 'POST', body: JSON.stringify({ sessionId: childId, cwd }) })
+        if (result.sessionId !== childId) fail('SESSION_UNAVAILABLE')
+        bindSession(childId, profile.id)
+        const route = routeForProfile(profile.id)
+        await gateway(`/sessions/${encodeURIComponent(childId)}/models`, { method: 'PUT', body: JSON.stringify({ provider: route.provider, model: profile.model }) })
+        const title = `${(sourceTitle || (await this.describeSession(sessionId)).title).slice(0, 252)}（分叉）`
+        const accepted = await gateway(`/sessions/${encodeURIComponent(childId)}/rename`, { method: 'POST', body: JSON.stringify({ title }) })
+        return { ...result, title: accepted.title, modelProfileId: profile.id }
+      } catch (error) {
+        await gateway(`/sessions/${encodeURIComponent(childId)}`, { method: 'DELETE', body: '{}' }).catch(() => {})
+        await rm(cwd, { recursive: true, force: true }); throw error
+      }
     },
     async cleanupMemoryCopies({ sessionId, sourceTexts = [], deleteConversationSnippets = false }) {
       requireRuntime()
