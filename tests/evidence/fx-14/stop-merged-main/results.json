@@ -1,0 +1,130 @@
+{
+  "runnerPid": 41292,
+  "startedAt": "2026-10-09T21:50:42.600Z",
+  "realMain": true,
+  "realDsh": true,
+  "syntheticModel": true,
+  "checks": [
+    {
+      "name": "stability-cycle-1",
+      "status": "failed",
+      "durationMs": 12004,
+      "error": "locator.click: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '新对话 Ctrl N', exact: true })\u001b[22m\n",
+      "screenshot": "desktop/failure-0.png"
+    },
+    {
+      "name": "stability-cycle-2",
+      "status": "failed",
+      "durationMs": 12004,
+      "error": "locator.click: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '新对话 Ctrl N', exact: true })\u001b[22m\n",
+      "screenshot": "desktop/failure-1.png"
+    },
+    {
+      "name": "stability-cycle-3",
+      "status": "failed",
+      "durationMs": 12002,
+      "error": "locator.click: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '新对话 Ctrl N', exact: true })\u001b[22m\n",
+      "screenshot": "desktop/failure-2.png"
+    },
+    {
+      "name": "stability-cycle-4",
+      "status": "failed",
+      "durationMs": 12002,
+      "error": "locator.click: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '新对话 Ctrl N', exact: true })\u001b[22m\n",
+      "screenshot": "desktop/failure-3.png"
+    },
+    {
+      "name": "stability-cycle-5",
+      "status": "failed",
+      "durationMs": 12005,
+      "error": "locator.click: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '新对话 Ctrl N', exact: true })\u001b[22m\n",
+      "screenshot": "desktop/failure-4.png"
+    }
+  ],
+  "errors": [],
+  "requestCount": 449,
+  "stability": {
+    "elapsedMs": 120322,
+    "p99Ms": 21.544959,
+    "maxMs": 83.689471,
+    "storeWatchEvents": 2,
+    "exactStoreWrites": 0,
+    "samples": [
+      {
+        "at": 1791582648879,
+        "rss": 169660416,
+        "heapUsed": 24629204
+      },
+      {
+        "at": 1791582658879,
+        "rss": 172732416,
+        "heapUsed": 22010584
+      },
+      {
+        "at": 1791582668880,
+        "rss": 174301184,
+        "heapUsed": 22960760
+      },
+      {
+        "at": 1791582678880,
+        "rss": 158998528,
+        "heapUsed": 21017760
+      },
+      {
+        "at": 1791582688882,
+        "rss": 160116736,
+        "heapUsed": 21385920
+      },
+      {
+        "at": 1791582698882,
+        "rss": 160444416,
+        "heapUsed": 21886016
+      },
+      {
+        "at": 1791582708882,
+        "rss": 164478976,
+        "heapUsed": 21203544
+      },
+      {
+        "at": 1791582718883,
+        "rss": 156594176,
+        "heapUsed": 21464796
+      },
+      {
+        "at": 1791582728884,
+        "rss": 157327360,
+        "heapUsed": 21253800
+      },
+      {
+        "at": 1791582738884,
+        "rss": 158150656,
+        "heapUsed": 21750912
+      },
+      {
+        "at": 1791582748885,
+        "rss": 158851072,
+        "heapUsed": 21940976
+      },
+      {
+        "at": 1791582758885,
+        "rss": 161492992,
+        "heapUsed": 22443208
+      },
+      {
+        "at": 1791582768885,
+        "rss": 161316864,
+        "heapUsed": 23243956
+      }
+    ]
+  },
+  "logScan": {
+    "files": 1,
+    "bodyHits": 0,
+    "keyHits": 0,
+    "bytes": 464
+  },
+  "modelCalls": 0,
+  "finishedAt": "2026-10-09T21:52:49.203Z",
+  "cleaned": true,
+  "root": "removed isolated FX14 profile"
+}

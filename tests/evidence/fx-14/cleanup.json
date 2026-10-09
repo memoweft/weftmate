@@ -1,0 +1,17 @@
+{
+  "explicitlyTerminatedProcesses": 11,
+  "cancelledOwnedMotionProcessTree": 9,
+  "ownedIdleGradleAndKotlinDaemons": 2,
+  "remainingOwnedWindowsNodeElectronPythonWslProcesses": 0,
+  "mumuTestApplicationUninstalled": true,
+  "mumuReverseAndForwardRemoved": true,
+  "mumuVirtualMachineShutDown": true,
+  "macOwnProcessesExited": true,
+  "macTemporaryWorktreesRemoved": 2,
+  "macFixtureDirectoriesRemoved": 19,
+  "otherAgentsMacWindowUntouched": true,
+  "firstSyntheticMigrationDirectoryRetained": true,
+  "retentionReason": "Automatic approval review rejected recursive deletion: blocked by policy; no further reason supplied.",
+  "successfulMigrationDirectoriesRemoved": true,
+  "dailyApplicationDataAndScheduledTaskUntouched": true
+}

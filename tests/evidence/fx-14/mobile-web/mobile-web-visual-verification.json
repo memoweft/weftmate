@@ -1,0 +1,21 @@
+{
+  "startedAt": "2026-10-09T21:28:02.424Z",
+  "realCloudEntrypoint": "services/cloud/src/main.mjs",
+  "realElectronEntrypoint": ".",
+  "sourceCommit": "1a92824ae776432037677cec9a4e0d4f2fb4ce26",
+  "phase": "mobile-web",
+  "baselineHost": false,
+  "steps": [
+    "Real cloud entrypoint health"
+  ],
+  "cloudTransport": "WSL Ubuntu",
+  "passed": false,
+  "error": "electronApplication.evaluate: Resulting promise was garbage collected.",
+  "pageErrors": [],
+  "failedRequests": [],
+  "finishedAt": "2026-10-09T21:28:18.459Z",
+  "surface": "mobile-web",
+  "realNativeBridge": false,
+  "locators": "visible accessible names and roles",
+  "requests": []
+}

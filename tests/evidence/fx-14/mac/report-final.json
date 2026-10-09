@@ -1,0 +1,16 @@
+{
+  "base": "1a92824ae776432037677cec9a4e0d4f2fb4ce26",
+  "isolatedWorktree": true,
+  "canonicalTmp": true,
+  "runs": [
+    {
+      "phase": "before",
+      "exitCode": 0
+    },
+    {
+      "phase": "after",
+      "exitCode": 0
+    }
+  ],
+  "worktreeRemoved": true
+}
