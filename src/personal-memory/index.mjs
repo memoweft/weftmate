@@ -28,13 +28,17 @@ const owner = (value) => {
 export function createPersonalMemoryManager({ root, enabled = false, python, pythonPath,
   baseUrl, model, credential = () => null, rpcFactory = (options) => new MemoWeftRpc(options),
   processingRoute = null, defaultProcessingRoute = null, maxActiveOwners = MAX_ACTIVE_OWNERS,
-  formationWaitMs = 0, cleanupDeletedMemory = null }) {
+  formationWaitMs = 0, cleanupDeletedMemory = null,
+  recallMaxItems = Number(process.env.WEFTMATE_MEMORY_RECALL_MAX_ITEMS ?? 6),
+  recallMaxChars = Number(process.env.WEFTMATE_MEMORY_RECALL_MAX_CHARS ?? 1200) }) {
   if (typeof root !== 'string' || !path.isAbsolute(root) || typeof enabled !== 'boolean' ||
       typeof credential !== 'function' || typeof rpcFactory !== 'function' ||
       processingRoute !== null && typeof processingRoute !== 'function' ||
       defaultProcessingRoute !== null && typeof defaultProcessingRoute !== 'function' ||
       !Number.isInteger(maxActiveOwners) || maxActiveOwners < 1 || maxActiveOwners > 16 ||
       !Number.isInteger(formationWaitMs) || formationWaitMs < 0 ||
+      !Number.isInteger(recallMaxItems) || recallMaxItems < 1 ||
+      !Number.isInteger(recallMaxChars) || recallMaxChars < 1 || recallMaxChars > 16_384 ||
       (enabled && (typeof python !== 'string' || !path.isAbsolute(python) ||
         typeof pythonPath !== 'string' || !path.isAbsolute(pythonPath) ||
         typeof baseUrl !== 'string' || !/^http:\/\/127\.0\.0\.1:\d{1,5}\/(?:[A-Za-z0-9._/-]+\/)?v1$/.test(baseUrl) ||
@@ -520,21 +524,24 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           const rendered = snapshot?.preview?.rendered_recall ?? '';
           const pairs = snapshot?.preview?.selected_item_ids ?? [];
           const claims = rendered.split(/\n(?=记忆(?:（过往）)?：)/);
-          if (!pairs.length && rendered.trim()) fragments.push(rendered.trim());
+          if (!pairs.length && rendered.trim() &&
+              fragments.join('\n\n').length + rendered.length + 2 <= recallMaxChars && !fragments.includes(rendered.trim())) fragments.push(rendered.trim());
           for (const [index, pair] of pairs.entries()) {
             const [kind, id] = Array.isArray(pair) ? pair : [];
             const claim = claims[index]?.trim();
             const summary = claim?.replace(/^记忆(?:（过往）)?：/, '').trim().slice(0, 240);
             if (!['cognition', 'entity', 'relationship', 'event'].includes(kind) ||
-                typeof id !== 'string' || !summary || seen.has(`${kind}:${id}`)) continue;
+                typeof id !== 'string' || !summary || seen.has(`${kind}:${id}`) ||
+                memories.length >= recallMaxItems || fragments.join('\n\n').length + claim.length + 2 > recallMaxChars) continue;
             seen.add(`${kind}:${id}`);
             memories.push({ id, kind, summary }); fragments.push(claim);
           }
         }
         if (typeof interaction?.rendered_context === 'string' && interaction.rendered_context.trim()) {
-          fragments.push(interaction.rendered_context.trim());
+          const remaining = recallMaxChars - fragments.join('\n\n').length - 2;
+          if (interaction.rendered_context.trim().length <= remaining) fragments.push(interaction.rendered_context.trim());
         }
-        const contextText = fragments.join('\n\n').slice(0, 16_384);
+        const contextText = fragments.join('\n\n').slice(0, recallMaxChars);
         return { state: 'ready', contextText, memories, worldRevision: Number.isSafeInteger(world?.world_revision)
           ? world.world_revision : null, sourceCount: memories.length };
       }, sessionId);
