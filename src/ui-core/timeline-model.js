@@ -135,7 +135,7 @@
             const collect = value => typeof value === 'string' ? [value] : Array.isArray(value) ? value.flatMap(collect)
                 : value?.type === 'text' ? [value.text || ''] : value?.content ? collect(value.content) : [];
             const output = collect(data.output).filter(Boolean).join('\n');
-            return Object.keys(args).length || output ? `${Object.keys(args).length ? `参数\n${JSON.stringify(readableParameters(args), null, 2)}` : ''}${output ? `\n\n输出\n${output}` : ''}`.trim() : text;
+            return Object.keys(args).length || output ? `${Object.keys(args).length ? `参数\n${JSON.stringify(readableParameters(args), null, 2)}` : ''}${output ? `\n\n输出\n${output}` : ''}`.trim() : data && typeof data === 'object' && ['arguments','parameters','output'].some(key => key in data) ? '暂无参数与输出' : text;
         } catch { return text; }
     }
     function projectTimeline(events, approvals = []) {
