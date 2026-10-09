@@ -23,6 +23,9 @@ export function createMainChat(context) {
       return context.serial(async () => {
         const auth = authorize(), account = context.accountState(ownerId);
         if (auth.ownerId !== ownerId || auth.deviceId !== deviceId || !context.hostOwner(ownerId)) throw failure('FORBIDDEN', 403);
+        // Match session.create: legacy enrollment does not grant an executable
+        // personal-remote session merely by knowing the logical main identity.
+        if (!['password','cloud'].includes(account.devices[deviceId]?.authKind)) throw failure('SESSION_READ_ONLY', 409);
         if (payload.chatId !== chat(ownerId).chatId) throw failure('CHAT_UNAVAILABLE', 404);
         const previous = Object.values(account.commands).find(row => row.requestId === payload.requestId);
         if (previous) {

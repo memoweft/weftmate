@@ -24,7 +24,13 @@ test('durable main sends bind once, queue during relay, keep attachments, recove
   let service;
   try {
     service = await createPersonalAccessService({ root, port: 0, backend });
-    let { origin, hostId } = await service.start(); const grant = await service.issueSetupGrant();
+    let { origin, hostId } = await service.start();
+    const legacy = await service.enrollDevice({ name: 'legacy bearer' });
+    const legacyMain = await (await fetch(origin + '/personal/v1/chats/main', { headers: { authorization: `Bearer ${legacy.token}` } })).json();
+    const legacySend = await fetch(origin + '/personal/v1/commands', { method: 'POST', headers: { authorization: `Bearer ${legacy.token}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ requestId: 'legacy-send', kind: 'chat.message', targetDeviceId: hostId, chatId: legacyMain.chat.chatId, modelProfileId: 'local', text: 'test' }) });
+    assert.equal(legacySend.status, 409); assert.equal((await legacySend.json()).error.code, 'SESSION_READ_ONLY');
+    const grant = await service.issueSetupGrant();
     const setup = await fetch(`${origin}/personal/v1/auth/setup`, { method: 'POST', headers: { origin, 'content-type': 'application/json' },
       body: JSON.stringify({ grant: grant.grant, username: 'synthetic-relay', password: 'synthetic-password-long', deviceName: 'synthetic' }) });
     const auth = await setup.json(), cookie = setup.headers.get('set-cookie')!.split(';')[0];
