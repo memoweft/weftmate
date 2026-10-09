@@ -86,7 +86,7 @@ async function until(check, timeoutMs = 90000, label = 'setup') {
   throw new Error(`${label} timed out after ${timeoutMs}ms`);
 }
 const git = async directory => (await run('git', ['-C', directory, 'rev-parse', 'HEAD'])).stdout.trim();
-const revision = { weftmate: await git(repository), core: await git(resolve(coreSource, '../..')) };
+const revisions = async () => ({ weftmate: await git(repository), core: await git(resolve(coreSource, '../..')) });
 
 async function baseline(modelName, fourOnly = false) {
   // Short, atomically unique roots also keep Windows SQLite backup destinations
@@ -95,7 +95,7 @@ async function baseline(modelName, fourOnly = false) {
   roots.push(root);
   const profile = join(root, 'profile'), out = join(root, 'eval');
   mkdirSync(profile, { recursive: true }); mkdirSync(out);
-  const report = { schemaVersion: 1, startedAt: new Date().toISOString(), model: modelName, revision, electron: true, steps: [], turns: [] };
+  const report = { schemaVersion: 1, startedAt: new Date().toISOString(), model: modelName, revision: await revisions(), electron: true, steps: [], turns: [] };
   const reportFile = join(evidence, `${remindersOnly ? 'reminders' : fourOnly ? 'four' : 'baseline'}-${modelName}.json`);
   const persist = () => { save(join(root, 'progress.json'), report); save(reportFile, report); };
   reports.push(report);
@@ -344,8 +344,19 @@ async function baseline(modelName, fourOnly = false) {
       writeFileSync(join(out, 'credentials.json'), JSON.stringify({ host: new URL(page.url()).origin, username, password, deviceName: 'EX-2 four', provisioned: true }));
       const scenarioList = (await loadScenarios('eval/scenarios/memory-*.yaml')).filter(s => /^memory-0[1-4]-/.test(s.id));
       report.fourProgress = [];
-      const result = await runEvaluation({ host: new URL(page.url()).origin, out, model: modelName, switchModel: alternate, judgeModel, scenarioList,
-        onScenarioResult: async result => { report.fourProgress.push(result); persist(); console.log(`${result.id}: ${result.status} ${result.durationMs}ms`); } });
+      const result = await runEvaluation({ host: new URL(page.url()).origin, out, model: modelName, switchModel: alternate,
+        judgeModel: judgeModel === 'mimo' ? undefined : judgeModel, scenarioList,
+        onScenarioResult: async result => {
+          if (judgeModel === 'mimo') {
+            result.semanticJudgement = await judgeMemorySemantics({ result, scenario: scenarioList.find(s => s.id === result.id), key });
+            (report.directJudgements ??= []).push(result.semanticJudgement);
+            if (!['passed', 'skipped'].includes(result.semanticJudgement.status)) {
+              result.status = 'failed';
+              result.reason = [result.reason, result.semanticJudgement.reason].filter(Boolean).join('; ');
+            }
+          }
+          report.fourProgress.push(result); persist(); console.log(`${result.id}: ${result.status} ${result.durationMs}ms`);
+        } });
       report.four = fourScenarioSummary(result.results); persist(); return;
     }
     if (settingsOnly) {
