@@ -12,7 +12,7 @@ function describeUse(tool, args, fallback) {
   const description = describeTool(tool, args);
   const file = strings(args.file_path ?? args.filePath ?? args.path)[0]?.split(/[\\/]/).at(-1);
   if (file && /^(读取文件|写入文件|修改文件)$/.test(description)) return `${description}：${short(file)}`;
-  if (description.startsWith('执行工具 ')) {
+  if (description === '调用扩展服务' || description.startsWith('执行工具 ')) {
     if (args.description) return short(args.description);
     if (fallback && fallback !== description && fallback !== tool) return short(fallback);
     return `调用 ${short(tool)}${args.query ? `：${short(args.query)}` : ''}`;
