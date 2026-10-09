@@ -45,6 +45,7 @@ import Security
         if CommandLine.arguments.dropFirst(7).contains("ephemeral") { app.arguments?.append("--a10-ephemeral-credentials") }
         if let driver = CommandLine.arguments.dropFirst(7).first(where: { $0.hasPrefix("a13-driver=") }) { app.arguments?.append(contentsOf: ["--a13-driver", String(driver.dropFirst("a13-driver=".count))]) }
         if let driver = CommandLine.arguments.dropFirst(7).first(where: { $0.hasPrefix("a14-driver=") }) { app.arguments?.append(contentsOf: ["--a14-driver", String(driver.dropFirst("a14-driver=".count))]) }
+        if let driver = CommandLine.arguments.dropFirst(7).first(where: { $0.hasPrefix("a15-driver=") }) { app.arguments?.append(contentsOf: ["--a15-driver", String(driver.dropFirst("a15-driver=".count)), "--a15-synthetic-media"]) }
         let output = Pipe(); app.standardOutput = output; app.standardError = output
         try app.run()
         defer {
@@ -73,7 +74,7 @@ import Security
                     try JSONSerialization.data(withJSONObject: entry, options: [.prettyPrinted, .sortedKeys]).write(to: destination.appendingPathComponent((entry["scene"] as! String) + "-text.json"))
                 }
                 if line.hasPrefix("A14_DEBUG:") || line.hasPrefix("A11_STEP:") || line.hasPrefix("A13_NATIVE:") || line.hasPrefix("A13_RESPONDER:") || line.hasPrefix("A13_KEY_STATE:") { FileHandle.standardOutput.write(Data((line + "\n").utf8)) }
-                if ["a14-all", "a13-all", "a10-all", "a11-all", "a11-remote", "a12-login"].contains(scene), line.hasPrefix("A10_CAPTURE:") {
+                if ["a15-all", "a14-all", "a13-all", "a10-all", "a11-all", "a11-remote", "a12-login"].contains(scene), line.hasPrefix("A10_CAPTURE:") {
                     let parts = line.split(separator: ":", maxSplits: 2)
                     guard parts.count == 3, let png = Data(base64Encoded: String(parts[2])) else { throw CocoaError(.fileReadCorruptFile) }
                     try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
@@ -83,7 +84,7 @@ import Security
             }
         }
         app.waitUntilExit()
-        if ["a14-all", "a13-all", "a10-all", "a11-all", "a11-remote", "a12-login"].contains(scene), let text = String(data: bytes, encoding: .utf8), app.terminationStatus == 0 {
+        if ["a15-all", "a14-all", "a13-all", "a10-all", "a11-all", "a11-remote", "a12-login"].contains(scene), let text = String(data: bytes, encoding: .utf8), app.terminationStatus == 0 {
             try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
             for line in text.split(separator: "\n") where line.hasPrefix("A10_CAPTURE:") {
                 let parts = line.split(separator: ":", maxSplits: 2)

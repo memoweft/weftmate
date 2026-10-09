@@ -106,12 +106,14 @@ public struct ConversationSummary: Identifiable, Sendable, Equatable {
     public let projectName: String?
     public let projectNotice: String?
     public let taskAvailable: Bool?
+    public let hostId: String?
+    public let updatedAt: String?
     public init(id: String, title: String, conversationId: String?, sessionId: String?, running: Bool,
-                sendAvailable: Bool, originalModelLabel: String?, archived: Bool = false, pinned: Bool = false, unread: Bool = false, groupId: String? = nil, contextUsage: ConversationContextUsage? = nil, processing: ConversationProcessing? = nil, projectId: String? = nil, projectName: String? = nil, projectNotice: String? = nil, taskAvailable: Bool? = nil) {
+                sendAvailable: Bool, originalModelLabel: String?, archived: Bool = false, pinned: Bool = false, unread: Bool = false, groupId: String? = nil, contextUsage: ConversationContextUsage? = nil, processing: ConversationProcessing? = nil, projectId: String? = nil, projectName: String? = nil, projectNotice: String? = nil, taskAvailable: Bool? = nil, hostId: String? = nil, updatedAt: String? = nil) {
         self.id = id; self.title = title; self.conversationId = conversationId; self.sessionId = sessionId
         self.running = running; self.sendAvailable = sendAvailable; self.originalModelLabel = originalModelLabel; self.archived = archived
         self.pinned = pinned; self.unread = unread; self.groupId = groupId; self.contextUsage = contextUsage; self.processing = processing
-        self.projectId = projectId; self.projectName = projectName; self.projectNotice = projectNotice; self.taskAvailable = taskAvailable
+        self.projectId = projectId; self.projectName = projectName; self.projectNotice = projectNotice; self.taskAvailable = taskAvailable; self.hostId = hostId; self.updatedAt = updatedAt
     }
 
 }

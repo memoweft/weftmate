@@ -120,7 +120,7 @@ async function systemStatusSection(target){const owner=state.owner,epoch=state.a
       unavailable:'不可用',unconfigured:'尚未配置',degraded:'需要处理'};
     status.textContent=system.queue?.backgroundPending?`${system.queue.backgroundPending} 项后台请求排队中`:'已更新';
     for(const [key,name] of [['model','模型服务'],['host','宿主'],['memory','记忆']]){const value=system[key];
-      const detail=[labels[value.state]||'状态未知',value.currentModelId?`当前模型 ${value.currentModelId}`:'',
+      const detail=[key==='memory'?uiCore.memoryHealthText(value):labels[value.state]||'状态未知',value.currentModelId?`当前模型 ${value.currentModelId}`:'',
         value.version?`版本 ${value.version}`:['disabled','unconfigured','stopped'].includes(value.state)?'':'版本未知',
         value.contextWindow?`上下文 ${value.contextWindow.toLocaleString()}`:'',
         value.slots?`槽数 ${value.slots}`:'',

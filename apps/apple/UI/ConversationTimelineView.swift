@@ -27,7 +27,7 @@ struct ConversationTimelineView: View {
         ForEach(TimelineProjection.conversationEntries(appModel.timeline.events)) { entry in
             VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
                 if !entry.steps.isEmpty {
-                    TimelineExecutionBlock(client: appModel.assistantClient, sessionID: sessionID, entry: entry, interactions: interactions, openSources: openSources)
+                    TimelineExecutionBlock(appModel: appModel, client: appModel.assistantClient, sessionID: sessionID, entry: entry, interactions: interactions, openSources: openSources)
                         .id(entry.id + appModel.accountEpoch.uuidString)
                 } else if entry.event.type.hasSuffix(".message") {
                     if let message = appModel.messages.first(where: { $0.id == (appModel.timelineMessageIDs[entry.seq] ?? "host|\(sessionID)|\(entry.seq)") }) {
@@ -92,6 +92,7 @@ struct ConversationTimelineView: View {
 }
 
 struct TimelineExecutionBlock: View {
+    @ObservedObject var appModel: AppleAppModel
     let client: PersonalClient
     let sessionID: String
     let entry: TimelineEntry
@@ -118,7 +119,7 @@ struct TimelineExecutionBlock: View {
             if expanded {
                 VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
                 ForEach(entry.steps) { step in
-                    TimelineStepView(client: client, sessionID: sessionID, step: step, running: entry.running, decision: interactions.decisionLabel(for: step), progress: progress, openSources: openSources)
+                    TimelineStepView(client: client, sessionID: sessionID, step: step, running: entry.running, decision: interactions.decisionLabel(for: step), progress: progress, openSources: openSources, targetSeq: appModel.subtaskStepTarget)
                 }
                 }.padding(AppleTokens.Space.p10).overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r12).strokeBorder(Weave.line))
                 .transition(.opacity)
@@ -134,6 +135,7 @@ struct TimelineExecutionBlock: View {
                 if args.contains("--ui-testing"), args.contains("a9-detail") { expanded = true }
                 #endif
                 initialized = true } }
+        .onChange(of: appModel.subtaskStepTarget) { _, seq in if entry.steps.contains(where: { $0.seq == seq }) { expanded = true } }
         .onChange(of: failed) { _, value in if value { expanded = true } }
     }
 }
@@ -145,6 +147,7 @@ private struct TimelineStepView: View {
     let decision: String?
     @ObservedObject var progress: ToolProgressModel
     let openSources: () -> Void
+    let targetSeq: Int?
     @State private var expanded = false
     private var detail: TimelineDetail? { step.detailSeq.flatMap { progress.details[$0] } }
     private var error: String? { step.detailSeq.flatMap { progress.errors[$0] } }
@@ -168,12 +171,13 @@ private struct TimelineStepView: View {
             }
         }
         .onAppear {
-            if step.effectiveState == "failed" { expanded = true }
+            if step.effectiveState == "failed" || targetSeq == step.seq { expanded = true }
             #if DEBUG && os(macOS)
             let args = ProcessInfo.processInfo.arguments
             if args.contains("--ui-testing"), args.contains("a9-detail"), step.ordinal == 1 { expanded = true }
             #endif
         }
+        .onChange(of: targetSeq) { _, seq in if seq == step.seq { expanded = true } }
         .onChange(of: step.effectiveState) { _, value in if value == "failed" { expanded = true } }
         .task(id: "\(expanded)-\(step.detailSeq ?? -1)") {
             guard expanded else { return }

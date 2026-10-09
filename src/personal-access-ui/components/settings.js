@@ -4,7 +4,7 @@ globalThis.WeftUiComponents.factories.settings = (core, ui) => {
         for (const [key, label] of [['model', '模型服务'], ['host', '宿主'], ['memory', '记忆']]) {
             const value = system[key], item = ui.element('li', 'system-service');
             const details = ui.element('div', 'system-service-detail');
-            details.append(ui.element('strong', '', label), ui.element('span', '', core.serviceStateLabels[value.state] ?? '状态未知'));
+            details.append(ui.element('strong', '', label), ui.element('span', '', key === 'memory' ? core.memoryHealthText(value) : core.serviceStateLabels[value.state] ?? '状态未知'));
             const info = [value.currentModelId ? `当前模型 ${value.currentModelId}` : '',
                 value.version ? `版本 ${value.version}` : ['disabled', 'unconfigured', 'stopped'].includes(value.state) ? '' : '版本未知',
                 value.contextWindow ? `上下文 ${value.contextWindow.toLocaleString()}` : '',
