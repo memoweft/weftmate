@@ -422,7 +422,7 @@ details[open] > summary > .progress-chevron { transform: rotate(0deg); }
 .execution-records .timeline-raw { margin: var(--wm-space-8) var(--wm-space-12); }
 .execution-step[data-state="failed"] > summary, .has-failure > .execution-block > summary { color: var(--danger); }
 .inline-progress-text.is-running { animation: progress-breathe var(--wm-duration-working) var(--wm-easing-smooth) infinite; }
-@keyframes progress-breathe { 0%, 100% { opacity: 1; } 50% { opacity: .65; } }
+@keyframes progress-breathe { 0%, 100% { opacity: 1; } 50% { opacity: .95; } }
 .conversation-task { border: 0; padding: 0; background: transparent; }
 .artifact-verification { color: var(--progress-ink); }
 .approval-bar { background: var(--progress-soft); border-radius: var(--wm-radius-12); padding: var(--wm-space-10) var(--wm-space-12); margin-bottom: var(--wm-space-10); color: var(--ink); font-size: var(--wm-font-size-13); overflow-wrap: anywhere; }
