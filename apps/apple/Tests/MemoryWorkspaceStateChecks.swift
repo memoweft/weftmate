@@ -26,6 +26,8 @@ private actor MemoryHTTP: HTTPTransport {
     var pagination = false
     var cleanupPending = true
     var offline = false
+    var failPreview = false
+    func setPreviewFailure(_ value: Bool) { failPreview = value }
     func configure(lose: Bool = false, discard: Bool = false, conflict: Bool = false, pagination: Bool = false) {
         loseReply = lose; discardReply = discard; self.conflict = conflict; self.pagination = pagination
     }
@@ -82,6 +84,10 @@ private actor MemoryHTTP: HTTPTransport {
                 if let bytes = receipts[id] { object = ["receipt": try JSONSerialization.jsonObject(with: bytes)] }
                 else { status = 404; object = ["error": ["code": "NOT_FOUND"]] }
             }
+        case let route where route.hasSuffix("/forget-preview"):
+            if failPreview { throw APIFailure.server(status: 503, code: "MEMORY_UNAVAILABLE") }
+            object = ["worldRevision": revision, "itemCount": 1, "evidenceCount": 1, "evidenceIds": ["evidence.1"],
+                "items": [["id": "memory.1", "kind": "cognition", "text": "Synthetic original", "itemType": "preference"]]]
         case let route where route.hasSuffix("/sources"):
             object = ["worldRevision": revision, "sources": [["evidenceId": "evidence.1", "relation": "supports", "currentnessState": "current",
                 "permissions": ["allowLocalRead": false, "allowCloudRead": true, "allowInference": true], "contentAvailable": true,
@@ -148,6 +154,23 @@ private func receipt(_ intent: MemoryMutationIntent, revision: Int, cleanup: Boo
             guard let value = model.actionContext(kind) else { throw Failed(message: "Missing enabled action context") }; return value
         }
 
+        let (previewHTTP, _, _, _, previewModel) = try await setup("forget-preview")
+        await previewModel.open(previewModel.items[0]); let forget = try action(previewModel, .deleteItem)
+        await previewModel.mutate(forget)
+        try check(await previewHTTP.mutationRequests().isEmpty, "Deletion submitted without preview")
+        await previewHTTP.setPreviewFailure(true); await previewModel.prepareForget(forget)
+        try check(!previewModel.canForget(forget) && previewModel.forgetPreviewError != nil, "Failed preview enabled confirm")
+        await previewHTTP.setPreviewFailure(false); await previewModel.prepareForget(forget)
+        try check(previewModel.canForget(forget) && !previewModel.forgetConfirmation.deleteConversationSnippets, "Successful preview or default unchecked missing")
+        previewModel.forgetConfirmation.deleteConversationSnippets = true
+        await previewModel.prepareForget(forget)
+        try check(!previewModel.forgetConfirmation.deleteConversationSnippets, "Reload did not reset original snippet choice")
+        await previewHTTP.advance(); await previewModel.prepareForget(forget)
+        try check(!previewModel.canForget(forget), "Changed revision accepted")
+        await previewModel.mutate(forget)
+        try check(await previewHTTP.mutationRequests().isEmpty, "Changed revision submitted deletion")
+        pass("PASS A7 missing/failed/changed preview blocks deletion and every preview resets snippet choice")
+
         let (readHTTP, _, _, _, read) = try await setup("read")
         try check(read.items.count == 2 && read.status?.status.state == .ready, "Initial status/list missing")
         try check(await readHTTP.allRequests().filter { $0.url!.path.hasSuffix("/sources") }.isEmpty, "Automatically read source bodies")
@@ -213,6 +236,8 @@ private func receipt(_ intent: MemoryMutationIntent, revision: Int, cleanup: Boo
         target.setCorrection("Captured correction", token: oldToken)
         let oldDelete = try action(target, .deleteItem); let oldCorrect = try action(target, .correct)
         await target.open(target.items[1]); target.setCorrection("Late editor A", token: oldToken)
+        await target.prepareForget(oldDelete)
+        try check(!target.canForget(oldDelete), "Stale action must not accept a preview")
         await target.mutate(oldDelete); await target.mutate(oldCorrect)
         let account = try LocalAccountScope(server: oldDelete.session.server, ownerId: oldDelete.session.account.ownerId)
         let staleRecords = try await targetJournal.operations(account: account)

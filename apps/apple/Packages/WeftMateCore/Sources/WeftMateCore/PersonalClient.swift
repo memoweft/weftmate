@@ -10,7 +10,7 @@ private struct Credential: Codable, Sendable {
 private struct DevicesReply: Decodable { let devices: [DeviceRecord] }
 private struct RemoteSession: Decodable {
     let sessionId: String; let title: String; let running: Bool; let sendAvailable: Bool
-    let conversationId: String?; let modelProfileId: String?; let unavailable: Bool?; let archived: Bool?
+    let conversationId: String?; let modelProfileId: String?; let unavailable: Bool?; let archived: Bool?; let pinned: Bool?; let unread: Bool?; let groupId: String?
 }
 private struct SessionsReply: Decodable { let sessions: [RemoteSession] }
 private struct OriginalModel: Decodable { let modelId: String; let displayName: String }
@@ -285,12 +285,44 @@ public actor PersonalClient {
         return reply.devices
     }
 
+    public func sessionGroups() async throws -> [SessionGroup] {
+        let reply: SessionGroupsReply = try await parityRequest(path: "/session-groups")
+        return reply.groups
+    }
+    public func createSessionGroup(name: String) async throws -> SessionGroup {
+        struct Body: Encodable { let name: String }
+        let reply: SessionGroupReply = try await parityRequest(path: "/session-groups", method: "POST", body: JSONEncoder().encode(Body(name: name)))
+        return reply.group
+    }
+    public func updateSessionMetadata(sessionID: String, pinned: Bool? = nil, unread: Bool? = nil, title: String? = nil, groupID: String? = nil, changeGroup: Bool = false) async throws -> SessionMetadataReply {
+        var body: [String: Any] = [:]
+        if let pinned { body["pinned"] = pinned }; if let unread { body["unread"] = unread }; if let title { body["title"] = title }
+        if changeGroup { body["groupId"] = groupID.map { $0 as Any } ?? NSNull() }
+        return try await parityRequest(path: "/sessions/\(try checkedID(sessionID))/metadata", method: "PATCH", body: JSONSerialization.data(withJSONObject: body))
+    }
+    public func forkSession(sessionID: String) async throws -> SessionForkReply {
+        try await parityRequest(path: "/sessions/\(try checkedID(sessionID))/fork", method: "POST", body: Data("{}".utf8))
+    }
+    public func sessionForgetPreview(sessionID: String) async throws -> ForgetPreview {
+        let (auth, generation) = try snapshot()
+        let reply: ForgetPreview = try await parityRequest(path: "/sessions/\(try checkedID(sessionID))/forget-preview")
+        try check(generation); try reply.validate(ownerID: auth.session.account.ownerId)
+        return reply
+    }
+    public func memoryForgetPreview(kind: MemoryKind, itemID: String, evidenceID: String? = nil, expectedRevision: Int) async throws -> ForgetPreview {
+        let (auth, generation) = try snapshot()
+        try MemoryValidation.require(MemoryValidation.itemID(evidenceID ?? itemID))
+        let path = evidenceID.map { "/memory/evidence/\($0)/forget-preview" } ?? "/memory/items/\(kind.rawValue)/\(itemID)/forget-preview"
+        let reply: ForgetPreview = try await parityRequest(path: path)
+        try check(generation); try reply.validate(ownerID: auth.session.account.ownerId, expectedRevision: expectedRevision)
+        return reply
+    }
     public func setSessionArchived(_ archived: Bool, sessionID: String) async throws -> SessionArchiveResult {
         try await parityRequest(path: "/sessions/\(try checkedID(sessionID))/" + (archived ? "archive" : "unarchive"), method: "POST", body: Data("{}".utf8))
     }
-    public func deleteSession(sessionID: String, forgetMemories: Bool = false) async throws -> SessionDeleteResult {
-        struct Body: Encodable { let forgetMemories: Bool }
-        return try await parityRequest(path: "/sessions/\(try checkedID(sessionID))", method: "DELETE", body: JSONEncoder().encode(Body(forgetMemories: forgetMemories)))
+    public func deleteSession(sessionID: String, forgetMemories: Bool = false, deleteConversationSnippets: Bool = false, memoryWorldRevision: Int? = nil) async throws -> SessionDeleteResult {
+        struct Body: Encodable { let forgetMemories: Bool; let deleteConversationSnippets: Bool; let memoryWorldRevision: Int? }
+        return try await parityRequest(path: "/sessions/\(try checkedID(sessionID))", method: "DELETE", body: JSONEncoder().encode(Body(forgetMemories: forgetMemories, deleteConversationSnippets: deleteConversationSnippets, memoryWorldRevision: memoryWorldRevision)))
     }
     public func cancelQueuedTask(taskID: String, requestID: String) async throws -> TaskSnapshot {
         struct Body: Encodable { let requestId: String }
@@ -375,14 +407,14 @@ public actor PersonalClient {
             let bound = host.sessions.filter { $0.conversationId == id }
             guard bound.count <= 1 else { throw APIFailure.invalidResponse }
             let session = bound.first
-            rows.append(.init(id: id, title: title, conversationId: id, sessionId: session?.sessionId,
-                running: session?.running ?? false, sendAvailable: false, originalModelLabel: nil, archived: session?.archived ?? false))
+            rows.append(.init(id: id, title: session?.title ?? title, conversationId: id, sessionId: session?.sessionId,
+                running: session?.running ?? false, sendAvailable: false, originalModelLabel: nil, archived: session?.archived ?? false, pinned: session?.pinned ?? false, unread: session?.unread ?? false, groupId: session?.groupId))
         }
         for session in host.sessions where session.conversationId == nil || grouped[session.conversationId!] == nil {
             rows.append(.init(id: session.conversationId ?? session.sessionId,
                 title: session.title.isEmpty ? "电脑会话" : session.title, conversationId: session.conversationId,
                 sessionId: session.sessionId, running: session.running, sendAvailable: false,
-                originalModelLabel: session.modelProfileId, archived: session.archived ?? false))
+                originalModelLabel: session.modelProfileId, archived: session.archived ?? false, pinned: session.pinned ?? false, unread: session.unread ?? false, groupId: session.groupId))
         }
         try check(generation)
         syncEvents = events

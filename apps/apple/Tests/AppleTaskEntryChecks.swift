@@ -32,6 +32,7 @@ private actor ReadOnlyHTTP: HTTPTransport {
         case "/personal/v1/auth/devices": object = ["devices": [["id": "device-Mac", "name": "Fixture", "current": true]]]
         case "/personal/v1/sync/capabilities": object = ["deviceId": "device-Mac", "platform": "macos", "sharedConversations": 1]
         case "/personal/v1/sync/events": object = ["events": [], "nextSeq": 0, "hasMore": false]
+        case "/personal/v1/session-groups": object = ["groups": []]
         case "/personal/v1/sessions":
             object = ["sessions": [
                 ["sessionId": "session-remote", "title": "From another device", "running": false, "sendAvailable": true],

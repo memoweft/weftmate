@@ -8,6 +8,9 @@ public struct LocalCachedConversationSummary: Codable, Equatable, Sendable, Iden
     public let sessionId: String?
     public let hostId: String
     public let originalModelLabel: String?
+    public let pinned: Bool?
+    public let unread: Bool?
+    public let groupId: String?
     public let archived: Bool?
     public let originalModel: SharedOriginalModel?
     public var conversationKey: String {
@@ -16,11 +19,12 @@ public struct LocalCachedConversationSummary: Codable, Equatable, Sendable, Iden
     }
     public var conversation: ConversationSummary {
         .init(id: id, title: title, conversationId: conversationId, sessionId: sessionId,
-              running: false, sendAvailable: false, originalModelLabel: originalModelLabel, archived: archived ?? false)
+              running: false, sendAvailable: false, originalModelLabel: originalModelLabel, archived: archived ?? false, pinned: pinned ?? false, unread: unread ?? false, groupId: groupId)
     }
     public init(conversation: ConversationSummary, hostId: String, originalModel: SharedOriginalModel? = nil) throws {
         id = conversation.id; title = conversation.title; conversationId = conversation.conversationId
         sessionId = conversation.sessionId; self.hostId = hostId
+        pinned = conversation.pinned; unread = conversation.unread; groupId = conversation.groupId
         archived = conversation.archived; originalModelLabel = conversation.originalModelLabel; self.originalModel = originalModel
         try validate()
     }

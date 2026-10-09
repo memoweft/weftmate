@@ -60,6 +60,7 @@ private actor CommandHTTP: HTTPTransport {
         case "/personal/v1/status": object = ["ownerId": "ownerA", "hostId": "host-test"]
         case "/personal/v1/auth/devices": object = ["devices": [["id": "device-Mac", "name": "Fixture", "current": true]]]
         case "/personal/v1/sync/events": object = ["events": [], "nextSeq": 0, "hasMore": false]
+        case "/personal/v1/session-groups": object = ["groups": []]
         case "/personal/v1/sessions":
             var session: [String: Any] = ["sessionId": "session-host", "title": "Synthetic", "running": false, "sendAvailable": true]
             if !omitProfile { session["modelProfileId"] = "profile-one" }

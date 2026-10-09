@@ -39,6 +39,7 @@ private actor FixtureHTTP: HTTPTransport {
                 "conversationId": "same-conversation", "kind": "conversation.created",
                 "occurredAt": "2026-10-05T00:00:00Z", "payload": ["title": "Synthetic"]]],
                 "nextSeq": 1, "hasMore": false]
+        case "/personal/v1/session-groups": object = ["groups": []]
         case "/personal/v1/sessions": object = ["sessions": []]
         case "/personal/v1/auth/logout": object = [:]
         default: throw CheckFailure(message: "Unexpected mock route")

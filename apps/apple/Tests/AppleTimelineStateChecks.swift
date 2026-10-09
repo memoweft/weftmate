@@ -40,6 +40,7 @@ private actor HTTP: HTTPTransport {
         case "/personal/v1/auth/devices": object = ["devices": [["id": "device-fixture", "name": "Fixture", "current": true]]]
         case "/personal/v1/sync/capabilities": object = ["deviceId": "device-fixture", "platform": "macos", "sharedConversations": 1]
         case "/personal/v1/sync/events": object = ["events": [], "nextSeq": 0, "hasMore": false]
+        case "/personal/v1/session-groups": object = ["groups": []]
         case "/personal/v1/sessions": object = ["sessions": [["sessionId": "session-fixture", "title": "Synthetic", "running": false, "sendAvailable": true]]]
         case "/personal/v1/models": object = ["models": []]
         case "/personal/v1/sessions/session-fixture/events":
