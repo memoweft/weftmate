@@ -49,6 +49,7 @@ test('activity HTTP snapshots, filtered all-read, version conflicts, restart, na
   await f.recordActivity({key:'pause',type:'memory.paused',title:'记忆已暂停',summary:'测试状态',level:'normal'});
   const initial=await f.request('/activity?limit=1');assert.ok(initial.hasMore);assert.ok(initial.unreadCount>=3);
   const memory=await f.request('/activity?type=memory');assert.equal(memory.items.length,1);
+  await assert.rejects(()=>f.request('/activity/read',{requestId:42,through:memory.snapshotCursor}),/INVALID_REQUEST/);
   const readId=randomUUID();await f.request('/activity/read',{requestId:readId,through:memory.snapshotCursor});
   await f.request('/activity/read',{requestId:readId,through:memory.snapshotCursor});
   assert.equal((await f.request('/activity?type=memory')).items[0].read,true);
