@@ -1,0 +1,6 @@
+{
+  "windows": "1bbc863aa664d58105c0f1b086c5f8dc702c9235",
+  "core": "a9b115f2d0de10bdf79bd7000057da6cbda7c046",
+  "coreSource": "read-only git archive; no Core working tree modification",
+  "stressConcurrentLoad": "M1/M2/UI/installer builds overlapped; report is not an isolated CPU benchmark"
+}
