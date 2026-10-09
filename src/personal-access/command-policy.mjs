@@ -64,7 +64,7 @@ export function canonicalCommand(value, hostId, internal = false) {
     throw failure('INVALID_REQUEST');
   }
   if (value.conversationId !== undefined && (!internal || !CONVERSATION_ID.test(value.conversationId) ||
-      value.projectId !== undefined || value.workspaceKind !== undefined ||
+      value.projectId !== undefined && value.kind !== 'session.message' || value.workspaceKind !== undefined ||
       !['session.create', 'session.message'].includes(value.kind))) throw failure('INVALID_REQUEST');
   if (value.kind === 'session.create') {
     exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'modelProfileId',

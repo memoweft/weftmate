@@ -399,6 +399,7 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(PLUGINS_DIR, 'personal-write-targets.mjs'), join(dir, 'plugins', 'personal-write-targets.mjs')],
     [join(PLUGINS_DIR, 'personal-web-fetch.mjs'), join(dir, 'plugins', 'personal-web-fetch.mjs')],
     [join(PLUGINS_DIR, 'personal-native-files.mjs'), join(dir, 'plugins', 'personal-native-files.mjs')],
+    [join(PLUGINS_DIR, 'personal-project-context.mjs'), join(dir, 'plugins', 'personal-project-context.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-desktop-preset.mjs'), join(dir, 'plugins', 'weftmate-personal-desktop-preset.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-memory.mjs'), join(dir, 'plugins', 'weftmate-personal-memory.mjs')],
     [join(PLUGINS_DIR, 'personal-prompt.mjs'), join(dir, 'plugins', 'personal-prompt.mjs')],
@@ -1940,7 +1941,9 @@ export class DshWebRuntime {
           if (!value || !['auto','ask','accept-edits','plan','allow-all'].includes(value.mode as string) || !Array.isArray(value.allowedCategories)) {
             settle({ ok: false, error: 'PERSONAL_TOOL_UNAVAILABLE' }); return
           }
-          settle({ ok: true, command: { mode: value.mode, allowedCategories: value.allowedCategories } }); return
+          settle({ ok: true, command: { mode: value.mode, allowedCategories: value.allowedCategories,
+            ...(value.project ? { project: value.project } : {}),
+            ...(value.projectNotice ? { projectNotice: value.projectNotice, conversationWorkspace: value.conversationWorkspace } : {}) } }); return
         }
         if (nativeFile || nativeBrowser) {
           if (!value || typeof value !== 'object') { settle({ ok: false, error: 'PERSONAL_TOOL_UNAVAILABLE' }); return }

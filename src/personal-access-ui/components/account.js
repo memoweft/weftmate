@@ -281,52 +281,16 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
         }
     }
     function renderProjects() {
-        const list = ui.byId('projects-list');
-        list.replaceChildren();
-        ui.byId('project-register-form').hidden = !core.state.projectCanManage;
-        if (!core.state.projects.length) {
-            ui.byId('projects-status').textContent = core.state.projectCanManage
-                ? '还没有登记项目。选择一个你愿意让这台电脑读取的资料目录。'
-                : '当前账户没有可用项目。请在原电脑账户中登记资料目录。';
-            return;
+        ui.renderSessions();
+        const list = ui.byId('projects-list'); list.replaceChildren();
+        ui.byId('project-register-form').hidden = true;
+        ui.byId('projects-status').textContent = '项目与对话统一在侧栏管理。移除登记不会删除电脑文件。';
+        if (ui.canManageProjectFolders()) {
+            const create = ui.element('button', 'button secondary', '新建项目'); create.type = 'button'; create.onclick = () => ui.editProject(); list.append(create);
         }
-        ui.byId('projects-status').textContent = '';
-        for (const project of core.state.projects) {
-            if (!/^project-[A-Za-z0-9-]{1,128}$/.test(project?.projectId ?? ''))
-                continue;
-            const row = ui.element('li', 'project-row');
-            const title = ui.element('div', 'project-row-main');
-            title.append(ui.element('strong', '', project.name || '未命名项目'), ui.element('small', '', project.revoked ? '已撤销 · 历史来源与成果仍可查看'
-                : `可读取 · 修订 ${project.revision}`));
-            row.append(title);
-            if (core.state.projectCanManage && !project.revoked) {
-                const revoke = ui.element('button', 'button quiet small', '撤销');
-                revoke.type = 'button';
-                revoke.addEventListener('click', () => {
-                    if (revoke.dataset.confirm !== 'yes') {
-                        revoke.dataset.confirm = 'yes';
-                        revoke.textContent = '确认撤销';
-                        return;
-                    }
-                    const token = core.accountToken();
-                    revoke.disabled = true;
-                    const requestId = crypto.randomUUID();
-                    void core.revokeProject(project.projectId, requestId).then(() => {
-                        if (core.accountCurrent(token))
-                            void core.refreshProjects();
-                    }, (error) => {
-                        if (!core.accountCurrent(token))
-                            return;
-                        revoke.disabled = false;
-                        revoke.dataset.confirm = '';
-                        revoke.textContent = '撤销';
-                        ui.byId('projects-status').textContent = error.code === 'NETWORK'
-                            ? '撤销结果尚未确认，请刷新项目列表核对。' : '撤销未完成，请刷新后重试。';
-                    });
-                });
-                row.append(revoke);
-            }
-            list.append(row);
+        for (const project of core.state.projects.filter(project => !project.revoked)) {
+            const row = ui.element('li', 'project-row'); row.append(ui.element('strong', '', project.name));
+            if (ui.canManageProjectFolders()) { const settings = ui.element('button', 'button secondary', '项目设置'); settings.onclick = () => ui.editProject(project); row.append(settings); } list.append(row);
         }
     }
     function renderBrowserModels() {

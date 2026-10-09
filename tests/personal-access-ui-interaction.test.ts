@@ -315,6 +315,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     if (url.endsWith('/models')) return Promise.resolve(reply({ models: config.modelCatalog ??
       [{ id: 'model-test', name: 'Synthetic', configured: true }] }))
     if (/\/sessions\/[^/]+\/metadata$/.test(url) && options.method === 'PATCH') return Promise.resolve(reply(JSON.parse(options.body)))
+    if (url.endsWith('/projects') && options.method !== 'POST') return Promise.resolve(reply({ projects: [], canManage: true }))
     if (url.split('?')[0].endsWith('/sessions')) return Promise.resolve(reply({ sessions: config.sessions ?? [
       { sessionId: 'A', title: 'A', sendAvailable: true, running: aRunning }, { sessionId: 'B', title: 'B', sendAvailable: true },
     ] }))
