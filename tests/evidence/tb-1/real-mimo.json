@@ -1,0 +1,74 @@
+{
+  "realElectron": true,
+  "fixedDsh": true,
+  "model": "mimo-v2.6-flash",
+  "checks": [
+    "real-model-native-schedule-created",
+    "one-minute-native-dispatch",
+    "same-activity-native-notification-id",
+    "single-notification",
+    "desktop-activity-visible"
+  ],
+  "activity": {
+    "id": "activity-7372fa969766e37ee773b5b37a12347c440ebf9fd8a9466d2cd7e9e159622235",
+    "type": "reminder.triggered",
+    "at": "2026-10-09T22:28:27.569Z",
+    "level": "important"
+  },
+  "schedule": {
+    "id": "schedule-1"
+  },
+  "usage": [
+    {
+      "completion_tokens": 21,
+      "prompt_tokens": 2139,
+      "total_tokens": 2160,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1536
+      }
+    },
+    {
+      "completion_tokens": 22,
+      "prompt_tokens": 2226,
+      "total_tokens": 2248,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 2112
+      }
+    },
+    {
+      "completion_tokens": 53,
+      "prompt_tokens": 2783,
+      "total_tokens": 2836,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1984
+      }
+    },
+    {
+      "completion_tokens": 63,
+      "prompt_tokens": 2966,
+      "total_tokens": 3029,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 2752
+      }
+    }
+  ],
+  "totals": {
+    "requests": 4,
+    "inputTokens": 10114,
+    "cachedInputTokens": 8384,
+    "outputTokens": 159,
+    "totalTokens": 10273
+  }
+}
