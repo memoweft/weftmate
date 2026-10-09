@@ -159,6 +159,9 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
             core.addAttachmentFiles(selected);
         });
         ui.byId('attachment-cancel').addEventListener('click', () => core.cancelAttachmentUpload(true));
+        ui.byId('new-temporary-session').addEventListener('click', () => {
+            if (core.state.capabilities?.chat?.available === true) core.startNewConversation(false, true);
+        });
         ui.byId('new-session').addEventListener('click', async () => {
             if (!core.state.modelProfileId || core.state.capabilities?.chat?.available !== true)
                 return;

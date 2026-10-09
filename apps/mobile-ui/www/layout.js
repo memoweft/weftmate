@@ -14,6 +14,7 @@ const mobileMarkup = String.raw`
     <nav id="drawer" class="drawer" aria-label="主导航">
       <div class="drawer-brand"><span class="logo" aria-label="WeftMate"></span><strong>WeftMate</strong><button id="drawer-close" class="icon-button" aria-label="关闭导航"><span class="icon icon-close"></span></button></div>
       <button class="nav-primary" data-action="new-chat"><span class="icon icon-compose"></span>新对话</button>
+      <button class="nav-primary" data-action="temporary-chat">临时对话</button>
       <input id="conversation-search" class="search" type="search" placeholder="搜索会话" aria-label="搜索会话">
       <div class="drawer-section-label">最近对话</div>
       <div id="conversation-list" class="conversation-list" aria-label="最近对话" aria-live="polite"></div>

@@ -1,0 +1,704 @@
+{
+  "startedAt": "2026-10-09T21:30:33.496Z",
+  "realCloudEntrypoint": "services/cloud/src/main.mjs",
+  "realElectronEntrypoint": ".",
+  "sourceCommit": "1a92824ae776432037677cec9a4e0d4f2fb4ce26",
+  "phase": "android-inline",
+  "baselineHost": false,
+  "steps": [
+    "Real cloud entrypoint health",
+    "Mobile registration, real file mail, sixty-second resend deadline and bundled legal reading",
+    "Real desktop approves the waiting phone and recipient imports trusted host delivery",
+    "Settings device directory sees real desktop, connects through hosts/connect and adopts real host session"
+  ],
+  "cloudTransport": "WSL Ubuntu",
+  "visualChecks": [
+    {
+      "name": "login",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "login",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "waiting",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "waiting",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "devices",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "devices",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "task-approval",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "task-approval",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "task-result",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "extra-settings-常规",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "extra-settings-外观",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "extra-settings-账户",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "extra-settings-设备",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "extra-settings-用量",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "extra-settings-模型",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "extra-settings-审批",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "extra-settings-记忆",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "extra-settings-提醒与定时任务",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "extra-settings-已归档",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "extra-settings-关于",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "extra-settings-常规",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "extra-settings-外观",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "extra-settings-账户",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "extra-settings-设备",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "extra-settings-用量",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "extra-settings-模型",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "extra-settings-审批",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "extra-settings-记忆",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "extra-settings-提醒与定时任务",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "extra-settings-已归档",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "extra-settings-关于",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "extra-project-list",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "extra-project-list",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "extra-project-conversation",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "extra-project-menu",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "extra-move-project",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    }
+  ],
+  "nativeErrors": [
+    {
+      "method": "cloud.pending",
+      "errorCode": "LOGIN_REQUIRED",
+      "status": 401
+    },
+    {
+      "method": "cloud.pending",
+      "errorCode": "ACCOUNT_SWITCHED",
+      "status": 0
+    }
+  ],
+  "executionOwner": {
+    "executionAccount": true,
+    "session": "session-edae385a-d29c-4f34-888c-9501ff117c4c",
+    "approvalMode": {
+      "status": 200,
+      "body": {
+        "mode": "ask",
+        "allowedCategories": []
+      }
+    }
+  },
+  "phoneTask": {
+    "passed": true,
+    "durationMs": 53189,
+    "approvals": 2,
+    "completed": true,
+    "fileContent": "FX9_PHONE_EXECUTED",
+    "noUnconfirmed": true,
+    "commandState": "accepted_by_dsh",
+    "taskStatus": 200,
+    "replyEvidence": {
+      "status": "completed",
+      "turn": 1,
+      "assistantChunks": 107,
+      "textChunks": 18,
+      "reasoningChunks": 0,
+      "assistantMessages": 5,
+      "toolSaveObserved": false,
+      "step": 5,
+      "observedAt": "2026-10-09T21:32:10.901Z",
+      "terminalAt": "2026-10-09T21:32:10.901Z",
+      "firstChunkAt": "2026-10-09T21:31:25.452Z",
+      "lastChunkAt": "2026-10-09T21:32:10.888Z"
+    },
+    "draft": "",
+    "pending": null,
+    "optimistic": [],
+    "text": "FX-9 手机办事\n本对话用量\n输出与来源\nWeftMate\n新对话\n最近对话\n未分组\nFX-9 手机办事\n电脑执行\n项目\n\n在电脑上添加项目后，可在这里开始对话。\n\n功能\n对话\n记忆\n能力与扩展\n项目与成果\n设备\n通知\n设置\n合\n合成电脑\n个人资料与设置\n请在电脑上创建 C:/Temp/fx9-phone-bad5ec6c-7526-4d9d-b279-ba016e85edd2.txt，内容只写 FX9_PHONE_EXECUTED。只操作这个测试文件，并读回核验内容。完成后告诉我。\n\n正在处理…\n\n已运行 1 个命令、读取了 1 个文件\n每次询问\n当前模型\n电脑已受理消息，等待会话记录更新"
+  },
+  "extraChecks": [
+    {
+      "name": "light-settings-常规",
+      "status": "passed",
+      "durationMs": 1628,
+      "page": "general",
+      "text": "常规\n此设备\n通知\n回复、动作和同步状态\n›\n离线与同步\n当前账户的记录与状态\n›\n界面更新\n0.8.12（内置）\n›\n原生兼容界面\n排查系统网页组件\n›\n回复进行中时发送的消息\n\n排队：等当前回复结束后作为下一条处理。 引导：插入当前回复，引导它调整方向。\n\n排队\n系统状态\n\n已更新\n\n模型服务\n尚未配置\n重启模型服务\n宿主\n运行中 · 版本 0.1.0\n重启宿主\n记忆\n未启用\n重启记忆\n\n后台模型跟随主模型 · 在电脑设置中修改\n\n刷新状态"
+    },
+    {
+      "name": "light-settings-外观",
+      "status": "passed",
+      "durationMs": 1604,
+      "page": "appearance",
+      "text": "外观\n\n保存到这台设备。\n\n颜色模式\n\n选择适合当前环境的颜色模式。\n\n浅色\n深色\n跟随系统"
+    },
+    {
+      "name": "light-settings-账户",
+      "status": "passed",
+      "durationMs": 1677,
+      "page": "account",
+      "text": "设置本月用量暂时无法读取，点此重试。设置常规通知、离线与同步›外观浅色›账户cloud-43630449-eb3c-4510-9e64-45f358a2efa8›设备连接、配对与待批准›用量本月费用、用量与月度上限›已归档›助手模型管理手机与账户模型›审批新对话的默认模式›记忆查看理解与来源›提醒与定时任务管理提醒与定时任务›资料访问项目与网页资料›关于关于0.8.12（内置）›"
+    },
+    {
+      "name": "light-settings-设备",
+      "status": "passed",
+      "durationMs": 1580,
+      "page": "devices",
+      "text": "设置本月用量暂时无法读取，点此重试。设置常规通知、离线与同步›外观浅色›账户cloud-43630449-eb3c-4510-9e64-45f358a2efa8›设备连接、配对与待批准›用量本月费用、用量与月度上限›已归档›助手模型管理手机与账户模型›审批新对话的默认模式›记忆查看理解与来源›提醒与定时任务管理提醒与定时任务›资料访问项目与网页资料›关于关于0.8.12（内置）›"
+    },
+    {
+      "name": "light-settings-用量",
+      "status": "passed",
+      "durationMs": 1579,
+      "page": "usage",
+      "text": "用量与费用\n2026 年 10 月\n上一年\n下一年\n刷新用量\n\n本月合计 ¥0.01258912 · 5 次请求\n\n输入 21,550（含缓存 9,856） · 输出 349\n\n按 中国标准时间 统计，金额按请求时单价计算，供参考，以服务商账单为准。\n\n未设置月度上限。\n\n每日费用\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n每日明细\n按对话排行\nFX-9 手机办事\n¥0.01258912 · 5 次\n输入 21550（缓存 9856） · 输出 349\n按模型排行\nFX-9 MiMo\n¥0.01258912 · 5 次\n输入 21550（缓存 9856） · 输出 349\n月度上限\n月度上限（元）\n仅本月临时上限（元）\n\n留空表示不限；0 暂停云端请求。本地模型不受限。临时上限于下月自动失效。\n\n保存月度上限\n模型单价（元 / 百万词元）"
+    },
+    {
+      "name": "light-settings-模型",
+      "status": "passed",
+      "durationMs": 1622,
+      "page": "models",
+      "text": "对话模型\n\n手机直连模型与电脑模型分开列出；密钥不会出现在账户模型目录中。\n\n手机已保存模型\n\n尚未保存手机模型\n\n配置自定义模型\n提供方地址（/v1）\n模型 ID\nAPI Key（留空保留同一地址已存密钥）\n保存并选择\n电脑模型\nFX-9 MiMo\n电脑云端 · 已配置 · 支持深入思考\n›\n账户云模型\n此模型未声明深入思考能力\nFX-9 MiMo\nmimo-v2.6-flash · 账户可用 · 修订 1\n保存到手机\n测试连接"
+    },
+    {
+      "name": "light-settings-审批",
+      "status": "passed",
+      "durationMs": 1599,
+      "page": "approvals",
+      "text": "审批\n\n用于新电脑对话，已有对话可在输入区单独设置。\n\n设置默认审批模式"
+    },
+    {
+      "name": "light-settings-记忆",
+      "status": "passed",
+      "durationMs": 1572,
+      "page": "memory",
+      "text": "记忆\n\n查看当前账户的理解与来源；可用时在详情中纠正、停用或删除。手机对话的自动记忆接入仍待验证。\n\n当前账户尚未启用记忆服务。\n刷新记忆状态"
+    },
+    {
+      "name": "light-settings-提醒与定时任务",
+      "status": "passed",
+      "durationMs": 1558,
+      "page": "schedules",
+      "text": "提醒与定时任务\n\n读取失败，请刷新重试。\n\n刷新提醒"
+    },
+    {
+      "name": "light-settings-已归档",
+      "status": "passed",
+      "durationMs": 1560,
+      "page": "archived",
+      "text": "已归档\n\n没有已归档对话。"
+    },
+    {
+      "name": "light-settings-关于",
+      "status": "passed",
+      "durationMs": 1577,
+      "page": "about",
+      "text": "关于\nWeftMate\n界面版本\n0.8.12（内置）\n›\n服务条款\n在应用内阅读\n›\n隐私政策\n在应用内阅读\n›"
+    },
+    {
+      "name": "dark-settings-常规",
+      "status": "passed",
+      "durationMs": 1644,
+      "page": "general",
+      "text": "常规\n此设备\n通知\n回复、动作和同步状态\n›\n离线与同步\n当前账户的记录与状态\n›\n界面更新\n0.8.12（内置）\n›\n原生兼容界面\n排查系统网页组件\n›\n回复进行中时发送的消息\n\n排队：等当前回复结束后作为下一条处理。 引导：插入当前回复，引导它调整方向。\n\n排队\n系统状态\n\n已更新\n\n模型服务\n尚未配置\n重启模型服务\n宿主\n运行中 · 版本 0.1.0\n重启宿主\n记忆\n未启用\n重启记忆\n\n后台模型跟随主模型 · 在电脑设置中修改\n\n刷新状态"
+    },
+    {
+      "name": "dark-settings-外观",
+      "status": "passed",
+      "durationMs": 1602,
+      "page": "appearance",
+      "text": "外观\n\n保存到这台设备。\n\n颜色模式\n\n选择适合当前环境的颜色模式。\n\n浅色\n深色\n跟随系统"
+    },
+    {
+      "name": "dark-settings-账户",
+      "status": "passed",
+      "durationMs": 1646,
+      "page": "account",
+      "text": "设置本月用量暂时无法读取，点此重试。设置常规通知、离线与同步›外观深色›账户cloud-43630449-eb3c-4510-9e64-45f358a2efa8›设备连接、配对与待批准›用量本月费用、用量与月度上限›已归档›助手模型管理手机与账户模型›审批新对话的默认模式›记忆查看理解与来源›提醒与定时任务管理提醒与定时任务›资料访问项目与网页资料›关于关于0.8.12（内置）›"
+    },
+    {
+      "name": "dark-settings-设备",
+      "status": "passed",
+      "durationMs": 1632,
+      "page": "devices",
+      "text": "设置本月用量暂时无法读取，点此重试。设置常规通知、离线与同步›外观深色›账户cloud-43630449-eb3c-4510-9e64-45f358a2efa8›设备连接、配对与待批准›用量本月费用、用量与月度上限›已归档›助手模型管理手机与账户模型›审批新对话的默认模式›记忆查看理解与来源›提醒与定时任务管理提醒与定时任务›资料访问项目与网页资料›关于关于0.8.12（内置）›"
+    },
+    {
+      "name": "dark-settings-用量",
+      "status": "passed",
+      "durationMs": 1644,
+      "page": "usage",
+      "text": "用量与费用\n2026 年 10 月\n上一年\n下一年\n刷新用量\n\n本月合计 ¥0.01258912 · 5 次请求\n\n输入 21,550（含缓存 9,856） · 输出 349\n\n按 中国标准时间 统计，金额按请求时单价计算，供参考，以服务商账单为准。\n\n未设置月度上限。\n\n每日费用\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n每日明细\n按对话排行\nFX-9 手机办事\n¥0.01258912 · 5 次\n输入 21550（缓存 9856） · 输出 349\n按模型排行\nFX-9 MiMo\n¥0.01258912 · 5 次\n输入 21550（缓存 9856） · 输出 349\n月度上限\n月度上限（元）\n仅本月临时上限（元）\n\n留空表示不限；0 暂停云端请求。本地模型不受限。临时上限于下月自动失效。\n\n保存月度上限\n模型单价（元 / 百万词元）"
+    },
+    {
+      "name": "dark-settings-模型",
+      "status": "passed",
+      "durationMs": 1678,
+      "page": "models",
+      "text": "对话模型\n\n手机直连模型与电脑模型分开列出；密钥不会出现在账户模型目录中。\n\n手机已保存模型\n\n尚未保存手机模型\n\n配置自定义模型\n提供方地址（/v1）\n模型 ID\nAPI Key（留空保留同一地址已存密钥）\n保存并选择\n电脑模型\nFX-9 MiMo\n电脑云端 · 已配置 · 支持深入思考\n›\n账户云模型\n此模型未声明深入思考能力\nFX-9 MiMo\nmimo-v2.6-flash · 账户可用 · 修订 1\n保存到手机\n测试连接"
+    },
+    {
+      "name": "dark-settings-审批",
+      "status": "passed",
+      "durationMs": 1619,
+      "page": "approvals",
+      "text": "审批\n\n用于新电脑对话，已有对话可在输入区单独设置。\n\n设置默认审批模式"
+    },
+    {
+      "name": "dark-settings-记忆",
+      "status": "passed",
+      "durationMs": 1603,
+      "page": "memory",
+      "text": "记忆\n\n查看当前账户的理解与来源；可用时在详情中纠正、停用或删除。手机对话的自动记忆接入仍待验证。\n\n当前账户尚未启用记忆服务。\n刷新记忆状态"
+    },
+    {
+      "name": "dark-settings-提醒与定时任务",
+      "status": "passed",
+      "durationMs": 1568,
+      "page": "schedules",
+      "text": "提醒与定时任务\n\n读取失败，请刷新重试。\n\n刷新提醒"
+    },
+    {
+      "name": "dark-settings-已归档",
+      "status": "passed",
+      "durationMs": 1591,
+      "page": "archived",
+      "text": "已归档\n\n没有已归档对话。"
+    },
+    {
+      "name": "dark-settings-关于",
+      "status": "passed",
+      "durationMs": 1570,
+      "page": "about",
+      "text": "关于\nWeftMate\n界面版本\n0.8.12（内置）\n›\n服务条款\n在应用内阅读\n›\n隐私政策\n在应用内阅读\n›"
+    },
+    {
+      "name": "projects",
+      "status": "passed",
+      "durationMs": 4365,
+      "projectCreated": true,
+      "sessionLinked": true
+    }
+  ],
+  "secondAccount": {
+    "isolated": true,
+    "executionAccount": false,
+    "actionStatus": 403,
+    "visibleExplanation": true,
+    "privateSessions": 0,
+    "originalDesktopApprovedFromPhone": true,
+    "originalExecutionRetained": true
+  },
+  "visualOnly": true,
+  "passed": true,
+  "nativeCleanup": {
+    "applicationRemoved": true,
+    "reverseRemoved": true,
+    "forwardRemoved": true,
+    "probePassed": true,
+    "originalNightMode": "yes",
+    "nightModeRestored": true
+  },
+  "finishedAt": "2026-10-09T21:33:18.314Z",
+  "surface": "android",
+  "realNativeBridge": true,
+  "locators": "visible accessible names and roles",
+  "requests": [
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/config",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/authorization",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/auth/registration/request",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/registration/verify",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/registration/complete",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/authorization/resume",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/oidc/token",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/oidc/jwks",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/cloud/devices",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/auth/cloud-nonce",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/cloud-desktop",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/pending",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/models",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/models",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/projects",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/commands",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/usage",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sync/events",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/cloud-session",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/cloud/auth/device/confirm",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/77f43a28-a93b-485d-a06d-08d99e2596c2/decision",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/77f43a28-a93b-485d-a06d-08d99e2596c2/trust",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/cloud-session",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/account/models",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/account/models/by-request/a0ac820b-fdcc-4776-b461-e418e246ef11",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/commands",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/commands/cmd-70f37562-0725-4274-b3de-315710a1666a",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-edae385a-d29c-4f34-888c-9501ff117c4c/approval-mode",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-edae385a-d29c-4f34-888c-9501ff117c4c/metadata",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-edae385a-d29c-4f34-888c-9501ff117c4c/events",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-edae385a-d29c-4f34-888c-9501ff117c4c/approvals",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-edae385a-d29c-4f34-888c-9501ff117c4c/questions",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/tasks/cmd-a62e5e70-72c8-4cd2-9069-9edc3ce223a0",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-edae385a-d29c-4f34-888c-9501ff117c4c/events/102/detail",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-edae385a-d29c-4f34-888c-9501ff117c4c/events/125/detail",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/projects",
+      "status": 201
+    },
+    {
+      "path": "/personal/v1/sessions/session-86e45e52-3a86-4fda-9acf-1ad9237eeb6c/events",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/usage",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/binding",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/devices",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/account/models",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/approvals",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/system",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/workspaces/browser",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/logout",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/logout",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/commands",
+      "status": 403
+    },
+    {
+      "path": "/personal/v1/auth/cloud-desktop",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/cloud/devices/afddc6bd-6bf4-4565-be38-e141686bae92/trust",
+      "status": 200
+    }
+  ]
+}

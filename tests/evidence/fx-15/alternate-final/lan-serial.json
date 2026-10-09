@@ -1,0 +1,84 @@
+{
+  "maxActive": 1,
+  "requests": [
+    {
+      "method": "POST",
+      "queuedAt": "2026-10-09T21:22:12.919Z",
+      "kind": "inference",
+      "startedAt": "2026-10-09T21:22:12.919Z",
+      "status": 200,
+      "endedAt": "2026-10-09T21:22:13.790Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:22:17.899Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:22:17.900Z",
+      "status": 404,
+      "endedAt": "2026-10-09T21:22:17.907Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:22:17.908Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:22:17.909Z",
+      "status": 200,
+      "endedAt": "2026-10-09T21:22:17.931Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:22:17.951Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:22:17.951Z",
+      "status": 404,
+      "endedAt": "2026-10-09T21:22:17.955Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:22:17.956Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:22:17.956Z",
+      "status": 200,
+      "endedAt": "2026-10-09T21:22:17.977Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:22:20.580Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:22:20.580Z",
+      "status": 404,
+      "endedAt": "2026-10-09T21:22:20.591Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:22:20.599Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:22:20.599Z",
+      "status": 200,
+      "endedAt": "2026-10-09T21:22:20.621Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:22:22.200Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:22:22.200Z",
+      "status": 404,
+      "endedAt": "2026-10-09T21:22:22.209Z"
+    },
+    {
+      "method": "POST",
+      "queuedAt": "2026-10-09T21:22:22.278Z",
+      "kind": "inference",
+      "startedAt": "2026-10-09T21:22:22.279Z",
+      "status": 200,
+      "endedAt": "2026-10-09T21:22:29.973Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:22:22.418Z",
+      "kind": "metadata",
+      "cancelled": true,
+      "endedAt": "2026-10-09T21:22:29.973Z"
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+✖ desktop motion respects live reduced-motion changes, keyboard, immediate layout and long lists (6330.694213ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6454.534416
+
+✖ failing tests:
+
+test at tests/personal-desktop-motion.test.ts:6:1
+✖ desktop motion respects live reduced-motion changes, keyboard, immediate layout and long lists (6330.694213ms)
+  AssertionError [ERR_ASSERTION]: AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+      height: 827,
+  +   top: 72
+  -   top: 0
+    }
+  
+      at file:///private/tmp/weftmate-fx14-motion-315h8clh/tests/integration/ui-p1-desktop-motion.mjs:206:12 {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [Object],
+    expected: [Object],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+  WeftMate
+  新对话
+  Ctrl N
+  Ctrl K
+  
+  未分组
+  项目进度报告
+  合成空白对话
+  项目
+  添加一个文件夹，开始项目对话。
+  T
+  TimelineFixture
+  项目进度报告
+  输出与来源
+  本对话用量
+  读取项目资料，运行测试，并保存一份进度报告。
+  
+  我会先读取资料并运行测试，再整理 项目进度报告。
+  
+  覆盖现有报告前，需要你批准。
+  
+  用到了 1 条记忆
+  读取了 3 个文件、已运行 1 个命令
+  读取 3 个文件：README.md、PLAN.md、STATE.md
+  运行命令 npm test
+  提问已结束
+  已运行 1 个命令、修改了 1 个文件
+  项目进度报告.md
+  已读回核验
+  
+  Markdown · 68 字节
+  
+  打开成果下载
+  
+  报告已保存，测试全部通过。
+  
+  用到了 1 条记忆
+  输入消息
+  自动
+  合成会话
+  Isolated diagnostics: /private/tmp/weftmate-ui-p1-69gzHL
+  node:internal/modules/run_main:107
+      triggerUncaughtException(
+      ^
+  
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+      height: 827,
+  +   top: 72
+  -   top: 0
+    }
+  
+      at file:///private/tmp/weftmate-fx14-motion-315h8clh/tests/integration/ui-p1-desktop-motion.mjs:206:12 {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { height: 827, top: 72 },
+    expected: { height: 827, top: 0 },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+  
+  Node.js v24.21.0
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///private/tmp/weftmate-fx14-motion-315h8clh/tests/personal-desktop-motion.test.ts:12:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

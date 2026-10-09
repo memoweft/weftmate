@@ -300,6 +300,11 @@ class LocalStore(context: Context, databaseName: String = "weftmate-mobile.db") 
         }
     }
 
+    @Synchronized fun clearSharedHistory(owner: String, hostId: String, sessionId: String) = write { db ->
+        db.execSQL("DELETE FROM shared_history_events WHERE owner_key=? AND host_id=? AND session_id=?", arrayOf(owner, hostId, sessionId))
+        db.execSQL("DELETE FROM shared_history_cursors WHERE owner_key=? AND host_id=? AND session_id=?", arrayOf(owner, hostId, sessionId))
+    }
+
     /** Cache only projected native events, under their exact owner/host/session identity. */
     @Synchronized fun saveSharedHistoryPage(owner: String, hostId: String, sessionId: String,
         events: JSONArray, nextSeq: Long, hasOlder: Boolean = false) = write { db ->
@@ -412,9 +417,15 @@ class LocalStore(context: Context, databaseName: String = "weftmate-mobile.db") 
             val row = sessions.getJSONObject(i)
             val sessionId = row.getString("sessionId")
             if (!sessionId.matches(Regex("[A-Za-z0-9_-]{1,128}"))) continue
+            val cached = JSONObject(row.toString())
+            if (row.optBoolean("hasTemporaryContent") || row.optString("memoryMode") == "off") {
+                cached.put("title", "临时对话")
+                db.execSQL("DELETE FROM shared_history_events WHERE owner_key=? AND host_id=? AND session_id=?", arrayOf(owner, hostId, sessionId))
+                db.execSQL("DELETE FROM shared_history_cursors WHERE owner_key=? AND host_id=? AND session_id=?", arrayOf(owner, hostId, sessionId))
+            }
             db.insertOrThrow("shared_sessions", null, ContentValues().apply {
                 put("owner_key", owner); put("host_id", hostId); put("session_id", sessionId)
-                put("body", row.toString())
+                put("body", cached.toString())
             })
         }
     }
