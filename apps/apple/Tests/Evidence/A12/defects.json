@@ -1,0 +1,25 @@
+{
+  "reproduced": [
+    {
+      "issue": "Watch reply callback crashes under Swift 6 actor checks",
+      "trigger": "first real WCSession refresh reply on NSOperationQueue utility queue",
+      "crash": "_dispatch_assert_queue_fail / closure #1 in WatchTimelineModel.send",
+      "fix": "Mark SDK reply and error callbacks @Sendable and hop explicitly to MainActor",
+      "firstRun": "failed; not counted as successful live approval"
+    },
+    {
+      "issue": "successful reply could leave stale approval buttons actionable",
+      "fix": "retain per account/session registered decisions and filter stale cards"
+    },
+    {
+      "issue": "saved uncertain phone journal mistaken for registration",
+      "fix": "only matched registered record reports success to Watch"
+    },
+    {
+      "issue": "Rejected task incorrectly played success haptic",
+      "trigger": "task.ended includes aborted tasks; producer treated every task end as successful completion",
+      "fix": "Only reason=completed task IDs enter success feedback projection",
+      "secondRun": "approval/rejection XCTest passed 1/1, haptic audit failed; not counted as final acceptance"
+    }
+  ]
+}

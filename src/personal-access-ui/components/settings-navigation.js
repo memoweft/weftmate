@@ -139,7 +139,6 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         }
         const description = (id, name, help, value) => panels.get(id).append(globalThis.WeftSettingsControls.row(name, help, node('span', 'settings-value', value)));
         if (!nativeSettings) description('general', '开机自启', '在 WeftMate 桌面程序中设置。', '仅桌面程序');
-        description('general', '通知', '审批、提问与任务完成会通过系统通知提醒。', globalThis.weftmateDesktop ? '由系统管理' : '在桌面程序中管理');
         description('general', '关闭窗口时最小化到托盘', '关闭窗口后，WeftMate 继续在后台运行。', globalThis.weftmateDesktop ? '已启用' : '仅桌面程序');
         if (globalThis.weftmateDesktop?.openLogs) {
             const logs = node('button', 'button secondary small', '打开日志文件夹'); logs.type = 'button';
@@ -160,7 +159,6 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
             const row = globalThis.WeftSettingsControls.row(name, help, control); panels.get('appearance').append(row);
             if (key === 'theme') { const segmented = globalThis.WeftSettingsControls.segmented(control); row.append(segmented); }
         }
-        description('appearance', '界面密度', '当前布局使用标准间距。', '标准');
         move('memory', ui.byId('memory-view'));
 
         const updates = node('section', 'settings-updates'); updates.id = 'settings-updates'; panels.get('about').append(updates);

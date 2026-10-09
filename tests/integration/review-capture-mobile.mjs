@@ -75,7 +75,9 @@ try {
         await questionPage.goto(candidate.mobileUrl);
         await questionPage.waitForFunction(() => state.booted && state.page === 'home');
         await questionPage.getByRole('button', { name: '项目进度报告 待审批', exact: true }).click();
-        await questionPage.getByText('报告要采用哪种格式？', { exact: true }).evaluate(node => node.scrollIntoView({ block: 'center' }));
+        await questionPage.getByRole('button',{name:'拒绝',exact:true}).click();
+        await questionPage.getByRole('region',{name:'待回答问题'}).waitFor();
+        await questionPage.getByRole('radio',{name:'简要报告',exact:true}).waitFor();
       }, questionPage);
       if (errors.length) throw Error('Mobile renderer failed');
       console.log(`Mobile ${theme}: scene outcomes recorded.`);

@@ -1,0 +1,43 @@
+{
+  "checkedAt": "2026-10-09T14:47:24.004411+00:00",
+  "forcedProcessCount": 33,
+  "forcedBatches": [
+    {
+      "reason": "mistaken immediate runner selected action scenarios; terminated own tree",
+      "count": 10
+    },
+    {
+      "reason": "relay fixture restart/cleanup adaptation",
+      "count": 2
+    },
+    {
+      "reason": "Android settings harness invalid navigation; terminated own tree",
+      "count": 14
+    },
+    {
+      "reason": "initial Android package-name mismatch left isolated Electron after runner exit",
+      "count": 5
+    },
+    {
+      "reason": "own idle Gradle and Kotlin daemons after builds completed",
+      "count": 2
+    }
+  ],
+  "normallyExitedChildren": "Not added to forced count without an exact process ledger. All successful runners close their own app, browser, host and model fixture.",
+  "windowsQaProcessesRemaining": 0,
+  "macQaProcessesRemaining": 0,
+  "bootedAppleSimulators": 0,
+  "mumuRunning": null,
+  "androidTestPackageRemoved": true,
+  "adbForwardRemaining": 0,
+  "lanLockReleased": true,
+  "wslQaCloudFrpHaproxyRemaining": 0,
+  "wslNote": "Shared Ubuntu distribution was not shut down; only this test infrastructure stopped. It has no systemd, so the service check is inapplicable; process checks found no HAProxy/frps.",
+  "macWorkingTreeClean": true,
+  "protectedDailyPortsAccessed": false,
+  "protectedDailyDataAccessed": false,
+  "productCodeChanged": false,
+  "ownMumuClosedAt": "2026-10-09T22:27:12+08:00",
+  "ownMumuShutdownVerifiedAt": "2026-10-09T22:29:00+08:00",
+  "laterSharedEmulatorState": "A later inventory found MuMu running on a different ADB port (16385) after this package shutdown was verified. No QA-2 process launched it; left it intact to avoid interrupting another package."
+}

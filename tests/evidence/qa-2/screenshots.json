@@ -1,0 +1,2786 @@
+[
+  {
+    "screenshot": "android-all/android-devices-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all/android-devices-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all/android-extra-failure-1-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all/android-extra-failure-2-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all/android-extra-failure-4-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all/android-extra-settings-账户-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all/android-login-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all/android-login-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all/android-task-approval-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all/android-task-result-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all/android-waiting-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all/android-waiting-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all/desktop-phone-approval.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all/desktop-phone-result.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-devices-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-devices-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-failure-11-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-failure-12-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-failure-24-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-failure-25-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-failure-27-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-project-list-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-project-list-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-settings-关于-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-settings-关于-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-settings-外观-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-settings-外观-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-settings-审批-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-settings-审批-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-settings-已归档-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-settings-已归档-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-settings-常规-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-settings-常规-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-settings-提醒与定时任务-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-settings-提醒与定时任务-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-settings-模型-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-settings-模型-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-settings-用量-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-settings-用量-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-settings-记忆-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-settings-记忆-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-settings-设备-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-settings-设备-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-settings-账户-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-extra-settings-账户-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-login-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-login-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-task-approval-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-task-result-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-waiting-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/android-waiting-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/desktop-phone-approval.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-all-retry/desktop-phone-result.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-new-retry/android-devices-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-new-retry/android-devices-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-new-retry/android-login-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-new-retry/android-login-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-new-retry/android-task-approval-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-new-retry/android-task-result-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-new-retry/android-waiting-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-new-retry/android-waiting-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-new-retry/desktop-phone-approval.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-new-retry/desktop-phone-result.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-projects/android-devices-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-projects/android-devices-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-projects/android-extra-move-project-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-projects/android-extra-project-conversation-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-projects/android-extra-project-list-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-projects/android-extra-project-list-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-projects/android-extra-project-menu-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-projects/android-login-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-projects/android-login-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-projects/android-task-approval-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-projects/android-task-result-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-projects/android-waiting-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-projects/android-waiting-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-projects/desktop-phone-approval.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "android-projects/desktop-phone-result.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-dark/approval.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-dark/main.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-dark/send-ready.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-dark/settings-about.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-dark/settings-account.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-dark/settings-appearance.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-dark/settings-approvals.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-dark/settings-archived.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-dark/settings-backups.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-dark/settings-devices.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-dark/settings-general.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-dark/settings-memory.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-dark/settings-models.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-dark/settings-schedules.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-dark/settings-system.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-dark/settings-usage.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-light/approval.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-light/main.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-light/send-ready.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-light/settings-about.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-light/settings-account.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-light/settings-appearance.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-light/settings-approvals.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-light/settings-archived.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-light/settings-backups.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-light/settings-devices.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-light/settings-general.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-light/settings-memory.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-light/settings-models.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-light/settings-schedules.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-light/settings-system.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/a10/mac-light/settings-usage.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-dark/approval.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-dark/main.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-dark/send-ready.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-dark/settings-about.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-dark/settings-account.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-dark/settings-appearance.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-dark/settings-approvals.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-dark/settings-archived.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-dark/settings-backups.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-dark/settings-devices.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-dark/settings-general.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-dark/settings-memory.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-dark/settings-models.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-dark/settings-schedules.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-dark/settings-system.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-dark/settings-usage.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-light/approval.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-light/main.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-light/send-ready.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-light/settings-about.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-light/settings-account.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-light/settings-appearance.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-light/settings-approvals.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-light/settings-archived.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-light/settings-backups.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-light/settings-devices.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-light/settings-general.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-light/settings-memory.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-light/settings-models.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-light/settings-schedules.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-light/settings-system.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/mac-timed/mac-light/settings-usage.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/phone-flow/a9-iphone-detail-light-20261009T142855Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/phone-flow/a9-iphone-error-light-20261009T142855Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/phone-flow/a9-iphone-general-queue-light-20261009T142855Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/phone-flow/a9-iphone-general-steer-light-20261009T142855Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/phone-flow/a9-iphone-raw-light-20261009T142855Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/phone-flow/a9-iphone-send-queue-light-20261009T142855Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/phone-flow/a9-iphone-send-steer-light-20261009T142855Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/phone-flow/review-iphone-composer-context-light-20261009T142855Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/phone-flow/review-iphone-conversation-light-20261009T142855Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/phone-flow/review-iphone-general-light-20261009T142855Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-mac-dark/move-project.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-mac-dark/project-moved.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-mac-dark/project-new-conversation.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-mac-dark/project-send-ready.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-mac-dark/project-sent.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-mac-dark/projects-list.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-mac-dark/restricted-session.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-mac-light/move-project.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-mac-light/project-moved.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-mac-light/project-new-conversation.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-mac-light/project-send-ready.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-mac-light/project-sent.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-mac-light/projects-list.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-mac-light/restricted-session.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-phone-dark/a11-iphone-move-project-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-phone-dark/a11-iphone-project-moved-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-phone-dark/a11-iphone-project-new-conversation-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-phone-dark/a11-iphone-project-sent-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-phone-dark/a11-iphone-projects-list-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-phone-dark/a11-iphone-restricted-sent-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-phone-dark/a11-iphone-restricted-session-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-phone-light/a11-iphone-move-project-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-phone-light/a11-iphone-project-moved-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-phone-light/a11-iphone-project-new-conversation-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-phone-light/a11-iphone-project-sent-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-phone-light/a11-iphone-projects-list-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-phone-light/a11-iphone-restricted-sent-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/projects-phone-light/a11-iphone-restricted-session-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-dark/review-iphone-appearance-dark-20261009T141724Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-dark/review-iphone-settings-about-dark-20261009T141724Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-dark/review-iphone-settings-account-dark-20261009T141724Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-dark/review-iphone-settings-appearance-dark-20261009T141724Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-dark/review-iphone-settings-approvals-dark-20261009T141724Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-dark/review-iphone-settings-archived-dark-20261009T141724Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-dark/review-iphone-settings-devices-dark-20261009T141724Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-dark/review-iphone-settings-general-dark-20261009T141724Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-dark/review-iphone-settings-home-dark-20261009T141724Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-dark/review-iphone-settings-memory-dark-20261009T141724Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-dark/review-iphone-settings-models-dark-20261009T141724Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-dark/review-iphone-settings-schedules-dark-20261009T141724Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-dark/review-iphone-settings-usage-dark-20261009T141724Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-dark/review-iphone-usage-dark-20261009T141724Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-light/review-iphone-appearance-light-20261009T141013Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-light/review-iphone-settings-about-light-20261009T141013Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-light/review-iphone-settings-account-light-20261009T141013Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-light/review-iphone-settings-appearance-light-20261009T141013Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-light/review-iphone-settings-approvals-light-20261009T141013Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-light/review-iphone-settings-archived-light-20261009T141013Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-light/review-iphone-settings-devices-light-20261009T141013Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-light/review-iphone-settings-general-light-20261009T141013Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-light/review-iphone-settings-home-light-20261009T141013Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-light/review-iphone-settings-memory-light-20261009T141013Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-light/review-iphone-settings-models-light-20261009T141013Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-light/review-iphone-settings-schedules-light-20261009T141013Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-light/review-iphone-settings-usage-light-20261009T141013Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/settings-light/review-iphone-usage-light-20261009T141013Z.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "apple/watch/approval.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-desktop-dark-01-running-risk.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-desktop-dark-02-input-mode.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-desktop-dark-03-collapsed.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-desktop-dark-04-maximized.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-desktop-dark-05-settings.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-desktop-dark-06-approval.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-desktop-dark-07-idle.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-desktop-dark-08-queued.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-desktop-light-01-running-risk.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-desktop-light-02-input-mode.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-desktop-light-03-collapsed.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-desktop-light-04-maximized.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-desktop-light-05-settings.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-desktop-light-06-approval.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-desktop-light-07-idle.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-desktop-light-08-queued.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-mobile-dark-01-running-risk.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-mobile-dark-02-input-mode.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-mobile-dark-06-approval.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-mobile-dark-07-idle.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-mobile-dark-08-queued.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-mobile-light-01-running-risk.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-mobile-light-02-input-mode.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-mobile-light-06-approval.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-mobile-light-07-idle.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-mobile-light-08-queued.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-mobile-web-dark-01-running-risk.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-mobile-web-dark-02-input-mode.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-mobile-web-dark-06-approval.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-mobile-web-dark-07-idle.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-mobile-web-dark-08-queued.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-mobile-web-light-01-running-risk.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-mobile-web-light-02-input-mode.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-mobile-web-light-06-approval.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-mobile-web-light-07-idle.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "d36/after-mobile-web-light-08-queued.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "desktop/cycle-1.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "desktop/cycle-10.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "desktop/cycle-2.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "desktop/cycle-20.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "desktop/cycle-3.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "desktop/cycle-30.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "desktop/cycle-40.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "desktop/cycle-50.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "desktop/cycle-60.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "immediate-after-mf1/action-01-organize.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "immediate-after-mf1/memory-01-preference.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "immediate-after-mf1/memory-02-correction.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "immediate-after-mf1/memory-04-person.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "immediate-after-mf1/memory-1x-correction.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "immediate-after-mf1/memory-1x-person.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "immediate-after-mf1/memory-1x-preference.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "legacy/desktop-legacy-bound.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "legacy/desktop-phone-approval.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "legacy/desktop-phone-result.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "legacy/mobile-web-devices-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "legacy/mobile-web-devices-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "legacy/mobile-web-login-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "legacy/mobile-web-login-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "legacy/mobile-web-task-approval-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "legacy/mobile-web-task-result-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "legacy/mobile-web-waiting-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "legacy/mobile-web-waiting-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "m1-mimo/lan-action-01-organize.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "m1-mimo/lan-action-03-read-code.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "m1-mimo/lan-action-05-stop-resume.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "m1-mimo/mimo-action-01-organize.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "m1-mimo/mimo-action-02-web-document.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "m1-mimo/mimo-action-03-read-code.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "m1-mimo/mimo-action-04-research-script.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "m1-mimo/mimo-action-05-stop-resume.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "m1-mimo/mimo-action-06-delete-approval.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "m2/mimo-core-unavailable-chat.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "m2/mimo-core-unavailable-memory.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "m2/mimo-forget.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "m2/mimo-sources.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "menus/desktop-archived-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "menus/desktop-archived-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "menus/desktop-menu-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "menus/desktop-menu-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "mimo-action-04-research-script.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "models/desktop-dark-list.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "models/desktop-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "models/desktop-edit.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "models/desktop-light-list.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "models/desktop-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "models/desktop-test-no-catalog.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "models/mobile-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "models/mobile-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "orphan-stop/after-missing-turn.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "orphan-stop/after-model-switch-failed.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "orphan-stop/after-runtime-restart.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "orphan-stop/after-upstream-disconnect.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "progress/desktop-light-01-loading.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "progress/desktop-light-02-working-command.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "progress/desktop-light-03-working-read.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "progress/desktop-light-04-working-search.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "progress/mobile-light-01-loading.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "progress/mobile-light-02-working-command.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "progress/mobile-light-03-working-read.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "progress/mobile-light-04-working-search.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "progress/mobile-web-light-01-loading.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "progress/mobile-web-light-02-working-command.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "progress/mobile-web-light-03-working-read.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "progress/mobile-web-light-04-working-search.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "project-lifecycle/desktop-create-project.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "project-lifecycle/desktop-move-project.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "project-lifecycle/desktop-project-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "project-lifecycle/desktop-project-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "project-lifecycle/desktop-project-narrow.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "project-lifecycle/desktop-project-settings.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "project-lifecycle/mobile-bundle-move-project.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "project-lifecycle/mobile-bundle-project-new-conversation.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "project-lifecycle/mobile-bundle-projects-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "project-lifecycle/mobile-bundle-projects-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "project-lifecycle/mobile-project-conversation.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "project-lifecycle/mobile-project-list.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "projects/create-project-permission-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "projects/create-project-permission-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "projects/desktop-phone-approval.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "projects/desktop-phone-result.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "projects/edit-project-permission-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "projects/edit-project-permission-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "projects/mobile-web-devices-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "projects/mobile-web-devices-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "projects/mobile-web-login-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "projects/mobile-web-login-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "projects/mobile-web-task-approval-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "projects/mobile-web-task-result-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "projects/mobile-web-waiting-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "projects/mobile-web-waiting-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "projects/ordinary-progress-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "projects/ordinary-progress-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "projects/project-progress-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "projects/project-progress-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay/mobile-web-devices-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay/mobile-web-devices-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay/mobile-web-login-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay/mobile-web-login-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay/mobile-web-waiting-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay/mobile-web-waiting-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-auth/mobile-web-devices-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-auth/mobile-web-devices-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-auth/mobile-web-login-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-auth/mobile-web-login-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-auth/mobile-web-waiting-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-auth/mobile-web-waiting-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-chain/mobile-web-devices-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-chain/mobile-web-devices-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-chain/mobile-web-login-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-chain/mobile-web-login-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-chain/mobile-web-waiting-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-chain/mobile-web-waiting-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-complete/desktop-phone-approval.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-complete/desktop-phone-result.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-complete/mobile-web-devices-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-complete/mobile-web-devices-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-complete/mobile-web-login-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-complete/mobile-web-login-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-complete/mobile-web-task-approval-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-complete/mobile-web-task-result-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-complete/mobile-web-waiting-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-complete/mobile-web-waiting-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-cookie/mobile-web-devices-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-cookie/mobile-web-devices-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-cookie/mobile-web-login-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-cookie/mobile-web-login-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-cookie/mobile-web-waiting-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-cookie/mobile-web-waiting-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-diagnosis/mobile-web-devices-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-diagnosis/mobile-web-devices-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-diagnosis/mobile-web-login-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-diagnosis/mobile-web-login-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-diagnosis/mobile-web-waiting-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-diagnosis/mobile-web-waiting-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-final/mobile-web-devices-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-final/mobile-web-devices-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-final/mobile-web-login-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-final/mobile-web-login-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-final/mobile-web-waiting-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-final/mobile-web-waiting-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-login/mobile-web-devices-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-login/mobile-web-devices-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-login/mobile-web-login-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-login/mobile-web-login-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-login/mobile-web-waiting-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-login/mobile-web-waiting-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-retry/mobile-web-devices-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-retry/mobile-web-devices-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-retry/mobile-web-login-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-retry/mobile-web-login-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-retry/mobile-web-waiting-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "relay-retry/mobile-web-waiting-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "scroll/after-desktop-light-01-sending.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "scroll/after-desktop-light-02-bottom.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "scroll/after-desktop-light-03-running-draft.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "scroll/after-desktop-light-03-stop.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "scroll/after-desktop-light-04-layout.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "scroll/after-desktop-light-05-context-tooltip.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "scroll/after-desktop-light-05-context.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "scroll-focused/desktop-dark-bottom.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "scroll-focused/desktop-dark-history.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "scroll-focused/desktop-dark-returned.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "scroll-focused/desktop-light-bottom.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "scroll-focused/desktop-light-history.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "scroll-focused/desktop-light-returned.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "scroll-focused/mobile-web-dark-bottom.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "scroll-focused/mobile-web-dark-history.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "scroll-focused/mobile-web-dark-returned.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "scroll-focused/mobile-web-light-bottom.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "scroll-focused/mobile-web-light-history.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "scroll-focused/mobile-web-light-returned.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "second/desktop-phone-approval.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "second/desktop-phone-result.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "second/desktop-second-account-limited.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "second/mobile-web-devices-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "second/mobile-web-devices-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "second/mobile-web-login-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "second/mobile-web-login-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "second/mobile-web-task-approval-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "second/mobile-web-task-result-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "second/mobile-web-waiting-dark.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "second/mobile-web-waiting-light.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/dark-narrow.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/dark-settings-关于.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/dark-settings-备份与恢复.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/dark-settings-外观.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/dark-settings-审批.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/dark-settings-已归档.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/dark-settings-常规.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/dark-settings-提醒与定时任务.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/dark-settings-模型.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/dark-settings-用量.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/dark-settings-系统状态.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/dark-settings-记忆.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/dark-settings-设备.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/dark-settings-账户.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/light-narrow.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/light-settings-关于.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/light-settings-备份与恢复.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/light-settings-外观.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/light-settings-审批.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/light-settings-已归档.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/light-settings-常规.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/light-settings-提醒与定时任务.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/light-settings-模型.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/light-settings-用量.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/light-settings-系统状态.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/light-settings-记忆.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/light-settings-设备.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "settings/light-settings-账户.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "write-sample/cycle-1.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "write-sample/cycle-10.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "write-sample/cycle-2.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  },
+  {
+    "screenshot": "write-sample/cycle-3.png",
+    "synthetic": true,
+    "durationMs": null,
+    "timing": "Parent result JSON or README phase timing. Null means no independent action timer."
+  }
+]

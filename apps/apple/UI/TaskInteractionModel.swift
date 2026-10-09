@@ -178,6 +178,7 @@ private struct SavedTaskResponse: Codable {
         } catch { if isCurrent && token == generation { questionError = message(error); currentQuestions = [] } }
     }
     func hasSaved(_ key: String) -> Bool { response(key) != nil }
+    func isRegistered(_ key: String) -> Bool { response(key)?.registered == true }
     func canRespond(_ key: String) -> Bool {
         guard isCurrent, journalError == nil, !busy.contains(key), response(key) == nil else { return false }
         if key.hasPrefix("approval:") { return approvalError == nil && currentApprovals.contains(String(key.dropFirst(9))) }

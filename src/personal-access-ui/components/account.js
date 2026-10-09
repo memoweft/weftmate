@@ -377,7 +377,7 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
             catch (error) {
                 if (!core.accountCurrent(token) || selection !== core.state.avatarSelectionGeneration)
                     return;
-                ui.byId('profile-avatar-status').textContent = error.message || '无法读取这张图片，请重新选择。';
+                ui.byId('profile-avatar-status').textContent = error instanceof Error && /[\u4e00-\u9fff]/.test(error.message) ? core.interfaceText(error.message) : '无法读取这张图片，请重新选择。';
                 ui.byId('profile-avatar-file').value = '';
                 void ui.paintAvatar(core.state.account?.avatar ?? null, token);
             }

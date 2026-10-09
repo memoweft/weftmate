@@ -531,6 +531,17 @@ export async function createHostCloudIdentity(context, options) {
     }
   }
   return { browserConfiguration: () => ({ issuer: config.issuer }),
+    offlineDeviceId(ownerId, deviceId) {
+      if (context.accountState(ownerId).devices[deviceId]?.authKind !== 'cloud') return deviceId;
+      assertSession(ownerId, deviceId);
+      return store.state.sessions[deviceId].trustId;
+    },
+    async publishOffline(ownerId, generation) {
+      const binding = Object.values(store.state.bindings).find(item => item.ownerId === ownerId && item.status === 'active');
+      if (!binding) throw failure('CLOUD_NOT_BOUND', 409);
+      await signedRequest('/hosts/offline/publish', { sub: binding.sub, generation });
+      return { url: `${config.base}/hosts/offline/status`, hostId, accountId: binding.sub, generation };
+    },
     isInstallationOwner: ownerId => Object.values(store.state.bindings).some(binding => binding.ownerId === ownerId && binding.desktop === true && binding.status === 'active'),
     tls: () => structuredClone(store.state.tls), relayRequest: signedRequest, handle, assertSession, revokeLocalDevice, applyEvents, syncRevocations, closeInvalidResponses,
     validSession(ownerId, deviceId) {

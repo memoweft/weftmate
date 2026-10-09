@@ -62,8 +62,8 @@ test('UI-3m named controls preserve intent, edit/cancel races and latest output 
     await page.getByRole('button',{name:'输出与来源',exact:true}).click();
     await page.getByRole('button',{name:/^报告.md/}).waitFor();assert.equal(await page.getByRole('button',{name:/^报告.md/}).count(),1);await page.getByRole('button',{name:/^报告.md/}).click();
     await page.getByText('最新报告内容',{exact:true}).waitFor();await page.getByText('旧版 · 1 个',{exact:true}).click();await page.getByRole('button',{name:'报告.md',exact:true}).click();await page.getByText('旧版报告内容',{exact:true}).waitFor();
-    await page.getByRole('button',{name:'返回对话',exact:true}).click();await page.getByRole('button',{name:'输出与来源',exact:true}).click();await page.getByRole('button',{name:/read_file/}).click();await page.getByText('读取报告',{exact:true}).click();
-    await page.getByText('读取 1 个文件：notes.md',{exact:true}).waitFor();assert.equal(await page.getByText(/"arguments"/).isVisible(),false);await page.getByText('详情',{exact:true}).click();assert.equal(await page.getByText(/"arguments"/).isVisible(),true);
+    await page.getByRole('button',{name:'返回对话',exact:true}).click();await page.getByRole('button',{name:'输出与来源',exact:true}).click();await page.getByRole('button',{name:/读取文件/}).click();await page.getByText('读取报告',{exact:true}).click();
+    await page.getByText('读取 1 个文件：notes.md',{exact:true}).waitFor();assert.equal(await page.getByText(/"路径"/).isVisible(),false);await page.getByText('详情',{exact:true}).click();assert.equal(await page.getByText(/"路径"/).isVisible(),true);
     await page.getByRole('button',{name:'返回对话',exact:true}).click();
     await page.evaluate(()=>{fixture.offlineResources=true;localStorage.setItem('weftmate-resources:qa:s1',JSON.stringify({outputs:[{artifactId:'old',fileName:'报告.md',createdAt:'2026-10-07T00:00:00Z'},{artifactId:'new',fileName:'报告.md',createdAt:'2026-10-08T00:00:00Z'}],sources:[]}));});
     await page.getByRole('button',{name:'输出与来源',exact:true}).click();await page.getByText('离线 · 上次读取的内容',{exact:true}).waitFor();

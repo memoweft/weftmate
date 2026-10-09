@@ -116,6 +116,14 @@
         const resolved = ordered.find(e => e.seq > start.seq &&
           (family === 'approval' ? e.type === 'approval.resolved' && e.data?.approvalId === key
             : family === 'question' && e.type === 'question.answered' && (e.data?.callId || e.data?.stepId) === key))
+        if (family === 'question') {
+          const question = options.questions?.find(question => question.observedSeq === start.seq);
+          row.hidden = question ? question.status === 'pending' : !resolved;
+          row.className = 'timeline-entry question-record';
+          row.replaceChildren();
+          if (!row.hidden) row.append(node('span', '', question && globalThis.WeftQuestionBar ? WeftQuestionBar.record(question) : '已回答'));
+          return;
+        }
         row.replaceChildren(node('strong', '', family === 'approval' ? resolved ? '审批已处理' : '需要审批'
           : family === 'question' ? resolved ? '已回答' : '需要补充信息' : family === 'artifact' ? data.fileName || '成果文件' : '排队中'))
         if (family === 'artifact') globalThis.WeftTimelineCards.artifact(row, data, options)

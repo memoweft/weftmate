@@ -120,7 +120,7 @@ async function systemStatusSection(target){const owner=state.owner,epoch=state.a
         value.version?`版本 ${value.version}`:['disabled','unconfigured','stopped'].includes(value.state)?'':'版本未知',
         value.contextWindow?`上下文 ${value.contextWindow.toLocaleString()}`:'',
         value.slots?`槽数 ${value.slots}`:'',
-        value.lastSwitch?.at?`最近切换 ${new Date(value.lastSwitch.at).toLocaleString()}${value.lastSwitch.ok?'':'（未成功）'}`:'',
+        value.lastSwitch?.at?`最近切换 ${uiCore.dateText(value.lastSwitch.at)}${value.lastSwitch.ok?'':'（未成功）'}`:'',
         value.lastError?`最近错误：${value.lastError}`:''].filter(Boolean).join(' · ');
       const item=el('div','row'),text=el('span');text.append(el('strong','',name),el('small','',detail));item.append(text);section.append(item);
       const button=el('button','secondary',`重启${name}`);button.disabled=!system.canRestart||!value.canRestart;
