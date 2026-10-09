@@ -95,8 +95,13 @@ import WeftMateCore
         case "general": return "简体中文"
         case "appearance": return AppleAppearance(rawValue: app.appearanceMode)?.title ?? "跟随系统"
         case "account": return app.cloudLogin.authenticated ? app.cloudLogin.email : app.accountName
-        case "devices": return "\(app.cloudLogin.devices.count) 台设备"
+        case "devices":
+            let count = app.cloudLogin.authenticated ? app.cloudLogin.devices.count : app.devices.count
+            return "\(count) 台设备"
         case "usage": return "本月费用与上限"
+        case "archived":
+            let count = app.conversations.filter(\.archived).count
+            return count == 0 ? "无" : "\(count) 条"
         case "models": return "主模型与单价"
         case "approvals": return "新对话默认模式"
         case "memory": return "记忆与来源"
@@ -104,7 +109,7 @@ import WeftMateCore
         case "schedules": return "提醒与任务"
         case "system": return app.verificationPending ? "等待连接" : "已连接"
         case "backups": return "电脑本地备份"
-        default: return Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1"
+        default: return ""
         }
     }
 }

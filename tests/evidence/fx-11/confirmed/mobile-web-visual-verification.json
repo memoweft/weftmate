@@ -1,0 +1,503 @@
+{
+  "startedAt": "2026-10-09T12:05:33.190Z",
+  "realCloudEntrypoint": "services/cloud/src/main.mjs",
+  "realElectronEntrypoint": ".",
+  "sourceCommit": "d50e93ca28e4d32f1dd4eafc02eea4496ed8f5b1",
+  "phase": "confirmed",
+  "baselineHost": false,
+  "steps": [
+    "Real cloud entrypoint health",
+    "Mobile registration, real file mail, sixty-second resend deadline and bundled legal reading",
+    "Real desktop approves the waiting phone and recipient imports trusted host delivery",
+    "Settings device directory sees real desktop, connects through hosts/connect and adopts real host session"
+  ],
+  "cloudTransport": "WSL Ubuntu",
+  "visualChecks": [
+    {
+      "name": "login",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "login",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "waiting",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "waiting",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "devices",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "devices",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "task-approval",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 9.87
+    },
+    {
+      "name": "task-approval",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 13.7
+    },
+    {
+      "name": "task-result",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    }
+  ],
+  "executionOwner": {
+    "executionAccount": true,
+    "session": "session-ef82643f-4c4e-4d2d-bce3-8777c62d2d7a",
+    "approvalMode": {
+      "status": 200,
+      "body": {
+        "mode": "ask",
+        "allowedCategories": []
+      }
+    }
+  },
+  "firstWrite": {
+    "state": "completed",
+    "artifacts": 1
+  },
+  "phoneTask": {
+    "passed": true,
+    "durationMs": 33340,
+    "approvals": 2,
+    "completed": true,
+    "fileContent": "FX11_PHONE_EXECUTED",
+    "noUnconfirmed": true,
+    "commandState": "accepted_by_dsh",
+    "taskStatus": 200,
+    "replyEvidence": {
+      "status": "completed",
+      "turn": 1,
+      "assistantChunks": 112,
+      "textChunks": 15,
+      "reasoningChunks": 42,
+      "assistantMessages": 4,
+      "toolSaveObserved": true,
+      "step": 4,
+      "observedAt": "2026-10-09T12:06:32.331Z",
+      "terminalAt": "2026-10-09T12:06:32.331Z",
+      "firstChunkAt": "2026-10-09T12:06:07.936Z",
+      "lastChunkAt": "2026-10-09T12:06:32.323Z"
+    },
+    "draft": "",
+    "pending": null,
+    "optimistic": [],
+    "text": "FX-9 手机办事\n输出与来源\n本对话用量\n请在电脑上创建 C:/Temp/fx11-phone-5b2732ee-ba8e-445f-833a-cb75728ec3be.txt，内容只写 FX11_PHONE_EXECUTED。直接使用 write 工具完成首次写入，再用 read 读回。只操作这个测试文件。如果 write 报错就停止，不要重试也不要换工具绕过。完成后告诉我。\n修改了 1 个文件\nfx11-phone-5b2732ee-ba8e-445f-833a-cb75728ec3be.txt\n已读回核验\n\n文本 · 19 字节\n\n打开成果下载\n读取了 1 个文件\n\n已完成：[local path] 用 write 工具首次写入成功，read 读回内容为 FX11_PHONE_EXECUTED`，与要求一致。\n\n输入消息\n每次询问\nFX-9 MiMo"
+  },
+  "scenarios": [
+    {
+      "sessionId": "session-604023e3-8c61-4d16-8411-ba904ad76696",
+      "fileName": "ordinary-first.txt",
+      "writeCalls": 1,
+      "firstWrite": "completed",
+      "artifactRegistered": true,
+      "readCompleted": true,
+      "approvals": 2,
+      "summaries": [
+        "修改了 1 个文件",
+        "读取了 1 个文件"
+      ]
+    },
+    {
+      "sessionId": "session-f63d566f-c022-4d3c-bb74-f243439140f5",
+      "fileName": "project-first.txt",
+      "writeCalls": 1,
+      "firstWrite": "completed",
+      "artifactRegistered": true,
+      "readCompleted": true,
+      "approvals": 2,
+      "summaries": [
+        "修改了 1 个文件",
+        "正在读取 1 个文件：project-first.txt…"
+      ]
+    }
+  ],
+  "projectPermission": {
+    "sharedCombobox": true,
+    "keyboard": true,
+    "newProjectSaved": true,
+    "editedReadonly": true,
+    "editedWritable": true
+  },
+  "targetedFirstWrite": true,
+  "passed": true,
+  "usage": [
+    {
+      "inputTokens": 647,
+      "outputTokens": 163,
+      "cacheReadTokens": 1536
+    },
+    {
+      "inputTokens": 887,
+      "outputTokens": 78,
+      "cacheReadTokens": 1920
+    },
+    {
+      "inputTokens": 534,
+      "outputTokens": 73,
+      "cacheReadTokens": 2752
+    },
+    {
+      "inputTokens": 216,
+      "outputTokens": 84,
+      "cacheReadTokens": 3264
+    },
+    {
+      "inputTokens": 620,
+      "outputTokens": 72,
+      "cacheReadTokens": 1536
+    },
+    {
+      "inputTokens": 769,
+      "outputTokens": 56,
+      "cacheReadTokens": 1920
+    },
+    {
+      "inputTokens": 376,
+      "outputTokens": 50,
+      "cacheReadTokens": 2688
+    },
+    {
+      "inputTokens": 206,
+      "outputTokens": 61,
+      "cacheReadTokens": 3008
+    },
+    {
+      "inputTokens": 581,
+      "outputTokens": 74,
+      "cacheReadTokens": 1536
+    },
+    {
+      "inputTokens": 907,
+      "outputTokens": 44,
+      "cacheReadTokens": 1920
+    },
+    {
+      "inputTokens": 459,
+      "outputTokens": 151,
+      "cacheReadTokens": 2816
+    },
+    {
+      "inputTokens": 335,
+      "outputTokens": 43,
+      "cacheReadTokens": 3264
+    }
+  ],
+  "finishedAt": "2026-10-09T12:07:48.076Z",
+  "surface": "mobile-web",
+  "realNativeBridge": false,
+  "locators": "visible accessible names and roles",
+  "requests": [
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/config",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/authorization",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/auth/registration/request",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/registration/verify",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/registration/complete",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/authorization/resume",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/oidc/token",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/oidc/jwks",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/cloud/devices",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/auth/cloud-nonce",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/cloud-desktop",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/pending",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/models",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/models",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/projects",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/commands",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/usage",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sync/events",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/cloud-session",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/cloud/auth/device/confirm",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/7e180a36-1b10-4894-b695-26a229bf888a/decision",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/7e180a36-1b10-4894-b695-26a229bf888a/trust",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/cloud-session",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/account/models",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/account/models/by-request/c12f058b-21d1-4cd3-b6d6-e6dc36c446ba",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/commands",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/commands/cmd-57f8689a-21f2-47ad-bbca-324ec211ff5d",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-ef82643f-4c4e-4d2d-bce3-8777c62d2d7a/approval-mode",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-ef82643f-4c4e-4d2d-bce3-8777c62d2d7a/metadata",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-ef82643f-4c4e-4d2d-bce3-8777c62d2d7a/events",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-ef82643f-4c4e-4d2d-bce3-8777c62d2d7a/approvals",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-ef82643f-4c4e-4d2d-bce3-8777c62d2d7a/questions",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/tasks/cmd-5f336a29-15e7-44e0-8a45-1511d38fcd81",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-ef82643f-4c4e-4d2d-bce3-8777c62d2d7a/events/91/detail",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-ef82643f-4c4e-4d2d-bce3-8777c62d2d7a/approvals/341d9b00-6448-42f0-9795-02fac97fbeed",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-ef82643f-4c4e-4d2d-bce3-8777c62d2d7a/events/122/detail",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-ef82643f-4c4e-4d2d-bce3-8777c62d2d7a/approvals/2685ae39-676e-4eea-90c1-299dba796d42",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/commands/cmd-bea36cdc-3cbf-4e16-b1ac-1c7d67a1fd0d",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-604023e3-8c61-4d16-8411-ba904ad76696/metadata",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-604023e3-8c61-4d16-8411-ba904ad76696/approval-mode",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-604023e3-8c61-4d16-8411-ba904ad76696/events",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-604023e3-8c61-4d16-8411-ba904ad76696/approvals",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-604023e3-8c61-4d16-8411-ba904ad76696/questions",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/tasks/cmd-92e3ffd8-a99d-4d79-a17e-e69fee5a6f44",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-604023e3-8c61-4d16-8411-ba904ad76696/events/71/detail",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-604023e3-8c61-4d16-8411-ba904ad76696/approvals/1dd19f9f-d7de-47d2-9039-46d5e831ed17",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-604023e3-8c61-4d16-8411-ba904ad76696/events/102/detail",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-604023e3-8c61-4d16-8411-ba904ad76696/approvals/2c7f6bc2-75d3-41b3-b412-58c1c7a3115e",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/projects",
+      "status": 201
+    },
+    {
+      "path": "/personal/v1/projects/project-5fa16392-1806-4da9-ab7e-8e87c5290c06",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/projects/project-5fa16392-1806-4da9-ab7e-8e87c5290c06/sessions",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/commands/cmd-abe26c4d-4df9-4769-acf1-b1dfa9062542",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-f63d566f-c022-4d3c-bb74-f243439140f5/metadata",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-f63d566f-c022-4d3c-bb74-f243439140f5/approval-mode",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-f63d566f-c022-4d3c-bb74-f243439140f5/events",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-f63d566f-c022-4d3c-bb74-f243439140f5/approvals",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-f63d566f-c022-4d3c-bb74-f243439140f5/questions",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/tasks/cmd-e33f7681-7663-4537-972c-2b7f21414b32",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-f63d566f-c022-4d3c-bb74-f243439140f5/events/69/detail",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-f63d566f-c022-4d3c-bb74-f243439140f5/approvals/9badfb3a-6a77-4df7-8a54-e1ef99728782",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-f63d566f-c022-4d3c-bb74-f243439140f5/events/139/detail",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-f63d566f-c022-4d3c-bb74-f243439140f5/approvals/bf557ebb-7c65-4fe2-a223-84357ecb291a",
+      "status": 200
+    }
+  ]
+}

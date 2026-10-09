@@ -190,7 +190,7 @@ private struct ToolStepDetailView: View {
     @State private var rawExpanded = false
     var body: some View {
         VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
-            Button("查看使用的来源", action: openSources).font(AppleTokens.Fonts.callout)
+            Button("查看使用的来源", action: openSources).font(AppleTokens.Fonts.callout).buttonStyle(OutlineActionStyle())
             if !value.parameters.isEmpty {
                 Text("参数").font(AppleTokens.Fonts.callout.weight(.medium))
                 ForEach(value.parameters) { parameter in
@@ -209,7 +209,7 @@ private struct ToolStepDetailView: View {
                 }
             }
             if value.truncated { Text("内容已截断").font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted) }
-            Button("复制") { copy(value.readableText) }.font(AppleTokens.Fonts.callout)
+            Button("复制") { copy(value.readableText) }.font(AppleTokens.Fonts.callout).buttonStyle(OutlineActionStyle())
             DisclosureGroup("查看原始数据", isExpanded: $rawExpanded) {
                 Text(value.raw).font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled)
                 Button("复制原始数据") { copy(value.raw) }.font(AppleTokens.Fonts.callout)

@@ -1,0 +1,17 @@
+{
+  "configuration": {
+    "expectedCaptureExit": 1,
+    "actualCaptureExit": 1,
+    "pngGenerated": false,
+    "diagnosticPhase": "configuration"
+  },
+  "authentication": {
+    "expectedCaptureExit": 1,
+    "actualCaptureExit": 1,
+    "pngGenerated": false,
+    "diagnosticPhase": "authentication"
+  },
+  "synthetic": true,
+  "ambiguousCocoa256": false,
+  "newPermissionRequested": false
+}

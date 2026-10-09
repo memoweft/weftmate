@@ -1,0 +1,8 @@
+{
+  "scope": "same current main with only pre-PJ-1 password-only artifact condition restored",
+  "firstWriteError": true,
+  "sourceUnavailable": true,
+  "fileAlreadyWritten": true,
+  "laterFallback": "pwsh",
+  "taskPassedDoesNotMeanFirstWritePassed": true
+}

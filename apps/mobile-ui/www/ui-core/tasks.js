@@ -162,7 +162,7 @@ globalThis.WeftUiCore.factories.tasks = (core, effects, environment) => {
     }
     function executionName(row) {
         return { pwsh: '运行命令', read: '读取文件', write: '写入文件', edit: '修改文件', glob: '查找文件', grep: '搜索内容',
-            weftmod: '设备操作', weftmod_script: '运行脚本', job_output: '读取后台输出', job_list: '查看后台任务', job_kill: '停止后台任务' }[row.toolName] || '工具操作';
+            weftmod: '设备操作', weftmod_script: '运行脚本', job_output: '读取后台输出', job_list: '查看后台任务', job_kill: '停止后台任务' }[row.toolName] || core.toolSummary(row.toolName, row.arguments);
     }
     async function refreshConversationTasks() {
         const context = core.conversationTaskContext();
