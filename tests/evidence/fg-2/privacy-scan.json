@@ -1,0 +1,73 @@
+{
+  "scannedAt": "2026-10-09T03:35:10.366Z",
+  "publicEvidence": {
+    "scannedFiles": 56,
+    "secretMatches": 0
+  },
+  "modelRoots": [
+    {
+      "root": "C:/Temp/weftmate-m2-exit-mimo-fr2fvS",
+      "scannedFiles": 357,
+      "secretMatches": 0
+    },
+    {
+      "root": "C:/Temp/weftmate-m2-exit-lan-h9gS4d",
+      "scannedFiles": 373,
+      "secretMatches": 0
+    },
+    {
+      "root": "C:/Temp/weftmate-m2-exit-lan-CEu2S0",
+      "scannedFiles": 231,
+      "secretMatches": 0
+    },
+    {
+      "root": "C:/Temp/weftmate-m2-exit-mimo-R1M214",
+      "scannedFiles": 384,
+      "secretMatches": 0
+    },
+    {
+      "root": "C:/Temp/weftmate-m2-exit-mimo-FIoAKp",
+      "scannedFiles": 386,
+      "secretMatches": 0
+    },
+    {
+      "root": "C:/Temp/weftmate-m2-exit-lan-khioXX",
+      "scannedFiles": 386,
+      "secretMatches": 0
+    },
+    {
+      "root": "C:/Temp/weftmate-m2-exit-mimo-OejbAX",
+      "scannedFiles": 283,
+      "secretMatches": 0
+    },
+    {
+      "root": "C:/Temp/weftmate-m2-exit-mimo-cSbxMq",
+      "scannedFiles": 384,
+      "secretMatches": 0
+    }
+  ],
+  "modelRootCount": 8,
+  "skippedLinks": 4080,
+  "diffs": [
+    {
+      "repository": "D:/AIProjects/WeftMate/Worktrees/w4",
+      "secretMatches": 0
+    },
+    {
+      "repository": "D:/AIProjects/MemoWeft/Worktrees/fg-2-commitment-forget",
+      "secretMatches": 0
+    }
+  ],
+  "processes": {
+    "remaining": [],
+    "checkedAt": "2026-10-09T11:31:25.5635715+08:00",
+    "lanLockExists": true,
+    "stoppedOnlyOwnDiagnostic": {
+      "creationTime": "2026-10-09 10:35:00",
+      "pid": 33704,
+      "reason": "Short diagnostic did not honor its declared timeout"
+    },
+    "lanLockOwnerAtAudit": "PF-1",
+    "ownLanLockReleased": true
+  }
+}
