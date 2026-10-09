@@ -79,7 +79,7 @@ test('UI-2 mobile home, themes, progressive detail, full-screen sources, drafts 
       await page.evaluate(value=>applyTheme(value),theme);await capture(`${theme}-list.png`);
       await page.locator('#home-conversations [data-id="running"]').click();await page.getByText('正在处理…',{exact:true}).waitFor();
       assert.equal(await page.locator('.execution-block').evaluate(n=>n.open),false);await capture(`${theme}-running.png`);
-      assert.equal(await page.locator('#stop-button').isVisible(),true);await page.locator('#page-back').click();
+      assert.equal(await page.getByRole('button',{name:'停止回复',exact:true}).isVisible(),true);await page.locator('#page-back').click();
       await page.locator('#home-conversations [data-id="approve"]').click();await page.evaluate(()=>refreshToolApprovals());
       await page.getByRole('button',{name:'批准',exact:true}).waitFor();await capture(`${theme}-approval.png`);await page.locator('#page-back').click();
       await page.locator('#home-conversations [data-id="report"]').click();await page.getByText('报告已保存，点文件即可查看。',{exact:false}).waitFor();

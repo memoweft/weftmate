@@ -79,6 +79,7 @@ class Element {
   fire(name: string, extra: Record<string, unknown> = {}) {
     for (const listener of this.listeners.get(name) ?? []) listener({ currentTarget: this, target: this, preventDefault() {}, ...extra })
   }
+  dispatchEvent(event: Event) { this.fire(event.type); return true }
   append(...children: Element[]) { for (const child of children) child.parentNode = this; this.children.push(...children) }
   prepend(...children: Element[]) { for (const child of children) child.parentNode = this; this.children.unshift(...children) }
   replaceChildren(...children: Element[]) { for (const child of [...this.children]) child.remove(); this.children = []; this.append(...children) }
@@ -439,7 +440,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
   URLShim.revokeObjectURL = (value: string) => { objectUrls.revoked.push(value) }
   const context = { document, window, location, fetch, URL: URLShim, localStorage: { getItem: (key: string) => storage.get(key) ?? null,
     setItem: (key: string, value: string) => { storage.set(key, value) }, removeItem: (key: string) => { storage.delete(key) } },
-  TextEncoder, TextDecoder, Blob, File, AbortController, DOMException, queueMicrotask,
+  TextEncoder, TextDecoder, Blob, File, AbortController, DOMException, queueMicrotask, Event,
   Option: class extends Element { constructor(text: string, value: string) { super('', 'option'); this.textContent = text; this.value = value } },
   __weftmateTestHashBlobSha256: hashBlobSha256, crypto: { randomUUID: () => config.uuidForSync
     ? `00000000-0000-4000-8000-${(++sequence).toString(16).padStart(12, '0')}` : `request-${++sequence}` }, AbortSignal: config.abortSignal ?? AbortSignal, Intl, Date, btoa,
@@ -460,7 +461,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     return dynamicButtons().filter(node=>names.has(buttonName(node)));
   };
   const getByRole = (role: string, { name }: { name: string | RegExp }) => {
-    const matches = [...controlMetadata].filter(([, control]) => control.role === role && named(control.name,name)).map(([id])=>get(id));
+    const matches = [...controlMetadata].filter(([id, control]) => control.role === role && named(get(id).getAttribute('aria-label')||control.name,name)).map(([id])=>get(id));
     if(role==='button')matches.push(...dynamicButtons().filter(node=>named(buttonName(node),name)));
     assert.equal(matches.length, 1, `one ${role} named ${name}`);
     return matches[0];
@@ -560,7 +561,7 @@ test('desktop file composer streams a file over 2 MiB, retries the same tuple, a
   assert.equal(command.originalAttachments[0].size, file.size)
   assert.equal(command.originalAttachments[0].sha256, expectedSha)
   assert.ok(command.attachments[0].size <= 16 * 1024)
-  page.resolvePost({ command: { ...command, commandId: 'cmd-file-stage15', state: 'pending' } })
+  page.resolvePost({ command: { ...command, commandId: 'cmd-file-stage15', state: 'accepted_by_dsh' } })
   for (let attempt = 0; attempt < 20 && page.get('attachment-draft-list').children.length; attempt++) await flush()
   assert.equal(page.get('attachment-draft-list').children.length, 0)
   assert.equal(page.getByRole('textbox', { name: '输入消息' }).value, '')
@@ -635,7 +636,7 @@ test('a double click during an unresolved POST issues only one desktop command a
   const posts = page.requests.filter((request) => request.url.endsWith('/commands') && request.options.method === 'POST')
   assert.equal(posts.length, 1)
   assert.equal(page.get('open-notepad').disabled, true)
-  assert.equal(page.get('cancel-turn').disabled, false, 'a running turn can still be stopped while another POST waits')
+  assert.equal(page.getByRole('button',{name:'停止回复'}).disabled, false, 'a running turn can still be stopped while another POST waits')
   const stored = [...page.storage.values()].join('\n')
   assert.match(stored, /request-1/)
   assert.doesNotMatch(stored, /notepad|synthetic-csrf|password|text/)
@@ -719,7 +720,7 @@ test('a delayed create keeps the old conversation until acceptance and then sele
   const tasks: object[] = []
   const page = harness(tasks, [], true, { sessions, byRequest: { 'request-1': command } })
   for (let attempt = 0; attempt < 10 && page.get('assistant-title').textContent !== 'A'; attempt++) await flush()
-  page.getByRole('button', { name: /新对话/ }).fire('click')
+  void page.core.submitCommand('session.create', {modelProfileId:'local'})
   await flush()
   page.resolvePost({ command })
   tasks.push(command)
@@ -747,7 +748,7 @@ test('a delayed create failure updates its real receipt without clearing the sel
     const tasks: object[] = []
     const page = harness(tasks, [], true, { sessions, byRequest: { 'request-1': command } })
     for (let attempt = 0; attempt < 10 && page.get('assistant-title').textContent !== 'A'; attempt++) await flush()
-    page.getByRole('button', { name: /新对话/ }).fire('click')
+    void page.core.submitCommand('session.create', {modelProfileId:'local'})
     await flush()
     page.resolvePost({ command })
     tasks.push(command)
@@ -1268,7 +1269,7 @@ test('bound phone conversation keeps one rail card and exact receipt renders its
   const text = visibleText(page.get('transcript'))
   assert.match(text, /手机事实.*本机回应.*电脑基于手机事实回答/)
   assert.equal(text.match(/新的电脑追问/g)?.length, 1)
-  assert.equal(page.get('send-message').textContent, '发送到电脑')
+  assert.equal(page.core.composerState(page.get('message-text').value).sendText, '发送到电脑')
 })
 
 test('phone handoff prefers only one exact original route and never defaults to unrelated Qwen', async () => {
@@ -1536,7 +1537,7 @@ test('timeout keeps exact phone event and draft; retry reconciles then posts the
   const key = 'weftmate:phone-sync-outbox:v1:owner-test:device-test'
   const pending = JSON.parse(page.storage.get(key)!)
   assert.equal(pending.event.payload.text, '原文保留')
-  for (let attempt = 0; attempt < 20 && (page.get('send-message').textContent !== '核对并重试' ||
+  for (let attempt = 0; attempt < 20 && (page.core.composerState(page.get('message-text').value).sendText !== '核对并重试' ||
     page.get('send-message').disabled); attempt++) await flush()
   assert.equal(page.getByRole('textbox', { name: '输入消息' }).value, '原文保留')
   page.get('message-form').fire('submit')
@@ -1577,7 +1578,7 @@ test('409 keeps the original phone draft and exact event for explicit review', a
   assert.equal(page.getByRole('textbox', { name: '输入消息' }).value, '冲突时保留')
   const stored = JSON.parse(page.storage.get('weftmate:phone-sync-outbox:v1:owner-test:device-test')!)
   assert.equal(stored.event.payload.text, '冲突时保留')
-  assert.equal(page.get('send-message').textContent, '核对并重试')
+  assert.equal(page.core.composerState(page.get('message-text').value).sendText, '核对并重试')
   assert.equal(visibleText(page.get('transcript')).includes('冲突时保留'), false)
 })
 
@@ -2036,7 +2037,7 @@ test('A pending phone text stays under A device key after B signs in', async () 
   for (let attempt = 0; attempt < 20 && page.conversationButtons().length < 3; attempt++) await flush()
   page.getByRole('button',{name:'原手机对话'}).fire('click')
   assert.equal(page.getByRole('textbox', { name: '输入消息' }).value, '')
-  assert.equal(page.get('send-message').textContent, '同步文字')
+  assert.equal(page.core.composerState(page.get('message-text').value).sendText, '同步文字')
   assert.doesNotMatch(page.get('model-hint').textContent, /待核对/)
   assert.equal(page.storage.has(aKey), true)
   assert.equal(page.storage.has('weftmate:phone-sync-outbox:v1:profile-owner-b:profile-device-B'), false)
@@ -2060,7 +2061,7 @@ test('same owner on a new device recovers old text by checking the server before
   for (let attempt = 0; attempt < 20 && second.conversationButtons().length < 3; attempt++) await flush()
   second.getByRole('button',{name:'恢复草稿'}).fire('click')
   assert.equal(second.getByRole('textbox', { name: '输入消息' }).value, '登录前的文字')
-  assert.equal(second.get('send-message').textContent, '核对旧请求')
+  assert.equal(second.core.composerState(second.get('message-text').value).sendText, '核对旧请求')
   second.get('message-form').fire('submit')
   for (let attempt = 0; attempt < 20 && storage.has('weftmate:phone-sync-recovery:v1:profile-owner-a'); attempt++) await flush()
   assert.equal(second.getByRole('textbox', { name: '输入消息' }).value, '登录前的文字')

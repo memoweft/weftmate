@@ -1,0 +1,139 @@
+{
+  "syntheticOnly": true,
+  "before": false,
+  "checks": [
+    {
+      "surface": "desktop",
+      "theme": "light",
+      "sendToBubbleMs": 5.300000011920929
+    },
+    {
+      "surface": "desktop",
+      "theme": "light",
+      "pinnedGap": 0,
+      "historyPreserved": true,
+      "jumpNewContent": true,
+      "progressResize": true,
+      "imageLoad": true,
+      "contextTooltip": true
+    },
+    {
+      "surface": "desktop",
+      "theme": "light",
+      "retrySameRequestId": true,
+      "draftRetained": true,
+      "oneMessageAfterAck": true
+    },
+    {
+      "surface": "mobile-web",
+      "theme": "light",
+      "sendToBubbleMs": 3
+    },
+    {
+      "surface": "mobile-web",
+      "theme": "light",
+      "pinnedGap": 0,
+      "historyPreserved": true,
+      "jumpNewContent": true,
+      "progressResize": true,
+      "imageLoad": true,
+      "contextTooltip": true
+    },
+    {
+      "surface": "mobile-web",
+      "theme": "light",
+      "retrySameRequestId": true,
+      "draftRetained": true,
+      "oneMessageAfterAck": true
+    },
+    {
+      "surface": "mobile",
+      "theme": "light",
+      "sendToBubbleMs": 14.100000023841858
+    },
+    {
+      "surface": "mobile",
+      "theme": "light",
+      "pinnedGap": 0,
+      "historyPreserved": true,
+      "jumpNewContent": true,
+      "progressResize": true,
+      "imageLoad": true,
+      "contextTooltip": true
+    },
+    {
+      "surface": "mobile",
+      "theme": "light",
+      "retrySameRequestId": true,
+      "draftRetained": true,
+      "oneMessageAfterAck": true
+    },
+    {
+      "surface": "desktop",
+      "theme": "dark",
+      "sendToBubbleMs": 4.0999999940395355
+    },
+    {
+      "surface": "desktop",
+      "theme": "dark",
+      "pinnedGap": 0,
+      "historyPreserved": true,
+      "jumpNewContent": true,
+      "progressResize": true,
+      "imageLoad": true,
+      "contextTooltip": true
+    },
+    {
+      "surface": "desktop",
+      "theme": "dark",
+      "retrySameRequestId": true,
+      "draftRetained": true,
+      "oneMessageAfterAck": true
+    },
+    {
+      "surface": "mobile-web",
+      "theme": "dark",
+      "sendToBubbleMs": 3.4000000059604645
+    },
+    {
+      "surface": "mobile-web",
+      "theme": "dark",
+      "pinnedGap": 0,
+      "historyPreserved": true,
+      "jumpNewContent": true,
+      "progressResize": true,
+      "imageLoad": true,
+      "contextTooltip": true
+    },
+    {
+      "surface": "mobile-web",
+      "theme": "dark",
+      "retrySameRequestId": true,
+      "draftRetained": true,
+      "oneMessageAfterAck": true
+    },
+    {
+      "surface": "mobile",
+      "theme": "dark",
+      "sendToBubbleMs": 23.900000005960464
+    },
+    {
+      "surface": "mobile",
+      "theme": "dark",
+      "pinnedGap": 0,
+      "historyPreserved": true,
+      "jumpNewContent": true,
+      "progressResize": true,
+      "imageLoad": true,
+      "contextTooltip": true
+    },
+    {
+      "surface": "mobile",
+      "theme": "dark",
+      "retrySameRequestId": true,
+      "draftRetained": true,
+      "oneMessageAfterAck": true
+    }
+  ],
+  "errors": []
+}

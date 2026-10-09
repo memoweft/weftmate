@@ -55,6 +55,7 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
             core.state.turnStatus = terminal.type === 'turn.started' ? 'running' : ['completed', 'aborted', 'error', 'blocked'].includes(terminal.data?.reason) ? terminal.data.reason : 'unknown';
             core.state.turnEndReasonKind = core.state.turnStatus === 'error' && terminal.data?.endReasonKind === 'max-tokens' ? 'max-tokens' : null;
         }
+        core.observeOptimistic?.(accepted);
         effects.paintHistoryMessages(accepted);
     }
     async function refreshHistory(reset = false) {

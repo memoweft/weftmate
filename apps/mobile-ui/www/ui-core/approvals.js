@@ -44,6 +44,10 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
             return;
         const sessionId = core.state.selectedSessionId;
         const generation = core.state.identityGeneration;
+        if(!sessionId&&core.state.newConversation){
+            core.state.newConversationApprovalMode=mode;core.currentApprovalMode=mode;
+            effects.renderApprovalMode();effects.closeApprovalMenu();effects.focusApprovalMode();return;
+        }
         if (!sessionId || core.state.approvalModeLoading || core.state.activeChatSource !== 'desktop')
             return;
         core.state.approvalModeLoading = true;
@@ -67,6 +71,17 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
             }
         }
     }
+    async function refreshNewConversationApprovalMode(){
+        const identity=core.state.identityGeneration,history=core.state.historyGeneration;
+        const current=()=>identity===core.state.identityGeneration&&history===core.state.historyGeneration&&core.state.newConversation&&!core.state.selectedSessionId;
+        core.state.approvalModeLoading=true;effects.setApprovalModeBusy(true);effects.renderApprovalMode();
+        try{const value=await core.accessApi('/settings/approvals');
+            if(current()&&core.state.newConversationApprovalMode===null&&core.approvalModes.some(row=>row[0]===value.mode)){
+                core.state.newConversationApprovalMode=value.mode;core.currentApprovalMode=value.mode;effects.renderApprovalMode();
+            }
+        }catch{if(current())effects.historyNotice('默认审批模式暂时无法读取，仍可在菜单里选择。');}
+        finally{if(current()){core.state.approvalModeLoading=false;effects.setApprovalModeBusy(false);}}
+    }
     async function selectSession(sessionId) {
         if (!core.sessionIdPattern.test(sessionId))
             return;
@@ -86,6 +101,7 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         core.state.activeChatSource = 'desktop';
         effects.paintDesktopComposer(fromPhone);
         core.state.selectedSessionId = sessionId;
+        core.state.newConversation = false;
         void core.updateSession(sessionId, { unread: false }).catch(error => effects.historyNotice(core.failureMessage(error)));
         void core.refreshApprovalMode(sessionId);
         core.state.turnStatus = null;
@@ -105,8 +121,9 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
             catch { /* optional preference */ }
         }
         effects.removeResourcePreview();
-        await core.refreshHistory(true);
         effects.scrollToLatest();
+        await core.refreshHistory(true);
+        effects.followConversationBottom?.();
         void core.refreshConversationTasks();
         effects.updateAvailability();
     }
@@ -350,5 +367,5 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
                 effects.defaultApprovalNotice('无法读取默认模式，请刷新设置。');
         }
     }
-    return { approvalPresentation, readApprovalPresentation, refreshApprovalMode, saveApprovalMode, selectSession, resetConversationApprovals, approvalContext, approvalContextCurrent, approvalIdentity, sameApproval, validApproval, approvalMarkerKey, approvalMarkers, approvalMarker, saveApprovalMarker, clearApprovalMarker, approvalSource, mergeApproval, refreshConversationApprovals, approvalStatusText, submitApproval, refreshApprovalSettings };
+    return { refreshNewConversationApprovalMode, approvalPresentation, readApprovalPresentation, refreshApprovalMode, saveApprovalMode, selectSession, resetConversationApprovals, approvalContext, approvalContextCurrent, approvalIdentity, sameApproval, validApproval, approvalMarkerKey, approvalMarkers, approvalMarker, saveApprovalMarker, clearApprovalMarker, approvalSource, mergeApproval, refreshConversationApprovals, approvalStatusText, submitApproval, refreshApprovalSettings };
 };
