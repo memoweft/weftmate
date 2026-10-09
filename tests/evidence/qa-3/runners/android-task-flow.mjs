@@ -24,6 +24,7 @@ export async function run({desktop,mobile,profile,evidence,report,shot}) {
  const native=await mobile.evaluate(()=>!!window.weftNative);
  if(native){await mobile.evaluate(()=>listSharedSessions());await mobile.getByRole('button',{name:'FX-9 手机办事',exact:true}).click();}
  else{await mobile.reload();await until(async()=>(await mobile.locator('#assistant-title').innerText())==='FX-9 手机办事');}
+ if(process.argv.includes('--setup-only')){report.modelSetupOnly=true;return;}
  const path=join('C:/Temp','fx9-phone-'+randomUUID()+'.txt').replaceAll('\\','/');
  await mobile.locator(native?'#draft':'#message-text').fill(`请在电脑上创建 ${path}，内容只写 FX9_PHONE_EXECUTED。只操作这个测试文件，并读回核验内容。完成后告诉我。`);
  await mobile.locator(native?'#send-button':'#send-message').click();

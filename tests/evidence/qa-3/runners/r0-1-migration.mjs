@@ -20,7 +20,7 @@ const evidence = join(repository, 'tests/evidence/qa-3/installed'); await mkdir(
 const control = join(process.env.APPDATA, 'WeftMate qa3'), configFile = join(control, 'WeftMate/desktop-config.json');
 const installer = join(releaseRoot, '0.1.1-preview.2/build/WeftMate-Setup-0.1.1-preview.2.exe');
 const installation = join(root, 'Programs/WeftMate'), executable = join(installation, 'WeftMate.exe');
-let application, privateHostLog = '';
+let application, privateHostLog = '', accountsToProbe=[];
 const report = { backupReadOnly: true, sourceTaskUntouched: true, randomPort: true, publicOrigin: null,
   rehearsalAccountPassword: 'temporary synthetic password on the copy only', paidModelRequests: 0, networkBoundary: 'loopback only; 8081 and 18186 denied' };
 async function hashes(dir) {
@@ -58,12 +58,16 @@ async function start(installed) {
     { username: 'R01Migration', password, deviceName: installed ? 'Installed rehearsal' : 'Source rehearsal' });
   assert.equal(login, 200); await page.reload();
   const status = await page.evaluate(async () => (await fetch('/personal/v1/status')).json());
-  const visibility=await page.evaluate(async()=>{
-    const sessions=await(await fetch('/personal/v1/sessions')).json();
-    const memory=[];
-    for(const kind of ['entity','relationship','cognition']){const r=await fetch('/personal/v1/memory/items?kind='+kind+'&limit=1');const body=await r.json();memory.push({kind,httpStatus:r.status,visible:!!body.items?.length});}
-    return {conversationsVisible:!!sessions.sessions?.length,memory,memoryVisible:memory.some(v=>v.visible)};
-  });
+  const visibility=await page.evaluate(async({accounts,password})=>{
+    const results=[];
+    for(const [index,account] of accounts.entries()){
+      const login=await fetch('/personal/v1/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username:account.username,password,deviceName:'QA3 isolated migration'})});
+      const auth=await login.json();const sessions=await(await fetch('/personal/v1/sessions')).json();const memory=[];
+      for(const kind of ['entity','relationship','cognition']){const r=await fetch('/personal/v1/memory/items?kind='+kind+'&limit=1');const body=await r.json();memory.push({kind,httpStatus:r.status,visible:!!body.items?.length});}
+      results.push({syntheticIndex:index,loginStatus:login.status,identityRetained:auth.account?.ownerId===account.ownerId,conversationsVisible:!!sessions.sessions?.length,memory,memoryVisible:memory.some(v=>v.visible)});
+    }
+    return {accounts:results,conversationsVisible:results.some(v=>v.conversationsVisible),memoryVisible:results.some(v=>v.memoryVisible)};
+  },{accounts:accountsToProbe,password});
   return { origin: new URL(page.url()).origin, status, visibility, settings: await page.evaluate(() => weftmateDesktop.settings()) };
 }
 const password = `rehearsal-${randomUUID()}-password`;
@@ -103,6 +107,16 @@ try {
   // Username may be stored as a canonical/display pair in legacy versions.
   if (target.account.usernameCanonical !== undefined) target.account.usernameCanonical = 'r01migration';
   if (target.account.usernameDisplay !== undefined) target.account.usernameDisplay = 'R01Migration';
+  for(const [ownerId,state] of Object.entries(store.accounts||{})){
+    if(!state.account)continue;
+    const username=state===target?'r01migration':'qa3migration'+accountsToProbe.length;
+    state.account.username=username;state.account.displayName=username;state.account.password=await hashPassword(password);
+    if(state.account.usernameCanonical!==undefined)state.account.usernameCanonical=username;
+    if(state.account.usernameDisplay!==undefined)state.account.usernameDisplay=username;
+    accountsToProbe.push({ownerId,username});
+  }
+  if(!accountsToProbe.length)accountsToProbe=[{ownerId:target.account.ownerId,username:'r01migration'}];
+  report.accountProbeScope='All stored account identities; synthetic local login aliases/passwords exist only on disposable copy. No account names, ids or private memory text exported.';
   await writeFile(storeFile, JSON.stringify(store));
   report.accountIdentityRetained = true;
   if (process.argv.includes('--wait-native')) {

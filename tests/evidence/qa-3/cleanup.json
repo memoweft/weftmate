@@ -1,0 +1,55 @@
+{
+  "windows": {
+    "checkedAt": "2026-10-10T04:42:32.0752232+08:00",
+    "ownedProductProcessesRemaining": 0,
+    "extraForcedTerminations": 0,
+    "privateBackupCopiesRemaining": 0,
+    "testLoginItemRemaining": false,
+    "testSigningPrivateKeyRemaining": false
+  },
+  "mac": {
+    "checkedAtUnix": 1791577968.076396,
+    "bootedSimulators": 0,
+    "ownedDevicesRemaining": 0,
+    "recentQaProcesses": [],
+    "preExistingProcessesNotTouched": [
+      95818
+    ],
+    "forcedProcessTerminations": 0,
+    "motionTemporaryDirectoriesRemoved": [
+      "weftmate-ui-p1-TGGL8D",
+      "weftmate-m0-3-tSBgCF",
+      "weftmate-m0-3-aFhAUH",
+      "weftmate-m0-3-NF5RNs",
+      "weftmate-ui-p1-i6GBd3"
+    ]
+  },
+  "wsl": {
+    "checkedAt": "2026-10-09T20:44:06.221Z",
+    "frpsProcesses": 0,
+    "haproxyProcesses": 0,
+    "ownedCloudOrRelayProcesses": 0
+  },
+  "mumu": {
+    "android_version": "15.0",
+    "created_timestamp": 1785465832031915,
+    "disk_size_bytes": 67925004666,
+    "error_code": 0,
+    "hyperv_enabled": true,
+    "index": "0",
+    "info_source": "rpc",
+    "is_android_started": false,
+    "is_main": false,
+    "is_process_started": false,
+    "name": "MuMu安卓设备"
+  },
+  "privateRehearsal": {
+    "privateDiagnosticLogsRemoved": 6,
+    "privateBackupCopiesRemaining": 0
+  },
+  "macTemporaryEvidenceRemoved": true,
+  "extraForcedProcessTerminations": 0,
+  "normalRunnerExitsNotIndividuallyCounted": true,
+  "windowsBuildArtifactDeletionRejected": "blocked by policy",
+  "windowsBuildArtifactsRetained": ".local/qa-3/releases; generated test packages only, signing private key removed"
+}

@@ -5,7 +5,7 @@ import {homedir} from 'node:os';
 const root='tests/evidence/qa-3';
 const env=(name,scope)=>execFileSync('powershell.exe',['-NoProfile','-Command',`[Console]::Out.Write([Environment]::GetEnvironmentVariable('${name}','${scope}'))`],{encoding:'utf8',windowsHide:true}).trim();
 const lan=env('WEFTMATE_LAN_MODEL_BASE_URL','User');
-const secrets=[env('MIMO_API_KEY','Machine'),env('WEFTMATE_LAN_MODEL_KEY','User'),lan,lan&&new URL(lan).host].filter(Boolean);
+const secrets=[env('MIMO_API_KEY','Machine'),env('WEFTMATE_LAN_MODEL_KEY','User'),lan,lan&&new URL(lan).host,lan&&new URL(lan).hostname].filter(Boolean);
 function walk(dir){return readdirSync(dir,{withFileTypes:true}).flatMap(d=>d.isDirectory()?walk(join(dir,d.name)):[join(dir,d.name)]);}
 const files=walk(root),hits=[],privateFiles=[],homes=[],redacted=[];
 for(const file of files){

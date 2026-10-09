@@ -1,0 +1,36 @@
+{
+  "devicesAndConfigurations": [
+    {
+      "device": {
+        "architecture": "x86_64",
+        "deviceId": "ACF93D57-7097-45CC-8F26-6B7AEFD955E3",
+        "deviceName": "QA3 iPhone",
+        "modelName": "Apple Watch Series 11 (46mm)",
+        "osBuildNumber": "23S303",
+        "osVersion": "26.2",
+        "platform": "watchOS Simulator"
+      },
+      "expectedFailures": 0,
+      "failedTests": 0,
+      "passedTests": 1,
+      "skippedTests": 0,
+      "testPlanConfiguration": {
+        "configurationId": "1",
+        "configurationName": "Test Scheme Action"
+      }
+    }
+  ],
+  "environmentDescription": "WeftMateWatch · Built with macOS 26.6.2",
+  "expectedFailures": 0,
+  "failedTests": 0,
+  "finishTime": 1791577507.785,
+  "passedTests": 1,
+  "result": "Passed",
+  "skippedTests": 0,
+  "startTime": 1791577461.266,
+  "statistics": [],
+  "testFailures": [],
+  "title": "Test - WeftMateWatch",
+  "topInsights": [],
+  "totalTestCount": 1
+}
