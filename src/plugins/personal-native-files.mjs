@@ -31,7 +31,10 @@ export async function snapshotFiles(directory) {
   async function visit(root) {
     for (const entry of await readdir(root, { withFileTypes: true })) {
       const file = path.join(root, entry.name);
-      if (entry.isDirectory()) await visit(file);
+      // Browser captures are host-owned research inputs. Registering them as
+      // user deliverables races concurrent reads and creates uncertain write
+      // receipts that block the actual document tools (PF-2 LAN evidence).
+      if (entry.isDirectory() && entry.name !== '.weftmate-web-sources') await visit(file);
       else if (entry.isFile()) {
         try {
           const stat = await lstat(file);
