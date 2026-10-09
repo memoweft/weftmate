@@ -3,21 +3,24 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { UpdateStore, updateSource } from './store.mjs';
 import { personalAccessUiResources, setPersonalAccessUiResourceReader } from '../personal-access-ui/index.mjs';
-import { updateState, checkForUpdates, quitAndInstall } from '../update.ts';
+import { updateState, checkForUpdates, quitAndInstall, changeUpdateChannel } from '../update.ts';
+import { configureUpdateEnvironment, saveDesktopConfig } from '../desktop-config.mjs';
 import { createMobileUiPublisher } from '../personal-access/mobile-ui-release.mjs';
 import { installPreparedUpdate } from '../update-policy.ts';
+import { cancelAppRollback } from './app-rollback.mjs';
 
 export async function updateTrustedKeys({ development = false, feed = null } = {}) {
   // Packaged applications never accept an environment-provided trust root.
   const file = development && feed && updateSource(feed).protocol === 'http:' && process.env.WEFTMATE_UPDATE_TEST_PUBLIC_KEYS_PATH
-    ? process.env.WEFTMATE_UPDATE_TEST_PUBLIC_KEYS_PATH : new URL('./trusted-keys.json', import.meta.url);
+    ? process.env.WEFTMATE_UPDATE_TEST_PUBLIC_KEYS_PATH : app.isPackaged
+      ? join(process.resourcesPath, 'update-trusted-keys.json') : new URL('./trusted-keys.json', import.meta.url);
   return JSON.parse(await readFile(file, 'utf8'));
 }
 
 export async function createDesktopUpdates({ isIdle, appVersion = app.getVersion(), getWindow = () => null,
   root = join(app.getPath('userData'), 'updates', 'ui'), feed = process.env.WEFTMATE_UI_UPDATE_FEED,
-  trustedKeys = null, selfCheckTimeout = 10000, mobileUiDir = null, beforeAppInstall = async () => {} } = {}) {
-  const channel = process.env.WEFTMATE_UPDATE_CHANNEL || 'stable';
+  trustedKeys = null, selfCheckTimeout = 10000, mobileUiDir = null, beforeAppInstall = async () => {}, desktopConfig = null } = {}) {
+  let channel = process.env.WEFTMATE_UPDATE_CHANNEL || 'stable';
   const store = await new UpdateStore({ root, trustedKeys: trustedKeys || await updateTrustedKeys({ development: !app.isPackaged, feed }),
     versions: { app: appVersion, host: appVersion, bridge: 1 }, channel, builtInVersion: appVersion,
     allowedPaths: new Set(personalAccessUiResources.keys()), builtInFile: name => personalAccessUiResources.get(name) }).init();
@@ -33,7 +36,7 @@ export async function createDesktopUpdates({ isIdle, appVersion = app.getVersion
     { layer: 'mobile-ui', currentVersion: mobileManifest?.version || mobileManifest?.uiVersion || null,
       availableVersion: mobileManifest?.version || mobileManifest?.uiVersion || null, scope: 'host-published',
       status: mobileError ? 'failed' : mobileManifest ? 'device-managed' : 'disabled', error: mobileError, enabled: !!mobile, channel },
-  ], canRestart: updateState().status === 'downloaded' };
+  ], canRestart: updateState().status === 'downloaded', canChangeChannel: !!desktopConfig && !['available', 'checking'].includes(updateState().status), channel };
   };
   async function check() {
     await Promise.all([feed ? store.check(feed) : undefined, checkForUpdates(getWindow)]);
@@ -84,15 +87,30 @@ export async function createDesktopUpdates({ isIdle, appVersion = app.getVersion
   const trusted = event => window && event.sender === window.webContents && event.senderFrame === window.webContents.mainFrame &&
     event.senderFrame.url === window.webContents.getURL() && ['/personal/v1/ui', '/personal/v1/ui/'].includes(new URL(event.senderFrame.url).pathname);
   async function restart() {
-    return installPreparedUpdate({ ready: () => updateState().status === 'downloaded', idle: isIdle,
+    const result = await installPreparedUpdate({ ready: () => updateState().status === 'downloaded', idle: isIdle,
       beforeInstall: beforeAppInstall, install: quitAndInstall });
+    if (!result && app.isPackaged) await cancelAppRollback();
+    return result;
+  }
+  async function setChannel(value) {
+    if (!desktopConfig || !['stable', 'preview'].includes(value) || store.inFlight || ['available', 'checking'].includes(updateState().status)) throw new Error('UPDATE_CHANNEL_UNAVAILABLE');
+    const config = { ...desktopConfig.config, updates: { ...desktopConfig.config.updates, channel: value } };
+    saveDesktopConfig(desktopConfig.file, config); desktopConfig.config = config;
+    configureUpdateEnvironment(config); changeUpdateChannel();
+    channel = value; store.channel = value;
+    // The existing healthy UI remains usable; a staged package belongs to its original channel.
+    store.pointer.staged = null; await store.persist(); store.state.availableVersion = null;
+    store.state.status = 'current'; store.state.error = null;
+    feed = process.env.WEFTMATE_UI_UPDATE_FEED;
+    return state();
   }
   for (const [channelName, handler] of [['wm:desktop:update-state', state], ['wm:desktop:update-check', check],
+    ['wm:desktop:update-channel', setChannel],
     ['wm:desktop:update-restart', async () => { const restarted = await restart(); return { restarted, ...(restarted ? {} : { reason: '更新尚未就绪、任务仍在运行或更新前备份未完成，请稍后重试' }) }; }]]) {
-    ipcMain.handle(channelName, (event) => { if (!trusted(event)) throw new Error('Desktop update unavailable'); return handler(); });
+    ipcMain.handle(channelName, (event, value) => { if (!trusted(event)) throw new Error('Desktop update unavailable'); return handler(value); });
   }
   if (feed || updateState().enabled) { checkTimer = setInterval(() => void check(), 60 * 60 * 1000); checkTimer.unref(); void check(); }
   return { store, state, check, reopen, attach, restart, async prepareWindow() { if (await isIdle()) await store.activate({ idle: true }); },
     close() { clearInterval(checkTimer); clearTimeout(healthTimer); setPersonalAccessUiResourceReader(null);
-      for (const name of ['wm:desktop:update-state', 'wm:desktop:update-check', 'wm:desktop:update-restart']) ipcMain.removeHandler(name); } };
+      for (const name of ['wm:desktop:update-state', 'wm:desktop:update-check', 'wm:desktop:update-restart', 'wm:desktop:update-channel']) ipcMain.removeHandler(name); } };
 }

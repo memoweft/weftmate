@@ -46,6 +46,9 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
     }
     function showSettingsDialog() {
         if (!dialog?.open) { returnFocus = document.activeElement; dialog.showModal(); globalThis.WeftMotion?.reveal(dialog, '240ms'); }
+        const strip = ui.byId('settings-usage-strip');
+        strip.textContent = '正在读取本月用量…';
+        void core.loadUsageStrip().then(text => { if (text && dialog.open) strip.textContent = text; }).catch(() => { if (dialog.open) strip.textContent = '本月用量暂时无法读取，点此重试。'; });
         selectSettings(core.state.currentView === 'memory' ? 'memory' : selected);
     }
     function hideSettingsDialog() { if (dialog?.open) dialog.close(); }
@@ -60,13 +63,26 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         const names = {ui:'电脑界面',app:'程序版本','mobile-ui':'手机界面'};
         if(value) {target.replaceChildren();for(const layer of value.layers) target.append(globalThis.WeftSettingsControls.row(names[layer.layer] || '版本',
             `当前 ${layer.currentVersion || '版本未知'}${layer.availableVersion ? ` · 可用 ${layer.availableVersion}` : ''}`,node('span','settings-value',core.updateStatusText(layer))));}
+        if (value?.channel) {
+            const channel = node('select', ''); channel.setAttribute('aria-label', '更新通道');
+            for (const [id, label] of [['stable', '正式'], ['preview', '预览']]) { const option = node('option', '', label); option.value = id; channel.append(option); }
+            channel.value = value.channel; channel.disabled = !value.canChangeChannel;
+            channel.addEventListener('change', async () => { channel.disabled = true; try { await core.setUpdateChannel(channel.value); if (current()) await renderSettingsUpdates(); }
+                catch { if (current()) { loading.textContent = '更新通道暂时无法切换，请等下载完成后重试。'; target.prepend(loading); channel.value = value.channel; channel.disabled = !value.canChangeChannel; } } });
+            target.append(globalThis.WeftSettingsControls.row('更新通道', '正式版本适合日常使用；预览版本可提前体验新功能。', channel));
+        }
+        for (const layer of value?.layers || []) if (layer.releaseNotes) target.append(globalThis.WeftSettingsControls.row(`${names[layer.layer] || '版本'}更新内容`, layer.releaseNotes, node('span', '', '')));
         const actions=node('div','actions'), refresh=node('button','button secondary','检查更新');refresh.type='button';refresh.addEventListener('click',()=>{void renderSettingsUpdates(true)});actions.append(refresh);
         if(value?.canRestart){const restart=node('button','button primary','重启并更新');restart.type='button';restart.addEventListener('click',async()=>{restart.disabled=true;try{const result=await core.restartForUpdate();if(!current())return;if(!result?.restarted){loading.textContent=result?.reason||'更新尚未就绪，请重新检查。';target.prepend(loading);restart.disabled=false}}catch{if(current()){loading.textContent='更新未完成，请重新检查。';target.prepend(loading);restart.disabled=false}}});actions.append(restart)}
         target.append(actions);
+        if (value?.canRestart) target.append(node('p', 'muted', '可以稍后再更新。重启前会等待进行中的任务结束，并创建备份。'));
+        clearTimeout(renderSettingsUpdates.timer);
+        if (value?.layers.some(layer => ['checking', 'available', 'downloading'].includes(layer.status))) renderSettingsUpdates.timer = setTimeout(() => { if (current()) void renderSettingsUpdates(); }, 1500);
     }
     function mountSettingsNavigation() {
         const account = ui.byId('account-view');
         dialog = node('dialog', 'settings-dialog'); dialog.id = 'settings-dialog'; dialog.setAttribute('aria-label', '设置');
+        const strip = node('button', 'settings-usage-strip'); strip.id = 'settings-usage-strip'; strip.type = 'button'; strip.setAttribute('aria-label', '用量详情'); strip.onclick = () => selectSettings('usage');
         const sidebar = node('aside', 'settings-sidebar');
         search = node('input', 'settings-search'); search.type = 'search'; search.placeholder = '搜索设置'; search.setAttribute('aria-label', '搜索设置');
         navigation = node('nav', 'settings-navigation'); navigation.setAttribute('aria-label', '设置分类'); sidebar.append(search, navigation);
@@ -155,13 +171,15 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         if (globalThis.weftmateDesktop) { panels.get('about').append(globalThis.WeftSettingsControls.row('版本', '当前桌面程序。', appVersion)); void globalThis.weftmateDesktop.settings().then(settings => { appVersion.textContent = settings.version; }); }
         const version = node('span', 'settings-value', '正在读取…'); version.id = 'settings-host-version';
         panels.get('about').append(globalThis.WeftSettingsControls.row('宿主版本', '来自当前连接的宿主。', version));
+        const feedback = node('a', 'button secondary', '反馈问题'); feedback.href = 'https://github.com/memoweft/weftmate/issues'; feedback.target = '_blank'; feedback.rel = 'noopener noreferrer';
+        panels.get('about').append(globalThis.WeftSettingsControls.row('帮助与反馈', '描述问题时请勿包含密码或私人对话。', feedback));
         for (const [name, kind] of [['服务条款', 'terms'], ['隐私政策', 'privacy']]) {
             const button = node('button', 'button secondary', '阅读' + name); button.type = 'button';
             button.addEventListener('click', () => { void ui.openLegal(kind); });
             panels.get('about').append(globalThis.WeftSettingsControls.row(name, '在应用内阅读。', button));
         }
         for (const original of originals) if (original.parentNode === account) original.hidden = true;
-        account.append(content); main.append(head, picker); if (cloudNotice) main.append(cloudNotice); main.append(account); dialog.append(sidebar, main); document.body.append(dialog);
+        account.append(content); main.append(head, strip, picker); if (cloudNotice) main.append(cloudNotice); main.append(account); dialog.append(sidebar, main); document.body.append(dialog);
         registry = globalThis.WeftUiCore.settingsRegistry({
             general: () => { messageMode.value = core.messageModePreference(); messageMode.dispatchEvent(new Event('weft:sync')); },
             account: () => { ui.selectCloudSettings?.('account'); ui.paintCloudSettings?.(); },

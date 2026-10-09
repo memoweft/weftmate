@@ -1,0 +1,245 @@
+{
+  "syntheticAccount": true,
+  "realNsis": true,
+  "realElectron": true,
+  "realDsh": true,
+  "paidModelRequests": 0,
+  "installation": "isolated per-user directory",
+  "shortcutAppUserModelId": "com.memoweft.weftmate.r01qa",
+  "firstLaunch": true,
+  "autoStart": {
+    "version": "0.1.1-preview.1",
+    "autoStart": false,
+    "autoStartSupported": true
+  },
+  "uiDownloads": [
+    {
+      "path": "files/ui/0.1.1-preview.9/personal-access-ui/layout.js",
+      "bytes": 5074,
+      "range": false
+    }
+  ],
+  "uiTotalBytes": 1525039,
+  "busyRestartDeferred": true,
+  "taskCompleted": true,
+  "aboutVersionsChannelNotes": true,
+  "appTransfers": [
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 44682,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 8632,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 98018,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 4177040,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 69311,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 32768,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 109533,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 32768,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 32768,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 32768,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 32768,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 32768,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 32768,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 124805,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 15915,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 19897,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 35598,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 24410,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 43124,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 25802,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 92042,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 30050,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 32768,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 37676,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 32768,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 11694,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 20440,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 32768,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 25238,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 16974,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 31572,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 14537,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 18885,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 11085,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 21385,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 32768,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 32768,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 421906,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 157917,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 359150,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 119879,
+      "range": true
+    }
+  ],
+  "newInstallerBytes": 174201561,
+  "downloadedInstallerBytes": 6580413,
+  "appUpgrade": {
+    "phase": "healthy",
+    "version": "0.1.1-preview.2",
+    "previousVersion": "0.1.1-preview.1"
+  },
+  "rollbackEvidence": "rollback-report.json (independent automatic bad-version trial)",
+  "channelPersisted": true,
+  "uninstallRetainsData": true,
+  "passed": true,
+  "autoStartEvidence": "login-item-report.json (fixed named-entry readback and quoted configuration arguments)"
+}

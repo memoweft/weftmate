@@ -1,4 +1,5 @@
 import packageInfo from '../package.json' with { type: 'json' };
+import { quoteWindowsLoginArgs, loginItemEnabled } from './desktop-autostart.mjs';
 /** Native shell for the same authenticated /personal/v1 client used remotely. */
 import { app, BrowserWindow, ipcMain, Notification, screen, shell, session, nativeTheme, safeStorage, dialog } from 'electron';
 import { hostname } from 'node:os';
@@ -85,10 +86,10 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
   const loginArgs = [
     ...(!app.isPackaged ? [app.getAppPath()] : []), '--personal-host', '--start-in-tray',
     `--user-data-dir=${app.getPath('userData')}`,
-    ...process.argv.filter(arg => /^--(?:access-port|workspace-dir|public-origin|personal-memory-config|local-model-config|android-package-path|mobile-ui-dir)=/.test(arg) || arg === '--trust-loopback-proxy'),
+    ...process.argv.filter(arg => /^--(?:desktop-config|access-port|workspace-dir|public-origin|personal-memory-config|local-model-config|android-package-path|mobile-ui-dir)=/.test(arg) || arg === '--trust-loopback-proxy'),
   ];
-  const loginOptions = { path: process.execPath, args: loginArgs };
-  const settings = () => ({ version: packageInfo.version, autoStart: app.getLoginItemSettings(loginOptions).openAtLogin,
+  const loginOptions = { path: process.execPath, args: process.platform === 'win32' ? quoteWindowsLoginArgs(loginArgs) : loginArgs, name: packageInfo.desktopIdentity || 'WeftMate' };
+  const settings = () => ({ version: packageInfo.version, autoStart: loginItemEnabled(app.getLoginItemSettings(loginOptions), loginOptions.name, loginOptions.path),
     autoStartSupported: process.platform === 'win32' || process.platform === 'darwin' });
   handle('wm:desktop:settings', settings);
   handle('wm:desktop:project-folder', async () => {
