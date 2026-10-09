@@ -198,13 +198,23 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
         const marker = core.savedAccountModelMarker();
         const form = ui.byId('account-model-form');
         form.hidden = !core.state.accountModelsCanManage;
-        if (!core.state.accountModels.length) {
-            list.append(ui.element('li', 'muted', '当前账户尚无已配置的电脑模型。手机原模型不会自动上传。'));
-        }
-        for (const model of core.state.accountModels) {
+        ui.byId('account-model-add').hidden = !core.state.accountModelsCanManage;
+        const models = (core.state.allModels || []).filter(row => !row.id.startsWith('private-model-')).map(row => ({ ...row, modelId: row.model, status: 'active' }));
+        models.push(...core.state.accountModels);
+        const location = model => model.location || (model.sourceKind === 'cloud' ? 'cloud' : model.baseUrl && !['127.0.0.1', 'localhost', '[::1]'].includes(new URL(model.baseUrl).hostname) ? 'lan' : 'computer');
+        for (const [group, label] of [['computer', '本机模型'], ['lan', '局域网模型'], ['cloud', '云端模型']]) {
+            const heading = ui.element('li', 'model-list-heading', label); list.append(heading);
+            const rows = models.filter(model => location(model) === group);
+            if (!rows.length) list.append(ui.element('li', 'model-list-empty muted', '暂无模型'));
+            for (const model of rows) {
             const row = ui.element('li', 'project-row');
             const main = ui.element('div', 'project-row-main');
-            main.append(ui.element('strong', '', model.name || model.modelId), ui.element('small', '', `${model.modelId} · ${{ active: '可用', stopped: '已停止使用', pending: '配置中', failed: '配置失败' }[model.status] || '待核对'} · 修订 ${model.revision}`));
+            const checked = core.state.modelChecks?.[model.id ?? model.profileId];
+            const loaded = group === 'computer' && core.state.system?.model?.currentModelId === model.modelId;
+            const available = model.status === 'active' && model.configured;
+            const failed = checked && (!checked.reachable || checked.authentication === 'rejected' || checked.model === 'missing' || checked.model === 'test_failed');
+            const status = loaded ? '已加载' : !model.configured ? '需要密钥' : !available || failed ? '不可用' : '可用';
+            main.append(ui.element('strong', '', model.name || model.modelId), ui.element('small', 'muted', `${model.modelId} · ${label}`), ui.element('span', 'model-status' + (loaded ? ' is-loaded' : ''), status));
             const actions = ui.element('div', 'actions');
             const edit = ui.element('button', 'button quiet small', '编辑');
             edit.disabled = core.state.accountModelBusy || !!marker || model.status !== 'active';
@@ -217,14 +227,18 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
                 ui.byId('account-model-key').value = '';
                 ui.byId('account-model-submit').textContent = '保存修改';
                 ui.byId('account-model-cancel').hidden = false;
-                ui.byId('account-model-form-status').textContent = '留空密钥表示沿用原地址已保存的密钥；换地址需输入新地址的密钥。';
+                ui.accountModelFormNotice('留空密钥表示沿用原地址已保存的密钥；换地址需输入新地址的密钥。');
+                ui.byId('model-editor-title').textContent = '编辑模型';
+                ui.byId('account-model-draft-result').replaceChildren();
+                ui.byId('account-model-dialog').showModal();
                 ui.byId('account-model-name').focus();
             });
-            actions.append(edit);
+            if (model.accountModelId && core.state.accountModelsCanManage) actions.append(edit);
+            else if (!model.accountModelId) actions.append(ui.element('span', 'muted model-host-note', '宿主目录'));
             if (model.status === 'active') {
                 const test = ui.element('button', 'button secondary small', '测试连接');
                 test.disabled = core.state.accountModelBusy || !!marker;
-                test.addEventListener('click', () => { void core.submitAccountModelControl(model, 'test'); });
+                test.addEventListener('click', () => { test.disabled = true; void core.checkModelDraft({ profileId: model.id ?? model.profileId }, false, model); });
                 const stop = ui.element('button', 'button quiet small', '停止使用');
                 stop.disabled = core.state.accountModelBusy || !!marker;
                 stop.addEventListener('click', () => {
@@ -235,7 +249,8 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
                     }
                     void core.submitAccountModelControl(model, 'stop_using');
                 });
-                actions.append(test, stop);
+                if (core.state.accountModelsCanManage) actions.append(test);
+                if (model.accountModelId && core.state.accountModelsCanManage) actions.append(stop);
             }
             else if (model.status === 'stopped' || model.status === 'failed') {
                 const remove = ui.element('button', 'button danger small', '移除配置');
@@ -251,7 +266,17 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
                 actions.append(remove);
             }
             row.append(main, actions);
+            if (checked) {
+                const checks = ui.element('div', 'model-check-result');
+                for (const [name, detail] of core.modelConnectionSteps(checked)) checks.append(ui.element('p', '', `${name}：${detail}`));
+                if (checked.requiresTestMessage && !checked.inferenceVerified && checked.authentication !== 'rejected') {
+                    const send = ui.element('button', 'button secondary small', '发送测试消息'); send.type = 'button';
+                    send.addEventListener('click', () => { send.disabled = true; void core.checkModelDraft({ profileId: model.id ?? model.profileId }, true, model); }); checks.append(send);
+                }
+                row.append(checks);
+            }
             list.append(row);
+        }
         }
     }
     function renderProjects() {

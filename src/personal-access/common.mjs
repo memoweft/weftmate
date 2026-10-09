@@ -141,6 +141,7 @@ export function modelProjection(value) {
     routeFingerprint: model.routeFingerprint === null ||
       typeof model.routeFingerprint === 'string' && /^[a-f0-9]{64}$/.test(model.routeFingerprint)
       ? model.routeFingerprint : null,
+    ...(['computer', 'lan', 'cloud'].includes(model.location) ? { location: model.location } : {}),
     ...(model.source === 'host' ? { source: 'host' } : {}),
     ...(['auto', 'local', 'cloud'].includes(model.modelTier) ? { modelTier: model.modelTier } : {}),
     ...(['local', 'cloud'].includes(model.sourceKind) ? { sourceKind: model.sourceKind } : {}),
