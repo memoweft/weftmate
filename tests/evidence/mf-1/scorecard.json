@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-09T09:00:44.131Z",
+  "generatedAt": "2026-10-09T09:20:16.606Z",
   "timeline": [
     {
       "name": "after-lan",
@@ -2114,6 +2114,626 @@
             "dedicatedMemoryExport": true,
             "filesWithForgottenName": [],
             "files": 103,
+            "databaseTextScan": {
+              "tables": [
+                {
+                  "table": "boundary_evidence_content",
+                  "columns": [
+                    "evidence_id",
+                    "raw_content_hash"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "clarification",
+                  "columns": [
+                    "clarification_id",
+                    "source_job_id",
+                    "source_outcome_id",
+                    "subject_id",
+                    "result_session_id",
+                    "question",
+                    "target_hint",
+                    "state",
+                    "answer_evidence_id",
+                    "follow_up_job_id",
+                    "opened_at",
+                    "answered_at",
+                    "resolved_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "cognition",
+                  "columns": [
+                    "id",
+                    "subject_id",
+                    "content",
+                    "content_type",
+                    "formed_by",
+                    "confidence",
+                    "cred_status",
+                    "scope",
+                    "valid_at",
+                    "invalid_at",
+                    "asked_at",
+                    "archived_at",
+                    "muted_at",
+                    "created_at",
+                    "updated_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "cognition_evidence",
+                  "columns": [
+                    "cognition_id",
+                    "evidence_id",
+                    "relation"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "cognition_target",
+                  "columns": [
+                    "cognition_id",
+                    "target_entity_id",
+                    "perspective_entity_id"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "cognition_transitions",
+                  "columns": [
+                    "id",
+                    "prior_cognition_id",
+                    "replacement_cognition_id",
+                    "reason",
+                    "revision"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "entity",
+                  "columns": [
+                    "id",
+                    "world_id",
+                    "kind",
+                    "canonical_name",
+                    "invalid_at",
+                    "created_at",
+                    "updated_at",
+                    "aliases_json"
+                  ],
+                  "rows": 1
+                },
+                {
+                  "table": "event",
+                  "columns": [
+                    "id",
+                    "subject_id",
+                    "summary",
+                    "occurred_at",
+                    "created_at",
+                    "consolidated"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "event_evidence",
+                  "columns": [
+                    "event_id",
+                    "evidence_id"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "evidence",
+                  "columns": [
+                    "id",
+                    "subject_id",
+                    "source_kind",
+                    "host_id",
+                    "origin_id",
+                    "occurred_at",
+                    "recorded_at",
+                    "raw_content",
+                    "summary",
+                    "allow_local_read",
+                    "allow_cloud_read",
+                    "allow_inference",
+                    "corrects_evidence_id",
+                    "deleted_at",
+                    "preceding_ai_context"
+                  ],
+                  "rows": 3
+                },
+                {
+                  "table": "evidence_ledger",
+                  "columns": [
+                    "id",
+                    "content",
+                    "payload_json"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "evidence_origin_history",
+                  "columns": [
+                    "evidence_id",
+                    "origin_id"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "evidence_retraction",
+                  "columns": [
+                    "cognition_id",
+                    "evidence_id",
+                    "retracted_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "hard_deleted_origin",
+                  "columns": [
+                    "origin_hash",
+                    "subject_id",
+                    "evidence_id"
+                  ],
+                  "rows": 3
+                },
+                {
+                  "table": "identity_state",
+                  "columns": [
+                    "singleton",
+                    "identity_schema_version",
+                    "world_id",
+                    "memory_revision",
+                    "memory_snapshot_hash",
+                    "identity_graph_hash",
+                    "state_json",
+                    "state_hash",
+                    "storage_generation"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "interaction_commitment",
+                  "columns": [
+                    "id",
+                    "subject_id",
+                    "conversation_id",
+                    "episode_id",
+                    "assistant_message_id",
+                    "kind",
+                    "content",
+                    "raw_quote",
+                    "status",
+                    "created_at",
+                    "updated_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "interaction_context",
+                  "columns": [
+                    "id",
+                    "subject_id",
+                    "conversation_id",
+                    "episode_id",
+                    "context_json",
+                    "context_hash",
+                    "created_at"
+                  ],
+                  "rows": 3
+                },
+                {
+                  "table": "management_log",
+                  "columns": [
+                    "op",
+                    "target_kind",
+                    "target_id",
+                    "reason",
+                    "detail",
+                    "created_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "memory_state",
+                  "columns": [
+                    "singleton",
+                    "revision",
+                    "snapshot_json",
+                    "snapshot_hash"
+                  ],
+                  "rows": 1
+                },
+                {
+                  "table": "memory_world_job",
+                  "columns": [
+                    "job_id",
+                    "job_schema_version",
+                    "boundary_event_id",
+                    "boundary_payload_hash",
+                    "boundary_schema_version",
+                    "provider_name",
+                    "parent_session_id",
+                    "result_session_id",
+                    "boundary_mode",
+                    "formal_target_json",
+                    "formal_target_hash",
+                    "subject_id",
+                    "host_id",
+                    "evidence_ids_json",
+                    "state",
+                    "attempts",
+                    "next_attempt_at",
+                    "claim_owner",
+                    "claim_token",
+                    "claimed_at",
+                    "lease_expires_at",
+                    "heartbeat_at",
+                    "fencing_generation",
+                    "model_dispatch_started_at",
+                    "model_completed_at",
+                    "model_task",
+                    "model_provider",
+                    "model_name",
+                    "model_usage_json",
+                    "model_result_json",
+                    "model_result_hash",
+                    "world_result_json",
+                    "result_hash",
+                    "delivery_receipt_json",
+                    "delivery_receipt_hash",
+                    "created_at",
+                    "completed_at",
+                    "last_error_type",
+                    "terminal_state",
+                    "terminal_detail"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "observed_source",
+                  "columns": [
+                    "subject_id",
+                    "host_id",
+                    "source_hash",
+                    "evidence_id",
+                    "version",
+                    "payload_hash",
+                    "permission_version",
+                    "withdrawn_through",
+                    "valid_at",
+                    "valid_until"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "portable_import_receipt",
+                  "columns": [
+                    "receipt_id",
+                    "schema_version",
+                    "command_id",
+                    "plan_hash",
+                    "bundle_id",
+                    "source_subject_id",
+                    "target_subject_id",
+                    "target_world_revision",
+                    "target_snapshot_hash",
+                    "after_world_revision",
+                    "result_state",
+                    "result_json",
+                    "result_hash",
+                    "completed_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "proposal_decision_receipts",
+                  "columns": [
+                    "proposal_id",
+                    "offered_result_hash",
+                    "effective_decision",
+                    "world_revision",
+                    "snapshot_hash",
+                    "decided_at",
+                    "receipt_hash"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "proposals",
+                  "columns": [
+                    "id",
+                    "kind",
+                    "base_revision",
+                    "result_hash",
+                    "payload_json",
+                    "review_payload_json",
+                    "status"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "relationship",
+                  "columns": [
+                    "id",
+                    "world_id",
+                    "source_entity_id",
+                    "target_entity_id",
+                    "relation_type",
+                    "content",
+                    "formed_by",
+                    "confidence",
+                    "cred_status",
+                    "invalid_at",
+                    "created_at",
+                    "updated_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "relationship_evidence",
+                  "columns": [
+                    "relationship_id",
+                    "evidence_id",
+                    "relation"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "relationship_transitions",
+                  "columns": [
+                    "id",
+                    "prior_relationship_id",
+                    "replacement_relationship_id",
+                    "reason",
+                    "revision"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "retraction",
+                  "columns": [
+                    "id",
+                    "prior_cognition_id",
+                    "prior_relationship_id",
+                    "reason",
+                    "revision",
+                    "created_at",
+                    "prior_event_id"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "semantic_resolution",
+                  "columns": [
+                    "id",
+                    "evidence_id",
+                    "resolved_content",
+                    "response_act",
+                    "prompt_act",
+                    "proposition_origin",
+                    "assertion_strength",
+                    "required_context",
+                    "resolver_version",
+                    "created_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "terminal_outcome",
+                  "columns": [
+                    "outcome_id",
+                    "schema_version",
+                    "job_id",
+                    "boundary_event_id",
+                    "provider_name",
+                    "subject_id",
+                    "parent_session_id",
+                    "result_session_id",
+                    "terminal_state",
+                    "terminal_detail",
+                    "world_revision",
+                    "world_result_json",
+                    "result_hash",
+                    "occurred_at",
+                    "delivery_state",
+                    "attempts",
+                    "next_attempt_at",
+                    "claim_owner",
+                    "claim_token",
+                    "lease_expires_at",
+                    "heartbeat_at",
+                    "delivered_at",
+                    "last_error"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "trust_command",
+                  "columns": [
+                    "command_id",
+                    "schema_version",
+                    "subject_id",
+                    "actor",
+                    "expected_world_revision",
+                    "operation",
+                    "target_kind",
+                    "target_id",
+                    "payload_json",
+                    "request_hash",
+                    "submitted_at"
+                  ],
+                  "rows": 3
+                },
+                {
+                  "table": "trust_command_receipt",
+                  "columns": [
+                    "command_id",
+                    "schema_version",
+                    "accepted",
+                    "result_state",
+                    "before_revision",
+                    "after_revision",
+                    "affected_ids_json",
+                    "transition_ids_json",
+                    "result_hash",
+                    "completed_at"
+                  ],
+                  "rows": 3
+                },
+                {
+                  "table": "trust_command_rejection",
+                  "columns": [
+                    "command_id",
+                    "reason_code"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "trust_delete_storage_status",
+                  "columns": [
+                    "command_id",
+                    "state",
+                    "detail_code"
+                  ],
+                  "rows": 3
+                },
+                {
+                  "table": "world_delete_marker",
+                  "columns": [
+                    "subject_id",
+                    "object_kind",
+                    "item_id",
+                    "deleted_at"
+                  ],
+                  "rows": 6
+                },
+                {
+                  "table": "world_event",
+                  "columns": [
+                    "id",
+                    "world_id",
+                    "content",
+                    "occurred_at",
+                    "time_expression",
+                    "participants_json",
+                    "objects_json",
+                    "formed_by",
+                    "confidence",
+                    "cred_status",
+                    "invalid_at",
+                    "created_at",
+                    "updated_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "world_event_evidence",
+                  "columns": [
+                    "world_event_id",
+                    "evidence_id",
+                    "relation"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "world_item_lifecycle",
+                  "columns": [
+                    "subject_id",
+                    "object_kind",
+                    "item_id",
+                    "archived_at",
+                    "muted_at",
+                    "updated_at"
+                  ],
+                  "rows": 0
+                }
+              ],
+              "tableCount": 38,
+              "hits": [],
+              "hitCount": 0,
+              "needles": [
+                "王小明",
+                "好兄弟",
+                "表弟",
+                "王小明打游戏挺厉害，是我好兄弟。",
+                "更正一下：王小明是我的表弟，不是好兄弟。以后组队还是找他。"
+              ]
+            }
+          }
+        },
+        {
+          "id": "08",
+          "status": "passed",
+          "checks": {
+            "actualCoreStopped": true,
+            "unavailable": true,
+            "chatCompleted": true,
+            "noMemoryInjected": true,
+            "chatNotice": true,
+            "memoryPageNotice": true,
+            "mobileWebNotice": true,
+            "recoveryClearsNotice": true,
+            "semanticAccepted": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "post-ms1-forget",
+      "model": "mimo",
+      "revision": {
+        "weftmate": "1ccfea3ed9628b2c12eab4cb64192f44f1598630",
+        "core": "8913d5ab81f2efacb752ef956387df45b5cb28cc"
+      },
+      "summary": {
+        "passed": 3,
+        "failed": 0,
+        "eightStepGate": false
+      },
+      "interrupted": false,
+      "steps": [
+        {
+          "id": "06",
+          "status": "passed",
+          "checks": {
+            "restarted": true,
+            "persistedLatest": true,
+            "latestReply": true,
+            "latestAdopted": true,
+            "semanticAccepted": true
+          }
+        },
+        {
+          "id": "07",
+          "status": "passed",
+          "checks": {
+            "uiSource": true,
+            "exportBeforeForget": true,
+            "memoryPageForget": true,
+            "originalChatRetained": true,
+            "forgotSourceEvidence": true,
+            "allConversationsDeleted": true,
+            "noFormalFact": true,
+            "memoryExportsExcludeForgotten": true,
+            "exportSucceeded": true,
+            "exportNoRecoverableBytes": true,
+            "exportNoRecoverableDatabase": true,
+            "noRecallAfterForget": true,
+            "semanticAccepted": true
+          },
+          "export": {
+            "kind": "BK-1 local backup",
+            "status": 202,
+            "dedicatedMemoryExport": true,
+            "filesWithForgottenName": [],
+            "files": 104,
             "databaseTextScan": {
               "tables": [
                 {

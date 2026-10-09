@@ -5066,6 +5066,98 @@
     ]
   },
   {
+    "root": "C:\\temp\\weftmate-m2-exit-mimo-lSMwUB",
+    "account": "owner-5b3fc991-e505-447c-8ae9-9962d905aa53",
+    "recovery": null,
+    "jobs": [
+      {
+        "job_id": "memory-world-job-f1916e16c6152aa123586c83776f1df1d1ee8fd07a701b84e0b9019604568854",
+        "parent_session_id": "session-c3d7324b-52a9-46b7-9d26-1d79b340cfdf",
+        "boundary_event_id": "weftmate-turn-boundary-v1:ec72bff66203fd786c641c88af3d7830:425ce5014ee495c05ec5d9c450e15434c2c056821495d5504401e21640fa59dc",
+        "state": "no_change",
+        "attempts": 1,
+        "created_at": "2026-10-09T09:18:33.834Z",
+        "claimed_at": "2026-10-09T09:18:33.852Z",
+        "model_dispatch_started_at": "2026-10-09T09:18:33.880Z",
+        "model_completed_at": "2026-10-09T09:18:33.890Z",
+        "completed_at": "2026-10-09T09:18:33.890Z",
+        "sources": [
+          "我们之前说组队可以找谁？"
+        ],
+        "model_result": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        },
+        "world_result": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      },
+      {
+        "job_id": "memory-world-job-e1faa85e7ef04faf7e7683e0452d501b6907e2c3a7401723ad13206fd6571f5a",
+        "parent_session_id": "session-c3d7324b-52a9-46b7-9d26-1d79b340cfdf",
+        "boundary_event_id": "weftmate-turn-boundary-v1:b04e7df4154b7df8acda2d39f2474ead:45873f39bc9c81cc80485c29499c5fbe5a82a56aefa92b62104ae2ef3877b8ae",
+        "state": "no_change",
+        "attempts": 1,
+        "created_at": "2026-10-09T09:18:42.450Z",
+        "claimed_at": "2026-10-09T09:18:42.471Z",
+        "model_dispatch_started_at": "2026-10-09T09:18:42.498Z",
+        "model_completed_at": "2026-10-09T09:18:50.124Z",
+        "completed_at": "2026-10-09T09:18:50.124Z",
+        "sources": [
+          "你好，请用一句中文打个招呼。"
+        ],
+        "model_result": {
+          "content": "{\"schema_version\":8,\"result\":\"no_change\"}",
+          "finish_reason": "stop",
+          "formation_rewrite": {
+            "error": {
+              "code": "model_no_change",
+              "instruction": "Rewrite the complete interpretation JSON once. Fix the reported compiler error; every cognition must include a nonempty proposition and valid supports. Copy names, forms of address, numbers and dates exactly from user evidence. Never invent facts. The source passed the declarative-fact check. Reconsider no_change: a new personal preference, name, relationship or correction must be represented unless the current World already expresses it. A question or task-only instruction can still return no_change."
+            },
+            "final_error": "model_no_change",
+            "first_result": {
+              "content": "{\"schema_version\":8,\"result\":\"no_change\"}",
+              "finish_reason": "stop",
+              "model": "mimo-v2.6-flash",
+              "usage": {
+                "completion_tokens": 32,
+                "completion_tokens_details": {
+                  "reasoning_tokens": 19
+                },
+                "prompt_tokens": 4574,
+                "prompt_tokens_details": {
+                  "cached_tokens": 4352
+                },
+                "total_tokens": 4606
+              }
+            },
+            "state": "completed"
+          },
+          "model": "mimo-v2.6-flash",
+          "usage": {
+            "completion_tokens": 57,
+            "completion_tokens_details": {
+              "reasoning_tokens": 42
+            },
+            "prompt_tokens": 4832,
+            "prompt_tokens_details": {
+              "cached_tokens": 4544
+            },
+            "total_tokens": 4889
+          }
+        },
+        "world_result": {
+          "reason": "model_no_change",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ]
+  },
+  {
     "root": "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-mf1-iN0F7V",
     "account": "owner-0954a710-0d86-4b26-a410-5ab74ce9eccf",
     "recovery": null,
