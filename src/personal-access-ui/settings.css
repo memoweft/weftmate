@@ -1,4 +1,31 @@
 /* UI-4 settings surface. Values come from design/tokens. */
+.settings-category[data-category=models] > .settings-row { align-items: flex-start; }
+.settings-category[data-category=models] > .settings-row .muted { max-width: 65ch; }
+.settings-category[data-category=models] #account-model-section { margin-top: var(--wm-space-32); }
+.model-list-heading { list-style: none; font-size: var(--wm-font-size-14); font-weight: 600; padding: var(--wm-space-24) 0 var(--wm-space-8); }
+.model-list-heading:first-child { padding-top: 0; }
+.model-list-empty { list-style: none; padding: var(--wm-space-12) 0; font-size: var(--wm-font-size-13); }
+#account-models-list .project-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--wm-space-12); padding: var(--wm-space-16) 0; border-bottom: var(--wm-space-1) solid var(--line); }
+#account-models-list .project-row-main { display: grid; gap: var(--wm-space-4); min-width: 0; overflow-wrap: anywhere; }
+.model-status { color: var(--ink-secondary); font-size: var(--wm-font-size-12); }
+.model-status.is-loaded { color: var(--accent); }
+.model-host-note { font-size: var(--wm-font-size-12); }
+.model-check-result { grid-column: 1 / -1; padding: var(--wm-space-12) 0; font-size: var(--wm-font-size-13); line-height: var(--wm-line-height-1_55); overflow-wrap: anywhere; }
+.model-check-result p + p { margin-top: var(--wm-space-8); }
+.model-check-result button { margin-top: var(--wm-space-12); }
+.model-editor-dialog { width: min(65ch, calc(100dvw - var(--wm-space-32))); max-width: 65ch; max-height: calc(100dvh - var(--wm-space-32)); overflow: auto; color: var(--ink); background: var(--surface); }
+.model-editor-dialog::backdrop { background: var(--wm-color-desktop-scrim); }
+.model-editor-dialog .model-editor-form { display: grid; height: auto; max-height: none; gap: var(--wm-space-8); padding: var(--wm-space-20) var(--wm-space-24); max-width: none; }
+.model-editor-form > label:not(:first-child) { margin-top: var(--wm-space-8); }
+.model-editor-form > input, .model-editor-form > select { width: 100%; min-width: 0; }
+.model-editor-dialog > .model-check-result { padding: 0 var(--wm-space-24) var(--wm-space-24); }
+@media (max-width: 719px) {
+  .settings-category[data-category=models] > .settings-row { flex-direction: column; gap: var(--wm-space-12); }
+  .settings-category[data-category=models] > .settings-row > select { width: 100%; max-width: none; }
+  #account-models-list .project-row { grid-template-columns: 1fr; }
+  #account-models-list .actions { justify-content: flex-start; flex-wrap: wrap; }
+  .model-editor-form { padding: var(--wm-space-16); }
+}
 .settings-dialog { padding: 0; border: 0; border-radius: var(--wm-radius-16); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-float); width: min(calc(100vw - var(--wm-space-64)), var(--wm-size-settings-width)); height: min(calc(100dvh - var(--wm-space-72)), var(--wm-size-settings-height)); max-width: none; max-height: none; overflow: hidden; }
 .settings-dialog[open] { display: grid; grid-template-columns: var(--wm-size-settings-sidebar) minmax(0, 1fr); }
 .settings-dialog::backdrop { background: var(--wm-color-desktop-scrim); }
@@ -101,3 +128,10 @@
 @media (max-width: 719px) { .settings-row > .settings-select { width: 100%; } .settings-category-picker.settings-select { display: flex; } }
 
 #background-model-select + .settings-select { width: 100%; }
+
+.settings-category #account-model-section .group-heading { align-items: flex-start; gap: var(--wm-space-16); }
+.settings-category #account-model-section .group-heading > .actions { flex: none; flex-wrap: nowrap; }
+.model-editor-dialog .form-error:empty { display: none; }
+
+.model-current { margin-top: var(--wm-space-8); color: var(--ink); font-size: var(--wm-font-size-13); overflow-wrap: anywhere; }
+.model-editor-form > #account-model-form-status:not(.form-error) { color: var(--ink-secondary); background: transparent; padding: 0; }

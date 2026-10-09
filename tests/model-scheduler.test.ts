@@ -60,6 +60,37 @@ test('single-slot formation buffers partial output, yields to greeting, and retu
   } finally { await bridge.close(); }
 });
 
+test('yielded formation rechecks the selected background model before resuming after chat', async () => {
+  let ready = true, attempts = 0;
+  let began!: () => void;
+  const started = new Promise<void>(resolve => { began = resolve; });
+  const bridge = await createModelScheduler({ isIdle: async () => true,
+    profileFor: () => ({ id: 'local', baseUrl: 'http://127.0.0.1:1/v1', model: 'synthetic' }),
+    credentialFor: () => 'synthetic', backgroundRoute: () => null, backgroundReady: async () => ready,
+    fetchImpl: async (url, options) => {
+      if (String(url).endsWith('/props')) return Response.json({ total_slots: 1 });
+      if (++attempts > 1) return Response.json({ completed: true });
+      return new Response(new ReadableStream({ start(controller) {
+        controller.enqueue(new TextEncoder().encode('incomplete'));
+        options.signal.addEventListener('abort', () => controller.error(options.signal.reason), { once: true }); began();
+      } }));
+    } });
+  try {
+    const memory = fetch(`${bridge.memoryBaseUrl('local')}/chat/completions`, { method: 'POST',
+      headers: { authorization: 'Bearer synthetic' }, body: JSON.stringify({ messages: [] }) });
+    await started;
+    ready = false; // Chat switched the single-slot endpoint to another model.
+    const chat = await acquireModelSlot('foreground', undefined, bridge.url, { profileId: 'local' });
+    await chat();
+    await pause(1100);
+    assert.equal(attempts, 1, 'do not switch back merely because the endpoint is idle');
+    assert.equal(bridge.queue.status().active, null, 'chat retains access while the selected model is unavailable');
+    ready = true;
+    assert.deepEqual(await (await memory).json(), { completed: true });
+    assert.equal(attempts, 2);
+  } finally { await bridge.close(); }
+});
+
 test('session progress uses actual queue position, observed switcher and stream phases, and disappears when its lease closes', async () => {
   let switching = true;
   const bridge = await createModelScheduler({ isIdle: async () => true,

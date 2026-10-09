@@ -1,6 +1,8 @@
+import { modelTierFor } from '../model-tier.ts';
+import { currentChatProfile } from '../background-model-selection.mjs';
 import path from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
-import { failure, plainObject, withDeadline } from './common.mjs';
+import { digest, failure, plainObject, withDeadline } from './common.mjs';
 import { ensurePrivateDirectory, ensurePrivateFile } from '../private-host-storage.mjs';
 import { lstat, readdir, readFile } from 'node:fs/promises';
 import {
@@ -544,6 +546,9 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       const sessionIds = Object.values(rootState.accounts).flatMap(account => Object.entries(account.sessions).filter(([, row]) => row.origin === 'personal-remote').map(([id]) => id));
       await backend.restoreSchedules?.(sessionIds);
     },
+    currentChatModelProfile(ownerId) {
+      return currentChatProfile(accountState(ownerId), id => modelSelectable(ownerId, id));
+    },
     backgroundModelProfile(ownerId) {
       const selected = accountState(ownerId).backgroundModelProfileId ?? null;
       if (selected && !modelSelectable(ownerId, selected)) throw failure('MODEL_UNAVAILABLE', 503);
@@ -613,6 +618,13 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     isFormalLocalProfile: accountModels.isFormalLocalProfile,
     privateAccountModelProof: accountModels.privateAccountModelProof,
     ownerForSession: sessions.ownerForSession,
+    async beginModelConnectionUsage(ownerId, { baseUrl, modelId, profileId, modelTier }) {
+      accountState(ownerId);
+      const id = profileId ?? `connection-test-${digest(baseUrl + '\n' + modelId).slice(0, 24)}`;
+      const model = { id, model: modelId, sourceKind: modelTierFor({ baseUrl, modelTier }) };
+      const requestId = await usage.begin(ownerId, { profileId: id, model, sessionId: null });
+      return { ownerId, requestId };
+    },
     async beginUsage({ sessionId = null, profileId, ownerId = null }) {
       const binding = sessionId ? sessions.ownerForSession(sessionId) : null;
       if (sessionId && !binding || ownerId && binding && binding.ownerId !== ownerId) throw failure('SESSION_UNAVAILABLE', 404);

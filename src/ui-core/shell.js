@@ -63,6 +63,8 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
             || typeof payload?.csrfToken !== 'string' || !payload.csrfToken)
             throw { code: 'REQUEST_FAILED' };
         core.state.identityGeneration++;
+        core.state.allModels = []; core.state.modelChecks = {}; core.state.modelSettings = null;
+        core.state.modelCheckGeneration = (core.state.modelCheckGeneration || 0) + 1;
         core.resetConversationApprovals();
         core.resetConversationQuestions();
         core.resetMemoryIdentity();
@@ -157,11 +159,18 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         effects.updateAvailability();
     }
     async function refreshModels() {
+        const identity = core.state.identityGeneration;
         const payload = await core.accessApi('/models');
+        if (identity !== core.state.identityGeneration) return;
+        core.state.allModels = Array.isArray(payload.models) ? payload.models : [];
+        const modelSettings = await core.accessApi('/settings/models').catch(() => ({}));
+        if (identity !== core.state.identityGeneration) return;
+        core.state.modelSettings = modelSettings;
         core.state.models = Array.isArray(payload.models) ? payload.models.filter((item) => item?.configured === true &&
             typeof item.id === 'string' && typeof item.name === 'string') : [];
-        core.state.modelProfileId = core.state.models.some(item => item.id === core.state.modelProfileId) ? core.state.modelProfileId : core.state.models[0]?.id ?? null;
+        core.state.modelProfileId = core.state.models.some(item => item.id === core.state.modelProfileId) ? core.state.modelProfileId : modelSettings.defaultModelProfileId ?? core.state.models[0]?.id ?? null;
         effects.paintModels();
+        effects.renderAccountModels?.();
         effects.updateAvailability();
         if (core.state.currentView === 'account' && core.state.browserAvailable)
             effects.renderBrowserModels();
@@ -250,6 +259,8 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         core.resetConversationQuestions();
         core.resetMemoryIdentity();
         core.state.identityGeneration++;
+        core.state.allModels = []; core.state.modelChecks = {}; core.state.modelSettings = null;
+        core.state.modelCheckGeneration = (core.state.modelCheckGeneration || 0) + 1;
         core.state.avatarGeneration++;
         core.state.avatarSelectionGeneration++;
         core.state.deviceFetchGeneration++;

@@ -70,6 +70,12 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
     if (!trusted(event)) throw new Error('Desktop bridge unavailable');
     return callback(...args);
   });
+  handle('wm:desktop:open-logs', async () => {
+    await jsonLocal('/auth/me');
+    const directory = join(app.getPath('userData'), 'logs'); mkdirSync(directory, { recursive: true });
+    const error = await shell.openPath(directory); if (error) throw new Error('LOG_FOLDER_UNAVAILABLE');
+    return { opened: true };
+  });
   const fetchLocal = path => desktopSession.fetch(new URL(`/personal/v1${path}`, contentOrigin).href, { credentials: 'include' });
   const jsonLocal = async path => {
     const response = await fetchLocal(path);
