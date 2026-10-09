@@ -167,7 +167,7 @@ private struct MacWorkspace: View {
                 model.settingsRoute = .init(categoryID: String(category.dropFirst(9))); openWindow(id: "settings")
             case "conversation-forget":
                 if let conversation = model.conversations.first(where: { $0.title == "可遗忘的合成对话" }) { selected = .conversation(conversation.id) }
-            case "conversation", "approval", "question", "outputs-sources", "session-menu":
+            case "conversation", "composer-context", "approval", "question", "outputs-sources", "session-menu":
                 if let conversation = model.conversations.first(where: { $0.title == "整理项目资料" }) { selected = .conversation(conversation.id) }
             default: selected = nil
             }

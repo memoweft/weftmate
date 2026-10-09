@@ -38,7 +38,7 @@ final class A8ConversationFlowUITests: XCTestCase {
         XCTAssertFalse(app.segmentedControls["sendIntent"].exists)
         try expect(app.buttons["contextUsage"]); XCTAssertTrue(app.buttons["contextUsage"].label.contains("86%"))
         try tap(app.buttons["contextUsage"]); try expect(app.staticTexts["背景信息窗口：86% 已用 / 已用 713.1k 标记，共 828.0k"])
-        keep(app, "context", theme); try tap(app.buttons["contextUsage"])
+        keep(app, "composer-context", theme, review: true); try tap(app.buttons["contextUsage"])
         keep(app, "loading", theme)
         _ = try await get("/a8/queued"); try await Task.sleep(for: .seconds(5)); XCTAssertTrue(app.staticTexts["processingLine"].label.contains("排队中"))
         _ = try await get("/a8/reasoning"); try await Task.sleep(for: .seconds(5)); XCTAssertTrue(app.staticTexts["processingLine"].label.contains("正在思考"))
