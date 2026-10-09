@@ -25,6 +25,9 @@
     ui.loadAttachmentHasher = () => import('./file-sha256.js');
     for (const factory of Object.values(globalThis.WeftUiComponents.factories))
         Object.assign(ui, factory(core, ui));
+    ui.cloudUi = globalThis.WeftCloudUi.create({ acceptSession: core.acceptSession, enterAssistant: core.enterAssistant,
+        openAccount: core.openAccount, show: core.show, accessApi: core.accessApi, toast: ui.toast,
+        bindDesktop: core.cloudBindDesktop });
     for (const mount of ["mountAuth", "mountAccount", "mountSettings", "mountMemory", "mountApprovals", "mountComposer", "mountPhone", "mountSessions", "mountCloudSettings", "mountShell", "mountSettingsNavigation"])
         ui[mount]();
     globalThis.__WeftUiStarted = true;

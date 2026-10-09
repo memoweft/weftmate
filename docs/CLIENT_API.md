@@ -830,6 +830,8 @@ WebCrypto 生成不可导出的 P-256 私钥，CryptoKey 与公开设备标识�
 
 Android 0.8.2 / native code 15 的 WebView 保持本地界面，OIDC 在系统认证浏览器打开，经自定义 scheme 回到同一 Activity；只接收匹配原 state 的回调。首次云登录用输入配对码取得宿主 pin，无相机权限；密钥仍由 WebCrypto/IndexedDB 保存，刷新凭据与宿主 Cookie 存原生 Keystore 加密设置。原生所有宿主 HTTP/SSE/下载/更新连接先完成系统 CA/域名验证，再比较当面配对的 SPKI；不接受云目录替换已有 pin。电脑 key 轮换、相机扫描、Android 真机往返与 Apple 接入另包。此版手机 UI 发布时需 `--min-native-version-code 15`，旧壳保留原本地登录。此段描述已交付的 S1c 兼容路径；D29 的新页面改走下节 App 内接口，由 LG-1 / LG-2 接线。
 
+Windows（视窗系统）日用桌面部署使用 `weftmate-desktop`、`application_type=native`（原生客户端），预登记 `http://127.0.0.1:18186/personal/v1/ui/`。宿主的 `WEFTMATE_CLOUD_WEB_CLIENT_ID` 在此部署也设为 `weftmate-desktop`，使 `/cloud/config` 的默认客户端与桌面一致；桌面另设 `WEFTMATE_CLOUD_DESKTOP_CLIENT_ID` / `WEFTMATE_CLOUD_DESKTOP_REDIRECT_URI`。旧本地账号从「离线使用这台电脑」以本地账户名和原密码登录，设置中的绑定使用 7.8 App（应用）内云账号页及原生凭据桥：先 `/cloud/claims`，再将云控制面令牌提交 `/cloud/binding`。保留原本地 Cookie（会话凭据）、ownerId、密码和数据，不调用 `/auth/cloud-desktop` 创建另一个账号。注册、找回或绑定失败重试仍保留同一认领；取消结束本次绑定。成功后清除仅供绑定使用的云令牌，继续原本地会话。远程浏览器的 HTTPS（加密连接）登录须另行登记真实来源，不能复用桌面回环回调。
+
 ### 7.8 App 内账号与设置设备（S1d / D29）
 
 本节供 LG-1（Windows 程序 / 网页 / Android）与 LG-2（Apple）调用，页面留在 App 内。云仍用锁定的 `oidc-provider`，沿用 **Authorization Code + PKCE S256（授权码与校验）/ DPoP（设备密钥持有证明）/ refresh rotation（刷新令牌轮换）**。没有密码授权模式或第二套令牌。所有新账号接口 JSON ≤16 KiB、`Cache-Control: no-store`，请求 Origin 为云自身或已预登记回调 origin；原生请求可显式带云 Origin。注册/找回的 `passwordTicket` 是随机、服务端只存 HMAC（带密钥摘要）的短期设置密码凭据，不是登录/内容令牌。
