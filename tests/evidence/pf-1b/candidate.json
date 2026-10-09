@@ -1,0 +1,15 @@
+{
+  "weftmateMergeHead": "b14fdc1981d7e64550ca03222f1e22c00416e915",
+  "main": "c6048102dfabc6423f039b7fc7f32e3337989e23",
+  "core": "5d91823a36d8154531e62db1eb76165a1f479cbb",
+  "productSourceSha256": {
+    "src/plugins/personal-prompt.mjs": "cda8da8112461e5c676cc85ebb92c705d1c0e71de42a4199d928c46b781873b8",
+    "src/plugins/weftmate-personal-desktop-preset.mjs": "1c819160e9e65d0f5164923ac052cf0693d9d7f2d065c3b3b1fdfefe968e93a4",
+    "src/plugins/weftmate-personal-memory.mjs": "8a931d435e5bb4595c6162746e7df2f2cb6485308071efb579d8fc314948c9c3",
+    "src/personal-memory/index.mjs": "d550f3f45f5bf63f89cf593ed6a6430eff4c42e5d369bd7e8f05b388f086438b"
+  },
+  "note": "Final candidate restores all original bilingual guidance verbatim. Final accepted runs are under final-bilingual/. Earlier English-only runs remain separate.",
+  "latestMergedMain": "c41393b764f2c7d9ba952e058e36859c1d76ef48",
+  "repairCommit": "be3f89137beba55e528e6aa84b406b04d60ca2cb",
+  "sourceUnchangedAfterModelRuns": true
+}

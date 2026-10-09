@@ -1,0 +1,1246 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-09T04:22:00.254Z",
+  "model": "lan",
+  "revision": {
+    "weftmate": "c6048102dfabc6423f039b7fc7f32e3337989e23",
+    "core": "5d91823a36d8154531e62db1eb76165a1f479cbb"
+  },
+  "electron": true,
+  "steps": [
+    {
+      "id": "reminder-1",
+      "title": "明天早上 8 点提醒我交报告",
+      "status": "passed",
+      "checks": {
+        "completed": true,
+        "exactlyOne": true,
+        "kind": true,
+        "content": true,
+        "hour": true,
+        "calendar": true,
+        "nativeTool": true,
+        "noSourceOrTimers": true,
+        "confirmation": true
+      },
+      "startedAt": "2026-10-09T04:22:13.804Z",
+      "schedules": [
+        {
+          "id": "schedule-1",
+          "nativeId": "schedule-1",
+          "text": "交报告",
+          "kind": "reminder",
+          "timeZone": "Asia/Shanghai",
+          "repeat": null,
+          "state": "scheduled",
+          "nextRunAt": "2026-10-10T00:00:00.000Z",
+          "lastRunAt": null,
+          "approvalMode": "auto",
+          "sessionId": "session-c1dacf65-1aa9-48b0-a09c-00d8a44e984d"
+        }
+      ],
+      "finishedAt": "2026-10-09T04:22:53.620Z"
+    },
+    {
+      "id": "reminder-2",
+      "title": "明天早上 8 点提醒我交报告",
+      "status": "passed",
+      "checks": {
+        "completed": true,
+        "exactlyOne": true,
+        "kind": true,
+        "content": true,
+        "hour": true,
+        "calendar": true,
+        "nativeTool": true,
+        "noSourceOrTimers": true,
+        "confirmation": true
+      },
+      "startedAt": "2026-10-09T04:22:53.621Z",
+      "schedules": [
+        {
+          "id": "schedule-1",
+          "nativeId": "schedule-1",
+          "text": "交报告",
+          "kind": "reminder",
+          "timeZone": "Asia/Shanghai",
+          "repeat": null,
+          "state": "scheduled",
+          "nextRunAt": "2026-10-10T00:00:00.000Z",
+          "lastRunAt": null,
+          "approvalMode": "auto",
+          "sessionId": "session-8f0779db-7316-486d-805d-dfafcb775cef"
+        }
+      ],
+      "finishedAt": "2026-10-09T04:23:38.192Z"
+    },
+    {
+      "id": "reminder-3",
+      "title": "明天早上 8 点提醒我交报告",
+      "status": "passed",
+      "checks": {
+        "completed": true,
+        "exactlyOne": true,
+        "kind": true,
+        "content": true,
+        "hour": true,
+        "calendar": true,
+        "nativeTool": true,
+        "noSourceOrTimers": true,
+        "confirmation": true
+      },
+      "startedAt": "2026-10-09T04:23:38.193Z",
+      "schedules": [
+        {
+          "id": "schedule-1",
+          "nativeId": "schedule-1",
+          "text": "交报告",
+          "kind": "reminder",
+          "timeZone": "Asia/Shanghai",
+          "repeat": null,
+          "state": "scheduled",
+          "nextRunAt": "2026-10-10T00:00:00.000Z",
+          "lastRunAt": null,
+          "approvalMode": "auto",
+          "sessionId": "session-8e571e96-c490-4d19-b696-31af42544c27"
+        }
+      ],
+      "finishedAt": "2026-10-09T04:24:22.425Z"
+    },
+    {
+      "id": "task-1",
+      "title": "每周一 8 点生成周报",
+      "status": "passed",
+      "checks": {
+        "completed": true,
+        "exactlyOne": true,
+        "kind": true,
+        "content": true,
+        "hour": true,
+        "calendar": true,
+        "nativeTool": true,
+        "noSourceOrTimers": true,
+        "confirmation": true
+      },
+      "startedAt": "2026-10-09T04:24:22.426Z",
+      "schedules": [
+        {
+          "id": "schedule-1",
+          "nativeId": "schedule-1",
+          "text": "生成周报",
+          "kind": "task",
+          "timeZone": "Asia/Shanghai",
+          "repeat": {
+            "kind": "weekly",
+            "time": "08:00:00",
+            "weekday": 1
+          },
+          "state": "scheduled",
+          "nextRunAt": "2026-10-12T00:00:00.000Z",
+          "lastRunAt": null,
+          "approvalMode": "auto",
+          "sessionId": "session-bc1664a9-27a3-4364-9a97-09d650fcabc1"
+        }
+      ],
+      "finishedAt": "2026-10-09T04:25:17.220Z"
+    },
+    {
+      "id": "task-2",
+      "title": "每周一 8 点生成周报",
+      "status": "passed",
+      "checks": {
+        "completed": true,
+        "exactlyOne": true,
+        "kind": true,
+        "content": true,
+        "hour": true,
+        "calendar": true,
+        "nativeTool": true,
+        "noSourceOrTimers": true,
+        "confirmation": true
+      },
+      "startedAt": "2026-10-09T04:25:17.221Z",
+      "schedules": [
+        {
+          "id": "schedule-1",
+          "nativeId": "schedule-1",
+          "text": "生成周报",
+          "kind": "task",
+          "timeZone": "Asia/Shanghai",
+          "repeat": {
+            "kind": "weekly",
+            "time": "08:00:00",
+            "weekday": 1
+          },
+          "state": "scheduled",
+          "nextRunAt": "2026-10-12T00:00:00.000Z",
+          "lastRunAt": null,
+          "approvalMode": "auto",
+          "sessionId": "session-cf9b33dc-a75b-4ec2-90de-c7d6130a177a"
+        }
+      ],
+      "finishedAt": "2026-10-09T04:26:18.152Z"
+    },
+    {
+      "id": "task-3",
+      "title": "每周一 8 点生成周报",
+      "status": "passed",
+      "checks": {
+        "completed": true,
+        "exactlyOne": true,
+        "kind": true,
+        "content": true,
+        "hour": true,
+        "calendar": true,
+        "nativeTool": true,
+        "noSourceOrTimers": true,
+        "confirmation": true
+      },
+      "startedAt": "2026-10-09T04:26:18.153Z",
+      "schedules": [
+        {
+          "id": "schedule-1",
+          "nativeId": "schedule-1",
+          "text": "生成周报文件",
+          "kind": "task",
+          "timeZone": "Asia/Shanghai",
+          "repeat": {
+            "kind": "weekly",
+            "time": "08:00:00",
+            "weekday": 1
+          },
+          "state": "scheduled",
+          "nextRunAt": "2026-10-12T00:00:00.000Z",
+          "lastRunAt": null,
+          "approvalMode": "auto",
+          "sessionId": "session-37b792f7-f389-4050-97a6-d488fa75b886"
+        }
+      ],
+      "finishedAt": "2026-10-09T04:27:22.077Z"
+    }
+  ],
+  "turns": [
+    {
+      "sessionId": "session-c1dacf65-1aa9-48b0-a09c-00d8a44e984d",
+      "model": "lan",
+      "modelProfileId": "private-model-78ea5a8e5d4de5174061270ada5a4bfb4bc09ceb",
+      "user": "明天早上 8 点提醒我交报告",
+      "reply": "已设置提醒：2026-10-10 08:00（Asia/Shanghai）提醒你“交报告”。",
+      "status": "completed",
+      "memoryUsed": [],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-09T04:22:18.408Z",
+          "data": {
+            "taskId": "cmd-67534b5d-5965-4782-8b1c-4bb812607719",
+            "receiptId": "602ced26-2f14-4d2a-a6ee-d9a466bb39cd",
+            "text": "明天早上 8 点提醒我交报告",
+            "commandId": "cmd-67534b5d-5965-4782-8b1c-4bb812607719",
+            "requestId": "357bc86c-99aa-4cfe-bacd-93ba84c12f8c"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-09T04:22:18.408Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-09T04:22:18.808Z",
+          "data": {
+            "taskId": "cmd-67534b5d-5965-4782-8b1c-4bb812607719",
+            "turn": 1,
+            "receiptId": "602ced26-2f14-4d2a-a6ee-d9a466bb39cd",
+            "commandId": "cmd-67534b5d-5965-4782-8b1c-4bb812607719",
+            "requestId": "357bc86c-99aa-4cfe-bacd-93ba84c12f8c",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-09T04:22:18.808Z",
+          "data": {
+            "text": "明天早上 8 点提醒我交报告",
+            "receiptId": "602ced26-2f14-4d2a-a6ee-d9a466bb39cd"
+          }
+        },
+        {
+          "seq": 368,
+          "type": "step.started",
+          "at": "2026-10-09T04:22:38.955Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "2xOTE2WdSvmLGNWSo7bI5qQs5zbQtyuZ",
+            "callId": "2xOTE2WdSvmLGNWSo7bI5qQs5zbQtyuZ",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 368
+            },
+            "turn": 1,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 369,
+          "type": "step.completed",
+          "at": "2026-10-09T04:22:38.967Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "2xOTE2WdSvmLGNWSo7bI5qQs5zbQtyuZ",
+            "callId": "2xOTE2WdSvmLGNWSo7bI5qQs5zbQtyuZ",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 369
+            },
+            "turn": 1,
+            "state": "completed"
+          }
+        },
+        {
+          "seq": 576,
+          "type": "step.started",
+          "at": "2026-10-09T04:22:47.543Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "1CmKgivi5xUbv56Dd9D0NurhHvM5k9k4",
+            "callId": "1CmKgivi5xUbv56Dd9D0NurhHvM5k9k4",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 576
+            },
+            "turn": 1,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 578,
+          "type": "step.completed",
+          "at": "2026-10-09T04:22:47.562Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "1CmKgivi5xUbv56Dd9D0NurhHvM5k9k4",
+            "callId": "1CmKgivi5xUbv56Dd9D0NurhHvM5k9k4",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 578
+            },
+            "turn": 1,
+            "state": "completed"
+          }
+        },
+        {
+          "seq": 691,
+          "type": "assistant.message",
+          "at": "2026-10-09T04:22:52.355Z",
+          "data": {
+            "text": "已设置提醒：2026-10-10 08:00（Asia/Shanghai）提醒你“交报告”。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 692,
+          "type": "task.ended",
+          "at": "2026-10-09T04:22:52.356Z",
+          "data": {
+            "taskId": "cmd-67534b5d-5965-4782-8b1c-4bb812607719",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 693,
+            "receiptId": "602ced26-2f14-4d2a-a6ee-d9a466bb39cd",
+            "commandId": "cmd-67534b5d-5965-4782-8b1c-4bb812607719",
+            "requestId": "357bc86c-99aa-4cfe-bacd-93ba84c12f8c",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 693,
+          "type": "turn.ended",
+          "at": "2026-10-09T04:22:52.357Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 36567,
+      "steps": 2
+    },
+    {
+      "sessionId": "session-8f0779db-7316-486d-805d-dfafcb775cef",
+      "model": "lan",
+      "modelProfileId": "private-model-78ea5a8e5d4de5174061270ada5a4bfb4bc09ceb",
+      "user": "明天早上 8 点提醒我交报告",
+      "reply": "已建立提醒：2026-10-10 08:00（Asia/Shanghai）提醒你“交报告”。",
+      "status": "completed",
+      "memoryUsed": [],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-09T04:23:01.116Z",
+          "data": {
+            "taskId": "cmd-4404116f-5c1f-46ad-b649-55c1c9f4b744",
+            "receiptId": "31e0d72f-4801-4c27-b234-cd2dff9fbff7",
+            "text": "明天早上 8 点提醒我交报告",
+            "commandId": "cmd-4404116f-5c1f-46ad-b649-55c1c9f4b744",
+            "requestId": "ab49a982-e331-4a8e-bf72-fa6f25d38873"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-09T04:23:01.116Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-09T04:23:01.857Z",
+          "data": {
+            "taskId": "cmd-4404116f-5c1f-46ad-b649-55c1c9f4b744",
+            "turn": 1,
+            "receiptId": "31e0d72f-4801-4c27-b234-cd2dff9fbff7",
+            "commandId": "cmd-4404116f-5c1f-46ad-b649-55c1c9f4b744",
+            "requestId": "ab49a982-e331-4a8e-bf72-fa6f25d38873",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-09T04:23:01.857Z",
+          "data": {
+            "text": "明天早上 8 点提醒我交报告",
+            "receiptId": "31e0d72f-4801-4c27-b234-cd2dff9fbff7"
+          }
+        },
+        {
+          "seq": 466,
+          "type": "step.started",
+          "at": "2026-10-09T04:23:16.729Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "ZBV8E0PDfPI2mEOHexNCGFs2A7ILj6Se",
+            "callId": "ZBV8E0PDfPI2mEOHexNCGFs2A7ILj6Se",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 466
+            },
+            "turn": 1,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 467,
+          "type": "step.completed",
+          "at": "2026-10-09T04:23:16.742Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "ZBV8E0PDfPI2mEOHexNCGFs2A7ILj6Se",
+            "callId": "ZBV8E0PDfPI2mEOHexNCGFs2A7ILj6Se",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 467
+            },
+            "turn": 1,
+            "state": "completed"
+          }
+        },
+        {
+          "seq": 652,
+          "type": "step.started",
+          "at": "2026-10-09T04:23:32.644Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "LAEG4ZQ7rzFSX5R68L24AQ0da3gAM7LL",
+            "callId": "LAEG4ZQ7rzFSX5R68L24AQ0da3gAM7LL",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 652
+            },
+            "turn": 1,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 654,
+          "type": "step.completed",
+          "at": "2026-10-09T04:23:32.661Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "LAEG4ZQ7rzFSX5R68L24AQ0da3gAM7LL",
+            "callId": "LAEG4ZQ7rzFSX5R68L24AQ0da3gAM7LL",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 654
+            },
+            "turn": 1,
+            "state": "completed"
+          }
+        },
+        {
+          "seq": 740,
+          "type": "assistant.message",
+          "at": "2026-10-09T04:23:37.262Z",
+          "data": {
+            "text": "已建立提醒：2026-10-10 08:00（Asia/Shanghai）提醒你“交报告”。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 741,
+          "type": "task.ended",
+          "at": "2026-10-09T04:23:37.263Z",
+          "data": {
+            "taskId": "cmd-4404116f-5c1f-46ad-b649-55c1c9f4b744",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 742,
+            "receiptId": "31e0d72f-4801-4c27-b234-cd2dff9fbff7",
+            "commandId": "cmd-4404116f-5c1f-46ad-b649-55c1c9f4b744",
+            "requestId": "ab49a982-e331-4a8e-bf72-fa6f25d38873",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 742,
+          "type": "turn.ended",
+          "at": "2026-10-09T04:23:37.263Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 38776,
+      "steps": 2
+    },
+    {
+      "sessionId": "session-8e571e96-c490-4d19-b696-31af42544c27",
+      "model": "lan",
+      "modelProfileId": "private-model-78ea5a8e5d4de5174061270ada5a4bfb4bc09ceb",
+      "user": "明天早上 8 点提醒我交报告",
+      "reply": "已为 2026-10-10 08:00:00 Asia/Shanghai 设置一次性提醒，内容为交报告。\n",
+      "status": "completed",
+      "memoryUsed": [],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-09T04:23:44.444Z",
+          "data": {
+            "taskId": "cmd-96b507c1-402f-4b5b-a529-8347d1698847",
+            "receiptId": "c9294ba2-b02a-42e3-b59e-1d2c2c49c81c",
+            "text": "明天早上 8 点提醒我交报告",
+            "commandId": "cmd-96b507c1-402f-4b5b-a529-8347d1698847",
+            "requestId": "2c61dea6-8765-4e67-890b-36a5bcc11db1"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-09T04:23:44.444Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-09T04:23:45.058Z",
+          "data": {
+            "taskId": "cmd-96b507c1-402f-4b5b-a529-8347d1698847",
+            "turn": 1,
+            "receiptId": "c9294ba2-b02a-42e3-b59e-1d2c2c49c81c",
+            "commandId": "cmd-96b507c1-402f-4b5b-a529-8347d1698847",
+            "requestId": "2c61dea6-8765-4e67-890b-36a5bcc11db1",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-09T04:23:45.059Z",
+          "data": {
+            "text": "明天早上 8 点提醒我交报告",
+            "receiptId": "c9294ba2-b02a-42e3-b59e-1d2c2c49c81c"
+          }
+        },
+        {
+          "seq": 387,
+          "type": "step.started",
+          "at": "2026-10-09T04:23:56.536Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "6pXgBumpqK8vubEaDeYjIWJ2ECw0CHQS",
+            "callId": "6pXgBumpqK8vubEaDeYjIWJ2ECw0CHQS",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 387
+            },
+            "turn": 1,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 388,
+          "type": "step.completed",
+          "at": "2026-10-09T04:23:56.545Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "6pXgBumpqK8vubEaDeYjIWJ2ECw0CHQS",
+            "callId": "6pXgBumpqK8vubEaDeYjIWJ2ECw0CHQS",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 388
+            },
+            "turn": 1,
+            "state": "completed"
+          }
+        },
+        {
+          "seq": 654,
+          "type": "step.started",
+          "at": "2026-10-09T04:24:06.603Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "kyGoA4s3VnlFQ50a3XVd9DlegVTzMMdM",
+            "callId": "kyGoA4s3VnlFQ50a3XVd9DlegVTzMMdM",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 654
+            },
+            "turn": 1,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 656,
+          "type": "step.completed",
+          "at": "2026-10-09T04:24:06.619Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "kyGoA4s3VnlFQ50a3XVd9DlegVTzMMdM",
+            "callId": "kyGoA4s3VnlFQ50a3XVd9DlegVTzMMdM",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 656
+            },
+            "turn": 1,
+            "state": "completed"
+          }
+        },
+        {
+          "seq": 786,
+          "type": "assistant.message",
+          "at": "2026-10-09T04:24:21.504Z",
+          "data": {
+            "text": "已为 2026-10-10 08:00:00 Asia/Shanghai 设置一次性提醒，内容为交报告。\n",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 787,
+          "type": "task.ended",
+          "at": "2026-10-09T04:24:21.504Z",
+          "data": {
+            "taskId": "cmd-96b507c1-402f-4b5b-a529-8347d1698847",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 788,
+            "receiptId": "c9294ba2-b02a-42e3-b59e-1d2c2c49c81c",
+            "commandId": "cmd-96b507c1-402f-4b5b-a529-8347d1698847",
+            "requestId": "2c61dea6-8765-4e67-890b-36a5bcc11db1",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 788,
+          "type": "turn.ended",
+          "at": "2026-10-09T04:24:21.505Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 39221,
+      "steps": 2
+    },
+    {
+      "sessionId": "session-bc1664a9-27a3-4364-9a97-09d650fcabc1",
+      "model": "lan",
+      "modelProfileId": "private-model-78ea5a8e5d4de5174061270ada5a4bfb4bc09ceb",
+      "user": "每周一 8 点生成周报",
+      "reply": "已创建每周一 08:00（Asia/Shanghai）生成周报的定时任务。\n\n首次执行时间：2026-10-12 08:00:00 Asia/Shanghai，之后每周一 08:00 循环。任务 ID：schedule-1，已调度。",
+      "status": "completed",
+      "memoryUsed": [],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-09T04:24:28.701Z",
+          "data": {
+            "taskId": "cmd-a45f246b-99f6-482d-ae68-d2846b1e144d",
+            "receiptId": "28a7a8ae-b517-47cd-b9e0-937917940d6e",
+            "text": "每周一 8 点生成周报",
+            "commandId": "cmd-a45f246b-99f6-482d-ae68-d2846b1e144d",
+            "requestId": "f7f99f25-161b-4cd1-a68c-d2152d19f6e9"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-09T04:24:28.701Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-09T04:24:29.315Z",
+          "data": {
+            "taskId": "cmd-a45f246b-99f6-482d-ae68-d2846b1e144d",
+            "turn": 1,
+            "receiptId": "28a7a8ae-b517-47cd-b9e0-937917940d6e",
+            "commandId": "cmd-a45f246b-99f6-482d-ae68-d2846b1e144d",
+            "requestId": "f7f99f25-161b-4cd1-a68c-d2152d19f6e9",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-09T04:24:29.315Z",
+          "data": {
+            "text": "每周一 8 点生成周报",
+            "receiptId": "28a7a8ae-b517-47cd-b9e0-937917940d6e"
+          }
+        },
+        {
+          "seq": 855,
+          "type": "step.started",
+          "at": "2026-10-09T04:24:49.116Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "gXNJCXcbkryiJgjVKuHfT81NRzysJb5V",
+            "callId": "gXNJCXcbkryiJgjVKuHfT81NRzysJb5V",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 855
+            },
+            "turn": 1,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 856,
+          "type": "step.completed",
+          "at": "2026-10-09T04:24:49.129Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "gXNJCXcbkryiJgjVKuHfT81NRzysJb5V",
+            "callId": "gXNJCXcbkryiJgjVKuHfT81NRzysJb5V",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 856
+            },
+            "turn": 1,
+            "state": "completed"
+          }
+        },
+        {
+          "seq": 1170,
+          "type": "step.started",
+          "at": "2026-10-09T04:25:09.587Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "hLSZ2ElLQSh6PQM0z45wjT7ctPP7EZeU",
+            "callId": "hLSZ2ElLQSh6PQM0z45wjT7ctPP7EZeU",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 1170
+            },
+            "turn": 1,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 1172,
+          "type": "step.completed",
+          "at": "2026-10-09T04:25:09.790Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "hLSZ2ElLQSh6PQM0z45wjT7ctPP7EZeU",
+            "callId": "hLSZ2ElLQSh6PQM0z45wjT7ctPP7EZeU",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 1172
+            },
+            "turn": 1,
+            "state": "completed"
+          }
+        },
+        {
+          "seq": 1335,
+          "type": "assistant.message",
+          "at": "2026-10-09T04:25:16.106Z",
+          "data": {
+            "text": "已创建每周一 08:00（Asia/Shanghai）生成周报的定时任务。\n\n首次执行时间：2026-10-12 08:00:00 Asia/Shanghai，之后每周一 08:00 循环。任务 ID：schedule-1，已调度。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 1336,
+          "type": "task.ended",
+          "at": "2026-10-09T04:25:16.106Z",
+          "data": {
+            "taskId": "cmd-a45f246b-99f6-482d-ae68-d2846b1e144d",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 1337,
+            "receiptId": "28a7a8ae-b517-47cd-b9e0-937917940d6e",
+            "commandId": "cmd-a45f246b-99f6-482d-ae68-d2846b1e144d",
+            "requestId": "f7f99f25-161b-4cd1-a68c-d2152d19f6e9",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 1337,
+          "type": "turn.ended",
+          "at": "2026-10-09T04:25:16.107Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 49620,
+      "steps": 2
+    },
+    {
+      "sessionId": "session-cf9b33dc-a75b-4ec2-90de-c7d6130a177a",
+      "model": "lan",
+      "modelProfileId": "private-model-78ea5a8e5d4de5174061270ada5a4bfb4bc09ceb",
+      "user": "每周一 8 点生成周报",
+      "reply": "已建立每周一 08:00（Asia/Shanghai）生成周报的定时任务，首次执行为 2026-10-12 08:00，之后每周一同一时间重复。",
+      "status": "completed",
+      "memoryUsed": [
+        {
+          "id": "cognition-db5d6483854f44c67ba132fa180e8df31b52e1412b767c69c65577a406d8bcbd",
+          "kind": "cognition",
+          "summary": "用户每周一 8 点生成周报"
+        }
+      ],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-09T04:25:23.368Z",
+          "data": {
+            "taskId": "cmd-33899648-331e-4b9b-ab03-ecabdb09adec",
+            "receiptId": "805460c3-8ec7-459a-bec3-7113d7b97114",
+            "text": "每周一 8 点生成周报",
+            "commandId": "cmd-33899648-331e-4b9b-ab03-ecabdb09adec",
+            "requestId": "5082ef14-c8ca-4164-9252-1e294eb9af4f"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-09T04:25:23.369Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-09T04:25:23.970Z",
+          "data": {
+            "taskId": "cmd-33899648-331e-4b9b-ab03-ecabdb09adec",
+            "turn": 1,
+            "receiptId": "805460c3-8ec7-459a-bec3-7113d7b97114",
+            "commandId": "cmd-33899648-331e-4b9b-ab03-ecabdb09adec",
+            "requestId": "5082ef14-c8ca-4164-9252-1e294eb9af4f",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-09T04:25:23.970Z",
+          "data": {
+            "text": "每周一 8 点生成周报",
+            "receiptId": "805460c3-8ec7-459a-bec3-7113d7b97114"
+          }
+        },
+        {
+          "seq": 1089,
+          "type": "step.started",
+          "at": "2026-10-09T04:25:49.765Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "FXzD4doNPPOAB4tekUKGEG8hf50Z5nbA",
+            "callId": "FXzD4doNPPOAB4tekUKGEG8hf50Z5nbA",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 1089
+            },
+            "turn": 1,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 1090,
+          "type": "step.completed",
+          "at": "2026-10-09T04:25:49.775Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "FXzD4doNPPOAB4tekUKGEG8hf50Z5nbA",
+            "callId": "FXzD4doNPPOAB4tekUKGEG8hf50Z5nbA",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 1090
+            },
+            "turn": 1,
+            "state": "completed"
+          }
+        },
+        {
+          "seq": 1376,
+          "type": "step.started",
+          "at": "2026-10-09T04:26:09.749Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "ACytBMQnWDVSgXjoGpG6SaCt4HtbK5Hq",
+            "callId": "ACytBMQnWDVSgXjoGpG6SaCt4HtbK5Hq",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 1376
+            },
+            "turn": 1,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 1378,
+          "type": "step.completed",
+          "at": "2026-10-09T04:26:09.767Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "ACytBMQnWDVSgXjoGpG6SaCt4HtbK5Hq",
+            "callId": "ACytBMQnWDVSgXjoGpG6SaCt4HtbK5Hq",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 1378
+            },
+            "turn": 1,
+            "state": "completed"
+          }
+        },
+        {
+          "seq": 1539,
+          "type": "assistant.message",
+          "at": "2026-10-09T04:26:16.978Z",
+          "data": {
+            "text": "已建立每周一 08:00（Asia/Shanghai）生成周报的定时任务，首次执行为 2026-10-12 08:00，之后每周一同一时间重复。",
+            "memoryUsed": [
+              {
+                "id": "cognition-db5d6483854f44c67ba132fa180e8df31b52e1412b767c69c65577a406d8bcbd",
+                "kind": "cognition",
+                "summary": "用户每周一 8 点生成周报"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 1540,
+          "type": "task.ended",
+          "at": "2026-10-09T04:26:16.979Z",
+          "data": {
+            "taskId": "cmd-33899648-331e-4b9b-ab03-ecabdb09adec",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 1541,
+            "receiptId": "805460c3-8ec7-459a-bec3-7113d7b97114",
+            "commandId": "cmd-33899648-331e-4b9b-ab03-ecabdb09adec",
+            "requestId": "5082ef14-c8ca-4164-9252-1e294eb9af4f",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 1541,
+          "type": "turn.ended",
+          "at": "2026-10-09T04:26:16.979Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 55956,
+      "steps": 2
+    },
+    {
+      "sessionId": "session-37b792f7-f389-4050-97a6-d488fa75b886",
+      "model": "lan",
+      "modelProfileId": "private-model-78ea5a8e5d4de5174061270ada5a4bfb4bc09ceb",
+      "user": "每周一 8 点生成周报",
+      "reply": "已建立每周一 08:00（Asia/Shanghai）生成周报文件，首次执行为 2026-10-12 08:00，每周一 08:00 重复。\n",
+      "status": "completed",
+      "memoryUsed": [
+        {
+          "id": "cognition-db5d6483854f44c67ba132fa180e8df31b52e1412b767c69c65577a406d8bcbd",
+          "kind": "cognition",
+          "summary": "用户每周一 8 点生成周报"
+        }
+      ],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-09T04:26:25.680Z",
+          "data": {
+            "taskId": "cmd-699c693f-007c-442b-b6a4-a895b1d9912a",
+            "receiptId": "378c0f75-3921-4c25-9aa4-d0858bfdc097",
+            "text": "每周一 8 点生成周报",
+            "commandId": "cmd-699c693f-007c-442b-b6a4-a895b1d9912a",
+            "requestId": "8a2e2826-e4ab-4dfe-bf1b-89e3274ff266"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-09T04:26:25.680Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-09T04:26:26.293Z",
+          "data": {
+            "taskId": "cmd-699c693f-007c-442b-b6a4-a895b1d9912a",
+            "turn": 1,
+            "receiptId": "378c0f75-3921-4c25-9aa4-d0858bfdc097",
+            "commandId": "cmd-699c693f-007c-442b-b6a4-a895b1d9912a",
+            "requestId": "8a2e2826-e4ab-4dfe-bf1b-89e3274ff266",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-09T04:26:26.293Z",
+          "data": {
+            "text": "每周一 8 点生成周报",
+            "receiptId": "378c0f75-3921-4c25-9aa4-d0858bfdc097"
+          }
+        },
+        {
+          "seq": 1524,
+          "type": "step.started",
+          "at": "2026-10-09T04:26:55.479Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "nlf3lkXPu9BBu4wrsS4jiis4tGtk5wEK",
+            "callId": "nlf3lkXPu9BBu4wrsS4jiis4tGtk5wEK",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 1524
+            },
+            "turn": 1,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 1525,
+          "type": "step.completed",
+          "at": "2026-10-09T04:26:55.489Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "nlf3lkXPu9BBu4wrsS4jiis4tGtk5wEK",
+            "callId": "nlf3lkXPu9BBu4wrsS4jiis4tGtk5wEK",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 1525
+            },
+            "turn": 1,
+            "state": "completed"
+          }
+        },
+        {
+          "seq": 1846,
+          "type": "step.started",
+          "at": "2026-10-09T04:27:12.553Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "UOuVZPNaMvpwXErxgt0NO6TCCAk3sWDp",
+            "callId": "UOuVZPNaMvpwXErxgt0NO6TCCAk3sWDp",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 1846
+            },
+            "turn": 1,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 1848,
+          "type": "step.completed",
+          "at": "2026-10-09T04:27:12.570Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "UOuVZPNaMvpwXErxgt0NO6TCCAk3sWDp",
+            "callId": "UOuVZPNaMvpwXErxgt0NO6TCCAk3sWDp",
+            "toolName": "schedule_create",
+            "summary": "执行工具 schedule_create",
+            "groupHint": "schedule_create",
+            "detailRef": {
+              "seq": 1848
+            },
+            "turn": 1,
+            "state": "completed"
+          }
+        },
+        {
+          "seq": 2001,
+          "type": "assistant.message",
+          "at": "2026-10-09T04:27:20.561Z",
+          "data": {
+            "text": "已建立每周一 08:00（Asia/Shanghai）生成周报文件，首次执行为 2026-10-12 08:00，每周一 08:00 重复。\n",
+            "memoryUsed": [
+              {
+                "id": "cognition-db5d6483854f44c67ba132fa180e8df31b52e1412b767c69c65577a406d8bcbd",
+                "kind": "cognition",
+                "summary": "用户每周一 8 点生成周报"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 2002,
+          "type": "task.ended",
+          "at": "2026-10-09T04:27:20.562Z",
+          "data": {
+            "taskId": "cmd-699c693f-007c-442b-b6a4-a895b1d9912a",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 2003,
+            "receiptId": "378c0f75-3921-4c25-9aa4-d0858bfdc097",
+            "commandId": "cmd-699c693f-007c-442b-b6a4-a895b1d9912a",
+            "requestId": "8a2e2826-e4ab-4dfe-bf1b-89e3274ff266",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 2003,
+          "type": "turn.ended",
+          "at": "2026-10-09T04:27:20.563Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 58246,
+      "steps": 2
+    }
+  ],
+  "initialMemory": {
+    "ownerId": "owner-1c4d3e3a-4712-4482-9090-53b045acdefc",
+    "state": "ready",
+    "version": "2.0.0",
+    "worldRevision": 0,
+    "capabilities": {
+      "list": true,
+      "source": true,
+      "inject": true,
+      "correct": true,
+      "mute": true,
+      "deleteEvidence": true,
+      "deleteWorldItem": true
+    },
+    "pendingBoundaryCount": 0,
+    "blockedBoundaryCount": 0,
+    "discardedBoundaryCount": 0,
+    "lastFailureCode": null
+  },
+  "finishedAt": "2026-10-09T04:27:22.756Z",
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "eightStepGate": false
+  },
+  "mimoUsage": {
+    "requests": 0,
+    "returnedUsage": 0,
+    "missingUsage": 0,
+    "input": 0,
+    "cached": 0,
+    "output": 0,
+    "knownCnyLowerBound": 0
+  },
+  "credentialScan": {
+    "scanned": 226,
+    "matches": 0
+  }
+}

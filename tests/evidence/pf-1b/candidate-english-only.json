@@ -1,0 +1,12 @@
+{
+  "weftmateMergeHead": "b14fdc1981d7e64550ca03222f1e22c00416e915",
+  "main": "c6048102dfabc6423f039b7fc7f32e3337989e23",
+  "core": "5d91823a36d8154531e62db1eb76165a1f479cbb",
+  "productSourceSha256": {
+    "src/plugins/personal-prompt.mjs": "999d5cfba67235593badc12b3f08bbe0583994767223929a359fb3e62660d476",
+    "src/plugins/weftmate-personal-desktop-preset.mjs": "1c819160e9e65d0f5164923ac052cf0693d9d7f2d065c3b3b1fdfefe968e93a4",
+    "src/plugins/weftmate-personal-memory.mjs": "8a931d435e5bb4595c6162746e7df2f2cb6485308071efb579d8fc314948c9c3",
+    "src/personal-memory/index.mjs": "d550f3f45f5bf63f89cf593ed6a6430eff4c42e5d369bd7e8f05b388f086438b"
+  },
+  "note": "Model runs started with these uncommitted product changes on the merged head; runtime reports record git HEAD, so source hashes identify the actual tested candidate."
+}
