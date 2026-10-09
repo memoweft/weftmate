@@ -1,0 +1,41 @@
+{
+  "matched" : true,
+  "samples" : [
+    {
+      "colorSpace" : "Generic RGB",
+      "file" : "review-mac-composer-context-dark-20261009T083951Z.png",
+      "rgb" : [
+        223,
+        223,
+        214
+      ],
+      "sourceTokenRGB" : [
+        229,
+        229,
+        222
+      ],
+      "uniformPatchPixels" : 64,
+      "x" : 1003,
+      "y" : 698
+    },
+    {
+      "colorSpace" : "Generic RGB",
+      "file" : "a9-mac-send-dark-20261009T084056Z.png",
+      "rgb" : [
+        223,
+        223,
+        214
+      ],
+      "sourceTokenRGB" : [
+        229,
+        229,
+        222
+      ],
+      "uniformPatchPixels" : 64,
+      "x" : 1003,
+      "y" : 698
+    }
+  ],
+  "theme" : "dark",
+  "themeAccent" : "#E5E5DE"
+}

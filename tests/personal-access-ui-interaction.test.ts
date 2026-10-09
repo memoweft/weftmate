@@ -488,6 +488,26 @@ function visibleText(node: Element): string {
   return [node.textContent, ...node.children.map(visibleText)].join(' ')
 }
 
+test('FIX-8 named new conversation and session entries leave phone mode and discard old pagination', async () => {
+  const conversationId='conversation-00000000-0000-4000-8000-000000000099';
+  const page=harness([],[],false,{syncAvailable:true,syncEvents:[
+    {seq:1,conversationId,sourceDeviceId:'device-phone',kind:'conversation.created',payload:{title:'合成手机记录'}},
+    {seq:2,conversationId,sourceDeviceId:'device-phone',kind:'message.created',payload:{messageId:'message-00000000-0000-4000-8000-000000000099',role:'user',text:'旧手机文字'}},
+  ]});
+  for(let n=0;n<20&&page.conversationButtons().length!==3;n++)await flush();
+  page.getByRole('button',{name:'合成手机记录'}).fire('click');await flush();
+  assert.equal(page.getByRole('textbox',{name:'输入消息'}).placeholder,'补充到这条手机对话');
+  Object.assign(page.core.state,{hasOlder:true,nextBeforeSeq:20,olderLoading:true});
+  page.getByRole('button',{name:/^新对话/}).fire('click');await flush();
+  assert.equal(page.core.state.activeChatSource,'desktop');assert.equal(page.core.state.selectedPhoneConversationId,null);
+  assert.equal(page.core.state.selectedSessionId,null);assert.equal(page.core.state.newConversation,true);
+  assert.equal(page.getByRole('textbox',{name:'输入消息'}).placeholder,'向 WeftMate 说说你的目标');
+  assert.equal(page.get('load-older').hidden,true);assert.equal(page.get('attachment-add').hidden,false);
+  page.getByRole('button',{name:'A'}).fire('click');await flush();
+  assert.equal(page.get('assistant-title').textContent,'A');assert.equal(page.core.state.selectedSessionId,'A');
+  assert.equal(page.core.state.activeChatSource,'desktop');assert.equal(page.core.state.newConversation,false);
+});
+
 test('model menu preserves the draft, selects a configured model and opens existing account settings', async () => {
   const page = harness([], [], false, { modelCatalog: [
     { id: 'local-model', name: '本地模型', configured: true },

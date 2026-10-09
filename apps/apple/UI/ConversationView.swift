@@ -259,7 +259,7 @@ struct ConversationView: View {
                     if ConversationProcessing.visible(events: model.timeline.events, running: conversation.running, phase: conversation.processing?.phase) {
                         TimelineView(.periodic(from: waitingSince, by: 1)) { clock in
                             Text((conversation.processing ?? .init(phase: "waiting")).label + " · \(max(0, Int(clock.date.timeIntervalSince(waitingSince)))) 秒")
-                                .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("processingLine")
+                                .font(AppleTokens.Fonts.body).foregroundStyle(Weave.muted).accessibilityIdentifier("processingLine")
                         }
                     }
                     commandStatusCards
@@ -375,6 +375,7 @@ struct ConversationView: View {
             let args = ProcessInfo.processInfo.arguments
             if args.contains("--ui-testing"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1) {
                 if args[index + 1] == "composer-context" { contextPopover = true }
+                if args[index + 1] == "a9-send" { model.setDraft("合成待发送消息", for: conversation, accountEpoch: model.accountEpoch) }
                 if args[index + 1] == "outputs-sources" { resources.showingList = true; resources.visible = true }
                 if args[index + 1] == "session-menu" { showingSessionActions = true }
                 if args[index + 1] == "conversation-forget" { model.askToDelete(conversation); await model.setConversationForget(true) }
@@ -495,11 +496,11 @@ struct ConversationView: View {
                     .focused($draftFocused).padding(.horizontal, AppleTokens.Space.p9).padding(.top, AppleTokens.Space.p7)
                     .disabled(!model.canEditDraft(for: conversation))
                     .accessibilityIdentifier("conversationDraft")
-                    .onSubmit { Task { await model.send(conversation, accountEpoch: accountEpoch, intent: .queue) } }
+                    .onSubmit { Task { await model.send(conversation, accountEpoch: accountEpoch) } }
                     #if os(macOS)
                     .onKeyPress(.return, phases: .down) { press in
                         if press.modifiers.contains(.shift) { return .ignored }
-                        Task { await model.send(conversation, accountEpoch: accountEpoch, intent: .queue) }
+                        Task { await model.send(conversation, accountEpoch: accountEpoch) }
                         return .handled
                     }
                     #endif
@@ -539,6 +540,9 @@ struct ConversationView: View {
                         Button("粘贴图片或文件") { pasteAttachments(accountEpoch: accountEpoch) }
                         #endif
                     } label: { WeftIcon("plus").frame(width: 44, height: 44) }
+                    #if os(macOS)
+                    .menuIndicator(.hidden).menuStyle(.borderlessButton)
+                    #endif
                     .disabled(!model.canAddAttachments(conversation)).accessibilityLabel("添加附件")
                     .accessibilityIdentifier("addAttachmentButton")
                     if !dynamicTypeSize.isAccessibilitySize {
@@ -574,9 +578,9 @@ struct ConversationView: View {
                     let action = ComposerAction.resolve(running: conversation.running, text: draft.wrappedValue, attachments: !(model.attachmentDrafts[key] ?? []).isEmpty)
                     Button {
                         if action == .stop { Task { await model.stopActiveTask() } }
-                        else { Task { await model.send(conversation, accountEpoch: accountEpoch, intent: .queue) } }
+                        else { Task { await model.send(conversation, accountEpoch: accountEpoch) } }
                     } label: { WeftIcon(action == .stop ? "stop" : "send").frame(width: AppleTokens.Space.p20, height: AppleTokens.Space.p44) }
-                        .buttonStyle(PrimaryActionStyle(fillsWidth: false))
+                        .buttonStyle(PrimaryActionStyle(fillsWidth: false)).tint(Weave.accent)
                         .disabled(action == .stop ? model.stoppingActiveTask || model.timelineRootCommands.isEmpty || model.historyCachedAt != nil : !model.canSend(conversation))
                         .accessibilityLabel(action == .stop ? "停止" : "发送").accessibilityIdentifier("sendButton")
                     #if os(macOS)

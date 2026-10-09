@@ -1,0 +1,77 @@
+{
+  "coreTests": {
+    "passed": 13,
+    "failed": 0,
+    "skipped": 0,
+    "filter": "A9PolishTests|ConversationFlowTests|watchFeedback"
+  },
+  "stateChecks": {
+    "AppleSendStateChecks": 12,
+    "TaskInteractionChecks": 11,
+    "ToolProgressChecks": 1
+  },
+  "tokenTests": 4,
+  "tokenGenerationCheck": true,
+  "evidenceTests": 4,
+  "phoneUITests": {
+    "light": {
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "realCloudMain": true,
+      "realPersonalHost": true,
+      "compiledDshEngine": false,
+      "syntheticModel": true,
+      "simulatorsAtOnce": 1,
+      "xcodeJobs": 2,
+      "shutdownImmediately": true
+    },
+    "dark": {
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "realCloudMain": true,
+      "realPersonalHost": true,
+      "compiledDshEngine": false,
+      "syntheticModel": true,
+      "simulatorsAtOnce": 1,
+      "xcodeJobs": 2,
+      "shutdownImmediately": true
+    }
+  },
+  "nativeDebugBuilds": [
+    "macOS",
+    "iOS",
+    "watchOS companion"
+  ],
+  "buttonColorChecks": {
+    "iphoneLight": true,
+    "iphoneDark": true,
+    "macLight": true,
+    "macDark": true,
+    "tolerance": 0,
+    "profileAware": true
+  },
+  "screenshots": {
+    "before": {
+      "iphone": 8,
+      "mac": 8,
+      "watch": 0
+    },
+    "after": {
+      "iphone": 20,
+      "mac": 12,
+      "watch": 1
+    }
+  },
+  "watch": {
+    "syntheticSnapshot": true,
+    "standaloneSimulator": true,
+    "realPhonePairing": false,
+    "shutdownAndDeleted": true
+  },
+  "dailyDataTouched": false,
+  "xcodeJobs": 2,
+  "simulatorsAtOnce": 1,
+  "serialBoundaryIncident": "One failed UI test was still finalizing when an incremental build began; subsequent xcodebuild operations waited for process exit."
+}

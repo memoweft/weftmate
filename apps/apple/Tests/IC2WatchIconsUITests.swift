@@ -6,9 +6,9 @@ final class IC2WatchIconsUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--ic2-icons-fixture"]
         app.launch()
-        XCTAssertTrue(app.staticTexts["运行合成脚本"].waitForExistence(timeout: 20))
-        XCTAssertTrue(app.buttons["允许"].exists)
-        XCTAssertFalse(app.buttons["允许"].isEnabled) // Fixture never impersonates a reachable phone.
+        XCTAssertTrue(app.staticTexts["要运行命令：npm test"].waitForExistence(timeout: 20))
+        XCTAssertTrue(app.buttons["批准"].exists)
+        XCTAssertFalse(app.buttons["批准"].isEnabled) // Fixture never impersonates a reachable phone.
         capture(app.screenshot(), "approval")
         XCUIDevice.shared.press(.home)
         Thread.sleep(forTimeInterval: 2)
