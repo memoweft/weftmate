@@ -1,0 +1,3422 @@
+{
+  "generatedAt": "2026-10-09T08:53:24.751Z",
+  "timeline": [
+    {
+      "name": "after-lan",
+      "model": "lan",
+      "single": false,
+      "cases": [
+        {
+          "index": 0,
+          "text": "以后请用中文解释，少用术语，多举日常例子。",
+          "acceptedMs": 3074,
+          "immediateRecallMs": 3291,
+          "immediateFormalItems": 0,
+          "immediateRecentItems": 1,
+          "modelDurationsMs": [
+            6969
+          ],
+          "firstModelStartMs": 2191,
+          "settledMs": 9459,
+          "finalContext": "记忆：用户以后请用中文解释，少用术语，多举日常例子。"
+        },
+        {
+          "index": 1,
+          "text": "我最近只能周三晚上锻炼，安排运动时帮我记着。",
+          "acceptedMs": 1628,
+          "immediateRecallMs": 1824,
+          "immediateFormalItems": 1,
+          "immediateRecentItems": 1,
+          "modelDurationsMs": [
+            16430
+          ],
+          "firstModelStartMs": 1039,
+          "settledMs": 17734,
+          "finalContext": "记忆：用户以后请用中文解释，少用术语，多举日常例子。"
+        },
+        {
+          "index": 2,
+          "text": "不对，是周五晚上。",
+          "acceptedMs": 1621,
+          "immediateRecallMs": 1828,
+          "immediateFormalItems": 1,
+          "immediateRecentItems": 1,
+          "modelDurationsMs": [
+            9493
+          ],
+          "firstModelStartMs": 984,
+          "settledMs": 10841,
+          "finalContext": "记忆：用户不对，是周五晚上。\n\n记忆：用户以后请用中文解释，少用术语，多举日常例子。"
+        },
+        {
+          "index": 3,
+          "text": "以后叫我小禾就好。",
+          "acceptedMs": 1668,
+          "immediateRecallMs": 1881,
+          "immediateFormalItems": 1,
+          "immediateRecentItems": 1,
+          "modelDurationsMs": [
+            8145
+          ],
+          "firstModelStartMs": 1037,
+          "settledMs": 9517,
+          "finalContext": "记忆：用户以后叫我小禾就好。\n\n记忆：用户以后请用中文解释，少用术语，多举日常例子。"
+        },
+        {
+          "index": 4,
+          "text": "王小明是我的表弟。",
+          "acceptedMs": 1654,
+          "immediateRecallMs": 1857,
+          "immediateFormalItems": 2,
+          "immediateRecentItems": 1,
+          "modelDurationsMs": [
+            5818
+          ],
+          "firstModelStartMs": 1037,
+          "settledMs": 7133,
+          "finalContext": "记忆：用户王小明是我的表弟。\n\n记忆：用户以后请用中文解释，少用术语，多举日常例子。\n\n记忆：用户以后叫我小禾就好。"
+        }
+      ]
+    },
+    {
+      "name": "after-mimo",
+      "model": "mimo",
+      "single": false,
+      "cases": [
+        {
+          "index": 0,
+          "text": "以后请用中文解释，少用术语，多举日常例子。",
+          "acceptedMs": 2783,
+          "immediateRecallMs": 2972,
+          "immediateFormalItems": 0,
+          "immediateRecentItems": 1,
+          "modelDurationsMs": [
+            5114
+          ],
+          "firstModelStartMs": 2202,
+          "settledMs": 7585,
+          "finalContext": "记忆：用户以后请用中文解释，少用术语，多举日常例子。"
+        },
+        {
+          "index": 1,
+          "text": "我最近只能周三晚上锻炼，安排运动时帮我记着。",
+          "acceptedMs": 1667,
+          "immediateRecallMs": 1891,
+          "immediateFormalItems": 1,
+          "immediateRecentItems": 1,
+          "modelDurationsMs": [
+            9987
+          ],
+          "firstModelStartMs": 1014,
+          "settledMs": 11257,
+          "finalContext": "记忆：用户最近只能周三晚上锻炼，安排运动时帮我记着。\n\n记忆：用户以后请用中文解释，少用术语，多举日常例子。"
+        },
+        {
+          "index": 2,
+          "text": "不对，是周五晚上。",
+          "acceptedMs": 1606,
+          "immediateRecallMs": 1819,
+          "immediateFormalItems": 2,
+          "immediateRecentItems": 1,
+          "modelDurationsMs": [
+            6635
+          ],
+          "firstModelStartMs": 1033,
+          "settledMs": 8005,
+          "finalContext": "记忆：用户不对，是周五晚上。\n\n记忆：用户以后请用中文解释，少用术语，多举日常例子。"
+        },
+        {
+          "index": 3,
+          "text": "以后叫我小禾就好。",
+          "acceptedMs": 1670,
+          "immediateRecallMs": 1884,
+          "immediateFormalItems": 1,
+          "immediateRecentItems": 1,
+          "modelDurationsMs": [
+            10334
+          ],
+          "firstModelStartMs": 1088,
+          "settledMs": 11684,
+          "finalContext": "记忆：用户以后叫我小禾就好。\n\n记忆：用户以后请用中文解释，少用术语，多举日常例子。"
+        },
+        {
+          "index": 4,
+          "text": "王小明是我的表弟。",
+          "acceptedMs": 1692,
+          "immediateRecallMs": 1930,
+          "immediateFormalItems": 2,
+          "immediateRecentItems": 1,
+          "modelDurationsMs": [
+            5076
+          ],
+          "firstModelStartMs": 1049,
+          "settledMs": 6412,
+          "finalContext": "记忆：用户王小明是我的表弟。\n\n记忆：用户以后请用中文解释，少用术语，多举日常例子。\n\n记忆：用户以后叫我小禾就好。"
+        }
+      ]
+    },
+    {
+      "name": "after-synthetic",
+      "model": "synthetic",
+      "single": false,
+      "cases": [
+        {
+          "index": 0,
+          "text": "我喝咖啡时偏好加一小撮肉桂粉。",
+          "acceptedMs": 2674,
+          "immediateRecallMs": 2871,
+          "immediateFormalItems": 1,
+          "immediateRecentItems": 0,
+          "modelDurationsMs": [
+            426
+          ],
+          "firstModelStartMs": 2039,
+          "settledMs": 3062,
+          "finalContext": "记忆：用户喝咖啡时偏好加一小撮肉桂粉。"
+        }
+      ]
+    },
+    {
+      "name": "before-lan",
+      "model": "lan",
+      "single": false,
+      "cases": [
+        {
+          "index": 0,
+          "text": "以后请用中文解释，少用术语，多举日常例子。",
+          "acceptedMs": 2660,
+          "immediateRecallMs": 2884,
+          "immediateFormalItems": 0,
+          "immediateRecentItems": 0,
+          "modelDurationsMs": [
+            50369
+          ],
+          "firstModelStartMs": 21865,
+          "settledMs": 72513,
+          "finalContext": "记忆：用户以后请用中文解释，少用术语，多举日常例子。"
+        },
+        {
+          "index": 1,
+          "text": "我最近只能周三晚上锻炼，安排运动时帮我记着。",
+          "acceptedMs": 1547,
+          "immediateRecallMs": 1722,
+          "immediateFormalItems": 1,
+          "immediateRecentItems": 0,
+          "modelDurationsMs": [
+            27401
+          ],
+          "firstModelStartMs": 20879,
+          "settledMs": 48521,
+          "finalContext": "记忆：用户以后请用中文解释，少用术语，多举日常例子。"
+        },
+        {
+          "index": 2,
+          "text": "不对，是周五晚上。",
+          "acceptedMs": 1502,
+          "immediateRecallMs": 1740,
+          "immediateFormalItems": 1,
+          "immediateRecentItems": 0,
+          "modelDurationsMs": [
+            8291
+          ],
+          "firstModelStartMs": 20826,
+          "settledMs": 29391,
+          "finalContext": "记忆：用户不对，是周五晚上。\n\n记忆：用户以后请用中文解释，少用术语，多举日常例子。"
+        },
+        {
+          "index": 3,
+          "text": "以后叫我小禾就好。",
+          "acceptedMs": 1545,
+          "immediateRecallMs": 1733,
+          "immediateFormalItems": 1,
+          "immediateRecentItems": 0,
+          "modelDurationsMs": [
+            9607
+          ],
+          "firstModelStartMs": 20897,
+          "settledMs": 30732,
+          "finalContext": "记忆：以后叫我小禾就好。\n\n记忆：用户以后请用中文解释，少用术语，多举日常例子。"
+        },
+        {
+          "index": 4,
+          "text": "王小明是我的表弟。",
+          "acceptedMs": 1607,
+          "immediateRecallMs": 1866,
+          "immediateFormalItems": 2,
+          "immediateRecentItems": 0,
+          "modelDurationsMs": [
+            8242
+          ],
+          "firstModelStartMs": 20850,
+          "settledMs": 29402,
+          "finalContext": "记忆：用户王小明是我的表弟。\n\n记忆：用户以后请用中文解释，少用术语，多举日常例子。\n\n记忆：以后叫我小禾就好。"
+        }
+      ]
+    },
+    {
+      "name": "before-mimo",
+      "model": "mimo",
+      "single": false,
+      "cases": [
+        {
+          "index": 0,
+          "text": "以后请用中文解释，少用术语，多举日常例子。",
+          "acceptedMs": 2688,
+          "immediateRecallMs": 2892,
+          "immediateFormalItems": 0,
+          "immediateRecentItems": 0,
+          "modelDurationsMs": [
+            3933
+          ],
+          "firstModelStartMs": 2031,
+          "settledMs": 6294,
+          "finalContext": "记忆：用户以后请用中文解释，少用术语，多举日常例子。"
+        },
+        {
+          "index": 1,
+          "text": "我最近只能周三晚上锻炼，安排运动时帮我记着。",
+          "acceptedMs": 1626,
+          "immediateRecallMs": 1850,
+          "immediateFormalItems": 1,
+          "immediateRecentItems": 0,
+          "modelDurationsMs": [
+            6110
+          ],
+          "firstModelStartMs": 1012,
+          "settledMs": 7403,
+          "finalContext": "记忆：用户最近只能周三晚上锻炼，安排运动时帮我记着。\n\n记忆：用户以后请用中文解释，少用术语，多举日常例子。"
+        },
+        {
+          "index": 2,
+          "text": "不对，是周五晚上。",
+          "acceptedMs": 1610,
+          "immediateRecallMs": 1800,
+          "immediateFormalItems": 2,
+          "immediateRecentItems": 0,
+          "modelDurationsMs": [
+            8255
+          ],
+          "firstModelStartMs": 1030,
+          "settledMs": 9619,
+          "finalContext": "记忆：用户不对，是周五晚上。\n\n记忆：用户以后请用中文解释，少用术语，多举日常例子。"
+        },
+        {
+          "index": 3,
+          "text": "以后叫我小禾就好。",
+          "acceptedMs": 1782,
+          "immediateRecallMs": 2004,
+          "immediateFormalItems": 1,
+          "immediateRecentItems": 0,
+          "modelDurationsMs": [
+            7421
+          ],
+          "firstModelStartMs": 1133,
+          "settledMs": 8792,
+          "finalContext": "记忆：以后叫我小禾就好。\n\n记忆：用户以后请用中文解释，少用术语，多举日常例子。"
+        },
+        {
+          "index": 4,
+          "text": "王小明是我的表弟。",
+          "acceptedMs": 1888,
+          "immediateRecallMs": 2099,
+          "immediateFormalItems": 2,
+          "immediateRecentItems": 0,
+          "modelDurationsMs": [
+            3133
+          ],
+          "firstModelStartMs": 1161,
+          "settledMs": 4576,
+          "finalContext": "记忆：用户王小明是我的表弟。\n\n记忆：用户以后请用中文解释，少用术语，多举日常例子。\n\n记忆：以后叫我小禾就好。"
+        }
+      ]
+    },
+    {
+      "name": "before-synthetic-single",
+      "model": "synthetic",
+      "single": true,
+      "cases": [
+        {
+          "index": 0,
+          "text": "我喝咖啡时偏好加一小撮肉桂粉。",
+          "acceptedMs": 2814,
+          "immediateRecallMs": 3017,
+          "immediateFormalItems": 1,
+          "immediateRecentItems": 0,
+          "modelDurationsMs": [
+            412
+          ],
+          "firstModelStartMs": 2204,
+          "settledMs": 3206,
+          "finalContext": "记忆：用户喝咖啡时偏好加一小撮肉桂粉。"
+        }
+      ]
+    },
+    {
+      "name": "before-synthetic-single-corrected",
+      "model": "synthetic",
+      "single": true,
+      "cases": [
+        {
+          "index": 0,
+          "text": "我喝咖啡时偏好加一小撮肉桂粉。",
+          "acceptedMs": 2812,
+          "immediateRecallMs": 3015,
+          "immediateFormalItems": 0,
+          "immediateRecentItems": 0,
+          "modelDurationsMs": [
+            402
+          ],
+          "firstModelStartMs": 4005,
+          "settledMs": 4658,
+          "finalContext": "记忆：用户喝咖啡时偏好加一小撮肉桂粉。"
+        }
+      ]
+    },
+    {
+      "name": "phases-after-mimo",
+      "model": "mimo",
+      "single": false,
+      "cases": [
+        {
+          "index": 0,
+          "text": "以后请用中文解释，少用术语，多举日常例子。",
+          "acceptedMs": 3547,
+          "immediateRecallMs": 3774,
+          "immediateFormalItems": 0,
+          "immediateRecentItems": 1,
+          "modelDurationsMs": [
+            34583
+          ],
+          "firstModelStartMs": 2859,
+          "settledMs": 37767,
+          "finalContext": "记忆：用户以后请用中文解释，少用术语，多举日常例子。"
+        }
+      ]
+    },
+    {
+      "name": "phases-before-mimo",
+      "model": "mimo",
+      "single": false,
+      "cases": [
+        {
+          "index": 0,
+          "text": "以后请用中文解释，少用术语，多举日常例子。",
+          "acceptedMs": 3106,
+          "immediateRecallMs": 3345,
+          "immediateFormalItems": 0,
+          "immediateRecentItems": 0,
+          "modelDurationsMs": [
+            4549
+          ],
+          "firstModelStartMs": 2436,
+          "settledMs": 7298,
+          "finalContext": "记忆：用户以后请用中文解释，少用术语，多举日常例子。"
+        }
+      ]
+    },
+    {
+      "name": "single-slot-preemption",
+      "model": "synthetic",
+      "single": true,
+      "cases": [
+        {
+          "index": 0,
+          "text": "我喝咖啡时偏好加一小撮肉桂粉。",
+          "acceptedMs": 3071,
+          "immediateRecallMs": 3295,
+          "immediateFormalItems": 0,
+          "immediateRecentItems": 1,
+          "modelDurationsMs": [
+            null,
+            1500
+          ],
+          "firstModelStartMs": 2192,
+          "settledMs": 4687,
+          "finalContext": "记忆：用户喝咖啡时偏好加一小撮肉桂粉。"
+        }
+      ]
+    }
+  ],
+  "matrices": [
+    {
+      "name": "default-matrix",
+      "model": "mimo",
+      "formationWaitMs": 0,
+      "original": {
+        "passed": 3,
+        "failed": 4,
+        "manual": 0,
+        "unsupported": 0,
+        "skippedChecks": 6,
+        "passRate": 0.42857142857142855,
+        "coverage": 0.42857142857142855
+      },
+      "fourBehavior": 4,
+      "cBehavior": 2,
+      "results": [
+        {
+          "id": "memory-01-preference",
+          "originalStatus": "failed",
+          "originalReason": "memory_used did not match expected value",
+          "semanticStatus": "passed",
+          "behaviorPass": true,
+          "formalMemoryUsed": [],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。我看到一大段术语就头疼。"
+          ],
+          "reply": "**先说个买菜的例子**\n\n你家厨房离超市有 30 公里，每天炒菜都要用酱油。要是每放一次酱油就跑一趟超市，一顿饭得吃三天。所以你的做法是：厨房柜子里放一瓶（**缓存**），用完了再开车去超市补货（**回源**）。\n\n柜子就在手边，拿一下 3 秒；跑超市要 1 小时。东西还是那个东西，只是放得近了。缓存干的就是这件事：**把常用的数据搬到离使用它最近的地方**。\n\n**再讲原理**\n\n计算机里也是同样的账，只是\"距离\"换成了时间：\n\n| 存放位置 | 取一次大约要 | 相当于 |\n|---|---|---|\n| CPU 里的缓存 | 1~10 纳秒 | 伸手拿柜子里的酱油 |\n| 内存 | ~100 纳秒 | 去楼下便利店 |\n| 硬盘/网络 | 几毫秒~几百毫秒 | 跑 30 公里外的超市 |\n\n快的和慢的之间差着几个数量级，所以\"先在手边放一份\"能带来质的变化。之所以可行，是因为有个普遍规律：**刚用过的东西大概率还会再用**（你今天放酱油，明天还得放）。\n\n所以缓存永远伴随着两个动作：\n\n- **读的时候**：先看手边有没有，有就直接用（命中），没有才跑远路（未命中），拿回来顺手放一份。\n- **写的时候**：数据变了，柜子里那份就可能过期。是马上同步，还是先标记\"作废下次再取\"，这就是所谓的\"一致性\"问题。\n\n**常见的缓存，都是同一个柜子**\n\n- 浏览器缓存：网站的图片、CSS 存在你电脑上，第二次打开秒开。\n- CDN：把网站内容放在离你最近的城市节点上。\n- 数据库前面加 Redis：热门查询结果先存内存里，别每次都让数据库翻表。\n- CPU 的 L1/L2/L3 缓存：把内存里最近要用的数据抓到芯片里。\n\n**代价（也就是坑）**\n\n柜子空间有限，只能放一部分。于是：\n\n1. **过期**：超市降价了，你柜子里那瓶还是旧标签 —— 需要设置有效期或主动失效。\n2. **命中率太低**：柜子里放的全是从来不碰的东西，白占地方 —— 得有淘汰规则（比如\"最久没用的扔掉\"）。\n3. **突然全空了**：柜子打翻、或者缓存服务挂了，所有请求瞬间涌向超市 —— 这就是所谓的\"缓存击穿/雪崩\"，通常要靠限流或兜底来扛。\n\n一句话总结：**缓存是用一点空间和\"可能过期\"的风险，换巨大的速度收益。**"
+        },
+        {
+          "id": "memory-02-correction",
+          "originalStatus": "passed",
+          "originalReason": null,
+          "semanticStatus": "passed",
+          "behaviorPass": true,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-d6b8791380e9c61542cbade498e36751e428afa810da347ce0511bf3e8e9b03f",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            }
+          ],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：我最近只能周三晚上锻炼，安排运动时帮我记着。\n\n纠正所指的较早原话（仅解释主题）：我最近只能周三晚上锻炼，安排运动时帮我记着。\n本人原话：刚才说错了，现在固定空出来的是周五晚上，周三已经没空了，以后按周五来安排。"
+          ],
+          "reply": "下周建议放在**周五晚上（10月16日晚上）**——按你最近的安排，空出来的固定时间是周五晚上，周三已经没空了，锻炼跟着挪到周五正合适。\n\n要不要我直接用 `schedule_create` 给你建一个下周五晚上的锻炼提醒？告诉我具体时间（比如 19:00）就行。"
+        },
+        {
+          "id": "memory-03-switch-model",
+          "originalStatus": "passed",
+          "originalReason": null,
+          "semanticStatus": "skipped",
+          "behaviorPass": true,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-d6b8791380e9c61542cbade498e36751e428afa810da347ce0511bf3e8e9b03f",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            }
+          ],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：我习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+          ],
+          "reply": "早上好，小禾。\n\n今天事情多的时候，先把最要紧的那一件事挑出来做完，就像买菜先把要放冰箱的肉挑好放进袋子，其他的再慢慢拎。一步一步来，你已经在推进了，很稳。\n\n需要我帮你先把今天的事项排个优先级吗？"
+        },
+        {
+          "id": "memory-04-person",
+          "originalStatus": "passed",
+          "originalReason": null,
+          "semanticStatus": "passed",
+          "behaviorPass": true,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-d6b8791380e9c61542cbade498e36751e428afa810da347ce0511bf3e8e9b03f",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            },
+            {
+              "id": "cognition-a3ba30333da9e1bb506e02196a6fc77660cdaad3131ea26a89f3932f224044a1",
+              "kind": "cognition",
+              "summary": "用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+            }
+          ],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n记忆：用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：阿岚是跟我一起准备秋季展览的朋友，她负责海报，我们周六要碰一下进度。"
+          ],
+          "reply": "小禾，给你一句自然点的：\n\n「阿岚，周六碰展览的事你时间方便吗？顺便看看海报做得怎么样了～」\n\n如果想更随意一点，也可以说：\n\n「阿岚，海报最近进展如何？周六约个时间对一下呀 😄」\n\n挑一句顺手的就行～"
+        },
+        {
+          "id": "memory-3x-correction",
+          "originalStatus": "failed",
+          "originalReason": "reply_matches did not match expected value; holdout must adopt its own current formal memory",
+          "semanticStatus": "failed",
+          "behaviorPass": false,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-0a1b6931f213ef1c00d757e179a5502e14c37f3feba11e2be07a789f1ef6c3ce",
+              "kind": "cognition",
+              "summary": "用户做手冲咖啡一直按粉水比1比15，之后帮我照这个比例算。"
+            },
+            {
+              "id": "cognition-d6b8791380e9c61542cbade498e36751e428afa810da347ce0511bf3e8e9b03f",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            },
+            {
+              "id": "cognition-a3ba30333da9e1bb506e02196a6fc77660cdaad3131ea26a89f3932f224044a1",
+              "kind": "cognition",
+              "summary": "用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+            }
+          ],
+          "provisionalQuoteInActualRequest": false,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户做手冲咖啡一直按粉水比1比15，之后帮我照这个比例算。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n记忆：用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+          ],
+          "reply": "小禾，下一杯按你一直用的 **1:15** 就行。\n\n算起来很直观：粉多少克，水就是粉重的 15 倍。比如 15 克粉配 225 克水，20 克粉配 300 克水。你要是想换着花样试，再告诉我。"
+        },
+        {
+          "id": "memory-3x-person",
+          "originalStatus": "failed",
+          "originalReason": "holdout must adopt its own current formal memory",
+          "semanticStatus": "passed",
+          "behaviorPass": true,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-d6b8791380e9c61542cbade498e36751e428afa810da347ce0511bf3e8e9b03f",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            },
+            {
+              "id": "cognition-a3ba30333da9e1bb506e02196a6fc77660cdaad3131ea26a89f3932f224044a1",
+              "kind": "cognition",
+              "summary": "用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+            }
+          ],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n记忆：用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：今天事情有点多，跟我打个招呼，鼓励我一下吧。\n\n本人原话：我准备找阿岚聊聊，帮我写一句自然点的开场白。\n\n本人原话：顾遥和我是博物馆志愿服务的同组伙伴，我们每月一起负责展厅导览。"
+          ],
+          "reply": "给顾遥的一句招呼：\n\n「顾遥，好久不见！下次展厅导览又可以并肩作战啦，到时候见～」\n\n如果想更简短自然一点，也可以用：「顾遥，下次导览见，到时候继续搭档！」"
+        },
+        {
+          "id": "memory-3x-preference",
+          "originalStatus": "failed",
+          "originalReason": "holdout must adopt its own current formal memory",
+          "semanticStatus": "passed",
+          "behaviorPass": true,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-d6b8791380e9c61542cbade498e36751e428afa810da347ce0511bf3e8e9b03f",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            },
+            {
+              "id": "cognition-a3ba30333da9e1bb506e02196a6fc77660cdaad3131ea26a89f3932f224044a1",
+              "kind": "cognition",
+              "summary": "用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+            }
+          ],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n记忆：用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：我准备找阿岚聊聊，帮我写一句自然点的开场白。\n\n本人原话：替我给顾遥写一句下次碰面的招呼。\n\n本人原话：我选骑行路线一直避开陡坡，更喜欢沿河的平缓路段。"
+          ],
+          "reply": "挑选周末单车路线的要求：尽量选沿河的平缓路段，避开连续陡坡，风景好、路面好走，单程控制在一到两小时左右，中途最好有补给点和歇脚的地方。"
+        }
+      ]
+    },
+    {
+      "name": "default-matrix",
+      "model": "lan",
+      "formationWaitMs": 0,
+      "original": {
+        "passed": 3,
+        "failed": 4,
+        "manual": 0,
+        "unsupported": 0,
+        "skippedChecks": 6,
+        "passRate": 0.42857142857142855,
+        "coverage": 0.42857142857142855
+      },
+      "fourBehavior": 4,
+      "cBehavior": 2,
+      "results": [
+        {
+          "id": "memory-01-preference",
+          "originalStatus": "failed",
+          "originalReason": "memory_used did not match expected value",
+          "semanticStatus": "passed",
+          "behaviorPass": true,
+          "formalMemoryUsed": [],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。我看到一大段术语就头疼。"
+          ],
+          "reply": "缓存就是“把常拿的东西先放在手边”，省得每次都跑很远去取。\n\n**买菜的小例子**\n想象你家楼下有家菜市场，买一次菜要走 20 分钟。有一天你发现每周三都要买西红柿和生菜。\n\n不缓存的做法：每周三你都从家出发，挤公交去市场，挑西红柿、生菜，排队付钱，走回来。每次都花 20 分钟。\n\n用缓存的做法：周一你多买一点，周三要用的西红柿和生菜先放在冰箱里。周三早上你直接开冰箱门就拿到了， 10 秒搞定。\n\n冰箱就是缓存。里面的菜是“缓存的数据”，是最近用过、很可能还会用到的东西。把它们放在离你最近的地方，取用就快、省力。\n\n当然冰箱也有问题：\n* 菜放久了会坏 → 缓存会过期。冰箱里的西红柿放一周会烂，周三的菜只能用一周左右。\n* 冰箱放不下太多 → 缓存有容量限制。放不下就得扔掉旧的，换新的。\n* 有时候市场进了更好更便宜的西红柿 → 缓存可能不是最新。冰箱里的菜可能不是今天市场最新鲜的。\n\n**原理就是这三件事**\n1. **就近取用**：把访问频繁、获取成本高的东西复制一份，放到离使用者更近、更快的地方。CPU 里有寄存器、L1/L2/L3 缓存，浏览器里有 HTTP 缓存，手机里有应用缓存，都是这个思路。\n2. **用空间换时间**：缓存占内存/磁盘空间，换来的是更快的访问速度和更少的重复计算或网络请求。\n3. **有失效策略**：因为缓存的数据是“旧的副本”，必须决定什么时候更新、什么时候丢弃。常见的策略有：时间过期 TTL、访问次数、LRU 最近最少用就淘汰。\n\n所以缓存不是魔法，只是“把明天大概率要用的菜先放进冰箱”。快是快，但要记得看保质期。"
+        },
+        {
+          "id": "memory-02-correction",
+          "originalStatus": "passed",
+          "originalReason": null,
+          "semanticStatus": "passed",
+          "behaviorPass": true,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-c408010e4acb97992994fd3271c85d8393400ea96224101e342171771386cc69",
+              "kind": "cognition",
+              "summary": "用户最近只能周三晚上锻炼，安排运动时帮我记着。"
+            },
+            {
+              "id": "cognition-53fb1ac0de4a77ef340abc8ded392ac19300d3b137a8c603173a870caad4dc76",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            }
+          ],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户最近只能周三晚上锻炼，安排运动时帮我记着。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n纠正所指的较早原话（仅解释主题）：我最近只能周三晚上锻炼，安排运动时帮我记着。\n本人原话：刚才说错了，现在固定空出来的是周五晚上，周三已经没空了，以后按周五来安排。"
+          ],
+          "reply": "根据你上周修正过的安排，现在固定空出来的是周五晚上，周三已经没空了。\n\n下周的话，周五晚上 2026-10-16 最合适。就是下周五晚上。\n\n要我帮你把下周五晚上的锻炼设个提醒吗？"
+        },
+        {
+          "id": "memory-03-switch-model",
+          "originalStatus": "passed",
+          "originalReason": null,
+          "semanticStatus": "skipped",
+          "behaviorPass": true,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-53fb1ac0de4a77ef340abc8ded392ac19300d3b137a8c603173a870caad4dc76",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            }
+          ],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：我习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+          ],
+          "reply": "小禾，早上好！☀️\n\n今天事情多，说明你手上有得做、有得拼，这本身就是件好事。别急着一口吃成胖子——先把最要紧的一件挑出来，做完一件划一件，势头起来了后面就顺了。\n\n累的时候就喘口气，事情是做不完的，但你的节奏可以自己定。我在这儿，需要帮忙随时喊我。\n\n加油，小禾，今天也稳稳的！💪"
+        },
+        {
+          "id": "memory-04-person",
+          "originalStatus": "passed",
+          "originalReason": null,
+          "semanticStatus": "passed",
+          "behaviorPass": true,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-53fb1ac0de4a77ef340abc8ded392ac19300d3b137a8c603173a870caad4dc76",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            },
+            {
+              "id": "cognition-f33a71c5a1fdb5d18e7baff51c0e9c22e6887904fadd0b4054f3dd2fd464200a",
+              "kind": "cognition",
+              "summary": "用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+            }
+          ],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n记忆：用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：阿岚是跟我一起准备秋季展览的朋友，她负责海报，我们周六要碰一下进度。"
+          ],
+          "reply": "可以，小禾。\n\n给你一句自然的开场白，直接用就行：\n\n“阿岚早/午安，周六碰进度之前想先跟你对一下海报的想法，有没有方便的时间现在聊两句？”\n\n想更轻松一点也可以说：\n“阿岚，秋季展览海报这边你进度怎么样？我周六之前想先跟你对齐一下，顺便聊聊细节。”"
+        },
+        {
+          "id": "memory-3x-correction",
+          "originalStatus": "failed",
+          "originalReason": "holdout must adopt its own current formal memory",
+          "semanticStatus": "passed",
+          "behaviorPass": true,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-0e8cb1035d01cb4f94d91b2c4b7d23460564102337fa7340576b1b2e99bb25cc",
+              "kind": "cognition",
+              "summary": "用户做手冲咖啡一直按粉水比1比15，之后帮我照这个比例算。"
+            },
+            {
+              "id": "cognition-53fb1ac0de4a77ef340abc8ded392ac19300d3b137a8c603173a870caad4dc76",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            },
+            {
+              "id": "cognition-f33a71c5a1fdb5d18e7baff51c0e9c22e6887904fadd0b4054f3dd2fd464200a",
+              "kind": "cognition",
+              "summary": "用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+            }
+          ],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户做手冲咖啡一直按粉水比1比15，之后帮我照这个比例算。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n记忆：用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n纠正所指的较早原话（仅解释主题）：我做手冲咖啡一直按粉水比1比15，之后帮我照这个比例算。\n本人原话：更正，往后统一用1比17，原来的1比15停用。"
+          ],
+          "reply": "小禾，你现在用 **1:17** 这个粉水比。\n\n你之前说过做手冲一直按 1:15，后来更正说往后统一用 1:17，原来的 1:15 已停用。下一杯就按 1:17 来算吧。"
+        },
+        {
+          "id": "memory-3x-person",
+          "originalStatus": "failed",
+          "originalReason": "holdout must adopt its own current formal memory",
+          "semanticStatus": "passed",
+          "behaviorPass": true,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-53fb1ac0de4a77ef340abc8ded392ac19300d3b137a8c603173a870caad4dc76",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            },
+            {
+              "id": "cognition-f33a71c5a1fdb5d18e7baff51c0e9c22e6887904fadd0b4054f3dd2fd464200a",
+              "kind": "cognition",
+              "summary": "用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+            }
+          ],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n记忆：用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：今天事情有点多，跟我打个招呼，鼓励我一下吧。\n\n本人原话：我准备找阿岚聊聊，帮我写一句自然点的开场白。\n\n本人原话：顾遥和我是博物馆志愿服务的同组伙伴，我们每月一起负责展厅导览。"
+          ],
+          "reply": "给顾遥的下次碰面招呼可以这样说：\n\n“顾遥，下次展厅导览前见面聊聊吧，最近有几个观众提问挺有意思的，一起对一下思路。”\n\n要更轻松点也可以说： “下次碰面一起喝杯咖啡，复盘下个月的导览安排吧。”"
+        },
+        {
+          "id": "memory-3x-preference",
+          "originalStatus": "failed",
+          "originalReason": "reply_matches did not match expected value; holdout must adopt its own current formal memory",
+          "semanticStatus": "failed",
+          "behaviorPass": false,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-53fb1ac0de4a77ef340abc8ded392ac19300d3b137a8c603173a870caad4dc76",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            },
+            {
+              "id": "cognition-f33a71c5a1fdb5d18e7baff51c0e9c22e6887904fadd0b4054f3dd2fd464200a",
+              "kind": "cognition",
+              "summary": "用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+            }
+          ],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n记忆：用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：我准备找阿岚聊聊，帮我写一句自然点的开场白。\n\n本人原话：替我给顾遥写一句下次碰面的招呼。"
+          ],
+          "reply": "小禾，你可以这样说：\n\n挑选周末单车路线时，要求里程在 30-50 公里、爬升适中、路面平整且沿途有补给点和风景优美。"
+        }
+      ]
+    },
+    {
+      "name": "final-matrix",
+      "model": "mimo",
+      "formationWaitMs": 0,
+      "original": {
+        "passed": 3,
+        "failed": 4,
+        "manual": 0,
+        "unsupported": 0,
+        "skippedChecks": 6,
+        "passRate": 0.42857142857142855,
+        "coverage": 0.42857142857142855
+      },
+      "fourBehavior": 4,
+      "cBehavior": 2,
+      "results": [
+        {
+          "id": "memory-01-preference",
+          "originalStatus": "failed",
+          "originalReason": "memory_used did not match expected value",
+          "semanticStatus": "passed",
+          "behaviorPass": true,
+          "formalMemoryUsed": [],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。我看到一大段术语就头疼。"
+          ],
+          "reply": "**先说个买菜的例子**\n\n你家楼下有个小超市，你想喝可乐。要是每次都跑去三公里外的大批发市场，来回两小时，太累了。于是你在家楼下小超市买——小超市就是\"缓存\"：它东西不全，但离得近，你常买的东西它都有。\n\n流程是这样的：\n\n1. 你先问小超市\"有可乐吗？\"\n2. 有 → 直接拿走，30 秒搞定（**命中缓存**）\n3. 没有 → 跑大批发市场买，回来顺手在小超市也放几瓶，下次就不用跑远了（**未命中，回源取，顺便存一份**）\n\n代价是：小超市要占地方（内存/空间），而且放久了可乐可能过期（**数据变旧**），所以要么定期扔掉，要么大市场换了新货就通知小超市下架（**失效机制**）。\n\n**再讲原理**\n\n缓存的本质就一句话：**用\"少量贵的空间\"换\"大量的时间\"**。\n\n计算机里访问数据的速度差是数量级的，好比楼下超市和批发市场的差距：\n\n| 存的地方 | 大概多快 | 相当于 |\n|---|---|---|\n| CPU 里的缓存 | 1 纳秒级 | 家里冰箱 |\n| 内存 | 几十纳秒 | 楼下超市 |\n| 硬盘/网络 | 几十微秒~毫秒 | 批发市场 |\n\nCPU 每秒钟要取几亿次数据，如果每次都去内存拿，CPU 大部分时间都在\"赶路\"。所以 CPU 会把最近用过的东西复制一份放在自己怀里（L1/L2/L3 缓存），下次直接用。\n\n**生活中你天天在用的缓存**\n\n- **浏览器缓存**：网站的图片第一次打开时下载，之后直接从本地显示，所以第二次打开快很多。更新了网页图片却\"还是老样子\"，就是缓存没失效。\n- **App 缓存**：微信聊天记录、抖音刷过的视频存在本地，下次秒开。\n- **DNS 缓存**：你输 `baidu.com`，电脑不用每次都问\"百度的门牌号（IP）是多少\"，问过一次就记下来。\n\n**缓存带来的三个经典问题**（面试也常问）：\n\n1. **命中率**：100 次请求有 99 次在缓存里解决，命中率 99%，缓存才算有效。\n2. **一致性**：源头数据改了，缓存还是旧的，怎么办？要么设过期时间，要么改的时候主动通知删缓存。\n3. **容量**：地方就那么大，新数据来了旧数据走谁？常用的策略叫 LRU（最近最少使用），跟人一样——最近没用的先请出去。\n\n一句话总结：**缓存就是把常用的东西提前搬到离你最近的地方，牺牲一点空间和\"可能变旧\"的风险，换速度。**"
+        },
+        {
+          "id": "memory-02-correction",
+          "originalStatus": "passed",
+          "originalReason": null,
+          "semanticStatus": "passed",
+          "behaviorPass": true,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-24df28f70c64fa8a7800bdabec86366b65ee77e7b86dfc5e59bd2fbbb797cf90",
+              "kind": "cognition",
+              "summary": "用户最近只能周三晚上锻炼，安排运动时帮我记着。"
+            },
+            {
+              "id": "cognition-0f7c63b563b009a5c3d6bdfcc29a3dfca63d43f15f9fc2316a1aaf5d5a88f1f9",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            }
+          ],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户最近只能周三晚上锻炼，安排运动时帮我记着。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n纠正所指的较早原话（仅解释主题）：我最近只能周三晚上锻炼，安排运动时帮我记着。\n本人原话：刚才说错了，现在固定空出来的是周五晚上，周三已经没空了，以后按周五来安排。"
+          ],
+          "reply": "按你最近的安排（周五晚上固定空出来，周三已经没空了），下周放在**周五晚上，10月16日**最合适。\n\n如果你想，我也可以帮你在日历上建个提醒，到时候提醒你去锻炼。"
+        },
+        {
+          "id": "memory-03-switch-model",
+          "originalStatus": "passed",
+          "originalReason": null,
+          "semanticStatus": "skipped",
+          "behaviorPass": true,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-0f7c63b563b009a5c3d6bdfcc29a3dfca63d43f15f9fc2316a1aaf5d5a88f1f9",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            }
+          ],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：我习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+          ],
+          "reply": "早安，小禾！今天事情多就说明你很重要、能者多劳。先喝口水、深呼吸，把待办拆成“一件小事 → 完成 → 再下一件”，每完成一点就给自己一个小肯定。你已经在稳稳推进了，加油，我陪你一块扛过去。"
+        },
+        {
+          "id": "memory-04-person",
+          "originalStatus": "passed",
+          "originalReason": null,
+          "semanticStatus": "passed",
+          "behaviorPass": true,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-0f7c63b563b009a5c3d6bdfcc29a3dfca63d43f15f9fc2316a1aaf5d5a88f1f9",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            },
+            {
+              "id": "cognition-b3b4ec4056196945e4fe5701a451061b9503aab8db5608821a7b68445c9b9b00",
+              "kind": "cognition",
+              "summary": "用户习惯大家叫我小禾"
+            },
+            {
+              "id": "cognition-f309f86ebd3609d36ce0ab42fc9482cb66265a1bcc72a8f762370e05dbc646d4",
+              "kind": "cognition",
+              "summary": "用户以后你也这么叫我吧"
+            }
+          ],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n记忆：用户习惯大家叫我小禾\n\n记忆：用户以后你也这么叫我吧\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：阿岚是跟我一起准备秋季展览的朋友，她负责海报，我们周六要碰一下进度。"
+          ],
+          "reply": "小禾，给你一句，自然不生硬：\n\n**「阿岚，周六见面之前先跟你对一下～海报那边现在做到哪步了？有没有什么需要我这边配合的？」**\n\n如果想更随意一点，也可以：\n\n**「阿岚，周末快到了，咱俩的海报进度怎么样啦？周六见面细聊，你先给我透个底😄」**\n\n第一句更偏\"推进事情\"，第二句更轻松寒暄，看你们平时聊天的语气挑一个就行。"
+        },
+        {
+          "id": "memory-3x-correction",
+          "originalStatus": "failed",
+          "originalReason": "holdout must adopt its own current formal memory",
+          "semanticStatus": "passed",
+          "behaviorPass": true,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-0f7c63b563b009a5c3d6bdfcc29a3dfca63d43f15f9fc2316a1aaf5d5a88f1f9",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            },
+            {
+              "id": "cognition-b3b4ec4056196945e4fe5701a451061b9503aab8db5608821a7b68445c9b9b00",
+              "kind": "cognition",
+              "summary": "用户习惯大家叫我小禾"
+            },
+            {
+              "id": "cognition-f309f86ebd3609d36ce0ab42fc9482cb66265a1bcc72a8f762370e05dbc646d4",
+              "kind": "cognition",
+              "summary": "用户以后你也这么叫我吧"
+            }
+          ],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n记忆：用户习惯大家叫我小禾\n\n记忆：用户以后你也这么叫我吧\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：我做手冲咖啡一直按粉水比1比15，之后帮我照这个比例算。\n\n纠正所指的较早原话（仅解释主题）：我做手冲咖啡一直按粉水比1比15，之后帮我照这个比例算。\n本人原话：更正，往后统一用1比17，原来的1比15停用。"
+          ],
+          "reply": "小禾，下一杯按 **1:17** 来，之前的 1:15 已经停用了。\n\n举例：15 克咖啡粉，就配 15×17 = 255 克水。"
+        },
+        {
+          "id": "memory-3x-person",
+          "originalStatus": "failed",
+          "originalReason": "holdout must adopt its own current formal memory",
+          "semanticStatus": "passed",
+          "behaviorPass": true,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-0f7c63b563b009a5c3d6bdfcc29a3dfca63d43f15f9fc2316a1aaf5d5a88f1f9",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            },
+            {
+              "id": "cognition-b3b4ec4056196945e4fe5701a451061b9503aab8db5608821a7b68445c9b9b00",
+              "kind": "cognition",
+              "summary": "用户习惯大家叫我小禾"
+            },
+            {
+              "id": "cognition-f309f86ebd3609d36ce0ab42fc9482cb66265a1bcc72a8f762370e05dbc646d4",
+              "kind": "cognition",
+              "summary": "用户以后你也这么叫我吧"
+            }
+          ],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n记忆：用户习惯大家叫我小禾\n\n记忆：用户以后你也这么叫我吧\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：今天事情有点多，跟我打个招呼，鼓励我一下吧。\n\n本人原话：我准备找阿岚聊聊，帮我写一句自然点的开场白。\n\n本人原话：顾遥和我是博物馆志愿服务的同组伙伴，我们每月一起负责展厅导览。"
+          ],
+          "reply": "小禾，给你一句自然的：\n\n「顾遥，好巧！上次展厅里多亏你兜场，下次碰面请你喝杯咖啡，顺便把导览词剩下的部分对一对～」\n\n要是想更简短口语一点，也可以用：「顾遥～下次碰面可算能当面谢你了，上次真靠你救场！」"
+        },
+        {
+          "id": "memory-3x-preference",
+          "originalStatus": "failed",
+          "originalReason": "reply_matches did not match expected value; holdout must adopt its own current formal memory",
+          "semanticStatus": "failed",
+          "behaviorPass": false,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-0f7c63b563b009a5c3d6bdfcc29a3dfca63d43f15f9fc2316a1aaf5d5a88f1f9",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            },
+            {
+              "id": "cognition-b3b4ec4056196945e4fe5701a451061b9503aab8db5608821a7b68445c9b9b00",
+              "kind": "cognition",
+              "summary": "用户习惯大家叫我小禾"
+            },
+            {
+              "id": "cognition-f309f86ebd3609d36ce0ab42fc9482cb66265a1bcc72a8f762370e05dbc646d4",
+              "kind": "cognition",
+              "summary": "用户以后你也这么叫我吧"
+            }
+          ],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n记忆：用户习惯大家叫我小禾\n\n记忆：用户以后你也这么叫我吧\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：我准备找阿岚聊聊，帮我写一句自然点的开场白。\n\n本人原话：替我给顾遥写一句下次碰面的招呼。"
+          ],
+          "reply": "小禾，给你一句：\n\n**\"单程15公里以内，累计爬升不超过200米，尽量选有独立骑行道、沿途有补水点的路线，往返能在半天内完成，避开货车多的主干道。\"**\n\n如果想更短一点的版本：**\"平路为主、十来公里、有骑行道、半天能回，最好沿途有地方喝水休息。\"**"
+        }
+      ]
+    },
+    {
+      "name": "final-matrix",
+      "model": "lan",
+      "formationWaitMs": 0,
+      "original": {
+        "passed": 3,
+        "failed": 4,
+        "manual": 0,
+        "unsupported": 0,
+        "skippedChecks": 6,
+        "passRate": 0.42857142857142855,
+        "coverage": 0.42857142857142855
+      },
+      "fourBehavior": 4,
+      "cBehavior": 3,
+      "results": [
+        {
+          "id": "memory-01-preference",
+          "originalStatus": "failed",
+          "originalReason": "memory_used did not match expected value",
+          "semanticStatus": "passed",
+          "behaviorPass": true,
+          "formalMemoryUsed": [],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。我看到一大段术语就头疼。"
+          ],
+          "reply": "缓存说白了就是“把常用的东西先放手边，别每次都跑远路去拿”。\n\n**先用买菜的小例子讲明白：**\n\n你家楼下有菜场，离你家走路 20 分钟。今天买菜，你去了菜场挑了西红柿，回家路上顺手在小区门口的小便利店买了 2 个，放在冰箱里。\n\n* 明天中午要做番茄炒蛋，你先去冰箱看一下。冰箱里还有昨天买的西红柿，直接拿来用，不用再去菜场。——这就是**缓存**：把刚用过、可能很快又要用的东西，先放到离你最近、最快能拿到地方。\n* 后天西红柿坏了，冰箱里没有了，你才又去菜场买。——这就是**缓存失效**，需要重新去“源头”取数据。\n\n便利店就是缓存，菜场就是原始数据。缓存的目的是省时间、省力气。\n\n**再讲原理：**\n\n计算机里也一样。每次要数据都要去“源头”取，比如磁盘、网络服务器、数据库，都会花时间。缓存就是把这些刚取过、经常要用的数据，临时放到更快、更近的地方，比如：\n\n* CPU 里的 L1/L2/L3 缓存，比去主内存快几十倍\n* 内存里的程序缓存，比去硬盘快上万倍\n* 浏览器缓存，把网页图片存本地，下次打开不用重新下载\n* CDN / Redis 这类网络缓存，把热门内容放在离用户近的服务器上\n\n核心有三件事：\n1. **命中**：想要的东西在缓存里，直接用，最快\n2. **未命中**：缓存里没有，去源头取，取完通常会放一份到缓存里\n3. **失效策略**：缓存不能一直放，要定规则，比如放多久自动扔掉、数据更新后就失效，不然你会一直用坏掉的西红柿。\n\n所以缓存的本质不是“存东西”，而是**用空间和一点点复杂度，换取速度**。"
+        },
+        {
+          "id": "memory-02-correction",
+          "originalStatus": "passed",
+          "originalReason": null,
+          "semanticStatus": "passed",
+          "behaviorPass": true,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-c445a48933a713bb96d3d9f80527e7072c674f4da4582a76483411455bbb94a9",
+              "kind": "cognition",
+              "summary": "用户最近只能周三晚上锻炼，安排运动时帮我记着。"
+            },
+            {
+              "id": "cognition-cabef9f0bf84df0463f97eb3271d1231c26fec6226a4256846af736eefdf42eb",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            }
+          ],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户最近只能周三晚上锻炼，安排运动时帮我记着。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n纠正所指的较早原话（仅解释主题）：我最近只能周三晚上锻炼，安排运动时帮我记着。\n本人原话：刚才说错了，现在固定空出来的是周五晚上，周三已经没空了，以后按周五来安排。"
+          ],
+          "reply": "根据你最新的纠正，现在固定空出来的时间是**周五晚上**，周三已经没空了，以后按周五安排。\n\n下周的话比较合适的是 **下周五 2026-10-16 晚上**。这个时间跟你说的固定空档一致。\n\n需要我帮你把下周五晚上的锻炼直接建个提醒/定时任务吗？"
+        },
+        {
+          "id": "memory-03-switch-model",
+          "originalStatus": "passed",
+          "originalReason": null,
+          "semanticStatus": "skipped",
+          "behaviorPass": true,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-cabef9f0bf84df0463f97eb3271d1231c26fec6226a4256846af736eefdf42eb",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            }
+          ],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：我习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+          ],
+          "reply": "小禾，早上好！☀️\n\n今天事情多没关系，一件一件来就好——就像逛菜市场，先把要买的菜在心里列个清单，然后挨个挑，挑着挑着篮子就满了。别急着一口气全拎起来，那反而容易摔。\n\n你一直都在稳稳地往前走，这点我看得清楚。今天也按自己的节奏来，能清一件是一件，每打一个勾都是赚到。\n\n加油，小禾！忙完了记得给自己倒杯水歇一会儿。💪"
+        },
+        {
+          "id": "memory-04-person",
+          "originalStatus": "passed",
+          "originalReason": null,
+          "semanticStatus": "passed",
+          "behaviorPass": true,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-cabef9f0bf84df0463f97eb3271d1231c26fec6226a4256846af736eefdf42eb",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            },
+            {
+              "id": "cognition-43393f234b5658dc39e069a5679658125b92d6bd9ee0984e98d232c8efe542da",
+              "kind": "cognition",
+              "summary": "用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+            }
+          ],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n记忆：用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：阿岚是跟我一起准备秋季展览的朋友，她负责海报，我们周六要碰一下进度。"
+          ],
+          "reply": "可以这样开场，轻松自然：\n\n“阿岚早，周六碰进度之前想先跟你对一下海报这边的想法，有空现在聊两句吗？”\n\n需要更随意的版本也可以用：“阿岚，我在整理秋季展览的物料，关于海报部分想跟你对一下细节，方便现在说几句吗？”"
+        },
+        {
+          "id": "memory-3x-correction",
+          "originalStatus": "failed",
+          "originalReason": "holdout must adopt its own current formal memory",
+          "semanticStatus": "passed",
+          "behaviorPass": true,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-cabef9f0bf84df0463f97eb3271d1231c26fec6226a4256846af736eefdf42eb",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            },
+            {
+              "id": "cognition-43393f234b5658dc39e069a5679658125b92d6bd9ee0984e98d232c8efe542da",
+              "kind": "cognition",
+              "summary": "用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+            }
+          ],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n记忆：用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：我做手冲咖啡一直按粉水比1比15，之后帮我照这个比例算。\n\n纠正所指的较早原话（仅解释主题）：我做手冲咖啡一直按粉水比1比15，之后帮我照这个比例算。\n本人原话：更正，往后统一用1比17，原来的1比15停用。"
+          ],
+          "reply": "小禾，你现在用的手冲粉水比是 **1:17**。\n\n之前你说一直按 1:15，后来明确更正为往后统一用 1:17，原来的 1:15 已停用，按这个比例算下一杯就行。"
+        },
+        {
+          "id": "memory-3x-person",
+          "originalStatus": "failed",
+          "originalReason": "holdout must adopt its own current formal memory",
+          "semanticStatus": "passed",
+          "behaviorPass": true,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-cabef9f0bf84df0463f97eb3271d1231c26fec6226a4256846af736eefdf42eb",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            },
+            {
+              "id": "cognition-43393f234b5658dc39e069a5679658125b92d6bd9ee0984e98d232c8efe542da",
+              "kind": "cognition",
+              "summary": "用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+            }
+          ],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n记忆：用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：今天事情有点多，跟我打个招呼，鼓励我一下吧。\n\n本人原话：我准备找阿岚聊聊，帮我写一句自然点的开场白。\n\n本人原话：顾遥和我是博物馆志愿服务的同组伙伴，我们每月一起负责展厅导览。"
+          ],
+          "reply": "可以这样说：\n\n“顾遥，下次见面再一起聊聊本月的展厅导览安排吧，期待跟你搭档。”"
+        },
+        {
+          "id": "memory-3x-preference",
+          "originalStatus": "failed",
+          "originalReason": "holdout must adopt its own current formal memory",
+          "semanticStatus": "passed",
+          "behaviorPass": true,
+          "formalMemoryUsed": [
+            {
+              "id": "cognition-cabef9f0bf84df0463f97eb3271d1231c26fec6226a4256846af736eefdf42eb",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            },
+            {
+              "id": "cognition-43393f234b5658dc39e069a5679658125b92d6bd9ee0984e98d232c8efe542da",
+              "kind": "cognition",
+              "summary": "用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+            }
+          ],
+          "provisionalQuoteInActualRequest": true,
+          "matchingRequests": 1,
+          "context": [
+            "【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。\n\n记忆：用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\n\n记忆：用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：我准备找阿岚聊聊，帮我写一句自然点的开场白。\n\n本人原话：替我给顾遥写一句下次碰面的招呼。\n\n本人原话：我选骑行路线一直避开陡坡，更喜欢沿河的平缓路段。"
+          ],
+          "reply": "挑选周末单车路线要求：优先沿河平缓路段，避开陡坡，保证里程适中且风景好，适合轻松骑行。"
+        }
+      ]
+    }
+  ],
+  "eight": [
+    {
+      "name": "eight",
+      "model": "mimo",
+      "revision": {
+        "weftmate": "f787c3c1b1215b969a4db8e143b18da0b2421d5a",
+        "core": "50642726ee3c9069546f87d282f0034d15222c6b"
+      },
+      "summary": {
+        "passed": 7,
+        "failed": 1,
+        "eightStepGate": false
+      },
+      "interrupted": true,
+      "steps": [
+        {
+          "id": "01",
+          "status": "passed",
+          "checks": {
+            "completed": true,
+            "exactUserEvent": true,
+            "nonemptyReply": true
+          }
+        },
+        {
+          "id": "02",
+          "status": "passed",
+          "checks": {
+            "proposal": true,
+            "confirmationCompleted": true,
+            "confirmationSource": true,
+            "semanticAccepted": true
+          }
+        },
+        {
+          "id": "03",
+          "status": "passed",
+          "checks": {
+            "person": true,
+            "relationship": true,
+            "evaluation": true,
+            "decision": true,
+            "personSource": true,
+            "relationshipSource": true,
+            "evaluationSource": true,
+            "decisionSource": true
+          }
+        },
+        {
+          "id": "04",
+          "status": "passed",
+          "checks": {
+            "newSession": true,
+            "changedModel": true,
+            "completed": true,
+            "replyName": true,
+            "formalMemoryAdopted": true,
+            "semanticAccepted": true
+          }
+        },
+        {
+          "id": "05",
+          "status": "passed",
+          "checks": {
+            "correctionCompleted": true,
+            "latestStored": true,
+            "oldInvalid": true,
+            "oldSourceExplainsChange": true,
+            "correctedSource": true,
+            "bothRepliesLatest": true,
+            "bothAdoptLatest": true,
+            "oldExcluded": true,
+            "replacementReason": true,
+            "bothExplainReplacement": true,
+            "semanticAccepted": true
+          }
+        },
+        {
+          "id": "06",
+          "status": "passed",
+          "checks": {
+            "restarted": true,
+            "persistedLatest": true,
+            "latestReply": true,
+            "latestAdopted": true,
+            "semanticAccepted": true
+          }
+        },
+        {
+          "id": "07",
+          "status": "failed",
+          "checks": {
+            "uiSource": true
+          },
+          "reason": "page.screenshot: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n"
+        },
+        {
+          "id": "08",
+          "status": "passed",
+          "checks": {
+            "actualCoreStopped": true,
+            "unavailable": true,
+            "chatCompleted": true,
+            "noMemoryInjected": true,
+            "chatNotice": true,
+            "memoryPageNotice": true,
+            "semanticAccepted": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "eight",
+      "model": "lan",
+      "revision": {
+        "weftmate": "f787c3c1b1215b969a4db8e143b18da0b2421d5a",
+        "core": "50642726ee3c9069546f87d282f0034d15222c6b"
+      },
+      "interrupted": true,
+      "steps": [
+        {
+          "id": "01",
+          "status": "passed",
+          "checks": {
+            "completed": true,
+            "exactUserEvent": true,
+            "nonemptyReply": true
+          }
+        },
+        {
+          "id": "02",
+          "status": "passed",
+          "checks": {
+            "proposal": true,
+            "confirmationCompleted": true,
+            "confirmationSource": true,
+            "semanticAccepted": true
+          }
+        },
+        {
+          "id": "03",
+          "status": "passed",
+          "checks": {
+            "person": true,
+            "relationship": true,
+            "evaluation": true,
+            "decision": true,
+            "personSource": true,
+            "relationshipSource": true,
+            "evaluationSource": true,
+            "decisionSource": true
+          }
+        },
+        {
+          "id": "04",
+          "status": "passed",
+          "checks": {
+            "newSession": true,
+            "changedModel": true,
+            "completed": true,
+            "replyName": true,
+            "formalMemoryAdopted": true,
+            "semanticAccepted": true
+          }
+        },
+        {
+          "id": "05",
+          "status": "failed",
+          "checks": {
+            "correctionCompleted": true,
+            "latestStored": true,
+            "oldInvalid": true,
+            "oldSourceExplainsChange": true,
+            "correctedSource": true,
+            "bothRepliesLatest": true,
+            "bothAdoptLatest": true,
+            "oldExcluded": true,
+            "replacementReason": true,
+            "bothExplainReplacement": false,
+            "semanticAccepted": true
+          }
+        },
+        {
+          "id": "06",
+          "status": "failed",
+          "checks": {
+            "restarted": true,
+            "persistedLatest": true,
+            "latestReply": false,
+            "latestAdopted": false,
+            "semanticAccepted": false
+          }
+        },
+        {
+          "id": "07",
+          "status": "failed",
+          "checks": {
+            "uiSource": true
+          },
+          "reason": "page.screenshot: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n"
+        },
+        {
+          "id": "08",
+          "status": "running",
+          "checks": {}
+        }
+      ]
+    },
+    {
+      "name": "final-eight",
+      "model": "mimo",
+      "revision": {
+        "weftmate": "960a5f28574c1348f30d93e9b7c6dc8508a36787",
+        "core": "234f2a50d8f646ae699e6a7791421d8216ad969e"
+      },
+      "summary": {
+        "passed": 2,
+        "failed": 1,
+        "eightStepGate": false
+      },
+      "interrupted": true,
+      "steps": [
+        {
+          "id": "01",
+          "status": "passed",
+          "checks": {
+            "completed": true,
+            "exactUserEvent": true,
+            "nonemptyReply": true
+          }
+        },
+        {
+          "id": "02",
+          "status": "passed",
+          "checks": {
+            "proposal": true,
+            "confirmationCompleted": true,
+            "confirmationSource": true,
+            "semanticAccepted": true
+          }
+        },
+        {
+          "id": "03",
+          "status": "failed",
+          "checks": {
+            "person": false,
+            "relationship": false,
+            "evaluation": false,
+            "decision": true,
+            "personSource": false,
+            "relationshipSource": false,
+            "evaluationSource": false,
+            "decisionSource": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "final-eight",
+      "model": "lan",
+      "revision": {
+        "weftmate": "960a5f28574c1348f30d93e9b7c6dc8508a36787",
+        "core": "234f2a50d8f646ae699e6a7791421d8216ad969e"
+      },
+      "interrupted": true,
+      "steps": [
+        {
+          "id": "01",
+          "status": "running",
+          "checks": {}
+        }
+      ]
+    },
+    {
+      "name": "forget-mimo",
+      "model": "mimo",
+      "revision": {
+        "weftmate": "e92f88d69c8ed4332bb22c659aab6330b1562b51",
+        "core": "234f2a50d8f646ae699e6a7791421d8216ad969e"
+      },
+      "summary": {
+        "passed": 3,
+        "failed": 0,
+        "eightStepGate": false
+      },
+      "interrupted": false,
+      "steps": [
+        {
+          "id": "06",
+          "status": "passed",
+          "checks": {
+            "restarted": true,
+            "persistedLatest": true,
+            "latestReply": true,
+            "latestAdopted": true,
+            "semanticAccepted": true
+          }
+        },
+        {
+          "id": "07",
+          "status": "passed",
+          "checks": {
+            "uiSource": true,
+            "exportBeforeForget": true,
+            "memoryPageForget": true,
+            "originalChatRetained": true,
+            "forgotSourceEvidence": true,
+            "allConversationsDeleted": true,
+            "noFormalFact": true,
+            "memoryExportsExcludeForgotten": true,
+            "exportSucceeded": true,
+            "exportNoRecoverableBytes": true,
+            "exportNoRecoverableDatabase": true,
+            "noRecallAfterForget": true,
+            "semanticAccepted": true
+          },
+          "export": {
+            "kind": "BK-1 local backup",
+            "status": 202,
+            "dedicatedMemoryExport": true,
+            "filesWithForgottenName": [],
+            "files": 103,
+            "databaseTextScan": {
+              "tables": [
+                {
+                  "table": "boundary_evidence_content",
+                  "columns": [
+                    "evidence_id",
+                    "raw_content_hash"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "clarification",
+                  "columns": [
+                    "clarification_id",
+                    "source_job_id",
+                    "source_outcome_id",
+                    "subject_id",
+                    "result_session_id",
+                    "question",
+                    "target_hint",
+                    "state",
+                    "answer_evidence_id",
+                    "follow_up_job_id",
+                    "opened_at",
+                    "answered_at",
+                    "resolved_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "cognition",
+                  "columns": [
+                    "id",
+                    "subject_id",
+                    "content",
+                    "content_type",
+                    "formed_by",
+                    "confidence",
+                    "cred_status",
+                    "scope",
+                    "valid_at",
+                    "invalid_at",
+                    "asked_at",
+                    "archived_at",
+                    "muted_at",
+                    "created_at",
+                    "updated_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "cognition_evidence",
+                  "columns": [
+                    "cognition_id",
+                    "evidence_id",
+                    "relation"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "cognition_target",
+                  "columns": [
+                    "cognition_id",
+                    "target_entity_id",
+                    "perspective_entity_id"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "cognition_transitions",
+                  "columns": [
+                    "id",
+                    "prior_cognition_id",
+                    "replacement_cognition_id",
+                    "reason",
+                    "revision"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "entity",
+                  "columns": [
+                    "id",
+                    "world_id",
+                    "kind",
+                    "canonical_name",
+                    "invalid_at",
+                    "created_at",
+                    "updated_at",
+                    "aliases_json"
+                  ],
+                  "rows": 1
+                },
+                {
+                  "table": "event",
+                  "columns": [
+                    "id",
+                    "subject_id",
+                    "summary",
+                    "occurred_at",
+                    "created_at",
+                    "consolidated"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "event_evidence",
+                  "columns": [
+                    "event_id",
+                    "evidence_id"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "evidence",
+                  "columns": [
+                    "id",
+                    "subject_id",
+                    "source_kind",
+                    "host_id",
+                    "origin_id",
+                    "occurred_at",
+                    "recorded_at",
+                    "raw_content",
+                    "summary",
+                    "allow_local_read",
+                    "allow_cloud_read",
+                    "allow_inference",
+                    "corrects_evidence_id",
+                    "deleted_at",
+                    "preceding_ai_context"
+                  ],
+                  "rows": 3
+                },
+                {
+                  "table": "evidence_ledger",
+                  "columns": [
+                    "id",
+                    "content",
+                    "payload_json"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "evidence_origin_history",
+                  "columns": [
+                    "evidence_id",
+                    "origin_id"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "evidence_retraction",
+                  "columns": [
+                    "cognition_id",
+                    "evidence_id",
+                    "retracted_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "hard_deleted_origin",
+                  "columns": [
+                    "origin_hash",
+                    "subject_id",
+                    "evidence_id"
+                  ],
+                  "rows": 3
+                },
+                {
+                  "table": "identity_state",
+                  "columns": [
+                    "singleton",
+                    "identity_schema_version",
+                    "world_id",
+                    "memory_revision",
+                    "memory_snapshot_hash",
+                    "identity_graph_hash",
+                    "state_json",
+                    "state_hash",
+                    "storage_generation"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "interaction_commitment",
+                  "columns": [
+                    "id",
+                    "subject_id",
+                    "conversation_id",
+                    "episode_id",
+                    "assistant_message_id",
+                    "kind",
+                    "content",
+                    "raw_quote",
+                    "status",
+                    "created_at",
+                    "updated_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "interaction_context",
+                  "columns": [
+                    "id",
+                    "subject_id",
+                    "conversation_id",
+                    "episode_id",
+                    "context_json",
+                    "context_hash",
+                    "created_at"
+                  ],
+                  "rows": 3
+                },
+                {
+                  "table": "management_log",
+                  "columns": [
+                    "op",
+                    "target_kind",
+                    "target_id",
+                    "reason",
+                    "detail",
+                    "created_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "memory_state",
+                  "columns": [
+                    "singleton",
+                    "revision",
+                    "snapshot_json",
+                    "snapshot_hash"
+                  ],
+                  "rows": 1
+                },
+                {
+                  "table": "memory_world_job",
+                  "columns": [
+                    "job_id",
+                    "job_schema_version",
+                    "boundary_event_id",
+                    "boundary_payload_hash",
+                    "boundary_schema_version",
+                    "provider_name",
+                    "parent_session_id",
+                    "result_session_id",
+                    "boundary_mode",
+                    "formal_target_json",
+                    "formal_target_hash",
+                    "subject_id",
+                    "host_id",
+                    "evidence_ids_json",
+                    "state",
+                    "attempts",
+                    "next_attempt_at",
+                    "claim_owner",
+                    "claim_token",
+                    "claimed_at",
+                    "lease_expires_at",
+                    "heartbeat_at",
+                    "fencing_generation",
+                    "model_dispatch_started_at",
+                    "model_completed_at",
+                    "model_task",
+                    "model_provider",
+                    "model_name",
+                    "model_usage_json",
+                    "model_result_json",
+                    "model_result_hash",
+                    "world_result_json",
+                    "result_hash",
+                    "delivery_receipt_json",
+                    "delivery_receipt_hash",
+                    "created_at",
+                    "completed_at",
+                    "last_error_type",
+                    "terminal_state",
+                    "terminal_detail"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "observed_source",
+                  "columns": [
+                    "subject_id",
+                    "host_id",
+                    "source_hash",
+                    "evidence_id",
+                    "version",
+                    "payload_hash",
+                    "permission_version",
+                    "withdrawn_through",
+                    "valid_at",
+                    "valid_until"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "portable_import_receipt",
+                  "columns": [
+                    "receipt_id",
+                    "schema_version",
+                    "command_id",
+                    "plan_hash",
+                    "bundle_id",
+                    "source_subject_id",
+                    "target_subject_id",
+                    "target_world_revision",
+                    "target_snapshot_hash",
+                    "after_world_revision",
+                    "result_state",
+                    "result_json",
+                    "result_hash",
+                    "completed_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "proposal_decision_receipts",
+                  "columns": [
+                    "proposal_id",
+                    "offered_result_hash",
+                    "effective_decision",
+                    "world_revision",
+                    "snapshot_hash",
+                    "decided_at",
+                    "receipt_hash"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "proposals",
+                  "columns": [
+                    "id",
+                    "kind",
+                    "base_revision",
+                    "result_hash",
+                    "payload_json",
+                    "review_payload_json",
+                    "status"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "relationship",
+                  "columns": [
+                    "id",
+                    "world_id",
+                    "source_entity_id",
+                    "target_entity_id",
+                    "relation_type",
+                    "content",
+                    "formed_by",
+                    "confidence",
+                    "cred_status",
+                    "invalid_at",
+                    "created_at",
+                    "updated_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "relationship_evidence",
+                  "columns": [
+                    "relationship_id",
+                    "evidence_id",
+                    "relation"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "relationship_transitions",
+                  "columns": [
+                    "id",
+                    "prior_relationship_id",
+                    "replacement_relationship_id",
+                    "reason",
+                    "revision"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "retraction",
+                  "columns": [
+                    "id",
+                    "prior_cognition_id",
+                    "prior_relationship_id",
+                    "reason",
+                    "revision",
+                    "created_at",
+                    "prior_event_id"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "semantic_resolution",
+                  "columns": [
+                    "id",
+                    "evidence_id",
+                    "resolved_content",
+                    "response_act",
+                    "prompt_act",
+                    "proposition_origin",
+                    "assertion_strength",
+                    "required_context",
+                    "resolver_version",
+                    "created_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "terminal_outcome",
+                  "columns": [
+                    "outcome_id",
+                    "schema_version",
+                    "job_id",
+                    "boundary_event_id",
+                    "provider_name",
+                    "subject_id",
+                    "parent_session_id",
+                    "result_session_id",
+                    "terminal_state",
+                    "terminal_detail",
+                    "world_revision",
+                    "world_result_json",
+                    "result_hash",
+                    "occurred_at",
+                    "delivery_state",
+                    "attempts",
+                    "next_attempt_at",
+                    "claim_owner",
+                    "claim_token",
+                    "lease_expires_at",
+                    "heartbeat_at",
+                    "delivered_at",
+                    "last_error"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "trust_command",
+                  "columns": [
+                    "command_id",
+                    "schema_version",
+                    "subject_id",
+                    "actor",
+                    "expected_world_revision",
+                    "operation",
+                    "target_kind",
+                    "target_id",
+                    "payload_json",
+                    "request_hash",
+                    "submitted_at"
+                  ],
+                  "rows": 3
+                },
+                {
+                  "table": "trust_command_receipt",
+                  "columns": [
+                    "command_id",
+                    "schema_version",
+                    "accepted",
+                    "result_state",
+                    "before_revision",
+                    "after_revision",
+                    "affected_ids_json",
+                    "transition_ids_json",
+                    "result_hash",
+                    "completed_at"
+                  ],
+                  "rows": 3
+                },
+                {
+                  "table": "trust_command_rejection",
+                  "columns": [
+                    "command_id",
+                    "reason_code"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "trust_delete_storage_status",
+                  "columns": [
+                    "command_id",
+                    "state",
+                    "detail_code"
+                  ],
+                  "rows": 3
+                },
+                {
+                  "table": "world_delete_marker",
+                  "columns": [
+                    "subject_id",
+                    "object_kind",
+                    "item_id",
+                    "deleted_at"
+                  ],
+                  "rows": 6
+                },
+                {
+                  "table": "world_event",
+                  "columns": [
+                    "id",
+                    "world_id",
+                    "content",
+                    "occurred_at",
+                    "time_expression",
+                    "participants_json",
+                    "objects_json",
+                    "formed_by",
+                    "confidence",
+                    "cred_status",
+                    "invalid_at",
+                    "created_at",
+                    "updated_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "world_event_evidence",
+                  "columns": [
+                    "world_event_id",
+                    "evidence_id",
+                    "relation"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "world_item_lifecycle",
+                  "columns": [
+                    "subject_id",
+                    "object_kind",
+                    "item_id",
+                    "archived_at",
+                    "muted_at",
+                    "updated_at"
+                  ],
+                  "rows": 0
+                }
+              ],
+              "tableCount": 38,
+              "hits": [],
+              "hitCount": 0,
+              "needles": [
+                "王小明",
+                "好兄弟",
+                "表弟",
+                "王小明打游戏挺厉害，是我好兄弟。",
+                "更正一下：王小明是我的表弟，不是好兄弟。以后组队还是找他。"
+              ]
+            }
+          }
+        },
+        {
+          "id": "08",
+          "status": "passed",
+          "checks": {
+            "actualCoreStopped": true,
+            "unavailable": true,
+            "chatCompleted": true,
+            "noMemoryInjected": true,
+            "chatNotice": true,
+            "memoryPageNotice": true,
+            "mobileWebNotice": true,
+            "recoveryClearsNotice": true,
+            "semanticAccepted": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "verified-eight",
+      "model": "mimo",
+      "revision": {
+        "weftmate": "373c731684bb1891840b4cd93f7384f2e57c7063",
+        "core": "8913d5ab81f2efacb752ef956387df45b5cb28cc"
+      },
+      "summary": {
+        "passed": 8,
+        "failed": 0,
+        "eightStepGate": true
+      },
+      "interrupted": false,
+      "steps": [
+        {
+          "id": "01",
+          "status": "passed",
+          "checks": {
+            "completed": true,
+            "exactUserEvent": true,
+            "nonemptyReply": true
+          }
+        },
+        {
+          "id": "02",
+          "status": "passed",
+          "checks": {
+            "proposal": true,
+            "confirmationCompleted": true,
+            "confirmationSource": true,
+            "semanticAccepted": true
+          }
+        },
+        {
+          "id": "03",
+          "status": "passed",
+          "checks": {
+            "person": true,
+            "relationship": true,
+            "evaluation": true,
+            "decision": true,
+            "personSource": true,
+            "relationshipSource": true,
+            "evaluationSource": true,
+            "decisionSource": true
+          }
+        },
+        {
+          "id": "04",
+          "status": "passed",
+          "checks": {
+            "newSession": true,
+            "changedModel": true,
+            "completed": true,
+            "replyName": true,
+            "formalMemoryAdopted": true,
+            "semanticAccepted": true
+          }
+        },
+        {
+          "id": "05",
+          "status": "passed",
+          "checks": {
+            "correctionCompleted": true,
+            "latestStored": true,
+            "oldInvalid": true,
+            "oldSourceExplainsChange": true,
+            "correctedSource": true,
+            "bothRepliesLatest": true,
+            "bothAdoptLatest": true,
+            "oldExcluded": true,
+            "replacementReason": true,
+            "bothExplainReplacement": true,
+            "semanticAccepted": true
+          }
+        },
+        {
+          "id": "06",
+          "status": "passed",
+          "checks": {
+            "restarted": true,
+            "persistedLatest": true,
+            "latestReply": true,
+            "latestAdopted": true,
+            "semanticAccepted": true
+          }
+        },
+        {
+          "id": "07",
+          "status": "passed",
+          "checks": {
+            "uiSource": true,
+            "forgotSourceEvidence": true,
+            "allConversationsDeleted": true,
+            "noFormalFact": true,
+            "exportSucceeded": true,
+            "exportNoRecoverableBytes": true,
+            "exportNoRecoverableDatabase": true,
+            "noRecallAfterForget": true,
+            "semanticAccepted": true
+          },
+          "export": {
+            "kind": "BK-1 local backup",
+            "status": 202,
+            "dedicatedMemoryExport": false,
+            "filesWithForgottenName": [],
+            "files": 104,
+            "databaseTextScan": {
+              "tables": [
+                {
+                  "table": "boundary_evidence_content",
+                  "columns": [
+                    "evidence_id",
+                    "raw_content_hash"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "clarification",
+                  "columns": [
+                    "clarification_id",
+                    "source_job_id",
+                    "source_outcome_id",
+                    "subject_id",
+                    "result_session_id",
+                    "question",
+                    "target_hint",
+                    "state",
+                    "answer_evidence_id",
+                    "follow_up_job_id",
+                    "opened_at",
+                    "answered_at",
+                    "resolved_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "cognition",
+                  "columns": [
+                    "id",
+                    "subject_id",
+                    "content",
+                    "content_type",
+                    "formed_by",
+                    "confidence",
+                    "cred_status",
+                    "scope",
+                    "valid_at",
+                    "invalid_at",
+                    "asked_at",
+                    "archived_at",
+                    "muted_at",
+                    "created_at",
+                    "updated_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "cognition_evidence",
+                  "columns": [
+                    "cognition_id",
+                    "evidence_id",
+                    "relation"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "cognition_target",
+                  "columns": [
+                    "cognition_id",
+                    "target_entity_id",
+                    "perspective_entity_id"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "cognition_transitions",
+                  "columns": [
+                    "id",
+                    "prior_cognition_id",
+                    "replacement_cognition_id",
+                    "reason",
+                    "revision"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "entity",
+                  "columns": [
+                    "id",
+                    "world_id",
+                    "kind",
+                    "canonical_name",
+                    "invalid_at",
+                    "created_at",
+                    "updated_at",
+                    "aliases_json"
+                  ],
+                  "rows": 1
+                },
+                {
+                  "table": "event",
+                  "columns": [
+                    "id",
+                    "subject_id",
+                    "summary",
+                    "occurred_at",
+                    "created_at",
+                    "consolidated"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "event_evidence",
+                  "columns": [
+                    "event_id",
+                    "evidence_id"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "evidence",
+                  "columns": [
+                    "id",
+                    "subject_id",
+                    "source_kind",
+                    "host_id",
+                    "origin_id",
+                    "occurred_at",
+                    "recorded_at",
+                    "raw_content",
+                    "summary",
+                    "allow_local_read",
+                    "allow_cloud_read",
+                    "allow_inference",
+                    "corrects_evidence_id",
+                    "deleted_at",
+                    "preceding_ai_context"
+                  ],
+                  "rows": 9
+                },
+                {
+                  "table": "evidence_ledger",
+                  "columns": [
+                    "id",
+                    "content",
+                    "payload_json"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "evidence_origin_history",
+                  "columns": [
+                    "evidence_id",
+                    "origin_id"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "evidence_retraction",
+                  "columns": [
+                    "cognition_id",
+                    "evidence_id",
+                    "retracted_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "hard_deleted_origin",
+                  "columns": [
+                    "origin_hash",
+                    "subject_id",
+                    "evidence_id"
+                  ],
+                  "rows": 9
+                },
+                {
+                  "table": "identity_state",
+                  "columns": [
+                    "singleton",
+                    "identity_schema_version",
+                    "world_id",
+                    "memory_revision",
+                    "memory_snapshot_hash",
+                    "identity_graph_hash",
+                    "state_json",
+                    "state_hash",
+                    "storage_generation"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "interaction_commitment",
+                  "columns": [
+                    "id",
+                    "subject_id",
+                    "conversation_id",
+                    "episode_id",
+                    "assistant_message_id",
+                    "kind",
+                    "content",
+                    "raw_quote",
+                    "status",
+                    "created_at",
+                    "updated_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "interaction_context",
+                  "columns": [
+                    "id",
+                    "subject_id",
+                    "conversation_id",
+                    "episode_id",
+                    "context_json",
+                    "context_hash",
+                    "created_at"
+                  ],
+                  "rows": 9
+                },
+                {
+                  "table": "management_log",
+                  "columns": [
+                    "op",
+                    "target_kind",
+                    "target_id",
+                    "reason",
+                    "detail",
+                    "created_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "memory_state",
+                  "columns": [
+                    "singleton",
+                    "revision",
+                    "snapshot_json",
+                    "snapshot_hash"
+                  ],
+                  "rows": 1
+                },
+                {
+                  "table": "memory_world_job",
+                  "columns": [
+                    "job_id",
+                    "job_schema_version",
+                    "boundary_event_id",
+                    "boundary_payload_hash",
+                    "boundary_schema_version",
+                    "provider_name",
+                    "parent_session_id",
+                    "result_session_id",
+                    "boundary_mode",
+                    "formal_target_json",
+                    "formal_target_hash",
+                    "subject_id",
+                    "host_id",
+                    "evidence_ids_json",
+                    "state",
+                    "attempts",
+                    "next_attempt_at",
+                    "claim_owner",
+                    "claim_token",
+                    "claimed_at",
+                    "lease_expires_at",
+                    "heartbeat_at",
+                    "fencing_generation",
+                    "model_dispatch_started_at",
+                    "model_completed_at",
+                    "model_task",
+                    "model_provider",
+                    "model_name",
+                    "model_usage_json",
+                    "model_result_json",
+                    "model_result_hash",
+                    "world_result_json",
+                    "result_hash",
+                    "delivery_receipt_json",
+                    "delivery_receipt_hash",
+                    "created_at",
+                    "completed_at",
+                    "last_error_type",
+                    "terminal_state",
+                    "terminal_detail"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "observed_source",
+                  "columns": [
+                    "subject_id",
+                    "host_id",
+                    "source_hash",
+                    "evidence_id",
+                    "version",
+                    "payload_hash",
+                    "permission_version",
+                    "withdrawn_through",
+                    "valid_at",
+                    "valid_until"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "portable_import_receipt",
+                  "columns": [
+                    "receipt_id",
+                    "schema_version",
+                    "command_id",
+                    "plan_hash",
+                    "bundle_id",
+                    "source_subject_id",
+                    "target_subject_id",
+                    "target_world_revision",
+                    "target_snapshot_hash",
+                    "after_world_revision",
+                    "result_state",
+                    "result_json",
+                    "result_hash",
+                    "completed_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "proposal_decision_receipts",
+                  "columns": [
+                    "proposal_id",
+                    "offered_result_hash",
+                    "effective_decision",
+                    "world_revision",
+                    "snapshot_hash",
+                    "decided_at",
+                    "receipt_hash"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "proposals",
+                  "columns": [
+                    "id",
+                    "kind",
+                    "base_revision",
+                    "result_hash",
+                    "payload_json",
+                    "review_payload_json",
+                    "status"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "relationship",
+                  "columns": [
+                    "id",
+                    "world_id",
+                    "source_entity_id",
+                    "target_entity_id",
+                    "relation_type",
+                    "content",
+                    "formed_by",
+                    "confidence",
+                    "cred_status",
+                    "invalid_at",
+                    "created_at",
+                    "updated_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "relationship_evidence",
+                  "columns": [
+                    "relationship_id",
+                    "evidence_id",
+                    "relation"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "relationship_transitions",
+                  "columns": [
+                    "id",
+                    "prior_relationship_id",
+                    "replacement_relationship_id",
+                    "reason",
+                    "revision"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "retraction",
+                  "columns": [
+                    "id",
+                    "prior_cognition_id",
+                    "prior_relationship_id",
+                    "reason",
+                    "revision",
+                    "created_at",
+                    "prior_event_id"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "semantic_resolution",
+                  "columns": [
+                    "id",
+                    "evidence_id",
+                    "resolved_content",
+                    "response_act",
+                    "prompt_act",
+                    "proposition_origin",
+                    "assertion_strength",
+                    "required_context",
+                    "resolver_version",
+                    "created_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "terminal_outcome",
+                  "columns": [
+                    "outcome_id",
+                    "schema_version",
+                    "job_id",
+                    "boundary_event_id",
+                    "provider_name",
+                    "subject_id",
+                    "parent_session_id",
+                    "result_session_id",
+                    "terminal_state",
+                    "terminal_detail",
+                    "world_revision",
+                    "world_result_json",
+                    "result_hash",
+                    "occurred_at",
+                    "delivery_state",
+                    "attempts",
+                    "next_attempt_at",
+                    "claim_owner",
+                    "claim_token",
+                    "lease_expires_at",
+                    "heartbeat_at",
+                    "delivered_at",
+                    "last_error"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "trust_command",
+                  "columns": [
+                    "command_id",
+                    "schema_version",
+                    "subject_id",
+                    "actor",
+                    "expected_world_revision",
+                    "operation",
+                    "target_kind",
+                    "target_id",
+                    "payload_json",
+                    "request_hash",
+                    "submitted_at"
+                  ],
+                  "rows": 9
+                },
+                {
+                  "table": "trust_command_receipt",
+                  "columns": [
+                    "command_id",
+                    "schema_version",
+                    "accepted",
+                    "result_state",
+                    "before_revision",
+                    "after_revision",
+                    "affected_ids_json",
+                    "transition_ids_json",
+                    "result_hash",
+                    "completed_at"
+                  ],
+                  "rows": 9
+                },
+                {
+                  "table": "trust_command_rejection",
+                  "columns": [
+                    "command_id",
+                    "reason_code"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "trust_delete_storage_status",
+                  "columns": [
+                    "command_id",
+                    "state",
+                    "detail_code"
+                  ],
+                  "rows": 9
+                },
+                {
+                  "table": "world_delete_marker",
+                  "columns": [
+                    "subject_id",
+                    "object_kind",
+                    "item_id",
+                    "deleted_at"
+                  ],
+                  "rows": 6
+                },
+                {
+                  "table": "world_event",
+                  "columns": [
+                    "id",
+                    "world_id",
+                    "content",
+                    "occurred_at",
+                    "time_expression",
+                    "participants_json",
+                    "objects_json",
+                    "formed_by",
+                    "confidence",
+                    "cred_status",
+                    "invalid_at",
+                    "created_at",
+                    "updated_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "world_event_evidence",
+                  "columns": [
+                    "world_event_id",
+                    "evidence_id",
+                    "relation"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "world_item_lifecycle",
+                  "columns": [
+                    "subject_id",
+                    "object_kind",
+                    "item_id",
+                    "archived_at",
+                    "muted_at",
+                    "updated_at"
+                  ],
+                  "rows": 0
+                }
+              ],
+              "tableCount": 38,
+              "hits": [],
+              "hitCount": 0,
+              "needles": [
+                "王小明",
+                "好兄弟",
+                "表弟",
+                "王小明打游戏挺厉害，是我好兄弟。",
+                "更正一下：王小明是我的表弟，不是好兄弟。以后组队还是找他。"
+              ]
+            }
+          }
+        },
+        {
+          "id": "08",
+          "status": "passed",
+          "checks": {
+            "actualCoreStopped": true,
+            "unavailable": true,
+            "chatCompleted": true,
+            "noMemoryInjected": true,
+            "chatNotice": true,
+            "memoryPageNotice": true,
+            "semanticAccepted": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "verified-eight",
+      "model": "lan",
+      "revision": {
+        "weftmate": "373c731684bb1891840b4cd93f7384f2e57c7063",
+        "core": "8913d5ab81f2efacb752ef956387df45b5cb28cc"
+      },
+      "summary": {
+        "passed": 8,
+        "failed": 0,
+        "eightStepGate": true
+      },
+      "interrupted": false,
+      "steps": [
+        {
+          "id": "01",
+          "status": "passed",
+          "checks": {
+            "completed": true,
+            "exactUserEvent": true,
+            "nonemptyReply": true
+          }
+        },
+        {
+          "id": "02",
+          "status": "passed",
+          "checks": {
+            "proposal": true,
+            "confirmationCompleted": true,
+            "confirmationSource": true,
+            "semanticAccepted": true
+          }
+        },
+        {
+          "id": "03",
+          "status": "passed",
+          "checks": {
+            "person": true,
+            "relationship": true,
+            "evaluation": true,
+            "decision": true,
+            "personSource": true,
+            "relationshipSource": true,
+            "evaluationSource": true,
+            "decisionSource": true
+          }
+        },
+        {
+          "id": "04",
+          "status": "passed",
+          "checks": {
+            "newSession": true,
+            "changedModel": true,
+            "completed": true,
+            "replyName": true,
+            "formalMemoryAdopted": true,
+            "semanticAccepted": true
+          }
+        },
+        {
+          "id": "05",
+          "status": "passed",
+          "checks": {
+            "correctionCompleted": true,
+            "latestStored": true,
+            "oldInvalid": true,
+            "oldSourceExplainsChange": true,
+            "correctedSource": true,
+            "bothRepliesLatest": true,
+            "bothAdoptLatest": true,
+            "oldExcluded": true,
+            "replacementReason": true,
+            "bothExplainReplacement": true,
+            "semanticAccepted": true
+          }
+        },
+        {
+          "id": "06",
+          "status": "passed",
+          "checks": {
+            "restarted": true,
+            "persistedLatest": true,
+            "latestReply": true,
+            "latestAdopted": true,
+            "semanticAccepted": true
+          }
+        },
+        {
+          "id": "07",
+          "status": "passed",
+          "checks": {
+            "uiSource": true,
+            "forgotSourceEvidence": true,
+            "allConversationsDeleted": true,
+            "noFormalFact": true,
+            "exportSucceeded": true,
+            "exportNoRecoverableBytes": true,
+            "exportNoRecoverableDatabase": true,
+            "noRecallAfterForget": true,
+            "semanticAccepted": true
+          },
+          "export": {
+            "kind": "BK-1 local backup",
+            "status": 202,
+            "dedicatedMemoryExport": false,
+            "filesWithForgottenName": [],
+            "files": 104,
+            "databaseTextScan": {
+              "tables": [
+                {
+                  "table": "boundary_evidence_content",
+                  "columns": [
+                    "evidence_id",
+                    "raw_content_hash"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "clarification",
+                  "columns": [
+                    "clarification_id",
+                    "source_job_id",
+                    "source_outcome_id",
+                    "subject_id",
+                    "result_session_id",
+                    "question",
+                    "target_hint",
+                    "state",
+                    "answer_evidence_id",
+                    "follow_up_job_id",
+                    "opened_at",
+                    "answered_at",
+                    "resolved_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "cognition",
+                  "columns": [
+                    "id",
+                    "subject_id",
+                    "content",
+                    "content_type",
+                    "formed_by",
+                    "confidence",
+                    "cred_status",
+                    "scope",
+                    "valid_at",
+                    "invalid_at",
+                    "asked_at",
+                    "archived_at",
+                    "muted_at",
+                    "created_at",
+                    "updated_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "cognition_evidence",
+                  "columns": [
+                    "cognition_id",
+                    "evidence_id",
+                    "relation"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "cognition_target",
+                  "columns": [
+                    "cognition_id",
+                    "target_entity_id",
+                    "perspective_entity_id"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "cognition_transitions",
+                  "columns": [
+                    "id",
+                    "prior_cognition_id",
+                    "replacement_cognition_id",
+                    "reason",
+                    "revision"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "entity",
+                  "columns": [
+                    "id",
+                    "world_id",
+                    "kind",
+                    "canonical_name",
+                    "invalid_at",
+                    "created_at",
+                    "updated_at",
+                    "aliases_json"
+                  ],
+                  "rows": 1
+                },
+                {
+                  "table": "event",
+                  "columns": [
+                    "id",
+                    "subject_id",
+                    "summary",
+                    "occurred_at",
+                    "created_at",
+                    "consolidated"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "event_evidence",
+                  "columns": [
+                    "event_id",
+                    "evidence_id"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "evidence",
+                  "columns": [
+                    "id",
+                    "subject_id",
+                    "source_kind",
+                    "host_id",
+                    "origin_id",
+                    "occurred_at",
+                    "recorded_at",
+                    "raw_content",
+                    "summary",
+                    "allow_local_read",
+                    "allow_cloud_read",
+                    "allow_inference",
+                    "corrects_evidence_id",
+                    "deleted_at",
+                    "preceding_ai_context"
+                  ],
+                  "rows": 9
+                },
+                {
+                  "table": "evidence_ledger",
+                  "columns": [
+                    "id",
+                    "content",
+                    "payload_json"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "evidence_origin_history",
+                  "columns": [
+                    "evidence_id",
+                    "origin_id"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "evidence_retraction",
+                  "columns": [
+                    "cognition_id",
+                    "evidence_id",
+                    "retracted_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "hard_deleted_origin",
+                  "columns": [
+                    "origin_hash",
+                    "subject_id",
+                    "evidence_id"
+                  ],
+                  "rows": 9
+                },
+                {
+                  "table": "identity_state",
+                  "columns": [
+                    "singleton",
+                    "identity_schema_version",
+                    "world_id",
+                    "memory_revision",
+                    "memory_snapshot_hash",
+                    "identity_graph_hash",
+                    "state_json",
+                    "state_hash",
+                    "storage_generation"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "interaction_commitment",
+                  "columns": [
+                    "id",
+                    "subject_id",
+                    "conversation_id",
+                    "episode_id",
+                    "assistant_message_id",
+                    "kind",
+                    "content",
+                    "raw_quote",
+                    "status",
+                    "created_at",
+                    "updated_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "interaction_context",
+                  "columns": [
+                    "id",
+                    "subject_id",
+                    "conversation_id",
+                    "episode_id",
+                    "context_json",
+                    "context_hash",
+                    "created_at"
+                  ],
+                  "rows": 9
+                },
+                {
+                  "table": "management_log",
+                  "columns": [
+                    "op",
+                    "target_kind",
+                    "target_id",
+                    "reason",
+                    "detail",
+                    "created_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "memory_state",
+                  "columns": [
+                    "singleton",
+                    "revision",
+                    "snapshot_json",
+                    "snapshot_hash"
+                  ],
+                  "rows": 1
+                },
+                {
+                  "table": "memory_world_job",
+                  "columns": [
+                    "job_id",
+                    "job_schema_version",
+                    "boundary_event_id",
+                    "boundary_payload_hash",
+                    "boundary_schema_version",
+                    "provider_name",
+                    "parent_session_id",
+                    "result_session_id",
+                    "boundary_mode",
+                    "formal_target_json",
+                    "formal_target_hash",
+                    "subject_id",
+                    "host_id",
+                    "evidence_ids_json",
+                    "state",
+                    "attempts",
+                    "next_attempt_at",
+                    "claim_owner",
+                    "claim_token",
+                    "claimed_at",
+                    "lease_expires_at",
+                    "heartbeat_at",
+                    "fencing_generation",
+                    "model_dispatch_started_at",
+                    "model_completed_at",
+                    "model_task",
+                    "model_provider",
+                    "model_name",
+                    "model_usage_json",
+                    "model_result_json",
+                    "model_result_hash",
+                    "world_result_json",
+                    "result_hash",
+                    "delivery_receipt_json",
+                    "delivery_receipt_hash",
+                    "created_at",
+                    "completed_at",
+                    "last_error_type",
+                    "terminal_state",
+                    "terminal_detail"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "observed_source",
+                  "columns": [
+                    "subject_id",
+                    "host_id",
+                    "source_hash",
+                    "evidence_id",
+                    "version",
+                    "payload_hash",
+                    "permission_version",
+                    "withdrawn_through",
+                    "valid_at",
+                    "valid_until"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "portable_import_receipt",
+                  "columns": [
+                    "receipt_id",
+                    "schema_version",
+                    "command_id",
+                    "plan_hash",
+                    "bundle_id",
+                    "source_subject_id",
+                    "target_subject_id",
+                    "target_world_revision",
+                    "target_snapshot_hash",
+                    "after_world_revision",
+                    "result_state",
+                    "result_json",
+                    "result_hash",
+                    "completed_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "proposal_decision_receipts",
+                  "columns": [
+                    "proposal_id",
+                    "offered_result_hash",
+                    "effective_decision",
+                    "world_revision",
+                    "snapshot_hash",
+                    "decided_at",
+                    "receipt_hash"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "proposals",
+                  "columns": [
+                    "id",
+                    "kind",
+                    "base_revision",
+                    "result_hash",
+                    "payload_json",
+                    "review_payload_json",
+                    "status"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "relationship",
+                  "columns": [
+                    "id",
+                    "world_id",
+                    "source_entity_id",
+                    "target_entity_id",
+                    "relation_type",
+                    "content",
+                    "formed_by",
+                    "confidence",
+                    "cred_status",
+                    "invalid_at",
+                    "created_at",
+                    "updated_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "relationship_evidence",
+                  "columns": [
+                    "relationship_id",
+                    "evidence_id",
+                    "relation"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "relationship_transitions",
+                  "columns": [
+                    "id",
+                    "prior_relationship_id",
+                    "replacement_relationship_id",
+                    "reason",
+                    "revision"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "retraction",
+                  "columns": [
+                    "id",
+                    "prior_cognition_id",
+                    "prior_relationship_id",
+                    "reason",
+                    "revision",
+                    "created_at",
+                    "prior_event_id"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "semantic_resolution",
+                  "columns": [
+                    "id",
+                    "evidence_id",
+                    "resolved_content",
+                    "response_act",
+                    "prompt_act",
+                    "proposition_origin",
+                    "assertion_strength",
+                    "required_context",
+                    "resolver_version",
+                    "created_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "terminal_outcome",
+                  "columns": [
+                    "outcome_id",
+                    "schema_version",
+                    "job_id",
+                    "boundary_event_id",
+                    "provider_name",
+                    "subject_id",
+                    "parent_session_id",
+                    "result_session_id",
+                    "terminal_state",
+                    "terminal_detail",
+                    "world_revision",
+                    "world_result_json",
+                    "result_hash",
+                    "occurred_at",
+                    "delivery_state",
+                    "attempts",
+                    "next_attempt_at",
+                    "claim_owner",
+                    "claim_token",
+                    "lease_expires_at",
+                    "heartbeat_at",
+                    "delivered_at",
+                    "last_error"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "trust_command",
+                  "columns": [
+                    "command_id",
+                    "schema_version",
+                    "subject_id",
+                    "actor",
+                    "expected_world_revision",
+                    "operation",
+                    "target_kind",
+                    "target_id",
+                    "payload_json",
+                    "request_hash",
+                    "submitted_at"
+                  ],
+                  "rows": 9
+                },
+                {
+                  "table": "trust_command_receipt",
+                  "columns": [
+                    "command_id",
+                    "schema_version",
+                    "accepted",
+                    "result_state",
+                    "before_revision",
+                    "after_revision",
+                    "affected_ids_json",
+                    "transition_ids_json",
+                    "result_hash",
+                    "completed_at"
+                  ],
+                  "rows": 9
+                },
+                {
+                  "table": "trust_command_rejection",
+                  "columns": [
+                    "command_id",
+                    "reason_code"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "trust_delete_storage_status",
+                  "columns": [
+                    "command_id",
+                    "state",
+                    "detail_code"
+                  ],
+                  "rows": 9
+                },
+                {
+                  "table": "world_delete_marker",
+                  "columns": [
+                    "subject_id",
+                    "object_kind",
+                    "item_id",
+                    "deleted_at"
+                  ],
+                  "rows": 6
+                },
+                {
+                  "table": "world_event",
+                  "columns": [
+                    "id",
+                    "world_id",
+                    "content",
+                    "occurred_at",
+                    "time_expression",
+                    "participants_json",
+                    "objects_json",
+                    "formed_by",
+                    "confidence",
+                    "cred_status",
+                    "invalid_at",
+                    "created_at",
+                    "updated_at"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "world_event_evidence",
+                  "columns": [
+                    "world_event_id",
+                    "evidence_id",
+                    "relation"
+                  ],
+                  "rows": 0
+                },
+                {
+                  "table": "world_item_lifecycle",
+                  "columns": [
+                    "subject_id",
+                    "object_kind",
+                    "item_id",
+                    "archived_at",
+                    "muted_at",
+                    "updated_at"
+                  ],
+                  "rows": 0
+                }
+              ],
+              "tableCount": 38,
+              "hits": [],
+              "hitCount": 0,
+              "needles": [
+                "王小明",
+                "好兄弟",
+                "表弟",
+                "王小明打游戏挺厉害，是我好兄弟。",
+                "更正一下：王小明是我的表弟，不是好兄弟。以后组队还是找他。"
+              ]
+            }
+          }
+        },
+        {
+          "id": "08",
+          "status": "passed",
+          "checks": {
+            "actualCoreStopped": true,
+            "unavailable": true,
+            "chatCompleted": true,
+            "noMemoryInjected": true,
+            "chatNotice": true,
+            "memoryPageNotice": true,
+            "semanticAccepted": true
+          }
+        }
+      ]
+    }
+  ],
+  "distinction": "Behavior scores preserve the original reply/semantic criteria; original formal-source checks remain unchanged and separately reported. Provisional quotes are never counted as formal World items."
+}

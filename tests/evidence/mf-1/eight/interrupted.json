@@ -1,0 +1,12 @@
+{
+  "stoppedAt": "2026-10-09T08:07:14.0685563Z",
+  "reason": "Repeated original 300s stream inactivity/600s turn timeouts in LAN steps 05 and 06; step 07 screenshot timed out. Ended this failed isolated run and closed its connection tree before retrying from fresh accounts.",
+  "pid": 45180,
+  "onlyOwnedTestTreeStopped": true,
+  "roots": [
+    "C:/Temp/weftmate-m2-exit-mimo-TdJHFp",
+    "C:/Temp/weftmate-m2-exit-lan-wLtCod"
+  ],
+  "dailyHostTouched": false,
+  "modelServiceRestarted": false
+}
