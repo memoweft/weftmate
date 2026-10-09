@@ -119,7 +119,7 @@ def target(name, platform, sources, testing=None):
         settings.update(TEST_TARGET_NAME=testing, INFOPLIST_KEY_CFBundleDisplayName=name)
     elif platform in ["macosx", "iphoneos"]:
         if platform == "iphoneos":
-            settings["INFOPLIST_KEY_NSCameraUsageDescription"] = "扫描你电脑上的一次性配对二维码，授权这台 iPhone 访问你的 WeftMate 对话。"
+            settings["INFOPLIST_KEY_NSCameraUsageDescription"] = "拍摄你选择的图片作为对话附件，或扫描电脑上的一次性配对二维码。"
         settings["INFOPLIST_KEY_NSLocalNetworkUsageDescription"] = "WeftMate 连接你选择的个人服务器，以便同步账户和会话。"
     if not is_test and platform in ["iphoneos", "watchos"]:
         settings["CODE_SIGN_ENTITLEMENTS"] = "Config/WeftMateHealth.entitlements"
@@ -140,8 +140,8 @@ target("WeftMateWatch", "watchos", watch + ["UI/WeftIcon.swift", "../../design/t
 debug_fixture = ["Tests/TaskProgressUIFixture.swift", "Tests/AppleContractUIFixture.swift", "Tests/HealthKitUIFixture.swift"]
 target("WeftMateMac", "macosx", ui + mac + debug_fixture + ["../../design/tokens/generated/apple/DesignTokens.swift"])
 target("WeftMatePhone", "iphoneos", ui + phone + debug_fixture + ["../../design/tokens/generated/apple/DesignTokens.swift"])
-target("WeftMateMacUITests", "macosx", ["Tests/UPD2UITests.swift", "Tests/WeftMateUITests.swift", "Tests/A4aApprovalUITests.swift", "Tests/A4bResourcesUITests.swift"], "WeftMateMac")
-target("WeftMatePhoneUITests", "iphoneos", ["Tests/A14OfflineUITests.swift", "Tests/A13ConsistencyUITests.swift", "Tests/A11ProjectsUITests.swift", "Tests/A9PolishUITests.swift", "Tests/A8ConversationFlowUITests.swift", "Tests/UPD2UITests.swift", "Tests/A7SessionMenuUITests.swift", "Tests/A6SettingsUITests.swift", "Tests/A5ParityUITests.swift", "Tests/LG2AccountUITests.swift", "Tests/WeftMateUITests.swift", "Tests/IC2IconsUITests.swift", "Tests/A4cAppearanceUITests.swift", "Tests/A3TimelineUITests.swift", "Tests/S1cCloudUITests.swift", "Tests/A4aApprovalUITests.swift", "Tests/A4bResourcesUITests.swift"], "WeftMatePhone")
+target("WeftMateMacUITests", "macosx", ["Tests/A15UXUITests.swift", "Tests/UPD2UITests.swift", "Tests/WeftMateUITests.swift", "Tests/A4aApprovalUITests.swift", "Tests/A4bResourcesUITests.swift"], "WeftMateMac")
+target("WeftMatePhoneUITests", "iphoneos", ["Tests/A15UXUITests.swift", "Tests/A14OfflineUITests.swift", "Tests/A13ConsistencyUITests.swift", "Tests/A11ProjectsUITests.swift", "Tests/A9PolishUITests.swift", "Tests/A8ConversationFlowUITests.swift", "Tests/UPD2UITests.swift", "Tests/A7SessionMenuUITests.swift", "Tests/A6SettingsUITests.swift", "Tests/A5ParityUITests.swift", "Tests/LG2AccountUITests.swift", "Tests/WeftMateUITests.swift", "Tests/IC2IconsUITests.swift", "Tests/A4cAppearanceUITests.swift", "Tests/A3TimelineUITests.swift", "Tests/S1cCloudUITests.swift", "Tests/A4aApprovalUITests.swift", "Tests/A4bResourcesUITests.swift"], "WeftMatePhone")
 target("WeftMateWatchUITests", "watchos", ["Tests/A13WatchUITests.swift", "Tests/IC2WatchIconsUITests.swift", "Tests/A12WatchLiveUITests.swift"], "WeftMateWatch")
 product_group = obj("products", isa="PBXGroup", children=products, name="Products", sourceTree="<group>")
 group = obj("group", isa="PBXGroup", children=all_files+[product_group], sourceTree="<group>")

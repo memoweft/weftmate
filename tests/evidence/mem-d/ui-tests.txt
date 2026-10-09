@@ -1,0 +1,46 @@
+✔ memory status distinguishes ready, degraded, disabled and unavailable; absent capabilities keep actions hidden (68.5805ms)
+✔ a delayed A list success after B is displayed cannot replace or append to B (42.2926ms)
+✔ a delayed A list failure after B is displayed cannot clear B data or show A failure (43.5051ms)
+✔ first list page establishes its revision, while a changed later page clears the old snapshot (10.0935ms)
+✔ unreadable source content is withheld and labels stay human-readable (27.0203ms)
+✔ overlong encoded paths and unsupported point-segment IDs fail visibly without dropping cursor or facts (7.0688ms)
+✔ memory IDs keep a legal colon literal so the host pathname matches the account route (6.9698ms)
+✔ empty state separates blocked pending sources from previously deleted-source history (11.3032ms)
+✔ capability-gated correction and mute use one request ID and refresh detail and sources (17.6037ms)
+✔ item deletion requires typing confirmation and reports incomplete storage cleanup honestly (9.8422ms)
+✔ source evidence deletion uses the evidence ID and refreshes the source list (12.6138ms)
+✔ forget confirmation cannot submit after preview failure or a changed revision (24.4238ms)
+✔ revision conflict refreshes the changed account snapshot without resubmitting (10.6119ms)
+✔ timeout checks the same request receipt and never sends a second memory command (12.0868ms)
+✔ item and source actions remain hidden when capability or current source state forbids them (11.1251ms)
+✔ unknown receipt keeps the original request marker for manual review without resending (11.1949ms)
+✔ late A mutation receipt cannot render or refresh A data after B logs in (56.5467ms)
+✔ correction result belongs to the acted-on item and clears when a different item opens (10.677ms)
+✔ delete conflict copy names source or dependency conflict without guessing another memory (12.1782ms)
+✔ project session saves owner-host choice before POST and selects only the exact bound session (18.978ms)
+✔ lost project-session POST receipt reuses the saved request before selecting a session (20.7491ms)
+✔ browser workspace persists two request IDs and goal before exact session and shared send (17.1709ms)
+✔ closing the drawer in the same frame prevents its delayed open animation (15.2504ms)
+✔ empty projects keep browser first and hide project-only model controls (18.9921ms)
+✔ project list failure does not hide browser entry and browser 404 differs from outage (49.3394ms)
+✔ adopted phone conversation keeps one card and sends the next turn through its DSH session (34.9594ms)
+✔ an open original phone card observes a later desktop adoption without navigation (27.314ms)
+✔ mobile handoff selects only a unique exact original model and preserves a manual choice (114.1691ms)
+✔ phone model publish sends only a saved model identity through JS and keeps the request ID (19.8896ms)
+✔ account model import keeps phone selection and asks before replacing an endpoint credential (20.8298ms)
+✔ late account model directory from A cannot replace B model list (39.8051ms)
+✔ M1-0 mobile navigation has no standalone task page or task-detail implementation (1.8463ms)
+✔ isolated synthetic memory HTTP contract keeps owners, cursors and receipts separate (6366.0422ms)
+✔ memory page keeps scripts external and uses only the candidate static publisher (2.6741ms)
+✔ memory view preserves chat draft and discards a successful response for another cookie owner (101.3566ms)
+✔ history is opt-in, ordered, pausable, cancellable and idempotent; privacy exclusions survive restart (16.8007ms)
+✔ durable new DSH turns recover a missed IPC with frozen per-turn exclusions (0.889ms)
+✔ long visible messages remain complete boundary sources instead of silently disappearing (13.8208ms)
+ℹ tests 38
+ℹ suites 0
+ℹ pass 38
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11599.6543

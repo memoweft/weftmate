@@ -514,3 +514,9 @@ html, body { overflow: hidden; }
 .toast-undo { margin-left: var(--wm-space-12); padding: var(--wm-space-6); border: 0; background: transparent; color: inherit; font: inherit; text-decoration: underline; }
 
 @media (max-width: 600px) { .settings-select-menu { inset: auto 0 0 !important; width: 100% !important; max-height: 55vh !important; border-radius: var(--wm-radius-12) var(--wm-radius-12) 0 0; padding-bottom: max(var(--wm-space-12), env(safe-area-inset-bottom)); } }
+
+.memory-ingestion { margin-block: var(--wm-space-20); }
+.memory-ingestion > p { margin-block: var(--wm-space-10); line-height: var(--wm-line-height-1_65); }
+.memory-ingestion > p:empty { display: none; }
+.memory-ingestion .form-actions { flex-wrap: wrap; margin-top: var(--wm-space-12); }
+.memory-ingestion .form-actions button { flex: 0 1 auto; }

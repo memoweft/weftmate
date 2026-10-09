@@ -275,7 +275,7 @@ D33：`deleteConversationSnippets` 默认 `false`。桌面、手机网页及手�
 - `GET /personal/v1/sessions/{sessionId}/thinking` 返回 `{supported,enabled}`；`PATCH` 同一路径接受严格 `{enabled:boolean}`，沿用 Cookie（会话凭据）/ 原令牌、`commands:write` 与 CSRF（跨站请求伪造防护）。只允许本账户可发送的非归档会话，不支持的模型不能开启。幂等布尔偏好持久保存，不中断当前回合。`GET /sessions` / 对话视图增加 `deepThinking:boolean`，旧客户端可忽略。
 - 偏好同时保存到逻辑对话与当前会话；发送时优先逻辑对话，后续接力段沿用。宿主在后续原生回合的 `agent/request`（请求构造钩子）读取并固定偏好；开启只给该回合请求配置加 `reasoningEffort:"high"`，关闭透传模型原配置。同一回合中途切换不改变已固定的偏好。不改变账户模型默认值。原生已有能力声明优先；旧受管路由仅补缺失的能力与等价字段声明。
 - 原有 `step.started|step.completed` 可选 `subtask:{name,id?,background?}`：名称来自真实委派描述 / 后台命令；`id` 是原生子任务 / 作业标识，`background=true` 表示启动工具结束仍未结束任务。新增只读 `subtask.updated` 事件携带 `{id,state:"completed"|"failed"}`，来自 DSH 的后台结束通知，不包含子任务正文或隐藏推理。事件仍沿用真实 `seq` / `at` 和当前账户历史权限。客户端按同一 ID 合并，背景任务在原生终态前保持进行中，不因主回合结束推测终态。
-- Android（安卓）code25：`attachments.pick` 新增 `kind:"camera"`（已有 `image|file` 保持），结果仍走原 `attachment.result` 与原账户 / 对话 / `viewGeneration`（视图代次）核对。`/sessions/{id}/thinking` 加入原生业务桥。系统相机使用已有相机权限、仅专用缓存路径的临时 URI（资源标识）；返回导入后删除临时原图。发布 UX-3 手机包要求最低原生 code25。Apple（苹果端）原生接线见 `tests/evidence/ux-3/README.md`。
+- Android（安卓）code25：`attachments.pick` 新增 `kind:"camera"`（已有 `image|file` 保持），结果仍走原 `attachment.result` 与原账户 / 对话 / `viewGeneration`（视图代次）核对。`/sessions/{id}/thinking` 加入原生业务桥。系统相机使用已有相机权限、仅专用缓存路径的临时 URI（资源标识）；返回导入后删除临时原图。发布 UX-3 手机包要求最低原生 code25。Apple（苹果端）A15 已消费上述模型能力、会话偏好与子任务投影；客户端只提交 `{enabled}`，不构造提供方字段。原生验证与边界见 `apps/apple/Tests/Evidence/A15/README.md`。
 
 ### 3.10 模型（12）
 
@@ -499,7 +499,7 @@ MS-1：`defaultModelProfileId` 按账户保存，用于新对话；已有对话�
 
 原生 DSH（模型执行框架）用量事件优先；OpenAI-compatible（OpenAI 兼容协议）JSON（结构化数据）或 SSE（服务端事件流）响应 `usage` 用于手机代理 / 记忆后台。缓存输入使用 `prompt_tokens_details.cached_tokens` 或 `prompt_cache_hit_tokens`，原生适配器的缓存读写计数按实际语义合并；DSH 适配器合成的全零事件无法证明供应商提供了用量，保留未知。缺失或不完整用量的整次请求计 `unknownRequests`，该请求费用不计入 `cost`，保留请求标识与时间；没有自行估算。只存账号 / 对话 / 模型 / 请求标识、时间、数字与来源类别，不存消息正文、工具参数或响应正文。宿主账本保留已删除对话的费用统计，不恢复对话内容；历史账单 / 外部供应商账单导入未实现。
 
-桌面与手机功能读取 / 保存统一位于 `src/ui-core/usage.js`；实际手机页面使用同一宿主账本。手机独立离线直连模型尚无宿主回传，离线聊天记账随 S6 接入；Apple（苹果客户端）已在 A5 接入本节的统计 / 上限 / 402 提示，并同步 FIX-3 的本机时区查询与账号时区上报。Android（安卓）原生 `host.business` 已增加精确用量路径，旧原生壳未升级时返回不支持，不能以未知错误显示为零费用。
+桌面与手机功能读取 / 保存统一位于 `src/ui-core/usage.js`；实际手机页面使用同一宿主账本。手机独立离线直连模型尚无宿主回传，离线聊天记账随 S6 接入；Apple（苹果客户端）已在 A5 接入本节的统计 / 上限 / 402 提示，A15 起先读账户 `UsageSettings.timeZone`，再读该时区的月份统计；用量读取不写账户时区。Android（安卓）原生 `host.business` 已增加精确用量路径，旧原生壳未升级时返回不支持，不能以未知错误显示为零费用。
 
 
 ### 3.18 提醒与定时任务（SCH-1，M2）
@@ -1165,3 +1165,21 @@ D33与删除会话清理同一缓存，SQLite使用安全删除及VACUUM（数�
 临时内容不自动回写主对话、不进入动态正文、全局成果库、近期对话离线副本。分叉、引用开旁聊、发布结果对 `hasTemporaryContent` 会话返回409 `TEMPORARY_CONTEXT_CONFIRMATION_REQUIRED`，直到显式分享功能提供确认与预览。TB-1/TB-3未来的全局列表必须排除该标记；对话内自己的输出与来源仍可查看。MEM-2没有新增全局列表接口。
 
 Apple（苹果端）接线：新建入口发送 `/sessions/temporary`；侧栏/标题/输入区显示状态；菜单分别接记忆与召回开关和四档期限；切换说明之前形成的保留；主对话导向临时旁聊。持久化模型添加本节公开字段，`cacheAllowed:false` 的历史不写离线缓存，离线副本继续消费宿主过滤结果；到期404移除本机展示缓存。原生界面与Watch（手表）实机验收由Apple工作包完成。
+
+
+## 11. 记忆摄取健康与历史补整理（MEM-D）
+
+`GET /memory/status` 保留既有字段，新增可选 `pendingFormationCount`、`failedFormationCount`、`captureError` 和 `backfill`。`pendingBoundaryCount` 是宿主 outbox（持久待提交队列）条数，模型不可用时仍返回已知数量。`pendingFormationCount` 是 Core（记忆核心）已接受、尚在形成的作业数；两者不能混为已形成条数。`state=degraded` 也可表示正在整理，已有可用记忆继续沿 `capabilities.inject` 与原目的地权限使用。`reasonCode` 新增 `MEMORY_MODEL_WAITING`（切换中，等待原模型服务）、`MEMORY_FORMATION_PENDING`、`MEMORY_FORMATION_FAILED`；保留 `MEMORY_BUSY`、`MEMORY_MODEL_UNAVAILABLE` 与来源阻断原因。`GET /system.memory` 同步提供 `reasonCode,pendingBoundaryCount,pendingFormationCount,failedFormationCount`，供设置健康项显示。客户端必须区分正常、补交／形成中和暂停，不能把503当作空记忆。
+
+| 接口 | 请求与结果 |
+|---|---|
+| `GET /memory/backfill` | 200 `{ownerId,previewId,sessionCount,turnCount,estimatedUsage:{inputTokens,outputTokens,approximate:true},job}`；扫描账户已完成的原生回合，仅返回计数与估算，不调用形成模型。估算含每回合提示与输出余量，实际重试与模型用量可能不同，不是价格承诺。 |
+| `POST /memory/backfill` | `{action:"start",previewId,confirm:true}` → 202 `{ownerId,job}`；必须先读取预览，再由本人确认。相同预览的重复提交返回同一作业，不重复形成。 |
+| `POST /memory/backfill` | `{action:"pause"\|"resume"\|"cancel",jobId}` → 202 `{ownerId,job}`；暂停／取消停止后续提交，已经交给Core的回合继续形成；取消不删除已经形成的记忆。 |
+| `GET /memory/status` | `backfill:null` 或 `{id,state:"running"\|"paused"\|"cancelled"\|"completed",totalTurns,submittedTurns,skippedTurns,lastError,createdAt}`；`submittedTurns` 包含已检查并跳过的回合，实际提交数为两者之差。`completed` 表示补交结束，是否形成完毕另看形成计数。 |
+
+读接口沿账户会话读取权限，写接口要求 `account:manage` 与原 CSRF（跨站请求伪造防护）。缺少确认／预览失效409 `MEMORY_PREVIEW_REQUIRED`，无此作业404 `MEMORY_JOB_NOT_FOUND`，参数无效400 `INVALID_REQUEST`。所有结果绑定 `ownerId`；切换账户时丢弃旧预览与迟到响应。
+
+补整理按原回合时间顺序进行，每步重核对会话及来源；临时对话、当前关闭记忆的对话、回合冻结策略禁止摄取的内容和已遗忘来源均排除。排除已确认投递的回合及Core已接受的边界；事件标识沿实时摄取算法保持一致，重复确认、重启与未知回执不会重复形成。历史回合默认不自动运行；升级后新完成的普通回合由持久日志恢复漏掉的IPC（进程间通信），先写outbox再尝试投递，忙／路由不可用／子进程离线均退避重试。宿主重启恢复outbox和已确认的补整理进度，暂停状态也持久保留。
+
+Windows（视窗系统）程序与远程手机网页、Android（安卓）界面包已接入。安卓现有 `host.business` 记忆路由支持这些接口，无需新增权限；Apple（苹果端）需接记忆页健康、预览／确认、暂停／继续／取消及进度，旧客户端可忽略新增字段。确认与溯源语义未改变，不把助手提议当作用户事实。
