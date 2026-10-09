@@ -1,0 +1,39 @@
+{
+  "requests": 232,
+  "returnedUsage": 231,
+  "missingUsage": 1,
+  "input": 485109,
+  "cached": 339904,
+  "output": 33334,
+  "knownCnyLowerBound": 0.21867108,
+  "pricing": {
+    "verifiedAt": "2026-10-09",
+    "url": "https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash",
+    "uncachedPerMillionCny": 1,
+    "cachedPerMillionCny": 0.02,
+    "outputPerMillionCny": 2
+  },
+  "syntheticRoots": [
+    "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-mf1-Q6PCOC",
+    "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-mf1-f5BXt1",
+    "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-mf1-EPW7CX",
+    "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-mf1-jmLpES",
+    "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-mf1-BNxkzn",
+    "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-mf1-uMUieZ",
+    "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-mf1-zHaWyl",
+    "C:\\Temp\\weftmate-m2f-mimo-99e09758-0f19-46db-9a7e-827fe24c66de",
+    "C:\\Temp\\weftmate-m2f-lan-3babed12-8ed8-43db-9fbc-43a11d6e7f84",
+    "C:/Temp/weftmate-m2-exit-mimo-TdJHFp",
+    "C:/Temp/weftmate-m2-exit-lan-wLtCod",
+    "C:/Temp/weftmate-m2-exit-mimo-7uBZqy",
+    "C:/Temp/weftmate-m2-exit-lan-CdDoJC",
+    "C:\\Temp\\weftmate-m2f-mimo-06af25c2-6ebf-425d-857f-297ba7e2ec07",
+    "C:\\Temp\\weftmate-m2f-lan-627f098e-4e0e-45d7-9c16-1bf534a77bb2",
+    "C:/Temp/weftmate-m2-exit-mimo-JHU6vL",
+    "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-mf1-ESTiaZ",
+    "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-mf1-uipJ6d",
+    "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-mf1-iN0F7V",
+    "C:/Temp/weftmate-m2-exit-mimo-gD47Gz",
+    "C:/Temp/weftmate-m2-exit-lan-HgIe97"
+  ]
+}

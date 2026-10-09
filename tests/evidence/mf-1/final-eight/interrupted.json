@@ -1,0 +1,12 @@
+{
+  "stoppedAt": "2026-10-09T08:12:11.7009958Z",
+  "reason": "Step 03 failed: model reversed relationship endpoints (target=owner); initial response and one rewrite both failed entity_name_not_in_proposition. Original checkpoint preserved; stopping this failed isolated run to fix the specific rewrite feedback.",
+  "pid": 2720,
+  "onlyOwnedTestTreeStopped": true,
+  "roots": [
+    "C:/Temp/weftmate-m2-exit-mimo-7uBZqy",
+    "C:/Temp/weftmate-m2-exit-lan-CdDoJC"
+  ],
+  "dailyHostTouched": false,
+  "modelServiceRestarted": false
+}

@@ -641,6 +641,7 @@ try {
     return total;
   }, {});
   save(join(evidence, 'usage.json'), usage);
+  save(join(evidence, 'run-roots.json'), roots);
   const publicScan = scan(evidence); save(join(evidence, 'credential-scan.json'), publicScan); assert.equal(publicScan.matches, 0);
   // Optional assertion mode lets CI consume the same evidence without treating
   // a successfully completed baseline collection as a passing product exit.

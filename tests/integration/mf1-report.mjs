@@ -11,6 +11,7 @@ const add = usage => {totals.requests++;if(!usage){totals.missingUsage++;return;
 const timeline=[], matrices=[], eight=[], sources=[], syntheticRoots=new Set();
 for(const name of readdirSync(root)) {
   const dir=join(root,name);if(!lstatSync(dir).isDirectory())continue;
+  if(existsSync(join(dir,'run-roots.json')))for(const temp of json(join(dir,'run-roots.json')))syntheticRoots.add(temp);
   if(existsSync(join(dir,'timeline.json'))) {
     const run=json(join(dir,'timeline.json'));syntheticRoots.add(run.root);
     if(run.model==='mimo')for(const request of run.requests)add(request.response?.usage);
@@ -73,6 +74,42 @@ totals.knownCnyLowerBound=(totals.input-totals.cached+totals.cached*0.02+totals.
 save('scorecard.json',{generatedAt:new Date().toISOString(),timeline,matrices,eight,
   distinction:'Behavior scores preserve the original reply/semantic criteria; original formal-source checks remain unchanged and separately reported. Provisional quotes are never counted as formal World items.'});
 save('usage-total.json',{...totals,pricing:{verifiedAt:'2026-10-09',url:'https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash',uncachedPerMillionCny:1,cachedPerMillionCny:0.02,outputPerMillionCny:2},syntheticRoots:[...syntheticRoots]});
+if(process.argv.includes('--formation-jobs')) {
+  const raw=execFileSync('D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe', ['tests/integration/mf1-core-jobs.py',...syntheticRoots],
+    {encoding:'utf8',maxBuffer:40*1024*1024,windowsHide:true,env:{...process.env,PYTHONIOENCODING:'utf-8'}});
+  save('formation-jobs.json',JSON.parse(raw));
+  const jobs=JSON.parse(raw), observed=[];
+  const fakeRoots=new Set();
+  for(const name of readdirSync(root)){const file=join(root,name,'timeline.json');if(existsSync(file)){const run=json(file);if(run.model==='synthetic')fakeRoots.add(resolve(run.root).toLowerCase());}}
+  const measured=jobs.filter(group=>!fakeRoots.has(resolve(group.root).toLowerCase())).flatMap(group=>group.jobs)
+    .filter(job=>typeof job.model_result?.content==='string');
+  const firstResponseClasses={},outcomes={},noChangeSources={};
+  for(const job of measured){const code=job.model_result.formation_rewrite?.error?.code??(job.world_result.reason==='model_no_change'?'model_no_change':'no_recorded_first_error');
+    firstResponseClasses[code]=(firstResponseClasses[code]??0)+1;outcomes[job.state]=(outcomes[job.state]??0)+1;
+    if(code==='model_no_change')for(const source of job.sources)noChangeSources[source]=(noChangeSources[source]??0)+1;}
+  save('formation-failure-rates.json',{scope:'Real model jobs with retained complete first-response checkpoints in measurement, matrix and failed runs; synthetic model fixtures excluded. Successfully erased jobs are absent by design. This is not an unbiased reliability estimate.',
+    receivedFirstResponses:measured.length,firstResponseClasses,outcomes,noChangeSources});
+  for(const matrix of matrices) {
+    const report=json(join(root,matrix.name,`${matrix.model}.json`));
+    for(const scenarioResult of report.report.results) {
+      const scenario=json(resolve('eval/scenarios',`${scenarioResult.id}.yaml`));
+      for(const [index,turn] of scenarioResult.turns.entries()) {
+        const pathKey=value=>process.platform==='win32'?resolve(value).toLowerCase():resolve(value);
+        const job=jobs.find(r=>pathKey(r.root)===pathKey(report.root))?.jobs.find(j=>j.parent_session_id===turn.sessionId&&j.sources.includes(scenario.turns[index].user));
+        if(!job)continue;
+        const sinceUser=value=>value?Date.parse(value)-Date.parse(turn.startedAt):null;
+        observed.push({batch:matrix.name,model:matrix.model,scenario:scenarioResult.id,turn:index+1,
+          userStartedAt:turn.startedAt,chatCompletedMs:Date.parse(turn.endedAt)-Date.parse(turn.startedAt),
+          acceptedMs:sinceUser(job.created_at),workerStartedMs:sinceUser(job.claimed_at),
+          dispatchMs:sinceUser(job.model_dispatch_started_at),modelCompletedMs:sinceUser(job.model_completed_at),
+          committedMs:sinceUser(job.completed_at),terminalState:job.state,
+          firstError:job.model_result.formation_rewrite?.error?.code??null,finalReason:job.world_result.reason??null,
+          source:scenario.turns[index].user});
+      }
+    }
+  }
+  save('user-to-memory-timeline.json',observed);
+}
 console.log(JSON.stringify({timelines:timeline.length,matrices:matrices.map(({name,model,fourBehavior,cBehavior})=>({name,model,fourBehavior,cBehavior})),eight:eight.map(({name,model,summary})=>({name,model,summary})),usage:totals},null,2));
 
 if(process.argv.includes('--privacy-scan')) {
