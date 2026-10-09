@@ -91,3 +91,5 @@ globalThis.WeftUiCore.sessionMenuItems = session => [
     {id:'delete',label:'删除',key:'D',danger:true},
 ];
 globalThis.WeftUiCore.sessionMenuKey = key => ({p:'pin',u:'unread',r:'rename',f:'fork',a:'archive',d:'delete'})[key.toLowerCase()];
+globalThis.WeftUiCore.compareSessionGroups = (a, b) => Number(b.pinned === true) - Number(a.pinned === true) ||
+    Number(!!b.groupId) - Number(!!a.groupId) || (a.groupId || '').localeCompare(b.groupId || '');

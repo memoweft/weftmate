@@ -11,7 +11,7 @@ const adbRun=(...args)=>execFileSync(adb,['-s',serial,...args],{encoding:'utf8',
 const sleep=ms=>new Promise(done=>setTimeout(done,ms));
 async function until(check){const end=Date.now()+60000;while(Date.now()<end){const value=await check();if(value)return value;await sleep(250)}throw Error('Mobile UI-5 wait timed out');}
 
-export async function verifyMobileMenus({origin,credentials,evidence,sessionId,api,mumu=false}){
+export async function verifyMobileMenus({origin,credentials,evidence,sessionId,api,mumu=false,verifyGroupOrder=false}){
   let browser,server,page,installed=false,instrumentation,forwardPort;
   const surface=mumu?'mumu':'mobile-web',errors=[];
   try{
@@ -44,6 +44,7 @@ export async function verifyMobileMenus({origin,credentials,evidence,sessionId,a
     const shots=async name=>{for(const theme of ['light','dark']){await page.evaluate(t=>applyTheme(t),theme);await sleep(200);const file=join(evidence,`${surface}-${name}-${theme}.png`);if(mumu)writeFileSync(file,execFileSync(adb,['-s',serial,'exec-out','screencap','-p'],{windowsHide:true,maxBuffer:12*1024*1024}));else await page.screenshot({path:file,animations:'disabled'});}};
     const button=name=>page.getByRole('button',{name,exact:true});
     await page.evaluate(()=>page('home'));await page.waitForFunction(id=>state.sharedSessions.some(row=>row.sessionId===id),sessionId);
+    if(verifyGroupOrder){const group=page.getByRole('main').getByRole('button',{name:'合成资料',exact:true}),loose=page.getByRole('main').getByRole('button',{name:'未分组',exact:true});await group.waitFor();await loose.waitFor();const boxes=await until(async()=>{const g=await group.boundingBox(),l=await loose.boundingBox();return g&&l&&{g,l}});assert.ok(boxes.g.y<boxes.l.y,'grouped conversations precede ungrouped conversations');}
     const title=(await api('/sessions')).body.sessions.find(row=>row.sessionId===sessionId).title;
     const session=page.getByRole('main').getByRole('button',{name:title,exact:true});await session.waitFor();
     if(mumu){const box=await session.boundingBox(),dpr=await page.evaluate(()=>devicePixelRatio),x=Math.round((box.x+box.width/2)*dpr),y=Math.round((box.y+box.height/2+24)*dpr);adbRun('shell','input','swipe',String(x),String(y),String(x),String(y),'650');}
@@ -52,12 +53,12 @@ export async function verifyMobileMenus({origin,credentials,evidence,sessionId,a
     for(const name of ['取消置顶','标记为未读','重命名','分叉','移至分组','归档','删除'])await button(name).waitFor();
     await shots('long-press-menu');await click(button('标记为未读'));await until(async()=>(await api('/sessions')).body.sessions.find(row=>row.sessionId===sessionId).unread);
     await click(page.getByRole('main').getByRole('button',{name:`更多操作 ${title}`,exact:true}));await click(button('标记为已读'));await until(async()=>!(await api('/sessions')).body.sessions.find(row=>row.sessionId===sessionId).unread);
-    await click(page.getByRole('main').getByRole('button',{name:`更多操作 ${title}`,exact:true}));await click(button('移至分组'));await page.getByRole('dialog',{name:'移至分组',exact:true}).waitFor();await button('合成资料').waitFor();await shots('groups');await click(button('取消'));
+    await click(page.getByRole('main').getByRole('button',{name:`更多操作 ${title}`,exact:true}));await click(button('移至分组'));await page.getByRole('dialog',{name:'移至分组',exact:true}).waitFor();await page.getByRole('dialog',{name:'移至分组',exact:true}).getByRole('button',{name:'合成资料',exact:true}).waitFor();await shots('groups');await click(button('取消'));
     await click(page.getByRole('main').getByRole('button',{name:`更多操作 ${title}`,exact:true}));await click(button('归档'));
     await until(async()=>(await api('/sessions?archived=all')).body.sessions.find(row=>row.sessionId===sessionId).archived);
     await click(button('设置与账户'));await click(button(/^已归档/));await page.getByRole('searchbox',{name:'搜索已归档对话',exact:true}).fill('合成');await button('恢复').waitFor();await shots('archived');await click(button('恢复'));
     await until(async()=>!(await api('/sessions?archived=all')).body.sessions.find(row=>row.sessionId===sessionId).archived);
-    assert.deepEqual(errors,[]);writeFileSync(join(evidence,`${surface}-verification.json`),JSON.stringify({surface,realHost:true,realNativeBridge:mumu,longPress:true,sameMenu:true,unread:true,groups:true,archiveRestore:true,errors},null,2));
+    assert.deepEqual(errors,[]);writeFileSync(join(evidence,`${surface}-verification.json`),JSON.stringify({surface,realHost:true,realNativeBridge:mumu,longPress:true,sameMenu:true,unread:true,groups:true,...(verifyGroupOrder?{groupOrder:true}:{}),archiveRestore:true,errors},null,2));
   }catch(error){if(page)console.error('Mobile state:',await page.evaluate(()=>({page:state.page,loggedIn:state.loggedIn,cloud:WeftMobileCloud.core?.state.cloudAuth.mode,body:document.body.innerText.slice(0,1200),width:innerWidth,height:innerHeight})).catch(()=>({})));if(page)await page.screenshot({path:join(evidence,`${surface}-failure.png`)}).catch(()=>{});throw error}
   finally{
     if(mumu&&installed){try{adbRun('shell','run-as',packageId,'touch','files/ui5-probe.done');await sleep(600)}catch{}await browser?.close().catch(()=>{});instrumentation?.kill();try{adbRun('uninstall',packageId+'.test');adbRun('uninstall',packageId);if(forwardPort)adbRun('forward','--remove',`tcp:${forwardPort}`);const port=new URL(origin).port;adbRun('reverse','--remove',`tcp:${port}`);}catch{}}

@@ -341,7 +341,7 @@ function renderConversationList(){const target=$('conversation-list'),previousSc
     .map(item=>({source:'host',id:item.sessionId,title:item.title||'对话',createdAt:item.updatedAt||item.createdAt||item.attachedAt,
       model:item.modelName||item.modelDisplayName||null,record:item}));
   const entries=[...phone,...host].filter(item=>!filter||`${item.title} ${item.model||''} ${item.source==='phone'?'手机':'电脑'}`.toLocaleLowerCase().includes(filter));
-  entries.sort((a,b)=>Number(!!b.record?.pinned)-Number(!!a.record?.pinned)||(a.record?.groupId||'~').localeCompare(b.record?.groupId||'~')||(Date.parse(b.createdAt)||0)-(Date.parse(a.createdAt)||0));let previousGroup;
+  entries.sort((a,b)=>WeftUiCore.compareSessionGroups(a.record||{},b.record||{})||(Date.parse(b.createdAt)||0)-(Date.parse(a.createdAt)||0));let previousGroup;
   for(const item of entries){const groupId=item.record?.pinned?'pinned':item.record?.groupId||'ungrouped',groupName=item.record?.pinned?'置顶':(uiCore.state.sessionGroups||[]).find(g=>g.id===groupId)?.name||'未分组';
     if(groupId!==previousGroup){const toggle=el('button','session-group-toggle',groupName);toggle.setAttribute('aria-expanded',String(!collapsedMobileGroups.has(groupId)));toggle.onclick=()=>{collapsedMobileGroups.has(groupId)?collapsedMobileGroups.delete(groupId):collapsedMobileGroups.add(groupId);renderConversationList()};target.append(toggle);previousGroup=groupId;}
     if(collapsedMobileGroups.has(groupId)&&!filter)continue;const selected=item.source==='phone'?state.chatSource==='phone'&&state.conversationId===item.id:
@@ -385,7 +385,7 @@ function renderHome(){const target=$('home-conversations'),top=target.scrollTop;
       running:!!item.running||state.busy&&state.conversationId===item.id||!!state.sharedSessions.find(s=>s.sessionId===sessionId)?.running})}
   for(const item of state.sharedSessions){if(item.archived===true||linked.has(item.sessionId)||state.conversations.some(c=>c.id===item.conversationId))continue;
     entries.push({id:item.sessionId,sessionId:item.sessionId,source:'host',record:item,title:item.title||'新对话',at:item.updatedAt||item.createdAt||item.attachedAt,running:!!item.running})}
-  entries.sort((a,b)=>Number(!!b.record?.pinned)-Number(!!a.record?.pinned)||(a.record?.groupId||'~').localeCompare(b.record?.groupId||'~')||(Date.parse(b.at)||0)-(Date.parse(a.at)||0));let lastGroup='';
+  entries.sort((a,b)=>WeftUiCore.compareSessionGroups(a.record||{},b.record||{})||(Date.parse(b.at)||0)-(Date.parse(a.at)||0));let lastGroup='';
   for(const item of entries.filter(item=>item.title.toLocaleLowerCase().includes(filter))){
     const date=new Date(item.at),today=new Date(),group=Number.isFinite(date.getTime())?
       date.toDateString()===today.toDateString()?'今天':date.toDateString()===new Date(today.getFullYear(),today.getMonth(),today.getDate()-1).toDateString()?'昨天':'更早':'会话';
