@@ -54,7 +54,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             try { await core.saveProject(project, { name: name.value.trim().normalize('NFC'), instructions: instructions.value, permission: permission.value,
                 ...(!project ? { requestId, rootPath: folder.value.trim() } : {}) }); dialog.close(); }
             catch (error) { notice.textContent = projectError(error); } finally { save.disabled = false; } };
-        dialog.onclose = () => dialog.remove(); document.body.append(dialog); dialog.showModal(); (folder || name).focus();
+        dialog.onclose = () => dialog.remove(); document.body.append(dialog); globalThis.WeftPopover.bindSettingsSelect(permission); dialog.showModal(); (folder || name).focus();
     }
     async function newProjectConversation(project, button) {
         button.disabled = true;

@@ -1,0 +1,49 @@
+{
+  "nativeOrProviderResponsesWithUsage": 48,
+  "uncachedInputTokens": 32843,
+  "cacheReadTokens": 102272,
+  "outputTokens": 4264,
+  "runs": [
+    {
+      "run": "baseline",
+      "nativeResponses": 5
+    },
+    {
+      "run": "confirmed",
+      "nativeResponses": 12
+    },
+    {
+      "run": "final",
+      "nativeResponses": 9
+    },
+    {
+      "run": "initial-password-probe-30b1d187",
+      "nativeResponses": 3
+    },
+    {
+      "run": "initial-password-probe-d8d6ee46",
+      "nativeResponses": 2
+    },
+    {
+      "run": "initial-password-probe-77dddb1e",
+      "nativeResponses": 4
+    },
+    {
+      "run": "initial-password-probe-3edeaeea",
+      "nativeResponses": 5
+    },
+    {
+      "run": "initial-password-probe-57e95f04",
+      "nativeResponses": 4
+    },
+    {
+      "run": "initial-cloud-mobile-web",
+      "providerReports": 4
+    }
+  ],
+  "limitations": [
+    "Configuration/connection probes are outside the native assistant count.",
+    "One earlier incorrect approval fixture was terminated while a request was outstanding; unreported usage is unknown.",
+    "Known totals are a lower bound, not a bill."
+  ]
+}
