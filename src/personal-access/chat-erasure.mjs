@@ -7,6 +7,11 @@ export function eraseChatCopies(account, { sessionId = null, forgotten = false }
   const changed = new Set();
   const identity = account.chatIdentity;
   const sourceChatId = identity?.segments[identity.sessionSegments[sessionId]]?.chatId;
+  for (const [requestId, operation] of Object.entries(account.messageBranches ?? {})) {
+    const branch = operation.response;
+    if (forgotten || [branch.sessionId, branch.sourceSessionId, branch.inputSourceSessionId].includes(sessionId))
+      delete account.messageBranches[requestId];
+  }
   for (const operation of Object.values(account.chatOperations ?? {})) {
     const snapshot = operation.response?.chat;
     if (!snapshot) continue;

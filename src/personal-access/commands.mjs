@@ -11,7 +11,7 @@ export function createCommandOperations(context) {
   const messageDispatches = new Map();
 
   function requestIdUsed(account, requestId) {
-    return !!account.chatOperations?.[requestId] || !!account.sideOperations?.[requestId] || !!account.modelOperations?.[requestId] || !!account.projectOperations?.[requestId] ||
+    return !!account.messageBranches?.[requestId] || !!account.chatOperations?.[requestId] || !!account.sideOperations?.[requestId] || !!account.modelOperations?.[requestId] || !!account.projectOperations?.[requestId] ||
       Object.values(account.commands).some(command => command.requestId === requestId ||
         command.taskControl?.stopRequests.some(entry => entry.requestId === requestId) ||
         command.toolApprovals?.some(row => row.decisionRequestId === requestId) ||

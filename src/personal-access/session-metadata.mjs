@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { protectMainSession } from './chat-identity.mjs';
 import { failure, plainObject, validId } from './common.mjs';
+import { createMessageBranches } from './message-branches.mjs';
 
 export function createSessionMetadata(context) {
   const requireSession = (ownerId, sessionId) => {
@@ -15,6 +16,7 @@ export function createSessionMetadata(context) {
     return value.trim();
   };
   return {
+    messageBranches: createMessageBranches(context),
     async metadata(ownerId, sessionId, patch) {
       protectMainSession(context.accountState(ownerId), sessionId);
       if (!plainObject(patch) || !Object.keys(patch).length || Object.keys(patch).some(key => !['pinned', 'unread', 'title', 'groupId', 'projectId'].includes(key)) ||

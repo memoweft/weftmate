@@ -26,6 +26,7 @@ contextBridge.exposeInMainWorld('weftmateDesktop', {
   setAutoStart: (enabled) => ipcRenderer.invoke('wm:desktop:auto-start', enabled),
   artifact: (artifactId, action) => ipcRenderer.invoke('wm:desktop:artifact', { artifactId, action }),
   exportMemories: (format, ownerId) => ipcRenderer.invoke('wm:desktop:memory-export', { format, ownerId }),
+  exportConversation: payload => ipcRenderer.invoke('wm:desktop:conversation-export', payload),
   onConversation: (callback) => {
     const listener = (_event, sessionId) => callback(sessionId);
     ipcRenderer.on('wm:desktop:conversation', listener);

@@ -1,5 +1,7 @@
 # WeftMate 手机界面
 
+UX-4 界面包 **0.8.13 / 最低原生 code26**：宿主消息操作复用 `src/ui-core/message-actions.js`，呈现与桌面共用 `message-actions.js / .css`，由构建脚本生成。复制、有用 / 没用、选中文字引用、完整 Markdown（标记文本）/ 浅深 PNG（图片文件）导出也覆盖手机本机记录；本机记录使用 `conversationId/messageId` 保存设备端反馈，不上传。尚未由电脑接续到 DSH（助手运行时）的手机消息不提供自造分叉，界面说明「需由电脑接续」；接续后的宿主消息可编辑、重生成与切版本，保留原聊天权限。导出先预览脱敏内容，系统保存文件无需新增权限。见 [UX-4](../../tests/evidence/ux-4/README.md)。
+
 M3-A：Android（安卓）0.8.11 / code24 新增设备加密副本、云模型凭据原生保管与离线对话；发布最低原生 code24。网页与安卓共用离线状态、相关记忆召回和补交，设计见 [M3_OFFLINE](../../docs/M3_OFFLINE.md)，接口见 CLIENT_API 3.19，验收见 [M3-A](../../tests/evidence/m3-a/README.md)。
 
 UPD-1 / D32：Android（安卓）0.8.9 / code22 的发布清单升级为统一 `mobile-ui` 签名格式，保留旧 `uiVersion` / `assets` / `minNativeVersionCode` 字段与既有下载接口。新安卓壳在下载、激活和恢复已装版本时核对内置公钥的 Ed25519（签名算法）签名与兼容范围；按大小与 SHA-256（文件哈希）复用内置 / 当前版本的相同文件，全部校验后才暂存，任务 / 草稿期间继续暂缓切换，坏页沿用原生回退。旧壳仍可读取新清单，但不具备新签名验证能力。发布命令现在必须从 `WEFTMATE_UPDATE_PRIVATE_KEY_PATH` 读私钥路径，私钥绝不进仓库或包；正式公钥与发布源留 UPD-3 配置。完整步骤与本地校验见 [发布说明](../../scripts/release/README.md)，真实 Chromium（浏览器引擎）390×844 与 MuMu（安卓模拟器）切换 / 回退见 [UPD-1 证据](../../tests/evidence/upd-1/README.md)。合入 BK-1 后资源总数达到251，超过旧壳250文件容量；code22支持512文件，超过250的包必须声明 `minNativeVersionCode >= 22`，旧壳保留原界面。共享 `src/ui-core/update.js` 提供当前 / 可用版本、状态和检查动作，关于页呈现由 UI-4 注册表接入。

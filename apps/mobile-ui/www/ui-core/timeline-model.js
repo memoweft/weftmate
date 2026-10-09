@@ -143,7 +143,7 @@
         } catch { return text; }
     }
     function projectTimeline(events, approvals = []) {
-        const ordered = [...events].sort((a, b) => a.seq - b.seq), groups = [], steps = new Map();
+        const ordered = [...events].filter(event => !(event.type === 'task.queued' && event.data?.inherited)).sort((a, b) => a.seq - b.seq), groups = [], steps = new Map();
         let group = null;
         const ordinals = new Map();
         for (const raw of ordered) {
