@@ -1,0 +1,265 @@
+{
+  "total": {
+    "requests": 507,
+    "returnedUsage": 501,
+    "missingUsage": 6,
+    "input": 1371671,
+    "cached": 1018368,
+    "output": 73446,
+    "knownCnyLowerBound": 0.52056236,
+    "pricing": {
+      "source": "https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash",
+      "checked": "2026-10-09",
+      "inputCnyPerMillion": 1,
+      "cachedInputCnyPerMillion": 0.02,
+      "outputCnyPerMillion": 2
+    },
+    "note": "Includes initial failures, interrupted/invalid wrapper calls, all completed model regressions, before-reminder comparison and direct judges. Missing usage is unknown, not zero; estimate is a lower bound, not an account invoice."
+  },
+  "roots": [
+    {
+      "root": "C:\\temp\\weftmate-m2-exit-lan-969k81",
+      "requests": 3,
+      "returnedUsage": 3,
+      "missingUsage": 0,
+      "input": 6578,
+      "cached": 5120,
+      "output": 478
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2-exit-lan-F4sm45",
+      "requests": 0,
+      "returnedUsage": 0,
+      "missingUsage": 0,
+      "input": 0,
+      "cached": 0,
+      "output": 0
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2-exit-lan-fLJRGV",
+      "requests": 0,
+      "returnedUsage": 0,
+      "missingUsage": 0,
+      "input": 0,
+      "cached": 0,
+      "output": 0
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2-exit-lan-p6l8q8",
+      "requests": 3,
+      "returnedUsage": 3,
+      "missingUsage": 0,
+      "input": 6281,
+      "cached": 4736,
+      "output": 548
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2-exit-lan-sAyzKB",
+      "requests": 0,
+      "returnedUsage": 0,
+      "missingUsage": 0,
+      "input": 0,
+      "cached": 0,
+      "output": 0
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2-exit-mimo-0H17e2",
+      "requests": 44,
+      "returnedUsage": 43,
+      "missingUsage": 1,
+      "input": 110068,
+      "cached": 85504,
+      "output": 4076
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2-exit-mimo-9jC3d6",
+      "requests": 21,
+      "returnedUsage": 21,
+      "missingUsage": 0,
+      "input": 33033,
+      "cached": 25856,
+      "output": 2611
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2-exit-mimo-A7JcFz",
+      "requests": 40,
+      "returnedUsage": 39,
+      "missingUsage": 1,
+      "input": 102031,
+      "cached": 70400,
+      "output": 4872
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2-exit-mimo-AlSqB8",
+      "requests": 23,
+      "returnedUsage": 23,
+      "missingUsage": 0,
+      "input": 44174,
+      "cached": 33088,
+      "output": 4686
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2-exit-mimo-DxMhrI",
+      "requests": 22,
+      "returnedUsage": 22,
+      "missingUsage": 0,
+      "input": 36792,
+      "cached": 30336,
+      "output": 3655
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2-exit-mimo-JYwGmk",
+      "requests": 0,
+      "returnedUsage": 0,
+      "missingUsage": 0,
+      "input": 0,
+      "cached": 0,
+      "output": 0
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2-exit-mimo-VteYjc",
+      "requests": 36,
+      "returnedUsage": 35,
+      "missingUsage": 1,
+      "input": 295421,
+      "cached": 241984,
+      "output": 4007
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2-exit-mimo-ZSPBHh",
+      "requests": 27,
+      "returnedUsage": 27,
+      "missingUsage": 0,
+      "input": 39708,
+      "cached": 29312,
+      "output": 5035
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2-exit-mimo-x68THT",
+      "requests": 5,
+      "returnedUsage": 5,
+      "missingUsage": 0,
+      "input": 13675,
+      "cached": 11904,
+      "output": 125
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2f-lan-081fb660-9009-43b3-bcc0-023eb5badb17",
+      "requests": 1,
+      "returnedUsage": 1,
+      "missingUsage": 0,
+      "input": 2222,
+      "cached": 1664,
+      "output": 132
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2f-lan-0fb97fe1-4556-4fff-ae3d-af9bc0235690",
+      "requests": 1,
+      "returnedUsage": 1,
+      "missingUsage": 0,
+      "input": 2221,
+      "cached": 1664,
+      "output": 94
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2f-lan-190fbd29-0e3c-448c-9b47-ed79a17990d3",
+      "requests": 1,
+      "returnedUsage": 1,
+      "missingUsage": 0,
+      "input": 10791,
+      "cached": 6144,
+      "output": 144
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2f-lan-48ae4cbc-633c-4ba9-b796-3ff847f281cc",
+      "requests": 1,
+      "returnedUsage": 1,
+      "missingUsage": 0,
+      "input": 2210,
+      "cached": 1664,
+      "output": 130
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2f-lan-57ef637e-477f-4742-8b1e-abdc5329ed2c",
+      "requests": 1,
+      "returnedUsage": 1,
+      "missingUsage": 0,
+      "input": 2219,
+      "cached": 1664,
+      "output": 144
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2f-lan-e7f50b6f-0bd2-4db9-9bf6-aa6feef526c1",
+      "requests": 1,
+      "returnedUsage": 1,
+      "missingUsage": 0,
+      "input": 10770,
+      "cached": 6144,
+      "output": 135
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2f-lan-ee1497ba-ebf1-4bdc-bc34-c2095704c405",
+      "requests": 1,
+      "returnedUsage": 1,
+      "missingUsage": 0,
+      "input": 2204,
+      "cached": 0,
+      "output": 214
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2f-mimo-184b1d32-963a-472a-a92d-6eb7f2b96657",
+      "requests": 6,
+      "returnedUsage": 5,
+      "missingUsage": 1,
+      "input": 7287,
+      "cached": 3264,
+      "output": 747
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2f-mimo-1ee191e6-07f0-440c-a7fc-f8de2dfa7e34",
+      "requests": 50,
+      "returnedUsage": 50,
+      "missingUsage": 0,
+      "input": 138529,
+      "cached": 105024,
+      "output": 9933
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2f-mimo-350e1aaf-c832-4082-8d9f-698458f1e0be",
+      "requests": 34,
+      "returnedUsage": 33,
+      "missingUsage": 1,
+      "input": 85583,
+      "cached": 62208,
+      "output": 6950
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2f-mimo-7b47aa98-b55a-473c-81d8-002c0c9884d2",
+      "requests": 47,
+      "returnedUsage": 47,
+      "missingUsage": 0,
+      "input": 283389,
+      "cached": 222720,
+      "output": 13563
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2f-mimo-93b44144-0cc6-4ca3-8764-16969aee3cff",
+      "requests": 45,
+      "returnedUsage": 45,
+      "missingUsage": 0,
+      "input": 111091,
+      "cached": 66240,
+      "output": 8375
+    },
+    {
+      "root": "C:\\temp\\weftmate-m2f-mimo-d8accd65-da90-4eb4-abe6-6f049418057e",
+      "requests": 3,
+      "returnedUsage": 2,
+      "missingUsage": 1,
+      "input": 2189,
+      "cached": 1536,
+      "output": 137
+    }
+  ],
+  "directJudgements": 91
+}

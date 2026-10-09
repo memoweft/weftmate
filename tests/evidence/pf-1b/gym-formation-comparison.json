@@ -1,0 +1,165 @@
+[
+  {
+    "root": "C:/Temp/weftmate-m2f-lan-0fb97fe1-4556-4fff-ae3d-af9bc0235690",
+    "systemSha256": "f59ebe02fa0124b439d5d1fe9c2df7223eb9297eebc3ee9dc3c7a03abb28b454",
+    "input": {
+      "conversation_context": [],
+      "current_cognitions": [
+        {
+          "content": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。",
+          "id": "cognition-19ae6056e4d5aee4ad1e950293af939ac403525c99f9bbd06a38c0fe9d76644a",
+          "statement_kind": "preference"
+        }
+      ],
+      "current_entities": [],
+      "current_events": [],
+      "current_relationships": [],
+      "evidence": [
+        {
+          "id": "10698c61-9183-4ae5-922e-83cc74403bfa",
+          "segments": [
+            {
+              "end": 12,
+              "id": "s0",
+              "start": 0,
+              "text": "我最近只能周三晚上锻炼，"
+            },
+            {
+              "end": 22,
+              "id": "s1",
+              "start": 12,
+              "text": "安排运动时帮我记着。"
+            }
+          ],
+          "sentences": [
+            {
+              "end": 22,
+              "id": "t0",
+              "start": 0,
+              "text": "我最近只能周三晚上锻炼，安排运动时帮我记着。"
+            }
+          ],
+          "text": "我最近只能周三晚上锻炼，安排运动时帮我记着。"
+        }
+      ],
+      "subject": "owner"
+    },
+    "job": {
+      "state": "no_change",
+      "world_result_json": "{\"reason\":\"model_no_change\",\"schema_version\":1,\"state\":\"no_change\"}",
+      "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"no_change\\\"}\",\"finish_reason\":\"stop\",\"model\":\"local-quality\",\"usage\":{\"completion_tokens\":421,\"prompt_tokens\":4488,\"prompt_tokens_details\":{\"cached_tokens\":4264},\"total_tokens\":4909}}"
+    }
+  },
+  {
+    "root": "C:/Temp/weftmate-m2f-lan-48ae4cbc-633c-4ba9-b796-3ff847f281cc",
+    "systemSha256": "f59ebe02fa0124b439d5d1fe9c2df7223eb9297eebc3ee9dc3c7a03abb28b454",
+    "input": {
+      "conversation_context": [],
+      "current_cognitions": [
+        {
+          "content": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。",
+          "id": "cognition-4e1578cb107539da10e4018976d317a69bb9c1cc0a76b230c75621cf6c6d8c0d",
+          "statement_kind": "preference"
+        },
+        {
+          "content": "用户看到一大段术语就头疼。",
+          "id": "cognition-69b48b7ae0b7bd9c8ba6e0f1d02f4d74235bf219f78139cca56957d7747deff7",
+          "statement_kind": "attribute"
+        }
+      ],
+      "current_entities": [],
+      "current_events": [],
+      "current_relationships": [],
+      "evidence": [
+        {
+          "id": "ebec2494-595d-42d9-8a5b-afea47b6dd42",
+          "segments": [
+            {
+              "end": 12,
+              "id": "s0",
+              "start": 0,
+              "text": "我最近只能周三晚上锻炼，"
+            },
+            {
+              "end": 22,
+              "id": "s1",
+              "start": 12,
+              "text": "安排运动时帮我记着。"
+            }
+          ],
+          "sentences": [
+            {
+              "end": 22,
+              "id": "t0",
+              "start": 0,
+              "text": "我最近只能周三晚上锻炼，安排运动时帮我记着。"
+            }
+          ],
+          "text": "我最近只能周三晚上锻炼，安排运动时帮我记着。"
+        }
+      ],
+      "subject": "owner"
+    },
+    "job": {
+      "state": "no_change",
+      "world_result_json": "{\"reason\":\"model_no_change\",\"schema_version\":1,\"state\":\"no_change\"}",
+      "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"no_change\\\"}\",\"finish_reason\":\"stop\",\"model\":\"local-quality\",\"usage\":{\"completion_tokens\":362,\"prompt_tokens\":4555,\"prompt_tokens_details\":{\"cached_tokens\":4262},\"total_tokens\":4917}}"
+    }
+  },
+  {
+    "root": "C:/Temp/weftmate-m2f-lan-190fbd29-0e3c-448c-9b47-ed79a17990d3",
+    "systemSha256": "f59ebe02fa0124b439d5d1fe9c2df7223eb9297eebc3ee9dc3c7a03abb28b454",
+    "input": {
+      "conversation_context": [],
+      "current_cognitions": [
+        {
+          "content": "用户看到一大段术语就头疼。",
+          "id": "cognition-11435c32093bdae8043612a0b8d4b95e121599f97c8615156e6d148d75402375",
+          "statement_kind": "attribute"
+        },
+        {
+          "content": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。",
+          "id": "cognition-8bc14e648615f4bf69cb1bda5e170cb3cfe9b7a6549b532f591feb8d41b0692f",
+          "statement_kind": "preference"
+        }
+      ],
+      "current_entities": [],
+      "current_events": [],
+      "current_relationships": [],
+      "evidence": [
+        {
+          "id": "61e55a61-4a45-427a-94b0-43acb4015263",
+          "segments": [
+            {
+              "end": 12,
+              "id": "s0",
+              "start": 0,
+              "text": "我最近只能周三晚上锻炼，"
+            },
+            {
+              "end": 22,
+              "id": "s1",
+              "start": 12,
+              "text": "安排运动时帮我记着。"
+            }
+          ],
+          "sentences": [
+            {
+              "end": 22,
+              "id": "t0",
+              "start": 0,
+              "text": "我最近只能周三晚上锻炼，安排运动时帮我记着。"
+            }
+          ],
+          "text": "我最近只能周三晚上锻炼，安排运动时帮我记着。"
+        }
+      ],
+      "subject": "owner"
+    },
+    "job": {
+      "state": "applied",
+      "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:1aef023af6d3110f9b8863c839aa5605:fe80d42ec8f95be0d77fd1639a15e5a8c1e37596527a4c6836b06bd8cfb924af\",\"cognitions\":[{\"action\":\"form\",\"cognition_id\":\"cognition-e84971a51639e918c1bde743e4164872de9b21129d34d4c2e0068063c44eea64\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":2}",
+      "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u6211\\u6700\\u8fd1\\u53ea\\u80fd\\u5468\\u4e09\\u665a\\u4e0a\\u953b\\u70bc\\uff0c\\u5b89\\u6392\\u8fd0\\u52a8\\u65f6\\u5e2e\\u6211\\u8bb0\\u7740\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"61e55a61-4a45-427a-94b0-43acb4015263\\\",\\\"sentence_id\\\":\\\"t0\\\"}]}]}\",\"finish_reason\":\"stop\",\"model\":\"local-quality\",\"usage\":{\"completion_tokens\":375,\"prompt_tokens\":4549,\"prompt_tokens_details\":{\"cached_tokens\":4263},\"total_tokens\":4924}}"
+    }
+  }
+]

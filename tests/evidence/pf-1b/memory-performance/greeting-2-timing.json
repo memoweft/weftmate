@@ -1,0 +1,20 @@
+[
+  {
+    "foreground": true,
+    "firstTextMs": 25615.3325,
+    "firstDeltaMs": 24514.5235,
+    "turnFirstTextMs": 26766.115700000002,
+    "turnFirstDeltaMs": 25665.3067,
+    "totalMs": 25857.0317,
+    "text": "你好！有什么需要帮忙的吗？",
+    "tools": [],
+    "usage": {
+      "completion_tokens": 71,
+      "prompt_tokens": 2338,
+      "total_tokens": 2409,
+      "prompt_tokens_details": {
+        "cached_tokens": 1722
+      }
+    }
+  }
+]

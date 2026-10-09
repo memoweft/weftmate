@@ -1,0 +1,41 @@
+{
+  "jobs": [
+    {
+      "state": "applied",
+      "model_completed_at": "2026-10-09T04:45:56.160Z",
+      "completed_at": "2026-10-09T04:45:56.181Z",
+      "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:86e313bf3ff56dff7bebf90777d1ce01:90eee11b3ebde61f0b49e59ef0f6e25155a29268d455d4803bef72fce5dfcefd\",\"cognitions\":[{\"action\":\"form\",\"cognition_id\":\"cognition-a8ef5b4fe1492d392413fe70b288efa08ca0d964affc3c6ceb376ae409072642\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":4}"
+    }
+  ],
+  "claims": [
+    {
+      "id": "cognition-a8ef5b4fe1492d392413fe70b288efa08ca0d964affc3c6ceb376ae409072642",
+      "content": "用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。",
+      "created_at": "2026-10-09T04:45:56.181Z"
+    }
+  ],
+  "foreground": [
+    {
+      "at": "2026-10-09T04:44:49.382Z",
+      "model": "mimo-v2.6-flash",
+      "userMessages": [
+        "Generate the session title from this JSON array of human messages:\n[{\"seq\":11,\"text\":\"今天事情有点多，跟我打个招呼，鼓励我一下吧。\"}]"
+      ]
+    },
+    {
+      "at": "2026-10-09T04:44:49.798Z",
+      "model": "local-quality",
+      "userMessages": [
+        "当前时间 2026-10-09T04:44:48.915Z；账号时区 Asia/Shanghai。消息以“现在执行定时任务”开头时，这是已到点的任务，直接执行内容；用户交代未来的提醒/定时执行时直接调用 schedule_create，WeftMate 的日历重复和定时执行适配已安装，不需要读源码或编写调度脚本。prompt 是完整 JSON 字符串，例如 {\"weftmate\":1,\"kind\":\"reminder\",\"text\":\"交报告\"}；定时工作示例 {\"weftmate\":1,\"kind\":\"task\",\"text\":\"生成周报文件\",\"repeat\":{\"kind\":\"weekly\",\"time\":\"08:00:00\",\"weekday\":1}}。纯提醒 kind=reminder，届时执行 kind=task；daily 不填 weekday。首次时间由 at 或 after_seconds 指定，后续日历规则在 repeat 中，二者可以不同。at 的 time_zone 用账号时区。固定间隔用 every_seconds。一次性不填 repeat。成功后一句话复述本地时间、规则、内容；失败不能说已建立。取消/暂停/恢复先 schedule_manage list，再操作准确 id。",
+        "今天事情有点多，跟我打个招呼，鼓励我一下吧。"
+      ]
+    },
+    {
+      "at": "2026-10-09T04:45:56.975Z",
+      "model": "mimo-v2.6-flash",
+      "userMessages": [
+        "{\"conversation_context\":[],\"current_cognitions\":[{\"content\":\"用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。\",\"id\":\"cognition-385c0ebd40488215789a4392713bd80bdda5a3fc51d4da44957a59da0b20a093\",\"statement_kind\":\"preference\"},{\"content\":\"用户刚才说错了，现在固定空出来的是周五晚上，周三已经没空了，以后按周五来安排。\",\"id\":\"cognition-2008320c713c49579535759cf548e62a49c709d65f9198bfce614028e21171ce\",\"predecessor_context\":[\"用户最近只能周三晚上锻炼，安排运动时帮我记着。\"],\"statement_kind\":\"preference\"},{\"content\":\"用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。\",\"id\":\"cognition-a8ef5b4fe1492d392413fe70b288efa08ca0d964affc3c6ceb376ae409072642\",\"statement_kind\":\"preference\"}],\"current_entities\":[{\"aliases\":[\"技术讲解\"],\"canonical_name\":\"技术问题\",\"id\":\"entity-a508f816ebb767b3414657658dd4236e73daa1299fcf415f2df19e5b21469e47\",\"kind\":\"topic\"},{\"aliases\":[\"运动\"],\"canonical_name\":\"锻炼\",\"id\":\"entity-23c64873a4718494dd6c720fd6dcc88774bcf45cbfcdf54cd78ef596283047b8\",\"kind\":\"topic\"}],\"current_events\":[],\"current_relationships\":[],\"evidence\":[{\"id\":\"899a04c4-fba3-4545-90c2-db954933957c\",\"segments\":[{\"end\":8,\"id\":\"s0\",\"start\":0,\"text\":\"今天事情有点多，\"},{\"end\":15,\"id\":\"s1\",\"start\":8,\"text\":\"跟我打个招呼，\"},{\"end\":22,\"id\":\"s2\",\"start\":15,\"text\":\"鼓励我一下吧。\"}],\"sentences\":[{\"end\":22,\"id\":\"t0\",\"start\":0,\"text\":\"今天事情有点多，跟我打个招呼，鼓励我一下吧。\"}],\"text\":\"今天事情有点多，跟我打个招呼，鼓励我一下吧。\"}],\"subject\":\"owner\"}"
+      ]
+    }
+  ]
+}

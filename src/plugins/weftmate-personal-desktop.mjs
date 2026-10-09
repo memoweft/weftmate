@@ -19,7 +19,7 @@ const LEGACY_BROWSER_OPEN_TOOL = 'personal_browser_open';
 const LEGACY_BROWSER_FOLLOW_TOOL = 'personal_browser_follow';
 const LEGACY_BROWSER_SEGMENT_TOOL = 'personal_browser_read_segment';
 const NATIVE_SESSION_TOOLS = new Set(['get_goal', 'create_goal', 'update_goal', 'ask_user_question',
-  'schedule_create', 'schedule_list', 'schedule_delete', 'schedule_manage']);
+  'schedule_create', 'schedule_list', 'schedule_delete', 'schedule_manage', 'load_tools']);
 const executionToolName = name => typeof name === 'string' && /^[A-Za-z][A-Za-z0-9_.:-]{0,159}$/.test(name);
 export const PERSONAL_PROJECT_PROOF_PROTOCOL = 'weftmate.personal-project-proof.v1';
 export const inject = ['tools', 'web', 'approval'];
