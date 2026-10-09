@@ -10,7 +10,7 @@ const response = (body: object, status = 200) => ({ ok: status < 400, status, js
 function fixture(read: (path: string, options: any) => any = () => response({})) {
   const values = new Map<string, string>(), requests: Array<{ path: string; options: any }> = [], paints: Array<{ name: string; args: any[] }> = []
   const storage = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value) }, removeItem: (key: string) => { values.delete(key) } }
-  const effects = new Proxy({}, { get: (_target, name: string) => (...args: any[]) => { paints.push({ name, args }); return name === 'readMessageDraft' ? '' : undefined } })
+  const effects = new Proxy({}, { get: (_target, name: string) => (...args: any[]) => { paints.push({ name, args }); return name === 'readMessageDraft' ? '' : name === 'acceptApprovalRisk' ? true : undefined } })
   let counter = 0
   const environment = { fetch: async (path: string, options: any = {}) => { requests.push({ path, options }); return read(path, options) }, storage,
     crypto: { randomUUID: () => `00000000-0000-4000-8000-${String(++counter).padStart(12, '0')}` } }
@@ -425,7 +425,7 @@ test('UI-P4 first message appears before session creation and survives an accoun
   const pending=deferred(),f=fixture(()=>pending.promise);f.core.refreshTasks=async()=>{};
   f.core.startNewConversation();assert.equal(f.core.state.selectedSessionId,null);assert.equal(f.core.composerState('首条消息').sendDisabled,false);
   const send=f.core.sendDraft('首条消息');assert.equal(f.core.optimisticMessages()[0].sessionId,null);
-  assert.equal(JSON.parse(f.requests[0].options.body).kind,'session.create');
+  assert.equal(JSON.parse(f.requests.find(row=>row.options.method==='POST')!.options.body).kind,'session.create');
   f.core.state.identityGeneration++;f.core.state.ownerId='other-owner';
   pending.resolve(response({command:{requestId:'old-create',kind:'session.create',sessionId:'old-session',state:'accepted_by_dsh'}}));await send;
   assert.equal(f.core.optimisticMessages().length,0);assert.equal(f.core.state.selectedSessionId,null);
@@ -437,6 +437,18 @@ test('UI-P4 switching accounts during receipt lookup never retries the old accou
   const retry=f.core.retryOptimistic(row.requestId);f.core.state.identityGeneration++;f.core.state.ownerId='other-owner';
   lookup.resolve({command:null});await retry;
   assert.equal(f.requests.length,0);assert.equal(f.core.optimisticMessages().length,0);
+});
+
+test('UI-P4 a new draft reads the account approval mode and applies its chosen mode before sending',async()=>{
+  const f=fixture(url=>response(url.endsWith('/settings/approvals')?{mode:'ask'}:{}));
+  f.core.startNewConversation();await new Promise(done=>setTimeout(done,0));assert.equal(f.core.state.newConversationApprovalMode,'ask');
+  await f.core.saveApprovalMode('plan');assert.equal(f.core.state.newConversationApprovalMode,'plan');
+  const operations:string[]=[];
+  f.core.submitCommand=async(kind,fields,_session,id)=>{operations.push(kind);return {requestId:id,kind,sessionId:'new-session',state:'accepted_by_dsh',receiptId:kind==='session.message'?'new-rpc':undefined};};
+  f.core.refreshSessions=async()=>{};f.core.refreshHistory=async()=>{};f.core.refreshApprovalMode=async()=>{};
+  f.core.selectSession=async id=>{f.core.state.selectedSessionId=id;f.core.state.newConversation=false;};
+  f.core.accessApi=async(_path,options)=>{operations.push('approval-mode:'+options.body.mode);return {mode:options.body.mode};};
+  await f.core.sendDraft('先出计划');assert.deepEqual(operations,['session.create','approval-mode:plan','session.message']);
 });
 test('a delayed lifecycle response cannot replace another account session list',async()=>{
   const pending=deferred(),f=fixture(()=>pending.promise);

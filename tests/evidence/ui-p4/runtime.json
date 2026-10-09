@@ -10,18 +10,20 @@
       "contextUsage": {
         "usedTokens": 713111,
         "contextWindow": 828000
-      }
+      },
+      "newDraftApprovalMode": "ask"
     },
     {
       "theme": "dark",
-      "firstMessageMs": 2.2999999821186066,
+      "firstMessageMs": 2.300000011920929,
       "contextUsage": {
         "usedTokens": 713111,
         "contextWindow": 828000
-      }
+      },
+      "newDraftApprovalMode": "ask"
     }
   ],
   "modelCalls": 4,
-  "streamingFrames": 74,
+  "streamingFrames": 81,
   "errors": []
 }
