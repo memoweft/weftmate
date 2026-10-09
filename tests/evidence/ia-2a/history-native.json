@@ -1,0 +1,13 @@
+{
+  "checkedAt": "2026-10-09T17:52:56.143Z",
+  "fixedDsh": true,
+  "realElectronHost": true,
+  "syntheticAccount": true,
+  "randomPorts": true,
+  "coldLogicalTimelineMs": 16.699799999998504,
+  "publicMessagesAndOriginalSources": true,
+  "chineseSearch": true,
+  "dateLocate": true,
+  "independentChanges": true,
+  "note": "Small native migration fixture; native cold 10k/100k recovery is measured separately, not inferred from this time."
+}
