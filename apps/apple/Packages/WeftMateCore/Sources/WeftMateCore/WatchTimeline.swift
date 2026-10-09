@@ -39,3 +39,11 @@ public struct WatchFeedbackTracker: Sendable {
         return effects
     }
 }
+
+public enum WatchTimelineProjection {
+    /// Aborted/rejected tasks end too, but must never announce successful completion.
+    public static func successfulTaskIDs(in events: [TimelineEvent]) -> [String] {
+        events.filter { $0.type == "task.ended" && $0.data["reason"]?.string == "completed" }
+            .compactMap { $0.data["taskId"]?.string }
+    }
+}

@@ -121,6 +121,8 @@ private struct SettingsCategoryView: View {
     @State private var restoringBackup: HostBackup?
     @State private var restartingService: HostService?
     #if os(macOS)
+    @StateObject private var loginItem = MacLoginItemModel()
+    @Environment(\.scenePhase) private var scenePhase
     @EnvironmentObject private var updates: MacUpdateModel
     @Environment(\.openWindow) private var openWindow
     #endif
@@ -205,9 +207,18 @@ private struct SettingsCategoryView: View {
                 VStack(alignment: .leading, spacing: AppleTokens.Space.p4) { Text(mode.title); Text(mode.explanation) }.font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
             }
             SettingsRow("语言", "当前界面使用简体中文。") { Text("简体中文").foregroundStyle(Weave.muted) }
-            SettingsRow("通知", "审批与任务提醒沿用系统通知权限。") { Text("由系统管理").foregroundStyle(Weave.muted) }
             #if os(macOS)
-            SettingsRow("开机自启", "Apple 原生启动项尚未接入。") { Text("即将支持").foregroundStyle(Weave.muted) }
+            SettingsRow("开机自启", loginItem.state.explanation) {
+                Toggle("开机自启", isOn: Binding(get: { loginItem.state.isOn }, set: { value in Task { await loginItem.setEnabled(value) } }))
+                    .labelsHidden().disabled(loginItem.busy).accessibilityIdentifier("launchAtLogin")
+            }
+            if let error = loginItem.error { InlineNotice(message: error, isError: true) }
+            if loginItem.state == .requiresApproval || loginItem.error != nil {
+                Button("打开系统登录项设置") { loginItem.openSystemSettings() }.accessibilityIdentifier("loginItemSystemSettings")
+            }
+            Button("刷新登录项状态") { loginItem.refresh() }.accessibilityIdentifier("refreshLoginItem")
+                .task { loginItem.refresh() }
+                .onChange(of: scenePhase) { _, phase in if phase == .active { loginItem.refresh() } }
             SettingsRow("关闭窗口", "关闭主窗口后程序仍保留在 Dock，可再次打开。") { Text("保留程序").foregroundStyle(Weave.muted) }
             #endif
             SettingsRow("电脑连接", "更换电脑需退出当前连接，在设备分类重新连接。") { Text(app.verificationPending ? "等待验证" : "已连接").foregroundStyle(Weave.muted) }

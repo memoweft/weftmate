@@ -1,0 +1,43 @@
+{"approvals":[],"event":"snapshot","progress":"已停止","running":false,"sessionID":"session-cda32525-d2c9-42fb-922f-68bc35cb5681","time":"2026-10-09T15:32:09Z"}
+{"approvals":[],"event":"snapshot","progress":"等待新任务","running":false,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:09Z"}
+{"approvals":[],"event":"snapshot","progress":"等待新任务","running":false,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:09Z"}
+{"action":"refresh","event":"send","time":"2026-10-09T15:32:09Z"}
+{"approvals":["要运行命令：rm synthetic-approve-draft.txt"],"event":"snapshot","progress":"运行命令 rm synthetic-approve-draft.txt","running":true,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:11Z"}
+{"event":"haptic","time":"2026-10-09T15:32:11Z","type":"notification"}
+{"approvals":["要运行命令：rm synthetic-approve-draft.txt"],"event":"snapshot","progress":"运行命令 rm synthetic-approve-draft.txt","running":true,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:12Z"}
+{"approvalID":"","error":"","event":"reply","registered":false,"time":"2026-10-09T15:32:12Z"}
+{"approvals":["要运行命令：rm synthetic-approve-draft.txt"],"event":"snapshot","progress":"运行命令 rm synthetic-approve-draft.txt","running":true,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:12Z"}
+{"action":"approval","approvalID":"b71ccf55-71a8-4b54-953b-bd0ef0fd94ef","event":"send","outcome":"allowed-once","sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:13Z"}
+{"approvals":[],"event":"snapshot","progress":"运行命令 rm synthetic-approve-draft.txt","running":true,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:14Z"}
+{"approvals":[],"event":"snapshot","progress":"运行命令 rm synthetic-approve-draft.txt","running":true,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:15Z"}
+{"approvals":[],"event":"snapshot","progress":"运行命令 rm synthetic-approve-draft.txt","running":true,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:15Z"}
+{"approvals":[],"event":"snapshot","progress":"运行命令 rm synthetic-approve-draft.txt","running":true,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:15Z"}
+{"approvalID":"b71ccf55-71a8-4b54-953b-bd0ef0fd94ef","error":"","event":"reply","registered":true,"time":"2026-10-09T15:32:16Z"}
+{"approvals":[],"event":"snapshot","progress":"运行命令 rm synthetic-approve-draft.txt","running":true,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:16Z"}
+{"approvals":[],"event":"snapshot","progress":"运行命令 rm synthetic-approve-draft.txt","running":true,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:16Z"}
+{"action":"refresh","event":"send","time":"2026-10-09T15:32:16Z"}
+{"approvals":[],"event":"snapshot","progress":"已完成","running":false,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:17Z"}
+{"event":"haptic","time":"2026-10-09T15:32:17Z","type":"success"}
+{"approvals":[],"event":"snapshot","progress":"已完成","running":false,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:18Z"}
+{"approvalID":"","error":"","event":"reply","registered":false,"time":"2026-10-09T15:32:18Z"}
+{"approvals":[],"event":"snapshot","progress":"已完成","running":false,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:18Z"}
+{"approvals":[],"event":"snapshot","progress":"已完成","running":false,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:20Z"}
+{"approvals":[],"event":"snapshot","progress":"已完成","running":false,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:20Z"}
+{"approvals":["要运行命令：rm synthetic-reject-draft.txt"],"event":"snapshot","progress":"运行命令 rm synthetic-reject-draft.txt","running":true,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:21Z"}
+{"event":"haptic","time":"2026-10-09T15:32:21Z","type":"notification"}
+{"approvals":["要运行命令：rm synthetic-reject-draft.txt"],"event":"snapshot","progress":"运行命令 rm synthetic-reject-draft.txt","running":true,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:21Z"}
+{"action":"approval","approvalID":"9fa5d02a-cc3f-4e27-a33c-97524e7894c9","event":"send","outcome":"rejected","sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:23Z"}
+{"approvals":[],"event":"snapshot","progress":"运行命令 rm synthetic-reject-draft.txt","running":true,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:24Z"}
+{"approvals":[],"event":"snapshot","progress":"运行命令 rm synthetic-reject-draft.txt","running":true,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:25Z"}
+{"approvals":[],"event":"snapshot","progress":"运行命令 rm synthetic-reject-draft.txt","running":true,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:25Z"}
+{"approvals":[],"event":"snapshot","progress":"运行命令 rm synthetic-reject-draft.txt","running":true,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:25Z"}
+{"approvalID":"9fa5d02a-cc3f-4e27-a33c-97524e7894c9","error":"","event":"reply","registered":true,"time":"2026-10-09T15:32:26Z"}
+{"approvals":[],"event":"snapshot","progress":"运行命令 rm synthetic-reject-draft.txt","running":true,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:26Z"}
+{"approvals":[],"event":"snapshot","progress":"运行命令 rm synthetic-reject-draft.txt","running":true,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:26Z"}
+{"action":"refresh","event":"send","time":"2026-10-09T15:32:26Z"}
+{"approvals":[],"event":"snapshot","progress":"已停止","running":false,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:26Z"}
+{"approvals":[],"event":"snapshot","progress":"已停止","running":false,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:26Z"}
+{"approvals":[],"event":"snapshot","progress":"已停止","running":false,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:27Z"}
+{"approvals":[],"event":"snapshot","progress":"已停止","running":false,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:29Z"}
+{"approvalID":"","error":"","event":"reply","registered":false,"time":"2026-10-09T15:32:29Z"}
+{"approvals":[],"event":"snapshot","progress":"已停止","running":false,"sessionID":"session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706","time":"2026-10-09T15:32:29Z"}

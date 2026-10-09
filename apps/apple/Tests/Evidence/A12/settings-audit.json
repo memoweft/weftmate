@@ -1,0 +1,32 @@
+{
+  "scope": "Mac / iPhone native settings and shared cloud device settings",
+  "items": [
+    {
+      "platform": "Mac",
+      "item": "开机自启",
+      "before": "Apple 原生启动项尚未接入 / 即将支持",
+      "after": "SMAppService.mainApp register/unregister/status; requiresApproval; failure notice; refresh and system settings link"
+    },
+    {
+      "platform": "Mac + iPhone",
+      "item": "共享给其他账号",
+      "before": "disabled no-op 即将支持 button",
+      "after": "removed; S5 cross-account sharing remains a separate package"
+    },
+    {
+      "platform": "Mac + iPhone",
+      "item": "通知",
+      "before": "由系统管理; no native notification permission or delivery implementation",
+      "after": "removed misleading row; Watch foreground feedback remains active; APNs not implemented"
+    }
+  ],
+  "remainingUnsupportedSettingControls": [],
+  "readOnlyValuesRetained": [
+    "简体中文",
+    "主题色石墨",
+    "版本与安全说明",
+    "连接状态",
+    "Mac关闭窗口保留程序"
+  ],
+  "newEntitlements": false
+}
