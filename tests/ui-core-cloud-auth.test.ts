@@ -172,7 +172,10 @@ test('registration state and 60 second resend deadline live in the shared core; 
   await core.cloudComplete({ password, confirmation: password, deviceName: 'X'.repeat(129) });
   assert.equal(f.calls.filter(row => row.url.endsWith('/registration/complete')).length, 0, 'bad device names must not consume the password ticket')
   assert.match(core.cloudAuthView().error, /设备名称/)
-  assert.equal(f.records.size, 1, 'only the key was persisted')
+  assert.equal(f.records.size, 2, 'only the key and public offline connection configuration were persisted')
+  assert.equal([...f.records.keys()].filter(key => key.startsWith('offline-config:')).length, 1)
+  assert.equal(JSON.stringify([...f.records.values()]).includes(password), false)
+  assert.equal(JSON.stringify([...f.records.values()]).includes('passwordTicket'), false)
   assert.equal(core.cloudPasswordHint('short'), '至少 8 位'); assert.ok(paints.length)
 })
 test('pending approval exchanges share one request and stop polling after success without leaving Settings', async () => {

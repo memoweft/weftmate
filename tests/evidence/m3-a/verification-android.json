@@ -1,0 +1,418 @@
+{
+  "syntheticAccounts": true,
+  "realDesktop": true,
+  "realCore": true,
+  "cloud": "local WSL",
+  "relay": "loopback TCP fixture",
+  "checks": [
+    "real desktop turn formed a formal coffee preference",
+    "native Keystore-wrapped device encryption, secret isolation and old-key erasure",
+    "approved phone encrypted replica synchronized",
+    "host stopped; MiMo answered with recalled coffee preference",
+    "offline preference imported and formed a formal Core item",
+    "new desktop conversation recalled the imported preference",
+    "phone profile byte scan contains no remembered text or credential"
+  ],
+  "usage": [
+    {
+      "source": "android",
+      "usage": {
+        "completion_tokens": 156,
+        "prompt_tokens": 201,
+        "total_tokens": 357,
+        "completion_tokens_details": {
+          "reasoning_tokens": 103
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      }
+    },
+    {
+      "source": "android",
+      "usage": {
+        "completion_tokens": 89,
+        "prompt_tokens": 200,
+        "total_tokens": 289,
+        "completion_tokens_details": {
+          "reasoning_tokens": 22
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 64
+        }
+      }
+    },
+    {
+      "month": "2026-10",
+      "timeZone": "Asia/Shanghai",
+      "sessionId": null,
+      "total": {
+        "requests": 5,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 9134,
+        "cachedInputTokens": 4416,
+        "outputTokens": 350,
+        "cost": 0.00550632
+      },
+      "days": [
+        {
+          "day": "2026-10-01",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-02",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-03",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-04",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-05",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-06",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-07",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-08",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-09",
+          "requests": 5,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 9134,
+          "cachedInputTokens": 4416,
+          "outputTokens": 350,
+          "cost": 0.00550632
+        },
+        {
+          "day": "2026-10-10",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-11",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-12",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-13",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-14",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-15",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-16",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-17",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-18",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-19",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-20",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-21",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-22",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-23",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-24",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-25",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-26",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-27",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-28",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-29",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-30",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        },
+        {
+          "day": "2026-10-31",
+          "requests": 0,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 0,
+          "cachedInputTokens": 0,
+          "outputTokens": 0,
+          "cost": 0
+        }
+      ],
+      "sessions": [
+        {
+          "sessionId": "session-c82c7585-f529-4c26-8eec-2783f803a632",
+          "requests": 3,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 6838,
+          "cachedInputTokens": 4352,
+          "outputTokens": 293,
+          "cost": 0.00315904
+        },
+        {
+          "sessionId": "session-f52198f1-f0e5-45b4-ac15-b0e0dd518f8b",
+          "requests": 2,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 2296,
+          "cachedInputTokens": 64,
+          "outputTokens": 57,
+          "cost": 0.00234728
+        }
+      ],
+      "models": [
+        {
+          "profileId": "private-model-ed0ac218d6e7b1f084d29162b6b2d538223f6584",
+          "requests": 5,
+          "unknownRequests": 0,
+          "unpricedRequests": 0,
+          "inputTokens": 9134,
+          "cachedInputTokens": 4416,
+          "outputTokens": 350,
+          "cost": 0.00550632
+        }
+      ],
+      "budget": {
+        "monthlyLimit": null,
+        "effectiveLimit": null,
+        "temporaryLimit": null,
+        "state": "unlimited"
+      }
+    }
+  ],
+  "requests": 4,
+  "storageScan": {
+    "bytes": 4501504,
+    "matches": []
+  },
+  "status": "passed"
+}

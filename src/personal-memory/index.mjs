@@ -236,7 +236,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       if (boundaryFlights.has(`${ownerId}\0${boundary.event_id}`)) continue;
       try {
         await withOwner(ownerId, (entry) => entry.rpc.request('ingest_boundary', { boundary }),
-          boundary.parent_session_id);
+          row.offline === true ? null : boundary.parent_session_id);
         await queueOutbox(ownerId, async () => {
           const latest = await readOutbox(ownerId);
           latest.items = latest.items.filter((item) => item.boundary.event_id !== boundary.event_id);
@@ -400,6 +400,13 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
 
   return {
     enabled,
+    async discardOfflinePending(ownerId) {
+      return queueOutbox(ownerId, async () => {
+        const state = await readOutbox(ownerId);
+        state.items = state.items.filter(item => item.offline !== true);
+        await writeOutbox(ownerId, state);
+      });
+    },
     healthStore,
     flushObserved,
     // Expose remaining replay inputs; delivered revisions are acknowledged durably.
@@ -570,7 +577,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           ? world.world_revision : null, sourceCount: memories.length };
       }, sessionId);
     },
-    async ingest(ownerId, boundary) {
+    async ingest(ownerId, boundary, { offline = false } = {}) {
       owner(ownerId);
       if (!enabled) throw error('MEMORY_DISABLED');
       if (!boundary || typeof boundary !== 'object' || Array.isArray(boundary) ||
@@ -585,7 +592,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           return;
         }
         if (state.items.length >= MAX_OUTBOX_ITEMS) throw error('MEMORY_OUTBOX_FULL');
-        state.items.push({ boundary, blocked: false, lastFailureCode: null });
+        state.items.push({ boundary, blocked: false, lastFailureCode: null, ...(offline ? { offline: true } : {}) });
         await writeOutbox(ownerId, state);
       });
       const blocked = await queueOutbox(ownerId, async () => (await readOutbox(ownerId))
@@ -597,7 +604,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       boundaryFlights.add(flight);
       try {
         const result = await withOwner(ownerId, (entry) => entry.rpc.request('ingest_boundary', { boundary }),
-          boundary.parent_session_id);
+          offline ? null : boundary.parent_session_id);
         await queueOutbox(ownerId, async () => {
           const state = await readOutbox(ownerId);
           state.items = state.items.filter((item) => item.boundary.event_id !== boundary.event_id);
