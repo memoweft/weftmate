@@ -33,8 +33,7 @@
         ui[mount]();
     globalThis.__WeftUiStarted = true;
     if (!native && globalThis.navigator?.serviceWorker) void globalThis.navigator.serviceWorker.register('/personal/v1/ui/offline-worker.js').catch(() => {});
-    if (globalThis.indexedDB) globalThis.WeftOfflineView?.mount({ core, desktop: !!native,
-        identity: async () => core.state.account && core.state.hostId ? { origin: location.origin,
-            ownerId: core.state.account.ownerId, deviceId: core.state.device.id, hostId: core.state.hostId } : null,
+    if (globalThis.indexedDB && globalThis.matchMedia?.('(max-width: 720px)')?.matches) globalThis.WeftOfflineView?.mount({ core, desktop: !!native,
+        identity: async () => core.cloudOfflineIdentity(),
         host: (path, body) => core.accessApi(path, { method: 'POST', body: JSON.stringify(body) }) });
 })();
