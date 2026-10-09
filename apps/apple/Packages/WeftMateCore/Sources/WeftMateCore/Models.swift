@@ -100,11 +100,13 @@ public struct ConversationSummary: Identifiable, Sendable, Equatable {
     public let pinned: Bool
     public let unread: Bool
     public let groupId: String?
+    public let contextUsage: ConversationContextUsage?
+    public let processing: ConversationProcessing?
     public init(id: String, title: String, conversationId: String?, sessionId: String?, running: Bool,
-                sendAvailable: Bool, originalModelLabel: String?, archived: Bool = false, pinned: Bool = false, unread: Bool = false, groupId: String? = nil) {
+                sendAvailable: Bool, originalModelLabel: String?, archived: Bool = false, pinned: Bool = false, unread: Bool = false, groupId: String? = nil, contextUsage: ConversationContextUsage? = nil, processing: ConversationProcessing? = nil) {
         self.id = id; self.title = title; self.conversationId = conversationId; self.sessionId = sessionId
         self.running = running; self.sendAvailable = sendAvailable; self.originalModelLabel = originalModelLabel; self.archived = archived
-        self.pinned = pinned; self.unread = unread; self.groupId = groupId
+        self.pinned = pinned; self.unread = unread; self.groupId = groupId; self.contextUsage = contextUsage; self.processing = processing
     }
 
 }

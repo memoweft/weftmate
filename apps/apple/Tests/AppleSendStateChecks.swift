@@ -142,6 +142,7 @@ private actor CommandHTTP: HTTPTransport {
         try check(normal.draftText(for: conversation, accountEpoch: normal.accountEpoch).isEmpty, "Accepted matching draft remained")
         await http.finishTurn()
         try await wait { normal.commandRows(for: conversation).first?.progress == .completed }
+        try check(normal.optimisticRows(for: conversation).isEmpty, "Confirmed user message duplicated optimistic row")
         try check(normal.messages.contains { $0.text == "synthetic answer" }, "Projected assistant message missing")
         try check(await http.submitted().count == 1, "Normal request duplicated")
         print("PASS durable send, accepted is not completed, true turn-ended correlation")
@@ -153,6 +154,8 @@ private actor CommandHTTP: HTTPTransport {
         delayed.setDraft("submitted", for: delayedConversation, accountEpoch: delayed.accountEpoch)
         let send = Task { await delayed.send(delayedConversation, accountEpoch: delayed.accountEpoch) }
         try await wait { await delayedHTTP.paused() }
+        try check(delayed.optimisticRows(for: delayedConversation).first?.record.intent.text == "submitted", "Immediate optimistic message missing before receipt")
+        try check(delayed.draftText(for: delayedConversation, accountEpoch: delayed.accountEpoch) == "submitted", "Pending request discarded draft")
         delayed.setDraft("newly typed", for: delayedConversation, accountEpoch: delayed.accountEpoch)
         await delayedHTTP.release(); await send.value
         try check(delayed.draftText(for: delayedConversation, accountEpoch: delayed.accountEpoch) == "newly typed", "Accepted old text cleared new draft")
