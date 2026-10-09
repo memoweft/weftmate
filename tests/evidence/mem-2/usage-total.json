@@ -1,11 +1,11 @@
 {
-  "requests": 108,
-  "knownUsage": 105,
-  "unknownUsage": 3,
-  "inputTokens": 265633,
-  "cachedInputTokens": 171648,
-  "outputTokens": 4594,
-  "hostRecordedCost": 0.10599667999999998,
+  "requests": 126,
+  "knownUsage": 122,
+  "unknownUsage": 4,
+  "inputTokens": 306207,
+  "cachedInputTokens": 201664,
+  "outputTokens": 5310,
+  "hostRecordedCost": 0.11858699999999998,
   "runs": [
     {
       "run": "weftmate-mem2-real-6DfR0Z",
@@ -66,6 +66,16 @@
       "cachedInputTokens": 0,
       "outputTokens": 0,
       "hostRecordedCost": 0
+    },
+    {
+      "run": "weftmate-mem2-real-jMEzQX",
+      "requests": 18,
+      "knownUsage": 17,
+      "unknownUsage": 1,
+      "inputTokens": 40574,
+      "cachedInputTokens": 30016,
+      "outputTokens": 716,
+      "hostRecordedCost": 0.012590319999999999
     },
     {
       "run": "weftmate-mem2-real-nbhvbT",

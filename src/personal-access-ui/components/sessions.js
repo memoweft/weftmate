@@ -217,7 +217,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             const runs={project:()=>sessionMenu(session,menu.querySelector('[data-project-menu]'),'project'),pin:async()=>{await core.updateSession(session.sessionId,{pinned:!session.pinned});closeMenu();},unread:async()=>{await core.updateSession(session.sessionId,{unread:!session.unread});closeMenu();},
                 rename:()=>{closeMenu();renameInline(session);},fork:async()=>{const child=await core.forkSession(session.sessionId);closeMenu();if(!child)return;await core.refreshSessions();await core.selectSession(child.sessionId);},
                 group:()=>sessionMenu(session,menu.querySelector('[data-group-menu]'),true),archive:async()=>{if(session.archived)await core.archiveSession(session.sessionId,false);else await archiveWithUndo(session);closeMenu();},delete:()=>{closeMenu();confirmDelete(session);}};
-            if (session.kind === 'main') action('这次别记：开临时对话', () => { closeMenu(); core.startNewConversation(true); });
+            if (session.kind === 'main') action('这次别记：开临时对话', () => { closeMenu(); core.startNewConversation(false, true); });
             else {
                 const toggle = action('此对话不形成记忆', async () => { await core.updateSession(session.sessionId, {memoryMode: session.memoryMode === 'off' ? 'on' : 'off'}); closeMenu(); paintSelectedSession(core.state.selectedSessionId); ui.toast('从下一回合生效。之前形成的记忆保留，可去记忆页遗忘。'); });
                 toggle.setAttribute('role', 'menuitemcheckbox'); toggle.setAttribute('aria-checked', String(session.memoryMode === 'off'));

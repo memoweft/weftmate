@@ -41,7 +41,7 @@ function scan(directory,needles){let files=0,frames=0;const matches=[];const has
 try{
  app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:resolve('.'),args:['tests/integration/mem-2-bootstrap.mjs',`--user-data-dir=${profile}`,'--personal-host','--access-port=0',`--personal-memory-config=${config}`],env,timeout:90000});
  let diagnostics='';app.process().stderr?.on('data',data=>{diagnostics+=data;writeFileSync(join(root,'host.log'),diagnostics.replaceAll(key,'[private]'));});
- page=await app.firstWindow();page.on('pageerror',e=>console.error('PAGE',e.message));page.setDefaultTimeout(30000);await page.waitForURL('**/personal/v1/ui');await localUiSession(page,credentials);
+ page=await app.firstWindow();page.on('pageerror',e=>console.error('PAGE',e.message));page.setDefaultTimeout(30000);await page.waitForURL('**/personal/v1/ui');await localUiSession(page,credentials,'MEM-2',{mainChat:true});
  const status=(await api('/status')).body;hostId=status.hostId;ownerId=status.ownerId;
  const requestId=randomUUID();assert.equal((await api('/account/models',{requestId,name:'MEM-2 MiMo',baseUrl:'https://api.xiaomimimo.com/v1',modelId:'mimo-v2.6-flash',apiKey:key})).status,202);
  await until(async()=>((await api('/account/models/by-request/'+requestId)).body.operation?.status==='succeeded'),'model setup');
@@ -54,8 +54,17 @@ try{
  await page.evaluate(()=>document.documentElement.dataset.theme='dark');await page.screenshot({path:join(evidence,'desktop-temporary-dark.png')});
  const normal=await create(false);await turn(normal,'请记住：我给盆栽浇水的量是每次 137 毫升。只需简短确认，不要调用工具。');
  await until(async()=>((await api('/memory/items?kind=cognition')).body.items??[]).some(i=>i.currentState==='current'&&i.text.includes('137')),'ordinary formation',330000);
- const temporary=await create(true);const secret='紫金色珊瑚杯';
- const recalled=await turn(temporary,`这次只临时说：我喝茶只用${secret}。请告诉我之前说过每次给盆栽浇多少水，不要重复杯子信息，也不要调用工具。`);
+ const secret='紫金色珊瑚杯';
+ await page.evaluate(async()=>{await globalThis.mem2UiCore.refreshSessions();await globalThis.mem2UiCore.selectMainChat();});
+ await page.getByRole('button',{name:'临时对话',exact:true}).click();
+ const privateText=`这次只临时说：我喝茶只用${secret}。请告诉我之前说过每次给盆栽浇多少水，不要重复杯子信息，也不要调用工具。`;
+ await page.locator('#message-text').fill(privateText);await page.getByRole('button',{name:'发送',exact:true}).click();
+ const temporary=await until(async()=>((await api('/sessions')).body.sessions??[]).find(s=>s.memoryMode==='off')?.sessionId,'UI temporary creation');
+ const privateEvents=await until(async()=>{const rows=(await api(`/sessions/${temporary}/events?limit=100`)).body.events??[];return rows.some(e=>e.type==='turn.ended')&&rows;},'UI temporary turn');
+ const recalled=privateEvents.filter(e=>e.type==='assistant.message').map(e=>e.data.text).join('\n');
+ report.turns.push({sessionId:temporary,text:privateText,reply:recalled,events:privateEvents});report.checks.push('main to temporary UI creates and sends a private side conversation');
+ await page.evaluate(()=>globalThis.mem2UiCore.selectMainChat());
+ assert.equal(await page.locator('#temporary-chat-notice').isVisible(),false,'main never inherits the temporary badge');
  assert.match(recalled,/137/);report.checks.push('temporary recall of ordinary memory');
  for(const mode of ['default','settled']){
    if(mode==='settled')await until(async()=>{
