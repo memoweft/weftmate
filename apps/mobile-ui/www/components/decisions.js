@@ -289,7 +289,7 @@ function renderConversationTasks(){const context=conversationTaskContext(),conte
       item.sessionId===context.sessionId&&sessionIdPattern.test(item.artifactId||''));
     const outputLimited=task?.replyEvidence?.status==='failed'&&task.replyEvidence.endReasonKind==='max-tokens';
     let card=[...content.children].find(node=>node.dataset?.conversationTask===entry.taskId);
-    if(!entry.notice&&!steps.length&&!artifacts.length&&(!control||control.state==='active')&&!outputLimited){card?.remove();continue}
+    if(!steps.length&&!artifacts.length&&!outputLimited){card?.remove();continue}
     const receiptId=task?.source?.receiptId||entry.receiptId,anchor=[...content.children].find(node=>node.dataset?.receiptId===receiptId);
     if(!anchor&&!entry.notice)continue;
     if(card&&anchor&&anchor.nextSibling!==card)content.insertBefore(card,anchor.nextSibling);

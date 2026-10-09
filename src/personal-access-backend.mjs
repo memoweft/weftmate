@@ -10,7 +10,7 @@ const fail = (code) => { const error = new Error(code); error.code = code; throw
 
 export function createPersonalAccessBackend({ currentOrigin, referenceScan, profiles, hasCredential,
   routeForProfile, listSessions, resolveSession, ensureKnownSession, gateway, queue, bindSession,
-  credentialForProfile = null, modelFetch = fetch,
+  credentialForProfile = null, modelFetch = fetch, processingStatus = async () => null,
   hostOwnerId = () => null, getRuntimeId = () => null,
   ownerForSession = () => null,
   modelAllowed = () => true,
@@ -416,7 +416,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       try { modelProfileId = (await resolveSession(sessionId))?.profile?.id ?? null } catch { /* History may remain readable. */ }
       return { sessionId, title: typeof item.title === 'string' ? item.title : '新对话',
         running: item.running === true, agentPreset: item.agentPreset ?? null,
-        modelProfileId }
+        modelProfileId, ...(item.running === true ? { processing: await processingStatus(sessionId) } : {}) }
     },
   }
 }

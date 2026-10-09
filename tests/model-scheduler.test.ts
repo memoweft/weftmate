@@ -4,6 +4,36 @@ import { createInferenceQueue, createModelScheduler } from '../src/model-schedul
 import { acquireModelSlot, scheduledModelFetch, isBackgroundPurpose, runWithModelSlot } from '../src/model-scheduler-client.mjs';
 const pause = (ms = 15) => new Promise(resolve => setTimeout(resolve, ms));
 
+test('session progress uses actual queue position, observed switcher and stream phases, and disappears when its lease closes', async () => {
+  let switching = true;
+  const bridge = await createModelScheduler({ isIdle: async () => true,
+    profileFor: () => ({ id: 'local', name: 'Synthetic Muse', baseUrl: 'http://127.0.0.1:1/v1' }),
+    credentialFor: () => 'synthetic', backgroundRoute: async () => ({}),
+    fetchImpl: async url => String(url).endsWith('/props') ? Response.json({ total_slots: 1 })
+      : Response.json({ switching }),
+  });
+  let first, second;
+  try {
+    first = await acquireModelSlot('foreground', undefined, bridge.url, { profileId: 'local', sessionId: 'one' });
+    assert.deepEqual(await bridge.progress('one'), { phase: 'loading', modelName: 'Synthetic Muse' });
+    const queued = acquireModelSlot('foreground', undefined, bridge.url, { profileId: 'local', sessionId: 'two' });
+    await pause();
+    assert.deepEqual(await bridge.progress('two'), { phase: 'queued', ahead: 1, modelName: 'Synthetic Muse' });
+    switching = false;
+    assert.equal((await bridge.progress('one')).phase, 'waiting');
+    await fetch(`${bridge.url}/progress`, { method: 'POST', body: JSON.stringify({ sessionId: 'one', phase: 'reasoning' }) });
+    assert.equal((await bridge.progress('one')).phase, 'reasoning');
+    await fetch(`${bridge.url}/progress`, { method: 'POST', body: JSON.stringify({ sessionId: 'one', phase: 'answering' }) });
+    assert.equal((await bridge.progress('one')).phase, 'answering');
+    await first(); first = null;
+    second = await queued;
+    await pause(); assert.equal(await bridge.progress('one'), null);
+    assert.equal((await bridge.progress('two')).phase, 'waiting');
+    await second(); second = null;
+    await pause(); assert.equal(await bridge.progress('two'), null);
+  } finally { await first?.(); await second?.(); await bridge.close(); }
+});
+
 test('background waits through tool gaps, foreground has FIFO priority and cancellation removes waiting work', async () => {
   let idle = false;
   const queue = createInferenceQueue({ isIdle: async () => idle, pollMs: 5 });
