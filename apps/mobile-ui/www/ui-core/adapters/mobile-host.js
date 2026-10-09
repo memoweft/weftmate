@@ -49,6 +49,8 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
     state.sharedEvents = [...core.state.historyEvents.values()].sort((a,b) => a.seq-b.seq);
     state.sharedNextSeq = core.state.afterSeq; state.sharedHasOlder = core.state.hasOlder;
     state.sharedNextBeforeSeq = core.state.nextBeforeSeq; state.sharedLoading = false;
+    await core.mobile.reconcileSharedDelivery();
+    if (!core.mobile.sharedViewCurrent(owner, epoch, generation, sessionId)) return;
     effects.renderSharedConversation(); void effects.refreshConversationTasks();
   }
   function mobileOutput(item) {

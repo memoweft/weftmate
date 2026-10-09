@@ -17,7 +17,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         if (!row || row.ownerId !== core.state.ownerId || row.identity !== core.state.identityGeneration) return;
         row.command = command;
         row.receiptId = command.receiptId;
-        row.status = command.state === 'accepted_by_dsh' ? 'accepted' :
+        row.status = ['accepted_by_dsh', 'observed'].includes(command.state) ? 'accepted' :
             ['failed', 'rejected', 'blocked', 'uncertain'].includes(command.state) ? 'failed' : 'sending';
         if (row.status === 'accepted' && row.sessionId === core.state.selectedSessionId && effects.readMessageDraft() === row.text)
             effects.clearMessageDraft();
@@ -25,7 +25,11 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
     }
     function observeOptimistic(events) {
         for (const event of events) if (event.type === 'user.message' && event.data?.receiptId) {
-            for (const row of optimisticMessages()) if (row.receiptId === event.data.receiptId) messages.delete(row.requestId);
+            for (const row of optimisticMessages()) if (row.receiptId === event.data.receiptId) {
+                row.status = 'accepted';
+                if (effects.readMessageDraft() === row.text) effects.clearMessageDraft();
+                messages.delete(row.requestId);
+            }
         }
     }
     function startNewConversation() {
@@ -267,6 +271,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
                     : recovery && !recoveryHere ? '旧设备有未确认文字，请先切回原手机对话核对。'
                         : recoveryHere ? '重新登录后保留了旧文字。先核对服务器是否已接收，再决定是否重新同步。' : core.state.phoneSendNotice || ''
             : !core.state.online ? '等待重新连接电脑。'
+                : core.state.executionAccount === false ? '这台电脑已有执行账号。当前账号仅可聊天，不能操作电脑或读取原账号资料；请退出后登录这台电脑的原账号。'
                 : selected?.archived ? '这段对话已归档，请在会话菜单中恢复后继续。'
                     : selected && !canSendHere ? '旧会话历史可读；要继续聊天或在对话中执行，请新建受限远端会话。'
                     : !chat || !model ? '电脑尚无可用模型。历史可阅读，聊天请先在电脑设置中配置模型。' : '';

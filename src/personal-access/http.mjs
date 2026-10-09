@@ -701,6 +701,7 @@ export function createHttpHandler(context) {
         }
         return context.json(response, 200, {
           ...context.service.status(ownerId),
+          executionAccount: context.hostOwner(ownerId),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
           backend: backendStatus, memory: { state: memoryStatus.state, inject: memoryStatus.capabilities?.inject === true },
           updates: await context.updateStatus(), nativeMinimumVersions: context.nativeMinimumVersions,
@@ -1106,6 +1107,7 @@ export function createHttpHandler(context) {
               title: bounded(described.title, 256) ?? '',
               ...await context.sessionOperations.summary(ownerId, sessionId),
               running: described.running === true,
+              taskAvailable: state.sessions[sessionId].origin === 'personal-remote',
               ...(described.contextUsage ? {contextUsage: described.contextUsage} : {}),
               ...(described.running === true && described.processing ? { processing: described.processing } : {}),
               ...(state.sessions[sessionId].workspaceKind ? {

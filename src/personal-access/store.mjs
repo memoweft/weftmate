@@ -592,6 +592,8 @@ export function validateStore(store) {
   if (!plainObject(store) || store.version !== VERSION || !validId(store.hostId) ||
       !validId(store.legacyOwnerId) || !plainObject(store.accounts) ||
       !Object.hasOwn(store.accounts, store.legacyOwnerId) ||
+      (store.executionOwnerId !== undefined && (!validId(store.executionOwnerId) ||
+        !store.accounts[store.executionOwnerId]?.account)) ||
       !plainObject(store.unknownAuthLimits) ||
       !Number.isSafeInteger(store.unknownAuthLimits.failures) || store.unknownAuthLimits.failures < 0 ||
       !Number.isSafeInteger(store.unknownAuthLimits.lastFailureAt) || store.unknownAuthLimits.lastFailureAt < 0 ||

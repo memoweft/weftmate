@@ -346,7 +346,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   };
   const healthStore = memoryManager?.healthStore ?? createPersonalHealthStore({ root, clock });
   const artifactStore = createPersonalArtifactStore(path.join(root, 'artifacts'));
-  const hostOwner = (ownerId) => ownerId === rootState.legacyOwnerId;
+  const executionOwnerId = () => rootState.executionOwnerId ?? rootState.legacyOwnerId;
+  const hostOwner = (ownerId) => ownerId === executionOwnerId();
   const registeredAccountCount = () => Object.values(rootState.accounts)
     .filter((entry) => entry.account !== null).length;
   // A callback may have run before the process died. Never replay these commands.
@@ -614,6 +615,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     rotateRelayCredential: (requestId) => hostRelay?.rotate(requestId),
     reloadRelayCertificate: () => hostRelay?.reloadCertificate(),
     legacyOwnerId() { return rootState.legacyOwnerId; },
+    executionOwnerId,
     canUseModelProfile: accountModels.canUseModelProfile,
     isFormalLocalProfile: accountModels.isFormalLocalProfile,
     privateAccountModelProof: accountModels.privateAccountModelProof,
@@ -660,7 +662,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     receiveCloudRevocations: (token) => hostCloudIdentity?.applyEvents(token),
     listDevices: authentication.listDevices,
     hasVerifiedPersonalTool() {
-      return Object.values(accountState(rootState.legacyOwnerId).commands).some((command) => command.kind === 'desktop.open_app' &&
+      return Object.values(accountState(executionOwnerId()).commands).some((command) => command.kind === 'desktop.open_app' &&
         command.toolSource && command.state === 'observed' && command.verification?.status === 'observed');
     },
     attachSession: sessions.attachSession,
