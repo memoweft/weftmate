@@ -446,6 +446,12 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
           hostOwnerId() !== null && ownerForSession(sessionId) !== ownerId) fail('SESSION_UNAVAILABLE')
       return gateway(`/sessions/${encodeURIComponent(sessionId)}/source?receiptId=${encodeURIComponent(receiptId)}${turn === undefined ? '' : `&turn=${turn}`}`)
     },
+    async readMemoryBoundaries({ sessionId, ownerId, afterSeq = -1 }) {
+      requireRuntime()
+      if (!idPattern.test(sessionId) || ownerForSession(sessionId) !== ownerId) fail('SESSION_UNAVAILABLE')
+      if (!Number.isSafeInteger(afterSeq) || afterSeq < -1) fail('INVALID_COMMAND')
+      return gateway(`/sessions/${encodeURIComponent(sessionId)}/memory-boundaries?afterSeq=${afterSeq}`)
+    },
     async readEvents({ sessionId, afterSeq, beforeSeq, limit = 50 }) {
       requireRuntime()
       if (typeof sessionId !== 'string' || !idPattern.test(sessionId)

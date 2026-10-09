@@ -1,0 +1,14 @@
+import { mkdtemp, readFile, mkdir, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+const repo=resolve(process.argv[2]??'.'), output=resolve(process.argv[3]??'tests/evidence/mem-d/queue-before-main.json');
+const {createPersonalMemoryManager}=await import(pathToFileURL(join(repo,'src/personal-memory/index.mjs')));
+const {boundaryForCompletedTurn}=await import(pathToFileURL(join(repo,'src/plugins/weftmate-personal-memory.mjs')));
+const longEvents=[{seq:1,type:'turn/start',data:{turn:1}},{seq:2,type:'user/message',data:{source:{kind:'user'},content:[{type:'text',text:'合成原话'.repeat(5000)}]}},{seq:3,type:'turn/end',data:{turn:1,reason:{kind:'completed'}}}];
+const longBoundary=boundaryForCompletedTurn({id:'long',header:{agentPreset:'personal-remote'},events:longEvents},longEvents.at(-1));
+const root=await mkdtemp(join(tmpdir(),'weftmate-mem-d-probe-')),owner='owner-00000000-0000-4000-8000-000000000001';
+let busy=true,attempts=0,home;
+const methods=['initialize','capabilities','health','shutdown','ingest_boundary','preview_recall','query_interactions','query_world','query_evidence','query_provenance','submit_command','query_command_receipt','retry_delete_storage_cleanup'];
+const manager=createPersonalMemoryManager({root,enabled:true,python:join(root,'python'),pythonPath:root,baseUrl:'http://127.0.0.1:1/v1',model:'@current',credential:()=> 'synthetic',rpcFactory:()=>({child:{},async close(){},async request(method,p={}){if(method==='capabilities')return {protocol:'memoweft.dsh_rpc',protocol_version:2,schema_version:1,methods};if(method==='initialize'){home=p.dsh_home;return {runtime:{subject_id:owner,db_path:join(home,'memoweft/memoweft.sqlite3')},capabilities:{subject_id:owner,services:{command:{operations:[]}}}};}if(method==='health')return {runtime:{subject_id:owner,route_ready:true}};if(method==='query_world')return {world_revision:0};if(method==='ingest_boundary'){attempts++;if(busy)throw Object.assign(new Error('busy'),{code:'MEMORY_BUSY'});return {job_state:'pending'};}return {};}})});
+try{const receipt=await manager.ingest(owner,{event_id:'synthetic-completed-turn',parent_session_id:'s'});await new Promise(r=>setTimeout(r,100));const attemptsBefore=attempts;busy=false;await new Promise(r=>setTimeout(r,2500));const state=JSON.parse(await readFile(join(home,'boundary-outbox.json'),'utf8'));await mkdir(resolve(output,'..'),{recursive:true});await writeFile(output,JSON.stringify({receipt,attemptsBefore,attemptsAfter:attempts,pendingAfterRecovery:state.items.length,longUserBoundaryCreated:!!longBoundary,longUserCharacters:longBoundary?.source_messages?.[0]?.content?.length??0},null,2));}finally{await manager.close();await rm(root,{recursive:true,force:true});}

@@ -1,0 +1,14 @@
+✔ natural memory explicit correction: source retention, new-session recall and restart (4092.9565ms)
+✔ natural memory changed preference: source retention, new-session recall and restart (3773.4582ms)
+✔ natural memory negated coffee correction: source retention, new-session recall and restart (3785.4045ms)
+✔ default immediate new-session recall bridges only accepted permitted quotes, then formal memory replaces them (3723.0642ms)
+✔ elliptical numeric corrections are paired immediately; ambiguous topics and forgetting keep their boundaries (7438.269ms)
+✔ real MemoWeft observed health: local/cloud consent, ordinary memory, overwrite, delete/export, restart (5887.5964ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13837.0205

@@ -1,0 +1,11 @@
+{
+  "receipt": {
+    "state": "queued",
+    "reasonCode": "MEMORY_BUSY"
+  },
+  "attemptsBefore": 1,
+  "attemptsAfter": 2,
+  "pendingAfterRecovery": 0,
+  "longUserBoundaryCreated": true,
+  "longUserCharacters": 20000
+}

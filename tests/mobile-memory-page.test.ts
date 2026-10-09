@@ -447,7 +447,7 @@ test('empty state separates blocked pending sources from previously deleted-sour
   await openMemory(blocked)
   await waitUntil(() => blocked.get('page-content').textContent.includes('来源尚未处理'), 'pending count was not visible')
   assert.match(blocked.get('page-content').textContent, /其中 1 条已暂停自动处理/)
-  assert.match(blocked.get('page-content').textContent, /本手机页面不会重试或管理待处理来源/)
+  assert.match(blocked.get('page-content').textContent, /恢复后会按顺序自动补交/)
 
   const deletedHistory = harness({ status: (owner) => ({ ownerId: appOwner(owner), state: 'ready', worldRevision: 11,
     capabilities: { list: true, source: true, inject: true }, pendingBoundaryCount: 0, blockedBoundaryCount: 0,
