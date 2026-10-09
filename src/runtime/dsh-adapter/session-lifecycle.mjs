@@ -1,3 +1,4 @@
+import { executionDirectory } from '../../plugins/personal-project-context.mjs';
 import { copySnapshotTree } from './snapshot-files.mjs';
 import { mkdirSync, existsSync } from 'node:fs';
 import { dirname, relative, resolve, isAbsolute } from 'node:path'
@@ -27,9 +28,9 @@ export function nativeSessionLifecycle(ctx) {
       await ctx.get('agentPresets').mount(agentCtx, preset)
       agentCtx.on('agent/pre-step', async (payload, next) => {
         const decision = await next()
-        if (decision.kind !== 'enter' || !meta.cwd) return decision
+        if (decision.kind !== 'enter' || !executionDirectory(payload.agent.session)) return decision
         let experience
-        try { experience = await readFile(resolve(meta.cwd, '经验.md'), 'utf8') }
+        try { experience = await readFile(resolve(executionDirectory(payload.agent.session), '经验.md'), 'utf8') }
         catch (error) { if (error.code === 'ENOENT') return decision; throw error }
         return experience.trim() ? { ...decision, messages: [...decision.messages,
           createUserMessage({ source: { kind: 'plugin', plugin: 'weftmate-session-experience' },
@@ -86,7 +87,7 @@ export function nativeSessionLifecycle(ctx) {
       await ensure({ sessionId }, true)
       const source = ctx.sessions.get(sessionId)
       if (ctx.agents.get(sessionId)?.status !== 'idle') throw Object.assign(new Error('session busy'), { code: 'agent-busy' })
-      if (source.header.cwd) await cp(source.header.cwd, options.cwd, { recursive: true })
+      if (options.copyWorkspace !== false && source.header.cwd) await cp(source.header.cwd, options.cwd, { recursive: true })
       // Use the native fork transaction's immutable event seed and lineage.
       // Agent creation owns the native session lifecycle, with a fresh cwd,
       // rather than publishing a bare SessionStore child without an agent.

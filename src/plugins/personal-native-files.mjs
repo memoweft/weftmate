@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { lstat, readdir, readFile, realpath } from 'node:fs/promises';
 import path from 'node:path';
+import { executionDirectory } from './personal-project-context.mjs';
 const additions = new WeakMap();
 
 /** Creation provenance survives turns/restarts in the native artifact results. */
@@ -44,7 +45,7 @@ export async function snapshotFiles(directory) {
 }
 
 async function snapshotFor(exec) {
-  const cwd = exec.agent.session.header.cwd;
+  const cwd = executionDirectory(exec.agent.session);
   const files = await snapshotFiles(cwd);
   // Native shell workdir and native file arguments can name user-selected paths.
   const workdir = exec.arguments?.workdir;
@@ -64,7 +65,7 @@ async function snapshotFor(exec) {
 
 /** Keep the native outcome and add host-owned references to files it changed. */
 export async function trackNativeFiles(bridge, exec, next, identity) {
-  const cwd = exec.agent?.session?.header?.cwd;
+  const cwd = executionDirectory(exec.agent?.session);
   if (exec.agent?.session?.header?.origin === 'subagent' ||
       exec.agent?.session?.header?.agentPreset !== 'personal-remote' || !cwd) return next();
   const before = await snapshotFor(exec);

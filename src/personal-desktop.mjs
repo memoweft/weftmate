@@ -91,6 +91,12 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
   const settings = () => ({ version: packageInfo.version, autoStart: app.getLoginItemSettings(loginOptions).openAtLogin,
     autoStartSupported: process.platform === 'win32' || process.platform === 'darwin' });
   handle('wm:desktop:settings', settings);
+  handle('wm:desktop:project-folder', async () => {
+    await jsonLocal('/auth/me');
+    if (contentOrigin !== origin) throw new Error('Desktop project registration unavailable');
+    const selection = await dialog.showOpenDialog(win, { title: '选择项目文件夹', properties: ['openDirectory'] });
+    return selection.canceled ? null : selection.filePaths[0] ?? null;
+  });
   const authStore = desktopAuthStorage(join(app.getPath('userData'), 'desktop-auth.enc'), safeStorage);
   handle('wm:desktop:identity', () => ({ deviceName: hostname(), localOrigin: origin,
     clientId: process.env.WEFTMATE_CLOUD_DESKTOP_CLIENT_ID || process.env.WEFTMATE_CLOUD_WEB_CLIENT_ID,
@@ -282,7 +288,7 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
     for (const notification of notifications) notification.close();
     nativeTheme.removeListener('updated', updatePalette);
     for (const request of networkRequests.values()) request.abort();
-    for (const channel of ['wm:desktop:settings', 'wm:desktop:identity', 'wm:desktop:credentials', 'wm:desktop:key', 'wm:desktop:key-reset', 'wm:desktop:proof', 'wm:desktop:connect-host', 'wm:desktop:activate-host', 'wm:desktop:fetch', 'wm:desktop:fetch-abort', 'wm:desktop:clear-sessions', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);
+    for (const channel of ['wm:desktop:project-folder', 'wm:desktop:settings', 'wm:desktop:identity', 'wm:desktop:credentials', 'wm:desktop:key', 'wm:desktop:key-reset', 'wm:desktop:proof', 'wm:desktop:connect-host', 'wm:desktop:activate-host', 'wm:desktop:fetch', 'wm:desktop:fetch-abort', 'wm:desktop:clear-sessions', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);
     await save(); await desktopSession.cookies.flushStore(); desktopSession.flushStorageData();
   } };
 }
