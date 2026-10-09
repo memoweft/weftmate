@@ -1,0 +1,148 @@
+{
+  "realAndroid": true,
+  "synthetic": true,
+  "packageName": "com.memoweft.weftmate.mobile.ia4qa",
+  "checks": [
+    "real-native-status-main",
+    "native-calendar",
+    "search-navigation",
+    "fold-expand",
+    "side-create-source-return",
+    "themes",
+    "native-chat-message",
+    "immediate-optimistic",
+    "progress-approval-original-identity",
+    "native-stop",
+    "native-soft-keyboard-visible-composer",
+    "font130",
+    "real-MiMo-native-text",
+    "real-MiMo-native-logical-staging-attachment",
+    "real-MiMo-web-text",
+    "real-MiMo-web-logical-staging-attachment",
+    "original-request-receipt"
+  ],
+  "keyboard": {
+    "shown": true,
+    "geometry": {
+      "height": 726,
+      "visual": 726.2745361328125,
+      "draft": {
+        "x": 20.772058486938477,
+        "y": 587.3529663085938,
+        "width": 523.9461059570312,
+        "height": 66.15196228027344,
+        "top": 587.3529663085938,
+        "right": 544.7181644439697,
+        "bottom": 653.5049285888672,
+        "left": 20.772058486938477
+      },
+      "dock": {
+        "x": 0,
+        "y": 571.5808715820312,
+        "width": 565.490234375,
+        "height": 154.69363403320312,
+        "top": 571.5808715820312,
+        "right": 565.490234375,
+        "bottom": 726.2745056152344,
+        "left": 0
+      }
+    }
+  },
+  "performance": {
+    "durationMs": 60005.5,
+    "frames": 10480,
+    "p95Ms": 5.556000000004133,
+    "maxMs": 72.22199999999793,
+    "maxRows": 28,
+    "longTasks": [],
+    "cacheEvents": 1000,
+    "viewport": {
+      "width": 565,
+      "height": 980,
+      "dpr": 1.274999976158142
+    },
+    "streamedUpdates": 69,
+    "appPssKiB": 117369,
+    "heapBytes": 8084136
+  },
+  "realMimo": {
+    "model": "mimo-v2.6-flash",
+    "usage": [
+      {
+        "completion_tokens": 7,
+        "prompt_tokens": 2113,
+        "total_tokens": 2120,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      {
+        "completion_tokens": 9,
+        "prompt_tokens": 2618,
+        "total_tokens": 2627,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 2112
+        }
+      },
+      {
+        "completion_tokens": 7,
+        "prompt_tokens": 2953,
+        "total_tokens": 2960,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 2560
+        }
+      },
+      {
+        "completion_tokens": 9,
+        "prompt_tokens": 3459,
+        "total_tokens": 3468,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 2560
+        }
+      }
+    ],
+    "commands": [
+      {
+        "kind": "chat.message",
+        "chatId": "chat-4280b924-e986-46ad-9e53-50ee336eff02",
+        "sessionId": "session-b920d499-8535-4f38-8a10-22da3e452dd4",
+        "requestId": "c10f53db-3f06-4db0-bba8-2a92aece637f",
+        "receiptId": "5615b71d-b1a0-4056-a3a4-0b6cf595ee24"
+      },
+      {
+        "kind": "chat.message",
+        "chatId": "chat-4280b924-e986-46ad-9e53-50ee336eff02",
+        "sessionId": "session-b920d499-8535-4f38-8a10-22da3e452dd4",
+        "requestId": "attachment-send-0058300d-92cb-49fd-95b7-bc8954c60db5",
+        "receiptId": "55bb0270-cd39-476f-8a7a-6fcdaa2d56fc"
+      },
+      {
+        "kind": "chat.message",
+        "chatId": "chat-4280b924-e986-46ad-9e53-50ee336eff02",
+        "sessionId": "session-b920d499-8535-4f38-8a10-22da3e452dd4",
+        "requestId": "c37582b6-66ed-4534-858c-a874a9ee8690",
+        "receiptId": "6b127f4d-dbda-4c97-822b-12616c5c7981"
+      },
+      {
+        "kind": "chat.message",
+        "chatId": "chat-4280b924-e986-46ad-9e53-50ee336eff02",
+        "sessionId": "session-b920d499-8535-4f38-8a10-22da3e452dd4",
+        "requestId": "attachment-send-661255fe-9951-497d-92fe-e2a21112aecf",
+        "receiptId": "236d5923-8184-4627-80f8-72c1cb5fe9b4"
+      }
+    ]
+  },
+  "provenance": "Successful full run output; independent performance and usage files and its recorded native receipts. The generic verification filename was subsequently replaced by a synthetic rerun."
+}

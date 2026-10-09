@@ -1,0 +1,8 @@
+
+com.memoweft.weftmate.mobile.Ia4WebViewProbeTest:.
+
+Time: 93.449
+
+OK (1 test)
+
+
