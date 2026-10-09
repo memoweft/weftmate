@@ -1,0 +1,35 @@
+{
+  "startedAt": "2026-10-09T18:58:03.545Z",
+  "realCloudEntrypoint": "services/cloud/src/main.mjs",
+  "realElectronEntrypoint": ".",
+  "sourceCommit": "1bbc863aa664d58105c0f1b086c5f8dc702c9235",
+  "phase": "relay",
+  "baselineHost": false,
+  "steps": [
+    "Real cloud entrypoint health"
+  ],
+  "cloudTransport": "WSL Ubuntu",
+  "passed": false,
+  "error": "browserType.launch: Executable doesn't exist at [local diagnostic path]\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝",
+  "pageErrors": [],
+  "failedRequests": [
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    }
+  ],
+  "finishedAt": "2026-10-09T18:58:21.391Z",
+  "surface": "mobile-web",
+  "realNativeBridge": false,
+  "locators": "visible accessible names and roles",
+  "requests": [
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/config",
+      "status": 200
+    }
+  ]
+}

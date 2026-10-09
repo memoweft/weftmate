@@ -1,0 +1,144 @@
+{
+  "syntheticOnly": true,
+  "baselineRevision": "f787c3c",
+  "before": false,
+  "checks": [
+    {
+      "theme": "light",
+      "legacyCloud": {
+        "ownerPreserved": true,
+        "devicePreserved": true,
+        "bound": true
+      }
+    },
+    {
+      "surface": "desktop",
+      "theme": "light",
+      "stop": {
+        "text": "已停止",
+        "color": "rgb(39, 39, 36)",
+        "background": "rgb(241, 240, 237)",
+        "overlaps": false,
+        "contrast": 13.143892760618803
+      }
+    },
+    {
+      "surface": "phone-web",
+      "theme": "light",
+      "stop": {
+        "text": "已停止",
+        "color": "rgb(39, 39, 36)",
+        "background": "rgb(241, 240, 237)",
+        "overlaps": false,
+        "contrast": 13.143892760618803
+      }
+    },
+    {
+      "surface": "desktop",
+      "theme": "light",
+      "newFromPhone": {
+        "placeholder": "向 WeftMate 说说你的目标",
+        "isPhone": false,
+        "older": false,
+        "title": "新对话"
+      }
+    },
+    {
+      "theme": "light",
+      "entries": {
+        "phoneToDraft": true,
+        "firstSend": true,
+        "sessionSwitch": true,
+        "historyPagination": true,
+        "desktopKeyboardDraft": true,
+        "phoneKeyboardDraft": true,
+        "usageOnlyForSession": true,
+        "queuedStopCount": 2
+      }
+    },
+    {
+      "theme": "light",
+      "surface": "phone-web",
+      "queuedStopCount": 2
+    },
+    {
+      "theme": "light",
+      "surface": "mobile-ui",
+      "copyToast": {
+        "color": "rgb(37, 39, 34)",
+        "background": "rgb(255, 255, 255)",
+        "overlaps": false,
+        "contrast": 15.086540821005562
+      }
+    },
+    {
+      "theme": "dark",
+      "legacyCloud": {
+        "ownerPreserved": true,
+        "devicePreserved": true,
+        "bound": true
+      }
+    },
+    {
+      "surface": "desktop",
+      "theme": "dark",
+      "stop": {
+        "text": "已停止",
+        "color": "rgb(232, 233, 227)",
+        "background": "rgb(48, 49, 46)",
+        "overlaps": false,
+        "contrast": 10.717637715025921
+      }
+    },
+    {
+      "surface": "phone-web",
+      "theme": "dark",
+      "stop": {
+        "text": "已停止",
+        "color": "rgb(232, 233, 227)",
+        "background": "rgb(48, 49, 46)",
+        "overlaps": false,
+        "contrast": 10.717637715025921
+      }
+    },
+    {
+      "surface": "desktop",
+      "theme": "dark",
+      "newFromPhone": {
+        "placeholder": "向 WeftMate 说说你的目标",
+        "isPhone": false,
+        "older": false,
+        "title": "新对话"
+      }
+    },
+    {
+      "theme": "dark",
+      "entries": {
+        "phoneToDraft": true,
+        "firstSend": true,
+        "sessionSwitch": true,
+        "historyPagination": true,
+        "desktopKeyboardDraft": true,
+        "phoneKeyboardDraft": true,
+        "usageOnlyForSession": true,
+        "queuedStopCount": 2
+      }
+    },
+    {
+      "theme": "dark",
+      "surface": "phone-web",
+      "queuedStopCount": 2
+    },
+    {
+      "theme": "dark",
+      "surface": "mobile-ui",
+      "copyToast": {
+        "color": "rgb(227, 229, 222)",
+        "background": "rgb(38, 39, 35)",
+        "overlaps": false,
+        "contrast": 11.832480512431328
+      }
+    }
+  ],
+  "errors": []
+}
