@@ -33,6 +33,7 @@ try {
     await page.getByRole('combobox', { name: /^字号/ }).click()
     await page.getByRole('option', { name: '大 · 17', exact: true }).click()
     await page.getByRole('button', { name: '关闭设置', exact: true }).click()
+    await page.getByRole('button', { name: '批准', exact: true }).waitFor({state:'visible'})
     assert.equal(await page.getByRole('button', { name: '批准', exact: true }).count(), 1)
     await page.getByRole('region', { name: '待批准操作' }).getByText(/要运行命令/).click()
     await page.getByRole('button', { name: '总是允许此类', exact: true }).waitFor()

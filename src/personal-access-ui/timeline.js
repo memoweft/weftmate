@@ -72,7 +72,7 @@
       details.open = newFailure || previous?.open === true
       row.dataset.running = String(running)
       row.classList.toggle('has-failure', !!view.failed)
-      const summary = details.querySelector(':scope > summary') || node('summary', 'inline-progress-summary')
+      const summary = details.querySelector('summary') || node('summary', 'inline-progress-summary')
       summary.setAttribute('role', 'button')
       const text = summary.querySelector('.inline-progress-text') || node('span', 'inline-progress-text')
       text.textContent = view.text
@@ -86,7 +86,7 @@
       }
       const accessibility = () => { summary.setAttribute('aria-expanded', String(details.open)); summary.setAttribute('aria-label', `${text.textContent}，${details.open ? '已展开' : '已收起'}`) }
       if (!previous) details.addEventListener('toggle', () => { accessibility(); if (details.open && details.isConnected) renderCurrent() }); accessibility()
-      const records = details.querySelector(':scope > .execution-records') || node('div', 'execution-records')
+      const records = details.querySelector('.execution-records') || node('div', 'execution-records')
       if (!summary.parentNode) details.append(summary)
       if (!records.parentNode) details.append(records)
       records.replaceChildren(...block.steps.map(step => globalThis.WeftTimelineCards.step(step, savedSteps.get(String(step.stepId)), running, options)))

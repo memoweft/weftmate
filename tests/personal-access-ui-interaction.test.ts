@@ -207,7 +207,8 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
   let syncPosts = 0
   let originalAttachmentAttempts = 0
   const synchronized = [...(config.syncEvents ?? [])] as any[]
-  let refreshTick = () => {}
+  let intervalId = 0
+  const refreshTicks = new Map<number, () => void>()
   const fetch = (url: string, options: any = {}) => {
     requests.push({ url, options })
     if (url.endsWith('/system') && config.systemRead) return Promise.resolve(reply(config.systemRead))
@@ -449,7 +450,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
      const id = ++timerId
      if (config.taskPollTimers && delay === 2_000) taskTimers.set(id, callback)
      return id
-   }, clearTimeout(id: number) { taskTimers.delete(id) }, setInterval: (callback: () => void) => { refreshTick = callback; return 1 }, clearInterval() {} }
+   }, clearTimeout(id: number) { taskTimers.delete(id) }, setInterval: (callback: () => void) => { const id=++intervalId;refreshTicks.set(id,callback);return id }, clearInterval(id: number) { refreshTicks.delete(id) } }
   runInNewContext(readFileSync(join(repository, 'src/personal-access-ui/icons.js'), 'utf8') + '\nwindow.WeftIcons = globalThis.WeftIcons;', context)
   runInNewContext(readFileSync(join(repository, 'src/personal-access-ui/timeline.js'), 'utf8'), context)
   runInNewContext(executableSource.replace('    ui.loadAttachmentHasher', '    globalThis.__testCore = core;\n    ui.loadAttachmentHasher'), context)
@@ -480,7 +481,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
       deferredOriginalAttachment?.resolve(reply(value, status)); deferredOriginalAttachment = null
     },
     profileAccounts,
-    tick: () => refreshTick(),
+    tick: () => { for(const callback of [...refreshTicks.values()])callback() },
     resolvePost: (value: object) => { pendingPost?.resolve(reply(value)); pendingPost = null },
     rejectPost: () => { pendingPost?.reject(new Error('synthetic disconnect')); pendingPost = null } }
 }

@@ -216,9 +216,8 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         }, 6000);
         core.state.liveRefreshTimer = setInterval(() => {
             if (document.visibilityState === 'visible' && (core.state.unresolvedSubmission ||
-                core.state.submitting || core.state.turnStatus === 'running' ||
-                core.optimisticMessages().some(row => ['sending', 'accepted'].includes(row.status)) ||
-                core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId)?.running))
+                core.state.submitting || core.conversationRunning(core.state.selectedSessionId) ||
+                core.optimisticMessages().some(row => ['sending', 'accepted'].includes(row.status))))
                 void core.refreshLiveConversation().catch(() => {});
         }, 250);
     }
