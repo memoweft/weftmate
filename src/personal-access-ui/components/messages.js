@@ -214,7 +214,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
     }
     function renderOlderControl() {
         const button = ui.byId('load-older');
-        button.hidden = !core.state.hasOlder;
+        button.hidden = core.state.newConversation || !core.conversationTaskContext().sessionId || !core.state.hasOlder || !Number.isSafeInteger(core.state.nextBeforeSeq);
         button.disabled = core.state.olderLoading;
         button.textContent = core.state.olderLoading ? '正在读取…' : '加载更早内容';
     }
