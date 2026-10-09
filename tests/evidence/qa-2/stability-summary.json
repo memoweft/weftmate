@@ -1,0 +1,28 @@
+{
+  "elapsedMs": 1801445,
+  "cycles": 64,
+  "passed": 64,
+  "p99Ms": 31.997951,
+  "maxEventLoopMs": 185.466879,
+  "rssGrowthMiB": 84.2265625,
+  "stopMedianMs": 1355,
+  "stopP95Ms": 3364,
+  "stopMaxMs": 4313,
+  "over12Seconds": 0,
+  "over2Seconds": 24,
+  "storeNotifications": 1072,
+  "exactWriteInstrumentationValid": false,
+  "exactWriteLimitation": "Initial hook did not synchronize Node built-in ESM exports. Zero is invalid, not a measured zero. Separate corrected 5-minute sample is supplied.",
+  "logScan": {
+    "files": 1,
+    "bodyHits": 0,
+    "keyHits": 0,
+    "bytes": 71559
+  },
+  "writeSample": {
+    "elapsedMs": 303802,
+    "successfulStoreRenames": 89,
+    "writesPerMinute": 17.577237806202724,
+    "separateIsolatedRun": true
+  }
+}

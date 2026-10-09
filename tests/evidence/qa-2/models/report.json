@@ -1,0 +1,11 @@
+{
+  "synthetic": true,
+  "realElectron": true,
+  "realDsh": true,
+  "paidInference": 0,
+  "clientErrors": [],
+  "syntheticInference": 1,
+  "logs": [
+    "host-2026-10-09.jsonl"
+  ]
+}

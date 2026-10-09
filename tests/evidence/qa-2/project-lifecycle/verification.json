@@ -1,0 +1,76 @@
+{
+  "desktop": true,
+  "realMiMo": true,
+  "readWriteCommand": true,
+  "outsideRefused": true,
+  "readonlyRefused": true,
+  "removePreservesFiles": true,
+  "mobileWeb": true,
+  "usage": [
+    {
+      "inputTokens": 670,
+      "outputTokens": 38,
+      "cacheReadTokens": 1536
+    },
+    {
+      "inputTokens": 987,
+      "outputTokens": 25,
+      "cacheReadTokens": 2432
+    },
+    {
+      "inputTokens": 316,
+      "outputTokens": 96,
+      "cacheReadTokens": 3392
+    },
+    {
+      "inputTokens": 660,
+      "outputTokens": 61,
+      "cacheReadTokens": 3648
+    },
+    {
+      "inputTokens": 340,
+      "outputTokens": 56,
+      "cacheReadTokens": 4288
+    },
+    {
+      "inputTokens": 571,
+      "outputTokens": 91,
+      "cacheReadTokens": 4608
+    },
+    {
+      "inputTokens": 353,
+      "outputTokens": 99,
+      "cacheReadTokens": 5120
+    },
+    {
+      "inputTokens": 575,
+      "outputTokens": 37,
+      "cacheReadTokens": 5440
+    },
+    {
+      "inputTokens": 375,
+      "outputTokens": 44,
+      "cacheReadTokens": 5952
+    },
+    {
+      "inputTokens": 736,
+      "outputTokens": 55,
+      "cacheReadTokens": 1536
+    },
+    {
+      "inputTokens": 1452,
+      "outputTokens": 115,
+      "cacheReadTokens": 2048
+    },
+    {
+      "inputTokens": 482,
+      "outputTokens": 120,
+      "cacheReadTokens": 3456
+    },
+    {
+      "inputTokens": 659,
+      "outputTokens": 92,
+      "cacheReadTokens": 3904
+    }
+  ]
+}
