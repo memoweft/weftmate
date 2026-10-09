@@ -425,7 +425,10 @@ test('FX-9 legacy account binding retains execution and data; another desktop id
 });
 
 for (const scenario of ['ordinary', 'project', 'phone'] as const) {
-  test(`FX-11 first native write registers a cloud owner's artifact in ${scenario} conversation`, async t => {
+  // The current project-folder reader is a Windows native capability, like the
+  // existing project service tests; ordinary/phone source receipts are portable.
+  test(`FX-11 first native write registers a cloud owner's artifact in ${scenario} conversation`,
+    {skip:scenario === 'project' && process.platform !== 'win32'}, async t => {
     const f = await fixture(t, { fresh: true })
     const key = await generateKeyPair('ES256')
     const token = await f.access('fx11-owner', 'fx11-desktop', key, {scope:'cloud:account'}, f.issuer.slice(0,-5))
