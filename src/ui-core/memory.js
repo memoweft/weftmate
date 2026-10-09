@@ -1,5 +1,19 @@
 /* Shared memory state, data and actions. Presentation is supplied through named effects. */
 globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
+    function memoryHealthText(status) {
+        if (!status) return '正在检查记忆健康…';
+        const code = status.reasonCode ?? status.lastError ?? status.lastFailureCode;
+        const waiting = status.pendingBoundaryCount ?? 0;
+        if (status.state === 'disabled') return '记忆暂停：尚未启用';
+        if (code === 'MEMORY_MODEL_UNAVAILABLE') return `记忆暂停：记忆模型不可用${waiting ? `，已保存 ${waiting} 条待补交` : ''}`;
+        if (code === 'MEMORY_MODEL_WAITING') return `记忆等待：模型切换中${waiting ? `，已保存 ${waiting} 条待补交` : ''}`;
+        if (status.blockedBoundaryCount > 0) return `记忆暂停：${status.blockedBoundaryCount} 条来源需要处理`;
+        if (status.failedFormationCount > 0) return `记忆暂停：${status.failedFormationCount} 条整理失败，请检查模型服务`;
+        if (waiting) return `正在补交 ${waiting} 条${code === 'MEMORY_BUSY' ? '，服务忙，稍后自动重试' : ''}`;
+        if (status.pendingFormationCount > 0) return `正在整理 ${status.pendingFormationCount} 条已提交的对话`;
+        if (status.state === 'unavailable' || status.captureError) return '记忆暂停：服务暂不可用，恢复后自动补交';
+        return status.state === 'ready' ? '记忆正常' : '记忆暂停：请检查模型与宿主连接';
+    }
     function memoryIdentity() {
         return { generation: core.state.identityGeneration, ownerId: core.state.account?.ownerId,
             deviceId: core.state.device?.id, csrf: core.state.csrfToken, view: core.memory.viewGeneration };
@@ -676,5 +690,5 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         core.memory.receiptNotice = { message, requestId, action };
         effects.paintMemoryReceipt(message, requestId, action);
     }
-    return { memoryIdentity, memoryIdentityCurrent, memoryViewCurrent, memoryRequest, memoryFailure, memoryLifecycle, refreshMemoryStatus, memoryActionAllowed, memoryMarkerKey, persistMemoryMarker, clearMemoryMarker, storedMemoryMarker, memoryCleanupKey, storedCleanupMarkers, setCleanupMarker, clearCleanupMarker, memoryReceiptMessage, applyMemoryReceipt, recoverMemoryReceipt, resetMemoryIdentity, invalidateMemorySnapshot, loadMemoryPage, openMemoryDetail, staleMemoryProjection, submitMemoryAction, retryMemoryCleanup, closeMemoryDetail, openMemory, setMemoryFilters, setMemoryMode, setMemoryCorrectionText, showMemoryReceipt };
+    return { memoryHealthText, memoryIdentity, memoryIdentityCurrent, memoryViewCurrent, memoryRequest, memoryFailure, memoryLifecycle, refreshMemoryStatus, memoryActionAllowed, memoryMarkerKey, persistMemoryMarker, clearMemoryMarker, storedMemoryMarker, memoryCleanupKey, storedCleanupMarkers, setCleanupMarker, clearCleanupMarker, memoryReceiptMessage, applyMemoryReceipt, recoverMemoryReceipt, resetMemoryIdentity, invalidateMemorySnapshot, loadMemoryPage, openMemoryDetail, staleMemoryProjection, submitMemoryAction, retryMemoryCleanup, closeMemoryDetail, openMemory, setMemoryFilters, setMemoryMode, setMemoryCorrectionText, showMemoryReceipt };
 };

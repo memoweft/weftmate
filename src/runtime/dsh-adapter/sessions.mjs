@@ -6,6 +6,7 @@
  * second DSH runtime and it does not create a fictitious `session.resume` RPC.
  */
 
+import { boundaryForCompletedTurn } from '../../plugins/weftmate-personal-memory.mjs'
 import { createHash } from 'node:crypto'
 import { describeTool, toolArguments } from './timeline.mjs'
 import { sourceRange } from './source-range.mjs'
@@ -544,6 +545,26 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
       const value = await lifecycle.fork(sessionId, options)
       owned.set(value.sessionId, { lastSeq: -1, cancelRequested: false })
       return value
+    },
+    async memoryBoundaries(sessionId, afterSeq = -1) {
+      if (!Number.isSafeInteger(afterSeq) || afterSeq < -1) throw new TypeError('invalid memory cursor')
+      const listed = await unwrap(await client.sessions.list({}), 'list')
+      const item = (listed?.items ?? []).find(item => sessionIdOf(item) === sessionId)
+      requireOrdinarySummary(item, sessionId)
+      const events = (await logFor(sessionId)).map(row => row.event ?? row)
+      const session = { id: sessionId, header: { agentPreset: item.agentPreset }, events }
+      const items = []
+      for (const event of events) {
+        if (event.seq <= afterSeq || event.type !== 'turn/end') continue
+        const boundary = boundaryForCompletedTurn(session, event)
+        if (!boundary) continue
+        const start = events.findLastIndex(row => row.seq < event.seq && row.type === 'turn/start' && row.data?.turn === event.data.turn)
+        const sourceSeqs = events.slice(start + 1).filter(row => row.seq < event.seq && ['user/message', 'assistant/message'].includes(row.type)).map(row => row.seq)
+        items.push({ turn: event.data.turn, endSeq: event.seq, sourceSeqs,
+          at: Number.isFinite(Number(event.time)) && Number(event.time) > 0 ? new Date(Number(event.time)).toISOString() : null, boundary })
+        if (items.length === 50) return { items, nextSeq: event.seq, hasMore: event.seq < events.at(-1)?.seq }
+      }
+      return { items, nextSeq: events.at(-1)?.seq ?? afterSeq, hasMore: false }
     },
     async historyPage(sessionId, options = {}) {
       const { afterSeq, beforeSeq, limit = 50 } = options

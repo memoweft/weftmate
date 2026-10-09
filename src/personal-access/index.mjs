@@ -1,3 +1,4 @@
+import { createMemoryIngestion } from './memory-ingestion.mjs';
 import { modelTierFor } from '../model-tier.ts';
 import { currentChatProfile } from '../background-model-selection.mjs';
 import path from 'node:path';
@@ -193,6 +194,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get localTurnState() { return localTurnState; },
     get loginAccount() { return loginAccount; },
     get matchingOrigin() { return matchingOrigin; },
+    get memoryIngestion() { return memoryIngestion; },
     get memoryManager() { return memoryManager; },
     get healthStore() { return healthStore; },
     get messageModelUsable() { return messageModelUsable; },
@@ -565,11 +567,14 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const scheduleOperations = createScheduleOperations(context);
   const offline = await createOfflineService(context);
   const temporaryChats = createTemporaryChats(context);
+  const memoryIngestion = createMemoryIngestion(context);
   const service = {
+    captureMemoryTurn: memoryIngestion.capture,
     memoryTurnPolicy: temporaryChats.policy,
     expireTemporaryChats: temporaryChats.sweep,
     async cleanupMemoryCopies(ownerId, { sourceTexts = [], deleteConversationSnippets = false }) {
       await serial(() => mutate(ownerId, next => { next.memoryCleanupPending = true; }));
+      await memoryManager?.discardPendingSources?.(ownerId, { sourceTexts });
       await mainChat.drain(ownerId);
       await offline.invalidate(ownerId);
       // Portable backups already exclude this managed migration preimage.
@@ -643,6 +648,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       };
       await restoreSchedulesWithRetry();
       temporaryChats.start();
+      await memoryIngestion.start();
       hostCloudIdentity?.start();
       hostRelay?.start(origin);
       for (const [ownerId, account] of Object.entries(rootState.accounts)) {
@@ -756,6 +762,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         }
       }
       closePromise = (async () => {
+        await memoryIngestion.close();
         await temporaryChats.close();
         await sideChats.close();
         await chatTimeline.close();
