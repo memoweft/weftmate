@@ -446,8 +446,16 @@ test('historical approvals are paged without duplication and the per-command led
     } while (before)
     assert.deepEqual(lengths, [100, 100, 56])
     const stored = f.raw()
-    await assert.rejects(f.register({ approvalId: randomUUID(), runtimeId: randomUUID(), callId: 'overflow', rootCallId: 'overflow' }), code('CAPACITY_LIMIT'))
-    assert.equal(f.raw(), stored)
+    const overflowId = randomUUID()
+    await assert.rejects(f.register({ approvalId: overflowId, runtimeId: randomUUID(), callId: 'overflow', rootCallId: 'overflow' }), code('CAPACITY_LIMIT'))
+    const beforeBusiness = JSON.parse(stored), afterBusiness = JSON.parse(f.raw())
+    // Native observation can update derived activity while a rejected registration is in flight.
+    for (const [ownerId, account] of Object.entries(afterBusiness.accounts) as [string, any][]) {
+      assert.equal(account.activity.secret, beforeBusiness.accounts[ownerId].activity.secret)
+      assert.ok(!Object.values(account.activity.items).some((row: any) => row.actions.some((action: any) => action.target.approvalId === overflowId)))
+      delete account.activity; delete beforeBusiness.accounts[ownerId].activity
+    }
+    assert.deepEqual(afterBusiness, beforeBusiness)
     assert.equal((await f.request(`${f.approvalsPath}?before=${randomUUID()}`)).status, 404)
   } finally { await f.close() }
 })
