@@ -1,0 +1,11 @@
+{
+  "platform": "android",
+  "scene": "main-chat",
+  "theme": "dark",
+  "synthetic": true,
+  "commit": "117f330d77e65ab864cbb637ff89276e8a40ce04",
+  "generatedAt": "2026-10-09T23:41:42.344429+00:00",
+  "source": "IA-4 isolated MuMu native WebView capture, code27",
+  "workingTreeCapture": true,
+  "apkSha256": "5475adf627b8dc271a099f9796eabd4a6f675d4a3374c1f5ef750c1e4720bcf7"
+}
