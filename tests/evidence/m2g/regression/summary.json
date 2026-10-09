@@ -1,0 +1,78 @@
+[
+  {
+    "model": "lan",
+    "suite": "matrix",
+    "exitCode": 0,
+    "summary": {
+      "passed": 9,
+      "failed": 1,
+      "manual": 0,
+      "unsupported": 0,
+      "skippedChecks": 9,
+      "passRate": 0.9,
+      "coverage": 0.9
+    },
+    "privateScan": {
+      "scanned": 254,
+      "matches": 0,
+      "skippedLinks": 511
+    }
+  },
+  {
+    "model": "lan",
+    "suite": "correction",
+    "exitCode": 0,
+    "summary": {
+      "passed": 3,
+      "failed": 0,
+      "manual": 0,
+      "unsupported": 0,
+      "skippedChecks": 3,
+      "passRate": 1,
+      "coverage": 1
+    },
+    "privateScan": {
+      "scanned": 240,
+      "matches": 0,
+      "skippedLinks": 511
+    }
+  },
+  {
+    "model": "mimo",
+    "suite": "matrix",
+    "exitCode": 0,
+    "summary": {
+      "passed": 8,
+      "failed": 2,
+      "manual": 0,
+      "unsupported": 0,
+      "skippedChecks": 9,
+      "passRate": 0.8,
+      "coverage": 0.8
+    },
+    "privateScan": {
+      "scanned": 254,
+      "matches": 0,
+      "skippedLinks": 511
+    }
+  },
+  {
+    "model": "mimo",
+    "suite": "correction",
+    "exitCode": 0,
+    "summary": {
+      "passed": 3,
+      "failed": 0,
+      "manual": 0,
+      "unsupported": 0,
+      "skippedChecks": 3,
+      "passRate": 1,
+      "coverage": 1
+    },
+    "privateScan": {
+      "scanned": 237,
+      "matches": 0,
+      "skippedLinks": 511
+    }
+  }
+]

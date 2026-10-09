@@ -125,8 +125,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: memoweft/memoweft
-          # FG-1 rework candidate (Core #91): exact read-only forget preview and scoped redaction.
-          ref: b623fc7f0cde207e4e7ed24409f3285704d7ce5b
+          # M2g candidate (Core #92), including merged FG-1; replace after Claude squash.
+          ref: e2d19d7b2c16fdf9f09bab933882a4d7c3e34b3a
           path: memoweft-core
           persist-credentials: false
       - name: Setup Node

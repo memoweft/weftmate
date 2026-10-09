@@ -1,0 +1,278 @@
+{
+  "originalReport": "C:\\Temp\\m2g-final-exit-mimo\\baseline-mimo.json",
+  "results": [
+    {
+      "id": "01",
+      "originalStatus": "passed",
+      "originalSemantic": [],
+      "deterministicPassed": true,
+      "verdicts": [],
+      "supplementaryStatus": "passed"
+    },
+    {
+      "id": "02",
+      "originalStatus": "failed",
+      "originalSemantic": [
+        {
+          "type": "llm_judge",
+          "prompt": "应主动提议以后用户想组队时提醒找王小明，邀请用户确认。",
+          "turn": 1,
+          "status": "failed",
+          "reason": "POST /models/private-model-b61e7fae0807f0b4416cdba5744e5f560c25ed15/chat/completions: HTTP 503 BACKEND_UNAVAILABLE"
+        }
+      ],
+      "deterministicPassed": true,
+      "verdicts": [
+        {
+          "model": "mimo-v2.6-flash",
+          "usage": {
+            "completion_tokens": 26,
+            "prompt_tokens": 153,
+            "total_tokens": 179,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "finishReason": "stop",
+          "rawVerdict": "{\"pass\":true,\"reason\":\"回复主动提议以后组队时提醒找王小明，并邀请用户确认。\"}",
+          "status": "passed",
+          "reason": "回复主动提议以后组队时提醒找王小明，并邀请用户确认。",
+          "prompt": "应主动提议以后用户想组队时提醒找王小明，邀请用户确认。",
+          "turn": 1
+        }
+      ],
+      "supplementaryStatus": "passed"
+    },
+    {
+      "id": "03",
+      "originalStatus": "passed",
+      "originalSemantic": [],
+      "deterministicPassed": true,
+      "verdicts": [],
+      "supplementaryStatus": "passed"
+    },
+    {
+      "id": "04",
+      "originalStatus": "failed",
+      "originalSemantic": [
+        {
+          "type": "llm_judge",
+          "prompt": "新会话应根据此前确认的组队决定回答找王小明，不能只询问或编造别人。",
+          "turn": 3,
+          "status": "failed",
+          "reason": "POST /models/private-model-b61e7fae0807f0b4416cdba5744e5f560c25ed15/chat/completions: HTTP 503 BACKEND_UNAVAILABLE"
+        }
+      ],
+      "deterministicPassed": true,
+      "verdicts": [
+        {
+          "model": "mimo-v2.6-flash",
+          "usage": {
+            "completion_tokens": 26,
+            "prompt_tokens": 131,
+            "total_tokens": 157,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "finishReason": "stop",
+          "rawVerdict": "{\"pass\":true,\"reason\":\"回复直接确认了此前组队决定为王小明，符合标准。\"}",
+          "status": "passed",
+          "reason": "回复直接确认了此前组队决定为王小明，符合标准。",
+          "prompt": "新会话应根据此前确认的组队决定回答找王小明，不能只询问或编造别人。",
+          "turn": 3
+        }
+      ],
+      "supplementaryStatus": "passed"
+    },
+    {
+      "id": "05",
+      "originalStatus": "failed",
+      "originalSemantic": [
+        {
+          "type": "llm_judge",
+          "prompt": "当前关系是表弟，已纠正好兄弟的旧说法；组队仍找王小明。",
+          "turn": 5,
+          "status": "failed",
+          "reason": "POST /models/private-model-b61e7fae0807f0b4416cdba5744e5f560c25ed15/chat/completions: HTTP 503 BACKEND_UNAVAILABLE"
+        },
+        {
+          "type": "llm_judge",
+          "prompt": "当前关系是表弟，已纠正好兄弟的旧说法；组队仍找王小明。",
+          "turn": 6,
+          "status": "failed",
+          "reason": "POST /models/private-model-b61e7fae0807f0b4416cdba5744e5f560c25ed15/chat/completions: HTTP 503 BACKEND_UNAVAILABLE"
+        }
+      ],
+      "deterministicPassed": true,
+      "verdicts": [
+        {
+          "model": "mimo-v2.6-flash",
+          "usage": {
+            "completion_tokens": 26,
+            "prompt_tokens": 138,
+            "total_tokens": 164,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 64
+            }
+          },
+          "finishReason": "stop",
+          "rawVerdict": "{\"pass\":true,\"reason\":\"回复确认表弟关系并建议组队找王小明，符合标准。\"}",
+          "status": "passed",
+          "reason": "回复确认表弟关系并建议组队找王小明，符合标准。",
+          "prompt": "当前关系是表弟，已纠正好兄弟的旧说法；组队仍找王小明。",
+          "turn": 5
+        },
+        {
+          "model": "mimo-v2.6-flash",
+          "usage": {
+            "completion_tokens": 28,
+            "prompt_tokens": 156,
+            "total_tokens": 184,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "finishReason": "stop",
+          "rawVerdict": "{\"pass\":true,\"reason\":\"回复正确指出表弟关系，组队对象为王小明，符合标准。\"}",
+          "status": "passed",
+          "reason": "回复正确指出表弟关系，组队对象为王小明，符合标准。",
+          "prompt": "当前关系是表弟，已纠正好兄弟的旧说法；组队仍找王小明。",
+          "turn": 6
+        }
+      ],
+      "supplementaryStatus": "passed"
+    },
+    {
+      "id": "06",
+      "originalStatus": "failed",
+      "originalSemantic": [
+        {
+          "type": "llm_judge",
+          "prompt": "重启后当前关系仍是表弟；组队找王小明。",
+          "turn": 9,
+          "status": "failed",
+          "reason": "POST /models/private-model-b61e7fae0807f0b4416cdba5744e5f560c25ed15/chat/completions: HTTP 503 BACKEND_UNAVAILABLE"
+        }
+      ],
+      "deterministicPassed": true,
+      "verdicts": [
+        {
+          "model": "mimo-v2.6-flash",
+          "usage": {
+            "completion_tokens": 25,
+            "prompt_tokens": 131,
+            "total_tokens": 156,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "finishReason": "stop",
+          "rawVerdict": "{\"pass\":true,\"reason\":\"回复确认了表弟关系并建议组队找他，符合标准。\"}",
+          "status": "passed",
+          "reason": "回复确认了表弟关系并建议组队找他，符合标准。",
+          "prompt": "重启后当前关系仍是表弟；组队找王小明。",
+          "turn": 9
+        }
+      ],
+      "supplementaryStatus": "passed"
+    },
+    {
+      "id": "07",
+      "originalStatus": "failed",
+      "originalSemantic": [
+        {
+          "type": "llm_judge",
+          "prompt": "遗忘后不知道此前组队对象，不应重新说出王小明。",
+          "turn": 10,
+          "status": "failed",
+          "reason": "POST /models/private-model-b61e7fae0807f0b4416cdba5744e5f560c25ed15/chat/completions: HTTP 503 BACKEND_UNAVAILABLE"
+        }
+      ],
+      "deterministicPassed": false,
+      "verdicts": [
+        {
+          "model": "mimo-v2.6-flash",
+          "usage": {
+            "completion_tokens": 25,
+            "prompt_tokens": 150,
+            "total_tokens": 175,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 64
+            }
+          },
+          "finishReason": "stop",
+          "rawVerdict": "{\"pass\":false,\"reason\":\"遗忘后不应重新说出王小明，回复违反了该标准。\"}",
+          "status": "failed",
+          "reason": "遗忘后不应重新说出王小明，回复违反了该标准。",
+          "prompt": "遗忘后不知道此前组队对象，不应重新说出王小明。",
+          "turn": 10
+        }
+      ],
+      "supplementaryStatus": "failed"
+    },
+    {
+      "id": "08",
+      "originalStatus": "failed",
+      "originalSemantic": [
+        {
+          "type": "llm_judge",
+          "prompt": "记忆服务故障时普通问候仍可用。",
+          "turn": 11,
+          "status": "failed",
+          "reason": "POST /models/private-model-b61e7fae0807f0b4416cdba5744e5f560c25ed15/chat/completions: HTTP 503 BACKEND_UNAVAILABLE"
+        }
+      ],
+      "deterministicPassed": false,
+      "verdicts": [
+        {
+          "model": "mimo-v2.6-flash",
+          "usage": {
+            "completion_tokens": 19,
+            "prompt_tokens": 114,
+            "total_tokens": 133,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 64
+            }
+          },
+          "finishReason": "stop",
+          "rawVerdict": "{\"pass\":true,\"reason\":\"回复为一句中文问候，符合标准。\"}",
+          "status": "passed",
+          "reason": "回复为一句中文问候，符合标准。",
+          "prompt": "记忆服务故障时普通问候仍可用。",
+          "turn": 11
+        }
+      ],
+      "supplementaryStatus": "failed"
+    },
+    {
+      "id": "speed",
+      "originalStatus": "passed",
+      "originalSemantic": [],
+      "deterministicPassed": true,
+      "verdicts": [],
+      "supplementaryStatus": "passed"
+    }
+  ]
+}

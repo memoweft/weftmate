@@ -1,0 +1,63 @@
+{
+  "core": "ce70bb81d387be14dc8c7419aa29a8d0209cc079",
+  "corePr": "https://github.com/memoweft/memoweft/pull/92",
+  "weftmatePr": "https://github.com/memoweft/weftmate/pull/101",
+  "targetedChecks": {
+    "formationAndCorrectionBeforeFinalRefinements": "80/80",
+    "finalTopicDecisionAndPredecessorTests": "32/32",
+    "trustQueryAndCompilerRegression": "76/76",
+    "restrictedSourceRegression": "1/1",
+    "nodeMemoryIpcAndExitPredicates": "10/10",
+    "realCoreCorrectionAndObservedBridge": "4/4",
+    "mypyChangedSourcesAndNewTest": "5 files strict, passed",
+    "weftmateTypecheck": "passed",
+    "finalPersonSourceAndCompilerTests": "64/64"
+  },
+  "fullTests": "CI only; targeted sets overlap and must not be added together",
+  "price": {
+    "checkedAt": "2026-10-09",
+    "source": "https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash",
+    "cachedInputCnyPerMillion": 0.02,
+    "uncachedInputCnyPerMillion": 1,
+    "outputCnyPerMillion": 2
+  },
+  "regressionGate": {
+    "lanOriginalSevenMinimum": 6,
+    "lanACMinimum": 4,
+    "mimoOriginalSevenMinimum": 6,
+    "mimoACMinimum": 3,
+    "explanation": "M2f original LAN 13/14 and A+C 10/12 are two-round totals; one round allows one question of fluctuation. MiMo reference is 7/7 and 4/6."
+  },
+  "weftmateCandidate": "e21032bd61390dea1f44bfa23e63afdc540c2b96",
+  "coreIncludesMergedFg1": true,
+  "unchangedC": [
+    {
+      "file": "eval/scenarios/memory-3x-preference.yaml",
+      "expected": "6fd47774b5e8afcb49f547c760454477f78d73d46991ac3e8ce862d307dd79aa",
+      "actual": "6fd47774b5e8afcb49f547c760454477f78d73d46991ac3e8ce862d307dd79aa"
+    },
+    {
+      "file": "eval/scenarios/memory-3x-correction.yaml",
+      "expected": "537345e97e1fd2e54b80dffe40c75801430eff652f7a0f0a9cc2fa9a47bb31d3",
+      "actual": "537345e97e1fd2e54b80dffe40c75801430eff652f7a0f0a9cc2fa9a47bb31d3"
+    },
+    {
+      "file": "eval/scenarios/memory-3x-person.yaml",
+      "expected": "3429decd36d3de5f6d165e2abc674f6c262296787a616bd53fa8baabd3dec303",
+      "actual": "3429decd36d3de5f6d165e2abc674f6c262296787a616bd53fa8baabd3dec303"
+    }
+  ],
+  "fullCi": {
+    "core": {
+      "run": 37864059817,
+      "passedTests": 1840,
+      "strictTypecheckedFiles": 212,
+      "head": "ce70bb81d387be14dc8c7419aa29a8d0209cc079"
+    },
+    "weftmate": {
+      "run": 37865238825,
+      "head": "e21032bd61390dea1f44bfa23e63afdc540c2b96",
+      "checks": "6/6 passed"
+    }
+  }
+}

@@ -1,0 +1,18 @@
+[
+  {
+    "job_id": "memory-world-job-403d05f2493eb00797a3110d3591249e940b89bc6aba1cffc3bc5d3c3b177160",
+    "state": "no_change",
+    "terminal_detail": null,
+    "evidence_ids_json": "[\"233b7cdb-dc91-40c8-8519-b7f372a12a69\"]",
+    "model_result_json": "{\"content\":\"\",\"finish_reason\":\"stop\",\"formation_rewrite\":{\"error\":{\"code\":\"independent_person_claims_need_separate_clauses\",\"instruction\":\"Rewrite the complete interpretation JSON once. Fix the reported compiler error; every cognition must include a nonempty proposition and valid supports. Copy names, forms of address, numbers and dates exactly from user evidence. Never invent facts.\"},\"final_error\":\"invalid_model_result\",\"first_result\":{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"relationship\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u963f\\u5c9a\\u662f\\u8ddf\\u6211\\u4e00\\u8d77\\u51c6\\u5907\\u79cb\\u5b63\\u5c55\\u89c8\\u7684\\u670b\\u53cb\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"233b7cdb-dc91-40c8-8519-b7f372a12a69\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"target_entity\\\":{\\\"canonical_name\\\":\\\"\\u963f\\u5c9a\\\",\\\"kind\\\":\\\"person\\\"},\\\"relation_type\\\":\\\"friend\\\"},{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"attribute\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u5979\\u8d1f\\u8d23\\u6d77\\u62a5\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"233b7cdb-dc91-40c8-8519-b7f372a12a69\\\",\\\"segment_id\\\":\\\"s1\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u963f\\u5c9a\\\",\\\"kind\\\":\\\"person\\\"},\\\"entity_reference\\\":{\\\"mention\\\":\\\"\\u5979\\\"}}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":759,\"completion_tokens_details\":{\"reasoning_tokens\":551},\"prompt_tokens\":5007,\"prompt_tokens_details\":{\"cached_tokens\":4800},\"total_tokens\":5766}},\"state\":\"completed\"},\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":934,\"completion_tokens_details\":{\"reasoning_tokens\":933},\"prompt_tokens\":5471,\"prompt_tokens_details\":{\"cached_tokens\":4992},\"total_tokens\":6405}}",
+    "world_result_json": "{\"reason\":\"invalid_model_result\",\"schema_version\":1,\"state\":\"no_change\"}"
+  },
+  {
+    "job_id": "memory-world-job-d3344dc31b02ca46f6e1f71e8c9722dc53bdb45bd05d4527a1595ea1cafff712",
+    "state": "no_change",
+    "terminal_detail": null,
+    "evidence_ids_json": "[\"98035fc7-3ca9-4407-a3ae-c3d0d23a3030\"]",
+    "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"no_change\\\"}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":49,\"completion_tokens_details\":{\"reasoning_tokens\":36},\"prompt_tokens\":4971,\"prompt_tokens_details\":{\"cached_tokens\":4800},\"total_tokens\":5020}}",
+    "world_result_json": "{\"reason\":\"model_no_change\",\"schema_version\":1,\"state\":\"no_change\"}"
+  }
+]

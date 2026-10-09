@@ -4,6 +4,11 @@ export const original = '王小明打游戏挺厉害，是我好兄弟。';
 export const confirmation = '好，以后我想组队时，就提醒我找王小明。';
 export const correction = '更正一下：王小明是我的表弟，不是好兄弟。以后组队还是找他。';
 export const recallQuestion = '我们之前说组队可以找谁？';
+export function proposalCheck(reply) {
+  return /组队|开黑|游戏|一起玩/.test(reply) && /以后|下次|将来|未来/.test(reply) &&
+    /提醒(?:你|您|用户)/.test(reply) && /(?:找|联系|叫|邀请|拉上).*(?:王小明|他)/.test(reply) &&
+    /[？?]|要不要|需要.*吗|好吗|行吗/.test(reply);
+}
 export function exportHasForgottenName(bytes, path) {
   const containsName = buffer => buffer.includes(Buffer.from('王小明')) || buffer.includes(Buffer.from('王小明', 'utf16le')) ||
     /\\+u738b\\+u5c0f\\+u660e/i.test(buffer.toString('utf8'));

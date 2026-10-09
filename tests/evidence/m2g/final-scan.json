@@ -1,0 +1,84 @@
+{
+  "isolatedRoots": [
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-mimo-IYWTXK",
+      "scanned": 214,
+      "matches": []
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-mimo-JF9DZP",
+      "scanned": 479,
+      "matches": []
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-mimo-69aUA5",
+      "scanned": 464,
+      "matches": []
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-lan-WQiHkn",
+      "scanned": 464,
+      "matches": []
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-mimo-HvjHm0",
+      "scanned": 398,
+      "matches": []
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-lan-GgkWn4",
+      "scanned": 398,
+      "matches": []
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-lan-GqHA6M",
+      "scanned": 219,
+      "matches": []
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-mimo-2qjIQP",
+      "scanned": 386,
+      "matches": []
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-lan-P7C0L0",
+      "scanned": 386,
+      "matches": []
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2f-lan-82c52d85-e776-4e54-aa81-e3ed68e0780d",
+      "scanned": 255,
+      "matches": []
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2f-lan-46f1c849-d9a8-4eff-ac88-c1799fc7f853",
+      "scanned": 241,
+      "matches": []
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2f-mimo-66c855bd-23f9-4ff3-824e-ebbc8ed9619e",
+      "scanned": 255,
+      "matches": []
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2f-mimo-0cf783b5-985f-4d98-b973-c107d3050a3d",
+      "scanned": 238,
+      "matches": []
+    }
+  ],
+  "isolatedFiles": 4397,
+  "publicFiles": 41,
+  "publicMatches": [],
+  "diffScans": [
+    {
+      "repo": "D:/AIProjects/WeftMate/Worktrees/w2",
+      "matches": 0
+    },
+    {
+      "repo": "D:/AIProjects/MemoWeft/Worktrees/m2g-person-loop",
+      "matches": 0
+    }
+  ],
+  "recordedProcessesStillAlive": [],
+  "lanLockReleased": true
+}
