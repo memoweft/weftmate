@@ -109,6 +109,15 @@ $sourceTask = 'D:\AIProjects\WeftMate\Repository\scripts\run-personal-host-task.
 
 指定备份把 DSH 的生成依赖联接展开成普通目录。演练只在副本中删除 `dsh-home/profiles/node_modules` 这份生成缓存，由 DSH 原生启动器重新生成；原日用迁移的联接会由 DSH 重指向新安装位置。备份文件全部保留，演练最后恢复副本并重新核对每个文件。升级冷备份同时覆盖了实际出现的 Windows 长路径：SQLite 读源和写备份目标使用扩展长度路径，避免超过260字符时启动失败；真实数据库回归见 `tests/backup-windows-long-path.test.ts`。
 
+### FX-15：迁移当天的记忆核对
+
+2026-10-10 的指定备份只读副本核对见 [FX-15 数量证据](../tests/evidence/fx-15/backup-inventory.json)：7 个 Core（记忆核心）SQLite（嵌入式数据库）文件均为 `user_version=20`，`entity / relationship / cognition / world_event` 均为 0 行。2 个账号有规范库，另 5 个文件是同一原账号目录内的非当前库；原账号规范库有 1 条 Evidence（原始证据）、1 条交互上下文、1 个作业及 1 条助手承诺，均不能当成正式记忆。规范路径由宿主确定为 `<dataDirectory>/personal-access/accounts/<ownerId>/memory-home/memoweft/memoweft.sqlite3`；记录的依据归属与账号一致。此结论只覆盖指定备份，未搜索本人其他运行目录。
+
+- 切换前，用当天备份运行 `python tests/integration/fx15-memory-inventory.py <备份路径> --output <私有数量报告路径>`，核对每个账号的规范库、表行数与归属布尔值；工具只读复制、排除依赖和密钥库，结束自动删除副本，不导出姓名、账号标识或原文。不要把本次 0 行当成迁移当天应有的固定值。
+- 指定备份没有可迁移的旧版正式记忆，也没有账号映射错位证据，因此 FX-15 不增加转换、清库或回填步骤，不改 `migrate-installed-desktop.ps1`。如果本人预期这里应有旧记忆，应先确认另一个明确授权的数据源；不要让安装程序凭猜测创建或合并记忆空间。
+- 登录同一旧账号后逐类核对记忆页数量；`200 + 0` 与 `503` 分开记录。后者是不可用，不等于 0。副本中其他三个账号的底层错误均为 `MEMORY_MODEL_UNAVAILABLE`：两个账号没有可用模型，另一个有私有模型但后台选择不可用；仅补合成凭据仍503，再选可用后台模型后三类均200且0条。其他账号还需核对可用模型、后台模型选择和该账号的凭据；桥进程的启动依赖已授权模型路由。隔离诊断只使用合成凭据，不能证明日用模型凭据可用。
+- 安装后与回退后分别对照迁移前数量。若当天非零，应在迁移窗口用正式 Core 查询／备份工具取得前后数量与内容摘要哈希；不把指定空库的历史演练称为非空记忆迁移验收。Verify（迁移验证）的匿名请求修复归 FX-14。
+
 ## Windows 代码签名
 
 本包不购买证书，不保存签名私钥，也没有替 Windows 建立测试信任根。Ed25519 清单保证更新内容来自受信发布者；Windows SmartScreen（下载信誉保护）依赖 Authenticode 与文件 / 发布者信誉，两者分工不同。

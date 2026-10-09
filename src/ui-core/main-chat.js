@@ -63,6 +63,10 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             next = await core.accessApi('/chats?' + new URLSearchParams({ archived: 'all', cursor: next.nextCursor }));
             core.state.chats.push(...next.items);
         }
+        // Keep the native snapshot clock when projecting logical chats. The
+        // composer compares newer native turn events against this clock so a
+        // sidebar poll is not a prerequisite for showing the stop button.
+        core.state.sessionSnapshotAt = sessions.snapshotAt ?? null;
         core.state.sessions = (sessions.sessions || []).map(row => ({ ...row, ...core.state.chats.find(chat => chat.kind === 'side' && chat.activeSessionId === row.sessionId) }));
         core.state.sessionGroups = sessions.groups || []; installMain(main.chat);
         await core.refreshSessionProjects(); effects.renderSessions(); effects.paintSelectedSession(core.state.selectedSessionId); notify();
@@ -73,7 +77,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         core.cancelAttachmentUpload(); core.state.activeChatSource = 'desktop'; core.state.selectedPhoneConversationId = null;
         core.state.selectedChatId = core.state.mainChat.chatId; core.state.selectedSessionId = core.state.mainChat.activeSessionId;
         if (core.state.mainChat.modelProfileId) { core.state.modelProfileId = core.state.mainChat.modelProfileId; effects.paintModels(); }
-        core.state.newConversation = false; core.state.historyGeneration++; core.state.historyEvents.clear(); core.state.seenSeq.clear();
+        core.state.newConversation = false; core.state.newConversationTemporary = false; core.state.historyGeneration++; core.state.historyEvents.clear(); core.state.seenSeq.clear();
         core.resetConversationApprovals(); core.resetConversationQuestions(); core.state.turnStatus = null;
         clearLogical(); effects.restoreMainChatDraft?.(drafts.get(core.state.selectedChatId) || '');
         effects.paintSelectedSession(core.state.selectedSessionId); effects.renderSessions(); effects.showConversation(); effects.closeRail();

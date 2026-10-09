@@ -65,10 +65,12 @@ if ($Action -eq 'Apply') {
   }
 } elseif ($Action -eq 'Verify') {
   $config = Get-Content -LiteralPath $state.config -Raw | ConvertFrom-Json
-  $uri = 'http://127.0.0.1:' + $config.accessPort + '/personal/v1/config'
+  $uri = 'http://127.0.0.1:' + $config.accessPort + '/personal/v1/auth/state'
   $response = Invoke-WebRequest -Uri $uri -UseBasicParsing
   if ($response.StatusCode -ne 200) { throw 'Local host unavailable' }
-  Write-Output '端口与公开配置可访问。请在程序中登录旧账户，并核对设置 → 系统状态的记忆桥、中继与证书；成功后 Finalize。'
+  $health = $response.Content | ConvertFrom-Json
+  if ($health.configured -isnot [bool] -or $health.registrationAvailable -isnot [bool]) { throw 'Unexpected local host health response' }
+  Write-Output '端口与公开登录状态可访问。请在程序中登录旧账户，并核对设置 → 系统状态的记忆桥、中继与证书；成功后 Finalize。'
 } elseif ($Action -eq 'Finalize') {
   if ($state.phase -ne 'awaiting-verification') { throw 'Installed program has not reached verification.' }
   Unregister-ScheduledTask -TaskName $state.taskName -Confirm:$false

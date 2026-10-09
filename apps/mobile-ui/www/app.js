@@ -525,6 +525,7 @@ function handleBack(){if(!$('resource-page').hidden){closeResourcePage();return}
 document.addEventListener('DOMContentLoaded',()=>{
   $('menu-button').addEventListener('click',openDrawer);$('drawer-close').addEventListener('click',closeDrawer);$('drawer-scrim').addEventListener('click',closeDrawer);
   $('page-back').addEventListener('click',()=>{if(state.page==='chat')page('home');else handleBack()});
+  document.querySelector('[data-action="temporary-chat"]').addEventListener('click', () => { void mobileNewTemporaryConversation(); });
   $('home-new-chat').addEventListener('click',()=>selectConversation(null));
   $('home-settings').addEventListener('click',()=>page('settings'));
   $('home-search').addEventListener('input',renderHome);

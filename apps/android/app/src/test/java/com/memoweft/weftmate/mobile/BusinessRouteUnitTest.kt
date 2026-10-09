@@ -14,6 +14,11 @@ class BusinessRouteUnitTest {
         for(path in listOf("/personal/v1/chats/../events", "/personal/v1/chats/chat%2Fone/events", "/personal/v1/chats/chat-one/credentials"))
             assertFalse(path, validBusinessPath(path))
     }
+    @Test fun temporaryCreationUsesOnlyItsExactBusinessRoute() {
+        assertTrue(validBusinessPath("/personal/v1/sessions/temporary"))
+        assertFalse(validBusinessPath("/personal/v1/sessions/temporary?recallEnabled=false"))
+        assertFalse(validBusinessPath("/personal/v1/sessions/temporary/events"))
+    }
     @Test fun conversationResourcesUseAnExactRouteAndForwardCursor() {
         assertTrue(validBusinessPath("/personal/v1/sessions/session-one/resources"))
         assertTrue(validBusinessPath("/personal/v1/sessions/session-one/resources?afterSeq=-1"))

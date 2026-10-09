@@ -37,7 +37,9 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
             if (next < (afterSeq ?: -1) || events.length() > 100 ||
                 result.optBoolean("hasMore") && next == afterSeq)
                 throw ApiFailure(502, "HISTORY_CURSOR_INVALID")
-            store.saveSharedHistoryPage(owner, host.hostId, sessionId, events, next, result.optBoolean("hasOlder"))
+            if (result.optBoolean("cacheAllowed", true))
+                store.saveSharedHistoryPage(owner, host.hostId, sessionId, events, next, result.optBoolean("hasOlder"))
+            else store.clearSharedHistory(owner, host.hostId, sessionId)
             result.put("source", "host").put("sessionId", sessionId)
                 .put("hostAvailable", true).put("cached", false)
         } catch (error: Exception) {
