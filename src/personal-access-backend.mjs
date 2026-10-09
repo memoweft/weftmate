@@ -1,4 +1,5 @@
 /** Thin host callbacks for the authenticated personal access service. */
+import { checkModelConnection, canonicalProviderModelId } from './model-connection-check.mjs'
 import { discoverOpenAICompatibleModels, openAICompatibleEndpoint } from './openai-compatible-client.ts'
 import { modelTierFor } from './model-tier.ts'
 import { modelRouteFingerprint } from './model-route-fingerprint.mjs'
@@ -96,17 +97,15 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       routeFingerprint: (() => { try { return modelRouteFingerprint(
         openAICompatibleEndpoint(profile.baseUrl, 'chat/completions').href, profile.model) }
       catch { return null } })(),
-      modelTier: profile.modelTier ?? 'auto', sourceKind: modelTierFor(profile) })) },
+      modelTier: profile.modelTier ?? 'auto', sourceKind: modelTierFor(profile),
+      location: modelTierFor(profile) === 'cloud' ? 'cloud' : ['127.0.0.1', 'localhost', '[::1]'].includes(new URL(profile.baseUrl).hostname) ? 'computer' : 'lan' })) },
     async verifyModelProfile(profileId, ownerId) {
       requireModelAllowed(ownerId, profileId, 'new')
       const profile = modelProfile(profileId)
       if (typeof credentialForProfile !== 'function') fail('MODEL_UNAVAILABLE')
       const apiKey = credentialForProfile(profile)
       if (!apiKey) fail('MODEL_UNAVAILABLE')
-      try {
-        const models = await discoverOpenAICompatibleModels({ baseUrl: profile.baseUrl, apiKey, fetchImpl: modelFetch })
-        return { configured: true, reachable: true, modelListed: models.includes(profile.model), inferenceVerified: false }
-      } catch { return { configured: true, reachable: false, modelListed: false, inferenceVerified: false } }
+      return checkModelConnection({ baseUrl: profile.baseUrl, modelId: profile.model, apiKey, fetchImpl: modelFetch })
     },
     async modelCompletion({ profileId, body, signal, ownerId }) {
       requireModelAllowed(ownerId, profileId, 'new')
@@ -119,7 +118,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         method: 'POST', redirect: 'error', signal,
         headers: { 'content-type': 'application/json', accept: body.stream ? 'text/event-stream' : 'application/json',
           authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...body, model: canonicalProviderModelId(profile.baseUrl, body.model) }),
       })
     },
     async preflight(command) {

@@ -1324,6 +1324,8 @@ test('desktop account model form sends a typed secret once and recovers only pub
     accountModelWrite: (url, options) => {
       const body = JSON.parse(options.body)
       writes.push({ url, body })
+      if (url.endsWith('/check')) return { configured: true, reachable: false, modelListed: false, inferenceVerified: false,
+        address: 'unreachable', authentication: 'unchecked', catalog: 'unchecked', model: 'unchecked' }
       const model = { accountModelId: 'account-model-one', revision: 1, profileId: 'private-one',
         name: '我的 MiMo', provider: 'openai-compatible', baseUrl: 'http://192.168.1.10:18080/v1', modelTier: 'cloud',
         modelId: 'mimo-v2.6-flash', routeFingerprint: 'a'.repeat(64), configured: true,
@@ -1356,18 +1358,19 @@ test('desktop account model form sends a typed secret once and recovers only pub
   assert.equal([...page.storage.values()].some((value) => value.includes('synthetic-private-key')), false)
   for (let attempt = 0; attempt < 25 && !visibleText(page.get('account-models-list')).includes('我的 MiMo'); attempt++) await flush()
   assert.match(visibleText(page.get('account-models-list')), /我的 MiMo/)
-  const edit = page.get('account-models-list').children[0].children[1].children
+  const edit = page.get('account-models-list').children.find(item => visibleText(item).includes('我的 MiMo'))!.children[1].children
     .find((item) => item.textContent === '编辑')!
   edit.fire('click')
   assert.equal(page.get('account-model-tier').value, 'cloud', 'editing restores the saved override')
-  const test = page.get('account-models-list').children[0].children[1].children
+  const test = page.get('account-models-list').children.find(item => visibleText(item).includes('我的 MiMo'))!.children[1].children
     .find((item) => item.textContent === '测试连接')!
   test.fire('click')
   for (let attempt = 0; attempt < 25 && writes.length < 2; attempt++) await flush()
   assert.equal(writes.length, 2)
   assert.equal(writes[1].body.apiKey, undefined)
-  assert.match(page.get('account-models-status').textContent, /尚未发送推理消息/)
-  assert.match(page.get('account-models-status').textContent, /未通过/)
+  for (let attempt = 0; attempt < 25 && !visibleText(page.get('account-models-list')).includes('地址连不上'); attempt++) await flush()
+  assert.match(visibleText(page.get('account-models-list')), /地址连不上/)
+  assert.equal(writes[1].body.sendTestMessage, false)
 })
 
 test('phone image timeline bounds large originals and recovers small images without display sidecars', async () => {

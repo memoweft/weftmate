@@ -1,3 +1,4 @@
+import { usageResponse } from './personal-access/usage-response.mjs';
 /**
  * WeftMate · Electron 主进程：个人宿主 + 原生桌面窗口。
  *
@@ -14,6 +15,9 @@
  *
  * v2 的 SDK 聊天/桥/旧 UI 等主链路已随 R4 退役删除（见 docs/ARCHITECTURE.md §4 退役清单）。
  */
+import { createHostLog } from './host-log.mjs';
+import { selectBackgroundProfile, backgroundModelReady } from './background-model-selection.mjs';
+import { checkModelConnection } from './model-connection-check.mjs';
 import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, screen, dialog, nativeTheme, session } from 'electron';
 import packageInfo from '../package.json' with { type: 'json' };
 import { createBackupManager } from './personal-backup/index.mjs';
@@ -201,13 +205,13 @@ function redactSecretText(value) {
     .replace(/((?:api[_-]?key|token|secret|password)\s*[=:]\s*["']?)[^\s,;"'}]+/gi, '$1[REDACTED]');
 }
 
+const hostLog = createHostLog(app.getPath('userData'));
+hostLog.write('host.start', { mode: personalHostMode ? 'personal-host' : 'desktop', pid: process.pid,
+  version: app.getVersion(), headless: process.argv.includes('--headless'),
+  memoryEnabled: process.argv.some(arg => arg.startsWith('--personal-memory-config=')),
+  localModelConfigured: process.argv.some(arg => arg.startsWith('--local-model-config=')) });
 function logCrash(kind, err) {
-  try {
-    const p = join(app.getPath('userData'), 'weftmate-crash.log');
-    try { if (statSync(p).size > 1_000_000) writeFileSync(p, ''); } catch { /* 首次无文件 */ }
-    const detail = redactSecretText(err && err.stack ? err.stack : String(err));
-    appendFileSync(p, `[${new Date().toISOString()}] ${kind}: ${detail}\n`);
-  } catch { /* 日志都写不了就算了,别二次崩 */ }
+  hostLog.write('host.failure', { source: kind, code: /^[A-Z_]{2,64}$/.test(err?.code) ? err.code : 'HOST_ERROR' });
 }
 process.on('uncaughtException', (err) => { logCrash('uncaughtException', err); });
 process.on('unhandledRejection', (reason) => { logCrash('unhandledRejection', reason); });
@@ -1656,7 +1660,7 @@ async function bootstrap() {
   function memoryProcessingRouteForSession(ownerId, sessionId) {
     if (!personalAccessService || !personalMemoryRuntimeConfig) return null;
     const profiles = settingsMod.listModelProfiles().profiles;
-    let boundProfileId = personalMemoryRuntimeConfig.authRef;
+    let boundProfileId = null;
     if (sessionId !== null) {
       const binding = personalAccessService.ownerForSession(sessionId);
       if (!binding || binding.ownerId !== ownerId) return null;
@@ -1668,7 +1672,10 @@ async function bootstrap() {
       if (!destination.allowed) return null;
     }
     const backgroundProfileId = personalAccessService.backgroundModelProfile(ownerId);
-    const selected = profiles.find((profile) => profile.id === (backgroundProfileId ?? boundProfileId));
+    const selected = selectBackgroundProfile({ explicit: backgroundProfileId, bound: boundProfileId,
+      current: personalAccessService.currentChatModelProfile(ownerId), profiles,
+      allowed: id => personalAccessService.canUseModelProfile(ownerId, id, 'new') });
+    hostLog.write('background.route', { profileId: selected?.id, sessionId: sessionId ?? undefined, configured: !!selected });
     if (!selected || !personalAccessService.canUseModelProfile(ownerId, selected.id, 'new')) return null;
     const key = credentialForModelProfile(selected);
     return key ? { profileId: selected.id, baseUrl: modelScheduler.memoryBaseUrl(selected.id, ownerId, sessionId),
@@ -1680,6 +1687,8 @@ async function bootstrap() {
   const localModelController = localModelFlag
     ? createLocalModelController(localModelFlag.slice('--local-model-config='.length)) : null;
   modelScheduler = await createModelScheduler({
+    onEvent: (event, data) => hostLog.write(event, data),
+    backgroundReady: profile => backgroundModelReady(profile, { credentialFor: credentialForModelProfile }),
     beginUsage: input => input.sessionId && !personalAccessService?.ownerForSession(input.sessionId)
       ? null : personalAccessService?.beginUsage(input),
     finishUsage: input => personalAccessService?.finishUsage(input),
@@ -1688,9 +1697,9 @@ async function bootstrap() {
     profileFor: id => settingsMod.listModelProfiles().profiles.find(profile => profile.id === id ||
       routeForProfile(profile.id).provider === id || profile.baseUrl?.replace(/\/+$/, '') === id?.replace(/\/+$/, '')),
     credentialFor: credentialForModelProfile,
-    backgroundRoute: (sessionId, profileId) => {
+    backgroundRoute: async (sessionId, profileId) => {
       const binding = personalAccessService?.ownerForSession(sessionId);
-      const selectedId = binding ? personalAccessService.backgroundModelProfile(binding.ownerId) : null;
+      const selectedId = binding ? personalAccessService.backgroundModelProfile(binding.ownerId) ?? personalAccessService.currentChatModelProfile(binding.ownerId) : null;
       const profile = settingsMod.listModelProfiles().profiles.find(row => selectedId
         ? row.id === selectedId : row.id === profileId || routeForProfile(row.id).provider === profileId);
       if (!profile || binding && !personalAccessService.canUseModelProfile(binding.ownerId, profile.id, 'new')) {
@@ -1803,7 +1812,7 @@ async function bootstrap() {
         turn: request.turn, step: request.step, receiptId: request.receiptId,
         messageHash: request.messageHash });
     } : undefined,
-    log: (line) => console.log(`[weftmate] ${redactSecretText(line)}`),
+    log: (line) => { hostLog.write('runtime.event', { source: 'dsh', code: /error|failed|失败/i.test(line) ? 'RUNTIME_FAILURE' : 'RUNTIME_STATE' }); console.log(`[weftmate] ${redactSecretText(line)}`); },
   });
   async function replaceSharedRuntime() {
     const profiles = settingsMod.listModelProfiles().profiles
@@ -2962,6 +2971,7 @@ async function bootstrap() {
   if (personalMemoryConfigPath !== null) {
     const memoryConfig = await loadPersonalMemoryConfig(personalMemoryConfigPath);
     personalMemoryRuntimeConfig = memoryConfig;
+    hostLog.write('memory.bridge', { phase: 'configured', configured: true });
     personalMemoryManager = createPersonalMemoryManager({
       root: join(userDataDir, 'personal-access'), enabled: true,
       cleanupDeletedMemory: (ownerId, options) => personalAccessService.cleanupMemoryCopies(ownerId, options),
@@ -3161,6 +3171,28 @@ async function bootstrap() {
         return { applied: exact, clean };
       });
     },
+    async check({ ownerId, input }) {
+      let profile, apiKey = input.apiKey;
+      if (input.profileId) {
+        if (!personalAccessService.canUseModelProfile(ownerId, input.profileId, 'new')) throw Object.assign(new Error('MODEL_UNAVAILABLE'), { code: 'MODEL_UNAVAILABLE' });
+        profile = settingsMod.listModelProfiles().profiles.find(row => row.id === input.profileId);
+        if (!profile || input.baseUrl && input.baseUrl !== profile.baseUrl && !apiKey) throw Object.assign(new Error('ACCOUNT_MODEL_SECRET_REQUIRED'), { code: 'ACCOUNT_MODEL_SECRET_REQUIRED' });
+        if (!apiKey) apiKey = credentialForModelProfile(profile);
+      }
+      return checkModelConnection({ baseUrl: input.baseUrl ?? profile?.baseUrl, modelId: input.modelId ?? profile?.model,
+        apiKey, sendTestMessage: input.sendTestMessage === true,
+        fetchImpl: async (url, options) => {
+          if (options.method !== 'POST') return fetch(url, options);
+          const ticket = await personalAccessService.beginModelConnectionUsage(ownerId, { baseUrl: input.baseUrl ?? profile?.baseUrl,
+            modelId: input.modelId ?? profile?.model, profileId: profile?.id, modelTier: profile?.modelTier });
+          hostLog.write('model.start', { profileId: profile?.id, priority: 'foreground', source: 'connection-test' });
+          try {
+            const reply = await scheduledModelFetch(url, options, modelScheduler.url);
+            hostLog.write('model.end', { profileId: profile?.id, priority: 'foreground', status: reply.status });
+            return ticket ? usageResponse(reply, usage => personalAccessService.finishUsage({ ...ticket, usage, source: 'openai' })) : reply;
+          } catch (error) { if (ticket) await personalAccessService.finishUsage({ ...ticket, usage: null }); hostLog.write('model.failure', { code: 'CONNECTION_TEST_FAILED' }); throw error; }
+        } });
+    },
     async test({ profileId, ownerId }) {
       return accessBackend.verifyModelProfile(profileId, ownerId);
     },
@@ -3259,6 +3291,7 @@ async function bootstrap() {
                   currentModelId: null, lastSwitch: null, canRestart: false, lastError: null };
               const memory = personalMemoryManager ? await personalMemoryManager.status(ownerId)
                 : { state: 'disabled', lastFailureCode: null };
+              hostLog.write('memory.bridge', { phase: memory.state, code: memory.lastFailureCode ?? memory.reasonCode ?? undefined, configured: !!personalMemoryManager });
               return { model,
                 host: { state: runtimeOrigin ? 'ready' : 'unavailable', version: appVersion,
                   lastError: sessionReferenceScan.state === 'failed' ? 'REFERENCE_SCAN_FAILED' : null, canRestart: true },

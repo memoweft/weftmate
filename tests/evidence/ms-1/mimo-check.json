@@ -1,0 +1,16 @@
+{
+  "officialEndpoint": true,
+  "inferenceRequests": 0,
+  "result": {
+    "configured": true,
+    "reachable": true,
+    "modelListed": true,
+    "inferenceVerified": false,
+    "address": "reachable",
+    "authentication": "accepted",
+    "catalog": "available",
+    "model": "listed",
+    "suggestedModelId": "mimo-v2.6-flash",
+    "httpStatus": 200
+  }
+}
