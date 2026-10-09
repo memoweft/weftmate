@@ -162,6 +162,9 @@ struct MemoryWorkspaceView: View {
                         HStack {
                             Button("取消") { pendingAction = nil; model.cancelForget() }
                             Button("确认忘掉", role: .destructive) { Task { await model.mutate(context); pendingAction = nil } }.disabled(!model.canForget(context)).accessibilityIdentifier("confirmForgetMemory")
+                                #if os(macOS)
+                                .foregroundStyle(Weave.danger)
+                                #endif
                         }
                     }.padding(AppleTokens.Space.p24).frame(maxWidth: 600).background(Weave.surface)
                     .task { await model.prepareForget(context) }

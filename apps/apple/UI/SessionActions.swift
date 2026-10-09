@@ -22,11 +22,17 @@ struct SessionActions: View {
                         Button("移出分组") { onSelect(); Task { await app.updateMetadata(conversation, changeGroup: true) } }
                             .disabled(conversation.groupId == nil)
                     }.disabled(app.lifecycleBusy)
+                    #if os(macOS)
+                    .menuStyle(.borderlessButton).foregroundStyle(Weave.ink).fixedSize()
+                    #endif
                 } else {
                     Button(action.title(for: conversation), role: action == .delete ? .destructive : nil) { perform(action) }
                         .keyboardShortcut(KeyEquivalent(Character(action.shortcut!)), modifiers: [])
                         .disabled(app.lifecycleBusy || (action == .fork && conversation.running))
                         .accessibilityIdentifier("sessionAction." + action.rawValue)
+                        #if os(macOS)
+                        .buttonStyle(.plain).foregroundStyle(action == .delete ? Weave.danger : Weave.ink)
+                        #endif
                 }
             }
         }
@@ -145,6 +151,9 @@ struct SessionDeleteSheet: View {
                     Button("取消") { app.deletionCandidate = nil }.disabled(app.lifecycleBusy)
                     Button(app.lifecycleBusy ? "正在删除…" : "永久删除", role: .destructive) { Task { await app.deleteConversation() } }
                         .disabled(!app.canDeleteConversation).accessibilityIdentifier("confirmDeleteConversation")
+                        #if os(macOS)
+                        .foregroundStyle(Weave.danger)
+                        #endif
                 }
             }.padding(AppleTokens.Space.p24).frame(maxWidth: 600, alignment: .leading)
         }.background(Weave.surface)
@@ -184,6 +193,9 @@ struct ArchivedSessionsView: View {
                         Spacer()
                         Button("恢复") { Task { await app.archive(row, archived: false) } }.accessibilityIdentifier("restoreArchived." + row.id)
                         Button("删除", role: .destructive) { app.askToDelete(row, inSettings: true) }.accessibilityIdentifier("deleteArchived." + row.id)
+                            #if os(macOS)
+                            .foregroundStyle(Weave.danger)
+                            #endif
                     }.buttonStyle(.borderless).disabled(app.lifecycleBusy)
                 }
                 if rows.isEmpty { Text("没有已归档对话。").foregroundStyle(Weave.muted) }
