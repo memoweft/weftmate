@@ -15,11 +15,18 @@ export function createMemoryHttpHandler(context) {
       }
       throw failure('MEMORY_DISABLED', 503);
     }
+    if (pathname === '/personal/v1/memory/backfill') {
+      if (url.search) throw failure('INVALID_REQUEST');
+      if (request.method === 'GET') return context.json(response, 200, { ownerId, ...await context.memoryIngestion.preview(ownerId) });
+      if (request.method === 'POST') return context.json(response, 202, { ownerId, ...await context.memoryIngestion.action(ownerId, await context.readJson(request)) });
+      throw failure('METHOD_NOT_ALLOWED', 405);
+    }
     if (request.method === 'DELETE') await context.offline?.invalidate(ownerId);
     const result = await handlePersonalMemoryHttp({ manager: context.memoryManager,
       ownerId, request, pathname, url, readJson: context.readJson });
     if (mutation && /\/(correct|mute)$/.test(pathname) && result.status < 300) await context.offline?.invalidate(ownerId);
-    return context.json(response, result.status, { ownerId, ...result.body });
+    return context.json(response, result.status, { ownerId, ...result.body,
+      ...(pathname === '/personal/v1/memory/status' ? context.memoryIngestion.status(ownerId) : {}) });
   }
   return { handleMemoryHttp };
 }

@@ -2,7 +2,7 @@ function paintChatMemoryAvailability(value) {
   let node=$('chat-memory-notice');
   if(!node){node=el('p','muted');node.id='chat-memory-notice';node.setAttribute('role','status');node.setAttribute('aria-live','polite');$('chat-page').prepend(node)}
   node.hidden=!state.loggedIn||value?.state!=='unavailable';
-  node.textContent=node.hidden?'':'记忆暂时不可用，这次对话不会用到或记住新内容';
+  node.textContent=node.hidden?'':'记忆暂时不可用，普通对话已保存，恢复后会自动补交。';
 }
 async function exportMyMemories(format) {
   const owner=state.owner,epoch=state.authEpoch;
@@ -63,6 +63,36 @@ function memoryCurrentnessLabel(value){return ({current:'当前来源',not_curre
   evidence_local_read_denied:'来源未允许本机模型读取',evidence_cloud_read_denied:'来源未允许云端模型读取',
   evidence_not_model_readable:'来源当前不可供模型读取',evidence_missing:'来源记录未找到',evidence_subject_mismatch:'来源账户不匹配'}[value]||'来源状态未说明')}
 
+function memoryIngestionPanel(target){
+  const section=el('section','memory-ingestion'),health=el('p','muted',uiCore.memoryHealthText(state.memory.healthStatus));
+  health.id='mobile-memory-health';health.setAttribute('role','status');
+  const progress=el('p','muted');progress.id='mobile-memory-progress';progress.setAttribute('role','status');
+  const message=el('p','muted'),actions=el('div','form-actions');
+  const token=memoryToken();let prepared=null,busy=false,job=state.memory.healthStatus?.backfill;
+  const preview=action('整理过去的对话',async()=>{
+    preview.disabled=true;message.textContent='正在统计可整理的过去对话…';
+    try{const value=await business({path:'/personal/v1/memory/backfill',method:'GET'});if(!memoryCurrent(token))return;
+      prepared=value;message.textContent=!value.turnCount?'过去的对话已全部补交，没有需要重复整理的回合。':`可整理 ${value.sessionCount} 个会话、${value.turnCount} 个回合。预计输入约 ${value.estimatedUsage.inputTokens.toLocaleString()}、输出约 ${value.estimatedUsage.outputTokens.toLocaleString()} 个词元；实际用量取决于模型与重试。跳过临时对话、已关闭记忆的对话及已遗忘内容。`;confirm.hidden=!value.turnCount;
+    }catch{if(memoryCurrent(token))message.textContent='统计失败，请检查连接后重试。'}finally{preview.disabled=false;}
+  },false);
+  async function change(body){busy=true;for(const b of [preview,confirm,pause,cancel])b.disabled=true;
+    try{await business({path:'/personal/v1/memory/backfill',method:'POST',body});if(!memoryCurrent(token))return;confirm.hidden=true;message.textContent='';}
+    catch{if(memoryCurrent(token))message.textContent='操作未确认，请刷新核对进度后重试。';}
+    finally{busy=false;for(const b of [preview,confirm,pause,cancel])b.disabled=false;await refresh();}}
+  const confirm=action('确认开始整理',()=>{if(prepared)void change({action:'start',previewId:prepared.previewId,confirm:true})},true);confirm.hidden=true;
+  const pause=action('暂停整理',()=>{if(job)void change({action:job.state==='paused'?'resume':'pause',jobId:job.id})},false);
+  const cancel=action('取消整理',()=>{if(job)void change({action:'cancel',jobId:job.id})},false);
+  function paint(value){job=value?.backfill;health.textContent=uiCore.memoryHealthText(value);
+    const active=job&&['running','paused'].includes(job.state);preview.disabled=busy||!!active;pause.hidden=cancel.hidden=!active;
+    pause.textContent=job?.state==='paused'?'继续整理':'暂停整理';
+    progress.textContent=job?`${({running:'正在补整理',paused:'已暂停',cancelled:'已取消',completed:'补交完成'})[job.state]}：已提交 ${job.submittedTurns-job.skippedTurns} / ${job.totalTurns} 回合。${active?'暂停或取消后不再提交后续回合；已提交的回合继续整理。':''}`:'';
+  }
+  async function refresh(){if(!memoryCurrent(token)||!section.isConnected||busy)return;
+    try{const value=await business({path:'/personal/v1/memory/status',method:'GET'});if(memoryCurrent(token)&&section.isConnected){state.memory.healthStatus=value;paint(value)}}catch{if(memoryCurrent(token))health.textContent='记忆状态暂时无法读取，请刷新重试。';}}
+  actions.append(preview,confirm,pause,cancel);section.append(health,actions,message,progress);target.append(section);paint(state.memory.healthStatus);
+  const poll=async()=>{if(!section.isConnected||!memoryCurrent(token))return;await refresh();setTimeout(poll,3000);};setTimeout(poll,3000);
+}
+
 function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||state.page!=='memory')return;const memory=state.memory;clear(target);
   target.append(heading('记忆','查看当前账户的理解与来源；可用时在详情中纠正、停用或删除。手机对话的自动记忆接入仍待验证。'));
   target.append(notice(memoryStatusText(),memory.error?'读取状态':''));
@@ -79,6 +109,7 @@ function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||s
   search.input.setAttribute('aria-label','搜索当前类别的全部账户记忆');search.input.disabled=memory.loading;
   search.input.addEventListener('input',()=>{memory.queryDraft=search.input.value});
   const category=el('label','field');category.append(el('span','','记忆类别'),select);
+  memoryIngestionPanel(target);
   const form=el('form');form.append(search.box,category);
   form.addEventListener('submit',event=>{event.preventDefault();memory.queryDraft=search.input.value;
     const query=search.input.value.trim();if([...query].length>120){memory.error='搜索内容最多120个字符，请缩短后重试。';renderMemoryList(target);return}
@@ -87,11 +118,11 @@ function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||s
   const refresh=action(memory.loading?'正在刷新…':'刷新',()=>startMemorySnapshot(target,memory.kind,memory.query),false);refresh.type='button';refresh.disabled=memory.loading;
   actions.append(submit,refresh);form.append(actions);target.append(form);
   if(memoryListAllowed(memory)){target.append(action('导出我的记忆 · JSON',()=>exportMyMemories('json'),false),action('导出我的记忆 · Markdown',()=>exportMyMemories('markdown'),false))}
-  if(memory.pendingBoundaryCount>0)target.append(notice(`有 ${memory.pendingBoundaryCount} 条来源尚未处理${memory.blockedBoundaryCount>0?`，其中 ${memory.blockedBoundaryCount} 条已暂停自动处理`:''}。本手机页面不会重试或管理待处理来源。`,'来源待处理'));
+  if(memory.pendingBoundaryCount>0)target.append(notice(`有 ${memory.pendingBoundaryCount} 条来源尚未处理${memory.blockedBoundaryCount>0?`，其中 ${memory.blockedBoundaryCount} 条已暂停自动处理`:''}。恢复后会按顺序自动补交。`,'来源待处理'));
   if(memory.lastFailureCode==='MEMORY_SOURCE_DELETED'&&memory.discardedBoundaryCount>0)
     target.append(notice(`${memory.discardedBoundaryCount} 条来源已删除；这不表示仍有待处理来源。`,'来源状态'));
   else if(memory.lastFailureCode&&memory.lastFailureCode!=='MEMORY_SOURCE_DELETED')
-    target.append(notice('最近来源处理状态需要在电脑端查看；本手机页面不会重试或管理待处理来源。','来源状态'));
+    target.append(notice('最近来源处理状态见上方记忆健康；恢复后会按顺序自动补交。','来源状态'));
   if(memory.loading&&memory.items.length)target.append(notice('正在读取同一记忆快照的下一页…'));
   if(!memory.items.length){if(memory.loading)target.append(el('p','muted','正在读取完整的账户记忆快照…'));
     else if(!memory.error&&memory.statusState!=='error'){
