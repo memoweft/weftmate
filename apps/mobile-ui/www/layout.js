@@ -48,6 +48,7 @@ const mobileMarkup = String.raw`
         <div id="chat-scroll" class="chat-scroll"><div id="chat-content" class="chat-content"></div></div>
         <button id="jump-latest" class="jump-latest" hidden>回到最新 <span class="icon icon-down"></span></button>
         <div id="composer-dock" class="composer-dock">
+          <section id="approval-bar" class="approval-bar" aria-label="待批准操作" hidden></section>
           <div id="device-line" class="device-line" role="status"></div>
           <details id="queued-tasks" class="queued-tasks" hidden>
             <summary id="queued-count">排队中</summary>

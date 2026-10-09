@@ -8,15 +8,20 @@
         return n;
     };
     function stepCard(step, saved, running, options) {
-        const detail = node('details', 'execution-step'), label = node('summary', '', `${step.summary || '工具执行'}${step.state === 'failed' ? ' · 未完成' : step.state === 'running' && running ? ' · 运行中' : ''}`);
-        label.prepend(window.WeftIcons.create('chevron', 16), window.WeftIcons.create('terminal', 16));
+        const detail = node('details', 'execution-step'), label = node('summary', '', `${step.summary || '工具执行'}${step.state === 'failed' ? ' · 失败' : step.state === 'cancelled' ? ' · 已停止' : step.state === 'running' && running ? ' · 运行中' : ''}${step.approvalText ? ` · ${step.approvalText}` : ''}`);
+        const arrow = node('span', 'progress-chevron'); arrow.setAttribute('aria-hidden', 'true');
+        arrow.append(window.WeftIcons.create('chevron', 16)); label.append(arrow);
         const output = node('pre', 'timeline-raw'), copy = node('button', 'timeline-action', '复制');
         detail.dataset.step = String(step.stepId);
+        detail.dataset.state = step.state;
+        detail.dataset.detailSeq = String(step.detailRef?.seq ?? '');
+        detail.open = step.state === 'failed' && saved?.dataset.state !== 'failed';
         if (saved) {
-            detail.open = saved.open;
-            if (saved.dataset.loaded === 'true') {
+            detail.open = detail.open || saved.open;
+            if (saved.dataset.loaded === 'true' && saved.dataset.detailSeq === detail.dataset.detailSeq) {
                 detail.dataset.loaded = 'true';
                 output.textContent = saved.querySelector('pre')?.textContent || '';
+                detail.rawText = saved.rawText;
             }
         }
         copy.type = 'button';
@@ -41,7 +46,7 @@
         detail.append(label, resources, output, copy);
         globalThis.WeftMotion?.details(detail);
         if (detail.dataset.loaded === 'true')
-            appendReferences(output.textContent, detail, options);
+            appendReferences(detail.rawText || output.textContent, detail, options);
         detail.addEventListener('toggle', async () => {
             if (!detail.open || detail.dataset.loaded || !step.detailRef)
                 return;
@@ -51,7 +56,8 @@
                 const data = await options.readDetail(step.detailRef.seq);
                 if (!detail.isConnected)
                     return;
-                output.textContent = `${data.text || ''}${data.truncated ? '\n[内容已截断]' : ''}`;
+                output.textContent = `${globalThis.WeftUiCore.executionDetailText(data.text || '')}${data.truncated ? '\n[内容已截断]' : ''}`;
+                detail.rawText = data.text;
                 copy.hidden = false;
                 detail.dataset.loaded = 'true';
                 appendReferences(data.text, detail, options);

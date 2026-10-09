@@ -209,7 +209,8 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         send.replaceChildren(window.WeftIcons.create('send', 20));
         ui.byId('model-hint').textContent = value.hint;
         ui.byId('model-hint').setAttribute('role', 'status');
-        ui.byId('model-hint').hidden = !value.hint;
+        ui.byId('model-hint').hidden = !value.hint || value.running || !ui.byId('approval-bar').hidden;
+        ui.renderTimeline();
     }
     function startAssistantRefresh() {
         core.stopAssistantRefresh();
@@ -262,6 +263,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
     }
     function resetConversationControls() {
         ui.byId('timeline-status').textContent = '';
+        ui.byId('approval-bar').hidden = true; ui.byId('approval-bar').replaceChildren(); delete ui.byId('approval-bar').dataset.signature;
         ui.byId('transcript').replaceChildren();
         ui.byId('session-list').replaceChildren();
         ui.byId('assistant-title').textContent = '新对话';
