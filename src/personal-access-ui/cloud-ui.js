@@ -8,7 +8,7 @@
     STORAGE_UNAVAILABLE: '无法保存设备密钥。请允许此页面使用浏览器存储。' };
   const message = error => messages[error.message || error.code] || '连接不可用，请重试。';
   globalThis.WeftCloudUi = {
-    create({ acceptSession, enterAssistant, openAccount, show, accessApi, toast }) {
+    create({ acceptSession, enterAssistant, openAccount, show, accessApi, toast, bindDesktop }) {
       let client, waitTimer, pairingTimer, generation = 0, pairingGeneration = 0, enabled = false;
       const newClient = () => new WeftCloud.Client();
       function stopPairing() { pairingGeneration++; clearTimeout(pairingTimer); $('pairing-panel').hidden = true; $('pairing-code').value = ''; $('pairing-qr').removeAttribute('src'); }
@@ -45,6 +45,7 @@
         const ticket = ++generation;
         const button = mode === 'bind' ? $('cloud-bind') : $('cloud-login'); button.disabled = true;
         try {
+          if (mode === 'bind' && bindDesktop) { await bindDesktop(); return; }
           client = newClient();
           const claim = mode === 'bind' ? await accessApi('/cloud/claims', { method: 'POST', protectedWrite: true, body: {} }) : null;
           const input = $('cloud-pairing-input').value.trim();

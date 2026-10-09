@@ -2,7 +2,7 @@
 globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
   const auth = { mode: 'login', step: 'email', email: '', error: '', busy: false, resendAt: 0, retryAt: 0, deviceName: '这台设备', devices: [], hosts: [] };
   core.state.cloudAuth = auth;
-  let client, waitTimer, renewalTimer, journey = 0, exchangeInFlight, ownHost;
+  let client, waitTimer, renewalTimer, journey = 0, exchangeInFlight, ownHost, bindingClaim;
   const now = () => environment.now?.() ?? Date.now();
   const paint = () => effects.paintCloudAuth?.(cloudAuthView());
   function cloudAuthView() {
@@ -18,6 +18,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     return ({ INVALID_CREDENTIALS: '邮箱或密码不对，请重试。', INVALID_EMAIL: '请填写有效的邮箱地址。', EMAIL_IN_USE: '无法使用这个邮箱，请换一个邮箱或尝试登录。',
       CODE_INVALID: '验证码不对，请重新输入。', CHALLENGE_INVALID: '验证码已失效，请重新发送。', PASSWORD_TICKET_INVALID: '验证已失效，请重新发送验证码。',
       CLOUD_TOKEN_INVALID: '登录已失效，请重新登录。', UNAUTHORIZED: '登录已失效，请重新登录。', DEVICE_NOT_TRUSTED: '这台设备未获允许，请在已登录设备上重新批准。',
+      CLOUD_BINDING_CONFLICT: '这个云账号已绑定其他本地账户，请使用原账号或先解绑。',
       NETWORK: '网络不通，请检查连接后重试。', STORAGE_UNAVAILABLE: '无法安全记住本设备，请检查设备存储后重试。',
       PAIRING_INVALID: '配对码已失效或不属于这台电脑，请获取新码。', PAIRING_REQUIRED: '请在目标电脑显示二维码，并输入配对码后连接。',
       HOST_TRUST_INVALID: '可信交付码已失效或不属于本设备，请在已登录设备上重新获取。',
@@ -42,9 +43,15 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     finally { if (ticket === journey) { auth.busy = false; paint(); } }
   }
   function startCloudJourney(mode = 'login') {
+    if (mode === 'offline-login' || mode === 'local-login') bindingClaim = null;
     journey++; clearTimeout(waitTimer); client.generation++; client.pending = null;
     Object.assign(auth, { mode, step: 'email', error: '', busy: false, challengeId: null, passwordTicket: null, requestId: null, devices: [], hosts: [], resendAt: 0, retryAt: 0 });
     core.show('login'); paint();
+  }
+  async function cloudBindDesktop() {
+    const claim = await core.accessApi('/cloud/claims', { method: 'POST', protectedWrite: true, body: {} });
+    startCloudJourney();
+    bindingClaim = claim;
   }
   async function cloudRequestCode(email = auth.email) {
     if (cloudAuthView().resendSeconds) return;
@@ -100,6 +107,19 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     try { return await current; } finally { if (exchangeInFlight === current) exchangeInFlight = null; }
   }
   async function applyCloudSession(ticket) {
+    if (bindingClaim) {
+      const claim = bindingClaim, token = await client.access();
+      if (ticket !== journey) return;
+      await core.accessApi('/cloud/binding', { method: 'POST', protectedWrite: true,
+        body: { claimId: claim.claimId, accessToken: token } });
+      if (ticket !== journey) return;
+      bindingClaim = null;
+      await client.forget();
+      auth.mode = 'offline'; paint();
+      await core.enterAssistant(); core.openAccount();
+      effects.toast('已绑定 WeftMate 账号。');
+      return;
+    }
     const pairing = environment.initialPairing ? parseCloudPairing(environment.initialPairing) : null;
     if (pairing && pairing.hostId !== client.config.hostId) throw { code: 'PAIRING_INVALID' };
     const result = await client.exchange(pairing ? false : environment.bindDesktop ?? environment.desktop, pairing);
@@ -149,11 +169,11 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     await effects.clearNativeHostSessions?.();
     core.clearSession(); auth.email = email; startCloudJourney();
   }
-  async function cancelCloudJourney() { await client.forget(); await client.resetKey(); startCloudJourney(); }
+  async function cancelCloudJourney() { bindingClaim = null; await client.forget(); await client.resetKey(); startCloudJourney(); }
   async function cloudOfflineLogin({ password, cloudAccountId, username }) {
     return run(async () => {
       const remembered = await environment.cloudCredentials('offline-account');
-      const sub = cloudAccountId || remembered?.sub;
+      const sub = username ? null : cloudAccountId || remembered?.sub;
       const result = sub ? await core.api('/cloud-offline', { method: 'POST', body: { cloudAccountId: sub, password, deviceName: auth.deviceName } })
         : await core.api('/login', { method: 'POST', body: { username, password, deviceName: auth.deviceName } });
       auth.mode = 'offline'; paint(); core.acceptSession(result); await core.enterAssistant();
@@ -285,7 +305,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     client = new globalThis.WeftUiCore.CloudAuthClient({ fetch: environment.fetch, crypto: environment.crypto,
       credentials: environment.cloudCredentials, vendor: environment.cloudVendor, host: environment.hostOrigin, nativeKey: environment.nativeCloudKey, now });
     const localLoad = core.load, localExpired = core.sessionExpired, localClear = core.clearSession;
-    core.clearSession = () => { localClear(); if (auth.mode === 'offline') startCloudJourney(); };
+    core.clearSession = () => { bindingClaim = null; localClear(); if (auth.mode === 'offline') startCloudJourney(); };
     core.load = async () => {
       if (core.state.setupGrant) return localLoad();
       if (environment.nativeIdentity) {
@@ -318,7 +338,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     core.sessionExpired = () => { if (auth.mode === 'authenticated') void (async () => { try { await finishCloudLogin(); } catch { await expireCloudSession(); } })(); else localExpired(); };
     return client;
   }
-  return { initializeCloudAccount, cloudAuthView, cloudError, cloudPasswordHint, startCloudJourney, cloudRequestCode, cloudVerifyCode, cloudComplete, cloudLogin,
+  return { initializeCloudAccount, cloudAuthView, cloudError, cloudPasswordHint, startCloudJourney, cloudBindDesktop, cloudRequestCode, cloudVerifyCode, cloudComplete, cloudLogin,
     retryCloudApproval, cancelCloudJourney, renewCloudSession, cloudOfflineLogin, cloudDirectory, cloudRename, cloudRemove, cloudConnect, cloudTrust,
     cloudEmailRequest, cloudEmailConfirm, cloudChangePassword, cloudLogout, cloudLogoutOthers, cloudDeleteAccount, cloudEmergencyPassword, cloudPairing, cloudRedeemPairing, cloudConnectTrusted,
     cloudTrustMaterial, cloudImportTrust, cloudApproveOffline };

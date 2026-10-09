@@ -2,13 +2,13 @@
 
 > 只写现在，整页覆盖，不追加日记。路线见 PLAN.md；旧记录见 archive/2026-10-07/。
 
-更新：2026-10-08
+更新：2026-10-09
 
 ## 当前里程碑：M0 重置 / 轻云并行
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
-| Codex · Windows-3 | FIX-7 对话框避让 Windows 标题栏 | `wp/fix-7-dialog-titlebar-inset`：Windows 专用浮层区域从 Electron（桌面程序框架）标题栏下方开始，设置四边 32px / 窄窗口 12px，普通对话框及图片预览至少 16px；共享菜单同步避让，横向按包含块宽度排除滚动条。真实 main.mjs + 隔离账号浅深 / 大窄窗口 / 设置与删除及遗忘前后24张原生截图和边界断言通过；macOS 与网页平台标记的设置边界与改前一致。相关桌面交互 / 动效 / IPC（进程间通信）/ 记忆 / 设置 / 菜单及手机资产回归82/82、FIX-6 遮罩与通知回归、typecheck（类型检查）通过，[证据](../tests/evidence/fix-7/README.md)。完整 CI（持续集成）见本包 PR（拉取请求），待 Claude 审查；未重打安装包，无客户端接口变更。 |
+| Codex · Windows-3 | UP-2 日用桌面云账号配置与旧账号绑定 | `wp/up-2-daily-cloud`：Production（生产）接入正式 issuer（签发者）、`weftmate-desktop` 回环回调、官方 frpc（中继客户端）/公开 CA（证书机构）和自动内容证书；Probe（隔离探测）不变。修复云已配置时旧本地账户名误走云离线登录，以及设置绑定未挂载 / 被桌面导航限制阻断，复用 App（应用）内认证与原 claims/binding，保留原账号会话 / 密码 / 内容。生产只新增桌面客户端，Apple（苹果）/Android（安卓）不变，私有 env（环境文件）备份、发现文档 / 公钥 / 授权 200。真实 Electron（桌面程序框架）+复制版本2密码账号+生产运维合成账号完整绑定 / 对话与健康记忆夹具保留 / 正式证书 / 在线中继 / 公网443标准验证通过；账号与临时宿主清理，云合成账号及DNS（域名解析）残留0。相关认证最终15项、宿主10项、共享功能与资产35项、桌面与设置44项、功能层桌面 / 记忆 / 认证77项（有重叠）及类型 / Windows PowerShell 5.1（命令行脚本环境）隔离配置执行通过，[证据](../tests/evidence/up-2/README.md)。完整 CI（持续集成）见本包 PR（拉取请求）；日用任务 / 程序 / 数据未动，待 Claude 与本人更新主仓并安排重启 / 本人绑定；远程网页回调与长时稳定性另验。 |
 | Codex · Windows-5 | DEP-1 第二轮生产 cloud 升级与 DNS-01 验收完成 | [PR（拉取请求）#104](https://github.com/memoweft/weftmate/pull/104) · `wp/dep-1-cloud-upgrade`：部署前六项 CI（持续集成）全绿；生产已由 `46b4bec` 升到含安全 AliDNS 运维日志的 `dfe56ec`，schema（数据库结构版本）4→6、公开健康/OIDC（开放身份连接协议）/JWKS（签名公钥集合）、Apple/Android 各自完整 PKCE（授权码校验）/DPoP（设备密钥持有证明）登录、隔离宿主配置、Resend 官方测试地址接受、API/relay 443 标准 CA（证书机构）均通过。正式 `weftmate-apple` / `weftmate-android` 文档回调已保留登记；staging（测试环境）成功后一次正式内容证书签发、公网 HTTPS（加密网页连接）与原 SPKI（公钥指纹）匹配验证通过，两次 TXT/RecordId（记录标识）持久化及清理通过、两台权威 NS（域名服务器）无残留；本轮阿里云拒绝事件 0，无需本人修正权限或凭据。新完整私有备份 `dep-1-backup-20261009T012948Z` / 回滚 dry-run（试运行）通过，本轮未回滚；核心失败才整体回滚、证书失败单独报告。原三个账号/身份密钥不变，临时宿主/合成账号/测试待注册账号清理完，16 个既有入口及其他服务差异 0。[升级记录与回滚命令](../services/cloud/deploy/README.md)。本地 DNS 单测 6/6；Windows 入口已知 EPERM（操作权限错误）由 Linux CI / 生产真实入口验证补足；最终 CI 见 PR。日用宿主、网页/桌面实际正式回调、五端真机和长时稳定性未做。 |
 | Codex · Windows-4 | FG-1 真正遗忘、导出与故障提示（返工） | [PR #102](https://github.com/memoweft/weftmate/pull/102) · `wp/fg-1-forget-and-degrade`：按原文／被删ID清除前置AI上下文，无关内容原样保留；Core（记忆核心）只读遗忘预览与实际级联同算法，确认前列出人物／关系／决定及数量。D33桌面、手机网页与手机界面两类确认框暴露原话删除选项，默认不勾；会话遗忘预览含失去批次索引的来源，按预览修订核对。原生400修复、真正来源删除、导出与故障提示保留。Core 37项、宿主／界面48项＋预览失败／真实Core集成相关回归及类型检查通过；真实Electron（桌面程序框架）／DSH（助手运行时）／Core与手机宽度网页按名称和角色验收；[返工截图与证据](../tests/evidence/fg-1/rework/README.md)。Core依赖[PR #91](https://github.com/memoweft/memoweft/pull/91)，Observed bridge（观测桥接）固定最新Core提交；两仓完整CI（持续集成）见PR。不改M2g形成代码 |
 | Codex · Windows | M0-6 现有模型入口、后台路由与系统状态 | [PR（合并请求）#33](https://github.com/memoweft/weftmate/pull/33) 方向调整完成：接入 D:\AI 的 8081 ModelSwitcher（模型切换代理），删除自起模型与参数；98,304 / 单槽 / 12 步与后台排队冒烟通过，M1-1b 完成后真实按钮重启通过；最终 CI（持续集成）见 PR 当前提交 |
@@ -92,6 +92,7 @@ MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌）�
 ## 契约变更
 
 - **UP-3 / Windows-2**：`GET /sessions` 的运行会话可带 `processing:{phase,modelName?,ahead?}`，提供宿主记忆读取 / 实际排队 / 8081 加载 / 模型思考及文字阶段；旧客户端可忽略。见 CLIENT_API 3.3。
+- **UP-2**：CLIENT_API 7.7 补桌面实际客户端 / 回调与旧本地账号绑定说明；复用 7.4 / 7.8 的 claims、binding、App（应用）内认证，无新增路径或请求 / 响应字段。绑定成功保留原本地会话，清除绑定专用云令牌；未登记远程浏览器回调。
 
 - **UI-5 / D34**：CLIENT_API 会话章节新增 PATCH `/sessions/{id}/metadata`、POST `/sessions/{id}/fork`、`/session-groups` CRUD；列表增加 `pinned,unread,groupId,parentSessionId?` 与 `groups`，置顶优先、助手新消息水位自动未读；写入沿用账号隔离 / CSRF（跨站请求伪造防护）与权限。分叉独立工作目录及经验、原生种子谱系、不复制 MemoWeft 来源；已归档迁到设置，旧客户端兼容。
 - **FG-1 / Windows-4**：CLIENT_API 3.9新增遗忘只读预览 GET `/memory/items/{kind}/{itemId}/forget-preview`、`/memory/evidence/{evidenceId}/forget-preview`；3.3新增 GET `/sessions/{sessionId}/forget-preview`，均返回范围／名称／数量／`worldRevision`。对话 DELETE 可另传 `deleteConversationSnippets:false`、`memoryWorldRevision`；D33两类界面确认框默认不勾原话删除，预览失败／修订变化不可确认。既有 `/memory/export`、状态 `memory:{state,inject}` 和受限原生错误字段保留。

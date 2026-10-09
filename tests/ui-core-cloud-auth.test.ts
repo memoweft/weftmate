@@ -57,6 +57,53 @@ async function fixture() {
 }
 const login = async (f: any) => f.client.begin({ email: 'synthetic@example.com', password: randomBytes(24).toString('base64url'), deviceName: 'Synthetic browser' })
 
+test('legacy local binding uses App login and preserves the current owner/session without desktop bootstrap', async () => {
+  const f = await fixture(), writes: any[] = [], notices: string[] = []
+  const account = { ownerId: 'legacy-owner', username: 'legacy-local' }
+  let opened = 0, entered = 0
+  const core: any = { state: { account }, show: () => {}, load: () => {}, clearSession: () => {}, sessionExpired: () => {},
+    acceptSession: () => assert.fail('Binding must keep the original local session'), enterAssistant: async () => { entered++ }, openAccount: () => { opened++ },
+    accessApi: async (path: string, options: any) => { writes.push({ path, options }); return path === '/cloud/claims' ? { claimId: 'legacy-claim' } : { bound: true } } }
+  Object.assign(core, f.context.WeftUiCore.factories.cloudAccount(core, { toast: (message: string) => notices.push(message) }, f.environment))
+  const client = core.initializeCloudAccount(); f.useClient(client); await client.configure()
+  await core.cloudBindDesktop(); core.startCloudJourney('registration'); core.startCloudJourney();
+  await core.cloudLogin({ email: 'synthetic@example.com', password: randomBytes(24).toString('base64url') })
+  assert.deepEqual(writes.map(row => row.path), ['/cloud/claims', '/cloud/binding'])
+  assert.equal(writes[1].options.body.claimId, 'legacy-claim'); assert.ok(writes[1].options.body.accessToken)
+  assert.ok(writes.every(row => row.options.protectedWrite === true))
+  assert.equal(core.state.account, account); assert.equal(entered, 1); assert.equal(opened, 1)
+  assert.equal(core.cloudAuthView().mode, 'offline'); assert.equal(await client.saved(), undefined)
+  assert.equal(await f.credentials('offline-account'), undefined)
+  assert.equal(f.calls.some(row => /auth\/cloud-(desktop|session)$/.test(row.url)), false)
+  assert.ok(notices.includes('已绑定 WeftMate 账号。'))
+})
+
+test('failed legacy binding retains its claim for retry and cancellation does not bootstrap a local owner', async () => {
+  const f = await fixture(); let failed = true; const claims: string[] = []
+  const core: any = { state: { account: { ownerId: 'legacy-owner' } }, show: () => {}, load: () => {}, clearSession: () => {}, sessionExpired: () => {},
+    acceptSession: () => assert.fail('A failed binding cannot replace the local session'), enterAssistant: async () => {}, openAccount: () => {},
+    accessApi: async (path: string, options: any) => { if (path === '/cloud/claims') return { claimId: 'retry-claim' }; claims.push(options.body.claimId); if (failed) throw { code: 'CLOUD_UNAVAILABLE' }; return { bound: true } } }
+  Object.assign(core, f.context.WeftUiCore.factories.cloudAccount(core, { toast: () => {} }, f.environment))
+  const client = core.initializeCloudAccount(); f.useClient(client); await client.configure()
+  await core.cloudBindDesktop(); await core.cloudLogin({ email: 'synthetic@example.com', password: randomBytes(24).toString('base64url') })
+  assert.equal(core.cloudAuthView().mode, 'login'); assert.equal(core.state.account.ownerId, 'legacy-owner')
+  failed = false; await core.cloudLogin({ email: 'synthetic@example.com', password: randomBytes(24).toString('base64url') })
+  assert.deepEqual(claims, ['retry-claim', 'retry-claim'])
+  await core.cloudBindDesktop(); await core.cancelCloudJourney(); assert.equal(core.state.account.ownerId, 'legacy-owner')
+  assert.equal(f.calls.some(row => row.url.endsWith('/auth/cloud-desktop')), false)
+})
+
+test('an explicit legacy username chooses local password login even when a cloud account was remembered', async () => {
+  const f = await fixture(); await f.credentials('offline-account', { sub: 'remembered-cloud-sub' })
+  const localCalls: any[] = []
+  const core: any = { state: {}, show: () => {}, load: () => {}, clearSession: () => {}, sessionExpired: () => {}, acceptSession: () => {}, enterAssistant: async () => {},
+    api: async (path: string, options: any) => { localCalls.push({ path, options }); return {} } }
+  Object.assign(core, f.context.WeftUiCore.factories.cloudAccount(core, {}, f.environment)); core.initializeCloudAccount()
+  await core.cloudOfflineLogin({ username: 'legacy-local', password: randomBytes(24).toString('base64url') })
+  assert.equal(localCalls[0].path, '/login'); assert.equal(localCalls[0].options.body.username, 'legacy-local')
+  assert.equal('cloudAccountId' in localCalls[0].options.body, false)
+})
+
 test('app login produces PKCE S256, nonextractable key and exact DPoP method/URL/token digest without navigation', async () => {
   const f = await fixture(); await login(f)
   const bootstrap = f.calls.find(row => row.url.endsWith('/auth/authorization')).body
