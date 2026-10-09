@@ -998,3 +998,23 @@ App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协�
 升级沿第 8 节 BK-1（本地备份）完整快照；本功能另在首次迁移前保存私有 `personal-access/chat-identity-v1.before.json` 原始接入存储，覆盖应用版本未变的开发升级。原始副本只供停写后的演练 / 人工恢复，不自动读入；其中有原设备凭据校验值，因此不进入可携带备份，备份仍只保存撤销设备凭据后的当前接入存储。迁移提交失败保留旧存储；修复后可重跑。界面回退仍可使用旧旁聊，新逻辑元数据保留。
 
 新版产生数据后不能用旧副本覆盖正在使用的数据目录。需要宿主降级时先停写、保留新版完整快照，再把旧完整快照恢复至独立目录；只运行一份任务。单独的接入存储副本不能代替 DSH、记忆及成果完整备份。已经发生的遗忘 / 撤权必须按原清理水位前向恢复，不从备份自动重新摄取。本步不提供主对话区间归档或清空；D42-A 的全部历史保留政策不变。
+
+### 9.3 跨段历史、日期与搜索（IA-2.2 正式）
+
+能力增加 `chatTimeline:1,chatSearch:1`。路径均以 `/personal/v1` 为前缀，读取沿用 `sessions:read`，只读当前账户自己的逻辑对话。主对话尚无段时正常返回空页；不创建执行段，不执行模型。ui-core（共用功能层）的 `readChatEvents/readChatChanges/readChatDates/locateChatDate/searchChat` 提供同一路径。
+
+| GET 路径 | 参数 | 响应 |
+|---|---|---|
+| `/chats/{chatId}/events` | `before/after/around` 互斥；无方向为尾页；`around` 为 `eventId`；`limit` 默认50，1–200 | `{items,olderCursor,newerCursor,hasOlder,hasNewer,syncCursor,deletedAnchor,...}`；正序，锚点附近均衡窗口；未知或已删除锚点回尾页并给 `deletedAnchor:true` |
+| `/chats/{chatId}/changes` | 必填 `cursor`，可选 `limit` 同上 | `{upserts,removals,nextCursor,hasMore,...}`；独立增量，空页仍返回水位；旧段迟到消息同样交付 |
+| `/chats/{chatId}/dates` | `from,to` 必填，本地 `YYYY-MM-DD`，间隔≤31天 | `{days:[{date,count,firstEventId,lastEventId}],...}`；计数为公开条目数，未出现的日期不伪造条目 |
+| `/chats/{chatId}/locate` | 必填 `date`，本地 `YYYY-MM-DD` | `{date,eventId,previousDate,nextDate,...}`；当天无记录为 `eventId:null` |
+| `/chats/{chatId}/search` | `q` 非空≤256字符；可选 `from,to,role=user\|assistant,hasArtifact=true\|false,cursor,limit` | `{hits:[{eventId,sourceRef,at,snippet,highlights:[{start,end}]}],nextCursor,hasMore,...}`；中文字面子串、不区分大小写；范围为可见消息与结果摘要，工具输出和隐藏推理不索引 |
+
+共同字段为 `{contentRevision,chatRevision,unread,indexState,timeZone}`。`indexState=building|ready|failed`；首次返回可读尾页后逐页整理早期索引，整理中搜索/日期只是部分结果，不能解释为没有历史。失败可重新打开重建；本步索引只在宿主内存中存必要检索文本与原文定位，宿主重启后渐进重建，不持久复制原生日志。日期使用账户用量设置中的时区，未设置沿宿主时区；修改时区重新分日，事件身份和顺序不变。`hasArtifact` 检查该公开消息上的附件/成果引用，不推测另一条工具输出属于哪条回复。
+
+`items` 为 `{eventId,chatId,orderKey,revision,type,at,sourceRef,data}`。原生 `sourceRef={kind:"native",hostId,sessionId,seq}`，正文通过原历史公开投影读取；`eventId` 从原身份确定，索引重建不变。`orderKey` 按宿主段序及原生序号分配，与设备时钟无关；旧段迟到信息保留原段顺序。客户端遵从服务端顺序，不将 `orderKey` 当同步水位。展开、高度、焦点、选择以 `eventId` 保存；上翻后保留首个可见 ID 与像素偏移，不全量挂载历史。工具详情继续原 `sessionId/seq` 接口。
+
+游标绑定账户、对话、索引代次、用途及搜索过滤；不透明且经宿主签名，客户端不能解码、拼接、加一或混用。历史页的 `syncCursor` 不覆盖已建立的增量水位；增量只续传 `nextCursor`。逐步索引早期内容也可能在增量出现，以 `eventId` 去重即可。搜索游标保持过滤/时区，新增匹配可在重新搜索时出现。重启、内容代次变化或不合法游标返回409 `CURSOR_RESET_REQUIRED`，客户端清理旧缓存再取尾页或保存的锚点。
+
+`removals=[{eventId,revision,reason:"deleted"|"forgotten"}]` 不带正文；`removeEvents` 为 IA-2b 的持久原文清理完成后通知接缝，跨重启清理由 `contentRevision` 提升触发全缓存失效。本步未上线 D33 多段清理或接力。D42-A 保留全部原始历史，不增加区间归档或清空。固定 DSH 的原生冷 `inspect` 仍物化整个日志，测量脚本分别记录逻辑页与冷进程读取；不能把逻辑页的有界返回声称为原生磁盘读取已经有界。范围读取及最终性能闭环交 IA-2b 的 2.6。
