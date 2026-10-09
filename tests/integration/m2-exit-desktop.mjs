@@ -1,6 +1,6 @@
 /** EX-2 repeatable M2 exit. Real Electron/DSH/Core, synthetic account per baseline.
  * Default: MiMo 8 steps + LAN 8 steps + original LAN memory-01..04 + speed each.
- * --model mimo|lan runs one baseline; --four runs only original LAN four.
+ * --model mimo|lan runs one baseline; --four runs original four (LAN by default).
  * --judge-model same|mimo enables the existing optional semantic evaluator.
  * --reminders runs the two unchanged scheduling requests three times each.
  * --recall-trace retains synthetic Core snapshots and the exact injected context.
@@ -339,11 +339,12 @@ async function baseline(modelName, fourOnly = false) {
       return;
     }
     if (fourOnly) {
-      await configure('mimo');
+      const alternate = modelName === 'mimo' ? 'lan' : 'mimo';
+      await configure(alternate);
       writeFileSync(join(out, 'credentials.json'), JSON.stringify({ host: new URL(page.url()).origin, username, password, deviceName: 'EX-2 four', provisioned: true }));
       const scenarioList = (await loadScenarios('eval/scenarios/memory-*.yaml')).filter(s => /^memory-0[1-4]-/.test(s.id));
       report.fourProgress = [];
-      const result = await runEvaluation({ host: new URL(page.url()).origin, out, model: 'lan', switchModel: 'mimo', judgeModel, scenarioList,
+      const result = await runEvaluation({ host: new URL(page.url()).origin, out, model: modelName, switchModel: alternate, judgeModel, scenarioList,
         onScenarioResult: async result => { report.fourProgress.push(result); persist(); console.log(`${result.id}: ${result.status} ${result.durationMs}ms`); } });
       report.four = fourScenarioSummary(result.results); persist(); return;
     }
@@ -626,7 +627,7 @@ function scan(directory) {
   return { scanned: files.length, matches: matches.length };
 }
 try {
-  if (process.argv.includes('--four')) { await acquireLan(); await baseline('lan', true); }
+  if (process.argv.includes('--four')) { await acquireLan(); await baseline(provider ?? 'lan', true); }
   else {
     if (!provider || provider === 'mimo') await baseline('mimo');
     if (!provider || provider === 'lan') { await acquireLan(); await baseline('lan'); }
