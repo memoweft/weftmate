@@ -1,0 +1,49 @@
+{
+  "devicesAndConfigurations" : [
+    {
+      "device" : {
+        "architecture" : "x86_64",
+        "deviceId" : "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName" : "iPhone 17",
+        "modelName" : "iPhone 17",
+        "osBuildNumber" : "23D8133",
+        "osVersion" : "26.3.1",
+        "platform" : "iOS Simulator"
+      },
+      "expectedFailures" : 0,
+      "failedTests" : 1,
+      "passedTests" : 0,
+      "skippedTests" : 0,
+      "testPlanConfiguration" : {
+        "configurationId" : "1",
+        "configurationName" : "Test Scheme Action"
+      }
+    }
+  ],
+  "environmentDescription" : "WeftMatePhone · Built with macOS 26.6.2",
+  "expectedFailures" : 0,
+  "failedTests" : 1,
+  "finishTime" : 1791538556.213,
+  "passedTests" : 0,
+  "result" : "Failed",
+  "skippedTests" : 0,
+  "startTime" : 1791538334.063,
+  "statistics" : [
+
+  ],
+  "testFailures" : [
+    {
+      "failureText" : "XCTAssertTrue failed - Missing required native control",
+      "targetName" : "WeftMatePhoneUITests",
+      "testIdentifier" : 1,
+      "testIdentifierString" : "A6SettingsUITests/testLightSettingsReachabilitySearchDeepLinkAndDeviceOperation()",
+      "testIdentifierURL" : "test://com.apple.xcode/WeftMate/WeftMatePhoneUITests/A6SettingsUITests/testLightSettingsReachabilitySearchDeepLinkAndDeviceOperation",
+      "testName" : "testLightSettingsReachabilitySearchDeepLinkAndDeviceOperation()"
+    }
+  ],
+  "title" : "Test - WeftMatePhone",
+  "topInsights" : [
+
+  ],
+  "totalTestCount" : 1
+}

@@ -1,0 +1,11 @@
+{"id":"18168-1","at":"2026-10-09T09:49:13.091Z","elapsedMs":0,"kind":"lease","origin":"http://127.0.0.1:49941","phase":"start"}
+{"id":"18168-1","at":"2026-10-09T09:49:13.103Z","elapsedMs":12,"kind":"lease","origin":"http://127.0.0.1:49941","phase":"headers","status":200}
+{"id":"18168-1","at":"2026-10-09T09:49:13.104Z","elapsedMs":13,"kind":"lease","origin":"http://127.0.0.1:49941","phase":"first-chunk"}
+{"id":"18168-2","at":"2026-10-09T09:49:13.171Z","elapsedMs":0,"kind":"model","origin":"https://api.xiaomimimo.com","phase":"start","requestChars":5661,"requestedModel":"mimo-v2.6-flash","stream":true}
+{"id":"18168-2","at":"2026-10-09T09:49:14.683Z","elapsedMs":1512,"kind":"model","origin":"https://api.xiaomimimo.com","phase":"headers","status":200}
+{"id":"18168-2","at":"2026-10-09T09:49:14.684Z","elapsedMs":1513,"kind":"model","origin":"https://api.xiaomimimo.com","phase":"first-chunk"}
+{"id":"18168-2","at":"2026-10-09T09:49:14.780Z","elapsedMs":1609,"kind":"model","origin":"https://api.xiaomimimo.com","phase":"first-reasoning"}
+{"id":"18168-2","at":"2026-10-09T09:49:19.402Z","elapsedMs":6231,"kind":"model","origin":"https://api.xiaomimimo.com","phase":"first-content"}
+{"id":"18168-2","at":"2026-10-09T09:49:20.463Z","elapsedMs":7293,"kind":"model","origin":"https://api.xiaomimimo.com","phase":"progress","chunks":100,"bytes":30150}
+{"id":"18168-2","at":"2026-10-09T09:49:23.368Z","elapsedMs":10197,"kind":"model","origin":"https://api.xiaomimimo.com","phase":"end","chunks":149,"bytes":44595,"reasoningChars":1055,"contentChars":312,"usage":{"completion_tokens":461,"prompt_tokens":1741,"total_tokens":2202,"completion_tokens_details":{"reasoning_tokens":271},"prompt_tokens_details":{"cached_tokens":0}}}
+{"id":"18168-1","at":"2026-10-09T09:49:23.382Z","elapsedMs":10291,"kind":"lease","origin":"http://127.0.0.1:49941","phase":"cancel","chunks":1,"bytes":8}

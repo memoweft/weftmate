@@ -1,0 +1,14 @@
+{
+  "platform": "mac",
+  "scene": "conversation",
+  "theme": "dark",
+  "commit": "84e22644872acf3122e637094fd0df2a49fb132c",
+  "generatedAt": "2026-10-09T09:36:34.408Z",
+  "synthetic": true,
+  "source": "实际 Mac 原生 App 自身窗口；真实隔离 cloud main / 宿主，合成 DSH 日志与模型",
+  "qaObservation": {
+    "status": "blocked",
+    "actualScene": "login",
+    "note": "Capture script filename does not prove the requested conversation/settings scene was reached."
+  }
+}

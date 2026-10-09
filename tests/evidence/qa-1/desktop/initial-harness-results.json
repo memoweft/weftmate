@@ -1,0 +1,56 @@
+{
+  "startedAt": "2026-10-09T09:20:06.513Z",
+  "realMain": true,
+  "realDsh": true,
+  "syntheticModel": true,
+  "checks": [
+    {
+      "name": "light-settings",
+      "status": "failed",
+      "durationMs": 12051,
+      "error": "locator.click: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('menuitem', { name: '设置', exact: true })\u001b[22m\n",
+      "screenshot": "desktop/failure-0.png"
+    },
+    {
+      "name": "light-narrow-window",
+      "status": "passed",
+      "durationMs": 51,
+      "screenshot": "desktop/light-narrow.png"
+    },
+    {
+      "name": "dark-settings",
+      "status": "failed",
+      "durationMs": 12023,
+      "error": "locator.click: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('menuitem', { name: '设置', exact: true })\u001b[22m\n",
+      "screenshot": "desktop/failure-2.png"
+    },
+    {
+      "name": "dark-narrow-window",
+      "status": "passed",
+      "durationMs": 45,
+      "screenshot": "desktop/dark-narrow.png"
+    },
+    {
+      "name": "stability-cycle-1",
+      "status": "failed",
+      "durationMs": 12106,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-4.png"
+    },
+    {
+      "name": "stability-cycle-2",
+      "status": "failed",
+      "durationMs": 12066,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-5.png"
+    },
+    {
+      "name": "stability-cycle-3",
+      "status": "failed",
+      "durationMs": 12065,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-6.png"
+    }
+  ],
+  "errors": []
+}

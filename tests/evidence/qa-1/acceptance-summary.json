@@ -1,0 +1,80 @@
+{
+  "overall": "not-ready-for-user-trial",
+  "productCodeChanged": false,
+  "startRevision": "a313ea86605656b0af12706e5bccc2bfc131f581",
+  "finalRevision": "c3d07f8",
+  "mf1MergedAndRetested": true,
+  "finalCore": "cb10a16a7cfe112f5bee2b0e19ad49586b161b79",
+  "m1": {
+    "mimoPassed": 5,
+    "mimoTotal": 6,
+    "lanPassed": 3,
+    "lanTested": 3,
+    "fullExitPassed": false,
+    "crossPlatformApproval": "blocked"
+  },
+  "m2": {
+    "eightStepsPassed": 8,
+    "eightStepsTotal": 8,
+    "immediateBeforeMf1": {
+      "passed": 1,
+      "total": 3
+    },
+    "immediateAfterMf1": {
+      "behaviorSemanticPassed": 3,
+      "total": 3,
+      "legacyFormalObjectChecksPassed": 2
+    },
+    "fullExitRetested": false
+  },
+  "platforms": {
+    "windows": {
+      "status": "partial-fail",
+      "evidence": [
+        "desktop/results.json",
+        "models/report.json",
+        "menus/desktop-verification.json",
+        "legacy/checks.json",
+        "cloud/verification.json"
+      ],
+      "failure": "fresh cloud owner execution; stop button deadline misses"
+    },
+    "android": {
+      "status": "fail",
+      "evidence": [
+        "android-cloud/android-verification.json",
+        "android-task-recheck/phone-task.json"
+      ],
+      "failure": "phone task does not execute; task status 404; pending send remains"
+    },
+    "iphone": {
+      "status": "partial-fail",
+      "evidence": [
+        "apple/iphone/validation-a9-after-light.json",
+        "apple/iphone/validation-a9-after-dark.json",
+        "apple/iphone-settings-summary.json"
+      ],
+      "failure": "all-settings traversal did not reach About"
+    },
+    "mac": {
+      "status": "blocked",
+      "evidence": [
+        "apple/acceptance.json"
+      ],
+      "failure": "local fixture stays on login; AX permission not available; no new permission requested"
+    },
+    "watch": {
+      "status": "partial",
+      "evidence": [
+        "apple/watch/approval.png",
+        "apple/acceptance.json"
+      ],
+      "notVerified": "live phone bridge, approval receipt, haptics, push"
+    }
+  },
+  "fullLocalRelayVerified": false,
+  "stability": "stability-summary.json",
+  "usage": "usage.json",
+  "issueList": "issues.md",
+  "timingPolicy": "Per-action time retained where measured. Legacy uninstrumented actions explicitly have no per-action timing; no timing inferred from screenshots."
+}
