@@ -155,6 +155,19 @@ private actor OfflineTransport: HTTPTransport {
         do { try await request.value; Issue.record("Expected rejection") } catch {}
         #expect(engine.state.turns.isEmpty); #expect(store.count == 0)
     }
+    @Test func watchBackgroundRefreshCannotRetainAnApprovalOnFailure() throws {
+        let old = WatchTimelineSnapshot(accountKey: "account", sessionID: "online", taskID: "task", progress: "等待批准",
+            running: true, assistantSummary: "", approvals: [.init(id: "approval", summary: "合成操作")], completedTaskIDs: [])
+        for failure in [APIFailure.transport(.unavailable), .transport(.timeout), .server(status: 503, code: "HOST_UNAVAILABLE")] {
+            var tracker = WatchFeedbackTracker(); _ = tracker.apply(old)
+            let next = try #require(WatchTimelineProjection.connectionFailure(failure, accountKey: "account"))
+            let restored = try JSONDecoder().decode(WatchTimelineSnapshot.self, from: JSONEncoder().encode(next))
+            #expect(restored.progress == "电脑离线" && restored.approvals.isEmpty && !restored.running)
+            #expect(!tracker.apply(restored).approval)
+        }
+        #expect(WatchTimelineProjection.connectionFailure(APIFailure.server(status: 401, code: "UNAUTHORIZED"), accountKey: "account") == nil)
+        #expect(WatchTimelineProjection.connectionFailure(APIFailure.identityMismatch, accountKey: "account") == nil)
+    }
     @Test func longUnicodeReplyFitsHostTurnContract() async throws {
         let transport = OfflineTransport(reply: String(repeating: "👩‍👩‍👧‍👧", count: 2000))
         let (_, engine, dir, _) = try fixture(transport: transport); defer { try? FileManager.default.removeItem(at: dir) }

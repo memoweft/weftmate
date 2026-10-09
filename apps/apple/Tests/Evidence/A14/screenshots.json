@@ -3,25 +3,25 @@
   "images": [
     {
       "file": "iphone-light/a14-iphone-forgotten.png",
-      "sha256": "dbe8e59800447f86f8ac28bb6bf8b3c60a8036bc9d631d075797b472306f9afd",
+      "sha256": "106804be1e2fe87cdd26efa601d005482c0c4f23edb8b1c0fe7a267191f88c87",
       "width": 1206,
       "height": 2622
     },
     {
       "file": "iphone-light/a14-iphone-memory.png",
-      "sha256": "a6d1ad93535cb93287cfa8b3d63424f64e173d7da8fa0e3f217759023b6cb0ff",
+      "sha256": "dea882563c0505ff97e30683dc1c8bf864c2ea8d4076b3080599a920dc1cd28b",
       "width": 1206,
       "height": 2622
     },
     {
       "file": "iphone-light/a14-iphone-preference.png",
-      "sha256": "f5eb56ae14eda93b9b9ec22ccfd8261f85b7d9faa81956aea5f996afa647b904",
+      "sha256": "16634517fed6e948dbc2ed820679c4855a58bad80942bb66e120b22ad5e881aa",
       "width": 1206,
       "height": 2622
     },
     {
       "file": "iphone-light/a14-iphone-synced.png",
-      "sha256": "657d67f85e06a5fbf3f0ce5ee052e7590d645d2266da44c715755cfd1ec98ad8",
+      "sha256": "e1b429bd8c3e285c8298a5c1510049ad59d02417a9e864d304aad0bf1f34bb9d",
       "width": 1206,
       "height": 2622
     },

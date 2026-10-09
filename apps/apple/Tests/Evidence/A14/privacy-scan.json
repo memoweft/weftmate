@@ -1,6 +1,6 @@
 {
   "passed": true,
-  "changedFiles": 52,
+  "changedFiles": 53,
   "addedTextChecks": [
     "privateHome",
     "privateKey",
