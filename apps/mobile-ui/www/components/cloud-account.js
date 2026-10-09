@@ -105,8 +105,9 @@
     const redeem = core.cloudRedeemPairing; core.cloudRedeemPairing = async input => { const result = await redeem(input); core.state.cloudAuth.mode = 'authenticated'; return result; };
     globalThis.WeftMobileCloud.core = core;
     globalThis.WeftOfflineView?.mount({ core, nativeCall: native ? call : null,
+      openConversation: () => page('chat'),
       identity: async () => native ? call('offline.identity') : core.cloudOfflineIdentity(),
-      host: (path, body) => core.accessApi(path, { method: 'POST', body: JSON.stringify(body) }) });
+      host: (path, body) => core.accessApi(path, { method: 'POST', body, protectedWrite: true }) });
     await core.load();
   }
   function route(name) {

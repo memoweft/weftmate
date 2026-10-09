@@ -3,7 +3,18 @@
   const element = (tag, text, className = '') => Object.assign(document.createElement(tag), { textContent: text, className });
   const explanation = '电脑离线，只能聊天和用记忆，不能操作电脑';
   globalThis.WeftOfflineView = {
-    mount({ core, nativeCall, identity: readIdentity, host, desktop = false }) {
+    syncFailure(cause) {
+      const code = cause?.code || cause?.message;
+      if (['UNAUTHORIZED', 'DEVICE_NOT_TRUSTED', 'OFFLINE_RESET_REQUIRED'].includes(code) || cause?.status === 401)
+        return { unreachable: false, clear: true, message: '设备授权已失效，请重新登录并连接电脑。' };
+      if (['NETWORK', 'HOST_UNAVAILABLE', 'HOST_OFFLINE'].includes(code))
+        return { unreachable: true, message: '电脑暂时无法连接，可打开离线对话。' };
+      return { unreachable: false, message: ({ OFFLINE_MODEL_REQUIRED: '请先在电脑配置一个云模型。',
+        OFFLINE_CLOUD_REQUIRED: '请先绑定云账户并批准这台设备。',
+        FORBIDDEN: '离线副本同步没有权限，请重新连接电脑。',
+        INVALID_REQUEST: '离线副本同步未完成，请重新连接电脑。' })[code] || '离线副本同步未完成，请稍后重试。' };
+    },
+    mount({ core, nativeCall, identity: readIdentity, host, desktop = false, openConversation = () => {} }) {
       if (desktop) return;
       let engine, scope, identity, polling = false, offline = false, selected = null, error = '', showHistory = false;
       const section = element('section', '', 'offline-chat'); section.hidden = true; section.setAttribute('aria-label', '离线对话');
@@ -17,12 +28,19 @@
       const status = element('p'); status.setAttribute('role', 'status');
       const send = element('button', '发送'); send.type = 'submit'; form.append(label, status, send); section.append(header, messages, form);
       const launcher = element('button', '离线对话', 'offline-launcher'); launcher.hidden = true; launcher.type = 'button';
-      document.body.append(section, launcher);
+      const notice = element('p', '', 'offline-notice'); notice.hidden = true; notice.setAttribute('role', 'status');
+      // The conversation's scroll area owns this content. It is never a fixed
+      // overlay above approvals, settings, project dialogs or device actions.
+      (document.getElementById?.('chat-scroll') || document.body).append(section);
+      document.body.append(launcher, notice);
       function paint() {
         const view = engine?.view();
-        launcher.hidden = !view?.ready && !view?.conversations.length;
+        launcher.hidden = !offline && !view?.conversations.length;
         launcher.textContent = offline ? '离线模式' : view?.turns.length ? '离线对话 · 待同步' : '离线对话 · 已同步';
-        section.hidden = !(view && (offline || showHistory));
+        // Polling updates availability, never navigation. Only the user's launcher
+        // action opens this page, so pending approvals and settings stay usable.
+        section.hidden = !(view && showHistory);
+        notice.textContent = error; notice.hidden = !error || showHistory;
         title.textContent = offline ? '离线模式' : '离线对话';
         mode.textContent = offline ? explanation : view?.turns.length ? '电脑已上线，正在同步离线对话' : '已同步';
         label.firstChild.textContent = offline ? explanation : '这段对话已同步，可返回电脑对话继续';
@@ -54,6 +72,7 @@
         if (scope === next) { Object.assign(identity, current); return; }
         if (engine) { await engine.clear(); engine.close(); }
         scope = next; identity = current;
+        offline = false; showHistory = false; error = '';
         const vault = nativeCall ? WeftOffline.nativeVault(nativeCall) : await WeftOffline.browserVault(scope);
         engine = await WeftOffline.create({ vault, identity, host, control: hostId => core.cloudOfflineStatus(hostId), notify: paint });
         selected = engine.view().conversations.at(-1)?.id || null;
@@ -69,13 +88,15 @@
           await start(current);
           try { if (await engine.sync()) { offline = false; error = ''; } }
           catch (cause) {
-            if (['UNAUTHORIZED', 'DEVICE_NOT_TRUSTED'].includes(cause.code || cause.message)) { await engine.clear(); return; }
-            if (engine.view().ready) {
-              try { await engine.check(); offline = true; error = ''; }
-              catch { offline = true; error = '暂时无法核对设备授权，请联网后重试。'; }
-            } else if (['OFFLINE_MODEL_REQUIRED', 'OFFLINE_CLOUD_REQUIRED'].includes(cause.code || cause.message)) {
-              error = (cause.code || cause.message) === 'OFFLINE_MODEL_REQUIRED' ? '请先在电脑配置一个云模型。' : '请先绑定云账户并批准这台设备。';
-            } else { offline = true; error = '尚未同步离线副本，请在电脑在线时连接一次。'; }
+            const failure = globalThis.WeftOfflineView.syncFailure(cause);
+            offline = failure.unreachable; error = failure.message;
+            if (failure.clear) { showHistory = false; await engine.clear(); }
+            else if (offline && engine.view().ready) {
+              try { await engine.check(); }
+              catch (checkError) { const authorization = globalThis.WeftOfflineView.syncFailure(checkError);
+                if (authorization.clear) { offline = false; showHistory = false; }
+                error = '暂时无法核对设备授权，请联网后重试。'; }
+            } else if (offline) error = '尚未同步离线副本，请在电脑在线时连接一次。';
           }
           paint();
         } finally { polling = false; }
@@ -92,14 +113,14 @@
       input.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); form.requestSubmit(); } });
       selector.addEventListener('change', () => { selected = selector.value || null; paint(); });
       fresh.addEventListener('click', () => { selected = null; paint(); input.focus(); });
-      close.addEventListener('click', () => { showHistory = false; section.hidden = true; });
-      launcher.addEventListener('click', () => { showHistory = true; paint(); input.focus(); });
+      close.addEventListener('click', () => { showHistory = false; paint(); });
+      launcher.addEventListener('click', () => { openConversation(); showHistory = true; paint(); section.scrollIntoView?.({ block: 'start' }); input.focus(); });
       document.addEventListener('visibilitychange', () => void tick());
       const timer = setInterval(() => void tick().catch(() => {}), 15000);
       void tick().catch(() => {});
       const originalLogout = core.cloudLogout;
-      if (originalLogout) core.cloudLogout = async (...args) => { await engine?.clear(); if (!nativeCall) localStorage.removeItem('weftmate-offline-identity'); return originalLogout(...args); };
-      return { tick, close: () => { clearInterval(timer); engine?.close(); section.remove(); launcher.remove(); } };
+      if (originalLogout) core.cloudLogout = async (...args) => { showHistory = false; offline = false; error = ''; await engine?.clear(); paint(); if (!nativeCall) localStorage.removeItem('weftmate-offline-identity'); return originalLogout(...args); };
+      return { tick, close: () => { clearInterval(timer); engine?.close(); section.remove(); launcher.remove(); notice.remove(); } };
     },
   };
 })();
