@@ -55,30 +55,32 @@ struct EditableSessionRow: View {
     @FocusState private var editing: Bool
     @State private var hovering = false
     var body: some View {
-        HStack {
+        Group {
             if app.renamingSessionID == conversation.id {
-                TextField("对话名称", text: $app.sessionTitleDraft)
-                    .focused($editing).onSubmit { Task { await app.saveSessionTitle(conversation) } }
-                    .accessibilityIdentifier("sessionRename." + conversation.id)
-                Button("保存") { Task { await app.saveSessionTitle(conversation) } }.disabled(app.lifecycleBusy)
-                Button("取消") { app.renamingSessionID = nil }
-                    #if os(macOS)
-                    .keyboardShortcut(.cancelAction)
-                    #endif
+                HStack {
+                    TextField("对话名称", text: $app.sessionTitleDraft)
+                        .focused($editing).onSubmit { Task { await app.saveSessionTitle(conversation) } }
+                        .accessibilityIdentifier("sessionRename." + conversation.id)
+                    Button("保存") { Task { await app.saveSessionTitle(conversation) } }.disabled(app.lifecycleBusy)
+                    Button("取消") { app.renamingSessionID = nil }
+                        #if os(macOS)
+                        .keyboardShortcut(.cancelAction)
+                        #endif
+                }.onAppear { editing = true }
             } else {
-                ConversationRow(conversation: conversation, selected: selected)
-                Spacer(minLength: AppleTokens.Space.p4)
-                #if os(macOS)
-                Menu { SessionActions(app: app, conversation: conversation) } label: { WeftIcon("more", size: 16) }
-                    .menuStyle(.borderlessButton).fixedSize().opacity(hovering ? 1 : 0)
-                    .accessibilityLabel("对话操作：" + conversation.title)
-                #endif
+                HStack {
+                    ConversationRow(conversation: conversation, selected: selected)
+                    Spacer(minLength: AppleTokens.Space.p4)
+                    #if os(macOS)
+                    Menu { SessionActions(app: app, conversation: conversation) } label: { WeftIcon("more", size: 16) }
+                        .menuStyle(.borderlessButton).fixedSize().opacity(hovering ? 1 : 0)
+                        .accessibilityLabel("对话操作：" + conversation.title)
+                    #endif
+                }
+                .onHover { hovering = $0 }
+                .contextMenu { SessionActions(app: app, conversation: conversation) }
             }
         }
-        .onHover { hovering = $0 }
-        .onChange(of: app.renamingSessionID) { _, id in if id == conversation.id { editing = true } }
-        .contextMenu { SessionActions(app: app, conversation: conversation) }
-        .accessibilityIdentifier("sessionRow." + conversation.id)
     }
 }
 struct ForgetPreviewList: View {
