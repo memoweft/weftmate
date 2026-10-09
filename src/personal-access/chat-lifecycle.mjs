@@ -26,7 +26,7 @@ export function createChatLifecycle(context) {
         worldRevision, itemCount: items.size, evidenceCount: evidenceIds.size, evidenceIds: [...evidenceIds], items: [...items.values()] };
     },
     async write(ownerId, chatId, action, body, authorize) {
-      const extra = action === 'metadata' ? ['title','pinned','unread','groupId','projectId']
+      const extra = action === 'metadata' ? ['title','pinned','unread','groupId','projectId','memoryMode','recallEnabled','autoDeleteDays']
         : action === 'delete' ? ['forgetMemories','deleteConversationSnippets','memoryWorldRevision','expectedContentRevision'] : [];
       exactKeys(body, ['requestId','expectedRevision',...extra], ['requestId','expectedRevision']);
       if (!REQUEST_ID.test(body.requestId ?? '') || !Number.isSafeInteger(body.expectedRevision) || body.expectedRevision < 1 ||

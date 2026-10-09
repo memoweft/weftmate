@@ -45,6 +45,7 @@ import { createUsageStore } from './usage.mjs';
 import { createScheduleOperations } from './schedules.mjs';
 import { createOfflineService } from '../personal-offline/index.mjs';
 import { reconcileChatIdentity, chatForSession } from './chat-identity.mjs';
+import { createTemporaryChats } from './temporary-chats.mjs';
 import { createChatOperations } from './chats.mjs';
 import { createChatTimeline } from './chat-timeline.mjs';
 import { eraseChatCopies } from './chat-erasure.mjs';
@@ -563,7 +564,10 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
 
   const scheduleOperations = createScheduleOperations(context);
   const offline = await createOfflineService(context);
+  const temporaryChats = createTemporaryChats(context);
   const service = {
+    memoryTurnPolicy: temporaryChats.policy,
+    expireTemporaryChats: temporaryChats.sweep,
     async cleanupMemoryCopies(ownerId, { sourceTexts = [], deleteConversationSnippets = false }) {
       await serial(() => mutate(ownerId, next => { next.memoryCleanupPending = true; }));
       await mainChat.drain(ownerId);
@@ -638,6 +642,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         }
       };
       await restoreSchedulesWithRetry();
+      temporaryChats.start();
       hostCloudIdentity?.start();
       hostRelay?.start(origin);
       for (const [ownerId, account] of Object.entries(rootState.accounts)) {
@@ -751,6 +756,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         }
       }
       closePromise = (async () => {
+        await temporaryChats.close();
         await sideChats.close();
         await chatTimeline.close();
         await offline.close();

@@ -1,3 +1,4 @@
+import { hasPrivateContent, memorySettings, validateMemorySettings } from './temporary-chats.mjs';
 import { randomUUID } from 'node:crypto';
 import { protectMainSession } from './chat-identity.mjs';
 import { failure, plainObject, validId } from './common.mjs';
@@ -17,14 +18,24 @@ export function createSessionMetadata(context) {
   return {
     async metadata(ownerId, sessionId, patch) {
       protectMainSession(context.accountState(ownerId), sessionId);
-      if (!plainObject(patch) || !Object.keys(patch).length || Object.keys(patch).some(key => !['pinned', 'unread', 'title', 'groupId', 'projectId'].includes(key)) ||
+      if (!plainObject(patch) || !Object.keys(patch).length || Object.keys(patch).some(key => !['pinned', 'unread', 'title', 'groupId', 'projectId', 'memoryMode', 'recallEnabled', 'autoDeleteDays'].includes(key)) ||
           ['pinned', 'unread'].some(key => patch[key] !== undefined && typeof patch[key] !== 'boolean') ||
           patch.groupId !== undefined && patch.groupId !== null && !validId(patch.groupId) ||
           patch.projectId !== undefined && patch.projectId !== null && !validId(patch.projectId) ||
           patch.projectId && patch.groupId) throw failure('INVALID_REQUEST');
+      validateMemorySettings(patch);
       if (patch.title !== undefined) patch = { ...patch, title: name(patch.title) };
       return context.serial(async () => {
         const session = requireSession(ownerId, sessionId);
+        if (patch.memoryMode !== undefined || patch.recallEnabled !== undefined || patch.autoDeleteDays !== undefined) {
+          if (!['personal-remote', 'shared-chat'].includes(session.origin)) throw failure('SESSION_READ_ONLY', 409);
+          if (patch.memoryMode === 'off') patch = { ...patch, hasTemporaryContent: true };
+          if (patch.autoDeleteDays !== undefined || patch.memoryMode === 'off' && session.memoryMode !== 'off') {
+            const days = patch.autoDeleteDays === undefined ? (session.autoDeleteDays === undefined ? 30 : session.autoDeleteDays) : patch.autoDeleteDays;
+            patch = { ...patch, autoDeleteDays: days, expiresAt: days === null ? null : new Date(context.timestamp() + days * 86400000).toISOString() };
+          }
+          if (patch.memoryMode === 'on') patch = { ...patch, temporary: false, expiresAt: null };
+        }
         if (patch.projectId !== undefined || patch.groupId && session.projectId) {
           if (!context.hostOwner(ownerId) || session.origin !== 'personal-remote') throw failure('SESSION_READ_ONLY', 409);
           const project = patch.projectId ? context.accountState(ownerId).projects?.[patch.projectId] : null;
@@ -38,7 +49,8 @@ export function createSessionMetadata(context) {
               : '已移出项目。从下一回合使用本对话的独立工作目录；项目文件仍保留。' };
         }
         if (patch.groupId && !Object.hasOwn(context.accountState(ownerId).sessionGroups ?? {}, patch.groupId)) throw failure('NOT_FOUND', 404);
-        if (patch.title !== undefined) {
+        validateMemorySettings(patch);
+      if (patch.title !== undefined) {
           if (!context.backend.renameSession) throw failure('BACKEND_UNAVAILABLE', 503);
           const accepted = await context.callBackend(() => context.backend.renameSession({ ownerId, sessionId, title: patch.title }));
           patch = { ...patch, title: accepted.title };
@@ -79,6 +91,7 @@ export function createSessionMetadata(context) {
       protectMainSession(context.accountState(ownerId), sessionId);
       return context.serial(async () => {
         const source = requireSession(ownerId, sessionId);
+        if (hasPrivateContent(source)) throw failure('TEMPORARY_CONTEXT_CONFIRMATION_REQUIRED', 409);
         if (!context.backend.forkSession) throw failure('BACKEND_UNAVAILABLE', 503);
         const described = await context.callBackend(() => context.backend.describeSession?.(sessionId, ownerId));
         if (described?.running || Object.values(context.accountState(ownerId).commands ?? {}).some(command => command.sessionId === sessionId &&
@@ -99,7 +112,7 @@ export function createSessionMetadata(context) {
       const history = await context.callBackend(() => context.backend.readEvents({ ownerId, sessionId, limit: 200 }));
       const latestMessageSeq = Math.max(-1, ...(history.events ?? []).filter(event => event.type === 'assistant.message').map(event => event.seq));
       const activityTimes = [metadata.attachedAt, ...(history.events ?? []).map(event => event.at)].map(value => Date.parse(value)).filter(Number.isFinite);
-      return { pinned: metadata.pinned === true, unread: metadata.unread === true || latestMessageSeq > (metadata.readMessageSeq ?? -1),
+      return { ...memorySettings(metadata), pinned: metadata.pinned === true, unread: metadata.unread === true || latestMessageSeq > (metadata.readMessageSeq ?? -1),
         ...(activityTimes.length ? { updatedAt: new Date(Math.max(...activityTimes)).toISOString() } : {}),
         groupId: metadata.groupId ?? null, ...(metadata.title ? { title: metadata.title } : {}),
         ...(metadata.parentSessionId ? { parentSessionId: metadata.parentSessionId } : {}) };
