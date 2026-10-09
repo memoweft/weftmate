@@ -25,6 +25,8 @@ export interface OfficialModelProjection {
   name: string;
   contextWindow: number;
   maxTokens: number;
+  reasoningEfforts?: Record<string, string | null>;
+  compat?: { thinkingFormat?: string; supportsReasoningEffort?: boolean };
 }
 
 export interface LegacyRouteProjection {
@@ -146,6 +148,8 @@ export function projectOfficialProviderConfig(route: LegacyRouteProjection): Pro
       name: requireString(model.name, 'model.name'),
       contextWindow: finitePositiveInteger(model.contextWindow, 'model.contextWindow'),
       maxTokens: finitePositiveInteger(model.maxTokens, 'model.maxTokens'),
+      ...(model.reasoningEfforts ? { reasoningEfforts: structuredClone(model.reasoningEfforts) } : {}),
+      ...(model.compat ? { compat: structuredClone(model.compat) } : {}),
     })),
   };
 }

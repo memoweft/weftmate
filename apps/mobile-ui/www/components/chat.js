@@ -256,19 +256,22 @@ function closeAttachmentMenu({restoreFocus=false}={}){if(!state.attachmentMenu)r
 
 function renderAttachmentPickStatus(){const box=$('attachment-pick-status'),pick=state.attachmentPick;
   box.hidden=!pick;if(pick)$('attachment-pick-label').textContent=pick.requestId?
-    `正在系统中选择${pick.kind==='image'?'图片':'文件'}，返回后可取消等待。`:'正在打开系统选择器…';
+    `正在系统中选择${pick.kind==='file'?'文件':pick.kind==='camera'?'照片':'图片'}，返回后可取消等待。`:'正在打开系统选择器…';
   syncChatInsets()}
 
 function cancelAttachmentPick({announce=false}={}){if(!state.attachmentPick)return;
   state.attachmentPick=null;renderAttachmentPickStatus();updateComposer();
   if(announce)status('已停止等待选择结果，原有消息草稿保留')}
 
-function openAttachmentMenu(){if(state.chatSource==='host'&&!selectedSharedSession()?.sendAvailable){toast('这段电脑会话仅可查看，无法添加图片',true);return}
+async function openAttachmentMenu(){if(state.chatSource==='host'&&!selectedSharedSession()?.sendAvailable){toast('这段电脑会话仅可查看，无法添加图片',true);return}
   closeApprovalModeMenu();
   if(state.attachmentPick)return;if(state.attachmentMenu){closeAttachmentMenu({restoreFocus:true});return}
   closeModelMenu();state.attachmentMenu=true;const popup=$('attachment-popover');popup.hidden=false;
   $('pick-file').hidden=false;$('attachment-note').hidden=state.chatSource!=='host';
-  $('plus-button').setAttribute('aria-expanded','true');requestAnimationFrame(()=>popup.classList.add('open'));placeAttachmentMenu();$('pick-image').focus()}
+  $('plus-button').setAttribute('aria-expanded','true');requestAnimationFrame(()=>popup.classList.add('open'));placeAttachmentMenu();$('pick-camera').focus();
+  const owner=state.owner,epoch=state.authEpoch,sessionId=state.sharedSessionId;
+  if(state.chatSource==='host')try{await uiCore.refreshThinkingModels();if(owner!==state.owner||epoch!==state.authEpoch||sessionId!==state.sharedSessionId)return;paintMobileThinking();placeAttachmentMenu()}catch{}
+}
 
 function placeAttachmentMenu(){globalThis.WeftPopover.position($('attachment-popover'),$('plus-button'))}
 
@@ -323,10 +326,10 @@ function finishAttachmentPick(data){const pick=state.attachmentPick;if(!pick||!p
     (data.viewGeneration!=null&&data.viewGeneration!==pick.viewGeneration)||data.conversationId!==pick.conversationId){
     cancelAttachmentPick();return}
   cancelAttachmentPick();if(data.status==='selected'){
-    status(pick.kind==='image'?'':'正在读取附件草稿…');refreshAttachmentDrafts(pick.viewGeneration).then(restored=>{
+    status(pick.kind==='file'?'正在读取附件草稿…':'');refreshAttachmentDrafts(pick.viewGeneration).then(restored=>{
       if(restored&&state.owner===pick.owner&&state.authEpoch===pick.epoch&&pick.source===state.chatSource&&
         attachmentViewGeneration===pick.viewGeneration)
-        status(currentAttachments().length?(pick.kind==='image'?'':'附件已加入草稿，确认后可发送'):
+        status(currentAttachments().length?(pick.kind==='file'?'附件已加入草稿，确认后可发送':''):
           '没有找到已选附件，请重新选择',!currentAttachments().length)});
   }else if(data.status==='cancelled')status('已取消选择，消息草稿保留');
   else{const message=safeError(new Error(data.errorCode||'OPERATION_FAILED'));status(message,true)}}
@@ -353,6 +356,8 @@ function updateComposer(){uiCore.syncMobileIdentity();const view=uiCore.mobile.c
   button.setAttribute('aria-label',stop?'停止回复':'发送');button.replaceChildren(el('span',`icon icon-${stop?'stop':'send'}`));
   $('draft').disabled=view.draftDisabled;$('draft').placeholder=view.placeholder;
   renderContextUsage();
+  paintMobileThinking();
+  globalThis.WeftComposerSubtasks?.paint($('composer-subtasks'),globalThis.WeftUiCore.composerSubtasks([...uiCore.state.historyEvents.values()]),{scope:`${state.owner}/${state.authEpoch}/${state.sharedSessionId}`,root:$('chat-content')});
   $('device-line').hidden=true;$('device-line').textContent='';$('device-line').setAttribute('role','status');$('model-label').textContent=view.modelName;$('model-button').setAttribute('aria-label',view.modelLabel);
   $('plus-button').disabled=view.attachmentsDisabled;
   for(const button of $('attachment-drafts').querySelectorAll('button'))button.disabled=view.attachmentItemDisabled;
@@ -503,3 +508,5 @@ function refreshCloudDevices(){const owner=state.owner,epoch=state.authEpoch;
 }
 
 /* Keep the existing mode value/change contract; use shared menu geometry. */
+
+function paintMobileThinking(){const view=uiCore.thinkingView(),host=state.chatSource==='host';$('pick-thinking').hidden=!host||!view.supported;$('pick-thinking').setAttribute('aria-checked',String(view.enabled));$('pick-thinking').disabled=view.busy;$('thinking-badge').hidden=!host||!view.supported||!view.enabled;}

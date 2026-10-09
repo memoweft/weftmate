@@ -544,6 +544,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     const options=[...$('approval-mode-popover').querySelectorAll('button:not(:disabled)')],index=options.indexOf(document.activeElement);
     if(['ArrowDown','ArrowUp','Home','End'].includes(event.key)){event.preventDefault();
       options[event.key==='Home'?0:event.key==='End'?options.length-1:(index+(event.key==='ArrowUp'?-1:1)+options.length)%options.length]?.focus()}});
+  $('pick-camera').addEventListener('click',()=>pickAttachment('camera'));
+  $('pick-thinking').addEventListener('click',async()=>{closeAttachmentMenu({restoreFocus:true});await uiCore.setDeepThinking(!uiCore.thinkingView().enabled);updateComposer()});
+  $('attachment-popover').addEventListener('keydown',event=>{const items=[...$('attachment-popover').querySelectorAll('button:not([hidden]):not(:disabled)')];if(!['ArrowDown','ArrowUp','Home','End'].includes(event.key))return;event.preventDefault();const i=items.indexOf(document.activeElement);items[event.key==='Home'?0:event.key==='End'?items.length-1:(i+(event.key==='ArrowDown'?1:-1)+items.length)%items.length]?.focus()});
   $('pick-image').addEventListener('click',()=>pickAttachment('image'));$('pick-file').addEventListener('click',()=>pickAttachment('file'));
   $('attachment-pick-cancel').addEventListener('click',()=>cancelAttachmentPick({announce:true}));
   $('image-preview-close').addEventListener('click',()=>closeImagePreview());

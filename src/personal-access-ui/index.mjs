@@ -6,6 +6,8 @@ import { uiCoreAssets } from '../ui-core/manifest.mjs'
 const files = new Map([
   ['/personal/v1/ui/components/main-chat.js', ['components/main-chat.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/main-chat.css', ['main-chat.css', 'text/css; charset=utf-8']],
+  ['/personal/v1/ui/composer-subtasks.js', ['composer-subtasks.js', 'text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/composer-extras.css', ['composer-extras.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/offline.css', ['offline.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/components/offline.js', ['components/offline.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/conversation-scroll.js', ['conversation-scroll.js', 'text/javascript; charset=utf-8']],

@@ -13,6 +13,7 @@
     { "id": "login", "label": "登录页", "unavailable": ["watch"] },
     { "id": "sessions", "label": "会话列表", "unavailable": ["watch"] },
     { "id": "conversation", "label": "对话中 · 执行步骤", "unavailable": ["watch"] },
+    { "id": "composer-menu", "label": "输入区 / 附件与深入思考", "unavailable": ["watch"] },
     { "id": "composer-context", "label": "输入区 / 上下文用量", "unavailable": ["watch"] },
     { "id": "approval", "label": "审批卡" },
     { "id": "question", "label": "提问条", "unavailable": ["watch"] },

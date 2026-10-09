@@ -30,6 +30,7 @@ import { discoverOpenAICompatibleModels, verifyOpenAICompatibleModel } from './o
 import { resolveModelDiscoveryRequest } from './model-discovery-policy.ts';
 import { resolveModelSaveCredential } from './model-save-policy.ts';
 import { modelCapacityFor, routeForProfile, writeModelRoutesPatch } from './harness-model-routes.ts';
+import { modelReasoning, prepareOfficialModelReasoning } from './model-reasoning.mjs';
 import { readModelCapacity } from './model-budget.mjs';
 import { createModelScheduler } from './model-scheduler.mjs';
 import { scheduledModelFetch } from './model-scheduler-client.mjs';
@@ -1928,7 +1929,7 @@ async function bootstrap() {
           route: route.provider,
           displayName: profile.name,
           baseURL: profile.baseUrl,
-          models: [{ id: profile.model, name: profile.name, ...await readModelCapacity({
+          models: [{ ...modelReasoning(profile), id: profile.model, name: profile.name, ...await readModelCapacity({
             baseUrl: profile.baseUrl, modelId: profile.model,
             apiKey: configStoreMod.getCredential(profile.id) ?? undefined }) }],
         },
@@ -2370,7 +2371,7 @@ async function bootstrap() {
         if (!models.includes(clean.model)) throw new Error('selected model was not returned by local catalog');
         if (!runtimeOrigin) throw new Error('official DSH runtime unavailable');
         const projection = { route: officialRoute.provider, displayName: publicName, baseURL: baseUrl,
-          models: [{ id: clean.model, name: publicName, ...await readModelCapacity({
+          models: [{ ...modelReasoning(clean), id: clean.model, name: publicName, ...await readModelCapacity({
             baseUrl, modelId: clean.model, apiKey,
             contextWindow: input.contextWindow, maxTokens: input.outputReserve }) }] };
         const visionProjection = id === OCCAMY_VISION_PROFILE_ID
@@ -2608,7 +2609,7 @@ async function bootstrap() {
       const projections = await Promise.all(additions.map(async (input) => {
         const route = routeForProfile(input.id);
         return { route: route.provider, displayName: input.name, baseURL: input.baseUrl,
-          models: [{ id: input.model, name: input.name, ...await readModelCapacity({
+          models: [{ ...modelReasoning(input), id: input.model, name: input.name, ...await readModelCapacity({
             baseUrl: input.baseUrl, modelId: input.model, apiKey,
             contextWindow: input.contextWindow, maxTokens: input.outputReserve }) }] };
       }));
@@ -3020,6 +3021,8 @@ async function bootstrap() {
     profiles: () => settingsMod.listModelProfiles().profiles,
     hasCredential: hasProfileCredential,
     credentialForProfile: credentialForModelProfile,
+    reasoningSettings: async () => {const snapshot=await createOfficialDshSettingsClient({origin:runtimeOrigin}).describeSettings();return {...snapshot.baseProviders,...snapshot.userProviders};},
+    prepareModelReasoning: profile => prepareOfficialModelReasoning(createOfficialDshSettingsClient({origin:runtimeOrigin}), routeForProfile(profile.id).provider, profile),
     processingStatus: (sessionId) => modelScheduler.progress(sessionId),
     modelFetch: (url, options) => options?.method === 'POST'
       ? scheduledModelFetch(url, options, modelScheduler.url) : fetch(url, options),
@@ -3122,7 +3125,7 @@ async function bootstrap() {
         if (!secret) throw Object.assign(new Error('model credential unavailable'),
           { code: 'ACCOUNT_MODEL_SECRET_REQUIRED', definite: true });
         const projection = { route: route.provider, displayName: target.name, baseURL: target.baseUrl,
-          models: [{ id: target.modelId, name: target.name, ...await readModelCapacity({ ...target, apiKey: secret }) }] };
+          models: [{ ...modelReasoning(target), id: target.modelId, name: target.name, ...await readModelCapacity({ ...target, apiKey: secret }) }] };
         const previousActive = settingsMod.listModelProfiles().activeId;
         const routeBefore = await createOfficialDshSettingsClient({ origin: runtimeOrigin }).describeSettings();
         let addedOfficialRoute = false;
@@ -3184,7 +3187,7 @@ async function bootstrap() {
         // make an already committed route look unapplied.
         const installed = snapshot.userProviders[route.provider]?.models?.[0];
         const projection = { route: route.provider, displayName: target.name, baseURL: target.baseUrl,
-          models: [{ id: target.modelId, name: target.name, ...modelCapacityFor({ ...target,
+          models: [{ ...modelReasoning(target), id: target.modelId, name: target.name, ...modelCapacityFor({ ...target,
             contextWindow: installed?.contextWindow, maxTokens: installed?.maxTokens }) }] };
         const exact = isDeepStrictEqual(snapshot.userProviders[route.provider],
           projectOfficialProviderConfig(projection)) && profile?.baseUrl === target.baseUrl &&
