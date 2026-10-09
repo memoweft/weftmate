@@ -1,0 +1,46 @@
+{
+  "requests": 144,
+  "knownUsage": 144,
+  "missingUsage": 0,
+  "inputTokens": 579787,
+  "cachedInputTokens": 417600,
+  "outputTokens": 11481,
+  "runs": [
+    {
+      "run": "after-mimo",
+      "requests": 45,
+      "knownUsage": 45,
+      "missingUsage": 0,
+      "inputTokens": 170318,
+      "cachedInputTokens": 123392,
+      "outputTokens": 3257
+    },
+    {
+      "run": "final-mimo",
+      "requests": 56,
+      "knownUsage": 56,
+      "missingUsage": 0,
+      "inputTokens": 244984,
+      "cachedInputTokens": 161728,
+      "outputTokens": 4483
+    },
+    {
+      "run": "post-merge-mimo",
+      "requests": 7,
+      "knownUsage": 7,
+      "missingUsage": 0,
+      "inputTokens": 18825,
+      "cachedInputTokens": 15168,
+      "outputTokens": 534
+    },
+    {
+      "run": "verified-mimo",
+      "requests": 36,
+      "knownUsage": 36,
+      "missingUsage": 0,
+      "inputTokens": 145660,
+      "cachedInputTokens": 117312,
+      "outputTokens": 3207
+    }
+  ]
+}

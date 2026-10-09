@@ -11,21 +11,22 @@ import WeftMateCore
     @Published var month = DeviceDateText.monthKey(Date())
     private weak var app: AppleAppModel?
     private let epoch: UUID
+    private let host: String?
+    private let device: String?
     let sessionID: String?
-    init(app: AppleAppModel, sessionID: String? = nil) { self.app = app; epoch = app.accountEpoch; self.sessionID = sessionID }
-    var current: Bool { app?.accountEpoch == epoch }
+    init(app: AppleAppModel, sessionID: String? = nil) { self.app = app; epoch = app.accountEpoch; host = app.session?.hostId; device = app.session?.device.id; self.sessionID = sessionID }
+    var current: Bool { app?.accountEpoch == epoch && app?.session?.hostId == host && app?.session?.device.id == device }
     func refresh() async {
         guard !loading, current, let app else { return }
         loading = true; error = nil
         defer { loading = false }
         do {
-            var preferences = try await app.assistantClient.usageSettings()
+            let preferences = try await app.assistantClient.usageSettings()
             guard current, !Task.isCancelled else { return }
-            if preferences.canManage, preferences.timeZone != TimeZone.current.identifier {
-                preferences = try await app.assistantClient.setUsageTimeZone(TimeZone.current.identifier)
-            }
-            let value = try await app.assistantClient.usage(month: month, sessionID: sessionID, timeZone: TimeZone.current.identifier)
-            guard current, !Task.isCancelled else { return }
+            let zone = preferences.timeZone ?? TimeZone.current.identifier
+            let requestedMonth = month
+            let value = try await app.assistantClient.usage(month: requestedMonth, sessionID: sessionID, timeZone: zone)
+            guard current, !Task.isCancelled, month == requestedMonth, value.month == requestedMonth, value.timeZone == zone, value.sessionId == sessionID else { return }
             summary = value; settings = preferences
             monthlyInput = preferences.monthlyLimit.map(String.init(describing:)) ?? ""
             temporaryInput = preferences.temporaryMonth == value.month ? preferences.temporaryLimit.map(String.init(describing:)) ?? "" : ""
@@ -38,7 +39,7 @@ import WeftMateCore
         guard text.isEmpty || value.map({ $0.isFinite && $0 >= 0 }) == true else { error = "请输入非负金额，留空表示不限或清除临时上限。"; return }
         loading = true; error = nil
         do {
-            let result = try await app.assistantClient.setUsageLimit(value, temporary: temporary, timeZone: TimeZone.current.identifier)
+            let result = try await app.assistantClient.setUsageLimit(value, temporary: temporary, timeZone: settings?.timeZone ?? TimeZone.current.identifier)
             guard current else { loading = false; return }
             settings = result; loading = false; await refresh()
         } catch { if current { self.error = "上限未保存，请重试。" }; loading = false }

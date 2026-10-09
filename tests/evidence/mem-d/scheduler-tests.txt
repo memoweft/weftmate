@@ -1,0 +1,22 @@
+✔ owner local memory follows a changed model and credential while waiting, without changing the Core route (1051.9915ms)
+✔ a running formation yields its slot to chat and resumes at the next idle opportunity (1.3227ms)
+✔ single-slot formation buffers partial output, yields to greeting, and returns only its completed retry (21.6805ms)
+✔ yielded formation rechecks the selected background model before resuming after chat (2008.9276ms)
+✔ session progress uses actual queue position, observed switcher and stream phases, and disappears when its lease closes (62.4962ms)
+✔ background waits through tool gaps, foreground has FIFO priority and cancellation removes waiting work (18.195ms)
+✔ native stream socket owns the slot; a cancelled or crashed owner releases it and queued memory uses its selected model (135.7844ms)
+✔ background provider begins its own deadline after queueing and nested native streaming uses the same lease (122.4545ms)
+✔ queued MemoWeft HTTP receives informational keepalive without masking the final error status (105.9356ms)
+✔ foreground HTTP completion holds its slot through the response body (23.232ms)
+✔ native compaction remains foreground while titles and companion work are background (0.3494ms)
+✔ cloud requests run concurrently while local foreground and queued background hold their service (127.2841ms)
+✔ unknown and multiple slots bypass queueing; only observed single slots queue (7.2276ms)
+✔ address-only native requests use the matching profile credential to probe authenticated 8081 props (4.8716ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3830.7073
