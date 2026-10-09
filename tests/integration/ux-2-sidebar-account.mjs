@@ -103,12 +103,24 @@ try {
         await button(page,recent.title).dispatchEvent('pointerdown',{pointerType:'touch'}); await page.getByRole('menu',{name:'对话操作'}).waitFor();
         await button(page,recent.title).dispatchEvent('pointerup',{pointerType:'touch'}); await page.keyboard.press('Escape');
         await button(page,'账户菜单').click(); await button(page,'设置').click();
-      } else { await button(page,'关闭导航').click(); await page.evaluate(()=>page('settings')); }
+      } else {
+        const openActions = async () => { await button(conversations,recent.title).dispatchEvent('pointerdown',{pointerType:'touch'});
+          await page.getByRole('dialog',{name:'对话操作',exact:true}).waitFor(); await button(conversations,recent.title).dispatchEvent('pointerup',{pointerType:'touch'});
+          return page.getByRole('dialog',{name:'对话操作',exact:true}); };
+        let menu = await openActions(); await button(menu,'置顶').click(); await menu.waitFor({state:'hidden'});
+        assert.equal((await fixture.request('/sessions')).sessions.find(row=>row.sessionId===recent.id).pinned,true);
+        await button(page,'打开导航').click(); menu = await openActions(); await button(menu,'取消置顶').click(); await menu.waitFor({state:'hidden'});
+        await button(page,'打开导航').click(); menu = await openActions(); await button(menu,'归档').click(); await menu.waitFor({state:'hidden'});
+        await button(page,'撤销归档').waitFor(); await shot(page,surface,theme,'archive-undo'); await button(page,'撤销归档').click();
+        await button(page,'撤销归档').waitFor({state:'hidden'});
+        assert.equal((await fixture.request('/sessions?archived=all')).sessions.find(row=>row.sessionId===recent.id).archived,false);
+        await button(page,'打开导航').click(); await button(page,'关闭导航').click(); await page.evaluate(()=>page('settings'));
+      }
       await button(page,'用量详情').filter({visible:true}).waitFor(); await page.getByText(new RegExp(expected)).filter({visible:true}).waitFor(); await shot(page,surface,theme,'settings-usage');
       if(surface==='mobile-web') { await button(page,'关闭设置').click(); await button(page,'切换会话侧栏').click(); }
       else { await page.evaluate(()=>page('home')); await button(page,'打开导航').click(); }
       await button(conversations,'收起对话 合成项目1').click();
-      checks.push({surface,theme,projectLimit:true,usageStrip:true,touchNoHover:true});
+      checks.push({surface,theme,projectLimit:true,usageStrip:true,touchNoHover:true,...(surface==='android-ui'?{longPressPin:true,longPressArchiveUndo:true}:{longPressMenu:true})});
     }
     await page.close();
   }
