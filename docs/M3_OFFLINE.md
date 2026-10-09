@@ -1,6 +1,6 @@
 # M3-A · 电脑离线时继续聊天
 
-依据：D13、D20、D23、D25、D39、S6；本文定义 Android（安卓）和手机网页共用的 `/personal/v1` 契约。iPhone（苹果手机）原生接线留给后续包。电脑仍是内容权威，MemoWeft 仍是唯一正式记忆系统；手机不得将副本直接写回 World（世界理解）。
+依据：D13、D20、D23、D25、D39、S6；本文定义各客户端共用的 `/personal/v1` 契约。A14 已接 iPhone（苹果手机）与作为远程客户端的 Mac 原生离线链路。电脑仍是内容权威，MemoWeft 仍是唯一正式记忆系统；手机不得将副本直接写回 World（世界理解）。
 
 ## 内容与上限
 
@@ -37,3 +37,7 @@ M3-A 不接受电脑执行任务；D17 / D40 的加密任务暂存属于 S7。�
 测试使用合成账号、临时目录、随机端口、本地云与中继；不触碰日用宿主、8081 或生产云。覆盖密文篡改／错设备、权限过滤、增量、遗忘／撤权清理和旧补交拒绝、补交幂等及只发送相关记忆。真实桌面宿主、手机网页、MuMu（安卓模拟器）和 MiMo 走在线同步→宿主关闭→记忆问答→新偏好→上线补交形成→新对话召回→遗忘流程。实际通过项、未通过项及用量以本包证据和结果文件为准。
 
 实现参考：[Android Keystore MGF1 参数](https://developer.android.com/reference/android/security/keystore/KeyGenParameterSpec.Builder#setMgf1Digests(java.lang.String...))说明旧平台参数差异；本包用 Keystore AES 包裹设备私钥，保持线上的 RSA-OAEP-256 格式。
+
+## A14 Apple 原生接线
+
+iPhone / Mac 复用 3.19 契约，原生 Security / CryptoKit 解包，RSA 私钥和本机 AES 内容钥匙保存在 ThisDeviceOnly Keychain，普通文件仅保存密文并排除备份；稳定宿主 / 账户隔离、云 DPoP 前后核对、删除清理和幂等补交见 [A14 验证与边界](../apps/apple/Tests/Evidence/A14/README.md)。Watch 离线投影不包含审批。离线新对话与现有普通草稿 / 时间线缓存分开保存；未新增服务端接口、恢复码或服务器代管钥匙。

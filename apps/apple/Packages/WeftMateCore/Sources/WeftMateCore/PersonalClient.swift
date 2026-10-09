@@ -1324,6 +1324,19 @@ public actor PersonalClient {
         compatibilityNotice = NativeCompatibility.notice(installed: nativeVersion, minimum: status.minimum(for: platform), platform: platform)
         if let compatibilityNotice { throw APIFailure.nativeUpdateRequired(compatibilityNotice) }
     }
+    public func syncOffline(_ body: OfflineSyncRequest) async throws -> OfflineEnvelope {
+        let (auth, generation) = try snapshot()
+        let response = try await rawRequest(server: auth.session.server, path: "/offline/sync", method: "POST",
+            body: JSONEncoder().encode(body), auth: auth, timeoutInterval: 15, maximumResponseBytes: 3 * 1024 * 1024)
+        try check(generation); return try decode(response.body)
+    }
+    public func submitOffline(_ body: OfflineSubmission) async throws -> OfflineReceipts {
+        let (auth, generation) = try snapshot()
+        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
+        let response = try await rawRequest(server: auth.session.server, path: "/offline/turns", method: "POST",
+            body: encoder.encode(body), auth: auth)
+        try check(generation); return try decode(response.body)
+    }
     public func nativeUpdateStatus() async throws -> NativeHostStatus {
         let (auth, generation) = try snapshot()
         let value: NativeHostStatus = try await authorized(auth, generation, path: "/status")
@@ -1412,7 +1425,7 @@ public actor PersonalClient {
         do { return try decoder.decode(T.self, from: data) } catch { throw APIFailure.invalidResponse }
     }
     private func rawRequest(server: ServerConfiguration, path: String, method: String = "GET",
-                            body: Data? = nil, auth: Credential? = nil, acceptedErrorStatuses: Set<Int> = [], extraHeaders: [String: String] = [:], timeoutInterval: TimeInterval = 60) async throws -> HTTPResponse {
+                            body: Data? = nil, auth: Credential? = nil, acceptedErrorStatuses: Set<Int> = [], extraHeaders: [String: String] = [:], timeoutInterval: TimeInterval = 60, maximumResponseBytes: Int = 1_048_576) async throws -> HTTPResponse {
         guard let url = URL(string: server.originString + "/personal/v1" + path),
               body?.count ?? 0 <= 262_144 else { throw APIFailure.invalidResponse }
         var request = URLRequest(url: url, timeoutInterval: timeoutInterval)
@@ -1430,7 +1443,7 @@ public actor PersonalClient {
         catch let e as APIFailure { throw e }
         catch is CancellationError { throw APIFailure.transport(.cancelled) }
         catch { throw APIFailure.transport(.unavailable) }
-        guard response.body.count <= 1_048_576 else { throw APIFailure.responseTooLarge }
+        guard response.body.count <= maximumResponseBytes else { throw APIFailure.responseTooLarge }
         if (300...399).contains(response.status) { throw APIFailure.transport(.redirect) }
         guard (200...299).contains(response.status) || acceptedErrorStatuses.contains(response.status) else { throw serverFailure(response) }
         return response
