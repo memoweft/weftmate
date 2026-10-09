@@ -4,6 +4,8 @@ import { join } from 'node:path'
 import { uiCoreAssets } from '../ui-core/manifest.mjs'
 
 const files = new Map([
+  ['/personal/v1/ui/offline.css', ['offline.css', 'text/css; charset=utf-8']],
+  ['/personal/v1/ui/components/offline.js', ['components/offline.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/conversation-scroll.js', ['conversation-scroll.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/backup.css', ['backup.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/components/backup.js', ['components/backup.js', 'text/javascript; charset=utf-8']],
@@ -64,7 +66,7 @@ const files = new Map([
   ['/personal/v1/ui/vendor/noble-hashes-2.3.0/utils.js', ['vendor/noble-hashes-2.3.0/utils.js', 'text/javascript; charset=utf-8']],
 ])
 
-export const personalAccessUiAssetPaths = new Set(files.keys())
+export const personalAccessUiAssetPaths = new Set([...files.keys(), '/personal/v1/ui/offline-worker.js'])
 export const personalAccessUiResources = new Map([...files.values()].map(([name]) => {
   const resource = name.startsWith('../ui-core/') ? name.slice(3) : `personal-access-ui/${name}`;
   return [resource, join(import.meta.dirname, name)];
@@ -74,7 +76,7 @@ export function setPersonalAccessUiResourceReader(reader) { verifiedResource = r
 
 const securityHeaders = {
   'cache-control': 'no-store',
-  'content-security-policy': "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data: blob:; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'",
+  'content-security-policy': "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self' https:; img-src 'self' data: blob:; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'",
   'referrer-policy': 'no-referrer',
   'x-content-type-options': 'nosniff',
   'x-frame-options': 'DENY',
@@ -86,6 +88,14 @@ export async function servePersonalAccessUi(request, response, cloud = null) {
   let url
   try { url = new URL(request.url, 'http://127.0.0.1') } catch { return false }
   if (url.search || url.pathname.includes('%')) return false
+  if (url.pathname === '/personal/v1/ui/offline-worker.js') {
+    const assets = [...files.keys()].filter(name => name.startsWith('/personal/v1/ui/') && !name.endsWith('/'));
+    const script = `const CACHE='weftmate-public-ui-m3a-v1',ASSETS=${JSON.stringify(assets)};
+self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
+self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('weftmate-public-ui-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
+self.addEventListener('fetch',event=>{const u=new URL(event.request.url);if(event.request.method!=='GET'||u.origin!==self.location.origin||u.search)return;const name=u.pathname==='/personal/v1/ui/'?'/personal/v1/ui/index.html':u.pathname;if(!ASSETS.includes(name))return;event.respondWith(fetch(event.request).catch(()=>caches.open(CACHE).then(c=>c.match(name))));});`;
+    response.writeHead(200, { ...securityHeaders, 'content-type': 'text/javascript; charset=utf-8' }); response.end(script); return true;
+  }
   const asset = files.get(url.pathname)
   if (!asset) return false
   try {

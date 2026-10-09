@@ -15,7 +15,12 @@ internal class CloudAppLogin(private val secrets: SecureSettings, private val ap
     fun configure(originInput: String): JSONObject {
         val host = Endpoints.hostOrigin(originInput)
         val response = try { JsonHttp().request("$host/personal/v1/cloud/config", "GET") }
-            catch (error: ApiFailure) { if (error.status == 404) HttpReply(404, JSONObject()) else throw error }
+            catch (error: Exception) {
+                val cached = secrets.appValue("login")?.let { JSONObject(it) }
+                if ((error !is ApiFailure || error.status >= 500) && cached?.optString("host") == host)
+                    return cached.getJSONObject("config")
+                if (error is ApiFailure && error.status == 404) HttpReply(404, JSONObject()) else throw error
+            }
         val config = if (response.status == 404) JSONObject().put("issuer", "$host/personal/v1/cloud/oidc")
             .put("hostId", "unconnected") else response.body
         if (response.status !in setOf(200, 404)) throw ApiFailure(response.status, config.optJSONObject("error")?.optString("code") ?: "REQUEST_FAILED")
@@ -32,7 +37,7 @@ internal class CloudAppLogin(private val secrets: SecureSettings, private val ap
     private fun values() = JSONObject(secrets.appValue("credentials") ?: "{}")
     @Synchronized fun credentials(params: JSONObject): JSONObject {
         val key = params.getString("key")
-        require(key == "offline-account" || listOf("app-tokens:", "trusted-host:", "draft:").any { key.startsWith(it) })
+        require(key == "offline-account" || listOf("app-tokens:", "trusted-host:", "draft:", "offline-config:").any { key.startsWith(it) })
         require(key.length <= 2048)
         val entries = values()
         if (params.optBoolean("remove")) {

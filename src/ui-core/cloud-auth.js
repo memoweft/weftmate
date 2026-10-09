@@ -28,7 +28,14 @@
       return data;
     }
     async configure() {
-      this.config = await this.request(this.host + '/personal/v1/cloud/config');
+      try {
+        this.config = await this.request(this.host + '/personal/v1/cloud/config');
+        await this.credentials('offline-config:' + this.host, this.config);
+      } catch (error) {
+        if (error.code !== 'NETWORK' && !(error.status >= 500)) throw error;
+        this.config = await this.credentials('offline-config:' + this.host);
+        if (!this.config) throw error;
+      }
       if (this.clientId) this.config.clientId = this.clientId;
       const cloudOrigin = origin(this.config.issuer);
       if (this.config.issuer !== cloudOrigin + '/personal/v1/cloud/oidc' || !this.config.clientId || !this.config.hostId) fail('INVALID_CONFIGURATION');

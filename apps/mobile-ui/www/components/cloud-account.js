@@ -104,6 +104,9 @@
     choose.addEventListener('click', () => { page('devices'); }); byId('cloud-wait-view').append(choose);
     const redeem = core.cloudRedeemPairing; core.cloudRedeemPairing = async input => { const result = await redeem(input); core.state.cloudAuth.mode = 'authenticated'; return result; };
     globalThis.WeftMobileCloud.core = core;
+    globalThis.WeftOfflineView?.mount({ core, nativeCall: native ? call : null,
+      identity: async () => native ? call('offline.identity') : core.cloudOfflineIdentity(),
+      host: (path, body) => core.accessApi(path, { method: 'POST', body: JSON.stringify(body) }) });
     await core.load();
   }
   function route(name) {

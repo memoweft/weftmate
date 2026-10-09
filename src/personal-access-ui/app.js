@@ -32,4 +32,9 @@
     for (const mount of ["mountAuth", "mountAccount", "mountSettings", "mountMemory", "mountApprovals", "mountComposer", "mountPhone", "mountSessions", "mountCloudSettings", "mountShell", "mountSettingsNavigation"])
         ui[mount]();
     globalThis.__WeftUiStarted = true;
+    if (!native && navigator.serviceWorker) void navigator.serviceWorker.register('/personal/v1/ui/offline-worker.js').catch(() => {});
+    globalThis.WeftOfflineView?.mount({ core, desktop: !!native,
+        identity: async () => core.state.account && core.state.hostId ? { origin: location.origin,
+            ownerId: core.state.account.ownerId, deviceId: core.state.device.id, hostId: core.state.hostId } : null,
+        host: (path, body) => core.accessApi(path, { method: 'POST', body: JSON.stringify(body) }) });
 })();

@@ -271,6 +271,7 @@ export function createSessionOperations(context) {
           }
         }
         await context.callBackend(() => context.backend.deleteSession({ sessionId, ownerId }));
+        await context.offline?.invalidate(ownerId);
         await context.sharedAttachmentStores?.get(ownerId)?.removeSession(sessionId);
         await context.attachmentStores?.get(ownerId)?.removeConversation(sessionId);
         const commands = Object.values(account.commands).filter(command => command.sessionId === sessionId);
