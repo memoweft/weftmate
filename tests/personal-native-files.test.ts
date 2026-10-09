@@ -89,3 +89,30 @@ test('new owner conversations get separate host data directories; shared chat al
     assert.equal(created[2].agentPreset, 'personal-shared-chat')
   } finally { await rm(root, { recursive: true, force: true }) }
 })
+
+test('FX-11 direct write observes a file once across Windows cwd/argument casing and preserves update provenance', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'native-first-write-'))
+  try {
+    const frames: any[] = []
+    const bridge = {request: async (frame: any) => {
+      frames.push(frame)
+      return {artifactId:`artifact-${frames.length}`,taskId:'cmd-first',fileName:'first.txt',state:'observed'}
+    }}
+    const target = join(process.platform === 'win32' ? root.toUpperCase() : root, 'first.txt')
+    const exec = {name:'write',arguments:{file_path:target},agent:{session:{header:{agentPreset:'personal-remote',cwd:root}}}}
+    const native = {isError:false,content:[{type:'text',text:'Created file'}]}
+    const run = (text: string) => trackNativeFiles(bridge,exec,async()=>{await writeFile(target,text);return native},()=>({sessionId:'first-write'}))
+    await run('first')
+    assert.equal(frames.length,1,'cwd scan and explicit file argument refer to the same file')
+    const created = await appendNativeArtifacts(exec,native,async()=>({kind:'accept'}))
+    assert.equal(created.content.length,2)
+    assert.equal(JSON.parse(created.content[1].text).createdFilePath,target)
+    await run('first')
+    assert.equal(frames.length,1,'unchanged content is not registered again')
+    await run('updated')
+    assert.equal(frames.length,2,'an actual update creates one new artifact')
+    const updated = await appendNativeArtifacts(exec,native,async()=>({kind:'accept'}))
+    assert.equal(updated.content.length,2)
+    assert.equal(JSON.parse(updated.content[1].text).createdFilePath,undefined,'different casing cannot turn an update into a new creation')
+  } finally {await rm(root,{recursive:true,force:true})}
+})

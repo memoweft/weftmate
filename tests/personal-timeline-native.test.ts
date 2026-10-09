@@ -48,5 +48,6 @@ test('human tool descriptions use tool names/parameters and retain a bounded gen
   assert.equal(describeTool('pwsh', '{"command":"npm test"}'), '运行命令 npm test')
   assert.equal(describeTool('web_fetch', { url: 'https://example.com/report' }), '打开网页 example.com')
   assert.equal(describeTool('write'), '写入文件')
-  assert.ok(describeTool('custom-tool', 'not-json').startsWith('执行工具'))
+  assert.equal(describeTool('custom-tool', 'not-json'), '调用扩展服务')
+  assert.equal(describeTool('load_tools'), '准备可用工具')
 })

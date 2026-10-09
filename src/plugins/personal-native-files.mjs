@@ -3,6 +3,7 @@ import { lstat, readdir, readFile, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import { executionDirectory } from './personal-project-context.mjs';
 const additions = new WeakMap();
+const fileKey = file => process.platform === 'win32' ? file.toLowerCase() : file;
 
 /** Creation provenance survives turns/restarts in the native artifact results. */
 export function conversationCreatedFiles(session) {
@@ -33,7 +34,7 @@ export async function snapshotFiles(directory) {
       else if (entry.isFile()) {
         try {
           const stat = await lstat(file);
-          files.set(file, { size: stat.size, mtimeMs: stat.mtimeMs,
+          files.set(fileKey(file), { filePath: file, size: stat.size, mtimeMs: stat.mtimeMs,
             sha256: createHash('sha256').update(await readFile(file)).digest('hex') });
         } catch (error) { if (error.code !== 'ENOENT') throw error; }
       }
@@ -56,7 +57,7 @@ async function snapshotFor(exec) {
     const file = path.resolve(cwd, exec.arguments.file_path);
     try {
       const stat = await lstat(file);
-      if (stat.isFile()) files.set(file, { size: stat.size, mtimeMs: stat.mtimeMs,
+      if (stat.isFile()) files.set(fileKey(await realpath(file)), { filePath: file, size: stat.size, mtimeMs: stat.mtimeMs,
         sha256: createHash('sha256').update(await readFile(file)).digest('hex') });
     } catch (error) { if (error.code !== 'ENOENT') throw error; }
   }
@@ -72,12 +73,13 @@ export async function trackNativeFiles(bridge, exec, next, identity) {
   const result = await next();
   const after = await snapshotFor(exec);
   const artifacts = [];
-  for (const [file, current] of after) {
-    if (before.get(file)?.sha256 === current.sha256) continue;
+  for (const [key, current] of after) {
+    if (before.get(key)?.sha256 === current.sha256) continue;
+    const file = current.filePath;
     const registered = await bridge.request({ action: 'register_file', ...identity(exec),
       filePath: file, sha256: current.sha256 }, exec.signal);
     artifacts.push(registered.artifactId ? { artifact: registered,
-      ...(!before.has(file) ? { createdFilePath: file } : {}) } : { fileName: path.basename(file), ...registered });
+      ...(!before.has(key) ? { createdFilePath: file } : {}) } : { fileName: path.basename(file), ...registered });
   }
   if (!artifacts.length) return result;
   additions.set(exec, artifacts.map(value => ({ type: 'text', text: JSON.stringify(value) })));
