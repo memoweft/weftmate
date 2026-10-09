@@ -57,7 +57,7 @@ async function snapshotFor(exec) {
     const file = path.resolve(cwd, exec.arguments.file_path);
     try {
       const stat = await lstat(file);
-      if (stat.isFile()) files.set(fileKey(file), { filePath: file, size: stat.size, mtimeMs: stat.mtimeMs,
+      if (stat.isFile()) files.set(fileKey(await realpath(file)), { filePath: file, size: stat.size, mtimeMs: stat.mtimeMs,
         sha256: createHash('sha256').update(await readFile(file)).digest('hex') });
     } catch (error) { if (error.code !== 'ENOENT') throw error; }
   }
