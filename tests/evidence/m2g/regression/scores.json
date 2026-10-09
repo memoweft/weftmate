@@ -1,0 +1,46 @@
+{
+  "lan": {
+    "original": {
+      "deterministic": "7/7",
+      "semantic": "6/6"
+    },
+    "A": {
+      "deterministic": "3/3",
+      "semantic": "3/3"
+    },
+    "C": {
+      "deterministic": "2/3",
+      "semantic": "2/3"
+    },
+    "AC": {
+      "deterministic": "5/6",
+      "semantic": "5/6"
+    },
+    "correction": {
+      "deterministic": "3/3",
+      "semantic": "3/3"
+    }
+  },
+  "mimo": {
+    "original": {
+      "deterministic": "6/7",
+      "semantic": "5/6"
+    },
+    "A": {
+      "deterministic": "3/3",
+      "semantic": "3/3"
+    },
+    "C": {
+      "deterministic": "2/3",
+      "semantic": "2/3"
+    },
+    "AC": {
+      "deterministic": "5/6",
+      "semantic": "5/6"
+    },
+    "correction": {
+      "deterministic": "3/3",
+      "semantic": "3/3"
+    }
+  }
+}

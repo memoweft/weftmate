@@ -28,7 +28,7 @@ function walk(directory) { return readdirSync(directory).flatMap(name => {
   return info.isSymbolicLink() ? [] : info.isDirectory() ? walk(file) : [file];
 }); }
 function audit(root) {
-  assert.ok(/^weftmate-m2-exit-/.test(relative('C:/Temp', root)) && !relative('C:/Temp', root).includes('..'), 'Only named EX-2 C:/Temp roots');
+  assert.ok(/^weftmate-(?:m2-exit|m2f)-/.test(relative('C:/Temp', root)) && !relative('C:/Temp', root).includes('..'), 'Only named memory-baseline C:/Temp roots');
   let removed = 0;
   for (const file of walk(root)) if (sensitive.test(file.replaceAll('\\', '/'))) { rmSync(file, { force: true }); removed++; }
   const files = walk(root), matches = files.filter(file => privateValues.some(value => readFileSync(file).includes(Buffer.from(value)))).length;

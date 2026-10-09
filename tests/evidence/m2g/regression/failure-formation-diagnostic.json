@@ -1,0 +1,43 @@
+[
+  {
+    "model": "lan",
+    "needle": "骑行",
+    "formalItems": [
+      {
+        "kind": "cognition",
+        "id": "cognition-6c9d332fac11360ff856348ac33c274506c8b9f50cdc78aad37b4d7e122f9a78",
+        "content": "用户选骑行路线一直避开陡坡，更喜欢沿河的平缓路段。",
+        "invalid_at": null
+      }
+    ]
+  },
+  {
+    "model": "lan",
+    "needle": "阿岚",
+    "formalItems": [
+      {
+        "kind": "relationship",
+        "id": "relationship-bf36686dee45c756a2518a330c3faddec5aa47d95245416ea3525feaa06d42f5",
+        "content": "用户阿岚是跟我一起准备秋季展览的朋友，",
+        "invalid_at": null
+      }
+    ]
+  },
+  {
+    "model": "mimo",
+    "needle": "骑行",
+    "formalItems": [
+      {
+        "kind": "cognition",
+        "id": "cognition-f30a024d33a5e3003231a690427b90a5b6a1a785508ddcbd7ea621cec9b03500",
+        "content": "用户选骑行路线一直避开陡坡，更喜欢沿河的平缓路段。",
+        "invalid_at": null
+      }
+    ]
+  },
+  {
+    "model": "mimo",
+    "needle": "阿岚",
+    "formalItems": []
+  }
+]
