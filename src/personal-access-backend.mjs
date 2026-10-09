@@ -106,10 +106,10 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
             ...(!(chat && desktop && naturalLanguageDesktopReady()) ? { reasonCode: 'CAPABILITY_UNAVAILABLE' } : {}) },
         } }
     },
-    async listModels() {
-      let settings = {}; if (reasoningSettings && currentOrigin()) try { settings = await reasoningSettings(); } catch { /* Keep declared profile capabilities while the runtime is unavailable. */ }
+    listModels() {
+      const project = (settings = {}) => {
       const capability = profile => {
-        const model = settings[routeForProfile(profile.id).provider]?.models?.find(row => row.id === profile.model);
+        const model = settings[routeForProfile?.(profile.id)?.provider]?.models?.find(row => row.id === profile.model);
         return model?.reasoningEfforts !== undefined ? {supported:!!model.reasoningEfforts?.high,
           ...(model.reasoningEfforts?.high ? {effort:'high'} : {})} : reasoningCapability(profile);
       };
@@ -119,7 +119,9 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         openAICompatibleEndpoint(profile.baseUrl, 'chat/completions').href, profile.model) }
       catch { return null } })(),
       modelTier: profile.modelTier ?? 'auto', sourceKind: modelTierFor(profile),
-      location: modelTierFor(profile) === 'cloud' ? 'cloud' : ['127.0.0.1', 'localhost', '[::1]'].includes(new URL(profile.baseUrl).hostname) ? 'computer' : 'lan' })) },
+      location: modelTierFor(profile) === 'cloud' ? 'cloud' : ['127.0.0.1', 'localhost', '[::1]'].includes(new URL(profile.baseUrl).hostname) ? 'computer' : 'lan' })) };
+      return reasoningSettings && currentOrigin() ? Promise.resolve().then(reasoningSettings).then(project, () => project()) : project();
+    },
     async verifyModelProfile(profileId, ownerId) {
       requireModelAllowed(ownerId, profileId, 'new')
       const profile = modelProfile(profileId)
