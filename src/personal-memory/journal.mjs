@@ -50,7 +50,8 @@ export function createMemoryCommandJournal({ root }) {
             : row.redacted !== undefined && row.redacted !== false ||
               row.payloadHash !== digest(JSON.stringify({ operation: row.command.operation,
                 targetKind: row.command.target_kind, targetId: row.command.target_id,
-                payload: row.command.payload, expectedWorldRevision: row.command.expected_world_revision }))))) {
+                payload: row.command.payload, expectedWorldRevision: row.command.expected_world_revision,
+                ...(row.deleteConversationSnippets !== undefined ? { deleteConversationSnippets: row.deleteConversationSnippets } : {}) }))))) {
       throw failure('MEMORY_JOURNAL_CORRUPT');
     }
     return value;
@@ -77,9 +78,10 @@ export function createMemoryCommandJournal({ root }) {
     }
   }
   return {
-    async reserve({ ownerId, requestId, operation, targetKind, targetId, payload, expectedWorldRevision }) {
+    async reserve({ ownerId, requestId, operation, targetKind, targetId, payload, expectedWorldRevision, deleteConversationSnippets, cleanup }) {
       check(ownerId, requestId);
-      const proposal = { operation, targetKind, targetId, payload, expectedWorldRevision };
+      const proposal = { operation, targetKind, targetId, payload, expectedWorldRevision,
+        ...(deleteConversationSnippets === true ? { deleteConversationSnippets: true } : {}) };
       const payloadHash = digest(JSON.stringify(proposal));
       await ensurePrivateDirectory(path.dirname(fileFor(ownerId)));
       return queue(ownerId, async () => {
@@ -95,7 +97,8 @@ export function createMemoryCommandJournal({ root }) {
           subject_id: ownerId, actor: `weftmate:${ownerId}`, expected_world_revision: expectedWorldRevision,
           submitted_at: new Date().toISOString(), operation, target_kind: targetKind,
           target_id: targetId, payload };
-        state.records[requestId] = { requestId, payloadHash, command };
+        state.records[requestId] = { requestId, payloadHash, command,
+          ...(deleteConversationSnippets === true ? { deleteConversationSnippets: true } : {}), ...(cleanup ? { cleanup } : {}) };
         await write(ownerId, state);
         return state.records[requestId];
       });
@@ -103,6 +106,12 @@ export function createMemoryCommandJournal({ root }) {
     async get(ownerId, requestId) {
       check(ownerId, requestId);
       return queue(ownerId, async () => (await read(ownerId)).records[requestId] ?? null);
+    },
+    async clearCleanup(ownerId, requestId) {
+      check(ownerId, requestId);
+      return queue(ownerId, async () => { const state = await read(ownerId);
+        if (state.records[requestId]?.cleanup) { delete state.records[requestId].cleanup; await write(ownerId, state); }
+      });
     },
     async redactTargets(ownerId, ids) {
       if (typeof ownerId !== 'string' || !OWNER.test(ownerId) || !Array.isArray(ids) ||

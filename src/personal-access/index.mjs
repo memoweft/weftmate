@@ -521,6 +521,22 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
 
   const scheduleOperations = createScheduleOperations(context);
   const service = {
+    async cleanupMemoryCopies(ownerId, { sourceTexts = [], deleteConversationSnippets = false }) {
+      const account = accountState(ownerId);
+      for (const sessionId of Object.keys(account.sessions)) {
+        await callBackend(() => backend.cleanupMemoryCopies({ sessionId, ownerId, sourceTexts, deleteConversationSnippets }));
+      }
+      if (deleteConversationSnippets && sourceTexts.length) await serial(() => mutate(ownerId, next => {
+        for (const command of Object.values(next.commands)) {
+          if (typeof command.payload?.text === 'string') {
+            let text = command.payload.text;
+            for (const source of sourceTexts) text = text.replaceAll(source, '[已遗忘的原话]');
+            command.payload.text = text; command.payloadHash = digest(JSON.stringify(command.payload));
+          }
+        }
+      }));
+      return { cleaned: true };
+    },
     handleScheduleRuntime: scheduleOperations.handleRuntime,
     async restoreSchedules() {
       const sessionIds = Object.values(rootState.accounts).flatMap(account => Object.entries(account.sessions).filter(([, row]) => row.origin === 'personal-remote').map(([id]) => id));

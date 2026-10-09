@@ -440,6 +440,23 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
       return { sessionId, events, lastSeq }
     },
 
+    async withLifecycle(sessionId, task) {
+      if (lifecycle?.use) return lifecycle.use(sessionId, task)
+      const listed = await unwrap(await client.sessions.list({}), 'list')
+      const item = (listed?.items ?? []).find(item => sessionIdOf(item) === sessionId)
+      requireOrdinarySummary(item, sessionId)
+      if (lifecycle && item.agentPreset?.startsWith('personal-')) {
+        if (lifecycle.use) return lifecycle.use(sessionId, task)
+        await lifecycle.resume(sessionId)
+      }
+      return task()
+    },
+    async cleanupMemory(sessionId, options) {
+      if (!lifecycle) throw new DshAdapterError('internal', 'memory-cleanup')
+      const value = await lifecycle.cleanupMemory(sessionId, options)
+      logs.delete(sessionId); callIndexes.delete(sessionId); owned.delete(sessionId)
+      return value
+    },
     async remove(sessionId) {
       if (!lifecycle) throw new DshAdapterError('internal', 'delete')
       const value = await lifecycle.remove(sessionId)
