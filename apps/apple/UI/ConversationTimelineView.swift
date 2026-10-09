@@ -211,7 +211,7 @@ private struct ToolStepDetailView: View {
             if value.truncated { Text("内容已截断").font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted) }
             Button("复制") { copy(value.readableText) }.font(AppleTokens.Fonts.callout).buttonStyle(OutlineActionStyle())
             DisclosureGroup("查看原始数据", isExpanded: $rawExpanded) {
-                Text(value.raw).font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled)
+                Text(value.readableText).font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled)
                 Button("复制原始数据") { copy(value.raw) }.font(AppleTokens.Fonts.callout)
             }.font(AppleTokens.Fonts.callout)
         }.frame(maxWidth: .infinity, alignment: .leading)

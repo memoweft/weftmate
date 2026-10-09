@@ -1,0 +1,109 @@
+{
+  "generatedAt": "2026-10-09T18:22:52.536Z",
+  "baseCommit": "862cf7489fde17f4dc08dd46dae90b564bcded63",
+  "sourcesSHA256": "2aa3ba25195d59e7f869bcd2ee4d255ecea33f473b26dbfea4f1965c883bad79",
+  "implementationSHA256": {
+    "mac": "a546e82f6cb1254f50c2190a4b8030d89abd9da92700dfb0564bbc46941eacca",
+    "iphone": "0df4b6f30b45520e67fc3e1399d0990f3a6a3d9ba35e3896283f0084e59d05fd",
+    "watch": "019d06f41c143cad5e653cd27630e41f9e8ce9042e9393418c5b7617f615bf93"
+  },
+  "swiftCore": {
+    "passed": 52,
+    "failed": 0
+  },
+  "stateChecks": {
+    "executables": 2,
+    "passed": 2,
+    "interactionAssertions": 11
+  },
+  "nativeFlows": {
+    "mac": 2,
+    "iphone": 2,
+    "watch": 1,
+    "failed": 0,
+    "skipped": 0
+  },
+  "uiCopy": {
+    "authoredStrings": 1547,
+    "screenshotFrames": 53
+  },
+  "validations": [
+    {
+      "passed": true,
+      "platform": "mac",
+      "theme": "light",
+      "realPersonalHost": true,
+      "syntheticOnly": true,
+      "compiledDSH": false,
+      "xcodeJobs": 2,
+      "simulatorsAtOnce": 0,
+      "questionBatchPOSTs": 2,
+      "generatedAt": "2026-10-09T18:18:24.930052+00:00"
+    },
+    {
+      "passed": true,
+      "platform": "mac",
+      "theme": "dark",
+      "realPersonalHost": true,
+      "syntheticOnly": true,
+      "compiledDSH": false,
+      "xcodeJobs": 2,
+      "simulatorsAtOnce": 0,
+      "questionBatchPOSTs": 2,
+      "generatedAt": "2026-10-09T18:05:02.686794+00:00"
+    },
+    {
+      "passed": true,
+      "platform": "iphone",
+      "theme": "light",
+      "realPersonalHost": true,
+      "syntheticOnly": true,
+      "compiledDSH": false,
+      "xcodeJobs": 2,
+      "simulatorsAtOnce": 1,
+      "questionBatchPOSTs": 2,
+      "generatedAt": "2026-10-09T18:16:06.373341+00:00"
+    },
+    {
+      "passed": true,
+      "platform": "iphone",
+      "theme": "dark",
+      "realPersonalHost": true,
+      "syntheticOnly": true,
+      "compiledDSH": false,
+      "xcodeJobs": 2,
+      "simulatorsAtOnce": 1,
+      "questionBatchPOSTs": 2,
+      "generatedAt": "2026-10-09T18:20:23.011177+00:00"
+    }
+  ],
+  "resourceLimits": {
+    "xcodeJobs": 2,
+    "xcodebuildSerial": true,
+    "simulatorsAtOnce": 1,
+    "pairedWatchException": 2
+  },
+  "boundaries": {
+    "syntheticOnly": true,
+    "realPersonalHost": true,
+    "realWatchConnectivity": true,
+    "compiledDSH": false,
+    "realModel": false,
+    "realDevice": false,
+    "productionRelay": false,
+    "deploy": false,
+    "contractChanges": false
+  },
+  "postMergeIntegration": {
+    "main": "862cf748",
+    "mac": 1,
+    "iphone": 1,
+    "pairedWatch": 1,
+    "failed": 0
+  },
+  "cleanup": {
+    "status": "已清理",
+    "simulatorsShutdown": true,
+    "testProcessesRemaining": 0
+  }
+}
