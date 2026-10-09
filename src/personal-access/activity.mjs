@@ -132,7 +132,7 @@ export function createActivity(context) {
     if(request.method==='PATCH'&&readMatch){exactKeys(body,['requestId','read','attentionRevision'],['requestId','read','attentionRevision']);if(typeof body.read!=='boolean'||!Number.isSafeInteger(body.attentionRevision))throw failure('INVALID_REQUEST');}
     else if(request.method==='POST'&&path==='/read')exactKeys(body,['requestId','through'],['requestId','through']);
     else throw failure('INVALID_REQUEST');
-    if(!REQUEST_ID.test(body.requestId??''))throw failure('INVALID_REQUEST');
+    if(typeof body.requestId!=='string'||!REQUEST_ID.test(body.requestId))throw failure('INVALID_REQUEST');
     const fingerprint=digest(JSON.stringify({path,body}));
     await context.serial(()=>context.mutate(ownerId,next=>{
       authorize();const store=activityState(next),prior=store.operations[body.requestId];
