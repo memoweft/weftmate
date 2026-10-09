@@ -124,6 +124,9 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         description('appearance', '界面密度', '当前布局使用标准间距。', '标准');
         const memory = node('button', 'button secondary', '管理记忆'); memory.type = 'button'; memory.addEventListener('click', () => { hideSettingsDialog(); void core.openMemory(); });
         panels.get('memory').append(globalThis.WeftSettingsControls.row('记忆管理', '查看理解与来源，纠正或移除已有记忆。', memory));
+        const exports = node('div', 'form-actions');
+        for (const [format, label] of [['json', 'JSON'], ['markdown', 'Markdown']]) { const button = node('button', 'button secondary', label); button.type = 'button'; button.addEventListener('click', () => { void ui.exportMemories(format); }); exports.append(button); }
+        panels.get('memory').append(globalThis.WeftSettingsControls.row('导出我的记忆', '保存当前记忆与来源摘要，已遗忘的内容不会导出。', exports));
         description('models', '主模型', '每段对话在输入区单独选择主模型。', '在对话中选择');
         const updates = node('section', 'settings-updates'); updates.id = 'settings-updates'; panels.get('about').append(updates);
         description('about', 'WeftMate', '跨设备、跨对话的个人助手。', globalThis.weftmateDesktop ? '桌面程序' : '远程网页');

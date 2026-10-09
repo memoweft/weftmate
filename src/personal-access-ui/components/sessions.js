@@ -27,15 +27,36 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             ui.element('p', '', '这会永久删除对话、工作目录与经验，无法恢复。运行中的对话会先停止。'));
         const label = ui.element('label'); const forget = ui.element('input'); forget.type = 'checkbox';
         label.append(forget, document.createTextNode('同时忘掉从这段对话形成的记忆')); body.append(label);
+        const snippetsLabel = ui.element('label'), snippets = ui.element('input'); snippets.type = 'checkbox';
+        snippetsLabel.append(snippets, document.createTextNode('同时删除对话里含这句话的原话')); snippetsLabel.hidden = true;
+        const summary = ui.element('p'); summary.setAttribute('role', 'status'); body.append(summary, snippetsLabel);
+        let preview = null, previewGeneration = 0;
         const error = ui.element('p', 'form-error'); error.setAttribute('role', 'alert'); body.append(error);
         const footer = ui.element('div', 'dialog-footer');
         const cancel = ui.element('button', 'button secondary', '取消'); cancel.type = 'button'; cancel.addEventListener('click', () => dialog.close());
         const remove = ui.element('button', 'button danger', '永久删除'); remove.type = 'button';
+        forget.addEventListener('change', async () => {
+            const generation = ++previewGeneration; preview = null; snippets.checked = false;
+            snippetsLabel.hidden = !forget.checked; summary.textContent = ''; error.textContent = '';
+            remove.disabled = forget.checked;
+            if (!forget.checked) return;
+            summary.textContent = '正在读取遗忘范围…';
+            try {
+                const result = await core.previewSessionForget(session.sessionId);
+                if (generation !== previewGeneration || !dialog.open) return;
+                preview = result; summary.textContent = `将一起忘掉 ${result.itemCount} 项记忆，清除 ${result.evidenceCount} 条来源。勾选删除原话也会清除其他对话里的对应片段。`;
+                remove.disabled = false;
+            } catch (cause) {
+                if (generation !== previewGeneration || !dialog.open) return;
+                summary.textContent = ''; error.textContent = '无法读取遗忘范围，请取消勾选或重新打开确认框。';
+            }
+        });
         remove.addEventListener('click', async () => {
             remove.disabled = true; error.textContent = '';
-            try { await core.deleteSession(session.sessionId, forget.checked); dialog.close(); }
+            if (forget.checked && !preview) return;
+            try { await core.deleteSession(session.sessionId, forget.checked, { deleteConversationSnippets: snippets.checked, worldRevision: preview?.worldRevision }); dialog.close(); }
             catch (cause) { error.textContent = core.sessionLifecycleMessage(cause); }
-            finally { remove.disabled = false; }
+            finally { remove.disabled = forget.checked && !preview; }
         });
         footer.append(cancel, remove); dialog.append(body, footer); dialog.addEventListener('close', () => dialog.remove());
         document.body.append(dialog); dialog.showModal(); cancel.focus();
