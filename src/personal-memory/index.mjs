@@ -519,30 +519,49 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         ]);
         // Summaries come from permission-filtered rendered snapshots, never
         // unrestricted query_world values on a cloud destination.
-        const memories = [], fragments = [], seen = new Set();
+        const memories = [], fragments = [], seen = new Set(), recentEvidence = [];
+        // Core reads accepted Evidence in the same permission-filtered snapshot.
+        // Keep it visibly provisional and never fabricate a formal World item.
+        const recent = new Map();
+        for (const snapshot of [world, style, identity]) for (const item of snapshot?.preview?.recent_evidence ?? []) {
+          if (typeof item.id === 'string' && typeof item.text === 'string' && item.text.trim()) recent.set(item.id, item);
+        }
+        const recentHeader = '【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。';
+        const recentFragments = [];
+        for (const item of [...recent.values()].sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))) {
+          const claim = (item.preceding_text ? `纠正所指的较早原话（仅解释主题）：${item.preceding_text}\n` : '') + `本人原话：${item.text}`;
+          if (recentEvidence.length >= Math.min(4, recallMaxItems) ||
+              recentHeader.length + recentFragments.join('\n\n').length + claim.length + 4 > Math.min(900, recallMaxChars)) continue;
+          recentFragments.push(claim);
+          recentEvidence.push({ id: item.id, summary: item.text.slice(0, 240),
+            ...(item.preceding_evidence_id ? { precedingEvidenceId: item.preceding_evidence_id } : {}) });
+        }
+        const recentText = recentFragments.length ? `${recentHeader}\n${recentFragments.join('\n\n')}` : '';
+        const formalBudget = recallMaxChars - (recentText ? recentText.length + 2 : 0);
         for (const snapshot of [world, style, identity]) {
           const rendered = snapshot?.preview?.rendered_recall ?? '';
           const pairs = snapshot?.preview?.selected_item_ids ?? [];
           const claims = rendered.split(/\n(?=记忆(?:（过往）)?：)/);
           if (!pairs.length && rendered.trim() &&
-              fragments.join('\n\n').length + rendered.length + 2 <= recallMaxChars && !fragments.includes(rendered.trim())) fragments.push(rendered.trim());
+              fragments.join('\n\n').length + rendered.length + 2 <= formalBudget && !fragments.includes(rendered.trim())) fragments.push(rendered.trim());
           for (const [index, pair] of pairs.entries()) {
             const [kind, id] = Array.isArray(pair) ? pair : [];
             const claim = claims[index]?.trim();
             const summary = claim?.replace(/^记忆(?:（过往）)?：/, '').trim().slice(0, 240);
             if (!['cognition', 'entity', 'relationship', 'event'].includes(kind) ||
                 typeof id !== 'string' || !summary || seen.has(`${kind}:${id}`) ||
-                memories.length >= recallMaxItems || fragments.join('\n\n').length + claim.length + 2 > recallMaxChars) continue;
+                memories.length + recentEvidence.length >= recallMaxItems || fragments.join('\n\n').length + claim.length + 2 > formalBudget) continue;
             seen.add(`${kind}:${id}`);
             memories.push({ id, kind, summary }); fragments.push(claim);
           }
         }
         if (typeof interaction?.rendered_context === 'string' && interaction.rendered_context.trim()) {
-          const remaining = recallMaxChars - fragments.join('\n\n').length - 2;
+          const remaining = formalBudget - fragments.join('\n\n').length - 2;
           if (interaction.rendered_context.trim().length <= remaining) fragments.push(interaction.rendered_context.trim());
         }
+        if (recentText) fragments.push(recentText);
         const contextText = fragments.join('\n\n').slice(0, recallMaxChars);
-        return { state: 'ready', contextText, memories, worldRevision: Number.isSafeInteger(world?.world_revision)
+        return { state: 'ready', contextText, memories, ...(recentEvidence.length ? { recentEvidence } : {}), worldRevision: Number.isSafeInteger(world?.world_revision)
           ? world.world_revision : null, sourceCount: memories.length };
       }, sessionId);
     },

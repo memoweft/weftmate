@@ -35,18 +35,20 @@ export function createInferenceQueue({ isIdle = async () => true, pollMs = 100 }
     }
   }
   return {
-    acquire(priority, signal, onQueued = null) {
+    acquire(priority, signal, onQueued = null, onPreempt = null) {
       if (closed) return Promise.reject(new Error('MODEL_QUEUE_CLOSED'));
       signal?.throwIfAborted();
       return new Promise((resolve, reject) => {
-        const item = { priority, signal, resolve, reject, abort: null, onQueued };
+        const item = { priority, signal, resolve, reject, abort: null, onQueued, onPreempt };
         item.abort = () => {
           const index = pending.indexOf(item);
           if (index !== -1) { pending.splice(index, 1); notify(); reject(signal.reason); }
           else if (active === item) { active = null; void drain(); }
         };
         signal?.addEventListener('abort', item.abort, { once: true });
-        pending.push(item); notify(); void drain();
+        pending.push(item); notify();
+        if (priority === 'foreground' && active?.priority === 'background') active.onPreempt?.();
+        void drain();
       });
     },
     status: () => ({ active: active?.priority ?? null,
@@ -56,6 +58,28 @@ export function createInferenceQueue({ isIdle = async () => true, pollMs = 100 }
       item.signal?.removeEventListener('abort', item.abort); item.reject(new Error('MODEL_QUEUE_CLOSED'));
     } },
   };
+}
+
+/** A formation request owns no World writes until its complete reply reaches Core.
+ * Yield its unfinished generation to chat, then retry the same immutable request
+ * at the next idle slot. Do not send partial output from a cancelled attempt.
+ */
+export async function runPreemptibleFormation(queue, signal, work) {
+  while (true) {
+    signal.throwIfAborted();
+    const attempt = new AbortController();
+    const combined = AbortSignal.any([signal, attempt.signal]);
+    let yielded = false;
+    const release = await queue.acquire('background', signal, null, () => {
+      yielded = true; attempt.abort(new Error('MODEL_BACKGROUND_YIELD'));
+    });
+    try {
+      combined.throwIfAborted();
+      return await work(combined);
+    } catch (error) {
+      if (!yielded || signal.aborted) throw error;
+    } finally { release(); }
+  }
 }
 
 /** Private loopback bridge shared by native DSH streams and MemoWeft workers. */
@@ -145,13 +169,11 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
       const key = profile && credentialFor(profile);
       if (!profile || !key || request.headers.authorization !== `Bearer ${key}`) { response.writeHead(403).end(); return; }
       const operation = match[4];
+      let selectedQueue;
       if (operation === 'chat/completions') {
         // MemoWeft's HTTP timeout measures transport inactivity. Informational
         // responses keep queued work alive without changing the final status/body.
-        const heartbeat = setInterval(() => { if (!response.headersSent) response.writeProcessing(); }, heartbeatMs);
-        try { const selectedQueue = await queueFor({ profileId: match[1] });
-          if (selectedQueue) release = await selectedQueue.acquire('background', controller.signal); }
-        finally { clearInterval(heartbeat); }
+        selectedQueue = await queueFor({ profileId: match[1] });
       }
       let body;
       if (request.method === 'POST') {
@@ -162,6 +184,33 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
       const endpoint = operation === 'props'
         ? new URL(profile.baseUrl.replace(/\/?v1\/?$/, '/props'))
         : openAICompatibleEndpoint(profile.baseUrl, operation);
+      if (selectedQueue) {
+        const heartbeat = setInterval(() => { if (!response.headersSent) response.writeProcessing(); }, heartbeatMs);
+        try {
+          const completed = await runPreemptibleFormation(selectedQueue, controller.signal, async signal => {
+            const ticket = beginUsage ? await beginUsage({ profileId: profile.id,
+              ownerId: match[2] ?? null, sessionId: match[3] === 'none' ? null : match[3] ?? null }) : null;
+            let settled = false;
+            try {
+              let upstream = await fetchImpl(endpoint, { method: request.method, signal,
+                headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body });
+              if (ticket) upstream = await usageResponse(upstream, async usage => {
+                settled = true; await finishUsage({ ...ticket, usage, source: 'openai' });
+              });
+              const bytes = await upstream.arrayBuffer();
+              signal.throwIfAborted();
+              return { status: upstream.status, contentType: upstream.headers.get('content-type'), bytes };
+            } catch (error) {
+              if (ticket && !settled) await finishUsage({ ...ticket, usage: null });
+              throw error;
+            }
+          });
+          response.writeHead(completed.status, { 'content-type': completed.contentType ?? 'application/json',
+            'x-modelswitcher-model': profile.model });
+          response.end(Buffer.from(completed.bytes));
+        } finally { clearInterval(heartbeat); }
+        return;
+      }
       const usageTicket = operation === 'chat/completions' && beginUsage ? await beginUsage({ profileId: profile.id,
         ownerId: match[2] ?? null, sessionId: match[3] === 'none' ? null : match[3] ?? null }) : null;
       let upstream;

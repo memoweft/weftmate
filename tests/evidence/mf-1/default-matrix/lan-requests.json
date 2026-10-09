@@ -1,0 +1,5924 @@
+[
+  {
+    "id": "35856-1",
+    "at": "2026-10-09T07:28:32.148Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "scheduler-2",
+    "at": "2026-10-09T07:28:32.152Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-2",
+    "at": "2026-10-09T07:28:32.152Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "35856-1",
+    "at": "2026-10-09T07:28:32.157Z",
+    "elapsedMs": 9,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-1",
+    "at": "2026-10-09T07:28:32.158Z",
+    "elapsedMs": 10,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-2",
+    "at": "2026-10-09T07:28:32.162Z",
+    "elapsedMs": 10,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-4",
+    "at": "2026-10-09T07:28:32.602Z",
+    "elapsedMs": 440,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-3",
+    "at": "2026-10-09T07:28:32.646Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 7918,
+    "requestedModel": "local-quality",
+    "stream": true
+  },
+  {
+    "id": "scheduler-5",
+    "at": "2026-10-09T07:28:33.057Z",
+    "elapsedMs": 893,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-4",
+    "at": "2026-10-09T07:28:33.060Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 569,
+    "requestedModel": "local-quality",
+    "stream": true
+  },
+  {
+    "id": "35856-3",
+    "at": "2026-10-09T07:28:33.580Z",
+    "elapsedMs": 935,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-3",
+    "at": "2026-10-09T07:28:33.581Z",
+    "elapsedMs": 936,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-3",
+    "at": "2026-10-09T07:28:33.638Z",
+    "elapsedMs": 993,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-6",
+    "at": "2026-10-09T07:28:33.642Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-3",
+    "at": "2026-10-09T07:28:37.303Z",
+    "elapsedMs": 4659,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-7",
+    "at": "2026-10-09T07:28:37.307Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-3",
+    "at": "2026-10-09T07:28:37.856Z",
+    "elapsedMs": 5211,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 45091
+  },
+  {
+    "id": "35856-3",
+    "at": "2026-10-09T07:28:38.204Z",
+    "elapsedMs": 5559,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 106,
+    "bytes": 47492,
+    "reasoningChars": 622,
+    "contentChars": 50,
+    "usage": {
+      "completion_tokens": 186,
+      "prompt_tokens": 2355,
+      "total_tokens": 2541,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  },
+  {
+    "id": "35856-4",
+    "at": "2026-10-09T07:28:38.555Z",
+    "elapsedMs": 5496,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-4",
+    "at": "2026-10-09T07:28:38.556Z",
+    "elapsedMs": 5497,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-4",
+    "at": "2026-10-09T07:28:38.618Z",
+    "elapsedMs": 5559,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-8",
+    "at": "2026-10-09T07:28:38.703Z",
+    "elapsedMs": 495,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-1",
+    "at": "2026-10-09T07:28:38.704Z",
+    "elapsedMs": 6556,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "35856-4",
+    "at": "2026-10-09T07:28:39.680Z",
+    "elapsedMs": 6621,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 30,
+    "bytes": 17282,
+    "reasoningChars": 180,
+    "contentChars": 0,
+    "usage": {
+      "completion_tokens": 64,
+      "prompt_tokens": 158,
+      "total_tokens": 222,
+      "prompt_tokens_details": {
+        "cached_tokens": 100
+      }
+    }
+  },
+  {
+    "id": "scheduler-9",
+    "at": "2026-10-09T07:28:40.506Z",
+    "elapsedMs": 652,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-1",
+    "at": "2026-10-09T07:28:41.988Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 10773,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "templateThinking": false
+  },
+  {
+    "id": "40880-1",
+    "at": "2026-10-09T07:28:42.721Z",
+    "elapsedMs": 734,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-10",
+    "at": "2026-10-09T07:28:42.722Z",
+    "elapsedMs": 2867,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-1",
+    "at": "2026-10-09T07:28:42.723Z",
+    "elapsedMs": 736,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "40880-1",
+    "at": "2026-10-09T07:28:42.723Z",
+    "elapsedMs": 736,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35856-5",
+    "at": "2026-10-09T07:28:45.122Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "scheduler-12",
+    "at": "2026-10-09T07:28:45.126Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-6",
+    "at": "2026-10-09T07:28:45.126Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "35856-5",
+    "at": "2026-10-09T07:28:47.126Z",
+    "elapsedMs": 2004,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-5",
+    "at": "2026-10-09T07:28:47.126Z",
+    "elapsedMs": 2004,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-6",
+    "at": "2026-10-09T07:28:47.129Z",
+    "elapsedMs": 2003,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-14",
+    "at": "2026-10-09T07:28:47.664Z",
+    "elapsedMs": 536,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-7",
+    "at": "2026-10-09T07:28:47.669Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 8100,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-15",
+    "at": "2026-10-09T07:28:48.139Z",
+    "elapsedMs": 1009,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-8",
+    "at": "2026-10-09T07:28:48.143Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 533,
+    "requestedModel": "local-quality",
+    "stream": true
+  },
+  {
+    "id": "40880-1",
+    "at": "2026-10-09T07:28:49.488Z",
+    "elapsedMs": 7501,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 107893
+  },
+  {
+    "id": "40880-1",
+    "at": "2026-10-09T07:28:54.652Z",
+    "elapsedMs": 12665,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 200,
+    "bytes": 158539
+  },
+  {
+    "id": "40880-1",
+    "at": "2026-10-09T07:28:58.586Z",
+    "elapsedMs": 16599,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "40880-1",
+    "at": "2026-10-09T07:28:58.842Z",
+    "elapsedMs": 16855,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 300,
+    "bytes": 212510
+  },
+  {
+    "id": "40880-1",
+    "at": "2026-10-09T07:29:01.113Z",
+    "elapsedMs": 19126,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 363,
+    "bytes": 251991,
+    "reasoningChars": 2997,
+    "contentChars": 493,
+    "usage": {
+      "completion_tokens": 964,
+      "prompt_tokens": 4521,
+      "total_tokens": 5485,
+      "prompt_tokens_details": {
+        "cached_tokens": 4260
+      }
+    }
+  },
+  {
+    "id": "scheduler-10",
+    "at": "2026-10-09T07:29:01.611Z",
+    "elapsedMs": 21756,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-7",
+    "at": "2026-10-09T07:29:02.119Z",
+    "elapsedMs": 14451,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-7",
+    "at": "2026-10-09T07:29:02.119Z",
+    "elapsedMs": 14451,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-7",
+    "at": "2026-10-09T07:29:02.175Z",
+    "elapsedMs": 14507,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-16",
+    "at": "2026-10-09T07:29:02.178Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-7",
+    "at": "2026-10-09T07:29:05.455Z",
+    "elapsedMs": 17787,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-17",
+    "at": "2026-10-09T07:29:05.458Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-7",
+    "at": "2026-10-09T07:29:06.715Z",
+    "elapsedMs": 19047,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 44965
+  },
+  {
+    "id": "35856-7",
+    "at": "2026-10-09T07:29:11.210Z",
+    "elapsedMs": 23542,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 200,
+    "bytes": 80020
+  },
+  {
+    "id": "35856-7",
+    "at": "2026-10-09T07:29:15.774Z",
+    "elapsedMs": 28106,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 300,
+    "bytes": 115090
+  },
+  {
+    "id": "35856-7",
+    "at": "2026-10-09T07:29:20.022Z",
+    "elapsedMs": 32354,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 400,
+    "bytes": 150451
+  },
+  {
+    "id": "35856-7",
+    "at": "2026-10-09T07:29:20.076Z",
+    "elapsedMs": 32408,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 401,
+    "bytes": 151581,
+    "reasoningChars": 566,
+    "contentChars": 686,
+    "usage": {
+      "completion_tokens": 597,
+      "prompt_tokens": 2447,
+      "total_tokens": 3044,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  },
+  {
+    "id": "35856-8",
+    "at": "2026-10-09T07:29:20.337Z",
+    "elapsedMs": 32195,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-8",
+    "at": "2026-10-09T07:29:20.338Z",
+    "elapsedMs": 32196,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-8",
+    "at": "2026-10-09T07:29:20.398Z",
+    "elapsedMs": 32256,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-18",
+    "at": "2026-10-09T07:29:20.541Z",
+    "elapsedMs": 462,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-5",
+    "at": "2026-10-09T07:29:20.542Z",
+    "elapsedMs": 35420,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "35856-8",
+    "at": "2026-10-09T07:29:21.364Z",
+    "elapsedMs": 33222,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 32,
+    "bytes": 17317,
+    "reasoningChars": 289,
+    "contentChars": 0,
+    "usage": {
+      "completion_tokens": 64,
+      "prompt_tokens": 133,
+      "total_tokens": 197,
+      "prompt_tokens_details": {
+        "cached_tokens": 100
+      }
+    }
+  },
+  {
+    "id": "scheduler-19",
+    "at": "2026-10-09T07:29:22.048Z",
+    "elapsedMs": 653,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-9",
+    "at": "2026-10-09T07:29:27.848Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "scheduler-21",
+    "at": "2026-10-09T07:29:27.851Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-10",
+    "at": "2026-10-09T07:29:27.851Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "35856-9",
+    "at": "2026-10-09T07:29:27.856Z",
+    "elapsedMs": 8,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-9",
+    "at": "2026-10-09T07:29:27.856Z",
+    "elapsedMs": 8,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-10",
+    "at": "2026-10-09T07:29:27.860Z",
+    "elapsedMs": 9,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-23",
+    "at": "2026-10-09T07:29:28.245Z",
+    "elapsedMs": 388,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-11",
+    "at": "2026-10-09T07:29:28.248Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 8039,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-24",
+    "at": "2026-10-09T07:29:28.655Z",
+    "elapsedMs": 793,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-12",
+    "at": "2026-10-09T07:29:28.657Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 545,
+    "requestedModel": "local-quality",
+    "stream": true
+  },
+  {
+    "id": "35856-11",
+    "at": "2026-10-09T07:29:29.107Z",
+    "elapsedMs": 859,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-11",
+    "at": "2026-10-09T07:29:29.108Z",
+    "elapsedMs": 860,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-11",
+    "at": "2026-10-09T07:29:29.158Z",
+    "elapsedMs": 910,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-25",
+    "at": "2026-10-09T07:29:29.160Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-11",
+    "at": "2026-10-09T07:29:33.061Z",
+    "elapsedMs": 4813,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 48574
+  },
+  {
+    "id": "35856-11",
+    "at": "2026-10-09T07:29:36.092Z",
+    "elapsedMs": 7844,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-26",
+    "at": "2026-10-09T07:29:36.094Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-11",
+    "at": "2026-10-09T07:29:36.718Z",
+    "elapsedMs": 8470,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 190,
+    "bytes": 88487,
+    "reasoningChars": 1486,
+    "contentChars": 37,
+    "usage": {
+      "completion_tokens": 340,
+      "prompt_tokens": 2410,
+      "total_tokens": 2750,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  },
+  {
+    "id": "35856-12",
+    "at": "2026-10-09T07:29:37.065Z",
+    "elapsedMs": 8408,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-12",
+    "at": "2026-10-09T07:29:37.066Z",
+    "elapsedMs": 8409,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-12",
+    "at": "2026-10-09T07:29:37.127Z",
+    "elapsedMs": 8470,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-27",
+    "at": "2026-10-09T07:29:37.159Z",
+    "elapsedMs": 438,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-9",
+    "at": "2026-10-09T07:29:37.159Z",
+    "elapsedMs": 9311,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "35856-12",
+    "at": "2026-10-09T07:29:38.010Z",
+    "elapsedMs": 9353,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 33,
+    "bytes": 17288,
+    "reasoningChars": 237,
+    "contentChars": 0,
+    "usage": {
+      "completion_tokens": 64,
+      "prompt_tokens": 144,
+      "total_tokens": 208,
+      "prompt_tokens_details": {
+        "cached_tokens": 100
+      }
+    }
+  },
+  {
+    "id": "scheduler-28",
+    "at": "2026-10-09T07:29:38.936Z",
+    "elapsedMs": 747,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-2",
+    "at": "2026-10-09T07:29:40.391Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 10808,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "templateThinking": false
+  },
+  {
+    "id": "40880-2",
+    "at": "2026-10-09T07:29:41.105Z",
+    "elapsedMs": 714,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-29",
+    "at": "2026-10-09T07:29:41.105Z",
+    "elapsedMs": 2915,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-2",
+    "at": "2026-10-09T07:29:41.106Z",
+    "elapsedMs": 715,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "40880-2",
+    "at": "2026-10-09T07:29:41.106Z",
+    "elapsedMs": 715,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35856-13",
+    "at": "2026-10-09T07:29:41.580Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "35856-13",
+    "at": "2026-10-09T07:29:43.582Z",
+    "elapsedMs": 2002,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-13",
+    "at": "2026-10-09T07:29:43.583Z",
+    "elapsedMs": 2003,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "scheduler-31",
+    "at": "2026-10-09T07:29:44.029Z",
+    "elapsedMs": 444,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-14",
+    "at": "2026-10-09T07:29:44.032Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 10619,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 7,
+      "lastUserIndex": 10,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "40880-2",
+    "at": "2026-10-09T07:29:46.137Z",
+    "elapsedMs": 5746,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 63828
+  },
+  {
+    "id": "40880-2",
+    "at": "2026-10-09T07:29:49.731Z",
+    "elapsedMs": 9340,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "40880-2",
+    "at": "2026-10-09T07:29:49.992Z",
+    "elapsedMs": 9601,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 200,
+    "bytes": 115355
+  },
+  {
+    "id": "40880-2",
+    "at": "2026-10-09T07:29:51.137Z",
+    "elapsedMs": 10746,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 224,
+    "bytes": 136285,
+    "reasoningChars": 1572,
+    "contentChars": 274,
+    "usage": {
+      "completion_tokens": 524,
+      "prompt_tokens": 4544,
+      "total_tokens": 5068,
+      "prompt_tokens_details": {
+        "cached_tokens": 4260
+      }
+    }
+  },
+  {
+    "id": "scheduler-29",
+    "at": "2026-10-09T07:29:51.659Z",
+    "elapsedMs": 13469,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-14",
+    "at": "2026-10-09T07:29:52.821Z",
+    "elapsedMs": 8790,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-14",
+    "at": "2026-10-09T07:29:52.822Z",
+    "elapsedMs": 8791,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-14",
+    "at": "2026-10-09T07:29:52.872Z",
+    "elapsedMs": 8841,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-32",
+    "at": "2026-10-09T07:29:52.874Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-14",
+    "at": "2026-10-09T07:29:54.073Z",
+    "elapsedMs": 10042,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-33",
+    "at": "2026-10-09T07:29:54.077Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-14",
+    "at": "2026-10-09T07:29:54.779Z",
+    "elapsedMs": 10748,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 51,
+    "bytes": 21275,
+    "reasoningChars": 267,
+    "contentChars": 39,
+    "usage": {
+      "completion_tokens": 87,
+      "prompt_tokens": 3116,
+      "total_tokens": 3203,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  },
+  {
+    "id": "scheduler-34",
+    "at": "2026-10-09T07:29:55.238Z",
+    "elapsedMs": 457,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-13",
+    "at": "2026-10-09T07:29:55.239Z",
+    "elapsedMs": 13659,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "40880-3",
+    "at": "2026-10-09T07:29:57.077Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 11258,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "templateThinking": false
+  },
+  {
+    "id": "40880-3",
+    "at": "2026-10-09T07:29:58.193Z",
+    "elapsedMs": 1116,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-35",
+    "at": "2026-10-09T07:29:58.194Z",
+    "elapsedMs": 1778,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-3",
+    "at": "2026-10-09T07:29:58.194Z",
+    "elapsedMs": 1117,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "40880-3",
+    "at": "2026-10-09T07:29:58.194Z",
+    "elapsedMs": 1117,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35856-15",
+    "at": "2026-10-09T07:30:01.083Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "scheduler-37",
+    "at": "2026-10-09T07:30:01.087Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-16",
+    "at": "2026-10-09T07:30:01.087Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "35856-15",
+    "at": "2026-10-09T07:30:03.087Z",
+    "elapsedMs": 2004,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-15",
+    "at": "2026-10-09T07:30:03.087Z",
+    "elapsedMs": 2004,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-16",
+    "at": "2026-10-09T07:30:03.088Z",
+    "elapsedMs": 2001,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-39",
+    "at": "2026-10-09T07:30:03.559Z",
+    "elapsedMs": 471,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-17",
+    "at": "2026-10-09T07:30:03.562Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 8215,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": 6,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": true,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-40",
+    "at": "2026-10-09T07:30:04.029Z",
+    "elapsedMs": 940,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-18",
+    "at": "2026-10-09T07:30:04.033Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 543,
+    "requestedModel": "local-quality",
+    "stream": true
+  },
+  {
+    "id": "40880-3",
+    "at": "2026-10-09T07:30:05.340Z",
+    "elapsedMs": 8263,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "40880-3",
+    "at": "2026-10-09T07:30:05.458Z",
+    "elapsedMs": 8381,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 84947
+  },
+  {
+    "id": "40880-3",
+    "at": "2026-10-09T07:30:07.747Z",
+    "elapsedMs": 10670,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 168,
+    "bytes": 121061,
+    "reasoningChars": 1396,
+    "contentChars": 393,
+    "usage": {
+      "completion_tokens": 469,
+      "prompt_tokens": 4726,
+      "total_tokens": 5195,
+      "prompt_tokens_details": {
+        "cached_tokens": 4252
+      }
+    }
+  },
+  {
+    "id": "scheduler-35",
+    "at": "2026-10-09T07:30:08.261Z",
+    "elapsedMs": 11845,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-17",
+    "at": "2026-10-09T07:30:08.842Z",
+    "elapsedMs": 5280,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-17",
+    "at": "2026-10-09T07:30:08.842Z",
+    "elapsedMs": 5280,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-17",
+    "at": "2026-10-09T07:30:08.902Z",
+    "elapsedMs": 5340,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-41",
+    "at": "2026-10-09T07:30:08.904Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-17",
+    "at": "2026-10-09T07:30:12.515Z",
+    "elapsedMs": 8953,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 48532
+  },
+  {
+    "id": "35856-17",
+    "at": "2026-10-09T07:30:16.949Z",
+    "elapsedMs": 13387,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 200,
+    "bytes": 95398
+  },
+  {
+    "id": "35856-17",
+    "at": "2026-10-09T07:30:20.778Z",
+    "elapsedMs": 17216,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-42",
+    "at": "2026-10-09T07:30:20.781Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-17",
+    "at": "2026-10-09T07:30:21.117Z",
+    "elapsedMs": 17556,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 300,
+    "bytes": 142200
+  },
+  {
+    "id": "35856-17",
+    "at": "2026-10-09T07:30:22.409Z",
+    "elapsedMs": 18847,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 327,
+    "bytes": 154493,
+    "reasoningChars": 2196,
+    "contentChars": 90,
+    "usage": {
+      "completion_tokens": 592,
+      "prompt_tokens": 2526,
+      "total_tokens": 3118,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  },
+  {
+    "id": "35856-18",
+    "at": "2026-10-09T07:30:22.710Z",
+    "elapsedMs": 18677,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-18",
+    "at": "2026-10-09T07:30:22.710Z",
+    "elapsedMs": 18677,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-18",
+    "at": "2026-10-09T07:30:22.766Z",
+    "elapsedMs": 18733,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-43",
+    "at": "2026-10-09T07:30:22.874Z",
+    "elapsedMs": 463,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-15",
+    "at": "2026-10-09T07:30:22.875Z",
+    "elapsedMs": 21792,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "35856-18",
+    "at": "2026-10-09T07:30:23.728Z",
+    "elapsedMs": 19695,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 29,
+    "bytes": 17302,
+    "reasoningChars": 254,
+    "contentChars": 0,
+    "usage": {
+      "completion_tokens": 64,
+      "prompt_tokens": 141,
+      "total_tokens": 205,
+      "prompt_tokens_details": {
+        "cached_tokens": 100
+      }
+    }
+  },
+  {
+    "id": "scheduler-44",
+    "at": "2026-10-09T07:30:24.179Z",
+    "elapsedMs": 418,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-19",
+    "at": "2026-10-09T07:30:30.156Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "scheduler-46",
+    "at": "2026-10-09T07:30:30.158Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-20",
+    "at": "2026-10-09T07:30:30.159Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "35856-19",
+    "at": "2026-10-09T07:30:30.163Z",
+    "elapsedMs": 7,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-19",
+    "at": "2026-10-09T07:30:30.164Z",
+    "elapsedMs": 8,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-20",
+    "at": "2026-10-09T07:30:30.166Z",
+    "elapsedMs": 7,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-48",
+    "at": "2026-10-09T07:30:30.540Z",
+    "elapsedMs": 375,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-21",
+    "at": "2026-10-09T07:30:30.543Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 8043,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-49",
+    "at": "2026-10-09T07:30:30.945Z",
+    "elapsedMs": 776,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-22",
+    "at": "2026-10-09T07:30:30.947Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 549,
+    "requestedModel": "local-quality",
+    "stream": true
+  },
+  {
+    "id": "35856-21",
+    "at": "2026-10-09T07:30:31.474Z",
+    "elapsedMs": 931,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-21",
+    "at": "2026-10-09T07:30:31.475Z",
+    "elapsedMs": 932,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-21",
+    "at": "2026-10-09T07:30:31.541Z",
+    "elapsedMs": 998,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-50",
+    "at": "2026-10-09T07:30:31.542Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-21",
+    "at": "2026-10-09T07:30:34.403Z",
+    "elapsedMs": 3860,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-51",
+    "at": "2026-10-09T07:30:34.404Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-21",
+    "at": "2026-10-09T07:30:34.838Z",
+    "elapsedMs": 4295,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 87,
+    "bytes": 37020,
+    "reasoningChars": 512,
+    "contentChars": 18,
+    "usage": {
+      "completion_tokens": 150,
+      "prompt_tokens": 2421,
+      "total_tokens": 2571,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  },
+  {
+    "id": "35856-22",
+    "at": "2026-10-09T07:30:35.082Z",
+    "elapsedMs": 4135,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-22",
+    "at": "2026-10-09T07:30:35.082Z",
+    "elapsedMs": 4135,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-22",
+    "at": "2026-10-09T07:30:35.132Z",
+    "elapsedMs": 4185,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-52",
+    "at": "2026-10-09T07:30:35.269Z",
+    "elapsedMs": 429,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-19",
+    "at": "2026-10-09T07:30:35.270Z",
+    "elapsedMs": 5114,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "35856-22",
+    "at": "2026-10-09T07:30:36.025Z",
+    "elapsedMs": 5078,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 28,
+    "bytes": 16989,
+    "reasoningChars": 201,
+    "contentChars": 0,
+    "usage": {
+      "completion_tokens": 64,
+      "prompt_tokens": 150,
+      "total_tokens": 214,
+      "prompt_tokens_details": {
+        "cached_tokens": 100
+      }
+    }
+  },
+  {
+    "id": "scheduler-53",
+    "at": "2026-10-09T07:30:36.624Z",
+    "elapsedMs": 435,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-4",
+    "at": "2026-10-09T07:30:37.257Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 11106,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "templateThinking": false
+  },
+  {
+    "id": "40880-4",
+    "at": "2026-10-09T07:30:38.364Z",
+    "elapsedMs": 1107,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-54",
+    "at": "2026-10-09T07:30:38.365Z",
+    "elapsedMs": 1962,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-4",
+    "at": "2026-10-09T07:30:38.365Z",
+    "elapsedMs": 1108,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "40880-4",
+    "at": "2026-10-09T07:30:38.366Z",
+    "elapsedMs": 1109,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35856-23",
+    "at": "2026-10-09T07:30:41.778Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "35856-23",
+    "at": "2026-10-09T07:30:41.781Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-56",
+    "at": "2026-10-09T07:30:41.781Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-23",
+    "at": "2026-10-09T07:30:41.781Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-24",
+    "at": "2026-10-09T07:30:41.783Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "scheduler-57",
+    "at": "2026-10-09T07:30:42.217Z",
+    "elapsedMs": 433,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-25",
+    "at": "2026-10-09T07:30:42.220Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 8135,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "40880-4",
+    "at": "2026-10-09T07:30:43.750Z",
+    "elapsedMs": 6493,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "35856-24",
+    "at": "2026-10-09T07:30:43.788Z",
+    "elapsedMs": 2005,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-59",
+    "at": "2026-10-09T07:30:44.213Z",
+    "elapsedMs": 424,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-26",
+    "at": "2026-10-09T07:30:44.215Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 545,
+    "requestedModel": "local-quality",
+    "stream": true
+  },
+  {
+    "id": "35856-25",
+    "at": "2026-10-09T07:30:44.827Z",
+    "elapsedMs": 2607,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-25",
+    "at": "2026-10-09T07:30:44.828Z",
+    "elapsedMs": 2608,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-25",
+    "at": "2026-10-09T07:30:44.997Z",
+    "elapsedMs": 2777,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-60",
+    "at": "2026-10-09T07:30:44.999Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-25",
+    "at": "2026-10-09T07:30:45.389Z",
+    "elapsedMs": 3169,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-61",
+    "at": "2026-10-09T07:30:45.391Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-4",
+    "at": "2026-10-09T07:30:45.423Z",
+    "elapsedMs": 8166,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 81,
+    "bytes": 84196,
+    "reasoningChars": 945,
+    "contentChars": 278,
+    "usage": {
+      "completion_tokens": 332,
+      "prompt_tokens": 4683,
+      "total_tokens": 5015,
+      "prompt_tokens_details": {
+        "cached_tokens": 4252
+      }
+    }
+  },
+  {
+    "id": "35856-26",
+    "at": "2026-10-09T07:30:45.728Z",
+    "elapsedMs": 1513,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-26",
+    "at": "2026-10-09T07:30:45.730Z",
+    "elapsedMs": 1515,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-26",
+    "at": "2026-10-09T07:30:45.787Z",
+    "elapsedMs": 1572,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-54",
+    "at": "2026-10-09T07:30:45.913Z",
+    "elapsedMs": 9510,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-26",
+    "at": "2026-10-09T07:30:46.797Z",
+    "elapsedMs": 2582,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 28,
+    "bytes": 17282,
+    "reasoningChars": 227,
+    "contentChars": 0,
+    "usage": {
+      "completion_tokens": 64,
+      "prompt_tokens": 144,
+      "total_tokens": 208,
+      "prompt_tokens_details": {
+        "cached_tokens": 100
+      }
+    }
+  },
+  {
+    "id": "scheduler-62",
+    "at": "2026-10-09T07:30:47.255Z",
+    "elapsedMs": 457,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-25",
+    "at": "2026-10-09T07:30:48.552Z",
+    "elapsedMs": 6332,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 71,
+    "bytes": 20878,
+    "reasoningChars": 124,
+    "contentChars": 142,
+    "usage": {
+      "completion_tokens": 129,
+      "prompt_tokens": 2258,
+      "total_tokens": 2387,
+      "completion_tokens_details": {
+        "reasoning_tokens": 29
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1664
+      }
+    }
+  },
+  {
+    "id": "scheduler-63",
+    "at": "2026-10-09T07:30:49.005Z",
+    "elapsedMs": 452,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-23",
+    "at": "2026-10-09T07:30:49.006Z",
+    "elapsedMs": 7228,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "40880-5",
+    "at": "2026-10-09T07:30:51.423Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 11258,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "templateThinking": false
+  },
+  {
+    "id": "40880-5",
+    "at": "2026-10-09T07:30:52.122Z",
+    "elapsedMs": 700,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-64",
+    "at": "2026-10-09T07:30:52.122Z",
+    "elapsedMs": 1765,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-5",
+    "at": "2026-10-09T07:30:52.123Z",
+    "elapsedMs": 701,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "40880-5",
+    "at": "2026-10-09T07:30:52.335Z",
+    "elapsedMs": 913,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "40880-5",
+    "at": "2026-10-09T07:30:54.393Z",
+    "elapsedMs": 2971,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "40880-5",
+    "at": "2026-10-09T07:30:54.820Z",
+    "elapsedMs": 3398,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 23,
+    "bytes": 25131,
+    "reasoningChars": 330,
+    "contentChars": 41,
+    "usage": {
+      "completion_tokens": 101,
+      "prompt_tokens": 4740,
+      "total_tokens": 4841,
+      "prompt_tokens_details": {
+        "cached_tokens": 4422
+      }
+    }
+  },
+  {
+    "id": "scheduler-64",
+    "at": "2026-10-09T07:30:55.527Z",
+    "elapsedMs": 5170,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-6",
+    "at": "2026-10-09T07:30:56.493Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 12341,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "templateThinking": false
+  },
+  {
+    "id": "35856-27",
+    "at": "2026-10-09T07:30:56.957Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "scheduler-67",
+    "at": "2026-10-09T07:30:56.960Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-28",
+    "at": "2026-10-09T07:30:56.960Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "40880-6",
+    "at": "2026-10-09T07:30:57.067Z",
+    "elapsedMs": 574,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-65",
+    "at": "2026-10-09T07:30:57.068Z",
+    "elapsedMs": 1490,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-6",
+    "at": "2026-10-09T07:30:57.068Z",
+    "elapsedMs": 575,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "40880-6",
+    "at": "2026-10-09T07:30:57.126Z",
+    "elapsedMs": 633,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35856-27",
+    "at": "2026-10-09T07:30:58.960Z",
+    "elapsedMs": 2003,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-27",
+    "at": "2026-10-09T07:30:58.960Z",
+    "elapsedMs": 2003,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-28",
+    "at": "2026-10-09T07:30:58.962Z",
+    "elapsedMs": 2002,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-69",
+    "at": "2026-10-09T07:30:59.410Z",
+    "elapsedMs": 449,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-29",
+    "at": "2026-10-09T07:30:59.413Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 8085,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-70",
+    "at": "2026-10-09T07:30:59.880Z",
+    "elapsedMs": 917,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-30",
+    "at": "2026-10-09T07:30:59.883Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 557,
+    "requestedModel": "local-quality",
+    "stream": true
+  },
+  {
+    "id": "40880-6",
+    "at": "2026-10-09T07:31:01.792Z",
+    "elapsedMs": 5299,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 84017
+  },
+  {
+    "id": "40880-6",
+    "at": "2026-10-09T07:31:06.165Z",
+    "elapsedMs": 9672,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 200,
+    "bytes": 157003
+  },
+  {
+    "id": "40880-6",
+    "at": "2026-10-09T07:31:10.810Z",
+    "elapsedMs": 14317,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 300,
+    "bytes": 210554
+  },
+  {
+    "id": "40880-6",
+    "at": "2026-10-09T07:31:13.768Z",
+    "elapsedMs": 17275,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "40880-6",
+    "at": "2026-10-09T07:31:13.983Z",
+    "elapsedMs": 17490,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 372,
+    "bytes": 246025,
+    "reasoningChars": 3256,
+    "contentChars": 41,
+    "usage": {
+      "completion_tokens": 938,
+      "prompt_tokens": 5016,
+      "total_tokens": 5954,
+      "prompt_tokens_details": {
+        "cached_tokens": 4741
+      }
+    }
+  },
+  {
+    "id": "scheduler-65",
+    "at": "2026-10-09T07:31:14.536Z",
+    "elapsedMs": 18958,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-29",
+    "at": "2026-10-09T07:31:15.268Z",
+    "elapsedMs": 15855,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-29",
+    "at": "2026-10-09T07:31:15.269Z",
+    "elapsedMs": 15856,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-29",
+    "at": "2026-10-09T07:31:15.335Z",
+    "elapsedMs": 15922,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-71",
+    "at": "2026-10-09T07:31:15.338Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-29",
+    "at": "2026-10-09T07:31:19.149Z",
+    "elapsedMs": 19736,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 45134
+  },
+  {
+    "id": "35856-29",
+    "at": "2026-10-09T07:31:23.327Z",
+    "elapsedMs": 23914,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 200,
+    "bytes": 102408
+  },
+  {
+    "id": "35856-29",
+    "at": "2026-10-09T07:31:26.215Z",
+    "elapsedMs": 26802,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-72",
+    "at": "2026-10-09T07:31:26.217Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-29",
+    "at": "2026-10-09T07:31:27.320Z",
+    "elapsedMs": 27907,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 289,
+    "bytes": 146560,
+    "reasoningChars": 2243,
+    "contentChars": 66,
+    "usage": {
+      "completion_tokens": 570,
+      "prompt_tokens": 2442,
+      "total_tokens": 3012,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  },
+  {
+    "id": "35856-30",
+    "at": "2026-10-09T07:31:27.763Z",
+    "elapsedMs": 27880,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-30",
+    "at": "2026-10-09T07:31:27.764Z",
+    "elapsedMs": 27881,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-30",
+    "at": "2026-10-09T07:31:27.825Z",
+    "elapsedMs": 27942,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-73",
+    "at": "2026-10-09T07:31:27.880Z",
+    "elapsedMs": 557,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-27",
+    "at": "2026-10-09T07:31:27.879Z",
+    "elapsedMs": 30922,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "35856-30",
+    "at": "2026-10-09T07:31:28.829Z",
+    "elapsedMs": 28946,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 29,
+    "bytes": 17031,
+    "reasoningChars": 215,
+    "contentChars": 0,
+    "usage": {
+      "completion_tokens": 64,
+      "prompt_tokens": 152,
+      "total_tokens": 216,
+      "prompt_tokens_details": {
+        "cached_tokens": 100
+      }
+    }
+  },
+  {
+    "id": "scheduler-74",
+    "at": "2026-10-09T07:31:29.630Z",
+    "elapsedMs": 652,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-7",
+    "at": "2026-10-09T07:31:30.704Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 11296,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "templateThinking": false
+  },
+  {
+    "id": "40880-7",
+    "at": "2026-10-09T07:31:31.583Z",
+    "elapsedMs": 880,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-75",
+    "at": "2026-10-09T07:31:31.584Z",
+    "elapsedMs": 2605,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-7",
+    "at": "2026-10-09T07:31:31.584Z",
+    "elapsedMs": 881,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "40880-7",
+    "at": "2026-10-09T07:31:31.584Z",
+    "elapsedMs": 881,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35856-31",
+    "at": "2026-10-09T07:31:34.757Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "scheduler-76",
+    "at": "2026-10-09T07:31:34.760Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-32",
+    "at": "2026-10-09T07:31:34.760Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "35856-31",
+    "at": "2026-10-09T07:31:36.761Z",
+    "elapsedMs": 2004,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-31",
+    "at": "2026-10-09T07:31:36.761Z",
+    "elapsedMs": 2004,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-32",
+    "at": "2026-10-09T07:31:36.762Z",
+    "elapsedMs": 2002,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-79",
+    "at": "2026-10-09T07:31:37.183Z",
+    "elapsedMs": 421,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-33",
+    "at": "2026-10-09T07:31:37.185Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 8177,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-80",
+    "at": "2026-10-09T07:31:37.620Z",
+    "elapsedMs": 856,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-34",
+    "at": "2026-10-09T07:31:37.622Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 545,
+    "requestedModel": "local-quality",
+    "stream": true
+  },
+  {
+    "id": "40880-7",
+    "at": "2026-10-09T07:31:39.355Z",
+    "elapsedMs": 8652,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 86101
+  },
+  {
+    "id": "40880-7",
+    "at": "2026-10-09T07:31:43.488Z",
+    "elapsedMs": 12785,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "40880-7",
+    "at": "2026-10-09T07:31:43.913Z",
+    "elapsedMs": 13210,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 200,
+    "bytes": 133124
+  },
+  {
+    "id": "40880-7",
+    "at": "2026-10-09T07:31:46.996Z",
+    "elapsedMs": 16293,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 272,
+    "bytes": 181031,
+    "reasoningChars": 2162,
+    "contentChars": 628,
+    "usage": {
+      "completion_tokens": 715,
+      "prompt_tokens": 4764,
+      "total_tokens": 5479,
+      "prompt_tokens_details": {
+        "cached_tokens": 4479
+      }
+    }
+  },
+  {
+    "id": "scheduler-75",
+    "at": "2026-10-09T07:31:47.588Z",
+    "elapsedMs": 18609,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-33",
+    "at": "2026-10-09T07:31:48.261Z",
+    "elapsedMs": 11077,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-33",
+    "at": "2026-10-09T07:31:48.261Z",
+    "elapsedMs": 11077,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-33",
+    "at": "2026-10-09T07:31:48.322Z",
+    "elapsedMs": 11138,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-81",
+    "at": "2026-10-09T07:31:48.325Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-33",
+    "at": "2026-10-09T07:31:52.618Z",
+    "elapsedMs": 15434,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 48702
+  },
+  {
+    "id": "35856-33",
+    "at": "2026-10-09T07:31:54.074Z",
+    "elapsedMs": 16890,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-82",
+    "at": "2026-10-09T07:31:54.077Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-33",
+    "at": "2026-10-09T07:31:56.772Z",
+    "elapsedMs": 19588,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 193,
+    "bytes": 85755,
+    "reasoningChars": 810,
+    "contentChars": 125,
+    "usage": {
+      "completion_tokens": 343,
+      "prompt_tokens": 2507,
+      "total_tokens": 2850,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  },
+  {
+    "id": "35856-34",
+    "at": "2026-10-09T07:31:57.073Z",
+    "elapsedMs": 19452,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-34",
+    "at": "2026-10-09T07:31:57.074Z",
+    "elapsedMs": 19453,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-34",
+    "at": "2026-10-09T07:31:57.139Z",
+    "elapsedMs": 19518,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-83",
+    "at": "2026-10-09T07:31:57.237Z",
+    "elapsedMs": 463,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-31",
+    "at": "2026-10-09T07:31:57.238Z",
+    "elapsedMs": 22481,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "35856-34",
+    "at": "2026-10-09T07:31:58.123Z",
+    "elapsedMs": 20502,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 26,
+    "bytes": 17007,
+    "reasoningChars": 214,
+    "contentChars": 0,
+    "usage": {
+      "completion_tokens": 64,
+      "prompt_tokens": 147,
+      "total_tokens": 211,
+      "prompt_tokens_details": {
+        "cached_tokens": 100
+      }
+    }
+  },
+  {
+    "id": "scheduler-84",
+    "at": "2026-10-09T07:31:58.809Z",
+    "elapsedMs": 684,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-8",
+    "at": "2026-10-09T07:31:59.319Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 12113,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "templateThinking": false
+  },
+  {
+    "id": "40880-8",
+    "at": "2026-10-09T07:32:00.480Z",
+    "elapsedMs": 1161,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-85",
+    "at": "2026-10-09T07:32:00.480Z",
+    "elapsedMs": 2116,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-8",
+    "at": "2026-10-09T07:32:00.480Z",
+    "elapsedMs": 1161,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "40880-8",
+    "at": "2026-10-09T07:32:00.724Z",
+    "elapsedMs": 1405,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "40880-8",
+    "at": "2026-10-09T07:32:02.386Z",
+    "elapsedMs": 3067,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "40880-8",
+    "at": "2026-10-09T07:32:02.627Z",
+    "elapsedMs": 3308,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 12,
+    "bytes": 20867,
+    "reasoningChars": 231,
+    "contentChars": 41,
+    "usage": {
+      "completion_tokens": 86,
+      "prompt_tokens": 5102,
+      "total_tokens": 5188,
+      "prompt_tokens_details": {
+        "cached_tokens": 4503
+      }
+    }
+  },
+  {
+    "id": "scheduler-85",
+    "at": "2026-10-09T07:32:03.086Z",
+    "elapsedMs": 4722,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-9",
+    "at": "2026-10-09T07:32:04.069Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 13142,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "templateThinking": false
+  },
+  {
+    "id": "40880-9",
+    "at": "2026-10-09T07:32:04.771Z",
+    "elapsedMs": 703,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-86",
+    "at": "2026-10-09T07:32:04.772Z",
+    "elapsedMs": 1433,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-9",
+    "at": "2026-10-09T07:32:04.772Z",
+    "elapsedMs": 704,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "40880-9",
+    "at": "2026-10-09T07:32:04.772Z",
+    "elapsedMs": 704,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35856-35",
+    "at": "2026-10-09T07:32:06.742Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "scheduler-88",
+    "at": "2026-10-09T07:32:06.745Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-36",
+    "at": "2026-10-09T07:32:06.745Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "35856-35",
+    "at": "2026-10-09T07:32:08.746Z",
+    "elapsedMs": 2004,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-35",
+    "at": "2026-10-09T07:32:08.746Z",
+    "elapsedMs": 2004,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-36",
+    "at": "2026-10-09T07:32:08.748Z",
+    "elapsedMs": 2003,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-90",
+    "at": "2026-10-09T07:32:09.186Z",
+    "elapsedMs": 438,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-37",
+    "at": "2026-10-09T07:32:09.187Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 8079,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-91",
+    "at": "2026-10-09T07:32:09.625Z",
+    "elapsedMs": 875,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-38",
+    "at": "2026-10-09T07:32:09.627Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 551,
+    "requestedModel": "local-quality",
+    "stream": true
+  },
+  {
+    "id": "40880-9",
+    "at": "2026-10-09T07:32:10.816Z",
+    "elapsedMs": 6748,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 77974
+  },
+  {
+    "id": "40880-9",
+    "at": "2026-10-09T07:32:11.904Z",
+    "elapsedMs": 7836,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "40880-9",
+    "at": "2026-10-09T07:32:12.101Z",
+    "elapsedMs": 8033,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 124,
+    "bytes": 93294,
+    "reasoningChars": 1634,
+    "contentChars": 41,
+    "usage": {
+      "completion_tokens": 360,
+      "prompt_tokens": 5370,
+      "total_tokens": 5730,
+      "prompt_tokens_details": {
+        "cached_tokens": 5103
+      }
+    }
+  },
+  {
+    "id": "scheduler-86",
+    "at": "2026-10-09T07:32:12.639Z",
+    "elapsedMs": 9300,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-37",
+    "at": "2026-10-09T07:32:13.286Z",
+    "elapsedMs": 4099,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-37",
+    "at": "2026-10-09T07:32:13.286Z",
+    "elapsedMs": 4099,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-37",
+    "at": "2026-10-09T07:32:13.341Z",
+    "elapsedMs": 4154,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-92",
+    "at": "2026-10-09T07:32:13.344Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-37",
+    "at": "2026-10-09T07:32:17.132Z",
+    "elapsedMs": 7945,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 46331
+  },
+  {
+    "id": "35856-37",
+    "at": "2026-10-09T07:32:20.722Z",
+    "elapsedMs": 11535,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-93",
+    "at": "2026-10-09T07:32:20.724Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-37",
+    "at": "2026-10-09T07:32:21.392Z",
+    "elapsedMs": 12205,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 200,
+    "bytes": 85470
+  },
+  {
+    "id": "35856-37",
+    "at": "2026-10-09T07:32:22.291Z",
+    "elapsedMs": 13104,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 222,
+    "bytes": 95472,
+    "reasoningChars": 1182,
+    "contentChars": 98,
+    "usage": {
+      "completion_tokens": 374,
+      "prompt_tokens": 2443,
+      "total_tokens": 2817,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  },
+  {
+    "id": "35856-38",
+    "at": "2026-10-09T07:32:22.609Z",
+    "elapsedMs": 12983,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-38",
+    "at": "2026-10-09T07:32:22.610Z",
+    "elapsedMs": 12984,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-38",
+    "at": "2026-10-09T07:32:22.681Z",
+    "elapsedMs": 13055,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-94",
+    "at": "2026-10-09T07:32:22.761Z",
+    "elapsedMs": 468,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-35",
+    "at": "2026-10-09T07:32:22.762Z",
+    "elapsedMs": 16020,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "35856-38",
+    "at": "2026-10-09T07:32:23.649Z",
+    "elapsedMs": 14023,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 31,
+    "bytes": 17262,
+    "reasoningChars": 203,
+    "contentChars": 0,
+    "usage": {
+      "completion_tokens": 64,
+      "prompt_tokens": 150,
+      "total_tokens": 214,
+      "prompt_tokens_details": {
+        "cached_tokens": 100
+      }
+    }
+  },
+  {
+    "id": "scheduler-95",
+    "at": "2026-10-09T07:32:24.325Z",
+    "elapsedMs": 669,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-10",
+    "at": "2026-10-09T07:32:24.984Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 12133,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "templateThinking": false
+  },
+  {
+    "id": "40880-10",
+    "at": "2026-10-09T07:32:25.881Z",
+    "elapsedMs": 898,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-96",
+    "at": "2026-10-09T07:32:25.881Z",
+    "elapsedMs": 1986,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-10",
+    "at": "2026-10-09T07:32:25.882Z",
+    "elapsedMs": 899,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "40880-10",
+    "at": "2026-10-09T07:32:25.882Z",
+    "elapsedMs": 899,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35856-39",
+    "at": "2026-10-09T07:32:29.676Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "scheduler-98",
+    "at": "2026-10-09T07:32:29.679Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-40",
+    "at": "2026-10-09T07:32:29.679Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "40880-10",
+    "at": "2026-10-09T07:32:30.742Z",
+    "elapsedMs": 5759,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "35856-39",
+    "at": "2026-10-09T07:32:31.679Z",
+    "elapsedMs": 2003,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-39",
+    "at": "2026-10-09T07:32:31.680Z",
+    "elapsedMs": 2004,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-40",
+    "at": "2026-10-09T07:32:31.682Z",
+    "elapsedMs": 2003,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-100",
+    "at": "2026-10-09T07:32:32.166Z",
+    "elapsedMs": 483,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-41",
+    "at": "2026-10-09T07:32:32.168Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 8172,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "40880-10",
+    "at": "2026-10-09T07:32:32.623Z",
+    "elapsedMs": 7640,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 79,
+    "bytes": 77886,
+    "reasoningChars": 835,
+    "contentChars": 280,
+    "usage": {
+      "completion_tokens": 304,
+      "prompt_tokens": 5111,
+      "total_tokens": 5415,
+      "prompt_tokens_details": {
+        "cached_tokens": 4841
+      }
+    }
+  },
+  {
+    "id": "scheduler-101",
+    "at": "2026-10-09T07:32:32.624Z",
+    "elapsedMs": 940,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-42",
+    "at": "2026-10-09T07:32:32.628Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 546,
+    "requestedModel": "local-quality",
+    "stream": true
+  },
+  {
+    "id": "scheduler-96",
+    "at": "2026-10-09T07:32:33.406Z",
+    "elapsedMs": 9511,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-41",
+    "at": "2026-10-09T07:32:33.789Z",
+    "elapsedMs": 1621,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-41",
+    "at": "2026-10-09T07:32:33.789Z",
+    "elapsedMs": 1621,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-41",
+    "at": "2026-10-09T07:32:33.857Z",
+    "elapsedMs": 1689,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-102",
+    "at": "2026-10-09T07:32:33.859Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-41",
+    "at": "2026-10-09T07:32:37.306Z",
+    "elapsedMs": 5138,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 54801
+  },
+  {
+    "id": "35856-41",
+    "at": "2026-10-09T07:32:40.074Z",
+    "elapsedMs": 7906,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-103",
+    "at": "2026-10-09T07:32:40.077Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-41",
+    "at": "2026-10-09T07:32:40.855Z",
+    "elapsedMs": 8687,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 187,
+    "bytes": 93706,
+    "reasoningChars": 1229,
+    "contentChars": 49,
+    "usage": {
+      "completion_tokens": 365,
+      "prompt_tokens": 2501,
+      "total_tokens": 2866,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  },
+  {
+    "id": "35856-42",
+    "at": "2026-10-09T07:32:41.119Z",
+    "elapsedMs": 8492,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-42",
+    "at": "2026-10-09T07:32:41.121Z",
+    "elapsedMs": 8494,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-42",
+    "at": "2026-10-09T07:32:41.174Z",
+    "elapsedMs": 8547,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-104",
+    "at": "2026-10-09T07:32:41.312Z",
+    "elapsedMs": 455,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-39",
+    "at": "2026-10-09T07:32:41.312Z",
+    "elapsedMs": 11636,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "35856-42",
+    "at": "2026-10-09T07:32:42.051Z",
+    "elapsedMs": 9424,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 28,
+    "bytes": 17260,
+    "reasoningChars": 218,
+    "contentChars": 0,
+    "usage": {
+      "completion_tokens": 64,
+      "prompt_tokens": 146,
+      "total_tokens": 210,
+      "prompt_tokens_details": {
+        "cached_tokens": 100
+      }
+    }
+  },
+  {
+    "id": "scheduler-105",
+    "at": "2026-10-09T07:32:42.859Z",
+    "elapsedMs": 657,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-11",
+    "at": "2026-10-09T07:32:43.488Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 12338,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "templateThinking": false
+  },
+  {
+    "id": "40880-11",
+    "at": "2026-10-09T07:32:44.418Z",
+    "elapsedMs": 931,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-106",
+    "at": "2026-10-09T07:32:44.418Z",
+    "elapsedMs": 1944,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-11",
+    "at": "2026-10-09T07:32:44.419Z",
+    "elapsedMs": 932,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "40880-11",
+    "at": "2026-10-09T07:32:44.426Z",
+    "elapsedMs": 939,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35856-43",
+    "at": "2026-10-09T07:32:48.647Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "scheduler-108",
+    "at": "2026-10-09T07:32:48.650Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-44",
+    "at": "2026-10-09T07:32:48.650Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "35856-43",
+    "at": "2026-10-09T07:32:50.650Z",
+    "elapsedMs": 2003,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-43",
+    "at": "2026-10-09T07:32:50.651Z",
+    "elapsedMs": 2004,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-44",
+    "at": "2026-10-09T07:32:50.652Z",
+    "elapsedMs": 2002,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-110",
+    "at": "2026-10-09T07:32:51.151Z",
+    "elapsedMs": 499,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-45",
+    "at": "2026-10-09T07:32:51.153Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 8243,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-111",
+    "at": "2026-10-09T07:32:51.666Z",
+    "elapsedMs": 1013,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-46",
+    "at": "2026-10-09T07:32:51.670Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 539,
+    "requestedModel": "local-quality",
+    "stream": true
+  },
+  {
+    "id": "40880-11",
+    "at": "2026-10-09T07:32:51.812Z",
+    "elapsedMs": 8325,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 90103
+  },
+  {
+    "id": "40880-11",
+    "at": "2026-10-09T07:32:53.712Z",
+    "elapsedMs": 10225,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "40880-11",
+    "at": "2026-10-09T07:32:56.121Z",
+    "elapsedMs": 12634,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 200,
+    "bytes": 142811
+  },
+  {
+    "id": "40880-11",
+    "at": "2026-10-09T07:32:56.555Z",
+    "elapsedMs": 13068,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 202,
+    "bytes": 144696,
+    "reasoningChars": 1576,
+    "contentChars": 363,
+    "usage": {
+      "completion_tokens": 559,
+      "prompt_tokens": 5192,
+      "total_tokens": 5751,
+      "prompt_tokens_details": {
+        "cached_tokens": 4503
+      }
+    }
+  },
+  {
+    "id": "scheduler-106",
+    "at": "2026-10-09T07:32:57.117Z",
+    "elapsedMs": 14643,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-45",
+    "at": "2026-10-09T07:32:58.245Z",
+    "elapsedMs": 7093,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-45",
+    "at": "2026-10-09T07:32:58.246Z",
+    "elapsedMs": 7094,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-45",
+    "at": "2026-10-09T07:32:58.310Z",
+    "elapsedMs": 7158,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-112",
+    "at": "2026-10-09T07:32:58.314Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-45",
+    "at": "2026-10-09T07:33:02.179Z",
+    "elapsedMs": 11027,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 44409
+  },
+  {
+    "id": "35856-45",
+    "at": "2026-10-09T07:33:04.199Z",
+    "elapsedMs": 13047,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-113",
+    "at": "2026-10-09T07:33:04.202Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-45",
+    "at": "2026-10-09T07:33:05.948Z",
+    "elapsedMs": 14796,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 176,
+    "bytes": 77627,
+    "reasoningChars": 816,
+    "contentChars": 86,
+    "usage": {
+      "completion_tokens": 307,
+      "prompt_tokens": 2551,
+      "total_tokens": 2858,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  },
+  {
+    "id": "35856-46",
+    "at": "2026-10-09T07:33:06.325Z",
+    "elapsedMs": 14655,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-46",
+    "at": "2026-10-09T07:33:06.326Z",
+    "elapsedMs": 14656,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-46",
+    "at": "2026-10-09T07:33:06.392Z",
+    "elapsedMs": 14722,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-114",
+    "at": "2026-10-09T07:33:06.503Z",
+    "elapsedMs": 553,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-43",
+    "at": "2026-10-09T07:33:06.504Z",
+    "elapsedMs": 17857,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "35856-46",
+    "at": "2026-10-09T07:33:07.526Z",
+    "elapsedMs": 15856,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 30,
+    "bytes": 17294,
+    "reasoningChars": 253,
+    "contentChars": 0,
+    "usage": {
+      "completion_tokens": 64,
+      "prompt_tokens": 140,
+      "total_tokens": 204,
+      "prompt_tokens_details": {
+        "cached_tokens": 100
+      }
+    }
+  },
+  {
+    "id": "scheduler-115",
+    "at": "2026-10-09T07:33:08.277Z",
+    "elapsedMs": 719,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-47",
+    "at": "2026-10-09T07:33:15.520Z",
+    "elapsedMs": 1,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "scheduler-116",
+    "at": "2026-10-09T07:33:15.522Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-48",
+    "at": "2026-10-09T07:33:15.522Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "35856-47",
+    "at": "2026-10-09T07:33:15.532Z",
+    "elapsedMs": 13,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-47",
+    "at": "2026-10-09T07:33:15.533Z",
+    "elapsedMs": 14,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-48",
+    "at": "2026-10-09T07:33:15.539Z",
+    "elapsedMs": 17,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-119",
+    "at": "2026-10-09T07:33:16.053Z",
+    "elapsedMs": 519,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-49",
+    "at": "2026-10-09T07:33:16.057Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 8082,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-120",
+    "at": "2026-10-09T07:33:16.550Z",
+    "elapsedMs": 1010,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-50",
+    "at": "2026-10-09T07:33:16.552Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 554,
+    "requestedModel": "local-quality",
+    "stream": true
+  },
+  {
+    "id": "35856-49",
+    "at": "2026-10-09T07:33:17.083Z",
+    "elapsedMs": 1027,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-49",
+    "at": "2026-10-09T07:33:17.083Z",
+    "elapsedMs": 1027,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-49",
+    "at": "2026-10-09T07:33:17.143Z",
+    "elapsedMs": 1087,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-121",
+    "at": "2026-10-09T07:33:17.145Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-49",
+    "at": "2026-10-09T07:33:21.448Z",
+    "elapsedMs": 5392,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 52303
+  },
+  {
+    "id": "35856-49",
+    "at": "2026-10-09T07:33:25.388Z",
+    "elapsedMs": 9332,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 200,
+    "bytes": 99252
+  },
+  {
+    "id": "35856-49",
+    "at": "2026-10-09T07:33:26.807Z",
+    "elapsedMs": 10751,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-122",
+    "at": "2026-10-09T07:33:26.884Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-49",
+    "at": "2026-10-09T07:33:28.437Z",
+    "elapsedMs": 12381,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 265,
+    "bytes": 125589,
+    "reasoningChars": 2171,
+    "contentChars": 73,
+    "usage": {
+      "completion_tokens": 486,
+      "prompt_tokens": 2434,
+      "total_tokens": 2920,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  },
+  {
+    "id": "35856-50",
+    "at": "2026-10-09T07:33:28.747Z",
+    "elapsedMs": 12195,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-50",
+    "at": "2026-10-09T07:33:28.748Z",
+    "elapsedMs": 12196,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-50",
+    "at": "2026-10-09T07:33:28.807Z",
+    "elapsedMs": 12255,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-123",
+    "at": "2026-10-09T07:33:28.923Z",
+    "elapsedMs": 484,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-47",
+    "at": "2026-10-09T07:33:28.923Z",
+    "elapsedMs": 13404,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "35856-50",
+    "at": "2026-10-09T07:33:29.781Z",
+    "elapsedMs": 13229,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 29,
+    "bytes": 17294,
+    "reasoningChars": 222,
+    "contentChars": 0,
+    "usage": {
+      "completion_tokens": 64,
+      "prompt_tokens": 147,
+      "total_tokens": 211,
+      "prompt_tokens_details": {
+        "cached_tokens": 100
+      }
+    }
+  },
+  {
+    "id": "scheduler-124",
+    "at": "2026-10-09T07:33:30.272Z",
+    "elapsedMs": 457,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-12",
+    "at": "2026-10-09T07:33:30.890Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 12353,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "templateThinking": false
+  },
+  {
+    "id": "40880-12",
+    "at": "2026-10-09T07:33:32.309Z",
+    "elapsedMs": 1420,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-125",
+    "at": "2026-10-09T07:33:32.309Z",
+    "elapsedMs": 2255,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-12",
+    "at": "2026-10-09T07:33:32.310Z",
+    "elapsedMs": 1421,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "40880-12",
+    "at": "2026-10-09T07:33:32.310Z",
+    "elapsedMs": 1421,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35856-51",
+    "at": "2026-10-09T07:33:36.146Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "scheduler-127",
+    "at": "2026-10-09T07:33:36.149Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-52",
+    "at": "2026-10-09T07:33:36.149Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "35856-51",
+    "at": "2026-10-09T07:33:38.149Z",
+    "elapsedMs": 2003,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-51",
+    "at": "2026-10-09T07:33:38.150Z",
+    "elapsedMs": 2004,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-52",
+    "at": "2026-10-09T07:33:38.151Z",
+    "elapsedMs": 2002,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-129",
+    "at": "2026-10-09T07:33:38.594Z",
+    "elapsedMs": 443,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-53",
+    "at": "2026-10-09T07:33:38.597Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 8230,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-130",
+    "at": "2026-10-09T07:33:39.296Z",
+    "elapsedMs": 1144,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-54",
+    "at": "2026-10-09T07:33:39.299Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 539,
+    "requestedModel": "local-quality",
+    "stream": true
+  },
+  {
+    "id": "40880-12",
+    "at": "2026-10-09T07:33:39.555Z",
+    "elapsedMs": 8666,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "40880-12",
+    "at": "2026-10-09T07:33:40.033Z",
+    "elapsedMs": 9144,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 81683
+  },
+  {
+    "id": "40880-12",
+    "at": "2026-10-09T07:33:41.865Z",
+    "elapsedMs": 10976,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 145,
+    "bytes": 107741,
+    "reasoningChars": 1310,
+    "contentChars": 369,
+    "usage": {
+      "completion_tokens": 417,
+      "prompt_tokens": 5189,
+      "total_tokens": 5606,
+      "prompt_tokens_details": {
+        "cached_tokens": 4503
+      }
+    }
+  },
+  {
+    "id": "scheduler-125",
+    "at": "2026-10-09T07:33:42.354Z",
+    "elapsedMs": 12300,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-53",
+    "at": "2026-10-09T07:33:42.972Z",
+    "elapsedMs": 4375,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-53",
+    "at": "2026-10-09T07:33:42.972Z",
+    "elapsedMs": 4375,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-53",
+    "at": "2026-10-09T07:33:43.034Z",
+    "elapsedMs": 4437,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-131",
+    "at": "2026-10-09T07:33:43.037Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-53",
+    "at": "2026-10-09T07:33:47.298Z",
+    "elapsedMs": 8701,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 48157
+  },
+  {
+    "id": "35856-53",
+    "at": "2026-10-09T07:33:47.868Z",
+    "elapsedMs": 9271,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-132",
+    "at": "2026-10-09T07:33:47.871Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-53",
+    "at": "2026-10-09T07:33:50.351Z",
+    "elapsedMs": 11754,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 165,
+    "bytes": 72857,
+    "reasoningChars": 772,
+    "contentChars": 97,
+    "usage": {
+      "completion_tokens": 287,
+      "prompt_tokens": 2539,
+      "total_tokens": 2826,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  },
+  {
+    "id": "35856-54",
+    "at": "2026-10-09T07:33:50.625Z",
+    "elapsedMs": 11326,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-54",
+    "at": "2026-10-09T07:33:50.626Z",
+    "elapsedMs": 11327,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-54",
+    "at": "2026-10-09T07:33:50.709Z",
+    "elapsedMs": 11410,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-133",
+    "at": "2026-10-09T07:33:50.974Z",
+    "elapsedMs": 490,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-51",
+    "at": "2026-10-09T07:33:50.975Z",
+    "elapsedMs": 14829,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "35856-54",
+    "at": "2026-10-09T07:33:51.688Z",
+    "elapsedMs": 12389,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 33,
+    "bytes": 17286,
+    "reasoningChars": 247,
+    "contentChars": 0,
+    "usage": {
+      "completion_tokens": 64,
+      "prompt_tokens": 142,
+      "total_tokens": 206,
+      "prompt_tokens_details": {
+        "cached_tokens": 100
+      }
+    }
+  },
+  {
+    "id": "scheduler-134",
+    "at": "2026-10-09T07:33:52.533Z",
+    "elapsedMs": 834,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-13",
+    "at": "2026-10-09T07:33:53.398Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 12767,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "templateThinking": false
+  },
+  {
+    "id": "40880-13",
+    "at": "2026-10-09T07:33:54.454Z",
+    "elapsedMs": 1056,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-135",
+    "at": "2026-10-09T07:33:54.455Z",
+    "elapsedMs": 1677,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-13",
+    "at": "2026-10-09T07:33:54.456Z",
+    "elapsedMs": 1058,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "40880-13",
+    "at": "2026-10-09T07:33:54.508Z",
+    "elapsedMs": 1110,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "40880-13",
+    "at": "2026-10-09T07:33:56.042Z",
+    "elapsedMs": 2644,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "40880-13",
+    "at": "2026-10-09T07:33:56.502Z",
+    "elapsedMs": 3104,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 35,
+    "bytes": 16644,
+    "reasoningChars": 212,
+    "contentChars": 41,
+    "usage": {
+      "completion_tokens": 69,
+      "prompt_tokens": 5376,
+      "total_tokens": 5445,
+      "prompt_tokens_details": {
+        "cached_tokens": 4503
+      }
+    }
+  },
+  {
+    "id": "scheduler-135",
+    "at": "2026-10-09T07:33:57.314Z",
+    "elapsedMs": 4536,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-14",
+    "at": "2026-10-09T07:33:58.368Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 13726,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "templateThinking": false
+  },
+  {
+    "id": "40880-14",
+    "at": "2026-10-09T07:33:58.856Z",
+    "elapsedMs": 489,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-136",
+    "at": "2026-10-09T07:33:58.856Z",
+    "elapsedMs": 1311,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-14",
+    "at": "2026-10-09T07:33:58.856Z",
+    "elapsedMs": 489,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "40880-14",
+    "at": "2026-10-09T07:33:59.093Z",
+    "elapsedMs": 726,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35856-55",
+    "at": "2026-10-09T07:34:02.688Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "scheduler-138",
+    "at": "2026-10-09T07:34:02.691Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-56",
+    "at": "2026-10-09T07:34:02.692Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "35856-55",
+    "at": "2026-10-09T07:34:04.690Z",
+    "elapsedMs": 2002,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-55",
+    "at": "2026-10-09T07:34:04.691Z",
+    "elapsedMs": 2003,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-56",
+    "at": "2026-10-09T07:34:04.695Z",
+    "elapsedMs": 2003,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-140",
+    "at": "2026-10-09T07:34:05.127Z",
+    "elapsedMs": 435,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-57",
+    "at": "2026-10-09T07:34:05.131Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 8075,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "40880-14",
+    "at": "2026-10-09T07:34:05.570Z",
+    "elapsedMs": 7203,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 103226
+  },
+  {
+    "id": "scheduler-141",
+    "at": "2026-10-09T07:34:05.570Z",
+    "elapsedMs": 874,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-58",
+    "at": "2026-10-09T07:34:05.572Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 547,
+    "requestedModel": "local-quality",
+    "stream": true
+  },
+  {
+    "id": "40880-14",
+    "at": "2026-10-09T07:34:06.240Z",
+    "elapsedMs": 7873,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "40880-14",
+    "at": "2026-10-09T07:34:06.441Z",
+    "elapsedMs": 8074,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 123,
+    "bytes": 113528,
+    "reasoningChars": 1754,
+    "contentChars": 41,
+    "usage": {
+      "completion_tokens": 435,
+      "prompt_tokens": 5614,
+      "total_tokens": 6049,
+      "prompt_tokens_details": {
+        "cached_tokens": 5377
+      }
+    }
+  },
+  {
+    "id": "scheduler-136",
+    "at": "2026-10-09T07:34:06.924Z",
+    "elapsedMs": 9379,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-57",
+    "at": "2026-10-09T07:34:07.516Z",
+    "elapsedMs": 2386,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-57",
+    "at": "2026-10-09T07:34:07.517Z",
+    "elapsedMs": 2387,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-57",
+    "at": "2026-10-09T07:34:07.577Z",
+    "elapsedMs": 2447,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-142",
+    "at": "2026-10-09T07:34:07.579Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-57",
+    "at": "2026-10-09T07:34:11.488Z",
+    "elapsedMs": 6358,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 45891
+  },
+  {
+    "id": "35856-57",
+    "at": "2026-10-09T07:34:12.897Z",
+    "elapsedMs": 7767,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-143",
+    "at": "2026-10-09T07:34:12.900Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-57",
+    "at": "2026-10-09T07:34:13.523Z",
+    "elapsedMs": 8393,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 151,
+    "bytes": 67679,
+    "reasoningChars": 1027,
+    "contentChars": 35,
+    "usage": {
+      "completion_tokens": 269,
+      "prompt_tokens": 2440,
+      "total_tokens": 2709,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  },
+  {
+    "id": "35856-58",
+    "at": "2026-10-09T07:34:13.772Z",
+    "elapsedMs": 8200,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-58",
+    "at": "2026-10-09T07:34:13.773Z",
+    "elapsedMs": 8201,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-58",
+    "at": "2026-10-09T07:34:13.828Z",
+    "elapsedMs": 8256,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-144",
+    "at": "2026-10-09T07:34:13.942Z",
+    "elapsedMs": 417,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-55",
+    "at": "2026-10-09T07:34:13.942Z",
+    "elapsedMs": 11254,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "35856-58",
+    "at": "2026-10-09T07:34:14.682Z",
+    "elapsedMs": 9110,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 31,
+    "bytes": 17003,
+    "reasoningChars": 207,
+    "contentChars": 0,
+    "usage": {
+      "completion_tokens": 64,
+      "prompt_tokens": 148,
+      "total_tokens": 212,
+      "prompt_tokens_details": {
+        "cached_tokens": 100
+      }
+    }
+  },
+  {
+    "id": "scheduler-145",
+    "at": "2026-10-09T07:34:15.604Z",
+    "elapsedMs": 846,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-15",
+    "at": "2026-10-09T07:34:16.499Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 12845,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "templateThinking": false
+  },
+  {
+    "id": "40880-15",
+    "at": "2026-10-09T07:34:17.184Z",
+    "elapsedMs": 686,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-146",
+    "at": "2026-10-09T07:34:17.185Z",
+    "elapsedMs": 2241,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-15",
+    "at": "2026-10-09T07:34:17.185Z",
+    "elapsedMs": 687,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "40880-15",
+    "at": "2026-10-09T07:34:17.185Z",
+    "elapsedMs": 687,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "40880-15",
+    "at": "2026-10-09T07:34:20.356Z",
+    "elapsedMs": 3858,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "40880-15",
+    "at": "2026-10-09T07:34:22.000Z",
+    "elapsedMs": 5502,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 60,
+    "bytes": 59725,
+    "reasoningChars": 678,
+    "contentChars": 276,
+    "usage": {
+      "completion_tokens": 236,
+      "prompt_tokens": 5411,
+      "total_tokens": 5647,
+      "prompt_tokens_details": {
+        "cached_tokens": 5115
+      }
+    }
+  },
+  {
+    "id": "scheduler-146",
+    "at": "2026-10-09T07:34:22.480Z",
+    "elapsedMs": 7536,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-59",
+    "at": "2026-10-09T07:34:23.302Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "scheduler-148",
+    "at": "2026-10-09T07:34:23.305Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-60",
+    "at": "2026-10-09T07:34:23.305Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "start"
+  },
+  {
+    "id": "35856-59",
+    "at": "2026-10-09T07:34:23.309Z",
+    "elapsedMs": 7,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-59",
+    "at": "2026-10-09T07:34:23.309Z",
+    "elapsedMs": 7,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-60",
+    "at": "2026-10-09T07:34:23.312Z",
+    "elapsedMs": 7,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-150",
+    "at": "2026-10-09T07:34:23.825Z",
+    "elapsedMs": 515,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-61",
+    "at": "2026-10-09T07:34:23.829Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 8185,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-151",
+    "at": "2026-10-09T07:34:24.375Z",
+    "elapsedMs": 1061,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-62",
+    "at": "2026-10-09T07:34:24.379Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 540,
+    "requestedModel": "local-quality",
+    "stream": true
+  },
+  {
+    "id": "35856-61",
+    "at": "2026-10-09T07:34:25.147Z",
+    "elapsedMs": 1318,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-61",
+    "at": "2026-10-09T07:34:25.148Z",
+    "elapsedMs": 1319,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-61",
+    "at": "2026-10-09T07:34:25.224Z",
+    "elapsedMs": 1395,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-152",
+    "at": "2026-10-09T07:34:25.226Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-61",
+    "at": "2026-10-09T07:34:29.596Z",
+    "elapsedMs": 5767,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 43979
+  },
+  {
+    "id": "35856-61",
+    "at": "2026-10-09T07:34:33.599Z",
+    "elapsedMs": 9770,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-153",
+    "at": "2026-10-09T07:34:33.602Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-61",
+    "at": "2026-10-09T07:34:34.052Z",
+    "elapsedMs": 10223,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "progress",
+    "chunks": 200,
+    "bytes": 86689
+  },
+  {
+    "id": "35856-61",
+    "at": "2026-10-09T07:34:35.366Z",
+    "elapsedMs": 11537,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 223,
+    "bytes": 94399,
+    "reasoningChars": 1265,
+    "contentChars": 59,
+    "usage": {
+      "completion_tokens": 372,
+      "prompt_tokens": 2513,
+      "total_tokens": 2885,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  },
+  {
+    "id": "35856-62",
+    "at": "2026-10-09T07:34:35.770Z",
+    "elapsedMs": 11391,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35856-62",
+    "at": "2026-10-09T07:34:35.771Z",
+    "elapsedMs": 11392,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35856-62",
+    "at": "2026-10-09T07:34:35.837Z",
+    "elapsedMs": 11458,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-154",
+    "at": "2026-10-09T07:34:35.976Z",
+    "elapsedMs": 607,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35856-59",
+    "at": "2026-10-09T07:34:35.976Z",
+    "elapsedMs": 12674,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:64132",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "35856-62",
+    "at": "2026-10-09T07:34:36.905Z",
+    "elapsedMs": 12526,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "end",
+    "chunks": 28,
+    "bytes": 17305,
+    "reasoningChars": 261,
+    "contentChars": 0,
+    "usage": {
+      "completion_tokens": 64,
+      "prompt_tokens": 139,
+      "total_tokens": 203,
+      "prompt_tokens_details": {
+        "cached_tokens": 100
+      }
+    }
+  },
+  {
+    "id": "scheduler-155",
+    "at": "2026-10-09T07:34:37.361Z",
+    "elapsedMs": 455,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-16",
+    "at": "2026-10-09T07:34:38.010Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "start",
+    "requestChars": 12934,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "templateThinking": false
+  },
+  {
+    "id": "40880-16",
+    "at": "2026-10-09T07:34:39.706Z",
+    "elapsedMs": 1696,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-156",
+    "at": "2026-10-09T07:34:39.707Z",
+    "elapsedMs": 2572,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "40880-16",
+    "at": "2026-10-09T07:34:39.707Z",
+    "elapsedMs": 1697,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "40880-16",
+    "at": "2026-10-09T07:34:39.707Z",
+    "elapsedMs": 1697,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "40880-16",
+    "at": "2026-10-09T07:34:42.744Z",
+    "elapsedMs": 4734,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "cancel",
+    "chunks": 71,
+    "bytes": 33385
+  },
+  {
+    "id": "40880-16",
+    "at": "2026-10-09T07:34:42.744Z",
+    "elapsedMs": 4734,
+    "kind": "model",
+    "origin": "http://127.0.0.1:64084",
+    "phase": "error",
+    "chunks": 71,
+    "bytes": 33385,
+    "name": "AbortError"
+  },
+  {
+    "id": "scheduler-156",
+    "at": "2026-10-09T07:34:42.745Z",
+    "elapsedMs": 5610,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  }
+]
