@@ -26,7 +26,7 @@ async function fixture(t: any) {
     backend: { listModels: () => [{ id: 'mimo', configured: true, sourceKind: 'cloud', name: 'MiMo' }] },
     service: { currentChatModelProfile: () => 'mimo' },
     accountModelManager: { readOfflineModel: async () => ({ baseUrl: 'https://model.example/v1', modelId: 'mimo', apiKey: 'synthetic-secret' }) },
-    cloudIdentity: { publishOffline: async (_owner: string, value: number) => { generation = value; return { hostId: identity.hostId, generation }; } },
+    cloudIdentity: { publishOffline: async (_owner: string, value: number) => { generation = value; return { hostId: identity.hostId, accountId: 'account-test', generation }; } },
     memoryManager: { enabled: true, query: async (_: any, _method: any, input: any) => ({ world_revision: generation, ...(input.operation === 'list' ? { items } : {}) }),
       ingest: async (_: any, boundary: any) => { assert.ok(boundary.source_messages.every((m: any) => ['user', 'assistant'].includes(m.role))); accepted.push(boundary); return { state: 'accepted' }; }, discardOfflinePending: async () => {} },
     readJson: (request: any) => request.body, json: (_response: any, _status: any, value: any) => value };
@@ -69,7 +69,7 @@ test('online sync → cloud-only relevant recall → offline preference → idem
   const f = await fixture(t), vault = await W.browserVault('roundtrip', { indexedDB: new IDBFactory(), crypto: webcrypto });
   let lastBody: any;
   vault.complete = async (body: any) => { lastBody = body; return { choices: [{ message: { content: '你喜欢茉莉花茶，不加糖。' } }], usage: { total_tokens: 42 } }; };
-  const engine = await W.create({ vault, identity, host: f.host, control: async () => ({ authorized: true, generation: f.generation() }), crypto: webcrypto });
+  const engine = await W.create({ vault, identity, host: f.host, control: async () => ({ authorized: true, hostId: identity.hostId, accountId: 'account-test', generation: f.generation() }), crypto: webcrypto });
   await engine.sync(); const encrypted = await readFile(path.join(f.root, 'offline-metadata.json'), 'utf8');
   assert.ok(!encrypted.includes('茉莉花茶') && !encrypted.includes('synthetic-secret'));
   const reply = await engine.send('我喝茶喜欢什么？');
@@ -95,7 +95,7 @@ test('revocation erases pending conversations, and unavailable control plane sen
   vault.complete = async () => { calls++; return { choices: [{ message: { content: '已收到' } }] }; };
   const engine = await W.create({ vault, identity, host: f.host, crypto: webcrypto, control: async () => {
     if (status) throw Object.assign(new Error('denied'), { status });
-    return { authorized: true, generation: f.generation() };
+    return { authorized: true, hostId: identity.hostId, accountId: 'account-test', generation: f.generation() };
   } });
   await engine.sync(); await engine.send('测试偏好'); status = 503;
   await assert.rejects(engine.send('不能发送')); assert.equal(calls, 1);
@@ -119,11 +119,21 @@ test('renewing a host cookie preserves the physical device import identity and d
   const vault = await W.browserVault('renewal', { indexedDB: new IDBFactory(), crypto: webcrypto });
   vault.complete = async () => ({ choices: [{ message: { content: '已收到偏好' } }] });
   const engine = await W.create({ vault, identity: mutableIdentity, host: f.host,
-    control: async () => ({ authorized: true, generation: 1 }), crypto: webcrypto });
+    control: async () => ({ authorized: true, hostId: identity.hostId, accountId: 'account-test', generation: 1 }), crypto: webcrypto });
   await engine.sync(); await engine.send('新的偏好');
   const turns = structuredClone(engine.view().turns);
   mutableIdentity.deviceId = 'renewed-cookie-device';
   await engine.sync(); assert.equal(f.accepted.length, 1);
   await f.host('/offline/turns', { generation: 1, turns }); assert.equal(f.accepted.length, 1);
   engine.close();
+});
+
+test('another cloud account on the same host cannot authorize use of this replica', async t => {
+  const f = await fixture(t), vault = await W.browserVault('other-account', { indexedDB: new IDBFactory(), crypto: webcrypto });
+  let calls = 0;
+  vault.complete = async () => { calls++; return {}; };
+  const engine = await W.create({ vault, identity, host: f.host, crypto: webcrypto,
+    control: async () => ({ authorized: true, hostId: identity.hostId, accountId: 'other-account', generation: 1 }) });
+  await engine.sync(); await assert.rejects(engine.send('我喝茶喜欢什么？'), /OFFLINE_RESET_REQUIRED/);
+  assert.equal(calls, 0); assert.equal((await vault.load()).snapshot, null); engine.close();
 });

@@ -93,7 +93,10 @@
       let status;
       try { status = await control(identity.hostId); }
       catch (error) { if ([401, 403, 404].includes(error.status)) await clear(); throw error; }
-      if (!status.authorized || status.generation !== value.snapshot.generation) { await clear(); fail('OFFLINE_RESET_REQUIRED'); }
+      if (status.authorized !== true || status.hostId !== identity.hostId || typeof value.snapshot.control?.accountId !== 'string' ||
+          status.accountId !== value.snapshot.control.accountId || status.generation !== value.snapshot.generation) {
+        await clear(); fail('OFFLINE_RESET_REQUIRED');
+      }
       return status;
     }
     async function sync() {
