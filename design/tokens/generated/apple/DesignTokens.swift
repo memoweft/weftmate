@@ -276,7 +276,7 @@ public enum AppleTokens {
         public static let p56: CGFloat = 56
         public static let p64: CGFloat = 64
         public static let p72: CGFloat = 72
-        public static let psettings-nav-gap: CGFloat = 4
+        public static let psettings_nav_gap: CGFloat = 4
     }
     public enum Radius {
         public static let r4: CGFloat = 4
