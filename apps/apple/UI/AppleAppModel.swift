@@ -719,7 +719,79 @@ final class AppleAppModel: ObservableObject {
         guard actionEpoch == epoch else { return }
         queueNotice = control.stopError ?? control.error
     }
-    @Published var showingArchived = false
+    @Published var sessionGroups: [SessionGroup] = []
+    @Published var collapsedSessionGroups = Set<String>()
+    @Published var openedSessionID: String?
+    @Published var renamingSessionID: String?
+    @Published var sessionTitleDraft = ""
+    @Published var groupCandidate: ConversationSummary?
+    @Published var newGroupName = ""
+    @Published var conversationForget = ForgetConfirmationState()
+    @Published var conversationPreviewLoading = false
+    private var conversationPreviewToken = UUID()
+    func sections(query: String) -> [SessionSidebarSection] { SessionSidebar.sections(rows: conversations, groups: sessionGroups, query: query) }
+    func beginRename(_ row: ConversationSummary) { renamingSessionID = row.id; sessionTitleDraft = row.title }
+    func saveSessionTitle(_ row: ConversationSummary) async {
+        let title = sessionTitleDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !title.isEmpty, title.count <= 256 else { lifecycleError = "标题不能为空，且最多 256 个字符。"; return }
+        await updateMetadata(row, title: title)
+        if lifecycleError == nil { renamingSessionID = nil }
+    }
+    func updateMetadata(_ row: ConversationSummary, pinned: Bool? = nil, unread: Bool? = nil, title: String? = nil, groupID: String? = nil, changeGroup: Bool = false) async {
+        guard !lifecycleBusy, let id = row.sessionId else { return }
+        let token = epoch; lifecycleBusy = true; lifecycleError = nil
+        defer { if token == epoch { lifecycleBusy = false } }
+        do {
+            let reply = try await client.updateSessionMetadata(sessionID: id, pinned: pinned, unread: unread, title: title, groupID: groupID, changeGroup: changeGroup)
+            guard token == epoch else { return }
+            guard reply.sessionId == id else { throw APIFailure.identityMismatch }
+            await refresh()
+        } catch { if token == epoch { lifecycleError = friendly(error) } }
+    }
+    func createGroupAndMove() async {
+        guard !lifecycleBusy, let row = groupCandidate else { return }
+        let name = newGroupName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty, name.count <= 256 else { lifecycleError = "分组名称不能为空，且最多 256 个字符。"; return }
+        let token = epoch; lifecycleBusy = true; lifecycleError = nil
+        defer { if token == epoch { lifecycleBusy = false } }
+        do {
+            let group = try await client.createSessionGroup(name: name)
+            guard token == epoch else { return }
+            lifecycleBusy = false
+            await updateMetadata(row, groupID: group.id, changeGroup: true)
+            if lifecycleError == nil { groupCandidate = nil; newGroupName = "" }
+        } catch { if token == epoch { lifecycleError = friendly(error) } }
+    }
+    func fork(_ row: ConversationSummary) async {
+        guard !lifecycleBusy, let id = row.sessionId else { return }
+        let token = epoch; lifecycleBusy = true; lifecycleError = nil
+        defer { if token == epoch { lifecycleBusy = false } }
+        do {
+            let reply = try await client.forkSession(sessionID: id)
+            guard token == epoch else { return }
+            await refresh()
+            guard token == epoch else { return }
+            guard let child = conversations.first(where: { $0.sessionId == reply.sessionId }) else { throw APIFailure.invalidResponse }
+            openedSessionID = child.id
+        } catch { if token == epoch { lifecycleError = friendly(error) } }
+    }
+    func setConversationForget(_ value: Bool) async {
+        forgetConversationMemories = value; conversationForget = .init(); lifecycleError = nil
+        conversationPreviewToken = UUID(); conversationPreviewLoading = false
+        guard value, let row = deletionCandidate, let id = row.sessionId else { return }
+        let token = conversationPreviewToken, account = epoch
+        conversationPreviewLoading = true
+        defer { if token == conversationPreviewToken && account == epoch { conversationPreviewLoading = false } }
+        do {
+            let preview = try await client.sessionForgetPreview(sessionID: id)
+            guard token == conversationPreviewToken, account == epoch, deletionCandidate?.id == row.id else { return }
+            conversationForget.preview = preview
+        } catch { if token == conversationPreviewToken && account == epoch { lifecycleError = "无法读取遗忘范围，请重新读取后确认。" } }
+    }
+    var canDeleteConversation: Bool { !lifecycleBusy && (!forgetConversationMemories || conversationForget.canConfirm) }
+
+    @Published var deletionInSettings = false
+    @Published var sessionMenuCandidate: ConversationSummary?
     @Published var deletionCandidate: ConversationSummary?
     @Published var forgetConversationMemories = false
     @Published var lifecycleBusy = false
@@ -728,9 +800,10 @@ final class AppleAppModel: ObservableObject {
     @Published var queueBusy = Set<String>()
     private var queueCancelRequests: [String: String] = [:]
     private var canceledQueuedTasks = Set<String>()
-    var visibleConversations: [ConversationSummary] { conversations.filter { $0.archived == showingArchived } }
-    func askToDelete(_ conversation: ConversationSummary) {
-        forgetConversationMemories = false; lifecycleError = nil; deletionCandidate = conversation
+    var visibleConversations: [ConversationSummary] { conversations.filter { !$0.archived } }
+    func askToDelete(_ conversation: ConversationSummary, inSettings: Bool = false) {
+        deletionInSettings = inSettings
+        forgetConversationMemories = false; conversationForget = .init(); conversationPreviewToken = UUID(); conversationPreviewLoading = false; lifecycleError = nil; deletionCandidate = conversation
     }
     func archive(_ conversation: ConversationSummary, archived: Bool) async {
         guard !lifecycleBusy, let id = conversation.sessionId else { return }
@@ -743,19 +816,19 @@ final class AppleAppModel: ObservableObject {
             if let index = conversations.firstIndex(where: { $0.id == conversation.id }) {
                 let old = conversations[index]
                 conversations[index] = .init(id: old.id, title: old.title, conversationId: old.conversationId, sessionId: old.sessionId,
-                    running: old.running, sendAvailable: !archived && old.sendAvailable, originalModelLabel: old.originalModelLabel, archived: archived)
+                    running: old.running, sendAvailable: !archived && old.sendAvailable, originalModelLabel: old.originalModelLabel, archived: archived, pinned: old.pinned, unread: old.unread, groupId: old.groupId)
             }
             if selectedConversation?.id == conversation.id { selectedConversation = conversations.first { $0.id == conversation.id } }
             await refresh()
         } catch { if actionEpoch == epoch { lifecycleError = "归档状态未更新，请重试。" } }
     }
     func deleteConversation() async {
-        guard !lifecycleBusy, let conversation = deletionCandidate, let id = conversation.sessionId else { return }
+        guard canDeleteConversation, let conversation = deletionCandidate, let id = conversation.sessionId else { return }
         let actionEpoch = epoch, forget = forgetConversationMemories
         lifecycleBusy = true; lifecycleError = nil
         defer { if actionEpoch == epoch { lifecycleBusy = false } }
         do {
-            let result = try await client.deleteSession(sessionID: id, forgetMemories: forget)
+            let result = try await client.deleteSession(sessionID: id, forgetMemories: forget, deleteConversationSnippets: conversationForget.deleteConversationSnippets, memoryWorldRevision: forget ? conversationForget.preview?.worldRevision : nil)
             guard actionEpoch == epoch else { return }
             guard result.deleted, result.sessionId == id, result.forgetMemories == forget else { throw APIFailure.identityMismatch }
             conversations.removeAll { $0.id == conversation.id }
@@ -765,7 +838,7 @@ final class AppleAppModel: ObservableObject {
         } catch {
             guard actionEpoch == epoch else { return }
             if case APIFailure.server(409, "SESSION_BUSY") = error { lifecycleError = "任务停止尚未确认，请稍后重试删除。" }
-            else if forget { lifecycleError = "遗忘或删除尚未完成，对话保留，请重试。" }
+            else if forget { conversationForget.preview = nil; lifecycleError = "遗忘范围已变化或删除未完成，请重新读取后确认。" }
             else { lifecycleError = "对话尚未删除，请稍后重试。" }
         }
     }
@@ -1184,6 +1257,8 @@ final class AppleAppModel: ObservableObject {
             taskControlSessions = try await client.taskControlSessionIDs(includeArchived: true)
             guard actionEpoch == epoch else { return }
             conversations = result
+            sessionGroups = try await client.sessionGroups()
+            guard actionEpoch == epoch else { return }
             liveConversations = Dictionary(uniqueKeysWithValues: result.map { ($0.id, $0) })
             conversationsCachedAt = nil
             lastRefresh = Date()
@@ -1614,7 +1689,7 @@ final class AppleAppModel: ObservableObject {
     private func clearVisibleAccount() {
         settingsRoute = .init(categoryID: "general")
         timelineRootCommands = []; stoppingActiveTask = false
-        showingArchived = false; deletionCandidate = nil; forgetConversationMemories = false; lifecycleBusy = false; lifecycleError = nil
+        sessionGroups = []; collapsedSessionGroups = []; openedSessionID = nil; renamingSessionID = nil; groupCandidate = nil; sessionMenuCandidate = nil; deletionInSettings = false; conversationForget = .init(); conversationPreviewToken = UUID(); conversationPreviewLoading = false; deletionCandidate = nil; forgetConversationMemories = false; lifecycleBusy = false; lifecycleError = nil
         queueNotice = nil; queueBusy = []; queueCancelRequests = [:]; canceledQueuedTasks = []
         attachmentDrafts.values.flatMap { $0 }.forEach { $0.removeTemporaryFiles() }
         attachmentDrafts = [:]; attachmentAttempts = [:]; attachmentMessageIDs = [:]; attachmentSessionIDs = [:]

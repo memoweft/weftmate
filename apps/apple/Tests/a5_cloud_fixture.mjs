@@ -134,6 +134,7 @@ const driver = createServer(async(req,res)=>{
         else if(path==='/a5/deny'){result=await synthetic.addApproval();}
         else if(path==='/a5/ids'){result=ids;}
         else if(path==='/a6/settings-report'){result={schedules:scheduleCalls,backups:await direct('/backups'),system:await direct('/system')};}
+        else if(path==='/a7/seed-archived'){result=await direct('/sessions/'+ids.deletion+'/archive',{});}
         else if(path==='/a5/report'){result={operations:synthetic.operations,memoryDeletes:synthetic.memoryDeletes,approvalState:await direct('/sessions/'+ids.review+'/approvals'),approvalReasons:Object.values(JSON.parse(await readFile(join(profile,'personal-access','store.json'),'utf8')).accounts).flatMap(account=>Object.values(account.commands).flatMap(command=>(command.toolApprovals??[]).map(row=>({status:row.status,reasonCode:row.invalidationReason,taskId:row.taskId})))),usage:await direct('/usage'),sessions:await direct('/sessions?archived=all'),ids,workspaceExists:Object.fromEntries(await Promise.all(Object.entries(ids??{}).map(async([name,id])=>[name,await access(join(profile,'workspaces',id)).then(()=>true,()=>false)])))};}
         else if(path==='/a5/complete'){const s=synthetic.sessions.get(ids.queue);synthetic.finish(s);result={ok:true};}
         else if(path==='/a5/review-login'){

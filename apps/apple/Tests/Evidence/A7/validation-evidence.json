@@ -1,0 +1,153 @@
+{
+  "synthetic": true,
+  "images": [
+    {
+      "file": "a7-iphone-archived-dark-20261009T013415Z.png",
+      "platform": "iphone",
+      "scene": "archived",
+      "theme": "dark",
+      "commit": "7fa9447a1fb5427b9cfa29f16100cccba18dc647",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "a7-iphone-archived-light-20261009T012927Z.png",
+      "platform": "iphone",
+      "scene": "archived",
+      "theme": "light",
+      "commit": "7fa9447a1fb5427b9cfa29f16100cccba18dc647",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "a7-iphone-conversation-forget-dark-20261009T013415Z.png",
+      "platform": "iphone",
+      "scene": "conversation-forget",
+      "theme": "dark",
+      "commit": "7fa9447a1fb5427b9cfa29f16100cccba18dc647",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "a7-iphone-conversation-forget-light-20261009T012927Z.png",
+      "platform": "iphone",
+      "scene": "conversation-forget",
+      "theme": "light",
+      "commit": "7fa9447a1fb5427b9cfa29f16100cccba18dc647",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "a7-iphone-memory-forget-dark-20261009T013415Z.png",
+      "platform": "iphone",
+      "scene": "memory-forget",
+      "theme": "dark",
+      "commit": "7fa9447a1fb5427b9cfa29f16100cccba18dc647",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "a7-iphone-memory-forget-light-20261009T012927Z.png",
+      "platform": "iphone",
+      "scene": "memory-forget",
+      "theme": "light",
+      "commit": "7fa9447a1fb5427b9cfa29f16100cccba18dc647",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "a7-mac-archived-dark-20261009T014047Z.png",
+      "platform": "mac",
+      "scene": "archived",
+      "theme": "dark",
+      "commit": "1b4ad67ddec16913a186c9119185217f9bbc1b93",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "a7-mac-archived-light-20261009T014038Z.png",
+      "platform": "mac",
+      "scene": "archived",
+      "theme": "light",
+      "commit": "1b4ad67ddec16913a186c9119185217f9bbc1b93",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "a7-mac-conversation-forget-dark-20261009T014109Z.png",
+      "platform": "mac",
+      "scene": "conversation-forget",
+      "theme": "dark",
+      "commit": "1b4ad67ddec16913a186c9119185217f9bbc1b93",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "a7-mac-conversation-forget-light-20261009T014059Z.png",
+      "platform": "mac",
+      "scene": "conversation-forget",
+      "theme": "light",
+      "commit": "1b4ad67ddec16913a186c9119185217f9bbc1b93",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "a7-mac-memory-forget-dark-20261009T013931Z.png",
+      "platform": "mac",
+      "scene": "memory-forget",
+      "theme": "dark",
+      "commit": "1b4ad67ddec16913a186c9119185217f9bbc1b93",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "a7-mac-memory-forget-light-20261009T013922Z.png",
+      "platform": "mac",
+      "scene": "memory-forget",
+      "theme": "light",
+      "commit": "1b4ad67ddec16913a186c9119185217f9bbc1b93",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "review-iphone-session-menu-dark-20261009T013415Z.png",
+      "platform": "iphone",
+      "scene": "session-menu",
+      "theme": "dark",
+      "commit": "7fa9447a1fb5427b9cfa29f16100cccba18dc647",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "review-iphone-session-menu-light-20261009T012927Z.png",
+      "platform": "iphone",
+      "scene": "session-menu",
+      "theme": "light",
+      "commit": "7fa9447a1fb5427b9cfa29f16100cccba18dc647",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "review-mac-session-menu-dark-20261009T014026Z.png",
+      "platform": "mac",
+      "scene": "session-menu",
+      "theme": "dark",
+      "commit": "1b4ad67ddec16913a186c9119185217f9bbc1b93",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "review-mac-session-menu-light-20261009T014017Z.png",
+      "platform": "mac",
+      "scene": "session-menu",
+      "theme": "light",
+      "commit": "1b4ad67ddec16913a186c9119185217f9bbc1b93",
+      "width": 1080,
+      "height": 760
+    }
+  ],
+  "completeMatrix": true,
+  "metadataPrivatePathOrCredentialMatches": 0,
+  "reviewSceneCells": 4,
+  "nativeImageDimensionsVerified": true
+}

@@ -1,0 +1,10 @@
+{
+  "debugBuild": true,
+  "nativeWindowsCaptured": 8,
+  "globalScreenCapture": false,
+  "accessibilityPermissionRequested": false,
+  "compiledDshEngine": false,
+  "syntheticMemoryManager": true,
+  "orderedOwnWindows": true,
+  "synthetic": true
+}

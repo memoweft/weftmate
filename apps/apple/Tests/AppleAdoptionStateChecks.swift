@@ -73,6 +73,7 @@ private actor AdoptionHTTP: HTTPTransport {
                 ["seq": 2, "sourceDeviceId": "source-device", "eventId": "event-other", "conversationId": "other-conversation",
                  "kind": "conversation.created", "occurredAt": "2026-10-05T00:00:00Z", "payload": ["title": "Other"]]],
                 "nextSeq": through, "hasMore": false]
+        case "/personal/v1/session-groups": object = ["groups": []]
         case "/personal/v1/sessions":
             object = ["sessions": active && !creating ? [["sessionId": "session-adopted", "title": "Original", "conversationId": "original-conversation",
                 "running": false, "sendAvailable": true, "modelProfileId": profile]] : []]
