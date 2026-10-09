@@ -1,0 +1,12 @@
+{
+  "verifiedCodeHead": "8e00d11d",
+  "note": "This head had the same production code as the subsequent evidence-only commit c88f2c71. Final PR head check status is recorded in Runtime/Orchestrator/fx-10.result.md after all checks complete.",
+  "checks": [
+    {"name":"test (ubuntu-latest)","result":"success","url":"https://github.com/memoweft/weftmate/actions/runs/37931420505/job/113822812567"},
+    {"name":"Observed bridge (real MemoWeft Core)","result":"success","url":"https://github.com/memoweft/weftmate/actions/runs/37931420505/job/113822813056"},
+    {"name":"Android debug and JVM tests","result":"success","url":"https://github.com/memoweft/weftmate/actions/runs/37931420686/job/113822813834"},
+    {"name":"Web cloud login interactions","result":"success","url":"https://github.com/memoweft/weftmate/actions/runs/37931420686/job/113822814292"},
+    {"name":"Host certificates (Pebble DNS-01)","result":"success","url":"https://github.com/memoweft/weftmate/actions/runs/37931420694/job/113822814046"},
+    {"name":"Relay full chain (443)","result":"success","url":"https://github.com/memoweft/weftmate/actions/runs/37931420487/job/113822812874"}
+  ]
+}
