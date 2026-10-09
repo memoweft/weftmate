@@ -1,0 +1,202 @@
+[
+  {
+    "id": "memory-1x-correction",
+    "category": "memory",
+    "title": "留出：浇水量省略主题纠正",
+    "status": "failed",
+    "durationMs": 18932,
+    "checks": [
+      {
+        "type": "turn_status",
+        "turn": 1,
+        "status": "passed"
+      },
+      {
+        "type": "turn_status",
+        "turn": 2,
+        "status": "passed"
+      },
+      {
+        "type": "reply_contains",
+        "text": "150",
+        "status": "failed",
+        "reason": "reply_contains did not match expected value"
+      },
+      {
+        "type": "turn_status",
+        "status": "passed"
+      },
+      {
+        "type": "memory_used",
+        "status": "failed",
+        "reason": "memory_used did not match expected value"
+      },
+      {
+        "type": "llm_judge",
+        "prompt": "应采用纠正后的150毫升，不能仍按300毫升浇水；纠正回合没有重复盆栽或浇水主题。",
+        "status": "skipped",
+        "reason": "No judge configured; enable --judge-model same or a configured model name."
+      }
+    ],
+    "turns": [
+      {
+        "sessionId": "session-273751f1-c6c5-44c4-8090-62462e3cc1b7",
+        "modelProfileId": "private-model-bdbd2c2bc485213ea058fe092ad365031baa71a3",
+        "commandId": "cmd-33bec027-f7f3-4d0d-bbd0-9b69f393a39e",
+        "startedAt": "2026-10-09T15:04:26.281Z",
+        "reply": "好的，已了解到：你阳台的盆栽每次浇水固定用 300 毫升。以后涉及浇水安排或建议时，我会按这个用量来。",
+        "status": "completed",
+        "approvals": [],
+        "timeline": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-09T15:04:26.345Z"
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-09T15:04:26.345Z"
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-09T15:04:26.394Z"
+          },
+          {
+            "seq": 8,
+            "type": "user.message",
+            "at": "2026-10-09T15:04:26.394Z"
+          },
+          {
+            "seq": 54,
+            "type": "assistant.message",
+            "at": "2026-10-09T15:04:30.125Z"
+          },
+          {
+            "seq": 55,
+            "type": "task.ended",
+            "at": "2026-10-09T15:04:30.126Z"
+          },
+          {
+            "seq": 56,
+            "type": "turn.ended",
+            "at": "2026-10-09T15:04:30.127Z"
+          }
+        ],
+        "memoryUsedSupported": true,
+        "memoryUsed": [],
+        "durationMs": 4025,
+        "endedAt": "2026-10-09T15:04:30.306Z"
+      },
+      {
+        "sessionId": "session-cfd845f5-0cec-4d57-a834-14640c875499",
+        "modelProfileId": "private-model-bdbd2c2bc485213ea058fe092ad365031baa71a3",
+        "commandId": "cmd-1257d8bd-9615-443e-9ac4-711bfabe0384",
+        "startedAt": "2026-10-09T15:04:31.668Z",
+        "reply": "好的，已更正：阳台盆栽每次浇水量以 **150 毫升** 为准，之前说的 300 毫升作废。",
+        "status": "completed",
+        "approvals": [],
+        "timeline": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-09T15:04:31.719Z"
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-09T15:04:31.719Z"
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-09T15:04:32.092Z"
+          },
+          {
+            "seq": 11,
+            "type": "user.message",
+            "at": "2026-10-09T15:04:32.093Z"
+          },
+          {
+            "seq": 59,
+            "type": "assistant.message",
+            "at": "2026-10-09T15:04:38.784Z"
+          },
+          {
+            "seq": 60,
+            "type": "task.ended",
+            "at": "2026-10-09T15:04:38.785Z"
+          },
+          {
+            "seq": 61,
+            "type": "turn.ended",
+            "at": "2026-10-09T15:04:38.785Z"
+          }
+        ],
+        "memoryUsedSupported": true,
+        "memoryUsed": [],
+        "durationMs": 7376,
+        "endedAt": "2026-10-09T15:04:39.044Z"
+      },
+      {
+        "sessionId": "session-0ba26c26-0f11-48ab-bd9c-9b4848c0131a",
+        "modelProfileId": "private-model-bdbd2c2bc485213ea058fe092ad365031baa71a3",
+        "commandId": "cmd-b91a1e24-9a37-49da-98fd-843b5d417481",
+        "startedAt": "2026-10-09T15:04:40.392Z",
+        "reply": "按你固定用量，今天浇水每盆 300 毫升即可。",
+        "status": "completed",
+        "approvals": [],
+        "timeline": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-09T15:04:40.438Z"
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-09T15:04:40.439Z"
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-09T15:04:40.463Z"
+          },
+          {
+            "seq": 11,
+            "type": "user.message",
+            "at": "2026-10-09T15:04:40.464Z"
+          },
+          {
+            "seq": 40,
+            "type": "assistant.message",
+            "at": "2026-10-09T15:04:44.716Z"
+          },
+          {
+            "seq": 41,
+            "type": "task.ended",
+            "at": "2026-10-09T15:04:44.716Z"
+          },
+          {
+            "seq": 42,
+            "type": "turn.ended",
+            "at": "2026-10-09T15:04:44.717Z"
+          }
+        ],
+        "memoryUsedSupported": true,
+        "memoryUsed": [],
+        "durationMs": 4476,
+        "endedAt": "2026-10-09T15:04:44.868Z"
+      }
+    ],
+    "replySummary": "按你固定用量，今天浇水每盆 300 毫升即可。",
+    "notes": "M2e留出场景；园艺数量领域；三个独立会话。基线严格检查当前纠正项采用、旧项失效且排除、双方原话来源保留及未声明审批。",
+    "scratchDir": "C:\\temp\\weftmate-eval-memory-1x-correction-CtLuCj",
+    "reason": "reply_contains did not match expected value; memory_used did not match expected value; holdout must adopt its own current formal memory",
+    "holdoutVerification": {
+      "distinctSessions": true,
+      "noUndeclaredApprovals": true
+    }
+  }
+]

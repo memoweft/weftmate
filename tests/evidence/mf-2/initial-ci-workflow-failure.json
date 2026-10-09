@@ -1,0 +1,7 @@
+{
+  "run": "https://github.com/memoweft/weftmate/actions/runs/37950785238",
+  "commit": "da09fc876e98a1ca78b016baa3847f5269d3ee9c",
+  "reason": "The Core ref was indented two spaces too far under checkout.with; GitHub rejected the workflow before creating its jobs.",
+  "fix": "0476450d corrected the indentation and updated the Core pin. Later CI must show all six expected host jobs; four green checks alone are insufficient.",
+  "status": "Original failed run retained; not counted as a successful CI run."
+}

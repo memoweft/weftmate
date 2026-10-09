@@ -1,0 +1,4 @@
+{
+  "reason": "Initial old runner invocation used --scenario instead of --only. Stopped at first synthetic action, process tree (10 PIDs) terminated; any model usage is included. Not scored as a memory attempt.",
+  "root": "C:/Temp/weftmate-m2f-mimo-782dfe8d-e5dd-4310-8aa6-7161b545b24e"
+}
