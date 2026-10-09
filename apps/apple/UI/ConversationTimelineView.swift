@@ -64,7 +64,7 @@ struct ConversationTimelineView: View {
         if let error = interactions.approvalError ?? interactions.questionError { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
         if let error = interactions.persistenceError { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
         AppleTokens.Colors.clear.frame(height: 0)
-            .task(id: "\(scenePhase)|\(appModel.historyCachedAt != nil)|\(appModel.historyBusy)|\(appModel.timeline.events.last?.seq ?? -1)") {
+            .task(id: "\(scenePhase)|\(appModel.historyCachedAt != nil)|\(appModel.historyBusy)|\(appModel.taskControlSessions.contains(sessionID))|\(appModel.timeline.events.last?.seq ?? -1)") {
                 guard scenePhase == .active, !appModel.historyBusy, appModel.historyCachedAt == nil else { interactions.suspend(); commands.suspend(); return }
                 interactions.activate(); commands.activate()
                 if appModel.taskControlSessions.contains(sessionID) {
