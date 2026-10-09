@@ -1,0 +1,82 @@
+{
+  "generatedAt": "2026-10-09T22:33:29.270Z",
+  "sourcesSHA256": "4a6b7462bae9ae11e747be438730f283130093fc674c52d744cbe8d1fba077cc",
+  "binarySHA256": {
+    "mac": "c2b849f776bcb517defa827cd5d258dbee6bcdde16a783925bb7abe66ba4718d",
+    "iphone": "87d89c80b4d809cfd1b8b572c68d78ea0ccead5687ffa7c989d4b5d71f057237"
+  },
+  "swiftA15": {
+    "passed": 9,
+    "failed": 0
+  },
+  "stateChecks": {
+    "passed": 2,
+    "failed": 0
+  },
+  "nodeCopyAndTokens": {
+    "passed": 12,
+    "failed": 0
+  },
+  "surfaces": [
+    {
+      "surface": "mac-light",
+      "passed": true,
+      "usageRequests": 1,
+      "thinkingPATCHs": 4,
+      "xcuITest": false
+    },
+    {
+      "surface": "mac-dark",
+      "passed": true,
+      "usageRequests": 1,
+      "thinkingPATCHs": 4,
+      "xcuITest": false
+    },
+    {
+      "surface": "iphone-light",
+      "passed": true,
+      "usageRequests": 12,
+      "thinkingPATCHs": 2,
+      "xcuITest": true
+    },
+    {
+      "surface": "iphone-dark",
+      "passed": true,
+      "usageRequests": 12,
+      "thinkingPATCHs": 2,
+      "xcuITest": true
+    }
+  ],
+  "uiCopy": {
+    "authoredStrings": 1666,
+    "screenshotFrames": 58
+  },
+  "hiddenBodyAndKeyScan": [
+    {
+      "marker": "A15_SYNTHETIC_PRIVATE_BODY_NEVER_DISPLAY",
+      "hits": 0
+    },
+    {
+      "marker": "A15_SYNTHETIC_SECRET_NEVER_DISPLAY",
+      "hits": 0
+    }
+  ],
+  "resourceLimits": {
+    "xcodeJobs": 2,
+    "xcodebuildSerial": true,
+    "simulatorsAtOnce": 1
+  },
+  "boundaries": {
+    "realPersonalHTTPHost": true,
+    "syntheticOnly": true,
+    "mediaInjected": true,
+    "macXCUITestAutomationUnavailable": true,
+    "compiledDSH": false,
+    "realModel": false,
+    "realCameraDevice": false,
+    "personalClipboardRead": false,
+    "personalDesktopCapture": false,
+    "productionRelay": false,
+    "deployment": false
+  }
+}

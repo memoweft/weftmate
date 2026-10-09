@@ -69,6 +69,7 @@ struct SettingsView: View {
         #else
         NavigationStack(path: $phonePath) {
             List {
+                Section { AccountUsageBar(app: model) }
                 ForEach(["设置", "助手", "关于"], id: \.self) { group in
                     let rows = categories.filter { $0.group == group }
                     if !rows.isEmpty {
@@ -253,7 +254,7 @@ private struct SettingsCategoryView: View {
             }
             Section("模型档案与单价 · 元 / 百万令牌") {
                 ForEach(settings.models) { model in
-                    SettingsRow(model.name, model.configured ? "已配置 · " + model.model : "未配置") {
+                    SettingsRow(model.name, (model.configured ? "已配置 · " + model.model : "未配置") + (model.deepThinking?.supported == true ? " · 支持深入思考" : " · 不支持深入思考")) {
                         if let price = settings.prices.first(where: { $0.id == model.id })?.price {
                             Text("缓存 \(price.cachedInput) · 输入 \(price.input) · 输出 \(price.output)").font(AppleTokens.Fonts.caption)
                         } else { Text("费用未知").foregroundStyle(Weave.muted) }
