@@ -1,0 +1,12 @@
+{
+  "passed": 1,
+  "failed": 0,
+  "skipped": 0,
+  "realCloudMain": true,
+  "realPersonalHost": true,
+  "compiledDshEngine": false,
+  "syntheticModel": true,
+  "simulatorsAtOnce": 1,
+  "xcodeJobs": 2,
+  "shutdownImmediately": true
+}
