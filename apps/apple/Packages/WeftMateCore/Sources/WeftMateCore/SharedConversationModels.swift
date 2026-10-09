@@ -44,6 +44,7 @@ public struct SharedHostModel: Codable, Equatable, Sendable, Identifiable {
     public let sourceKind: String?
     public let accountModelId: String?
     public let revision: Int?
+    public var deepThinking: DeepThinkingCapability? = nil
     func validate() throws {
         try SharedValidation.require(SharedValidation.profile(id) && name.utf16.count <= 256 && model.utf16.count <= 128 &&
             (!configured || !model.isEmpty) && (routeFingerprint.map(SharedValidation.hash) ?? true) &&
