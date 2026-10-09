@@ -13,6 +13,18 @@ const pythonPath = process.env.WEFTMATE_TEST_MEMOWEFT_SOURCE
 const owner = 'owner-00000000-0000-4000-8000-000000000001'
 const skip = !python || !pythonPath ? 'CI runs this test with the pinned MemoWeft Core' : false
 
+async function waitForFormation(manager: ReturnType<typeof createPersonalMemoryManager>) {
+  // Ingest accepts a durable background job. Ordinary recall no longer waits
+  // for it; this semantic test reads only after the real worker has settled.
+  const deadline = Date.now() + 15000
+  while (Date.now() < deadline) {
+    const result = await manager.query(owner, 'query_jobs', { operation: 'list' })
+    if (!result.jobs?.some((job: any) => ['pending', 'processing', 'retry'].includes(job.worker?.state))) return
+    await new Promise(resolve => setTimeout(resolve, 100))
+  }
+  throw new Error('Synthetic formation worker did not settle')
+}
+
 function boundary(text: string, sessionId: string) {
   const events = [
     { seq: 1, type: 'turn/start', data: { turn: 1 } },
@@ -83,11 +95,13 @@ for (const scenario of [
       object_kind: 'cognition', item_id: id, projection: 'history' })
     try {
       assert.equal((await manager.ingest(owner, boundary(scenario.old, 'session-old'))).state, 'accepted')
+      await waitForFormation(manager)
       const before = await manager.recall(owner, { query: scenario.query, sessionId: 'session-before' })
       assert.deepEqual(errors, [])
       assert.match(before.contextText, new RegExp(scenario.obsolete))
       const prior = (await world()).items[0]
       assert.equal((await manager.ingest(owner, boundary(scenario.correction, 'session-correction'))).state, 'accepted')
+      await waitForFormation(manager)
       const after = await manager.recall(owner, { query: scenario.query, sessionId: 'session-after' })
       assert.deepEqual(errors, [])
       assert.equal(requests.length, 2, 'recall makes no generation calls')
