@@ -115,20 +115,21 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
         {seq:1,type:'assistant.message',data:{text:'整理脚本已准备好。先确认这次操作的影响范围。'}}];
       state.sharedEvents=fixture.history;renderSharedConversation();
     });await page.evaluate(()=>refreshToolApprovals());await page.evaluate(()=>{$('chat-scroll').scrollTop=0;closeToast()})};
-    await showApproval();const card=page.locator('.conversation-approval');
+    await showApproval();const card=page.getByRole('region',{name:'待批准操作'});
+    await card.getByText('详情',{exact:true}).click();
     assert.match(await card.innerText(),/风险类别：执行脚本、删除文件.*可能无法撤销/s);
     await page.evaluate(()=>Promise.allSettled(document.getAnimations().map(animation=>animation.finished)));
-    for(const button of await card.locator('button').all()){const box=await button.boundingBox();assert.ok(box.height>=47.99&&box.width>=120,JSON.stringify(box))}
+    for(const button of await card.locator('.approval-actions button').all()){const box=await button.boundingBox();assert.ok(box.height>=43.99,JSON.stringify(box))}
     await screenshot('03-three-buttons.png');
-    await card.getByRole('button',{name:'允许一次',exact:true}).click();await page.waitForFunction(()=>fixture.approval.status==='answered');
-    await page.waitForFunction(()=>document.querySelector('.conversation-approval')?.innerText==='已允许 · 运行脚本');
-    assert.equal(await card.locator('button').count(),0);await screenshot('04-resolved-line.png');
+    await card.getByRole('button',{name:'批准',exact:true}).click();await page.waitForFunction(()=>fixture.approval.status==='answered');
+    await card.waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>approvalRecord([...toolApprovals.sessions.get('s1').rows.values()][0])),'已允许 · 运行脚本');
+    assert.equal(await card.isVisible(),false);await screenshot('04-resolved-line.png');
     assert.equal(await page.evaluate(()=>fixture.requests.filter(r=>r.method==='shared.approvals.decide').at(-1).params.scope),'once');
-    await showApproval();await card.getByRole('button',{name:'总是允许此类',exact:true}).click();
-    await page.waitForFunction(()=>document.querySelector('.conversation-approval')?.innerText==='已总是允许此类 · 运行脚本');
+    await showApproval();await card.getByText('详情',{exact:true}).click();await card.getByRole('button',{name:'总是允许此类',exact:true}).click();
+    await card.waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>approvalRecord([...toolApprovals.sessions.get('s1').rows.values()][0])),'已总是允许此类 · 运行脚本');
     assert.equal(await page.evaluate(()=>fixture.requests.filter(r=>r.method==='shared.approvals.decide').at(-1).params.scope),'conversation-category');
     await showApproval();await card.getByRole('button',{name:'拒绝',exact:true}).click();
-    await page.waitForFunction(()=>document.querySelector('.conversation-approval')?.innerText==='已拒绝 · 运行脚本');
+    await card.waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>approvalRecord([...toolApprovals.sessions.get('s1').rows.values()][0])),'已拒绝 · 运行脚本');
     assert.equal(await page.evaluate(()=>Object.hasOwn(fixture.requests.filter(r=>r.method==='shared.approvals.decide').at(-1).params,'scope')),false);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),390);
     await page.evaluate(()=>applyTheme('dark'));await showApproval();await screenshot('05-dark-approval.png');

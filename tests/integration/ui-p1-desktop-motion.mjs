@@ -24,7 +24,7 @@ const errors = [], results = [], performanceResults = [];
 async function until(check) { const deadline = performance.now() + 30000; while (performance.now() < deadline) { if (await check()) return; await new Promise(done => setTimeout(done, 50)); } throw Error('Motion fixture condition timed out'); }
 async function frames(phase, name, action) {
   console.log(`${phase}: ${name}`);
-  if (name.startsWith('execution-')) await page.getByText('执行了 2 步 · 用时 2 秒', { exact: true }).scrollIntoViewIfNeeded();
+  if (name.startsWith('execution-')) await page.getByText(phase === 'before' ? '执行了 2 步 · 用时 2 秒' : '读取了 3 个文件、已运行 1 个命令', { exact: true }).scrollIntoViewIfNeeded();
   if (name === 'approval-resolve') await page.locator('[data-conversation-approval]').first().scrollIntoViewIfNeeded();
   await page.evaluate(() => {
     for (const animation of document.getAnimations()) { try { animation.finish(); } catch {} }
@@ -74,6 +74,7 @@ async function projectSteps(count) {
     let list = document.getElementById('motion-steps');
     if (!list) { list = document.createElement('li'); list.id = 'motion-steps'; document.getElementById('transcript').append(list); }
     window.WeftTimeline.render(Array.from({ length: count }, (_, index) => ({ seq: index, sessionId: 'motion-session', type: 'step.started', at: '2026-10-08T08:00:00Z', data: { taskId: 'motion-task', stepId: `motion-step-${index}`, state: 'running', summary: `合成新增步骤 ${index + 1}` } })), list);
+    const details = list.querySelector('.execution-block'); if (details) details.open = true;
     if (count <= 20) list.scrollIntoView({ block: 'center' });
   }, count);
 }
@@ -142,9 +143,9 @@ try {
     }, step));
     await page.reload();
     await page.getByRole('heading', { name: '登录 WeftMate' }).waitFor();
-    await frames(phase, 'approval-enter', async () => { await localUiSession(page, candidate.credentials); await page.getByRole('button', { name: '允许一次', exact: true }).waitFor(); });
-    await page.getByRole('button', { name: '允许一次', exact: true }).waitFor();
-    const summary = page.getByText('执行了 2 步 · 用时 2 秒', { exact: true });
+    await frames(phase, 'approval-enter', async () => { await localUiSession(page, candidate.credentials); await page.getByRole('button', { name: phase === 'before' ? '允许一次' : '批准', exact: true }).waitFor(); });
+    await page.getByRole('button', { name: phase === 'before' ? '允许一次' : '批准', exact: true }).waitFor();
+    const summary = page.getByText(phase === 'before' ? '执行了 2 步 · 用时 2 秒' : '读取了 3 个文件、已运行 1 个命令', { exact: true });
     await frames(phase, 'execution-expand', () => summary.evaluate(element => element.click()));
     await frames(phase, 'execution-collapse', () => summary.evaluate(element => element.click()));
     if (phase === 'after') await measure('execution-expand-collapse', async () => { await summary.evaluate(element => element.click()); await page.waitForTimeout(240); await summary.evaluate(element => element.click()); });
@@ -152,7 +153,7 @@ try {
     await frames(phase, 'queue-enter', () => projectQueue(2));
     await frames(phase, 'queue-exit', () => projectQueue(0));
     await projectQueue(21); await projectSteps(21);
-    const longLists = await page.evaluate(() => document.getAnimations().filter(animation => animation.playState === 'running' && (animation.effect.target.closest('#task-queue, #motion-steps'))).length);
+    const longLists = await page.evaluate(() => document.getAnimations().filter(animation => animation.playState === 'running' && animation.effect.getTiming().iterations !== Infinity && (animation.effect.target.closest('#task-queue, #motion-steps'))).length);
     assert.equal(longLists, 0, 'more than 20 rows show immediately');
     await projectQueue(0); await page.locator('#motion-steps').evaluate(element => element.remove());
     await page.getByRole('button', { name: '输出与来源', exact: true }).click();
@@ -172,13 +173,14 @@ try {
     await frames(phase, 'session-list', () => search.fill('项目'));
     await search.fill('');
     await page.getByRole('button', { name: '合成空白对话', exact: true }).click();
-    await frames(phase, 'session-switch', async () => { await page.getByRole('button', { name: /^项目进度报告(?:\s|$)/ }).evaluate(button => button.click()); await page.getByRole('button', { name: '允许一次', exact: true }).waitFor(); });
+    await frames(phase, 'session-switch', async () => { await page.getByRole('button', { name: /^项目进度报告(?:\s|$)/ }).evaluate(button => button.click()); await page.getByRole('button', { name: phase === 'before' ? '允许一次' : '批准', exact: true }).waitFor(); });
     await page.getByRole('button', { name: '账户菜单' }).click();
     await frames(phase, 'page-switch', () => page.getByRole('button', { name: '设置', exact: true }).evaluate(button => button.click()));
     await page.getByRole('button', { name: phase === 'before' ? /返回对话/ : '关闭设置' }).click();
     await frames(phase, 'approval-resolve', async () => {
-      await page.getByRole('button', { name: '允许一次', exact: true }).evaluate(button => button.click());
-      await until(() => page.getByText(/已提交允许|已允许本次/).count());
+      await page.getByRole('button', { name: phase === 'before' ? '允许一次' : '批准', exact: true }).evaluate(button => button.click());
+      if (phase === 'before') await until(() => page.getByText(/已提交允许|已允许本次/).count());
+      else await page.getByRole('region', { name: '待批准操作' }).waitFor({ state: 'hidden' });
     });
     await frames(phase, 'reply-and-send-stop', async () => {
       await candidate.complete(true);

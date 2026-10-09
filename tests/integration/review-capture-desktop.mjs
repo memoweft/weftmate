@@ -51,13 +51,13 @@ for (const theme of ['light', 'dark']) {
     }, fixture.credentials);
     const home = async () => {
       await page.goto(fixture.origin + '/personal/v1/ui');
-      await button('允许一次').waitFor();
+      await button('批准').waitFor();
     };
     const settings = async () => { await home(); await button('账户菜单').click(); await button('设置').click(); };
     const preparations = {
       sessions: async () => { await home(); await button('搜索会话').click(); await page.getByRole('searchbox', { name: '搜索会话', exact: true }).waitFor(); },
-      conversation: async () => { await home(); await page.getByText('执行了 2 步 · 用时 2 秒', { exact: true }).click(); await page.getByText('读取 3 个文件', { exact: true }).evaluate(node => node.scrollIntoView({ block: 'center' })); },
-      approval: async () => { await home(); await button('允许一次').evaluate(node => node.scrollIntoView({ block: 'center' })); },
+      conversation: async () => { await home(); await page.getByRole('button', {name:'读取了 3 个文件、已运行 1 个命令，已收起',exact:true}).click(); await page.getByText(/^读取 3 个文件/).evaluate(node => node.scrollIntoView({ block: 'center' })); },
+      approval: async () => { await home(); await button('批准').evaluate(node => node.scrollIntoView({ block: 'center' })); },
       question: async () => { await home(); await page.getByRole('radio', { name: '简要报告', exact: true }).evaluate(node => node.scrollIntoView({ block: 'center' })); },
       'outputs-sources': async () => { await home(); await button('输出与来源').click(); await page.getByRole('button', { name: /README.md.*读取/ }).waitFor(); },
       memory: async () => { await home(); await button('查看这条回复采用的 1 条记忆来源').click(); await page.getByText('合成偏好：使用中文说明。', { exact: true }).waitFor(); },

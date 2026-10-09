@@ -41,7 +41,7 @@ async function frames(name,action){
  }
  await page.evaluate(()=>{window.__motionCapture=false;for(const a of window.__motionFrames){try{a.finish()}catch{}}});
  results.push({phase,name,sampleTimesMs:[0,60,120,240],samples});console.log(`${surface} ${phase} ${name}`);
- if(phase==='after')assert.ok(samples[0].length>0,`${name}: expected motion`);
+ if(phase==='after'&&name!=='approval-resolve')assert.ok(samples[0].length>0,`${name}: expected motion`);
  if(phase==='reduced')assert.equal(samples.flat().length,0,`${name}: reduced motion must be instant`);
 }
 async function measure(name,action){
@@ -53,7 +53,7 @@ async function measure(name,action){
  performanceResults.push({name,...report});if(capture){assert.equal(report.longTasks.filter(e=>e.duration>50).length,0,`${name}: long task`);assert.equal(report.frameGapsMs.filter(gap=>gap>50).length,0,`${name}: long frame`);}
 }
 async function home(){await page.evaluate(()=>page('home'));await conversation('整理项目进展').waitFor();await settle()}
-async function report(){await home();await conversation('整理项目进展').click();await page.getByText(/执行了 1 步/).waitFor();await settle()}
+async function report(){await home();await conversation('整理项目进展').click();await page.getByText(/(?:执行了 1 步|读取了 1 个文件)/).waitFor();await settle()}
 async function projectSteps(count){await page.evaluate(count=>{
  let list=document.getElementById('motion-step-fixture');if(!list){list=el('div');list.id='motion-step-fixture';$('chat-content').prepend(list)}
  WeftTimeline.render(Array.from({length:count},(_,i)=>({seq:i+30,type:'step.completed',at:'2026-10-08T06:00:00Z',data:{taskId:'motion',stepId:`step-${i}`,state:'completed',summary:`合成执行步骤 ${i+1}`}})),list,{mobile:true});
@@ -104,10 +104,10 @@ try{
   await frames('login-code',()=>loginStep('registration','code'));
   await frames('login-password',()=>loginStep('registration','password'));
   await bridge({method:'auth.login',params:{...fixture.credentials,deviceName:'合成动效手机'}});await page.reload();await conversation('整理项目进展').waitFor();
-  await frames('session-enter',()=>conversation('整理项目进展').click());await page.getByText(/执行了 1 步/).waitFor();
-  await page.getByText(/执行了 1 步/).scrollIntoViewIfNeeded();
-  await frames('execution-expand',()=>page.getByText(/执行了 1 步/).click());
-  await frames('execution-collapse',()=>page.getByText(/执行了 1 步/).click());
+  await frames('session-enter',()=>conversation('整理项目进展').click());await page.getByText(/(?:执行了 1 步|读取了 1 个文件)/).waitFor();
+  await page.getByText(/(?:执行了 1 步|读取了 1 个文件)/).scrollIntoViewIfNeeded();
+  await frames('execution-expand',()=>page.getByText(/(?:执行了 1 步|读取了 1 个文件)/).click());
+  await frames('execution-collapse',()=>page.getByText(/(?:执行了 1 步|读取了 1 个文件)/).click());
   await projectSteps(1);
   await frames('steps-enter',()=>projectSteps(3));
   await frames('outputs-push',()=>button('输出与来源').click());await button(/^notes.md 1 次使用$/).waitFor();
@@ -121,14 +121,14 @@ try{
   await home();
   await frames('long-press-menu',async()=>{await conversation('整理项目进展').dispatchEvent('pointerdown');await page.waitForTimeout(520);await page.getByRole('dialog',{name:'对话操作',exact:true}).waitFor()});
   await page.getByRole('dialog',{name:'对话操作',exact:true}).getByRole('button',{name:'取消',exact:true}).click();
-  await frames('approval-enter',async()=>{await conversation('整理临时文件').click();await button('允许一次').waitFor()});
-  await frames('approval-resolve',()=>page.evaluate(()=>{const card=document.querySelector('.conversation-approval');const context=approvalContext();const cache=toolApprovals.sessions.get(context.sessionId);fillApprovalCard(card,{...[...cache.rows.values()][0],status:'answered',decisionOutcome:'allowed-once'},context,cache)}));
+  await frames('approval-enter',async()=>{await conversation('整理临时文件').click();await button(phase==='before'?'允许一次':'批准').waitFor()});
+  await frames('approval-resolve',()=>page.evaluate(()=>{const context=approvalContext(),cache=toolApprovals.sessions.get(context.sessionId),row=[...cache.rows.values()][0];cache.rows.set(row.approvalId,{...row,status:'answered',decisionOutcome:'allowed-once'});renderConversationApprovals()}));
   await page.evaluate(()=>{page('chat');state.sharedRunning=false;updateComposer()});
   await frames('send-stop',()=>page.evaluate(()=>{state.sharedRunning=true;updateComposer()}));
   await frames('stop-send',()=>page.evaluate(()=>{state.sharedRunning=false;updateComposer()}));
  }
  phase='after';await preference(false);await report();
- await measure('execution-expand-collapse',async()=>{await page.getByText(/执行了 1 步/).click();await page.waitForTimeout(250);await page.getByText(/执行了 1 步/).click()});
+ await measure('execution-expand-collapse',async()=>{await page.getByText(/(?:执行了 1 步|读取了 1 个文件)/).click();await page.waitForTimeout(250);await page.getByText(/(?:执行了 1 步|读取了 1 个文件)/).click()});
  await measure('outputs-push-back',async()=>{await button('输出与来源').click();await button(/^notes.md 1 次使用$/).waitFor();await page.waitForTimeout(250);await button('返回对话').click()});
  await home();
  await measure('drawer-open-close',async()=>{await button('打开导航').click();await page.waitForTimeout(250);await button('关闭导航').click()});

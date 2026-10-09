@@ -102,7 +102,8 @@ async function openConversationResources(filter=null){const context=conversation
 }
 
 function renderTimeline(events=state.sharedEvents){if(!window.WeftTimeline)return;const context=conversationTaskContext();
-  window.WeftTimeline.render(events,$('chat-content'),{tag:'section',mobile:true,copyText:text=>call('clipboard.copy',{text}),
+  window.WeftTimeline.render(events,$('chat-content'),{tag:'section',mobile:true,artifacts:[...conversationTasks.entries.values()].flatMap(entry=>entry.task?.artifacts||[]),approvals:uiCore.mobileDecisions.rows(approvalContext()),
+    waiting:state.chatSource==='host'&&state.sharedRunning?uiCore.processingLabel(state.sharedSessions.find(row=>row.sessionId===context.sessionId)?.processing):'',copyText:text=>call('clipboard.copy',{text}),
     openStep:step=>openConversationResources(item=>item.uses?.some(use=>use.id===`${step.taskId}/${step.stepId}`)),
     openReference:key=>openConversationResources(item=>item.key===key),
     readDetail:seq=>uiCore.readTimelineDetail(context.sessionId,seq),

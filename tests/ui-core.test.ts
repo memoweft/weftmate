@@ -23,6 +23,45 @@ function fixture(read: (path: string, options: any) => any = () => response({}))
 const plain = (value: any) => JSON.parse(JSON.stringify(value))
 const deferred = () => { let resolve!: (value: any) => void; const promise = new Promise(done => { resolve = done }); return { promise, resolve } }
 
+test('D35 progress uses real kinds/objects and prioritizes failure and stopped states', () => {
+  const { api } = fixture();
+  const steps = [
+    {toolName:'pwsh',state:'completed',summary:'运行命令 npm test'},
+    {toolName:'read',state:'completed',summary:'读取 2 个文件',arguments:{paths:['a.md','b.md']}},
+    {toolName:'grep',state:'running',summary:'搜索 approval'},
+  ];
+  assert.equal(api.progressText(steps).text, '正在搜索 approval…');
+  assert.equal(api.progressText(steps, true).text, '已运行 1 个命令、读取了 2 个文件、搜索了 1 次');
+  assert.equal(api.progressText([...steps, {state:'failed',ordinal:4}]).text, '第 4 步失败');
+  assert.equal(api.progressText([{state:'cancelled'}]).text, '已停止');
+  assert.equal(api.progressText([{state:'completed',jobState:'running',summary:'运行命令 npm test'}]).text,'正在运行命令 npm test…');
+  assert.equal(api.progressText([{state:'completed',jobState:'killed'}]).text,'已停止');
+  assert.equal(api.progressText([{state:'completed',jobState:'failed',ordinal:2}]).text,'第 2 步失败');
+  assert.equal(api.progressText([]).text, '');
+  const raw = JSON.stringify({arguments: JSON.stringify({command:'npm test'}),output:[{type:'tool-result',content:[{type:'text',text:'42 passed'}]}]});
+  assert.match(api.executionDetailText(raw), /参数\n.*\n.*npm test[\s\S]*输出\n42 passed/);
+  assert.equal(api.executionDetailText('plain output'), 'plain output');
+});
+
+test('D35 chronology splits only at visible conversation boundaries and approvals stay on their own step', () => {
+  const { api } = fixture();
+  const events = [
+    {seq:1,type:'step.started',data:{taskId:'turn-1',stepId:'command',toolName:'pwsh',state:'running'}},
+    {seq:2,type:'approval.requested',data:{taskId:'turn-1',callId:'command',approvalId:'approval-a'}},
+    {seq:3,type:'step.completed',data:{taskId:'turn-1',stepId:'command',state:'completed'}},
+    {seq:4,type:'step.completed',data:{taskId:'turn-1',stepId:'read',toolName:'read',state:'completed'}},
+    {seq:5,type:'assistant.message',data:{text:'已读完，接着检查。'}},
+    {seq:6,type:'step.completed',data:{taskId:'turn-1',stepId:'failure',state:'failed'}},
+    {seq:7,type:'approval.requested',data:{approvalId:'missing-call-id'}},
+  ];
+  const copy = JSON.stringify(events), result = api.projectTimeline(events,[{callId:'command',turn:1,status:'answered',decisionOutcome:'allowed-once'}]);
+  assert.equal(result.groups.length,2);
+  assert.equal(result.groups[0].steps[0].approvalText,'已批准');
+  assert.equal(result.groups[0].steps[1].approvalText,'');
+  assert.equal(api.progressText(result.groups[1].steps).text,'第 3 步失败');
+  assert.equal(JSON.stringify(events),copy);
+});
+
 test('running composer reports observed phases and hides them on an idle session without changing stop availability', () => {
   const f = fixture(), session: any = f.core.state.sessions[0]
   session.running = true
