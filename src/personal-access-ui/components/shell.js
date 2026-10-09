@@ -177,6 +177,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
             control.disabled = busy;
     }
     function updateAvailability() {
+        ui.messageActions?.refresh();
         const value = core.composerState(ui.readMessageDraft());
         ui.renderConversationUsage?.();
         ui.byId('show-phone').hidden = true;

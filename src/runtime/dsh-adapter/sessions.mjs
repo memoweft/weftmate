@@ -99,14 +99,14 @@ export function contextUsage(value) {
 }
 const HISTORY_PAGE_LIMIT = 200
 const HISTORY_RESPONSE_BYTES_LIMIT = 900_000
-function safeHistoryText(value) {
+function safeHistoryText(value, limit = HISTORY_TEXT_LIMIT) {
   const raw = String(value ?? '')
-  const text = raw.slice(0, HISTORY_TEXT_LIMIT)
+  const text = raw.slice(0, limit)
     .replace(/(?:[A-Za-z]:\\|\\\\)[^\s"'<>]+/g, '[local path]')
     .replace(/(^|[\s(])\/(?:[^\s"'<>/]+\/)*[^\s"'<>/]+/g, '$1[local path]')
     .replace(/\bBearer\s+[^\s,;]+/gi, 'Bearer [redacted]')
     .replace(/(?:sk-[A-Za-z0-9_-]{8,}|(?:api[_-]?key|token|secret|password)\s*[:=]\s*[^\s,;]+)/gi, '[redacted]')
-  return { text, ...(raw.length > HISTORY_TEXT_LIMIT ? { truncated: true } : {}) }
+  return { text, ...(raw.length > limit ? { truncated: true } : {}) }
 }
 function messageText(message, includeHash = false) {
   if (!Array.isArray(message?.content)) return null
@@ -588,6 +588,14 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
       requireOrdinarySummary((listed?.items ?? []).find(item => sessionIdOf(item) === sessionId), sessionId)
       const entries = await logFor(sessionId), index = lowerBound(entries, seq)
       const event = entries[index]?.event ?? entries[index]
+      const messageType = event?.seq === seq ? projectHistoryEvent(event)?.type : null;
+      if (['user.message', 'assistant.message'].includes(messageType)) {
+        const message = event.data?.message ?? event.data;
+        const raw = (message.content ?? []).filter(part => part.type === 'text').map(part => part.text).join('');
+        return { seq, type: messageType, text: safeHistoryText(raw, Infinity).text,
+          ...(messageType === 'user.message' ? { messageHash: createHash('sha256').update(raw, 'utf8').digest('hex'),
+            receiptId: event.data?.source?.rpcId } : {}) };
+      }
       if (event?.seq !== seq || !['tool/call', 'tool/result', 'approval/asked', 'approval/decided'].includes(event.type))
         throw new DshAdapterError('session-not-found', 'history.detail')
       const call = event.type === 'tool/call' ? event : relatedCall(entries, index, callIndex(sessionId, entries))

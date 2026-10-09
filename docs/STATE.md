@@ -94,6 +94,7 @@ MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌）�
 ## 契约变更
 
 - **TB-1**：CLIENT_API 9.8正式增加 ctivity:1/activityChanges:1/activityRead:1/activityNotification:1、动态列表 / 增量 / 未读 / 单项与快照已读；原同步事件通道增加无正文动态水位，动作直达原审批 / 问题路径。账户签名游标、原任务结果身份、D33删除增量、临时脱敏与重要 / 普通 / 静默通知字段见9.8。
+- **UX-4**：CLIENT_API 3.3 新增消息锚点 `POST/GET /sessions/{id}/message-branches` 与完整消息详情，创建后用返回的 `sendRequestId` 走既有 `session.message`；原版与新版可切换，模型只改新分支，原有 `/fork` 不变。主对话走 `session.side.create` 来源引用；`task.queued.inherited` 对齐原生种子队列。反馈只存设备；导出先脱敏预览。安卓保存桥最低code27，Apple改动清单见UX-4证据。
 - **MEM-D**：CLIENT_API第11节新增账户 `GET/POST /memory/backfill` 预览、确认、暂停／继续／取消；记忆状态及设置健康增加形成计数、等待／失败原因与补整理进度。旧字段兼容，新增回合持久摄取，历史默认不自动跑；MEM-2排除与确认／来源权限保留。Apple需按第11节接线；安卓界面包沿现有记忆业务桥。
 
 
