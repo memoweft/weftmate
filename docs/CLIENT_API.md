@@ -998,3 +998,63 @@ App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协�
 升级沿第 8 节 BK-1（本地备份）完整快照；本功能另在首次迁移前保存私有 `personal-access/chat-identity-v1.before.json` 原始接入存储，覆盖应用版本未变的开发升级。原始副本只供停写后的演练 / 人工恢复，不自动读入；其中有原设备凭据校验值，因此不进入可携带备份，备份仍只保存撤销设备凭据后的当前接入存储。迁移提交失败保留旧存储；修复后可重跑。界面回退仍可使用旧旁聊，新逻辑元数据保留。
 
 新版产生数据后不能用旧副本覆盖正在使用的数据目录。需要宿主降级时先停写、保留新版完整快照，再把旧完整快照恢复至独立目录；只运行一份任务。单独的接入存储副本不能代替 DSH、记忆及成果完整备份。已经发生的遗忘 / 撤权必须按原清理水位前向恢复，不从备份自动重新摄取。本步不提供主对话区间归档或清空；D42-A 的全部历史保留政策不变。
+
+### 9.3 跨段历史、日期与搜索（IA-2.2 正式）
+
+能力增加 `chatTimeline:1,chatSearch:1`。路径均以 `/personal/v1` 为前缀，读取沿用 `sessions:read`，只读当前账户自己的逻辑对话。主对话尚无段时正常返回空页；不创建执行段，不执行模型。ui-core（共用功能层）的 `readChatEvents/readChatChanges/readChatDates/locateChatDate/searchChat` 提供同一路径。
+
+| GET 路径 | 参数 | 响应 |
+|---|---|---|
+| `/chats/{chatId}/events` | `before/after/around` 互斥；无方向为尾页；`around` 为 `eventId`；`limit` 默认50，1–200 | `{items,olderCursor,newerCursor,hasOlder,hasNewer,syncCursor,deletedAnchor,...}`；正序，锚点附近均衡窗口；未知或已删除锚点回尾页并给 `deletedAnchor:true` |
+| `/chats/{chatId}/changes` | 必填 `cursor`，可选 `limit` 同上 | `{upserts,removals,nextCursor,hasMore,...}`；独立增量，空页仍返回水位；旧段迟到消息同样交付 |
+| `/chats/{chatId}/dates` | `from,to` 必填，本地 `YYYY-MM-DD`，间隔≤31天 | `{days:[{date,count,firstEventId,lastEventId}],...}`；计数为公开条目数，未出现的日期不伪造条目 |
+| `/chats/{chatId}/locate` | 必填 `date`，本地 `YYYY-MM-DD` | `{date,eventId,previousDate,nextDate,...}`；当天无记录为 `eventId:null` |
+| `/chats/{chatId}/search` | `q` 非空≤256字符；可选 `from,to,role=user\|assistant,hasArtifact=true\|false,cursor,limit` | `{hits:[{eventId,sourceRef,at,snippet,highlights:[{start,end}]}],nextCursor,hasMore,...}`；中文字面子串、不区分大小写；范围为可见消息与结果摘要，工具输出和隐藏推理不索引 |
+
+共同字段为 `{contentRevision,chatRevision,unread,indexState,timeZone}`。`indexState=building|ready|failed`；首次返回可读尾页后逐页整理早期索引，整理中搜索/日期只是部分结果，不能解释为没有历史。失败可重新打开重建；本步索引只在宿主内存中存必要检索文本与原文定位，宿主重启后渐进重建，不持久复制原生日志。日期使用账户用量设置中的时区，未设置沿宿主时区；修改时区重新分日，事件身份和顺序不变。`hasArtifact` 检查该公开消息上的附件/成果引用，不推测另一条工具输出属于哪条回复。
+
+`items` 为 `{eventId,chatId,orderKey,revision,type,at,sourceRef,data}`。原生 `sourceRef={kind:"native",hostId,sessionId,seq}`，正文通过原历史公开投影读取；`eventId` 从原身份确定，索引重建不变。`orderKey` 按宿主段序及原生序号分配，与设备时钟无关；旧段迟到信息保留原段顺序。客户端遵从服务端顺序，不将 `orderKey` 当同步水位。展开、高度、焦点、选择以 `eventId` 保存；上翻后保留首个可见 ID 与像素偏移，不全量挂载历史。工具详情继续原 `sessionId/seq` 接口。
+
+游标绑定账户、对话、索引代次、用途及搜索过滤；不透明且经宿主签名，客户端不能解码、拼接、加一或混用。历史页的 `syncCursor` 不覆盖已建立的增量水位；增量只续传 `nextCursor`。逐步索引早期内容也可能在增量出现，以 `eventId` 去重即可。搜索游标保持过滤/时区，新增匹配可在重新搜索时出现。重启、内容代次变化或不合法游标返回409 `CURSOR_RESET_REQUIRED`，客户端清理旧缓存再取尾页或保存的锚点。
+
+`removals=[{eventId,revision,reason:"deleted"|"forgotten"}]` 不带正文；`removeEvents` 为 IA-2b 的持久原文清理完成后通知接缝，跨重启清理由 `contentRevision` 提升触发全缓存失效。本步未上线 D33 多段清理或接力。D42-A 保留全部原始历史，不增加区间归档或清空。固定 DSH 的原生冷 `inspect` 仍物化整个日志，测量脚本分别记录逻辑页与冷进程读取；不能把逻辑页的有界返回声称为原生磁盘读取已经有界。范围读取及最终性能闭环交 IA-2b 的 2.6。
+
+### 9.4 开旁聊与结果回写（IA-2.3 正式）
+
+能力增加 `sideChats:1`。沿用原 `/commands` 的 `commands:write`、设备归属、模型/项目权限、Cookie（会话凭据）/CSRF（跨站请求伪造防护）及原命令查询回执，不增加执行器或新的模型授权。
+
+`POST /commands` 新增客户端命令：
+
+```json
+{
+  "requestId": "side-example",
+  "kind": "session.side.create",
+  "targetDeviceId": "host-example",
+  "parent": {"kind": "main", "id": "chat-main-example"},
+  "modelProfileId": "local",
+  "title": "纸船安排",
+  "originChatId": "chat-source-example",
+  "originEventId": "event-source-example",
+  "entry": "message"
+}
+```
+
+必填 `requestId,kind,targetDeviceId,parent,modelProfileId`；`parent.kind=main|project`，`parent.id` 必须是当前账户主对话或已授权且未撤销项目。`title` 可选，去首尾空白后1–256字符；来源两个字段同时出现或省略，只能是当前账户可读的完整公开用户/助手消息。来源与组织父级分别保存：项目来源移到主对话父级不会继承项目写权限，目标项目使用原 D37 权限及目录。旁聊开出的新旁聊仍直接属于所选主对话或项目，不嵌套。
+
+`entry` 可选 `composer|message|suggestion`；缺省有来源为 `message`、无来源为 `composer`。`message` 必须有来源。模型建议入口必须另传 `confirmed:true`，否则409 `SIDE_CHAT_CONFIRMATION_REQUIRED`；客户端只在用户点确认后提交。此 API（应用接口）没有注册成模型自动建聊工具。输入区草稿和待上传附件留在客户端，创建不发送首句、不执行原消息、不改变审批模式。
+
+返回202 `{command}`，附 `kind:"session.side.create",chatId,sessionId,contextTransfer`；内部复用原持久 `session.create` 的创建/恢复流程。两项身份在首次受理时确定，同请求并发或重试返回同一命令；不同请求体409 `REQUEST_CONFLICT`。客户端等原 `/commands/by-request/{requestId}` 到 `accepted_by_dsh` 后才能使用旁聊。失败/不确定沿原回执处理，不换新请求编号重发。新旁聊使用独立原生会话与工作目录；项目旁聊沿原项目目录。
+
+本步 `contextTransfer={state:"references_only",sourceRefs:[{chatId,eventId,kind:"native",hostId,sessionId,seq,contentRevision}],truncated:false}`，`Chat` 同时返回 `originRefs` 与 `contextTransfer`。**尚未接入原生摘要转移**；采用 IA_MAIN_CHAT 3.1 允许的仅引用回退，界面必须提示“相关上下文尚未带入”，允许用户编辑首句继续。不能把引用就绪显示为完整上下文已转移；不把客户端摘要当事实，也不复制整条历史或注入伪造真人消息。来源删除后原链接返回不可用，引用不能恢复正文。原 D34 分叉继续完整事件种子语义，本接口不等同分叉。临时来源409 `TEMPORARY_CONTEXT_CONFIRMATION_REQUIRED`，共享来源409 `SHARED_CONTEXT_UNAVAILABLE`；未实现绕过提示的确认布尔开关。
+
+| 接口 | 请求 | 响应与规则 |
+|---|---|---|
+| POST `/chats/{sideChatId}/results` | `{requestId,sourceEventId,expectedRevision,taskId?}` | 201 `{result,mainEventId,activityId}`；原请求重放先于修订核对，异体409；新请求旧修订409 `REVISION_CHANGED`；正文由授权来源读取，客户端不提交摘要/成功状态 |
+| `result` | — | `{resultId,sourceChatId,sourceEventId,sourceRef,taskId?,state,summary,resultRevision,requiresResponse,artifactRefs[],deleted?}`；`state=completed|failed|stopped`；摘要最多160个 Unicode（统一字符编码）码点，不额外调用模型 |
+| 主对话 `items[]` | — | `type:"side.result"`，`sourceRef={kind:"result",resultId,sourceChatId,sourceEventId,native:{kind:"native",hostId,sessionId,seq}}`，没有伪造 `seq`；`data` 包含结果字段及 `activityId,notificationRevision`；历史、日期、搜索、增量走9.3 |
+
+不带 `taskId` 是显式分享选中的完整助手答复，`completed` 只表示该答复可分享，不证明某项任务成功。带 `taskId` 时必须属于该旁聊原根任务，原生回合已确定完成/失败/停止，且后台工作无活动或未确认状态；否则409 `TASK_NOT_READY`。宿主先用原来源接口核对回合边界，再按范围读取公开答复；不会读取下一回合或工具原始输出作为摘要。找不到来源404 `SOURCE_UNAVAILABLE`。临时及共享旁聊同样拒绝回写；主对话409 `MAIN_CHAT_PROTECTED`。
+
+自动回写在主对话身份/历史/日期/搜索/增量读取时对账：仅处理主对话身份建立后新受理的普通/项目旁聊根任务，原生工具或成果事实表明它是执行任务；纯闲聊不因每条回复生成卡。不追溯迁移前旧任务。原生 `completed/failed/aborted` 分别显示完成/失败/停止，停止绝不显示完成；缺乏确定证据保留待对账。归档不阻止已受理任务回写。回写不启动主对话模型、不追加 DSH 消息、不重新摄取记忆；没有新增后台计时器。
+
+同一旁聊根任务保持同一 `resultId/mainEventId/activityId`，后续续做/显式更正增加 `resultRevision` 和 `notificationRevision`，更新原卡；手动分享已有自动结果也复用身份。普通手动分享以来源消息去重。`requiresResponse` 当前为false，不凭问号产生待办或代表用户认可/批准。TB-1（动态）复用这些来源和通知版本，不再复制消息或发第二份通知；动态已读、推送和结构化待回应接线留对应包。删除旁聊清空派生摘要、成果引用与搜索正文，保留 `deleted:true` 的无正文锚点；重复分享请求也只返回当前墓碑。D33 原话/派生数据跨段清理仍由 IA-2b 2.5 接入，接力未启用。
