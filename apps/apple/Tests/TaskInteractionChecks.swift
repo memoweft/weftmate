@@ -29,7 +29,9 @@ private actor InteractionHTTP: HTTPTransport {
         self.lostQuestion = lostQuestion; self.lostApproval = lostApproval; self.denyQuestions = denyQuestions
         self.withholdACK = withholdACK; self.oldSnapshot = oldSnapshot
     }
+    private var denyApprovals = false
     private var includeSecondApproval = false
+    func denyApprovalReads(_ value: Bool) { denyApprovals = value }
     func addSecondApproval() { includeSecondApproval = true }
     func submissions() -> ([Data], [Data]) { (approvalBodies, questionBodies) }
     func send(_ request: URLRequest) async throws -> HTTPResponse {
@@ -54,6 +56,7 @@ private actor InteractionHTTP: HTTPTransport {
             return try json(["question": question(resolved: false), "requestId": answerRequest!])
         }
         if path.hasSuffix("/approvals") {
+            if denyApprovals { throw APIFailure.transport(.timeout) }
             if pause { await withCheckedContinuation { paused = $0 } }
             return try json(["approvals": [approval(resolved: !oldSnapshot)] + (includeSecondApproval ? [secondApproval()] : []), "hasMore": false]) }
         if path.hasSuffix("/questions") {
@@ -82,7 +85,7 @@ private actor InteractionHTTP: HTTPTransport {
     }
     private func secondApproval() -> [String: Any] {
         var row = identity("approval-second", field: "approvalId")
-        row["riskCategories"] = ["execute"]; row["callId"] = "call-second"; row["toolName"] = "Synthetic"; row["reason"] = "Second synthetic approval"
+        row["riskCategories"] = ["execute"]; row["callId"] = "call-second"; row["toolName"] = "Synthetic"; row["reason"] = "[weftmate:execute] 合成检查。\n{\"command\":\"npm run verify\"}"
         return row
     }
     private func question(resolved: Bool) -> [String: Any] {
@@ -204,6 +207,10 @@ private actor InteractionHTTP: HTTPTransport {
         await firstCategory.decide(firstCategory.approvals[0], outcome: .allowedOnce, decisionScope: .conversationCategory)
         try require(firstCategory.pendingApprovals.count == 1, "Uncertain approval disappeared before matched receipt")
         let categoryKey = "approval:approval-check"
+        await categoryHTTP.denyApprovalReads(true)
+        await firstCategory.refresh(snapshot)
+        try require(firstCategory.pendingApprovals.count == 1 && !firstCategory.canRespond(categoryKey), "Uncertain original disappeared or approval became enabled after read failure")
+        await categoryHTTP.denyApprovalReads(false)
         try require(firstCategory.responseNeedsReadback(categoryKey), "Lost category POST was not retained")
         let reloadedCategory = categoryModel()
         await reloadedCategory.refresh(categorySnapshot)
@@ -223,7 +230,8 @@ private actor InteractionHTTP: HTTPTransport {
         try require(queueModel.pendingApprovals.count == 2 && queueModel.pendingApprovals.first?.id == "approval-check", "Approval queue ordering incorrect")
         await queueModel.decide(queueModel.pendingApprovals[0], outcome: .allowedOnce)
         try require(queueModel.pendingApprovals.count == 1 && queueModel.pendingApprovals.first?.id == "approval-second", "Next approval did not replace registered first item")
-        print("PASS 11 two-item queue advances after matched receipt")
+        try require(queueModel.approvalHeadline(queueModel.pendingApprovals[0]) == "要运行命令：npm run verify", "Approval target missing before asynchronous detail read")
+        print("PASS 11 two-item queue advances after matched receipt; immediate target and uncertain read failure retained")
         print("TaskInteractionChecks: 11/11 passed; journal=" + directory.path)
     }
 }

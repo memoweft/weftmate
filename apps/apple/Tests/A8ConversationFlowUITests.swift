@@ -54,6 +54,7 @@ final class A8ConversationFlowUITests: XCTestCase {
         try expect(app.staticTexts["还有 1 个待批准"]); try expect(app.descendants(matching: .any)["approvalBar"])
         XCTAssertEqual(group.value as? String, "已展开")
         try tap(group)
+        XCTAssertTrue(app.buttons["approvalDetails"].label.contains("要运行命令：npm run verify"))
         try expect(matching(app, "approveOnce.")); keep(app, "approval", theme, review: true)
         let approve = matching(app, "approveOnce."); let previousID = approve.identifier
         try tap(approve); try await waitGone(app.buttons[previousID])

@@ -14,11 +14,11 @@ struct ConversationApprovalBar: View {
                     Button { expanded.toggle() } label: {
                         HStack(spacing: AppleTokens.Space.p5) {
                             WeftIcon(expanded ? "chevron" : "right", size: 16)
-                            Text(model.readableApprovals[approval.id] ?? approval.readableSummary).lineLimit(expanded ? nil : 2)
+                            Text(model.approvalHeadline(approval)).lineLimit(expanded ? nil : 2)
                         }.frame(maxWidth: .infinity, alignment: .leading)
-                    }.buttonStyle(.plain).accessibilityLabel("审批详情").accessibilityValue(expanded ? "已展开" : "已收起")
+                    }.buttonStyle(.plain).accessibilityLabel(model.approvalHeadline(approval) + "，审批详情").accessibilityIdentifier("approvalDetails").accessibilityValue(expanded ? "已展开" : "已收起")
                     Button("批准") { Task { await model.decide(approval, outcome: .allowedOnce, decisionScope: .once) } }
-                        .buttonStyle(PrimaryActionStyle(fillsWidth: false)).focused($approveFocused)
+                        .buttonStyle(PrimaryActionStyle(fillsWidth: false)).disabled(!model.canRespond(key)).focused($approveFocused)
                         .accessibilityIdentifier("approveOnce." + approval.id)
                         #if os(macOS)
                         .onKeyPress(.return) {
@@ -28,11 +28,12 @@ struct ConversationApprovalBar: View {
                         }
                         #endif
                     Button("拒绝") { Task { await model.decide(approval, outcome: .rejected) } }
-                        .buttonStyle(OutlineActionStyle()).accessibilityIdentifier("rejectApproval." + approval.id)
-                }.disabled(!model.canRespond(key))
+                        .buttonStyle(OutlineActionStyle()).disabled(!model.canRespond(key)).accessibilityIdentifier("rejectApproval." + approval.id)
+                }
                 if model.pendingApprovals.count > 1 { Text("还有 \(model.pendingApprovals.count - 1) 个待批准").foregroundStyle(Weave.muted) }
                 if expanded {
                     Text(model.approvalDetails[approval.id] ?? approval.reason).font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled)
+                    if let risk = approval.readableRisk { Text(risk).foregroundStyle(Weave.muted) }
                     Text(approval.reversalNotice).foregroundStyle(Weave.muted)
                     if !(approval.riskCategories ?? []).isEmpty {
                         Button("总是允许此类") { Task { await model.decide(approval, outcome: .allowedOnce, decisionScope: .conversationCategory) } }.disabled(!model.canRespond(key))
