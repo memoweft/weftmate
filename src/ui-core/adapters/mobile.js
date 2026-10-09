@@ -75,11 +75,45 @@ function trackSharedAcceptedTurn(event){const wait=state.sharedAwaiting;
 function waitForSharedTurn(sessionId,text,afterSeq,attachmentIds=[]){state.sharedAwaiting={sessionId,text,afterSeq,attachmentIds,seenUser:false};
   for(const event of state.sharedEvents)trackSharedAcceptedTurn(event)}
 
+function acceptSharedCommand(command){
+  if(command?.kind!=='session.message'||command.sessionId!==state.sharedSessionId||
+    !['accepted_by_dsh','observed'].includes(command.state))return false;
+  const pending=state.sharedPending?.requestId===command.requestId?state.sharedPending:null;
+  const row=core.optimisticMessages().find(item=>item.requestId===command.requestId);
+  if(!pending&&!row)return false;
+  core.reconcileOptimistic(command);
+  const text=pending?.text??row?.text,attachments=pending?.attachmentIds??row?.attachmentIds??[];
+  if(typeof text==='string'){
+    try{if(environment.storage.getItem(sharedDraftKey())?.trim()===text)environment.storage.removeItem(sharedDraftKey())}catch{}
+    if(effects.readMessageDraft().trim()===text)effects.clearMessageDraft();
+    effects.clearAcceptedHostAttachments(attachments);
+    effects.status('电脑已受理消息，等待会话记录更新');
+    waitForSharedTurn(command.sessionId,text,pending?.afterSeq??row?.afterSeq??-1,attachments);
+  }
+  if(pending)state.sharedPending=null;
+  core.observeOptimistic(state.sharedEvents);
+  return true;
+}
+
+async function reconcileSharedDelivery(){
+  if(state.chatSource!=='host')return;
+  const owner=state.owner,epoch=state.authEpoch,generation=state.sharedGeneration,sessionId=state.sharedSessionId;
+  const requests=new Set(core.optimisticMessages().filter(row=>row.status!=='accepted').map(row=>row.requestId));
+  if(state.sharedPending?.requestId)requests.add(state.sharedPending.requestId);
+  for(const requestId of requests){
+    try{const result=await core.accessApi(`/commands/by-request/${encodeURIComponent(requestId)}`);
+      if(!sharedViewCurrent(owner,epoch,generation,sessionId))return;
+      if(result.command?.requestId===requestId)acceptSharedCommand(result.command);
+    }catch{} // An unreadable receipt keeps the original request and draft.
+  }
+}
+
 async function loadSharedOutbox(){if(state.chatSource!=='host')return;
   const owner=state.owner,epoch=state.authEpoch,generation=state.sharedGeneration,sessionId=state.sharedSessionId,
     pendingAtStart=state.sharedPending?.requestId||null;
   try{const result=await effects.nativeCall('shared.outbox.list');if(!sharedViewCurrent(owner,epoch,generation,sessionId)||
     (state.sharedPending?.requestId||null)!==pendingAtStart)return;
+    for(const item of result?.commands||[])if(item.state==='accepted')acceptSharedCommand(item.command);
     const accepted=(result?.commands||[]).find(item=>item.sessionId===sessionId&&item.kind==='session.message'&&
       (!state.sharedPending||item.requestId===state.sharedPending.requestId)&&item.state==='accepted');
     if(accepted&&state.sharedPending?.text!==undefined){const text=state.sharedPending.text,key=sharedDraftKey(),
@@ -105,7 +139,7 @@ async function checkSharedPending(){const pending=state.sharedPending;
     requestId=pending.requestId;
   state.sharedChecking=requestId;effects.renderSharedConversation();
   try{const result=await effects.nativeCall('shared.outbox.reconcile');
-    if(!sharedViewCurrent(owner,epoch,generation,sessionId))return;
+    if(!sharedViewCurrent(owner,epoch,generation,sessionId)||optimistic.status==='accepted')return;
     if(result?.source!=='host'||!Array.isArray(result.commands))throw new Error('COMMAND_RECEIPT_INVALID');
     const outcome=result.commands.find(item=>item.sessionId===sessionId&&item.requestId===requestId);
     if(outcome?.state==='uncertain')effects.status('电脑仍未确认这条请求；原请求会保留，暂不重复发送');
@@ -211,14 +245,15 @@ async function sendShared(options={}){core.syncMobileIdentity();const intent=opt
   if(text.length>16384){effects.status('消息过长，请缩短后发送',true);return}
   const owner=state.owner,epoch=state.authEpoch,generation=state.sharedGeneration,sessionId=session.sessionId,
     requestId=options.retryRow?.requestId || newSharedRequestId(),key=sharedDraftKey(),attachmentIds=options.retryRow?.attachmentIds || items.map(item=>item.attachmentId);
-  const optimistic=options.retryRow || core.beginOptimistic({sessionId,text,requestId,attachmentIds,
+  const optimistic=options.retryRow || core.beginOptimistic({sessionId,text,requestId,attachmentIds,afterSeq:state.sharedNextSeq,
     retry:row=>sendShared({retryRow:row,intent:row.intent}),intent});
   optimistic.status='sending';
   const afterSeq=state.sharedNextSeq;state.sharedPending={requestId,state:'submitting',text,attachmentIds,afterSeq,intent};
   effects.updateComposer();effects.status('正在提交到电脑会话…');effects.renderSharedConversation();effects.scrollBottom(true);
   try{const result=await effects.nativeCall('shared.send',{sessionId,text,requestId,intent,...(attachmentIds.length?{attachmentIds}:{})});
-    if(!sharedViewCurrent(owner,epoch,generation,sessionId))return;
+    if(!sharedViewCurrent(owner,epoch,generation,sessionId)||optimistic.status==='accepted')return;
     if(result?.source!=='host'||result.sessionId!==sessionId||result.requestId!==requestId)throw new Error('OPERATION_FAILED');
+    if(result.command?.requestId===requestId&&acceptSharedCommand(result.command)){void effects.loadSharedHistory();return;}
     if(result.state==='accepted'){
       optimistic.status='accepted';
       void core.accessApi(`/commands/by-request/${encodeURIComponent(requestId)}`).then(found=>{
@@ -233,7 +268,7 @@ async function sendShared(options={}){core.syncMobileIdentity();const intent=opt
     }else if(result.state==='uncertain'){optimistic.status='failed';state.sharedPending={requestId,state:'uncertain',text,attachmentIds,afterSeq};
       effects.status('发送结果待核对 · 请求已保留，不会自动重发')}
     else{optimistic.status='failed';state.sharedPending=null;effects.status(effects.safeError(new Error(result.errorCode||'OPERATION_FAILED')),true)}
-  }catch(e){if(!sharedViewCurrent(owner,epoch,generation,sessionId))return;
+  }catch(e){if(!sharedViewCurrent(owner,epoch,generation,sessionId)||optimistic.status==='accepted')return;
     optimistic.status='failed';state.sharedPending=e?.message==='TIMEOUT'?{requestId,state:'uncertain',text,attachmentIds,afterSeq}:null;
     if(state.sharedPending)effects.status('发送结果待核对 · 请查看电脑会话或待处理记录');
     else effects.status(effects.safeError(e),true)}
@@ -569,5 +604,5 @@ async function submitMemoryAction(operation,evidenceId=null,correction=''){const
       return}
     memory.receiptMessage='提交结果待确认，正在查询原请求回执；不会自动重发。';
     effects.renderMemoryDetail(memory.target,token);void reconcileMemoryMarker(marker)}}
-  return { mobile: { composerState, draftKey, sharedDraftKey, attachmentConversationId, attachmentKey, currentAttachments, selectionKey, chatSourceKey, savedSharedSelection, hasAnyDraft, sharedViewCurrent, trackSharedAcceptedTurn, waitForSharedTurn, loadSharedOutbox, checkSharedPending, listConversations, selectedSharedSession, selectedBinding, matchingOriginalHostModels, refreshHandoffModelName, refreshHandoff, loadLinkedHistory, acceptSend, newSharedRequestId, sendShared, sendLinked, send, stop, emptyMemoryState, memoryToken, memoryCurrent, memoryFailureText, memoryFail, memoryOwnerMatches, memoryRevisionMatches, memoryPathEncode, memoryItemsPath, memoryListAllowed, startMemorySnapshot, loadMemorySnapshot, loadMemoryItems, loadMemoryMore, memoryPathIdSupported, memoryMarkerKey, savedMemoryMarker, persistMemoryMarker, clearMemoryMarker, newMemoryRequestId, memoryActionAllowed, openMemoryDetail, loadMemoryDetail, memoryReceiptMessage, memoryReceiptRejected, handleMemoryReceipt, reconcileMemoryMarker, submitMemoryAction } };
+  return { mobile: { composerState, draftKey, sharedDraftKey, attachmentConversationId, attachmentKey, currentAttachments, selectionKey, chatSourceKey, savedSharedSelection, hasAnyDraft, sharedViewCurrent, trackSharedAcceptedTurn, waitForSharedTurn, acceptSharedCommand, reconcileSharedDelivery, loadSharedOutbox, checkSharedPending, listConversations, selectedSharedSession, selectedBinding, matchingOriginalHostModels, refreshHandoffModelName, refreshHandoff, loadLinkedHistory, acceptSend, newSharedRequestId, sendShared, sendLinked, send, stop, emptyMemoryState, memoryToken, memoryCurrent, memoryFailureText, memoryFail, memoryOwnerMatches, memoryRevisionMatches, memoryPathEncode, memoryItemsPath, memoryListAllowed, startMemorySnapshot, loadMemorySnapshot, loadMemoryItems, loadMemoryMore, memoryPathIdSupported, memoryMarkerKey, savedMemoryMarker, persistMemoryMarker, clearMemoryMarker, newMemoryRequestId, memoryActionAllowed, openMemoryDetail, loadMemoryDetail, memoryReceiptMessage, memoryReceiptRejected, handleMemoryReceipt, reconcileMemoryMarker, submitMemoryAction } };
 };

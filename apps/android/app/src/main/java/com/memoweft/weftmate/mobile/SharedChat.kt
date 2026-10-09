@@ -234,6 +234,18 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
         }
     }
 
+    /** Receipt lookup also settles the original durable outbox row, without sending. */
+    @Synchronized fun commandByRequest(host: HostIdentity, requestId: String, current: () -> Boolean): JSONObject {
+        if (!requestIdPattern.matches(requestId)) throw ApiFailure(400, "INVALID_REQUEST")
+        if (!current()) throw ApiFailure(409, "ACCOUNT_SWITCHED")
+        val command = api.commandByRequest(host, requestId)
+        if (!current()) throw ApiFailure(409, "ACCOUNT_SWITCHED")
+        val row = store.sharedCommand(Endpoints.ownerKey(host.origin, host.ownerId), host.hostId,
+            command.optString("sessionId"), requestId)
+        if (row != null) checked(row, command)
+        return command
+    }
+
     fun outbox(host: HostIdentity): JSONObject = JSONObject().put("source", "host")
         .put("commands", JSONArray(store.sharedCommands(Endpoints.ownerKey(host.origin, host.ownerId), host.hostId)
             .map { it.bridge() }))

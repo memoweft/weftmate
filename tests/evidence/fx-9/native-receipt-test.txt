@@ -1,0 +1,8 @@
+
+com.memoweft.weftmate.mobile.SharedChatOutboxTest:.
+
+Time: 0.066
+
+OK (1 test)
+
+

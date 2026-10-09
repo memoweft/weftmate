@@ -27,6 +27,8 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
   uiCore.syncMobileIdentity();
   const scroll=$('chat-scroll'),previousScroll=scroll.scrollTop,content=$('chat-content'),saved=retainTimeline(content);clear(content);
   const session=selectedSharedSession();updatePageHeader();olderControl(content);
+  if(session?.taskAvailable===false)content.append(el('div','shared-notice',
+    '这台电脑已有执行账号。当前账号仅可聊天，不能操作电脑或读取原账号资料；请在电脑退出后登录原账号。'));
   if(state.sharedError)content.append(el('div','shared-notice',state.sharedError));
   else if(!state.sharedHostAvailable)content.append(el('div','shared-notice','电脑暂不可达。已读取的内容仅供查看，新消息可能进入待核对状态。'));
   let lastTurn='',lastEndReasonKind='';for(const event of state.sharedEvents){

@@ -86,7 +86,7 @@ export function createUserQuestionOperations(context) {
         (input.action === 'register_question' ? input.outcome !== undefined : input.questions !== undefined ||
           !['answered', 'cancelled'].includes(input.outcome))) throw failure('INVALID_REQUEST');
     context.requireToolRuntime(input.runtimeId);
-    const ownerId = context.rootState.legacyOwnerId;
+    const ownerId = context.sessionOperations.executionOwnerForSession(input.sessionId);
     const account = context.accountState(ownerId);
     if (account.sessions[input.sessionId]?.origin !== 'personal-remote') throw failure('SESSION_READ_ONLY', 409);
     const prior = userQuestions(account).find(row => row.questionRpcId === input.questionRpcId);

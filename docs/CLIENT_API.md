@@ -99,7 +99,7 @@
 | DELETE `/auth/devices/{deviceId}` | 无；客户端可发 `{}`；撤销当前设备会清 Cookie | 200 `{"revoked":true}` | 404 `NOT_FOUND` | 桌、手、安 |
 | GET `/status` | 无 | 200 `{"ownerId":"owner-…","hostId":"host-…","sync":{"available":true},"downloads":{"android":true},"backend":{"runtime":"ready","referenceScan":"ready","capabilities":{"chat":{"available":true}},"modules":{"memory":"connected"}}}` | 后端错误 | 桌、手、安、苹 |
 
-`backend.capabilities` 还含 `desktopOpenApp,naturalLanguageDesktop`；`modules` 含 `memory,mods,tasks,notifications,workspaces,capabilities`。这些是能力/状态字段，不代表存在同名 HTTP 路由。
+`backend.capabilities` 还含 `desktopOpenApp,naturalLanguageDesktop`；`modules` 含 `memory,mods,tasks,notifications,workspaces,capabilities`。这些是能力/状态字段，不代表存在同名 HTTP 路由。FX-9 增加可选 `executionAccount:boolean`，表示当前账号是否为这台电脑的执行账号；`false` 时仅可聊天，界面须说明不能操作电脑或读取原账号资料。旧宿主缺字段时按既有能力投影处理。
 
 ### 3.3 会话列表与管理（10）
 
@@ -125,7 +125,7 @@
 
 普通对话以 DSH（助手运行时）原生 `cwd` 绑定宿主数据目录内按账号散列 / 会话 ID 隔离的工作目录。脚本与笔记默认在这里，回到原会话沿用同一目录及原生上下文；`经验.md` 存在时作为本对话资料读取。压缩仍由既有原生摘要保留方法、脚本路径、命令与踩坑记录。项目的用户目录不属于对话删除范围。
 
-项目会话可带 `projectId,projectRevision,projectName,projectRevoked`，浏览器会话带 `workspaceKind:"browser"`，共享会话带 `conversationId`。无法描述的会话返回 `title:"",running:false,sendAvailable:false,unavailable:true`。`sendAvailable` 是可发送权限，不是「当前空闲」；列表置顶项优先，同层按既有会话顺序；客户端按分组折叠显示，未分组在下。列表响应增加 `groups:[{id,name}]`，每会话增加 `pinned,unread,groupId` 及可选 `parentSessionId`；旧客户端可忽略。助手新消息水位超过已读水位时自动未读，打开对话由客户端 PATCH（部分更新）`unread:false` 自动已读；手动 `unread:true` 保留到下次打开/手动已读。分组与元数据持久保存且账号隔离，所有写操作沿用现有 `commands:write`、Cookie（会话凭据）/设备授权与 CSRF（跨站请求伪造防护）；已归档列表只在设置 → 已归档呈现，支持客户端标题搜索、恢复和既有删除确认。Android（安卓）原生 code23 起支持本节新增元数据、分组与分叉路由；新版界面包最低原生 code23，旧壳保留原版界面。创建走 `/commands`，没有 POST `/sessions`。
+项目会话可带 `projectId,projectRevision,projectName,projectRevoked`，浏览器会话带 `workspaceKind:"browser"`，共享会话带 `conversationId`。无法描述的会话返回 `title:"",running:false,sendAvailable:false,unavailable:true`。`sendAvailable` 是可发送权限，不是「当前空闲」；列表置顶项优先，同层按既有会话顺序；客户端按分组折叠显示，未分组在下。列表响应增加 `groups:[{id,name}]`，每会话增加 `pinned,unread,groupId` 及可选 `parentSessionId`；旧客户端可忽略。助手新消息水位超过已读水位时自动未读，打开对话由客户端 PATCH（部分更新）`unread:false` 自动已读；手动 `unread:true` 保留到下次打开/手动已读。分组与元数据持久保存且账号隔离，所有写操作沿用现有 `commands:write`、Cookie（会话凭据）/设备授权与 CSRF（跨站请求伪造防护）；已归档列表只在设置 → 已归档呈现，支持客户端标题搜索、恢复和既有删除确认。Android（安卓）原生 code23 起支持本节新增元数据、分组与分叉路由；新版界面包最低原生 code23，旧壳保留原版界面。创建走 `/commands`，没有 POST `/sessions`。FX-9 会话增加可选 `taskAvailable:boolean`；`false` 表示受限聊天会话不提供任务详情、任务控制与执行审批，客户端不轮询其 `/tasks/{id}`。发送是否已受理仍以原 `/commands/by-request/{requestId}` 回执和匹配 `receiptId` 的会话记录判定，与任务详情读取分开。缺字段沿用旧行为。
 
 UI-P4：每会话可选只读 `contextUsage:{usedTokens,contextWindow}`。`usedTokens` 是 DSH（助手运行时）原生 `contextPressure.projectedTokens`（缺失时用 `pressureTokens`）的当前上下文占用，会随压缩及有效上下文增减；不是请求用量的累加。`contextWindow` 来自原生最新 `request/context` 上限，缺失为 `null`。宿主未提供有效占用时省略整个字段，旧客户端可忽略；客户端未知上限不计算比例，不能用计费用量或默认模型容量伪造圆环。Android（安卓）现有宿主会话透传保留此字段，不新增原生业务路径。
 
@@ -874,7 +874,7 @@ Windows（视窗系统）日用桌面部署使用 `weftmate-desktop`、`applicat
 |---|---|---|
 | 云 GET `/personal/v1/cloud/devices` | 云 DPoP 授权 | 200 `{devices,hosts,sharing:{supported:false}}`。devices 每项 `{id,name,type,online,lastUsedAt,isCurrent}`；hosts 每项同字段及 `hostId`，type=computer。仅同账号已登录设备/已认领宿主；不返回邮箱、安装 key、pin、内容、frpc 凭据 |
 | 云 POST `/personal/v1/cloud/hosts/connect` | `{hostId}` + 云 DPoP 授权 | 200 `{hostId,baseUrl,status,resource,approval,pairingRequired}`；status=online/offline/revoked（无中继配置或尚无地址时 offline/null）；approval=pending/trusted/denied/revoked，pairingRequired 为未受信。非成员 404；旧非 App grant 403 APP_LOGIN_REQUIRED。增加本设备现有 provider grant 与尚未消费 refresh model（刷新记录）的该宿主 resource，不另发令牌/改变生命周期或消费状态 |
-| 宿主 POST `/personal/v1/auth/cloud-desktop` | `{accessToken,deviceName}` + 云 audience access token 的宿主 nonce/DPoP（htu 为本路径），无 Authorization | 只允许本机回环 socket、直接 Host/Origin、无转发头。首次云登录自动创建独立本地 owner、S1b claim/member/binding、受信电脑 key，并返回原宿主 `{account,device,csrfToken}` + Cookie；不读取或接管已有本地账号数据。相同 sub/key 重试保留 owner/claim；已绑定宿主的另一未知 key 202 等待批准，拒绝/撤销 key 403。已绑旧本地账号仍须已有设备批准 |
+| 宿主 POST `/personal/v1/auth/cloud-desktop` | `{accessToken,deviceName}` + 云 audience access token 的宿主 nonce/DPoP（htu 为本路径），无 Authorization | 只允许本机回环 socket、直接 Host/Origin、无转发头。首次云登录自动创建独立本地 owner、S1b claim/member/binding、受信电脑 key；空白安装的首个账号自动成为执行账号（完整通用工具与审批），并返回原宿主 `{account,device,csrfToken}` + Cookie；不读取或接管已有本地账号数据。执行归属持久保存；已有旧本地账号或历史设备/会话/命令时不转移归属，另一云账号仅可隔离聊天（D30），`GET /status.executionAccount=false`。相同 sub/key 重试保留 owner/claim；已绑定宿主的另一未知 key 202 等待批准，拒绝/撤销 key 403。已绑旧本地账号仍须已有设备批准 |
 | 宿主 POST `/personal/v1/cloud/devices/{requestId}/trust` | `{}` + 同账号已受信宿主 Cookie/CSRF（电脑/受信设备） | 200 `{sub,hostId,deviceId,jkt,tlsSpki,publicJwk,origin,relay,trustToken,expiresIn:120}`。仅已批准的指定 recipient（接收设备）；pending 403，跨 owner 404。返回值只能从已有信任的宿主 TLS（传输层安全）连接取得，再经可信设备通道转交 |
 | 宿主 POST `/personal/v1/cloud/emergency-password` | `{password}` + 自动绑定电脑的直接地址受信 Cookie/CSRF | 200 `{configured:true}`；云创建账号可首次设置本机独立离线密码，后续改密码走原本地接口；手机/旧密码账号/再次初始设置 403。创建时随机不可用的本地密码不会交给客户端 |
 | 宿主 POST `/personal/v1/auth/cloud-offline` | `{cloudAccountId,password,deviceName}`，直接地址 Origin/JSON | 200 原本地登录响应；只查本机已设置应急密码的云映射并走原密码校验/限速，不调用云。旧本地账号继续原 `/auth/login`；cloudAccountId 仅用于选择账号，不构成认证 |
@@ -890,6 +890,8 @@ devices 的 online 指最近 60 秒云 API/登录/刷新活动；hosts 指最近
 新增业务码：400 `PASSWORD_TICKET_INVALID`（过期/错用途/已用/旧 epoch）、401 `DPOP_INVALID`、403 `APP_LOGIN_REQUIRED`；账号密码/验证码限速与 7.3 相同。接口必须来自固定配置的云/宿主 origin，不以邮箱或目录 pin 推断本地 owner 或宿主信任。S1d 不部署；本节服务端已交付，客户端完整页面与真机扫码由 LG-1 / LG-2 验收。
 
 **Apple 实现备注（LG-2）**：iPhone / Mac 账号页面在 App 内走本节 JSON 接口，使用独立内存 Cookie 容器。`/auth/authorization/resume` 是 provider 恢复路由的 JSON 包装：原生网络层须同时取本 App 接口路径与返回的固定 issuer `/oidc/auth/{uid}` 路径对应的交互 / resume Cookie；仅按包装接口路径筛选会漏掉 provider 的 resume Cookie。Cookie 只发往已配置的云 origin，不跨宿主传送。代码 / 刷新均发送 DPoP，同一 single-use refresh family 的消费在模型网络层串行；没有新增服务端路径或第二种登录协议。
+
+App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协议）会话 Cookie（会话凭据），再走原密码 / 验证码 / PKCE（授权码校验）流程；避免账号改变时进入提供方的 HTML（网页标记语言）自动注销表单。云 DPoP（设备密钥持有证明）凭据和其他客户端不随之撤权。
 
 ### 7.9 账号生命周期（S1e / D30）
 

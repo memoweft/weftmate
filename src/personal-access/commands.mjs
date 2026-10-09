@@ -425,7 +425,7 @@ export function createCommandOperations(context) {
     },
     /** Main-process only: a DSH tool call from an owner-bound restricted turn. */
     async submitToolDesktop({ sessionId, turn, callId, messageHash, appId }) {
-      const ownerId = context.rootState.legacyOwnerId;
+      const ownerId = context.sessionOperations.executionOwnerForSession(sessionId);
       const state = context.accountState(ownerId);
       id(sessionId);
       if (!Number.isSafeInteger(turn) || turn < 0 || typeof callId !== 'string' ||

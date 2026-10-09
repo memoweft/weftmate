@@ -8,7 +8,7 @@ export function createNativeBrowserOperations(context) {
   return {
     async browse(input) {
       const { sessionId, browserAction, snapshotId, segmentIndex = 0, linkId } = input;
-      const ownerId = context.rootState.legacyOwnerId;
+      const ownerId = context.sessionOperations.executionOwnerForSession(sessionId);
       const session = context.accountState(ownerId).sessions[sessionId];
       if (session?.origin !== 'personal-remote') throw failure('SESSION_READ_ONLY', 409);
       if (!['open', 'read', 'follow'].includes(browserAction)) throw failure('INVALID_COMMAND');
