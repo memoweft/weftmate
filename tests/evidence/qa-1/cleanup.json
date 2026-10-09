@@ -1,0 +1,31 @@
+{
+  "checkedAt": "2026-10-09T09:59:01.737708+00:00",
+  "forcedEarlyHarnessPids": [
+    12752,
+    54092,
+    53008,
+    14236,
+    44752,
+    34580,
+    43672
+  ],
+  "forcedProcessCount": 7,
+  "normalRunnerAndChildExits": "Completed via finally/app.close; OS child total not counted",
+  "remainingQaWindowsNodeElectronPythonProcesses": 0,
+  "remainingMacQaAppFixtureBuildProcesses": 0,
+  "mumu": {
+    "isAndroidStarted": false,
+    "isProcessStarted": false,
+    "qaPackagesRemoved": [
+      "com.memoweft.weftmate.mobile.ui5qa",
+      "com.memoweft.weftmate.mobile.ui5qa.test",
+      "com.memoweft.weftmate.mobile.lg1bqa",
+      "com.memoweft.weftmate.mobile.lg1bqa.test"
+    ],
+    "preexistingPackagesPreserved": true
+  },
+  "appleBootedSimulators": 0,
+  "lanLock": "QA-1 lock released after M2 and M1 batches",
+  "dailyHostAndModelUntouched": true,
+  "ports18186And8081Requested": false
+}

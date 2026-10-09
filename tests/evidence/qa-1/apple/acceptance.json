@@ -1,0 +1,32 @@
+{
+  "mac": {
+    "status": "blocked",
+    "source": "readonly weftmate-h3; Apple source tree equal to main after A9",
+    "host": "local isolated host on random loopback ports",
+    "attempts": [
+      "Existing A9 Debug app and existing capture helper",
+      "Recompiled capture helper from unchanged source",
+      "Rebuilt Mac Debug with xcodebuild -jobs 2",
+      "run_a5_mac dark conversation"
+    ],
+    "actual": "Login page instead of requested conversation; settings capture failed with NSCocoaErrorDomain 256",
+    "fallback": "Mac AX validation: Existing host Accessibility permission is unavailable; no grant was requested.",
+    "productDefectConfirmed": false
+  },
+  "iphone": {
+    "a9Light": "passed 1/1",
+    "a9Dark": "passed 1/1",
+    "allSettings": "failed 0/1; settingsPage.about not reached",
+    "settingsFailureMayBeLocator": true
+  },
+  "watch": {
+    "status": "partial",
+    "screenshot": "watch/approval.png",
+    "fixture": "--ui-testing --ic2-icons-fixture",
+    "livePhoneReachable": false,
+    "approvalButtonEnabled": false,
+    "realApprovalReceiptVerified": false
+  },
+  "simulatorsAtOnce": 1,
+  "allSimulatorsShutdown": true
+}

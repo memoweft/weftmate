@@ -1,0 +1,292 @@
+Application, 0x10753a6f0, pid: 69897, label: 'WeftMate' <App element pid: 69897>
+  Window (Main), 0x10753b150, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 69897, elementOrHash.elementID: 4384116496.4>
+    Other, 0x10753b510, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 69897, elementOrHash.elementID: 4412506256.5>
+      Other, 0x10753b630, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 69897, elementOrHash.elementID: 4412519264.6>
+        Other, 0x10753b270, {{-402.0, -874.0}, {1206.0, 2622.0}} <AX element pid: 69897, elementOrHash.elementID: 4413005728.641>
+        Other, 0x10753b390, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 69897, elementOrHash.elementID: 4384168992.7>
+          Other, 0x10753b7f0, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 69897, elementOrHash.elementID: 4381581968.8>
+            Other, 0x10753b910, {{0.0, 0.0}, {402.0, 874.0}}, identifier: 'weftmateRoot' <AX element pid: 69897, elementOrHash.elementID: 4419378784.511>
+              NavigationBar, 0x10753ba30, {{0.0, 62.0}, {402.0, 54.0}}, identifier: 'WeftMate' <AX element pid: 69897, elementOrHash.elementID: 4419346928.512>
+                StaticText, 0x10753bb50, {{162.0, 73.7}, {77.7, 20.7}}, label: 'WeftMate' <AX element pid: 69897, elementOrHash.elementID: 5029151072.515>
+                Other, 0x10753bc70, {{292.0, 66.0}, {36.0, 36.0}}, identifier: 'phoneAccountMenu', label: '账户菜单' <AX element pid: 69897, elementOrHash.elementID: 4500978176.516>
+                  Other, 0x10753bd90, {{292.0, 66.0}, {36.0, 36.0}} <AX element pid: 69897, elementOrHash.elementID: 5029210832.520>
+                    Button, 0x10753beb0, {{293.0, 66.0}, {34.0, 36.0}}, identifier: 'phoneAccountMenu', label: '账户菜单' <AX element pid: 69897, elementOrHash.elementID: 5029035232.523>
+                      Button, 0x10753bfd0, {{293.0, 66.0}, {34.0, 36.0}} <AX element pid: 69897, elementOrHash.elementID: 5029066592.526>
+                        Image, 0x10753c0f0, {{300.0, 74.0}, {20.0, 20.0}}, label: 'wm-account' <AX element pid: 69897, elementOrHash.elementID: 5029111232.530>
+                Button, 0x10753c210, {{344.0, 66.0}, {38.0, 36.0}}, label: '刷新会话' <AX element pid: 69897, elementOrHash.elementID: 5029310112.517>
+              Other, 0x10753c330, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 69897, elementOrHash.elementID: 4419379232.513>
+                Other, 0x10753c450, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 69897, elementOrHash.elementID: 4419364704.518>
+                  Other, 0x10753c570, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 69897, elementOrHash.elementID: 4419556336.521>
+                    Other, 0x10753c690, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 69897, elementOrHash.elementID: 5029080656.524>
+                      CollectionView, 0x10753c7b0, {{0.0, 0.0}, {402.0, 874.0}}, identifier: 'conversationList' <AX element pid: 69897, elementOrHash.elementID: 4500314112.527>
+                        Other, 0x10753c8d0, {{0.0, -1632.0}, {402.0, 3809.0}} <AX element pid: 69897, elementOrHash.elementID: 4413056512.531>
+                        Other, 0x10753c9f0, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 69897, elementOrHash.elementID: 4419592608.532>
+                          Other, 0x10753cb10, {{0.0, 0.0}, {402.0, 170.8}} <AX element pid: 69897, elementOrHash.elementID: 4412543328.540>
+                          Other, 0x10753cc30, {{0.0, 733.2}, {402.0, 140.8}} <AX element pid: 69897, elementOrHash.elementID: 4412623136.541>
+                        Other, 0x10753cd50, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 69897, elementOrHash.elementID: 4419491504.533>
+                        Cell, 0x10753ce70, {{0.0, 116.0}, {402.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4499036672.557>
+                          Other, 0x10753cf90, {{0.0, 116.0}, {402.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4419536528.566>
+                            Other, 0x10753d0b0, {{0.0, 116.0}, {402.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4418814096.576>
+                          Other, 0x10753d1d0, {{0.0, 116.0}, {402.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 5029092448.567>
+                            Other, 0x10753d2f0, {{0.0, 116.0}, {402.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4496334336.577>
+                              Other, 0x10753d410, {{0.0, 116.0}, {402.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4381038064.586>
+                                Button, 0x10753d530, {{0.0, 116.0}, {402.0, 52.3}}, label: '未分组' <AX element pid: 69897, elementOrHash.elementID: 4381583200.591>
+                                  StaticText, 0x10753d650, {{16.0, 132.0}, {50.7, 20.3}}, label: '未分组' <AX element pid: 69897, elementOrHash.elementID: 4381036608.596>
+                                  Button, 0x10753d7d0, {{375.7, 135.3}, {10.3, 14.0}} <AX element pid: 69897, elementOrHash.elementID: 4381698032.597>
+                                    Image, 0x10753d8f0, {{375.7, 135.3}, {10.3, 14.0}}, identifier: 'expanded' <AX element pid: 69897, elementOrHash.elementID: 4381378704.606>
+                        Other, 0x10753da10, {{16.0, 116.0}, {370.0, 1.0}} <AX element pid: 69897, elementOrHash.elementID: 4413189392.535>
+                        Cell, 0x10753db30, {{0.0, 168.3}, {402.0, 60.3}} <AX element pid: 69897, elementOrHash.elementID: 4496428544.558>
+                          Other, 0x10753dc50, {{0.0, 168.3}, {402.0, 60.3}} <AX element pid: 69897, elementOrHash.elementID: 4419067024.568>
+                            Other, 0x10753dd70, {{0.0, 168.3}, {402.0, 60.3}} <AX element pid: 69897, elementOrHash.elementID: 4419701824.578>
+                          Other, 0x10753de90, {{0.0, 168.3}, {402.0, 60.3}} <AX element pid: 69897, elementOrHash.elementID: 4419501040.569>
+                            Other, 0x10753dfb0, {{0.0, 168.3}, {402.0, 60.3}} <AX element pid: 69897, elementOrHash.elementID: 4496430080.579>
+                              Other, 0x10753e0d0, {{0.0, 168.3}, {402.0, 60.3}} <AX element pid: 69897, elementOrHash.elementID: 4381557968.587>
+                                Button, 0x10753e1f0, {{0.0, 168.3}, {402.0, 60.3}}, identifier: 'conversationRow.session-1152a947-68ef-41ab-a7a2-1a352649b731', label: '可删除的合成对话' <AX element pid: 69897, elementOrHash.elementID: 4381604784.592>
+                                  StaticText, 0x10753e310, {{36.0, 188.3}, {135.0, 20.3}}, identifier: 'conversationRow.session-1152a947-68ef-41ab-a7a2-1a352649b731', label: '可删除的合成对话' <AX element pid: 69897, elementOrHash.elementID: 4381684640.598>
+                                  Image, 0x10753e430, {{376.7, 192.7}, {7.0, 12.0}}, identifier: 'chevron.forward' <AX element pid: 69897, elementOrHash.elementID: 4381021680.599>
+                        Other, 0x10753e550, {{16.0, 167.3}, {370.0, 1.0}} <AX element pid: 69897, elementOrHash.elementID: 4413191280.536>
+                        Cell, 0x10753e670, {{0.0, 228.7}, {402.0, 60.3}} <AX element pid: 69897, elementOrHash.elementID: 4497315328.559>
+                          Other, 0x10753e790, {{0.0, 228.7}, {402.0, 60.3}} <AX element pid: 69897, elementOrHash.elementID: 4419387120.570>
+                            Other, 0x10753e8b0, {{0.0, 228.7}, {402.0, 60.3}} <AX element pid: 69897, elementOrHash.elementID: 4419387616.580>
+                          Other, 0x10753e9d0, {{0.0, 228.7}, {402.0, 60.3}} <AX element pid: 69897, elementOrHash.elementID: 4418853632.571>
+                            Other, 0x10753eaf0, {{0.0, 228.7}, {402.0, 60.3}} <AX element pid: 69897, elementOrHash.elementID: 4500478976.581>
+                              Other, 0x10753ec10, {{0.0, 228.7}, {402.0, 60.3}} <AX element pid: 69897, elementOrHash.elementID: 4381841120.588>
+                                Button, 0x10753ed30, {{0.0, 228.7}, {402.0, 60.3}}, identifier: 'conversationRow.session-66d29581-8c6c-4a55-a59e-eab06943d408', label: '排队与插话练习' <AX element pid: 69897, elementOrHash.elementID: 4381896960.593>
+                                  StaticText, 0x10753ee50, {{36.0, 248.7}, {118.0, 20.3}}, identifier: 'conversationRow.session-66d29581-8c6c-4a55-a59e-eab06943d408', label: '排队与插话练习' <AX element pid: 69897, elementOrHash.elementID: 4381839664.600>
+                                  Image, 0x10753ef70, {{376.7, 253.0}, {7.0, 12.0}}, identifier: 'chevron.forward' <AX element pid: 69897, elementOrHash.elementID: 4381603760.601>
+                        Other, 0x10753f090, {{36.0, 227.7}, {350.0, 1.0}} <AX element pid: 69897, elementOrHash.elementID: 4419599280.560>
+                        Cell, 0x10753f1b0, {{0.0, 289.0}, {402.0, 79.7}} <AX element pid: 69897, elementOrHash.elementID: 4498327552.561>
+                          Other, 0x10753f2d0, {{0.0, 289.0}, {402.0, 79.7}} <AX element pid: 69897, elementOrHash.elementID: 4419599984.572>
+                            Other, 0x10753f3f0, {{0.0, 289.0}, {402.0, 79.7}} <AX element pid: 69897, elementOrHash.elementID: 4419600480.582>
+                          Other, 0x10753f510, {{0.0, 289.0}, {402.0, 79.7}} <AX element pid: 69897, elementOrHash.elementID: 4419232624.573>
+                            Other, 0x10753f630, {{0.0, 289.0}, {402.0, 79.7}} <AX element pid: 69897, elementOrHash.elementID: 4500987904.583>
+                              Other, 0x10753f750, {{0.0, 289.0}, {402.0, 79.7}} <AX element pid: 69897, elementOrHash.elementID: 4381403936.589>
+                                Button, 0x10753f870, {{0.0, 289.0}, {402.0, 79.7}}, identifier: 'conversationRow.session-82b03859-8a26-495b-a47a-ab4437b700eb', label: '整理项目资料、未读、正在处理、正在处理' <AX element pid: 69897, elementOrHash.elementID: 4381029792.594>
+                                  Other, 0x10753f990, {{36.0, 309.0}, {147.3, 39.7}}, identifier: 'conversationRow.session-82b03859-8a26-495b-a47a-ab4437b700eb', label: '整理项目资料、未读、正在处理、正在处理' <AX element pid: 69897, elementOrHash.elementID: 4381874144.602>
+                                    StaticText, 0x10753fab0, {{36.0, 309.0}, {101.3, 20.3}}, label: '整理项目资料' <AX element pid: 69897, elementOrHash.elementID: 4381671088.607>
+                                    StaticText, 0x10753fbd0, {{145.3, 314.0}, {24.0, 14.3}}, label: '未读' <AX element pid: 69897, elementOrHash.elementID: 4381821408.608>
+                                    Other, 0x10753fcf0, {{177.3, 319.3}, {6.0, 6.0}}, label: '正在处理' <AX element pid: 69897, elementOrHash.elementID: 4381811760.609>
+                                    StaticText, 0x10753fe10, {{36.0, 334.3}, {48.0, 14.3}}, label: '正在处理' <AX element pid: 69897, elementOrHash.elementID: 4381584944.610>
+                                  Image, 0x10753ff30, {{376.7, 323.0}, {7.0, 12.0}}, identifier: 'chevron.forward' <AX element pid: 69897, elementOrHash.elementID: 4381874576.603>
+                        Other, 0x107540050, {{36.0, 288.0}, {350.0, 1.0}} <AX element pid: 69897, elementOrHash.elementID: 4419694784.562>
+                        Cell, 0x107540170, {{0.0, 368.7}, {402.0, 60.3}} <AX element pid: 69897, elementOrHash.elementID: 4500208128.563>
+                          Other, 0x107540290, {{0.0, 368.7}, {402.0, 60.3}} <AX element pid: 69897, elementOrHash.elementID: 4419521280.574>
+                            Other, 0x1075403b0, {{0.0, 368.7}, {402.0, 60.3}} <AX element pid: 69897, elementOrHash.elementID: 5029145680.584>
+                          Other, 0x1075404d0, {{0.0, 368.7}, {402.0, 60.3}} <AX element pid: 69897, elementOrHash.elementID: 5029058832.575>
+                            Other, 0x1075405f0, {{0.0, 368.7}, {402.0, 60.3}} <AX element pid: 69897, elementOrHash.elementID: 4498941440.585>
+                              Other, 0x107540710, {{0.0, 368.7}, {402.0, 60.3}} <AX element pid: 69897, elementOrHash.elementID: 4381870976.590>
+                                Button, 0x107540830, {{0.0, 368.7}, {402.0, 60.3}}, identifier: 'conversationRow.session-cc3c1619-c5e9-4008-8bb6-1a843c857d5d', label: '可遗忘的合成对话' <AX element pid: 69897, elementOrHash.elementID: 4381810672.595>
+                                  StaticText, 0x107540950, {{36.0, 388.7}, {135.0, 20.3}}, identifier: 'conversationRow.session-cc3c1619-c5e9-4008-8bb6-1a843c857d5d', label: '可遗忘的合成对话' <AX element pid: 69897, elementOrHash.elementID: 4381404368.604>
+                                  Image, 0x107540a70, {{376.7, 393.0}, {7.0, 12.0}}, identifier: 'chevron.forward' <AX element pid: 69897, elementOrHash.elementID: 4381810240.605>
+                        Other, 0x107540b90, {{36.0, 367.7}, {350.0, 1.0}} <AX element pid: 69897, elementOrHash.elementID: 4419697536.564>
+                        Other, 0x107540cb0, {{36.0, 428.0}, {350.0, 1.0}} <AX element pid: 69897, elementOrHash.elementID: 4419699408.565>
+                        Other, 0x107540dd0, {{369.0, 116.0}, {30.0, 672.0}}, label: '垂直滚动条, 1页', value: 0% <AX element pid: 69897, elementOrHash.elementID: 5029277280.537>
+                          Other, 0x107540ef0, {{396.0, 478.0}, {3.0, 307.0}} <AX element pid: 69897, elementOrHash.elementID: 5029277744.544>
+                        Other, 0x107541010, {{369.0, 116.0}, {30.0, 672.0}}, label: '垂直滚动条, 1页', value: 0% <AX element pid: 69897, elementOrHash.elementID: 5029277280.537>
+                          Other, 0x107541130, {{396.0, 478.0}, {3.0, 307.0}} <AX element pid: 69897, elementOrHash.elementID: 5029277744.544>
+              Other, 0x107541250, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 69897, elementOrHash.elementID: 4419551488.514>
+                Other, 0x107541370, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 69897, elementOrHash.elementID: 4419553408.519>
+                  Other, 0x107541490, {{0.0, 788.0}, {402.0, 86.0}} <AX element pid: 69897, elementOrHash.elementID: 5029421216.522>
+                    Other, 0x1075415b0, {{28.0, 798.0}, {346.0, 48.0}} <AX element pid: 69897, elementOrHash.elementID: 5029423296.525>
+                      Other, 0x1075416d0, {{28.0, 798.0}, {346.0, 48.0}} <AX element pid: 69897, elementOrHash.elementID: 5029425200.528>
+                        Other, 0x1075417f0, {{28.0, 798.0}, {0.0, 0.0}} <AX element pid: 69897, elementOrHash.elementID: 5029425616.538>
+                          Other, 0x107541910, {{28.0, 798.0}, {346.0, 48.0}} <AX element pid: 69897, elementOrHash.elementID: 5029403312.545>
+                            Other, 0x107541a30, {{28.0, 798.0}, {346.0, 48.0}} <AX element pid: 69897, elementOrHash.elementID: 4412530992.548>
+                              Other, 0x107541b50, {{33.0, 803.0}, {336.0, 38.0}} <AX element pid: 69897, elementOrHash.elementID: 5029397344.550>
+                                SearchField, 0x107541c70, {{33.0, 803.0}, {336.0, 38.0}}, label: '搜索对话', placeholderValue: '搜索对话' <AX element pid: 69897, elementOrHash.elementID: 4500211712.552>
+                                  Image, 0x107541d90, {{46.0, 812.3}, {20.3, 18.7}}, identifier: 'magnifyingglass', label: '搜索' <AX element pid: 69897, elementOrHash.elementID: 5029389520.553>
+    Other, 0x107541eb0, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 69897, elementOrHash.elementID: 4412888784.638>
+      Other, 0x107541fd0, {{-402.0, -874.0}, {1206.0, 2622.0}} <AX element pid: 69897, elementOrHash.elementID: 4412653984.639>
+      Other, 0x1075420f0, {{0.0, 62.0}, {402.0, 812.0}} <AX element pid: 69897, elementOrHash.elementID: 4381788048.640>
+        Other, 0x107542210, {{0.0, 62.0}, {402.0, 812.0}} <AX element pid: 69897, elementOrHash.elementID: 4381585376.642>
+          Other, 0x107542330, {{0.0, 62.0}, {402.0, 812.0}} <AX element pid: 69897, elementOrHash.elementID: 4381758704.643>
+            Other, 0x107542450, {{0.0, 62.0}, {402.0, 812.0}} <AX element pid: 69897, elementOrHash.elementID: 4412630528.644>
+              Other, 0x107542570, {{0.0, 62.0}, {402.0, 812.0}} <AX element pid: 69897, elementOrHash.elementID: 4419185392.645>
+                Other, 0x107542690, {{0.0, 62.0}, {402.0, 812.0}} <AX element pid: 69897, elementOrHash.elementID: 4381938912.646>
+                  NavigationBar, 0x1075427b0, {{0.0, 78.0}, {402.0, 106.0}}, identifier: '设置' <AX element pid: 69897, elementOrHash.elementID: 4381800880.647>
+                    Other, 0x1075428d0, {{324.0, 82.0}, {58.0, 36.0}}, identifier: 'closeAuxiliarySheetButton', label: '完成' <AX element pid: 69897, elementOrHash.elementID: 4480065024.650>
+                      Other, 0x1075429f0, {{324.0, 82.0}, {58.0, 36.0}} <AX element pid: 69897, elementOrHash.elementID: 4412924240.2272>
+                        Button, 0x107542b10, {{324.0, 82.0}, {58.0, 36.0}}, identifier: 'closeAuxiliarySheetButton', label: '完成' <AX element pid: 69897, elementOrHash.elementID: 4413226672.2274>
+                    StaticText, 0x107542c30, {{16.0, 135.7}, {64.7, 40.7}}, label: '设置' <AX element pid: 69897, elementOrHash.elementID: 4412669184.2361>
+                  Other, 0x107542d50, {{0.0, 62.0}, {402.0, 812.0}} <AX element pid: 69897, elementOrHash.elementID: 4381757984.648>
+                    Other, 0x107542e70, {{0.0, 62.0}, {402.0, 812.0}} <AX element pid: 69897, elementOrHash.elementID: 4382315424.652>
+                      Other, 0x107542f90, {{0.0, 62.0}, {402.0, 812.0}} <AX element pid: 69897, elementOrHash.elementID: 4381760064.655>
+                        Other, 0x1075430b0, {{0.0, 62.0}, {402.0, 812.0}} <AX element pid: 69897, elementOrHash.elementID: 4414851936.1634>
+                          CollectionView, 0x1075431d0, {{0.0, 62.0}, {402.0, 812.0}}, identifier: 'settingsRoot' <AX element pid: 69897, elementOrHash.elementID: 4404318208.660>
+                            Other, 0x1075432f0, {{-16.0, -1440.0}, {434.0, 1996.0}} <AX element pid: 69897, elementOrHash.elementID: 4384472080.662>
+                            Other, 0x107543410, {{0.0, 62.0}, {402.0, 812.0}} <AX element pid: 69897, elementOrHash.elementID: 4386587984.663>
+                            Other, 0x107543530, {{0.0, 62.0}, {402.0, 812.0}} <AX element pid: 69897, elementOrHash.elementID: 4386587568.664>
+                              Other, 0x107543650, {{0.0, 733.2}, {402.0, 140.8}} <AX element pid: 69897, elementOrHash.elementID: 4384526080.691>
+                                Image, 0x107543770, {{-120.0, 738.0}, {642.0, 272.0}}, identifier: 'AdditionalDimmingOverlay' <AX element pid: 69897, elementOrHash.elementID: 4384601008.722>
+                                Other, 0x107543890, {{0.0, 733.2}, {402.0, 140.8}} <AX element pid: 69897, elementOrHash.elementID: 4384536784.723>
+                                  Other, 0x1075439b0, {{0.0, 733.2}, {402.0, 140.8}} <AX element pid: 69897, elementOrHash.elementID: 4384569264.751>
+                                Other, 0x107543ad0, {{0.0, 733.2}, {402.0, 140.8}} <AX element pid: 69897, elementOrHash.elementID: 4384523744.724>
+                                  Other, 0x107543bf0, {{0.0, 733.2}, {402.0, 140.8}} <AX element pid: 69897, elementOrHash.elementID: 4384529584.752>
+                                  Other, 0x107543d10, {{0.0, 733.2}, {402.0, 140.8}} <AX element pid: 69897, elementOrHash.elementID: 4413312256.2362>
+                            Cell, 0x107543e30, {{16.0, 184.0}, {370.0, 40.3}} <AX element pid: 69897, elementOrHash.elementID: 4396861440.665>
+                              Other, 0x107543f50, {{16.0, 184.0}, {370.0, 40.3}} <AX element pid: 69897, elementOrHash.elementID: 4384474096.692>
+                              Other, 0x107544070, {{16.0, 184.0}, {370.0, 40.3}} <AX element pid: 69897, elementOrHash.elementID: 4384526880.693>
+                                Other, 0x107544190, {{16.0, 184.0}, {370.0, 40.3}} <AX element pid: 69897, elementOrHash.elementID: 4396871680.725>
+                                  Other, 0x1075442b0, {{16.0, 184.0}, {370.0, 40.3}} <AX element pid: 69897, elementOrHash.elementID: 4381659744.2280>
+                                    StaticText, 0x1075443d0, {{16.0, 184.0}, {370.0, 40.3}}, label: '设置' <AX element pid: 69897, elementOrHash.elementID: 4381659312.2297>
+                            Cell, 0x1075444f0, {{16.0, 224.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4389245952.666>
+                              Other, 0x107544610, {{16.0, 224.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 5014365600.694>
+                                Other, 0x107544730, {{16.0, 224.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 5014363968.726>
+                              Other, 0x107544850, {{16.0, 224.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 5014363552.695>
+                                Other, 0x107544970, {{16.0, 224.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4388651008.727>
+                                  Other, 0x107544a90, {{16.0, 224.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 5014658256.2283>
+                                    Button, 0x107544bb0, {{16.0, 224.3}, {370.0, 52.3}}, identifier: 'settingsCategory.general', label: '常规、简体中文' <AX element pid: 69897, elementOrHash.elementID: 4381870352.2298>
+                                      Image, 0x107544cd0, {{32.0, 240.7}, {20.0, 19.7}}, label: 'wm-settings' <AX element pid: 69897, elementOrHash.elementID: 4381978752.2312>
+                                      StaticText, 0x107544df0, {{64.0, 240.3}, {34.0, 20.3}}, label: '常规' <AX element pid: 69897, elementOrHash.elementID: 4381593872.2313>
+                                      StaticText, 0x107544f10, {{300.0, 243.3}, {48.0, 14.3}}, label: '简体中文' <AX element pid: 69897, elementOrHash.elementID: 5014479168.2314>
+                                      Image, 0x107545030, {{360.7, 244.7}, {7.0, 12.0}}, identifier: 'chevron.forward' <AX element pid: 69897, elementOrHash.elementID: 5014485888.2315>
+                            Cell, 0x107545150, {{16.0, 276.7}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4389134848.667>
+                              Other, 0x107545270, {{16.0, 276.7}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 5014364384.696>
+                                Other, 0x107545390, {{16.0, 276.7}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 5014376512.728>
+                              Other, 0x1075454b0, {{16.0, 276.7}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 5014402032.697>
+                                Other, 0x1075455d0, {{16.0, 276.7}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4389279744.729>
+                                  Other, 0x1075456f0, {{16.0, 276.7}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 5014337072.2284>
+                                    Button, 0x107545810, {{16.0, 276.7}, {370.0, 52.3}}, identifier: 'settingsCategory.appearance', label: '外观、浅色' <AX element pid: 69897, elementOrHash.elementID: 5014542672.2299>
+                                      Image, 0x107545930, {{32.0, 293.0}, {20.0, 19.7}}, label: 'wm-palette' <AX element pid: 69897, elementOrHash.elementID: 4381958976.2316>
+                                      StaticText, 0x107545a50, {{64.0, 292.7}, {34.0, 20.3}}, label: '外观' <AX element pid: 69897, elementOrHash.elementID: 5014661600.2317>
+                                      StaticText, 0x107545b70, {{324.0, 295.7}, {24.0, 14.3}}, label: '浅色' <AX element pid: 69897, elementOrHash.elementID: 5014424960.2318>
+                                      Image, 0x107545c90, {{360.7, 297.0}, {7.0, 12.0}}, identifier: 'chevron.forward' <AX element pid: 69897, elementOrHash.elementID: 5014425744.2319>
+                            Other, 0x107545db0, {{64.0, 275.7}, {306.0, 1.0}} <AX element pid: 69897, elementOrHash.elementID: 4384392320.668>
+                            Cell, 0x107545ed0, {{16.0, 329.0}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4389285376.669>
+                              Other, 0x107545ff0, {{16.0, 329.0}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4381931952.698>
+                                Other, 0x107546110, {{16.0, 329.0}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 5014412368.730>
+                              Other, 0x107546230, {{16.0, 329.0}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 5014376928.699>
+                                Other, 0x107546350, {{16.0, 329.0}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4389309440.731>
+                                  Other, 0x107546470, {{16.0, 329.0}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 5014589712.2285>
+                                    Button, 0x107546590, {{16.0, 329.0}, {370.0, 52.3}}, identifier: 'settingsCategory.account', label: '账户、lg2-synthetic@example.com' <AX element pid: 69897, elementOrHash.elementID: 5014588816.2300>
+                                      Image, 0x1075466b0, {{32.0, 345.3}, {20.0, 19.7}}, label: 'wm-account' <AX element pid: 69897, elementOrHash.elementID: 4381805712.2320>
+                                      StaticText, 0x1075467d0, {{64.0, 345.0}, {34.0, 20.3}}, label: '账户' <AX element pid: 69897, elementOrHash.elementID: 5014445680.2321>
+                                      StaticText, 0x1075468f0, {{187.0, 348.0}, {161.0, 14.3}}, label: 'lg2-synthetic@example.com' <AX element pid: 69897, elementOrHash.elementID: 4381656176.2322>
+                                      Image, 0x107546a10, {{360.7, 349.3}, {7.0, 12.0}}, identifier: 'chevron.forward' <AX element pid: 69897, elementOrHash.elementID: 5014628592.2323>
+                            Other, 0x107546b30, {{64.0, 328.0}, {306.0, 1.0}} <AX element pid: 69897, elementOrHash.elementID: 4384491952.672>
+                            Cell, 0x107546c50, {{16.0, 381.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4389315072.671>
+                              Other, 0x107546d70, {{16.0, 381.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 5014441248.700>
+                                Other, 0x107546e90, {{16.0, 381.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 5014441744.732>
+                              Other, 0x107546fb0, {{16.0, 381.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 5014412784.701>
+                                Other, 0x1075470d0, {{16.0, 381.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4404800512.733>
+                                  Other, 0x1075471f0, {{16.0, 381.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4381715632.2286>
+                                    Button, 0x107547310, {{16.0, 381.3}, {370.0, 52.3}}, identifier: 'settingsCategory.devices', label: '设备、2 台设备' <AX element pid: 69897, elementOrHash.elementID: 4381580144.2301>
+                                      Image, 0x107547430, {{32.0, 397.7}, {20.0, 19.7}}, label: 'wm-desktop' <AX element pid: 69897, elementOrHash.elementID: 4381699440.2324>
+                                      StaticText, 0x107547550, {{64.0, 397.3}, {34.0, 20.3}}, label: '设备' <AX element pid: 69897, elementOrHash.elementID: 5014329968.2325>
+                                      StaticText, 0x107547670, {{301.3, 400.3}, {46.7, 14.3}}, label: '2 台设备' <AX element pid: 69897, elementOrHash.elementID: 4381868688.2326>
+                                      Image, 0x107547790, {{360.7, 401.7}, {7.0, 12.0}}, identifier: 'chevron.forward' <AX element pid: 69897, elementOrHash.elementID: 4381951520.2327>
+                            Other, 0x1075478b0, {{64.0, 380.3}, {306.0, 1.0}} <AX element pid: 69897, elementOrHash.elementID: 4384492464.674>
+                            Cell, 0x1075479d0, {{16.0, 433.7}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4404744192.673>
+                              Other, 0x107547af0, {{16.0, 433.7}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4386264288.702>
+                                Other, 0x107547c10, {{16.0, 433.7}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4386264784.734>
+                              Other, 0x107547d30, {{16.0, 433.7}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4386309600.703>
+                                Other, 0x107547e50, {{16.0, 433.7}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4404087808.735>
+                                  Other, 0x107547f70, {{16.0, 433.7}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4381719792.2287>
+                                    Button, 0x107548090, {{16.0, 433.7}, {370.0, 52.3}}, identifier: 'settingsCategory.usage', label: '用量、本月费用与上限' <AX element pid: 69897, elementOrHash.elementID: 4381718896.2302>
+                                      Image, 0x1075481b0, {{32.0, 450.0}, {20.0, 19.7}}, label: 'wm-chart' <AX element pid: 69897, elementOrHash.elementID: 4381762912.2328>
+                                      StaticText, 0x1075482d0, {{64.0, 449.7}, {34.0, 20.3}}, label: '用量' <AX element pid: 69897, elementOrHash.elementID: 4381716576.2329>
+                                      StaticText, 0x1075483f0, {{264.3, 452.7}, {83.7, 14.3}}, label: '本月费用与上限' <AX element pid: 69897, elementOrHash.elementID: 4381717008.2330>
+                                      Image, 0x107548510, {{360.7, 454.0}, {7.0, 12.0}}, identifier: 'chevron.forward' <AX element pid: 69897, elementOrHash.elementID: 4381717440.2331>
+                            Other, 0x107548630, {{64.0, 432.7}, {306.0, 1.0}} <AX element pid: 69897, elementOrHash.elementID: 4384392832.670>
+                            Cell, 0x107548750, {{16.0, 486.0}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4454428160.675>
+                              Other, 0x107548870, {{16.0, 486.0}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4413215808.704>
+                                Other, 0x107548990, {{16.0, 486.0}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4413216304.736>
+                              Other, 0x107548ab0, {{16.0, 486.0}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4412833472.705>
+                                Other, 0x107548bd0, {{16.0, 486.0}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4454429696.737>
+                                  Other, 0x107548cf0, {{16.0, 486.0}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4381783744.2288>
+                                    Button, 0x107548e10, {{16.0, 486.0}, {370.0, 52.3}}, identifier: 'settingsCategory.archived', label: '已归档、0.1.0' <AX element pid: 69897, elementOrHash.elementID: 4381658128.2303>
+                                      Image, 0x107548f30, {{32.0, 502.3}, {20.0, 19.7}}, label: 'wm-archive' <AX element pid: 69897, elementOrHash.elementID: 4381790208.2332>
+                                      StaticText, 0x107549050, {{64.0, 502.0}, {50.7, 20.3}}, label: '已归档' <AX element pid: 69897, elementOrHash.elementID: 4381753920.2333>
+                                      StaticText, 0x107549170, {{321.7, 505.0}, {26.3, 14.3}}, label: '0.1.0' <AX element pid: 69897, elementOrHash.elementID: 4381788640.2334>
+                                      Image, 0x107549290, {{360.7, 506.3}, {7.0, 12.0}}, identifier: 'chevron.forward' <AX element pid: 69897, elementOrHash.elementID: 4381865280.2335>
+                            Other, 0x1075493b0, {{64.0, 485.0}, {306.0, 1.0}} <AX element pid: 69897, elementOrHash.elementID: 4384492976.676>
+                            Other, 0x1075494d0, {{-16.0, 556.0}, {434.0, 267.3}} <AX element pid: 69897, elementOrHash.elementID: 4384369520.677>
+                            Cell, 0x1075495f0, {{16.0, 556.0}, {370.0, 40.3}} <AX element pid: 69897, elementOrHash.elementID: 4396406784.678>
+                              Other, 0x107549710, {{16.0, 556.0}, {370.0, 40.3}} <AX element pid: 69897, elementOrHash.elementID: 4384473136.706>
+                              Other, 0x107549830, {{16.0, 556.0}, {370.0, 40.3}} <AX element pid: 69897, elementOrHash.elementID: 4384466992.707>
+                                Other, 0x107549950, {{16.0, 556.0}, {370.0, 40.3}} <AX element pid: 69897, elementOrHash.elementID: 4396950016.738>
+                                  Other, 0x107549a70, {{16.0, 556.0}, {370.0, 40.3}} <AX element pid: 69897, elementOrHash.elementID: 4381858656.2289>
+                                    StaticText, 0x107549b90, {{16.0, 556.0}, {370.0, 40.3}}, label: '助手' <AX element pid: 69897, elementOrHash.elementID: 4381858224.2304>
+                            Cell, 0x107549cb0, {{16.0, 596.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4456658432.679>
+                              Other, 0x107549dd0, {{16.0, 596.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4413079344.708>
+                                Other, 0x107549ef0, {{16.0, 596.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4413079840.739>
+                              Other, 0x10754a010, {{16.0, 596.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4413084160.709>
+                                Other, 0x10754a130, {{16.0, 596.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4454553600.740>
+                                  Other, 0x10754a250, {{16.0, 596.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4381957680.2290>
+                                    Button, 0x10754a370, {{16.0, 596.3}, {370.0, 52.3}}, identifier: 'settingsCategory.models', label: '模型、主模型与单价' <AX element pid: 69897, elementOrHash.elementID: 4381613984.2305>
+                                      Image, 0x10754a490, {{32.0, 612.7}, {20.0, 19.7}}, label: 'wm-model' <AX element pid: 69897, elementOrHash.elementID: 4381786944.2336>
+                                      StaticText, 0x10754a5b0, {{64.0, 612.3}, {34.0, 20.3}}, label: '模型' <AX element pid: 69897, elementOrHash.elementID: 4381927840.2337>
+                                      StaticText, 0x10754a6d0, {{276.3, 615.3}, {71.7, 14.3}}, label: '主模型与单价' <AX element pid: 69897, elementOrHash.elementID: 4381837616.2338>
+                                      Image, 0x10754a7f0, {{360.7, 616.7}, {7.0, 12.0}}, identifier: 'chevron.forward' <AX element pid: 69897, elementOrHash.elementID: 4381660176.2339>
+                            Cell, 0x10754a910, {{16.0, 648.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4456618496.680>
+                              Other, 0x10754aa30, {{16.0, 648.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4413154240.710>
+                                Other, 0x10754ab50, {{16.0, 648.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4413203216.741>
+                              Other, 0x10754ac70, {{16.0, 648.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4413166240.711>
+                                Other, 0x10754ad90, {{16.0, 648.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4456548352.742>
+                                  Other, 0x10754aeb0, {{16.0, 648.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4381782144.2291>
+                                    Button, 0x10754afd0, {{16.0, 648.3}, {370.0, 52.3}}, identifier: 'settingsCategory.approvals', label: '审批、新对话默认模式' <AX element pid: 69897, elementOrHash.elementID: 4381781248.2306>
+                                      Image, 0x10754b0f0, {{32.0, 664.7}, {20.0, 19.7}}, label: 'wm-approval' <AX element pid: 69897, elementOrHash.elementID: 4381657696.2340>
+                                      StaticText, 0x10754b210, {{64.0, 664.3}, {34.0, 20.3}}, label: '审批' <AX element pid: 69897, elementOrHash.elementID: 4381977280.2341>
+                                      StaticText, 0x10754b330, {{264.3, 667.3}, {83.7, 14.3}}, label: '新对话默认模式' <AX element pid: 69897, elementOrHash.elementID: 4381977712.2342>
+                                      Image, 0x10754b450, {{360.7, 668.7}, {7.0, 12.0}}, identifier: 'chevron.forward' <AX element pid: 69897, elementOrHash.elementID: 4381981904.2343>
+                            Other, 0x10754b570, {{64.0, 647.3}, {306.0, 1.0}} <AX element pid: 69897, elementOrHash.elementID: 4384513184.683>
+                            Cell, 0x10754b690, {{16.0, 700.7}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4455945216.682>
+                              Other, 0x10754b7b0, {{16.0, 700.7}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4413213776.712>
+                                Other, 0x10754b8d0, {{16.0, 700.7}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4413233200.743>
+                              Other, 0x10754b9f0, {{16.0, 700.7}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4412764736.713>
+                                Other, 0x10754bb10, {{16.0, 700.7}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4456591872.744>
+                                  Other, 0x10754bc30, {{16.0, 700.7}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4381623776.2292>
+                                    Button, 0x10754bd50, {{16.0, 700.7}, {370.0, 52.3}}, identifier: 'settingsCategory.memory', label: '记忆、记忆与来源' <AX element pid: 69897, elementOrHash.elementID: 4381808608.2307>
+                                      Image, 0x10754be70, {{32.0, 717.0}, {20.0, 19.7}}, label: 'wm-memory' <AX element pid: 69897, elementOrHash.elementID: 4381673744.2344>
+                                      StaticText, 0x10754bf90, {{64.0, 716.7}, {34.0, 20.3}}, label: '记忆' <AX element pid: 69897, elementOrHash.elementID: 4381806960.2345>
+                                      StaticText, 0x10754c0b0, {{288.3, 719.7}, {59.7, 14.3}}, label: '记忆与来源' <AX element pid: 69897, elementOrHash.elementID: 4381807392.2346>
+                                      Image, 0x10754c1d0, {{360.7, 721.0}, {7.0, 12.0}}, identifier: 'chevron.forward' <AX element pid: 69897, elementOrHash.elementID: 4381808176.2347>
+                            Other, 0x10754c2f0, {{64.0, 699.7}, {306.0, 1.0}} <AX element pid: 69897, elementOrHash.elementID: 4384285312.681>
+                            Cell, 0x10754c410, {{16.0, 753.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4397033472.684>
+                              Other, 0x10754c530, {{16.0, 753.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4384538480.714>
+                                Other, 0x10754c650, {{16.0, 753.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4384538976.745>
+                              Other, 0x10754c770, {{16.0, 753.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4384531792.715>
+                                Other, 0x10754c890, {{16.0, 753.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4396142080.746>
+                                  Other, 0x10754c9b0, {{16.0, 753.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4381975152.2293>
+                                    Button, 0x10754cad0, {{16.0, 753.3}, {370.0, 52.3}}, identifier: 'settingsCategory.schedules', label: '提醒与定时任务、提醒与任务' <AX element pid: 69897, elementOrHash.elementID: 4381974256.2308>
+                                      Image, 0x10754cbf0, {{32.0, 769.7}, {20.0, 19.7}}, label: 'wm-clock' <AX element pid: 69897, elementOrHash.elementID: 4381905632.2348>
+                                      StaticText, 0x10754cd10, {{64.0, 769.3}, {118.0, 20.3}}, label: '提醒与定时任务' <AX element pid: 69897, elementOrHash.elementID: 4381711008.2349>
+                                      StaticText, 0x10754ce30, {{288.3, 772.3}, {59.7, 14.3}}, label: '提醒与任务' <AX element pid: 69897, elementOrHash.elementID: 4381674848.2350>
+                                      Image, 0x10754cf50, {{360.7, 773.7}, {7.0, 12.0}}, identifier: 'chevron.forward' <AX element pid: 69897, elementOrHash.elementID: 4381675632.2351>
+                            Other, 0x10754d070, {{64.0, 752.3}, {306.0, 1.0}} <AX element pid: 69897, elementOrHash.elementID: 4384516352.685>
+                            Other, 0x10754d190, {{-16.0, 823.0}, {434.0, 1736.7}} <AX element pid: 69897, elementOrHash.elementID: 4384519472.686>
+                            Cell, 0x10754d2b0, {{16.0, 823.0}, {370.0, 40.3}} <AX element pid: 69897, elementOrHash.elementID: 4397121536.687>
+                              Other, 0x10754d3d0, {{16.0, 823.0}, {370.0, 40.3}} <AX element pid: 69897, elementOrHash.elementID: 4384565536.716>
+                              Other, 0x10754d4f0, {{16.0, 823.0}, {370.0, 40.3}} <AX element pid: 69897, elementOrHash.elementID: 4384434976.717>
+                                Other, 0x10754d610, {{16.0, 823.0}, {370.0, 40.3}} <AX element pid: 69897, elementOrHash.elementID: 4397123072.747>
+                                  Other, 0x10754d730, {{16.0, 823.0}, {370.0, 40.3}} <AX element pid: 69897, elementOrHash.elementID: 4381678896.2294>
+                                    StaticText, 0x10754d850, {{16.0, 823.0}, {370.0, 40.3}}, label: '关于' <AX element pid: 69897, elementOrHash.elementID: 4381678464.2309>
+                            Cell, 0x10754d970, {{16.0, 863.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4396830720.688>
+                              Other, 0x10754da90, {{16.0, 863.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4384536288.718>
+                                Other, 0x10754dbb0, {{16.0, 863.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4384532208.748>
+                              Other, 0x10754dcd0, {{16.0, 863.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4384568848.719>
+                                Other, 0x10754ddf0, {{16.0, 863.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4396969472.749>
+                                  Other, 0x10754df10, {{16.0, 863.3}, {370.0, 52.3}} <AX element pid: 69897, elementOrHash.elementID: 4381709872.2295>
+                                    Button, 0x10754e030, {{16.0, 863.3}, {370.0, 52.3}}, identifier: 'settingsCategory.about', label: '关于、0.1.0 / 11' <AX element pid: 69897, elementOrHash.elementID: 4381708976.2310>
+                                      Image, 0x10754e150, {{32.0, 879.7}, {20.0, 19.7}}, label: 'wm-info' <AX element pid: 69897, elementOrHash.elementID: 4381861216.2352>
+                                      StaticText, 0x10754e270, {{64.0, 879.3}, {34.0, 20.3}}, label: '关于' <AX element pid: 69897, elementOrHash.elementID: 4381766576.2353>
+                                      StaticText, 0x10754e390, {{300.0, 882.3}, {48.0, 14.3}}, label: '0.1.0 / 11' <AX element pid: 69897, elementOrHash.elementID: 4381859088.2354>
+                                      Image, 0x10754e4b0, {{360.7, 883.7}, {7.0, 12.0}}, identifier: 'chevron.forward' <AX element pid: 69897, elementOrHash.elementID: 4381707520.2355>
+                            Other, 0x10754e720, {{369.0, 116.0}, {30.0, 672.0}}, label: '垂直滚动条, 2页', value: 0% <AX element pid: 69897, elementOrHash.elementID: 4386322640.689>
+                              Other, 0x10754e840, {{396.0, 119.0}, {3.0, 563.7}} <AX element pid: 69897, elementOrHash.elementID: 4386327616.720>
+                            Other, 0x10754e960, {{369.0, 116.0}, {30.0, 672.0}}, label: '垂直滚动条, 2页', value: 0% <AX element pid: 69897, elementOrHash.elementID: 4386322640.689>
+                              Other, 0x10754ea80, {{396.0, 119.0}, {3.0, 563.7}} <AX element pid: 69897, elementOrHash.elementID: 4386327616.720>
+                  Other, 0x10754eda0, {{0.0, 62.0}, {402.0, 812.0}} <AX element pid: 69897, elementOrHash.elementID: 4381941248.649>
+                    Other, 0x10754eec0, {{0.0, 62.0}, {402.0, 812.0}} <AX element pid: 69897, elementOrHash.elementID: 4381943168.653>
+                      Other, 0x10754efe0, {{0.0, 788.0}, {402.0, 86.0}} <AX element pid: 69897, elementOrHash.elementID: 5046003520.2273>
+                        Other, 0x10754f100, {{28.0, 798.0}, {346.0, 48.0}} <AX element pid: 69897, elementOrHash.elementID: 5046005392.2275>
+                          Other, 0x10754f220, {{28.0, 798.0}, {346.0, 48.0}} <AX element pid: 69897, elementOrHash.elementID: 4413018544.2357>
+                            Other, 0x10754f340, {{28.0, 798.0}, {0.0, 0.0}} <AX element pid: 69897, elementOrHash.elementID: 4413074784.2358>
+                              Other, 0x10754f460, {{28.0, 798.0}, {346.0, 48.0}} <AX element pid: 69897, elementOrHash.elementID: 4412889296.2359>
+                                Other, 0x10754f580, {{28.0, 798.0}, {346.0, 48.0}} <AX element pid: 69897, elementOrHash.elementID: 4413194320.2360>
+                                  Other, 0x10754f6a0, {{33.0, 803.0}, {336.0, 38.0}} <AX element pid: 69897, elementOrHash.elementID: 4413392432.2296>
+                                    SearchField, 0x10754f7c0, {{33.0, 803.0}, {336.0, 38.0}}, label: '搜索设置', placeholderValue: '搜索设置' <AX element pid: 69897, elementOrHash.elementID: 4457508864.2311>
+                                      Image, 0x10754f8e0, {{46.0, 812.0}, {20.7, 19.3}}, identifier: 'magnifyingglass', label: '搜索' <AX element pid: 69897, elementOrHash.elementID: 4413356592.2356>
+  Window, 0x10754fa00, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 69897, elementOrHash.elementID: 4497475072.20>
+    Other, 0x10754fb20, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 69897, elementOrHash.elementID: 4419062944.22>
+      Other, 0x10754fc40, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 69897, elementOrHash.elementID: 4419094608.24>
