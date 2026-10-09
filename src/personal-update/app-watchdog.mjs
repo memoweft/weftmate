@@ -6,6 +6,15 @@ import { createReadStream } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { copyPhysicalTree, removePhysicalTree } from './physical-copy.mjs';
 const run = promisify(execFile), pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+async function moveDirectory(from, to) {
+  for (let attempt = 0; ; attempt++) {
+    try { await rename(from, to); return; }
+    catch (error) {
+      if (!['EPERM', 'EACCES', 'EBUSY'].includes(error.code) || attempt >= 10) throw error;
+      await pause(100 * (attempt + 1));
+    }
+  }
+}
 const root = process.argv[2];
 const json = file => readFile(join(root, file), 'utf8').then(JSON.parse).catch(() => null);
 async function save(name, value) { const file = join(root, name), temp = file + '.tmp'; await writeFile(temp, JSON.stringify(value)); await rename(temp, file); }
@@ -27,7 +36,7 @@ try {
   if (hash.digest('hex') !== state.installerSha256) throw new Error('installer integrity changed');
   // NSIS may fail to rename individual files even after Electron exits. Move
   // the closed tree as a unit; keep it beside the new installation until healthy.
-  await rename(state.installation, replacedProgram); movedProgram = true;
+  await moveDirectory(state.installation, replacedProgram); movedProgram = true;
   await mkdir(state.installation);
   await save('monitor-state.json', { phase: 'installing', token: state.token });
   const installerEnv = { ...process.env,
@@ -72,18 +81,23 @@ while (installResult === 0 && Date.now() < installDeadline) {
   }
   await pause(1000);
 }
+let recoveryStep = 'stop-new-process';
 try {
   // Native failures may occur before main can write its PID. Select only this exact executable.
   for (const row of await relevantProcesses()) await run('taskkill.exe', ['/pid', String(row.ProcessId), '/T', '/F'], { windowsHide: true }).catch(() => {});
   await pause(500);
   const failedProgram = `${state.installation}.failed-${state.token}`;
-  await rename(state.installation, failedProgram);
+  recoveryStep = 'move-failed-program';
+  await moveDirectory(state.installation, failedProgram);
+  recoveryStep = 'restore-program';
   await copyPhysicalTree(join(state.snapshot, 'program'), state.installation, ['WeftMateRecovery.exe']);
   if (state.cacheDirectory) {
+    recoveryStep = 'restore-cache';
     await removePhysicalTree(state.cacheDirectory);
     await copyPhysicalTree(join(state.snapshot, 'cache'), state.cacheDirectory);
   }
   if (state.uninstallRegistry) {
+    recoveryStep = 'restore-system-version';
     const rows = Array.isArray(state.uninstallRegistry) ? state.uninstallRegistry : [state.uninstallRegistry];
     for (const row of rows) if (row.key?.startsWith('HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\'))
       await run('reg.exe', ['add', row.key, '/v', 'DisplayVersion', '/t', 'REG_SZ', '/d', state.oldVersion, '/f'], { windowsHide: true });
@@ -97,7 +111,8 @@ try {
   child.unref();
   await removePhysicalTree(failedProgram).catch(() => {});
   if (movedProgram) await removePhysicalTree(replacedProgram).catch(() => {});
-} catch {
-  await save('last-result.json', { phase: 'recovery-failed', version: state.oldVersion, rejectedVersion: state.nextVersion });
+} catch (error) {
+  await save('last-result.json', { phase: 'recovery-failed', version: state.oldVersion, rejectedVersion: state.nextVersion,
+    step: recoveryStep, code: error.code || 'RECOVERY_ERROR' });
   process.exitCode = 1;
 }

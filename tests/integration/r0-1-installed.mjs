@@ -4,10 +4,11 @@ import { _electron } from 'playwright';
 import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { mkdtemp, mkdir, readFile, writeFile, copyFile, cp, rm, readdir } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { join, resolve, relative } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawn, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { existsSync } from 'node:fs';
 import asar from '@electron/asar';
 import { saveDesktopConfig } from '../../src/desktop-config.mjs';
 import { packageRelease } from '../../scripts/release/package.mjs';
@@ -23,6 +24,9 @@ const configFile = join(control, 'WeftMate/desktop-config.json'), recovery = joi
 const release = version => join(resolve(process.argv[2] || '.local/r0-1/final-releases'), version);
 const v1 = '0.1.1-preview.1', v2 = '0.1.1-preview.2', v3 = '0.1.1-preview.3';
 const installer = version => join(release(version), 'build', `WeftMate-Setup-${version}.exe`);
+const builtIn = join(root, 'built-in');
+asar.extractAll(join(release(v1), 'build/win-unpacked/resources/app.asar'), builtIn);
+const baselineResources = new Map([...personalAccessUiResources].map(([name, file]) => [name, join(builtIn, 'src', relative(join(repository, 'src'), file))]).filter(([, file]) => existsSync(file)));
 const feedDir = join(root, 'feed'); await mkdir(feedDir);
 const privateKey = await readFile(join(repository, '.local/r0-1/private.pem'), 'utf8');
 const env = { ...process.env };
@@ -124,8 +128,8 @@ try {
   await until(() => page.getByRole('textbox', { name: '输入消息', exact: true }).isEnabled());
   await page.getByRole('textbox', { name: '输入消息', exact: true }).fill('R0-1 保持运行直到合成模型完成。'); await page.getByRole('button', { name: '发送', exact: true }).click();
   await until(() => held);
-  const layout = join(root, 'layout.js'); await writeFile(layout, (await readFile(personalAccessUiResources.get('personal-access-ui/layout.js'), 'utf8')).replace('/* layout-test-slot */', "document.querySelector('#new-session').append(document.createTextNode(' · R01 UI v2'));"));
-  const resources = new Map(personalAccessUiResources); resources.set('personal-access-ui/layout.js', layout);
+  const layout = join(root, 'layout.js'); await writeFile(layout, (await readFile(baselineResources.get('personal-access-ui/layout.js'), 'utf8')).replace('/* layout-test-slot */', "document.querySelector('#new-session').append(document.createTextNode(' · R01 UI v2'));"));
+  const resources = new Map(baselineResources); resources.set('personal-access-ui/layout.js', layout);
   const uiManifest = await packageRelease({ layer: 'ui', version: '0.1.1-preview.9', channel: 'preview', outputDir: feedDir, privateKey, resources, releaseNotes: 'R0-1 合成界面更新说明。' });
   const beforeUi = transfers.length; await page.evaluate(() => weftmateDesktop.checkUpdates()); await reopen(); await pause(600);
   assert.equal(held.closed, false); assert.equal((await state()).layers[0].currentVersion, v1);
@@ -152,6 +156,7 @@ try {
   report.appUpgrade = JSON.parse(await readFile(join(recovery, 'last-result.json'), 'utf8'));
   assert.equal(report.appUpgrade.phase, 'healthy'); await stopAutoLaunched(); await start(); await shot('04-app-v2.png');
   await page.evaluate(() => WeftUiComponents); // Window is still the product surface after upgrade.
+  if (!process.argv.includes('--normal-only')) {
   await stage(v3); await page.evaluate(() => weftmateDesktop.checkUpdates()); await until(async () => (await state()).canRestart);
   assert.equal((await page.evaluate(() => weftmateDesktop.restartForUpdate())).restarted, true); application = null;
   await until(async () => (await readFile(join(recovery, 'last-result.json'), 'utf8').then(JSON.parse).catch(() => null))?.phase === 'rolled-back', 720000);
@@ -159,6 +164,7 @@ try {
   assert.equal(report.rollback.version, v2); await stopAutoLaunched(); await start(); await shot('05-app-rollback.png');
   assert.equal(JSON.parse(asar.extractFile(join(installation, 'resources/app.asar'), 'package.json')).version, v2);
   await page.evaluate(() => weftmateDesktop.checkUpdates()); assert.equal((await state()).layers[1].status, 'error'); report.badVersionRejected = true;
+  } else report.rollbackEvidence = 'rollback-report.json (independent automatic bad-version trial)';
   const channel = await page.evaluate(() => weftmateDesktop.setUpdateChannel('stable')); assert.equal(channel.channel, 'stable');
   assert.equal(JSON.parse(await readFile(configFile, 'utf8')).updates.channel, 'stable'); report.channelPersisted = true;
   await application.close(); application = null;
