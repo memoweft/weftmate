@@ -48,10 +48,13 @@ test('native file observation publishes every changed file, leaves unchanged fil
   } finally { await rm(root, { recursive: true, force: true }) }
 })
 
-test('one browser capability opens model-selected URLs, reads captures and follows links across turns without a browser workspace', async () => {
+test('one browser capability opens model-selected URLs, reads captures and follows links across turns without a browser workspace', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'native-browser-captures-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
   const urls: string[] = []
   const account = { sessions: { conversation: { origin: 'personal-remote' }, other: { origin: 'personal-remote' } } }
   const browser = createNativeBrowserOperations({
+    root: join(root, 'personal-access'),
     sessionOperations: {executionOwnerForSession: () => 'owner'}, rootState: { legacyOwnerId: 'owner' }, accountState: () => account,
     personalExecutionSource: () => ({ root: { commandId: 'cmd-native' } }), browserReader: { read: async ({ url }: any) => {
       urls.push(url)

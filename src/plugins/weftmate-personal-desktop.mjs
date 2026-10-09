@@ -609,6 +609,7 @@ export function registerPersonalBrowserTool(ctx, bridge) {
       url: { type: 'string', description: 'URL to open.' },
       snapshotId: { type: 'string', description: 'Capture returned by browser.' },
       segmentIndex: { type: 'integer', description: 'Zero-based segment to read.' },
+      query: { type: 'string', description: 'For read: space-separated terms selecting relevant verbatim paragraphs across the frozen capture instead of a whole segment.' },
       linkId: { type: 'string', description: 'Link from the capture to follow.' },
     },
     output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },

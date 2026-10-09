@@ -1,0 +1,124 @@
+{
+  "toolCalls": [
+    "write",
+    "pwsh"
+  ],
+  "schemas": [
+    "load_tools"
+  ],
+  "artifacts": [],
+  "fixtureRoot": "[isolated fixture]",
+  "events": [
+    {
+      "seq": 5,
+      "type": "turn.started",
+      "at": "2026-10-09T16:33:08.559Z",
+      "data": {
+        "turn": 1
+      }
+    },
+    {
+      "seq": 7,
+      "type": "task.started",
+      "at": "2026-10-09T16:33:08.587Z",
+      "data": {
+        "taskId": "cmd-225b87c4-a415-492f-8105-75d6fb87cadf",
+        "turn": 1,
+        "receiptId": "c4210845-688b-4f59-88f0-ffa4b623b169",
+        "commandId": "cmd-225b87c4-a415-492f-8105-75d6fb87cadf",
+        "requestId": "8bae2829-d2d3-4124-a183-20a64631f084",
+        "turnTaskId": "turn-1"
+      }
+    },
+    {
+      "seq": 8,
+      "type": "user.message",
+      "at": "2026-10-09T16:33:08.587Z",
+      "data": {
+        "text": "Create and verify three files with native tools.",
+        "receiptId": "c4210845-688b-4f59-88f0-ffa4b623b169"
+      }
+    },
+    {
+      "seq": 23,
+      "type": "step.started",
+      "at": "2026-10-09T16:33:08.700Z",
+      "data": {
+        "taskId": "turn-1",
+        "stepId": "call-69608bf3-9b9d-42e6-a868-bd5404012c53",
+        "callId": "call-69608bf3-9b9d-42e6-a868-bd5404012c53",
+        "toolName": "write",
+        "summary": "写入文件",
+        "groupHint": "write",
+        "detailRef": {
+          "seq": 23
+        },
+        "turn": 1,
+        "state": "running"
+      }
+    },
+    {
+      "seq": 25,
+      "type": "artifact.created",
+      "at": "2026-10-09T16:33:10.012Z",
+      "data": {
+        "taskId": "cmd-225b87c4-a415-492f-8105-75d6fb87cadf",
+        "artifactId": "artifact-2c2a8fd1-9da9-468f-be40-afa736742bd8",
+        "fileName": "report.md",
+        "contentType": "text/plain; charset=utf-8",
+        "size": 38,
+        "detailSeq": 25,
+        "completedStep": {
+          "taskId": "turn-1",
+          "stepId": "call-69608bf3-9b9d-42e6-a868-bd5404012c53",
+          "callId": "call-69608bf3-9b9d-42e6-a868-bd5404012c53",
+          "toolName": "write",
+          "summary": "写入文件",
+          "groupHint": "write",
+          "detailRef": {
+            "seq": 25
+          },
+          "turn": 1,
+          "state": "completed"
+        }
+      }
+    },
+    {
+      "seq": 36,
+      "type": "step.started",
+      "at": "2026-10-09T16:33:10.067Z",
+      "data": {
+        "taskId": "turn-1",
+        "stepId": "call-894ab8b4-8a18-4f37-b966-21f04c041b23",
+        "callId": "call-894ab8b4-8a18-4f37-b966-21f04c041b23",
+        "toolName": "pwsh",
+        "summary": "运行命令 Set-Content -LiteralPath shell-one.txt -Value 'one'; Set-Content -LiteralPath shell-two.txt -Value '",
+        "groupHint": "pwsh",
+        "detailRef": {
+          "seq": 36
+        },
+        "turn": 1,
+        "state": "running"
+      }
+    },
+    {
+      "seq": 37,
+      "type": "approval.requested",
+      "at": "2026-10-09T16:33:10.077Z",
+      "data": {
+        "taskId": "turn-1",
+        "approvalId": "10e759d9-cd5d-49a5-a22c-a44a139346eb",
+        "stepId": "call-894ab8b4-8a18-4f37-b966-21f04c041b23",
+        "toolName": "pwsh",
+        "turn": 1,
+        "summary": "[weftmate:overwrite] 修改或覆盖已有文件，恢复需要原内容或备份。操作：pwsh\n{\"command\":\"Set-Content -LiteralPath shell-one.txt -Value 'one'; Set-Content -LiteralPath shell-two.txt -Value 'two'; node -e 'require(\\\"node:fs\\\").writeFileSync(process.argv[1], \\\"outside conversation\\\")' '[local path]'\",\"description\":\"Create files with the native shell and Node outside the conversation\"}",
+        "detailRef": {
+          "seq": 37
+        }
+      }
+    }
+  ],
+  "status": "failed",
+  "error": "Error: Native fixture timeout: \r\n[weftmate] startup mode=personal-host\n[weftmate] ✓ 模型凭据保险库已就绪\n[weftmate] ✓ 伴侣状态就绪:星瑶\n[weftmate] synthetic source provenance={\"appPath\":\"D:\\\\AIProjects\\\\WeftMate\\\\Worktrees\\\\w5\",\"mainModule\":\"D:\\\\AIProjects\\\\WeftMate\\\\Worktrees\\\\w5\\\\src\\\\main.mjs\",\"runtimeModule\":\"D:\\\\AIProjects\\\\WeftMate\\\\Worktrees\\\\w5\\\\src\\\\dsh-web-runtime.ts\",\"gatewaySource\":\"D:\\\\AIProjects\\\\WeftMate\\\\Worktrees\\\\w5\\\\src\\\\runtime\\\\gateway\\\\routes\\\\v1.mjs\",\"adapterSource\":\"D:\\\\AIProjects\\\\WeftMate\\\\Worktrees\\\\w5\\\\src\\\\runtime\\\\dsh-adapter\\\\agents.mjs\",\"fixedDshRuntime\":\"D:\\\\AIProjects\\\\WeftMate\\\\Worktrees\\\\w5\\\\vendor\\\\dsh-runtime\"}\n[weftmate] DSH_HOME = [isolated fixture]\\profile\\dsh-home\n[weftmate] [dsh] profile weftmate 已写入（[isolated fixture]\\profile\\dsh-home）\n[weftmate] [dsh:stdout] dsh web: http://127.0.0.1:61367\n[weftmate] ✓ personal-host ready origin=http://127.0.0.1:61367\n[weftmate] ✓ personal-access listening origin=http://127.0.0.1:49602\n[weftmate] personal-host active; managed shutdown via launcher IPC\n[weftmate] [dsh:stdout] dsh web: http://127.0.0.1:54027\n\n    at until (file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/integration/personal-native-tools-electron.mjs:94:9)\n    at async file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/integration/personal-native-tools-electron.mjs:140:18",
+  "nativeChildren": []
+}
