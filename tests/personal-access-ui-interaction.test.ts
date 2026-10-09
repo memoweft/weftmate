@@ -1070,8 +1070,9 @@ test('terminal-output-limit desktop keeps an old pure-reply card bound to its so
   events.push({ seq: 3, type: 'user.message', data: { text: '核对这份资料', receiptId: 'rpc:new.3' } },
     { seq: 4, type: 'turn.started', data: { turn: 3 } })
   page.tick()
-  for (let attempt = 0; attempt < 20 && !page.get('timeline-status').textContent.includes('正在处理'); attempt++) await flush()
-  assert.match(page.get('timeline-status').textContent, /正在处理/)
+  for (let attempt = 0; attempt < 20 && page.get('timeline-status').textContent; attempt++) await flush()
+  assert.equal(page.get('timeline-status').textContent, '')
+  assert.equal(page.get('timeline-status').hidden, true)
   assert.doesNotMatch(page.get('timeline-status').textContent, /长度限制/)
   assert.match(visibleText(card), /因输出限制结束，尚未确认完整交付/)
   events.push({ seq: 5, type: 'turn.ended', data: { reason: 'completed', turn: 3 } })

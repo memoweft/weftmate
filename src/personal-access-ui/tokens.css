@@ -205,6 +205,10 @@
   --success: var(--wm-color-success);
   --success-soft: var(--wm-color-success-soft);
   --warning: var(--wm-color-warning);
+  --window-frame: var(--canvas);
+  --sidebar: var(--window-frame);
+  --panel: var(--surface);
+  --panel-divider: var(--line);
 }
 :root[data-theme="dark"] {
   --canvas: #20211f;
@@ -225,6 +229,10 @@
   --success: #a7e7cf;
   --success-soft: #253c32;
   --warning: var(--wm-color-warning);
+  --window-frame: var(--canvas);
+  --sidebar: var(--window-frame);
+  --panel: var(--surface);
+  --panel-divider: var(--line);
 }
 :root[data-accent="blue"] {
   --accent: #365eab;

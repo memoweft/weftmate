@@ -115,6 +115,12 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         description('general', '通知', '审批、提问与任务完成会通过系统通知提醒。', globalThis.weftmateDesktop ? '由系统管理' : '在桌面程序中管理');
         description('general', '关闭窗口时最小化到托盘', '关闭窗口后，WeftMate 继续在后台运行。', globalThis.weftmateDesktop ? '已启用' : '仅桌面程序');
         description('general', '语言', '当前界面使用简体中文。', '简体中文');
+        const messageSetting = globalThis.WeftUiCore.messageModeSetting;
+        const messageMode = node('select'); messageMode.id = 'settings-message-mode'; messageMode.setAttribute('aria-label', messageSetting.name);
+        for (const [value, label] of messageSetting.options) messageMode.append(new Option(label, value));
+        const messageHelp = messageSetting.options.map(([, label, help]) => `${label}：${help}`).join(' ');
+        panels.get('general').append(globalThis.WeftSettingsControls.row(messageSetting.name, messageHelp, messageMode));
+        messageMode.addEventListener('change', () => core.setMessageMode(messageMode.value));
         const descriptions = { theme: '选择适合当前环境的颜色模式。', accent: '用于按钮、选中状态和交互提示。', fontSize: '调整阅读与输入的文字大小。' };
         for (const [key, help] of Object.entries(descriptions)) {
             const control = ui.byId('appearance-' + key), label = control.closest('label'), name = label.childNodes[0].textContent;
@@ -139,6 +145,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         for (const original of originals) if (original.parentNode === account) original.hidden = true;
         account.append(content); main.append(head, picker); if (cloudNotice) main.append(cloudNotice); main.append(account); dialog.append(sidebar, main); document.body.append(dialog);
         registry = globalThis.WeftUiCore.settingsRegistry({
+            general: () => { messageMode.value = core.messageModePreference(); messageMode.dispatchEvent(new Event('weft:sync')); },
             account: () => { ui.selectCloudSettings?.('account'); ui.paintCloudSettings?.(); },
             devices: () => { ui.selectCloudSettings?.('devices'); ui.paintCloudSettings?.(); },
             memory: () => { if (core.state.currentView !== 'memory') void core.openMemory(); },

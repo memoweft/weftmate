@@ -21,7 +21,7 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
         trigger.title = core.approvalModes.find(row => row[0] === currentMode)?.[2] ?? '选择新对话的审批模式';
         trigger.classList.toggle('is-warning', currentMode === 'allow-all');
         const shield = trigger.querySelector('.approval-shield');
-        if (shield) shield.hidden = currentMode !== 'allow-all';
+        if (shield) shield.toggleAttribute('hidden', currentMode !== 'allow-all');
         menu.replaceChildren();
         core.approvalModes.forEach(([mode, label, description], index) => {
             const button = ui.element('button', 'approval-mode-option');
@@ -50,7 +50,6 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
             .sort((a, b) => a.row.createdAt.localeCompare(b.row.createdAt)) : [];
         const hadFocus = bar.contains(document.activeElement), action = document.activeElement?.dataset?.conversationApprovalAction;
         bar.hidden = rows.length === 0;
-        ui.byId('timeline-status').hidden = !bar.hidden;
         ui.byId('model-hint').hidden = !bar.hidden || core.state.sessions.some(session => session.sessionId === context.sessionId && session.running) || !ui.byId('model-hint').textContent;
         if (!rows.length) {
             bar.replaceChildren(); delete bar.dataset.signature;

@@ -26,7 +26,7 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
     });
     const scope = JSON.stringify([state.owner, state.authEpoch, state.sharedGeneration, state.sharedSessionId]);
     const changed = scope !== historyScope;
-    if (changed) { historyScope = scope; core.state.historyGeneration++; core.state.messageMode = 'steer'; }
+    if (changed) { historyScope = scope; core.state.historyGeneration++; }
     if (changed || !core.state.historyInFlight && !core.state.olderLoading) {
       core.state.historyEvents = new Map(state.sharedEvents.map(event => [event.seq, event]));
       core.state.seenSeq = new Set(core.state.historyEvents.keys());

@@ -40,9 +40,12 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
   let saved = {};
   try { saved = JSON.parse(readFileSync(stateFile, 'utf8')); } catch { /* first launch */ }
   const desktopSession = session.fromPartition('persist:weftmate-desktop');
-  const palette = () => nativeTheme.shouldUseDarkColors
-    ? { color: '#202020', symbolColor: '#ffffff', height: 44 }
-    : { color: '#faf9f6', symbolColor: '#202020', height: 44 };
+  const tokenCss = readFileSync(new URL('./personal-access-ui/tokens.css', import.meta.url), 'utf8');
+  const tokenValues = name => [...tokenCss.matchAll(new RegExp(`${name}:\\s*([^;]+);`, 'g'))].map(match => match[1]);
+  const palette = () => {
+    const index = nativeTheme.shouldUseDarkColors ? 1 : 0;
+    return { color: tokenValues('--canvas')[index], symbolColor: tokenValues('--ink')[index], height: 44 };
+  };
   let resolvedPalette = null;
   const bounds = restoreDesktopBounds(saved, screen.getAllDisplays());
   const win = new BrowserWindow({

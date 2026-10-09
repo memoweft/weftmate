@@ -28,7 +28,6 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
         ui.byId('message-text').placeholder = '向 WeftMate 说说你的目标';
     }
     function mountComposer() {
-        globalThis.WeftPopover?.bindSettingsSelect(ui.byId('message-mode'));
         const context = ui.byId('context-usage');
         const tooltip = ui.byId('context-tooltip');
         const show = () => { tooltip.hidden = false; globalThis.WeftPopover.position(tooltip, context); };
@@ -73,7 +72,6 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
                 ui.closeModelMenu(true);
             }
         });
-        ui.byId('message-mode').addEventListener('change', event => { core.setMessageMode(event.target.value); });
         ui.byId('message-text').addEventListener('input', ui.updateAvailability);
         ui.byId('message-attachments').addEventListener('change', (event) => {
             const input = event.currentTarget, selected = [...(input.files || [])];
