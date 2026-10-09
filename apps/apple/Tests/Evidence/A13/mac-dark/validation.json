@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "platform": "mac",
+  "theme": "dark",
+  "realPersonalHost": true,
+  "syntheticOnly": true,
+  "compiledDSH": false,
+  "xcodeJobs": 2,
+  "simulatorsAtOnce": 0,
+  "questionBatchPOSTs": 2,
+  "generatedAt": "2026-10-09T18:05:02.686794+00:00"
+}

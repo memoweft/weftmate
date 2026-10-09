@@ -1,0 +1,397 @@
+{
+  "questionHTTP": [
+    {
+      "status": 200,
+      "request": {
+        "answer": {
+          "answers": [
+            {
+              "custom": "合成其他格式",
+              "id": "format",
+              "selected": []
+            },
+            {
+              "custom": "合成补充",
+              "id": "sections",
+              "selected": [
+                "摘要",
+                "步骤"
+              ]
+            },
+            {
+              "custom": "合成自由回答",
+              "id": "note",
+              "selected": []
+            }
+          ]
+        },
+        "requestId": "74A7AF57-8D41-4662-8FA7-2B856B8644D3"
+      },
+      "reply": {
+        "question": {
+          "questionRpcId": "5a57aa00-1b96-418c-88a4-9cf3b07de648",
+          "sessionId": "session-31b38cf6-eab6-4dea-a5ee-585cabab4b19",
+          "taskId": "cmd-92d7a3b8-e6f5-4882-92f8-5f43d2b379a0",
+          "sourceCommandId": "cmd-92d7a3b8-e6f5-4882-92f8-5f43d2b379a0",
+          "sourceReceiptId": "db0ce9fe-ca98-4025-8d45-c694fa96b57b",
+          "turn": 1,
+          "questions": [
+            {
+              "id": "format",
+              "question": "报告采用哪种格式？",
+              "header": "格式",
+              "detail": "完整说明：只用于合成报告的格式选择。",
+              "options": [
+                {
+                  "label": "简要报告",
+                  "description": "便于阅读"
+                },
+                {
+                  "label": "完整记录",
+                  "description": "包含完整过程"
+                }
+              ]
+            },
+            {
+              "id": "sections",
+              "question": "报告包含哪些部分？",
+              "options": [
+                {
+                  "label": "摘要"
+                },
+                {
+                  "label": "步骤"
+                }
+              ],
+              "multiSelect": true
+            },
+            {
+              "id": "note",
+              "question": "还有什么要补充？"
+            }
+          ],
+          "createdAt": "2026-10-09T18:17:56.075Z",
+          "status": "answered",
+          "answer": {
+            "answers": [
+              {
+                "id": "format",
+                "selected": [],
+                "custom": "合成其他格式"
+              },
+              {
+                "id": "sections",
+                "selected": [
+                  "摘要",
+                  "步骤"
+                ],
+                "custom": "合成补充"
+              },
+              {
+                "id": "note",
+                "selected": [],
+                "custom": "合成自由回答"
+              }
+            ]
+          },
+          "answerRequestId": "74A7AF57-8D41-4662-8FA7-2B856B8644D3",
+          "answeredAt": "2026-10-09T18:18:08.722Z",
+          "observedSeq": 22
+        },
+        "requestId": "74A7AF57-8D41-4662-8FA7-2B856B8644D3"
+      }
+    },
+    {
+      "status": 200,
+      "request": {
+        "answer": {
+          "answers": [
+            {
+              "id": "format",
+              "selected": [
+                "完整记录"
+              ]
+            },
+            {
+              "id": "sections",
+              "selected": [
+                "摘要"
+              ]
+            },
+            {
+              "custom": "合成重试回答",
+              "id": "note",
+              "selected": []
+            }
+          ]
+        },
+        "requestId": "2AB84869-53AE-4C72-914C-46E908AA661D"
+      },
+      "reply": {
+        "question": {
+          "questionRpcId": "03ff3b1b-10e1-4ea1-813f-a077e4b6c5dd",
+          "sessionId": "session-31b38cf6-eab6-4dea-a5ee-585cabab4b19",
+          "taskId": "cmd-92d7a3b8-e6f5-4882-92f8-5f43d2b379a0",
+          "sourceCommandId": "cmd-92d7a3b8-e6f5-4882-92f8-5f43d2b379a0",
+          "sourceReceiptId": "db0ce9fe-ca98-4025-8d45-c694fa96b57b",
+          "turn": 1,
+          "questions": [
+            {
+              "id": "format",
+              "question": "报告采用哪种格式？",
+              "header": "格式",
+              "detail": "完整说明：只用于合成报告的格式选择。",
+              "options": [
+                {
+                  "label": "简要报告",
+                  "description": "便于阅读"
+                },
+                {
+                  "label": "完整记录",
+                  "description": "包含完整过程"
+                }
+              ]
+            },
+            {
+              "id": "sections",
+              "question": "报告包含哪些部分？",
+              "options": [
+                {
+                  "label": "摘要"
+                },
+                {
+                  "label": "步骤"
+                }
+              ],
+              "multiSelect": true
+            },
+            {
+              "id": "note",
+              "question": "还有什么要补充？"
+            }
+          ],
+          "createdAt": "2026-10-09T18:18:10.582Z",
+          "status": "answered",
+          "answer": {
+            "answers": [
+              {
+                "id": "format",
+                "selected": [
+                  "完整记录"
+                ]
+              },
+              {
+                "id": "sections",
+                "selected": [
+                  "摘要"
+                ]
+              },
+              {
+                "id": "note",
+                "selected": [],
+                "custom": "合成重试回答"
+              }
+            ]
+          },
+          "answerRequestId": "2AB84869-53AE-4C72-914C-46E908AA661D",
+          "answeredAt": "2026-10-09T18:18:13.192Z",
+          "observedSeq": 25
+        },
+        "requestId": "2AB84869-53AE-4C72-914C-46E908AA661D"
+      }
+    }
+  ],
+  "usageHTTP": [
+    {
+      "month": null,
+      "timeZone": null
+    },
+    {
+      "month": "2026-10",
+      "timeZone": "US/Pacific"
+    },
+    {
+      "month": null,
+      "timeZone": null
+    },
+    {
+      "month": "2021-01",
+      "timeZone": "US/Pacific"
+    }
+  ],
+  "operations": [
+    {
+      "kind": "send",
+      "sessionId": "session-31b38cf6-eab6-4dea-a5ee-585cabab4b19",
+      "text": "A8_WAIT：读取项目资料，运行检查，并生成合成报告。",
+      "mode": "steer",
+      "receiptId": "db0ce9fe-ca98-4025-8d45-c694fa96b57b"
+    },
+    {
+      "kind": "started",
+      "sessionId": "session-31b38cf6-eab6-4dea-a5ee-585cabab4b19",
+      "text": "A8_WAIT：读取项目资料，运行检查，并生成合成报告。",
+      "receiptId": "db0ce9fe-ca98-4025-8d45-c694fa96b57b"
+    },
+    {
+      "kind": "approval",
+      "outcome": "allowed-once"
+    },
+    {
+      "kind": "approval",
+      "outcome": "allowed-once"
+    }
+  ],
+  "questions": {
+    "questions": [
+      {
+        "questionRpcId": "03ff3b1b-10e1-4ea1-813f-a077e4b6c5dd",
+        "sessionId": "session-31b38cf6-eab6-4dea-a5ee-585cabab4b19",
+        "taskId": "cmd-92d7a3b8-e6f5-4882-92f8-5f43d2b379a0",
+        "sourceCommandId": "cmd-92d7a3b8-e6f5-4882-92f8-5f43d2b379a0",
+        "sourceReceiptId": "db0ce9fe-ca98-4025-8d45-c694fa96b57b",
+        "turn": 1,
+        "questions": [
+          {
+            "id": "format",
+            "question": "报告采用哪种格式？",
+            "header": "格式",
+            "detail": "完整说明：只用于合成报告的格式选择。",
+            "options": [
+              {
+                "label": "简要报告",
+                "description": "便于阅读"
+              },
+              {
+                "label": "完整记录",
+                "description": "包含完整过程"
+              }
+            ]
+          },
+          {
+            "id": "sections",
+            "question": "报告包含哪些部分？",
+            "options": [
+              {
+                "label": "摘要"
+              },
+              {
+                "label": "步骤"
+              }
+            ],
+            "multiSelect": true
+          },
+          {
+            "id": "note",
+            "question": "还有什么要补充？"
+          }
+        ],
+        "createdAt": "2026-10-09T18:18:10.582Z",
+        "status": "resolved",
+        "answer": {
+          "answers": [
+            {
+              "id": "format",
+              "selected": [
+                "完整记录"
+              ]
+            },
+            {
+              "id": "sections",
+              "selected": [
+                "摘要"
+              ]
+            },
+            {
+              "id": "note",
+              "selected": [],
+              "custom": "合成重试回答"
+            }
+          ]
+        },
+        "answerRequestId": "2AB84869-53AE-4C72-914C-46E908AA661D",
+        "answeredAt": "2026-10-09T18:18:13.192Z",
+        "outcome": "answered",
+        "resolvedAt": "2026-10-09T18:18:13.205Z",
+        "answerAcceptedAt": "2026-10-09T18:18:13.205Z",
+        "observedSeq": 25
+      },
+      {
+        "questionRpcId": "5a57aa00-1b96-418c-88a4-9cf3b07de648",
+        "sessionId": "session-31b38cf6-eab6-4dea-a5ee-585cabab4b19",
+        "taskId": "cmd-92d7a3b8-e6f5-4882-92f8-5f43d2b379a0",
+        "sourceCommandId": "cmd-92d7a3b8-e6f5-4882-92f8-5f43d2b379a0",
+        "sourceReceiptId": "db0ce9fe-ca98-4025-8d45-c694fa96b57b",
+        "turn": 1,
+        "questions": [
+          {
+            "id": "format",
+            "question": "报告采用哪种格式？",
+            "header": "格式",
+            "detail": "完整说明：只用于合成报告的格式选择。",
+            "options": [
+              {
+                "label": "简要报告",
+                "description": "便于阅读"
+              },
+              {
+                "label": "完整记录",
+                "description": "包含完整过程"
+              }
+            ]
+          },
+          {
+            "id": "sections",
+            "question": "报告包含哪些部分？",
+            "options": [
+              {
+                "label": "摘要"
+              },
+              {
+                "label": "步骤"
+              }
+            ],
+            "multiSelect": true
+          },
+          {
+            "id": "note",
+            "question": "还有什么要补充？"
+          }
+        ],
+        "createdAt": "2026-10-09T18:17:56.075Z",
+        "status": "resolved",
+        "answer": {
+          "answers": [
+            {
+              "id": "format",
+              "selected": [],
+              "custom": "合成其他格式"
+            },
+            {
+              "id": "sections",
+              "selected": [
+                "摘要",
+                "步骤"
+              ],
+              "custom": "合成补充"
+            },
+            {
+              "id": "note",
+              "selected": [],
+              "custom": "合成自由回答"
+            }
+          ]
+        },
+        "answerRequestId": "74A7AF57-8D41-4662-8FA7-2B856B8644D3",
+        "answeredAt": "2026-10-09T18:18:08.722Z",
+        "outcome": "answered",
+        "resolvedAt": "2026-10-09T18:18:08.834Z",
+        "answerAcceptedAt": "2026-10-09T18:18:08.834Z",
+        "observedSeq": 22
+      }
+    ],
+    "nextBefore": null,
+    "hasMore": false,
+    "status": 200
+  }
+}
