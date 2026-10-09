@@ -1,0 +1,11 @@
+✔ FX-11 first native write registers a cloud owner's artifact in ordinary conversation (3999.0758ms)
+✔ FX-11 first native write registers a cloud owner's artifact in project conversation (4884.7066ms)
+✔ FX-11 first native write registers a cloud owner's artifact in phone conversation (4029.6132ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13091.9894

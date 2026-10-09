@@ -11,6 +11,7 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 APP_MODEL = ["CloudBrowser", "CloudLoginModel", "AppleAppModel", "ConversationSendState", "ConversationAdoptionState", "ConversationAttachmentState", "TaskWorkspaceModel"]
 CHECKS = {
+    "AppleSettingsSummaryChecks": APP_MODEL,
     "AppleContractStateChecks": APP_MODEL,
     "AppleAdoptionStateChecks": APP_MODEL,
     "AppleDraftStateChecks": APP_MODEL,
@@ -52,6 +53,8 @@ def main():
         if models == APP_MODEL:
             sources.append(ROOT / "Tests/TaskProgressUIFixture.swift")
             sources.append(ROOT / "Tests/AppleContractUIFixture.swift")
+        if name == "AppleSettingsSummaryChecks":
+            sources += [ROOT / "UI/AppleSettingsModel.swift", ROOT / "UI/WeaveTheme.swift", ROOT / "UI/WeftIcon.swift", ROOT.parent.parent / "design/tokens/generated/apple/DesignTokens.swift"]
         if name == "AppleTimelineStateChecks":
             sources.append(ROOT / "UI/ConversationResourcesModel.swift")
         if name == "DesignTokenChecks":

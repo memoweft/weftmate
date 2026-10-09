@@ -145,6 +145,21 @@ test('D35 chronology splits only at visible conversation boundaries and approval
   assert.equal(JSON.stringify(events),copy);
 });
 
+test('FX-11 progress counts actual activities and keeps internal names out of running and historical summaries', () => {
+  const { api } = fixture();
+  const completed = ['load_tools', 'write', 'web_fetch', 'todo_write', 'subagent', 'schedule_create',
+    'job_output', 'run_code', 'get_goal', 'weftmod_script', 'memory_lookup', 'custom_mcp_service']
+    .map(toolName => ({toolName, state:'completed'}));
+  const text = api.progressText(completed, true).text;
+  assert.equal(text, '修改了 1 个文件、访问了 1 次网页、整理了 1 次执行计划、处理了 1 个子任务、处理了 1 次定时安排、查看或管理了 1 次后台命令、运行了 1 次脚本、查看了 1 次任务目标、操作了 1 次电脑应用、查询或更新了 1 次记忆、调用了 1 次扩展服务');
+  assert.equal(api.progressText([{toolName:'load_tools',state:'completed'}],true).text,'工具已就绪');
+  assert.equal(api.progressText([{toolName:'load_tools',state:'running',summary:'执行工具 load_tools'}]).text,'正在准备可用工具…');
+  const old = api.projectTimeline([{seq:1,type:'step.completed',data:{taskId:'turn-1',stepId:'load',toolName:'load_tools',summary:'执行工具 load_tools',state:'failed'}}]);
+  assert.equal(old.groups[0].steps[0].summary,'准备可用工具');
+  assert.equal(api.progressText(old.groups[0].steps,true).text,'第 1 步失败','failed internal setup remains inspectable');
+  assert.doesNotMatch(text,/load_tools|todo_write|web_fetch|工具步骤|执行工具/);
+});
+
 test('running composer reports observed phases and hides them on an idle session without changing stop availability', () => {
   const f = fixture(), session: any = f.core.state.sessions[0]
   session.running = true
@@ -404,14 +419,14 @@ test('UI-3 approvals and sources share summaries for shell/files/web/subtask and
     ['edit', { path: 'out/report.md' }, '修改 1 个文件：report.md'],
     ['web_fetch', { url: 'https://example.com/a' }, '访问网页 example.com'],
     ['subagent', { prompt: '核对结果' }, '交给子任务：核对结果'],
-    ['custom_tool', { a: 1, b: 'two', c: true, d: 'omitted' }, 'custom_tool：a=1，b=two，c=true'],
+    ['custom_tool', { a: 1, b: 'two', c: true, d: 'omitted' }, '调用扩展服务'],
   ] as any[]) {
     const text = JSON.stringify({ arguments: JSON.stringify(args) })
     assert.equal(f.core.toolSummary(tool, args), summary)
     assert.equal(f.core.sourcePresentation(tool, text).summary, summary)
     assert.equal(f.core.approvalPresentation({ toolName: tool, reason: JSON.stringify(args) }).summary, summary)
   }
-  assert.equal(f.core.toolSummary('unknown', 'invalid json'), 'unknown')
+  assert.equal(f.core.toolSummary('unknown', 'invalid json'), '调用扩展服务')
   assert.equal(f.core.approvalPresentation({ toolName: 'write', reason: '[weftmate:overwrite] 覆盖报告，可从 Git 恢复。' }).summary, '覆盖报告，可从 Git 恢复。')
 })
 

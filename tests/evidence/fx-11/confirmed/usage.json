@@ -1,0 +1,62 @@
+[
+  {
+    "inputTokens": 647,
+    "outputTokens": 163,
+    "cacheReadTokens": 1536
+  },
+  {
+    "inputTokens": 887,
+    "outputTokens": 78,
+    "cacheReadTokens": 1920
+  },
+  {
+    "inputTokens": 534,
+    "outputTokens": 73,
+    "cacheReadTokens": 2752
+  },
+  {
+    "inputTokens": 216,
+    "outputTokens": 84,
+    "cacheReadTokens": 3264
+  },
+  {
+    "inputTokens": 620,
+    "outputTokens": 72,
+    "cacheReadTokens": 1536
+  },
+  {
+    "inputTokens": 769,
+    "outputTokens": 56,
+    "cacheReadTokens": 1920
+  },
+  {
+    "inputTokens": 376,
+    "outputTokens": 50,
+    "cacheReadTokens": 2688
+  },
+  {
+    "inputTokens": 206,
+    "outputTokens": 61,
+    "cacheReadTokens": 3008
+  },
+  {
+    "inputTokens": 581,
+    "outputTokens": 74,
+    "cacheReadTokens": 1536
+  },
+  {
+    "inputTokens": 907,
+    "outputTokens": 44,
+    "cacheReadTokens": 1920
+  },
+  {
+    "inputTokens": 459,
+    "outputTokens": 151,
+    "cacheReadTokens": 2816
+  },
+  {
+    "inputTokens": 335,
+    "outputTokens": 43,
+    "cacheReadTokens": 3264
+  }
+]

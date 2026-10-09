@@ -1,0 +1,27 @@
+[
+  {
+    "inputTokens": 626,
+    "outputTokens": 115,
+    "cacheReadTokens": 1536
+  },
+  {
+    "inputTokens": 818,
+    "outputTokens": 84,
+    "cacheReadTokens": 1920
+  },
+  {
+    "inputTokens": 183,
+    "outputTokens": 113,
+    "cacheReadTokens": 2688
+  },
+  {
+    "inputTokens": 1083,
+    "outputTokens": 166,
+    "cacheReadTokens": 2368
+  },
+  {
+    "inputTokens": 275,
+    "outputTokens": 140,
+    "cacheReadTokens": 3392
+  }
+]

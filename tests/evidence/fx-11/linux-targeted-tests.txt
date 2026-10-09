@@ -1,0 +1,12 @@
+✔ FX-11 first native write registers a cloud owner's artifact in ordinary conversation (819.552528ms)
+﹣ FX-11 first native write registers a cloud owner's artifact in project conversation (0.181624ms) # SKIP
+✔ FX-11 first native write registers a cloud owner's artifact in phone conversation (820.169701ms)
+✔ resource call summaries describe scripts, named files and connector searches without exposing raw code or output (2.209901ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 3119.596348
