@@ -1,0 +1,14 @@
+{
+  "retainedSyntheticRoots": 10,
+  "dailyDataUntouched": true,
+  "explicitlyTerminatedProcesses": 4,
+  "syntheticRootDeletionBlocked": true,
+  "dailyTaskUntouched": true,
+  "ownLanLockRemaining": false,
+  "remainingProductProcesses": 0,
+  "simulatorStarted": false,
+  "remainingBackupCopies": 0,
+  "orchestratorMonitorsExcluded": 2,
+  "trackedCoreStarts": 16,
+  "remainingTrackedCoreProcesses": 0
+}

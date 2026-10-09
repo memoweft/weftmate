@@ -1,0 +1,8 @@
+{
+  "original": { "confirmation": "好，以后我想组队时，就提醒我找王小明。", "intervening": [] },
+  "alternate": { "confirmation": "行，就这么办", "intervening": [] },
+  "delayed": {
+    "confirmation": "刚才你说的组队提醒，行，就这么办。",
+    "intervening": ["顺便问一下，一周有几天？一句话回答。", "17加23是多少？只回复结果。"]
+  }
+}

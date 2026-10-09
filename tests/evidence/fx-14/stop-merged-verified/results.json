@@ -1,0 +1,130 @@
+{
+  "runnerPid": 34796,
+  "startedAt": "2026-10-09T21:53:51.962Z",
+  "realMain": true,
+  "realDsh": true,
+  "syntheticModel": true,
+  "checks": [
+    {
+      "name": "stability-cycle-1",
+      "status": "failed",
+      "durationMs": 18378,
+      "error": "locator.click: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '发送', exact: true })\u001b[22m\n\u001b[2m    - locator resolved to <button disabled type=\"submit\" aria-label=\"发送\" id=\"send-message\" data-action=\"send\" data-motion-key=\"false\" class=\"composer-icon composer-send\" title=\"发送 · Enter；排队 · Ctrl/Cmd+Enter\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    24 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
+      "screenshot": "desktop/failure-0.png"
+    },
+    {
+      "name": "stability-cycle-2",
+      "status": "failed",
+      "durationMs": 12334,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-1.png"
+    },
+    {
+      "name": "stability-cycle-3",
+      "status": "failed",
+      "durationMs": 12207,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-2.png"
+    },
+    {
+      "name": "stability-cycle-4",
+      "status": "failed",
+      "durationMs": 12200,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-3.png"
+    },
+    {
+      "name": "stability-cycle-5",
+      "status": "failed",
+      "durationMs": 12207,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-4.png"
+    }
+  ],
+  "errors": [],
+  "requestCount": 586,
+  "stability": {
+    "elapsedMs": 127619,
+    "p99Ms": 21.463039,
+    "maxMs": 41.254911,
+    "storeWatchEvents": 66,
+    "exactStoreWrites": 0,
+    "samples": [
+      {
+        "at": 1791582838665,
+        "rss": 170307584,
+        "heapUsed": 24629132
+      },
+      {
+        "at": 1791582848665,
+        "rss": 175357952,
+        "heapUsed": 25368516
+      },
+      {
+        "at": 1791582858666,
+        "rss": 174481408,
+        "heapUsed": 22262512
+      },
+      {
+        "at": 1791582868665,
+        "rss": 160825344,
+        "heapUsed": 21579600
+      },
+      {
+        "at": 1791582878665,
+        "rss": 164483072,
+        "heapUsed": 24213712
+      },
+      {
+        "at": 1791582888666,
+        "rss": 174329856,
+        "heapUsed": 25565508
+      },
+      {
+        "at": 1791582898665,
+        "rss": 174882816,
+        "heapUsed": 26468204
+      },
+      {
+        "at": 1791582908666,
+        "rss": 179470336,
+        "heapUsed": 23928616
+      },
+      {
+        "at": 1791582918667,
+        "rss": 177389568,
+        "heapUsed": 28482148
+      },
+      {
+        "at": 1791582928667,
+        "rss": 179654656,
+        "heapUsed": 22792720
+      },
+      {
+        "at": 1791582938666,
+        "rss": 174620672,
+        "heapUsed": 24493532
+      },
+      {
+        "at": 1791582948667,
+        "rss": 179068928,
+        "heapUsed": 27384884
+      },
+      {
+        "at": 1791582958667,
+        "rss": 177942528,
+        "heapUsed": 26494724
+      }
+    ]
+  },
+  "logScan": {
+    "files": 1,
+    "bodyHits": 0,
+    "keyHits": 0,
+    "bytes": 4077
+  },
+  "modelCalls": 6,
+  "finishedAt": "2026-10-09T21:56:06.286Z",
+  "cleaned": true,
+  "root": "removed isolated FX14 profile"
+}

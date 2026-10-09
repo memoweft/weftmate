@@ -121,7 +121,7 @@
 
 UX-2：`GET /sessions` 的可用会话另返回执行电脑的 `hostId`，以及可选 `updatedAt`（ISO 8601 时间）。`updatedAt` 取最近已读取历史事件的 `at` 与原会话登记时间中较新者；无有效时间则省略，不以请求或重命名时间伪造活动。项目列表按它倒序默认展示最近 5 条；旧宿主缺字段时客户端保留稳定顺序并显示暂无活动记录。账户菜单读取既有 `/settings/usage` 的统计时区，再读取同一时区的 `/usage`；以 `budget.effectiveLimit`（包含本月临时额度）与该完整月份金额计算上限余量，无上限显示金额与请求数，不新增用量接口。
 
-运行中的会话可另带 `processing:{phase,modelName?,ahead?}`：`phase` 为 `memory`（宿主正在读取记忆）、`queued`（宿主推理队列）、`loading`（本机 ModelSwitcher〔模型切换代理〕实测正在切换）、`waiting`（已开始模型请求，尚无内容）、`reasoning`（收到模型思考片段）、`answering`（收到文字片段）。`ahead` 仅在 `queued` 时表示该请求前面的实际请求数，其他阶段省略；`modelName` 为当前模型显示名称。无可观测阶段时省略 `processing`，客户端显示普通等待提示，不推测加载或思考。结束后不返回阶段；旧客户端可忽略新增字段。
+运行中的会话可另带 `processing:{phase,modelName?,ahead?}`：`phase` 为 `memory`（宿主正在读取记忆）、`queued`（宿主推理队列）、`loading`（本机 ModelSwitcher〔模型切换代理〕实测正在切换）、`waiting`（已开始模型请求，尚无内容）、`reasoning`（收到模型思考片段）、`answering`（收到文字片段）、`retrying`（原生流空闲超时后正在重试，客户端显示“模型响应慢，正在重试…”）。`ahead` 仅在 `queued` 时表示该请求前面的实际请求数，其他阶段省略；`modelName` 为当前模型显示名称。无可观测阶段时省略 `processing`，客户端显示普通等待提示，不推测加载或思考。结束后不返回阶段；旧客户端可忽略新增字段。
 
 归档会话的 `sendAvailable:false`，发送新消息返回409 `SESSION_ARCHIVED`，先恢复再发送。已有运行不因归档停止。删除默认保留 MemoWeft 长期记忆；`forgetMemories:true` 需要 Cookie 与 `account:manage`，按账号及会话来源查询 Core（核心）的记忆任务证据，再走 `delete_evidence` 真正删除与储存清理。Core 不可用或遗忘失败时保留对话用于重试；已完成的证据遗忘不能撤销。再次删除已删除会话返回404。停止或后台形成未确认时不能宣称删除成功。
 
@@ -256,6 +256,8 @@ M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在�
 | POST `/memory/commands/by-request/{requestId}/retry-cleanup` | `{}`，≤1 KiB；只重试原删除的底层清理 | 200 `Receipt` | 404 `NOT_FOUND`；422 `MEMORY_ACTION_UNSUPPORTED`；503 `SERVICE_UNAVAILABLE` | 桌、安（能力）、苹 |
 
 遗忘预览的 `items[].kind` 可为 `interaction_commitment`（交互承诺）；其 `itemType` 为 `commitment` / `recommendation` / `agreement`，与正式项一起计入 `itemCount`，表示将随来源或会话清除的派生记录。此类型只用于预览，独立记忆列表与命令目标的 kind 不扩展。
+
+FX-15：确认决定的来源列表可额外包含 `role:"assistant"`、`messageId`、`conversationId`；`rawContent` 为被确认的助手提议原话。`evidenceId` 指向提议所在回合的用户证据，用于权限及遗忘依赖，不表示助手文字成为用户 Evidence（原始证据）。同一 `evidenceId` 可同时出现用户原话和助手上下文，客户端应按 `evidenceId + role + messageId` 区分；旧客户端继续显示既有摘要和原文。助手来源撤权或删除后不返回正文。
 
 查询对当前账号快照搜索，`query` 经 NFKC/trim/小写规范化；游标绑定账号、kind、query、worldRevision，修订变化后重新查首屏。`currentState` 另可 `not_current`。来源最多200条，摘要≤2,000、原文≤8,192 UTF-16；详情/来源内部大小上限256 KiB。拒绝删除的原因在 `receipt.reasonCode`，可为 `MEMORY_DELETE_CONFLICT / MEMORY_SOURCE_UNRECOVERABLE / MEMORY_DELETE_SOURCE_UNKNOWN / MEMORY_COMMAND_REJECTED`；外层未知错误会投影为 `SERVICE_UNAVAILABLE`。`capabilities.inject` 仅表示能力，当前没有公开「注入/采用记忆」HTTP路由。
 
