@@ -62,7 +62,7 @@ export function createActivity(context) {
           if(context.backend.schedules){const notices=await context.backend.schedules({ownerId,sessionId,action:'notifications'});
             await context.serial(()=>context.mutate(ownerId,next=>{if(!next.sessions[sessionId]||next.sessions[sessionId].deleting||next.memoryCleanupPending||(next.activity?.generation??0)!==generation)return;
               for(const notice of notices.items??[]){if(Object.values(next.activity?.items??{}).some(row=>row.type==='reminder.triggered'&&row.source.sessionId===sessionId&&row.source.messageId===notice.messageId))continue;putActivity(next,`reminder:${sessionId}:${notice.messageId??notice.id}`,{at:notice.createdAt,type:'reminder.triggered',title:notice.kind==='task'?'定时任务触发':'提醒',summary:notice.text,
-                source:activitySource(next,sessionId,{messageId:notice.messageId,scheduleId:notice.id}),actions:[{kind:'open_chat',label:'打开对话',target:activitySource(next,sessionId,{messageId:notice.messageId})}],level:'important'});}
+                source:activitySource(next,sessionId,{messageId:notice.messageId,scheduleId:notice.id,...(Number.isSafeInteger(notice.seq)?{seq:notice.seq}:{})}),actions:[{kind:'open_chat',label:'打开对话',target:activitySource(next,sessionId,{messageId:notice.messageId,...(Number.isSafeInteger(notice.seq)?{seq:notice.seq}:{})})}],level:'important'});}
             }));}
           await context.refreshToolApprovals(ownerId,sessionId);await context.syncUserQuestions(ownerId,sessionId);
         }catch(error){if(['SERVICE_CLOSING','STORAGE_UNAVAILABLE'].includes(error.code))throw error; /* Offline source keeps its durable watermark. */}
@@ -73,7 +73,7 @@ export function createActivity(context) {
           state.memoryState=memory.state;
         }));}
       const update=await context.updateStatus();
-      for(const layer of update?.layers??[])if(layer.availableVersion&&layer.availableVersion!==layer.currentVersion)await record(ownerId,{key:`update:${layer.layer}:${layer.availableVersion}`,type:'system.update.available',title:'更新可用',summary:`新版本 ${layer.availableVersion} 已可用。`,level:'normal',actions:[]});
+      for(const layer of update?.layers??[])if(layer.availableVersion&&layer.availableVersion!==layer.currentVersion)await record(ownerId,{key:`update:${layer.layer}:${layer.availableVersion}`,type:'system.update.available',title:'更新可用',summary:`新版本 ${layer.availableVersion} 已可用。`,level:'normal',actions:[{kind:'view_settings',label:'查看更新',target:{category:'about'}}]});
       await context.sideChats.reconcile(ownerId);
       await context.serial(()=>context.mutate(ownerId,()=>{}));
     })().finally(()=>flights.delete(ownerId));flights.set(ownerId,work);return work;
