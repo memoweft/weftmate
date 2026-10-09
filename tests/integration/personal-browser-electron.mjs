@@ -47,6 +47,10 @@ const fixture = createServer((request, response) => {
       <script>setTimeout(() => {
         document.getElementById('content').innerHTML = '<p>动态渲染后才出现的蓝色风筝。</p><a href="${base}/second">继续第二页</a>';
       }, 100)</script></body></html>`);
+  } else if (request.url === '/api-content') {
+    response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    response.end(`<!doctype html><title>API reference</title><nav>${'Unrelated module menu '.repeat(600)}</nav>
+      <div id="apicontent"><h1>Current API facts</h1><p>Supported reference content.</p></div>`);
   } else if (request.url === '/second') {
     response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
     response.end('<!doctype html><html><title>合成第二页</title><main>第二页橙色时钟。</main></html>');
@@ -144,6 +148,10 @@ try {
   assert.match(first.value.text, /动态渲染后才出现的蓝色风筝/);
   assert.equal(first.value.title, '合成第一页');
   assert.ok(first.value.links.some((link) => link.url === `${base}/second`));
+  const reference = await read(`${base}/api-content`).result;
+  assert.equal(reference.ok, true, reference.code);
+  assert.match(reference.value.text, /Current API facts.*Supported reference content/s);
+  assert.doesNotMatch(reference.value.capturedText, /Unrelated module menu/);
   const second = await read(`${base}/second`).result;
   assert.equal(second.ok, true, second.code);
   assert.match(second.value.text, /橙色时钟/);
