@@ -30,7 +30,7 @@ export async function startFe1bFixture() {
   const memoryItem = { id: 'fe1b-memory', kind: 'cognition', text: '使用中文说明，并保留必要的英文技术术语。', currentState: 'active', lifecycle: {}, sourceCount: 1 };
   const step = (state = 'completed') => ({ seq: 3, type: state === 'running' ? 'step.started' : 'step.completed', at: now,
     data: { taskId: 'turn-1', stepId: 'read-1', toolName: 'read_file', summary: '读取项目记录 · notes.md', state, detailRef: { seq: 3 } } });
-  const sessions = [{ sessionId: ids.report, title: '整理项目进展', sendAvailable: true, createdAt: now, modelDisplayName: '合成模型' },
+  const sessions = [{ sessionId: ids.report, title: '整理项目进展', sendAvailable: true, createdAt: now, modelDisplayName: '合成模型',contextUsage:{usedTokens:713000,contextWindow:828000} },
     { sessionId: ids.running, title: '准备下周的安排', sendAvailable: true, running: true, createdAt: now, modelDisplayName: '合成模型' },
     { sessionId: ids.approve, title: '整理临时文件', sendAvailable: true, createdAt: now, modelDisplayName: '合成模型' }];
   const histories = { [ids.report]: [{ seq: 1, type: 'user.message', at: now, data: { text: '整理这周的项目进展，写一份简洁的报告。' } }, step(),

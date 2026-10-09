@@ -30,6 +30,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
     function startNewConversation() {
         if (core.state.submitting || core.state.unresolvedSubmission) return;
         core.state.newConversation = true;
+        core.state.newConversationApprovalMode = null;
         core.state.selectedSessionId = null;
         core.state.historyGeneration++;
         core.state.historyEvents.clear(); core.state.seenSeq.clear(); core.state.afterSeq = -1;
@@ -39,6 +40,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         effects.paintSelectedSession(null);
         effects.clearHistoryView(); effects.renderSessions(); effects.updateAvailability();
         effects.scrollToLatest();
+        void core.refreshNewConversationApprovalMode();
     }
     async function deliverOptimistic(row) {
         const current = () => row.ownerId === core.state.ownerId && row.identity === core.state.identityGeneration;
@@ -62,6 +64,11 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             await core.refreshSessions();
             if (!current()) return;
             if (core.state.newConversation && core.state.selectedSessionId === null) await core.selectSession(row.sessionId);
+        }
+        if(row.approvalMode){
+            await core.accessApi(`/sessions/${encodeURIComponent(row.sessionId)}/approval-mode`,{method:'PATCH',protectedWrite:true,body:{mode:row.approvalMode}});
+            if(!current())return;
+            if(core.state.selectedSessionId===row.sessionId)void core.refreshApprovalMode(row.sessionId);
         }
         const submitted = row.attachments ? await sendIntentAction(() => core.sendDesktopMessageWithAttachments(row.text, row.requestId), row.intent)
             : await core.submitCommand('session.message', {sessionId: row.sessionId, text: row.text, intent: row.intent}, row.sessionId, row.requestId);
@@ -167,6 +174,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             sessionId: core.state.selectedSessionId, modelProfileId: core.state.modelProfileId,
             requestId: attachments.length ? core.attachmentAttempt(core.attachmentDraftKey(), text, attachments).requestId : environment.crypto.randomUUID(), createRequestId: environment.crypto.randomUUID(),
             text, attachments: attachments.length > 0, files: attachments.map(item => item.file?.name || '附件'),
+            approvalMode: core.state.newConversation ? core.state.newConversationApprovalMode : null,
             intent: intent === 'queue' || intent === 'steer' ? intent : core.composerInputMode(core.state.selectedSessionId), status: 'sending'};
         messages.set(row.requestId, row);
         effects.renderOptimisticMessages?.(); effects.scrollToLatest();
