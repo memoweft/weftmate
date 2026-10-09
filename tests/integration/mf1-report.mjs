@@ -54,10 +54,19 @@ for(const name of readdirSync(root)) {
       fourBehavior:results.filter(r=>/^memory-0[1-4]-/.test(r.id)&&r.behaviorPass).length,
       cBehavior:results.filter(r=>r.id.startsWith('memory-3x-')&&r.behaviorPass).length,results});
   }
-  if(existsSync(join(dir,'usage.json'))&&existsSync(join(dir,'baseline-mimo.json'))) {
-    const usage=json(join(dir,'usage.json'));for(const key of Object.keys(totals))totals[key]+=usage[key]??0;
+  const interrupted=existsSync(join(dir,'interrupted.json'))?json(join(dir,'interrupted.json')):null;
+  if((existsSync(join(dir,'usage.json'))||interrupted)&&existsSync(join(dir,'baseline-mimo.json'))) {
+    if(interrupted) {
+      for(const temp of interrupted.roots) {
+        syntheticRoots.add(temp);
+        const traceFile=join(temp,'requests.jsonl');if(!existsSync(traceFile))continue;
+        const trace=readFileSync(traceFile,'utf8').trim().split('\n').filter(Boolean).map(JSON.parse);
+        for(const start of trace.filter(r=>r.phase==='start'&&r.origin==='https://api.xiaomimimo.com'&&r.requestedModel==='mimo-v2.6-flash'))add(trace.find(r=>r.id===start.id&&r.phase==='end'&&r.usage)?.usage);
+      }
+      for(const model of ['mimo','lan'])if(existsSync(join(dir,`baseline-${model}.json`)))for(const verdict of json(join(dir,`baseline-${model}.json`)).directJudgements??[])add(verdict.usage);
+    } else {const usage=json(join(dir,'usage.json'));for(const key of Object.keys(totals))totals[key]+=usage[key]??0;}
     for(const model of ['mimo','lan'])if(existsSync(join(dir,`baseline-${model}.json`))){const report=json(join(dir,`baseline-${model}.json`));
-      eight.push({name,model,revision:report.revision,summary:report.summary,steps:report.steps.map(s=>({id:s.id,status:s.status,checks:s.checks,reason:s.reason,export:s.export}))});}
+      eight.push({name,model,revision:report.revision,summary:report.summary,interrupted:Boolean(interrupted),steps:report.steps.map(s=>({id:s.id,status:s.status,checks:s.checks,reason:s.reason,export:s.export}))});}
   }
 }
 totals.knownCnyLowerBound=(totals.input-totals.cached+totals.cached*0.02+totals.output*2)/1e6;
@@ -72,8 +81,9 @@ if(process.argv.includes('--privacy-scan')) {
   const hits=[];let files=0;
   function walk(file){const stat=lstatSync(file);if(stat.isSymbolicLink())return;if(stat.isDirectory()){for(const name of readdirSync(file))walk(join(file,name));return;}
     files++;const body=readFileSync(file);if(values.some(value=>body.includes(Buffer.from(value))))hits.push(file);}
-  walk(root);for(const dir of syntheticRoots){if(!/weftmate-(?:mf1|m2f)-/.test(dir))throw new Error('Unexpected synthetic root');if(existsSync(dir))walk(dir);}
-  const changed=execFileSync('git',['diff','--name-only','origin/main'],{encoding:'utf8'}).trim().split(/\r?\n/).filter(Boolean);
+  walk(root);for(const dir of syntheticRoots){if(!/weftmate-(?:mf1|m2f|m2-exit)-/.test(dir))throw new Error('Unexpected synthetic root');if(existsSync(dir))walk(dir);}
+  const base=execFileSync('git',['merge-base','origin/main','HEAD'],{encoding:'utf8'}).trim();
+  const changed=execFileSync('git',['diff','--name-only',base],{encoding:'utf8'}).trim().split(/\r?\n/).filter(Boolean);
   for(const file of changed)if(existsSync(file)&&!resolve(file).startsWith(root))walk(file);
   save('privacy-scan.json',{generatedAt:new Date().toISOString(),files,hits});console.log(JSON.stringify({privacyFiles:files,privacyHits:hits.length}));
   if(hits.length)process.exitCode=1;
