@@ -49,6 +49,7 @@ globalThis.WeftUiCore.factories.phone = (core, effects, environment) => {
         if (!core.state.online || !core.state.syncAvailable || !core.syncIdPattern.test(conversationId))
             return null;
         const owner = core.state.ownerId, generation = core.state.identityGeneration;
+        const history = core.state.historyGeneration, selectedSessionId = core.state.selectedSessionId;
         try {
             const view = await core.requestJson(`${core.accessBase}/sync/conversations/${encodeURIComponent(conversationId)}/shared`);
             if (core.state.ownerId !== owner || core.state.identityGeneration !== generation ||
@@ -56,7 +57,8 @@ globalThis.WeftUiCore.factories.phone = (core, effects, environment) => {
                 return null;
             core.state.phoneBindings.set(conversationId, view);
             effects.renderSessions();
-            if (core.state.activeChatSource === 'desktop' && core.state.selectedSessionId === view.binding?.sessionId &&
+            if (!core.state.newConversation && history === core.state.historyGeneration && selectedSessionId &&
+                core.state.activeChatSource === 'desktop' && core.state.selectedSessionId === selectedSessionId && selectedSessionId === view.binding?.sessionId &&
                 view.status === 'active')
                 core.selectPhoneConversation(conversationId);
             if (core.state.activeChatSource === 'phone' && core.state.selectedPhoneConversationId === conversationId) {
