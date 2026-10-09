@@ -1,0 +1,24 @@
+{
+  "syntheticOnly": true,
+  "realHttp": true,
+  "source": "src/personal-access-ui/app.js:36 / apps/mobile-ui/www/components/cloud-account.js:107",
+  "requests": [
+    {
+      "path": "/personal/v1/offline/sync",
+      "bodyJsonType": "string",
+      "hasCsrfHeader": false,
+      "httpStatus": 403,
+      "label": "production-mount-options",
+      "errorCode": "FORBIDDEN"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "bodyJsonType": "object",
+      "hasCsrfHeader": true,
+      "httpStatus": 400,
+      "label": "object-protected-write-control",
+      "errorCode": "INVALID_REQUEST"
+    }
+  ],
+  "conclusion": "Production mount omits protectedWrite and pre-stringifies body; core JSON-encodes the string again. Control changes request options only, not product code; invalid empty JWK remains deliberately invalid."
+}

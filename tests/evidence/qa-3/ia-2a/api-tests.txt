@@ -1,0 +1,13 @@
+✔ cross-segment pages keep stable ids and independent sync while old segments receive late events (50.3398ms)
+✔ dates use account timezone; Chinese search excludes tools, supports filters and resets after content invalidation (10.9542ms)
+✔ side creation references only the chosen message, requires suggestion confirmation and checks project destinations (30.5171ms)
+✔ automatic results preserve failed/stopped facts, skip ordinary chat and wait for live background work (4.0514ms)
+✔ real HTTP side command is idempotent, sends nothing; results persist once, share activity identity, update and clear on deletion (2444.3756ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2794.8331
