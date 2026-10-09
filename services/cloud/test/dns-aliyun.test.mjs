@@ -6,8 +6,58 @@ import { tmpdir } from 'node:os';
 import { openDatabase } from '../src/database.mjs';
 import { createAliyunDns, dnsFromEnvironment, aliyunRequest, waitForAuthoritativeTxt } from '../src/dns-aliyun.mjs';
 import { fakeAliyun, TEST_ACCESS_KEY_ID as accessKeyId, TEST_ACCESS_KEY_SECRET as accessKeySecret } from './dns-aliyun-helpers.mjs';
+import { createLogger } from '../src/log.mjs';
 
 const challenge = { name: `_acme-challenge.h-${'a'.repeat(32)}.hosts.example.com`, value: 'b'.repeat(43), ttl: 60 };
+
+test('AliDNS operational logs retain rejection codes and RequestId but never credentials, signature, URL or free-form Message', async t => {
+  const db = await database(t);
+  let output = '', response, signature;
+  const logger = createLogger({ stream: { write: line => { output += line; } } });
+  const provider = createAliyunDns({ database: db, zone: 'example.com', accessKeyId, accessKeySecret, logger,
+    fetcher: async (url, options) => {
+      signature = options.headers.authorization.match(/Signature=(.+)$/)[1];
+      return { ok: false, status: 403, json: async () => ({ ...(typeof response === 'function' ? response(signature) : response),
+        Message: `${accessKeyId} ${accessKeySecret} ${options.headers.authorization} ${url}` }) };
+    } });
+  for (const code of ['Forbidden.RAM', 'InvalidAccessKeyId.NotFound', 'SignatureDoesNotMatch', 'DomainRecordDuplicate', 'IncorrectDomainUser']) {
+    response = { Code: code, RequestId: 'ABCD-1234' }; output = '';
+    await assert.rejects(provider.present(challenge), { code: 'DNS_PROVIDER_ERROR' });
+    const entry = JSON.parse(output);
+    assert.equal(entry.event, 'dns.provider_failed');
+    assert.equal(entry.providerCode, code); assert.equal(entry.providerRequestId, 'ABCD-1234');
+    assert.equal(entry.httpStatus, 403); assert.equal(entry.failure, 'provider_rejected');
+    for (const secret of [accessKeyId, accessKeySecret, signature, 'Signature=', 'Credential=', 'https://', challenge.value]) {
+      assert.equal(output.includes(secret), false);
+    }
+    assert.equal('Message' in entry, false);
+  }
+  for (const secret of [accessKeyId, accessKeySecret, 'signature']) {
+    response = currentSignature => ({ Code: `Forbidden.${secret === 'signature' ? currentSignature : secret}`,
+      RequestId: secret === 'signature' ? currentSignature : secret }); output = '';
+    await assert.rejects(provider.present(challenge), { code: 'DNS_PROVIDER_ERROR' });
+    assert.equal(output.includes(secret === 'signature' ? signature : secret), false);
+  }
+});
+
+test('AliDNS network and invalid responses log only safe diagnostics and remain generic to clients', async t => {
+  const db = await database(t);
+  for (const [fetcher, failure, httpStatus, requestId] of [
+    [async () => { throw new Error(`https://alidns.aliyuncs.com/?Signature=secret ${accessKeySecret}`); }, 'network'],
+    [async () => ({ status: 502, json: async () => { throw new Error(accessKeyId); } }), 'invalid_response', 502],
+    [async () => ({ ok: true, status: 200, json: async () => null }), 'invalid_response', 200],
+    [async () => ({ ok: true, status: 200, json: async () => ({ RequestId: 'ABCD-1234' }) }), 'invalid_response', 200, 'ABCD-1234'],
+  ]) {
+    let output = '';
+    const provider = createAliyunDns({ database: db, zone: 'example.com', accessKeyId, accessKeySecret, fetcher,
+      logger: createLogger({ stream: { write: line => { output += line; } } }) });
+    await assert.rejects(provider.present(challenge), { code: 'DNS_PROVIDER_ERROR' });
+    const entry = JSON.parse(output);
+    assert.equal(entry.failure, failure); assert.equal(entry.httpStatus, httpStatus);
+    assert.equal(entry.providerRequestId, requestId);
+    for (const secret of [accessKeyId, accessKeySecret, 'Signature=', 'https://']) assert.equal(output.includes(secret), false);
+  }
+});
 async function database(t) {
   const root = await mkdtemp(path.join(tmpdir(), 'wm-dns-test-'));
   const opened = await openDatabase(path.join(root, 'cloud.sqlite'));

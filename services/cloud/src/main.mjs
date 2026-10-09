@@ -42,7 +42,7 @@ try {
       .catch(() => logger.error('service.cleanup_failed', { code: 'CLEANUP_FAILED' }));
   }, 60000);
   maintenance.unref();
-  const identity = await createIdentity({ database, config, mailer, logger, relayDns: dnsFromEnvironment({ database }) });
+  const identity = await createIdentity({ database, config, mailer, logger, relayDns: dnsFromEnvironment({ database, logger }) });
   relay = identity.relay;
   await relay.start();
   server = createCloudServer({ ...opened, logger, identity });
