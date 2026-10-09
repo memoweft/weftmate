@@ -49,8 +49,14 @@ test('real MemoWeft observed health: local/cloud consent, ordinary memory, overw
     try {
       await manager.ingest(owner, boundary())
       for (let attempt = 0; attempt < 200; attempt++) {
-        const result = await recall('cloud')
-        if (result.contextText?.includes('读书')) break
+        // Immediate recall can contain an accepted quote before formal
+        // formation finishes. Forget preview requires the formal item.
+        const sources = await manager.query(owner, 'query_evidence', { operation: 'list' })
+        const source = sources.evidence.find((row: any) => row.raw_content === '我喜欢睡眠前读书')
+        if (source) {
+          const preview = await manager.query(owner, 'preview_forget', { target_kind: 'evidence', target_id: source.evidence_id })
+          if (preview.item_count > 0) break
+        }
         await new Promise(resolve => setTimeout(resolve, 25))
       }
       assert.match((await recall('cloud')).contextText, /读书/)
