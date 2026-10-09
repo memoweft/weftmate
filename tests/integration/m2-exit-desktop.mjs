@@ -100,6 +100,8 @@ async function baseline(modelName, fourOnly = false) {
   const profile = join(root, 'profile'), out = join(root, 'eval');
   mkdirSync(profile, { recursive: true }); mkdirSync(out);
   const report = { schemaVersion: 1, startedAt: new Date().toISOString(), model: modelName, revision: await revisions(), electron: true, steps: [], turns: [] };
+  if (confirmedCase) report.confirmationFixture = { name: confirmedCase, ...confirmationFixture,
+    sha256: createHash('sha256').update(readFileSync(join(repository, 'tests/fixtures/fx15-confirmed-decisions.json'))).digest('hex') };
   const reportFile = join(evidence, `${remindersOnly ? 'reminders' : fourOnly ? 'four' : 'baseline'}-${modelName}.json`);
   const persist = () => { save(join(root, 'progress.json'), report); save(reportFile, report); };
   reports.push(report);
@@ -693,6 +695,6 @@ try {
   // Optional assertion mode lets CI consume the same evidence without treating
   // a successfully completed baseline collection as a passing product exit.
   if (process.argv.includes('--require-pass') && reports.some(report => report.fatal ||
-    (report.four ? !report.four.passedGate : remindersOnly ? report.steps.length !== 6 || report.steps.some(step => step.status !== 'passed') : fgOnly ? !report.steps.length || report.steps.some(step => step.status !== 'passed') : !report.summary?.eightStepGate || (!eightOnly && report.steps.find(step => step.id === 'speed')?.status !== 'passed')))) process.exitCode = 1;
+    (process.argv.includes('--confirmation-only') ? report.steps.length !== 4 || report.steps.some(step => step.status !== 'passed') : report.four ? !report.four.passedGate : remindersOnly ? report.steps.length !== 6 || report.steps.some(step => step.status !== 'passed') : fgOnly ? !report.steps.length || report.steps.some(step => step.status !== 'passed') : !report.summary?.eightStepGate || (!eightOnly && report.steps.find(step => step.id === 'speed')?.status !== 'passed')))) process.exitCode = 1;
   console.log(JSON.stringify({ roots, usage, credentialScan: publicScan }));
 }

@@ -1,4 +1,4 @@
-import argparse, json, os, shutil, sqlite3, tempfile
+import argparse, json, shutil, sqlite3, tempfile
 from pathlib import Path
 
 parser = argparse.ArgumentParser(description="Inventory an explicitly authorized backup using a disposable copy; no private text is exported.")
@@ -11,7 +11,9 @@ root = Path(tempfile.mkdtemp(prefix='weftmate-fx15-backup-'))
 report = {'backupReadOnly': True, 'databases': [], 'accounts': []}
 try:
     # Inspect only copies; never open a key vault. Dependencies are irrelevant to storage inventory.
-    shutil.copytree(source, root/'profile', ignore=shutil.ignore_patterns('node_modules', '.git', '*vault*', '*keychain*', '*credentials*'))
+    shutil.copytree(source, root/'profile', symlinks=True, ignore=lambda _directory, names: [
+        name for name in names if name.lower() in ('node_modules', '.git')
+        or any(part in name.lower() for part in ('vault', 'keychain', 'credential'))])
     profile = root/'profile'
     store = json.loads((profile/'personal-access/store.json').read_text(encoding='utf-8-sig'))
     accounts = store.get('accounts', {})
@@ -21,8 +23,9 @@ try:
         report['accounts'].append({'index': i, 'localPassword': bool(value.get('account', {}).get('password')), 'legacyOwner': owner == store.get('legacyOwnerId'), 'executionOwner': owner == store.get('executionOwnerId',store.get('legacyOwnerId')), 'activePrivateModels': sum(m.get('status')=='active' for m in value.get('accountModels',{}).values()), 'sharedModelCount': len(store.get('sharedModelProfiles',[])),
                                    'memoryHomeExists': (profile/'personal-access/accounts'/owner/'memory-home').exists()})
     for p in profile.rglob('*'):
-        if not p.is_file() or p.suffix.lower() not in ('.sqlite', '.sqlite3', '.db'): continue
+        if p.is_symlink() or not p.is_file() or p.suffix.lower() not in ('.sqlite', '.sqlite3', '.db'): continue
         if any(x in str(p).lower() for x in ('vault', 'keychain', 'credential')): continue
+        db = None
         try:
             db = sqlite3.connect(p.as_uri()+'?mode=ro', uri=True)
             tables = [r[0] for r in db.execute("select name from sqlite_master where type='table'")]
@@ -32,8 +35,9 @@ try:
             report['databases'].append({'index': len(report['databases']), 'accountIndex': account_index,
                 'accountMemoryHome': 'memory-home' in rel.parts, 'legacyDshHome': 'dsh-home' in rel.parts,
                 'canonicalAccountDatabase': account_index is not None and p == profile/'personal-access/accounts'/owner_keys[account_index]/'memory-home/memoweft/memoweft.sqlite3', 'bindingMatchesAccount': account_index is not None and ('evidence' not in tables or db.execute('select count(*) from evidence where subject_id != ?', (owner_keys[account_index],)).fetchone()[0] == 0), 'userVersion': db.execute('pragma user_version').fetchone()[0], 'tables': counts})
-            db.close()
         except sqlite3.DatabaseError: report['databases'].append({'readable': False})
+        finally:
+            if db is not None: db.close()
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     Path(args.output).write_text(json.dumps(report, indent=2))
     print(json.dumps({'databases':len(report['databases']), 'accounts':report['accounts']}))
