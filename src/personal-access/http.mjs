@@ -1087,6 +1087,7 @@ export function createHttpHandler(context) {
               title: bounded(described.title, 256) ?? '',
               ...await context.sessionOperations.summary(ownerId, sessionId),
               running: described.running === true,
+              ...(described.running === true && described.processing ? { processing: described.processing } : {}),
               ...(state.sessions[sessionId].workspaceKind ? {
                 workspaceKind: state.sessions[sessionId].workspaceKind,
                 modelProfileId: state.sessions[sessionId].modelProfileId } : {}),

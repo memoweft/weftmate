@@ -11,14 +11,14 @@ const required = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_bo
   'preview_recall', 'query_interactions', 'query_world', 'query_evidence', 'query_provenance',
   'submit_command', 'query_command_receipt', 'retry_delete_storage_cleanup', 'query_jobs']
 
-test('formation deadline recalls existing memories while a stuck job remains durable', async t => {
+for (const formationWaitMs of [undefined, 30]) test(`recall ${formationWaitMs === undefined ? 'does not wait by default' : 'honors an explicit formation deadline'} while a stuck job remains durable`, async t => {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-memory-stalled-'))
   t.after(() => rmSync(root, { recursive: true, force: true }))
   let jobReads = 0, home = ''
   const manager = createPersonalMemoryManager({ root, enabled: true,
     python: join(root, 'python.exe'), pythonPath: join(root, 'py'),
     baseUrl: 'http://127.0.0.1:8081/v1', model: '@current', credential: () => 'synthetic',
-    formationWaitMs: 30,
+    ...(formationWaitMs === undefined ? {} : { formationWaitMs }),
     rpcFactory: () => ({ child: {}, async close() {}, async request(method, params = {}) {
       if (method === 'capabilities') return { protocol: 'memoweft.dsh_rpc', protocol_version: 2,
         schema_version: 1, methods: required }
@@ -39,7 +39,8 @@ test('formation deadline recalls existing memories while a stuck job remains dur
   assert.equal(recalled.state, 'ready')
   assert.equal(recalled.sourceCount, 1)
   assert.match(recalled.contextText, /已有的表达偏好/)
-  assert.ok(jobReads > 0)
+  if (formationWaitMs === undefined) assert.equal(jobReads, 0, 'ordinary chat recalls the current World without polling formation jobs')
+  else assert.ok(jobReads > 0)
   assert.ok(Date.now() - started < 2000, 'stalled formation does not hold the foreground indefinitely')
 })
 
@@ -89,6 +90,7 @@ test('account memory workers follow only the owner session route and restart wit
     baseUrl: 'http://127.0.0.1:8081/v1', model: '@current', credential: () => 'formal-key',
     processingRoute: (ownerId: string, sessionId: string) => routes.get(`${ownerId}\0${sessionId}`) ?? null,
     defaultProcessingRoute: ownerId => backgroundRoutes.get(ownerId) ?? null,
+    formationWaitMs: 1000,
     rpcFactory })
   t.after(() => manager.close())
   const boundary = (sessionId: string, event: string) => ({ event_id: event,

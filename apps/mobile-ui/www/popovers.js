@@ -105,5 +105,75 @@
     });
     document.addEventListener('click', event => { if (event.target !== select && !menu.contains(event.target)) close(); });
   }
-  globalThis.WeftPopover = { position, bindSelect };
+  // Keep the source select for feature handlers and forms; expose a single
+  // accessible combobox instead of invoking a platform-native desktop popup.
+  const settingsSelects = new WeakMap();
+  function bindSettingsSelect(select) {
+    if (settingsSelects.has(select) || select.classList.contains('settings-control-source')) return;
+    const trigger = document.createElement('button'), text = document.createElement('span');
+    trigger.type = 'button'; trigger.className = `settings-select ${select.className}`;
+    trigger.setAttribute('role', 'combobox'); trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+    const label = select.getAttribute('aria-label') || select.labels?.[0]?.textContent.trim() || '选择';
+    trigger.setAttribute('aria-label', label);
+    const icon = globalThis.WeftIcons.create('chevron', 16); trigger.append(text, icon);
+    const menu = document.createElement('div'); menu.className = 'settings-select-menu'; menu.hidden = true;
+    menu.id = `settings-options-${select.id || crypto.randomUUID()}`;
+    const list = document.createElement('div'); list.setAttribute('role', 'listbox'); list.setAttribute('aria-label', label);
+    list.id = menu.id + '-list'; trigger.setAttribute('aria-controls', list.id);
+    select.after(trigger, menu); select.hidden = true; select.tabIndex = -1; select.setAttribute('aria-hidden', 'true');
+    settingsSelects.set(select, trigger);
+    const sync = () => { text.textContent = select.selectedOptions[0]?.textContent || label; trigger.disabled = select.disabled; trigger.hidden = select.classList.contains('settings-category-picker') && innerWidth >= 720; };
+    const close = (focus = false) => { menu.hidden = true; trigger.setAttribute('aria-expanded', 'false'); if (menu.matches(':popover-open')) menu.hidePopover(); if (focus) trigger.focus({ preventScroll: true }); };
+    let search;
+    const options = () => [...list.querySelectorAll('[role=option]')];
+    function render(query = '') {
+      list.replaceChildren();
+      for (const option of select.options) {
+        if (option.hidden || !option.textContent.toLocaleLowerCase().includes(query.toLocaleLowerCase())) continue;
+        const button = document.createElement('button'); button.type = 'button'; button.textContent = option.textContent;
+        button.setAttribute('role', 'option'); button.setAttribute('aria-selected', String(option.selected));
+        button.disabled = option.disabled || option.parentElement?.disabled;
+        button.onclick = () => { select.value = option.value; select.dispatchEvent(new Event('change', { bubbles: true })); sync(); close(true); };
+        list.append(button);
+      }
+      if (!list.children.length) { const empty = document.createElement('p'); empty.className = 'settings-select-empty'; empty.textContent = '没有匹配的选项'; empty.setAttribute('role', 'status'); list.append(empty); }
+      position(menu, trigger, { side: 'bottom' });
+    }
+    function open(last = false) {
+      if (trigger.disabled) return;
+      menu.replaceChildren(); search = null;
+      if (select.options.length > 8) {
+        search = document.createElement('input'); search.type = 'search'; search.placeholder = '搜索选项'; search.setAttribute('aria-label', `搜索${label}`);
+        search.oninput = () => render(search.value); menu.append(search);
+      }
+      menu.append(list); menu.hidden = false; trigger.setAttribute('aria-expanded', 'true'); render();
+      const buttons = options().filter(button => !button.disabled);
+      (search || buttons.find(button => button.getAttribute('aria-selected') === 'true') || buttons[last ? buttons.length - 1 : 0])?.focus({ preventScroll: true });
+    }
+    trigger.onclick = () => menu.hidden ? open() : close(true);
+    trigger.onkeydown = event => { if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) { event.preventDefault(); open(event.key === 'ArrowUp'); } };
+    menu.onkeydown = event => {
+      if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(true); }
+      if (event.key === 'Tab') { close(); trigger.focus(); }
+      const buttons = options().filter(button => !button.disabled), index = buttons.indexOf(document.activeElement);
+      if (event.key === 'Enter' && document.activeElement === search) { event.preventDefault(); buttons[0]?.click(); }
+      if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key) && (document.activeElement !== search || event.key.startsWith('Arrow'))) {
+        event.preventDefault(); buttons[event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length]?.focus();
+      }
+    };
+    document.addEventListener('click', event => { if (!trigger.contains(event.target) && !menu.contains(event.target)) close(); });
+    select.addEventListener('change', () => { sync(); close(); });
+    select.addEventListener('weft:sync', sync);
+    select.form?.addEventListener('reset', () => queueMicrotask(sync));
+    new MutationObserver(() => { sync(); if (!menu.hidden) render(search?.value || ''); }).observe(select, { subtree: true, childList: true, attributes: true, characterData: true });
+    select.closest('dialog')?.addEventListener('close', () => close());
+    window.addEventListener('resize', sync); sync();
+  }
+  function bindSettings(dialog) {
+    if (matchMedia('(pointer: coarse)').matches && !globalThis.weftmateDesktop) return;
+    const bind = () => dialog.querySelectorAll('select').forEach(bindSettingsSelect);
+    bind(); new MutationObserver(bind).observe(dialog, { childList: true, subtree: true });
+  }
+  globalThis.WeftPopover = { position, bindSelect, bindSettings };
 })();

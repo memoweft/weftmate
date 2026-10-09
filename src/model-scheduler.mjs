@@ -9,6 +9,10 @@ import { usageResponse } from './personal-access/usage-response.mjs';
 export function createInferenceQueue({ isIdle = async () => true, pollMs = 100 } = {}) {
   const pending = [];
   let active = null, draining = false, timer = null, closed = false;
+  function notify() {
+    const foreground = pending.filter(row => row.priority === 'foreground');
+    for (const row of foreground) row.onQueued?.(foreground.indexOf(row) + (active ? 1 : 0));
+  }
   async function drain() {
     if (active || draining || closed) return;
     draining = true;
@@ -18,9 +22,10 @@ export function createInferenceQueue({ isIdle = async () => true, pollMs = 100 }
       if (item && pending.includes(item) && !active && !closed) {
         pending.splice(pending.indexOf(item), 1);
         active = item;
+        notify();
         item.resolve(() => {
           if (active !== item) return;
-          active = null; item.signal?.removeEventListener('abort', item.abort); void drain();
+          active = null; item.signal?.removeEventListener('abort', item.abort); notify(); void drain();
         });
       }
     } catch { /* A failed native idle probe cannot start background inference. */ }
@@ -30,18 +35,18 @@ export function createInferenceQueue({ isIdle = async () => true, pollMs = 100 }
     }
   }
   return {
-    acquire(priority, signal) {
+    acquire(priority, signal, onQueued = null) {
       if (closed) return Promise.reject(new Error('MODEL_QUEUE_CLOSED'));
       signal?.throwIfAborted();
       return new Promise((resolve, reject) => {
-        const item = { priority, signal, resolve, reject, abort: null };
+        const item = { priority, signal, resolve, reject, abort: null, onQueued };
         item.abort = () => {
           const index = pending.indexOf(item);
-          if (index !== -1) { pending.splice(index, 1); reject(signal.reason); }
+          if (index !== -1) { pending.splice(index, 1); notify(); reject(signal.reason); }
           else if (active === item) { active = null; void drain(); }
         };
         signal?.addEventListener('abort', item.abort, { once: true });
-        pending.push(item); void drain();
+        pending.push(item); notify(); void drain();
       });
     },
     status: () => ({ active: active?.priority ?? null,
@@ -58,6 +63,7 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
   beginUsage = null, finishUsage = null,
   heartbeatMs = 15_000 }) {
   const queues = new Map();
+  const progress = new Map();
   async function queueFor(destination) {
     const profile = profileFor(destination.profileId ?? destination.baseUrl);
     const baseUrl = profile?.baseUrl ?? destination.baseUrl;
@@ -95,6 +101,12 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
       const prefix = `/${token}`;
       if (!url.pathname.startsWith(`${prefix}/`)) { response.writeHead(404).end(); return; }
       const route = url.pathname.slice(prefix.length);
+      if (route === '/progress' && request.method === 'POST') {
+        let raw = ''; for await (const part of request) raw += part;
+        const input = JSON.parse(raw), current = progress.get(input.sessionId);
+        if (current && ['reasoning', 'answering'].includes(input.phase)) current.phase = input.phase;
+        response.writeHead(204).end(); return;
+      }
       if ((route === '/usage/start' || route === '/usage/finish') && request.method === 'POST') {
         let raw = ''; for await (const part of request) raw += part;
         const input = JSON.parse(raw);
@@ -111,10 +123,19 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
       }
       if (route === '/lease' && request.method === 'POST') {
         const priority = url.searchParams.get('priority') === 'background' ? 'background' : 'foreground';
+        const sessionId = url.searchParams.get('sessionId');
+        const state = { phase: 'waiting', profileId: url.searchParams.get('profileId') };
+        if (priority === 'foreground' && sessionId) {
+          progress.set(sessionId, state);
+          response.once('close', () => { if (progress.get(sessionId) === state) progress.delete(sessionId); });
+        }
         const selectedQueue = await queueFor({ profileId: url.searchParams.get('profileId'), baseUrl: url.searchParams.get('baseUrl') });
-        if (!selectedQueue) { response.writeHead(204).end(); return; }
-        release = await selectedQueue.acquire(priority, controller.signal);
-        response.once('close', release);
+        if (!selectedQueue && !(priority === 'foreground' && sessionId)) { response.writeHead(204).end(); return; }
+        release = await selectedQueue?.acquire(priority, controller.signal, ahead => {
+          state.phase = 'queued'; state.ahead = ahead;
+        });
+        state.phase = 'waiting'; delete state.ahead;
+        if (release) response.once('close', release);
         response.writeHead(200, { 'content-type': 'text/plain' }); response.write('granted\n');
         return; // Socket lifetime owns the lease, including a crashed DSH child.
       }
@@ -165,6 +186,30 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const url = `http://127.0.0.1:${server.address().port}/${token}`;
   return { url, queue,
+    beginMemory(sessionId) {
+      const state = { phase: 'memory' };
+      progress.set(sessionId, state);
+      return () => { if (progress.get(sessionId) === state) progress.delete(sessionId); };
+    },
+    async progress(sessionId) {
+      const state = progress.get(sessionId);
+      if (!state) return null;
+      const profile = profileFor(state.profileId);
+      const result = { phase: state.phase, ...(state.phase === 'queued' ? { ahead: state.ahead } : {}),
+        modelName: profile?.name ?? null };
+      if (state.phase === 'waiting' && profile?.baseUrl) {
+        const endpoint = new URL(profile.baseUrl.replace(/\/?v1\/?$/, '/switch/status'));
+        if (['127.0.0.1', 'localhost', '[::1]'].includes(endpoint.hostname)) {
+          try {
+            const key = credentialFor(profile);
+            const response = await fetchImpl(endpoint, { signal: AbortSignal.timeout(1000),
+              headers: key ? { authorization: `Bearer ${key}` } : {} });
+            if (response.ok && (await response.json()).switching === true) result.phase = 'loading';
+          } catch { /* An unavailable switcher is not evidence of loading. */ }
+        }
+      }
+      return progress.get(sessionId) === state ? result : null;
+    },
     memoryBaseUrl: (profileId, ownerId, sessionId) => `${url}/inference/${profileId}${ownerId ? `/scope/${ownerId}/${sessionId ?? 'none'}` : ''}/v1`,
     async close() { queue.close(); for (const controller of controllers) controller.abort();
       server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); },

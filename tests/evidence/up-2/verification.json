@@ -1,0 +1,208 @@
+{
+  "startedAt": "2026-10-09T02:30:58.914Z",
+  "baseline": "d9eaf67",
+  "steps": [
+    "Cloud-disabled password account fixture created and copied to isolated profile",
+    "Synthetic production cloud account + confirmed test keys; desktop authorization/login/PKCE/DPoP pass",
+    "Offline entry logs into the original local password account with cloud configured",
+    "Settings account binding completes in the native App using claims/binding and the registered desktop callback",
+    "Original owner/host/device/session IDs, local password verifier, health and memory fixture files remain unchanged",
+    "Production certificate + online frpc + public 443 hostname/CA verification and host config HTTP 200",
+    "Remembered cloud account selection still permits explicit legacy local password login after reload"
+  ],
+  "cleanup": {
+    "syntheticCloudAccountDeleted": true,
+    "isolatedElectronClosed": true,
+    "isolatedDirectoryDeleted": true
+  },
+  "requests": [
+    {
+      "path": "/personal/v1/account/models",
+      "status": 200,
+      "count": 2
+    },
+    {
+      "path": "/personal/v1/account/models",
+      "status": 202,
+      "count": 1
+    },
+    {
+      "path": "/personal/v1/account/models/by-request/up2-model",
+      "status": 200,
+      "count": 4
+    },
+    {
+      "path": "/personal/v1/auth/devices",
+      "status": 200,
+      "count": 2
+    },
+    {
+      "path": "/personal/v1/auth/login",
+      "status": 200,
+      "count": 2
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 200,
+      "count": 26
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401,
+      "count": 7
+    },
+    {
+      "path": "/personal/v1/cloud/auth/authorization",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "path": "/personal/v1/cloud/auth/authorization/resume",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "path": "/personal/v1/cloud/binding",
+      "status": 200,
+      "count": 8
+    },
+    {
+      "path": "/personal/v1/cloud/claims",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "path": "/personal/v1/cloud/config",
+      "status": 200,
+      "count": 2
+    },
+    {
+      "path": "/personal/v1/cloud/devices/pending",
+      "status": 200,
+      "count": 7
+    },
+    {
+      "path": "/personal/v1/cloud/oidc/jwks",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "path": "/personal/v1/cloud/oidc/token",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "path": "/personal/v1/commands",
+      "status": 200,
+      "count": 6
+    },
+    {
+      "path": "/personal/v1/commands",
+      "status": 202,
+      "count": 1
+    },
+    {
+      "path": "/personal/v1/models",
+      "status": 200,
+      "count": 9
+    },
+    {
+      "path": "/personal/v1/projects",
+      "status": 200,
+      "count": 2
+    },
+    {
+      "path": "/personal/v1/sessions",
+      "status": 200,
+      "count": 30
+    },
+    {
+      "path": "/personal/v1/sessions/session-626f2727-9508-4bee-b3bd-904ab4e3a6a9/approval-mode",
+      "status": 200,
+      "count": 3
+    },
+    {
+      "path": "/personal/v1/sessions/session-626f2727-9508-4bee-b3bd-904ab4e3a6a9/approvals",
+      "status": 200,
+      "count": 4
+    },
+    {
+      "path": "/personal/v1/sessions/session-626f2727-9508-4bee-b3bd-904ab4e3a6a9/events",
+      "status": 200,
+      "count": 19
+    },
+    {
+      "path": "/personal/v1/sessions/session-626f2727-9508-4bee-b3bd-904ab4e3a6a9/metadata",
+      "status": 200,
+      "count": 3
+    },
+    {
+      "path": "/personal/v1/sessions/session-626f2727-9508-4bee-b3bd-904ab4e3a6a9/questions",
+      "status": 200,
+      "count": 4
+    },
+    {
+      "path": "/personal/v1/settings/approvals",
+      "status": 200,
+      "count": 2
+    },
+    {
+      "path": "/personal/v1/settings/models",
+      "status": 200,
+      "count": 2
+    },
+    {
+      "path": "/personal/v1/status",
+      "status": 200,
+      "count": 34
+    },
+    {
+      "path": "/personal/v1/sync/events",
+      "status": 200,
+      "count": 4
+    },
+    {
+      "path": "/personal/v1/system",
+      "status": 200,
+      "count": 2
+    },
+    {
+      "path": "/personal/v1/usage",
+      "status": 200,
+      "count": 4
+    },
+    {
+      "path": "/personal/v1/workspaces/browser",
+      "status": 200,
+      "count": 2
+    }
+  ],
+  "modelRequests": 0,
+  "ownerId": "owner-f65eb8ee-c47b-4675-9643-583438446857",
+  "hostId": "host-2a64416d-c544-4145-b28e-17f9c2a8768c",
+  "legacyStoreVersion": 2,
+  "randomPort": 64874,
+  "localSessionCount": 1,
+  "relay": {
+    "state": "online",
+    "baseUrl": "https://h-e278c86d3aecdd2d4879184559b18968.hosts.weftmate.com",
+    "certificateExpiresAt": "2027-01-07T01:33:17.000Z",
+    "certificateErrorCode": null
+  },
+  "certificate": {
+    "issuer": "C=US\nO=Let's Encrypt\nCN=YE1",
+    "expiresAt": "Jan  7 01:33:17 2027 GMT"
+  },
+  "passed": true,
+  "finishedAt": "2026-10-09T02:32:07.004Z",
+  "productionCleanup": {
+    "syntheticAccountsRemaining": 0,
+    "accountsTotal": 3,
+    "dnsRecordsRemaining": 0
+  }
+}

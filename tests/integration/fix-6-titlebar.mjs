@@ -73,7 +73,7 @@ try {
       assert.equal(opened.symbolColor, phase === 'after' ? expected.mixed.symbolColor : expected.base.symbolColor);
       await screenshot(`${phase}-${theme}-settings-open.png`);
       if (phase === 'after') {
-        await page.getByRole('combobox', { name: /^主题色/ }).selectOption('purple');
+        await page.getByRole('combobox', { name: /^主题色/ }).click(); await page.getByRole('option', { name: '紫色', exact: true }).click();
         await page.waitForTimeout(100);
         assert.equal((await lastPalette()).color, expected.mixed.color);
         // Open order deliberately differs from DOM order; only the top scrim wins.
