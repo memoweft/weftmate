@@ -27,6 +27,10 @@ import Testing
         #expect(stopped.stopped && !stopped.running)
         #expect(ToolProgressSummary.text(stopped).hasPrefix("已停止"))
     }
+    @Test func composerInteractionsDoNotLeaveFalseQueueRowsInConversation() {
+        let events = [event(1, "task.queued", [:]), event(2, "user.message", [:]), event(3, "approval.requested", ["approvalId": .string("approval")]), event(4, "assistant.message", [:])]
+        #expect(TimelineProjection.conversationEntries(events).map(\.seq) == [2, 4])
+    }
     @Test func contextRealValuesUnknownLimitAndWarning() throws {
         let value = try JSONDecoder().decode(ConversationContextUsage.self, from: Data(#"{"usedTokens":713111,"contextWindow":828000}"#.utf8))
         #expect(value.warning && value.label == "背景信息窗口：86% 已用 / 已用 713.1k 标记，共 828.0k")

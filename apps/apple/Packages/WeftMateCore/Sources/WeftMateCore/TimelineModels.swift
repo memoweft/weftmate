@@ -143,6 +143,10 @@ public struct TimelineEntry: Equatable, Sendable, Identifiable {
     }
 }
 public enum TimelineProjection {
+    /// Pending commands and permission actions are presented by the composer models.
+    public static func conversationEntries(_ events: [TimelineEvent]) -> [TimelineEntry] {
+        entries(events).filter { !$0.event.type.hasPrefix("approval.") && $0.event.type != "task.queued" }
+    }
     public static func taskRunning(_ events: [TimelineEvent], fallback: Bool) -> Bool {
         events.last(where: { ["task.started", "turn.started", "task.ended", "turn.ended"].contains($0.type) && !($0.type == "task.ended" && $0.data["reason"]?.string == "canceled") })
             .map { $0.type.hasSuffix("started") } ?? fallback
