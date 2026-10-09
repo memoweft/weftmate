@@ -59,6 +59,13 @@ export function syntheticBackend(root) {
     },
     cancelSession:async({sessionId})=>{const s=sessions.get(sessionId);s.queue=[];finish(s,'aborted');return {accepted:true};},
     describeSession:async id=>{const s=sessions.get(id);return s?{sessionId:id,title:s.title,agentPreset:'personal-remote',modelProfileId:model.id,running:s.running}:null;},
+    renameSession:async({sessionId,title})=>{sessions.get(sessionId).title=title;return {title};},
+    forkSession:async({sessionId,childId})=>{
+      const source=sessions.get(sessionId),folder=join(root,'workspaces',childId);
+      await mkdir(folder,{recursive:true,mode:0o700});await writeFile(join(folder,'经验.md'),'合成分叉经验');
+      const title=source.title+'（分叉）';sessions.set(childId,{...structuredClone(source),id:childId,folder,title,current:null,running:false,queue:[]});
+      operations.push({kind:'fork',sessionId,childId});return {title,modelProfileId:model.id,latestSeq:source.events.length-1};
+    },
     deleteSession:async({sessionId})=>{const s=sessions.get(sessionId);await rm(s.folder,{recursive:true,force:true});sessions.delete(sessionId);operations.push({kind:'deleted',sessionId});return {deleted:true};},
     readEvents:async({sessionId,...input})=>adapter(sessionId).historyPage(sessionId,input),
     readEventDetail:async({sessionId,seq})=>adapter(sessionId).historyDetail(sessionId,seq),
@@ -66,12 +73,18 @@ export function syntheticBackend(root) {
     listUserQuestions:async({sessionId})=>({runtimeId,questions:sessions.get(sessionId)?.questionFrame?[sessions.get(sessionId).questionFrame]:[]}),
     respondUserQuestion:async({sessionId})=>{sessions.get(sessionId).questionFrame.nativeState='answered';return {accepted:true};},
   };
+  const memoryReceipts = new Map();
   const memoryManager={
-    status:async()=>({state:'ready',worldRevision:1,capabilities:{list:true,source:true,correct:false,mute:false,inject:true,deleteEvidence:true,deleteWorldItem:false}}),
-    peek:async()=>({}),query:async(owner,kind)=>kind==='query_jobs'?{jobs:[...sessions.values()].map(s=>({acceptance:{parent_session_id:s.id,evidence_ids:['synthetic-'+s.id]}}))}:{world_revision:1,items:[{item_id:'memory-synthetic',object_kind:'cognition',current_state:'current',created_at:new Date().toISOString(),updated_at:new Date().toISOString(),source_count:1,value:{content:'偏好简洁的中文解释。'}}]},
+    status:async()=>({state:'ready',worldRevision:1,capabilities:{list:true,source:true,correct:false,mute:false,inject:true,deleteEvidence:true,deleteWorldItem:true}}),
+    peek:async()=>({}),query:async(owner,kind,input)=>{
+      const item={item_id:'memory-synthetic',object_kind:'cognition',current_state:'current',created_at:new Date().toISOString(),updated_at:new Date().toISOString(),source_count:1,value:{content:'偏好简洁的中文解释。'}};
+      if(kind==='query_jobs')return {jobs:[...sessions.values()].map(s=>({acceptance:{parent_session_id:s.id,evidence_ids:['synthetic-'+s.id]}}))};
+      if(kind==='preview_forget')return {world_revision:1,item_count:3,evidence_count:1,evidence_ids:['synthetic-'+(input.conversation_id??'memory')],items:[{item_id:'synthetic-person',object_kind:'entity',name:'合成人物蓝色纸鹤',item_type:'person'},{item_id:'synthetic-relation',object_kind:'relationship',name:'合成资料协作关系',item_type:'relationship'},{item_id:'memory-synthetic',object_kind:'cognition',name:'偏好简洁的中文解释。',item_type:'preference'}]};
+      return {world_revision:1,...(input?.operation==='get'?{item}:{items:[item]})};
+    },
     listSessionEvidence:async(owner,sessionId)=>[{evidenceId:'synthetic-'+sessionId}],
-    submitCommand:async(owner,command)=>{memoryDeletes.push({owner,command});return {result_state:'applied'};},
-    receiptByRequest:async()=>null,retryCleanupByRequest:async()=>({}),
+    submitCommand:async(owner,command)=>{memoryDeletes.push({owner,command});const receipt={result_state:'applied',after_revision:1,command_id:'synthetic-'+(command.requestId??randomUUID())};memoryReceipts.set(command.requestId,receipt);return receipt;},
+    receiptByRequest:async(owner,id)=>{if(memoryReceipts.has(id))return memoryReceipts.get(id);throw Object.assign(new Error('Missing synthetic receipt'),{code:'command_receipt_not_found'});},retryCleanupByRequest:async()=>({}),
     list:async()=>({worldRevision:1,items:[{id:'memory-synthetic',kind:'cognition',text:'偏好简洁的中文解释。',currentState:'current',sourceCount:1,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()}],hasMore:false,nextCursor:null,searchScope:'account_snapshot'}),
   };
   async function accepted(api,body) {const posted=await api('/commands',body);if(posted.status!==202)throw Error('Seed command failed '+JSON.stringify(posted));for(let i=0;i<100;i++){const row=(await api('/commands/'+posted.command.commandId)).command;if(row.state==='accepted_by_dsh')return row;if(row.state==='rejected'||row.state==='uncertain')throw Error(JSON.stringify(row));await pause(30);}throw Error('Seed dispatch timeout');}

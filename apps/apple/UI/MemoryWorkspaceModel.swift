@@ -42,6 +42,27 @@ struct MemoryActionContext: Sendable {
 
 @MainActor
 final class MemoryWorkspaceModel: ObservableObject {
+    @Published var forgetConfirmation = ForgetConfirmationState()
+    @Published private(set) var forgetPreviewLoading = false
+    @Published private(set) var forgetPreviewError: String?
+    private var forgetPreviewToken = UUID()
+    private var forgetTarget: String?
+    func prepareForget(_ context: MemoryActionContext) async {
+        forgetConfirmation = .init(); forgetPreviewError = nil; forgetTarget = nil
+        let token = UUID(); forgetPreviewToken = token
+        guard context.operation.isDeletion, matches(context) else { return }
+        forgetPreviewLoading = true
+        defer { if forgetPreviewToken == token { forgetPreviewLoading = false } }
+        do {
+            let preview = try await client.memoryForgetPreview(kind: context.kind, itemID: context.itemId, evidenceID: context.evidenceId, expectedRevision: context.worldRevision)
+            guard token == forgetPreviewToken, matches(context) else { return }
+            forgetTarget = context.evidenceId ?? context.itemId; forgetConfirmation.preview = preview
+        } catch { if token == forgetPreviewToken, matches(context) { forgetPreviewError = "无法读取遗忘范围，或内容版本已变化。请重新读取后确认。" } }
+    }
+    func cancelForget() { forgetPreviewToken = UUID(); forgetTarget = nil; forgetConfirmation = .init(); forgetPreviewLoading = false; forgetPreviewError = nil }
+    func canForget(_ context: MemoryActionContext) -> Bool {
+        canMutate && matches(context) && forgetTarget == (context.evidenceId ?? context.itemId) && forgetConfirmation.preview?.worldRevision == context.worldRevision
+    }
     @Published var query = ""
     @Published var kind: MemoryKind = .cognition
     @Published private(set) var correctionText = ""
@@ -308,6 +329,7 @@ final class MemoryWorkspaceModel: ObservableObject {
             workers.values.forEach { $0.cancel() }
         }
 
+        cancelForget()
         detailRequest = UUID(); detail = nil; sources = nil; correctionText = ""
         detailError = nil; detailLoading = false; sourcesLoading = false
     }
@@ -327,6 +349,7 @@ final class MemoryWorkspaceModel: ObservableObject {
     private func performMutation(_ context: MemoryActionContext) async {
         guard canMutate, matches(context), let journal else { return }
         if context.operation == .correct, let error = correctionValidationMessage { notice = error; return }
+        if context.operation.isDeletion && !canForget(context) { return }
         let operation = context.operation
         let target = context.evidenceId ?? context.itemId
         guard !operations.values.contains(where: { $0.record.identity.targetId == target &&
@@ -340,7 +363,7 @@ final class MemoryWorkspaceModel: ObservableObject {
             let intent = try MemoryMutationIntent(session: context.session, operation: operation,
                 itemKind: operation == .deleteEvidence ? nil : context.kind, targetID: target,
                 requestID: "apple-memory-" + UUID().uuidString.lowercased(), expectedWorldRevision: context.worldRevision,
-                correction: context.correction)
+                correction: context.correction, deleteConversationSnippets: operation.isDeletion ? forgetConfirmation.deleteConversationSnippets : nil)
             let record = try await journal.persist(intent)
             guard canPublish(request), matches(context) else { return }
             publish(record, note: "操作已记下，正在确认。")

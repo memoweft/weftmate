@@ -168,6 +168,7 @@ private struct SettingsCategoryView: View {
         case "devices":
             if app.cloudLogin.authenticated { CloudDevicesView(app: app, cloud: app.cloudLogin) }
             else { DevicesView(model: app) }
+        case "archived": ArchivedSessionsView(app: app)
         case "usage":
             VStack(spacing: AppleTokens.Space.p0) {
                 if let id = route.sessionID {

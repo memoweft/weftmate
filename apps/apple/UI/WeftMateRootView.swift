@@ -43,7 +43,12 @@ struct WeftMateRootView: View {
             }
         }
         .overlay { CloudAccessPresenter(cloud: model.cloudLogin) }
-        .sheet(item: $model.deletionCandidate) { _ in SessionDeleteSheet(app: model) }
+        .sheet(item: Binding(get: { model.deletionInSettings ? nil : model.deletionCandidate }, set: { model.deletionCandidate = $0 })) { _ in SessionDeleteSheet(app: model) }
+        .sheet(item: $model.sessionMenuCandidate) { row in
+            VStack(alignment: .leading, spacing: AppleTokens.Space.p16) { SessionActions(app: model, conversation: row, onSelect: { model.sessionMenuCandidate = nil }) }
+                .padding(AppleTokens.Space.p24)
+        }
+        .sheet(item: $model.groupCandidate) { _ in SessionGroupSheet(app: model) }
         .task(id: "\(scenePhase)-\(model.accountEpoch)-\(model.session?.verification.rawValue ?? "none")") {
             guard scenePhase == .active else { return }
             while !Task.isCancelled {
@@ -156,17 +161,20 @@ private struct MacWorkspace: View {
             let args = ProcessInfo.processInfo.arguments
             guard args.contains("--ui-testing"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1) else { return }
             switch args[index + 1] {
-            case "memory": selected = .memory
+            case "memory", "memory-forget": selected = .memory
             case "appearance", "usage":
                 model.settingsRoute = .init(categoryID: args[index + 1]); openWindow(id: "settings")
             case let category where category.hasPrefix("settings-"):
                 model.settingsRoute = .init(categoryID: String(category.dropFirst(9))); openWindow(id: "settings")
+            case "conversation-forget":
+                if let conversation = model.conversations.first(where: { $0.title == "可遗忘的合成对话" }) { selected = .conversation(conversation.id) }
             case "conversation", "approval", "question", "outputs-sources", "session-menu":
                 if let conversation = model.conversations.first(where: { $0.title == "整理项目资料" }) { selected = .conversation(conversation.id) }
             default: selected = nil
             }
         }
         #endif
+        .onChange(of: model.openedSessionID) { _, id in if let id { selected = .conversation(id) } }
         .onChange(of: selected) { _, selection in
             if case .conversation = selection {} else { model.closeConversation() }
         }
@@ -191,15 +199,20 @@ private struct MacWorkspace: View {
             }.padding(.horizontal, AppleTokens.Space.p18).padding(.top, AppleTokens.Space.p18).padding(.bottom, AppleTokens.Space.p14)
 
             List(selection: $selected) {
-                Section(model.showingArchived ? "已归档" : "最近对话") {
-                    Button(model.showingArchived ? "返回最近对话" : "已归档") { model.showingArchived.toggle() }
-                    if let error = model.lifecycleError { InlineNotice(message: error, isError: true) }
-                    ConversationListContent(model: model, search: $search)
-                    ForEach(filteredConversations) { conversation in
-                        ConversationRow(conversation: conversation, selected: selected == .conversation(conversation.id))
-                            .contextMenu { SessionActions(app: model, conversation: conversation) }
-                            .tag(SidebarSelection.conversation(conversation.id))
-                            .listRowBackground(selected == .conversation(conversation.id) ? Weave.accent : AppleTokens.Colors.clear)
+                if let error = model.lifecycleError { InlineNotice(message: error, isError: true) }
+                ConversationListContent(model: model, search: $search)
+                ForEach(model.sections(query: search)) { section in
+                    Section {
+                        Button { if model.collapsedSessionGroups.contains(section.id) { model.collapsedSessionGroups.remove(section.id) } else { model.collapsedSessionGroups.insert(section.id) } } label: {
+                            HStack { WeftIcon(model.collapsedSessionGroups.contains(section.id) ? "right" : "collapse", size: 16); Text(section.title) }
+                        }.buttonStyle(.plain).accessibilityIdentifier("sessionGroup." + section.id)
+                        if !model.collapsedSessionGroups.contains(section.id) {
+                            ForEach(section.rows) { conversation in
+                                EditableSessionRow(app: model, conversation: conversation, selected: selected == .conversation(conversation.id))
+                                    .tag(SidebarSelection.conversation(conversation.id))
+                                    .listRowBackground(selected == .conversation(conversation.id) ? Weave.accent : AppleTokens.Colors.clear)
+                            }
+                        }
                     }
                 }
                 Section {
@@ -259,18 +272,26 @@ private struct PhoneWorkspace: View {
     @StateObject private var health = HealthSettingsModel()
     @Environment(\.scenePhase) private var scenePhase
     @State private var search = ""
+    @State private var path: [String] = []
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
                 List {
-                    Section(model.showingArchived ? "已归档" : "最近对话") {
-                    Button(model.showingArchived ? "返回最近对话" : "已归档") { model.showingArchived.toggle() }
                     if let error = model.lifecycleError { InlineNotice(message: error, isError: true) }
-                        ConversationListContent(model: model, search: $search)
-                        ForEach(filteredConversations) { conversation in
-                            NavigationLink(value: conversation.id) { ConversationRow(conversation: conversation) }
-                                .contextMenu { SessionActions(app: model, conversation: conversation) }
-                                .swipeActions { SessionActions(app: model, conversation: conversation) }
-                                .accessibilityIdentifier("conversationRow.\(conversation.id)")
+                    ConversationListContent(model: model, search: $search)
+                    ForEach(model.sections(query: search)) { section in
+                        Section {
+                            DisclosureGroup(isExpanded: Binding(get: { !model.collapsedSessionGroups.contains(section.id) }, set: { if $0 { model.collapsedSessionGroups.remove(section.id) } else { model.collapsedSessionGroups.insert(section.id) } })) {
+                                ForEach(section.rows) { conversation in
+                                    if model.renamingSessionID == conversation.id {
+                                        EditableSessionRow(app: model, conversation: conversation)
+                                    } else {
+                                        NavigationLink(value: conversation.id) { ConversationRow(conversation: conversation) }
+                                            .contextMenu { SessionActions(app: model, conversation: conversation) }
+                                            .swipeActions(allowsFullSwipe: false) { Button("对话操作") { model.sessionMenuCandidate = conversation }.tint(Weave.accent) }
+                                            .accessibilityIdentifier("conversationRow.\(conversation.id)")
+                                    }
+                                }
+                            } label: { Text(section.title) }
                         }
                     }
                 }
@@ -298,6 +319,8 @@ private struct PhoneWorkspace: View {
                 .refreshable { await model.refresh() }
                 .accessibilityIdentifier("conversationList")
         }
+        .onChange(of: model.openedSessionID) { _, id in if let id { path = [id] } }
+        .onChange(of: model.renamingSessionID) { _, id in if id != nil { path = [] } }
         .environmentObject(health)
         .task(id: "\(model.accountEpoch)-\(scenePhase)-\(model.session?.verification.rawValue ?? "none")") {
             guard scenePhase == .active else { return }

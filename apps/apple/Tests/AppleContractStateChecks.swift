@@ -64,7 +64,8 @@ private actor ContractHTTP: HTTPTransport {
         case "/personal/v1/auth/devices": object = ["devices": [["id": "device-test", "name": "Mac", "current": true]]]
         case "/personal/v1/sync/capabilities": object = ["deviceId": "device-test", "platform": "macos", "sharedConversations": 1]
         case "/personal/v1/sync/events": object = ["events": [], "nextSeq": 0, "hasMore": false]
-        case "/personal/v1/sessions": object = ["sessions": [["sessionId": sessionID, "title": "Fixture", "running": false, "sendAvailable": true, "modelProfileId": "local"]]]
+        case "/personal/v1/session-groups": object = ["groups": []]
+        case "/personal/v1/sessions": object = ["sessions": [["sessionId": sessionID, "title": "Fixture", "running": false, "sendAvailable": !shared, "modelProfileId": "local"]]]
         case "/personal/v1/models": object = ["models": [["id": "local", "name": "Fixture", "model": "fixture", "configured": true]]]
         case "/personal/v1/commands":
             guard request.httpMethod == "POST", let body = request.httpBody else { throw Failed(message: "Unexpected commands request") }
