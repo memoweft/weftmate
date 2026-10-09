@@ -99,7 +99,7 @@ if (globalThis.WeftUiComponents) globalThis.WeftUiComponents.factories.usage = (
     let activeScope = null;
     let conversationButton;
     function renderConversationUsage() {
-        if (conversationButton) conversationButton.hidden = core.state.newConversation || !core.state.selectedSessionId || core.state.activeChatSource === 'phone';
+        if (conversationButton) conversationButton.hidden = core.state.newConversation || !core.state.selectedSessionId || core.state.activeChatSource === 'phone' || core.inMainChat?.() === true;
     }
     function showSettingsUsage({ sessionId = '' } = {}) {
         const target = document.querySelector('[data-category="usage"].settings-category');

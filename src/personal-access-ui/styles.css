@@ -155,7 +155,8 @@ input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent)
 .dialog form { display: flex; flex-direction: column; max-height: inherit; }
 .dialog-head, .dialog-footer { display: flex; align-items: center; justify-content: space-between; gap: var(--wm-space-12); padding: var(--wm-space-18) var(--wm-space-24); }
 .dialog-head { border-bottom: 1px solid var(--line); }
-.dialog-body { overflow-y: auto; padding: var(--wm-space-20) var(--wm-space-24); }
+.dialog-body { min-height: 0; overflow-y: auto; padding: var(--wm-space-20) var(--wm-space-24); }
+.dialog-head, .dialog-footer { flex-shrink: 0; }
 .dialog-body .muted { margin-bottom: var(--wm-space-12); }
 .dialog-footer { justify-content: flex-end; border-top: 1px solid var(--line); background: var(--surface-soft); }
 .icon-close { width: 36px; height: 36px; border: 0; border-radius: var(--wm-radius-10); color: var(--ink-secondary); background: transparent; font-size: var(--wm-font-size-25); line-height: var(--wm-line-height-1); }
@@ -831,7 +832,7 @@ details[open] > summary > .progress-chevron { transform: rotate(0deg); }
 .project-conversations { margin: 0 0 var(--wm-space-8) var(--wm-space-16); padding: 0; list-style: none; }
 .project-empty { padding: var(--wm-space-8) var(--wm-space-10); color: var(--ink-secondary); font-size: var(--wm-font-size-12); line-height: 1.5; }
 .project-conversation-notice { color: var(--ink-secondary); font-size: var(--wm-font-size-12); line-height: 1.6; margin: var(--wm-space-8) 0; }
-.project-dialog { width: min(560px, calc(100vw - var(--wm-space-32))); max-height: calc(100dvh - var(--wm-space-32)); overflow: auto; }
+.project-dialog { width: min(560px, calc(100vw - var(--wm-space-32))); max-height: calc(100dvh - var(--wm-space-32)); overflow: hidden; }
 .project-dialog .dialog-body { display: grid; gap: var(--wm-space-12); }
 .project-field { display: grid; gap: var(--wm-space-6); color: var(--ink); }
 .project-field input, .project-field textarea, .project-field select { width: 100%; min-width: 0; box-sizing: border-box; }
@@ -858,3 +859,5 @@ details[open] > summary > .progress-chevron { transform: rotate(0deg); }
 .question-record { color: var(--ink-muted, var(--muted)); font-size: var(--wm-font-size-13); overflow-wrap: anywhere; }
 
 @media (max-width: 600px) { .settings-select-menu { inset: auto 0 0 !important; width: 100% !important; max-height: 55vh !important; border-radius: var(--wm-radius-12) var(--wm-radius-12) 0 0; padding-bottom: max(var(--wm-space-12), env(safe-area-inset-bottom)); } }
+
+.temporary-chat-notice, .temporary-composer-hint { font-size: var(--wm-font-size-12); line-height: 1.5; margin: var(--wm-space-4) 0; }

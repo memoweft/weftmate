@@ -82,7 +82,8 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         }catch{if(current())effects.historyNotice('默认审批模式暂时无法读取，仍可在菜单里选择。');}
         finally{if(current()){core.state.approvalModeLoading=false;effects.setApprovalModeBusy(false);}}
     }
-    async function selectSession(sessionId) {
+    async function selectSession(sessionId, legacy = false) {
+        if (!legacy && core.selectLogicalSession) return core.selectLogicalSession(sessionId);
         if (!core.sessionIdPattern.test(sessionId))
             return;
         effects.closeResourcePreview();
@@ -102,6 +103,7 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         effects.paintDesktopComposer(fromPhone);
         core.state.selectedSessionId = sessionId;
         core.state.newConversation = false;
+        core.state.newConversationTemporary = false;
         void core.updateSession(sessionId, { unread: false }).catch(error => effects.historyNotice(core.failureMessage(error)));
         void core.refreshApprovalMode(sessionId);
         core.state.turnStatus = null;
@@ -196,10 +198,10 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
     function approvalSource(row, fresh = false) {
         const entry = core.conversationTasks.entries.get(row.taskId), payload = entry?.payload;
         if (!payload || fresh && entry.notice || payload.taskId !== row.taskId || payload.sessionId !== row.sessionId ||
-            payload.source?.commandId !== row.taskId || payload.source.kind !== 'session.message' || payload.source.rootTaskId)
+            payload.source?.commandId !== row.taskId || !['session.message','chat.message'].includes(payload.source.kind) || payload.source.rootTaskId)
             return null;
         return [payload.source, ...(Array.isArray(payload.supplements) ? payload.supplements : []),
-            ...(Array.isArray(payload.resumes) ? payload.resumes : [])].find((command) => command?.kind === 'session.message' &&
+            ...(Array.isArray(payload.resumes) ? payload.resumes : [])].find((command) => ['session.message','chat.message'].includes(command?.kind) &&
             command.sessionId === row.sessionId && command.commandId === row.sourceCommandId &&
             command.receiptId === row.sourceReceiptId && (command.commandId === row.taskId && !command.rootTaskId ||
             command.rootTaskId === row.taskId) && (!Number.isSafeInteger(command.dshTurn) || command.dshTurn === row.turn)) || null;

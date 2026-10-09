@@ -30,11 +30,12 @@
     ui.cloudUi = globalThis.WeftCloudUi.create({ acceptSession: core.acceptSession, enterAssistant: core.enterAssistant,
         openAccount: core.openAccount, show: core.show, accessApi: core.accessApi, toast: ui.toast,
         bindDesktop: core.cloudBindDesktop });
-    for (const mount of ["mountAuth", "mountAccount", "mountSettings", "mountMemory", "mountApprovals", "mountComposer", "mountPhone", "mountSessions", "mountCloudSettings", "mountShell", "mountSettingsNavigation"])
+    for (const mount of ["mountAuth", "mountAccount", "mountSettings", "mountMemory", "mountApprovals", "mountComposer", "mountPhone", "mountSessions", "mountCloudSettings", "mountShell", "mountSettingsNavigation", "mountMainChat"])
         ui[mount]();
     globalThis.__WeftUiStarted = true;
     if (!native && globalThis.navigator?.serviceWorker) void globalThis.navigator.serviceWorker.register('/personal/v1/ui/offline-worker.js').catch(() => {});
     if (globalThis.indexedDB && globalThis.matchMedia?.('(max-width: 720px)')?.matches) globalThis.WeftOfflineView?.mount({ core, desktop: !!native,
+        openConversation: () => ui.showConversation(),
         identity: async () => core.cloudOfflineIdentity(),
-        host: (path, body) => core.accessApi(path, { method: 'POST', body: JSON.stringify(body) }) });
+        host: (path, body) => core.accessApi(path, { method: 'POST', body, protectedWrite: true }) });
 })();

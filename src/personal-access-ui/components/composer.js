@@ -63,7 +63,7 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
         ui.byId('thinking-badge').hidden = !thinking.supported || !thinking.enabled;
         if (value.attachmentsDisabled) closeComposerMenu();
         globalThis.WeftComposerSubtasks?.paint(ui.byId('composer-subtasks'),
-            globalThis.WeftUiCore.composerSubtasks([...core.state.historyEvents.values()]),
+            globalThis.WeftUiCore.composerSubtasks(core.timelineEventsForContext()),
             {scope:`${core.state.ownerId}/${core.state.identityGeneration}/${core.state.selectedSessionId}`, root:ui.byId('transcript')});
     }
     function paintModels() {
@@ -159,6 +159,9 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
             core.addAttachmentFiles(selected);
         });
         ui.byId('attachment-cancel').addEventListener('click', () => core.cancelAttachmentUpload(true));
+        ui.byId('new-temporary-session').addEventListener('click', () => {
+            if (core.state.capabilities?.chat?.available === true) core.startNewConversation(false, true);
+        });
         ui.byId('new-session').addEventListener('click', async () => {
             if (!core.state.modelProfileId || core.state.capabilities?.chat?.available !== true)
                 return;

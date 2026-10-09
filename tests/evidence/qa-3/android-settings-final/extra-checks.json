@@ -1,0 +1,162 @@
+[
+  {
+    "name": "light-settings-常规",
+    "status": "passed",
+    "durationMs": 1629,
+    "page": "general",
+    "text": "常规\n此设备\n通知\n回复、动作和同步状态\n›\n离线与同步\n当前账户的记录与状态\n›\n界面更新\n0.8.11（内置）\n›\n原生兼容界面\n排查系统网页组件\n›\n回复进行中时发送的消息\n\n排队：等当前回复结束后作为下一条处理。 引导：插入当前回复，引导它调整方向。\n\n排队\n系统状态\n\n已更新\n\n模型服务\n尚未配置\n重启模型服务\n宿主\n运行中 · 版本 0.1.0\n重启宿主\n记忆\n未启用\n重启记忆\n\n后台模型跟随主模型 · 在电脑设置中修改\n\n刷新状态"
+  },
+  {
+    "name": "light-settings-外观",
+    "status": "passed",
+    "durationMs": 1584,
+    "page": "appearance",
+    "text": "外观\n\n保存到这台设备。\n\n颜色模式\n\n选择适合当前环境的颜色模式。\n\n浅色\n深色\n跟随系统"
+  },
+  {
+    "name": "light-settings-账户",
+    "status": "passed",
+    "durationMs": 1639,
+    "page": "account",
+    "text": "设置设置常规通知、离线与同步›外观浅色›账户cloud-eef27756-1ee4-44b9-8e2b-159359fb0c9c›设备连接、配对与待批准›用量本月费用、用量与月度上限›已归档›助手模型管理手机与账户模型›审批新对话的默认模式›记忆查看理解与来源›提醒与定时任务管理提醒与定时任务›资料访问项目与网页资料›关于关于0.8.11（内置）›"
+  },
+  {
+    "name": "light-settings-设备",
+    "status": "passed",
+    "durationMs": 1636,
+    "page": "devices",
+    "text": "设置设置常规通知、离线与同步›外观浅色›账户cloud-eef27756-1ee4-44b9-8e2b-159359fb0c9c›设备连接、配对与待批准›用量本月费用、用量与月度上限›已归档›助手模型管理手机与账户模型›审批新对话的默认模式›记忆查看理解与来源›提醒与定时任务管理提醒与定时任务›资料访问项目与网页资料›关于关于0.8.11（内置）›"
+  },
+  {
+    "name": "light-settings-用量",
+    "status": "passed",
+    "durationMs": 1618,
+    "page": "usage",
+    "text": "用量与费用\n2026 年 10 月\n上一年\n下一年\n刷新用量\n\n本月合计 ¥0.00457288 · 4 次请求\n\n输入 11,478（含缓存 7,744） · 输出 342\n\n按 中国标准时间 统计，金额按请求时单价计算，供参考，以服务商账单为准。\n\n未设置月度上限。\n\n每日费用\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n每日明细\n按对话排行\nFX-9 手机办事\n¥0.00457288 · 4 次\n输入 11478（缓存 7744） · 输出 342\n按模型排行\nFX-9 MiMo\n¥0.00457288 · 4 次\n输入 11478（缓存 7744） · 输出 342\n月度上限\n月度上限（元）\n仅本月临时上限（元）\n\n留空表示不限；0 暂停云端请求。本地模型不受限。临时上限于下月自动失效。\n\n保存月度上限\n模型单价（元 / 百万词元）"
+  },
+  {
+    "name": "light-settings-模型",
+    "status": "passed",
+    "durationMs": 1681,
+    "page": "models",
+    "text": "对话模型\n\n手机直连模型与电脑模型分开列出；密钥不会出现在账户模型目录中。\n\n手机已保存模型\n\n尚未保存手机模型\n\n配置自定义模型\n提供方地址（/v1）\n模型 ID\nAPI Key（留空保留同一地址已存密钥）\n保存并选择\n电脑模型\nFX-9 MiMo\n电脑云端 · 已配置\n›\n账户云模型\nFX-9 MiMo\nmimo-v2.6-flash · 账户可用 · 修订 1\n保存到手机\n测试连接"
+  },
+  {
+    "name": "light-settings-审批",
+    "status": "passed",
+    "durationMs": 1595,
+    "page": "approvals",
+    "text": "审批\n\n用于新电脑对话，已有对话可在输入区单独设置。\n\n设置默认审批模式"
+  },
+  {
+    "name": "light-settings-记忆",
+    "status": "passed",
+    "durationMs": 1614,
+    "page": "memory",
+    "text": "记忆\n\n查看当前账户的理解与来源；可用时在详情中纠正、停用或删除。手机对话的自动记忆接入仍待验证。\n\n当前账户尚未启用记忆服务。\n刷新记忆状态"
+  },
+  {
+    "name": "light-settings-提醒与定时任务",
+    "status": "passed",
+    "durationMs": 1662,
+    "page": "schedules",
+    "text": "提醒与定时任务\n\n读取失败，请刷新重试。\n\n刷新提醒"
+  },
+  {
+    "name": "light-settings-已归档",
+    "status": "passed",
+    "durationMs": 1565,
+    "page": "archived",
+    "text": "已归档\n\n没有已归档对话。"
+  },
+  {
+    "name": "light-settings-关于",
+    "status": "passed",
+    "durationMs": 1600,
+    "page": "about",
+    "text": "关于\nWeftMate\n界面版本\n0.8.11（内置）\n›\n服务条款\n在应用内阅读\n›\n隐私政策\n在应用内阅读\n›"
+  },
+  {
+    "name": "dark-settings-常规",
+    "status": "passed",
+    "durationMs": 1658,
+    "page": "general",
+    "text": "常规\n此设备\n通知\n回复、动作和同步状态\n›\n离线与同步\n当前账户的记录与状态\n›\n界面更新\n0.8.11（内置）\n›\n原生兼容界面\n排查系统网页组件\n›\n回复进行中时发送的消息\n\n排队：等当前回复结束后作为下一条处理。 引导：插入当前回复，引导它调整方向。\n\n排队\n系统状态\n\n已更新\n\n模型服务\n尚未配置\n重启模型服务\n宿主\n运行中 · 版本 0.1.0\n重启宿主\n记忆\n未启用\n重启记忆\n\n后台模型跟随主模型 · 在电脑设置中修改\n\n刷新状态"
+  },
+  {
+    "name": "dark-settings-外观",
+    "status": "passed",
+    "durationMs": 1612,
+    "page": "appearance",
+    "text": "外观\n\n保存到这台设备。\n\n颜色模式\n\n选择适合当前环境的颜色模式。\n\n浅色\n深色\n跟随系统"
+  },
+  {
+    "name": "dark-settings-账户",
+    "status": "passed",
+    "durationMs": 1605,
+    "page": "account",
+    "text": "设置设置常规通知、离线与同步›外观深色›账户cloud-eef27756-1ee4-44b9-8e2b-159359fb0c9c›设备连接、配对与待批准›用量本月费用、用量与月度上限›已归档›助手模型管理手机与账户模型›审批新对话的默认模式›记忆查看理解与来源›提醒与定时任务管理提醒与定时任务›资料访问项目与网页资料›关于关于0.8.11（内置）›"
+  },
+  {
+    "name": "dark-settings-设备",
+    "status": "passed",
+    "durationMs": 1666,
+    "page": "devices",
+    "text": "设置设置常规通知、离线与同步›外观深色›账户cloud-eef27756-1ee4-44b9-8e2b-159359fb0c9c›设备连接、配对与待批准›用量本月费用、用量与月度上限›已归档›助手模型管理手机与账户模型›审批新对话的默认模式›记忆查看理解与来源›提醒与定时任务管理提醒与定时任务›资料访问项目与网页资料›关于关于0.8.11（内置）›"
+  },
+  {
+    "name": "dark-settings-用量",
+    "status": "passed",
+    "durationMs": 1655,
+    "page": "usage",
+    "text": "用量与费用\n2026 年 10 月\n上一年\n下一年\n刷新用量\n\n本月合计 ¥0.00457288 · 4 次请求\n\n输入 11,478（含缓存 7,744） · 输出 342\n\n按 中国标准时间 统计，金额按请求时单价计算，供参考，以服务商账单为准。\n\n未设置月度上限。\n\n每日费用\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n每日明细\n按对话排行\nFX-9 手机办事\n¥0.00457288 · 4 次\n输入 11478（缓存 7744） · 输出 342\n按模型排行\nFX-9 MiMo\n¥0.00457288 · 4 次\n输入 11478（缓存 7744） · 输出 342\n月度上限\n月度上限（元）\n仅本月临时上限（元）\n\n留空表示不限；0 暂停云端请求。本地模型不受限。临时上限于下月自动失效。\n\n保存月度上限\n模型单价（元 / 百万词元）"
+  },
+  {
+    "name": "dark-settings-模型",
+    "status": "passed",
+    "durationMs": 1686,
+    "page": "models",
+    "text": "对话模型\n\n手机直连模型与电脑模型分开列出；密钥不会出现在账户模型目录中。\n\n手机已保存模型\n\n尚未保存手机模型\n\n配置自定义模型\n提供方地址（/v1）\n模型 ID\nAPI Key（留空保留同一地址已存密钥）\n保存并选择\n电脑模型\nFX-9 MiMo\n电脑云端 · 已配置\n›\n账户云模型\nFX-9 MiMo\nmimo-v2.6-flash · 账户可用 · 修订 1\n保存到手机\n测试连接"
+  },
+  {
+    "name": "dark-settings-审批",
+    "status": "passed",
+    "durationMs": 1610,
+    "page": "approvals",
+    "text": "审批\n\n用于新电脑对话，已有对话可在输入区单独设置。\n\n设置默认审批模式"
+  },
+  {
+    "name": "dark-settings-记忆",
+    "status": "passed",
+    "durationMs": 1591,
+    "page": "memory",
+    "text": "记忆\n\n查看当前账户的理解与来源；可用时在详情中纠正、停用或删除。手机对话的自动记忆接入仍待验证。\n\n当前账户尚未启用记忆服务。\n刷新记忆状态"
+  },
+  {
+    "name": "dark-settings-提醒与定时任务",
+    "status": "passed",
+    "durationMs": 1601,
+    "page": "schedules",
+    "text": "提醒与定时任务\n\n读取失败，请刷新重试。\n\n刷新提醒"
+  },
+  {
+    "name": "dark-settings-已归档",
+    "status": "passed",
+    "durationMs": 1591,
+    "page": "archived",
+    "text": "已归档\n\n没有已归档对话。"
+  },
+  {
+    "name": "dark-settings-关于",
+    "status": "passed",
+    "durationMs": 1589,
+    "page": "about",
+    "text": "关于\nWeftMate\n界面版本\n0.8.11（内置）\n›\n服务条款\n在应用内阅读\n›\n隐私政策\n在应用内阅读\n›"
+  },
+  {
+    "name": "projects",
+    "status": "failed",
+    "durationMs": 7719,
+    "error": "locator.click: Timeout 6000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('main').getByRole('button', { name: '在项目 QA3 合成项目 新建对话', exact: true })\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" class=\"session-more\" aria-label=\"在项目 QA3 合成项目 新建对话\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div role=\"log\" aria-live=\"polite\" class=\"offline-messages\">…</div> from <section aria-label=\"离线对话\" class=\"offline-chat\">…</section> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div role=\"log\" aria-live=\"polite\" class=\"offline-messages\">…</div> from <section aria-label=\"离线对话\" class=\"offline-chat\">…</section> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    11 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div role=\"log\" aria-live=\"polite\" class=\"offline-messages\">…</div> from <section aria-label=\"离线对话\" class=\"offline-chat\">…</section> subtree intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n"
+  }
+]

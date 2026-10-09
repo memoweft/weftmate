@@ -1,0 +1,9 @@
+{
+  "requests": 24,
+  "returnedUsage": 24,
+  "missingUsage": 0,
+  "input": 42410,
+  "cached": 31808,
+  "output": 2822,
+  "knownCnyLowerBound": 0.01688216
+}

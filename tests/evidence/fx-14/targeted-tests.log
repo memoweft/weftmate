@@ -1,0 +1,58 @@
+✔ installed startup reads configuration and channel without source launcher arguments (20.7129ms)
+✔ migration parses Production values without executing task and rehearsal disables public access (6.7806ms)
+✔ uninstall preserves configured account unless explicit deletion is requested (24.6002ms)
+✔ release channels require stable or numbered preview versions (0.5582ms)
+✔ offline cached phone binding keeps its read context and resource cache without enabling sends (22.5046ms)
+✔ late offline-resource reply stays out after a conversation switch (3.7747ms)
+✔ late offline-resource reply stays out after a owner switch (3.0424ms)
+▶ service context reaches native compaction and ten tool steps use changing wire budgets
+  ✔ native stream idle recovery, incremental progress and cancellation (6745.7796ms)
+✔ service context reaches native compaction and ten tool steps use changing wire budgets (9839.4065ms)
+▶ service model capacity
+  ✔ reads llama.cpp generation n_ctx and replaces an oversized configured window (62.8625ms)
+  ✔ reads root n_ctx and preserves a reverse-proxy prefix (0.6106ms)
+  ✔ reads matching /v1/models max_model_len, ignoring other model capacities (0.5947ms)
+  ✔ reads matching /v1/models context_length, ignoring other model capacities (0.3986ms)
+  ✔ reads matching /v1/models context_window, ignoring other model capacities (0.4945ms)
+  ✔ reads matching /v1/models n_ctx, ignoring other model capacities (0.7996ms)
+  ✔ falls back on configured values after missing or malformed metadata (0.7369ms)
+  ✔ uses at most 32768 without configuration after network or JSON failure (1.4094ms)
+  ✔ retains known official MiMo metadata without guessing from model name alone (0.1709ms)
+✔ service model capacity (69.2135ms)
+▶ per-request output budget
+  ✔ shrinks with input, respects an output capability, and includes safety headroom (0.1735ms)
+  ✔ rounds input upward and handles exact remaining capacity and overflow (0.0735ms)
+✔ per-request output budget (0.3437ms)
+✔ text-only model drops image bytes recursively while retaining tool descriptions and image metadata (0.3168ms)
+✔ a running formation yields its slot to chat and resumes at the next idle opportunity (2.6079ms)
+✔ single-slot formation buffers partial output, yields to greeting, and returns only its completed retry (57.4654ms)
+✔ yielded formation rechecks the selected background model before resuming after chat (2028.4757ms)
+✔ session progress uses actual queue position, observed switcher and stream phases, and disappears when its lease closes (91.7118ms)
+✔ background waits through tool gaps, foreground has FIFO priority and cancellation removes waiting work (30.2792ms)
+✔ native stream socket owns the slot; a cancelled or crashed owner releases it and queued memory uses its selected model (144.9199ms)
+✔ background provider begins its own deadline after queueing and nested native streaming uses the same lease (146.5119ms)
+✔ queued MemoWeft HTTP receives informational keepalive without masking the final error status (109.1776ms)
+✔ foreground HTTP completion holds its slot through the response body (29.298ms)
+✔ native compaction remains foreground while titles and companion work are background (0.352ms)
+✔ cloud requests run concurrently while local foreground and queued background hold their service (140.6264ms)
+✔ unknown and multiple slots bypass queueing; only observed single slots queue (5.9522ms)
+✔ address-only native requests use the matching profile credential to probe authenticated 8081 props (3.3576ms)
+✔ sync errors distinguish connectivity from permission, request and replica errors (1.8284ms)
+✔ polling never navigates over approvals; return stays closed on repeated offline ticks (4.7886ms)
+✔ manually opened offline content belongs to the chat scroller, outside approval and settings layers (2.0808ms)
+✔ both production mount transports pass objects and protected writes through requestJson (31.1074ms)
+✔ device envelope authenticates contents and identity; storage is encrypted and key replacement removes old values (90.488ms)
+✔ replica filters private, muted, invalid and mixed-currentness sources, and computes removals (9.9381ms)
+✔ online sync → cloud-only relevant recall → offline preference → idempotent import → forget cannot resurrect (345.7302ms)
+✔ revocation erases pending conversations, and unavailable control plane sends no model request (281.0877ms)
+✔ offline import uses the original Core boundary hash and stable event id (0.8462ms)
+✔ renewing a host cookie preserves the physical device import identity and deduplication (301.7047ms)
+✔ another cloud account on the same host cannot authorize use of this replica (303.4612ms)
+ℹ tests 45
+ℹ suites 2
+ℹ pass 45
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10059.1896

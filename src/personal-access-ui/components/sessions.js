@@ -77,32 +77,32 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
     function editProject(project = null) {
         if (!canManageProjectFolders()) return;
         const dialog = ui.element('dialog', 'dialog project-dialog'); dialog.setAttribute('aria-label', project ? '项目设置' : '新建项目');
-        const form = ui.element('form', 'dialog-body'); form.append(ui.element('h2', '', project ? '项目设置' : '新建项目'));
-        const field = (caption, control) => { const label = ui.element('label', 'project-field', caption); label.append(control); form.append(label); control.setAttribute('aria-label', caption); return control; };
+        const form = ui.element('form'), body = ui.element('div', 'dialog-body'); body.append(ui.element('h2', '', project ? '项目设置' : '新建项目'));
+        const field = (caption, control) => { const label = ui.element('label', 'project-field', caption); label.append(control); body.append(label); control.setAttribute('aria-label', caption); return control; };
         let folder;
         const name = ui.element('input'); name.value = project?.name || ''; name.required = true; name.maxLength = 80;
         if (!project) {
-            form.append(ui.element('p', 'muted', '一个项目对应电脑上的一个文件夹。项目对话默认在这里读写文件和运行命令。'));
+            body.append(ui.element('p', 'muted', '一个项目对应电脑上的一个文件夹。项目对话默认在这里读写文件和运行命令。'));
             folder = field('电脑上的文件夹', ui.element('input')); folder.required = true; folder.placeholder = '输入完整文件夹路径'; folder.autocomplete = 'off';
             const suggestName = () => { if (!name.value) name.value = folder.value.replace(/[\\/]+$/, '').split(/[\\/]/).pop() || ''; };
             folder.addEventListener('change', suggestName);
             if (globalThis.weftmateDesktop?.pickProjectFolder) {
                 const choose = ui.element('button', 'button secondary', '选择文件夹…'); choose.type = 'button';
                 choose.onclick = async () => { try { const path = await globalThis.weftmateDesktop.pickProjectFolder(); if (path) { folder.value = path; suggestName(); } }
-                    catch { notice.textContent = '无法打开系统选择框，请输入文件夹路径。'; } }; form.append(choose);
+                    catch { notice.textContent = '无法打开系统选择框，请输入文件夹路径。'; } }; body.append(choose);
             }
         }
         field('项目名称', name);
         const instructions = field('项目说明', ui.element('textarea')); instructions.value = project?.instructions || ''; instructions.rows = 5; instructions.maxLength = 16000;
         instructions.placeholder = '给助手的固定说明，例如背景、编码规范或写作要求';
         const permission = field('文件权限', ui.element('select')); permission.append(new Option('只读', 'read-only'), new Option('可写', 'write')); permission.value = project?.permission || 'write';
-        form.append(ui.element('p', 'field-help', '项目说明会自动带给模型。可写权限仅适用于项目文件夹；危险操作继续按对话审批模式处理。'));
-        const notice = ui.element('p', 'form-error'); notice.setAttribute('role', 'alert'); form.append(notice);
+        body.append(ui.element('p', 'field-help', '项目说明会自动带给模型。可写权限仅适用于项目文件夹；危险操作继续按对话审批模式处理。'));
+        const notice = ui.element('p', 'form-error'); notice.setAttribute('role', 'alert'); body.append(notice);
         const footer = ui.element('div', 'dialog-footer');
         const cancel = ui.element('button', 'button secondary', '取消'); cancel.type = 'button'; cancel.onclick = () => dialog.close();
         const save = ui.element('button', 'button primary', project ? '保存' : '创建项目'); save.type = 'submit';
         if (project) { const remove = ui.element('button', 'button danger', '移除项目'); remove.type = 'button'; remove.onclick = () => confirmRemoveProject(project, dialog); footer.append(remove); }
-        footer.append(cancel, save); form.append(footer); dialog.append(form);
+        footer.append(cancel, save); form.append(body, footer); dialog.append(form);
         const requestId = crypto.randomUUID();
         form.onsubmit = async event => { event.preventDefault(); save.disabled = true; notice.textContent = '';
             try { await core.saveProject(project, { name: name.value.trim().normalize('NFC'), instructions: instructions.value, permission: permission.value,
@@ -217,6 +217,14 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             const runs={project:()=>sessionMenu(session,menu.querySelector('[data-project-menu]'),'project'),pin:async()=>{await core.updateSession(session.sessionId,{pinned:!session.pinned});closeMenu();},unread:async()=>{await core.updateSession(session.sessionId,{unread:!session.unread});closeMenu();},
                 rename:()=>{closeMenu();renameInline(session);},fork:async()=>{const child=await core.forkSession(session.sessionId);closeMenu();if(!child)return;await core.refreshSessions();await core.selectSession(child.sessionId);},
                 group:()=>sessionMenu(session,menu.querySelector('[data-group-menu]'),true),archive:async()=>{if(session.archived)await core.archiveSession(session.sessionId,false);else await archiveWithUndo(session);closeMenu();},delete:()=>{closeMenu();confirmDelete(session);}};
+            if (session.kind === 'main') action('这次别记：开临时对话', () => { closeMenu(); core.startNewConversation(false, true); });
+            else {
+                const toggle = action('此对话不形成记忆', async () => { await core.updateSession(session.sessionId, {memoryMode: session.memoryMode === 'off' ? 'on' : 'off'}); closeMenu(); paintSelectedSession(core.state.selectedSessionId); ui.toast('从下一回合生效。之前形成的记忆保留，可去记忆页遗忘。'); });
+                toggle.setAttribute('role', 'menuitemcheckbox'); toggle.setAttribute('aria-checked', String(session.memoryMode === 'off'));
+                const recall = action('使用已有记忆', async () => { await core.updateSession(session.sessionId, {recallEnabled: session.recallEnabled === false}); closeMenu(); });
+                recall.setAttribute('role', 'menuitemcheckbox'); recall.setAttribute('aria-checked', String(session.recallEnabled !== false));
+                if (session.memoryMode === 'off') for (const days of [1, 7, 30, null]) action(days === null ? '不自动删除' : `${days} 天后自动删除`, async () => { await core.updateSession(session.sessionId, {autoDeleteDays: days}); closeMenu(); paintSelectedSession(core.state.selectedSessionId); });
+            }
             const buttons = new Map();
             for(const item of globalThis.WeftUiCore.sessionMenuItems(session)){ const button = action(item.label,runs[item.id],item); if (item.id === 'project') button.dataset.projectMenu = ''; if (item.id === 'group') button.dataset.groupMenu = ''; buttons.set(item.id,button); }
             menu.onkeydown = event => {
@@ -225,7 +233,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             };
         }
         menu.addEventListener('keydown', event=>{
-            const buttons=[...menu.querySelectorAll('[role=menuitem]')];let index=buttons.indexOf(document.activeElement);
+            const buttons=[...menu.querySelectorAll('[role=menuitem], [role=menuitemcheckbox]')];let index=buttons.indexOf(document.activeElement);
             if(event.key==='Escape'||groupsOnly&&event.key==='ArrowLeft'){event.preventDefault();if(groupsOnly){activeSubmenu?.remove();activeSubmenu=null;}else closeMenu();trigger.focus?.();}
             else if(['ArrowDown','ArrowUp','Home','End'].includes(event.key)){event.preventDefault();index=event.key==='Home'?0:event.key==='End'?buttons.length-1:(index+(event.key==='ArrowDown'?1:-1)+buttons.length)%buttons.length;buttons[index]?.focus();}
         });
@@ -279,6 +287,15 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         ui.byId('desktop-action').hidden = true;
         const selected = core.state.sessions.find((item) => item.sessionId === sessionId);
         ui.byId('assistant-title').textContent = selected?.title || '新对话';
+        const temporary = selected?.memoryMode === 'off' || !selected && core.state.newConversationTemporary;
+        let memoryNotice = ui.byId('temporary-chat-notice');
+        if (!memoryNotice) { memoryNotice = ui.element('p', 'muted temporary-chat-notice'); memoryNotice.id = 'temporary-chat-notice'; memoryNotice.setAttribute('role', 'status'); ui.byId('assistant-title').parentElement.append(memoryNotice); }
+        memoryNotice.textContent = temporary ? `临时对话 · 不会形成记忆，${selected?.autoDeleteDays === null ? '不自动删除' : (selected?.expiresAt ? Math.max(0, Math.ceil((Date.parse(selected.expiresAt) - Date.now()) / 86400000)) : selected?.autoDeleteDays ?? 30) + ' 天后自动删除'}` : '';
+        memoryNotice.hidden = !temporary;
+        let hint = ui.byId('temporary-composer-hint');
+        if (!hint) { hint = ui.element('p', 'muted temporary-composer-hint'); hint.id = 'temporary-composer-hint'; ui.byId('message-form').prepend(hint); }
+        hint.textContent = temporary ? '这次聊的内容不会形成记忆，也不会出现在其他对话。' : '';
+        hint.hidden = !temporary;
         let notice = ui.byId('project-conversation-notice');
         if (!notice) { notice = ui.element('p', 'project-conversation-notice'); notice.id = 'project-conversation-notice'; notice.setAttribute('role', 'status'); ui.byId('transcript').before(notice); }
         notice.textContent = selected?.projectNotice || (selected?.projectName ? `项目：${selected.projectName}` : ''); notice.hidden = !notice.textContent;

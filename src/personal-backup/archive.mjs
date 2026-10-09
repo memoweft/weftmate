@@ -1,3 +1,4 @@
+import { omitTemporaryChats } from './temporary.mjs';
 import path from 'node:path';
 import { createReadStream, createWriteStream, existsSync } from 'node:fs';
 import { copySnapshotTree } from '../runtime/dsh-adapter/snapshot-files.mjs';
@@ -92,7 +93,7 @@ export async function snapshot({ root, directory, reason = 'manual', now = Date.
   const databases = [];
   try {
     const manifest = { format: 'weftmate-local-backup', version: 1, sourceRoot: root, createdAt: new Date(now).toISOString(), reason,
-      excluded: ['model keys', 'cloud tokens and identity keys', 'device sessions and private keys', 'browser sessions/cache'], files: [] };
+      excluded: ['model keys', 'cloud tokens and identity keys', 'device sessions and private keys', 'browser sessions/cache', 'temporary conversations'], files: [] };
     // Capture ordinary files in the main event loop while atomic writers and
     // native DSH admission are paused. Copy bytes, never hard-link mutable logs.
     // Check the deadline between bounded chunks, including directory traversal.
@@ -118,6 +119,7 @@ export async function snapshot({ root, directory, reason = 'manual', now = Date.
     for (const { source, target, pinned } of databases) {
       if (pinned) await pinned.copy(target); else await databaseBackup(source, target);
     }
+    await omitTemporaryChats(stage);
     // Hashing, sanitizing captured bytes and compression never hold the write pause.
     for (const name of await files(stage)) {
       const target = path.join(stage, name);

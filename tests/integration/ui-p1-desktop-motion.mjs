@@ -114,6 +114,9 @@ try {
       return route.fulfill({ json });
     }
     const response = await route.fetch({ url: candidate.origin + url.pathname + url.search, headers: { ...route.request().headers(), origin: candidate.origin } });
+    if (url.pathname === '/personal/v1/status') {
+      const data=await response.json();return route.fulfill({response,json:{...data,personalCapabilities:{}}});
+    }
     if (url.pathname === '/personal/v1/sessions') {
       const data = await response.json(); data.sessions.push({ sessionId: '22222222-2222-4222-8222-222222222222', title: '合成空白对话', running: false });
       return route.fulfill({ response, json: data });
@@ -143,7 +146,7 @@ try {
     }, step));
     await page.reload();
     await page.getByRole('heading', { name: '登录 WeftMate' }).waitFor();
-    await frames(phase, 'approval-enter', async () => { await localUiSession(page, candidate.credentials); await page.getByRole('button', { name: phase === 'before' ? '允许一次' : '批准', exact: true }).waitFor(); });
+    await frames(phase, 'approval-enter', async () => { await localUiSession(page, candidate.credentials,'Synthetic motion regression',{interceptLegacyStatus:false}); await page.getByRole('button', { name: phase === 'before' ? '允许一次' : '批准', exact: true }).waitFor(); });
     await page.getByRole('button', { name: phase === 'before' ? '允许一次' : '批准', exact: true }).waitFor();
     const summary = page.getByText(phase === 'before' ? '执行了 2 步 · 用时 2 秒' : '读取了 3 个文件、已运行 1 个命令', { exact: true });
     await frames(phase, 'execution-expand', () => summary.evaluate(element => element.click()));
@@ -199,11 +202,35 @@ try {
       await until(async () => await page.locator('.motion-copy').count() === 0);
       assert.equal(await page.evaluate(() => document.getAnimations().length), 0);
     }
-    // Final geometry and scroll metrics are fixed for the full animation lifetime.
-    await page.evaluate(() => { const element = document.querySelector('.execution-block'); element.open = false; element.querySelector('summary').click(); });
-    const layout = await page.evaluate(() => { const scroll = document.getElementById('chat-scroll'); return { height: scroll.scrollHeight, top: scroll.scrollTop }; });
+    // ResizeObserver follows the bottom on the next frame. macOS legitimately
+    // moves 0 -> 72 when the expanded content first overflows; absolute scrollTop
+    // equality would reject the documented bottom-follow policy (D35).
+    await page.evaluate(() => { document.querySelector('.execution-block').open = false; });
     await page.waitForTimeout(260);
-    assert.deepEqual(await page.evaluate(() => { const scroll = document.getElementById('chat-scroll'); return { height: scroll.scrollHeight, top: scroll.scrollTop }; }), layout);
+    await page.evaluate(() => { const scroll = document.getElementById('chat-scroll'); scroll.scrollTop = scroll.scrollHeight; scroll.dispatchEvent(new Event('scroll')); });
+    await page.locator('.execution-block > summary').first().click();
+    const layout = await page.evaluate(() => { const scroll = document.getElementById('chat-scroll'); return { height: scroll.scrollHeight, client: scroll.clientHeight }; });
+    await page.waitForTimeout(260);
+    const followed = await page.evaluate(() => { const scroll = document.getElementById('chat-scroll'); return { height: scroll.scrollHeight, client: scroll.clientHeight, gap: scroll.scrollHeight - scroll.clientHeight - scroll.scrollTop }; });
+    assert.equal(followed.height, layout.height, 'animation must not change final content geometry');
+    assert.equal(followed.client, layout.client);
+    assert.ok(Math.abs(followed.gap) <= 1, `pinned reader stays at bottom: ${JSON.stringify(followed)}`);
+    // A reader who scrolls upward must retain the visible summary's anchor,
+    // including while the same expand animation and observers are running.
+    await page.evaluate(() => { const older = document.createElement('li'); older.id = 'motion-reader-history';
+      for (let index = 0; index < 24; index++) { const paragraph = document.createElement('p'); paragraph.textContent = `合成后续记录 ${index + 1}：保持上方阅读位置。`; older.append(paragraph); }
+      document.getElementById('transcript').append(older); });
+    await page.waitForTimeout(260);
+    await page.evaluate(() => { const scroll = document.getElementById('chat-scroll');
+      scroll.dispatchEvent(new WheelEvent('wheel', { deltaY: -120 })); scroll.scrollTop = 0; scroll.dispatchEvent(new Event('scroll'));
+      document.querySelector('.execution-block').open = false; });
+    await page.waitForTimeout(260);
+    await page.locator('.execution-block > summary').first().click();
+    const anchor = await page.evaluate(() => document.querySelector('.execution-block > summary').getBoundingClientRect().top - document.getElementById('chat-scroll').getBoundingClientRect().top);
+    await page.waitForTimeout(260);
+    const readerAnchor = await page.evaluate(() => document.querySelector('.execution-block > summary').getBoundingClientRect().top - document.getElementById('chat-scroll').getBoundingClientRect().top);
+    assert.ok(Math.abs(readerAnchor - anchor) <= 1, `reading anchor moved: ${anchor} -> ${readerAnchor}`);
+    await page.locator('#motion-reader-history').evaluate(element => element.remove());
     await page.getByRole('textbox', { name: '输入消息', exact: true }).fill('动效过程中可继续输入');
     await page.locator('.execution-block > summary').first().press('Enter');
     assert.equal(await page.getByRole('textbox', { name: '输入消息', exact: true }).inputValue(), '动效过程中可继续输入');

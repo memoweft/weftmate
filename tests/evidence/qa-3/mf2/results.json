@@ -1,0 +1,787 @@
+[
+  {
+    "id": "qa2-01-water",
+    "model": "mimo",
+    "settledMode": false,
+    "root": "C:/Temp/weftmate-mf2-Ugvid7",
+    "startedAt": "2026-10-09T18:55:59.500Z",
+    "turns": [
+      {
+        "sessionId": "session-284de641-c9b9-4c57-8614-e4bea12bd7ca",
+        "modelProfileId": "private-model-d1a61e80cf86fe10a9253456338ccefe1bab46e6",
+        "commandId": "cmd-e0b4ebf6-33da-4598-a1c2-f42f6d9498c6",
+        "startedAt": "2026-10-09T18:56:14.068Z",
+        "reply": "好的，已了解：你阳台盆栽每次浇水固定用 300 毫升，之后涉及浇水或估算用量时我会按这个来。",
+        "status": "completed",
+        "approvals": [],
+        "timeline": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-09T18:56:14.128Z"
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-09T18:56:14.129Z"
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-09T18:56:14.181Z"
+          },
+          {
+            "seq": 8,
+            "type": "user.message",
+            "at": "2026-10-09T18:56:14.181Z"
+          },
+          {
+            "seq": 63,
+            "type": "assistant.message",
+            "at": "2026-10-09T18:56:16.496Z"
+          },
+          {
+            "seq": 64,
+            "type": "task.ended",
+            "at": "2026-10-09T18:56:16.496Z"
+          },
+          {
+            "seq": 65,
+            "type": "turn.ended",
+            "at": "2026-10-09T18:56:16.497Z"
+          }
+        ],
+        "memoryUsedSupported": true,
+        "memoryUsed": [],
+        "durationMs": 2643,
+        "endedAt": "2026-10-09T18:56:16.711Z"
+      },
+      {
+        "sessionId": "session-060aca5a-0848-4878-b6e1-f438ef8c5e1a",
+        "modelProfileId": "private-model-d1a61e80cf86fe10a9253456338ccefe1bab46e6",
+        "commandId": "cmd-6109b78f-2179-4cab-84ec-ee9a8587bab0",
+        "startedAt": "2026-10-09T18:56:19.335Z",
+        "reply": "收到，已更正：阳台盆栽每次浇水以 **150毫升** 为准，之前的300毫升作废，后续都按150毫升执行。",
+        "status": "completed",
+        "approvals": [],
+        "timeline": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-09T18:56:19.407Z"
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-09T18:56:19.407Z"
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-09T18:56:19.448Z"
+          },
+          {
+            "seq": 11,
+            "type": "user.message",
+            "at": "2026-10-09T18:56:19.449Z"
+          },
+          {
+            "seq": 98,
+            "type": "assistant.message",
+            "at": "2026-10-09T18:56:25.458Z"
+          },
+          {
+            "seq": 99,
+            "type": "task.ended",
+            "at": "2026-10-09T18:56:25.458Z"
+          },
+          {
+            "seq": 100,
+            "type": "turn.ended",
+            "at": "2026-10-09T18:56:25.459Z"
+          }
+        ],
+        "memoryUsedSupported": true,
+        "memoryUsed": [],
+        "durationMs": 6293,
+        "endedAt": "2026-10-09T18:56:25.628Z"
+      },
+      {
+        "sessionId": "session-3bddab87-f9e3-48fa-86b3-e8bdfad33aa8",
+        "modelProfileId": "private-model-d1a61e80cf86fe10a9253456338ccefe1bab46e6",
+        "commandId": "cmd-5e149269-1b42-4805-a51d-10d83a2020bf",
+        "startedAt": "2026-10-09T18:56:27.942Z",
+        "reply": "今天浇 150 毫升（之前说的 300 毫升已作废，以 150 毫升为准）。",
+        "status": "completed",
+        "approvals": [],
+        "timeline": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-09T18:56:28.036Z"
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-09T18:56:28.037Z"
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-09T18:56:28.077Z"
+          },
+          {
+            "seq": 11,
+            "type": "user.message",
+            "at": "2026-10-09T18:56:28.078Z"
+          },
+          {
+            "seq": 39,
+            "type": "assistant.message",
+            "at": "2026-10-09T18:56:29.163Z"
+          },
+          {
+            "seq": 40,
+            "type": "task.ended",
+            "at": "2026-10-09T18:56:29.163Z"
+          },
+          {
+            "seq": 41,
+            "type": "turn.ended",
+            "at": "2026-10-09T18:56:29.164Z"
+          }
+        ],
+        "memoryUsedSupported": true,
+        "memoryUsed": [
+          {
+            "id": "cognition-000e781e9734019cb884adba28d6471e4ccb9d0654c1e1a33b21ec04cb5c8d25",
+            "kind": "cognition",
+            "summary": "用户养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。"
+          }
+        ],
+        "durationMs": 1388,
+        "endedAt": "2026-10-09T18:56:29.330Z"
+      }
+    ],
+    "settlements": [
+      {
+        "memory_world_job": [
+          {
+            "job_id": "memory-world-job-cb2526caed2cbb5634945153447f5845e7a9292ccee4b5762c39fc7ea418a67c",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:e765928d6d73767c9d9891eb87ed5262:e0ecfbb7ca9f40595d3e32a58632d541f794757add5d8bcc26754ccd47918808",
+            "boundary_payload_hash": "e0ecfbb7ca9f40595d3e32a58632d541f794757add5d8bcc26754ccd47918808",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-284de641-c9b9-4c57-8614-e4bea12bd7ca",
+            "result_session_id": "session-284de641-c9b9-4c57-8614-e4bea12bd7ca",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-284de641-c9b9-4c57-8614-e4bea12bd7ca\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-284de641-c9b9-4c57-8614-e4bea12bd7ca\",\"subject_id\":\"owner-6a21a5b1-473f-4ed0-967f-38d27d9fda21\"}",
+            "formal_target_hash": "7577b7c4ca804bbe2bbedc2af76f10d108b4a4d98e5174fcc72d366952300f7c",
+            "subject_id": "owner-6a21a5b1-473f-4ed0-967f-38d27d9fda21",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"f7cd3986-990a-483c-bdd3-5a6e3997dad5\"]",
+            "state": "applied",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-09T18:56:17.554Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-09T18:56:17.570Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-09T18:56:17.581Z",
+            "model_completed_at": "2026-10-09T18:56:22.644Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": "mimo-v2.6-flash",
+            "model_usage_json": "{\"completion_tokens\":268,\"completion_tokens_details\":{\"reasoning_tokens\":139},\"prompt_tokens\":4595,\"prompt_tokens_details\":{\"cached_tokens\":4416},\"total_tokens\":4863}",
+            "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u7528\\u6237\\u517b\\u7684\\u9633\\u53f0\\u76c6\\u683d\\u6bcf\\u6b21\\u6d47\\u6c34\\u7528300\\u6beb\\u5347\\uff0c\\u8fd9\\u662f\\u7528\\u6237\\u73b0\\u5728\\u56fa\\u5b9a\\u7684\\u7528\\u91cf\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"f7cd3986-990a-483c-bdd3-5a6e3997dad5\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u9633\\u53f0\\u76c6\\u683d\\\",\\\"kind\\\":\\\"topic\\\",\\\"aliases\\\":[\\\"\\u76c6\\u683d\\\"]}}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":268,\"completion_tokens_details\":{\"reasoning_tokens\":139},\"prompt_tokens\":4595,\"prompt_tokens_details\":{\"cached_tokens\":4416},\"total_tokens\":4863}}",
+            "model_result_hash": "f04610cb199d5d561aa60e4141a8d40aaf378f94d1d912a1c48904029bf3d228",
+            "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:e765928d6d73767c9d9891eb87ed5262:e0ecfbb7ca9f40595d3e32a58632d541f794757add5d8bcc26754ccd47918808\",\"cognitions\":[{\"action\":\"form\",\"cognition_id\":\"cognition-000e781e9734019cb884adba28d6471e4ccb9d0654c1e1a33b21ec04cb5c8d25\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":1}",
+            "result_hash": "1f631e4b0e74faeb79f2ab140a01fd9e409700d7f281fe112389a343b2a2a761",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T18:56:17.489Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:e765928d6d73767c9d9891eb87ed5262:e0ecfbb7ca9f40595d3e32a58632d541f794757add5d8bcc26754ccd47918808\",\"evidence_count\":1,\"evidence_manifest_hash\":\"7a48ed7fa60a15a43ca161681aadc81706468d135dd2c54f698916ec7e9b1fb6\",\"formal_target_hash\":\"7577b7c4ca804bbe2bbedc2af76f10d108b4a4d98e5174fcc72d366952300f7c\",\"job_id\":\"memory-world-job-cb2526caed2cbb5634945153447f5845e7a9292ccee4b5762c39fc7ea418a67c\",\"job_state\":\"pending\",\"payload_hash\":\"e0ecfbb7ca9f40595d3e32a58632d541f794757add5d8bcc26754ccd47918808\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "8db813688141569f12804357ae845f1693955807f4449a6ff4bcdb90710b2dc4",
+            "created_at": "2026-10-09T18:56:17.489Z",
+            "completed_at": "2026-10-09T18:56:22.654Z",
+            "last_error_type": null,
+            "terminal_state": "applied",
+            "terminal_detail": null
+          },
+          {
+            "job_id": "memory-world-job-4b0e1b47e5aa3c2fefde4b5df25db08af737ac2c8cde584f45dbe2165f17d1c2",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:38952804bbe1c7c005e42688649b01bb:5c5f47af34881eaa6dc8322f0b38ddc2487f5dcc2acd78ebaa96e72790276a1e",
+            "boundary_payload_hash": "5c5f47af34881eaa6dc8322f0b38ddc2487f5dcc2acd78ebaa96e72790276a1e",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-060aca5a-0848-4878-b6e1-f438ef8c5e1a",
+            "result_session_id": "session-060aca5a-0848-4878-b6e1-f438ef8c5e1a",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-060aca5a-0848-4878-b6e1-f438ef8c5e1a\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-060aca5a-0848-4878-b6e1-f438ef8c5e1a\",\"subject_id\":\"owner-6a21a5b1-473f-4ed0-967f-38d27d9fda21\"}",
+            "formal_target_hash": "2d4a6a02ce26363e4dc9d842b161ceacf46a6012dfe20f98f01551bed0d8c615",
+            "subject_id": "owner-6a21a5b1-473f-4ed0-967f-38d27d9fda21",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"c6333325-c736-42eb-b825-3c8956a9c7fd\"]",
+            "state": "applied",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-09T18:56:26.517Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-09T18:56:26.532Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-09T18:56:26.547Z",
+            "model_completed_at": "2026-10-09T18:56:31.550Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": "mimo-v2.6-flash",
+            "model_usage_json": "{\"completion_tokens\":272,\"completion_tokens_details\":{\"reasoning_tokens\":90},\"prompt_tokens\":4826,\"prompt_tokens_details\":{\"cached_tokens\":4416},\"total_tokens\":5098}",
+            "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"correct\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u524d\\u9762\\u90a3\\u4e2a\\u6570\\u62a5\\u5927\\u4e86\\uff0c\\u5e94\\u5f53\\u662f150\\u6beb\\u5347\\uff0c300\\u6beb\\u5347\\u4f5c\\u5e9f\\uff0c\\u540e\\u9762\\u90fd\\u4ee5\\u5c0f\\u7684\\u8fd9\\u4e2a\\u6570\\u4e3a\\u51c6\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"c6333325-c736-42eb-b825-3c8956a9c7fd\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"corrects_cognition_id\\\":\\\"cognition-000e781e9734019cb884adba28d6471e4ccb9d0654c1e1a33b21ec04cb5c8d25\\\"}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":272,\"completion_tokens_details\":{\"reasoning_tokens\":90},\"prompt_tokens\":4826,\"prompt_tokens_details\":{\"cached_tokens\":4416},\"total_tokens\":5098}}",
+            "model_result_hash": "20978573fa6ea787a44fe797fabfe3591fcad4036c1f64601973c1a0723dae92",
+            "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:38952804bbe1c7c005e42688649b01bb:5c5f47af34881eaa6dc8322f0b38ddc2487f5dcc2acd78ebaa96e72790276a1e\",\"cognitions\":[{\"action\":\"correct\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"prior_cognition_id\":\"cognition-000e781e9734019cb884adba28d6471e4ccb9d0654c1e1a33b21ec04cb5c8d25\",\"replacement_cognition_id\":\"cognition-35b23c361263ee9831ae8fa5863daf914d0db1baa9b0f35e8cefa82ab6e080d3\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":2}",
+            "result_hash": "8bc6580e36eeeb9ccf96b7d845cbcb030b9596e07b79e0aabcaa6648e58f0eb6",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T18:56:26.494Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:38952804bbe1c7c005e42688649b01bb:5c5f47af34881eaa6dc8322f0b38ddc2487f5dcc2acd78ebaa96e72790276a1e\",\"evidence_count\":1,\"evidence_manifest_hash\":\"583435b244da3f3d1de635847ab151fccbf612467c95d58c89af35075c43ec86\",\"formal_target_hash\":\"2d4a6a02ce26363e4dc9d842b161ceacf46a6012dfe20f98f01551bed0d8c615\",\"job_id\":\"memory-world-job-4b0e1b47e5aa3c2fefde4b5df25db08af737ac2c8cde584f45dbe2165f17d1c2\",\"job_state\":\"pending\",\"payload_hash\":\"5c5f47af34881eaa6dc8322f0b38ddc2487f5dcc2acd78ebaa96e72790276a1e\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "123bc4621aa1c1657e285a6375daaf7f7d7fa7429e198881abacbed36ed1b454",
+            "created_at": "2026-10-09T18:56:26.494Z",
+            "completed_at": "2026-10-09T18:56:31.565Z",
+            "last_error_type": null,
+            "terminal_state": "applied",
+            "terminal_detail": null
+          },
+          {
+            "job_id": "memory-world-job-c02fdf33c0edc622a09a319f4dd9cf87639039370fd79a8bbf24c8d7cf40d24c",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:e958fc92fea12d0e1375401052980116:dc5675f267f4b2bbb21902a910add3f2238cd262ca36a25e3dffdecbcadb0d0f",
+            "boundary_payload_hash": "dc5675f267f4b2bbb21902a910add3f2238cd262ca36a25e3dffdecbcadb0d0f",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-3bddab87-f9e3-48fa-86b3-e8bdfad33aa8",
+            "result_session_id": "session-3bddab87-f9e3-48fa-86b3-e8bdfad33aa8",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-3bddab87-f9e3-48fa-86b3-e8bdfad33aa8\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-3bddab87-f9e3-48fa-86b3-e8bdfad33aa8\",\"subject_id\":\"owner-6a21a5b1-473f-4ed0-967f-38d27d9fda21\"}",
+            "formal_target_hash": "9c6792d3166c161593996f9e589db30f1ad19290782303911ccb72bb4169f916",
+            "subject_id": "owner-6a21a5b1-473f-4ed0-967f-38d27d9fda21",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"2269f42b-8024-41ea-a022-7d679dfc16e2\"]",
+            "state": "no_change",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-09T18:56:31.580Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-09T18:56:31.591Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-09T18:56:31.607Z",
+            "model_completed_at": "2026-10-09T18:56:31.621Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": null,
+            "model_usage_json": null,
+            "model_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+            "model_result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+            "world_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+            "result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T18:56:30.048Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:e958fc92fea12d0e1375401052980116:dc5675f267f4b2bbb21902a910add3f2238cd262ca36a25e3dffdecbcadb0d0f\",\"evidence_count\":1,\"evidence_manifest_hash\":\"3bdfff839b4b2b90b09a98108bddf6a2eafefbe9b81068ded7bb2e59fe4a9ae3\",\"formal_target_hash\":\"9c6792d3166c161593996f9e589db30f1ad19290782303911ccb72bb4169f916\",\"job_id\":\"memory-world-job-c02fdf33c0edc622a09a319f4dd9cf87639039370fd79a8bbf24c8d7cf40d24c\",\"job_state\":\"pending\",\"payload_hash\":\"dc5675f267f4b2bbb21902a910add3f2238cd262ca36a25e3dffdecbcadb0d0f\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "482213efb2be98e6df17dbcc0a474515f32edaff31cba9ed5426f914eebc12d1",
+            "created_at": "2026-10-09T18:56:30.048Z",
+            "completed_at": "2026-10-09T18:56:31.621Z",
+            "last_error_type": null,
+            "terminal_state": "no_change",
+            "terminal_detail": null
+          }
+        ],
+        "cognition": [
+          {
+            "id": "cognition-000e781e9734019cb884adba28d6471e4ccb9d0654c1e1a33b21ec04cb5c8d25",
+            "subject_id": "owner-6a21a5b1-473f-4ed0-967f-38d27d9fda21",
+            "content": "用户养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。",
+            "content_type": "preference",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "scope": null,
+            "valid_at": null,
+            "invalid_at": "2026-10-09T18:56:31.565Z",
+            "asked_at": null,
+            "archived_at": null,
+            "muted_at": null,
+            "created_at": "2026-10-09T18:56:22.654Z",
+            "updated_at": "2026-10-09T18:56:31.565Z"
+          },
+          {
+            "id": "cognition-35b23c361263ee9831ae8fa5863daf914d0db1baa9b0f35e8cefa82ab6e080d3",
+            "subject_id": "owner-6a21a5b1-473f-4ed0-967f-38d27d9fda21",
+            "content": "用户前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。",
+            "content_type": "preference",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "scope": null,
+            "valid_at": null,
+            "invalid_at": null,
+            "asked_at": null,
+            "archived_at": null,
+            "muted_at": null,
+            "created_at": "2026-10-09T18:56:31.565Z",
+            "updated_at": "2026-10-09T18:56:31.565Z"
+          }
+        ],
+        "cognition_transitions": [
+          {
+            "id": "cognition-transition-80fcddaffd5aa8462c0c6533dc5df1c86f5a47ae6b779b079875ba761c4f2383",
+            "prior_cognition_id": "cognition-000e781e9734019cb884adba28d6471e4ccb9d0654c1e1a33b21ec04cb5c8d25",
+            "replacement_cognition_id": "cognition-35b23c361263ee9831ae8fa5863daf914d0db1baa9b0f35e8cefa82ab6e080d3",
+            "reason": "corrects",
+            "revision": 2
+          }
+        ],
+        "relationship": [],
+        "entity": [
+          {
+            "id": "entity-bac991adb5666de0ad4b7ca4edb70e0f62bac0742597a05fdf9e6e9317388172",
+            "world_id": "owner-6a21a5b1-473f-4ed0-967f-38d27d9fda21",
+            "kind": "topic",
+            "canonical_name": "阳台盆栽",
+            "invalid_at": null,
+            "created_at": "2026-10-09T18:56:22.654Z",
+            "updated_at": "2026-10-09T18:56:22.654Z",
+            "aliases_json": "[\"\\u76c6\\u683d\"]"
+          }
+        ]
+      }
+    ],
+    "turnResults": [
+      {
+        "id": "qa2-01-water-1",
+        "category": "memory",
+        "title": "qa2-01-water",
+        "status": "passed",
+        "durationMs": 2986,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-284de641-c9b9-4c57-8614-e4bea12bd7ca",
+            "modelProfileId": "private-model-d1a61e80cf86fe10a9253456338ccefe1bab46e6",
+            "commandId": "cmd-e0b4ebf6-33da-4598-a1c2-f42f6d9498c6",
+            "startedAt": "2026-10-09T18:56:14.068Z",
+            "reply": "好的，已了解：你阳台盆栽每次浇水固定用 300 毫升，之后涉及浇水或估算用量时我会按这个来。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T18:56:14.128Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T18:56:14.129Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T18:56:14.181Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-09T18:56:14.181Z"
+              },
+              {
+                "seq": 63,
+                "type": "assistant.message",
+                "at": "2026-10-09T18:56:16.496Z"
+              },
+              {
+                "seq": 64,
+                "type": "task.ended",
+                "at": "2026-10-09T18:56:16.496Z"
+              },
+              {
+                "seq": 65,
+                "type": "turn.ended",
+                "at": "2026-10-09T18:56:16.497Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [],
+            "durationMs": 2643,
+            "endedAt": "2026-10-09T18:56:16.711Z"
+          }
+        ],
+        "replySummary": "好的，已了解：你阳台盆栽每次浇水固定用 300 毫升，之后涉及浇水或估算用量时我会按这个来。",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness.",
+        "scratchDir": "C:\\temp\\weftmate-eval-qa2-01-water-1-Y9VETb"
+      },
+      {
+        "id": "qa2-01-water-2",
+        "category": "memory",
+        "title": "qa2-01-water",
+        "status": "passed",
+        "durationMs": 6684,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-060aca5a-0848-4878-b6e1-f438ef8c5e1a",
+            "modelProfileId": "private-model-d1a61e80cf86fe10a9253456338ccefe1bab46e6",
+            "commandId": "cmd-6109b78f-2179-4cab-84ec-ee9a8587bab0",
+            "startedAt": "2026-10-09T18:56:19.335Z",
+            "reply": "收到，已更正：阳台盆栽每次浇水以 **150毫升** 为准，之前的300毫升作废，后续都按150毫升执行。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T18:56:19.407Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T18:56:19.407Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T18:56:19.448Z"
+              },
+              {
+                "seq": 11,
+                "type": "user.message",
+                "at": "2026-10-09T18:56:19.449Z"
+              },
+              {
+                "seq": 98,
+                "type": "assistant.message",
+                "at": "2026-10-09T18:56:25.458Z"
+              },
+              {
+                "seq": 99,
+                "type": "task.ended",
+                "at": "2026-10-09T18:56:25.458Z"
+              },
+              {
+                "seq": 100,
+                "type": "turn.ended",
+                "at": "2026-10-09T18:56:25.459Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [],
+            "durationMs": 6293,
+            "endedAt": "2026-10-09T18:56:25.628Z"
+          }
+        ],
+        "replySummary": "收到，已更正：阳台盆栽每次浇水以 **150毫升** 为准，之前的300毫升作废，后续都按150毫升执行。",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness.",
+        "scratchDir": "C:\\temp\\weftmate-eval-qa2-01-water-2-NCBsm6"
+      },
+      {
+        "id": "qa2-01-water-3",
+        "category": "memory",
+        "title": "qa2-01-water",
+        "status": "passed",
+        "durationMs": 1814,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-3bddab87-f9e3-48fa-86b3-e8bdfad33aa8",
+            "modelProfileId": "private-model-d1a61e80cf86fe10a9253456338ccefe1bab46e6",
+            "commandId": "cmd-5e149269-1b42-4805-a51d-10d83a2020bf",
+            "startedAt": "2026-10-09T18:56:27.942Z",
+            "reply": "今天浇 150 毫升（之前说的 300 毫升已作废，以 150 毫升为准）。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T18:56:28.036Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T18:56:28.037Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T18:56:28.077Z"
+              },
+              {
+                "seq": 11,
+                "type": "user.message",
+                "at": "2026-10-09T18:56:28.078Z"
+              },
+              {
+                "seq": 39,
+                "type": "assistant.message",
+                "at": "2026-10-09T18:56:29.163Z"
+              },
+              {
+                "seq": 40,
+                "type": "task.ended",
+                "at": "2026-10-09T18:56:29.163Z"
+              },
+              {
+                "seq": 41,
+                "type": "turn.ended",
+                "at": "2026-10-09T18:56:29.164Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [
+              {
+                "id": "cognition-000e781e9734019cb884adba28d6471e4ccb9d0654c1e1a33b21ec04cb5c8d25",
+                "kind": "cognition",
+                "summary": "用户养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。"
+              }
+            ],
+            "durationMs": 1388,
+            "endedAt": "2026-10-09T18:56:29.330Z"
+          }
+        ],
+        "replySummary": "今天浇 150 毫升（之前说的 300 毫升已作废，以 150 毫升为准）。",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness.",
+        "scratchDir": "C:\\temp\\weftmate-eval-qa2-01-water-3-fipj6W"
+      }
+    ],
+    "expectedValuePresent": true,
+    "rejectedValueMentioned": true,
+    "rubric": "采用每次150毫升；不得把300毫升作为当前用量。",
+    "answer": "今天浇 150 毫升（之前说的 300 毫升已作废，以 150 毫升为准）。",
+    "automaticPass": false,
+    "formalItems": {
+      "ownerId": "owner-6a21a5b1-473f-4ed0-967f-38d27d9fda21",
+      "items": [
+        {
+          "id": "cognition-000e781e9734019cb884adba28d6471e4ccb9d0654c1e1a33b21ec04cb5c8d25",
+          "kind": "cognition",
+          "text": "用户养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-09T18:56:22.654Z",
+          "updatedAt": "2026-10-09T18:56:22.654Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        }
+      ],
+      "worldRevision": 1,
+      "nextCursor": null,
+      "hasMore": false,
+      "searchScope": "account_snapshot"
+    },
+    "finalStorage": {
+      "memory_world_job": [
+        {
+          "job_id": "memory-world-job-cb2526caed2cbb5634945153447f5845e7a9292ccee4b5762c39fc7ea418a67c",
+          "job_schema_version": 1,
+          "boundary_event_id": "weftmate-turn-boundary-v1:e765928d6d73767c9d9891eb87ed5262:e0ecfbb7ca9f40595d3e32a58632d541f794757add5d8bcc26754ccd47918808",
+          "boundary_payload_hash": "e0ecfbb7ca9f40595d3e32a58632d541f794757add5d8bcc26754ccd47918808",
+          "boundary_schema_version": 1,
+          "provider_name": "memoweft",
+          "parent_session_id": "session-284de641-c9b9-4c57-8614-e4bea12bd7ca",
+          "result_session_id": "session-284de641-c9b9-4c57-8614-e4bea12bd7ca",
+          "boundary_mode": "in_place",
+          "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-284de641-c9b9-4c57-8614-e4bea12bd7ca\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-284de641-c9b9-4c57-8614-e4bea12bd7ca\",\"subject_id\":\"owner-6a21a5b1-473f-4ed0-967f-38d27d9fda21\"}",
+          "formal_target_hash": "7577b7c4ca804bbe2bbedc2af76f10d108b4a4d98e5174fcc72d366952300f7c",
+          "subject_id": "owner-6a21a5b1-473f-4ed0-967f-38d27d9fda21",
+          "host_id": "weftmate:dsh",
+          "evidence_ids_json": "[\"f7cd3986-990a-483c-bdd3-5a6e3997dad5\"]",
+          "state": "applied",
+          "attempts": 1,
+          "next_attempt_at": null,
+          "claim_owner": null,
+          "claim_token": null,
+          "claimed_at": "2026-10-09T18:56:17.554Z",
+          "lease_expires_at": null,
+          "heartbeat_at": "2026-10-09T18:56:17.570Z",
+          "fencing_generation": 1,
+          "model_dispatch_started_at": "2026-10-09T18:56:17.581Z",
+          "model_completed_at": "2026-10-09T18:56:22.644Z",
+          "model_task": "memory_world",
+          "model_provider": null,
+          "model_name": "mimo-v2.6-flash",
+          "model_usage_json": "{\"completion_tokens\":268,\"completion_tokens_details\":{\"reasoning_tokens\":139},\"prompt_tokens\":4595,\"prompt_tokens_details\":{\"cached_tokens\":4416},\"total_tokens\":4863}",
+          "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u7528\\u6237\\u517b\\u7684\\u9633\\u53f0\\u76c6\\u683d\\u6bcf\\u6b21\\u6d47\\u6c34\\u7528300\\u6beb\\u5347\\uff0c\\u8fd9\\u662f\\u7528\\u6237\\u73b0\\u5728\\u56fa\\u5b9a\\u7684\\u7528\\u91cf\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"f7cd3986-990a-483c-bdd3-5a6e3997dad5\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u9633\\u53f0\\u76c6\\u683d\\\",\\\"kind\\\":\\\"topic\\\",\\\"aliases\\\":[\\\"\\u76c6\\u683d\\\"]}}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":268,\"completion_tokens_details\":{\"reasoning_tokens\":139},\"prompt_tokens\":4595,\"prompt_tokens_details\":{\"cached_tokens\":4416},\"total_tokens\":4863}}",
+          "model_result_hash": "f04610cb199d5d561aa60e4141a8d40aaf378f94d1d912a1c48904029bf3d228",
+          "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:e765928d6d73767c9d9891eb87ed5262:e0ecfbb7ca9f40595d3e32a58632d541f794757add5d8bcc26754ccd47918808\",\"cognitions\":[{\"action\":\"form\",\"cognition_id\":\"cognition-000e781e9734019cb884adba28d6471e4ccb9d0654c1e1a33b21ec04cb5c8d25\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":1}",
+          "result_hash": "1f631e4b0e74faeb79f2ab140a01fd9e409700d7f281fe112389a343b2a2a761",
+          "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T18:56:17.489Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:e765928d6d73767c9d9891eb87ed5262:e0ecfbb7ca9f40595d3e32a58632d541f794757add5d8bcc26754ccd47918808\",\"evidence_count\":1,\"evidence_manifest_hash\":\"7a48ed7fa60a15a43ca161681aadc81706468d135dd2c54f698916ec7e9b1fb6\",\"formal_target_hash\":\"7577b7c4ca804bbe2bbedc2af76f10d108b4a4d98e5174fcc72d366952300f7c\",\"job_id\":\"memory-world-job-cb2526caed2cbb5634945153447f5845e7a9292ccee4b5762c39fc7ea418a67c\",\"job_state\":\"pending\",\"payload_hash\":\"e0ecfbb7ca9f40595d3e32a58632d541f794757add5d8bcc26754ccd47918808\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+          "delivery_receipt_hash": "8db813688141569f12804357ae845f1693955807f4449a6ff4bcdb90710b2dc4",
+          "created_at": "2026-10-09T18:56:17.489Z",
+          "completed_at": "2026-10-09T18:56:22.654Z",
+          "last_error_type": null,
+          "terminal_state": "applied",
+          "terminal_detail": null
+        },
+        {
+          "job_id": "memory-world-job-4b0e1b47e5aa3c2fefde4b5df25db08af737ac2c8cde584f45dbe2165f17d1c2",
+          "job_schema_version": 1,
+          "boundary_event_id": "weftmate-turn-boundary-v1:38952804bbe1c7c005e42688649b01bb:5c5f47af34881eaa6dc8322f0b38ddc2487f5dcc2acd78ebaa96e72790276a1e",
+          "boundary_payload_hash": "5c5f47af34881eaa6dc8322f0b38ddc2487f5dcc2acd78ebaa96e72790276a1e",
+          "boundary_schema_version": 1,
+          "provider_name": "memoweft",
+          "parent_session_id": "session-060aca5a-0848-4878-b6e1-f438ef8c5e1a",
+          "result_session_id": "session-060aca5a-0848-4878-b6e1-f438ef8c5e1a",
+          "boundary_mode": "in_place",
+          "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-060aca5a-0848-4878-b6e1-f438ef8c5e1a\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-060aca5a-0848-4878-b6e1-f438ef8c5e1a\",\"subject_id\":\"owner-6a21a5b1-473f-4ed0-967f-38d27d9fda21\"}",
+          "formal_target_hash": "2d4a6a02ce26363e4dc9d842b161ceacf46a6012dfe20f98f01551bed0d8c615",
+          "subject_id": "owner-6a21a5b1-473f-4ed0-967f-38d27d9fda21",
+          "host_id": "weftmate:dsh",
+          "evidence_ids_json": "[\"c6333325-c736-42eb-b825-3c8956a9c7fd\"]",
+          "state": "applied",
+          "attempts": 1,
+          "next_attempt_at": null,
+          "claim_owner": null,
+          "claim_token": null,
+          "claimed_at": "2026-10-09T18:56:26.517Z",
+          "lease_expires_at": null,
+          "heartbeat_at": "2026-10-09T18:56:26.532Z",
+          "fencing_generation": 1,
+          "model_dispatch_started_at": "2026-10-09T18:56:26.547Z",
+          "model_completed_at": "2026-10-09T18:56:31.550Z",
+          "model_task": "memory_world",
+          "model_provider": null,
+          "model_name": "mimo-v2.6-flash",
+          "model_usage_json": "{\"completion_tokens\":272,\"completion_tokens_details\":{\"reasoning_tokens\":90},\"prompt_tokens\":4826,\"prompt_tokens_details\":{\"cached_tokens\":4416},\"total_tokens\":5098}",
+          "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"correct\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u524d\\u9762\\u90a3\\u4e2a\\u6570\\u62a5\\u5927\\u4e86\\uff0c\\u5e94\\u5f53\\u662f150\\u6beb\\u5347\\uff0c300\\u6beb\\u5347\\u4f5c\\u5e9f\\uff0c\\u540e\\u9762\\u90fd\\u4ee5\\u5c0f\\u7684\\u8fd9\\u4e2a\\u6570\\u4e3a\\u51c6\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"c6333325-c736-42eb-b825-3c8956a9c7fd\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"corrects_cognition_id\\\":\\\"cognition-000e781e9734019cb884adba28d6471e4ccb9d0654c1e1a33b21ec04cb5c8d25\\\"}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":272,\"completion_tokens_details\":{\"reasoning_tokens\":90},\"prompt_tokens\":4826,\"prompt_tokens_details\":{\"cached_tokens\":4416},\"total_tokens\":5098}}",
+          "model_result_hash": "20978573fa6ea787a44fe797fabfe3591fcad4036c1f64601973c1a0723dae92",
+          "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:38952804bbe1c7c005e42688649b01bb:5c5f47af34881eaa6dc8322f0b38ddc2487f5dcc2acd78ebaa96e72790276a1e\",\"cognitions\":[{\"action\":\"correct\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"prior_cognition_id\":\"cognition-000e781e9734019cb884adba28d6471e4ccb9d0654c1e1a33b21ec04cb5c8d25\",\"replacement_cognition_id\":\"cognition-35b23c361263ee9831ae8fa5863daf914d0db1baa9b0f35e8cefa82ab6e080d3\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":2}",
+          "result_hash": "8bc6580e36eeeb9ccf96b7d845cbcb030b9596e07b79e0aabcaa6648e58f0eb6",
+          "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T18:56:26.494Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:38952804bbe1c7c005e42688649b01bb:5c5f47af34881eaa6dc8322f0b38ddc2487f5dcc2acd78ebaa96e72790276a1e\",\"evidence_count\":1,\"evidence_manifest_hash\":\"583435b244da3f3d1de635847ab151fccbf612467c95d58c89af35075c43ec86\",\"formal_target_hash\":\"2d4a6a02ce26363e4dc9d842b161ceacf46a6012dfe20f98f01551bed0d8c615\",\"job_id\":\"memory-world-job-4b0e1b47e5aa3c2fefde4b5df25db08af737ac2c8cde584f45dbe2165f17d1c2\",\"job_state\":\"pending\",\"payload_hash\":\"5c5f47af34881eaa6dc8322f0b38ddc2487f5dcc2acd78ebaa96e72790276a1e\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+          "delivery_receipt_hash": "123bc4621aa1c1657e285a6375daaf7f7d7fa7429e198881abacbed36ed1b454",
+          "created_at": "2026-10-09T18:56:26.494Z",
+          "completed_at": "2026-10-09T18:56:31.565Z",
+          "last_error_type": null,
+          "terminal_state": "applied",
+          "terminal_detail": null
+        },
+        {
+          "job_id": "memory-world-job-c02fdf33c0edc622a09a319f4dd9cf87639039370fd79a8bbf24c8d7cf40d24c",
+          "job_schema_version": 1,
+          "boundary_event_id": "weftmate-turn-boundary-v1:e958fc92fea12d0e1375401052980116:dc5675f267f4b2bbb21902a910add3f2238cd262ca36a25e3dffdecbcadb0d0f",
+          "boundary_payload_hash": "dc5675f267f4b2bbb21902a910add3f2238cd262ca36a25e3dffdecbcadb0d0f",
+          "boundary_schema_version": 1,
+          "provider_name": "memoweft",
+          "parent_session_id": "session-3bddab87-f9e3-48fa-86b3-e8bdfad33aa8",
+          "result_session_id": "session-3bddab87-f9e3-48fa-86b3-e8bdfad33aa8",
+          "boundary_mode": "in_place",
+          "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-3bddab87-f9e3-48fa-86b3-e8bdfad33aa8\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-3bddab87-f9e3-48fa-86b3-e8bdfad33aa8\",\"subject_id\":\"owner-6a21a5b1-473f-4ed0-967f-38d27d9fda21\"}",
+          "formal_target_hash": "9c6792d3166c161593996f9e589db30f1ad19290782303911ccb72bb4169f916",
+          "subject_id": "owner-6a21a5b1-473f-4ed0-967f-38d27d9fda21",
+          "host_id": "weftmate:dsh",
+          "evidence_ids_json": "[\"2269f42b-8024-41ea-a022-7d679dfc16e2\"]",
+          "state": "no_change",
+          "attempts": 1,
+          "next_attempt_at": null,
+          "claim_owner": null,
+          "claim_token": null,
+          "claimed_at": "2026-10-09T18:56:31.580Z",
+          "lease_expires_at": null,
+          "heartbeat_at": "2026-10-09T18:56:31.591Z",
+          "fencing_generation": 1,
+          "model_dispatch_started_at": "2026-10-09T18:56:31.607Z",
+          "model_completed_at": "2026-10-09T18:56:31.621Z",
+          "model_task": "memory_world",
+          "model_provider": null,
+          "model_name": null,
+          "model_usage_json": null,
+          "model_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+          "model_result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+          "world_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+          "result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+          "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T18:56:30.048Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:e958fc92fea12d0e1375401052980116:dc5675f267f4b2bbb21902a910add3f2238cd262ca36a25e3dffdecbcadb0d0f\",\"evidence_count\":1,\"evidence_manifest_hash\":\"3bdfff839b4b2b90b09a98108bddf6a2eafefbe9b81068ded7bb2e59fe4a9ae3\",\"formal_target_hash\":\"9c6792d3166c161593996f9e589db30f1ad19290782303911ccb72bb4169f916\",\"job_id\":\"memory-world-job-c02fdf33c0edc622a09a319f4dd9cf87639039370fd79a8bbf24c8d7cf40d24c\",\"job_state\":\"pending\",\"payload_hash\":\"dc5675f267f4b2bbb21902a910add3f2238cd262ca36a25e3dffdecbcadb0d0f\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+          "delivery_receipt_hash": "482213efb2be98e6df17dbcc0a474515f32edaff31cba9ed5426f914eebc12d1",
+          "created_at": "2026-10-09T18:56:30.048Z",
+          "completed_at": "2026-10-09T18:56:31.621Z",
+          "last_error_type": null,
+          "terminal_state": "no_change",
+          "terminal_detail": null
+        }
+      ],
+      "cognition": [
+        {
+          "id": "cognition-000e781e9734019cb884adba28d6471e4ccb9d0654c1e1a33b21ec04cb5c8d25",
+          "subject_id": "owner-6a21a5b1-473f-4ed0-967f-38d27d9fda21",
+          "content": "用户养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。",
+          "content_type": "preference",
+          "formed_by": "stated",
+          "confidence": 600,
+          "cred_status": "limited",
+          "scope": null,
+          "valid_at": null,
+          "invalid_at": "2026-10-09T18:56:31.565Z",
+          "asked_at": null,
+          "archived_at": null,
+          "muted_at": null,
+          "created_at": "2026-10-09T18:56:22.654Z",
+          "updated_at": "2026-10-09T18:56:31.565Z"
+        },
+        {
+          "id": "cognition-35b23c361263ee9831ae8fa5863daf914d0db1baa9b0f35e8cefa82ab6e080d3",
+          "subject_id": "owner-6a21a5b1-473f-4ed0-967f-38d27d9fda21",
+          "content": "用户前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。",
+          "content_type": "preference",
+          "formed_by": "stated",
+          "confidence": 600,
+          "cred_status": "limited",
+          "scope": null,
+          "valid_at": null,
+          "invalid_at": null,
+          "asked_at": null,
+          "archived_at": null,
+          "muted_at": null,
+          "created_at": "2026-10-09T18:56:31.565Z",
+          "updated_at": "2026-10-09T18:56:31.565Z"
+        }
+      ],
+      "cognition_transitions": [
+        {
+          "id": "cognition-transition-80fcddaffd5aa8462c0c6533dc5df1c86f5a47ae6b779b079875ba761c4f2383",
+          "prior_cognition_id": "cognition-000e781e9734019cb884adba28d6471e4ccb9d0654c1e1a33b21ec04cb5c8d25",
+          "replacement_cognition_id": "cognition-35b23c361263ee9831ae8fa5863daf914d0db1baa9b0f35e8cefa82ab6e080d3",
+          "reason": "corrects",
+          "revision": 2
+        }
+      ],
+      "relationship": [],
+      "entity": [
+        {
+          "id": "entity-bac991adb5666de0ad4b7ca4edb70e0f62bac0742597a05fdf9e6e9317388172",
+          "world_id": "owner-6a21a5b1-473f-4ed0-967f-38d27d9fda21",
+          "kind": "topic",
+          "canonical_name": "阳台盆栽",
+          "invalid_at": null,
+          "created_at": "2026-10-09T18:56:22.654Z",
+          "updated_at": "2026-10-09T18:56:22.654Z",
+          "aliases_json": "[\"\\u76c6\\u683d\"]"
+        }
+      ]
+    },
+    "endedAt": "2026-10-09T18:56:34.598Z"
+  }
+]
