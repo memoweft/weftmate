@@ -10,7 +10,7 @@ export function createCommandOperations(context) {
   const messageDispatches = new Map();
 
   function requestIdUsed(account, requestId) {
-    return !!account.chatOperations?.[requestId] || !!account.modelOperations?.[requestId] || !!account.projectOperations?.[requestId] ||
+    return !!account.chatOperations?.[requestId] || !!account.sideOperations?.[requestId] || !!account.modelOperations?.[requestId] || !!account.projectOperations?.[requestId] ||
       Object.values(account.commands).some(command => command.requestId === requestId ||
         command.taskControl?.stopRequests.some(entry => entry.requestId === requestId) ||
         command.toolApprovals?.some(row => row.decisionRequestId === requestId) ||
@@ -200,6 +200,13 @@ export function createCommandOperations(context) {
           });
           return;
         }
+        if (command.payload.sideChat) {
+          try { context.sideChats.validatePrepared(ownerId, command.payload.sideChat); }
+          catch {
+            await context.mutate(ownerId, next => { next.commands[commandId].state = 'rejected'; next.commands[commandId].errorCode = 'SESSION_UNAVAILABLE'; });
+            return;
+          }
+        }
         if (command.kind === 'session.message') {
           const session = context.accountState(ownerId).sessions[command.sessionId];
           if (!session || session.archived === true || session.deleting === true || session.ownerId !== ownerId || !pendingSession ||
@@ -291,6 +298,7 @@ export function createCommandOperations(context) {
         try {
           if (snapshot.kind === 'session.create') callback = Promise.resolve(context.backend.createSession({
             sessionId: snapshot.sessionId, modelProfileId: snapshot.payload.modelProfileId, ownerId,
+            ...(snapshot.payload.sideChat?.title ? { title: snapshot.payload.sideChat.title } : {}),
             ...(snapshot.payload.projectId ? { project: context.accountState(ownerId).projects[snapshot.payload.projectId] } : {}),
           }));
           else if (snapshot.kind === 'session.message') {
@@ -348,6 +356,8 @@ export function createCommandOperations(context) {
               origin: !['password', 'cloud'].includes(next.devices[snapshot.sourceDeviceId]?.authKind)
                 ? 'legacy-local' : context.hostOwner(ownerId) ? 'personal-remote' : 'shared-chat',
               modelProfileId: snapshot.payload.modelProfileId,
+              ...(snapshot.payload.sideChat ? { sideChat: snapshot.payload.sideChat,
+                ...(snapshot.payload.sideChat.title ? { title: snapshot.payload.sideChat.title } : {}) } : {}),
               ...(snapshot.payload.conversationId ? { conversationId: snapshot.payload.conversationId } : {}),
               ...(snapshot.payload.workspaceKind ? { workspaceKind: snapshot.payload.workspaceKind } : {}),
               ...(snapshot.payload.projectId ? { projectId: snapshot.payload.projectId,

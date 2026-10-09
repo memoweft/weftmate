@@ -705,7 +705,7 @@ export function createHttpHandler(context) {
         }
         return context.json(response, 200, {
           ...context.service.status(ownerId),
-          personalCapabilities: { chats: 1 },
+          personalCapabilities: { chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1 },
           executionAccount: context.hostOwner(ownerId),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
           backend: backendStatus, memory: { state: memoryStatus.state, inject: memoryStatus.capabilities?.inject === true },
@@ -1111,10 +1111,30 @@ export function createHttpHandler(context) {
       }
       if (request.method === 'GET' && pathname === '/personal/v1/chats/main') {
         if (url.search) throw failure('INVALID_REQUEST');
+        await context.sideChats.reconcile(ownerId);
+        const current = context.authenticate(request, 'sessions:read');
+        if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
         return context.json(response, 200, await context.chats.main(ownerId));
       }
       if (request.method === 'GET' && pathname === '/personal/v1/chats') {
         return context.json(response, 200, await context.chats.list(ownerId, url.searchParams));
+      }
+      const chatTimelineMatch = /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)\/(events|changes|dates|locate|search)$/.exec(pathname);
+      if (request.method === 'GET' && chatTimelineMatch) {
+        if (chatTimelineMatch[1] === state.chatIdentity.mainChatId) await context.sideChats.reconcile(ownerId);
+        const result = await context.chatTimeline.query(ownerId, chatTimelineMatch[1], chatTimelineMatch[2], url.searchParams);
+        const current = context.authenticate(request, 'sessions:read');
+        if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+        return context.json(response, 200, result);
+      }
+      const sideResultMatch = /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)\/results$/.exec(pathname);
+      if (request.method === 'POST' && sideResultMatch) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const authorize = () => {
+          const current = context.authenticate(request, 'commands:write');
+          if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+        };
+        return context.json(response, 201, await context.sideChats.share(ownerId, sideResultMatch[1], await context.readJson(request, 2048), authorize));
       }
       const chatMatch = /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)$/.exec(pathname);
       if (request.method === 'GET' && chatMatch) {
@@ -1623,7 +1643,7 @@ export function createHttpHandler(context) {
           requestId: body.requestId, kind: 'session.message', targetDeviceId: state.hostId,
           sessionId: rootSource.sessionId, text: body.text,
           mode: taskAction === 'supplement' ? 'steer' : 'queue', rootTaskId, taskAction,
-        } : canonicalCommand(body, state.hostId);
+        } : body.kind === 'session.side.create' ? await context.sideChats.prepare(ownerId, body) : canonicalCommand(body, state.hostId);
         const projectBinding = rawPayload.kind === 'session.message' ? taskAction
           ? rootSource.payload : state.sessions[rawPayload.sessionId] : null;
         const conversationBinding = rawPayload.kind === 'session.message' ? taskAction
@@ -1663,6 +1683,7 @@ export function createHttpHandler(context) {
         if (state.modelOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
         if (state.projectOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
         if (state.chatOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
+        if (state.sideOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
         if (Object.values(state.commands).some((command) =>
           command.taskControl?.stopRequests.some((entry) => entry.requestId === payload.requestId))) {
           throw failure('REQUEST_CONFLICT', 409);
@@ -1723,13 +1744,14 @@ export function createHttpHandler(context) {
             payload.originalAttachments);
         }
         const preflightKey = `${ownerId}|${payload.requestId}`;
+        const preflightHash = payload.sideChat?.requestHash ?? payloadHash;
         const pendingPreflight = context.pendingPreflights.get(preflightKey);
-        if (pendingPreflight && pendingPreflight.hash !== payloadHash) throw failure('REQUEST_CONFLICT', 409);
+        if (pendingPreflight && pendingPreflight.hash !== preflightHash) throw failure('REQUEST_CONFLICT', 409);
         let preflight;
         if (pendingPreflight) preflight = pendingPreflight.promise;
         else {
           preflight = context.callBackend(() => context.backend.preflight({ ...payload, ownerId }));
-          context.pendingPreflights.set(preflightKey, { hash: payloadHash, promise: preflight });
+          context.pendingPreflights.set(preflightKey, { hash: preflightHash, promise: preflight });
           preflight.finally(() => {
             if (context.pendingPreflights.get(preflightKey)?.promise === preflight) {
               context.pendingPreflights.delete(preflightKey);
@@ -1749,6 +1771,7 @@ export function createHttpHandler(context) {
           if (latest.modelOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
           if (latest.projectOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
           if (latest.chatOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
+          if (latest.sideOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
           if (Object.values(latest.commands).some((command) =>
             command.taskControl?.stopRequests.some((entry) => entry.requestId === payload.requestId))) {
             throw failure('REQUEST_CONFLICT', 409);
@@ -1756,9 +1779,11 @@ export function createHttpHandler(context) {
           const existing = Object.values(latest.commands).find((command) =>
             command.ownerId === ownerId && command.requestId === payload.requestId);
           if (existing) {
-            if (existing.payloadHash !== payloadHash) throw failure('REQUEST_CONFLICT', 409);
+            if (existing.payloadHash !== payloadHash && !(payload.sideChat &&
+                existing.payload.sideChat?.requestHash === payload.sideChat.requestHash)) throw failure('REQUEST_CONFLICT', 409);
             return publicCommand(existing);
           }
+          if (payload.sideChat) context.sideChats.validatePrepared(ownerId, payload.sideChat);
           if (adoptionId) {
             const fresh = context.conversationSnapshot(ownerId, adoptionId);
             if (!context.sourceDevicesUpgraded(ownerId, fresh)) {
