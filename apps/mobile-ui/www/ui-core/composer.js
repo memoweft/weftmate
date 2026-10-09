@@ -1,5 +1,122 @@
 /* Shared composer state, data and actions. Presentation is supplied through named effects. */
 globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
+    const messages = new Map();
+    function beginOptimistic(fields) {
+        const row = {ownerId: core.state.ownerId, identity: core.state.identityGeneration, status:'sending', ...fields};
+        messages.set(row.requestId, row);
+        effects.renderOptimisticMessages?.();
+        return row;
+    }
+    function optimisticMessages() {
+        return [...messages.values()].filter(row => row.ownerId === core.state.ownerId &&
+            row.identity === core.state.identityGeneration && row.sessionId === core.state.selectedSessionId);
+    }
+    function reconcileOptimistic(command) {
+        const row = messages.get(command?.requestId);
+        if (!row || row.ownerId !== core.state.ownerId || row.identity !== core.state.identityGeneration) return;
+        row.command = command;
+        row.receiptId = command.receiptId;
+        row.status = command.state === 'accepted_by_dsh' ? 'accepted' :
+            ['failed', 'rejected', 'blocked', 'uncertain'].includes(command.state) ? 'failed' : 'sending';
+        if (row.status === 'accepted' && row.sessionId === core.state.selectedSessionId && effects.readMessageDraft() === row.text)
+            effects.clearMessageDraft();
+        effects.renderOptimisticMessages?.();
+    }
+    function observeOptimistic(events) {
+        for (const event of events) if (event.type === 'user.message' && event.data?.receiptId) {
+            for (const row of optimisticMessages()) if (row.receiptId === event.data.receiptId) messages.delete(row.requestId);
+        }
+    }
+    function startNewConversation() {
+        if (core.state.submitting || core.state.unresolvedSubmission) return;
+        core.state.newConversation = true;
+        core.state.selectedSessionId = null;
+        core.state.historyGeneration++;
+        core.state.historyEvents.clear(); core.state.seenSeq.clear(); core.state.afterSeq = -1;
+        core.state.turnStatus = null;
+        core.resetConversationApprovals(); core.resetConversationQuestions();
+        effects.renderConversationApprovals();effects.renderConversationQuestions();effects.renderConversationTasks();
+        effects.paintSelectedSession(null);
+        effects.clearHistoryView(); effects.renderSessions(); effects.updateAvailability();
+        effects.scrollToLatest();
+    }
+    async function deliverOptimistic(row) {
+        const current = () => row.ownerId === core.state.ownerId && row.identity === core.state.identityGeneration;
+        if(!current())return;
+        row.status = 'sending'; effects.renderOptimisticMessages?.();
+        if (!row.sessionId) {
+            row.creating = true;
+            core.creatingOptimisticSession = true;
+            const submitted = await core.submitCommand('session.create', {modelProfileId: row.modelProfileId}, null, row.createRequestId);
+            const created = core.state.tasks.find(command=>command.requestId===row.createRequestId) || submitted;
+            core.creatingOptimisticSession = false;
+            row.creating = false;
+            if (!current()) return;
+            if (!created?.sessionId || created.state !== 'accepted_by_dsh') { row.status = created && ['pending','dispatching'].includes(created.state) ? 'sending' : 'failed'; effects.renderOptimisticMessages?.(); return; }
+            row.sessionId = created.sessionId;
+            if (row.attachments) {
+                const oldKey = `${row.ownerId}|new`;
+                const drafts = core.state.attachmentDrafts.get(oldKey);
+                if (drafts) { core.state.attachmentDrafts.set(`${row.ownerId}|${row.sessionId}`, drafts); core.state.attachmentDrafts.delete(oldKey); }
+            }
+            await core.refreshSessions();
+            if (!current()) return;
+            if (core.state.newConversation && core.state.selectedSessionId === null) await core.selectSession(row.sessionId);
+        }
+        const submitted = row.attachments ? await sendIntentAction(() => core.sendDesktopMessageWithAttachments(row.text, row.requestId), row.intent)
+            : await core.submitCommand('session.message', {sessionId: row.sessionId, text: row.text, intent: row.intent}, row.sessionId, row.requestId);
+        const sent = core.state.tasks.find(command=>command.requestId===row.requestId) || submitted;
+        if (!current()) return;
+        if (sent) reconcileOptimistic(sent); else row.status = 'failed';
+        if (sent?.state === 'accepted_by_dsh' && core.state.selectedSessionId === row.sessionId) {
+            if (effects.readMessageDraft() === row.text) effects.clearMessageDraft();
+            await core.refreshHistory();
+            observeOptimistic([...core.state.historyEvents.values()]);
+        }
+        effects.renderOptimisticMessages?.(); effects.updateAvailability();
+    }
+    function deliverSafely(row) {
+        return deliverOptimistic(row).catch(()=>{
+            row.creating=false;
+            if(row.ownerId!==core.state.ownerId||row.identity!==core.state.identityGeneration)return;
+            if(row.status!=='accepted')row.status='failed';
+            effects.renderOptimisticMessages?.();effects.updateAvailability();
+        });
+    }
+    function handleOptimisticCreation(command) {
+        const row = [...messages.values()].find(row=>row.createRequestId===command?.requestId && row.ownerId===core.state.ownerId && row.identity===core.state.identityGeneration);
+        if (!row) return false;
+        if (!row.creating && !row.sessionId && command.state==='accepted_by_dsh') {
+            row.creating=true;
+            void deliverSafely(row);
+        } else if (['rejected','failed','uncertain'].includes(command.state)) {row.status='failed';effects.renderOptimisticMessages?.();}
+        return true;
+    }
+    async function retryOptimistic(requestId) {
+        const row = optimisticMessages().find(row => row.requestId === requestId);
+        if (!row || row.status !== 'failed' || core.state.submitting) return;
+        const current=()=>row.ownerId===core.state.ownerId&&row.identity===core.state.identityGeneration;
+        row.status='sending';effects.renderOptimisticMessages?.();
+        const lookupId = row.sessionId ? requestId : row.createRequestId;
+        // Query the original durable receipt before replaying the exact same request.
+        try {
+            const result = await core.accessApi(`/commands/by-request/${encodeURIComponent(lookupId)}`);
+            if(!current())return;
+            if (result.command) {
+                if (row.sessionId) reconcileOptimistic(result.command);
+                if (row.sessionId && result.command.state === 'accepted_by_dsh') { await core.refreshHistory(); return; }
+                if (['failed', 'rejected', 'blocked'].includes(result.command.state)) {
+                    // A definitive rejection did not deliver a message. A new attempt is safe.
+                    core.forgetMarker(lookupId);
+                    if (!row.sessionId) row.createRequestId = environment.crypto.randomUUID();
+                    else { messages.delete(requestId); row.requestId = environment.crypto.randomUUID(); messages.set(row.requestId, row); }
+                }
+            }
+        } catch (error) { if(!current())return;if (error.code !== 'NOT_FOUND') { row.status = 'failed'; effects.renderOptimisticMessages?.(); return; } core.setOnline(true); }
+        core.state.unresolvedRequests.delete(lookupId);
+        core.state.unresolvedSubmission = core.state.unresolvedRequests.size > 0;
+        return row.retry ? row.retry(row) : deliverSafely(row);
+    }
     function addAttachmentFiles(selected) {
         const key = core.attachmentDraftKey();
         if (!key || core.state.activeChatSource !== 'desktop' || core.state.attachmentUpload || selected.length === 0)
@@ -41,18 +158,19 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         if (core.state.activeChatSource === 'phone')
             return sendIntentAction(() => core.sendPhoneMessage(), intent);
         const attachments = core.currentAttachmentDrafts();
-        if ((!text.trim() && attachments.length === 0) || !core.state.selectedSessionId || core.state.unresolvedSubmission ||
+        if (optimisticMessages().some(row=>row.text===text && row.status==='sending')) return;
+        if ((!text.trim() && attachments.length === 0) || core.state.submitting || core.state.attachmentUpload || core.state.unresolvedSubmission ||
             core.state.capabilities?.chat?.available !== true ||
-            core.state.sessions.find((item) => item.sessionId === core.state.selectedSessionId)?.sendAvailable !== true)
+            (!core.state.newConversation && core.state.sessions.find((item) => item.sessionId === core.state.selectedSessionId)?.sendAvailable !== true))
             return;
-        if (attachments.length)
-            return sendIntentAction(() => core.sendDesktopMessageWithAttachments(text), intent);
-        const sent = await core.submitCommand('session.message', { sessionId: core.state.selectedSessionId, text,
-            intent: intent === 'queue' || intent === 'steer' ? intent : core.composerInputMode(core.state.selectedSessionId) }, core.state.selectedSessionId);
-        if (sent) {
-            effects.clearMessageDraft();
-            effects.updateAvailability();
-        }
+        const row = {ownerId: core.state.ownerId, identity: core.state.identityGeneration,
+            sessionId: core.state.selectedSessionId, modelProfileId: core.state.modelProfileId,
+            requestId: attachments.length ? core.attachmentAttempt(core.attachmentDraftKey(), text, attachments).requestId : environment.crypto.randomUUID(), createRequestId: environment.crypto.randomUUID(),
+            text, attachments: attachments.length > 0, files: attachments.map(item => item.file?.name || '附件'),
+            intent: intent === 'queue' || intent === 'steer' ? intent : core.composerInputMode(core.state.selectedSessionId), status: 'sending'};
+        messages.set(row.requestId, row);
+        effects.renderOptimisticMessages?.(); effects.scrollToLatest();
+        return deliverSafely(row);
     }
     async function stopCurrentTurn() {
         const session = core.state.activeChatSource === 'phone' ? core.phoneBinding()?.sessionId : core.state.selectedSessionId;
@@ -92,7 +210,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         const chat = core.state.online && core.state.capabilities?.chat?.available === true;
         const model = core.state.models.some(item => item.id === core.state.modelProfileId);
         const selected = core.state.sessions.find(item => item.sessionId === core.state.selectedSessionId);
-        const canSendHere = selected?.sendAvailable === true;
+        const canSendHere = selected?.sendAvailable === true || core.state.newConversation === true;
         const attachmentCount = phoneChat ? 0 : core.currentAttachmentDrafts().length;
         const attachmentBusy = !!core.state.attachmentUpload;
         const messageDisabled = phoneChat ? !phoneReady || !!pendingPhone || !!recovery : !chat || !model || !canSendHere || attachmentBusy;
@@ -137,5 +255,16 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         if (value?.phase === 'queued' && Number.isSafeInteger(value.ahead) && value.ahead > 0) return `模型排队中，前面还有 ${value.ahead} 个请求`;
         return { memory: '正在读取记忆…', reasoning: '正在思考…', answering: '正在回复…' }[value?.phase] || '等待模型回复…';
     }
-    return { addAttachmentFiles, composerInputMode, sendDraft, stopCurrentTurn, composerState, selectModelProfile, setMessageMode, processingLabel };
+    return { handleOptimisticCreation, beginOptimistic, optimisticMessages, reconcileOptimistic, observeOptimistic, startNewConversation, retryOptimistic,
+        addAttachmentFiles, composerInputMode, sendDraft, stopCurrentTurn, composerState, selectModelProfile, setMessageMode, processingLabel };
+};
+
+globalThis.WeftUiCore.contextUsageView = value => {
+    const used = Number.isSafeInteger(value?.usedTokens) && value.usedTokens >= 0 ? value.usedTokens : null;
+    const limit = Number.isSafeInteger(value?.contextWindow) && value.contextWindow > 0 ? value.contextWindow : null;
+    const compact = number => number >= 1e6 ? `${Number((number / 1e6).toFixed(1))}M` : number >= 1e3 ? `${Number((number / 1e3).toFixed(1))}k` : String(number);
+    const ratio = used !== null && limit !== null ? used / limit : null;
+    return {ratio, warning: ratio !== null && ratio >= .8,
+        label: ratio !== null ? `背景信息窗口：${Math.round(ratio * 100)}% 已用` : '背景信息窗口：用量待确认',
+        detail: used !== null ? `已用 ${compact(used)} 标记${limit !== null ? `，共 ${compact(limit)}` : '，上限未知'}` : '当前占用尚未提供'};
 };

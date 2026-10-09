@@ -15,7 +15,7 @@ function selectSharedSession(sessionId){if(!state.sharedSessions.some(item=>item
   try{localStorage.setItem(chatSourceKey(),JSON.stringify({source:'host',sessionId}))}catch{}status('');closeToast();
   state.sharedEvents=[];state.sharedNextSeq=-1;state.sharedHasOlder=false;state.sharedNextBeforeSeq=null;state.sharedOlderLoading=false;state.sharedLoading=false;state.sharedRunning=!!selectedSharedSession()?.running;
   state.sharedError='';state.sharedPending=null;state.sharedOutboxLoading=true;state.sharedAwaiting=null;state.sharedChecking=null;
-  loadDraft();page('chat');void loadSharedOutbox()}
+  loadDraft();page('chat');scrollBottom(true);void loadSharedOutbox()}
 
 function sharedViewCurrent(...args){return uiCore.mobile.sharedViewCurrent(...args)}
 
@@ -69,7 +69,20 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
     if(state.sharedPending.state==='uncertain'){const check=el('button','shared-check',state.sharedChecking?'正在核对…':'检查状态');
       check.disabled=!!state.sharedChecking;check.addEventListener('click',()=>{void checkSharedPending()});box.append(check)}content.append(box)}
   if(!state.sharedEvents.length&&!state.sharedError)content.append(el('p','muted',state.sharedLoading?'正在读取电脑会话…':'这段会话还没有可显示的文字记录'));
-  content.append(...saved);renderTimeline();renderConversationTasks();updateComposer();if(state.scrollPinned)scrollBottom();else scroll.scrollTop=previousScroll;}
+  content.append(...saved);renderTimeline();renderConversationTasks();renderOptimisticMessages();updateComposer();if(state.scrollPinned)scrollBottom();else scroll.scrollTop=previousScroll;}
+
+function renderOptimisticMessages(){if(state.chatSource!=='host'||state.page!=='chat')return;
+  uiCore.syncMobileIdentity();uiCore.observeOptimistic(state.sharedEvents);
+  const content=$('chat-content');
+  for(const node of content.querySelectorAll('[data-optimistic]'))node.remove();
+  for(const row of uiCore.optimisticMessages()){
+    const node=messageNode('user',row.text||'附件');node.dataset.optimistic=row.requestId;
+    node.classList.toggle('is-sending',row.status==='sending');node.classList.toggle('send-failed',row.status==='failed');
+    if(row.status!=='accepted'){const note=el('small','message-state',row.status==='failed'?'发送未确认，草稿已保留':'发送中');note.setAttribute('role','status');node.append(note)}
+    if(row.status==='failed'){const retry=el('button','quiet','重试发送');retry.addEventListener('click',()=>{
+      state.sharedPending=null;void uiCore.retryOptimistic(row.requestId)});node.append(retry)}content.append(node)
+  }
+}
 
 function loadSharedHistory(){return uiCore.loadMobileHistory()}
 
@@ -162,9 +175,7 @@ function scheduleLiveMotion(){if(liveMotionFrame||state.page!=='chat'||state.cha
       textNode.appendData(target.slice(textNode.data.length,end));
       if(end===target.length)liveRevealStart=null}
     else if(textNode&&textNode.data!==target){textNode.data=target;liveRevealStart=null}
-    if(state.scrollPinned){const box=$('chat-scroll'),bottom=Math.max(0,box.scrollHeight-box.clientHeight);
-      if(bottom>box.scrollTop+1){liveFollowTop=bottom;box.scrollTop=bottom}
-      $('jump-latest').hidden=true}
+    if(state.scrollPinned)scrollBottom();
     if(textNode&&textNode.data!==target)scheduleLiveMotion()})}
 
 function renderLiveProgress(){if(state.page!=='chat'||state.chatSource!=='phone'||!state.busy)return;

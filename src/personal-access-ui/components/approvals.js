@@ -18,6 +18,9 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
             return;
         ui.byId('approval-mode-label').textContent = core.approvalModes.find(row => row[0] === core.currentApprovalMode)?.[1].replace('（推荐）', '') ?? '自动';
         trigger.title = core.approvalModes.find(row => row[0] === core.currentApprovalMode)?.[2] ?? '';
+        trigger.classList.toggle('is-warning', core.currentApprovalMode === 'allow-all');
+        const shield = trigger.querySelector('.approval-shield');
+        if (shield) shield.hidden = core.currentApprovalMode !== 'allow-all';
         menu.replaceChildren();
         core.approvalModes.forEach(([mode, label, description], index) => {
             const button = ui.element('button', 'approval-mode-option');

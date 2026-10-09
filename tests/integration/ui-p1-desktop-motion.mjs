@@ -186,7 +186,7 @@ try {
       await candidate.complete(true);
       await page.evaluate(() => window.dispatchEvent(new Event('online')));
       await page.getByText('报告已保存，测试全部通过。', { exact: true }).waitFor();
-      await page.getByRole('button', { name: '停止', exact: true }).waitFor({ state: 'hidden' });
+      await page.getByRole('button', { name: /^停止(?:回复)?$/, exact: true }).waitFor({ state: 'hidden' });
       await page.getByText('报告已保存，测试全部通过。', { exact: true }).scrollIntoViewIfNeeded();
     });
     if (phase === 'reduced') {

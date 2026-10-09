@@ -320,6 +320,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         core.state.browserAvailable = false;
         core.state.browserFetchGeneration++;
         core.state.selectedSessionId = null;
+        core.state.newConversation = false;
         core.state.afterSeq = -1;
         core.state.historyGeneration++;
         core.state.historyInFlight = null;
