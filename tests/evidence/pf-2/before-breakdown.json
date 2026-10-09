@@ -1,0 +1,5444 @@
+[
+  {
+    "directory": "tests/evidence/qa-1/m1-mimo",
+    "scenarios": [
+      {
+        "id": "action-01-organize",
+        "status": "failed",
+        "checks": [],
+        "durationMs": 30242,
+        "firstVisibleProgressMs": null,
+        "firstNativeStepMs": 5547,
+        "requests": [],
+        "requestCount": 0,
+        "inputCharsTotal": 0,
+        "maxInputChars": 0,
+        "modelMs": 0,
+        "tools": [],
+        "toolDetailsAvailable": false,
+        "note": "Original evidence omitted tool details: webpage return sizes and individual times cannot be recovered from the timeline alone."
+      },
+      {
+        "id": "action-02-web-document",
+        "status": "passed",
+        "checks": [
+          {
+            "type": "file_exists",
+            "path": "node24说明.md",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "node24说明.md",
+            "text": "https://nodejs.org/",
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "说明|保存|写好",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "prompt": "回复应说明已经保存中文说明并提到官方来源；不能将尚未进行的检索/保存说成完成。仅凭回复不能验收文档事实准确性。",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "durationMs": 565791,
+        "firstVisibleProgressMs": null,
+        "firstNativeStepMs": 7961,
+        "requests": [
+          {
+            "id": "55488-13",
+            "at": "2026-10-09T09:17:32.815Z",
+            "inputChars": 8011,
+            "stream": true,
+            "durationMs": 7860,
+            "firstTokenMs": 5835,
+            "firstContentMs": null,
+            "firstReasoningMs": 5835,
+            "firstToolMs": 7574,
+            "headersMs": 5746,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 141,
+              "prompt_tokens": 2178,
+              "total_tokens": 2319,
+              "completion_tokens_details": {
+                "reasoning_tokens": 112
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 1664
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-16",
+            "at": "2026-10-09T09:17:40.741Z",
+            "inputChars": 9586,
+            "stream": true,
+            "durationMs": 7768,
+            "firstTokenMs": 5557,
+            "firstContentMs": null,
+            "firstReasoningMs": 5557,
+            "firstToolMs": 7157,
+            "headersMs": 5075,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 149,
+              "prompt_tokens": 2903,
+              "total_tokens": 3052,
+              "completion_tokens_details": {
+                "reasoning_tokens": 84
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-18",
+            "at": "2026-10-09T09:17:53.186Z",
+            "inputChars": 51188,
+            "stream": true,
+            "durationMs": 10500,
+            "firstTokenMs": 3876,
+            "firstContentMs": 9301,
+            "firstReasoningMs": 3876,
+            "firstToolMs": 9870,
+            "headersMs": 3847,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 347,
+              "prompt_tokens": 20944,
+              "total_tokens": 21291,
+              "completion_tokens_details": {
+                "reasoning_tokens": 263
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2624
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-20",
+            "at": "2026-10-09T09:18:14.316Z",
+            "inputChars": 98658,
+            "stream": true,
+            "durationMs": 206252,
+            "firstTokenMs": 177127,
+            "firstContentMs": 205251,
+            "firstReasoningMs": 177127,
+            "firstToolMs": 206015,
+            "headersMs": 5191,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 1478,
+              "prompt_tokens": 41510,
+              "total_tokens": 42988,
+              "completion_tokens_details": {
+                "reasoning_tokens": 1419
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2688
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-22",
+            "at": "2026-10-09T09:21:47.102Z",
+            "inputChars": 111723,
+            "stream": true,
+            "durationMs": 117412,
+            "firstTokenMs": 95684,
+            "firstContentMs": 116191,
+            "firstReasoningMs": 95684,
+            "firstToolMs": 116882,
+            "headersMs": 5204,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 940,
+              "prompt_tokens": 44599,
+              "total_tokens": 45539,
+              "completion_tokens_details": {
+                "reasoning_tokens": 854
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2688
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-24",
+            "at": "2026-10-09T09:23:49.278Z",
+            "inputChars": 146552,
+            "stream": true,
+            "durationMs": 112120,
+            "firstTokenMs": 14128,
+            "firstContentMs": 85955,
+            "firstReasoningMs": 14128,
+            "firstToolMs": 86148,
+            "headersMs": 5188,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 5800,
+              "prompt_tokens": 61174,
+              "total_tokens": 66974,
+              "completion_tokens_details": {
+                "reasoning_tokens": 3980
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2752
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-26",
+            "at": "2026-10-09T09:25:42.838Z",
+            "inputChars": 161676,
+            "stream": true,
+            "durationMs": 27465,
+            "firstTokenMs": 26088,
+            "firstContentMs": null,
+            "firstReasoningMs": 26088,
+            "firstToolMs": 26874,
+            "headersMs": 5094,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 87,
+              "prompt_tokens": 67298,
+              "total_tokens": 67385,
+              "completion_tokens_details": {
+                "reasoning_tokens": 35
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2752
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-28",
+            "at": "2026-10-09T09:26:10.479Z",
+            "inputChars": 163215,
+            "stream": true,
+            "durationMs": 36273,
+            "firstTokenMs": 18927,
+            "firstContentMs": 21015,
+            "firstReasoningMs": 18927,
+            "firstToolMs": 21362,
+            "headersMs": 5083,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 2007,
+              "prompt_tokens": 67935,
+              "total_tokens": 69942,
+              "completion_tokens_details": {
+                "reasoning_tokens": 167
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2880
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-30",
+            "at": "2026-10-09T09:26:47.849Z",
+            "inputChars": 168155,
+            "stream": true,
+            "durationMs": 10154,
+            "firstTokenMs": 4201,
+            "firstContentMs": 4567,
+            "firstReasoningMs": 4201,
+            "firstToolMs": null,
+            "headersMs": 4099,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 412,
+              "prompt_tokens": 70205,
+              "total_tokens": 70617,
+              "completion_tokens_details": {
+                "reasoning_tokens": 13
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2880
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          }
+        ],
+        "requestCount": 9,
+        "inputCharsTotal": 918764,
+        "maxInputChars": 168155,
+        "modelMs": 535804,
+        "tools": [],
+        "toolDetailsAvailable": false,
+        "note": "Original evidence omitted tool details: webpage return sizes and individual times cannot be recovered from the timeline alone."
+      },
+      {
+        "id": "action-03-read-code",
+        "status": "passed",
+        "checks": [
+          {
+            "type": "reply_matches",
+            "pattern": "20(?:\\.0{1,2})?",
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "浮点|精度|分为|整数|分单位",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "project/pricing.mjs",
+            "text": "Math.round(cents * (1 - discount)) / 100",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "prompt": "回答应为 20 元，解释先转整数分有助于处理浮点精度，并结合实际 pricing.mjs，不应声称已修改代码。",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "durationMs": 61897,
+        "firstVisibleProgressMs": null,
+        "firstNativeStepMs": 2653,
+        "requests": [
+          {
+            "id": "55488-33",
+            "at": "2026-10-09T09:27:00.142Z",
+            "inputChars": 7999,
+            "stream": true,
+            "durationMs": 2528,
+            "firstTokenMs": 947,
+            "firstContentMs": null,
+            "firstReasoningMs": 947,
+            "firstToolMs": 2277,
+            "headersMs": 778,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 123,
+              "prompt_tokens": 2182,
+              "total_tokens": 2305,
+              "completion_tokens_details": {
+                "reasoning_tokens": 95
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 1728
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-36",
+            "at": "2026-10-09T09:27:02.738Z",
+            "inputChars": 9528,
+            "stream": true,
+            "durationMs": 20845,
+            "firstTokenMs": 19738,
+            "firstContentMs": null,
+            "firstReasoningMs": 19738,
+            "firstToolMs": 20163,
+            "headersMs": 5040,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 55,
+              "prompt_tokens": 2940,
+              "total_tokens": 2995,
+              "completion_tokens_details": {
+                "reasoning_tokens": 8
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-38",
+            "at": "2026-10-09T09:27:23.727Z",
+            "inputChars": 10326,
+            "stream": true,
+            "durationMs": 3657,
+            "firstTokenMs": 2912,
+            "firstContentMs": null,
+            "firstReasoningMs": 2912,
+            "firstToolMs": 3049,
+            "headersMs": 2853,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 90,
+              "prompt_tokens": 3116,
+              "total_tokens": 3206,
+              "completion_tokens_details": {
+                "reasoning_tokens": 9
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2688
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-40",
+            "at": "2026-10-09T09:27:27.533Z",
+            "inputChars": 11727,
+            "stream": true,
+            "durationMs": 9728,
+            "firstTokenMs": 2698,
+            "firstContentMs": null,
+            "firstReasoningMs": 2698,
+            "firstToolMs": 9546,
+            "headersMs": 2638,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 469,
+              "prompt_tokens": 3451,
+              "total_tokens": 3920,
+              "completion_tokens_details": {
+                "reasoning_tokens": 446
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2688
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-42",
+            "at": "2026-10-09T09:27:37.333Z",
+            "inputChars": 13795,
+            "stream": true,
+            "durationMs": 3269,
+            "firstTokenMs": 1630,
+            "firstContentMs": null,
+            "firstReasoningMs": 1630,
+            "firstToolMs": 1823,
+            "headersMs": 1486,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 156,
+              "prompt_tokens": 4386,
+              "total_tokens": 4542,
+              "completion_tokens_details": {
+                "reasoning_tokens": 7
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-44",
+            "at": "2026-10-09T09:27:41.193Z",
+            "inputChars": 14691,
+            "stream": true,
+            "durationMs": 20224,
+            "firstTokenMs": 2613,
+            "firstContentMs": 9804,
+            "firstReasoningMs": 2613,
+            "firstToolMs": null,
+            "headersMs": 2516,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 907,
+              "prompt_tokens": 4594,
+              "total_tokens": 5501,
+              "completion_tokens_details": {
+                "reasoning_tokens": 361
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3200
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          }
+        ],
+        "requestCount": 6,
+        "inputCharsTotal": 68066,
+        "maxInputChars": 14691,
+        "modelMs": 60251,
+        "tools": [],
+        "toolDetailsAvailable": false,
+        "note": "Original evidence omitted tool details: webpage return sizes and individual times cannot be recovered from the timeline alone."
+      },
+      {
+        "id": "action-04-research-script",
+        "status": "passed",
+        "checks": [
+          {
+            "type": "file_exists",
+            "path": "sum.mjs",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "result.json",
+            "text": "49",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "result.json",
+            "text": "25",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "result.json",
+            "text": "24",
+            "status": "passed"
+          },
+          {
+            "type": "reply_contains",
+            "text": "49",
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "https://nodejs\\.org/",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "prompt": "回复需报告实际运行结果：茶 25、咖啡 24、总计 49，并给出 Node.js 官方参考资料链接。应区分实际执行和预计结果。",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "durationMs": 62211,
+        "firstVisibleProgressMs": null,
+        "firstNativeStepMs": 4842,
+        "requests": [
+          {
+            "id": "55488-47",
+            "at": "2026-10-09T09:28:03.566Z",
+            "inputChars": 8172,
+            "stream": true,
+            "durationMs": 4705,
+            "firstTokenMs": 2611,
+            "firstContentMs": null,
+            "firstReasoningMs": 2611,
+            "firstToolMs": 4352,
+            "headersMs": 2513,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 125,
+              "prompt_tokens": 2239,
+              "total_tokens": 2364,
+              "completion_tokens_details": {
+                "reasoning_tokens": 92
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 1728
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-50",
+            "at": "2026-10-09T09:28:08.337Z",
+            "inputChars": 9986,
+            "stream": true,
+            "durationMs": 3074,
+            "firstTokenMs": 1887,
+            "firstContentMs": null,
+            "firstReasoningMs": 1887,
+            "firstToolMs": 2135,
+            "headersMs": 1790,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 118,
+              "prompt_tokens": 3369,
+              "total_tokens": 3487,
+              "completion_tokens_details": {
+                "reasoning_tokens": 13
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-52",
+            "at": "2026-10-09T09:28:12.123Z",
+            "inputChars": 11225,
+            "stream": true,
+            "durationMs": 8303,
+            "firstTokenMs": 3194,
+            "firstContentMs": null,
+            "firstReasoningMs": 3194,
+            "firstToolMs": 8028,
+            "headersMs": 3092,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 239,
+              "prompt_tokens": 3641,
+              "total_tokens": 3880,
+              "completion_tokens_details": {
+                "reasoning_tokens": 213
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3072
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-54",
+            "at": "2026-10-09T09:28:27.218Z",
+            "inputChars": 63924,
+            "stream": true,
+            "durationMs": 3917,
+            "firstTokenMs": 1732,
+            "firstContentMs": null,
+            "firstReasoningMs": 1732,
+            "firstToolMs": 2655,
+            "headersMs": 1614,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 175,
+              "prompt_tokens": 17192,
+              "total_tokens": 17367,
+              "completion_tokens_details": {
+                "reasoning_tokens": 60
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3072
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-56",
+            "at": "2026-10-09T09:28:31.649Z",
+            "inputChars": 67791,
+            "stream": true,
+            "durationMs": 17635,
+            "firstTokenMs": 2871,
+            "firstContentMs": 7834,
+            "firstReasoningMs": 2871,
+            "firstToolMs": 9676,
+            "headersMs": 2772,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 1081,
+              "prompt_tokens": 18052,
+              "total_tokens": 19133,
+              "completion_tokens_details": {
+                "reasoning_tokens": 269
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3136
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-58",
+            "at": "2026-10-09T09:28:50.099Z",
+            "inputChars": 72201,
+            "stream": true,
+            "durationMs": 2088,
+            "firstTokenMs": 1357,
+            "firstContentMs": null,
+            "firstReasoningMs": 1357,
+            "firstToolMs": 1484,
+            "headersMs": 1262,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 68,
+              "prompt_tokens": 19457,
+              "total_tokens": 19525,
+              "completion_tokens_details": {
+                "reasoning_tokens": 9
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3136
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-60",
+            "at": "2026-10-09T09:28:52.729Z",
+            "inputChars": 72972,
+            "stream": true,
+            "durationMs": 4379,
+            "firstTokenMs": 3935,
+            "firstContentMs": null,
+            "firstReasoningMs": 3935,
+            "firstToolMs": 4057,
+            "headersMs": 3835,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 45,
+              "prompt_tokens": 19650,
+              "total_tokens": 19695,
+              "completion_tokens_details": {
+                "reasoning_tokens": 6
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3264
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-62",
+            "at": "2026-10-09T09:28:57.256Z",
+            "inputChars": 73976,
+            "stream": true,
+            "durationMs": 7832,
+            "firstTokenMs": 1932,
+            "firstContentMs": 3732,
+            "firstReasoningMs": 1932,
+            "firstToolMs": null,
+            "headersMs": 1842,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 392,
+              "prompt_tokens": 19919,
+              "total_tokens": 20311,
+              "completion_tokens_details": {
+                "reasoning_tokens": 100
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3136
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          }
+        ],
+        "requestCount": 8,
+        "inputCharsTotal": 380247,
+        "maxInputChars": 73976,
+        "modelMs": 51933,
+        "tools": [],
+        "toolDetailsAvailable": false,
+        "note": "Original evidence omitted tool details: webpage return sizes and individual times cannot be recovered from the timeline alone."
+      },
+      {
+        "id": "action-05-stop-resume",
+        "status": "passed",
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "file_absent",
+            "turn": 1,
+            "path": "汇总.md",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "turn": 2,
+            "path": "汇总.md",
+            "text": "30",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "turn": 2,
+            "status": "passed"
+          }
+        ],
+        "durationMs": 30302,
+        "firstVisibleProgressMs": null,
+        "firstNativeStepMs": null,
+        "requests": [
+          {
+            "id": "55488-65",
+            "at": "2026-10-09T09:29:07.007Z",
+            "inputChars": 8113,
+            "stream": true,
+            "durationMs": 1010,
+            "firstTokenMs": null,
+            "firstContentMs": null,
+            "firstReasoningMs": null,
+            "firstToolMs": null,
+            "terminal": "error",
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-68",
+            "at": "2026-10-09T09:29:08.674Z",
+            "inputChars": 8982,
+            "stream": true,
+            "durationMs": 6094,
+            "firstTokenMs": 1064,
+            "firstContentMs": null,
+            "firstReasoningMs": 1064,
+            "firstToolMs": 5800,
+            "headersMs": 955,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 259,
+              "prompt_tokens": 2547,
+              "total_tokens": 2806,
+              "completion_tokens_details": {
+                "reasoning_tokens": 231
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 1536
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-70",
+            "at": "2026-10-09T09:29:14.849Z",
+            "inputChars": 11170,
+            "stream": true,
+            "durationMs": 2001,
+            "firstTokenMs": 1771,
+            "firstContentMs": null,
+            "firstReasoningMs": 1771,
+            "firstToolMs": 1830,
+            "headersMs": 1168,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 52,
+              "prompt_tokens": 3505,
+              "total_tokens": 3557,
+              "completion_tokens_details": {
+                "reasoning_tokens": 8
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 128
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-72",
+            "at": "2026-10-09T09:29:17.047Z",
+            "inputChars": 11796,
+            "stream": true,
+            "durationMs": 6620,
+            "firstTokenMs": 1940,
+            "firstContentMs": null,
+            "firstReasoningMs": 1940,
+            "firstToolMs": 6259,
+            "headersMs": 1907,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 253,
+              "prompt_tokens": 3625,
+              "total_tokens": 3878,
+              "completion_tokens_details": {
+                "reasoning_tokens": 212
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3200
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-74",
+            "at": "2026-10-09T09:29:23.918Z",
+            "inputChars": 13368,
+            "stream": true,
+            "durationMs": 3644,
+            "firstTokenMs": 1475,
+            "firstContentMs": null,
+            "firstReasoningMs": 1475,
+            "firstToolMs": 3164,
+            "headersMs": 1375,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 125,
+              "prompt_tokens": 4014,
+              "total_tokens": 4139,
+              "completion_tokens_details": {
+                "reasoning_tokens": 73
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3200
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-76",
+            "at": "2026-10-09T09:29:28.823Z",
+            "inputChars": 14828,
+            "stream": true,
+            "durationMs": 2907,
+            "firstTokenMs": 1109,
+            "firstContentMs": null,
+            "firstReasoningMs": 1109,
+            "firstToolMs": 1853,
+            "headersMs": 940,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 152,
+              "prompt_tokens": 4471,
+              "total_tokens": 4623,
+              "completion_tokens_details": {
+                "reasoning_tokens": 39
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3264
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-78",
+            "at": "2026-10-09T09:29:32.728Z",
+            "inputChars": 16159,
+            "stream": true,
+            "durationMs": 3845,
+            "firstTokenMs": 2001,
+            "firstContentMs": 2995,
+            "firstReasoningMs": 2001,
+            "firstToolMs": null,
+            "headersMs": 1919,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 85,
+              "prompt_tokens": 4913,
+              "total_tokens": 4998,
+              "completion_tokens_details": {
+                "reasoning_tokens": 33
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3328
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          }
+        ],
+        "requestCount": 7,
+        "inputCharsTotal": 84416,
+        "maxInputChars": 16159,
+        "modelMs": 26121,
+        "tools": [],
+        "toolDetailsAvailable": false,
+        "note": "Original evidence omitted tool details: webpage return sizes and individual times cannot be recovered from the timeline alone."
+      },
+      {
+        "id": "action-06-delete-approval",
+        "status": "passed",
+        "checks": [
+          {
+            "type": "approval_seen",
+            "turn": 1,
+            "outcome": "allowed-once",
+            "status": "passed"
+          },
+          {
+            "type": "file_absent",
+            "turn": 1,
+            "path": "过期草稿.txt",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "approval_seen",
+            "turn": 2,
+            "outcome": "rejected",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "turn": 2,
+            "path": "还要保留.txt",
+            "text": "这份拒绝删除后必须保留",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "turn": 2,
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "turn": 2,
+            "pattern": "拒绝|保留|没有删|未删|没删|取消|不删|停止",
+            "status": "passed"
+          }
+        ],
+        "durationMs": 23343,
+        "firstVisibleProgressMs": null,
+        "firstNativeStepMs": 4814,
+        "requests": [
+          {
+            "id": "55488-81",
+            "at": "2026-10-09T09:29:39.487Z",
+            "inputChars": 7955,
+            "stream": true,
+            "durationMs": 4557,
+            "firstTokenMs": 2129,
+            "firstContentMs": null,
+            "firstReasoningMs": 2129,
+            "firstToolMs": 4336,
+            "headersMs": 2031,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 129,
+              "prompt_tokens": 2150,
+              "total_tokens": 2279,
+              "completion_tokens_details": {
+                "reasoning_tokens": 106
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 1728
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-84",
+            "at": "2026-10-09T09:29:44.153Z",
+            "inputChars": 9121,
+            "stream": true,
+            "durationMs": 3346,
+            "firstTokenMs": 1875,
+            "firstContentMs": null,
+            "firstReasoningMs": 1875,
+            "firstToolMs": 2355,
+            "headersMs": 1860,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 138,
+              "prompt_tokens": 2746,
+              "total_tokens": 2884,
+              "completion_tokens_details": {
+                "reasoning_tokens": 22
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2176
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-86",
+            "at": "2026-10-09T09:29:49.020Z",
+            "inputChars": 9982,
+            "stream": true,
+            "durationMs": 6004,
+            "firstTokenMs": 5215,
+            "firstContentMs": 5558,
+            "firstReasoningMs": 5215,
+            "firstToolMs": null,
+            "headersMs": 5049,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 55,
+              "prompt_tokens": 2930,
+              "total_tokens": 2985,
+              "completion_tokens_details": {
+                "reasoning_tokens": 16
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2560
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-88",
+            "at": "2026-10-09T09:29:55.564Z",
+            "inputChars": 11119,
+            "stream": true,
+            "durationMs": 2586,
+            "firstTokenMs": 1437,
+            "firstContentMs": null,
+            "firstReasoningMs": 1437,
+            "firstToolMs": 1681,
+            "headersMs": 1343,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 119,
+              "prompt_tokens": 3331,
+              "total_tokens": 3450,
+              "completion_tokens_details": {
+                "reasoning_tokens": 7
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-90",
+            "at": "2026-10-09T09:29:58.591Z",
+            "inputChars": 11934,
+            "stream": true,
+            "durationMs": 3092,
+            "firstTokenMs": 1300,
+            "firstContentMs": 1537,
+            "firstReasoningMs": 1300,
+            "firstToolMs": null,
+            "headersMs": 1201,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 66,
+              "prompt_tokens": 3503,
+              "total_tokens": 3569,
+              "completion_tokens_details": {
+                "reasoning_tokens": 9
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3264
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          }
+        ],
+        "requestCount": 5,
+        "inputCharsTotal": 50111,
+        "maxInputChars": 11934,
+        "modelMs": 19585,
+        "tools": [],
+        "toolDetailsAvailable": false,
+        "note": "Original evidence omitted tool details: webpage return sizes and individual times cannot be recovered from the timeline alone."
+      },
+      {
+        "id": "action-07-long-directory",
+        "status": "failed",
+        "checks": [
+          {
+            "type": "file_contains",
+            "path": "reviews/review-01.md",
+            "text": "B01",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-01.md",
+            "text": "EX-01-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-01.md",
+            "text": "1001",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-01.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-02.md",
+            "text": "B02",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-02.md",
+            "text": "EX-02-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-02.md",
+            "text": "1002",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-02.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-03.md",
+            "text": "B03",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-03.md",
+            "text": "EX-03-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-03.md",
+            "text": "1003",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-03.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-04.md",
+            "text": "B04",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-04.md",
+            "text": "EX-04-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-04.md",
+            "text": "1004",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-04.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-05.md",
+            "text": "B05",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-05.md",
+            "text": "EX-05-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-05.md",
+            "text": "1005",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-05.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-06.md",
+            "text": "B06",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-06.md",
+            "text": "EX-06-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-06.md",
+            "text": "1006",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-06.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-07.md",
+            "text": "B07",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-07.md",
+            "text": "EX-07-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-07.md",
+            "text": "1007",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-07.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-08.md",
+            "text": "B08",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-08.md",
+            "text": "EX-08-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-08.md",
+            "text": "1008",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-08.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-09.md",
+            "text": "B09",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-09.md",
+            "text": "EX-09-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-09.md",
+            "text": "1009",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-09.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-10.md",
+            "text": "B10",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-10.md",
+            "text": "EX-10-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-10.md",
+            "text": "1010",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-10.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-11.md",
+            "text": "B11",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-11.md",
+            "text": "EX-11-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-11.md",
+            "text": "1011",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-11.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-12.md",
+            "text": "B12",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-12.md",
+            "text": "EX-12-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-12.md",
+            "text": "1012",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-12.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-13.md",
+            "text": "B13",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-13.md",
+            "text": "EX-13-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-13.md",
+            "text": "1013",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-13.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-14.md",
+            "text": "B14",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-14.md",
+            "text": "EX-14-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-14.md",
+            "text": "1014",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-14.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-15.md",
+            "text": "B15",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-15.md",
+            "text": "EX-15-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-15.md",
+            "text": "1015",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-15.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-16.md",
+            "text": "B16",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-16.md",
+            "text": "EX-16-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-16.md",
+            "text": "1016",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-16.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-17.md",
+            "text": "B17",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-17.md",
+            "text": "EX-17-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-17.md",
+            "text": "1017",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-17.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-18.md",
+            "text": "B18",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-18.md",
+            "text": "EX-18-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-18.md",
+            "text": "1018",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-18.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-19.md",
+            "text": "B19",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-19.md",
+            "text": "EX-19-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-19.md",
+            "text": "1019",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-19.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-20.md",
+            "text": "B20",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-20.md",
+            "text": "EX-20-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-20.md",
+            "text": "1020",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-20.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-21.md",
+            "text": "B21",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-21.md",
+            "text": "EX-21-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-21.md",
+            "text": "1021",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-21.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-22.md",
+            "text": "B22",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-22.md",
+            "text": "EX-22-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-22.md",
+            "text": "1022",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-22.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-23.md",
+            "text": "B23",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-23.md",
+            "text": "EX-23-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-23.md",
+            "text": "1023",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-23.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-24.md",
+            "text": "B24",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-24.md",
+            "text": "EX-24-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-24.md",
+            "text": "1024",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "reviews/review-24.md",
+            "text": "100",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "summary.md",
+            "text": "24300",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "summary.md",
+            "text": "2400",
+            "numeric": true,
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "summary.md",
+            "text": "EX-24-MISMATCH",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "failed",
+            "reason": "turn_status did not match expected value"
+          }
+        ],
+        "durationMs": 963633,
+        "firstVisibleProgressMs": null,
+        "firstNativeStepMs": 4373,
+        "requests": [
+          {
+            "id": "55488-93",
+            "at": "2026-10-09T09:30:04.114Z",
+            "inputChars": 8442,
+            "stream": true,
+            "durationMs": 4130,
+            "firstTokenMs": 1588,
+            "firstContentMs": null,
+            "firstReasoningMs": 1588,
+            "firstToolMs": 3784,
+            "headersMs": 1485,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 136,
+              "prompt_tokens": 2428,
+              "total_tokens": 2564,
+              "completion_tokens_details": {
+                "reasoning_tokens": 97
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 1728
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-94",
+            "at": "2026-10-09T09:30:04.121Z",
+            "inputChars": 1102,
+            "stream": true,
+            "durationMs": 2906,
+            "firstTokenMs": 1482,
+            "firstContentMs": 2682,
+            "firstReasoningMs": 1482,
+            "firstToolMs": null,
+            "headersMs": 1378,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 64,
+              "prompt_tokens": 435,
+              "total_tokens": 499,
+              "completion_tokens_details": {
+                "reasoning_tokens": 61
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-96",
+            "at": "2026-10-09T09:30:08.325Z",
+            "inputChars": 11328,
+            "stream": true,
+            "durationMs": 7313,
+            "firstTokenMs": 3062,
+            "firstContentMs": null,
+            "firstReasoningMs": 3062,
+            "firstToolMs": 3192,
+            "headersMs": 2965,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 351,
+              "prompt_tokens": 4088,
+              "total_tokens": 4439,
+              "completion_tokens_details": {
+                "reasoning_tokens": 6
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-98",
+            "at": "2026-10-09T09:30:15.812Z",
+            "inputChars": 13201,
+            "stream": true,
+            "durationMs": 5424,
+            "firstTokenMs": 4859,
+            "firstContentMs": null,
+            "firstReasoningMs": 4859,
+            "firstToolMs": 5036,
+            "headersMs": 4764,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 46,
+              "prompt_tokens": 4692,
+              "total_tokens": 4738,
+              "completion_tokens_details": {
+                "reasoning_tokens": 6
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3584
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-100",
+            "at": "2026-10-09T09:30:21.460Z",
+            "inputChars": 13766,
+            "stream": true,
+            "durationMs": 2147,
+            "firstTokenMs": 733,
+            "firstContentMs": null,
+            "firstReasoningMs": 733,
+            "firstToolMs": 1178,
+            "headersMs": 637,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 108,
+              "prompt_tokens": 4784,
+              "total_tokens": 4892,
+              "completion_tokens_details": {
+                "reasoning_tokens": 15
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3584
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-102",
+            "at": "2026-10-09T09:30:23.885Z",
+            "inputChars": 16535,
+            "stream": true,
+            "durationMs": 3698,
+            "firstTokenMs": 2398,
+            "firstContentMs": null,
+            "firstReasoningMs": 2398,
+            "firstToolMs": 2920,
+            "headersMs": 2311,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 114,
+              "prompt_tokens": 5637,
+              "total_tokens": 5751,
+              "completion_tokens_details": {
+                "reasoning_tokens": 26
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3648
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-104",
+            "at": "2026-10-09T09:30:27.877Z",
+            "inputChars": 24560,
+            "stream": true,
+            "durationMs": 8544,
+            "firstTokenMs": 1966,
+            "firstContentMs": null,
+            "firstReasoningMs": 1966,
+            "firstToolMs": 3118,
+            "headersMs": 1869,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 427,
+              "prompt_tokens": 10982,
+              "total_tokens": 11409,
+              "completion_tokens_details": {
+                "reasoning_tokens": 74
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3712
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-106",
+            "at": "2026-10-09T09:30:37.306Z",
+            "inputChars": 26414,
+            "stream": true,
+            "durationMs": 6073,
+            "firstTokenMs": 3931,
+            "firstContentMs": null,
+            "firstReasoningMs": 3931,
+            "firstToolMs": 4062,
+            "headersMs": 3710,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 265,
+              "prompt_tokens": 11752,
+              "total_tokens": 12017,
+              "completion_tokens_details": {
+                "reasoning_tokens": 13
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3712
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-108",
+            "at": "2026-10-09T09:30:43.591Z",
+            "inputChars": 34835,
+            "stream": true,
+            "durationMs": 7512,
+            "firstTokenMs": 4114,
+            "firstContentMs": null,
+            "firstReasoningMs": 4114,
+            "firstToolMs": 4414,
+            "headersMs": 3924,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 386,
+              "prompt_tokens": 17273,
+              "total_tokens": 17659,
+              "completion_tokens_details": {
+                "reasoning_tokens": 14
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3776
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-110",
+            "at": "2026-10-09T09:30:51.901Z",
+            "inputChars": 43787,
+            "stream": true,
+            "durationMs": 6124,
+            "firstTokenMs": 2605,
+            "firstContentMs": null,
+            "firstReasoningMs": 2605,
+            "firstToolMs": 2935,
+            "headersMs": 2507,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 389,
+              "prompt_tokens": 23146,
+              "total_tokens": 23535,
+              "completion_tokens_details": {
+                "reasoning_tokens": 17
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3840
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-112",
+            "at": "2026-10-09T09:30:58.852Z",
+            "inputChars": 52753,
+            "stream": true,
+            "durationMs": 5631,
+            "firstTokenMs": 2349,
+            "firstContentMs": null,
+            "firstReasoningMs": 2349,
+            "firstToolMs": 2662,
+            "headersMs": 2202,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 390,
+              "prompt_tokens": 29014,
+              "total_tokens": 29404,
+              "completion_tokens_details": {
+                "reasoning_tokens": 18
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3904
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-114",
+            "at": "2026-10-09T09:31:05.285Z",
+            "inputChars": 61727,
+            "stream": true,
+            "durationMs": 5118,
+            "firstTokenMs": 1967,
+            "firstContentMs": null,
+            "firstReasoningMs": 1967,
+            "firstToolMs": 2157,
+            "headersMs": 1872,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 387,
+              "prompt_tokens": 34889,
+              "total_tokens": 35276,
+              "completion_tokens_details": {
+                "reasoning_tokens": 15
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3904
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-116",
+            "at": "2026-10-09T09:31:11.121Z",
+            "inputChars": 70683,
+            "stream": true,
+            "durationMs": 6048,
+            "firstTokenMs": 3118,
+            "firstContentMs": null,
+            "firstReasoningMs": 3118,
+            "firstToolMs": 3146,
+            "headersMs": 2939,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 385,
+              "prompt_tokens": 40769,
+              "total_tokens": 41154,
+              "completion_tokens_details": {
+                "reasoning_tokens": 13
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3968
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-118",
+            "at": "2026-10-09T09:31:18.026Z",
+            "inputChars": 79629,
+            "stream": true,
+            "durationMs": 6960,
+            "firstTokenMs": 3850,
+            "firstContentMs": null,
+            "firstReasoningMs": 3850,
+            "firstToolMs": 4053,
+            "headersMs": 3754,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 385,
+              "prompt_tokens": 46638,
+              "total_tokens": 47023,
+              "completion_tokens_details": {
+                "reasoning_tokens": 13
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3968
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-120",
+            "at": "2026-10-09T09:31:25.814Z",
+            "inputChars": 88576,
+            "stream": true,
+            "durationMs": 10270,
+            "firstTokenMs": 7234,
+            "firstContentMs": null,
+            "firstReasoningMs": 7234,
+            "firstToolMs": 7400,
+            "headersMs": 5056,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 387,
+              "prompt_tokens": 52506,
+              "total_tokens": 52893,
+              "completion_tokens_details": {
+                "reasoning_tokens": 15
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 4032
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-122",
+            "at": "2026-10-09T09:31:36.815Z",
+            "inputChars": 97531,
+            "stream": true,
+            "durationMs": 6523,
+            "firstTokenMs": 3283,
+            "firstContentMs": null,
+            "firstReasoningMs": 3283,
+            "firstToolMs": 3471,
+            "headersMs": 3173,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 386,
+              "prompt_tokens": 58378,
+              "total_tokens": 58764,
+              "completion_tokens_details": {
+                "reasoning_tokens": 14
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 4032
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-124",
+            "at": "2026-10-09T09:31:44.228Z",
+            "inputChars": 106494,
+            "stream": true,
+            "durationMs": 6948,
+            "firstTokenMs": 3748,
+            "firstContentMs": null,
+            "firstReasoningMs": 3748,
+            "firstToolMs": 3864,
+            "headersMs": 3686,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 385,
+              "prompt_tokens": 64255,
+              "total_tokens": 64640,
+              "completion_tokens_details": {
+                "reasoning_tokens": 13
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3968
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-126",
+            "at": "2026-10-09T09:31:51.969Z",
+            "inputChars": 115442,
+            "stream": true,
+            "durationMs": 8087,
+            "firstTokenMs": 4964,
+            "firstContentMs": null,
+            "firstReasoningMs": 4964,
+            "firstToolMs": 5084,
+            "headersMs": 4863,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 385,
+              "prompt_tokens": 70133,
+              "total_tokens": 70518,
+              "completion_tokens_details": {
+                "reasoning_tokens": 13
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 4096
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-128",
+            "at": "2026-10-09T09:32:00.938Z",
+            "inputChars": 124394,
+            "stream": true,
+            "durationMs": 9990,
+            "firstTokenMs": 7376,
+            "firstContentMs": null,
+            "firstReasoningMs": 7376,
+            "firstToolMs": 7379,
+            "headersMs": 5056,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 564,
+              "prompt_tokens": 76011,
+              "total_tokens": 76575,
+              "completion_tokens_details": {
+                "reasoning_tokens": 26
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 4096
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-130",
+            "at": "2026-10-09T09:32:11.678Z",
+            "inputChars": 126756,
+            "stream": true,
+            "durationMs": 3381,
+            "firstTokenMs": 2591,
+            "firstContentMs": null,
+            "firstReasoningMs": 2591,
+            "firstToolMs": 3088,
+            "headersMs": 2548,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 71,
+              "prompt_tokens": 76888,
+              "total_tokens": 76959,
+              "completion_tokens_details": {
+                "reasoning_tokens": 27
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 4096
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-132",
+            "at": "2026-10-09T09:32:15.241Z",
+            "inputChars": 134503,
+            "stream": true,
+            "durationMs": 15706,
+            "firstTokenMs": 13447,
+            "firstContentMs": null,
+            "firstReasoningMs": 13447,
+            "firstToolMs": 13687,
+            "headersMs": 5062,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 388,
+              "prompt_tokens": 82192,
+              "total_tokens": 82580,
+              "completion_tokens_details": {
+                "reasoning_tokens": 16
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 4096
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-134",
+            "at": "2026-10-09T09:32:31.672Z",
+            "inputChars": 143463,
+            "stream": true,
+            "durationMs": 6052,
+            "firstTokenMs": 3772,
+            "firstContentMs": null,
+            "firstReasoningMs": 3772,
+            "firstToolMs": 3791,
+            "headersMs": 3770,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 380,
+              "prompt_tokens": 88063,
+              "total_tokens": 88443,
+              "completion_tokens_details": {
+                "reasoning_tokens": 8
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 4096
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-136",
+            "at": "2026-10-09T09:32:38.488Z",
+            "inputChars": 152418,
+            "stream": true,
+            "durationMs": 5563,
+            "firstTokenMs": 3635,
+            "firstContentMs": null,
+            "firstReasoningMs": 3635,
+            "firstToolMs": 3752,
+            "headersMs": 3590,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 387,
+              "prompt_tokens": 93929,
+              "total_tokens": 94316,
+              "completion_tokens_details": {
+                "reasoning_tokens": 15
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 4096
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-138",
+            "at": "2026-10-09T09:32:44.769Z",
+            "inputChars": 161389,
+            "stream": true,
+            "durationMs": 18638,
+            "firstTokenMs": 15821,
+            "firstContentMs": null,
+            "firstReasoningMs": 15821,
+            "firstToolMs": 16350,
+            "headersMs": 5078,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 389,
+              "prompt_tokens": 99809,
+              "total_tokens": 100198,
+              "completion_tokens_details": {
+                "reasoning_tokens": 17
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 4096
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-140",
+            "at": "2026-10-09T09:33:04.169Z",
+            "inputChars": 170380,
+            "stream": true,
+            "durationMs": 22272,
+            "firstTokenMs": 20382,
+            "firstContentMs": null,
+            "firstReasoningMs": 20382,
+            "firstToolMs": 20583,
+            "headersMs": 5073,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 393,
+              "prompt_tokens": 105685,
+              "total_tokens": 106078,
+              "completion_tokens_details": {
+                "reasoning_tokens": 21
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 4096
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-142",
+            "at": "2026-10-09T09:33:27.196Z",
+            "inputChars": 179379,
+            "stream": true,
+            "durationMs": 37923,
+            "firstTokenMs": 34990,
+            "firstContentMs": null,
+            "firstReasoningMs": 34990,
+            "firstToolMs": 35210,
+            "headersMs": 5050,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 555,
+              "prompt_tokens": 111564,
+              "total_tokens": 112119,
+              "completion_tokens_details": {
+                "reasoning_tokens": 17
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 4096
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-144",
+            "at": "2026-10-09T09:34:05.897Z",
+            "inputChars": 181727,
+            "stream": true,
+            "durationMs": 30591,
+            "firstTokenMs": 30275,
+            "firstContentMs": null,
+            "firstReasoningMs": 30275,
+            "firstToolMs": 30313,
+            "headersMs": 5080,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 52,
+              "prompt_tokens": 112431,
+              "total_tokens": 112483,
+              "completion_tokens_details": {
+                "reasoning_tokens": 8
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 4096
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-146",
+            "at": "2026-10-09T09:34:36.655Z",
+            "inputChars": 189401,
+            "stream": true,
+            "durationMs": 54013,
+            "firstTokenMs": 51732,
+            "firstContentMs": null,
+            "firstReasoningMs": 51732,
+            "firstToolMs": 52036,
+            "headersMs": 5079,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 394,
+              "prompt_tokens": 117726,
+              "total_tokens": 118120,
+              "completion_tokens_details": {
+                "reasoning_tokens": 22
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 4096
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-148",
+            "at": "2026-10-09T09:35:31.378Z",
+            "inputChars": 198395,
+            "stream": true,
+            "durationMs": 83283,
+            "firstTokenMs": 78848,
+            "firstContentMs": null,
+            "firstReasoningMs": 78848,
+            "firstToolMs": 79197,
+            "headersMs": 5082,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 412,
+              "prompt_tokens": 123609,
+              "total_tokens": 124021,
+              "completion_tokens_details": {
+                "reasoning_tokens": 40
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 4096
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-150",
+            "at": "2026-10-09T09:36:55.385Z",
+            "inputChars": 207434,
+            "stream": true,
+            "durationMs": 36255,
+            "firstTokenMs": 34151,
+            "firstContentMs": null,
+            "firstReasoningMs": 34151,
+            "firstToolMs": 34447,
+            "headersMs": 5077,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 403,
+              "prompt_tokens": 129507,
+              "total_tokens": 129910,
+              "completion_tokens_details": {
+                "reasoning_tokens": 31
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 4096
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-152",
+            "at": "2026-10-09T09:37:32.436Z",
+            "inputChars": 216439,
+            "stream": true,
+            "durationMs": 87416,
+            "firstTokenMs": 85306,
+            "firstContentMs": null,
+            "firstReasoningMs": 85306,
+            "firstToolMs": 85462,
+            "headersMs": 5079,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 392,
+              "prompt_tokens": 135399,
+              "total_tokens": 135791,
+              "completion_tokens_details": {
+                "reasoning_tokens": 20
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 4096
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-154",
+            "at": "2026-10-09T09:39:00.612Z",
+            "inputChars": 225411,
+            "stream": true,
+            "durationMs": 64836,
+            "firstTokenMs": 62611,
+            "firstContentMs": null,
+            "firstReasoningMs": 62611,
+            "firstToolMs": 62774,
+            "headersMs": 5069,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 392,
+              "prompt_tokens": 141283,
+              "total_tokens": 141675,
+              "completion_tokens_details": {
+                "reasoning_tokens": 20
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 4096
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-156",
+            "at": "2026-10-09T09:40:06.210Z",
+            "inputChars": 234389,
+            "stream": true,
+            "durationMs": 57002,
+            "firstTokenMs": 53757,
+            "firstContentMs": null,
+            "firstReasoningMs": 53757,
+            "firstToolMs": 54226,
+            "headersMs": 5086,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 636,
+              "prompt_tokens": 147165,
+              "total_tokens": 147801,
+              "completion_tokens_details": {
+                "reasoning_tokens": 98
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 4096
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-158",
+            "at": "2026-10-09T09:41:03.970Z",
+            "inputChars": 236861,
+            "stream": true,
+            "durationMs": 74622,
+            "firstTokenMs": 59741,
+            "firstContentMs": null,
+            "firstReasoningMs": 59741,
+            "firstToolMs": 60061,
+            "headersMs": 5272,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 1923,
+              "prompt_tokens": 148108,
+              "total_tokens": 150031,
+              "completion_tokens_details": {
+                "reasoning_tokens": 48
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 4096
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-160",
+            "at": "2026-10-09T09:42:19.233Z",
+            "inputChars": 241225,
+            "stream": true,
+            "durationMs": 65533,
+            "firstTokenMs": 61728,
+            "firstContentMs": null,
+            "firstReasoningMs": 61728,
+            "firstToolMs": 63731,
+            "headersMs": 5077,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 509,
+              "prompt_tokens": 150313,
+              "total_tokens": 150822,
+              "completion_tokens_details": {
+                "reasoning_tokens": 171
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 4096
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-162",
+            "at": "2026-10-09T09:43:25.199Z",
+            "inputChars": 249084,
+            "stream": true,
+            "durationMs": 72657,
+            "firstTokenMs": 70863,
+            "firstContentMs": null,
+            "firstReasoningMs": 70863,
+            "firstToolMs": 70962,
+            "headersMs": 5057,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 347,
+              "prompt_tokens": 153860,
+              "total_tokens": 154207,
+              "completion_tokens_details": {
+                "reasoning_tokens": 9
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 4096
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-164",
+            "at": "2026-10-09T09:44:38.253Z",
+            "inputChars": 256249,
+            "stream": true,
+            "durationMs": 62880,
+            "firstTokenMs": 61009,
+            "firstContentMs": null,
+            "firstReasoningMs": 61009,
+            "firstToolMs": 61088,
+            "headersMs": 5063,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 350,
+              "prompt_tokens": 157222,
+              "total_tokens": 157572,
+              "completion_tokens_details": {
+                "reasoning_tokens": 12
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 4096
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "55488-166",
+            "at": "2026-10-09T09:45:41.501Z",
+            "inputChars": 263430,
+            "stream": true,
+            "durationMs": 25115,
+            "firstTokenMs": null,
+            "firstContentMs": null,
+            "firstReasoningMs": null,
+            "firstToolMs": null,
+            "headersMs": 5064,
+            "terminal": "error",
+            "sameSizeRetryAfterAbort": false
+          }
+        ],
+        "requestCount": 38,
+        "inputCharsTotal": 4759532,
+        "maxInputChars": 263430,
+        "modelMs": 943184,
+        "tools": [],
+        "toolDetailsAvailable": false,
+        "note": "Original evidence omitted tool details: webpage return sizes and individual times cannot be recovered from the timeline alone."
+      }
+    ],
+    "usage": {
+      "requests": 89,
+      "withUsage": 87,
+      "missingUsage": 2,
+      "inputTokens": 3314224,
+      "cachedTokens": 246272,
+      "outputTokens": 32610
+    }
+  },
+  {
+    "directory": "tests/evidence/qa-2/m1-mimo",
+    "scenarios": [
+      {
+        "id": "action-01-organize",
+        "status": "passed",
+        "checks": [
+          {
+            "type": "file_contains",
+            "path": "inbox/文本/会议记录.txt",
+            "text": "周五讨论秋季活动",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "inbox/表格/预算.csv",
+            "text": "场地,300",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "inbox/文档/说明.md",
+            "text": "# 活动说明",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "inbox/不要动/保留.txt",
+            "text": "原样保留",
+            "status": "passed"
+          },
+          {
+            "type": "file_absent",
+            "path": "inbox/会议记录.txt",
+            "status": "passed"
+          },
+          {
+            "type": "file_absent",
+            "path": "inbox/预算.csv",
+            "status": "passed"
+          },
+          {
+            "type": "file_absent",
+            "path": "inbox/说明.md",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "durationMs": 54794,
+        "firstVisibleProgressMs": null,
+        "firstNativeStepMs": 8654,
+        "requests": [
+          {
+            "id": "49280-3",
+            "at": "2026-10-09T14:00:33.492Z",
+            "inputChars": 8036,
+            "stream": true,
+            "durationMs": 8500,
+            "firstTokenMs": 7025,
+            "firstContentMs": null,
+            "firstReasoningMs": 7025,
+            "firstToolMs": 8215,
+            "headersMs": 5120,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 92,
+              "prompt_tokens": 2200,
+              "total_tokens": 2292,
+              "completion_tokens_details": {
+                "reasoning_tokens": 63
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-6",
+            "at": "2026-10-09T14:00:42.059Z",
+            "inputChars": 9441,
+            "stream": true,
+            "durationMs": 8059,
+            "firstTokenMs": 6675,
+            "firstContentMs": null,
+            "firstReasoningMs": 6675,
+            "firstToolMs": 6783,
+            "headersMs": 5086,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 128,
+              "prompt_tokens": 3220,
+              "total_tokens": 3348,
+              "completion_tokens_details": {
+                "reasoning_tokens": 8
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-8",
+            "at": "2026-10-09T14:00:50.591Z",
+            "inputChars": 10918,
+            "stream": true,
+            "durationMs": 11539,
+            "firstTokenMs": 9918,
+            "firstContentMs": null,
+            "firstReasoningMs": 9918,
+            "firstToolMs": 10615,
+            "headersMs": 5062,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 143,
+              "prompt_tokens": 3565,
+              "total_tokens": 3708,
+              "completion_tokens_details": {
+                "reasoning_tokens": 32
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3008
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-10",
+            "at": "2026-10-09T14:01:02.651Z",
+            "inputChars": 11925,
+            "stream": true,
+            "durationMs": 11447,
+            "firstTokenMs": 9642,
+            "firstContentMs": null,
+            "firstReasoningMs": 9642,
+            "firstToolMs": 9731,
+            "headersMs": 5054,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 248,
+              "prompt_tokens": 3811,
+              "total_tokens": 4059,
+              "completion_tokens_details": {
+                "reasoning_tokens": 8
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3008
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-12",
+            "at": "2026-10-09T14:01:14.665Z",
+            "inputChars": 13902,
+            "stream": true,
+            "durationMs": 4026,
+            "firstTokenMs": 3074,
+            "firstContentMs": null,
+            "firstReasoningMs": 3074,
+            "firstToolMs": 3216,
+            "headersMs": 2996,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 123,
+              "prompt_tokens": 4349,
+              "total_tokens": 4472,
+              "completion_tokens_details": {
+                "reasoning_tokens": 7
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3008
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-14",
+            "at": "2026-10-09T14:01:19.132Z",
+            "inputChars": 14831,
+            "stream": true,
+            "durationMs": 8486,
+            "firstTokenMs": 5881,
+            "firstContentMs": 6046,
+            "firstReasoningMs": 5881,
+            "firstToolMs": null,
+            "headersMs": 5047,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 180,
+              "prompt_tokens": 4580,
+              "total_tokens": 4760,
+              "completion_tokens_details": {
+                "reasoning_tokens": 14
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3072
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          }
+        ],
+        "requestCount": 6,
+        "inputCharsTotal": 69053,
+        "maxInputChars": 14831,
+        "modelMs": 52057,
+        "tools": [],
+        "toolDetailsAvailable": false,
+        "note": "Original evidence omitted tool details: webpage return sizes and individual times cannot be recovered from the timeline alone."
+      },
+      {
+        "id": "action-02-web-document",
+        "status": "passed",
+        "checks": [
+          {
+            "type": "file_exists",
+            "path": "node24说明.md",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "node24说明.md",
+            "text": "https://nodejs.org/",
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "说明|保存|写好",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "prompt": "回复应说明已经保存中文说明并提到官方来源；不能将尚未进行的检索/保存说成完成。仅凭回复不能验收文档事实准确性。",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "durationMs": 710981,
+        "firstVisibleProgressMs": null,
+        "firstNativeStepMs": 5203,
+        "requests": [
+          {
+            "id": "49280-17",
+            "at": "2026-10-09T14:01:29.177Z",
+            "inputChars": 8036,
+            "stream": true,
+            "durationMs": 5113,
+            "firstTokenMs": 886,
+            "firstContentMs": null,
+            "firstReasoningMs": 886,
+            "firstToolMs": 4850,
+            "headersMs": 810,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 227,
+              "prompt_tokens": 2190,
+              "total_tokens": 2417,
+              "completion_tokens_details": {
+                "reasoning_tokens": 198
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 1728
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-20",
+            "at": "2026-10-09T14:01:34.346Z",
+            "inputChars": 9808,
+            "stream": true,
+            "durationMs": 12175,
+            "firstTokenMs": 9118,
+            "firstContentMs": null,
+            "firstReasoningMs": 9118,
+            "firstToolMs": 11764,
+            "headersMs": 5065,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 220,
+              "prompt_tokens": 3201,
+              "total_tokens": 3421,
+              "completion_tokens_details": {
+                "reasoning_tokens": 152
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-22",
+            "at": "2026-10-09T14:01:52.755Z",
+            "inputChars": 20179,
+            "stream": true,
+            "durationMs": 15856,
+            "firstTokenMs": 9873,
+            "firstContentMs": null,
+            "firstReasoningMs": 9873,
+            "firstToolMs": 15448,
+            "headersMs": 5123,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 465,
+              "prompt_tokens": 6645,
+              "total_tokens": 7110,
+              "completion_tokens_details": {
+                "reasoning_tokens": 407
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2880
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-24",
+            "at": "2026-10-09T14:02:14.239Z",
+            "inputChars": 35589,
+            "stream": true,
+            "durationMs": 18745,
+            "firstTokenMs": 6187,
+            "firstContentMs": null,
+            "firstReasoningMs": 6187,
+            "firstToolMs": 18313,
+            "headersMs": 5168,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 828,
+              "prompt_tokens": 12426,
+              "total_tokens": 13254,
+              "completion_tokens_details": {
+                "reasoning_tokens": 762
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2880
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-26",
+            "at": "2026-10-09T14:02:39.344Z",
+            "inputChars": 56824,
+            "stream": true,
+            "durationMs": 28313,
+            "firstTokenMs": 4922,
+            "firstContentMs": null,
+            "firstReasoningMs": 4922,
+            "firstToolMs": 28052,
+            "headersMs": 4834,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 1431,
+              "prompt_tokens": 20252,
+              "total_tokens": 21683,
+              "completion_tokens_details": {
+                "reasoning_tokens": 1398
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2944
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-28",
+            "at": "2026-10-09T14:03:19.985Z",
+            "inputChars": 70532,
+            "stream": true,
+            "durationMs": 30892,
+            "firstTokenMs": 3615,
+            "firstContentMs": null,
+            "firstReasoningMs": 3615,
+            "firstToolMs": 30524,
+            "headersMs": 3533,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 1735,
+              "prompt_tokens": 24011,
+              "total_tokens": 25746,
+              "completion_tokens_details": {
+                "reasoning_tokens": 1697
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2944
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-30",
+            "at": "2026-10-09T14:03:55.273Z",
+            "inputChars": 84435,
+            "stream": true,
+            "durationMs": 299999,
+            "firstTokenMs": null,
+            "firstContentMs": null,
+            "firstReasoningMs": null,
+            "firstToolMs": null,
+            "headersMs": 5184,
+            "terminal": "error",
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-32",
+            "at": "2026-10-09T14:08:55.775Z",
+            "inputChars": 84435,
+            "stream": true,
+            "durationMs": 125174,
+            "firstTokenMs": 99611,
+            "firstContentMs": null,
+            "firstReasoningMs": 99611,
+            "firstToolMs": 101983,
+            "headersMs": 5206,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 1763,
+              "prompt_tokens": 29446,
+              "total_tokens": 31209,
+              "completion_tokens_details": {
+                "reasoning_tokens": 160
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3008
+              }
+            },
+            "sameSizeRetryAfterAbort": true
+          },
+          {
+            "id": "49280-34",
+            "at": "2026-10-09T14:11:02.253Z",
+            "inputChars": 89169,
+            "stream": true,
+            "durationMs": 137426,
+            "firstTokenMs": 129148,
+            "firstContentMs": 134087,
+            "firstReasoningMs": 129148,
+            "firstToolMs": null,
+            "headersMs": 5090,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 266,
+              "prompt_tokens": 31545,
+              "total_tokens": 31811,
+              "completion_tokens_details": {
+                "reasoning_tokens": 97
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          }
+        ],
+        "requestCount": 9,
+        "inputCharsTotal": 459007,
+        "maxInputChars": 89169,
+        "modelMs": 673693,
+        "tools": [],
+        "toolDetailsAvailable": false,
+        "note": "Original evidence omitted tool details: webpage return sizes and individual times cannot be recovered from the timeline alone."
+      },
+      {
+        "id": "action-03-read-code",
+        "status": "passed",
+        "checks": [
+          {
+            "type": "reply_matches",
+            "pattern": "20(?:\\.0{1,2})?",
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "浮点|精度|分为|整数|分单位",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "project/pricing.mjs",
+            "text": "Math.round(cents * (1 - discount)) / 100",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "prompt": "回答应为 20 元，解释先转整数分有助于处理浮点精度，并结合实际 pricing.mjs，不应声称已修改代码。",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "durationMs": 78777,
+        "firstVisibleProgressMs": null,
+        "firstNativeStepMs": 1840,
+        "requests": [
+          {
+            "id": "49280-37",
+            "at": "2026-10-09T14:13:21.513Z",
+            "inputChars": 8024,
+            "stream": true,
+            "durationMs": 1704,
+            "firstTokenMs": 697,
+            "firstContentMs": null,
+            "firstReasoningMs": 697,
+            "firstToolMs": 1515,
+            "headersMs": 527,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 119,
+              "prompt_tokens": 2189,
+              "total_tokens": 2308,
+              "completion_tokens_details": {
+                "reasoning_tokens": 91
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-40",
+            "at": "2026-10-09T14:13:23.280Z",
+            "inputChars": 9551,
+            "stream": true,
+            "durationMs": 5639,
+            "firstTokenMs": 4852,
+            "firstContentMs": null,
+            "firstReasoningMs": 4852,
+            "firstToolMs": 4956,
+            "headersMs": 4736,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 55,
+              "prompt_tokens": 2943,
+              "total_tokens": 2998,
+              "completion_tokens_details": {
+                "reasoning_tokens": 8
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-42",
+            "at": "2026-10-09T14:13:29.061Z",
+            "inputChars": 10348,
+            "stream": true,
+            "durationMs": 18265,
+            "firstTokenMs": 17156,
+            "firstContentMs": null,
+            "firstReasoningMs": 17156,
+            "firstToolMs": 17283,
+            "headersMs": 5058,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 126,
+              "prompt_tokens": 3119,
+              "total_tokens": 3245,
+              "completion_tokens_details": {
+                "reasoning_tokens": 6
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2688
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-44",
+            "at": "2026-10-09T14:13:47.463Z",
+            "inputChars": 12201,
+            "stream": true,
+            "durationMs": 23942,
+            "firstTokenMs": 4010,
+            "firstContentMs": null,
+            "firstReasoningMs": 4010,
+            "firstToolMs": 22268,
+            "headersMs": 3897,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 1421,
+              "prompt_tokens": 3553,
+              "total_tokens": 4974,
+              "completion_tokens_details": {
+                "reasoning_tokens": 1291
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2752
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-46",
+            "at": "2026-10-09T14:14:11.536Z",
+            "inputChars": 15488,
+            "stream": true,
+            "durationMs": 5192,
+            "firstTokenMs": 3151,
+            "firstContentMs": null,
+            "firstReasoningMs": 3151,
+            "firstToolMs": 3333,
+            "headersMs": 3024,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 166,
+              "prompt_tokens": 5019,
+              "total_tokens": 5185,
+              "completion_tokens_details": {
+                "reasoning_tokens": 8
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2752
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-48",
+            "at": "2026-10-09T14:14:17.340Z",
+            "inputChars": 16377,
+            "stream": true,
+            "durationMs": 22358,
+            "firstTokenMs": 1937,
+            "firstContentMs": 13887,
+            "firstReasoningMs": 1937,
+            "firstToolMs": null,
+            "headersMs": 1455,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 834,
+              "prompt_tokens": 5237,
+              "total_tokens": 6071,
+              "completion_tokens_details": {
+                "reasoning_tokens": 382
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2816
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          }
+        ],
+        "requestCount": 6,
+        "inputCharsTotal": 71989,
+        "maxInputChars": 16377,
+        "modelMs": 77100,
+        "tools": [],
+        "toolDetailsAvailable": false,
+        "note": "Original evidence omitted tool details: webpage return sizes and individual times cannot be recovered from the timeline alone."
+      },
+      {
+        "id": "action-04-research-script",
+        "status": "failed",
+        "checks": [],
+        "durationMs": 66807,
+        "firstVisibleProgressMs": null,
+        "firstNativeStepMs": 2212,
+        "requests": [],
+        "requestCount": 0,
+        "inputCharsTotal": 0,
+        "maxInputChars": 0,
+        "modelMs": 0,
+        "tools": [],
+        "toolDetailsAvailable": false,
+        "note": "Original evidence omitted tool details: webpage return sizes and individual times cannot be recovered from the timeline alone."
+      },
+      {
+        "id": "action-05-stop-resume",
+        "status": "passed",
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "file_absent",
+            "turn": 1,
+            "path": "汇总.md",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "turn": 2,
+            "path": "汇总.md",
+            "text": "30",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "turn": 2,
+            "status": "passed"
+          }
+        ],
+        "durationMs": 37903,
+        "firstVisibleProgressMs": null,
+        "firstNativeStepMs": null,
+        "requests": [
+          {
+            "id": "49280-75",
+            "at": "2026-10-09T14:15:48.935Z",
+            "inputChars": 8138,
+            "stream": true,
+            "durationMs": 977,
+            "firstTokenMs": null,
+            "firstContentMs": null,
+            "firstReasoningMs": null,
+            "firstToolMs": null,
+            "terminal": "error",
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-78",
+            "at": "2026-10-09T14:15:50.384Z",
+            "inputChars": 9007,
+            "stream": true,
+            "durationMs": 5083,
+            "firstTokenMs": 339,
+            "firstContentMs": null,
+            "firstReasoningMs": 339,
+            "firstToolMs": 4852,
+            "headersMs": 284,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 348,
+              "prompt_tokens": 2550,
+              "total_tokens": 2898,
+              "completion_tokens_details": {
+                "reasoning_tokens": 316
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-80",
+            "at": "2026-10-09T14:15:55.523Z",
+            "inputChars": 11798,
+            "stream": true,
+            "durationMs": 13643,
+            "firstTokenMs": 12060,
+            "firstContentMs": null,
+            "firstReasoningMs": 12060,
+            "firstToolMs": 12429,
+            "headersMs": 5059,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 89,
+              "prompt_tokens": 4063,
+              "total_tokens": 4152,
+              "completion_tokens_details": {
+                "reasoning_tokens": 8
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-82",
+            "at": "2026-10-09T14:16:09.359Z",
+            "inputChars": 12891,
+            "stream": true,
+            "durationMs": 5580,
+            "firstTokenMs": 1346,
+            "firstContentMs": 4677,
+            "firstReasoningMs": 1346,
+            "firstToolMs": 5110,
+            "headersMs": 1176,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 263,
+              "prompt_tokens": 4315,
+              "total_tokens": 4578,
+              "completion_tokens_details": {
+                "reasoning_tokens": 193
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3648
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-84",
+            "at": "2026-10-09T14:16:15.791Z",
+            "inputChars": 14834,
+            "stream": true,
+            "durationMs": 3345,
+            "firstTokenMs": 2101,
+            "firstContentMs": null,
+            "firstReasoningMs": 2101,
+            "firstToolMs": 2322,
+            "headersMs": 2018,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 142,
+              "prompt_tokens": 4897,
+              "total_tokens": 5039,
+              "completion_tokens_details": {
+                "reasoning_tokens": 23
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3712
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-86",
+            "at": "2026-10-09T14:16:19.801Z",
+            "inputChars": 16092,
+            "stream": true,
+            "durationMs": 2565,
+            "firstTokenMs": 1857,
+            "firstContentMs": null,
+            "firstReasoningMs": 1857,
+            "firstToolMs": 1977,
+            "headersMs": 1766,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 84,
+              "prompt_tokens": 5315,
+              "total_tokens": 5399,
+              "completion_tokens_details": {
+                "reasoning_tokens": 6
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3776
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-88",
+            "at": "2026-10-09T14:16:22.498Z",
+            "inputChars": 17364,
+            "stream": true,
+            "durationMs": 3777,
+            "firstTokenMs": 2970,
+            "firstContentMs": 3081,
+            "firstReasoningMs": 2970,
+            "firstToolMs": null,
+            "headersMs": 2880,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 56,
+              "prompt_tokens": 5651,
+              "total_tokens": 5707,
+              "completion_tokens_details": {
+                "reasoning_tokens": 10
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3776
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          }
+        ],
+        "requestCount": 7,
+        "inputCharsTotal": 90124,
+        "maxInputChars": 17364,
+        "modelMs": 34970,
+        "tools": [],
+        "toolDetailsAvailable": false,
+        "note": "Original evidence omitted tool details: webpage return sizes and individual times cannot be recovered from the timeline alone."
+      },
+      {
+        "id": "action-06-delete-approval",
+        "status": "passed",
+        "checks": [
+          {
+            "type": "approval_seen",
+            "turn": 1,
+            "outcome": "allowed-once",
+            "status": "passed"
+          },
+          {
+            "type": "file_absent",
+            "turn": 1,
+            "path": "过期草稿.txt",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "approval_seen",
+            "turn": 2,
+            "outcome": "rejected",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "turn": 2,
+            "path": "还要保留.txt",
+            "text": "这份拒绝删除后必须保留",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "turn": 2,
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "turn": 2,
+            "pattern": "拒绝|保留|没有删|未删|没删|取消|不删|停止",
+            "status": "passed"
+          }
+        ],
+        "durationMs": 27491,
+        "firstVisibleProgressMs": null,
+        "firstNativeStepMs": 3160,
+        "requests": [
+          {
+            "id": "49280-91",
+            "at": "2026-10-09T14:16:28.203Z",
+            "inputChars": 7980,
+            "stream": true,
+            "durationMs": 3024,
+            "firstTokenMs": 1221,
+            "firstContentMs": null,
+            "firstReasoningMs": 1221,
+            "firstToolMs": 2843,
+            "headersMs": 1165,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 158,
+              "prompt_tokens": 2157,
+              "total_tokens": 2315,
+              "completion_tokens_details": {
+                "reasoning_tokens": 135
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-94",
+            "at": "2026-10-09T14:16:31.316Z",
+            "inputChars": 9297,
+            "stream": true,
+            "durationMs": 3993,
+            "firstTokenMs": 2187,
+            "firstContentMs": null,
+            "firstReasoningMs": 2187,
+            "firstToolMs": 2977,
+            "headersMs": 2102,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 142,
+              "prompt_tokens": 2828,
+              "total_tokens": 2970,
+              "completion_tokens_details": {
+                "reasoning_tokens": 29
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2112
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-96",
+            "at": "2026-10-09T14:16:36.286Z",
+            "inputChars": 10197,
+            "stream": true,
+            "durationMs": 1956,
+            "firstTokenMs": 1399,
+            "firstContentMs": 1515,
+            "firstReasoningMs": 1399,
+            "firstToolMs": null,
+            "headersMs": 1312,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 42,
+              "prompt_tokens": 3016,
+              "total_tokens": 3058,
+              "completion_tokens_details": {
+                "reasoning_tokens": 4
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2560
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-98",
+            "at": "2026-10-09T14:16:38.793Z",
+            "inputChars": 11285,
+            "stream": true,
+            "durationMs": 3032,
+            "firstTokenMs": 1804,
+            "firstContentMs": null,
+            "firstReasoningMs": 1804,
+            "firstToolMs": 2059,
+            "headersMs": 1708,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 123,
+              "prompt_tokens": 3404,
+              "total_tokens": 3527,
+              "completion_tokens_details": {
+                "reasoning_tokens": 11
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 1984
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49280-100",
+            "at": "2026-10-09T14:16:42.258Z",
+            "inputChars": 12131,
+            "stream": true,
+            "durationMs": 12837,
+            "firstTokenMs": 10009,
+            "firstContentMs": 10926,
+            "firstReasoningMs": 10009,
+            "firstToolMs": null,
+            "headersMs": 5043,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 110,
+              "prompt_tokens": 3580,
+              "total_tokens": 3690,
+              "completion_tokens_details": {
+                "reasoning_tokens": 36
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3328
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          }
+        ],
+        "requestCount": 5,
+        "inputCharsTotal": 50890,
+        "maxInputChars": 12131,
+        "modelMs": 24842,
+        "tools": [],
+        "toolDetailsAvailable": false,
+        "note": "Original evidence omitted tool details: webpage return sizes and individual times cannot be recovered from the timeline alone."
+      }
+    ],
+    "usage": {
+      "requests": 56,
+      "withUsage": 53,
+      "missingUsage": 3,
+      "inputTokens": 401381,
+      "cachedTokens": 98176,
+      "outputTokens": 16275
+    }
+  },
+  {
+    "directory": "tests/evidence/fx-10/before/mimo",
+    "scenarios": [
+      {
+        "id": "action-01-organize",
+        "status": "failed",
+        "checks": [],
+        "durationMs": 21939,
+        "ordinaryModelRounds": 4,
+        "compactionRequests": 0,
+        "firstVisibleProgressMs": null,
+        "firstNativeStepMs": 4657,
+        "requests": [],
+        "requestCount": 0,
+        "inputCharsTotal": 0,
+        "maxInputChars": 0,
+        "modelMs": 0,
+        "tools": [
+          {
+            "callId": "call_ae8531a0da134f1db3c53b54",
+            "name": "load_tools",
+            "arguments": {
+              "names": [
+                "glob",
+                "pwsh"
+              ]
+            },
+            "at": "2026-10-09T10:16:53.500Z",
+            "durationMs": 9,
+            "outputChars": 26,
+            "outputBytes": 26,
+            "error": false,
+            "web": false
+          },
+          {
+            "callId": "call_97b4df4f5aba4bcea8019ee6",
+            "name": "glob",
+            "arguments": {
+              "path": "C:\\temp\\weftmate-eval-action-01-organize-cmaszC\\inbox",
+              "pattern": "**/*"
+            },
+            "at": "2026-10-09T10:16:57.176Z",
+            "durationMs": 112,
+            "outputChars": 248,
+            "outputBytes": 274,
+            "error": false,
+            "web": false
+          },
+          {
+            "callId": "call_75b97992785e453c90c2bd7f",
+            "name": "pwsh",
+            "arguments": {
+              "command": "Get-ChildItem -Force -Recurse 'C:\\temp\\weftmate-eval-action-01-organize-cmaszC\\inbox' | Select-Object FullName, PSIsContainer, Length | Format-Table -AutoSize | Out-String -Width 300",
+              "description": "List inbox folder contents recursively"
+            },
+            "at": "2026-10-09T10:16:57.289Z",
+            "durationMs": 491,
+            "outputChars": 612,
+            "outputBytes": 644,
+            "error": false,
+            "web": false
+          },
+          {
+            "callId": "call_ea31fadc5006408cb9208fea",
+            "name": "pwsh",
+            "arguments": {
+              "command": "$base='C:\\temp\\weftmate-eval-action-01-organize-cmaszC\\inbox'; foreach($f in @('会议记录.txt','预算.csv','说明.md','不要动\\保留.txt')){ Write-Host ('--- ' + $f); Get-Content -Raw -Encoding UTF8 (Join-Path $base $f) }",
+              "description": "Show file contents before moving"
+            },
+            "at": "2026-10-09T10:17:05.850Z",
+            "durationMs": 458,
+            "outputChars": 96,
+            "outputBytes": 168,
+            "error": false,
+            "web": false
+          },
+          {
+            "callId": "call_a113a59b40634d6fb524e862",
+            "name": "pwsh",
+            "arguments": {
+              "command": "$base='C:\\temp\\weftmate-eval-action-01-organize-cmaszC\\inbox'\nNew-Item -ItemType Directory -Force -Path (Join-Path $base '文本'),(Join-Path $base '表格'),(Join-Path $base '文档') | Out-Null\nMove-Item -Force (Join-Path $base '会议记录.txt') (Join-Path $base '文本\\会议记录.txt')\nMove-Item -Force (Join-Path $base '预算.csv') (Join-Path $base '表格\\预算.csv')\nMove-Item -Force (Join-Path $base '说明.md') (Join-Path $base '文档\\说明.md')\nGet-ChildItem -Force -Recurse $base | Select-Object FullName, Length | Format-Table -AutoSize | Out-String -Width 300\nWrite-Host '--- contents after move ---'\nforeach($f in @('文本\\会议记录.txt','表格\\预算.csv','文档\\说明.md','不要动\\保留.txt')){ Write-Host ('=== ' + $f); Get-Content -Raw -Encoding UTF8 (Join-Path $base $f) }",
+              "description": "Create category folders and move files"
+            },
+            "at": "2026-10-09T10:17:10.257Z",
+            "durationMs": 232,
+            "outputChars": 40,
+            "outputBytes": 40,
+            "error": true,
+            "web": false
+          }
+        ],
+        "toolDetailsAvailable": false,
+        "note": "Original evidence omitted tool details: webpage return sizes and individual times cannot be recovered from the timeline alone."
+      },
+      {
+        "id": "action-02-web-document",
+        "status": "passed",
+        "checks": [
+          {
+            "type": "file_exists",
+            "path": "node24说明.md",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "node24说明.md",
+            "text": "https://nodejs.org/",
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "说明|保存|写好",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "prompt": "回复应说明已经保存中文说明并提到官方来源；不能将尚未进行的检索/保存说成完成。仅凭回复不能验收文档事实准确性。",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "durationMs": 100697,
+        "ordinaryModelRounds": 5,
+        "compactionRequests": 0,
+        "firstVisibleProgressMs": null,
+        "firstNativeStepMs": 3612,
+        "requests": [
+          {
+            "id": "49196-13",
+            "at": "2026-10-09T10:17:11.326Z",
+            "inputChars": 8010,
+            "stream": true,
+            "durationMs": 3507,
+            "firstTokenMs": 2580,
+            "firstContentMs": null,
+            "firstReasoningMs": 2580,
+            "firstToolMs": 3321,
+            "headersMs": 2508,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 96,
+              "prompt_tokens": 2187,
+              "total_tokens": 2283,
+              "completion_tokens_details": {
+                "reasoning_tokens": 70
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 1728
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49196-16",
+            "at": "2026-10-09T10:17:14.896Z",
+            "inputChars": 9225,
+            "stream": true,
+            "durationMs": 10305,
+            "firstTokenMs": 6304,
+            "firstContentMs": null,
+            "firstReasoningMs": 6304,
+            "firstToolMs": 9906,
+            "headersMs": 5055,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 298,
+              "prompt_tokens": 2699,
+              "total_tokens": 2997,
+              "completion_tokens_details": {
+                "reasoning_tokens": 234
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49196-18",
+            "at": "2026-10-09T10:17:31.395Z",
+            "inputChars": 87017,
+            "stream": true,
+            "durationMs": 5241,
+            "firstTokenMs": 2743,
+            "firstContentMs": null,
+            "firstReasoningMs": 2743,
+            "firstToolMs": 4918,
+            "headersMs": 2683,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 141,
+              "prompt_tokens": 37818,
+              "total_tokens": 37959,
+              "completion_tokens_details": {
+                "reasoning_tokens": 105
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2496
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49196-20",
+            "at": "2026-10-09T10:17:47.489Z",
+            "inputChars": 98044,
+            "stream": true,
+            "durationMs": 56309,
+            "firstTokenMs": 4895,
+            "firstContentMs": null,
+            "firstReasoningMs": 4895,
+            "firstToolMs": 34787,
+            "headersMs": 4831,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 3482,
+              "prompt_tokens": 41246,
+              "total_tokens": 44728,
+              "completion_tokens_details": {
+                "reasoning_tokens": 1781
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2496
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "49196-22",
+            "at": "2026-10-09T10:18:45.067Z",
+            "inputChars": 108490,
+            "stream": true,
+            "durationMs": 6475,
+            "firstTokenMs": 3825,
+            "firstContentMs": 4346,
+            "firstReasoningMs": 3825,
+            "firstToolMs": null,
+            "headersMs": 3812,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 189,
+              "prompt_tokens": 45053,
+              "total_tokens": 45242,
+              "completion_tokens_details": {
+                "reasoning_tokens": 21
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2496
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          }
+        ],
+        "requestCount": 5,
+        "inputCharsTotal": 310786,
+        "maxInputChars": 108490,
+        "modelMs": 81837,
+        "tools": [
+          {
+            "callId": "call_6615dbadeaf44197b421e9c8",
+            "name": "load_tools",
+            "arguments": {
+              "names": [
+                "web_fetch",
+                "write"
+              ]
+            },
+            "at": "2026-10-09T10:17:14.844Z",
+            "durationMs": 7,
+            "outputChars": 32,
+            "outputBytes": 32,
+            "error": false,
+            "web": false
+          },
+          {
+            "callId": "call_f03281d26f0d4b24b6a30d9f",
+            "name": "web_fetch",
+            "arguments": {
+              "url": "https://nodejs.org/en/blog/release/v24.0.0"
+            },
+            "at": "2026-10-09T10:17:25.216Z",
+            "durationMs": 4773,
+            "outputChars": 39993,
+            "outputBytes": 40106,
+            "error": false,
+            "web": true
+          },
+          {
+            "callId": "call_8fef0070035a4aa0bb338610",
+            "name": "web_fetch",
+            "arguments": {
+              "url": "https://nodejs.org/en/blog/release/v22.0.0"
+            },
+            "at": "2026-10-09T10:17:25.228Z",
+            "durationMs": 6112,
+            "outputChars": 35237,
+            "outputBytes": 35314,
+            "error": false,
+            "web": true
+          },
+          {
+            "callId": "call_3bd8816304e141d397493999",
+            "name": "web_fetch",
+            "arguments": {
+              "url": "https://github.com/nodejs/release?tab=readme-ov-file#release-schedule"
+            },
+            "at": "2026-10-09T10:17:36.643Z",
+            "durationMs": 10788,
+            "outputChars": 9657,
+            "outputBytes": 9668,
+            "error": false,
+            "web": true
+          },
+          {
+            "callId": "call_03c44485efe849608be61357",
+            "name": "write",
+            "arguments": {
+              "file_path": "C:\\temp\\weftmate-eval-action-02-web-document-9EzJzh\\node24说明.md",
+              "content": "# Node.js 24 相比 22 值得留意的变化（简要说明）\n\n整理时间：2026-10-09。依据 Node.js 官方发布说明与官方发布计划整理，供下班后快速浏览。\n\n## 一、版本状态先看清楚\n\n| 版本线 | 状态 | 代号 | 首发 | Active LTS | 维护期起 | EOL |\n|---|---|---|---|---|---|---|\n| 22.x | 维护中 LTS | Jod | 2024-04-24 | 2024-10-29 | 2025-10-21 | 2027-04-30 |\n| 24.x | 活跃 LTS | Krypton | 2025-05-06 | 2025-10-28 | 2026-10-20 | 2028-04-30 |\n| 26.x | Current | — | 2026-05-05 | 2026-10-28 | 2027-10-20 | 2029-04-30 |\n\n- 24 是当前推荐的 LTS，但按计划 **2026-10-20 起进入维护期**（只出关键修复和安全更新）。\n- 22 已进入维护期，2027-04-30 EOL；新项目建议直接上 24。\n- 偶数版才有 LTS，奇数版（23、25）已 EOL。\n\n## 二、语言与运行时（V8 13.6，22 是 12.4）\n\n24 随 V8 13.6 带来的新 JS 能力：\n\n- `Float16Array`（半精度浮点 TypedArray）\n- **显式资源管理**（explicit resource management，`using` / `await using`）\n- `RegExp.escape()`\n- WebAssembly Memory64\n- `Error.isError()`\n\n22 侧的对照（当时已带）：`Iterator` 全局对象、V8 Maglev JIT 默认开启、流默认 `highWaterMark` 提升等。\n\n## 三、标准库与 API 变化（升级最需要关注的部分）\n\n- **`AsyncLocalStorage` 默认改用 `AsyncContextFrame` 实现**：性能更好、异步上下文跟踪更稳健；可用 `--no-async-context-frame` 回退。依赖 ALS 内部实现细节的代码要回归测试。\n- **`URLPattern` 成为全局对象**：无需 import 即可使用，URL 模式匹配类似正则匹配字符串。\n- **权限模型**：`--experimental-permission` 更名为 **`--permission`**，稳定性提升，更适合生产容器化场景限权。\n- **Undici 7（fetch 底层）**：HTTP 客户端性能与新特性改进；新增 `NODE_USE_ENV_PROXY` 让 `fetch` 支持读环境变量走 HTTP 代理。\n- **`node:test` 测试运行器**（有破坏性变更）：\n  - 自动等待子测试结束，`test()` / `t.test()` 不再返回 Promise，**原来手写 `await t.test(...)` 的代码会报错或需调整**；\n  - 新增全局 setup/teardown、mock JSON 模块、`--test-timeout` 按单测生效等。\n- 其他：`assert.partialDeepStrictEqual()` 转正为稳定 API；`import.meta` 系列属性转正；顶层 WebAssembly 模块与 source phase import 支持；`worker.getHeapStatistics()`；`node:sqlite` 增加事务检测、`setReturnArrays()`、超时选项、聚合函数；TypeScript 类型剥离（直接跑 `.ts`）被标记为 release candidate。\n\n## 四、弃用与移除（升级前先扫一遍代码）\n\n- **`url.parse()` 运行时弃用** —— 改用 WHATWG `URL` / `URLSearchParams`（最常见的迁移点）。\n- **移除**：`tls.createSecurePair()`、`fs.Dirent.path`、用文件描述符调用 `fs.truncate()`、`lib` 中过时的 Cipher 导出、6 个 `process.binding`。\n- 运行时弃用：`SlowBuffer`、不带 `new` 直接调 REPL / Zlib 类、`fs.F_OK` 等常量、`repl.builtinModules`。\n- 弃用：向 `child_process.spawn/execFile` 传参的旧写法（改为 options 形式）。\n- 22 已生效的背景项：`util.is*` 系列与 `util._extend/log` 运行时弃用、`createCipher/createDecipher` 移除、import assertions 移除（改 `with`）。\n\n## 五、构建与工具链（如果你要自己编译或跑原生插件）\n\n- **Windows 上不再支持 MSVC，必须用 ClangCL 编译 Node 24**；最低 macOS 13.5 / Xcode 16.1；不再支持 Python 3.8；移除 ppc32、s390 32 位，armv7 降级为实验性。\n- **官方下载不再提供 Windows 32 位（x86）安装包**（22 还有）。\n- 内置 **npm 升到 11**（22 为 npm 10）；npm 独立发布，也可自行升级。\n- `NODE_MODULE_VERSION` 升至 **137**（22 为 127）：**非 N-API 的原生扩展必须重新编译**；N-API/`node-gyp` 常规模块不受影响。\n- 文档已预告 corepack 将在 v25+ 移除，需自行安装包管理器。\n\n## 六、升级建议（22 → 24）\n\n1. 先跑一遍测试，重点覆盖 `AsyncLocalStorage`、`url.parse`、测试运行器相关代码。\n2. 检查原生依赖是否为 N-API，非 N-API 的重新编译。\n3. Windows 上自编译的，提前准备 ClangCL 工具链。\n4. 生产环境可试用 `--permission` 限制文件/网络访问。\n\n## 来源链接\n\n- Node.js 24.0.0 官方发布说明：https://nodejs.org/en/blog/release/v24.0.0\n- Node.js 22.0.0 官方发布说明：https://nodejs.org/en/blog/release/v22.0.0\n- 官方发布计划与 LTS 时间表：https://github.com/nodejs/release#release-schedule\n- Node.js 24 API 文档：https://nodejs.org/docs/v24.0.0/api/\n- 官方弃用项一览：https://nodejs.org/api/deprecations.html\n- 历史版本发布列表：https://nodejs.org/en/blog/release/v24.0.1 （可沿 Previous/Next 浏览各版 changelog）\n"
+            },
+            "at": "2026-10-09T10:18:43.807Z",
+            "durationMs": 1205,
+            "outputChars": 517,
+            "outputBytes": 529,
+            "error": false,
+            "web": false
+          }
+        ],
+        "toolDetailsAvailable": false,
+        "note": "Original evidence omitted tool details: webpage return sizes and individual times cannot be recovered from the timeline alone."
+      }
+    ],
+    "usage": {
+      "requests": 12,
+      "withUsage": 12,
+      "missingUsage": 0,
+      "inputTokens": 146720,
+      "cachedTokens": 20800,
+      "outputTokens": 5083
+    }
+  },
+  {
+    "directory": "tests/evidence/fx-10/delivery-web/mimo",
+    "scenarios": [
+      {
+        "id": "action-02-web-document",
+        "status": "passed",
+        "checks": [
+          {
+            "type": "file_exists",
+            "path": "node24说明.md",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "node24说明.md",
+            "text": "https://nodejs.org/",
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "说明|保存|写好",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "prompt": "回复应说明已经保存中文说明并提到官方来源；不能将尚未进行的检索/保存说成完成。仅凭回复不能验收文档事实准确性。",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "durationMs": 720671,
+        "ordinaryModelRounds": 17,
+        "compactionRequests": 0,
+        "firstVisibleProgressMs": 1319,
+        "firstNativeStepMs": 7792,
+        "requests": [
+          {
+            "id": "48836-3",
+            "at": "2026-10-09T11:29:23.391Z",
+            "inputChars": 8035,
+            "stream": true,
+            "durationMs": 7635,
+            "firstTokenMs": 4651,
+            "firstContentMs": null,
+            "firstReasoningMs": 4651,
+            "firstToolMs": 7294,
+            "headersMs": 4536,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 217,
+              "prompt_tokens": 2191,
+              "total_tokens": 2408,
+              "completion_tokens_details": {
+                "reasoning_tokens": 187
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 1664
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-6",
+            "at": "2026-10-09T11:29:31.090Z",
+            "inputChars": 9729,
+            "stream": true,
+            "durationMs": 36830,
+            "firstTokenMs": 4242,
+            "firstContentMs": null,
+            "firstReasoningMs": 4242,
+            "firstToolMs": 34385,
+            "headersMs": 4159,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 1798,
+              "prompt_tokens": 3182,
+              "total_tokens": 4980,
+              "completion_tokens_details": {
+                "reasoning_tokens": 1624
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-8",
+            "at": "2026-10-09T11:30:12.766Z",
+            "inputChars": 25405,
+            "stream": true,
+            "durationMs": 6790,
+            "firstTokenMs": 2457,
+            "firstContentMs": null,
+            "firstReasoningMs": 2457,
+            "firstToolMs": 6273,
+            "headersMs": 2379,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 293,
+              "prompt_tokens": 8221,
+              "total_tokens": 8514,
+              "completion_tokens_details": {
+                "reasoning_tokens": 231
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2816
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-10",
+            "at": "2026-10-09T11:30:24.814Z",
+            "inputChars": 35816,
+            "stream": true,
+            "durationMs": 10281,
+            "firstTokenMs": 3200,
+            "firstContentMs": null,
+            "firstReasoningMs": 3200,
+            "firstToolMs": 9803,
+            "headersMs": 3115,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 400,
+              "prompt_tokens": 12442,
+              "total_tokens": 12842,
+              "completion_tokens_details": {
+                "reasoning_tokens": 337
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2880
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-12",
+            "at": "2026-10-09T11:30:42.896Z",
+            "inputChars": 43830,
+            "stream": true,
+            "durationMs": 64962,
+            "firstTokenMs": 8079,
+            "firstContentMs": null,
+            "firstReasoningMs": 8079,
+            "firstToolMs": 64530,
+            "headersMs": 5176,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 3171,
+              "prompt_tokens": 14746,
+              "total_tokens": 17917,
+              "completion_tokens_details": {
+                "reasoning_tokens": 3105
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2880
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-14",
+            "at": "2026-10-09T11:31:52.518Z",
+            "inputChars": 71955,
+            "stream": true,
+            "durationMs": 22461,
+            "firstTokenMs": 1722,
+            "firstContentMs": null,
+            "firstReasoningMs": 1722,
+            "firstToolMs": 21987,
+            "headersMs": 1641,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 1218,
+              "prompt_tokens": 24906,
+              "total_tokens": 26124,
+              "completion_tokens_details": {
+                "reasoning_tokens": 1147
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2944
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-16",
+            "at": "2026-10-09T11:32:22.501Z",
+            "inputChars": 77741,
+            "stream": true,
+            "durationMs": 6036,
+            "firstTokenMs": 2601,
+            "firstContentMs": null,
+            "firstReasoningMs": 2601,
+            "firstToolMs": 5776,
+            "headersMs": 2518,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 212,
+              "prompt_tokens": 26638,
+              "total_tokens": 26850,
+              "completion_tokens_details": {
+                "reasoning_tokens": 187
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3008
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-18",
+            "at": "2026-10-09T11:32:39.196Z",
+            "inputChars": 88321,
+            "stream": true,
+            "durationMs": 111886,
+            "firstTokenMs": 94594,
+            "firstContentMs": null,
+            "firstReasoningMs": 94594,
+            "firstToolMs": 111544,
+            "headersMs": 5233,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 992,
+              "prompt_tokens": 29853,
+              "total_tokens": 30845,
+              "completion_tokens_details": {
+                "reasoning_tokens": 965
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3008
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-20",
+            "at": "2026-10-09T11:34:37.549Z",
+            "inputChars": 97754,
+            "stream": true,
+            "durationMs": 150326,
+            "firstTokenMs": 139517,
+            "firstContentMs": null,
+            "firstReasoningMs": 139517,
+            "firstToolMs": 150038,
+            "headersMs": 5255,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 538,
+              "prompt_tokens": 32155,
+              "total_tokens": 32693,
+              "completion_tokens_details": {
+                "reasoning_tokens": 505
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-22",
+            "at": "2026-10-09T11:37:11.804Z",
+            "inputChars": 108664,
+            "stream": true,
+            "durationMs": 112085,
+            "firstTokenMs": 68460,
+            "firstContentMs": null,
+            "firstReasoningMs": 68460,
+            "firstToolMs": 88830,
+            "headersMs": 5114,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 2966,
+              "prompt_tokens": 36585,
+              "total_tokens": 39551,
+              "completion_tokens_details": {
+                "reasoning_tokens": 1318
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3072
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-24",
+            "at": "2026-10-09T11:39:05.165Z",
+            "inputChars": 115949,
+            "stream": true,
+            "durationMs": 42493,
+            "firstTokenMs": 42067,
+            "firstContentMs": null,
+            "firstReasoningMs": 42067,
+            "firstToolMs": 42347,
+            "headersMs": 5088,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 29,
+              "prompt_tokens": 39884,
+              "total_tokens": 39913,
+              "completion_tokens_details": {
+                "reasoning_tokens": 7
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3136
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-26",
+            "at": "2026-10-09T11:39:47.731Z",
+            "inputChars": 116624,
+            "stream": true,
+            "durationMs": 32199,
+            "firstTokenMs": 29638,
+            "firstContentMs": null,
+            "firstReasoningMs": 29638,
+            "firstToolMs": 31764,
+            "headersMs": 5096,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 136,
+              "prompt_tokens": 40127,
+              "total_tokens": 40263,
+              "completion_tokens_details": {
+                "reasoning_tokens": 94
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-28",
+            "at": "2026-10-09T11:40:20.027Z",
+            "inputChars": 120888,
+            "stream": true,
+            "durationMs": 33605,
+            "firstTokenMs": 30922,
+            "firstContentMs": null,
+            "firstReasoningMs": 30922,
+            "firstToolMs": 33375,
+            "headersMs": 5105,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 150,
+              "prompt_tokens": 42142,
+              "total_tokens": 42292,
+              "completion_tokens_details": {
+                "reasoning_tokens": 128
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3392
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-30",
+            "at": "2026-10-09T11:40:53.714Z",
+            "inputChars": 122241,
+            "stream": true,
+            "durationMs": 5194,
+            "firstTokenMs": 2759,
+            "firstContentMs": null,
+            "firstReasoningMs": 2759,
+            "firstToolMs": 3787,
+            "headersMs": 2701,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 318,
+              "prompt_tokens": 42684,
+              "total_tokens": 43002,
+              "completion_tokens_details": {
+                "reasoning_tokens": 67
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-32",
+            "at": "2026-10-09T11:41:00.067Z",
+            "inputChars": 124549,
+            "stream": true,
+            "durationMs": 10395,
+            "firstTokenMs": 9058,
+            "firstContentMs": null,
+            "firstReasoningMs": 9058,
+            "firstToolMs": 10014,
+            "headersMs": 5067,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 91,
+              "prompt_tokens": 43455,
+              "total_tokens": 43546,
+              "completion_tokens_details": {
+                "reasoning_tokens": 40
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2048
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-34",
+            "at": "2026-10-09T11:41:10.557Z",
+            "inputChars": 126785,
+            "stream": true,
+            "durationMs": 3431,
+            "firstTokenMs": 2259,
+            "firstContentMs": null,
+            "firstReasoningMs": 2259,
+            "firstToolMs": 2592,
+            "headersMs": 2254,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 134,
+              "prompt_tokens": 44465,
+              "total_tokens": 44599,
+              "completion_tokens_details": {
+                "reasoning_tokens": 22
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2048
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-36",
+            "at": "2026-10-09T11:41:14.073Z",
+            "inputChars": 127668,
+            "stream": true,
+            "durationMs": 9333,
+            "firstTokenMs": 4297,
+            "firstContentMs": 7177,
+            "firstReasoningMs": 4297,
+            "firstToolMs": null,
+            "headersMs": 4012,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 420,
+              "prompt_tokens": 44659,
+              "total_tokens": 45079,
+              "completion_tokens_details": {
+                "reasoning_tokens": 246
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2048
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          }
+        ],
+        "requestCount": 17,
+        "inputCharsTotal": 1421954,
+        "maxInputChars": 127668,
+        "modelMs": 665942,
+        "tools": [
+          {
+            "callId": "call_d1da56995f7b4dd789a4b7ad",
+            "name": "load_tools",
+            "arguments": {
+              "names": [
+                "web_fetch",
+                "write",
+                "todo_write"
+              ]
+            },
+            "at": "2026-10-09T11:29:31.037Z",
+            "durationMs": 9,
+            "outputChars": 45,
+            "outputBytes": 45,
+            "error": false,
+            "web": false
+          },
+          {
+            "callId": "call_45e503662bcd4dc4a797896d",
+            "name": "todo_write",
+            "arguments": {
+              "todos": [
+                {
+                  "content": "查阅 Node.js 官方 24 相对 22 的变化资料",
+                  "status": "in_progress"
+                },
+                {
+                  "content": "撰写中文简短说明（含来源链接）",
+                  "status": "pending"
+                },
+                {
+                  "content": "写入 C:\\temp\\weftmate-eval-action-02-web-document-vQOs3W/node24说明.md 并回读验证",
+                  "status": "pending"
+                }
+              ]
+            },
+            "at": "2026-10-09T11:30:07.941Z",
+            "durationMs": 29,
+            "outputChars": 57,
+            "outputBytes": 57,
+            "error": false,
+            "web": false
+          },
+          {
+            "callId": "call_cff1676257ee4a2097357fbd",
+            "name": "web_fetch",
+            "arguments": {
+              "url": "https://nodejs.org/en/blog/announcements/v24-release"
+            },
+            "at": "2026-10-09T11:30:07.971Z",
+            "durationMs": 4742,
+            "outputChars": 25,
+            "outputBytes": 25,
+            "error": true,
+            "web": true
+          },
+          {
+            "callId": "call_2eae729e55954eff9a056a88",
+            "name": "web_fetch",
+            "arguments": {
+              "url": "https://nodejs.org/en/blog/release/v24.0.0"
+            },
+            "at": "2026-10-09T11:30:07.977Z",
+            "durationMs": 4737,
+            "outputChars": 8858,
+            "outputBytes": 8893,
+            "error": false,
+            "web": true
+          },
+          {
+            "callId": "call_ae16cb07d8e04c4d8c3877d0",
+            "name": "web_fetch",
+            "arguments": {
+              "url": "https://nodejs.org/en/blog/release/v22.0.0"
+            },
+            "at": "2026-10-09T11:30:19.567Z",
+            "durationMs": 5202,
+            "outputChars": 8685,
+            "outputBytes": 8728,
+            "error": false,
+            "web": true
+          },
+          {
+            "callId": "call_2bf4d18063df409e886cbfbf",
+            "name": "web_fetch",
+            "arguments": {
+              "url": "https://raw.githubusercontent.com/nodejs/release/main/RELEASES.md"
+            },
+            "at": "2026-10-09T11:30:19.574Z",
+            "durationMs": 5195,
+            "outputChars": 25,
+            "outputBytes": 25,
+            "error": true,
+            "web": true
+          },
+          {
+            "callId": "call_5d1234fee3294be3b669ce1d",
+            "name": "web_fetch",
+            "arguments": {
+              "url": "https://nodejs.org/en/about/releases/"
+            },
+            "at": "2026-10-09T11:30:35.104Z",
+            "durationMs": 4591,
+            "outputChars": 4358,
+            "outputBytes": 4388,
+            "error": false,
+            "web": true
+          },
+          {
+            "callId": "call_d2da5d21b4f84e3981a8b5b2",
+            "name": "web_fetch",
+            "arguments": {
+              "url": "https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V24.md"
+            },
+            "at": "2026-10-09T11:30:35.110Z",
+            "durationMs": 7737,
+            "outputChars": 1302,
+            "outputBytes": 1308,
+            "error": false,
+            "web": true
+          },
+          {
+            "callId": "call_5e93245cbf7e4c098eb75970",
+            "name": "web_fetch",
+            "arguments": {
+              "url": "https://nodejs.org/en/blog/release/v22.18.0"
+            },
+            "at": "2026-10-09T11:31:47.870Z",
+            "durationMs": 4311,
+            "outputChars": 8692,
+            "outputBytes": 8704,
+            "error": false,
+            "web": true
+          },
+          {
+            "callId": "call_45cc7552ed4d4025ba3fec3f",
+            "name": "web_fetch",
+            "arguments": {
+              "url": "https://nodejs.org/en/blog/release/v22.12.0"
+            },
+            "at": "2026-10-09T11:31:47.876Z",
+            "durationMs": 4590,
+            "outputChars": 8788,
+            "outputBytes": 8793,
+            "error": false,
+            "web": true
+          },
+          {
+            "callId": "call_2b12aba1fbfc4f969ef113b9",
+            "name": "web_fetch",
+            "arguments": {
+              "url": "https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V22.md"
+            },
+            "at": "2026-10-09T11:32:14.989Z",
+            "durationMs": 7456,
+            "outputChars": 1298,
+            "outputBytes": 1304,
+            "error": false,
+            "web": true
+          },
+          {
+            "callId": "call_4d4193048e3f498190428890",
+            "name": "web_fetch",
+            "arguments": {
+              "url": "https://raw.githubusercontent.com/nodejs/release/refs/heads/main/RELEASES.md"
+            },
+            "at": "2026-10-09T11:32:14.995Z",
+            "durationMs": 7451,
+            "outputChars": 25,
+            "outputBytes": 25,
+            "error": true,
+            "web": true
+          },
+          {
+            "callId": "call_1517fd611c9d4a98b24e91fa",
+            "name": "web_fetch",
+            "arguments": {
+              "url": "https://github.com/nodejs/release"
+            },
+            "at": "2026-10-09T11:32:28.547Z",
+            "durationMs": 10587,
+            "outputChars": 8956,
+            "outputBytes": 8964,
+            "error": false,
+            "web": true
+          },
+          {
+            "callId": "call_490d5d35e3ad40a6849f4ee3",
+            "name": "web_fetch",
+            "arguments": {
+              "url": "https://nodejs.org/api/typescript.html"
+            },
+            "at": "2026-10-09T11:34:31.091Z",
+            "durationMs": 6410,
+            "outputChars": 6049,
+            "outputBytes": 6049,
+            "error": false,
+            "web": true
+          },
+          {
+            "callId": "call_52c4635588b74c7c8b8159d8",
+            "name": "web_fetch",
+            "arguments": {
+              "url": "https://nodejs.org/en/blog/release/v23.6.0"
+            },
+            "at": "2026-10-09T11:37:07.884Z",
+            "durationMs": 3863,
+            "outputChars": 8710,
+            "outputBytes": 8712,
+            "error": false,
+            "web": true
+          },
+          {
+            "callId": "call_bbaf99ca3c314e2ca1d3e51d",
+            "name": "write",
+            "arguments": {
+              "file_path": "C:\\temp\\weftmate-eval-action-02-web-document-vQOs3W/node24说明.md",
+              "content": "# Node.js 24 相比 22 值得留意的变化（简短说明）\n\n整理时间：2026-10-09（账号时区 Asia/Shanghai）。对比基准：**24.0.0 初始版**（2025-05-06 发布）与 **22.0.0 初始版**（2024-04-24 发布）的官方发布说明，并结合两条分支当前维护中的最新小版本。所有内容来自 Node.js 官方资料，链接见文末。\n\n## 1. 先看版本状态（2026-10-09）\n\n| 分支 | 代号 | 首发 | 当前状态 | 最新版本 | 支持期 |\n|---|---|---|---|---|---|\n| v24 | Krypton | 2025-05-06 | Active LTS（2026-10-20 转 Maintenance） | 24.21.0（2026-09-08） | 至 2028-04-30 |\n| v22 | Jod | 2024-04-24 | Maintenance LTS | 22.23.3（2026-09-23） | 至 2027-04-30 |\n\n- 24 不是最新主线：v26 自 2026-05-05 起是 Current。\n- 22 仍在维护（安全/关键修复），但已进入维护期；新项目选 24、存量项目按节奏迁移是官方推荐的常规做法。\n- 两条分支都在持续出小版本，下文标了“初始版”的差异指 24.0.0 引入、22.0.0 没有的东西。\n\n## 2. v24.0.0 官方重点变化\n\n1. **V8 升级到 13.6**（22.0.0 是 V8 12.4），随之可用的新 JS 特性：`Float16Array`、**显式资源管理**（`using` / `await using`）、`RegExp.escape`、WebAssembly Memory64、`Error.isError`。\n2. **npm 升到 11**（24 自带）；22 分支一直是 npm 10 系列（如 22.18.0 自带 npm 10.9.3）。升级后注意 lockfile 与 CI 里 npm 版本的差异。\n3. **`AsyncLocalStorage` 默认改用 `AsyncContextFrame` 实现**，异步上下文跟踪更高效；个别依赖内部实现细节的用法可能受影响。\n4. **`URLPattern` 成为全局对象**，不用再手动 import。\n5. **权限模型更进一步**：`--experimental-permission` 改名为 `--permission`，稳定性提升。\n6. **测试运行器（`node:test`）自动等待子测试完成**，不再需要手动 `await` 子测试 promise，写测试更省心。\n7. **Undici 7**：内置 fetch / HTTP 客户端大版本更新，性能与 HTTP 特性支持更好。\n8. **废弃与移除（升级时最容易踩的坑）**：\n   - `url.parse()` **运行时废弃** → 改用 WHATWG `URL`；\n   - `SlowBuffer` 进入 EOL（运行时废弃）；\n   - 移除已废弃的 `tls.createSecurePair()`；\n   - 不带 `new` 直接调用 REPL、Zlib 类 → 废弃；\n   - 给 `child_process` 的 `spawn` / `execFile` 传参数的老写法 → 废弃。\n9. **Windows 构建变化**：不再支持 MSVC，Windows 上从源码编译 Node 需要用 **ClangCL**（只用官方二进制安装包的人不受影响）。\n\n## 3. 从 22 升到 24 的实际兼容点\n\n- **原生扩展（C/C++ addon）必须重新编译**：`NODE_MODULE_VERSION` 从 22 的 127 变为 24 的 137，ABI 不兼容，直接换 Node 版本会导致加载失败。\n- 用到 `url.parse`、`tls.createSecurePair`、`SlowBuffer`、不带 `new` 调 zlib/REPL 的代码需要迁移或加兼容处理。\n- 依赖内建 npm 的流程（Docker 镜像、CI 缓存）要按 npm 11 调整。\n\n## 4. 别误判：这些不是 24 独占（22 新小版本也有）\n\n- **`require(esm)` 默认开启**：22.12.0 起 22 分支就默认开启了（24 同样默认），不要当成 24 才有的能力。\n- **直接运行 `.ts`（类型剥离 type stripping）**：23.6.0 起默认开启、24 继承；**22 分支在 22.18.0 也回移了默认开启**。所以最新 22.x 同样可以直接 `node file.ts`（仍不支持 enum、namespace 运行时代码、装饰器等需编译的语法，见官方 TypeScript 文档）。\n- 结论：判断某能力“24 才有”，要看 22.x 的最新小版本，而不是 22.0.0。\n\n## 来源链接\n\n- Node.js 24.0.0 发布说明：https://nodejs.org/en/blog/release/v24.0.0\n- Node.js 22.0.0 发布说明：https://nodejs.org/en/blog/release/v22.0.0\n- 版本状态与更新日期总表：https://nodejs.org/en/about/releases/\n- 官方发布计划（各分支 LTS/维护/EOL 日期）：https://github.com/nodejs/release\n- 22.12.0：`require(esm)` 默认开启：https://nodejs.org/en/blog/release/v22.12.0\n- 22.18.0：类型剥离默认开启、npm 10.9.3：https://nodejs.org/en/blog/release/v22.18.0\n- 23.6.0：`--experimental-strip-types` 默认开启：https://nodejs.org/en/blog/release/v23.6.0\n- Node.js 24 完整变更日志（最新 24.21.0）：https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V24.md\n- Node.js 22 完整变更日志（最新 22.23.3）：https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V22.md\n- 官方 TypeScript 运行支持文档：https://nodejs.org/api/typescript.html\n"
+            },
+            "at": "2026-10-09T11:39:03.901Z",
+            "durationMs": 1200,
+            "outputChars": 517,
+            "outputBytes": 529,
+            "error": false,
+            "web": false
+          },
+          {
+            "callId": "call_5bb1662bbe214ac7ac1d6aa1",
+            "name": "load_tools",
+            "arguments": {
+              "names": [
+                "read"
+              ]
+            },
+            "at": "2026-10-09T11:39:47.678Z",
+            "durationMs": 8,
+            "outputChars": 19,
+            "outputBytes": 19,
+            "error": false,
+            "web": false
+          },
+          {
+            "callId": "call_072d4411bdd443d096729a6a",
+            "name": "read",
+            "arguments": {
+              "file_path": "C:\\temp\\weftmate-eval-action-02-web-document-vQOs3W\\node24说明.md"
+            },
+            "at": "2026-10-09T11:40:19.939Z",
+            "durationMs": 43,
+            "outputChars": 3259,
+            "outputBytes": 4953,
+            "error": false,
+            "web": false
+          },
+          {
+            "callId": "call_82b90ec00a19468b9b339da3",
+            "name": "load_tools",
+            "arguments": {
+              "names": [
+                "edit"
+              ]
+            },
+            "at": "2026-10-09T11:40:53.643Z",
+            "durationMs": 7,
+            "outputChars": 19,
+            "outputBytes": 19,
+            "error": false,
+            "web": false
+          },
+          {
+            "callId": "call_f4a63d359cbc407cb039b468",
+            "name": "edit",
+            "arguments": {
+              "file_path": "C:\\temp\\weftmate-eval-action-02-web-document-vQOs3W\\node24说明.md",
+              "old_string": "- 22 仍在维护（安全/关键修复），但已进入维护期；新项目选 24、存量项目按节奏迁移是官方推荐的常规做法。",
+              "new_string": "- 22 仍在维护（安全/关键修复），但已进入维护期；官方建议生产环境只使用 Active LTS 或 Maintenance LTS 版本。"
+            },
+            "at": "2026-10-09T11:40:58.918Z",
+            "durationMs": 548,
+            "outputChars": 405,
+            "outputBytes": 413,
+            "error": false,
+            "web": false
+          },
+          {
+            "callId": "call_7800b51b860c4396916c7f5e",
+            "name": "edit",
+            "arguments": {
+              "file_path": "C:\\temp\\weftmate-eval-action-02-web-document-vQOs3W\\node24说明.md",
+              "old_string": "3. **`AsyncLocalStorage` 默认改用 `AsyncContextFrame` 实现**，异步上下文跟踪更高效；个别依赖内部实现细节的用法可能受影响。",
+              "new_string": "3. **`AsyncLocalStorage` 默认改用 `AsyncContextFrame` 实现**，官方称异步上下文跟踪更高效、更健壮。"
+            },
+            "at": "2026-10-09T11:40:59.466Z",
+            "durationMs": 554,
+            "outputChars": 405,
+            "outputBytes": 413,
+            "error": false,
+            "web": false
+          },
+          {
+            "callId": "call_b7cda2f36103434088c4a91d",
+            "name": "read",
+            "arguments": {
+              "file_path": "C:\\temp\\weftmate-eval-action-02-web-document-vQOs3W\\node24说明.md",
+              "limit": 24
+            },
+            "at": "2026-10-09T11:41:10.473Z",
+            "durationMs": 41,
+            "outputChars": 1485,
+            "outputBytes": 2265,
+            "error": false,
+            "web": false
+          },
+          {
+            "callId": "call_99f7d325cb8845198e6a70e9",
+            "name": "todo_write",
+            "arguments": {
+              "todos": [
+                {
+                  "content": "查阅 Node.js 官方 24 相对 22 的变化资料",
+                  "status": "completed"
+                },
+                {
+                  "content": "撰写中文简短说明（含来源链接）",
+                  "status": "completed"
+                },
+                {
+                  "content": "写入 C:\\temp\\weftmate-eval-action-02-web-document-vQOs3W/node24说明.md 并回读验证",
+                  "status": "completed"
+                }
+              ]
+            },
+            "at": "2026-10-09T11:41:14.002Z",
+            "durationMs": 33,
+            "outputChars": 57,
+            "outputBytes": 57,
+            "error": false,
+            "web": false
+          }
+        ],
+        "toolDetailsAvailable": true,
+        "note": "Tool times paired by name and exact arguments; overlapping calls must not be summed as wall time."
+      },
+      {
+        "id": "action-02-web-document",
+        "status": "passed",
+        "checks": [
+          {
+            "type": "file_exists",
+            "path": "node24说明.md",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "node24说明.md",
+            "text": "https://nodejs.org/",
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "说明|保存|写好",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "prompt": "回复应说明已经保存中文说明并提到官方来源；不能将尚未进行的检索/保存说成完成。仅凭回复不能验收文档事实准确性。",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "durationMs": 204644,
+        "ordinaryModelRounds": 10,
+        "compactionRequests": 0,
+        "firstVisibleProgressMs": 439,
+        "firstNativeStepMs": 1846,
+        "requests": [
+          {
+            "id": "48836-39",
+            "at": "2026-10-09T11:41:25.070Z",
+            "inputChars": 8035,
+            "stream": true,
+            "durationMs": 1725,
+            "firstTokenMs": 668,
+            "firstContentMs": null,
+            "firstReasoningMs": 668,
+            "firstToolMs": 1469,
+            "headersMs": 570,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 98,
+              "prompt_tokens": 2184,
+              "total_tokens": 2282,
+              "completion_tokens_details": {
+                "reasoning_tokens": 72
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 1728
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-42",
+            "at": "2026-10-09T11:41:26.851Z",
+            "inputChars": 9262,
+            "stream": true,
+            "durationMs": 4947,
+            "firstTokenMs": 1551,
+            "firstContentMs": null,
+            "firstReasoningMs": 1551,
+            "firstToolMs": 4413,
+            "headersMs": 1460,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 220,
+              "prompt_tokens": 2879,
+              "total_tokens": 3099,
+              "completion_tokens_details": {
+                "reasoning_tokens": 159
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 64
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-44",
+            "at": "2026-10-09T11:41:44.580Z",
+            "inputChars": 20020,
+            "stream": true,
+            "durationMs": 5780,
+            "firstTokenMs": 2110,
+            "firstContentMs": 4865,
+            "firstReasoningMs": 2110,
+            "firstToolMs": 5197,
+            "headersMs": 2016,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 224,
+              "prompt_tokens": 6113,
+              "total_tokens": 6337,
+              "completion_tokens_details": {
+                "reasoning_tokens": 141
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2688
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-46",
+            "at": "2026-10-09T11:41:55.590Z",
+            "inputChars": 30367,
+            "stream": true,
+            "durationMs": 8834,
+            "firstTokenMs": 4028,
+            "firstContentMs": 8160,
+            "firstReasoningMs": 4028,
+            "firstToolMs": 8567,
+            "headersMs": 3939,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 337,
+              "prompt_tokens": 9557,
+              "total_tokens": 9894,
+              "completion_tokens_details": {
+                "reasoning_tokens": 276
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2688
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-48",
+            "at": "2026-10-09T11:42:08.882Z",
+            "inputChars": 40509,
+            "stream": true,
+            "durationMs": 25825,
+            "firstTokenMs": 2014,
+            "firstContentMs": 24909,
+            "firstReasoningMs": 2014,
+            "firstToolMs": 25455,
+            "headersMs": 1939,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 1100,
+              "prompt_tokens": 13813,
+              "total_tokens": 14913,
+              "completion_tokens_details": {
+                "reasoning_tokens": 1045
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2752
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-50",
+            "at": "2026-10-09T11:42:42.740Z",
+            "inputChars": 51302,
+            "stream": true,
+            "durationMs": 29466,
+            "firstTokenMs": 8092,
+            "firstContentMs": 28526,
+            "firstReasoningMs": 8092,
+            "firstToolMs": 29203,
+            "headersMs": 5157,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 939,
+              "prompt_tokens": 16221,
+              "total_tokens": 17160,
+              "completion_tokens_details": {
+                "reasoning_tokens": 889
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2752
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-52",
+            "at": "2026-10-09T11:43:15.381Z",
+            "inputChars": 63230,
+            "stream": true,
+            "durationMs": 82039,
+            "firstTokenMs": 2960,
+            "firstContentMs": 64890,
+            "firstReasoningMs": 2960,
+            "firstToolMs": 65321,
+            "headersMs": 2861,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 5200,
+              "prompt_tokens": 19184,
+              "total_tokens": 24384,
+              "completion_tokens_details": {
+                "reasoning_tokens": 3740
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2816
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-54",
+            "at": "2026-10-09T11:44:38.312Z",
+            "inputChars": 77483,
+            "stream": true,
+            "durationMs": 2579,
+            "firstTokenMs": 2193,
+            "firstContentMs": null,
+            "firstReasoningMs": 2193,
+            "firstToolMs": 2361,
+            "headersMs": 2105,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 28,
+              "prompt_tokens": 24687,
+              "total_tokens": 24715,
+              "completion_tokens_details": {
+                "reasoning_tokens": 6
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 2816
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-56",
+            "at": "2026-10-09T11:44:40.952Z",
+            "inputChars": 78155,
+            "stream": true,
+            "durationMs": 3985,
+            "firstTokenMs": 3284,
+            "firstContentMs": null,
+            "firstReasoningMs": 3284,
+            "firstToolMs": 3532,
+            "headersMs": 3194,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 55,
+              "prompt_tokens": 24929,
+              "total_tokens": 24984,
+              "completion_tokens_details": {
+                "reasoning_tokens": 13
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          },
+          {
+            "id": "48836-58",
+            "at": "2026-10-09T11:44:45.039Z",
+            "inputChars": 81673,
+            "stream": true,
+            "durationMs": 4053,
+            "firstTokenMs": 1238,
+            "firstContentMs": 1618,
+            "firstReasoningMs": 1238,
+            "firstToolMs": null,
+            "headersMs": 1111,
+            "terminal": "end",
+            "usage": {
+              "completion_tokens": 144,
+              "prompt_tokens": 26663,
+              "total_tokens": 26807,
+              "completion_tokens_details": {
+                "reasoning_tokens": 20
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 3136
+              }
+            },
+            "sameSizeRetryAfterAbort": false
+          }
+        ],
+        "requestCount": 10,
+        "inputCharsTotal": 460036,
+        "maxInputChars": 81673,
+        "modelMs": 169233,
+        "tools": [
+          {
+            "callId": "call_2c65f5df010441af8cf61fe3",
+            "name": "load_tools",
+            "arguments": {
+              "names": [
+                "web_fetch",
+                "write"
+              ]
+            },
+            "at": "2026-10-09T11:41:26.805Z",
+            "durationMs": 5,
+            "outputChars": 32,
+            "outputBytes": 32,
+            "error": false,
+            "web": false
+          },
+          {
+            "callId": "call_67aaaea4ef5d493bb3d3617a",
+            "name": "web_fetch",
+            "arguments": {
+              "url": "https://nodejs.org/en/blog/announcements/v24-release-announce"
+            },
+            "at": "2026-10-09T11:41:31.808Z",
+            "durationMs": 5460,
+            "outputChars": 25,
+            "outputBytes": 25,
+            "error": true,
+            "web": true
+          },
+          {
+            "callId": "call_3e39f0b8d2d04f7f91612bc9",
+            "name": "web_fetch",
+            "arguments": {
+              "url": "https://github.com/nodejs/release#release-schedule"
+            },
+            "at": "2026-10-09T11:41:31.815Z",
+            "durationMs": 12715,
+            "outputChars": 8956,
+            "outputBytes": 8964,
+            "error": false,
+            "web": true
+          },
+          {
+            "callId": "call_508bf1f0aa5649b1911b477f",
+            "name": "web_fetch",
+            "arguments": {
+              "url": "https://nodejs.org/en/blog/announcements/v24-release-announce/"
+            },
+            "at": "2026-10-09T11:41:50.371Z",
+            "durationMs": 5154,
+            "outputChars": 25,
+            "outputBytes": 25,
+            "error": true,
+            "web": true
+          },
+          {
+            "callId": "call_db3897995e7e46519ef912ff",
+            "name": "web_fetch",
+            "arguments": {
+              "url": "https://nodejs.org/en/blog/release/v24.0.0"
+            },
+            "at": "2026-10-09T11:41:50.377Z",
+            "durationMs": 5149,
+            "outputChars": 8858,
+            "outputBytes": 8893,
+            "error": false,
+            "web": true
+          },
+          {
+            "callId": "call_dc965ba2e1fb4ae196e488b2",
+            "name": "web_fetch",
+            "arguments": {
+              "url": "https://nodejs.org/en/blog/release/v22.0.0"
+            },
+            "at": "2026-10-09T11:42:04.434Z",
+            "durationMs": 4395,
+            "outputChars": 8685,
+            "outputBytes": 8728,
+            "error": false,
+            "web": true
+          },
+          {
+            "callId": "call_f8d9b94f5d284ad9912169f0",
+            "name": "web_fetch",
+            "arguments": {
+              "url": "https://nodejs.org/docs/latest/api/typescript.html"
+            },
+            "at": "2026-10-09T11:42:34.716Z",
+            "durationMs": 7978,
+            "outputChars": 6061,
+            "outputBytes": 6061,
+            "error": false,
+            "web": true
+          },
+          {
+            "callId": "call_b94220de38044b70b733c6a3",
+            "name": "web_fetch",
+            "arguments": {
+              "url": "https://raw.githubusercontent.com/nodejs/node/main/doc/api/typescript.md"
+            },
+            "at": "2026-10-09T11:43:12.217Z",
+            "durationMs": 3108,
+            "outputChars": 8024,
+            "outputBytes": 8024,
+            "error": false,
+            "web": true
+          },
+          {
+            "callId": "call_ca53d1c7e2244bcb8d2d3ab7",
+            "name": "write",
+            "arguments": {
+              "file_path": "C:\\temp\\weftmate-eval-action-02-web-document-eUBP4s/node24说明.md",
+              "content": "# Node.js 24 相比 22 值得留意的变化（简短说明）\n\n整理日期：2026-10-09。对比基准：**Node.js 24.0.0 与 22.0.0 的官方发布公告**，另以官方发布周期表和 TypeScript 文档补充。\n注意：部分特性后来回移到了 22.x 较新的小版本，并非 24 独有，文中已单独标注。\n\n## 1. 版本状态（截至 2026-10-09）\n\n| 版本 | 状态 | 代号 | 首发 | Active LTS | 维护期 | EOL |\n|---|---|---|---|---|---|---|\n| 24.x | Active LTS（10-20 起转维护） | Krypton | 2025-05-06 | 2025-10-28 | 2026-10-20 | 2028-04-30 |\n| 22.x | Maintenance LTS | Jod | 2024-04-24 | 2024-10-29 | 2025-10-21 | 2027-04-30 |\n\n结论：22 还在维护期（只有关键修复和安全更新），新项目建议直接上 24；24 的活跃支持期即将转入维护阶段。\n\n## 2. 运行时与工具链\n\n- **V8 升级 12.4 → 13.6**，新语言特性：`Float16Array`、显式资源管理（`using` / DisposableStack）、`RegExp.escape`、WebAssembly Memory64、`Error.isError`。\n- **npm 10 → 11**；内置 HTTP 客户端 **Undici 6 → 7**。\n- **ABI 变化**：NODE_MODULE_VERSION 127 → 137，原生扩展（node-gyp 编出的 `.node`）升级后必须重新编译。\n- **Windows 构建 Node 本体不再支持 MSVC，必须用 ClangCL**（只影响编译 Node 本身，不自动改变第三方原生扩展的构建要求）。\n- 平台调整：armv7 支持降级为实验性；移除 s390 32 位构建。\n\n## 3. API 与行为变化（升级时最该留意）\n\n- `AsyncLocalStorage` 默认改用 `AsyncContextFrame` 实现，异步上下文跟踪更快更稳。\n- `URLPattern` 成为全局对象，无需 import。\n- 权限模型实验开关 `--experimental-permission` 更名为 `--permission`。\n- 测试运行器会自动等待子测试结束，不必再手动 `await`。\n- **弃用与移除（24 起）**：\n  - `url.parse()` 运行时弃用 → 改用 WHATWG `URL`；\n  - `tls.createSecurePair` 已移除；\n  - `SlowBuffer` 运行时弃用（EOL）；\n  - 不带 `new` 调用 REPL 构造函数、不带 `new` 使用 Zlib 类被弃用；\n  - `child_process` 的 `spawn`/`execFile` 部分旧传参用法被弃用。\n- 其他 semver-major：HTTP/HTTP2 私有字段与会话跟踪、优雅关闭行为调整，readline 关闭后的调用校验更严格——依赖内部私有字段的代码可能失效。\n\n## 4. TypeScript 支持（含 22 的回移情况）\n\n- v22.6.0 引入类型剥离（当时需实验开关）；**v23.6.0 与 v22.18.0 起默认启用**；v24.3.0 起不再输出实验警告；**v24.12.0 起转为稳定**。\n- 即：最新 24 和较新的 22.x 都能直接运行只含“可擦除语法”的 `.ts`（不做类型检查，可用 `--no-strip-types` 关闭）。\n- 限制：不支持 enum、带运行时代码的 namespace、参数属性、装饰器；不读取 `tsconfig.json`；`node_modules` 内的 `.ts` 不处理。完整支持仍需 tsx 等第三方工具。\n\n## 5. 22 已有的能力（不要误当成 24 新特性）\n\n`require()` 同步 ESM 图、全局 `WebSocket`、`node --run`、`fs.glob/globSync`、`--watch` 模式稳定、Maglev 优化——这些在 22.0.0 就已落地，升到 24 只是继续可用。\n\n## 6. 升级检查清单\n\n1. 原生模块按 ABI 137 重新编译并做冒烟测试。\n2. 全局搜索 `url.parse`、`SlowBuffer`、`tls.createSecurePair`、旧式 `spawn/execFile` 用法并替换。\n3. Windows 上如需自行编译 Node，准备 ClangCL 工具链。\n4. 升级内置 npm 11 后复查 lockfile 与 peerDependencies 解析结果。\n5. 先在 22 最新小版本验证——部分 24 特性已回移，回归风险可能比预期小。\n\n## 来源\n\n- [Node.js 24.0.0 发布说明（官方博客）](https://nodejs.org/en/blog/release/v24.0.0)\n- [Node.js 22.0.0 发布说明（官方博客）](https://nodejs.org/en/blog/release/v22.0.0)\n- [Node.js 官方发布周期表（nodejs/release）](https://github.com/nodejs/release#release-schedule)\n- [TypeScript 支持文档及特性时间线（官方文档）](https://nodejs.org/docs/latest/api/typescript.html)\n"
+            },
+            "at": "2026-10-09T11:44:37.432Z",
+            "durationMs": 814,
+            "outputChars": 517,
+            "outputBytes": 529,
+            "error": false,
+            "web": false
+          },
+          {
+            "callId": "call_1996c48025714227be3ea678",
+            "name": "load_tools",
+            "arguments": {
+              "names": [
+                "read"
+              ]
+            },
+            "at": "2026-10-09T11:44:40.903Z",
+            "durationMs": 5,
+            "outputChars": 19,
+            "outputBytes": 19,
+            "error": false,
+            "web": false
+          },
+          {
+            "callId": "call_d1b3667ce70b464a91911904",
+            "name": "read",
+            "arguments": {
+              "file_path": "C:\\temp\\weftmate-eval-action-02-web-document-eUBP4s\\node24说明.md"
+            },
+            "at": "2026-10-09T11:44:44.948Z",
+            "durationMs": 47,
+            "outputChars": 2863,
+            "outputBytes": 4447,
+            "error": false,
+            "web": false
+          }
+        ],
+        "toolDetailsAvailable": true,
+        "note": "Tool times paired by name and exact arguments; overlapping calls must not be summed as wall time."
+      }
+    ],
+    "usage": {
+      "requests": 31,
+      "withUsage": 30,
+      "missingUsage": 1,
+      "inputTokens": 639738,
+      "cachedTokens": 60736,
+      "outputTokens": 21590
+    }
+  }
+]
