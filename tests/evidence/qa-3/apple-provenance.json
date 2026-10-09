@@ -1,0 +1,16 @@
+{
+  "appleTreeAtA13AndQa3Start": "04ee40bef9364bfebd84b6f0e4090fbe8b197b66",
+  "qa3WindowsCommit": "1bbc863aa664d58105c0f1b086c5f8dc702c9235",
+  "expectedImplementationSha256": {
+    "mac": "a546e82f6cb1254f50c2190a4b8030d89abd9da92700dfb0564bbc46941eacca",
+    "iphone": "0df4b6f30b45520e67fc3e1399d0990f3a6a3d9ba35e3896283f0084e59d05fd",
+    "watch": "019d06f41c143cad5e653cd27630e41f9e8ce9042e9393418c5b7617f615bf93"
+  },
+  "actualImplementationSha256": {
+    "mac": "a546e82f6cb1254f50c2190a4b8030d89abd9da92700dfb0564bbc46941eacca",
+    "iphone": "0df4b6f30b45520e67fc3e1399d0990f3a6a3d9ba35e3896283f0084e59d05fd",
+    "watch": "019d06f41c143cad5e653cd27630e41f9e8ce9042e9393418c5b7617f615bf93"
+  },
+  "allMatch": true,
+  "historicalTestResultsReused": false
+}

@@ -1,0 +1,50 @@
+[
+  {
+    "name": "models",
+    "startedAt": "2026-10-09T19:01:50.164Z",
+    "durationMs": 32679,
+    "exitCode": 0,
+    "stdout": "MS1 desktop light/dark, add/edit, explicit fallback inference and mobile 390x844 verified.\n",
+    "stderr": ""
+  },
+  {
+    "name": "d36",
+    "startedAt": "2026-10-09T19:02:22.844Z",
+    "durationMs": 78697,
+    "exitCode": 0,
+    "stdout": "light verified\ndark verified\n",
+    "stderr": ""
+  },
+  {
+    "name": "orphan",
+    "startedAt": "2026-10-09T19:03:41.542Z",
+    "durationMs": 8170,
+    "exitCode": 0,
+    "stdout": "{\"label\":\"after\",\"scenarios\":[{\"scenario\":\"runtime-restart\",\"control\":{\"state\":\"stop_requested\",\"updatedAt\":\"2026-10-09T19:03:45.699Z\",\"backgroundJobs\":{\"active\":0,\"unconfirmed\":0},\"stopRequestedAt\":\"2026-10-09T19:03:45.699Z\",\"canSupplement\":false,\"canStop\":false,\"canResume\":true,\"stopStatus\":\"completed\",\"pendingReceipts\":0,\"stopObservedAt\":\"2026-10-09T19:03:46.612Z\",\"reasonCode\":\"TURN_ENDED_AFTER_STOP_REQUEST\"}},{\"scenario\":\"missing-turn\",\"control\":{\"state\":\"stop_requested\",\"updatedAt\":\"2026-10-09T19:03:45.983Z\",\"backgroundJobs\":{\"active\":0,\"unconfirmed\":0},\"stopRequestedAt\":\"2026-10-09T19:03:45.983Z\",\"canSupplement\":false,\"canStop\":false,\"canResume\":true,\"stopStatus\":\"completed\",\"pendingReceipts\":0,\"stopObservedAt\":\"2026-10-09T19:03:46.612Z\",\"reasonCode\":\"TURN_ENDED_AFTER_STOP_REQUEST\"}},{\"scenario\":\"model-switch-failed\",\"control\":{\"state\":\"stop_requested\",\"updatedAt\":\"2026-10-09T19:03:46.269Z\",\"backgroundJobs\":{\"active\":0,\"unconfirmed\":0},\"stopRequestedAt\":\"2026-10-09T19:03:46.269Z\",\"canSupplement\":false,\"canStop\":false,\"canResume\":true,\"stopStatus\":\"completed\",\"pendingReceipts\":0,\"stopObservedAt\":\"2026-10-09T19:03:46.303Z\",\"reasonCode\":\"TURN_ENDED_AFTER_STOP_REQUEST\"}},{\"scenario\":\"upstream-disconnect\",\"control\":{\"state\":\"stop_requested\",\"updatedAt\":\"2026-10-09T19:03:46.577Z\",\"backgroundJobs\":{\"active\":0,\"unconfirmed\":0},\"stopRequestedAt\":\"2026-10-09T19:03:46.577Z\",\"canSupplement\":false,\"canStop\":false,\"canResume\":true,\"stopStatus\":\"completed\",\"pendingReceipts\":0,\"stopObservedAt\":\"2026-10-09T19:03:46.612Z\",\"reasonCode\":\"TURN_ENDED_AFTER_STOP_REQUEST\"}}],\"metrics\":{\"stopCalls\":4,\"nativeReads\":12,\"sends\":5},\"resumeDispatchedOnce\":true,\"retriesAfterTerminal\":0}\n",
+    "stderr": ""
+  },
+  {
+    "name": "scroll-focused",
+    "startedAt": "2026-10-09T19:03:49.712Z",
+    "durationMs": 11472,
+    "exitCode": 0,
+    "stdout": "[{\"surface\":\"desktop\",\"theme\":\"light\",\"status\":\"passed\",\"durationMs\":850,\"historyMovementPx\":0,\"stickyBottom\":true,\"jumpToBottom\":true},{\"surface\":\"mobile-web\",\"theme\":\"light\",\"status\":\"passed\",\"durationMs\":687,\"historyMovementPx\":0,\"stickyBottom\":true,\"jumpToBottom\":true},{\"surface\":\"desktop\",\"theme\":\"dark\",\"status\":\"passed\",\"durationMs\":860,\"historyMovementPx\":0,\"stickyBottom\":true,\"jumpToBottom\":true},{\"surface\":\"mobile-web\",\"theme\":\"dark\",\"status\":\"passed\",\"durationMs\":845,\"historyMovementPx\":0,\"stickyBottom\":true,\"jumpToBottom\":true}]\n",
+    "stderr": ""
+  },
+  {
+    "name": "ux-1-consistency",
+    "startedAt": "2026-10-09T19:04:01.184Z",
+    "durationMs": 45282,
+    "exitCode": 0,
+    "stdout": "light 01-approval-priority\nlight 02-single-choice\nlight 03-other-input-enter\nlight 04-expanded-description\nlight 05-multiple-choice\nlight 06-free-answer\nlight 07-next-batch\nlight 08-answered-bar-removed\nlight 09-chinese-sources\nlight 09b-source-detail\nlight 10-chinese-month-picker\nlight 11-local-time-usage\ndark 01-approval-priority\ndark 02-single-choice\ndark 03-other-input-enter\ndark 04-expanded-description\ndark 05-multiple-choice\ndark 06-free-answer\ndark 07-next-batch\ndark 08-answered-bar-removed\ndark 09-chinese-sources\ndark 09b-source-detail\ndark 10-chinese-month-picker\ndark 11-local-time-usage\nUX-1 production Electron / phone web / Android UI bundle passed.\n",
+    "stderr": ""
+  },
+  {
+    "name": "legacy",
+    "startedAt": "2026-10-09T19:04:46.467Z",
+    "durationMs": 14547,
+    "exitCode": 1,
+    "stdout": "surface light desktop {\n  screen: [ 'assistant-view' ],\n  title: '项目进度报告',\n  send: '停止回复',\n  hint: '正在加载模型 合成模型…',\n  loginError: ''\n}\nsynthetic diagnostics [\n  { kind: 'create' },\n  { kind: 'message', mode: 'steer', text: '读取项目资料，运行测试，并保存一份进度报告。' },\n  { kind: 'cancel' }\n] {\n  title: '项目进度报告',\n  draft: '',\n  operation: '',\n  transcript: '历史记录 14：已核对项目资料。\\n' +\n    '历史记录 15：已核对项目资料。\\n' +\n    '历史记录 16：已核对项目资料。\\n' +\n    '历史记录 17：已核对项目资料。\\n' +\n    '历史记录 18：已核对项目资料。\\n' +\n    '历史记录 19：已核对项目资料。\\n' +\n    '历史记录 20：已核对项目资料。\\n' +\n    '历史记录 21：已核对项目资料。\\n' +\n    '历史记录 22：已核对项目资料。\\n' +\n    '历史记录 23'\n}\n",
+    "stderr": "FIX-8 verification failed: locator.waitFor: Error: strict mode violation: getByRole('status').filter({ hasText: '已停止' }) resolved to 2 elements:\n    1) <p role=\"status\" id=\"timeline-status\" class=\"timeline-status\">本轮已停止。如需继续，请重新发送。</p> aka getByText('本轮已停止。如需继续，请重新发送。')\n    2) <p id=\"toast\" class=\"toast\" role=\"status\" aria-live=\"polite\">已停止</p> aka getByText('已停止', { exact: true })\n\nCall log:\n\u001b[2m  - waiting for getByRole('status').filter({ hasText: '已停止' }) to be visible\u001b[22m\n\nnode:internal/modules/run_main:107\r\n    triggerUncaughtException(\r\n    ^\r\n\r\nlocator.waitFor: Error: strict mode violation: getByRole('status').filter({ hasText: '已停止' }) resolved to 2 elements:\r\n    1) <p role=\"status\" id=\"timeline-status\" class=\"timeline-status\">本轮已停止。如需继续，请重新发送。</p> aka getByText('本轮已停止。如需继续，请重新发送。')\r\n    2) <p id=\"toast\" class=\"toast\" role=\"status\" aria-live=\"polite\">已停止</p> aka getByText('已停止', { exact: true })\r\n\r\nCall log:\r\n\u001b[2m  - waiting for getByRole('status').filter({ hasText: '已停止' }) to be visible\u001b[22m\r\n\r\n    at D:\\AIProjects\\WeftMate\\Worktrees\\w4\\tests\\evidence\\qa-3\\runners\\legacy.mjs:71:81 {\r\n  log: [\r\n    \"  - waiting for getByRole('status').filter({ hasText: '已停止' }) to be visible\"\r\n  ]\r\n}\r\n\r\nNode.js v24.15.0\r\n"
+  }
+]

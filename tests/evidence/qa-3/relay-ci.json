@@ -1,0 +1,17 @@
+{
+  "port": 443,
+  "frpVersion": "0.71.0",
+  "capturedTlsBytes": 258163,
+  "plaintextMarkerFound": false,
+  "login": true,
+  "sse": true,
+  "history2200": true,
+  "attachmentSha256": true,
+  "reconnect": true,
+  "foreignDomainRejected": true,
+  "spkiReplacementRejected": true,
+  "forgedCertificateRejected": true,
+  "credentialRotation": true,
+  "revokeMs": 11,
+  "loopbackOnly": true
+}

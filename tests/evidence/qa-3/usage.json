@@ -1,0 +1,83 @@
+{
+  "checkedPriceUrl": "https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash",
+  "priceCnyPerMillion": {
+    "uncachedInput": 1,
+    "cachedInput": 0.02,
+    "output": 2
+  },
+  "total": {
+    "requests": 168,
+    "returnedUsage": 158,
+    "missingUsage": 10,
+    "input": 512197,
+    "cached": 263232,
+    "output": 31982,
+    "knownCnyLowerBound": 0.31819364
+  },
+  "groups": [
+    {
+      "source": "accounts/legacy/requests.jsonl",
+      "requests": 4
+    },
+    {
+      "source": "android/requests.jsonl",
+      "requests": 2
+    },
+    {
+      "source": "android-recovery/requests.jsonl",
+      "requests": 5
+    },
+    {
+      "source": "android-settings-final/requests.jsonl",
+      "requests": 4
+    },
+    {
+      "source": "immediate/requests.jsonl",
+      "requests": 21
+    },
+    {
+      "source": "m1-lan/requests.jsonl",
+      "requests": 0
+    },
+    {
+      "source": "m1-mimo/requests.jsonl",
+      "requests": 61
+    },
+    {
+      "source": "m2/requests.jsonl",
+      "requests": 22
+    },
+    {
+      "source": "menus/requests.jsonl",
+      "requests": 7
+    },
+    {
+      "source": "mf2/qa2-01-water/requests.jsonl",
+      "requests": 8
+    },
+    {
+      "source": "project-lifecycle/requests.jsonl",
+      "requests": 14
+    },
+    {
+      "source": "relay-retry/requests.jsonl",
+      "requests": 4
+    },
+    {
+      "source": "ia-2a/identity-native.json",
+      "requests": 2
+    },
+    {
+      "source": "offline/verification-web.json",
+      "method": "direct phone usage plus separate host account aggregate; unavailable probe usage not invented"
+    },
+    {
+      "source": "offline/verification-android.json",
+      "method": "direct phone usage plus separate host account aggregate; unavailable probe usage not invented"
+    }
+  ],
+  "limitations": [
+    "Known lower bound, not a bill. Early Android/cloud harness failures did not retain complete provider traces; their unknown usage is not free.",
+    "Missing response usage includes cancellation/timeouts. No extra model inference for installed/backup tests."
+  ]
+}

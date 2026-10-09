@@ -1,0 +1,43 @@
+{
+  "syntheticOnly": true,
+  "realElectron": true,
+  "checks": [
+    {
+      "memoryCategory": true,
+      "theme": "light",
+      "surfaces": [
+        "desktop",
+        "android-ui",
+        "mobile-web"
+      ],
+      "approvalPriority": true,
+      "singleChoice": true,
+      "multipleChoice": true,
+      "custom": true,
+      "batches": 2,
+      "enterDoesNotSubmitInput": true,
+      "answeredDisappears": true,
+      "chineseSources": true,
+      "localizedUsage": true
+    },
+    {
+      "memoryCategory": true,
+      "theme": "dark",
+      "surfaces": [
+        "desktop",
+        "android-ui",
+        "mobile-web"
+      ],
+      "approvalPriority": true,
+      "singleChoice": true,
+      "multipleChoice": true,
+      "custom": true,
+      "batches": 2,
+      "enterDoesNotSubmitInput": true,
+      "answeredDisappears": true,
+      "chineseSources": true,
+      "localizedUsage": true
+    }
+  ],
+  "errors": []
+}
