@@ -5,5 +5,7 @@
   "remainingTaskProcesses": 0,
   "extraOwnProcessesClosed": 0,
   "legacyIsolatedA13CaptureClosed": 0,
-  "fixtureCleanup": "each native harness closes the isolated host/cloud/model and removes its temporary profile in finally; capture app removes its test Keychain namespace"
+  "fixtureCleanup": "each native harness closes the isolated host/cloud/model and removes its temporary profile in finally; capture app removes its test Keychain namespace",
+  "isolatedSimulatorDeleted": true,
+  "verifiedAt": "2026-10-09T19:44:09.485592+00:00"
 }

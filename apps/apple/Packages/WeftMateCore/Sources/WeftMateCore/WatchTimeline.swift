@@ -41,6 +41,22 @@ public struct WatchFeedbackTracker: Sendable {
 }
 
 public enum WatchTimelineProjection {
+    public static func computerOffline(accountKey: String) -> WatchTimelineSnapshot {
+        WatchTimelineSnapshot(accountKey: accountKey, sessionID: "offline", taskID: nil,
+            progress: "电脑离线", running: false, assistantSummary: "", approvals: [], completedTaskIDs: [])
+    }
+    /// A Watch refresh may wake a background phone before its foreground offline poll.
+    /// Authorization/identity failures clear the snapshot entirely; connectivity failures
+    /// replace it with an offline projection containing no actionable approvals.
+    public static func connectionFailure(_ error: any Error, accountKey: String) -> WatchTimelineSnapshot? {
+        switch error {
+        case APIFailure.transport(.unavailable), APIFailure.transport(.timeout):
+            return computerOffline(accountKey: accountKey)
+        case APIFailure.server(let status, _) where status >= 500:
+            return computerOffline(accountKey: accountKey)
+        default: return nil
+        }
+    }
     /// Aborted/rejected tasks end too, but must never announce successful completion.
     public static func successfulTaskIDs(in events: [TimelineEvent]) -> [String] {
         events.filter { $0.type == "task.ended" && $0.data["reason"]?.string == "completed" }

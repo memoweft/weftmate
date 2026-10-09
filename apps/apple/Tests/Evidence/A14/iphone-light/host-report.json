@@ -15,12 +15,12 @@
   "toolsSent": false,
   "ingested": [
     {
-      "eventID": "weftmate-turn-boundary-v1:038c8f1cb157c68077a2a45d9a521668:cfb5df727c52188cb6e60c69a5bd52ad728cfc598e915546e28d757ace0af8f0",
+      "eventID": "weftmate-turn-boundary-v1:48001031817cf8327c323af328438681:56363532134fe8001c2923b05765549aca7f0cf554a4eccf2b8757de51751175",
       "messages": [
         {
           "role": "user",
           "content": "我喝茶喜欢什么？",
-          "timestamp": 1791573726
+          "timestamp": 1791574864
         },
         {
           "role": "assistant",
@@ -36,17 +36,17 @@
             ],
             "interaction_ids": []
           },
-          "timestamp": 1791573726
+          "timestamp": 1791574864
         }
       ]
     },
     {
-      "eventID": "weftmate-turn-boundary-v1:8a0d0e5e37b473c4592b360d842558c4:2eb8b078b43bcd2935071348dd90f2d22c2442c94ab1c002491fb8fcb162150f",
+      "eventID": "weftmate-turn-boundary-v1:bc7c995628ecae783610d9892a3c8a67:608f70bb3ad687868adadc3035f451543bfcc381f5e43ce97a0f4eac94bce45a",
       "messages": [
         {
           "role": "user",
           "content": "我徒步用墨绿色双肩背包。",
-          "timestamp": 1791573728
+          "timestamp": 1791574866
         },
         {
           "role": "assistant",
@@ -62,7 +62,7 @@
             ],
             "interaction_ids": []
           },
-          "timestamp": 1791573728
+          "timestamp": 1791574866
         }
       ]
     }

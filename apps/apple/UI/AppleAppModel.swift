@@ -1653,12 +1653,13 @@ final class AppleAppModel: ObservableObject {
     func watchSnapshotBytes() async -> Data? {
         let actionEpoch = epoch
         guard let session else { return nil }
-        if offline.hostOffline {
-            let snapshot = WatchTimelineSnapshot(accountKey: session.account.ownerId, sessionID: "offline", taskID: nil,
-                progress: "电脑离线", running: false, assistantSummary: "", approvals: [], completedTaskIDs: [])
+        if offline.hostOffline || session.verification == .unverifiedOffline {
+            let snapshot = WatchTimelineProjection.computerOffline(accountKey: session.account.ownerId)
             watchBridge.publish(snapshot); return try? JSONEncoder().encode(snapshot)
         }
-        guard session.verification == .verified, selectedConversation.map({ tasksAvailable($0) }) != false else { return nil }
+        guard session.verification == .verified, selectedConversation.map({ tasksAvailable($0) }) != false else {
+            watchBridge.publish(nil); return nil
+        }
         do {
             let live = try await client.sharedSessions(includeArchived: true).filter { $0.taskAvailable != false }
             guard actionEpoch == epoch,
@@ -1694,7 +1695,12 @@ final class AppleAppModel: ObservableObject {
                 assistantSummary: "",
                 approvals: watchApprovals, completedTaskIDs: completed)
             watchBridge.publish(snapshot); return try JSONEncoder().encode(snapshot)
-        } catch { return nil }
+        } catch {
+            guard actionEpoch == epoch else { return nil }
+            let snapshot = WatchTimelineProjection.connectionFailure(error, accountKey: session.account.ownerId)
+            watchBridge.publish(snapshot)
+            return snapshot.flatMap { try? JSONEncoder().encode($0) }
+        }
     }
     func respondFromWatch(sessionID: String, approvalID: String, outcome: String) async -> Bool {
         let actionEpoch = epoch
