@@ -1,0 +1,7 @@
+{
+  "auditedAt": "2026-10-09T21:34:50.3458944Z",
+  "explicitTerminations": 0,
+  "remaining": 0,
+  "normalShutdown": "Integration runners closed their owned Electron, DSH and Core processes; no emulator started",
+  "processes": []
+}

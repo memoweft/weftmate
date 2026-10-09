@@ -28,7 +28,7 @@ export function createSessionMetadata(context) {
       return context.serial(async () => {
         const session = requireSession(ownerId, sessionId);
         if (patch.memoryMode !== undefined || patch.recallEnabled !== undefined || patch.autoDeleteDays !== undefined) {
-          if (session.origin !== 'personal-remote') throw failure('SESSION_READ_ONLY', 409);
+          if (!['personal-remote', 'shared-chat'].includes(session.origin)) throw failure('SESSION_READ_ONLY', 409);
           if (patch.memoryMode === 'off') patch = { ...patch, hasTemporaryContent: true };
           if (patch.autoDeleteDays !== undefined || patch.memoryMode === 'off' && session.memoryMode !== 'off') {
             const days = patch.autoDeleteDays === undefined ? (session.autoDeleteDays === undefined ? 30 : session.autoDeleteDays) : patch.autoDeleteDays;

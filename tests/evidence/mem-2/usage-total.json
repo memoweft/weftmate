@@ -1,12 +1,22 @@
 {
-  "requests": 64,
-  "knownUsage": 62,
-  "unknownUsage": 2,
-  "inputTokens": 155256,
-  "cachedInputTokens": 94336,
-  "outputTokens": 2585,
-  "hostRecordedCost": 0.06797672,
+  "requests": 108,
+  "knownUsage": 105,
+  "unknownUsage": 3,
+  "inputTokens": 265633,
+  "cachedInputTokens": 171648,
+  "outputTokens": 4594,
+  "hostRecordedCost": 0.10599667999999998,
   "runs": [
+    {
+      "run": "weftmate-mem2-real-6DfR0Z",
+      "requests": 19,
+      "knownUsage": 18,
+      "unknownUsage": 1,
+      "inputTokens": 45624,
+      "cachedInputTokens": 32768,
+      "outputTokens": 778,
+      "hostRecordedCost": 0.015067359999999998
+    },
     {
       "run": "weftmate-mem2-real-7cAw0v",
       "requests": 0,
@@ -76,6 +86,26 @@
       "cachedInputTokens": 18368,
       "outputTokens": 649,
       "hostRecordedCost": 0.01468236
+    },
+    {
+      "run": "weftmate-mem2-real-TGGePe",
+      "requests": 6,
+      "knownUsage": 6,
+      "unknownUsage": 0,
+      "inputTokens": 14022,
+      "cachedInputTokens": 5248,
+      "outputTokens": 467,
+      "hostRecordedCost": 0.00981296
+    },
+    {
+      "run": "weftmate-mem2-real-tYV82P",
+      "requests": 19,
+      "knownUsage": 19,
+      "unknownUsage": 0,
+      "inputTokens": 50731,
+      "cachedInputTokens": 39296,
+      "outputTokens": 764,
+      "hostRecordedCost": 0.01313964
     }
   ],
   "costBasis": "Existing host price configuration, known recorded costs only; not a supplier invoice. Missing usage is not zero."

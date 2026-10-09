@@ -18,7 +18,9 @@ export async function omitTemporaryChats(stage) {
     for (const id of chats) identifiers.add(id);
     for (const field of ['commands', 'toolApprovals', 'userQuestions', 'projectSources', 'browserSources', 'conversationBindings']) {
       for (const [id, row] of Object.entries(account[field] ?? {})) if (sessions.has(row.sessionId)) {
-        identifiers.add(id); if (row.taskId) identifiers.add(row.taskId); delete account[field][id];
+        identifiers.add(id); if (row.taskId) identifiers.add(row.taskId);
+        if (row.artifactId) identifiers.add(row.artifactId);
+        delete account[field][id];
       }
     }
     for (const id of sessions) delete account.sessions[id];
