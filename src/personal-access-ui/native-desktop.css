@@ -48,3 +48,6 @@
     --desktop-dialog-gap: var(--wm-space-12);
   }
 }
+
+.weftmate-desktop .rail-top { flex-wrap: wrap; }
+.weftmate-desktop #new-temporary-session { order: 1; flex-basis: 100%; }

@@ -3,11 +3,20 @@ import { copyFileSync, mkdtempSync, realpathSync, rmSync, symlinkSync } from 'no
 import { tmpdir } from 'node:os';
 import { join, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { registerHooks } from 'node:module';
 
 const root = mkdtempSync(join(tmpdir(), 'weftmate-memory-plugin-'));
 const pluginPath = join(root, 'weftmate-personal-memory.mjs');
 copyFileSync(fileURLToPath(new URL('../../src/plugins/weftmate-personal-memory.mjs', import.meta.url)), pluginPath);
-symlinkSync(fileURLToPath(new URL('../../vendor/dsh-runtime/node_modules', import.meta.url)),
+if (process.argv.includes('--privacy-only')) {
+  // Portable contract test for the final derivation path. The real DSH factory
+  // remains exercised by the existing vendor test and MEM-2 Electron evidence.
+  registerHooks({ resolve(specifier, context, next) {
+    if (specifier === '@deepseek-ai/dsh-llm/message') return { shortCircuit:true,
+      url:'data:text/javascript,'+encodeURIComponent('export const createUserMessage = input => ({id:crypto.randomUUID(),role:"user",...input});') };
+    return next(specifier, context);
+  } });
+} else symlinkSync(fileURLToPath(new URL('../../vendor/dsh-runtime/node_modules', import.meta.url)),
   join(root, 'node_modules'), 'junction');
 process.on('exit', () => {
   if (realpathSync(root).startsWith(realpathSync(tmpdir()) + sep)) {
@@ -53,6 +62,19 @@ async function preStep(id, agent = { session: session(id) }, priorMessages = nul
       sourceFrozen: Object.isFrozen(injected.at(-1).source) } : null };
 }
 process.on('message', async (message) => {
+  if (message?.type === 'run-private') {
+    try {
+      const value = session('session-private');
+      const old = { ...userClaim('old'), content: [{type:'text',text:'PRIVATE_HISTORY_SENTINEL'}] };
+      const current = userClaim('ordinary');
+      value.events.push({seq:2,type:'user/message',data:old}, {seq:3,type:'turn/start',data:{turn:3}},
+        {seq:4,type:'user/message',data:current});
+      const result = await preStep('session-private', {session:value}, value.deriveMessages(), [current]);
+      for (const item of result.messages.filter(row=>row.source?.plugin==='weftmate-personal-memory')) value.append('user/message',item);
+      process.send({type:'result', preStep:result.messages, derived:value.deriveMessages()});
+    } catch { process.send({type:'failed'}); }
+    return;
+  }
   if (message?.type !== 'run') return;
   try {
     const agentA = { session: session('session-a') };

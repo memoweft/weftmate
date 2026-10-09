@@ -183,6 +183,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         ui.byId('rail-phone').hidden = true;
         ui.byId('chat-intro').hidden = value.phoneChat || ui.byId('transcript').children.length > 0;
         ui.byId('new-session').disabled = value.newSessionDisabled;
+        ui.byId('new-temporary-session').disabled = value.newSessionDisabled;
         ui.byId('model-select').disabled = value.modelDisabled;
         ui.byId('model-trigger').disabled = value.modelDisabled;
         ui.byId('model-label').textContent = value.modelName;

@@ -5,6 +5,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @Test fun temporaryCreationUsesOnlyItsExactBusinessRoute() {
+        assertTrue(validBusinessPath("/personal/v1/sessions/temporary"))
+        assertFalse(validBusinessPath("/personal/v1/sessions/temporary?recallEnabled=false"))
+        assertFalse(validBusinessPath("/personal/v1/sessions/temporary/events"))
+    }
     @Test fun conversationResourcesUseAnExactRouteAndForwardCursor() {
         assertTrue(validBusinessPath("/personal/v1/sessions/session-one/resources"))
         assertTrue(validBusinessPath("/personal/v1/sessions/session-one/resources?afterSeq=-1"))

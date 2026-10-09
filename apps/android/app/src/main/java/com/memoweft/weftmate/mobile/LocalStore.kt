@@ -299,6 +299,11 @@ class LocalStore(context: Context, databaseName: String = "weftmate-mobile.db") 
         }
     }
 
+    @Synchronized fun clearSharedHistory(owner: String, hostId: String, sessionId: String) = write { db ->
+        db.execSQL("DELETE FROM shared_history_events WHERE owner_key=? AND host_id=? AND session_id=?", arrayOf(owner, hostId, sessionId))
+        db.execSQL("DELETE FROM shared_history_cursors WHERE owner_key=? AND host_id=? AND session_id=?", arrayOf(owner, hostId, sessionId))
+    }
+
     /** Cache only projected native events, under their exact owner/host/session identity. */
     @Synchronized fun saveSharedHistoryPage(owner: String, hostId: String, sessionId: String,
         events: JSONArray, nextSeq: Long, hasOlder: Boolean = false) = write { db ->

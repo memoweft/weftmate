@@ -38,6 +38,7 @@
       if ((row = match(/^\/personal\/v1\/auth\/devices\/([^/]+)$/))) return call(method === 'DELETE' ? 'auth.revokeDevice' : 'auth.renameDevice', { deviceId: decodeURIComponent(row[1]), ...body });
       if (pathname === '/personal/v1/projects' && method === 'GET') return call('shared.projects.list');
       if ((row = match(/^\/personal\/v1\/projects\/([^/]+)\/sessions$/)) && method === 'POST') return call('shared.projects.createSession', { projectId: decodeURIComponent(row[1]), ...body });
+      if (pathname === '/personal/v1/sessions/temporary' && method === 'POST') return call('host.business', {path:pathname,method,body});
       if (pathname === '/personal/v1/sessions') {
         const result = await call('shared.sessions.list');
         if (result.source !== 'host' || !Array.isArray(result.sessions)) throw new Error('OPERATION_FAILED');

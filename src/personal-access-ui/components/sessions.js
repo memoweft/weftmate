@@ -217,6 +217,14 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             const runs={project:()=>sessionMenu(session,menu.querySelector('[data-project-menu]'),'project'),pin:async()=>{await core.updateSession(session.sessionId,{pinned:!session.pinned});closeMenu();},unread:async()=>{await core.updateSession(session.sessionId,{unread:!session.unread});closeMenu();},
                 rename:()=>{closeMenu();renameInline(session);},fork:async()=>{const child=await core.forkSession(session.sessionId);closeMenu();if(!child)return;await core.refreshSessions();await core.selectSession(child.sessionId);},
                 group:()=>sessionMenu(session,menu.querySelector('[data-group-menu]'),true),archive:async()=>{if(session.archived)await core.archiveSession(session.sessionId,false);else await archiveWithUndo(session);closeMenu();},delete:()=>{closeMenu();confirmDelete(session);}};
+            if (session.kind === 'main') action('这次别记：开临时对话', () => { closeMenu(); core.startNewConversation(true); });
+            else {
+                const toggle = action('此对话不形成记忆', async () => { await core.updateSession(session.sessionId, {memoryMode: session.memoryMode === 'off' ? 'on' : 'off'}); closeMenu(); paintSelectedSession(core.state.selectedSessionId); ui.toast('从下一回合生效。之前形成的记忆保留，可去记忆页遗忘。'); });
+                toggle.setAttribute('role', 'menuitemcheckbox'); toggle.setAttribute('aria-checked', String(session.memoryMode === 'off'));
+                const recall = action('使用已有记忆', async () => { await core.updateSession(session.sessionId, {recallEnabled: session.recallEnabled === false}); closeMenu(); });
+                recall.setAttribute('role', 'menuitemcheckbox'); recall.setAttribute('aria-checked', String(session.recallEnabled !== false));
+                if (session.memoryMode === 'off') for (const days of [1, 7, 30, null]) action(days === null ? '不自动删除' : `${days} 天后自动删除`, async () => { await core.updateSession(session.sessionId, {autoDeleteDays: days}); closeMenu(); paintSelectedSession(core.state.selectedSessionId); });
+            }
             const buttons = new Map();
             for(const item of globalThis.WeftUiCore.sessionMenuItems(session)){ const button = action(item.label,runs[item.id],item); if (item.id === 'project') button.dataset.projectMenu = ''; if (item.id === 'group') button.dataset.groupMenu = ''; buttons.set(item.id,button); }
             menu.onkeydown = event => {
@@ -225,7 +233,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             };
         }
         menu.addEventListener('keydown', event=>{
-            const buttons=[...menu.querySelectorAll('[role=menuitem]')];let index=buttons.indexOf(document.activeElement);
+            const buttons=[...menu.querySelectorAll('[role=menuitem], [role=menuitemcheckbox]')];let index=buttons.indexOf(document.activeElement);
             if(event.key==='Escape'||groupsOnly&&event.key==='ArrowLeft'){event.preventDefault();if(groupsOnly){activeSubmenu?.remove();activeSubmenu=null;}else closeMenu();trigger.focus?.();}
             else if(['ArrowDown','ArrowUp','Home','End'].includes(event.key)){event.preventDefault();index=event.key==='Home'?0:event.key==='End'?buttons.length-1:(index+(event.key==='ArrowDown'?1:-1)+buttons.length)%buttons.length;buttons[index]?.focus();}
         });
@@ -279,6 +287,15 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         ui.byId('desktop-action').hidden = true;
         const selected = core.state.sessions.find((item) => item.sessionId === sessionId);
         ui.byId('assistant-title').textContent = selected?.title || '新对话';
+        const temporary = selected?.memoryMode === 'off' || !selected && core.state.newConversationTemporary;
+        let memoryNotice = ui.byId('temporary-chat-notice');
+        if (!memoryNotice) { memoryNotice = ui.element('p', 'muted temporary-chat-notice'); memoryNotice.id = 'temporary-chat-notice'; memoryNotice.setAttribute('role', 'status'); ui.byId('assistant-title').parentElement.append(memoryNotice); }
+        memoryNotice.textContent = temporary ? `临时对话 · 不会形成记忆，${selected?.autoDeleteDays === null ? '不自动删除' : (selected?.expiresAt ? Math.max(0, Math.ceil((Date.parse(selected.expiresAt) - Date.now()) / 86400000)) : selected?.autoDeleteDays ?? 30) + ' 天后自动删除'}` : '';
+        memoryNotice.hidden = !temporary;
+        let hint = ui.byId('temporary-composer-hint');
+        if (!hint) { hint = ui.element('p', 'muted temporary-composer-hint'); hint.id = 'temporary-composer-hint'; ui.byId('message-form').prepend(hint); }
+        hint.textContent = temporary ? '这次聊的内容不会形成记忆，也不会出现在其他对话。' : '';
+        hint.hidden = !temporary;
         let notice = ui.byId('project-conversation-notice');
         if (!notice) { notice = ui.element('p', 'project-conversation-notice'); notice.id = 'project-conversation-notice'; notice.setAttribute('role', 'status'); ui.byId('transcript').before(notice); }
         notice.textContent = selected?.projectNotice || (selected?.projectName ? `项目：${selected.projectName}` : ''); notice.hidden = !notice.textContent;

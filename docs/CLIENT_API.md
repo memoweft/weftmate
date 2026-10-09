@@ -1115,3 +1115,27 @@ App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协�
 同一固定日志、50条尾页、各30个新进程：十万条改前冷p95（第95百分位）531.94ms，缓存命中后7.59ms（原生日志事件读取0）；万条78.96ms→7.81ms。**首次未命中仍需一次全量建缓存**：本次万条224.78ms、十万条1539.38ms，不纳入缓存命中成绩，也不声称达到200ms。未来DSH需提供原生修订绑定的前/后范围、稳定水位及压缩帧索引，使旧日志首次无缓存打开也有物理范围保证。
 
 D33与删除会话清理同一缓存，SQLite使用安全删除及VACUUM（数据库重整），清理前后均失效并等待在途缓存工作；不会从新的备份或缓存重建恢复被忘内容。真实Electron（桌面程序框架）/Core（记忆核心）复验的新备份110文件、缓存2表与Core36表、全部日志帧均0命中。逻辑搜索索引仍为9.3的渐进内存索引；不把公开投影缓存当作另一份记忆来源。
+
+
+## 10. 临时对话（MEM-2）
+
+`GET /status.personalCapabilities.temporaryChats=1` 表示支持本节；旧客户端忽略新增字段。主对话是长期关系，不能设置临时或关闭记忆，入口应新建临时旁聊。
+
+| 接口 | 请求 / 响应 | 语义 |
+|---|---|---|
+| POST `/commands`，`kind:session.create` | 原字段外可加 `temporary:true,recallEnabled?:boolean,autoDeleteDays?:1\|7\|30\|null` | 临时对话默认不形成记忆、仍可召回已有记忆、30天删除；只在创建时接受 `temporary`，其余选项要求 `temporary:true` |
+| POST `/sessions/temporary` | `{requestId,modelProfileId,recallEnabled?,autoDeleteDays?}` → 202 `{command}` | 同上；宿主填充固定目标身份，供手机原生业务桥使用。沿原 `/commands/by-request/{id}` 追踪同一请求，不重复发送 |
+| PATCH `/sessions/{id}/metadata` | 新增 `memoryMode:"on"\|"off",recallEnabled:boolean,autoDeleteDays:1\|7\|30\|null` | 旁聊独立设置；现有 Cookie（会话凭据）与 CSRF（跨站请求伪造防护）、账号授权保持；主对话409 `MAIN_CHAT_PROTECTED` |
+| PATCH `/chats/{id}/metadata` | 同上，加既有 `requestId,expectedRevision` | 逻辑旁聊同一行为；主对话仍只允许已读设置 |
+| GET `/sessions`、`/chats`、`/chats/{id}` | 增加 `temporary,memoryMode,recallEnabled,autoDeleteDays,expiresAt,hasTemporaryContent` | `expiresAt` 是宿主绝对到期时间或null。`hasTemporaryContent` 在恢复普通模式后仍为true：保留的临时历史不能进入全局正文、离线副本或自动上下文传递 |
+| GET `/sessions/{id}/events` | 增加 `cacheAllowed:boolean` | 含临时内容的会话返回false；客户端可当前展示，不应保存为离线历史副本；Android（安卓）code26不写该历史缓存并清除旧缓存 |
+
+记忆开关在下一个开始处理的原生回合生效；宿主在首次模型步骤前持久保存回合策略，正在处理的回合及其重试不受中途切换影响。临时回合在宿主摄取入口直接跳过，不进入待交付队列、Core（记忆核心）Evidence（原始证据）、形成或近期原话桥。召回独立默认开启；关闭召回只影响之后的回合，不删除当前可见聊天或以前的记忆。Core查询为只读，不需要新增Core协议。
+
+恢复 `memoryMode:on` 不追溯摄取旧内容，取消本次自动删除。模型上下文从恢复后的新普通回合重新开始，排除旧临时原话、混合摘要和工作目录经验；用户仍能浏览原历史。之前已形成的记忆保留，提示可去记忆页遗忘。再次关闭按保存的期限开始新的删除倒计时。`autoDeleteDays:null` 不自动删除；修改期限从修改时间重新计算。
+
+宿主启动及每分钟检查到期对话，沿D33/FG原生生命周期停止任务、删除原生日志、专属工作目录、附件、成果副本与宿主命令正文；忙碌或原生清理未确认时保留原记录并重试，不返回虚假的删除完成。共享项目目录内的用户文件仍按D33保留。新备份排除含临时内容的整段会话、工作目录、命令与可重建历史缓存，普通回合已形成的长期记忆保留。过去导出的文件与旧备份沿既有删除边界处理。
+
+临时内容不自动回写主对话、不进入动态正文、全局成果库、近期对话离线副本。分叉、引用开旁聊、发布结果对 `hasTemporaryContent` 会话返回409 `TEMPORARY_CONTEXT_CONFIRMATION_REQUIRED`，直到显式分享功能提供确认与预览。TB-1/TB-3未来的全局列表必须排除该标记；对话内自己的输出与来源仍可查看。MEM-2没有新增全局列表接口。
+
+Apple（苹果端）接线：新建入口发送 `/sessions/temporary`；侧栏/标题/输入区显示状态；菜单分别接记忆与召回开关和四档期限；切换说明之前形成的保留；主对话导向临时旁聊。持久化模型添加本节公开字段，`cacheAllowed:false` 的历史不写离线缓存，离线副本继续消费宿主过滤结果；到期404移除本机展示缓存。原生界面与Watch（手表）实机验收由Apple工作包完成。
