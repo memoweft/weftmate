@@ -77,7 +77,7 @@ export function validModelOperation(record, ownerId, requestId, models) {
         typeof record.testResult.reachable !== 'boolean' ||
         typeof record.testResult.modelListed !== 'boolean' ||
         Object.keys(record.testResult).some((key) =>
-          !['configured', 'reachable', 'modelListed'].includes(key))) ||
+          !['configured', 'reachable', 'modelListed', 'inferenceVerified', 'address', 'authentication', 'catalog', 'model', 'httpStatus', 'requiresTestMessage', 'suggestedModelId'].includes(key))) ||
       record.stageRef !== undefined && !/^pending-model-[a-f0-9]{48}$/.test(record.stageRef) ||
       record.previousProfileId !== undefined && !PRIVATE_PROFILE_ID.test(record.previousProfileId) ||
       record.target !== undefined && (!plain(record.target) ||

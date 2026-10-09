@@ -142,6 +142,10 @@ export function validateSingleStore(store) {
           ? accountDeviceInvalid(device, store.account)
         : true)) throw failure('STORE_CORRUPT', 500);
   }
+  for (const key of ['lastChatModelProfileId', 'defaultModelProfileId']) {
+    if (store[key] !== undefined && store[key] !== null &&
+        (typeof store[key] !== 'string' || !MODEL_PROFILE_ID.test(store[key]))) throw failure('STORE_CORRUPT', 500);
+  }
   if (store.backgroundModelProfileId !== undefined && store.backgroundModelProfileId !== null &&
       (typeof store.backgroundModelProfileId !== 'string' || !MODEL_PROFILE_ID.test(store.backgroundModelProfileId))) {
     throw failure('STORE_CORRUPT', 500);

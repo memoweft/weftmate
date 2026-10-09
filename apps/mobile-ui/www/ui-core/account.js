@@ -48,9 +48,7 @@ globalThis.WeftUiCore.factories.account = (core, effects, environment) => {
                 core.forgetAccountModelMarker(marker.requestId);
                 const checked = operation.testResult;
                 effects.accountModelStatus(operation.kind === 'test'
-                    ? (checked?.configured === true && checked.reachable === true && checked.modelListed === true
-                        ? '目录与鉴权已核对；尚未发送推理消息。'
-                        : '连接检查已完成，但目录、鉴权或模型列表未通过；尚未发送推理消息。')
+                    ? (checked?.address ? modelConnectionSteps(checked).map(([name, detail]) => `${name}：${detail}`).join('；') : checked?.modelListed ? '目录与鉴权已核对；尚未发送推理消息。' : '模型列表中没有这个 ID，请核对拼写与大小写。')
                     : operation.kind === 'stop_using'
                         ? '已停止使用；原会话记录与绑定仍保留，后续新发送需要另选可用模型。'
                         : operation.kind === 'remove'
@@ -255,13 +253,41 @@ globalThis.WeftUiCore.factories.account = (core, effects, environment) => {
             effects.toast('网页目标已送达原会话；请在事情中查看实际阅读与来源。');
         }
     }
+    function modelConnectionSteps(result) {
+        const steps = [
+            ['服务地址', result.address === 'reachable' || result.reachable ? '已连接' : '地址连不上，请检查地址与网络。'],
+            ['密钥鉴权', { accepted: '已通过', rejected: `密钥被拒（${result.httpStatus}），请检查密钥与服务地址。`, missing: '需要密钥', unchecked: '尚未确认' }[result.authentication] || '尚未确认'],
+            ['模型列表', { available: '已读取', unsupported: '提供方不提供模型列表；可发送一次极小测试消息，会消耗少量用量。', failed: `读取失败（${result.httpStatus}），请检查提供方地址。`, invalid: '响应格式不是模型列表，请检查 /v1 地址。', unchecked: '尚未检查' }[result.catalog] || '尚未检查'],
+            ['模型 ID', { listed: '已找到', missing: '列表中没有这个 ID，请核对拼写与大小写。', tested: '测试消息已通过', test_failed: '测试消息失败，请检查模型 ID 与提供方状态。', unchecked: '尚未检查' }[result.model] || '尚未检查']
+        ];
+        if (result.suggestedModelId) steps.push(['规范模型 ID', result.suggestedModelId + '；保存时将使用官方小写 ID。']);
+        return steps;
+    }
+    async function checkModelDraft(input, sendTestMessage = false, model = null) {
+        const token = core.accountToken();
+        const generation = core.state.modelCheckGeneration = (core.state.modelCheckGeneration || 0) + 1;
+        try {
+            effects.accountModelFormNotice(model ? '' : '正在检查连接…');
+            const result = await core.checkModelConnection({ ...input, sendTestMessage });
+            if (!core.accountCurrent(token) || generation !== core.state.modelCheckGeneration) return;
+            if (model) {
+                core.state.modelChecks ??= {}; core.state.modelChecks[model.id ?? model.profileId] = result;
+                effects.renderAccountModels();
+            } else { effects.accountModelFormNotice(''); effects.modelDraftCheckResult(result); }
+        } catch (error) {
+            if (core.accountCurrent(token) && generation === core.state.modelCheckGeneration) {
+                if (model) effects.accountModelStatus('连接检查未完成，请刷新后重试。', true);
+                else effects.accountModelFormNotice('连接检查未完成，请核对地址、模型 ID 和密钥。');
+            }
+        }
+    }
     async function refreshAccountModels(preserveStatus = false) {
         const token = core.accountToken();
         if (!core.accountCurrent(token))
             return;
         const generation = ++core.state.accountModelFetchGeneration;
         if (!preserveStatus)
-            effects.accountModelStatus('正在读取当前账户的电脑模型…');
+            effects.accountModelStatus('正在读取模型…');
         try {
             const result = await core.readAccountModels();
             if (!core.accountCurrent(token) || generation !== core.state.accountModelFetchGeneration)
@@ -278,7 +304,7 @@ globalThis.WeftUiCore.factories.account = (core, effects, environment) => {
                 void core.accountModelReceipt(marker, token);
             else if (!preserveStatus)
                 effects.accountModelStatus(core.state.accountModels.length
-                    ? '测试连接只核目录和鉴权；配置变化不会改变已有会话的模型。'
+                    ? ''
                     : '可把手机已保存的云模型从手机明确上传，或在此新增账户配置。');
         }
         catch (error) {
@@ -731,5 +757,5 @@ globalThis.WeftUiCore.factories.account = (core, effects, environment) => {
                 : error.code === 'NETWORK' ? '电脑暂时不可达，重连后可核对原网页任务。' : '网页阅读状态暂不可核对。');
         }
     }
-    return { profileName, avatarSignature, accountModelMarkerKey, savedAccountModelMarker, storeAccountModelMarker, forgetAccountModelMarker, accountModelReceipt, submitAccountModelControl, browserIntentKey, savedBrowserIntent, reconcileBrowserIntent, refreshAccountModels, refreshProjects, saveAccountModelDraft, saveProfileDraft, registerProjectDraft, startBrowserDraft, profileDraftDirty, refreshPendingDevices, refreshProfile, refreshDevices, refreshBrowserWorkspace };
+    return { modelConnectionSteps, checkModelDraft, profileName, avatarSignature, accountModelMarkerKey, savedAccountModelMarker, storeAccountModelMarker, forgetAccountModelMarker, accountModelReceipt, submitAccountModelControl, browserIntentKey, savedBrowserIntent, reconcileBrowserIntent, refreshAccountModels, refreshProjects, saveAccountModelDraft, saveProfileDraft, registerProjectDraft, startBrowserDraft, profileDraftDirty, refreshPendingDevices, refreshProfile, refreshDevices, refreshBrowserWorkspace };
 };

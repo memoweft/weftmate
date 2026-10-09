@@ -25,6 +25,8 @@ globalThis.WeftUiCore.factories.client = (core) => {
         readBrowserWorkspace: () => core.accessApi('/workspaces/browser'),
         readDefaultApprovalMode: () => core.accessApi('/settings/approvals'),
         saveDefaultApprovalMode: mode => write('/settings/approvals', { mode }, 'PATCH'),
+        checkModelConnection: body => write('/account/models/check', body),
+        saveDefaultModel: async defaultModelProfileId => { const settings = await write('/settings/models', { defaultModelProfileId }, 'PATCH'); core.state.modelSettings = settings; return settings; },
         saveBackgroundModel: backgroundModelProfileId => write('/settings/models', { backgroundModelProfileId }, 'PATCH'),
         restartService: key => write(`/system/${key}/restart`, {}, 'POST', { timeoutMs: 360000 }),
         readCommand: id => core.accessApi(`/commands/${encodeURIComponent(id)}`),
