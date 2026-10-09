@@ -822,3 +822,18 @@ details[open] > summary > .progress-chevron { transform: rotate(0deg); }
 .project-field textarea, .project-field select { padding: var(--wm-space-10) var(--wm-space-12); border: 1px solid var(--wm-color-control-border); border-radius: var(--wm-radius-10); background: var(--surface); color: var(--ink); font: inherit; }
 .project-field textarea:focus-visible, .project-field select:focus-visible { outline: var(--wm-space-2) solid var(--accent); outline-offset: var(--wm-space-2); }
 .project-dialog .form-error:empty { display: none; }
+
+/* UX-1: one pending interaction immediately above the composer. */
+.question-bar-content { display: flex; flex-direction: column; gap: var(--wm-space-8); min-width: 0; }
+.question-bar-title { font-weight: 600; overflow-wrap: anywhere; }
+.question-bar-options, .question-actions { display: flex; flex-wrap: wrap; gap: var(--wm-space-8); }
+.question-bar .question-choice { display: inline-flex; align-items: center; gap: var(--wm-space-6); min-height: var(--wm-space-44); padding: var(--wm-space-8) var(--wm-space-12); border: 1px solid var(--line); border-radius: var(--wm-radius-8); background: var(--surface); white-space: normal; }
+.question-choice[aria-checked="true"], .question-choice[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.question-bar-custom { display: flex; align-items: center; gap: var(--wm-space-8); }
+.question-bar-custom input { min-width: 0; flex: 1; min-height: var(--wm-space-44); margin: 0; padding: var(--wm-space-8) var(--wm-space-12); border: 1px solid var(--line); border-radius: var(--wm-radius-8); background: var(--surface); color: var(--ink); }
+.question-bar-detail { max-height: 28vh; overflow: auto; }
+.question-bar-detail p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.question-bar summary { cursor: pointer; }
+.question-record { color: var(--ink-muted, var(--muted)); font-size: var(--wm-font-size-13); overflow-wrap: anywhere; }
+
+@media (max-width: 600px) { .settings-select-menu { inset: auto 0 0 !important; width: 100% !important; max-height: 55vh !important; border-radius: var(--wm-radius-12) var(--wm-radius-12) 0 0; padding-bottom: max(var(--wm-space-12), env(safe-area-inset-bottom)); } }

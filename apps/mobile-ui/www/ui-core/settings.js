@@ -5,12 +5,7 @@ globalThis.WeftUiCore.factories.settings = (core, effects, environment) => {
         core.show('login');
         effects.toast('登录已失效，请重新登录。');
     }
-    function formatDate(value) {
-        if (typeof value !== 'string')
-            return '未记录';
-        const date = new Date(value);
-        return Number.isNaN(date.getTime()) ? '未记录' : new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
-    }
+    function formatDate(value) { return core.dateText(value, { year: true }); }
     async function refreshSystem() {
         void core.refreshApprovalSettings();
         const token = core.accountToken();

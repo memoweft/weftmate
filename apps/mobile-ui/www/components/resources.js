@@ -79,10 +79,10 @@ function openResourceSource(item,context){if(!conversationTaskCurrent(context))r
       detail.querySelector('pre')?.remove();const output=el('pre','timeline-raw','正在读取…');detail.append(output);
       try{const data=await readResourceUse(context,use);if(state.resourceView!==view||!conversationTaskCurrent(context))return;
         const text=data.source?.text||data.text||'暂时没有可预览内容';
-        if(item.kind==='tool'){const presentation=uiCore.sourcePresentation(item.name,text);
+        if(item.kind==='tool'){const presentation=uiCore.sourcePresentation(item.toolName||item.name,text);
           detail.append(el('p','source-summary',presentation.summary));const raw=el('details','resource-raw');
           raw.append(el('summary','','详情'));output.remove();raw.append(output);detail.append(raw);}
-        output.textContent=`${text}${data.truncated||data.source?.truncated?'\n[内容已截断]':''}`;
+        output.textContent=`${data.source?text:uiCore.executionDetailText(text)}${data.truncated||data.source?.truncated?'\n[内容已截断]':''}`;
         const copy=el('button','timeline-action','复制');copy.addEventListener('click',()=>copyText(output.textContent));detail.append(copy);detail.dataset.loaded='true';
       }catch{if(state.resourceView===view){output.textContent='暂时无法读取，收起后可重试。';delete detail.dataset.loaded}}});target.append(detail)}
 }
@@ -102,7 +102,7 @@ async function openConversationResources(filter=null){const context=conversation
 }
 
 function renderTimeline(events=state.sharedEvents){if(!window.WeftTimeline)return;const context=conversationTaskContext();
-  window.WeftTimeline.render(events,$('chat-content'),{tag:'section',mobile:true,artifacts:[...conversationTasks.entries.values()].flatMap(entry=>entry.task?.artifacts||[]),approvals:uiCore.mobileDecisions.rows(approvalContext()),
+  window.WeftTimeline.render(events,$('chat-content'),{tag:'section',mobile:true,artifacts:[...conversationTasks.entries.values()].flatMap(entry=>entry.task?.artifacts||[]),approvals:uiCore.mobileDecisions.rows(approvalContext()),questions:uiCore.mobileDecisions.rows(approvalContext(),true),
     waiting:state.chatSource==='host'&&state.sharedRunning?uiCore.processingStageLabel(state.sharedSessions.find(row=>row.sessionId===context.sessionId)?.processing, state.sharedEvents):'',copyText:text=>call('clipboard.copy',{text}),
     openStep:step=>openConversationResources(item=>item.uses?.some(use=>use.id===`${step.taskId}/${step.stepId}`)),
     openReference:key=>openConversationResources(item=>item.key===key),
