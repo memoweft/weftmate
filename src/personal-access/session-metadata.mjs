@@ -98,7 +98,9 @@ export function createSessionMetadata(context) {
       const metadata = requireSession(ownerId, sessionId);
       const history = await context.callBackend(() => context.backend.readEvents({ ownerId, sessionId, limit: 200 }));
       const latestMessageSeq = Math.max(-1, ...(history.events ?? []).filter(event => event.type === 'assistant.message').map(event => event.seq));
+      const activityTimes = [metadata.attachedAt, ...(history.events ?? []).map(event => event.at)].map(value => Date.parse(value)).filter(Number.isFinite);
       return { pinned: metadata.pinned === true, unread: metadata.unread === true || latestMessageSeq > (metadata.readMessageSeq ?? -1),
+        ...(activityTimes.length ? { updatedAt: new Date(Math.max(...activityTimes)).toISOString() } : {}),
         groupId: metadata.groupId ?? null, ...(metadata.title ? { title: metadata.title } : {}),
         ...(metadata.parentSessionId ? { parentSessionId: metadata.parentSessionId } : {}) };
     },

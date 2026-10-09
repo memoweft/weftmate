@@ -11,7 +11,7 @@ import { publishMobileUi } from '../../src/personal-access/mobile-ui-release.mjs
 export async function packageRelease({ layer, version, outputDir, sourceDir, channel = 'stable',
   minAppVersion = '0.1.0', minHostVersion = '0.1.0', minNativeVersion = '0.0.0',
   minNativeVersionCode = 23, bridgeVersion = 1, previousManifest = null, privateKey = null,
-  resources = null }) {
+  resources = null, releaseNotes = '' }) {
   privateKey ||= await signingKeyFromEnvironment();
   const publicKey = createPublicKey(privateKey).export({ type: 'spki', format: 'pem' });
   const trustedKeys = { [keyId(publicKey)]: publicKey };
@@ -49,7 +49,7 @@ export async function packageRelease({ layer, version, outputDir, sourceDir, cha
   files.sort((a, b) => a.path < b.path ? -1 : 1);
   const manifest = signManifest({ schemaVersion: 1, layer, version, channel, minAppVersion, minHostVersion,
     ...(layer === 'ui' ? { bridgeVersion } : {}), files, publishedAt: new Date().toISOString(),
-    assetBase: `./files/${layer}/${version}/` }, privateKey);
+    assetBase: `./files/${layer}/${version}/`, releaseNotes }, privateKey);
   verifyManifest(manifest, trustedKeys, { layer, channel });
   if (previousManifest) verifyManifest(previousManifest, trustedKeys, { layer, channel });
   const changed = files.filter(file => !previousManifest?.files.some(old => old.path === file.path && old.sha256 === file.sha256 && old.size === file.size));

@@ -55,6 +55,10 @@ const mobileSettingsRegistry = WeftUiCore.settingsRegistry({
 const settingsListPosition = { scroll: 0, query: '' };
 function settingsPage(target){
   target.append(heading('设置'));
+  if(state.loggedIn){
+    const strip=el('button','settings-usage-strip','正在读取本月用量…');strip.type='button';strip.setAttribute('aria-label','用量详情');strip.onclick=()=>{state.settingsChild=true;page('usage')};target.append(strip);
+    void uiCore.loadUsageStrip().then(text=>{if(text&&strip.isConnected)strip.textContent=text}).catch(()=>{if(strip.isConnected)strip.textContent='本月用量暂时无法读取，点此重试。'});
+  }
   const search=el('input','settings-search');search.type='search';search.placeholder='搜索设置';search.setAttribute('aria-label','搜索设置');search.value=settingsListPosition.query;
   const list=el('nav','settings-list');list.setAttribute('aria-label','设置分类');target.append(search,list);
   const draw=()=>{clear(list);let name,section;

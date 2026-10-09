@@ -30,6 +30,7 @@ globalThis.WeftUiCore.factories.update = (core, effects, environment) => {
         if (!desktop?.restartForUpdate) return { restarted: false };
         return desktop.restartForUpdate();
     }
-    return { readUpdateState, checkUpdates, restartForUpdate,
+    async function setUpdateChannel(channel) { if (!desktop?.setUpdateChannel) throw new Error('UPDATE_CHANNEL_UNAVAILABLE'); return desktop.setUpdateChannel(channel); }
+    return { readUpdateState, checkUpdates, restartForUpdate, setUpdateChannel,
         updateStatusText: layer => layer.error || labels[layer.status] || '尚未检查' };
 };
