@@ -120,6 +120,7 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
   const nav = ['chat', 'things', 'memory', 'capabilities', 'workspaces', 'devices', 'notifications', 'settings', 'connect']
     .map((page) => { const button = new FakeElement('button'); button.dataset.page = page; button.textContent = page; return button })
   const newChat = new FakeElement('button'); newChat.dataset.action = 'new-chat'
+  const temporaryChat = new FakeElement('button'); temporaryChat.dataset.action = 'temporary-chat'
   const calls: Array<{ method: string; params: any; owner: string | null }> = []
   const storage = new Map<string, string>()
   let active: 'A' | 'B' | null = 'A'
@@ -253,7 +254,7 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
     visibilityState: 'visible', getElementById: (id: string) => htmlIds.has(id) ? get(id) : null,
     createElement: (tag: string) => new FakeElement(tag),
     createTextNode: (text: string) => { const node = new FakeElement(); node.textContent = text; return node },
-    querySelector: (selector: string) => selector === '[data-action="new-chat"]' ? newChat : selector === '.brand strong' ? brandTitle : null,
+    querySelector: (selector: string) => selector === '[data-action="new-chat"]' ? newChat : selector === '[data-action="temporary-chat"]' ? temporaryChat : selector === '.brand strong' ? brandTitle : null,
     querySelectorAll: (selector: string) => selector === '[data-page]' ? nav : [],
     addEventListener(name: string, listener: (event?: any) => unknown) { if (name === 'DOMContentLoaded') readyListener=listener },
   }

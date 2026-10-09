@@ -1,3 +1,4 @@
+import { hasPrivateContent } from './temporary-chats.mjs';
 import { canonicalProviderModelId } from '../model-connection-check.mjs';
 import { currentChatProfile } from '../background-model-selection.mjs';
 import { personalAccessUiAssetPaths } from '../personal-access-ui/index.mjs';
@@ -749,7 +750,7 @@ export function createHttpHandler(context) {
         }
         return context.json(response, 200, {
           ...context.service.status(ownerId),
-          personalCapabilities: { chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
+          personalCapabilities: { temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
           executionAccount: context.hostOwner(ownerId),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
           backend: backendStatus, memory: { state: memoryStatus.state, inject: memoryStatus.capabilities?.inject === true },
@@ -1435,6 +1436,7 @@ export function createHttpHandler(context) {
           }
         }
         const projection = {
+          cacheAllowed: !hasPrivateContent(context.accountState(ownerId).sessions[sessionId]),
           events: page.events.map((rawEvent) => {
             const event = context.publicHistoryEvent(ownerId, sessionId, rawEvent);
             const data = plainObject(event.data) && event.data.truncated === false
@@ -1628,14 +1630,19 @@ export function createHttpHandler(context) {
         const command = state.commands[commandId];
         return context.json(response, 200, { command: publicCommand(command) });
       }
-      if (request.method === 'POST' && (pathname === '/personal/v1/commands' ||
+      const temporarySessionPath = pathname === '/personal/v1/sessions/temporary';
+      if (request.method === 'POST' && (pathname === '/personal/v1/commands' || temporarySessionPath ||
           (taskActionMatch && ['supplements', 'resume'].includes(taskActionMatch[2])) || projectSessionMatch || browserSessionPath ||
           sharedConversationMatch)) {
         if (url.search) throw failure('INVALID_REQUEST');
         const taskAction = taskActionMatch?.[2] === 'supplements' ? 'supplement'
           : taskActionMatch?.[2] === 'resume' ? 'resume' : null;
         const rootTaskId = taskAction ? id(taskActionMatch[1]) : null;
-        const body = await context.readJson(request);
+        let body = await context.readJson(request);
+        if (temporarySessionPath) {
+          exactKeys(body, ['requestId','modelProfileId','recallEnabled','autoDeleteDays'], ['requestId','modelProfileId']);
+          body = { ...body, kind:'session.create', targetDeviceId:state.hostId, temporary:true };
+        }
         if (taskAction) exactKeys(body, ['requestId', 'text'], ['requestId', 'text']);
         if (pathname === '/personal/v1/commands' && body.kind === 'chat.message') {
           return context.json(response, 202, { command: await context.mainChat.submit(ownerId, deviceId, body,
