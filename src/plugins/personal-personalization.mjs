@@ -2,8 +2,14 @@ import '../ui-core/personalization.js';
 const webTools = new Set(['web_search', 'web_fetch', 'browser']);
 export function installPersonalization(ctx, policyFor) {
   const turns = new WeakMap();
-  const root = agent => agent?.session?.header?.origin === 'subagent'
-    ? ctx.get('agents')?.get(agent.session.header.parentSession) ?? agent : agent;
+  const root = agent => {
+    while (agent?.session?.header?.origin === 'subagent') {
+      const parent = ctx.get('agents')?.get(agent.session.header.parentSession);
+      if (!parent) break;
+      agent = parent;
+    }
+    return agent;
+  };
   const settingsFor = async agent => turns.get(root(agent))?.settings ?? (await policyFor(root(agent))).personalization ?? {};
   const personal = agent => ['personal-remote', 'personal-shared-chat'].includes(agent?.session?.header?.agentPreset);
   ctx.on('agent/pre-step', async (step, next) => {
