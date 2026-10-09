@@ -729,6 +729,38 @@ private struct LocalAppleDraftPersistence: AppleDraftPersisting {
 /// Keeps every visible record and draft within one authenticated account epoch.
 @MainActor
 final class AppleAppModel: ObservableObject {
+    #if DEBUG
+    func scanOfflineTestStorage(needles: [String]) throws -> Data {
+        guard A14TestSupport.driver != nil, let directory = timelineStateDirectory else { throw OfflineFailure.invalid }
+        var files = 0, bytes = 0, hits = 0
+        for case let file as URL in FileManager.default.enumerator(at: directory, includingPropertiesForKeys: [.isRegularFileKey])! {
+            guard (try file.resourceValues(forKeys: [.isRegularFileKey])).isRegularFile == true else { continue }
+            let data = try Data(contentsOf: file); files += 1; bytes += data.count
+            for needle in needles {
+                for encoding in [String.Encoding.utf8, .utf16LittleEndian, .utf16BigEndian] {
+                    if let marker = needle.data(using: encoding), data.range(of: marker) != nil { hits += 1 }
+                }
+            }
+        }
+        return try JSONSerialization.data(withJSONObject: ["files": files, "bytes": bytes, "plaintextOrKeyHits": hits])
+    }
+    #endif
+    let offline = OfflineChatModel()
+    func offlineAuthorization(_ hostID: String) async throws -> OfflineAuthorization {
+        #if DEBUG
+        if A14TestSupport.driver != nil { return try JSONDecoder().decode(OfflineAuthorization.self, from: await A14TestSupport.get("control")) }
+        #endif
+        return try await cloudLogin.offlineAuthorization(hostID: hostID)
+    }
+    func pollOffline() async {
+        guard let session, let directory = timelineStateDirectory else { return }
+        await offline.poll(session: session, client: client, directory: directory.appendingPathComponent("Offline"),
+            store: KeychainCredentialStore(service: cloudNamespace + ".offline"),
+            allowLoopback: permitsSyntheticLoopback, control: offlineAuthorization)
+        #if os(iOS)
+        if offline.hostOffline { _ = await watchSnapshotBytes() }
+        #endif
+    }
     private var cloudNamespace = "com.weftmate.apple.cloud"
     lazy var cloudLogin = CloudLoginModel(app: self, namespace: cloudNamespace)
     @Published var timelineRootCommands: [TaskRootCommandMetadata] = []
@@ -1163,7 +1195,7 @@ final class AppleAppModel: ObservableObject {
         }
         #endif
         cloudNamespace = uiTesting ? testService + ".cloud" : "com.weftmate.apple.cloud"
-        var transport = URLSessionTransport(hostPins: HostPinStore(store: KeychainCredentialStore(service: cloudNamespace + ".pins")))
+        var transport: any HTTPTransport = URLSessionTransport(hostPins: HostPinStore(store: KeychainCredentialStore(service: cloudNamespace + ".pins")))
         var routeEnabled = false
         #if DEBUG
         if let index = args.firstIndex(of: "--development-proxy-port") {
@@ -1178,6 +1210,9 @@ final class AppleAppModel: ObservableObject {
                 configurationError = "局域网开发联调端口无效，请检查启动参数。"
             }
         }
+        #endif
+        #if DEBUG
+        if A14TestSupport.driver != nil { transport = A14ApprovedSessionTransport(base: transport) }
         #endif
         developmentRouteEnabled = routeEnabled
         launchConfigurationError = configurationError
@@ -1304,6 +1339,14 @@ final class AppleAppModel: ObservableObject {
             await authenticate(username: "a3-tester", password: "synthetic-test-only", displayName: nil, register: false)
             return
         }
+        if A14TestSupport.driver != nil {
+            let server = try? ServerConfiguration(input: serverInput, allowLoopbackHTTP: true)
+            if let server {
+                do { session = try await client.restoreSession(server: server) }
+                catch { session = await client.currentSession(); verificationPending = session != nil }
+                if let session { await loadScopedDrafts(session); return }
+            }
+        }
         if permitsSyntheticLoopback && fixtureArguments.contains("--a5-local-server") {
             await authenticate(username: "a5-tester", password: "synthetic-test-only", displayName: nil, register: false)
             if let index = fixtureArguments.firstIndex(of: "--a12-live-session"), index + 1 < fixtureArguments.count,
@@ -1373,6 +1416,7 @@ final class AppleAppModel: ObservableObject {
     }
 
     func acceptCloudSession(_ result: AccountSession) async {
+        if session?.account.ownerId != result.account.ownerId || session?.hostId != result.hostId { offline.erase() }
         session = result; verificationPending = false
         defaults?.set(result.server.originString, forKey: "weftmate.server")
         serverInput = result.server.originString
@@ -1608,7 +1652,14 @@ final class AppleAppModel: ObservableObject {
     private var watchDecisionsInFlight = Set<String>()
     func watchSnapshotBytes() async -> Data? {
         let actionEpoch = epoch
-        guard let session, session.verification == .verified, selectedConversation.map({ tasksAvailable($0) }) != false else { return nil }
+        guard let session else { return nil }
+        if offline.hostOffline || session.verification == .unverifiedOffline {
+            let snapshot = WatchTimelineProjection.computerOffline(accountKey: session.account.ownerId)
+            watchBridge.publish(snapshot); return try? JSONEncoder().encode(snapshot)
+        }
+        guard session.verification == .verified, selectedConversation.map({ tasksAvailable($0) }) != false else {
+            watchBridge.publish(nil); return nil
+        }
         do {
             let live = try await client.sharedSessions(includeArchived: true).filter { $0.taskAvailable != false }
             guard actionEpoch == epoch,
@@ -1644,11 +1695,16 @@ final class AppleAppModel: ObservableObject {
                 assistantSummary: "",
                 approvals: watchApprovals, completedTaskIDs: completed)
             watchBridge.publish(snapshot); return try JSONEncoder().encode(snapshot)
-        } catch { return nil }
+        } catch {
+            guard actionEpoch == epoch else { return nil }
+            let snapshot = WatchTimelineProjection.connectionFailure(error, accountKey: session.account.ownerId)
+            watchBridge.publish(snapshot)
+            return snapshot.flatMap { try? JSONEncoder().encode($0) }
+        }
     }
     func respondFromWatch(sessionID: String, approvalID: String, outcome: String) async -> Bool {
         let actionEpoch = epoch
-        guard session?.verification == .verified, let value = ApprovalDecisionOutcome(rawValue: outcome),
+        guard !offline.hostOffline, session?.verification == .verified, let value = ApprovalDecisionOutcome(rawValue: outcome),
               !watchDecisionsInFlight.contains(approvalID) else { return false }
         watchDecisionsInFlight.insert(approvalID)
         defer { watchDecisionsInFlight.remove(approvalID) }
@@ -1872,6 +1928,12 @@ final class AppleAppModel: ObservableObject {
     }
 
     private func clearVisibleAccount() {
+        offline.erase()
+        if let directory = timelineStateDirectory {
+            do { try OfflineVault.clearActive(directory: directory.appendingPathComponent("Offline"),
+                store: KeychainCredentialStore(service: cloudNamespace + ".offline")) }
+            catch { authError = "离线副本清理失败，请检查设备存储后重试。" }
+        }
         settingsRoute = .init(categoryID: "general")
         timelineRootCommands = []; stoppingActiveTask = false
         projects = []; projectCanManage = false; projectsError = nil; projectEditor = nil; projectConversation = nil; projectModels = []; projectBusy = false; projectError = nil; executionAccount = nil; sessionProjectNotices = [:]; collapsedProjects = []

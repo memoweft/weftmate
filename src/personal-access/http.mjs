@@ -334,9 +334,21 @@ export function createHttpHandler(context) {
         } finally { await opened.handle.close(); }
       }
       const sharedImageMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]{1,128})\/attachments\/((?:attachment-[0-9a-f-]{36})|(?:sha256:[a-f0-9]{64}))$/i.exec(pathname.replace(/%3a/ig, ':'));
-      if (sharedImageMatch) {
-        const [, sessionId, attachmentId] = sharedImageMatch;
+      const chatImageMatch = request.method === 'PUT' && /^\/personal\/v1\/chats\/([A-Za-z0-9_-]{1,128})\/attachments\/(attachment-[0-9a-f-]{36})$/i.exec(pathname);
+      if (sharedImageMatch || chatImageMatch) {
+        let [, sessionId, attachmentId] = sharedImageMatch || chatImageMatch;
+        if (chatImageMatch) {
+          const selected = context.chats.requireChat(ownerId, sessionId);
+          if (selected.kind !== 'main' || !context.hostOwner(ownerId)) throw failure('CHAT_UNAVAILABLE', 404);
+          sessionId = await context.serial(async () => {
+            if (!context.chats.requireChat(ownerId, selected.chatId).attachmentSessionId) await context.mutate(ownerId, next => {
+              next.chatIdentity.chats[selected.chatId].attachmentSessionId = `session-${randomUUID()}`;
+            });
+            return context.chats.requireChat(ownerId, selected.chatId).attachmentSessionId;
+          });
+        }
         const ownedSession = () => {
+          if (chatImageMatch) { context.chats.requireChat(ownerId, chatImageMatch[1]); return; }
           const session = context.accountState(ownerId).sessions[sessionId];
           if (!session || session.ownerId !== ownerId ||
               !['personal-remote', 'shared-chat'].includes(session.origin)) throw failure('SESSION_UNAVAILABLE', 404);
@@ -726,7 +738,7 @@ export function createHttpHandler(context) {
         }
         return context.json(response, 200, {
           ...context.service.status(ownerId),
-          personalCapabilities: { chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1 },
+          personalCapabilities: { chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
           executionAccount: context.hostOwner(ownerId),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
           backend: backendStatus, memory: { state: memoryStatus.state, inject: memoryStatus.capabilities?.inject === true },
@@ -1170,7 +1182,32 @@ export function createHttpHandler(context) {
       const chatMetadataMatch = /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)\/metadata$/.exec(pathname);
       if (chatMetadataMatch && request.method === 'PATCH') {
         if (url.search) throw failure('INVALID_REQUEST');
+        if (context.chats.requireChat(ownerId, chatMetadataMatch[1]).kind === 'side') return context.json(response, 200,
+          await context.chatLifecycle.write(ownerId, chatMetadataMatch[1], 'metadata', await context.readJson(request, 2048), () => context.authenticate(request, 'commands:write')));
         return context.json(response, 200, await context.chats.metadata(ownerId, chatMetadataMatch[1], await context.readJson(request, 2048)));
+      }
+      const logicalRead = /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)\/(resources|forget-preview)$/.exec(pathname);
+      if (request.method === 'GET' && logicalRead) {
+        if (logicalRead[2] === 'forget-preview') {
+          if (url.search) throw failure('INVALID_REQUEST');
+          const auth = context.authenticate(request, 'account:manage');
+          if (auth.via !== 'cookie') throw failure('FORBIDDEN', 403);
+          return context.json(response, 200, await context.chatLifecycle.preview(ownerId, logicalRead[1]));
+        }
+        return context.json(response, 200, await context.chatLifecycle.resources(ownerId, logicalRead[1], url.searchParams));
+      }
+      const logicalArchive = /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)\/(archive|unarchive)$/.exec(pathname);
+      if (request.method === 'DELETE' && chatMatch || request.method === 'POST' && logicalArchive) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const target = chatMatch?.[1] ?? logicalArchive[1], action = chatMatch ? 'delete' : logicalArchive[2];
+        if (context.accountState(ownerId).chatIdentity.chats[target]?.kind === 'main') throw failure('MAIN_CHAT_PROTECTED', 409);
+        const body = await context.readJson(request, 2048);
+        const authorize = () => {
+          const auth = context.authenticate(request, body.forgetMemories ? 'account:manage' : 'commands:write');
+          if (body.forgetMemories && auth.via !== 'cookie') throw failure('FORBIDDEN', 403);
+          return auth;
+        };
+        return context.json(response, 200, await context.chatLifecycle.write(ownerId, target, action, body, authorize));
       }
       if (chatMatch && request.method === 'DELETE' || /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)\/(metadata|archive|unarchive|fork)$/.test(pathname) && ['PATCH', 'POST'].includes(request.method)) {
         const chatId = pathname.split('/')[4];
@@ -1589,12 +1626,22 @@ export function createHttpHandler(context) {
         const rootTaskId = taskAction ? id(taskActionMatch[1]) : null;
         const body = await context.readJson(request);
         if (taskAction) exactKeys(body, ['requestId', 'text'], ['requestId', 'text']);
+        if (pathname === '/personal/v1/commands' && body.kind === 'chat.message') {
+          return context.json(response, 202, { command: await context.mainChat.submit(ownerId, deviceId, body,
+            () => context.authenticate(request, 'commands:write')) });
+        }
         if (projectSessionMatch) exactKeys(body, ['requestId', 'modelProfileId'], ['requestId', 'modelProfileId']);
         if (browserSessionPath) exactKeys(body, ['requestId', 'modelProfileId'], ['requestId', 'modelProfileId']);
         if (sharedConversationMatch) exactKeys(body, ['requestId', 'modelProfileId', 'expectedSyncSeq',
           'acknowledgeUncertainLocalTurn'],
           ['requestId', 'modelProfileId', 'expectedSyncSeq']);
         const rootSource = taskAction ? context.taskSource(state, rootTaskId) : null;
+        if (rootSource) {
+          const segment = state.chatIdentity.segments[state.chatIdentity.sessionSegments[rootSource.sessionId]];
+          const logical = state.chatIdentity.chats[segment?.chatId];
+          if (logical?.kind === 'main' && segment.state === 'sealed') throw failure('MAIN_CHAT_ROUTE_REQUIRED', 409);
+          if (logical?.kind === 'main' && logical.relay) throw failure('SESSION_BUSY', 409);
+        }
         const requestedProjectId = projectSessionMatch ? id(projectSessionMatch[1]) : null;
         const requestedProject = requestedProjectId ? state.projects?.[requestedProjectId] : null;
         const adoptionId = sharedConversationMatch?.[1] ?? null;
@@ -1806,6 +1853,7 @@ export function createHttpHandler(context) {
             return publicCommand(existing);
           }
           if (payload.sideChat) context.sideChats.validatePrepared(ownerId, payload.sideChat);
+          if (latest.memoryCleanupPending) throw failure('SESSION_BUSY', 409);
           if (adoptionId) {
             const fresh = context.conversationSnapshot(ownerId, adoptionId);
             if (!context.sourceDevicesUpgraded(ownerId, fresh)) {
