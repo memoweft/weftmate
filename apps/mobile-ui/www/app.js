@@ -322,10 +322,11 @@ async function boot(){
       await restoreSharedSelection(previousHost,state.owner,state.authEpoch)}
     else{loadDraft();if(state.conversationId){await renderConversation();void refreshHandoff(state.conversationId)}else showWelcome();void listSharedSessions()}
     try{const appearance=await uiCore.mobileAppearance();if(typeof appearance.systemDark==='boolean')state.nativeSystemDark=appearance.systemDark;applyTheme(appearance.value)}catch{applyTheme('system')}
-    await call('app.ready',{owner:state.owner||'',hasDraft:hasAnyDraft()});state.booted=true;
+    await call('app.ready',{owner:state.owner||'',hasDraft:hasAnyDraft()});
     await listSharedSessions();
     if(state.logicalChats && !info.launchConversationId)await uiCore.selectMainChat();
     else if(!info.launchConversationId)page('home');else updatePageHeader();
+    state.booted=true;
     void resumeCloudLogin();void refreshCloudDevices();
     globalThis.WeftCloudMobile?.observe(refreshCloudDevices);
     if(info.notificationOtherAccount)toast('这条提醒属于另一账户，请切回对应账户查看');
