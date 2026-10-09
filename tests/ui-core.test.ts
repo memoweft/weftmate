@@ -34,6 +34,9 @@ test('D35 progress uses real kinds/objects and prioritizes failure and stopped s
   assert.equal(api.progressText(steps, true).text, '已运行 1 个命令、读取了 2 个文件、搜索了 1 次');
   assert.equal(api.progressText([...steps, {state:'failed',ordinal:4}]).text, '第 4 步失败');
   assert.equal(api.progressText([{state:'cancelled'}]).text, '已停止');
+  assert.equal(api.progressText([{state:'completed',jobState:'running',summary:'运行命令 npm test'}]).text,'正在运行命令 npm test…');
+  assert.equal(api.progressText([{state:'completed',jobState:'killed'}]).text,'已停止');
+  assert.equal(api.progressText([{state:'completed',jobState:'failed',ordinal:2}]).text,'第 2 步失败');
   assert.equal(api.progressText([]).text, '');
   const raw = JSON.stringify({arguments: JSON.stringify({command:'npm test'}),output:[{type:'tool-result',content:[{type:'text',text:'42 passed'}]}]});
   assert.match(api.executionDetailText(raw), /参数\n.*\n.*npm test[\s\S]*输出\n42 passed/);
