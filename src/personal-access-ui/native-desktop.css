@@ -4,7 +4,7 @@
   position: fixed; inset: 0 0 auto; height: 44px; box-sizing: border-box;
   padding: var(--wm-space-12) var(--wm-size-160) var(--wm-space-12) var(--wm-space-16); z-index: 1000;
   -webkit-app-region: drag; user-select: none;
-  color: var(--ink); background: var(--surface); font: var(--wm-font-size-14)/var(--wm-font-size-20) var(--wm-font-family-system);
+  color: var(--ink); background: var(--window-frame); font: var(--wm-font-size-14)/var(--wm-font-size-20) var(--wm-font-family-system);
 }
 .weftmate-desktop .page { min-height: calc(100dvh - 44px); }
 .weftmate-desktop .assistant-shell { height: min(820px, calc(100dvh - 176px)); }

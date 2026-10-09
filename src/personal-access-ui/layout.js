@@ -34,7 +34,7 @@
     globalThis.WeftUiLayout = {
         mountBackup(section) { const group = document.createElement('section'); group.setAttribute('aria-label', '此电脑'); const title = document.createElement('h2'); title.textContent = '此电脑'; group.append(title, section); document.querySelector('#account-view').append(group); },
         mountSchedules(section) { document.querySelector('#account-view').prepend(section); },
-        mountUsage(button) { document.querySelector('.assistant-heading').append(button); },
+        mountUsage(button) { document.querySelector('.assistant-topbar').append(button); },
         mountPreview(panel) { document.querySelector('.assistant-shell').append(panel); },
         mountResourcePicker(picker) { document.querySelector('.assistant-shell').append(picker); },
     };

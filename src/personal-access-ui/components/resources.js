@@ -198,7 +198,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
             return;
         const context = core.conversationTaskContext(), sessionId = context.sessionId;
         window.WeftTimeline.render(events.filter(event => event.type !== 'task.queued'), ui.byId('transcript'), {
-            waiting: core.state.turnStatus === 'running' ? core.processingLabel(core.state.sessions.find(row => row.sessionId === sessionId)?.processing) : '',
+            waiting: core.state.turnStatus === 'running' ? core.processingStageLabel(core.state.sessions.find(row => row.sessionId === sessionId)?.processing) : '',
             artifacts: [...core.conversationTasks.entries.values()].flatMap(entry => entry.payload?.artifacts || []),
             approvals: [...core.conversationApprovals.entries.values()].filter(entry => entry.row.sessionId === sessionId).map(entry => entry.row),
             fileLabel: window.WeftDesktop?.fileLabel,

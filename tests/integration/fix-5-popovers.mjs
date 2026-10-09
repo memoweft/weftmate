@@ -55,14 +55,17 @@ try {
       await page.keyboard.press('Escape');
       await page.getByRole('button', { name: '自动', exact: true }).click();
       await check(page, page.getByRole('menu', { name: '审批模式' }), 'approval', size, enforce); await page.keyboard.press('Escape');
-      if (enforce) {
-        await page.getByRole('combobox', { name: '运行中输入方式' }).click();
-        await check(page, page.getByRole('listbox', { name: '运行中输入方式' }).locator('..'), 'message-mode', size);
-        await page.getByRole('option', { name: '新任务', exact: true }).click();
-        assert.match(await page.getByRole('combobox', { name: '运行中输入方式' }).textContent(),/新任务/);
-      }
       await page.getByRole('button', { name: '账户菜单' }).click();
       await check(page, page.getByRole('button', { name: '设置', exact: true }).locator('..'), 'account', size, enforce); await page.keyboard.press('Escape');
+      if(enforce){
+        await page.getByRole('button',{name:'账户菜单'}).click();await page.getByRole('button',{name:'设置',exact:true}).click();
+        await page.getByRole('navigation',{name:'设置分类'}).getByRole('button',{name:'常规',exact:true}).click();
+        const mode=page.getByRole('combobox',{name:'回复进行中时发送的消息',exact:true});await mode.click();
+        await check(page,page.getByRole('listbox',{name:'回复进行中时发送的消息'}).locator('..'),'message-mode-setting',size);
+        await page.getByRole('option',{name:'排队',exact:true}).click();assert.match(await mode.textContent(),/排队/);
+        await page.getByRole('button',{name:'关闭设置',exact:true}).click();
+      }
+
       await page.getByRole('button', { name: /^更多操作 / }).first().click();
       await check(page, page.getByRole('menu', { name: '对话操作', exact: true }), 'session', size, enforce); await page.keyboard.press('Escape');
       await page.getByRole('button', { name: '输出与来源', exact: true }).click();
@@ -114,9 +117,13 @@ try {
     await check(phone,phone.getByRole('dialog',{name:'对话操作',exact:true}),'session','390x844',phase==='after');await phone.getByRole('button',{name:'取消',exact:true}).click();
     if(phase==='after') {
       await phone.evaluate(()=>{state.chatSource='host';state.sharedRunning=true;state.sharedSessionId='synthetic-session';state.sharedSessions=[{sessionId:'synthetic-session',sendAvailable:true}];updateComposer();});
-      await phone.getByRole('combobox',{name:'运行中输入方式'}).click();await check(phone,phone.getByRole('listbox',{name:'运行中输入方式'}).locator('..'),'message-mode','390x844');
-      await phone.getByRole('option',{name:'新任务',exact:true}).click();
-      assert.match(await phone.getByRole('combobox',{name:'运行中输入方式'}).textContent(),/新任务/);
+      await phone.getByRole('button',{name:'返回',exact:true}).click();await phone.getByRole('button',{name:'打开导航',exact:true}).click();
+      await phone.getByRole('button',{name:'设置',exact:true}).click();await phone.getByRole('button',{name:/^常规/}).click();
+      await phone.getByRole('combobox',{name:'回复进行中时发送的消息'}).click();await check(phone,phone.getByRole('listbox',{name:'回复进行中时发送的消息'}).locator('..'),'message-mode-setting','390x844');
+      await phone.getByRole('option',{name:'排队',exact:true}).click();
+      assert.match(await phone.getByRole('combobox',{name:'回复进行中时发送的消息'}).textContent(),/排队/);
+      await phone.getByRole('button',{name:'返回',exact:true}).click();await phone.getByRole('button',{name:'返回',exact:true}).click();
+      await phone.evaluate(()=>page('chat'));
       await phone.evaluate(()=>{state.chatSource='phone';state.sharedRunning=false;updateComposer();});
       await phone.getByRole('button',{name:'选择模型',exact:true}).click();
       await phone.setViewportSize({width:280,height:300});await check(phone,phone.getByRole('heading',{name:'选择模型',exact:true}).locator('..'),'model-resize','280x300');
