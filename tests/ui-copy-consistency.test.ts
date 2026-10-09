@@ -25,6 +25,8 @@ test('UX-1 every operation uses the shared Chinese label and detail keys', () =>
   const {api}=fixture();
   for(const name of ['read','pwsh','shell','search','write','ask_user_question','load_tools','weftmod','unknown_connector']) { const label=api.toolLabel(name);assert.match(label,/[\u4e00-\u9fff]/);checkVisibleCopy(label); }
   assert.equal(api.interfaceText('执行工具 mcp__calendar__list'),'扩展服务');
+  assert.equal(api.interfaceText('读取文件：read.md'),'读取文件：read.md');
+  assert.equal(api.interfaceText('运行命令：pwsh -Command null'),'运行命令：pwsh -Command null');
   assert.equal(api.executionDetailText(JSON.stringify({arguments:{},output:null,toolName:'mcp__calendar__list'})),'暂无参数与输出');
   checkVisibleCopy(api.executionDetailText(JSON.stringify({arguments:{file_path:'使用说明.md',toolName:'read',query:'报告'},output:[{type:'text',text:'已读取。'}]})));
 });
