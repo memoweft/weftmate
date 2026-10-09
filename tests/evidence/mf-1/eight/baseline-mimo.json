@@ -1,0 +1,282 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-09T07:36:25.088Z",
+  "model": "mimo",
+  "revision": {
+    "weftmate": "f787c3c1b1215b969a4db8e143b18da0b2421d5a",
+    "core": "50642726ee3c9069546f87d282f0034d15222c6b"
+  },
+  "electron": true,
+  "steps": [
+    {
+      "id": "01",
+      "title": "原话进入真实桌面对话",
+      "status": "passed",
+      "checks": {
+        "completed": true,
+        "exactUserEvent": true,
+        "nonemptyReply": true
+      },
+      "startedAt": "2026-10-09T07:36:39.236Z",
+      "finishedAt": "2026-10-09T07:36:49.522Z"
+    },
+    {
+      "id": "02",
+      "title": "模型提议、用户确认组队提醒",
+      "status": "passed",
+      "checks": {
+        "proposal": true,
+        "confirmationCompleted": true,
+        "confirmationSource": true,
+        "semanticAccepted": true
+      },
+      "startedAt": "2026-10-09T07:36:49.523Z",
+      "semantic": {
+        "type": "llm_judge",
+        "prompt": "应主动提议以后用户想组队时提醒找王小明，邀请用户确认。",
+        "turn": 1,
+        "model": "mimo-v2.6-flash",
+        "usage": {
+          "completion_tokens": 28,
+          "prompt_tokens": 153,
+          "total_tokens": 181,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "finishReason": "stop",
+        "rawVerdict": "{\"pass\":true,\"reason\":\"回复主动提议在游戏组队场景提醒找王小明，并明确邀请用户确认。\"}",
+        "status": "passed",
+        "reason": "回复主动提议在游戏组队场景提醒找王小明，并明确邀请用户确认。"
+      },
+      "finishedAt": "2026-10-09T07:37:01.027Z"
+    },
+    {
+      "id": "03",
+      "title": "人物、关系、评价、决定和原话来源",
+      "status": "running",
+      "checks": {},
+      "startedAt": "2026-10-09T07:37:01.028Z"
+    }
+  ],
+  "turns": [
+    {
+      "sessionId": "session-881246b6-b9a8-4310-a205-f0bd4424702f",
+      "model": "mimo",
+      "modelProfileId": "private-model-bba325de61b2c4a404b885b1d1cd5bf01b6a4803",
+      "user": "王小明打游戏挺厉害，是我好兄弟。",
+      "reply": "好的，记下王小明是你的好兄弟、游戏打得很厉害。要不要我在以后遇到一起开黑、找队友或游戏相关的问题时，提醒你去找他？",
+      "status": "completed",
+      "memoryUsed": [],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-09T07:36:42.720Z",
+          "data": {
+            "taskId": "cmd-cc5bd151-0027-4a22-a1f6-3c387a3284bf",
+            "receiptId": "dababc96-dba0-4423-ac5b-02f18804a84a",
+            "text": "王小明打游戏挺厉害，是我好兄弟。",
+            "commandId": "cmd-cc5bd151-0027-4a22-a1f6-3c387a3284bf",
+            "requestId": "c2968cf0-437f-4c2b-a1b7-9168267a5de3"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-09T07:36:42.721Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-09T07:36:43.131Z",
+          "data": {
+            "taskId": "cmd-cc5bd151-0027-4a22-a1f6-3c387a3284bf",
+            "turn": 1,
+            "receiptId": "dababc96-dba0-4423-ac5b-02f18804a84a",
+            "commandId": "cmd-cc5bd151-0027-4a22-a1f6-3c387a3284bf",
+            "requestId": "c2968cf0-437f-4c2b-a1b7-9168267a5de3",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-09T07:36:43.131Z",
+          "data": {
+            "text": "王小明打游戏挺厉害，是我好兄弟。",
+            "receiptId": "dababc96-dba0-4423-ac5b-02f18804a84a"
+          }
+        },
+        {
+          "seq": 74,
+          "type": "assistant.message",
+          "at": "2026-10-09T07:36:48.914Z",
+          "data": {
+            "text": "好的，记下王小明是你的好兄弟、游戏打得很厉害。要不要我在以后遇到一起开黑、找队友或游戏相关的问题时，提醒你去找他？",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 75,
+          "type": "task.ended",
+          "at": "2026-10-09T07:36:48.915Z",
+          "data": {
+            "taskId": "cmd-cc5bd151-0027-4a22-a1f6-3c387a3284bf",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 76,
+            "receiptId": "dababc96-dba0-4423-ac5b-02f18804a84a",
+            "commandId": "cmd-cc5bd151-0027-4a22-a1f6-3c387a3284bf",
+            "requestId": "c2968cf0-437f-4c2b-a1b7-9168267a5de3",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 76,
+          "type": "turn.ended",
+          "at": "2026-10-09T07:36:48.916Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 8075,
+      "steps": 0
+    },
+    {
+      "sessionId": "session-881246b6-b9a8-4310-a205-f0bd4424702f",
+      "model": "mimo",
+      "modelProfileId": "private-model-bba325de61b2c4a404b885b1d1cd5bf01b6a4803",
+      "user": "好，以后我想组队时，就提醒我找王小明。",
+      "reply": "好的，共同决定记下了：以后你想组队开黑时，我会提醒你找王小明。",
+      "status": "completed",
+      "memoryUsed": [],
+      "events": [
+        {
+          "seq": 78,
+          "type": "task.queued",
+          "at": "2026-10-09T07:36:53.402Z",
+          "data": {
+            "taskId": "cmd-9314cb84-5886-4a1e-8a53-1cc5f235f704",
+            "receiptId": "b2286aa8-811b-43be-92b8-a738c7f12512",
+            "text": "好，以后我想组队时，就提醒我找王小明。",
+            "commandId": "cmd-9314cb84-5886-4a1e-8a53-1cc5f235f704",
+            "requestId": "bd41f28e-3b8e-4fb8-a0df-2dc30d10c475"
+          }
+        },
+        {
+          "seq": 79,
+          "type": "turn.started",
+          "at": "2026-10-09T07:36:53.402Z",
+          "data": {
+            "turn": 2
+          }
+        },
+        {
+          "seq": 81,
+          "type": "task.started",
+          "at": "2026-10-09T07:36:54.313Z",
+          "data": {
+            "taskId": "cmd-9314cb84-5886-4a1e-8a53-1cc5f235f704",
+            "turn": 2,
+            "receiptId": "b2286aa8-811b-43be-92b8-a738c7f12512",
+            "commandId": "cmd-9314cb84-5886-4a1e-8a53-1cc5f235f704",
+            "requestId": "bd41f28e-3b8e-4fb8-a0df-2dc30d10c475",
+            "turnTaskId": "turn-2"
+          }
+        },
+        {
+          "seq": 83,
+          "type": "user.message",
+          "at": "2026-10-09T07:36:54.313Z",
+          "data": {
+            "text": "好，以后我想组队时，就提醒我找王小明。",
+            "receiptId": "b2286aa8-811b-43be-92b8-a738c7f12512"
+          }
+        },
+        {
+          "seq": 124,
+          "type": "assistant.message",
+          "at": "2026-10-09T07:37:00.195Z",
+          "data": {
+            "text": "好的，共同决定记下了：以后你想组队开黑时，我会提醒你找王小明。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 125,
+          "type": "task.ended",
+          "at": "2026-10-09T07:37:00.196Z",
+          "data": {
+            "taskId": "cmd-9314cb84-5886-4a1e-8a53-1cc5f235f704",
+            "turn": 2,
+            "reason": "completed",
+            "nativeTurnEndSeq": 126,
+            "receiptId": "b2286aa8-811b-43be-92b8-a738c7f12512",
+            "commandId": "cmd-9314cb84-5886-4a1e-8a53-1cc5f235f704",
+            "requestId": "bd41f28e-3b8e-4fb8-a0df-2dc30d10c475",
+            "turnTaskId": "turn-2"
+          }
+        },
+        {
+          "seq": 126,
+          "type": "turn.ended",
+          "at": "2026-10-09T07:37:00.196Z",
+          "data": {
+            "reason": "completed",
+            "turn": 2
+          }
+        }
+      ],
+      "durationMs": 9450,
+      "steps": 0
+    }
+  ],
+  "initialMemory": {
+    "ownerId": "owner-7d1f167a-84ff-4d18-9cdd-703ee0528e7d",
+    "state": "ready",
+    "version": "2.0.0",
+    "worldRevision": 0,
+    "capabilities": {
+      "list": true,
+      "source": true,
+      "inject": true,
+      "correct": true,
+      "mute": true,
+      "deleteEvidence": true,
+      "deleteWorldItem": true
+    },
+    "pendingBoundaryCount": 0,
+    "blockedBoundaryCount": 0,
+    "discardedBoundaryCount": 0,
+    "lastFailureCode": null
+  },
+  "directJudgements": [
+    {
+      "model": "mimo-v2.6-flash",
+      "usage": {
+        "completion_tokens": 28,
+        "prompt_tokens": 153,
+        "total_tokens": 181,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "finishReason": "stop",
+      "rawVerdict": "{\"pass\":true,\"reason\":\"回复主动提议在游戏组队场景提醒找王小明，并明确邀请用户确认。\"}",
+      "status": "passed",
+      "reason": "回复主动提议在游戏组队场景提醒找王小明，并明确邀请用户确认。"
+    }
+  ]
+}

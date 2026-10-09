@@ -1,8 +1,64 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createInferenceQueue, createModelScheduler } from '../src/model-scheduler.mjs';
+import { createInferenceQueue, createModelScheduler, runPreemptibleFormation } from '../src/model-scheduler.mjs';
 import { acquireModelSlot, scheduledModelFetch, isBackgroundPurpose, runWithModelSlot } from '../src/model-scheduler-client.mjs';
 const pause = (ms = 15) => new Promise(resolve => setTimeout(resolve, ms));
+
+test('a running formation yields its slot to chat and resumes at the next idle opportunity', async () => {
+  const queue = createInferenceQueue({ pollMs: 1 });
+  const owner = new AbortController();
+  const events: string[] = [];
+  let started!: () => void;
+  const firstStarted = new Promise<void>(resolve => { started = resolve; });
+  let attempts = 0;
+  try {
+    const formation = runPreemptibleFormation(queue, owner.signal, async signal => {
+      events.push(`formation-${++attempts}`);
+      if (attempts === 1) {
+        started();
+        await new Promise((_resolve, reject) => signal.addEventListener('abort', () => {
+          events.push('cancel-incomplete-generation'); reject(signal.reason);
+        }, { once: true }));
+      }
+      return 'complete-interpretation';
+    });
+    await firstStarted;
+    const release = await queue.acquire('foreground'); events.push('chat');
+    assert.equal(attempts, 1);
+    release();
+    assert.equal(await formation, 'complete-interpretation');
+    assert.deepEqual(events, ['formation-1', 'cancel-incomplete-generation', 'chat', 'formation-2']);
+  } finally { owner.abort(); queue.close(); }
+});
+
+test('single-slot formation buffers partial output, yields to greeting, and returns only its completed retry', async () => {
+  let attempts = 0;
+  let began!: () => void;
+  const first = new Promise<void>(resolve => { began = resolve; });
+  const bridge = await createModelScheduler({ isIdle: async () => true,
+    profileFor: () => ({ id: 'local', baseUrl: 'http://127.0.0.1:1/v1', model: 'synthetic' }),
+    credentialFor: () => 'synthetic', backgroundRoute: () => null,
+    fetchImpl: async (url, options) => {
+      if (String(url).endsWith('/props')) return Response.json({ total_slots: 1 });
+      if (++attempts > 1) return Response.json({ choices: [{ message: { content: 'valid final JSON' } }] });
+      return new Response(new ReadableStream({ start(controller) {
+        controller.enqueue(new TextEncoder().encode('discarded partial response'));
+        options.signal.addEventListener('abort', () => controller.error(options.signal.reason), { once: true }); began();
+      } }));
+    } });
+  try {
+    const memory = fetch(`${bridge.memoryBaseUrl('local')}/chat/completions`, { method: 'POST',
+      headers: { authorization: 'Bearer synthetic' }, body: JSON.stringify({ messages: [] }) });
+    await first;
+    const started = performance.now();
+    const greeting = await acquireModelSlot('foreground', undefined, bridge.url, { profileId: 'local' });
+    assert.ok(performance.now() - started < 1000);
+    assert.equal(attempts, 1);
+    await greeting();
+    const final = await (await memory).text();
+    assert.match(final, /valid final JSON/); assert.doesNotMatch(final, /discarded/); assert.equal(attempts, 2);
+  } finally { await bridge.close(); }
+});
 
 test('session progress uses actual queue position, observed switcher and stream phases, and disappears when its lease closes', async () => {
   let switching = true;

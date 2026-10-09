@@ -1,0 +1,20 @@
+[
+  {
+    "foreground": true,
+    "firstTextMs": 3509.9987,
+    "firstDeltaMs": 1099.9485000000004,
+    "turnFirstTextMs": 4255.1949,
+    "turnFirstDeltaMs": 1845.1447000000003,
+    "totalMs": 3791.7478,
+    "text": "你好！有什么我可以帮你的？",
+    "tools": [],
+    "usage": {
+      "completion_tokens": 111,
+      "prompt_tokens": 2442,
+      "total_tokens": 2553,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  }
+]
