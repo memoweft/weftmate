@@ -53,7 +53,7 @@ export function createChatOperations(context) {
     requireChat, view,
     async metadata(ownerId, chatId, body) {
       exactKeys(body, ['requestId', 'expectedRevision', 'unread', 'title', 'pinned', 'groupId', 'projectId'], ['requestId', 'expectedRevision']);
-      if (!REQUEST_ID.test(body.requestId ?? '') || !Number.isSafeInteger(body.expectedRevision) || body.expectedRevision < 1) throw failure('INVALID_REQUEST');
+      if (typeof body.requestId !== 'string' || !REQUEST_ID.test(body.requestId) || !Number.isSafeInteger(body.expectedRevision) || body.expectedRevision < 1) throw failure('INVALID_REQUEST');
       const fingerprint = digest(JSON.stringify({ chatId, ...Object.fromEntries(Object.entries(body).sort(([a], [b]) => a.localeCompare(b))) }));
       return context.serial(async () => {
         const account = context.accountState(ownerId), prior = account.chatOperations?.[body.requestId];
