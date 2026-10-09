@@ -6,3 +6,4 @@ export interface UpdateManifest {
 }
 export function verifyManifest(manifest: UpdateManifest, keys: Record<string, string>, options?: object): UpdateManifest;
 export function sha256(bytes: Buffer): string;
+export function compareVersions(a: string, b: string): number;

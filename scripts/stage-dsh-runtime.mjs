@@ -7,14 +7,18 @@
  * explicit, isolated --stage-root; the legacy default remains .stage so the
  * existing dist scripts keep working.
  */
-import { cp, lstat, mkdir, readdir, rm } from 'node:fs/promises'
+import { cp, lstat, mkdir, readdir, rm, realpath } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { writeFile, copyFile } from 'node:fs/promises'
+import { rootCertificates } from 'node:tls'
+import { downloadFrp } from './download-frp.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(here, '..')
-const runtime = join(repoRoot, 'vendor', 'dsh-runtime')
+// Worktrees may share the verified vendor root through a junction. Nested links remain forbidden.
+const runtime = await realpath(join(repoRoot, 'vendor', 'dsh-runtime'))
 
 function option(name, fallback) {
   const index = process.argv.indexOf(name)
@@ -66,3 +70,9 @@ await cp(runtime, stage, {
   },
 })
 console.log(`[stage-dsh-runtime] staged verified vendor runtime -> ${stage}`)
+if (process.platform === 'win32') {
+  const frp = await downloadFrp({ destination: join(repoRoot, '.local', 'frp') })
+  const relay = join(stageRoot, 'relay'); await mkdir(relay, { recursive: true })
+  await copyFile(join(frp, 'frpc.exe'), join(relay, 'frpc.exe'))
+  await writeFile(join(relay, 'transport-ca.pem'), rootCertificates.join('\n') + '\n')
+}

@@ -37,6 +37,16 @@ async function fixture(t: any) {
   return { root, privateKey, trustedKeys, publicKey, content, options, publish, url, requests, bytes: () => transferred,
     corrupt: () => { corrupt = true }, setManifest: (value: any) => { manifest = value } }
 }
+test('channel switching preserves an installed signed UI and rejects downloads from the old channel', async t => {
+  const f = await fixture(t), store = await new UpdateStore(f.options).init();
+  f.publish('0.2.0'); await store.check(f.url); await store.activate({ idle: true }); await store.healthy();
+  store.channel = 'preview';
+  assert.equal((await store.resource('personal-access-ui/index.html')).toString(), '<body>v1</body>');
+  f.publish('0.3.0'); await store.check(f.url); assert.equal(store.state.status, 'failed');
+  assert.equal(store.pointer.staged, null);
+  const restarted = await new UpdateStore({ ...f.options, channel: 'preview' }).init();
+  assert.equal(restarted.state.currentVersion, '0.2.0');
+});
 test('only changed files download; active version waits for idle, persists and rolls back a failed trial', async t => {
   const f = await fixture(t); const store = await new UpdateStore(f.options).init()
   f.publish('0.2.0'); await store.check(f.url)

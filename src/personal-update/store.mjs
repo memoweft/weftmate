@@ -40,7 +40,9 @@ export class UpdateStore {
   async persist() { await atomicJson(join(this.root, 'current.json'), this.pointer); }
   async manifest(id) {
     const value = JSON.parse(await readFile(join(this.directory(id), 'manifest.json'), 'utf8'));
-    verifyManifest(value, this.trustedKeys, this.options());
+    // A channel change affects future downloads; keep an already verified healthy UI usable.
+    const { channel, ...installedOptions } = this.options();
+    verifyManifest(value, this.trustedKeys, installedOptions);
     if (sha256(JSON.stringify(value)) !== id) throw new Error('hash manifest changed');
     if (this.allowedPaths && value.files.some(file => !this.allowedPaths.has(file.path))) throw new Error('invalid resource path');
     return value;
@@ -86,6 +88,7 @@ export class UpdateStore {
       if (this.allowedPaths && manifest.files.some(file => !this.allowedPaths.has(file.path))) throw new Error('invalid resource path');
       const id = sha256(JSON.stringify(manifest));
       this.state.availableVersion = manifest.version;
+      this.state.releaseNotes = typeof manifest.releaseNotes === 'string' ? manifest.releaseNotes : '';
       if (this.pointer.rejected.includes(id)) throw new Error('startup version rejected');
       if (compareVersions(manifest.version, this.state.currentVersion) <= 0 || this.pointer.staged === id) {
         this.state.status = this.pointer.staged ? 'ready' : 'current'; return this.state;

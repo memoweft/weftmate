@@ -67,7 +67,8 @@ run(process.execPath, ['scripts/stage-dsh-runtime.mjs', '--stage-root', stageRoo
 const config = {
   ...pkg.build,
   extraMetadata: { version },
-  extraResources: [{ from: stageRoot, to: '', filter: ['dsh-runtime/**/*'] }],
+  extraResources: [{ from: stageRoot, to: '', filter: ['dsh-runtime/**/*', 'relay/**/*'] },
+    { from: join(repoRoot, 'src/personal-update/trusted-keys.json'), to: 'update-trusted-keys.json' }],
   directories: { ...(pkg.build?.directories ?? {}), output: outputDir },
   publish: null,
 }
