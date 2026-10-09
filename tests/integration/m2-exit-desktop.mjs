@@ -430,7 +430,7 @@ async function baseline(modelName, fourOnly = false) {
         const list = (await api('/sessions?archived=all')).body.sessions;
         const row = list.find(s => s.sessionId === id); if (!row) continue;
         await page.locator('.session-row').filter({ has: page.locator('button.is-current') }).getByRole('button', { name: /^更多操作 / }).click();
-        await page.getByRole('button', { name: '删除对话', exact: true }).click();
+        await page.getByRole('menuitem', { name: /^删除(?:\s*D)?$/ }).click();
         await page.getByRole('checkbox', { name: '同时忘掉从这段对话形成的记忆' }).check();
         if (result.deletions.length === 0) await page.screenshot({ path: join(evidence, `${modelName}-forget.png`) });
         const response = page.waitForResponse(r => r.request().method() === 'DELETE' && new URL(r.url()).pathname === `/personal/v1/sessions/${id}`);
