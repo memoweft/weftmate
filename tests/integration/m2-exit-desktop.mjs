@@ -167,6 +167,22 @@ async function baseline(modelName, fourOnly = false) {
     await page.getByRole('button', { name: '记忆', exact: true }).click();
     await page.locator('#memory-view').waitFor();
   }
+  async function selectMemoryKind(kind) {
+    const picker = page.getByRole('combobox', { name: '类型', exact: true });
+    if (await picker.evaluate(element => element.tagName === 'SELECT')) await picker.selectOption(kind);
+    else {
+      await picker.click();
+      const label = { cognition: '理解', entity: '人物与事物', relationship: '关系', event: '经历' }[kind];
+      await page.getByRole('listbox', { name: '类型', exact: true }).getByRole('option', { name: label, exact: true }).click();
+    }
+  }
+  async function leaveMemoryPage() {
+    const detailClose = page.getByRole('button', { name: '关闭记忆详情', exact: true });
+    if (await detailClose.isVisible()) await detailClose.click();
+    const settingsClose = page.getByRole('button', { name: '关闭设置', exact: true });
+    if (await settingsClose.isVisible()) await settingsClose.click();
+    else await page.getByRole('button', { name: /返回对话/ }).click();
+  }
   async function session(name = modelName, capture = true) {
     // Use the visible model picker and new-conversation action in the real app.
     await page.reload(); await page.locator('#assistant-view').waitFor();
@@ -397,7 +413,7 @@ async function baseline(modelName, fourOnly = false) {
       result.checks.uiSource = false;
       if (target) {
         await openMemoryPage();
-        await page.getByLabel('类型', { exact: true }).selectOption(target.kind);
+        await selectMemoryKind(target.kind);
         await page.getByLabel('搜索当前类型').fill('王小明');
         await page.getByRole('button', { name: '搜索', exact: true }).click();
         await page.getByRole('button', { name: new RegExp(target.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) }).first().click();
@@ -417,10 +433,10 @@ async function baseline(modelName, fourOnly = false) {
           }
           result.checks.memoryPageForget = removed.ok() && (result.cleanupRetry?.body.receipt ?? result.memoryPageForget.body.receipt).storageCleanup?.state !== 'pending';
           result.checks.originalChatRetained = (await events(A)).some(event => event.type === 'user.message' && event.data.text === original);
-          if (result.checks.memoryPageForget) { await page.getByRole('button', { name: /返回对话/ }).click(); await openMemoryPage(); }
+          if (result.checks.memoryPageForget) { await leaveMemoryPage(); await openMemoryPage(); }
           else if (await page.getByRole('button', { name: '关闭记忆详情', exact: true }).isVisible()) await page.getByRole('button', { name: '关闭记忆详情', exact: true }).click();
         } else await page.getByRole('button', { name: '关闭记忆详情', exact: true }).click();
-        await page.getByRole('button', { name: /返回对话/ }).click();
+        await leaveMemoryPage();
       }
       result.deletions = [];
       // Remove every synthetic conversation that observed these facts, including recall
@@ -430,8 +446,10 @@ async function baseline(modelName, fourOnly = false) {
         const list = (await api('/sessions?archived=all')).body.sessions;
         const row = list.find(s => s.sessionId === id); if (!row) continue;
         await page.locator('.session-row').filter({ has: page.locator('button.is-current') }).getByRole('button', { name: /^更多操作 / }).click();
-        await page.getByRole('button', { name: '删除对话', exact: true }).click();
+        await page.getByRole('menuitem', { name: /^删除(?:\s*D)?$/ }).click();
         await page.getByRole('checkbox', { name: '同时忘掉从这段对话形成的记忆' }).check();
+        (result.forgetPreviews ??= []).push({ sessionId: id,
+          ...await api(`/sessions/${id}/forget-preview`) });
         if (result.deletions.length === 0) await page.screenshot({ path: join(evidence, `${modelName}-forget.png`) });
         const response = page.waitForResponse(r => r.request().method() === 'DELETE' && new URL(r.url()).pathname === `/personal/v1/sessions/${id}`);
         await page.getByRole('button', { name: '永久删除', exact: true }).click();
@@ -465,7 +483,10 @@ async function baseline(modelName, fourOnly = false) {
         result.export.filesWithForgottenName = affected;
         result.export.files = manifest.files.length;
         result.checks.exportNoRecoverableBytes = affected.length === 0;
-        result.checks.exportNoRecoverableDatabase = !JSON.stringify(await storage(join(extracted, relative(profile, dbPath())))).includes('王小明');
+        const { stdout } = await run(python, [join(repository, 'tests/integration/m2-backup-text-scan.py'),
+          join(extracted, relative(profile, dbPath())), '王小明', '好兄弟', '表弟', original, correction]);
+        result.export.databaseTextScan = JSON.parse(stdout);
+        result.checks.exportNoRecoverableDatabase = result.export.databaseTextScan.hitCount === 0;
       }
       const turn = await message(await session(modelName, false), recallQuestion);
       result.checks.noRecallAfterForget = turn.status === 'completed' && !turn.memoryUsed.length && !/王小明/.test(turn.reply);
@@ -487,7 +508,7 @@ async function baseline(modelName, fourOnly = false) {
       result.memoryNotice = await page.locator('#memory-status').innerText();
       result.checks.memoryPageNotice = /不可用|无法/.test(result.memoryNotice);
       await page.screenshot({ path: join(evidence, `${modelName}-core-unavailable-memory.png`) });
-      await page.getByRole('button', { name: /返回对话/ }).click();
+      await leaveMemoryPage();
       if (fgOnly) {
         await page.setViewportSize({width:390,height:844});
         await until(async () => await page.locator('#chat-memory-notice').isVisible());
