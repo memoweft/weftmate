@@ -12,7 +12,7 @@ const hash = value => createHash('sha256').update(value).digest('hex')
 const ok = value => ({ result: { ok: true, value } })
 export async function startTimelineCandidate(options = {}) {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-m0-3-')); let events = [];
-  const dailySessions = new Map(), questionFrames = [];
+  const dailySessions = new Map(), questionFrames = []; let relayPending = false;
   let sessionId, taskId, running = true, artifact, service, questionFrame, processing = {phase: 'loading', modelName: '合成模型'}
   let contextUsage=options.composer?{usedTokens:713000,contextWindow:828000}:null;
   const receiptId = 'timeline-synthetic-receipt', runtimeId = randomUUID(), approvalId = randomUUID()
@@ -25,6 +25,10 @@ export async function startTimelineCandidate(options = {}) {
   const adapter = createDshSessionAdapter({ sessions: { list: async () => ok({ items: [{ sessionId, origin: 'user' }] }) }, events: {} }, { readLog: async () => events })
   const scheduleRows = [{id:'ui4-schedule',text:'提交合成报告',state:'scheduled',timeZone:'Asia/Shanghai',nextRunAt:'2026-10-09T01:00:00Z'}];
   const backend = {
+    chatRelayState: async () => ({ pending: relayPending, safe: !running }),
+    prepareChatHandoff: async ({sessionId}) => ({text:'Synthetic bounded handoff',sourceSessionId:sessionId,throughSeq:1,sourceRefs:[]}),
+    installChatHandoff: async () => {relayPending=false;return {installed:true};},
+    readAttachment: async () => ({bytes:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jk9sAAAAASUVORK5CYII=','base64'),contentType:'image/png'}),
     ...(options.sidebar ? { renameSession: async ({sessionId, title}) => { dailySessions.get(sessionId).title = title; return {title}; } } : {}),
     ...(options.schedules ? { schedules: async ({action,id}) => {
       if (['list','notifications'].includes(action)) return {items:scheduleRows.map(row=>({...row}))};
@@ -73,8 +77,9 @@ export async function startTimelineCandidate(options = {}) {
     cancelSession: async () => { operations.push({ kind: 'cancel' }); if (options.interactive) { append('turn/end', { turn: 1, reason: { kind: 'aborted' } }); running = false } return { accepted: true } },
     describeSession: async id => options.daily && dailySessions.has(id) ? {sessionId:id,running:id===sessionId?running:dailySessions.get(id).running,processing,agentPreset:'personal-remote',modelProfileId:'local',title:dailySessions.get(id).title} : id === sessionId ? { sessionId, running, processing, agentPreset: 'personal-remote', modelProfileId: 'local', title: '项目进度报告', ...(contextUsage ? {contextUsage} : {}) } : null,
     readEvents: async ({ sessionId: id, ...options }) => {if(dailySessions.has(id))return createDshSessionAdapter({sessions:{list:async()=>ok({items:[...dailySessions.keys()].map(sessionId=>({sessionId,origin:'user'}))})},events:{}},{readLog:async()=>dailySessions.get(id).events}).historyPage(id,options);return adapter.historyPage(id, options)},
-    readEventDetail: async ({ sessionId: id, seq }) => adapter.historyDetail(id, seq),
-    getTaskReplyEvidence: async () => ({ status: running ? 'waiting' : 'completed', turn: 1,
+    readEventDetail: async ({ sessionId: id, seq }) => dailySessions.has(id) ? createDshSessionAdapter({sessions:{list:async()=>ok({items:[{sessionId:id,origin:'user'}]})},events:{}},{readLog:async()=>dailySessions.get(id).events}).historyDetail(id,seq) : adapter.historyDetail(id, seq),
+    getTaskReplyEvidence: async ({sessionId:id}) => ({ status: options.daily && dailySessions.get(id)?.events.at(-1)?.type==='turn/end'
+      ? ({completed:'completed',error:'failed',aborted:'aborted'}[dailySessions.get(id).events.at(-1).data.reason.kind]||'completed') : running ? 'waiting' : 'completed', turn: 1,
       assistantChunks: 0, textChunks: 0, reasoningChunks: 0, assistantMessages: running ? 1 : 2, toolSaveObserved: !!artifact }),
     listUserQuestions: async () => ({ runtimeId, questions: [...(questionFrame ? [questionFrame] : []), ...questionFrames.map(({callId, ...frame}) => frame)] }),
     respondUserQuestion: async input => { const frame = questionFrames.find(frame => frame.questionRpcId === input.questionRpcId) || questionFrame; frame.nativeState = 'answered'; result(frame.callId || 'question-1', '{"answers":[{"id":"format","selected":["简要报告"]}]}'); return { accepted: true } },
@@ -154,6 +159,19 @@ export async function startTimelineCandidate(options = {}) {
   const handler = server.listeners('request')[0];server.removeAllListeners('request');server.on('request',(req,res)=>{if(req.url==='/bridge.js'){res.writeHead(200,{'content-type':'text/javascript'});res.end(bridgeCode)}else handler(req,res)})
   await new Promise(done => server.listen(0,'127.0.0.1',done))
   return { root, origin,
+    relayNextMain: () => {relayPending=true;running=false;if(dailySessions.has(sessionId))dailySessions.get(sessionId).running=false;},
+    seedMainHistory: (id, count = 10000, {offset=0,total=count,mixed=false} = {}) => {
+      const row = dailySessions.get(id) || (id===sessionId?{events,running}:null); assert.ok(row);
+      const start = Date.now() - 10 * 86400000;
+      const raw=[]; const put=(n,type,data)=>raw.push({seq:raw.length,time:start+(offset+n)*10*86400000/total,type,data});
+      for(let n=0;n<count;n++) {
+        put(n,n%2?'assistant/message':'user/message',{...(n%2?{}:{source:{kind:'user',rpcId:`history-${offset+n}`}}),content:[{type:'text',text:n%73===0?`合成纸船 ${offset+n}：日期搜索锚点。\n\n\`\`\`js\n${'const synthetic = 123; '.repeat(30)}\n\`\`\``:`合成历史 ${offset+n}：准备周末安排。`},
+          ...(n%2===0&&mixed&&n%100===0?[{type:'image',attachment:{attachmentId:`sha256:${'a'.repeat(64)}`,mediaType:'image/png',bytes:68,width:1,height:1,name:'合成像素.png'}}]:[])]});
+        if(mixed&&n%100===1){const callId=`mixed-${n}`;put(n,'tool/call',{turn:1,callId,name:'read',arguments:JSON.stringify({paths:['synthetic.md']})});put(n,'tool/result',{turn:1,message:{source:{kind:'tool',callId},content:[{type:'tool-result',toolCallId:callId,content:[{type:'text',text:'Synthetic file read.'}]}]}});}
+      }
+      row.events=raw;
+      row.running=false; if(id===sessionId){events=row.events;running=false;}
+    },
     restartWithCloud: async cloudIdentity => {
       await service.close();
       service = await createPersonalAccessService({root,port:0,backend,backupManager,uiHandler:servePersonalAccessUi,cloudIdentity});
@@ -161,17 +179,17 @@ export async function startTimelineCandidate(options = {}) {
       return origin;
     },
     progress: {
-      ask: questions => { const id = 'question-' + randomUUID(), event = call('ask_user_question', id, {questions}); const user = events.find(event => event.type === 'user/message');
-        const frame = {sessionId,questionRpcId:randomUUID(),callId:id,sourceReady:true,sourceReceiptId:receiptId,messageHash:hash(goal),turn:1,sourceSeq:user.seq,observedSeq:event.seq,questions,nativeState:'pending'};
+      ask: questions => { const id = 'question-' + randomUUID(), event = call('ask_user_question', id, {questions}); const user = events.findLast(event => event.type === 'user/message');
+        const frame = {sessionId,questionRpcId:randomUUID(),callId:id,sourceReady:true,sourceReceiptId:user.data.source.rpcId,messageHash:hash(user.data.content.filter(part=>part.type==='text').map(part=>part.text).join('')),turn:1,sourceSeq:user.seq,observedSeq:event.seq,questions,nativeState:'pending'};
         questionFrames.push(frame);return frame; },
       context: value=>{contextUsage=value},
       call, result,
       text: text => append('assistant/message', {content:[{type:'text',text}]}),
       phase: value => {processing=value},
-      finish: reason => {append('turn/end',{turn:1,reason:{kind:reason||'completed'}});running=false},
-      approve: async (id, command) => {const approvalId=randomUUID(), tuple={runtimeId,approvalId,sessionId,turn:1,callId:id,rootCallId:id,receiptId,messageHash:hash(goal),toolName:'pwsh',argumentsHash:hash(command)};
+      finish: reason => {append('turn/end',{turn:1,reason:{kind:reason||'completed'}});running=false;if(dailySessions.has(sessionId))dailySessions.get(sessionId).running=false;},
+      approve: async (id, command) => {const user=events.findLast(event=>event.type==='user/message');const approvalId=randomUUID(), tuple={runtimeId,approvalId,sessionId,turn:1,callId:id,rootCallId:id,receiptId:user.data.source.rpcId,messageHash:hash(user.data.content.filter(part=>part.type==='text').map(part=>part.text).join('')),toolName:'pwsh',argumentsHash:hash(command)};
         call('pwsh',id,{command});append('approval/asked',{id:approvalId,toolName:'pwsh',callId:id,reason:`运行命令：${command}`});
-        await service.trackToolApproval({...tuple,action:'register_approval',reason:`运行命令：${command}`});return {approvalId,tuple}},
+        const registration=await service.trackToolApproval({...tuple,action:'register_approval',reason:`运行命令：${command}`});return {approvalId,tuple,registration}},
       resolve: async ({tuple},outcome) => {await service.trackToolApproval({...tuple,action:'resolve_approval',outcome});append('approval/decided',{id:tuple.approvalId,outcome})},
       artifact: async () => {const artifact=await service.submitToolArtifact({sessionId,turn:1,callId:'artifact-progress',messageHash:hash(goal),fileName:'合成验收报告.md',content:'# 合成验收报告\n\n这份文件仅用于界面验收。\n'});call('write','artifact-progress',{fileName:artifact.fileName});result('artifact-progress',JSON.stringify(artifact));return artifact},
     }, credentials, sessionId, operations, request, backupOperations, mobileUrl: `http://127.0.0.1:${server.address().port}/`,
