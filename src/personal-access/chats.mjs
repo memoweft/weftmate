@@ -17,6 +17,8 @@ export function createChatOperations(context) {
     const segment = identity.segments[chat.activeSegmentId], session = account.sessions[segment?.sessionId];
     const base = { chatId, kind: chat.kind, revision: chat.revision, contentRevision: chat.contentRevision,
       activeSegmentId: segment?.segmentId ?? null, activeSessionId: segment?.sessionId ?? null,
+      ...(session?.sideChat ? { originRefs: session.sideChat.contextTransfer.sourceRefs,
+        contextTransfer: session.sideChat.contextTransfer } : {}),
       timeZone: identity.timeZone, memoryMode: session?.memoryMode ?? 'on',
       parent: chat.kind === 'main' ? null : session?.projectId
         ? { kind: 'project', id: session.projectId } : { kind: 'main', id: identity.mainChatId } };
