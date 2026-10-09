@@ -1073,7 +1073,7 @@ App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协�
 
 ### 9.6 主对话发送与原生接力（IA-2b / 2.4）
 
-声明 `personalCapabilities.chatSend=1` 后，主对话使用 `POST /commands`，请求为 `{requestId,kind:"chat.message",targetDeviceId,chatId,text,modelProfileId?,mode?,attachments?,attachmentSessionId?,attachmentMessageId?,originalAttachments?}`。首次发送必需 `modelProfileId`，后续沿当前段模型；不匹配返回409 `REQUEST_CONFLICT`，切换模型仍沿原模型接口。`mode=queue|steer`，省略为queue（排队）。仅宿主账户主对话支持本命令；旁聊沿原 `session.message`。
+声明 `personalCapabilities.chatSend=1` 后，主对话使用 `POST /commands`，请求为 `{requestId,kind:"chat.message",targetDeviceId,chatId,text,modelProfileId?,mode?,attachments?,attachmentSessionId?,attachmentMessageId?,originalAttachments?}`。首次发送必需 `modelProfileId`，后续沿当前段模型；不匹配返回409 `REQUEST_CONFLICT`，切换模型仍沿原模型接口。`mode=queue|steer`，省略为queue（排队）。仅宿主账户主对话支持本命令，并沿原 `session.create` 的密码/云账号登录授权；旧登记令牌没有可执行个人会话权限，返回409 `SESSION_READ_ONLY`。旁聊沿原 `session.message`。
 
 返回202 `{command}`，查询仍用 `/commands/by-request/{requestId}` 或原命令ID。尚未派发时 `state=pending`、`sessionId` 可省略，正文已持久化；原子选定当前段后才附原生 `sessionId`，受理后沿原 `receiptId` 和任务端点。重复原请求只返回原回执，接力后也不改绑定。不同请求体同ID返回409。摘要失败保留旧段继续本次发送；创建/持久化失败按现有失败回执处理，未发布目标段保留用于下一次恢复，禁止另建重复目标。
 
