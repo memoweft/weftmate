@@ -1,0 +1,45 @@
+{
+  "syntheticOnly": true,
+  "checks": [
+    {
+      "theme": "light",
+      "surfaces": [
+        "production Electron",
+        "mobile bundle 390×844",
+        "remote mobile web 390×844"
+      ],
+      "liveFrames": 3,
+      "order": true,
+      "keyboard": true,
+      "preservedExpansion": true,
+      "approvals": [
+        "approved",
+        "rejected"
+      ],
+      "failure": true,
+      "artifactReadback": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "surfaces": [
+        "production Electron",
+        "mobile bundle 390×844",
+        "remote mobile web 390×844"
+      ],
+      "liveFrames": 3,
+      "order": true,
+      "keyboard": true,
+      "preservedExpansion": true,
+      "approvals": [
+        "approved",
+        "rejected"
+      ],
+      "failure": true,
+      "artifactReadback": true,
+      "reducedMotion": true
+    }
+  ],
+  "pureText": true,
+  "errors": []
+}

@@ -1,0 +1,12 @@
+{
+  "filesScanned": 389,
+  "totalBytes": 22369200,
+  "modelKeyAndPrivateLanMatches": 0,
+  "matchedFiles": [],
+  "passwordAndTokenFiles": [],
+  "notes": [
+    "Actual Machine MiMo key and User LAN key, URL and host matched only in process memory.",
+    "Screenshots come from synthetic accounts. Original Android screenshot with home path retained privately; public reproduction uses C:/Temp.",
+    "Diagnostic home paths are redacted in text; no assertions or synthetic replies changed."
+  ]
+}

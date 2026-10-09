@@ -1,0 +1,80 @@
+{
+  "groups": [
+    {
+      "group": "m1-mimo",
+      "requests": 89,
+      "returnedUsage": 87,
+      "missingUsage": 2,
+      "input": 3314224,
+      "cached": 246272,
+      "output": 32610
+    },
+    {
+      "group": "immediate-mimo",
+      "requests": 23,
+      "returnedUsage": 23,
+      "missingUsage": 0,
+      "input": 48662,
+      "cached": 36544,
+      "output": 4759
+    },
+    {
+      "group": "immediate-after-mf1",
+      "requests": 20,
+      "returnedUsage": 19,
+      "missingUsage": 1,
+      "input": 32426,
+      "cached": 25216,
+      "output": 4042
+    },
+    {
+      "group": "android-task",
+      "requests": 12,
+      "returnedUsage": 12,
+      "missingUsage": 0,
+      "input": 40474,
+      "cached": 35904,
+      "output": 2247
+    },
+    {
+      "group": "android-task-recheck",
+      "requests": 1,
+      "returnedUsage": 1,
+      "missingUsage": 0,
+      "input": 1741,
+      "cached": 0,
+      "output": 461
+    },
+    {
+      "group": "menus",
+      "requests": 8,
+      "returnedUsage": 7,
+      "missingUsage": 1,
+      "input": 21062,
+      "cached": 11968,
+      "output": 374
+    },
+    {
+      "group": "m2-eight",
+      "requests": 29,
+      "returnedUsage": 29,
+      "missingUsage": 0,
+      "input": 40178,
+      "cached": 30464,
+      "output": 4117,
+      "knownCnyLowerBound": 0.01855728
+    }
+  ],
+  "total": {
+    "requests": 182,
+    "returnedUsage": 178,
+    "missingUsage": 4,
+    "input": 3498767,
+    "cached": 386368,
+    "output": 48610,
+    "knownCnyLowerBound": 3.21734636
+  },
+  "priceVerifiedAt": "2026-10-09",
+  "priceSource": "https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash",
+  "note": "Includes initial failures, two Android task attempts, semantic judges, and the accidentally included action-07 (cancelled). Missing usage is not zero cost."
+}

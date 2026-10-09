@@ -1,0 +1,323 @@
+[
+  {
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "B944376F-48BC-4621-88B3-25B5D2EA3D72.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "App UI hierarchy for com.weftmate.apple_0_548B26ED-C856-4D59-92AE-A349B105307B.weftmatephone",
+        "timestamp": 1791538504.599
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "8369E197-DCC0-4078-9399-4092E1B9BE82.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_2DA36FD8-759F-4A4B-BB40-97BA4045E492.txt",
+        "timestamp": 1791538503.013
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "39E1FA9E-A0ED-4343-91D9-43FBB0D46B40.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_B9D8F2E3-505B-4C34-AA71-37507B51129E.txt",
+        "timestamp": 1791538502.589
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "48C1650D-4444-44AE-BC04-2CDB449684DA.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_F2D5ABFD-7A70-494E-926D-9E5737EC8066.txt",
+        "timestamp": 1791538501.543
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "76A5C205-6148-44B7-833C-E5F818745657.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_1B23BEF0-A267-4308-8724-E29A5AD2F199.txt",
+        "timestamp": 1791538500.571
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "0779E579-7045-4F63-9FA1-A081693C8879.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_50617DE5-ACD2-4D85-845A-B9F61FCEF823.txt",
+        "timestamp": 1791538499.572
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "B914F85A-B647-4A4E-B5F6-8443940B9697.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_ECDB02F8-5DE9-4AF0-BF48-90034F7EBC49.txt",
+        "timestamp": 1791538498.5
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "62A85258-D17C-44C8-B7FD-9203A1B264A2.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_0F8F4F2F-2F82-4C8D-9AA5-2496C617FF43.txt",
+        "timestamp": 1791538497.534
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "83BDBE9C-210B-4BC2-BAAF-FBC22F94E1A2.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_8F62A5D6-8543-4C92-A325-C9A6B208874E.txt",
+        "timestamp": 1791538496.552
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "604FB58E-1381-4AFB-AB15-0BE43A181D17.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_BA7D0248-C211-4A91-B12E-5598A597C547.txt",
+        "timestamp": 1791538495.499
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "D04EBB4B-690F-4631-8680-007648D7DC28.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_939B2720-4B82-4594-97E2-33C8D638BD61.txt",
+        "timestamp": 1791538494.544
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "29BFE918-221C-49D1-9365-FA9D84DE3F91.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_CC8460CD-0AAB-4A99-8735-F327F1C56731.txt",
+        "timestamp": 1791538493.511
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "667AE7C9-E13D-42B5-B4EC-6BC79602CE5A.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_5B35981E-2111-445C-B567-7FCEC641ED9A.txt",
+        "timestamp": 1791538492.538
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "309A34D3-F78A-4C96-82A8-9C0512E595CD.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_89D5B4E8-C2BF-4CA8-943D-9AFFA9B1B4FC.txt",
+        "timestamp": 1791538491.583
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "00DC84E5-CB3A-4152-B2C5-DA4606F519E2.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_3BE98B0F-2728-4151-BCFA-FFDEB2B0A88F.txt",
+        "timestamp": 1791538490.558
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "4656CD72-1E9B-438D-B268-B92307D6F3D8.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_7D515B9A-FECE-46BB-BFF0-0D1F63FC45E8.txt",
+        "timestamp": 1791538489.601
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "2ACE9C40-07E7-4E62-93F6-37AB62ADFE45.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_5C3BBB27-62EF-487E-9C8A-D30F65013327.txt",
+        "timestamp": 1791538488.534
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "CBD0019E-4C5A-49D8-8DD7-11F941704244.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_C1DBB7DE-BA10-42BF-9DB5-400CAABA3B3F.txt",
+        "timestamp": 1791538487.516
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "AFBD7448-55F6-4B52-B07F-CCF101DC416D.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_72CAA8EC-56BF-4D20-B91D-C557043DA79A.txt",
+        "timestamp": 1791538486.482
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "AE0F5B3F-0E0B-48BD-A1B5-5582C4CA9BED.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_06CD7362-F671-4E5B-95CC-ECAE17205C42.txt",
+        "timestamp": 1791538485.512
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "841B5924-8E03-4FF4-B51C-476B6CF4BFD3.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_6D6AA1D5-CF42-4079-BFE3-7C61F9D6F055.txt",
+        "timestamp": 1791538484.514
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "8916E2CE-F149-4D1E-8D15-89A2BB38DC93.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_C322F9E4-AC6C-4F66-9B36-B2FC00031886.txt",
+        "timestamp": 1791538483.546
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "15D7BB2B-8652-49A0-A7D6-0387926C5BE0.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_D39CD311-9441-49FC-93F6-F47CDF54FB47.txt",
+        "timestamp": 1791538482.574
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "F268956C-5F9A-491F-8FFB-8A85E7DD3ACF.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_1A612599-1C18-4529-8326-ADFDE8A9C01B.txt",
+        "timestamp": 1791538481.589
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "4EDEE80F-4134-442A-A26C-640358D998BE.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_6DDDC1F5-4C17-4E7F-955F-6081D86A4337.txt",
+        "timestamp": 1791538480.52
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "DBDC8E97-24FF-40F8-8E84-AF12753EEAE5.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_54000F3D-3476-4C7D-8B80-E74ACB04B9E8.txt",
+        "timestamp": 1791538479.658
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "97325775-A6C1-47EE-A216-D3515CE7A6A7.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_91262AA3-A306-4D8B-AA0D-488F4D83EE77.txt",
+        "timestamp": 1791538478.611
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "BA1DB606-622D-4D13-8F70-CF7EA8EB71D8.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_06ED11F8-3C71-404D-B8E4-94EA107A025A.txt",
+        "timestamp": 1791538477.492
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "41C9BB06-542F-4A34-88D4-BA223230E970.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_8B71AC70-E84B-417E-87E5-2C5F165CE8ED.txt",
+        "timestamp": 1791538476.517
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "25D3C3E9-FAA4-40CC-9C36-67E717107681.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_AB172D89-EF33-4976-9B64-5772DAEE207B.txt",
+        "timestamp": 1791538475.638
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "355E7D9A-54AB-4BB7-ACAB-E897612005C6.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"settingsPage.about\" Any`_0_C7DF47C7-8647-4CCA-95E2-D922A91B5DBC.txt",
+        "timestamp": 1791538474.66
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "681CF6E6-80E7-4607-9905-9F61AF295D6D.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "review-iphone-usage-light_0_253D10B3-3631-4C98-ADF9-0E1138B93E48.png",
+        "timestamp": 1791538435.55
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "6ED94338-D6EF-4523-ACFB-965FB3FD0895.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "review-iphone-appearance-light_0_78D6A127-B9D2-4A38-9AAB-696844A1966A.png",
+        "timestamp": 1791538403.184
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "27C9CF18-2AD1-4743-89A8-A02BBCFED721.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"conversationList\" Any`_0_DD751ED5-8028-40D8-86D9-CEC84E4C0C3F.txt",
+        "timestamp": 1791538384.587
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "F5A389E4-13FC-41B1-A758-7750883D2022",
+        "deviceName": "iPhone 17",
+        "exportedFileName": "7FB439E6-D44F-404A-93D2-DDE21C513085.txt",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "Debug description for `\"conversationList\" Any`_0_69D5A87B-6CBD-45B4-843E-168441871D26.txt",
+        "timestamp": 1791538383.613
+      }
+    ],
+    "testIdentifier": "A6SettingsUITests/testLightSettingsReachabilitySearchDeepLinkAndDeviceOperation()",
+    "testIdentifierURL": "test://com.apple.xcode/WeftMate/WeftMatePhoneUITests/A6SettingsUITests/testLightSettingsReachabilitySearchDeepLinkAndDeviceOperation"
+  }
+]
