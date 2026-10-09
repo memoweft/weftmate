@@ -15,6 +15,7 @@
  * v2 的 SDK 聊天/桥/旧 UI 等主链路已随 R4 退役删除（见 docs/ARCHITECTURE.md §4 退役清单）。
  */
 import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, screen, dialog, nativeTheme, session } from 'electron';
+import packageInfo from '../package.json' with { type: 'json' };
 import { createBackupManager } from './personal-backup/index.mjs';
 import { windowIcon, trayIcon } from './app-icons.mjs';
 import { normalizeApiBaseUrl } from './stage2-config.ts';
@@ -190,7 +191,8 @@ if (wipeLaunch) {
 
 // 去掉 Electron 默认应用菜单(顶栏那条 File/Edit/View/Window)——桌面产品不该露原生菜单,不像成品。
 Menu.setApplicationMenu(null);
-if (process.platform === 'win32') app.setAppUserModelId(app.isPackaged ? 'com.memoweft.weftmate' : process.execPath);
+// electron-builder removes build metadata from the packaged package.json.
+if (process.platform === 'win32') app.setAppUserModelId(packageInfo.build?.appId ?? 'com.memoweft.weftmate');
 
 // ── B4·崩溃/错误上报最小闭环（v2 遗产）──
 function redactSecretText(value) {
