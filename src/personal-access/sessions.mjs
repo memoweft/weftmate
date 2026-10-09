@@ -303,6 +303,14 @@ export function createSessionOperations(context) {
     ownerForSession(sessionId) {
       return uniqueSessionOwner(context.rootState.accounts, sessionId);
     },
+    executionOwnerForSession(sessionId) {
+      id(sessionId);
+      const ownerId = uniqueSessionOwner(context.rootState.accounts, sessionId)?.ownerId;
+      if (!ownerId || !context.hostOwner(ownerId) ||
+          context.accountState(ownerId).sessions[sessionId]?.origin !== 'personal-remote')
+        throw failure('SESSION_READ_ONLY', 409);
+      return ownerId;
+    },
     async getConversationContext({ sessionId, turn, step, receiptId, messageHash }) {
       if (!validId(sessionId) || !Number.isSafeInteger(turn) || turn < 0 || step !== 1 ||
           !validId(receiptId) || typeof messageHash !== 'string' || !/^[a-f0-9]{64}$/.test(messageHash)) {

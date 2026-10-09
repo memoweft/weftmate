@@ -397,7 +397,7 @@ export function createTaskOperations(context) {
         throw failure('INVALID_COMMAND');
       }
       context.requireToolRuntime(input.runtimeId);
-      const ownerId = context.rootState.legacyOwnerId;
+      const ownerId = context.sessionOperations.executionOwnerForSession(sessionId);
       if (context.accountState(ownerId).sessions[sessionId]?.origin !== 'personal-remote') throw failure('SESSION_READ_ONLY', 409);
       const executionId = `exec-${digest(`${ownerId}|${sessionId}|${callId}`).slice(0, 48)}`;
       if (action === 'authorize_execution') {

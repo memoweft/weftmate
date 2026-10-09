@@ -295,7 +295,7 @@ export async function createHostCloudIdentity(context, options) {
             const recoveredOwner = context.restoredCloudOwner?.(config.issuer, identity.sub);
             const created = recoveredOwner ? { account: { ownerId: recoveredOwner }, device: null }
               : await context.registerAccount({ username: `cloud-${randomUUID()}`,
-                password: randomBytes(48).toString('base64url'), deviceName: name, displayName: name });
+                password: randomBytes(48).toString('base64url'), deviceName: name, displayName: name }, { executionAccount: true });
             const claimId = randomUUID();
             await context.serial(async () => {
               if (created.device) await context.mutate(created.account.ownerId, next => { next.devices[created.device.id].revoked = true; });
