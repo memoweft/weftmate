@@ -297,10 +297,11 @@ class HybridActivity : Activity() {
         WebViewCompat.addWebMessageListener(web, "weftNative", setOf(origin)) { _, message, sourceOrigin, mainFrame, reply ->
             if (closed.get()) return@addWebMessageListener
             val raw = message.data ?: return@addWebMessageListener
-            if (!mainFrame || sourceOrigin.toString() != origin || raw.length > 128 * 1024) return@addWebMessageListener
+            if (!mainFrame || sourceOrigin.toString() != origin || raw.length > 10 * 1024 * 1024) return@addWebMessageListener
             val request = try { JSONObject(raw) } catch (_: Exception) { return@addWebMessageListener }
             val id = request.optString("id")
             val method = request.optString("method")
+            if (!method.startsWith("offline.") && raw.length > 128 * 1024) return@addWebMessageListener
             if (!id.matches(Regex("[A-Za-z0-9_-]{1,80}"))) return@addWebMessageListener
             if (!method.matches(Regex("[A-Za-z.]{1,64}"))) {
                 respond(reply, id, false, JSONObject().put("code", "INVALID_REQUEST"))
@@ -797,6 +798,22 @@ class HybridActivity : Activity() {
     }
 
     private fun handle(method: String, params: JSONObject, requestEpoch: Long, requestHost: HostIdentity?): JSONObject = when (method) {
+        "offline.identity" -> secrets.host()?.let { host -> JSONObject().put("ownerId", host.ownerId).put("hostId", host.hostId)
+            .put("deviceId", host.deviceId).put("origin", host.origin) } ?: JSONObject()
+        "offline.key", "offline.load", "offline.save", "offline.open", "offline.complete", "offline.clear" -> {
+            val host = requireHost()
+            val vault = OfflineVault(this, host)
+            val result = when (method) {
+                "offline.key" -> vault.key()
+                "offline.load" -> vault.load()
+                "offline.save" -> vault.save(params.getJSONObject("value"))
+                "offline.open" -> vault.open(params.getJSONObject("envelope"), params.getJSONObject("identity"))
+                "offline.complete" -> vault.complete(params.getJSONObject("body"))
+                else -> vault.clear()
+            }
+            if (secrets.host() != host || accountEpoch.get() != requestEpoch) { vault.clear(); throw ApiFailure(403, "ACCOUNT_SWITCHED") }
+            result
+        }
         "app.ready" -> {
             ensureOpen()
             val host = secrets.host()
@@ -1383,6 +1400,7 @@ class HybridActivity : Activity() {
             synchronized(syncRegistrationLock) {
                 ensureOpen()
                 if (previous != null) SyncJobService.cancel(this)
+                if (previous != null && (previous.ownerId != identity.ownerId || previous.origin != identity.origin)) OfflineVault(this, previous).clear()
                 secrets.saveHost(identity)
                 SyncJobService.schedule(this)
             }
@@ -1537,6 +1555,7 @@ class HybridActivity : Activity() {
                 .put("backgroundSync", SyncJobService.status(this))
         }
         "auth.logout" -> {
+            secrets.host()?.let { OfflineVault(this, it).clear() }
             val identity = secrets.host()
             var revoked = true
             if (identity != null) try { api.logout(identity) } catch (_: Exception) { revoked = false }
@@ -1571,7 +1590,7 @@ class HybridActivity : Activity() {
             val host = secrets.host() ?: throw ApiFailure(401, "LOGIN_REQUIRED")
             val result = api.business(host, params.getString("path"), params.optString("method", "GET"),
                 params.optJSONObject("body"))
-            require(result.toString().length <= 256 * 1024)
+            require(result.toString().length <= if (params.getString("path").startsWith("/personal/v1/offline/")) 4 * 1024 * 1024 else 256 * 1024)
             publicBusiness(result) as JSONObject
         }
         "updates.status" -> uiState(bundles.state())

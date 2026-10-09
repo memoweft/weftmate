@@ -43,6 +43,7 @@ import { createHostRelay } from '../personal-relay/index.mjs';
 import { backupBeforeCloud } from '../personal-cloud/storage.mjs';
 import { createUsageStore } from './usage.mjs';
 import { createScheduleOperations } from './schedules.mjs';
+import { createOfflineService } from '../personal-offline/index.mjs';
 export { explicitNotepadOpenIntent } from './command-policy.mjs';
 export { uniqueSessionOwner } from './store.mjs';
 
@@ -109,6 +110,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const usage = await createUsageStore({ root, clock });
   // Accessors preserve the original service's live state across module boundaries.
   const context = {
+    get offline() { return offline; },
     get backupManager() { return backupManager; },
     backupOwner: ownerId => hostOwner(ownerId) || hostCloudIdentity?.isInstallationOwner(ownerId) === true,
     restoredCloudOwner: (issuer, sub) => Array.isArray(restoredCloudOwners) ? restoredCloudOwners.find(row => row.issuer === issuer && row.sub === sub && rootState.accounts[row.ownerId])?.ownerId : undefined,
@@ -528,8 +530,10 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   }
 
   const scheduleOperations = createScheduleOperations(context);
+  const offline = await createOfflineService(context);
   const service = {
     async cleanupMemoryCopies(ownerId, { sourceTexts = [], deleteConversationSnippets = false }) {
+      await offline.invalidate(ownerId);
       const account = accountState(ownerId);
       for (const sessionId of Object.keys(account.sessions)) {
         await callBackend(() => backend.cleanupMemoryCopies({ sessionId, ownerId, sourceTexts, deleteConversationSnippets }));
@@ -698,6 +702,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         }
       }
       closePromise = (async () => {
+        await offline.close();
         await hostRelay?.close();
         hostCloudIdentity?.close();
         mobileUi?.close();
