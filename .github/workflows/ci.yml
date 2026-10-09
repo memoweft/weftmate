@@ -125,8 +125,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: memoweft/memoweft
-          # M2g candidate (Core #92), including merged FG-1; replace after Claude squash.
-          ref: e2d19d7b2c16fdf9f09bab933882a4d7c3e34b3a
+          # UP-3 legacy startup fix (Core #94); replace after Claude squash.
+          ref: cfded709894942b57801f73489e64f98003895e3
           path: memoweft-core
           persist-credentials: false
       - name: Setup Node

@@ -850,6 +850,20 @@ async function task15NarrowPage(config: NonNullable<Parameters<typeof harness>[3
   return { page, task, taskDetails, command }
 }
 
+test('ordinary text replies never produce a tool card from running, terminal or source-only metadata', async () => {
+  for (const state of ['active', 'completed', 'stopped']) {
+    const command = { commandId: `text-${state}`, kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'A', receiptId: `rpc:text.${state}` }
+    const task = { taskId: command.commandId, sessionId: 'A', source: command, artifacts: [], executionSteps: [],
+      sources: [{ kind: 'memory', title: '合成背景记忆' }], control: { state, canStop: state === 'active' },
+      replyEvidence: { status: state === 'active' ? 'streaming' : 'completed', assistantMessages: 1 } }
+    const page = harness([command], [{ seq: 0, type: 'user.message', data: { text: '你好', receiptId: command.receiptId } },
+      { seq: 1, type: 'assistant.message', data: { text: '你好！' } }], state === 'active', { taskDetails: { [command.commandId]: task } })
+    await ready(page); for (let i = 0; i < 20; i++) await flush()
+    assert.equal(page.get('transcript').children.some(row => row.dataset.conversationTask), false, state)
+    assert.match(visibleText(page.get('transcript')), /你好！/)
+  }
+})
+
 function task15NarrowCard(page: ReturnType<typeof harness>) {
   return page.get('transcript').children.find((row) => row.dataset.conversationTask === 'root-narrow')
 }
@@ -954,18 +968,20 @@ test('synthetic cached progress becomes visibly stale and a late receipt moves i
   const taskDetails: Record<string, any> = {}
   const page = harness([source], events, false, { taskDetails })
   for (let i = 0; i < 20 && !page.get('transcript').children.some((row) => row.dataset.conversationTask); i++) await flush()
-  const card = page.get('transcript').children.find((row) => row.dataset.conversationTask)!
-  assert.match(visibleText(card), /待更新.*暂时无法读取.*重新核对进展/)
+  assert.equal(page.get('transcript').children.some((row) => row.dataset.conversationTask), false,
+    'a failed progress read without any observed tool steps cannot create a tool card')
   events.push({ seq: 1, type: 'user.message', data: { text: '真实目标', receiptId: source.receiptId } },
     { seq: 2, type: 'assistant.message', data: { text: '继续观察' } })
   page.tick(); for (let i = 0; i < 15; i++) await flush()
-  const rows = page.get('transcript').children
-  assert.equal(rows.indexOf(card), rows.findIndex((row) => row.dataset.receiptId === source.receiptId) + 1)
+  assert.equal(page.get('transcript').children.some((row) => row.dataset.conversationTask), false)
   taskDetails[source.commandId] = { taskId: source.commandId, sessionId: 'A', source, artifacts: [],
     control: { state: 'stop_requested', stopStatus: 'cancel_requested' }, replyEvidence: { status: 'streaming' },
     executionSteps: [{ executionId: 'exec-stale', toolName: 'pwsh', state: 'completed', sourceCommandId: source.commandId,
       sourceReceiptId: source.receiptId, jobId: 'job-stale', jobState: 'stopping' }] }
   page.tick(); for (let i = 0; i < 15; i++) await flush()
+  const card = page.get('transcript').children.find((row) => row.dataset.conversationTask)!
+  const rows = page.get('transcript').children
+  assert.equal(rows.indexOf(card), rows.findIndex((row) => row.dataset.receiptId === source.receiptId) + 1)
   assert.match(visibleText(card), /后台正在停止.*等待实际结束记录/)
   assert.doesNotMatch(visibleText(card), /实际停止|待更新/)
   taskDetails[source.commandId].control.stopStatus = 'stopped'

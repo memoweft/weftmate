@@ -108,7 +108,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
                     : selected && !canSendHere ? '旧会话历史可读；要继续聊天或在对话中执行，请新建受限远端会话。'
                     : !chat || !model ? '电脑尚无可用模型。历史可阅读，聊天请先在电脑设置中配置模型。' : '';
         return {
-            phoneChat, running, hint, attachmentBusy,
+            phoneChat, running, hint: hint || (running ? processingLabel((phoneChat ? boundSession : selected)?.processing) : ''), attachmentBusy,
             newSessionDisabled: !chat || !model || core.state.submitting || attachmentBusy || core.state.unresolvedSubmission,
             modelDisabled: phoneChat || !chat || !core.state.models.length,
             modelName: core.state.models.find(item => item.id === core.state.modelProfileId)?.name || '选择模型',
@@ -132,5 +132,10 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         return true;
     }
     function setMessageMode(mode) { core.state.messageMode = mode === 'queue' ? 'queue' : 'steer'; effects.updateAvailability(); }
-    return { addAttachmentFiles, composerInputMode, sendDraft, stopCurrentTurn, composerState, selectModelProfile, setMessageMode };
+    function processingLabel(value) {
+        if (value?.phase === 'loading') return `正在加载模型${value.modelName ? ` ${value.modelName}` : ''}…`;
+        if (value?.phase === 'queued' && Number.isSafeInteger(value.ahead) && value.ahead > 0) return `模型排队中，前面还有 ${value.ahead} 个请求`;
+        return { memory: '正在读取记忆…', reasoning: '正在思考…', answering: '正在回复…' }[value?.phase] || '等待模型回复…';
+    }
+    return { addAttachmentFiles, composerInputMode, sendDraft, stopCurrentTurn, composerState, selectModelProfile, setMessageMode, processingLabel };
 };
