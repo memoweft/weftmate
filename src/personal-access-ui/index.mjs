@@ -4,6 +4,9 @@ import { join } from 'node:path'
 import { uiCoreAssets } from '../ui-core/manifest.mjs'
 
 const files = new Map([
+  ['/personal/v1/ui/activity.css', ['activity.css', 'text/css; charset=utf-8']],
+  ['/personal/v1/ui/components/activity-view.js', ['components/activity-view.js', 'text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/components/activity.js', ['components/activity.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/message-actions.js', ['message-actions.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/message-actions.css', ['message-actions.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/components/main-chat.js', ['components/main-chat.js', 'text/javascript; charset=utf-8']],

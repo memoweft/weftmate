@@ -534,7 +534,7 @@ export function createHttpHandler(context) {
         const afterText = url.searchParams.get('afterSeq') ?? '0';
         const limitText = url.searchParams.get('limit') ?? '100';
         if (!/^\d+$/.test(afterText) || !/^\d+$/.test(limitText)) throw failure('INVALID_REQUEST');
-        return context.json(response, 200, context.syncStores.get(ownerId).page({ afterSeq: Number(afterText), limit: Number(limitText) }));
+        return context.json(response, 200, { ...context.syncStores.get(ownerId).page({ afterSeq: Number(afterText), limit: Number(limitText) }), activity: context.activity.watermark(ownerId) });
       }
       const sharedConversationMatch = /^\/personal\/v1\/sync\/conversations\/([A-Za-z0-9_-]{1,128})\/shared$/.exec(pathname);
       if (sharedConversationMatch && request.method === 'GET') {
@@ -629,6 +629,7 @@ export function createHttpHandler(context) {
         }
       }
       if (await context.scheduleOperations.handleHttp(request, response, url, ownerId)) return;
+      if (await context.activity.handleHttp(request, response, url, ownerId, deviceId)) return;
       const thinkingMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/thinking$/.exec(pathname);
       if (thinkingMatch && ['GET', 'PATCH'].includes(request.method)) {
         if (url.search) throw failure('INVALID_REQUEST');
@@ -750,7 +751,7 @@ export function createHttpHandler(context) {
         }
         return context.json(response, 200, {
           ...context.service.status(ownerId),
-          personalCapabilities: { temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
+          personalCapabilities: { activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
           executionAccount: context.hostOwner(ownerId),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
           backend: backendStatus, memory: { state: memoryStatus.state, inject: memoryStatus.capabilities?.inject === true },

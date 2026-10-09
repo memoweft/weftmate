@@ -31,6 +31,14 @@ const androidBridge = WeftUiCore.createAndroidBridge({
 });
 const mobileWebBridge=window.weftNative?null:WeftUiCore.createMobileWebBridge();
 const mobileEffects = {
+  syncActivityIdentity:()=>uiCore.syncMobileIdentity(),
+  activityVisible:()=>state.page==='activity',
+  renderActivity:()=>{if(state.page==='activity')activityView?.render();},
+  async prepareActivityApproval(target){activityReturn=true;await selectSharedSession(target.sessionId);},
+  activityActionFinished:()=>{if(activityReturn){activityReturn=false;page('activity');}},
+  openActivitySource:target=>selectSharedSession(target.sessionId),
+  openActivityMemory:()=>page('memory'),
+  openActivitySettings:()=>page('about'),
   nativeCall: (...args) => call(...args),
   readMessageDraft: () => $('draft').value,
   clearMessageDraft: () => { $('draft').value = ''; },
@@ -83,6 +91,17 @@ const mobileMessageActions = globalThis.WeftMessageActions?.create({core:uiCore,
 const conversationTasks=uiCore.mobileDecisions.tasks;
 const toolApprovals=uiCore.mobileDecisions.approvals;
 const toolQuestions=uiCore.mobileDecisions.questions;
+let activityView=null,activityTimer=null,activityReturn=false;
+async function activityPage(target){
+  uiCore.syncMobileIdentity();
+  activityView=WeftActivityView.mount({target,core:uiCore});activityView.render();
+  const generation=state.generation,owner=state.owner;
+  try {const info=await uiCore.accessApi('/status');if(generation!==state.generation||owner!==state.owner)return;
+    uiCore.state.personalCapabilities=info.personalCapabilities??{};
+    if(uiCore.state.personalCapabilities.activity!==1){target.replaceChildren(document.createTextNode('这台电脑尚不支持动态。更新电脑上的 WeftMate 后重试。'));return;}
+    await uiCore.readActivity();clearInterval(activityTimer);activityTimer=setInterval(()=>{if(state.page==='activity'&&state.loggedIn&&document.visibilityState==='visible')void uiCore.refreshActivity();},6000);
+  }catch(error){if(generation===state.generation){uiCore.activity.error=safeError(error);activityView?.render();}}
+}
 
 
 
@@ -142,6 +161,7 @@ function call(method, params={}, timeoutMs=45000) { return mobileWebBridge?mobil
 
 
 function page(name){
+  if(name!=='activity'){if(activityTimer)clearInterval(activityTimer);activityTimer=null;activityView=null;}
   if(name==='memory')state.settingsChild=true;
   $('cloud-auth-page')?.classList.remove('active'); $('cloud-settings-page')?.classList.remove('active');
   workspaceNotices.clear();
@@ -155,7 +175,7 @@ function page(name){
   if(previousPage!==name)globalThis.WeftMobileMotion?.push($(name==='chat'?'chat-page':name==='home'?'home-page':'generic-page'),name==='home'||name==='settings'&&previousPage!=='settings');
   $('conversation-usage').hidden=!(name==='chat' && state.loggedIn && (state.sharedSessionId || uiCore.mobile?.selectedBinding()?.sessionId));
   $('header-subtitle').textContent=name==='chat'?'同一个助手，接着聊。':{
-    schedules:'提醒与定时任务',about:'关于',general:'常规',approvals:'审批',resources:'资料访问',usage:'用量',memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',settings:'设置',
+    activity:'动态',schedules:'提醒与定时任务',about:'关于',general:'常规',approvals:'审批',resources:'资料访问',usage:'用量',memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',settings:'设置',
     account:'账户',password:'修改密码',models:'对话模型',sync:'离线与同步',appearance:'外观',updates:'更新',connect:'连接电脑'
   }[name]||name;
   document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('current',b.dataset.page===name));
@@ -358,7 +378,8 @@ window.addEventListener('unhandledrejection',reportBootFailure);
 
 
 
-function renderPage(name){const target=$('page-content');clear(target);if(name!=='settings')$('generic-page').scrollTop=0;const category=mobileSettingsRegistry.get(name);if(category)return category.mount(target);switch(name){
+function renderPage(name){const target=$('page-content');clear(target);if(name!=='activity')target.classList.remove('activity-page');if(name!=='settings')$('generic-page').scrollTop=0;const category=mobileSettingsRegistry.get(name);if(category)return category.mount(target);switch(name){
+  case 'activity':return activityPage(target);
   case 'usage':return usagePage(target, state.usageSessionId || '');
   case 'memory':return memoryPage(target);
   case 'capabilities':return capabilitiesPage(target);
