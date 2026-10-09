@@ -191,11 +191,11 @@ export function projectHistoryEvent(raw, call = null, contextTurn = null, closin
       const args = toolArguments(data.arguments ?? call?.data?.arguments)
       const output = part?.content?.filter(p => p.type === 'text').map(p => p.text).join('\n') ?? ''
       const taskTool = ['subagent','pwsh','bash','shell','run_code'].includes(toolName)
-      const value = toolArguments(output), nativeValue = value.value ?? value
+      const value = toolArguments(output), nativeValue = value?.value ?? value
       const backgroundText = taskTool && /started background (?:subagent task|job) ([A-Za-z0-9._:-]+)/.exec(output)
       const childText = taskTool && /started subagent ([A-Za-z0-9._:-]+)/.exec(output)
-      const background = backgroundText || (taskTool && nativeValue.kind === 'background' && typeof nativeValue.jobId === 'string' ? [null,nativeValue.jobId] : null)
-      const child = childText || (taskTool && nativeValue.kind === 'continuable' && typeof nativeValue.subagentId === 'string' ? [null,nativeValue.subagentId] : null)
+      const background = backgroundText || (taskTool && nativeValue?.kind === 'background' && typeof nativeValue.jobId === 'string' ? [null,nativeValue.jobId] : null)
+      const child = childText || (taskTool && nativeValue?.kind === 'continuable' && typeof nativeValue.subagentId === 'string' ? [null,nativeValue.subagentId] : null)
       const subtask = toolName === 'subagent' || background || child || ['pwsh','bash','shell'].includes(toolName) && args.run_in_background === true
       projected = { seq, type: asked ? type === 'tool/call' ? 'question.asked' : 'question.answered'
         : type === 'tool/call' ? 'step.started' : 'step.completed', data: {
