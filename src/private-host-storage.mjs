@@ -1,5 +1,6 @@
-import { execFileSync } from 'node:child_process';
-import { chmod, lstat, mkdir, realpath } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { chmod, lstat, mkdir, open, realpath, rename } from 'node:fs/promises';
+import { promisify } from 'node:util';
 import path from 'node:path';
 
 const WINDOWS_ACL_SCRIPT = String.raw`
@@ -78,20 +79,32 @@ async function inspectComponents(target, create) {
   if (normalize(actual) !== normalize(target)) throw privateFailure();
 }
 
-function protectWindows(target, kind) {
-  try {
-    const systemPowerShell = path.join(process.env.SystemRoot ?? 'C:\\Windows',
-      'System32', 'WindowsPowerShell', 'v1.0');
-    execFileSync(path.join(systemPowerShell, 'powershell.exe'),
-      ['-NoProfile', '-NonInteractive', '-Command', WINDOWS_ACL_SCRIPT], {
-      env: { ...process.env,
-        PSModulePath: path.join(systemPowerShell, 'Modules'),
-        WEFTMATE_PRIVATE_ACL_TARGET: target, WEFTMATE_PRIVATE_ACL_KIND: kind },
-      windowsHide: true,
-      timeout: 15_000,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-  } catch { throw privateFailure(); }
+const runFile = promisify(execFile);
+const protectedPaths = new Map();
+const protecting = new Map();
+const identity = info => `${info.dev}:${info.ino}:${info.birthtimeMs}`;
+
+async function protectWindows(target, kind) {
+  const key = `${kind}:${target}`;
+  if (protectedPaths.get(key) === identity(await lstat(target))) return;
+  if (protecting.has(key)) return protecting.get(key);
+  const work = (async () => {
+    try {
+      const systemPowerShell = path.join(process.env.SystemRoot ?? 'C:\\Windows',
+        'System32', 'WindowsPowerShell', 'v1.0');
+      await runFile(path.join(systemPowerShell, 'powershell.exe'),
+        ['-NoProfile', '-NonInteractive', '-Command', WINDOWS_ACL_SCRIPT], {
+        env: { ...process.env,
+          PSModulePath: path.join(systemPowerShell, 'Modules'),
+          WEFTMATE_PRIVATE_ACL_TARGET: target, WEFTMATE_PRIVATE_ACL_KIND: kind },
+        windowsHide: true,
+        timeout: 15_000,
+      });
+      protectedPaths.set(key, identity(await lstat(target)));
+    } catch { throw privateFailure(); }
+  })().finally(() => protecting.delete(key));
+  protecting.set(key, work);
+  return work;
 }
 
 /** Protect only this directory, never its parent or existing descendants. */
@@ -99,7 +112,7 @@ export async function ensurePrivateDirectory(target) {
   const resolved = absolutePath(target);
   try {
     await inspectComponents(resolved, true);
-    if (process.platform === 'win32') protectWindows(resolved, 'directory');
+    if (process.platform === 'win32') await protectWindows(resolved, 'directory');
     else {
       await chmod(resolved, 0o700);
       if (((await lstat(resolved)).mode & 0o777) !== 0o700) throw privateFailure();
@@ -119,7 +132,7 @@ export async function ensurePrivateFile(target) {
     const actual = await realpath(resolved);
     const normalize = (value) => process.platform === 'win32' ? path.normalize(value).toLowerCase() : path.normalize(value);
     if (normalize(actual) !== normalize(resolved)) throw privateFailure();
-    if (process.platform === 'win32') protectWindows(resolved, 'file');
+    if (process.platform === 'win32') await protectWindows(resolved, 'file');
     else {
       await chmod(resolved, 0o600);
       if (((await lstat(resolved)).mode & 0o777) !== 0o600) throw privateFailure();
@@ -129,4 +142,30 @@ export async function ensurePrivateFile(target) {
     if (error?.code === 'ENOENT') throw error;
     throw privateFailure();
   }
+}
+
+/** Exclusive creation in a protected directory: Windows inherits its user-only ACL.
+ * Existing files still go through ensurePrivateFile's asynchronous ACL migration.
+ */
+export async function openPrivateFile(target) {
+  const resolved = absolutePath(target);
+  await ensurePrivateDirectory(path.dirname(resolved));
+  const handle = await open(resolved, 'wx', 0o600);
+  if (process.platform === 'win32') protectedPaths.set(`file:${resolved}`, identity(await handle.stat()));
+  return handle;
+}
+
+/** Atomic replacement preserves the verified file identity and inherited ACL. */
+export async function renamePrivateFile(source, target) {
+  const from = absolutePath(source), to = absolutePath(target);
+  if (path.dirname(from) !== path.dirname(to)) throw privateFailure();
+  await ensurePrivateFile(from);
+  const verified = protectedPaths.get(`file:${from}`);
+  await rename(from, to);
+  protectedPaths.delete(`file:${from}`);
+  if (verified !== undefined) protectedPaths.set(`file:${to}`, verified);
+}
+
+export function forgetPrivateFile(target) {
+  protectedPaths.delete(`file:${absolutePath(target)}`);
 }

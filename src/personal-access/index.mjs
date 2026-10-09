@@ -1,6 +1,7 @@
 import { modelTierFor } from '../model-tier.ts';
 import { currentChatProfile } from '../background-model-selection.mjs';
 import path from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 import { digest, failure, plainObject, withDeadline } from './common.mjs';
 import { ensurePrivateDirectory, ensurePrivateFile } from '../private-host-storage.mjs';
 import { lstat, readdir, readFile } from 'node:fs/promises';
@@ -494,6 +495,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       }
     }
     validateStore(next);
+    if (isDeepStrictEqual(next, rootState)) return value;
     try { await durableWrite(storeFile, next, () => {
       if (closing) return false;
       assertCurrent();

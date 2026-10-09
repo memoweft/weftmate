@@ -12,7 +12,7 @@
  *  - 窗口标题按 capture 设置截断（app_only 不采标题）；剪贴板文本截断 500 字符。
  */
 import { clipboard, powerMonitor } from 'electron';
-import { renameSync, writeFileSync } from 'node:fs';
+import { createLatestFileWriter } from './latest-file-writer.mjs';
 import { join } from 'node:path';
 import {
   getClipboardEnabled,
@@ -67,6 +67,7 @@ export function initPerception(opts: {
   readMobileObservations?: () => DeviceObservation[];
 }): PerceptionRuntime {
   const stateFile = join(opts.dshHome, 'weftmate-perception-main.json');
+  const writeSnapshot = createLatestFileWriter(stateFile);
   const readMobile = opts.readMobileObservations ?? (() => []);
   let timer: NodeJS.Timeout | null = null;
   let disposed = false;
@@ -75,11 +76,7 @@ export function initPerception(opts: {
 
   const writeNow = (payload: PerceptionMainFile): void => {
     if (disposed) return;
-    try {
-      const text = `${JSON.stringify(payload)}\n`;
-      writeFileSync(`${stateFile}.tmp`, text, 'utf8');
-      renameSync(`${stateFile}.tmp`, stateFile);
-    } catch { /* 写失败不影响采集（dsh-home 缺失时静默） */ }
+    void writeSnapshot(`${JSON.stringify(payload)}\n`).catch(() => {});
   };
 
   const loadActiveWindow = async (): Promise<GetWindowsModule['activeWindow'] | null> => {
