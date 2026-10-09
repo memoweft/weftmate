@@ -195,11 +195,7 @@ private struct SavedTaskResponse: Codable {
     func responseNeedsReadback(_ key: String) -> Bool { response(key)?.registered == false }
     func approvalHeadline(_ approval: SessionApproval) -> String {
         if let known = readableApprovals[approval.id] { return known }
-        if let range = approval.reason.range(of: "\n{") {
-            let raw = String(approval.reason[approval.reason.index(before: range.upperBound)...])
-            return "要" + ToolProgressSummary.readable(tool: approval.toolName, raw: raw)
-        }
-        return approval.readableSummary
+        return approval.actionHeadline
     }
     var pendingApprovals: [SessionApproval] {
         approvals.filter { $0.canDecide && (currentApprovals.contains($0.id) || hasSaved("approval:" + $0.id)) && response("approval:" + $0.id)?.registered != true }

@@ -372,9 +372,10 @@ extension AppleAppModel {
         if attachmentDrafts[key]?.isEmpty == true { attachmentMessageIDs[key] = nil; attachmentSessionIDs[key] = nil }
     }
 
-    func send(_ conversation: ConversationSummary, accountEpoch: UUID, intent: MessageIntent = .queue) async {
+    func send(_ conversation: ConversationSummary, accountEpoch: UUID, intent explicitIntent: MessageIntent? = nil) async {
         guard accountEpoch == epoch, canSend(conversation), let accountSession = session,
               let local = commandStore, let target = sendTargets[Self.draftKey(for: conversation)] else { return }
+        let intent = explicitIntent ?? runningMessageMode.intent(running: conversation.running)
         let key = Self.draftKey(for: conversation)
         let text = drafts[key] ?? ""
         guard text.utf16.count <= 8_192 else {
@@ -971,6 +972,17 @@ final class AppleAppModel: ObservableObject {
     @Published var appearanceMode = "system" {
         didSet { defaults?.set(appearanceMode, forKey: "appearanceMode") }
     }
+    var runningMessageMode: RunningMessageMode {
+        get {
+            guard let defaults, let session, let account = try? LocalAccountScope(server: session.server, ownerId: session.account.ownerId) else { return .queue }
+            return RunningMessagePreferences(defaults: defaults).read(account: account)
+        }
+        set {
+            guard let defaults, let session, let account = try? LocalAccountScope(server: session.server, ownerId: session.account.ownerId) else { return }
+            objectWillChange.send()
+            RunningMessagePreferences(defaults: defaults).write(newValue, account: account)
+        }
+    }
     private let defaults: UserDefaults?
     private let launchConfigurationError: String?
     private let draftPersistence: (any AppleDraftPersisting)?
@@ -1112,14 +1124,14 @@ final class AppleAppModel: ObservableObject {
 
     /// Dependency injection for deterministic account/late-callback checks; no alternate auth path.
     init(client: PersonalClient, draftPersistence: any AppleDraftPersisting, server: ServerConfiguration,
-         commandStore: LocalConversationStore? = nil, endpointStore: LocalEndpointOperationStore? = nil, stateDirectory: URL? = nil) {
+         commandStore: LocalConversationStore? = nil, endpointStore: LocalEndpointOperationStore? = nil, stateDirectory: URL? = nil, preferences: UserDefaults? = nil) {
         self.client = client
         cloudNamespace = "com.weftmate.apple.unit-tests." + UUID().uuidString
         self.draftPersistence = draftPersistence
         self.commandStore = commandStore
         self.endpointStore = endpointStore
         localStateDirectory = stateDirectory; timelineStateDirectory = stateDirectory
-        defaults = nil
+        defaults = preferences
         launchConfigurationError = nil
         developmentRouteEnabled = false
         serverInput = server.originString
@@ -1491,8 +1503,8 @@ final class AppleAppModel: ObservableObject {
             let snapshot = WatchTimelineSnapshot(accountKey: account.cacheKey, sessionID: sessionID,
                 taskID: current?.steps.last?.taskID, progress: running ? current?.steps.last?.summary ?? "正在处理" : ending == nil && current == nil ? "等待新任务" : endLabel,
                 running: running,
-                assistantSummary: String((page.events.last(where: { $0.type == "assistant.message" })?.data["text"]?.string ?? "").prefix(240)),
-                approvals: approvals.approvals.filter(\.canDecide).map { WatchApproval(id: $0.id, summary: $0.readableSummary) }, completedTaskIDs: completed)
+                assistantSummary: "",
+                approvals: approvals.approvals.filter(\.canDecide).map { WatchApproval(id: $0.id, summary: $0.actionHeadline) }, completedTaskIDs: completed)
             watchBridge.publish(snapshot); return try JSONEncoder().encode(snapshot)
         } catch { return nil }
     }

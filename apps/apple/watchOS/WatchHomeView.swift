@@ -13,10 +13,10 @@ import WeftMateCore
     override init() {
         super.init()
         #if DEBUG && targetEnvironment(simulator)
-        if ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--ic2-icons-fixture") {
+        if ProcessInfo.processInfo.arguments.contains("--ui-testing") && (ProcessInfo.processInfo.arguments.contains("--ic2-icons-fixture") || ProcessInfo.processInfo.arguments.contains("--a9-watch-fixture")) {
             snapshot = WatchTimelineSnapshot(accountKey: "ic2-synthetic", sessionID: "ic2-fixture", taskID: nil,
-                progress: "等待审批", running: false, assistantSummary: "", approvals: [
-                    WatchApproval(id: "ic2-approval", summary: "运行合成脚本")], completedTaskIDs: [])
+                progress: "已完成", running: false, assistantSummary: "", approvals: [
+                    WatchApproval(id: "ic2-approval", summary: "要运行命令：npm test")], completedTaskIDs: [])
             return
         }
         #endif
@@ -79,30 +79,30 @@ struct WatchHomeView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
                     if let snapshot = model.snapshot {
-                        WeftLabel(snapshot.progress, icon: snapshot.approvals.isEmpty ? (snapshot.running ? "tool" : "allow") : "approval", size: 16)
-                            .font(.caption).lineLimit(1).accessibilityIdentifier("watchProgress")
+                        if !snapshot.running && snapshot.progress == "已完成" {
+                            WeftLabel("已完成", icon: "allow", size: AppleTokens.Space.p16)
+                                .font(AppleTokens.Fonts.caption).accessibilityIdentifier("watchCompletion")
+                        }
                         ForEach(snapshot.approvals) { approval in
-                            VStack(alignment: .leading, spacing: 8) {
-                                WeftLabel(approval.summary, icon: "approval", size: 16).font(.caption)
+                            VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
+                                WeftLabel(approval.summary, icon: "approval", size: AppleTokens.Space.p16).font(AppleTokens.Fonts.caption)
                                 HStack {
-                                    Button { model.decide(approval, allowed: true) } label: { WeftLabel("允许", icon: "allow", size: 16) }
-                                    Button { model.decide(approval, allowed: false) } label: { WeftLabel("拒绝", icon: "deny", size: 16) }
+                                    Button { model.decide(approval, allowed: true) } label: { WeftLabel("批准", icon: "allow", size: AppleTokens.Space.p16) }
+                                    Button { model.decide(approval, allowed: false) } label: { WeftLabel("拒绝", icon: "deny", size: AppleTokens.Space.p16) }
                                 }.disabled(model.busy || !model.reachable)
-                            }.padding(8).background(AppleTokens.Styles.quaternary, in: RoundedRectangle(cornerRadius: 10))
+                            }.padding(AppleTokens.Space.p8).background(AppleTokens.Styles.quaternary, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r10))
                         }
-                        if !snapshot.assistantSummary.isEmpty {
-                            NavigationLink("最近回复") { ScrollView { Text(snapshot.assistantSummary).font(.caption).padding(8) } }
-                        }
-                    } else { Text("在手机上打开一段对话").font(.caption) }
+
+                    } else { Text("在手机上打开一段对话").font(AppleTokens.Fonts.caption) }
                     if let accountKey = model.snapshot?.accountKey { NavigationLink("健康") { WatchHealthView().id(accountKey) } }
                     Button("刷新") { model.refresh() }.disabled(model.busy)
-                    if let notice = model.notice { Text(notice).font(.caption).foregroundStyle(AppleTokens.Styles.secondary) }
+                    if let notice = model.notice { Text(notice).font(AppleTokens.Fonts.caption).foregroundStyle(AppleTokens.Styles.secondary) }
                     if !model.reachable {
-                        Text("打开手机后可审批").font(.caption2).foregroundStyle(AppleTokens.Styles.secondary)
+                        Text("打开手机后可审批").font(AppleTokens.Fonts.caption2).foregroundStyle(AppleTokens.Styles.secondary)
                     }
-                }.padding(8)
+                }.padding(AppleTokens.Space.p8)
             }.navigationTitle("WeftMate").tint(AppleTokens.Colors.primary)
         }
         .task(id: scenePhase) { if scenePhase == .active { model.refresh() } }

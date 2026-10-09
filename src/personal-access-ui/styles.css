@@ -161,7 +161,7 @@ input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent)
 .icon-close { width: 36px; height: 36px; border: 0; border-radius: var(--wm-radius-10); color: var(--ink-secondary); background: transparent; font-size: var(--wm-font-size-25); line-height: var(--wm-line-height-1); }
 .icon-close:hover { background: var(--surface-soft); }
 .confirm-dialog { width: min(480px, calc(100% - 32px)); }
-.toast { position: fixed; z-index: 10; bottom: 24px; left: 50%; transform: translateX(-50%); width: min(440px, calc(100% - 32px)); border-radius: var(--wm-radius-12); background: var(--ink); color: var(--wm-color-on-action); padding: var(--wm-space-11) var(--wm-space-16); box-shadow: var(--shadow-float); text-align: center; }
+.toast { position: fixed; z-index: 30; top: var(--wm-space-16); left: 50%; transform: translateX(-50%); width: min(440px, calc(100% - 32px)); border-radius: var(--wm-radius-12); background: var(--surface-soft); color: var(--ink); padding: var(--wm-space-11) var(--wm-space-16); box-shadow: var(--shadow-float); text-align: center; overflow-wrap: anywhere; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: calc(-1 * var(--wm-space-1)); overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 .assistant-active .main { width: min(100% - 32px, 1120px); margin: var(--wm-space-24) auto; }
 .assistant-active .footer { display: none; }

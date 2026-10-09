@@ -196,6 +196,14 @@ private struct SettingsCategoryView: View {
     @ViewBuilder private var fields: some View {
         switch route.categoryID {
         case "general":
+            SettingsRow("回复进行中时发送的消息", "按账户保存在这台设备。") {
+                Picker("回复进行中时发送的消息", selection: Binding(get: { app.runningMessageMode }, set: { app.runningMessageMode = $0 })) {
+                    ForEach(RunningMessageMode.allCases) { Text($0.title).tag($0) }
+                }.pickerStyle(.segmented).labelsHidden().accessibilityIdentifier("runningMessageMode")
+            }
+            ForEach(RunningMessageMode.allCases) { mode in
+                VStack(alignment: .leading, spacing: AppleTokens.Space.p4) { Text(mode.title); Text(mode.explanation) }.font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
+            }
             SettingsRow("语言", "当前界面使用简体中文。") { Text("简体中文").foregroundStyle(Weave.muted) }
             SettingsRow("通知", "审批与任务提醒沿用系统通知权限。") { Text("由系统管理").foregroundStyle(Weave.muted) }
             #if os(macOS)

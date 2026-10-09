@@ -1,0 +1,58 @@
+{
+  "matched" : true,
+  "samples" : [
+    {
+      "colorSpace" : "sRGB IEC61966-2.1",
+      "file" : "review-iphone-composer-context-light-20261009T083623Z.png",
+      "rgb" : [
+        48,
+        53,
+        47
+      ],
+      "sourceTokenRGB" : [
+        48,
+        53,
+        47
+      ],
+      "uniformPatchPixels" : 64,
+      "x" : 1020,
+      "y" : 2325
+    },
+    {
+      "colorSpace" : "sRGB IEC61966-2.1",
+      "file" : "a9-iphone-send-queue-light-20261009T083623Z.png",
+      "rgb" : [
+        48,
+        53,
+        47
+      ],
+      "sourceTokenRGB" : [
+        48,
+        53,
+        47
+      ],
+      "uniformPatchPixels" : 64,
+      "x" : 996,
+      "y" : 1421
+    },
+    {
+      "colorSpace" : "sRGB IEC61966-2.1",
+      "file" : "a9-iphone-send-steer-light-20261009T083623Z.png",
+      "rgb" : [
+        48,
+        53,
+        47
+      ],
+      "sourceTokenRGB" : [
+        48,
+        53,
+        47
+      ],
+      "uniformPatchPixels" : 64,
+      "x" : 996,
+      "y" : 1421
+    }
+  ],
+  "theme" : "light",
+  "themeAccent" : "#30352F"
+}
