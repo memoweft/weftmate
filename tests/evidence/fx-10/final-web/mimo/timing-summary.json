@@ -1,0 +1,434 @@
+[
+  {
+    "id": "action-02-web-document",
+    "status": "passed",
+    "durationMs": 139701,
+    "foregroundModelRequests": [
+      {
+        "id": "53976-3",
+        "at": "2026-10-09T10:30:08.308Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 8035,
+        "durationMs": 3478,
+        "headersMs": 2172,
+        "firstMeaningfulMs": 2234,
+        "reasoningChars": 311,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 109,
+          "prompt_tokens": 2193,
+          "total_tokens": 2302,
+          "completion_tokens_details": {
+            "reasoning_tokens": 83
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 1664
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "53976-6",
+        "at": "2026-10-09T10:30:11.882Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 9317,
+        "durationMs": 5895,
+        "headersMs": 3017,
+        "firstMeaningfulMs": 3088,
+        "reasoningChars": 478,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 206,
+          "prompt_tokens": 2830,
+          "total_tokens": 3036,
+          "completion_tokens_details": {
+            "reasoning_tokens": 137
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "53976-8",
+        "at": "2026-10-09T10:30:24.342Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 20912,
+        "durationMs": 6893,
+        "headersMs": 3004,
+        "firstMeaningfulMs": 3069,
+        "reasoningChars": 737,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 285,
+          "prompt_tokens": 6677,
+          "total_tokens": 6962,
+          "completion_tokens_details": {
+            "reasoning_tokens": 225
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2624
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "53976-10",
+        "at": "2026-10-09T10:30:40.357Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 40600,
+        "durationMs": 18631,
+        "headersMs": 3663,
+        "firstMeaningfulMs": 3737,
+        "reasoningChars": 2816,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 900,
+          "prompt_tokens": 13841,
+          "total_tokens": 14741,
+          "completion_tokens_details": {
+            "reasoning_tokens": 871
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2624
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "53976-12",
+        "at": "2026-10-09T10:31:05.380Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 51530,
+        "durationMs": 11132,
+        "headersMs": 5198,
+        "firstMeaningfulMs": 7348,
+        "reasoningChars": 646,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 253,
+          "prompt_tokens": 16350,
+          "total_tokens": 16603,
+          "completion_tokens_details": {
+            "reasoning_tokens": 220
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2688
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "53976-14",
+        "at": "2026-10-09T10:31:22.950Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 60508,
+        "durationMs": 43600,
+        "headersMs": 4923,
+        "firstMeaningfulMs": 5003,
+        "reasoningChars": 3126,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 2913,
+          "prompt_tokens": 18249,
+          "total_tokens": 21162,
+          "completion_tokens_details": {
+            "reasoning_tokens": 1229
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2688
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "53976-16",
+        "at": "2026-10-09T10:32:08.953Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 68214,
+        "durationMs": 3877,
+        "headersMs": 3317,
+        "firstMeaningfulMs": 3375,
+        "reasoningChars": 26,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 49,
+          "prompt_tokens": 21498,
+          "total_tokens": 21547,
+          "completion_tokens_details": {
+            "reasoning_tokens": 6
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2752
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "53976-18",
+        "at": "2026-10-09T10:32:12.978Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 72428,
+        "durationMs": 6811,
+        "headersMs": 4586,
+        "firstMeaningfulMs": 4646,
+        "reasoningChars": 169,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 228,
+          "prompt_tokens": 23508,
+          "total_tokens": 23736,
+          "completion_tokens_details": {
+            "reasoning_tokens": 64
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2752
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "53976-20",
+        "at": "2026-10-09T10:32:20.869Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 73764,
+        "durationMs": 6281,
+        "headersMs": 3391,
+        "firstMeaningfulMs": 3445,
+        "reasoningChars": 42,
+        "contentChars": 587,
+        "usage": {
+          "completion_tokens": 274,
+          "prompt_tokens": 23987,
+          "total_tokens": 24261,
+          "completion_tokens_details": {
+            "reasoning_tokens": 10
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2880
+          }
+        },
+        "terminal": "end"
+      }
+    ],
+    "maxRequestChars": 73764,
+    "toolDetailsCount": 18,
+    "toolWindows": [
+      {
+        "start": "2026-10-09T10:30:11.802Z",
+        "end": "2026-10-09T10:30:11.813Z",
+        "ms": 11
+      },
+      {
+        "start": "2026-10-09T10:30:17.812Z",
+        "end": "2026-10-09T10:30:21.594Z",
+        "ms": 3782
+      },
+      {
+        "start": "2026-10-09T10:30:31.259Z",
+        "end": "2026-10-09T10:30:40.274Z",
+        "ms": 9015
+      },
+      {
+        "start": "2026-10-09T10:30:59.005Z",
+        "end": "2026-10-09T10:31:05.319Z",
+        "ms": 6314
+      },
+      {
+        "start": "2026-10-09T10:31:16.531Z",
+        "end": "2026-10-09T10:31:22.884Z",
+        "ms": 6353
+      },
+      {
+        "start": "2026-10-09T10:32:12.844Z",
+        "end": "2026-10-09T10:32:12.913Z",
+        "ms": 69
+      }
+    ]
+  },
+  {
+    "id": "action-02-web-document",
+    "status": "passed",
+    "durationMs": 74915,
+    "foregroundModelRequests": [
+      {
+        "id": "53976-23",
+        "at": "2026-10-09T10:32:29.424Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 8035,
+        "durationMs": 4802,
+        "headersMs": 2015,
+        "firstMeaningfulMs": 2081,
+        "reasoningChars": 644,
+        "contentChars": 107,
+        "usage": {
+          "completion_tokens": 202,
+          "prompt_tokens": 2189,
+          "total_tokens": 2391,
+          "completion_tokens_details": {
+            "reasoning_tokens": 177
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 1728
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "53976-26",
+        "at": "2026-10-09T10:32:34.333Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 9311,
+        "durationMs": 5026,
+        "headersMs": 4072,
+        "firstMeaningfulMs": 4140,
+        "reasoningChars": 126,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 56,
+          "prompt_tokens": 2454,
+          "total_tokens": 2510,
+          "completion_tokens_details": {
+            "reasoning_tokens": 30
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2112
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "53976-28",
+        "at": "2026-10-09T10:32:39.425Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 10404,
+        "durationMs": 3658,
+        "headersMs": 2039,
+        "firstMeaningfulMs": 2115,
+        "reasoningChars": 320,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 159,
+          "prompt_tokens": 3038,
+          "total_tokens": 3197,
+          "completion_tokens_details": {
+            "reasoning_tokens": 90
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2240
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "53976-30",
+        "at": "2026-10-09T10:32:49.863Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 21836,
+        "durationMs": 11233,
+        "headersMs": 2066,
+        "firstMeaningfulMs": 2136,
+        "reasoningChars": 1553,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 476,
+          "prompt_tokens": 6838,
+          "total_tokens": 7314,
+          "completion_tokens_details": {
+            "reasoning_tokens": 411
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2624
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "53976-32",
+        "at": "2026-10-09T10:33:05.735Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 32985,
+        "durationMs": 29406,
+        "headersMs": 3028,
+        "firstMeaningfulMs": 3102,
+        "reasoningChars": 1663,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 1902,
+          "prompt_tokens": 11243,
+          "total_tokens": 13145,
+          "completion_tokens_details": {
+            "reasoning_tokens": 513
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2688
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "53976-34",
+        "at": "2026-10-09T10:33:36.364Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 38579,
+        "durationMs": 7179,
+        "headersMs": 4887,
+        "firstMeaningfulMs": 4948,
+        "reasoningChars": 77,
+        "contentChars": 449,
+        "usage": {
+          "completion_tokens": 224,
+          "prompt_tokens": 13475,
+          "total_tokens": 13699,
+          "completion_tokens_details": {
+            "reasoning_tokens": 17
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2688
+          }
+        },
+        "terminal": "end"
+      }
+    ],
+    "maxRequestChars": 38579,
+    "toolDetailsCount": 13,
+    "toolWindows": [
+      {
+        "start": "2026-10-09T10:32:34.249Z",
+        "end": "2026-10-09T10:32:34.260Z",
+        "ms": 11
+      },
+      {
+        "start": "2026-10-09T10:32:39.370Z",
+        "end": "2026-10-09T10:32:39.375Z",
+        "ms": 5
+      },
+      {
+        "start": "2026-10-09T10:32:43.106Z",
+        "end": "2026-10-09T10:32:47.244Z",
+        "ms": 4138
+      },
+      {
+        "start": "2026-10-09T10:33:01.122Z",
+        "end": "2026-10-09T10:33:05.163Z",
+        "ms": 4041
+      }
+    ]
+  }
+]

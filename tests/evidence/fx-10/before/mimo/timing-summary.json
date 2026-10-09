@@ -1,0 +1,284 @@
+[
+  {
+    "id": "action-01-organize",
+    "status": "failed",
+    "durationMs": 21939,
+    "foregroundModelRequests": [
+      {
+        "id": "49196-3",
+        "at": "2026-10-09T10:16:48.990Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 8010,
+        "durationMs": 4500,
+        "headersMs": 2729,
+        "firstMeaningfulMs": 2806,
+        "reasoningChars": 394,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 137,
+          "prompt_tokens": 2196,
+          "total_tokens": 2333,
+          "completion_tokens_details": {
+            "reasoning_tokens": 111
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 1664
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "49196-6",
+        "at": "2026-10-09T10:16:53.549Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 9583,
+        "durationMs": 3615,
+        "headersMs": 2232,
+        "firstMeaningfulMs": 2287,
+        "reasoningChars": 40,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 146,
+          "prompt_tokens": 3038,
+          "total_tokens": 3184,
+          "completion_tokens_details": {
+            "reasoning_tokens": 10
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "49196-8",
+        "at": "2026-10-09T10:16:57.821Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 11526,
+        "durationMs": 8019,
+        "headersMs": 5056,
+        "firstMeaningfulMs": 5566,
+        "reasoningChars": 239,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 186,
+          "prompt_tokens": 3507,
+          "total_tokens": 3693,
+          "completion_tokens_details": {
+            "reasoning_tokens": 80
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2752
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "49196-10",
+        "at": "2026-10-09T10:17:06.357Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 12619,
+        "durationMs": 3889,
+        "headersMs": 1415,
+        "firstMeaningfulMs": 1483,
+        "reasoningChars": 86,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 301,
+          "prompt_tokens": 3792,
+          "total_tokens": 4093,
+          "completion_tokens_details": {
+            "reasoning_tokens": 17
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2816
+          }
+        },
+        "terminal": "end"
+      }
+    ],
+    "maxRequestChars": 12619,
+    "toolDetailsCount": 0,
+    "toolWindows": [
+      {
+        "start": "2026-10-09T10:16:53.500Z",
+        "end": "2026-10-09T10:16:53.509Z",
+        "ms": 9
+      },
+      {
+        "start": "2026-10-09T10:16:57.176Z",
+        "end": "2026-10-09T10:16:57.288Z",
+        "ms": 112
+      },
+      {
+        "start": "2026-10-09T10:16:57.289Z",
+        "end": "2026-10-09T10:16:57.780Z",
+        "ms": 491
+      },
+      {
+        "start": "2026-10-09T10:17:05.850Z",
+        "end": "2026-10-09T10:17:06.308Z",
+        "ms": 458
+      }
+    ],
+    "unexpectedApproval": {
+      "approvalId": "02b8a8e2-d683-4174-b7c3-ceddeb7fda19",
+      "toolName": "pwsh",
+      "reason": "[weftmate:overwrite] 修改或覆盖已有文件，恢复需要原内容或备份。操作：pwsh\n{\"command\":\"$base='C:\\\\temp\\\\weftmate-eval-action-01-organize-cmaszC\\\\inbox'\\nNew-Item -ItemType Directory -Force -Path (Join-Path $base '文本'),(Join-Path $base '表格'),(Join-Path $base '文档') | Out-Null\\nMove-Item -Force (Join-Path $base '会议记录.txt') (Join-Path $base '文本\\\\会议记录.txt')\\nMove-Item -Force (Join-Path $base '预算.csv') (Join-Path $base '表格\\\\预算.csv')\\nMove-Item -Force (Join-Path $base '说明.md') (Join-Path $base '文档\\\\说明.md')\\nGet-ChildItem -Force -Recurse $base | Select-Object FullName, Length | Format-Table -AutoSize | Out-String -Width 300\\nWrite-Host '--- contents after move ---'\\nforeach($f in @('文本\\\\会议记录.txt','表格\\\\预算.csv','文档\\\\说明.md','不要动\\\\保留.txt')){ Write-Host ('=== ' + $f); Get-Conte",
+      "riskCategories": [
+        "overwrite"
+      ],
+      "status": "pending"
+    }
+  },
+  {
+    "id": "action-02-web-document",
+    "status": "passed",
+    "durationMs": 100697,
+    "foregroundModelRequests": [
+      {
+        "id": "49196-13",
+        "at": "2026-10-09T10:17:11.326Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 8010,
+        "durationMs": 3507,
+        "headersMs": 2508,
+        "firstMeaningfulMs": 2580,
+        "reasoningChars": 246,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 96,
+          "prompt_tokens": 2187,
+          "total_tokens": 2283,
+          "completion_tokens_details": {
+            "reasoning_tokens": 70
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 1728
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "49196-16",
+        "at": "2026-10-09T10:17:14.896Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 9225,
+        "durationMs": 10305,
+        "headersMs": 5055,
+        "firstMeaningfulMs": 6304,
+        "reasoningChars": 842,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 298,
+          "prompt_tokens": 2699,
+          "total_tokens": 2997,
+          "completion_tokens_details": {
+            "reasoning_tokens": 234
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "49196-18",
+        "at": "2026-10-09T10:17:31.395Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 87017,
+        "durationMs": 5241,
+        "headersMs": 2683,
+        "firstMeaningfulMs": 2743,
+        "reasoningChars": 368,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 141,
+          "prompt_tokens": 37818,
+          "total_tokens": 37959,
+          "completion_tokens_details": {
+            "reasoning_tokens": 105
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2496
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "49196-20",
+        "at": "2026-10-09T10:17:47.489Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 98044,
+        "durationMs": 56309,
+        "headersMs": 4831,
+        "firstMeaningfulMs": 4895,
+        "reasoningChars": 5886,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 3482,
+          "prompt_tokens": 41246,
+          "total_tokens": 44728,
+          "completion_tokens_details": {
+            "reasoning_tokens": 1781
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2496
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "49196-22",
+        "at": "2026-10-09T10:18:45.067Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 108490,
+        "durationMs": 6475,
+        "headersMs": 3812,
+        "firstMeaningfulMs": 3825,
+        "reasoningChars": 103,
+        "contentChars": 353,
+        "usage": {
+          "completion_tokens": 189,
+          "prompt_tokens": 45053,
+          "total_tokens": 45242,
+          "completion_tokens_details": {
+            "reasoning_tokens": 21
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2496
+          }
+        },
+        "terminal": "end"
+      }
+    ],
+    "maxRequestChars": 108490,
+    "toolDetailsCount": 0,
+    "toolWindows": [
+      {
+        "start": "2026-10-09T10:17:14.844Z",
+        "end": "2026-10-09T10:17:14.851Z",
+        "ms": 7
+      },
+      {
+        "start": "2026-10-09T10:17:25.228Z",
+        "end": "2026-10-09T10:17:29.989Z",
+        "ms": 4761
+      },
+      {
+        "start": "2026-10-09T10:17:36.643Z",
+        "end": "2026-10-09T10:17:47.431Z",
+        "ms": 10788
+      }
+    ]
+  }
+]

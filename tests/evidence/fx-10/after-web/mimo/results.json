@@ -1,0 +1,517 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-09T10:24:21.401Z",
+  "host": "http://127.0.0.1:59557",
+  "model": "mimo",
+  "results": [
+    {
+      "id": "action-02-web-document",
+      "category": "action",
+      "title": "查网页并保存说明",
+      "status": "passed",
+      "durationMs": 832467,
+      "checks": [
+        {
+          "type": "file_exists",
+          "path": "node24说明.md",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "node24说明.md",
+          "text": "https://nodejs.org/",
+          "status": "passed"
+        },
+        {
+          "type": "reply_matches",
+          "pattern": "说明|保存|写好",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "llm_judge",
+          "prompt": "回复应说明已经保存中文说明并提到官方来源；不能将尚未进行的检索/保存说成完成。仅凭回复不能验收文档事实准确性。",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-ee2f47da-ff2b-42a2-91be-801516af283c",
+          "modelProfileId": "private-model-70d9af41c3a85fca16eaebe955a2a2780c0dfad6",
+          "commandId": "cmd-c17e89e5-52c4-43bd-9e8c-8f6b8830aeab",
+          "startedAt": "2026-10-09T10:24:22.197Z",
+          "reply": "已写入 `[local path] 7.3 KB），内容涵盖 24 与 22 的版本状态、V8 13.6/npm 11/ABI 137 等运行时差异、弃用移除清单与升级检查表。已读来源包括 Node.js 24.0.0 与 22.0.0 官方发布说明、nodejs/release 发布计划、24/22 分支 Changelog 与 TypeScript/权限官方文档。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T10:24:22.257Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T10:24:22.258Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T10:24:22.306Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T10:24:22.307Z"
+            },
+            {
+              "seq": 82,
+              "type": "step.started",
+              "at": "2026-10-09T10:24:27.005Z"
+            },
+            {
+              "seq": 83,
+              "type": "step.completed",
+              "at": "2026-10-09T10:24:27.016Z"
+            },
+            {
+              "seq": 139,
+              "type": "step.started",
+              "at": "2026-10-09T10:24:29.543Z"
+            },
+            {
+              "seq": 140,
+              "type": "step.started",
+              "at": "2026-10-09T10:24:29.554Z"
+            },
+            {
+              "seq": 141,
+              "type": "step.completed",
+              "at": "2026-10-09T10:24:33.197Z"
+            },
+            {
+              "seq": 142,
+              "type": "step.completed",
+              "at": "2026-10-09T10:24:33.198Z"
+            },
+            {
+              "seq": 212,
+              "type": "step.started",
+              "at": "2026-10-09T10:24:37.547Z"
+            },
+            {
+              "seq": 213,
+              "type": "step.started",
+              "at": "2026-10-09T10:24:37.555Z"
+            },
+            {
+              "seq": 214,
+              "type": "step.completed",
+              "at": "2026-10-09T10:24:41.479Z"
+            },
+            {
+              "seq": 215,
+              "type": "step.completed",
+              "at": "2026-10-09T10:24:46.527Z"
+            },
+            {
+              "seq": 736,
+              "type": "step.started",
+              "at": "2026-10-09T10:25:13.453Z"
+            },
+            {
+              "seq": 737,
+              "type": "step.started",
+              "at": "2026-10-09T10:25:13.465Z"
+            },
+            {
+              "seq": 738,
+              "type": "step.completed",
+              "at": "2026-10-09T10:25:17.100Z"
+            },
+            {
+              "seq": 739,
+              "type": "step.completed",
+              "at": "2026-10-09T10:25:20.161Z"
+            },
+            {
+              "seq": 985,
+              "type": "step.started",
+              "at": "2026-10-09T10:25:36.931Z"
+            },
+            {
+              "seq": 986,
+              "type": "step.started",
+              "at": "2026-10-09T10:25:36.944Z"
+            },
+            {
+              "seq": 987,
+              "type": "step.completed",
+              "at": "2026-10-09T10:25:43.375Z"
+            },
+            {
+              "seq": 988,
+              "type": "step.completed",
+              "at": "2026-10-09T10:25:43.522Z"
+            },
+            {
+              "seq": 1388,
+              "type": "step.started",
+              "at": "2026-10-09T10:26:06.445Z"
+            },
+            {
+              "seq": 1389,
+              "type": "step.started",
+              "at": "2026-10-09T10:26:06.453Z"
+            },
+            {
+              "seq": 1390,
+              "type": "step.started",
+              "at": "2026-10-09T10:26:06.460Z"
+            },
+            {
+              "seq": 1391,
+              "type": "step.completed",
+              "at": "2026-10-09T10:26:12.843Z"
+            },
+            {
+              "seq": 1392,
+              "type": "step.completed",
+              "at": "2026-10-09T10:26:12.844Z"
+            },
+            {
+              "seq": 1393,
+              "type": "step.completed",
+              "at": "2026-10-09T10:26:12.844Z"
+            },
+            {
+              "seq": 1578,
+              "type": "step.started",
+              "at": "2026-10-09T10:26:24.870Z"
+            },
+            {
+              "seq": 1579,
+              "type": "step.started",
+              "at": "2026-10-09T10:26:24.878Z"
+            },
+            {
+              "seq": 1580,
+              "type": "step.completed",
+              "at": "2026-10-09T10:26:27.476Z"
+            },
+            {
+              "seq": 1581,
+              "type": "step.completed",
+              "at": "2026-10-09T10:26:27.582Z"
+            },
+            {
+              "seq": 1697,
+              "type": "step.started",
+              "at": "2026-10-09T10:29:00.060Z"
+            },
+            {
+              "seq": 1698,
+              "type": "step.started",
+              "at": "2026-10-09T10:29:00.078Z"
+            },
+            {
+              "seq": 1699,
+              "type": "step.completed",
+              "at": "2026-10-09T10:29:02.713Z"
+            },
+            {
+              "seq": 1700,
+              "type": "step.completed",
+              "at": "2026-10-09T10:29:02.759Z"
+            },
+            {
+              "seq": 1888,
+              "type": "step.started",
+              "at": "2026-10-09T10:30:19.946Z"
+            },
+            {
+              "seq": 1889,
+              "type": "step.completed",
+              "at": "2026-10-09T10:30:22.638Z"
+            },
+            {
+              "seq": 1952,
+              "type": "step.started",
+              "at": "2026-10-09T10:31:24.266Z"
+            },
+            {
+              "seq": 1953,
+              "type": "step.completed",
+              "at": "2026-10-09T10:31:27.046Z"
+            },
+            {
+              "seq": 2547,
+              "type": "step.started",
+              "at": "2026-10-09T10:32:40.861Z"
+            },
+            {
+              "seq": 2548,
+              "type": "step.completed",
+              "at": "2026-10-09T10:32:53.872Z"
+            },
+            {
+              "seq": 3563,
+              "type": "step.started",
+              "at": "2026-10-09T10:35:27.672Z"
+            },
+            {
+              "seq": 3564,
+              "type": "artifact.created",
+              "at": "2026-10-09T10:35:29.293Z"
+            },
+            {
+              "seq": 3630,
+              "type": "assistant.message",
+              "at": "2026-10-09T10:38:14.075Z"
+            },
+            {
+              "seq": 3631,
+              "type": "task.ended",
+              "at": "2026-10-09T10:38:14.076Z"
+            },
+            {
+              "seq": 3632,
+              "type": "turn.ended",
+              "at": "2026-10-09T10:38:14.077Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 832135,
+          "endedAt": "2026-10-09T10:38:14.332Z"
+        }
+      ],
+      "replySummary": "已写入 `[local path] 7.3 KB），内容涵盖 24 与 22 的版本状态、V8 13.6/npm 11/ABI 137 等运行时差异、弃用移除清单与升级检查表。已读来源包括 Node.js 24.0.0 与 22.0.0 官方发布说明、nodejs/release 发布计划、24/22 分支 Changelog 与 TypeScript/权限官方文档。",
+      "notes": "需要联网；文件检查只确认保存和官方来源链接，具体事实准确性由 Windows 人工抽查，judge 为可选补充。本地 Qwen 27B 首轮 240 秒到期时仍在正常检索官方迁移指南，调整为 600 秒以覆盖检索、写入和核验。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；900秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限600秒。",
+      "scratchDir": "C:\\temp\\weftmate-eval-action-02-web-document-pv3IUa"
+    },
+    {
+      "id": "action-02-web-document",
+      "category": "action",
+      "title": "查网页并保存说明",
+      "status": "passed",
+      "durationMs": 298288,
+      "checks": [
+        {
+          "type": "file_exists",
+          "path": "node24说明.md",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "node24说明.md",
+          "text": "https://nodejs.org/",
+          "status": "passed"
+        },
+        {
+          "type": "reply_matches",
+          "pattern": "说明|保存|写好",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "llm_judge",
+          "prompt": "回复应说明已经保存中文说明并提到官方来源；不能将尚未进行的检索/保存说成完成。仅凭回复不能验收文档事实准确性。",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-752b65f2-cb91-47d1-8e99-d0e34ef72938",
+          "modelProfileId": "private-model-70d9af41c3a85fca16eaebe955a2a2780c0dfad6",
+          "commandId": "cmd-18649987-ac56-4c0d-98d1-9844efd5312d",
+          "startedAt": "2026-10-09T10:38:15.690Z",
+          "reply": "已写好并核验 `[local path] 行，UTF-8），内容涵盖支持周期对比（24 的 Krypton 支持到 2028-04，22 到 2027-04）、V8 13.6 新语言特性、AsyncContextFrame/URLPattern/`--permission`/Undici 7 等 API 变化、TypeScript 默认类型剥离与 ClangCL 编译要求、废弃清单及升级检查项，全部基于已读取的官方资料：24.0.0 与 22.0.0 发布说明、24.10.0 发布说明、官方 schedule.json 与版本状态页、v24 TypeScript 文档，文末附有对应链接。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T10:38:15.746Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T10:38:15.747Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T10:38:15.788Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T10:38:15.789Z"
+            },
+            {
+              "seq": 104,
+              "type": "step.started",
+              "at": "2026-10-09T10:38:22.568Z"
+            },
+            {
+              "seq": 105,
+              "type": "step.completed",
+              "at": "2026-10-09T10:38:22.574Z"
+            },
+            {
+              "seq": 168,
+              "type": "step.started",
+              "at": "2026-10-09T10:38:27.353Z"
+            },
+            {
+              "seq": 169,
+              "type": "step.started",
+              "at": "2026-10-09T10:38:27.363Z"
+            },
+            {
+              "seq": 170,
+              "type": "step.completed",
+              "at": "2026-10-09T10:38:30.903Z"
+            },
+            {
+              "seq": 171,
+              "type": "step.completed",
+              "at": "2026-10-09T10:38:31.359Z"
+            },
+            {
+              "seq": 252,
+              "type": "step.started",
+              "at": "2026-10-09T10:38:35.118Z"
+            },
+            {
+              "seq": 253,
+              "type": "step.started",
+              "at": "2026-10-09T10:38:35.128Z"
+            },
+            {
+              "seq": 254,
+              "type": "step.completed",
+              "at": "2026-10-09T10:38:39.203Z"
+            },
+            {
+              "seq": 255,
+              "type": "step.completed",
+              "at": "2026-10-09T10:38:39.203Z"
+            },
+            {
+              "seq": 641,
+              "type": "step.started",
+              "at": "2026-10-09T10:38:59.111Z"
+            },
+            {
+              "seq": 642,
+              "type": "step.started",
+              "at": "2026-10-09T10:38:59.124Z"
+            },
+            {
+              "seq": 643,
+              "type": "step.completed",
+              "at": "2026-10-09T10:39:05.393Z"
+            },
+            {
+              "seq": 644,
+              "type": "step.completed",
+              "at": "2026-10-09T10:39:05.393Z"
+            },
+            {
+              "seq": 1084,
+              "type": "step.started",
+              "at": "2026-10-09T10:39:55.295Z"
+            },
+            {
+              "seq": 1085,
+              "type": "step.completed",
+              "at": "2026-10-09T10:39:58.001Z"
+            },
+            {
+              "seq": 1736,
+              "type": "step.started",
+              "at": "2026-10-09T10:40:30.444Z"
+            },
+            {
+              "seq": 1737,
+              "type": "step.completed",
+              "at": "2026-10-09T10:40:37.860Z"
+            },
+            {
+              "seq": 1738,
+              "type": "step.started",
+              "at": "2026-10-09T10:40:37.861Z"
+            },
+            {
+              "seq": 1739,
+              "type": "step.completed",
+              "at": "2026-10-09T10:40:38.676Z"
+            },
+            {
+              "seq": 2622,
+              "type": "step.started",
+              "at": "2026-10-09T10:41:21.309Z"
+            },
+            {
+              "seq": 2623,
+              "type": "artifact.created",
+              "at": "2026-10-09T10:41:22.286Z"
+            },
+            {
+              "seq": 2675,
+              "type": "step.started",
+              "at": "2026-10-09T10:42:02.076Z"
+            },
+            {
+              "seq": 2676,
+              "type": "step.completed",
+              "at": "2026-10-09T10:42:02.693Z"
+            },
+            {
+              "seq": 2743,
+              "type": "assistant.message",
+              "at": "2026-10-09T10:43:13.431Z"
+            },
+            {
+              "seq": 2744,
+              "type": "task.ended",
+              "at": "2026-10-09T10:43:13.432Z"
+            },
+            {
+              "seq": 2745,
+              "type": "turn.ended",
+              "at": "2026-10-09T10:43:13.433Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 297944,
+          "endedAt": "2026-10-09T10:43:13.634Z"
+        }
+      ],
+      "replySummary": "已写好并核验 `[local path] 行，UTF-8），内容涵盖支持周期对比（24 的 Krypton 支持到 2028-04，22 到 2027-04）、V8 13.6 新语言特性、AsyncContextFrame/URLPattern/`--permission`/Undici 7 等 API 变化、TypeScript 默认类型剥离与 ClangCL 编译要求、废弃清单及升级检查项，全部基于已读取的官方资料：24.0.0 与 22.0.0 发布说明、24.10.0 发布说明、官方 schedule.json 与版本状态页、v24 TypeScript 文档，文末附有对应链接。",
+      "notes": "需要联网；文件检查只确认保存和官方来源链接，具体事实准确性由 Windows 人工抽查，judge 为可选补充。本地 Qwen 27B 首轮 240 秒到期时仍在正常检索官方迁移指南，调整为 600 秒以覆盖检索、写入和核验。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；900秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限600秒。",
+      "scratchDir": "C:\\temp\\weftmate-eval-action-02-web-document-S7BkKE"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 0,
+    "manual": 0,
+    "unsupported": 0,
+    "skippedChecks": 2,
+    "passRate": 1,
+    "coverage": 1
+  }
+}

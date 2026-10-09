@@ -1,0 +1,164 @@
+[
+  {
+    "id": "action-01-organize",
+    "status": "passed",
+    "durationMs": 63098,
+    "foregroundModelRequests": [
+      {
+        "id": "33908-3",
+        "at": "2026-10-09T10:24:55.222Z",
+        "origin": "http://127.0.0.1:53850",
+        "stream": true,
+        "requestChars": 8034,
+        "durationMs": 15614,
+        "headersMs": 3527,
+        "firstMeaningfulMs": 3607,
+        "reasoningChars": 1716,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 523,
+          "prompt_tokens": 2399,
+          "total_tokens": 2922,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "33908-6",
+        "at": "2026-10-09T10:25:12.391Z",
+        "origin": "http://127.0.0.1:53850",
+        "stream": true,
+        "requestChars": 10550,
+        "durationMs": 5558,
+        "headersMs": 3760,
+        "firstMeaningfulMs": 3819,
+        "reasoningChars": 21,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 102,
+          "prompt_tokens": 3448,
+          "total_tokens": 3550,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "33908-8",
+        "at": "2026-10-09T10:25:18.727Z",
+        "origin": "http://127.0.0.1:53850",
+        "stream": true,
+        "requestChars": 11609,
+        "durationMs": 6138,
+        "headersMs": 1245,
+        "firstMeaningfulMs": 1308,
+        "reasoningChars": 320,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 268,
+          "prompt_tokens": 3734,
+          "total_tokens": 4002,
+          "prompt_tokens_details": {
+            "cached_tokens": 2814
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "33908-10",
+        "at": "2026-10-09T10:25:25.656Z",
+        "origin": "http://127.0.0.1:53850",
+        "stream": true,
+        "requestChars": 13164,
+        "durationMs": 8237,
+        "headersMs": 2145,
+        "firstMeaningfulMs": 2206,
+        "reasoningChars": 110,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 291,
+          "prompt_tokens": 4157,
+          "total_tokens": 4448,
+          "prompt_tokens_details": {
+            "cached_tokens": 2849
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "33908-12",
+        "at": "2026-10-09T10:25:34.875Z",
+        "origin": "http://127.0.0.1:53850",
+        "stream": true,
+        "requestChars": 14386,
+        "durationMs": 4908,
+        "headersMs": 2328,
+        "firstMeaningfulMs": 2401,
+        "reasoningChars": 15,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 104,
+          "prompt_tokens": 4506,
+          "total_tokens": 4610,
+          "prompt_tokens_details": {
+            "cached_tokens": 2884
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "33908-14",
+        "at": "2026-10-09T10:25:41.077Z",
+        "origin": "http://127.0.0.1:53850",
+        "stream": true,
+        "requestChars": 16464,
+        "durationMs": 16620,
+        "headersMs": 5353,
+        "firstMeaningfulMs": 5447,
+        "reasoningChars": 394,
+        "contentChars": 370,
+        "usage": {
+          "completion_tokens": 289,
+          "prompt_tokens": 5045,
+          "total_tokens": 5334,
+          "prompt_tokens_details": {
+            "cached_tokens": 2919
+          }
+        },
+        "terminal": "end"
+      }
+    ],
+    "maxRequestChars": 16464,
+    "toolDetailsCount": 0,
+    "toolWindows": [
+      {
+        "start": "2026-10-09T10:25:10.852Z",
+        "end": "2026-10-09T10:25:10.860Z",
+        "ms": 8
+      },
+      {
+        "start": "2026-10-09T10:25:17.960Z",
+        "end": "2026-10-09T10:25:18.667Z",
+        "ms": 707
+      },
+      {
+        "start": "2026-10-09T10:25:24.879Z",
+        "end": "2026-10-09T10:25:25.582Z",
+        "ms": 703
+      },
+      {
+        "start": "2026-10-09T10:25:33.910Z",
+        "end": "2026-10-09T10:25:34.760Z",
+        "ms": 850
+      },
+      {
+        "start": "2026-10-09T10:25:39.799Z",
+        "end": "2026-10-09T10:25:40.967Z",
+        "ms": 1168
+      }
+    ]
+  }
+]

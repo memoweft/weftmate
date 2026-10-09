@@ -1,0 +1,492 @@
+{
+  "method": "Approximation using first create POST start plus the measured click-to-enabled-stop delay, minus persisted native turn/start. This omits the small click-to-create-POST gap and is not an exact browser DOM timestamp measurement.",
+  "count": 69,
+  "medianMs": 457.64794921875,
+  "p95Ms": 684.138916015625,
+  "maxMs": 791.86376953125,
+  "rows": [
+    {
+      "cycle": 1,
+      "stopFromClickMs": 877,
+      "createRequestStartedAt": 1791548658406.148,
+      "nativeTurnStartedAt": 1791548658724,
+      "approxStopFromNativeStartMs": 559.14794921875
+    },
+    {
+      "cycle": 2,
+      "stopFromClickMs": 858,
+      "createRequestStartedAt": 1791548690398.744,
+      "nativeTurnStartedAt": 1791548690726,
+      "approxStopFromNativeStartMs": 530.743896484375
+    },
+    {
+      "cycle": 3,
+      "stopFromClickMs": 848,
+      "createRequestStartedAt": 1791548722389.4602,
+      "nativeTurnStartedAt": 1791548722725,
+      "approxStopFromNativeStartMs": 512.460205078125
+    },
+    {
+      "cycle": 4,
+      "stopFromClickMs": 860,
+      "createRequestStartedAt": 1791548736364.2222,
+      "nativeTurnStartedAt": 1791548736741,
+      "approxStopFromNativeStartMs": 483.22216796875
+    },
+    {
+      "cycle": 5,
+      "stopFromClickMs": 859,
+      "createRequestStartedAt": 1791548768269.9949,
+      "nativeTurnStartedAt": 1791548768488,
+      "approxStopFromNativeStartMs": 640.994873046875
+    },
+    {
+      "cycle": 6,
+      "stopFromClickMs": 851,
+      "createRequestStartedAt": 1791548800179.0999,
+      "nativeTurnStartedAt": 1791548800525,
+      "approxStopFromNativeStartMs": 505.099853515625
+    },
+    {
+      "cycle": 7,
+      "stopFromClickMs": 836,
+      "createRequestStartedAt": 1791548814104.934,
+      "nativeTurnStartedAt": 1791548814534,
+      "approxStopFromNativeStartMs": 406.93408203125
+    },
+    {
+      "cycle": 8,
+      "stopFromClickMs": 862,
+      "createRequestStartedAt": 1791548845993.578,
+      "nativeTurnStartedAt": 1791548846281,
+      "approxStopFromNativeStartMs": 574.577880859375
+    },
+    {
+      "cycle": 9,
+      "stopFromClickMs": 856,
+      "createRequestStartedAt": 1791548877904.2603,
+      "nativeTurnStartedAt": 1791548878276,
+      "approxStopFromNativeStartMs": 484.26025390625
+    },
+    {
+      "cycle": 10,
+      "stopFromClickMs": 862,
+      "createRequestStartedAt": 1791548891824.441,
+      "nativeTurnStartedAt": 1791548892215,
+      "approxStopFromNativeStartMs": 471.44091796875
+    },
+    {
+      "cycle": 11,
+      "stopFromClickMs": 863,
+      "createRequestStartedAt": 1791548923810.5378,
+      "nativeTurnStartedAt": 1791548924048,
+      "approxStopFromNativeStartMs": 625.537841796875
+    },
+    {
+      "cycle": 12,
+      "stopFromClickMs": 864,
+      "createRequestStartedAt": 1791548955725.375,
+      "nativeTurnStartedAt": 1791548956072,
+      "approxStopFromNativeStartMs": 517.375
+    },
+    {
+      "cycle": 13,
+      "stopFromClickMs": 853,
+      "createRequestStartedAt": 1791548969653.27,
+      "nativeTurnStartedAt": 1791548970147,
+      "approxStopFromNativeStartMs": 359.27001953125
+    },
+    {
+      "cycle": 14,
+      "stopFromClickMs": 849,
+      "createRequestStartedAt": 1791549001568.895,
+      "nativeTurnStartedAt": 1791549001840,
+      "approxStopFromNativeStartMs": 577.89501953125
+    },
+    {
+      "cycle": 15,
+      "stopFromClickMs": 844,
+      "createRequestStartedAt": 1791549033468.944,
+      "nativeTurnStartedAt": 1791549033858,
+      "approxStopFromNativeStartMs": 454.944091796875
+    },
+    {
+      "cycle": 16,
+      "stopFromClickMs": 847,
+      "createRequestStartedAt": 1791549047388.9539,
+      "nativeTurnStartedAt": 1791549047864,
+      "approxStopFromNativeStartMs": 371.953857421875
+    },
+    {
+      "cycle": 17,
+      "stopFromClickMs": 855,
+      "createRequestStartedAt": 1791549079274.114,
+      "nativeTurnStartedAt": 1791549079581,
+      "approxStopFromNativeStartMs": 548.114013671875
+    },
+    {
+      "cycle": 18,
+      "stopFromClickMs": 853,
+      "createRequestStartedAt": 1791549111174.085,
+      "nativeTurnStartedAt": 1791549111601,
+      "approxStopFromNativeStartMs": 426.0849609375
+    },
+    {
+      "cycle": 19,
+      "stopFromClickMs": 858,
+      "createRequestStartedAt": 1791549125109.1868,
+      "nativeTurnStartedAt": 1791549125646,
+      "approxStopFromNativeStartMs": 321.186767578125
+    },
+    {
+      "cycle": 20,
+      "stopFromClickMs": 854,
+      "createRequestStartedAt": 1791549157013.2441,
+      "nativeTurnStartedAt": 1791549157368,
+      "approxStopFromNativeStartMs": 499.244140625
+    },
+    {
+      "cycle": 21,
+      "stopFromClickMs": 852,
+      "createRequestStartedAt": 1791549188978.656,
+      "nativeTurnStartedAt": 1791549189422,
+      "approxStopFromNativeStartMs": 408.656005859375
+    },
+    {
+      "cycle": 22,
+      "stopFromClickMs": 860,
+      "createRequestStartedAt": 1791549202909.321,
+      "nativeTurnStartedAt": 1791549203403,
+      "approxStopFromNativeStartMs": 366.321044921875
+    },
+    {
+      "cycle": 23,
+      "stopFromClickMs": 1362,
+      "createRequestStartedAt": 1791549234821.8638,
+      "nativeTurnStartedAt": 1791549235392,
+      "approxStopFromNativeStartMs": 791.86376953125
+    },
+    {
+      "cycle": 24,
+      "stopFromClickMs": 859,
+      "createRequestStartedAt": 1791549267224.7388,
+      "nativeTurnStartedAt": 1791549267692,
+      "approxStopFromNativeStartMs": 391.73876953125
+    },
+    {
+      "cycle": 25,
+      "stopFromClickMs": 909,
+      "createRequestStartedAt": 1791549281194.8892,
+      "nativeTurnStartedAt": 1791549281693,
+      "approxStopFromNativeStartMs": 410.88916015625
+    },
+    {
+      "cycle": 26,
+      "stopFromClickMs": 857,
+      "createRequestStartedAt": 1791549313124.682,
+      "nativeTurnStartedAt": 1791549313705,
+      "approxStopFromNativeStartMs": 276.681884765625
+    },
+    {
+      "cycle": 27,
+      "stopFromClickMs": 841,
+      "createRequestStartedAt": 1791549345034.4172,
+      "nativeTurnStartedAt": 1791549345525,
+      "approxStopFromNativeStartMs": 350.417236328125
+    },
+    {
+      "cycle": 28,
+      "stopFromClickMs": 876,
+      "createRequestStartedAt": 1791549358954.4558,
+      "nativeTurnStartedAt": 1791549359421,
+      "approxStopFromNativeStartMs": 409.455810546875
+    },
+    {
+      "cycle": 29,
+      "stopFromClickMs": 863,
+      "createRequestStartedAt": 1791549390884.262,
+      "nativeTurnStartedAt": 1791549391484,
+      "approxStopFromNativeStartMs": 263.261962890625
+    },
+    {
+      "cycle": 30,
+      "stopFromClickMs": 863,
+      "createRequestStartedAt": 1791549422785.935,
+      "nativeTurnStartedAt": 1791549423208,
+      "approxStopFromNativeStartMs": 440.93505859375
+    },
+    {
+      "cycle": 31,
+      "stopFromClickMs": 858,
+      "createRequestStartedAt": 1791549436794.6301,
+      "nativeTurnStartedAt": 1791549437188,
+      "approxStopFromNativeStartMs": 464.630126953125
+    },
+    {
+      "cycle": 32,
+      "stopFromClickMs": 849,
+      "createRequestStartedAt": 1791549468708.731,
+      "nativeTurnStartedAt": 1791549469228,
+      "approxStopFromNativeStartMs": 329.73095703125
+    },
+    {
+      "cycle": 33,
+      "stopFromClickMs": 864,
+      "createRequestStartedAt": 1791549500619.3918,
+      "nativeTurnStartedAt": 1791549501313,
+      "approxStopFromNativeStartMs": 170.391845703125
+    },
+    {
+      "cycle": 34,
+      "stopFromClickMs": 1386,
+      "createRequestStartedAt": 1791549514585.2917,
+      "nativeTurnStartedAt": 1791549515280,
+      "approxStopFromNativeStartMs": 691.291748046875
+    },
+    {
+      "cycle": 35,
+      "stopFromClickMs": 864,
+      "createRequestStartedAt": 1791549547029.733,
+      "nativeTurnStartedAt": 1791549547548,
+      "approxStopFromNativeStartMs": 345.73291015625
+    },
+    {
+      "cycle": 36,
+      "stopFromClickMs": 879,
+      "createRequestStartedAt": 1791549578970.603,
+      "nativeTurnStartedAt": 1791549579508,
+      "approxStopFromNativeStartMs": 341.60302734375
+    },
+    {
+      "cycle": 37,
+      "stopFromClickMs": 869,
+      "createRequestStartedAt": 1791549592940.408,
+      "nativeTurnStartedAt": 1791549593554,
+      "approxStopFromNativeStartMs": 255.407958984375
+    },
+    {
+      "cycle": 38,
+      "stopFromClickMs": 876,
+      "createRequestStartedAt": 1791549624858.5789,
+      "nativeTurnStartedAt": 1791549625504,
+      "approxStopFromNativeStartMs": 230.578857421875
+    },
+    {
+      "cycle": 39,
+      "stopFromClickMs": 1375,
+      "createRequestStartedAt": 1791549656804.7632,
+      "nativeTurnStartedAt": 1791549657580,
+      "approxStopFromNativeStartMs": 599.76318359375
+    },
+    {
+      "cycle": 40,
+      "stopFromClickMs": 864,
+      "createRequestStartedAt": 1791549671260.183,
+      "nativeTurnStartedAt": 1791549671836,
+      "approxStopFromNativeStartMs": 288.18310546875
+    },
+    {
+      "cycle": 41,
+      "stopFromClickMs": 862,
+      "createRequestStartedAt": 1791549703273.957,
+      "nativeTurnStartedAt": 1791549703835,
+      "approxStopFromNativeStartMs": 300.95703125
+    },
+    {
+      "cycle": 42,
+      "stopFromClickMs": 1384,
+      "createRequestStartedAt": 1791549735205.3662,
+      "nativeTurnStartedAt": 1791549735931,
+      "approxStopFromNativeStartMs": 658.3662109375
+    },
+    {
+      "cycle": 43,
+      "stopFromClickMs": 1398,
+      "createRequestStartedAt": 1791549749669.473,
+      "nativeTurnStartedAt": 1791549750431,
+      "approxStopFromNativeStartMs": 636.472900390625
+    },
+    {
+      "cycle": 44,
+      "stopFromClickMs": 1388,
+      "createRequestStartedAt": 1791549782134.1382,
+      "nativeTurnStartedAt": 1791549782907,
+      "approxStopFromNativeStartMs": 615.13818359375
+    },
+    {
+      "cycle": 45,
+      "stopFromClickMs": 1377,
+      "createRequestStartedAt": 1791549814569.7698,
+      "nativeTurnStartedAt": 1791549815379,
+      "approxStopFromNativeStartMs": 567.769775390625
+    },
+    {
+      "cycle": 46,
+      "stopFromClickMs": 1382,
+      "createRequestStartedAt": 1791549829029.006,
+      "nativeTurnStartedAt": 1791549829731,
+      "approxStopFromNativeStartMs": 680.006103515625
+    },
+    {
+      "cycle": 47,
+      "stopFromClickMs": 1411,
+      "createRequestStartedAt": 1791549861489.883,
+      "nativeTurnStartedAt": 1791549862185,
+      "approxStopFromNativeStartMs": 715.883056640625
+    },
+    {
+      "cycle": 48,
+      "stopFromClickMs": 1389,
+      "createRequestStartedAt": 1791549894009.5369,
+      "nativeTurnStartedAt": 1791549894729,
+      "approxStopFromNativeStartMs": 669.536865234375
+    },
+    {
+      "cycle": 49,
+      "stopFromClickMs": 879,
+      "createRequestStartedAt": 1791549908488.334,
+      "nativeTurnStartedAt": 1791549909095,
+      "approxStopFromNativeStartMs": 272.333984375
+    },
+    {
+      "cycle": 50,
+      "stopFromClickMs": 1382,
+      "createRequestStartedAt": 1791549940429.536,
+      "nativeTurnStartedAt": 1791549941187,
+      "approxStopFromNativeStartMs": 624.535888671875
+    },
+    {
+      "cycle": 51,
+      "stopFromClickMs": 1387,
+      "createRequestStartedAt": 1791549972959.6292,
+      "nativeTurnStartedAt": 1791549973784,
+      "approxStopFromNativeStartMs": 562.629150390625
+    },
+    {
+      "cycle": 52,
+      "stopFromClickMs": 1387,
+      "createRequestStartedAt": 1791549987429.435,
+      "nativeTurnStartedAt": 1791549988220,
+      "approxStopFromNativeStartMs": 596.43505859375
+    },
+    {
+      "cycle": 53,
+      "stopFromClickMs": 1416,
+      "createRequestStartedAt": 1791550019901.648,
+      "nativeTurnStartedAt": 1791550020860,
+      "approxStopFromNativeStartMs": 457.64794921875
+    },
+    {
+      "cycle": 54,
+      "stopFromClickMs": 884,
+      "createRequestStartedAt": 1791550052384.572,
+      "nativeTurnStartedAt": 1791550053109,
+      "approxStopFromNativeStartMs": 159.572021484375
+    },
+    {
+      "cycle": 55,
+      "stopFromClickMs": 1379,
+      "createRequestStartedAt": 1791550066364.66,
+      "nativeTurnStartedAt": 1791550067222,
+      "approxStopFromNativeStartMs": 521.659912109375
+    },
+    {
+      "cycle": 56,
+      "stopFromClickMs": 1364,
+      "createRequestStartedAt": 1791550098819.8198,
+      "nativeTurnStartedAt": 1791550099752,
+      "approxStopFromNativeStartMs": 431.81982421875
+    },
+    {
+      "cycle": 57,
+      "stopFromClickMs": 1392,
+      "createRequestStartedAt": 1791550131256.144,
+      "nativeTurnStartedAt": 1791550131987,
+      "approxStopFromNativeStartMs": 661.14404296875
+    },
+    {
+      "cycle": 58,
+      "stopFromClickMs": 1394,
+      "createRequestStartedAt": 1791550145740.9238,
+      "nativeTurnStartedAt": 1791550146611,
+      "approxStopFromNativeStartMs": 523.923828125
+    },
+    {
+      "cycle": 59,
+      "stopFromClickMs": 1380,
+      "createRequestStartedAt": 1791550178231.52,
+      "nativeTurnStartedAt": 1791550179225,
+      "approxStopFromNativeStartMs": 386.52001953125
+    },
+    {
+      "cycle": 60,
+      "stopFromClickMs": 1379,
+      "createRequestStartedAt": 1791550210685.168,
+      "nativeTurnStartedAt": 1791550211555,
+      "approxStopFromNativeStartMs": 509.16796875
+    },
+    {
+      "cycle": 61,
+      "stopFromClickMs": 1385,
+      "createRequestStartedAt": 1791550225225.109,
+      "nativeTurnStartedAt": 1791550226056,
+      "approxStopFromNativeStartMs": 554.10888671875
+    },
+    {
+      "cycle": 62,
+      "stopFromClickMs": 1377,
+      "createRequestStartedAt": 1791550257695.399,
+      "nativeTurnStartedAt": 1791550258661,
+      "approxStopFromNativeStartMs": 411.39892578125
+    },
+    {
+      "cycle": 63,
+      "stopFromClickMs": 1407,
+      "createRequestStartedAt": 1791550290169.7332,
+      "nativeTurnStartedAt": 1791550291288,
+      "approxStopFromNativeStartMs": 288.733154296875
+    },
+    {
+      "cycle": 64,
+      "stopFromClickMs": 1404,
+      "createRequestStartedAt": 1791550304674.139,
+      "nativeTurnStartedAt": 1791550305394,
+      "approxStopFromNativeStartMs": 684.138916015625
+    },
+    {
+      "cycle": 65,
+      "stopFromClickMs": 1424,
+      "createRequestStartedAt": 1791550337155.335,
+      "nativeTurnStartedAt": 1791550338175,
+      "approxStopFromNativeStartMs": 404.3349609375
+    },
+    {
+      "cycle": 66,
+      "stopFromClickMs": 1405,
+      "createRequestStartedAt": 1791550369645.6611,
+      "nativeTurnStartedAt": 1791550370750,
+      "approxStopFromNativeStartMs": 300.6611328125
+    },
+    {
+      "cycle": 67,
+      "stopFromClickMs": 1413,
+      "createRequestStartedAt": 1791550384160.2979,
+      "nativeTurnStartedAt": 1791550385117,
+      "approxStopFromNativeStartMs": 456.2978515625
+    },
+    {
+      "cycle": 68,
+      "stopFromClickMs": 1377,
+      "createRequestStartedAt": 1791550416654.4302,
+      "nativeTurnStartedAt": 1791550417849,
+      "approxStopFromNativeStartMs": 182.43017578125
+    },
+    {
+      "cycle": 69,
+      "stopFromClickMs": 1394,
+      "createRequestStartedAt": 1791550449144.9011,
+      "nativeTurnStartedAt": 1791550450247,
+      "approxStopFromNativeStartMs": 291.901123046875
+    }
+  ]
+}

@@ -1111,11 +1111,20 @@ export function createHttpHandler(context) {
             url.searchParams.has('archived') && !['true', 'false', 'all'].includes(url.searchParams.get('archived')))
           throw failure('INVALID_REQUEST');
         const archived = url.searchParams.get('archived') ?? 'false';
+        const snapshotAt = new Date(context.timestamp()).toISOString();
         const sessions = [];
+        let descriptions;
+        if (typeof context.backend.describeSessions === 'function') {
+          try { descriptions = new Map((await context.callBackend(() => context.backend.describeSessions(Object.keys(state.sessions), ownerId)))
+            .map(item => [item.sessionId, item])); }
+          catch { /* Preserve the existing individual unavailable-session projection. */ }
+        }
         for (const sessionId of Object.keys(state.sessions).sort()) {
           if (archived !== 'all' && (state.sessions[sessionId].archived === true) !== (archived === 'true')) continue;
           try {
-            const described = await context.callBackend(() => context.backend.describeSession(sessionId, ownerId));
+            const described = descriptions ? descriptions.get(sessionId)
+              : await context.callBackend(() => context.backend.describeSession(sessionId, ownerId));
+            if (!described) throw failure('SESSION_UNAVAILABLE');
             if (described?.sessionId === sessionId) sessions.push({
               sessionId,
               archived: state.sessions[sessionId].archived === true,
@@ -1155,7 +1164,7 @@ export function createHttpHandler(context) {
           } catch { sessions.push({ sessionId, title: '', running: false, sendAvailable: false, unavailable: true }); }
         }
         sessions.sort((a, b) => Number(b.pinned) - Number(a.pinned));
-        return context.json(response, 200, { sessions, groups: Object.values(state.sessionGroups ?? {}) });
+        return context.json(response, 200, { sessions, groups: Object.values(state.sessionGroups ?? {}), snapshotAt });
       }
       const groupMatch = /^\/personal\/v1\/session-groups(?:\/([A-Za-z0-9_-]+))?$/.exec(pathname);
       if (groupMatch && (request.method === 'GET' && !groupMatch[1] || request.method === 'POST' && !groupMatch[1] || ['PATCH', 'DELETE'].includes(request.method) && groupMatch[1])) {

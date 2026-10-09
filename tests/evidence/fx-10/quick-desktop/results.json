@@ -1,0 +1,75 @@
+{
+  "startedAt": "2026-10-09T10:21:34.351Z",
+  "realMain": true,
+  "realDsh": true,
+  "syntheticModel": true,
+  "checks": [
+    {
+      "name": "stability-cycle-1",
+      "status": "passed",
+      "durationMs": 26540,
+      "immediateMs": 3.5999999940395355,
+      "stopMs": 887
+    },
+    {
+      "name": "stability-cycle-2",
+      "status": "passed",
+      "durationMs": 19922,
+      "immediateMs": 2,
+      "stopMs": 830
+    }
+  ],
+  "errors": [],
+  "stability": {
+    "elapsedMs": 70469,
+    "p99Ms": 21.889023,
+    "maxMs": 47.382527,
+    "storeWatchEvents": 30,
+    "samples": [
+      {
+        "at": 1791541302891,
+        "rss": 196575232,
+        "heapUsed": 21735412
+      },
+      {
+        "at": 1791541312893,
+        "rss": 202862592,
+        "heapUsed": 25524052
+      },
+      {
+        "at": 1791541322893,
+        "rss": 202309632,
+        "heapUsed": 22872372
+      },
+      {
+        "at": 1791541332893,
+        "rss": 198651904,
+        "heapUsed": 23087332
+      },
+      {
+        "at": 1791541342894,
+        "rss": 199446528,
+        "heapUsed": 23607344
+      },
+      {
+        "at": 1791541352895,
+        "rss": 208896000,
+        "heapUsed": 22712896
+      },
+      {
+        "at": 1791541362895,
+        "rss": 212815872,
+        "heapUsed": 30690188
+      },
+      {
+        "at": 1791541372896,
+        "rss": 210255872,
+        "heapUsed": 27451440
+      }
+    ]
+  },
+  "modelCalls": 4,
+  "finishedAt": "2026-10-09T10:22:53.361Z",
+  "cleaned": true,
+  "root": "C:/Temp/weftmate-fx10-desktop-wuTdnc"
+}
