@@ -16,19 +16,23 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
         const menu = ui.byId('approval-mode-menu'), trigger = ui.byId('approval-mode-trigger');
         if (!menu || !trigger)
             return;
-        ui.byId('approval-mode-label').textContent = core.approvalModes.find(row => row[0] === core.currentApprovalMode)?.[1].replace('（推荐）', '') ?? '自动';
-        trigger.title = core.approvalModes.find(row => row[0] === core.currentApprovalMode)?.[2] ?? '';
+        const currentMode=core.state.newConversation?core.state.newConversationApprovalMode:core.currentApprovalMode;
+        ui.byId('approval-mode-label').textContent = core.approvalModes.find(row => row[0] === currentMode)?.[1].replace('（推荐）', '') ?? '审批模式';
+        trigger.title = core.approvalModes.find(row => row[0] === currentMode)?.[2] ?? '选择新对话的审批模式';
+        trigger.classList.toggle('is-warning', currentMode === 'allow-all');
+        const shield = trigger.querySelector('.approval-shield');
+        if (shield) shield.hidden = currentMode !== 'allow-all';
         menu.replaceChildren();
         core.approvalModes.forEach(([mode, label, description], index) => {
             const button = ui.element('button', 'approval-mode-option');
             button.type = 'button';
             button.dataset.mode = mode;
             button.setAttribute('role', 'menuitemradio');
-            button.setAttribute('aria-checked', String(mode === core.currentApprovalMode));
+            button.setAttribute('aria-checked', String(mode === currentMode));
             const copy = ui.element('span', 'approval-mode-copy');
             copy.append(ui.element('strong', '', label), ui.element('span', 'muted', description));
             const check = ui.element('span', 'approval-mode-check');
-            if (mode === core.currentApprovalMode)
+            if (mode === currentMode)
                 check.append(window.WeftIcons.create('allow', 16));
             button.append(check, copy, ui.element('kbd', '', String(index + 1)));
             button.addEventListener('click', () => { void core.saveApprovalMode(mode); });

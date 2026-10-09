@@ -94,7 +94,7 @@ try {
   await page.getByRole('button', { name: '发送', exact: true }).click();
   try { await until(() => target, 20000); }
   catch (error) { console.log('UPD-1 diagnostic:', await api('/sessions')); console.log(await page.locator('body').innerText()); throw error; }
-  await page.getByRole('button', { name: '停止', exact: true }).waitFor(); await shot('02-v1-running.png'); console.log('UPD-1: real DSH task running');
+  await page.getByRole('button', { name: /^停止(?:回复)?$/, exact: true }).waitFor(); await shot('02-v1-running.png'); console.log('UPD-1: real DSH task running');
   const layout = join(root, 'layout-v2.js'); await writeFile(layout, (await readFile(personalAccessUiResources.get('personal-access-ui/layout.js'), 'utf8')).replace('/* layout-test-slot */', "document.querySelector('#new-session').append(document.createTextNode(' · UPD v2'));"));
   const v2Resources = new Map(personalAccessUiResources); v2Resources.set('personal-access-ui/layout.js', layout);
   const v2 = await packageRelease({ layer: 'ui', version: '0.2.0', outputDir: feedDir, privateKey, resources: v2Resources, previousManifest: v1 });

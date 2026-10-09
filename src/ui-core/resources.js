@@ -99,6 +99,8 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
         }
     }
     function updateFromCommand(command) {
+        const optimisticCreate = core.handleOptimisticCreation?.(command);
+        core.reconcileOptimistic?.(command);
         core.finishAttachmentCommand(command);
         if (!command || typeof command.requestId !== 'string')
             return;
@@ -118,7 +120,7 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
         }
         const locked = command.kind !== 'desktop.open_app' && (pending || command.state === 'uncertain');
         core.operation(command.state === 'accepted_by_dsh' && ['session.create', 'session.message'].includes(command.kind) ? '' : core.commandStatus(command), locked, command.requestId, command.state === 'uncertain');
-        if (command.kind === 'session.create' && command.state === 'accepted_by_dsh' && command.sessionId) {
+        if (command.kind === 'session.create' && command.state === 'accepted_by_dsh' && command.sessionId && !core.creatingOptimisticSession && !optimisticCreate) {
             void core.refreshSessions().then(() => core.selectSession(command.sessionId));
         }
     }
@@ -164,7 +166,7 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             core.state.cancelSubmitting = true;
         }
         else {
-            if (core.state.submitting || core.state.unresolvedSubmission || Date.now() - core.state.lastSubmissionMs < 800)
+            if (core.state.submitting || core.state.unresolvedSubmission)
                 return null;
             core.state.submitting = true;
             core.state.lastSubmissionMs = Date.now();

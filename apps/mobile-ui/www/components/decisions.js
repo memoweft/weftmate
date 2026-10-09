@@ -57,6 +57,7 @@ function updateApprovalModeButton(){if(state.page!=='chat')return;const context=
     if(context.sessionId&&state.loggedIn&&!state.transitionPending)void loadApprovalMode(context)}
   const mode=approvalModes.find(item=>item.mode===approvalModeState.mode);
   $('approval-mode-label').textContent=mode?.short||'审批';
+  button.classList.toggle('is-warning',mode?.mode==='allow-all');const shield=button.querySelector('.approval-shield');if(shield)shield.hidden=mode?.mode!=='allow-all';
   button.setAttribute('aria-label',`审批模式${mode?`：${mode.label}`:''}`)}
 
 async function loadApprovalMode(context){const key=JSON.stringify(context),revision=++approvalModeState.revision;approvalModeState.loading=true;

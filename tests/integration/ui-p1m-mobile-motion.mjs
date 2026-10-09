@@ -34,7 +34,7 @@ const conversation=title=>button(new RegExp(`^${title} [0-9]`));
 async function settle(){await page.evaluate(()=>Promise.allSettled(document.getAnimations().map(a=>a.finished)));await page.waitForTimeout(30)}
 async function frames(name,action){
  await settle();await page.evaluate(()=>{window.__motionCapture=true;window.__motionFrames=[]});
- await action();await page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));await page.evaluate(()=>{for(const a of document.getAnimations())if(!window.__motionFrames.includes(a)){a.pause();window.__motionFrames.push(a)}return document.fonts.ready});const samples=[];
+ await action(); await page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));await page.evaluate(()=>{for(const a of document.getAnimations())if(!window.__motionFrames.includes(a)){a.pause();window.__motionFrames.push(a)}return document.fonts.ready});const samples=[];
  for(const time of [0,60,120,240]){
   samples.push(await page.evaluate(time=>{const animations=window.__motionFrames.filter(a=>a.effect?.target?.isConnected);for(const a of animations)a.currentTime=time;return animations.map(a=>({target:a.effect.target.id||a.effect.target.className,timing:a.effect.getTiming(),opacity:getComputedStyle(a.effect.target).opacity}))},time));
   if(capture){const file=join(evidence,`${phase}-${surface}-${name}-${time}.png`);if(device)await writeFile(file,execFileSync(adb,['-s',serial,'exec-out','screencap','-p'],{windowsHide:true,maxBuffer:16*1024*1024}));else await page.screenshot({path:file,animations:'allow'})}
@@ -106,6 +106,10 @@ try{
   await bridge({method:'auth.login',params:{...fixture.credentials,deviceName:'合成动效手机'}});await page.reload();await conversation('整理项目进展').waitFor();
   await frames('session-enter',()=>conversation('整理项目进展').click());await page.getByText(/(?:执行了 1 步|读取了 1 个文件)/).waitFor();
   await page.getByText(/(?:执行了 1 步|读取了 1 个文件)/).scrollIntoViewIfNeeded();
+  // Resolve the first progressive object read before sampling the stable disclosure animation.
+  const progressLine=page.getByRole('button',{name:/读取了 1 个文件.*已收起/});
+  await progressLine.click();await page.waitForTimeout(150);
+  await page.getByRole('button',{name:/读取了 1 个文件.*已展开/}).click();await settle();
   await frames('execution-expand',()=>page.getByText(/(?:执行了 1 步|读取了 1 个文件)/).click());
   await frames('execution-collapse',()=>page.getByText(/(?:执行了 1 步|读取了 1 个文件)/).click());
   await projectSteps(1);

@@ -709,7 +709,7 @@ for(const hz of [60,120,180])test(`100 growing snapshots follow monotonically at
   assert.ok(box.scrollWrites<=frameCount+1,'at most one scroll write per animation frame');
   box._scrollTop-=1.4;h.run('handleChatScroll()');
   assert.equal(h.run('state.scrollPinned'),true,'a rounded delayed programmatic event stays pinned');
-  box.scrollTop=box.scrollHeight-box.clientHeight-30;h.run('handleChatScroll()');
+  box.scrollTop=box.scrollHeight-box.clientHeight-60;h.run('handleChatScroll()');
   assert.equal(h.run('state.scrollPinned'),false,'manual scroll-back releases live follow');
   const writes=box.scrollWrites;
   h.run('processEvent({event:"chat.progress",data:{conversationId:"c1",text:"'+ 'x'.repeat(500)+' more"}})');

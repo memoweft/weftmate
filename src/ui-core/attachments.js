@@ -1,7 +1,7 @@
 /* Shared attachments state, data and actions. Presentation is supplied through named effects. */
 globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
     function attachmentDraftKey(sessionId = core.state.selectedSessionId) {
-        return core.state.ownerId && sessionId ? `${core.state.ownerId}|${sessionId}` : null;
+        return core.state.ownerId && (sessionId || core.state.newConversation) ? `${core.state.ownerId}|${sessionId || 'new'}` : null;
     }
     function currentAttachmentDrafts() {
         const key = core.attachmentDraftKey();
@@ -143,7 +143,7 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
         core.state.attachmentAttempts.set(key, attempt);
         return attempt;
     }
-    async function sendDesktopMessageWithAttachments(text) {
+    async function sendDesktopMessageWithAttachments(text, requestId) {
         const sessionId = core.state.selectedSessionId;
         const key = core.attachmentDraftKey(sessionId);
         const drafts = key ? [...core.currentAttachmentDrafts()] : [];
@@ -152,6 +152,7 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
         const scope = core.attachmentScope(sessionId);
         const controller = new AbortController();
         const attempt = core.attachmentAttempt(key, text, drafts);
+        if (requestId) attempt.requestId = requestId;
         const messageId = core.state.attachmentGroups.get(key) || `message-${environment.crypto.randomUUID()}`;
         core.state.attachmentGroups.set(key, messageId);
         const upload = { controller, scope, key, requestId: attempt.requestId };
@@ -395,6 +396,7 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
             !core.state.acknowledgedDesktop.has(marker.commandId)) ?? null;
     }
     function finishAttachmentCommand(command) {
+        if (command?.state !== 'accepted_by_dsh') return;
         if (command?.kind !== 'session.message' || typeof command.requestId !== 'string')
             return;
         for (const [key, attempt] of core.state.attachmentAttempts) {

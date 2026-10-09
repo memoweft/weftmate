@@ -7,6 +7,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
         ui.byId('timeline-status').textContent = message;
     }
     function beginOlderHistory() {
+        ui.conversationScroll?.hold();
         ui.olderPosition = { top: ui.byId('chat-scroll').scrollTop, height: ui.byId('chat-scroll').scrollHeight };
     }
     function restoreOlderHistoryPosition() {
@@ -14,7 +15,38 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
         scroll.scrollTop = ui.olderPosition.top + scroll.scrollHeight - ui.olderPosition.height;
     }
     function scrollToLatest() {
-        ui.byId('chat-scroll').scrollTop = ui.byId('chat-scroll').scrollHeight;
+        ui.conversationScroll?.latest();
+    }
+    function followConversationBottom() { ui.conversationScroll?.follow(); }
+    function mountConversationScroll() {
+        const box = ui.byId('chat-scroll'), list = ui.byId('transcript');
+        ui.conversationScroll = globalThis.WeftConversationScroll(box, list, ui.byId('jump-latest'));
+        if (globalThis.ResizeObserver) new ResizeObserver(() => { ui.byId('jump-latest').style.bottom = `${ui.byId('message-form').parentElement.offsetHeight + 12}px`; }).observe(ui.byId('message-form').parentElement);
+    }
+    function renderOptimisticMessages() {
+        const list = ui.byId('transcript');
+        const rows = core.optimisticMessages();
+        for (const node of list.querySelectorAll('[data-optimistic]'))
+            if (!rows.some(row => row.requestId === node.dataset.optimistic)) node.remove();
+        for (const row of rows) {
+            let node = [...list.children].find(node => node.dataset.optimistic === row.requestId);
+            if (!node) { node = ui.element('li', 'message user'); node.dataset.optimistic = row.requestId; list.append(node); }
+            const signature = JSON.stringify([row.text, row.status, row.files]);
+            if (node.dataset.signature === signature) continue;
+            node.dataset.signature = signature; node.classList.toggle('is-sending', row.status === 'sending');
+            node.classList.toggle('send-failed', row.status === 'failed');
+            node.replaceChildren(ui.element('div', 'message-text', row.text || '附件'));
+            if (row.files?.length) node.append(ui.element('small', 'message-task-label', row.files.join(' · ')));
+            if (row.status !== 'accepted') {
+                const status = ui.element('small', 'message-task-label', row.status === 'failed' ? '发送未确认，草稿已保留' : '发送中');
+                status.setAttribute('role', 'status'); node.append(status);
+            }
+            if (row.status === 'failed') {
+                const retry = ui.element('button', 'button quiet small', '重试发送'); retry.type = 'button';
+                retry.addEventListener('click', () => core.retryOptimistic(row.requestId)); node.append(retry);
+            }
+        }
+        ui.byId('chat-intro').hidden = rows.length > 0 || list.children.length > 0;
     }
     function paintHistoryMessages(events) {
         const list = ui.byId('transcript'), sessionId = core.state.selectedSessionId;
@@ -94,6 +126,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
         ui.renderTimeline();
         ui.renderTurnStatus();
         ui.renderConversationTasks();
+        renderOptimisticMessages();
     }
     function appendOriginalFiles(row, event) {
         const files = (Array.isArray(event.data?.originalAttachments) ? event.data.originalAttachments : [])
@@ -180,5 +213,5 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
         button.disabled = core.state.olderLoading;
         button.textContent = core.state.olderLoading ? '正在读取…' : '加载更早内容';
     }
-    return { clearHistoryView, historyNotice, beginOlderHistory, restoreOlderHistoryPosition, scrollToLatest, paintHistoryMessages, appendOriginalFiles, appendUnpreviewedOriginalImages, appendReplyMemory, renderTurnStatus, renderOlderControl };
+    return { followConversationBottom, mountConversationScroll, renderOptimisticMessages, clearHistoryView, historyNotice, beginOlderHistory, restoreOlderHistoryPosition, scrollToLatest, paintHistoryMessages, appendOriginalFiles, appendUnpreviewedOriginalImages, appendReplyMemory, renderTurnStatus, renderOlderControl };
 };

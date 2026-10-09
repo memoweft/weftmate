@@ -1,0 +1,16 @@
+{
+  "syntheticOnly": true,
+  "before": true,
+  "checks": [
+    {
+      "surface": "desktop",
+      "theme": "light",
+      "sendToBubbleMs": 3179.399999976158
+    },
+    {
+      "surface": "desktop",
+      "theme": "dark",
+      "sendToBubbleMs": 3157.9000000059605
+    }
+  ]
+}

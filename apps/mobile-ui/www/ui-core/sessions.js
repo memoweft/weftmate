@@ -6,7 +6,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         if (identity !== core.state.identityGeneration) return;
         core.state.sessions = Array.isArray(payload.sessions) ? payload.sessions : [];
         core.state.sessionGroups = payload.groups || [];
-        if (!core.state.selectedSessionId && core.state.sessions.length && core.state.ownerId) {
+        if (!core.state.selectedSessionId && !core.state.newConversation && core.state.sessions.length && core.state.ownerId) {
             let saved = null;
             try {
                 saved = environment.storage.getItem(core.sessionKey());

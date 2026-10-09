@@ -196,6 +196,7 @@ test('memory view preserves chat draft and discards a successful response for an
     fire(name: string) {
       for (const fn of this.listeners.get(name) ?? []) fn({ currentTarget: this, target: this, preventDefault() {} })
     }
+    dispatchEvent(event: Event) { this.fire(event.type); return true }
     append(...nodes: Node[]) { for (const node of nodes) node.parentNode = this; this.children.push(...nodes) }
     prepend(...nodes: Node[]) { for (const node of nodes) node.parentNode = this; this.children.unshift(...nodes) }
     before(...nodes: Node[]) { if (!this.parentNode) return; const at = this.parentNode.children.indexOf(this); for (const node of nodes) node.parentNode = this.parentNode; this.parentNode.children.splice(at, 0, ...nodes) }
@@ -341,7 +342,7 @@ test('memory view preserves chat draft and discards a successful response for an
     querySelectorAll: () => [], addEventListener() {} }
   const window = { location: { hash: '', pathname: '/personal/v1/ui', search: '' },
     history: { replaceState() {} }, addEventListener() {}, WeftIcons: null as any }
-  const context = { document, window, location: { protocol: 'http:' }, fetch, URL, URLSearchParams, AbortSignal, Intl,
+  const context = { document, window, location: { protocol: 'http:' }, fetch, URL, URLSearchParams, AbortSignal, Intl, Event,
     globalThis: { crypto: { randomUUID: () => `synthetic-${++requestSequence}` } },
     localStorage: { getItem: (key: string) => storage.get(key) ?? null,
       setItem: (key: string, value: string) => { storage.set(key, value) }, removeItem: (key: string) => { storage.delete(key) } },

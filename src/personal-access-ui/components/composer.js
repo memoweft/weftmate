@@ -28,7 +28,16 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
         ui.byId('message-text').placeholder = '向 WeftMate 说说你的目标';
     }
     function mountComposer() {
-        globalThis.WeftPopover?.bindSelect(ui.byId('message-mode'), 'model-popover message-mode-popover');
+        globalThis.WeftPopover?.bindSettingsSelect(ui.byId('message-mode'));
+        const context = ui.byId('context-usage');
+        const tooltip = ui.byId('context-tooltip');
+        const show = () => { tooltip.hidden = false; globalThis.WeftPopover.position(tooltip, context); };
+        const hide = () => { tooltip.hidden = true; };
+        context.addEventListener('mouseenter', show); context.addEventListener('mouseleave', hide);
+        context.addEventListener('focus', show); context.addEventListener('blur', hide);
+        context.addEventListener('click', show);
+        document.addEventListener('click', event => { if (!context.contains(event.target)) hide(); });
+        context.addEventListener('keydown', event => { if (event.key === 'Escape') { event.stopPropagation(); hide(); } });
         ui.byId('model-select').addEventListener('change', (event) => { core.state.modelProfileId = event.target.value; ui.updateAvailability(); });
         ui.byId('model-trigger').addEventListener('click', ui.openModelMenu);
         ui.byId('model-trigger').addEventListener('keydown', (event) => {
@@ -76,7 +85,7 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
             if (!core.state.modelProfileId || core.state.capabilities?.chat?.available !== true)
                 return;
             ui.closeRail();
-            await core.submitCommand('session.create', { modelProfileId: core.state.modelProfileId });
+            core.startNewConversation();
         });
         ui.byId('message-form').addEventListener('submit', async (event) => {
             event.preventDefault();
@@ -84,7 +93,18 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
                 return core.stopCurrentTurn();
             return core.sendDraft();
         });
-        ui.byId('cancel-turn').addEventListener('click', core.stopCurrentTurn);
+        ui.mountConversationScroll();
     }
-    return { paintModels, readMessageDraft, clearMessageDraft, paintDesktopComposer, mountComposer };
+    function renderContextUsage() {
+        const session = core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId);
+        const value = globalThis.WeftUiCore.contextUsageView(session?.contextUsage);
+        const button = ui.byId('context-usage');
+        button.setAttribute('aria-label', value.label); button.classList.toggle('is-warning', value.warning);
+        button.classList.toggle('is-indeterminate', value.ratio === null);
+        const fill = button.querySelector('.context-fill');
+        if (fill) fill.style.strokeDasharray = `${Math.min(1, Math.max(0, value.ratio || 0)) * 100} 100`;
+        ui.byId('context-tooltip-label').textContent = value.label;
+        ui.byId('context-tooltip-detail').textContent = value.detail;
+    }
+    return { renderContextUsage, paintModels, readMessageDraft, clearMessageDraft, paintDesktopComposer, mountComposer };
 };

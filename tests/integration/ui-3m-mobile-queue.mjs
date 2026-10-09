@@ -178,9 +178,9 @@ try {
   await fill(mobile.getByLabel('个人服务地址',{exact:true}),origin);await fill(mobile.getByLabel('账户名（3–64个字符）',{exact:true}),'UiThreeFixture');
   await fill(mobile.getByLabel('密码（注册时15–128个字符）',{exact:true}),password);await fill(mobile.getByLabel('设备名称',{exact:true}),'合成 UI-3m 手机');
   await click(mobile.getByRole('button',{name:'检查服务连接',exact:true}));await mobile.getByRole('button',{name:'注册新账户',exact:true}).waitFor();await click(mobile.getByRole('button',{name:'登录',exact:true}));await mobile.waitForFunction(()=>state.loggedIn);await enterSession(id);
-  await mobile.getByRole('button',{name:'停止',exact:true}).waitFor();assert.equal(await mobile.getByRole('combobox',{name:'运行中输入方式',exact:true}).inputValue(),'steer');
+  await mobile.getByRole('button',{name:/^停止(?:回复)?$/,exact:true}).waitFor();assert.match(await mobile.getByRole('combobox',{name:'运行中输入方式',exact:true}).textContent(),/插话/);
   const steer=await send(`${marker} STEER`);assert.equal(steer.intent,'steer');assert.equal(steer.rootTaskId,target.commandId);
-  await mobile.getByRole('combobox',{name:'运行中输入方式',exact:true}).selectOption('queue');
+  await mobile.getByRole('combobox',{name:'运行中输入方式',exact:true}).click();await mobile.getByRole('option',{name:'新任务',exact:true}).click();
   const cancelled=await send(`${marker} CANCEL`),one=await send(`${marker} ONE`),two=await send(`${marker} TWO`);
   assert.equal(one.intent,'queue');assert.equal(two.intent,'queue');
   await click(mobile.getByText('3 个排队中',{exact:true}));const card=text=>mobile.getByRole('article',{name:`排队任务 ${text}`,exact:true});
@@ -190,12 +190,12 @@ try {
   const edited=await send(`${marker} EDIT changed`);await click(card(`${marker} EDIT changed`).getByRole('button',{name:'取消',exact:true}));await card(`${marker} EDIT changed`).waitFor({state:'hidden'});await shots('queue');
   requests.find(row=>row.marker===marker&&!row.closed).complete();await until(()=>requests.some(row=>row.marker===marker&&row.text.includes(`${marker} STEER`)));
   await mobile.getByText('已补充到当前任务',{exact:true}).waitFor();automatic.add(marker);await shots('steer');
-  await click(mobile.getByRole('button',{name:'停止',exact:true}));let events;
+  await click(mobile.getByRole('button',{name:/^停止(?:回复)?$/,exact:true}));let events;
   await until(async()=>{events=await history(control,id);return events.some(event=>event.type==='task.ended'&&event.data.taskId===two.commandId);});
   assert.deepEqual(events.filter(event=>event.type==='task.started').map(event=>event.data.taskId),[target.commandId,one.commandId,two.commandId]);
   assert.ok(events.some(event=>event.type==='task.ended'&&event.data.taskId===target.commandId&&event.data.reason==='aborted'));
   assert.ok(!events.some(event=>event.type==='user.message'&&[cancelled.receiptId,edit.receiptId,edited.receiptId].includes(event.data.receiptId)));
-  await mobile.getByRole('button',{name:'停止',exact:true}).waitFor({state:'hidden'});await shots('completed');
+  await mobile.getByRole('button',{name:/^停止(?:回复)?$/,exact:true}).waitFor({state:'hidden'});await shots('completed');
   for(const decision of ['allow','deny']){const sessionId=id,deletion=`UI3_DELETE_${surface}_${decision}`,file=join(root,`${deletion}.txt`);writeFileSync(file,'isolated file');
     await click(mobile.getByRole('button',{name:/^审批模式/}));await click(mobile.getByRole('menuitemradio',{name:/每次询问/}));
     await mobile.getByRole('button',{name:'审批模式：每次询问',exact:true}).waitFor();const deletionCommand=await send(deletion);
