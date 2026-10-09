@@ -56,7 +56,10 @@ try{
     const date=new Date(Date.now()-6*86400000).toLocaleDateString('en-CA',{timeZone:'Asia/Shanghai'}),label=`${Number(date.slice(5,7))} 月 ${Number(date.slice(8))} 日`;
     await page.getByRole('textbox',{name:'跳到日期',exact:true}).fill(date);await delay(300);console.log('native date',await page.evaluate(()=>({value:document.querySelector('.main-chat-tools input').value,selected:uiCore.state.selectedChatId,dates:uiCore.mainChatDays().map(row=>({label:row.label,collapsed:row.collapsed})),notice:document.querySelector('.main-chat-notice')?.textContent})));await b(`${label}，收起`).click();await page.getByRole('button',{name:new RegExp(`^${label} · \\d+ 条，展开$`)}).click();await shot(`${theme}-expanded`);
     const name=await page.evaluate(()=>{const box=$('chat-scroll').getBoundingClientRect();return [...document.querySelectorAll('[role=group][aria-label]')].find(row=>{const r=row.getBoundingClientRect();return r.top>=box.top&&r.bottom<=box.bottom;})?.getAttribute('aria-label');});
-    assert.ok(name);const row=page.getByRole('group',{name,exact:true});await row.click();await row.getByLabel('消息菜单',{exact:true}).click();await row.getByRole('button',{name:'从这里开旁聊',exact:true}).click();
+    assert.ok(name);const row=page.getByRole('group',{name,exact:true});
+    if(theme==='light'){const box=await row.boundingBox(),dpr=await page.evaluate(()=>devicePixelRatio);assert.ok(box);const x=String(Math.round((box.x+box.width/2)*dpr)),y=String(Math.round((box.y+box.height/2+24)*dpr));run('shell','input','swipe',x,y,x,y,'700');}
+    else{await row.click();await row.getByLabel('消息菜单',{exact:true}).click();}
+    await row.getByRole('button',{name:'从这里开旁聊',exact:true}).click();
     await page.getByRole('textbox',{name:'旁聊名称'}).fill('合成安卓旁聊');await b('确认开旁聊').click();await page.getByRole('dialog',{name:'开旁聊',exact:true}).waitFor({state:'hidden'});await page.getByText('相关上下文尚未带入',{exact:true}).waitFor();await shot(`${theme}-origin`);await b('回到主对话原消息').click();
     console.log('native navigation',await page.evaluate(()=>({body:document.body.className,topbar:getComputedStyle(document.querySelector('.topbar')).display,menuHidden:$('menu-button').hidden,page:state.page,logical:state.logicalChats,transition:state.transitionPending})));
     await b('打开导航').click();await b('WeftMate 主对话').click();
@@ -81,13 +84,15 @@ try{
   await until(async()=>{const rows=(await f.request('/commands?limit=50')).commands;return rows.find(row=>row.kind==='chat.message'&&row.state==='accepted_by_dsh'&&!beforeSendIds.has(row.commandId));});
   f.progress.call('read','ia4-read',{paths:['synthetic.md']});f.progress.result('ia4-read','synthetic contents');
   const approval=await f.progress.approve('ia4-approve','echo synthetic');await page.evaluate(()=>uiCore.refreshLogicalHistory());await b('批准').waitFor();await shot('approval');await b('批准').click();
+  f.progress.ask([{id:'format',question:'合成提问：采用哪种格式？',options:[{label:'简要报告'},{label:'完整记录'}]}]);await page.evaluate(()=>uiCore.refreshLogicalHistory());
+  await page.getByRole('region',{name:'待回答问题',exact:true}).waitFor();await page.getByRole('radio',{name:'简要报告',exact:true}).click();await shot('question');await b('提交回答').click();await page.getByRole('region',{name:'待回答问题',exact:true}).waitFor({state:'hidden'});
   await page.getByRole('textbox',{name:'输入消息',exact:true}).fill('');await b('停止回复').waitFor();await b('停止回复').click();await shot('stopped');
-  report.checks.push('native-chat-message','immediate-optimistic','progress-approval-original-identity','native-stop');
+  report.checks.push('native-chat-message','immediate-optimistic','progress-approval-original-identity','question-original-identity','native-stop','native-long-press-side-menu');
   previousIme=run('shell','settings','get','secure','default_input_method').trim();previousFont=run('shell','settings','get','system','font_scale').trim();
   const ime=`${pkg}.test/com.memoweft.weftmate.mobile.Ui2vTestIme`;run('shell','ime','enable',ime);run('shell','ime','set',ime);
   await page.getByRole('textbox',{name:'输入消息',exact:true}).click();await delay(1000);
   report.keyboard={shown:/mInputShown=true|mIsInputViewShown=true|isInputViewShown=true/.test(run('shell','dumpsys','input_method')),geometry:await page.evaluate(()=>({height:innerHeight,visual:visualViewport.height,draft:$('draft').getBoundingClientRect().toJSON(),dock:$('composer-dock').getBoundingClientRect().toJSON()}))};
-  await shot('keyboard');assert.ok(report.keyboard.shown);assert.ok(report.keyboard.geometry.dock.bottom<=report.keyboard.geometry.visual+1);run('shell','input','keyevent','4');
+  await writeFile(join(out,'android-keyboard.png'),execFileSync(adb,['-s',serial,'exec-out','screencap','-p'],{windowsHide:true,maxBuffer:12*1024*1024}));assert.ok(report.keyboard.shown);assert.ok(report.keyboard.geometry.dock.bottom<=report.keyboard.geometry.visual+1);run('shell','input','keyevent','4');
   run('shell','settings','put','system','font_scale','1.3');await delay(500);await shot('font130');assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   report.checks.push('native-soft-keyboard-visible-composer','font130');assert.deepEqual(errors,[]);
   if(process.argv.includes('--mimo')){
@@ -121,7 +126,7 @@ try{
     const webAttached=await until(async()=>{const rows=(await realHost.api('/commands?limit=30')).body.commands;return rows.find(row=>row.kind==='chat.message'&&row.state==='accepted_by_dsh'&&![sent.commandId,attached.commandId,webSent.commandId].includes(row.commandId));});await realHost.complete(webAttached);await webPage.evaluate(()=>uiCore.refreshLogicalHistory());await webPage.getByText(/PAPER-IA4-26/).last().waitFor();await webPage.screenshot({path:join(out,'web-real-mimo-attachment.png')});
     await webBrowser.close();webBrowser=null;await realHost.close();report.realMimo={model:'mimo-v2.6-flash',usage:await realHost.usage(),commands:[sent,attached,webSent,webAttached].map(row=>({kind:row.kind,chatId:row.chatId,sessionId:row.sessionId,requestId:row.requestId,receiptId:row.receiptId}))};report.checks.push('real-MiMo-native-text','real-MiMo-native-logical-staging-attachment','real-MiMo-web-text','real-MiMo-web-logical-staging-attachment','original-request-receipt');
   }
-  await writeFile(join(out,'android-verification.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));
+  await writeFile(join(out,process.argv.includes('--mimo')?'android-full-verification.json':'android-verification.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));
 }finally{
   if(previousIme)run('shell','ime','set',previousIme);if(previousFont)run('shell','settings','put','system','font_scale',previousFont);
   if(realPort){try{run('reverse','--remove',`tcp:${realPort}`);run('shell','rm','-f','/sdcard/Download/weftmate-ia4-synthetic-note.txt','/sdcard/ia4-picker.xml');}catch{}}
