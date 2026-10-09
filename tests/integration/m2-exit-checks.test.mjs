@@ -35,7 +35,7 @@ test('backup SQLite scan reaches all columns, legacy commitments and escaped JSO
   const python = 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe';
   const path = join(root, 'memory.sqlite3');
   try {
-    execFileSync(python, ['-c', 'import sqlite3,sys,json; c=sqlite3.connect(sys.argv[1]); c.execute("CREATE TABLE interaction_commitment(content, raw_quote)"); c.execute("INSERT INTO interaction_commitment VALUES (?,?)", ("clean", sys.argv[2])); c.execute("CREATE TABLE new_text_table(unknown_json)"); c.execute("INSERT INTO new_text_table VALUES (?)", (json.dumps({"source":sys.argv[2]}),)); c.commit(); c.close()', path, '王小明']);
+    execFileSync(python, ['-c', 'import sqlite3,sys,json; c=sqlite3.connect(sys.argv[1]); c.execute("CREATE TABLE interaction_commitment(content, raw_quote)"); c.execute("INSERT INTO interaction_commitment VALUES (?,?)", ("clean", sys.argv[2])); c.execute("CREATE TABLE new_text_table(unknown_json)"); c.execute("INSERT INTO new_text_table VALUES (?)", (json.dumps({"source":json.dumps({"raw":sys.argv[2]})}),)); c.commit(); c.close()', path, '王小明']);
     const result = JSON.parse(execFileSync(python, [join(import.meta.dirname, 'm2-backup-text-scan.py'), path, '王小明'], {encoding: 'utf8'}));
     assert.equal(result.tableCount, 2);
     assert.equal(result.hitCount, 2);

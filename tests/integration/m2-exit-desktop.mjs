@@ -432,6 +432,8 @@ async function baseline(modelName, fourOnly = false) {
         await page.locator('.session-row').filter({ has: page.locator('button.is-current') }).getByRole('button', { name: /^更多操作 / }).click();
         await page.getByRole('menuitem', { name: /^删除(?:\s*D)?$/ }).click();
         await page.getByRole('checkbox', { name: '同时忘掉从这段对话形成的记忆' }).check();
+        (result.forgetPreviews ??= []).push({ sessionId: id,
+          ...await api(`/sessions/${id}/forget-preview`) });
         if (result.deletions.length === 0) await page.screenshot({ path: join(evidence, `${modelName}-forget.png`) });
         const response = page.waitForResponse(r => r.request().method() === 'DELETE' && new URL(r.url()).pathname === `/personal/v1/sessions/${id}`);
         await page.getByRole('button', { name: '永久删除', exact: true }).click();
