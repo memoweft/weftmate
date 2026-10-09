@@ -25,6 +25,7 @@ export async function startTimelineCandidate(options = {}) {
   const adapter = createDshSessionAdapter({ sessions: { list: async () => ok({ items: [{ sessionId, origin: 'user' }] }) }, events: {} }, { readLog: async () => events })
   const scheduleRows = [{id:'ui4-schedule',text:'提交合成报告',state:'scheduled',timeZone:'Asia/Shanghai',nextRunAt:'2026-10-09T01:00:00Z'}];
   const backend = {
+    ...(options.sidebar ? { renameSession: async ({sessionId, title}) => { dailySessions.get(sessionId).title = title; return {title}; } } : {}),
     ...(options.schedules ? { schedules: async ({action,id}) => {
       if (['list','notifications'].includes(action)) return {items:scheduleRows.map(row=>({...row}))};
       const row=scheduleRows.find(row=>row.id===id);assert.ok(row);
@@ -118,6 +119,8 @@ export async function startTimelineCandidate(options = {}) {
     if (method === 'models.list') return { models: [] }
     if (method === 'models.host') return { models: [{ profileId: 'local', displayName: '合成会话', configured: true }] }
     if (method === 'shared.sessions.list') return { source: 'host', hostAvailable: true, sessions: (await request('/sessions')).sessions.map(row=>({...row,source:'host'})) }
+    if (options.sidebar && method === 'shared.projects.list') return request('/projects');
+    if (options.sidebar && method === 'shared.sessions.lifecycle') return request(`/sessions/${params.sessionId}/${params.action}`, {});
     if (method === 'shared.sessions.events') return { source: 'host', sessionId, hostAvailable: true, ...await request(`/sessions/${sessionId}/events?limit=100${params.afterSeq === undefined ? '' : `&afterSeq=${params.afterSeq}`}${params.beforeSeq === undefined ? '' : `&beforeSeq=${params.beforeSeq}`}`) }
     if (method === 'shared.sessions.eventDetail') return request(`/sessions/${sessionId}/events/${params.seq}/detail`)
     if (method === 'activity.list') return { hostAvailable: true, activities: [{ ...source, source: 'host', taskId }] }
