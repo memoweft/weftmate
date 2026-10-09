@@ -44,7 +44,7 @@ import { backupBeforeCloud } from '../personal-cloud/storage.mjs';
 import { createUsageStore } from './usage.mjs';
 import { createScheduleOperations } from './schedules.mjs';
 import { createOfflineService } from '../personal-offline/index.mjs';
-import { reconcileChatIdentity } from './chat-identity.mjs';
+import { reconcileChatIdentity, chatForSession } from './chat-identity.mjs';
 import { createChatOperations } from './chats.mjs';
 import { createChatTimeline } from './chat-timeline.mjs';
 import { createSideChats } from './side-chats.mjs';
@@ -675,6 +675,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       const account = accountState(match.ownerId), session = account.sessions[sessionId];
       const project = account.projects?.[session.projectId];
       return { conversationWorkspace: sessionWorkspace(path.join(path.dirname(root), 'conversations'), match.ownerId, sessionId),
+        deepThinking: (chatForSession(account,sessionId)?.deepThinking ?? session.deepThinking) === true,
         mode: session.approvalMode ?? account.defaultApprovalMode ?? 'auto',
         allowedCategories: session.allowedApprovalCategories ?? [],
         ...(project && !project.revoked ? { project: { projectId: project.projectId,

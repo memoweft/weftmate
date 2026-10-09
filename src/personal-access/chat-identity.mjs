@@ -57,6 +57,7 @@ export function validateChatIdentity(account) {
   if (typeof identity.timeZone !== 'string' || identity.chats[identity.mainChatId]?.kind !== 'main' ||
       Object.values(identity.chats).filter(chat => chat.kind === 'main').length !== 1) corrupt();
   for (const [id, chat] of Object.entries(identity.chats)) {
+    if (chat.deepThinking !== undefined && typeof chat.deepThinking !== 'boolean') corrupt();
     if (!validId(id) || !plainObject(chat) || chat.chatId !== id || !['main', 'side'].includes(chat.kind) ||
         !Number.isSafeInteger(chat.revision) || chat.revision < 1 ||
         !Number.isSafeInteger(chat.contentRevision) || chat.contentRevision < 1 ||

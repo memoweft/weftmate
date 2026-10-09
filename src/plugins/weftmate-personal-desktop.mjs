@@ -3,6 +3,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { resolve } from 'node:path';
 import { defineTool } from '@deepseek-ai/dsh-tools';
 import { installModelSelection } from '@deepseek-ai/dsh-agent';
+import { installConversationReasoning } from './personal-reasoning.mjs';
 import { setSandboxMode } from '@deepseek-ai/dsh-sandbox-policy';
 import { selectProjectContext, inheritProjectContext, routeProjectTool, installProjectSandbox, projectToolDecision, projectContextNotice, executionDirectory } from './personal-project-context.mjs';
 import { trackNativeFiles, appendNativeArtifacts, conversationCreatedFiles } from './personal-native-files.mjs';
@@ -646,6 +647,7 @@ export function apply(ctx) {
   ctx.plugin(PlanModeController, { section: 'You are planning. Present a complete Markdown plan with exit_plan_mode before executing tools. Ask for missing information if needed. Execute only after the user approves the plan.' });
   const policyFor = (agent) => bridge.request({ action: 'approval_policy', sessionId: agent.session.id,
     turn: 0, callId: 'approval-policy', messageHash: '0'.repeat(64) });
+  installConversationReasoning(ctx, policyFor);
   const selectedModes = new WeakMap();
   const webExecution = new AsyncLocalStorage();
   const delegatedExecutions = new WeakMap();
