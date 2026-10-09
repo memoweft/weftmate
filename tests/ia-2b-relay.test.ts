@@ -48,6 +48,11 @@ test('durable main sends bind once, queue during relay, keep attachments, recove
     const first = await wait('first'); assert.equal(first.state, 'accepted_by_dsh', JSON.stringify(first));
     assert.equal(sends.length, 1); assert.match(sends[0].text, /synthetic attached text/);
     assert.equal((await api('/commands', request)).body.command.receiptId, first.receiptId);
+    let mainView=(await api('/chats/main')).body.chat;
+    const marked=await api(`/chats/${main.chatId}/metadata`,{requestId:'unread',expectedRevision:mainView.revision,unread:true},'PATCH');
+    assert.equal((await api('/chats/main')).body.chat.unread,true);
+    await api(`/chats/${main.chatId}/metadata`,{requestId:'read',expectedRevision:marked.body.chat.revision,unread:false},'PATCH');
+    assert.equal((await api('/chats/main')).body.chat.unread,false);
     assert.equal((await api('/commands', { ...request, text: 'different' })).status, 409);
     pressure = true;
     await api('/commands', body('relay-first')); await summarizing;

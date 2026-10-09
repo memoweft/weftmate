@@ -717,7 +717,7 @@ export function createHttpHandler(context) {
         }
         return context.json(response, 200, {
           ...context.service.status(ownerId),
-          personalCapabilities: { chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, chatSend: 1 },
+          personalCapabilities: { chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
           executionAccount: context.hostOwner(ownerId),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
           backend: backendStatus, memory: { state: memoryStatus.state, inject: memoryStatus.capabilities?.inject === true },
@@ -1161,7 +1161,32 @@ export function createHttpHandler(context) {
       const chatMetadataMatch = /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)\/metadata$/.exec(pathname);
       if (chatMetadataMatch && request.method === 'PATCH') {
         if (url.search) throw failure('INVALID_REQUEST');
+        if (context.chats.requireChat(ownerId, chatMetadataMatch[1]).kind === 'side') return context.json(response, 200,
+          await context.chatLifecycle.write(ownerId, chatMetadataMatch[1], 'metadata', await context.readJson(request, 2048), () => context.authenticate(request, 'commands:write')));
         return context.json(response, 200, await context.chats.metadata(ownerId, chatMetadataMatch[1], await context.readJson(request, 2048)));
+      }
+      const logicalRead = /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)\/(resources|forget-preview)$/.exec(pathname);
+      if (request.method === 'GET' && logicalRead) {
+        if (logicalRead[2] === 'forget-preview') {
+          if (url.search) throw failure('INVALID_REQUEST');
+          const auth = context.authenticate(request, 'account:manage');
+          if (auth.via !== 'cookie') throw failure('FORBIDDEN', 403);
+          return context.json(response, 200, await context.chatLifecycle.preview(ownerId, logicalRead[1]));
+        }
+        return context.json(response, 200, await context.chatLifecycle.resources(ownerId, logicalRead[1], url.searchParams));
+      }
+      const logicalArchive = /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)\/(archive|unarchive)$/.exec(pathname);
+      if (request.method === 'DELETE' && chatMatch || request.method === 'POST' && logicalArchive) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const target = chatMatch?.[1] ?? logicalArchive[1], action = chatMatch ? 'delete' : logicalArchive[2];
+        if (context.accountState(ownerId).chatIdentity.chats[target]?.kind === 'main') throw failure('MAIN_CHAT_PROTECTED', 409);
+        const body = await context.readJson(request, 2048);
+        const authorize = () => {
+          const auth = context.authenticate(request, body.forgetMemories ? 'account:manage' : 'commands:write');
+          if (body.forgetMemories && auth.via !== 'cookie') throw failure('FORBIDDEN', 403);
+          return auth;
+        };
+        return context.json(response, 200, await context.chatLifecycle.write(ownerId, target, action, body, authorize));
       }
       if (chatMatch && request.method === 'DELETE' || /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)\/(metadata|archive|unarchive|fork)$/.test(pathname) && ['PATCH', 'POST'].includes(request.method)) {
         const chatId = pathname.split('/')[4];

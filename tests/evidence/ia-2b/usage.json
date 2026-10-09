@@ -1,10 +1,10 @@
 {
-  "scope": "All IA-2b development model runs including failures",
+  "scope": "All IA-2b model calls including failed development runs and final cache verification",
   "totals": {
-    "requests": 57,
-    "prompt": 365875,
-    "completion": 9843,
-    "cached": 233536
+    "requests": 61,
+    "prompt": 374742,
+    "completion": 10182,
+    "cached": 238976
   },
   "runs": [
     {
@@ -109,6 +109,34 @@
           },
           "prompt_tokens_details": {
             "cached_tokens": 0
+          }
+        }
+      ]
+    },
+    {
+      "run": "weftmate-ia-2b-erasure-E0itbB",
+      "requests": 2,
+      "usage": [
+        {
+          "completion_tokens": 221,
+          "prompt_tokens": 2097,
+          "total_tokens": 2318,
+          "completion_tokens_details": {
+            "reasoning_tokens": 180
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        {
+          "completion_tokens": 33,
+          "prompt_tokens": 2116,
+          "total_tokens": 2149,
+          "completion_tokens_details": {
+            "reasoning_tokens": 28
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 1664
           }
         }
       ]
@@ -408,6 +436,34 @@
           },
           "prompt_tokens_details": {
             "cached_tokens": 5184
+          }
+        }
+      ]
+    },
+    {
+      "run": "weftmate-ia-2b-relay-9fKM8u",
+      "requests": 2,
+      "usage": [
+        {
+          "completion_tokens": 72,
+          "prompt_tokens": 2128,
+          "total_tokens": 2200,
+          "completion_tokens_details": {
+            "reasoning_tokens": 68
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 1664
+          }
+        },
+        {
+          "completion_tokens": 13,
+          "prompt_tokens": 2526,
+          "total_tokens": 2539,
+          "completion_tokens_details": {
+            "reasoning_tokens": 6
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2112
           }
         }
       ]

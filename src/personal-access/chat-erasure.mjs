@@ -7,6 +7,12 @@ export function eraseChatCopies(account, { sessionId = null, forgotten = false }
   const changed = new Set();
   const identity = account.chatIdentity;
   const sourceChatId = identity?.segments[identity.sessionSegments[sessionId]]?.chatId;
+  for (const operation of Object.values(account.chatOperations ?? {})) {
+    const snapshot = operation.response?.chat;
+    if (!snapshot) continue;
+    if (sourceChatId && snapshot.chatId === sourceChatId) operation.response = { chatId: sourceChatId, deleted: true };
+    else if (forgotten) { delete snapshot.originRefs; delete snapshot.contextTransfer; }
+  }
   for (const result of Object.values(account.chatResults ?? {})) {
     if (!forgotten && result.sourceChatId !== sourceChatId && result.sourceRef?.native?.sessionId !== sessionId) continue;
     result.deleted = true; result.summary = ''; result.artifactRefs = []; result.requiresResponse = false;

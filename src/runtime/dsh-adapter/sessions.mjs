@@ -409,6 +409,36 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
     if (!owned.has(sessionId)) throw new DshAdapterError('session-not-found', operation)
   }
 
+  function projectedPage(sessionId, entries, options = {}) {
+    const { afterSeq, beforeSeq, limit = 50 } = options
+    const latestSeq = (entries.at(-1)?.event ?? entries.at(-1))?.seq ?? -1
+    const cache = callIndex(sessionId, entries), stableEnd = stableHistoryEnd(entries, cache)
+    const stableSeq = (entries[stableEnd - 1]?.event ?? entries[stableEnd - 1])?.seq ?? -1
+    const forward = afterSeq !== undefined
+    let index = forward ? lowerBound(entries, afterSeq + 1)
+      : beforeSeq === undefined ? stableEnd - 1 : Math.min(stableEnd, lowerBound(entries, beforeSeq)) - 1
+    let scanned = forward ? afterSeq : beforeSeq ?? stableSeq + 1
+    const events = []; let bytes = 0, hasMore = false
+    for (; index >= 0 && index < stableEnd; index += forward ? 1 : -1) {
+      const raw = entries[index]?.event ?? entries[index]
+      let contextTurn = null
+      if (typeof raw.type === 'string' && raw.type.startsWith('approval/')) for (let i = index; i >= 0; i--) {
+        const previous = entries[i]?.event ?? entries[i]
+        if (Number.isSafeInteger(previous.data?.turn)) { contextTurn = previous.data.turn; break }
+      }
+      const event = projectHistoryEvent(entries[index], raw.type === 'tool/result' ? relatedCall(entries, index, cache) : null, contextTurn, raw.type === 'step/end' ? resolveStepEnd(entries, index, cache) : null, ['agent/inbox/spliced', 'step/start', 'step/end'].includes(raw.type) ? indexInboxTimeline(entries, cache, index) : null)
+      const size = event ? Buffer.byteLength(JSON.stringify(event), 'utf8') : 0
+      if (event && (events.length === limit || bytes + size > HISTORY_RESPONSE_BYTES_LIMIT)) { hasMore = true; break }
+      scanned = raw.seq
+      if (event) { events.push(event); bytes += size }
+    }
+    if (!forward) events.reverse()
+    return { events, nextSeq: forward ? scanned : stableSeq, hasMore: forward && hasMore,
+      nextBeforeSeq: forward ? events[0]?.seq ?? null : scanned <= latestSeq ? scanned : null,
+      hasOlder: !forward && hasMore, latestSeq }
+  }
+  readLog?.setProjector?.(projectedPage);
+
   return {
     async taskStopState(input) {
       if (typeof lifecycle?.taskStopState !== 'function') return { status: 'unconfirmed' }
@@ -466,14 +496,18 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
     },
     async cleanupMemory(sessionId, options) {
       if (!lifecycle) throw new DshAdapterError('internal', 'memory-cleanup')
+      await readLog?.invalidate?.(sessionId)
       const value = await lifecycle.cleanupMemory(sessionId, options)
+      await readLog?.invalidate?.(sessionId)
       logs.delete(sessionId); callIndexes.delete(sessionId); owned.delete(sessionId)
       return value
     },
     chatHandoff(sessionId, action, handoff) { return lifecycle.chatHandoff(sessionId, action, handoff) },
     async remove(sessionId) {
       if (!lifecycle) throw new DshAdapterError('internal', 'delete')
+      await readLog?.invalidate?.(sessionId)
       const value = await lifecycle.remove(sessionId)
+      await readLog?.invalidate?.(sessionId)
       owned.delete(sessionId); logs.delete(sessionId); callIndexes.delete(sessionId)
       return value
     },
@@ -496,32 +530,11 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
       pageHistoryEvents([], afterSeq ?? -1, limit)
       const listed = await unwrap(await client.sessions.list({}), 'list')
       requireOrdinarySummary((listed?.items ?? []).find(item => sessionIdOf(item) === sessionId), sessionId)
-      const entries = await logFor(sessionId)
-      const latestSeq = (entries.at(-1)?.event ?? entries.at(-1))?.seq ?? -1
-      const cache = callIndex(sessionId, entries), stableEnd = stableHistoryEnd(entries, cache)
-      const stableSeq = (entries[stableEnd - 1]?.event ?? entries[stableEnd - 1])?.seq ?? -1
-      const forward = afterSeq !== undefined
-      let index = forward ? lowerBound(entries, afterSeq + 1)
-        : beforeSeq === undefined ? stableEnd - 1 : Math.min(stableEnd, lowerBound(entries, beforeSeq)) - 1
-      let scanned = forward ? afterSeq : beforeSeq ?? stableSeq + 1
-      const events = []; let bytes = 0, hasMore = false
-      for (; index >= 0 && index < stableEnd; index += forward ? 1 : -1) {
-        const raw = entries[index]?.event ?? entries[index]
-        let contextTurn = null
-        if (typeof raw.type === 'string' && raw.type.startsWith('approval/')) for (let i = index; i >= 0; i--) {
-          const previous = entries[i]?.event ?? entries[i]
-          if (Number.isSafeInteger(previous.data?.turn)) { contextTurn = previous.data.turn; break }
-        }
-        const event = projectHistoryEvent(entries[index], raw.type === 'tool/result' ? relatedCall(entries, index, cache) : null, contextTurn, raw.type === 'step/end' ? resolveStepEnd(entries, index, cache) : null, ['agent/inbox/spliced', 'step/start', 'step/end'].includes(raw.type) ? indexInboxTimeline(entries, cache, index) : null)
-        const size = event ? Buffer.byteLength(JSON.stringify(event), 'utf8') : 0
-        if (event && (events.length === limit || bytes + size > HISTORY_RESPONSE_BYTES_LIMIT)) { hasMore = true; break }
-        scanned = raw.seq
-        if (event) { events.push(event); bytes += size }
+      if (readLog?.historyPage) {
+        const page = await readLog.historyPage(sessionId, options, (entries, range) => projectedPage(sessionId, entries, range));
+        if (page) return page;
       }
-      if (!forward) events.reverse()
-      return { events, nextSeq: forward ? scanned : stableSeq, hasMore: forward && hasMore,
-        nextBeforeSeq: forward ? events[0]?.seq ?? null : scanned <= latestSeq ? scanned : null,
-        hasOlder: !forward && hasMore, latestSeq }
+      return projectedPage(sessionId, await logFor(sessionId), options)
     },
 
     async historyDetail(sessionId, seq) {

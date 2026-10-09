@@ -1,0 +1,123 @@
+{
+  "realElectron": true,
+  "fixedDsh": true,
+  "realCore": true,
+  "model": "mimo-v2.6-flash",
+  "seededMemoryFixture": true,
+  "modelFormationClaim": false,
+  "checks": [
+    {
+      "deleteConversationSnippets": false,
+      "result": {
+        "ownerId": "owner-d72f767e-fa1f-4162-8ec8-d4aebc7302af",
+        "receipt": {
+          "commandId": "memory-1b3aedfedcbdf9cc1d654d506fe727aa2da26cba93edaf5f",
+          "requestId": "4e91d157-20ce-4db2-a0ea-b5784bd5c4e6",
+          "state": "applied",
+          "worldRevision": 2,
+          "storageCleanup": {
+            "state": "complete",
+            "detailCode": "current_journal_committed"
+          }
+        }
+      },
+      "receipt": {
+        "ownerId": "owner-d72f767e-fa1f-4162-8ec8-d4aebc7302af",
+        "receipt": {
+          "commandId": "memory-1b3aedfedcbdf9cc1d654d506fe727aa2da26cba93edaf5f",
+          "requestId": "4e91d157-20ce-4db2-a0ea-b5784bd5c4e6",
+          "state": "applied",
+          "worldRevision": 2,
+          "storageCleanup": {
+            "state": "complete",
+            "detailCode": "current_journal_committed"
+          }
+        }
+      }
+    },
+    "default preserves visible originals and native session resumes after surface pruning",
+    {
+      "deleteConversationSnippets": true,
+      "result": {
+        "ownerId": "owner-d72f767e-fa1f-4162-8ec8-d4aebc7302af",
+        "receipt": {
+          "commandId": "memory-851e5ff960ae16d5fe5a2a2bba336b8d4adfcb50a619e2d1",
+          "requestId": "a3d40d27-66e5-4b29-9880-efb4e27bcf90",
+          "state": "applied",
+          "worldRevision": 4,
+          "storageCleanup": {
+            "state": "complete",
+            "detailCode": "current_journal_committed"
+          }
+        }
+      },
+      "receipt": {
+        "ownerId": "owner-d72f767e-fa1f-4162-8ec8-d4aebc7302af",
+        "receipt": {
+          "commandId": "memory-851e5ff960ae16d5fe5a2a2bba336b8d4adfcb50a619e2d1",
+          "requestId": "a3d40d27-66e5-4b29-9880-efb4e27bcf90",
+          "state": "applied",
+          "worldRevision": 4,
+          "storageCleanup": {
+            "state": "complete",
+            "detailCode": "current_journal_committed"
+          }
+        }
+      }
+    },
+    "logical resource/preview/archive/unarchive/delete routes and duplicate deletion pass in real Electron",
+    "restart does not restore result summaries, side refs or search text"
+  ],
+  "zeroResidue": {
+    "files": 110,
+    "byteAndDecodedFrameHits": 0,
+    "databases": [
+      {
+        "file": "dsh-home/weftmate-history.sqlite",
+        "tables": 2,
+        "hits": []
+      },
+      {
+        "file": "personal-access/accounts/owner-d72f767e-fa1f-4162-8ec8-d4aebc7302af/memory-home/memoweft/memoweft.sqlite3",
+        "tables": 36,
+        "hits": []
+      }
+    ]
+  },
+  "usage": [
+    {
+      "completion_tokens": 64,
+      "prompt_tokens": 118,
+      "total_tokens": 182,
+      "completion_tokens_details": {
+        "reasoning_tokens": 63
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    {
+      "completion_tokens": 334,
+      "prompt_tokens": 2093,
+      "total_tokens": 2427,
+      "completion_tokens_details": {
+        "reasoning_tokens": 293
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    {
+      "completion_tokens": 37,
+      "prompt_tokens": 2112,
+      "total_tokens": 2149,
+      "completion_tokens_details": {
+        "reasoning_tokens": 31
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1664
+      }
+    }
+  ],
+  "electronLaunchesClosed": 2
+}

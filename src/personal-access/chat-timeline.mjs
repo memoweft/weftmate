@@ -36,6 +36,7 @@ export function createChatTimeline(context) {
       .filter(s => s.chatId === chatId).sort((a, b) => a.ordinal - b.ordinal || a.segmentId.localeCompare(b.segmentId));
   }
   function current(ownerId, chatId) {
+    if (context.accountState(ownerId).memoryCleanupPending) throw failure('SESSION_BUSY', 409);
     const chat = context.chats.requireChat(ownerId, chatId), key = `${ownerId}/${chatId}`;
     let index = indexes.get(key);
     if (!index || index.contentRevision !== chat.contentRevision) {
