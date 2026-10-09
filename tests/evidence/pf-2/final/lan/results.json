@@ -1,0 +1,380 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-09T16:28:34.638Z",
+  "host": "http://127.0.0.1:51423",
+  "model": "lan/local-quality",
+  "results": [
+    {
+      "id": "action-02-web-document",
+      "category": "action",
+      "title": "查网页并保存说明",
+      "status": "passed",
+      "durationMs": 135846,
+      "checks": [
+        {
+          "type": "file_exists",
+          "path": "node24说明.md",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "node24说明.md",
+          "text": "https://nodejs.org/",
+          "status": "passed"
+        },
+        {
+          "type": "reply_matches",
+          "pattern": "说明|保存|写好",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "llm_judge",
+          "prompt": "回复应说明已经保存中文说明并提到官方来源；不能将尚未进行的检索/保存说成完成。仅凭回复不能验收文档事实准确性。",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-6886368c-fbac-49b7-846c-5678d35db703",
+          "modelProfileId": "private-model-1421ac856f6f156ad26a3dbbc4136071b36f2101",
+          "commandId": "cmd-344b76ab-f2b6-40ca-8075-168c37d068e0",
+          "startedAt": "2026-10-09T16:28:35.440Z",
+          "reply": "已完成。简短说明已存到 `[local path]\n\n主要来源：\n- Node.js 24.0.0 Release：https://nodejs.org/en/blog/release/v24.0.0/\n- Node.js 22.0.0 Release：https://nodejs.org/en/blog/release/v22.0.0/\n\n文件已核验，可下班后阅读。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T16:28:35.492Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T16:28:35.492Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T16:28:35.538Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T16:28:35.539Z"
+            },
+            {
+              "seq": 333,
+              "type": "step.started",
+              "at": "2026-10-09T16:28:46.847Z"
+            },
+            {
+              "seq": 334,
+              "type": "step.completed",
+              "at": "2026-10-09T16:28:46.858Z"
+            },
+            {
+              "seq": 402,
+              "type": "step.started",
+              "at": "2026-10-09T16:28:55.318Z"
+            },
+            {
+              "seq": 403,
+              "type": "step.started",
+              "at": "2026-10-09T16:28:55.326Z"
+            },
+            {
+              "seq": 404,
+              "type": "step.started",
+              "at": "2026-10-09T16:28:55.335Z"
+            },
+            {
+              "seq": 405,
+              "type": "step.completed",
+              "at": "2026-10-09T16:28:59.178Z"
+            },
+            {
+              "seq": 406,
+              "type": "step.completed",
+              "at": "2026-10-09T16:28:59.180Z"
+            },
+            {
+              "seq": 407,
+              "type": "step.completed",
+              "at": "2026-10-09T16:28:59.181Z"
+            },
+            {
+              "seq": 1020,
+              "type": "step.started",
+              "at": "2026-10-09T16:29:16.901Z"
+            },
+            {
+              "seq": 1021,
+              "type": "step.completed",
+              "at": "2026-10-09T16:29:21.648Z"
+            },
+            {
+              "seq": 1166,
+              "type": "step.started",
+              "at": "2026-10-09T16:29:29.961Z"
+            },
+            {
+              "seq": 1167,
+              "type": "step.completed",
+              "at": "2026-10-09T16:29:32.526Z"
+            },
+            {
+              "seq": 1201,
+              "type": "step.started",
+              "at": "2026-10-09T16:29:38.534Z"
+            },
+            {
+              "seq": 1202,
+              "type": "step.completed",
+              "at": "2026-10-09T16:29:46.240Z"
+            },
+            {
+              "seq": 2440,
+              "type": "step.started",
+              "at": "2026-10-09T16:30:15.583Z"
+            },
+            {
+              "seq": 2441,
+              "type": "artifact.created",
+              "at": "2026-10-09T16:30:16.906Z"
+            },
+            {
+              "seq": 2523,
+              "type": "step.started",
+              "at": "2026-10-09T16:30:26.369Z"
+            },
+            {
+              "seq": 2524,
+              "type": "step.completed",
+              "at": "2026-10-09T16:30:26.375Z"
+            },
+            {
+              "seq": 2566,
+              "type": "step.started",
+              "at": "2026-10-09T16:30:39.039Z"
+            },
+            {
+              "seq": 2567,
+              "type": "step.completed",
+              "at": "2026-10-09T16:30:39.089Z"
+            },
+            {
+              "seq": 2697,
+              "type": "assistant.message",
+              "at": "2026-10-09T16:30:50.800Z"
+            },
+            {
+              "seq": 2698,
+              "type": "task.ended",
+              "at": "2026-10-09T16:30:50.801Z"
+            },
+            {
+              "seq": 2699,
+              "type": "turn.ended",
+              "at": "2026-10-09T16:30:50.802Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 135523,
+          "endedAt": "2026-10-09T16:30:50.963Z"
+        }
+      ],
+      "replySummary": "已完成。简短说明已存到 `[local path]\n\n主要来源：\n- Node.js 24.0.0 Release：https://nodejs.org/en/blog/release/v24.0.0/\n- Node.js 22.0.0 Release：https://nodejs.org/en/blog/release/v22.0.0/\n\n文件已核验，可下班后阅读。",
+      "notes": "需要联网；文件检查只确认保存和官方来源链接，具体事实准确性由 Windows 人工抽查，judge 为可选补充。本地 Qwen 27B 首轮 240 秒到期时仍在正常检索官方迁移指南，调整为 600 秒以覆盖检索、写入和核验。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；900秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限600秒。",
+      "scratchDir": "C:\\temp\\weftmate-eval-action-02-web-document-KdDun6",
+      "toolDetails": [
+        {
+          "sessionId": "session-6886368c-fbac-49b7-846c-5678d35db703",
+          "seq": 333,
+          "at": "2026-10-09T16:28:46.847Z",
+          "type": "step.started",
+          "toolName": "load_tools",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"names\\\":[\\\"web_fetch\\\",\\\"write\\\"]}\"\n}"
+        },
+        {
+          "sessionId": "session-6886368c-fbac-49b7-846c-5678d35db703",
+          "seq": 334,
+          "at": "2026-10-09T16:28:46.858Z",
+          "type": "step.completed",
+          "toolName": "load_tools",
+          "state": "completed",
+          "text": "{\n  \"arguments\": \"{\\\"names\\\":[\\\"web_fetch\\\",\\\"write\\\"]}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"4CqrSUAcWurE9pvBHnGbVffWT7uvsWNT\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"{\\\"loaded\\\":[\\\"web_fetch\\\",\\\"write\\\"]}\"\n        }\n      ],\n      \"isError\": false\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-6886368c-fbac-49b7-846c-5678d35db703",
+          "seq": 402,
+          "at": "2026-10-09T16:28:55.318Z",
+          "type": "step.started",
+          "toolName": "web_fetch",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog/release/v24.0.0/\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-6886368c-fbac-49b7-846c-5678d35db703",
+          "seq": 403,
+          "at": "2026-10-09T16:28:55.326Z",
+          "type": "step.started",
+          "toolName": "web_fetch",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog/release/v22.0.0/\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-6886368c-fbac-49b7-846c-5678d35db703",
+          "seq": 404,
+          "at": "2026-10-09T16:28:55.335Z",
+          "type": "step.started",
+          "toolName": "web_fetch",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/about/releases\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-6886368c-fbac-49b7-846c-5678d35db703",
+          "seq": 405,
+          "at": "2026-10-09T16:28:59.178Z",
+          "type": "step.completed",
+          "toolName": "web_fetch",
+          "state": "completed",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog/release/v24.0.0/\\\"}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"mSPGzIsadlgu5WH6ec2EqKp50tf87NNX\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Fetched https://nodejs.org/en/blog/release/v24.0.0/ (HTTP 200)\\n\\nNode.js 24.0.0 (Current)\\nRG\\n\\nRafael Gonzaga\\n\\nNode.js 24.0.0 (Current)\\n2025-05-06, Version 24.0.0 (Current), @RafaelGSS and @juanarbol\\n\\nWe’re excited to announce the release of Node.js 24! This release brings several significant updates, including the upgrade of the V8 JavaScript engine to version 13.6 and npm to version 11. Starting with Node.js 24, support for MSVC has been removed, and ClangCL is now required to compile Node.js on Windows. The AsyncLocalStorage API now uses AsyncContextFrame by default, and URLPattern is available globally. These changes, along with many other improvements, continue to push the platform forward.\\n\\nAs a reminder, Node.js 24 will enter long-term support (LTS) in October, but until then, it will be the \\\"Current\\\" release for the next six months. We encourage you to explore the new features and benefits offered by this latest release and evaluate their potential impact on your applications.\\n\\nNotable Changes\\nV8 13.6\\n\\nThe V8 engine is updated to version 13.6, which includes several new JavaScript features:\\n\\nFloat16Array\\nExplicit resource management\\nRegExp.escape\\nWebAssembly Memory64\\nError.isError\\n\\nThe V8 update was a contribution by Michaël Zasso in #58070.\\n\\nnpm 11\\n\\nNode.js 24 comes with npm 11, which includes several improvements and new features. This update brings enhanced performance, improved security features, and better compatibility with modern JavaScript packages.\\n\\nThe npm update was a contribution by the npm team in #56274.\\n\\nAsyncLocalStorage defaults to AsyncContextFrame\\n\\nAsyncLocalStorage now uses AsyncContextFrame by default, which provides a more efficient implementation of asynchronous context tracking. This change improves performance and makes the API more robust for advanced use cases.\\n\\nThis change was a contribution by Stephen Belanger in #55552.\\n\\nURLPattern as a global\\n\\nThe URLPattern API is now exposed on the global object, making it easier to use without explicit imports. This API provides a powerful pattern matching system for URLs, similar to how regular expressions work for strings.\\n\\nThis feature was a contribution by Jonas Badalič in #56950.\\n\\nPermission Model Improvements\\n\\nThe experimental Permission Model introduced in Node.js 20 has been improved, and the flag has been changed from --experimental-permission to simply --permission, indicating its increasing stability and readiness for broader adoption.\\n\\nThis change was a contribution by Rafael Gonzaga in #56240.\\n\\nTest Runner Enhancements\\n\\nThe test runner module now automatically waits for subtests to finish, eliminating the need to manually await test promises. This makes writing tests more intuitive and reduces common errors related to unhandled promises.\\n\\nThe test runner improvements were contributions by Colin Ihrig in #56664.\\n\\nUndici 7\\n\\nNode.js 24 includes Undici 7, which brings numerous improvements to the HTTP client capabilities, including better performance and support for newer HTTP features.\\n\\nDeprecations and Removals\\n\\nSeveral APIs have been deprecated or removed in this release:\\n\\n[Partial page: segment 0 of 5. Read further captured sections with browser action=\\\"read\\\", snapshotId=\\\"capture-e9d48553-7f2e-4919-a542-9c6aa36ff013\\\", segmentIndex=1..4. Do not cite unread sections.]\\nOutline:\\nNode.js 24.0.0 (Current)\\n2025-05-06, Version 24.0.0 (Current), @RafaelGSS and @juanarbol\\nNotable Changes\\nV8 13.6\\nnpm 11\\nAsyncLocalStorage defaults to AsyncContextFrame\\nURLPattern as a global\\nPermission Model Improvements\\nTest Runner Enhancements\\nUndici 7\\nDeprecations and Removals\\nSemver-Major Commits\\nSemver-Minor Commits\\nSemver-Patch Commits\\nSHASUMS\\n\\n(Content truncated. Fetch a more specific URL or section for the full text.)\"\n        }\n      ],\n      \"isError\": false\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-6886368c-fbac-49b7-846c-5678d35db703",
+          "seq": 406,
+          "at": "2026-10-09T16:28:59.180Z",
+          "type": "step.completed",
+          "toolName": "web_fetch",
+          "state": "completed",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog/release/v22.0.0/\\\"}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"gYyAJnA7pUJFsjaxkbHSReJhBoq306tH\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Fetched https://nodejs.org/en/blog/release/v22.0.0/ (HTTP 200)\\n\\nNode.js 22.0.0 (Current)\\nRG\\n\\nRafael Gonzaga\\n\\nNode.js 22.0.0 (Current)\\n2024-04-24, Version 22.0.0 (Current), @RafaelGSS and @marco-ippolito\\n\\nWe're excited to announce the release of Node.js 22! Highlights include require()ing ESM graphs, WebSocket client, updates of the V8 JavaScript engine, and more! As a reminder, Node.js 22 will enter long-term support (LTS) in October, but until then, it will be the \\\"Current\\\" release for the next six months. We encourage you to explore the new features and benefits offered by this latest release and evaluate their potential impact on your applications.\\n\\nOther Notable Changes\\n[25c79f3331] - esm: drop support for import assertions (Nicolò Ribaudo) #52104\\n[818c10e86d] - lib: improve perf of AbortSignal creation (Raz Luvaton) #52408\\n[4f68c7c1c9] - watch: mark as stable (Moshe Atlow) #52074\\n[02b0bc01fe] - (SEMVER-MAJOR) deps: update V8 to 12.4.254.14 (Michaël Zasso) #52465\\n[c975384264] - (SEMVER-MAJOR) lib: enable WebSocket by default (Aras Abbasi) #51594\\n[1abff07392] - (SEMVER-MAJOR) stream: bump default highWaterMark (Robert Nagy) #52037\\n[1a5acd0638] - (SEMVER-MAJOR) v8: enable maglev on supported architectures (Keyhan Vakil) #51360\\n[128c60d906] - (SEMVER-MINOR) cli: implement node --run <script-in-package-json> (Yagiz Nizipli) #52190\\n[151d365ad1] - (SEMVER-MINOR) fs: expose glob and globSync (Moshe Atlow) #51912\\n[5f7fad2605] - (SEMVER-MINOR) module: support require()ing synchronous ESM graphs (Joyee Cheung) #51977\\nSemver-Major Commits\\n[2b1e7c2fcb] - (SEMVER-MAJOR) build: compile with C++20 support on Windows (StefanStojanovic) #52465\\n[12d00f1479] - (SEMVER-MAJOR) build: reset embedder string to \\\"-node.0\\\" (Michaël Zasso) #52465\\n[5f08e11a3c] - (SEMVER-MAJOR) build: reset embedder string to \\\"-node.0\\\" (Michaël Zasso) #52293\\n[94f0369d1d] - (SEMVER-MAJOR) build: reset embedder string to \\\"-node.0\\\" (Michaël Zasso) #51362\\n[58674cd1d8] - (SEMVER-MAJOR) build: reset embedder string to \\\"-node.0\\\" (Michaël Zasso) #50115\\n[60e836427e] - (SEMVER-MAJOR) console: treat non-strings as separate argument in console.assert() (Jacob Hummer) #49722\\n[d62ab3a1ef] - (SEMVER-MAJOR) crypto: runtime deprecate hmac constructor (Marco Ippolito) #52071\\n[de0602d190] - (SEMVER-MAJOR) crypto: runtime deprecate Hash constructor (Marco Ippolito) #51880\\n[215f4d04b7] - (SEMVER-MAJOR) crypto: move createCipher and createDecipher to eol (Marco Ippolito) #50973\\n[30801b8aaf] - (SEMVER-MAJOR) deps: V8: cherry-pick cd10ad7cdbe5 (Joyee Cheung) #52465\\n[521b629ab1] - (SEMVER-MAJOR) deps: V8: revert CL 5331688 (Michaël Zasso) #52465\\n[3795e97e6c] - (SEMVER-MAJOR) deps: patch V8 to support compilation with MSVC (StefanStojanovic) #52465\\n[5bde9e677d] - (SEMVER-MAJOR) deps: silence internal V8 deprecation warning (Michaël Zasso) #52465\\n[46e628c6f2] - (SEMVER-MAJOR) deps: patch V8 to avoid duplicated zlib symbol (Michaël Zasso) #52465\\n[f824e40a82] - (SEMVER-MAJOR) deps: remove usage of a C++20 feature from V8 (Michaël Zasso) #52465\\n[d2c84c9a13] - (SEMVER-MAJOR) deps: avoid compilation error with ASan (Michaël Zasso) #52465\\n[95d6045bdb] - (SEMVER-MAJOR) deps: disable V8 concurrent sparkplug compilation (Michaël Zasso) #52465\\n[00f55f5743] - (SEMVER-MAJOR) deps: silence irrelevant V8 warning (Michaël Zasso) #52465\\n[764085aa66] - (SEMVER-MAJOR) deps: always define V8_EXPORT_PRIVATE as no-op (Michaël Zasso) #52465\\n[02b0bc01fe] - (SEMVER-MAJOR) deps: update V8 to 12.4.254.14 (Michaël Zasso) #52465\\n[0ec50a19dd] - (SEMVER-MAJOR) deps: V8: cherry-pick cd10ad7cdbe5 (Joyee Cheung) #52293\\n[021b0b7dee] - (SEMVER-MAJOR) deps: V8: backport c4be0a97f981 (Richard Lau) #52293\\n[681aaf85c7] - (SEMVER-MAJOR) deps: silence internal V8 deprecation warning (Michaël Zasso) #52293\\n[c563a1c4e4] - (SEMVER-MAJOR) deps: patch V8 to support compilation with MSVC (Stefan Stojanovic) #52293\\n[11e94b9987] - (SEMVER-MAJOR) deps: patch V8 to avoid duplicated zlib symbol (Michaël Zasso) #52293\\n[856163e23c] - (SEMVER-MAJOR) deps: remove usage of a C++20 feature from V8 (Michaël Zasso) #52293\\n[b530214127] - (SEMVER-MAJOR) deps: avoid compilation error with ASan (Michaël Zasso) #52\\n\\n[Partial page: segment 0 of 5. Read further captured sections with browser action=\\\"read\\\", snapshotId=\\\"capture-6569cf41-c462-40e4-b34c-1f0020ff04cc\\\", segmentIndex=1..4. Do not cite unread sections.]\\nOutline:\\nNode.js 22.0.0 (Current)\\n2024-04-24, Version 22.0.0 (Current), @RafaelGSS and @marco-ippolito\\nOther Notable Changes\\nSemver-Major Commits\\nSemver-Minor Commits\\nSemver-Patch Commits\\nSHASUMS\\n\\n(Content truncated. Fetch a more specific URL or section for the full text.)\"\n        }\n      ],\n      \"isError\": false\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-6886368c-fbac-49b7-846c-5678d35db703",
+          "seq": 407,
+          "at": "2026-10-09T16:28:59.181Z",
+          "type": "step.completed",
+          "toolName": "web_fetch",
+          "state": "failed",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/about/releases\\\"}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"R8uNxDGR3Uv8TlZs9MuoHxX3jJhsIIzU\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Error: BROWSER_BUSY\"\n        }\n      ],\n      \"isError\": true\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-6886368c-fbac-49b7-846c-5678d35db703",
+          "seq": 1020,
+          "at": "2026-10-09T16:29:16.901Z",
+          "type": "step.started",
+          "toolName": "web_fetch",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/download/releases/\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-6886368c-fbac-49b7-846c-5678d35db703",
+          "seq": 1021,
+          "at": "2026-10-09T16:29:21.648Z",
+          "type": "step.completed",
+          "toolName": "web_fetch",
+          "state": "completed",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/download/releases/\\\"}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"2ObEAR4HbppqdP6lu8JEbf0CeugrPW19\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Fetched https://nodejs.org/en/about/previous-releases (HTTP 200)\\n\\nNode.js Releases\\nCommercial support for versions past the Maintenance LTS phase is available through our OpenJS Ecosystem Sustainability Program partners\\n\\nMajor Node.js versions enter Current release status for six months, which gives library authors time to add support for them. Historically (up to Node.js 26), odd-numbered releases (9, 11, etc.) become unsupported after six months, and even-numbered releases (10, 12, etc.) move to Active LTS status and are ready for general use. Starting with Node.js 27, the release cycle will be annual and every major version will move to LTS status after its six-month Current phase (and six additional months of Alpha phase). LTS release status is \\\"long-term support\\\", which typically guarantees that critical bugs will be fixed for a total of 30 months. Production applications should only use Active LTS or Maintenance LTS releases.\\n\\nRelease Schedule\\n\\nFull details regarding the Node.js release schedule are available on GitHub.\\n\\nLooking for the latest release of a version branch?\\nNode.js\\tCodename\\tFirst released\\tLast updated\\tStatus\\t\\nv26\\t-\\tMay 05, 2026\\tOct 07, 2026\\tCurrent\\tDetails\\nv25\\t-\\tOct 15, 2025\\tMar 31, 2026\\tEOL\\tDetails\\nv24\\tKrypton\\tMay 06, 2025\\tSep 07, 2026\\tLTS\\tDetails\\nv23\\t-\\tOct 16, 2024\\tMay 14, 2025\\tEOL\\tDetails\\nv22\\tJod\\tApr 24, 2024\\tSep 23, 2026\\tLTS\\tDetails\\nv21\\t-\\tOct 17, 2023\\tApr 10, 2024\\tEOL\\tDetails\\nv20\\tIron\\tApr 17, 2023\\tMar 24, 2026\\tEOL\\tDetails\\nv19\\t-\\tOct 17, 2022\\tApr 10, 2023\\tEOL\\tDetails\\nv18\\tHydrogen\\tApr 18, 2022\\tMar 27, 2025\\tEOL\\tDetails\\nv17\\t-\\tOct 19, 2021\\tJun 01, 2022\\tEOL\\tDetails\\nv16\\tGallium\\tApr 20, 2021\\tAug 08, 2023\\tEOL\\tDetails\\nv15\\t-\\tOct 20, 2020\\tApr 06, 2021\\tEOL\\tDetails\\nv14\\tFermium\\tApr 21, 2020\\tFeb 16, 2023\\tEOL\\tDetails\\nv13\\t-\\tOct 22, 2019\\tApr 29, 2020\\tEOL\\tDetails\\nv12\\tErbium\\tApr 23, 2019\\tApr 05, 2022\\tEOL\\tDetails\\nv11\\t-\\tOct 23, 2018\\tApr 30, 2019\\tEOL\\tDetails\\nv10\\tDubnium\\tApr 24, 2018\\tApr 06, 2021\\tEOL\\tDetails\\nv9\\t-\\tOct 31, 2017\\tJun 12, 2018\\tEOL\\tDetails\\nv8\\tCarbon\\tMay 30, 2017\\tDec 17, 2019\\tEOL\\tDetails\\nv7\\t-\\tOct 25, 2016\\tJul 11, 2017\\tEOL\\tDetails\\nv6\\tBoron\\tApr 26, 2016\\tApr 03, 2019\\tEOL\\tDetails\\nv5\\t-\\tOct 29, 2015\\tJun 23, 2016\\tEOL\\tDetails\\nv4\\tArgon\\tSep 08, 2015\\tMar 29, 2018\\tEOL\\tDetails\\nv0\\t-\\tFeb 06, 2015\\tFeb 22, 2017\\tEOL\\tDetails\\nOfficial vs. Community Installation Methods\\n\\nThe Node.js website provides several non-interactive installation methods, including command-line interfaces (CLIs), operating system (OS) package managers (e.g., brew), and Node.js version managers (e.g., nvm).\\n\\nTo highlight and promote community contributions, the Node.js project introduced a revised Downloads page categorizing installation methods as either “Official” or “Community.” This provides users with increased flexibility and choice. To ensure clarity, we’ve defined criteria for each category.\\n\\nOfficial Installation Methods\\n\\nInstallation methods designated as “Official” must meet the following requirements:\\n\\nRequirements (Official Installation Methods)\\nNew Node.js releases must be available simultaneously with the official release.\\nProject maintainers must have a close relationship with the Node.js project, including direct communication channels.\\nInstallation method must download official binaries bundled by the Node.js project.\\nInstallation method must not build from source when pre-built binaries are available, nor should it alter the official binaries.\\nCommunity Installation Methods\\n\\nCommunity installation methods included on the self-service download page (located at /download) must also adhere to a minimum set of criteria:\"\n        }\n      ],\n      \"isError\": false\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-6886368c-fbac-49b7-846c-5678d35db703",
+          "seq": 1166,
+          "at": "2026-10-09T16:29:29.961Z",
+          "type": "step.started",
+          "toolName": "web_fetch",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/api/whatsnew.html\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-6886368c-fbac-49b7-846c-5678d35db703",
+          "seq": 1167,
+          "at": "2026-10-09T16:29:32.526Z",
+          "type": "step.completed",
+          "toolName": "web_fetch",
+          "state": "failed",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/api/whatsnew.html\\\"}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"oucxQWyIy6htIhnTVtXvEf2nzgpHjcvH\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Error: BROWSER_HTTP_ERROR\"\n        }\n      ],\n      \"isError\": true\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-6886368c-fbac-49b7-846c-5678d35db703",
+          "seq": 1201,
+          "at": "2026-10-09T16:29:38.534Z",
+          "type": "step.started",
+          "toolName": "web_fetch",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/api/\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-6886368c-fbac-49b7-846c-5678d35db703",
+          "seq": 1202,
+          "at": "2026-10-09T16:29:46.240Z",
+          "type": "step.completed",
+          "toolName": "web_fetch",
+          "state": "completed",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/api/\\\"}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"lwYGK1Iz9W2RUihbCBI9MWm4GdmurLWb\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Fetched https://nodejs.org/api/ (HTTP 200)\\n\\nIndex\\n#\\nAbout this documentation\\nUsage and example\\nAssertion testing\\nAsynchronous context tracking\\nAsync hooks\\nBenchmark runner\\nBuffer\\nC++ addons\\nC/C++ addons with Node-API\\nC++ embedder API\\nChild processes\\nCluster\\nCommand-line options\\nConsole\\nCrypto\\nDebugger\\nDeprecated APIs\\nDiagnostics Channel\\nDNS\\nDomain\\nEnvironment Variables\\nErrors\\nEvents\\nFile system\\nFFI\\nGlobals\\nHTTP\\nHTTP/2\\nHTTPS\\nInspector\\nInternationalization\\nIterable Streams API\\nModules: CommonJS modules\\nModules: ECMAScript modules\\nModules: node:module API\\nModules: Packages\\nModules: TypeScript\\nNet\\nOS\\nPath\\nPerformance hooks\\nPermissions\\nProcess\\nPunycode\\nQuery strings\\nReadline\\nREPL\\nReport\\nSingle executable applications\\nSQLite\\nStream\\nString decoder\\nTest runner\\nTimers\\nTLS/SSL\\nTrace events\\nTTY\\nUDP/datagram\\nURL\\nUtilities\\nV8\\nVirtual File System\\nVM\\nWASI\\nWeb Crypto API\\nWeb Streams API\\nWorker threads\\nZlib\\nCode repository and issue tracker\"\n        }\n      ],\n      \"isError\": false\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-6886368c-fbac-49b7-846c-5678d35db703",
+          "seq": 2440,
+          "at": "2026-10-09T16:30:15.583Z",
+          "type": "step.started",
+          "toolName": "write",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"file_path\\\":\\\"C:\\\\\\\\temp\\\\\\\\weftmate-eval-action-02-web-document-KdDun6/node24说明.md\\\",\\\"content\\\":\\\"# Node.js 24 相比 22 值得留意的变化\\\\n\\\\n本文基于官方发布说明整理，简要对比 Node.js 22.0.0（2024-04-24）与 Node.js 24.0.0（2025-05-06）的核心变化，方便评估升级影响。\\\\n\\\\n## 版本定位\\\\n- Node.js 22.0.0：2024-04-24 发布，Current 六个月后进入 LTS，代号 Jod。\\\\n- Node.js 24.0.0：2025-05-06 发布，Current 六个月后进入 LTS，代号 Krypton。\\\\n\\\\n来源：[Node.js 22.0.0 Release](https://nodejs.org/en/blog/release/v22.0.0/)；[Node.js 24.0.0 Release](https://nodejs.org/en/blog/release/v24.0.0/)\\\\n\\\\n## 关键变化\\\\n\\\\n### 1. V8 引擎升级\\\\n- 22 → V8 12.4.254.14\\\\n- 24 → V8 13.6\\\\n\\\\nV8 13.6 带来新 JS 特性：\\\\n- Float16Array\\\\n- Explicit resource management\\\\n- RegExp.escape\\\\n- WebAssembly Memory64\\\\n- Error.isError\\\\n\\\\n来源：[Node.js 24.0.0 Release - V8 13.6](https://nodejs.org/en/blog/release/v24.0.0/)\\\\n\\\\n### 2. npm 版本\\\\n- 24 捆绑 npm 11，性能、安全性及对现代包的兼容性提升。\\\\n来源：[Node.js 24.0.0 Release - npm 11](https://nodejs.org/en/blog/release/v24.0.0/)\\\\n\\\\n### 3. AsyncLocalStorage 默认实现\\\\nNode.js 24 将 AsyncLocalStorage 默认切换为 AsyncContextFrame，实现更高效的异步上下文追踪，API 更稳健。\\\\n来源：[Node.js 24.0.0 Release - AsyncLocalStorage defaults to AsyncContextFrame](https://nodejs.org/en/blog/release/v24.0.0/)\\\\n\\\\n### 4. URLPattern 成全局可用\\\\nURLPattern API 现直接暴露在全局，无需额外导入，提供类似正则的 URL 模式匹配能力。\\\\n来源：[Node.js 24.0.0 Release - URLPattern as a global](https://nodejs.org/en/blog/release/v24.0.0/)\\\\n\\\\n### 5. Permission Model 稳定化\\\\n实验性 Permission Model 从 `--experimental-permission` 改为 `--permission`，标志着更接近稳定。\\\\n来源：[Node.js 24.0.0 Release - Permission Model Improvements](https://nodejs.org/en/blog/release/v24.0.0/)\\\\n\\\\n### 6. Test Runner 增强\\\\nTest Runner 现在自动等待子测试完成，无需手动 await，减少未处理 Promise 的常见错误。\\\\n来源：[Node.js 24.0.0 Release - Test Runner Enhancements](https://nodejs.org/en/blog/release/v24.0.0/)\\\\n\\\\n### 7. Undici 升级\\\\n内置 HTTP 客户端升级到 Undici 7，性能提升并支持更多现代 HTTP 特性。\\\\n来源：[Node.js 24.0.0 Release - Undici 7](https://nodejs.org/en/blog/release/v24.0.0/)\\\\n\\\\n### 8. 构建与平台变化\\\\n- Windows 编译：不再支持 MSVC，需使用 ClangCL 编译 Node.js。\\\\n来源：[Node.js 24.0.0 Release](https://nodejs.org/en/blog/release/v24.0.0/)\\\\n\\\\n### 9. Node.js 22 的代表性新特性，供对比参考\\\\n- 支持 require() 同步 ESM 图\\\\n- 默认启用 WebSocket 客户端\\\\n- `node --run <script-in-package-json>` CLI\\\\n- `fs.glob` / `fs.globSync` 暴露\\\\n- V8 12.4 及 Maglev 启用\\\\n来源：[Node.js 22.0.0 Release](https://nodejs.org/en/blog/release/v22.0.0/)\\\\n\\\\n## 升级建议\\\\n- 检查依赖对 V8 13.6 新语法的兼容性\\\\n- 若使用 AsyncLocalStorage，注意上下文行为变化\\\\n- Windows 编译环境需切换至 ClangCL\\\\n- 评估 Permission Model `--permission` 的使用场景\\\\n- 测试用例可利用 Test Runner 自动等待简化代码\\\\n\\\\n如需完整废弃/移除列表，请查阅官方发布说明的 Deprecations and Removals 章节。\\\\n\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-6886368c-fbac-49b7-846c-5678d35db703",
+          "seq": 2523,
+          "at": "2026-10-09T16:30:26.369Z",
+          "type": "step.started",
+          "toolName": "load_tools",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"names\\\":[\\\"read\\\"]}\"\n}"
+        },
+        {
+          "sessionId": "session-6886368c-fbac-49b7-846c-5678d35db703",
+          "seq": 2524,
+          "at": "2026-10-09T16:30:26.375Z",
+          "type": "step.completed",
+          "toolName": "load_tools",
+          "state": "completed",
+          "text": "{\n  \"arguments\": \"{\\\"names\\\":[\\\"read\\\"]}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"uZvzDLorXcomGEZKUbTdkMssd3qqZPp9\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"{\\\"loaded\\\":[\\\"read\\\"]}\"\n        }\n      ],\n      \"isError\": false\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-6886368c-fbac-49b7-846c-5678d35db703",
+          "seq": 2566,
+          "at": "2026-10-09T16:30:39.039Z",
+          "type": "step.started",
+          "toolName": "read",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"file_path\\\":\\\"C:\\\\\\\\temp\\\\\\\\weftmate-eval-action-02-web-document-KdDun6/node24说明.md\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-6886368c-fbac-49b7-846c-5678d35db703",
+          "seq": 2567,
+          "at": "2026-10-09T16:30:39.089Z",
+          "type": "step.completed",
+          "toolName": "read",
+          "state": "completed",
+          "text": "{\n  \"arguments\": \"{\\\"file_path\\\":\\\"C:\\\\\\\\temp\\\\\\\\weftmate-eval-action-02-web-document-KdDun6/node24说明.md\\\"}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"2aCOoorFxtFEFAt70WK5SpQCYPRWNUzZ\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"<path>C:\\\\temp\\\\weftmate-eval-action-02-web-document-KdDun6\\\\node24说明.md</path>\\n<type>file</type>\\n<content>\\n1: # Node.js 24 相比 22 值得留意的变化\\n2: \\n3: 本文基于官方发布说明整理，简要对比 Node.js 22.0.0（2024-04-24）与 Node.js 24.0.0（2025-05-06）的核心变化，方便评估升级影响。\\n4: \\n5: ## 版本定位\\n6: - Node.js 22.0.0：2024-04-24 发布，Current 六个月后进入 LTS，代号 Jod。\\n7: - Node.js 24.0.0：2025-05-06 发布，Current 六个月后进入 LTS，代号 Krypton。\\n8: \\n9: 来源：[Node.js 22.0.0 Release](https://nodejs.org/en/blog/release/v22.0.0/)；[Node.js 24.0.0 Release](https://nodejs.org/en/blog/release/v24.0.0/)\\n10: \\n11: ## 关键变化\\n12: \\n13: ### 1. V8 引擎升级\\n14: - 22 → V8 12.4.254.14\\n15: - 24 → V8 13.6\\n16: \\n17: V8 13.6 带来新 JS 特性：\\n18: - Float16Array\\n19: - Explicit resource management\\n20: - RegExp.escape\\n21: - WebAssembly Memory64\\n22: - Error.isError\\n23: \\n24: 来源：[Node.js 24.0.0 Release - V8 13.6](https://nodejs.org/en/blog/release/v24.0.0/)\\n25: \\n26: ### 2. npm 版本\\n27: - 24 捆绑 npm 11，性能、安全性及对现代包的兼容性提升。\\n28: 来源：[Node.js 24.0.0 Release - npm 11](https://nodejs.org/en/blog/release/v24.0.0/)\\n29: \\n30: ### 3. AsyncLocalStorage 默认实现\\n31: Node.js 24 将 AsyncLocalStorage 默认切换为 AsyncContextFrame，实现更高效的异步上下文追踪，API 更稳健。\\n32: 来源：[Node.js 24.0.0 Release - AsyncLocalStorage defaults to AsyncContextFrame](https://nodejs.org/en/blog/release/v24.0.0/)\\n33: \\n34: ### 4. URLPattern 成全局可用\\n35: URLPattern API 现直接暴露在全局，无需额外导入，提供类似正则的 URL 模式匹配能力。\\n36: 来源：[Node.js 24.0.0 Release - URLPattern as a global](https://nodejs.org/en/blog/release/v24.0.0/)\\n37: \\n38: ### 5. Permission Model 稳定化\\n39: 实验性 Permission Model 从 `--experimental-permission` 改为 `--permission`，标志着更接近稳定。\\n40: 来源：[Node.js 24.0.0 Release - Permission Model Improvements](https://nodejs.org/en/blog/release/v24.0.0/)\\n41: \\n42: ### 6. Test Runner 增强\\n43: Test Runner 现在自动等待子测试完成，无需手动 await，减少未处理 Promise 的常见错误。\\n44: 来源：[Node.js 24.0.0 Release - Test Runner Enhancements](https://nodejs.org/en/blog/release/v24.0.0/)\\n45: \\n46: ### 7. Undici 升级\\n47: 内置 HTTP 客户端升级到 Undici 7，性能提升并支持更多现代 HTTP 特性。\\n48: 来源：[Node.js 24.0.0 Release - Undici 7](https://nodejs.org/en/blog/release/v24.0.0/)\\n49: \\n50: ### 8. 构建与平台变化\\n51: - Windows 编译：不再支持 MSVC，需使用 ClangCL 编译 Node.js。\\n52: 来源：[Node.js 24.0.0 Release](https://nodejs.org/en/blog/release/v24.0.0/)\\n53: \\n54: ### 9. Node.js 22 的代表性新特性，供对比参考\\n55: - 支持 require() 同步 ESM 图\\n56: - 默认启用 WebSocket 客户端\\n57: - `node --run <script-in-package-json>` CLI\\n58: - `fs.glob` / `fs.globSync` 暴露\\n59: - V8 12.4 及 Maglev 启用\\n60: 来源：[Node.js 22.0.0 Release](https://nodejs.org/en/blog/release/v22.0.0/)\\n61: \\n62: ## 升级建议\\n63: - 检查依赖对 V8 13.6 新语法的兼容性\\n64: - 若使用 AsyncLocalStorage，注意上下文行为变化\\n65: - Windows 编译环境需切换至 ClangCL\\n66: - 评估 Permission Model `--permission` 的使用场景\\n67: - 测试用例可利用 Test Runner 自动等待简化代码\\n68: \\n69: 如需完整废弃/移除列表，请查阅官方发布说明的 Deprecations and Removals 章节。\\n\\n(End of file - total 69 lines)\\n</content>\"\n        }\n      ],\n      \"isError\": false\n    }\n  ]\n}"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 0,
+    "manual": 0,
+    "unsupported": 0,
+    "skippedChecks": 1,
+    "passRate": 1,
+    "coverage": 1
+  }
+}
