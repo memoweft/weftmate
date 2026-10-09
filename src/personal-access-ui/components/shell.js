@@ -283,11 +283,11 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
     }
     function paintScreen(view) {
         for (const name of ui.views)
-            ui.byId(`${name}-view`).hidden = name !== view && !(view === 'account' && name === 'assistant');
+            ui.byId(`${name}-view`).hidden = name !== view && !(['account', 'memory'].includes(view) && name === 'assistant') && !(view === 'memory' && name === 'account');
         if (ui.motionView !== view) globalThis.WeftMotion?.reveal(ui.byId(`${view}-view`), 'base');
         ui.motionView = view;
-        document.body.classList.toggle('assistant-active', view === 'assistant' || view === 'account');
-        if (view === 'account') {
+        document.body.classList.toggle('assistant-active', ['assistant', 'account', 'memory'].includes(view));
+        if (view === 'account' || view === 'memory') {
             ui.showSettingsDialog?.(); ui.byId('assistant-view').setAttribute('aria-hidden', 'true');
         } else {
             ui.byId('assistant-view').setAttribute('aria-hidden', 'false'); ui.hideSettingsDialog?.();

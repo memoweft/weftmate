@@ -42,7 +42,8 @@ public enum WeftDesignTokens {
         "54": 54,
         "56": 56,
         "64": 64,
-        "72": 72
+        "72": 72,
+        "settings-nav-gap": 4
     ]
     public static let radius: [String: Double] = [
         "4": 4,
@@ -183,7 +184,9 @@ public enum WeftDesignTokens {
         "--accent-hover": "#ced8cc",
         "--accent-soft": "#353e35",
         "--danger": "#ffa3ad",
-        "--danger-soft": "#442a2e"
+        "--danger-soft": "#442a2e",
+        "--success": "#a7e7cf",
+        "--success-soft": "#253c32"
     ]
     public static let desktopLightblue: [String: String] = [
         "--accent": "#365eab",
@@ -227,7 +230,10 @@ public enum WeftDesignTokens {
         "--line": "#deded7",
         "--danger": "#ab3d3d"
     ]
-    public static let mobileDark: [String: String] = [:]
+    public static let mobileDark: [String: String] = [
+        "--success": "#a7e7cf",
+        "--success-soft": "#253c32"
+    ]
 }
 
 // Native A4c recipes. System text styles retain Dynamic Type and platform metrics.
@@ -270,6 +276,7 @@ public enum AppleTokens {
         public static let p56: CGFloat = 56
         public static let p64: CGFloat = 64
         public static let p72: CGFloat = 72
+        public static let psettings-nav-gap: CGFloat = 4
     }
     public enum Radius {
         public static let r4: CGFloat = 4

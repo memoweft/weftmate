@@ -129,6 +129,7 @@ function call(method, params={}, timeoutMs=45000) { return androidBridge.call(me
 
 
 function page(name){
+  if(name==='memory')state.settingsChild=true;
   $('cloud-auth-page')?.classList.remove('active'); $('cloud-settings-page')?.classList.remove('active');
   workspaceNotices.clear();
   closeResourcePage({restoreFocus:false});clearTimeout(state.homePollTimer);
