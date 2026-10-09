@@ -65,6 +65,25 @@ test('replica filters private, muted, invalid and mixed-currentness sources, and
   assert.deepEqual(replicaDelta({ ...snapshot, items: [] }, first.hashes).remove, ['mixed', 'preferred-tea']);
 });
 
+test('temporary history never enters the encrypted replica, including a switch during the native read', async t => {
+  const f=await fixture(t), vault=await W.browserVault('temporary',{indexedDB:new IDBFactory(),crypto:webcrypto});
+  const sessions: any={ordinary:{modelProfileId:'mimo'},private:{modelProfileId:'mimo',memoryMode:'off'},
+    restored:{modelProfileId:'mimo',memoryMode:'on',hasTemporaryContent:true},racing:{modelProfileId:'mimo'}};
+  const reads: string[]=[];f.context.accountState=()=>({sessions});
+  f.context.backend.readEvents=async ({sessionId}:any)=>{
+    reads.push(sessionId);
+    if(sessionId==='racing')sessions.racing.hasTemporaryContent=true;
+    return {events:[{type:'user.message',data:{text:sessionId==='ordinary'?'ordinary history':'PRIVATE_SENTINEL'}}]};
+  };
+  const engine=await W.create({vault,identity,host:f.host,control:async()=>({authorized:true,hostId:identity.hostId,accountId:'account-test',generation:1}),crypto:webcrypto});
+  try {
+    await engine.sync();
+    assert.deepEqual(reads,['racing','ordinary']);
+    assert.deepEqual(engine.view().snapshot.recent.map((row:any)=>row.id),['ordinary']);
+    assert.ok(!JSON.stringify(await vault.load()).includes('PRIVATE_SENTINEL'));
+  } finally {engine.close();}
+});
+
 test('online sync → cloud-only relevant recall → offline preference → idempotent import → forget cannot resurrect', async t => {
   const f = await fixture(t), vault = await W.browserVault('roundtrip', { indexedDB: new IDBFactory(), crypto: webcrypto });
   let lastBody: any;

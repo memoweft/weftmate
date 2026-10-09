@@ -51,6 +51,18 @@ test('unknown capability versions keep main history readable and disable logical
   assert.equal(f.core.composerState('文字').messageDisabled,true);assert.equal(f.core.supportsChat('chatSend'),false);
   f.core.state.personalCapabilities.chatSend=1;assert.equal(f.core.composerState('文字').messageDisabled,false);
 });
+
+test('temporary composer leaves logical main and sends a private side creation without changing main policy', async()=>{
+  const f=setup((path,options)=>path.endsWith('/commands')&&options.method==='POST'
+    ? {command:{...JSON.parse(options.body),commandId:'private-create',state:'pending'}} : {});
+  f.core.startNewConversation(false,true);
+  assert.equal(f.core.state.selectedChatId,null);
+  assert.equal(f.core.state.newConversationTemporary,true);
+  await f.core.sendDraft('临时合成问题');
+  const posts=f.requests.filter(row=>row.options.method==='POST').map(row=>JSON.parse(row.options.body));
+  assert.equal(posts.length,1);assert.equal(posts[0].kind,'session.create');assert.equal(posts[0].temporary,true);
+  assert.equal(f.main.chatId,'chat-main');
+});
 test('search cursor reset clears old bodies, hits and resource cache before a fresh tail is fetched',async()=>{
   let freshRead=false,f:any;
   f=setup(path=>{

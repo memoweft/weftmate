@@ -1,0 +1,429 @@
+{
+  "checks": [
+    "temporary recall of ordinary memory",
+    "default new conversation cannot recall private preference",
+    "settled new conversation cannot recall private preference",
+    "memory switch before/after and fork blocked"
+  ],
+  "turns": [
+    {
+      "sessionId": "session-b28ccc77-3a48-4474-a81f-a182998c259d",
+      "text": "请记住：我给盆栽浇水的量是每次 137 毫升。只需简短确认，不要调用工具。",
+      "reply": "已记住：盆栽每次浇水 137 毫升。",
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-09T21:07:54.471Z",
+          "data": {
+            "taskId": "cmd-e9410bb2-5860-4e71-b6c8-78348c8026df",
+            "receiptId": "cd84807b-f73e-4bc9-ada9-db9341cf1d6f",
+            "text": "请记住：我给盆栽浇水的量是每次 137 毫升。只需简短确认，不要调用工具。",
+            "commandId": "cmd-e9410bb2-5860-4e71-b6c8-78348c8026df",
+            "requestId": "e4802c2d-7b3f-4b61-8da6-e4018f29509f"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-09T21:07:54.472Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-09T21:07:54.525Z",
+          "data": {
+            "taskId": "cmd-e9410bb2-5860-4e71-b6c8-78348c8026df",
+            "turn": 1,
+            "receiptId": "cd84807b-f73e-4bc9-ada9-db9341cf1d6f",
+            "commandId": "cmd-e9410bb2-5860-4e71-b6c8-78348c8026df",
+            "requestId": "e4802c2d-7b3f-4b61-8da6-e4018f29509f",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-09T21:07:54.525Z",
+          "data": {
+            "text": "请记住：我给盆栽浇水的量是每次 137 毫升。只需简短确认，不要调用工具。",
+            "receiptId": "cd84807b-f73e-4bc9-ada9-db9341cf1d6f"
+          }
+        },
+        {
+          "seq": 27,
+          "type": "assistant.message",
+          "at": "2026-10-09T21:07:56.065Z",
+          "data": {
+            "text": "已记住：盆栽每次浇水 137 毫升。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 28,
+          "type": "task.ended",
+          "at": "2026-10-09T21:07:56.065Z",
+          "data": {
+            "taskId": "cmd-e9410bb2-5860-4e71-b6c8-78348c8026df",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 29,
+            "receiptId": "cd84807b-f73e-4bc9-ada9-db9341cf1d6f",
+            "commandId": "cmd-e9410bb2-5860-4e71-b6c8-78348c8026df",
+            "requestId": "e4802c2d-7b3f-4b61-8da6-e4018f29509f",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 29,
+          "type": "turn.ended",
+          "at": "2026-10-09T21:07:56.066Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ]
+    },
+    {
+      "sessionId": "session-2851df01-3c9e-48c4-93cc-65df469999da",
+      "text": "这次只临时说：我喝茶只用紫金色珊瑚杯。请告诉我之前说过每次给盆栽浇多少水，不要重复杯子信息，也不要调用工具。",
+      "reply": "每次给盆栽浇水 137 毫升。",
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-09T21:08:03.897Z",
+          "data": {
+            "taskId": "cmd-e7d95a11-adc2-4a86-9028-0b3829de2c78",
+            "receiptId": "6e35b8f2-0c32-4875-aab6-b393a2810667",
+            "text": "这次只临时说：我喝茶只用紫金色珊瑚杯。请告诉我之前说过每次给盆栽浇多少水，不要重复杯子信息，也不要调用工具。",
+            "commandId": "cmd-e7d95a11-adc2-4a86-9028-0b3829de2c78",
+            "requestId": "a589621c-34d8-4312-85e1-ad867247140c"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-09T21:08:03.897Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-09T21:08:03.934Z",
+          "data": {
+            "taskId": "cmd-e7d95a11-adc2-4a86-9028-0b3829de2c78",
+            "turn": 1,
+            "receiptId": "6e35b8f2-0c32-4875-aab6-b393a2810667",
+            "commandId": "cmd-e7d95a11-adc2-4a86-9028-0b3829de2c78",
+            "requestId": "a589621c-34d8-4312-85e1-ad867247140c",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-09T21:08:03.934Z",
+          "data": {
+            "text": "这次只临时说：我喝茶只用紫金色珊瑚杯。请告诉我之前说过每次给盆栽浇多少水，不要重复杯子信息，也不要调用工具。",
+            "receiptId": "6e35b8f2-0c32-4875-aab6-b393a2810667"
+          }
+        },
+        {
+          "seq": 27,
+          "type": "assistant.message",
+          "at": "2026-10-09T21:08:07.620Z",
+          "data": {
+            "text": "每次给盆栽浇水 137 毫升。",
+            "memoryUsed": [
+              {
+                "id": "cognition-c9a6373f65dd8ed1c00ac1eddf364449c8c99140cc7d532b098e57d94dbfd917",
+                "kind": "cognition",
+                "summary": "用户给盆栽浇水的量是每次 137 毫升。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 28,
+          "type": "task.ended",
+          "at": "2026-10-09T21:08:07.621Z",
+          "data": {
+            "taskId": "cmd-e7d95a11-adc2-4a86-9028-0b3829de2c78",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 29,
+            "receiptId": "6e35b8f2-0c32-4875-aab6-b393a2810667",
+            "commandId": "cmd-e7d95a11-adc2-4a86-9028-0b3829de2c78",
+            "requestId": "a589621c-34d8-4312-85e1-ad867247140c",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 29,
+          "type": "turn.ended",
+          "at": "2026-10-09T21:08:07.622Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ]
+    },
+    {
+      "sessionId": "session-8e8128aa-4147-4d4b-abab-47d74592bf00",
+      "text": "我之前说喝茶只用什么杯子？如果没有可靠依据请说不知道，不要猜测，不要调用工具。",
+      "reply": "我不知道。当前对话里没有可靠依据，背景记忆中也没有相关记录，所以不作猜测。",
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-09T21:08:08.057Z",
+          "data": {
+            "taskId": "cmd-86918072-904b-41e1-9df4-4e245ecf7a0f",
+            "receiptId": "0ca7b0e1-dc07-40aa-ab9e-ef7e4453bd04",
+            "text": "我之前说喝茶只用什么杯子？如果没有可靠依据请说不知道，不要猜测，不要调用工具。",
+            "commandId": "cmd-86918072-904b-41e1-9df4-4e245ecf7a0f",
+            "requestId": "190d57e5-6d05-4655-9c30-cb37440d2a8d"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-09T21:08:08.058Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-09T21:08:08.091Z",
+          "data": {
+            "taskId": "cmd-86918072-904b-41e1-9df4-4e245ecf7a0f",
+            "turn": 1,
+            "receiptId": "0ca7b0e1-dc07-40aa-ab9e-ef7e4453bd04",
+            "commandId": "cmd-86918072-904b-41e1-9df4-4e245ecf7a0f",
+            "requestId": "190d57e5-6d05-4655-9c30-cb37440d2a8d",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-09T21:08:08.091Z",
+          "data": {
+            "text": "我之前说喝茶只用什么杯子？如果没有可靠依据请说不知道，不要猜测，不要调用工具。",
+            "receiptId": "0ca7b0e1-dc07-40aa-ab9e-ef7e4453bd04"
+          }
+        },
+        {
+          "seq": 33,
+          "type": "assistant.message",
+          "at": "2026-10-09T21:08:10.423Z",
+          "data": {
+            "text": "我不知道。当前对话里没有可靠依据，背景记忆中也没有相关记录，所以不作猜测。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 34,
+          "type": "task.ended",
+          "at": "2026-10-09T21:08:10.423Z",
+          "data": {
+            "taskId": "cmd-86918072-904b-41e1-9df4-4e245ecf7a0f",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 35,
+            "receiptId": "0ca7b0e1-dc07-40aa-ab9e-ef7e4453bd04",
+            "commandId": "cmd-86918072-904b-41e1-9df4-4e245ecf7a0f",
+            "requestId": "190d57e5-6d05-4655-9c30-cb37440d2a8d",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 35,
+          "type": "turn.ended",
+          "at": "2026-10-09T21:08:10.423Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ]
+    },
+    {
+      "sessionId": "session-8789d709-f755-46f0-bc97-a1d89bc48e32",
+      "text": "我之前说喝茶只用什么杯子？如果没有可靠依据请说不知道，不要猜测，不要调用工具。",
+      "reply": "我不知道。当前对话里没有可靠依据能确定你之前说过用什么杯子喝茶，也不去猜测。",
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-09T21:08:11.865Z",
+          "data": {
+            "taskId": "cmd-cec9c7e9-f213-46aa-9472-f8aa42381f06",
+            "receiptId": "72d68a38-2c8d-470a-8bf1-a0b01c1b585f",
+            "text": "我之前说喝茶只用什么杯子？如果没有可靠依据请说不知道，不要猜测，不要调用工具。",
+            "commandId": "cmd-cec9c7e9-f213-46aa-9472-f8aa42381f06",
+            "requestId": "f92a23b6-cfb9-4dad-be28-1a2394c8182f"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-09T21:08:11.865Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-09T21:08:11.914Z",
+          "data": {
+            "taskId": "cmd-cec9c7e9-f213-46aa-9472-f8aa42381f06",
+            "turn": 1,
+            "receiptId": "72d68a38-2c8d-470a-8bf1-a0b01c1b585f",
+            "commandId": "cmd-cec9c7e9-f213-46aa-9472-f8aa42381f06",
+            "requestId": "f92a23b6-cfb9-4dad-be28-1a2394c8182f",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-09T21:08:11.915Z",
+          "data": {
+            "text": "我之前说喝茶只用什么杯子？如果没有可靠依据请说不知道，不要猜测，不要调用工具。",
+            "receiptId": "72d68a38-2c8d-470a-8bf1-a0b01c1b585f"
+          }
+        },
+        {
+          "seq": 35,
+          "type": "assistant.message",
+          "at": "2026-10-09T21:08:14.323Z",
+          "data": {
+            "text": "我不知道。当前对话里没有可靠依据能确定你之前说过用什么杯子喝茶，也不去猜测。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 36,
+          "type": "task.ended",
+          "at": "2026-10-09T21:08:14.323Z",
+          "data": {
+            "taskId": "cmd-cec9c7e9-f213-46aa-9472-f8aa42381f06",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 37,
+            "receiptId": "72d68a38-2c8d-470a-8bf1-a0b01c1b585f",
+            "commandId": "cmd-cec9c7e9-f213-46aa-9472-f8aa42381f06",
+            "requestId": "f92a23b6-cfb9-4dad-be28-1a2394c8182f",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 37,
+          "type": "turn.ended",
+          "at": "2026-10-09T21:08:14.323Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ]
+    },
+    {
+      "sessionId": "session-b28ccc77-3a48-4474-a81f-a182998c259d",
+      "text": "这次不形成记忆：我旅行只带银蓝色折叠水壶。只回复收到，不要调用工具。",
+      "reply": "收到。",
+      "events": [
+        {
+          "seq": 30,
+          "type": "task.queued",
+          "at": "2026-10-09T21:08:14.722Z",
+          "data": {
+            "taskId": "cmd-216cbe5d-3136-4fee-b125-f059d8a373b3",
+            "receiptId": "dc02f70d-cce4-4838-8522-4c9cb3ccc445",
+            "text": "这次不形成记忆：我旅行只带银蓝色折叠水壶。只回复收到，不要调用工具。",
+            "commandId": "cmd-216cbe5d-3136-4fee-b125-f059d8a373b3",
+            "requestId": "baa45eea-71a2-4f8f-91ae-534a04907cfd"
+          }
+        },
+        {
+          "seq": 31,
+          "type": "turn.started",
+          "at": "2026-10-09T21:08:14.722Z",
+          "data": {
+            "turn": 2
+          }
+        },
+        {
+          "seq": 33,
+          "type": "task.started",
+          "at": "2026-10-09T21:08:14.761Z",
+          "data": {
+            "taskId": "cmd-216cbe5d-3136-4fee-b125-f059d8a373b3",
+            "turn": 2,
+            "receiptId": "dc02f70d-cce4-4838-8522-4c9cb3ccc445",
+            "commandId": "cmd-216cbe5d-3136-4fee-b125-f059d8a373b3",
+            "requestId": "baa45eea-71a2-4f8f-91ae-534a04907cfd",
+            "turnTaskId": "turn-2"
+          }
+        },
+        {
+          "seq": 35,
+          "type": "user.message",
+          "at": "2026-10-09T21:08:14.761Z",
+          "data": {
+            "text": "这次不形成记忆：我旅行只带银蓝色折叠水壶。只回复收到，不要调用工具。",
+            "receiptId": "dc02f70d-cce4-4838-8522-4c9cb3ccc445"
+          }
+        },
+        {
+          "seq": 44,
+          "type": "assistant.message",
+          "at": "2026-10-09T21:08:17.258Z",
+          "data": {
+            "text": "收到。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 45,
+          "type": "task.ended",
+          "at": "2026-10-09T21:08:17.258Z",
+          "data": {
+            "taskId": "cmd-216cbe5d-3136-4fee-b125-f059d8a373b3",
+            "turn": 2,
+            "reason": "completed",
+            "nativeTurnEndSeq": 46,
+            "receiptId": "dc02f70d-cce4-4838-8522-4c9cb3ccc445",
+            "commandId": "cmd-216cbe5d-3136-4fee-b125-f059d8a373b3",
+            "requestId": "baa45eea-71a2-4f8f-91ae-534a04907cfd",
+            "turnTaskId": "turn-2"
+          }
+        },
+        {
+          "seq": 46,
+          "type": "turn.ended",
+          "at": "2026-10-09T21:08:17.259Z",
+          "data": {
+            "reason": "completed",
+            "turn": 2
+          }
+        }
+      ]
+    }
+  ],
+  "synthetic": true,
+  "coreCommit": "a9b115f",
+  "failure": "Error: ENOENT: no such file or directory, scandir 'C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-mem2-real-RpPce9\\profile\\accounts\\owner-1e75c79b-0e3a-4e21-a9e0-43d6353de9cc\\memory-home'"
+}
