@@ -264,7 +264,7 @@ export function createAuthenticationOperations(context) {
       context.accountState(ownerId).devices[result.deviceId], result.csrfToken), token: result.token };
   }
 
-  async function registerAccount(body) {
+  async function registerAccount(body, { executionAccount = false } = {}) {
     exactKeys(body, ['username', 'password', 'deviceName', 'displayName'],
       ['username', 'password', 'deviceName']);
     const user = normalizeUsername(body.username);
@@ -295,6 +295,13 @@ export function createAuthenticationOperations(context) {
           devices: {}, sessions: {}, commands: {} };
         const device = newPasswordDevice(next, name, context.timestamp());
         const { version: _version, hostId: _hostId, ownerId: _ownerId, ...account } = next;
+        // Only the first cloud desktop on an unused installation may execute.
+        // Keep the legacy owner and all its storage paths intact.
+        const legacy = nextRoot.accounts[nextRoot.legacyOwnerId];
+        if (executionAccount && nextRoot.executionOwnerId === undefined &&
+            Object.keys(nextRoot.accounts).length === 1 && legacy.account === null &&
+            Object.keys(legacy.devices).length === 0 && Object.keys(legacy.sessions).length === 0 &&
+            Object.keys(legacy.commands).length === 0) nextRoot.executionOwnerId = ownerId;
         nextRoot.accounts[ownerId] = account;
         return device;
       }));
