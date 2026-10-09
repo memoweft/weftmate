@@ -11,7 +11,7 @@
 .chat-day { display:flex; justify-content:center; padding-block:.7rem; }
 .chat-day-toggle { font-size:.85rem; color:var(--muted); }
 .chat-message-menu { display:none; width:fit-content; margin-top:.4rem; }
-.actions-visible .chat-message-menu,.main-chat-row:focus-within .chat-message-menu { display:block; }
+.actions-visible .chat-message-menu,.chat-message-menu[open],.main-chat-row:focus-within .chat-message-menu { display:block; }
 .main-chat-row .message-actions { display:none; }
 .main-chat-row.actions-visible .message-actions,.main-chat-row:focus-within .message-actions { display:flex; }
 .chat-message-menu summary { display:flex; align-items:center; justify-content:center; min-width:44px; min-height:44px; cursor:pointer; }
