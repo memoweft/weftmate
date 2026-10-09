@@ -6,6 +6,8 @@
 
 本包只增加验收运行器、合成截图和结果，并更新 STATE 的 Windows-4 一行；不修改产品代码。Windows 验收版本 `1bbc863aa664d58105c0f1b086c5f8dc702c9235`，Core（记忆核心）为当前 CI（持续集成）固定的 `a9b115f2d0de10bdf79bd7000057da6cbda7c046` 只读归档；没有修改 Core 工作树。验收期间主干又合入 UX-2，该包不属于本次已测版本；不把后来的代码冒充已测代码。
 
+原M2运行器的 `revision.core` 在没有独立 `.git` 的归档目录中误读了外层WeftMate提交。原字段保留；实际导入源已逐文件与固定Core归档比对一致，归档本身又与该Core提交重新导出比对，见 [core-source-verification.json](core-source-verification.json)。它不表示本轮使用了WeftMate提交作为Core代码。
+
 ## QA-1、QA-2 逐条复验
 
 | 原问题 | 本轮结果 | 本轮证据 |
