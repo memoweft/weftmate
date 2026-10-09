@@ -151,6 +151,9 @@ final class CloudLoginModel: ObservableObject {
             form.resendAt = Date().addingTimeInterval(60); error = nil
         } catch { self.error = accountMessage(error) }
     }
+    func offlineAuthorization(hostID: String) async throws -> OfflineAuthorization {
+        try await accountClient().offlineStatus(hostID: hostID)
+    }
     func refreshDirectory() async {
         guard authenticated else { return }
         do {

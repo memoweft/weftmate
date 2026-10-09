@@ -1,0 +1,11 @@
+{
+  "scope": "entire isolated simulator app data container",
+  "files": 10,
+  "bytes": 6551,
+  "plaintextOrKeyHits": 0,
+  "encodings": [
+    "UTF-8",
+    "UTF-16LE",
+    "UTF-16BE"
+  ]
+}
