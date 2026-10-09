@@ -408,7 +408,8 @@ function modelsPage(target){target.append(heading('对话模型','手机直连�
     if(!result.models?.length)body.append(el('p','muted','尚未保存手机模型'));
     for(const item of result.models){const card=el('div','model-library-entry');
       card.append(el('strong','',`${item.displayName||item.modelId}${item.selected?' · 当前':''}`),
-        el('small','',`${item.endpoint.startsWith('http://')?'本地服务':'手机直连云'} · ${item.modelId}`));
+        el('small','',`${item.endpoint.startsWith('http://')?'本地服务':'手机直连云'} · ${item.modelId}`),
+        el('small','',item.deepThinking?.supported?'支持深入思考':'此模型未声明深入思考能力'));
       const controls=el('div','model-library-actions');
       const use=el('button','secondary','在手机使用');use.disabled=item.selected===true;
       use.addEventListener('click',async()=>{try{const selected=await call('models.select',{endpoint:item.endpoint,modelId:item.modelId});
