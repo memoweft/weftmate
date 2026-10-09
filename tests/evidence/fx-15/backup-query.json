@@ -1,0 +1,342 @@
+{
+  "backupReadOnly": true,
+  "vaultExcluded": true,
+  "paidModelRequests": 0,
+  "probes": [
+    {
+      "syntheticPrivateCredentials": false,
+      "selectAvailableModel": false,
+      "results": [
+        {
+          "index": 0,
+          "loginStatus": 200,
+          "rows": [
+            {
+              "httpStatus": 200,
+              "count": 0,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 200,
+              "count": 0,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 200,
+              "count": 0,
+              "modelUnavailable": false
+            }
+          ],
+          "selectionStatus": null,
+          "memoryModelUnavailable": false,
+          "modelCount": 10,
+          "configuredModelCount": 9
+        },
+        {
+          "index": 1,
+          "loginStatus": 200,
+          "rows": [
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            }
+          ],
+          "selectionStatus": null,
+          "memoryModelUnavailable": false,
+          "modelCount": 0,
+          "configuredModelCount": 0
+        },
+        {
+          "index": 2,
+          "loginStatus": 200,
+          "rows": [
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            }
+          ],
+          "selectionStatus": null,
+          "memoryModelUnavailable": false,
+          "modelCount": 0,
+          "configuredModelCount": 0
+        },
+        {
+          "index": 3,
+          "loginStatus": 200,
+          "rows": [
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            }
+          ],
+          "selectionStatus": null,
+          "memoryModelUnavailable": false,
+          "modelCount": 1,
+          "configuredModelCount": 0
+        }
+      ]
+    },
+    {
+      "syntheticPrivateCredentials": true,
+      "selectAvailableModel": false,
+      "results": [
+        {
+          "index": 0,
+          "loginStatus": 200,
+          "rows": [
+            {
+              "httpStatus": 200,
+              "count": 0,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 200,
+              "count": 0,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 200,
+              "count": 0,
+              "modelUnavailable": false
+            }
+          ],
+          "selectionStatus": null,
+          "memoryModelUnavailable": false,
+          "modelCount": 10,
+          "configuredModelCount": 10
+        },
+        {
+          "index": 1,
+          "loginStatus": 200,
+          "rows": [
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            }
+          ],
+          "selectionStatus": null,
+          "memoryModelUnavailable": false,
+          "modelCount": 0,
+          "configuredModelCount": 0
+        },
+        {
+          "index": 2,
+          "loginStatus": 200,
+          "rows": [
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            }
+          ],
+          "selectionStatus": null,
+          "memoryModelUnavailable": false,
+          "modelCount": 0,
+          "configuredModelCount": 0
+        },
+        {
+          "index": 3,
+          "loginStatus": 200,
+          "rows": [
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            }
+          ],
+          "selectionStatus": null,
+          "memoryModelUnavailable": false,
+          "modelCount": 1,
+          "configuredModelCount": 1
+        }
+      ]
+    },
+    {
+      "syntheticPrivateCredentials": true,
+      "selectAvailableModel": true,
+      "results": [
+        {
+          "index": 0,
+          "loginStatus": 200,
+          "rows": [
+            {
+              "httpStatus": 200,
+              "count": 0,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 200,
+              "count": 0,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 200,
+              "count": 0,
+              "modelUnavailable": false
+            }
+          ],
+          "selectionStatus": 200,
+          "memoryModelUnavailable": false,
+          "modelCount": 10,
+          "configuredModelCount": 10
+        },
+        {
+          "index": 1,
+          "loginStatus": 200,
+          "rows": [
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            }
+          ],
+          "selectionStatus": null,
+          "memoryModelUnavailable": false,
+          "modelCount": 0,
+          "configuredModelCount": 0
+        },
+        {
+          "index": 2,
+          "loginStatus": 200,
+          "rows": [
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 503,
+              "count": null,
+              "modelUnavailable": false
+            }
+          ],
+          "selectionStatus": null,
+          "memoryModelUnavailable": false,
+          "modelCount": 0,
+          "configuredModelCount": 0
+        },
+        {
+          "index": 3,
+          "loginStatus": 200,
+          "rows": [
+            {
+              "httpStatus": 200,
+              "count": 0,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 200,
+              "count": 0,
+              "modelUnavailable": false
+            },
+            {
+              "httpStatus": 200,
+              "count": 0,
+              "modelUnavailable": false
+            }
+          ],
+          "selectionStatus": 200,
+          "memoryModelUnavailable": false,
+          "modelCount": 1,
+          "configuredModelCount": 1
+        }
+      ]
+    }
+  ],
+  "storeVersion": 3,
+  "storeValid": true,
+  "httpModelUnavailableCount": 24,
+  "startupCodes": {
+    "STORE_CORRUPT": false,
+    "MEMORY_CONFIGURATION_INVALID": false,
+    "R01_REHEARSAL_NETWORK_BLOCKED": false,
+    "ENOENT": false,
+    "ERR_MODULE_NOT_FOUND": false,
+    "BACKUP_": false,
+    "profile marker": false,
+    "single instance": false,
+    "EACCES": false,
+    "TypeError": false,
+    "SyntaxError": false
+  },
+  "backupCopyDeleted": true
+}
