@@ -1,11 +1,11 @@
 {
-  "requests": 232,
-  "returnedUsage": 231,
-  "missingUsage": 1,
-  "input": 485109,
-  "cached": 339904,
-  "output": 33334,
-  "knownCnyLowerBound": 0.21867108,
+  "requests": 247,
+  "returnedUsage": 245,
+  "missingUsage": 2,
+  "input": 511863,
+  "cached": 359744,
+  "output": 35315,
+  "knownCnyLowerBound": 0.22994388000000002,
   "pricing": {
     "verifiedAt": "2026-10-09",
     "url": "https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash",
@@ -32,6 +32,7 @@
     "C:/Temp/weftmate-m2-exit-mimo-JHU6vL",
     "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-mf1-ESTiaZ",
     "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-mf1-uipJ6d",
+    "C:\\Temp\\weftmate-m2-exit-mimo-86eeeU",
     "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-mf1-iN0F7V",
     "C:/Temp/weftmate-m2-exit-mimo-gD47Gz",
     "C:/Temp/weftmate-m2-exit-lan-HgIe97"
