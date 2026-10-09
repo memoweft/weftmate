@@ -2,6 +2,31 @@
 
 2026-10-07 已部署 Node 24.21.0、官方 frp 0.71.0、cloud schema 4。现场沿用 Ubuntu nginx，公网 TCP 443 使用 stream（TCP 流代理）+ ssl_preread（读取 TLS 握手名称）；HAProxy/Caddy 文件保留为旧 S2 隔离验证夹具，生产使用本目录 nginx 配置。真实地址、邮箱、密钥、密码、证书和运行数据只在服务器私有文件或仓库外运行目录。
 
+## UP-2 桌面客户端配置（2026-10-09）
+
+生产保持 DEP-1 的 `dfe56ec` release（发布版本）与 schema（数据库结构版本）6，仅更新 `CLOUD_OIDC_CLIENTS`。修改前的 `cloud.env` 保存在 `/root/weftmate-deploy/up-2-20261009T021230Z/cloud.env`，私有目录 0700、文件 0600。只更换客户端配置一行，其余行逐字节一致；只重启 `weftmate-cloud`，未重启 frps/nginx、未更新代码或数据库结构。失败时恢复该文件并重启 cloud（云服务），无需恢复整个数据库快照。
+
+正式客户端列表只列 ID（标识）与回调：
+
+| client_id | redirect_uri（回调地址） |
+|---|---|
+| `weftmate-apple` | `com.weftmate.apple:/oauth/callback` |
+| `weftmate-android` | `com.memoweft.weftmate:/oauth` |
+| `weftmate-desktop` | `http://127.0.0.1:18186/personal/v1/ui/` |
+
+桌面为 native（原生）公开客户端，Apple / Android 原配置保持不变；没有临时、虚构或通配回调。`/healthz`、OIDC（开放身份连接协议）discovery（发现文档）、JWKS（签名公钥集合）和桌面 `/auth/authorization` 均为 200，cloud/frps/nginx 均 active（运行中）。隔离真实 Electron（桌面程序框架）、复制的版本 2 本地密码账号与运维合成云账号验通桌面绑定及正式内容证书、中继、公网 443；验证账号经正式注销接口清理，临时宿主与数据目录关闭删除。证据见 [UP-2 验证](../../../tests/evidence/up-2/README.md)，日用程序与数据未动。
+
+配置文件回滚命令仅用于本次客户端配置引入的故障：
+
+```sh
+cp -p /root/weftmate-deploy/up-2-20261009T021230Z/cloud.env /etc/weftmate-cloud/cloud.env
+systemctl restart weftmate-cloud
+systemctl is-active weftmate-cloud
+curl -fsS https://api.weftmate.com/healthz
+```
+
+日用电脑配置及本人重启后绑定步骤见 [SETUP](../../../docs/SETUP.md#日用-windows-云账号up-2)；远程网页回调需在确认实际用途后另行精确登记。本次没有读取或输出 `cloud.env` 的凭据值，备份不下载、不提交。
+
 ## 拓扑与现有服务
 
 | SNI（服务器名称指示） | 路径 | TLS（传输层安全协议）终止 |
