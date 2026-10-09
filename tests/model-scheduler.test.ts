@@ -4,6 +4,35 @@ import { createInferenceQueue, createModelScheduler, runPreemptibleFormation } f
 import { acquireModelSlot, scheduledModelFetch, isBackgroundPurpose, runWithModelSlot } from '../src/model-scheduler-client.mjs';
 const pause = (ms = 15) => new Promise(resolve => setTimeout(resolve, ms));
 
+test('owner local memory follows a changed model and credential while waiting, without changing the Core route', async () => {
+  const profiles = ['a', 'b'].map(id => ({ id, baseUrl: 'http://127.0.0.1:1/v1', model: `model-${id}` }));
+  let current = profiles[0], ready = false, observed = false;
+  const calls: any[] = [];
+  const bridge = await createModelScheduler({ isIdle: async () => true,
+    profileFor: id => profiles.find(p => p.id === id), credentialFor: p => `key-${p.id}`,
+    backgroundRoute: async () => null, memoryProfileFor: owner => owner === 'owner-a' ? current : null,
+    backgroundReady: async () => { observed = true; return ready; },
+    fetchImpl: async (url, options) => {
+      if (String(url).endsWith('/props')) return Response.json({ total_slots: 1 });
+      calls.push({ body: JSON.parse(options.body), key: options.headers.authorization });
+      return Response.json({ completed: true });
+    },
+  });
+  const send = (owner, credential) => fetch(`${bridge.memoryBaseUrl('current-local', owner, 'session')}/chat/completions`,
+    { method: 'POST', headers: { authorization: `Bearer ${credential}` }, body: JSON.stringify({ model: '@current', messages: [] }) });
+  try {
+    assert.equal((await send('owner-other', bridge.memoryCredential('owner-a'))).status, 403);
+    assert.equal((await send('owner-a', 'key-a')).status, 403, 'upstream key does not grant a dynamic owner route');
+    const pending = send('owner-a', bridge.memoryCredential('owner-a'));
+    for (let i = 0; i < 100 && !observed; i++) await pause();
+    assert.ok(observed); assert.equal(calls.length, 0);
+    current = profiles[1]; ready = true;
+    assert.equal((await pending).status, 200);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].body.model, 'model-b'); assert.equal(calls[0].key, 'Bearer key-b');
+  } finally { await bridge.close(); }
+});
+
 test('a running formation yields its slot to chat and resumes at the next idle opportunity', async () => {
   const queue = createInferenceQueue({ pollMs: 1 });
   const owner = new AbortController();

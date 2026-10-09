@@ -1,0 +1,26 @@
+✔ owner local memory follows a changed model and credential while waiting, without changing the Core route (1044.5769ms)
+✔ a running formation yields its slot to chat and resumes at the next idle opportunity (1.6006ms)
+✔ single-slot formation buffers partial output, yields to greeting, and returns only its completed retry (19.0187ms)
+✔ yielded formation rechecks the selected background model before resuming after chat (2008.7621ms)
+✔ session progress uses actual queue position, observed switcher and stream phases, and disappears when its lease closes (59.0256ms)
+✔ background waits through tool gaps, foreground has FIFO priority and cancellation removes waiting work (17.93ms)
+✔ native stream socket owns the slot; a cancelled or crashed owner releases it and queued memory uses its selected model (127.7544ms)
+✔ background provider begins its own deadline after queueing and nested native streaming uses the same lease (119.4332ms)
+✔ queued MemoWeft HTTP receives informational keepalive without masking the final error status (106.8273ms)
+✔ foreground HTTP completion holds its slot through the response body (22.172ms)
+✔ native compaction remains foreground while titles and companion work are background (0.2774ms)
+✔ cloud requests run concurrently while local foreground and queued background hold their service (126.6998ms)
+✔ unknown and multiple slots bypass queueing; only observed single slots queue (6.0803ms)
+✔ address-only native requests use the matching profile credential to probe authenticated 8081 props (3.4079ms)
+✔ native recovery pages completed boundaries and retains an unfinished turn across the cursor (4.9285ms)
+✔ history is opt-in, ordered, pausable, cancellable and idempotent; privacy exclusions survive restart (12.6449ms)
+✔ durable new DSH turns recover a missed IPC with frozen per-turn exclusions (0.4107ms)
+✔ long visible messages remain complete boundary sources instead of silently disappearing (10.1184ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3802.2097
