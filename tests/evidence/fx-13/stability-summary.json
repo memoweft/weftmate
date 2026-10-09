@@ -1,0 +1,39 @@
+{
+  "source": "tests/evidence/fx-13/clean-v2-desktop/results.json",
+  "startedAt": "2026-10-09T16:55:04.115Z",
+  "finishedAt": "2026-10-09T17:25:23.415Z",
+  "elapsedMs": 1813456,
+  "cycles": 68,
+  "passed": 68,
+  "failed": 0,
+  "medianMs": 1381,
+  "p95Ms": 1936,
+  "maxMs": 4291,
+  "over2Seconds": 2,
+  "requestCount": 10696,
+  "requestStorage": "append-only JSONL; request records excluded from results.json",
+  "eventLoopP99Ms": 34.865151,
+  "maxEventLoopMs": 123.404287,
+  "rssGrowthMiB": 80.875,
+  "logScan": {
+    "files": 1,
+    "bodyHits": 0,
+    "keyHits": 0,
+    "bytes": 78224
+  },
+  "modelCalls": 114,
+  "exactWriteInstrumentationValid": false,
+  "exactWriteLimitation": "Inherited QA hook does not synchronize builtin ESM exports; zero is not a measured write count.",
+  "measurement": "Date.now immediately before the real Send click through visible and enabled Stop locator; includes new conversation creation and detection latency.",
+  "originalQa2": {
+    "cycles": 64,
+    "elapsedMs": 1801445,
+    "medianMs": 1355,
+    "p95Ms": 3364,
+    "maxMs": 4313,
+    "over2Seconds": 24,
+    "requestSerialization": "repeated entire growing request array",
+    "concurrentOtherTests": true
+  },
+  "cleaned": true
+}

@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { lstat, readdir, readFile, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import { executionDirectory } from './personal-project-context.mjs';
+import { shellScriptInvocations, scriptWriteTargets } from './personal-write-targets.mjs';
 const additions = new WeakMap();
 const fileKey = file => process.platform === 'win32' ? file.toLowerCase() : file;
 
@@ -48,7 +49,7 @@ export async function snapshotFiles(directory) {
   return files;
 }
 
-async function snapshotFor(exec) {
+async function snapshotFor(exec, scriptFiles) {
   const cwd = executionDirectory(exec.agent.session);
   const files = await snapshotFiles(cwd);
   // Native shell workdir and native file arguments can name user-selected paths.
@@ -56,8 +57,10 @@ async function snapshotFor(exec) {
   if (typeof workdir === 'string') {
     for (const entry of await snapshotFiles(path.resolve(cwd, workdir))) files.set(...entry);
   }
-  if (['write', 'edit'].includes(exec.name) && typeof exec.arguments?.file_path === 'string') {
-    const file = path.resolve(cwd, exec.arguments.file_path);
+  const explicitFiles = ['write', 'edit'].includes(exec.name) && typeof exec.arguments?.file_path === 'string'
+    ? [path.resolve(cwd, exec.arguments.file_path)] : [];
+  explicitFiles.push(...scriptFiles);
+  for (const file of new Set(explicitFiles)) {
     try {
       const stat = await lstat(file);
       if (stat.isFile()) files.set(fileKey(await realpath(file)), { filePath: file, size: stat.size, mtimeMs: stat.mtimeMs,
@@ -72,9 +75,15 @@ export async function trackNativeFiles(bridge, exec, next, identity) {
   const cwd = executionDirectory(exec.agent?.session);
   if (exec.agent?.session?.header?.origin === 'subagent' ||
       exec.agent?.session?.header?.agentPreset !== 'personal-remote' || !cwd) return next();
-  const before = await snapshotFor(exec);
+  // Compare the same selected script outputs on both sides. A script can
+  // change its own source; that must not turn an unobserved existing output
+  // into a claimed creation after execution.
+  const scriptFiles = ['pwsh', 'bash', 'shell'].includes(exec.name)
+    ? shellScriptInvocations(exec.arguments?.command ?? '', path.resolve(cwd, exec.arguments?.workdir ?? '.'), exec.name !== 'bash')
+      .flatMap(scriptWriteTargets) : [];
+  const before = await snapshotFor(exec, scriptFiles);
   const result = await next();
-  const after = await snapshotFor(exec);
+  const after = await snapshotFor(exec, scriptFiles);
   const artifacts = [];
   for (const [key, current] of after) {
     if (before.get(key)?.sha256 === current.sha256) continue;
