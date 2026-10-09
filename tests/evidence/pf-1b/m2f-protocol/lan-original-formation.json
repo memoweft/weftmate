@@ -1,0 +1,7 @@
+[
+  {
+    "state": "applied",
+    "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:df8c747bf42d800428273954767c5e89:cd5b8eba45886bd8e82641a9d9793814d41b200511b5ea554c09df4cbd2b2bd5\",\"cognitions\":[{\"action\":\"form\",\"cognition_id\":\"cognition-1ca8bb64ee0ec569ae8c7c8ebe55c10041cb5708fb631a6f903ba977edf81014\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":2}",
+    "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u521a\\u624d\\u8bf4\\u9519\\u4e86\\uff0c\\u73b0\\u5728\\u56fa\\u5b9a\\u7a7a\\u51fa\\u6765\\u7684\\u662f\\u5468\\u4e94\\u665a\\u4e0a\\uff0c\\u5468\\u4e09\\u5df2\\u7ecf\\u6ca1\\u7a7a\\u4e86\\uff0c\\u4ee5\\u540e\\u6309\\u5468\\u4e94\\u6765\\u5b89\\u6392\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"3ad21dde-1246-4527-913e-f4f7a4b1185b\\\",\\\"sentence_id\\\":\\\"t0\\\"}]}]}\",\"finish_reason\":\"stop\",\"model\":\"local-quality\",\"usage\":{\"completion_tokens\":801,\"prompt_tokens\":4649,\"prompt_tokens_details\":{\"cached_tokens\":4252},\"total_tokens\":5450}}"
+  }
+]

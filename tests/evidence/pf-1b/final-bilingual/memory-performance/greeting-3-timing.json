@@ -1,0 +1,38 @@
+[
+  {
+    "foreground": false,
+    "firstTextMs": null,
+    "firstDeltaMs": 302.0054,
+    "turnFirstTextMs": null,
+    "turnFirstDeltaMs": 1122.1371,
+    "totalMs": 1172.1778999999997,
+    "text": "",
+    "tools": [],
+    "usage": {
+      "completion_tokens": 64,
+      "prompt_tokens": 130,
+      "total_tokens": 194,
+      "prompt_tokens_details": {
+        "cached_tokens": 125
+      }
+    }
+  },
+  {
+    "foreground": true,
+    "firstTextMs": 3554.5153,
+    "firstDeltaMs": 1887.9469,
+    "turnFirstTextMs": 4372.4729,
+    "turnFirstDeltaMs": 2705.9044999999996,
+    "totalMs": 3876.3168000000005,
+    "text": "你好！有什么我可以帮你整理的或解释的吗？",
+    "tools": [],
+    "usage": {
+      "completion_tokens": 101,
+      "prompt_tokens": 2440,
+      "total_tokens": 2541,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  }
+]

@@ -1,0 +1,2 @@
+[weftmate] [dsh:stderr] [weftmate] gateway POST failed: EPERM Error
+[weftmate] gateway POST /sessions/session-4afbf72c-321f-436c-b2b7-993e7113a4e6/memory-cleanup: HTTP 400 gateway-error

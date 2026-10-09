@@ -1,0 +1,209 @@
+{
+  "reason": "Initial test used nonexistent tool.called/name; client projects native tools as step.started/toolName. Original reports retained. Corrected check evaluated on same six actual turns, no repeat generation.",
+  "results": [
+    {
+      "id": "reminder-1",
+      "originalStatus": "failed",
+      "checks": {
+        "completed": true,
+        "exactlyOne": true,
+        "kind": true,
+        "content": true,
+        "hour": true,
+        "calendar": true,
+        "nativeTool": true,
+        "noSourceOrTimers": true,
+        "confirmation": true
+      },
+      "status": "passed",
+      "reply": "<tool_call><function=load_tools><parameter(names>[\"schedule_create\"])</parameter></function></tool_call>\n已建立：明天（2026-10-10）早上 8:00（Asia/Shanghai）提醒你交报告。",
+      "schedules": [
+        {
+          "id": "schedule-1",
+          "nativeId": "schedule-1",
+          "text": "交报告",
+          "kind": "reminder",
+          "timeZone": "Asia/Shanghai",
+          "repeat": null,
+          "state": "scheduled",
+          "nextRunAt": "2026-10-10T00:00:00.000Z",
+          "lastRunAt": null,
+          "approvalMode": "auto",
+          "sessionId": "session-e16b3634-8339-4f87-8aae-5f87da67e4f7"
+        }
+      ]
+    },
+    {
+      "id": "reminder-2",
+      "originalStatus": "failed",
+      "checks": {
+        "completed": true,
+        "exactlyOne": true,
+        "kind": true,
+        "content": true,
+        "hour": true,
+        "calendar": true,
+        "nativeTool": true,
+        "noSourceOrTimers": true,
+        "confirmation": true
+      },
+      "status": "passed",
+      "reply": "<tool_call><function=load_tools><parameter(names>[\"schedule_create\"])</parameter></function></tool_call>\n已建立：明天（2026-10-10）早上 08:00（Asia/Shanghai）一次性提醒“交报告”。",
+      "schedules": [
+        {
+          "id": "schedule-1",
+          "nativeId": "schedule-1",
+          "text": "交报告",
+          "kind": "reminder",
+          "timeZone": "Asia/Shanghai",
+          "repeat": null,
+          "state": "scheduled",
+          "nextRunAt": "2026-10-10T00:00:00.000Z",
+          "lastRunAt": null,
+          "approvalMode": "auto",
+          "sessionId": "session-2bdbfb63-0fe5-4114-bd2b-d623a146638f"
+        }
+      ]
+    },
+    {
+      "id": "reminder-3",
+      "originalStatus": "failed",
+      "checks": {
+        "completed": true,
+        "exactlyOne": true,
+        "kind": true,
+        "content": true,
+        "hour": true,
+        "calendar": true,
+        "nativeTool": true,
+        "noSourceOrTimers": true,
+        "confirmation": true
+      },
+      "status": "passed",
+      "reply": "<tool_call><function=load_tools><parameter.names>[\"schedule_create\"]</parameter></function></tool_call>\n已建立提醒：明天（2026-10-10）早上 8:00（Asia/Shanghai）提醒你交报告。",
+      "schedules": [
+        {
+          "id": "schedule-1",
+          "nativeId": "schedule-1",
+          "text": "交报告",
+          "kind": "reminder",
+          "timeZone": "Asia/Shanghai",
+          "repeat": null,
+          "state": "scheduled",
+          "nextRunAt": "2026-10-10T00:00:00.000Z",
+          "lastRunAt": null,
+          "approvalMode": "auto",
+          "sessionId": "session-630cf12e-78a1-4cb0-8ba6-42ed98233726"
+        }
+      ]
+    },
+    {
+      "id": "task-1",
+      "originalStatus": "failed",
+      "checks": {
+        "completed": true,
+        "exactlyOne": true,
+        "kind": true,
+        "content": true,
+        "hour": true,
+        "calendar": true,
+        "nativeTool": true,
+        "noSourceOrTimers": true,
+        "confirmation": true
+      },
+      "status": "passed",
+      "reply": "已建立：每周一 08:00（Asia/Shanghai）定时执行“生成周报”，首次为 2026-10-12 上午 8:00。",
+      "schedules": [
+        {
+          "id": "schedule-1",
+          "nativeId": "schedule-1",
+          "text": "生成周报",
+          "kind": "task",
+          "timeZone": "Asia/Shanghai",
+          "repeat": {
+            "kind": "weekly",
+            "time": "08:00:00",
+            "weekday": 1
+          },
+          "state": "scheduled",
+          "nextRunAt": "2026-10-12T00:00:00.000Z",
+          "lastRunAt": null,
+          "approvalMode": "auto",
+          "sessionId": "session-870e55d4-c6ee-4fd4-a57a-7caf6506487f"
+        }
+      ]
+    },
+    {
+      "id": "task-2",
+      "originalStatus": "failed",
+      "checks": {
+        "completed": true,
+        "exactlyOne": true,
+        "kind": true,
+        "content": true,
+        "hour": true,
+        "calendar": true,
+        "nativeTool": true,
+        "noSourceOrTimers": true,
+        "confirmation": true
+      },
+      "status": "passed",
+      "reply": "已建立：每周一 08:00（Asia/Shanghai）定时执行“生成周报文件”，首次为 2026-10-12 08:00。",
+      "schedules": [
+        {
+          "id": "schedule-1",
+          "nativeId": "schedule-1",
+          "text": "生成周报文件",
+          "kind": "task",
+          "timeZone": "Asia/Shanghai",
+          "repeat": {
+            "kind": "weekly",
+            "time": "08:00:00",
+            "weekday": 1
+          },
+          "state": "scheduled",
+          "nextRunAt": "2026-10-12T00:00:00.000Z",
+          "lastRunAt": null,
+          "approvalMode": "auto",
+          "sessionId": "session-998c9290-70b4-4a09-94d1-87a214ae775d"
+        }
+      ]
+    },
+    {
+      "id": "task-3",
+      "originalStatus": "failed",
+      "checks": {
+        "completed": true,
+        "exactlyOne": true,
+        "kind": true,
+        "content": true,
+        "hour": true,
+        "calendar": true,
+        "nativeTool": true,
+        "noSourceOrTimers": true,
+        "confirmation": true
+      },
+      "status": "passed",
+      "reply": "已建立：每周一 08:00（Asia/Shanghai）定时执行“生成周报”，首次为 2026 年 10 月 12 日 08:00，之后每周一重复。",
+      "schedules": [
+        {
+          "id": "schedule-1",
+          "nativeId": "schedule-1",
+          "text": "生成周报",
+          "kind": "task",
+          "timeZone": "Asia/Shanghai",
+          "repeat": {
+            "kind": "weekly",
+            "time": "08:00:00",
+            "weekday": 1
+          },
+          "state": "scheduled",
+          "nextRunAt": "2026-10-12T00:00:00.000Z",
+          "lastRunAt": null,
+          "approvalMode": "auto",
+          "sessionId": "session-cafa285e-3f1a-4aa8-aa08-4e08ab3c3d6b"
+        }
+      ]
+    }
+  ]
+}

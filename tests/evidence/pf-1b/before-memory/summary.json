@@ -1,0 +1,33 @@
+{
+  "runs": [
+    {
+      "model": "mimo",
+      "root": "C:\\Temp\\weftmate-m2f-mimo-7b47aa98-b55a-473c-81d8-002c0c9884d2",
+      "exitCode": 0,
+      "summary": {
+        "passed": 1,
+        "failed": 6,
+        "manual": 0,
+        "unsupported": 0,
+        "skippedChecks": 6,
+        "passRate": 0.14285714285714285,
+        "coverage": 0.14285714285714285
+      }
+    },
+    {
+      "model": "lan",
+      "root": "C:\\Temp\\weftmate-m2f-lan-e7f50b6f-0bd2-4db9-9bf6-aa6feef526c1",
+      "exitCode": 0,
+      "summary": {
+        "passed": 1,
+        "failed": 6,
+        "manual": 0,
+        "unsupported": 0,
+        "skippedChecks": 6,
+        "passRate": 0.14285714285714285,
+        "coverage": 0.14285714285714285
+      }
+    }
+  ],
+  "timings": []
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "foreground": false,
+    "firstTextMs": null,
+    "firstDeltaMs": 260.12149999999974,
+    "turnFirstTextMs": null,
+    "turnFirstDeltaMs": 978.8447999999999,
+    "totalMs": 1184.0862999999995,
+    "text": "",
+    "tools": [],
+    "usage": {
+      "completion_tokens": 64,
+      "prompt_tokens": 130,
+      "total_tokens": 194,
+      "prompt_tokens_details": {
+        "cached_tokens": 125
+      }
+    }
+  },
+  {
+    "foreground": true,
+    "firstTextMs": 6472.911700000001,
+    "firstDeltaMs": 1912.2427000000002,
+    "turnFirstTextMs": 7189.9514,
+    "turnFirstDeltaMs": 2629.2824,
+    "totalMs": 6739.8693,
+    "text": "你好！有什么我可以帮你做的？",
+    "tools": [],
+    "usage": {
+      "completion_tokens": 225,
+      "prompt_tokens": 2442,
+      "total_tokens": 2667,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  }
+]
