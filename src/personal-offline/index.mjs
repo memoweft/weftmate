@@ -39,7 +39,8 @@ export async function createOfflineService(context) {
     for (const [sessionId, session] of Object.entries(context.accountState(ownerId).sessions).reverse()) {
       if (hasPrivateContent(session) || session.deleting || session.archived || !cloudProfiles.has(session.modelProfileId)) continue;
       const page = await context.backend.readEvents({ ownerId, sessionId, limit: 20 }).catch(() => null);
-      if (hasPrivateContent(context.accountState(ownerId).sessions[sessionId])) continue;
+      const currentSession = context.accountState(ownerId).sessions[sessionId];
+      if (!currentSession || hasPrivateContent(currentSession)) continue;
       const messages = (page?.events ?? []).filter(e => ['user.message', 'assistant.message'].includes(e.type) && typeof e.data?.text === 'string' &&
         (!owner(ownerId).purgedAt || Date.parse(e.at ?? e.timestamp ?? '') > owner(ownerId).purgedAt))
         .slice(-20).map(e => ({ role: e.type === 'user.message' ? 'user' : 'assistant', text: e.data.text.slice(0, 4000) }));

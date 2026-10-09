@@ -7,6 +7,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync } from
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { zstdDecompressSync } from 'node:zlib';
+import { DatabaseSync } from 'node:sqlite';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
@@ -48,7 +49,7 @@ try{
  await api('/settings/models',{backgroundModelProfileId:modelId},'PATCH');
  await page.addInitScript(() => { let value; Object.defineProperty(globalThis, 'WeftUiCore', { configurable:true, get:()=>value, set:v=>{value=v;const create=v.create;v.create=(...args)=>{const core=create(...args);globalThis.mem2UiCore=core;return core;};} }); });
  await page.reload();
- await page.waitForFunction(()=>globalThis.mem2UiCore?.state.capabilities?.chat?.available === true);await page.getByRole('button',{name:'临时对话',exact:true}).click();console.log('UI',await page.evaluate(()=>({temporary:globalThis.mem2UiCore?.state.newConversationTemporary,newConversation:globalThis.mem2UiCore?.state.newConversation,cap:globalThis.mem2UiCore?.state.capabilities,notice:document.querySelector('#temporary-chat-notice')?.outerHTML})));await page.getByText('临时对话 · 不会形成记忆，30 天后自动删除',{exact:true}).waitFor();
+ await page.waitForFunction(()=>globalThis.mem2UiCore?.state.capabilities?.chat?.available === true);await page.getByRole('button',{name:'临时对话',exact:true}).click();await page.getByText('临时对话 · 不会形成记忆，30 天后自动删除',{exact:true}).waitFor();
  await page.screenshot({path:join(evidence,'desktop-temporary-light.png')});
  await page.evaluate(()=>document.documentElement.dataset.theme='dark');await page.screenshot({path:join(evidence,'desktop-temporary-dark.png')});
  const normal=await create(false);await turn(normal,'请记住：我给盆栽浇水的量是每次 137 毫升。只需简短确认，不要调用工具。');
@@ -57,7 +58,13 @@ try{
  const recalled=await turn(temporary,`这次只临时说：我喝茶只用${secret}。请告诉我之前说过每次给盆栽浇多少水，不要重复杯子信息，也不要调用工具。`);
  assert.match(recalled,/137/);report.checks.push('temporary recall of ordinary memory');
  for(const mode of ['default','settled']){
-   if(mode==='settled')await until(async()=>{const s=(await api('/memory/status')).body;return !s.pendingBoundaryCount;},'outbox settle');
+   if(mode==='settled')await until(async()=>{
+     const s=(await api('/memory/status')).body;
+     const db=new DatabaseSync(join(profile,'personal-access','accounts',ownerId,'memory-home','memoweft','memoweft.sqlite3'),{readOnly:true});
+     try { const rows=db.prepare('SELECT state,count(*) AS count FROM memory_world_job GROUP BY state').all();
+       report.settledJobs=rows;return !s.pendingBoundaryCount&&!rows.some(row=>['pending','processing','retry'].includes(row.state));
+     } finally {db.close();}
+   },'Core formation jobs settle',330000);
    const id=await create(false),answer=await turn(id,'我之前说喝茶只用什么杯子？如果没有可靠依据请说不知道，不要猜测，不要调用工具。');
    assert.ok(!answer.includes(secret));report.checks.push(mode+' new conversation cannot recall private preference');
  }

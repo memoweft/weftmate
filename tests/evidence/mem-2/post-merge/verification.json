@@ -1,0 +1,1015 @@
+{
+  "checks": [
+    "temporary recall of ordinary memory",
+    "default new conversation cannot recall private preference",
+    "settled new conversation cannot recall private preference",
+    "recall can be disabled independently",
+    "returning to ordinary mode cannot reuse private context",
+    "memory switch before/after and fork blocked",
+    "expiry removes native logs and workspace; fresh backup zero matches"
+  ],
+  "turns": [
+    {
+      "sessionId": "session-fba02785-a3a9-473d-aa9f-4cc4f2ec7de2",
+      "text": "请记住：我给盆栽浇水的量是每次 137 毫升。只需简短确认，不要调用工具。",
+      "reply": "已记住：盆栽每次浇水 137 毫升。",
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-09T21:25:25.074Z",
+          "data": {
+            "taskId": "cmd-e32ba8de-9c25-48c5-aa67-40f687bda471",
+            "receiptId": "d2505b45-49b8-46e9-8615-27df9a28ed86",
+            "text": "请记住：我给盆栽浇水的量是每次 137 毫升。只需简短确认，不要调用工具。",
+            "commandId": "cmd-e32ba8de-9c25-48c5-aa67-40f687bda471",
+            "requestId": "bda2fb41-b69b-4f95-9a14-d8b942c81415"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-09T21:25:25.075Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-09T21:25:25.160Z",
+          "data": {
+            "taskId": "cmd-e32ba8de-9c25-48c5-aa67-40f687bda471",
+            "turn": 1,
+            "receiptId": "d2505b45-49b8-46e9-8615-27df9a28ed86",
+            "commandId": "cmd-e32ba8de-9c25-48c5-aa67-40f687bda471",
+            "requestId": "bda2fb41-b69b-4f95-9a14-d8b942c81415",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-09T21:25:25.161Z",
+          "data": {
+            "text": "请记住：我给盆栽浇水的量是每次 137 毫升。只需简短确认，不要调用工具。",
+            "receiptId": "d2505b45-49b8-46e9-8615-27df9a28ed86"
+          }
+        },
+        {
+          "seq": 27,
+          "type": "assistant.message",
+          "at": "2026-10-09T21:25:27.987Z",
+          "data": {
+            "text": "已记住：盆栽每次浇水 137 毫升。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 28,
+          "type": "task.ended",
+          "at": "2026-10-09T21:25:27.987Z",
+          "data": {
+            "taskId": "cmd-e32ba8de-9c25-48c5-aa67-40f687bda471",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 29,
+            "receiptId": "d2505b45-49b8-46e9-8615-27df9a28ed86",
+            "commandId": "cmd-e32ba8de-9c25-48c5-aa67-40f687bda471",
+            "requestId": "bda2fb41-b69b-4f95-9a14-d8b942c81415",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 29,
+          "type": "turn.ended",
+          "at": "2026-10-09T21:25:27.988Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ]
+    },
+    {
+      "sessionId": "session-eaabefc0-9d3b-4916-941e-da293a38cab1",
+      "text": "这次只临时说：我喝茶只用紫金色珊瑚杯。请告诉我之前说过每次给盆栽浇多少水，不要重复杯子信息，也不要调用工具。",
+      "reply": "每次给盆栽浇水 137 毫升。",
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-09T21:25:36.832Z",
+          "data": {
+            "taskId": "cmd-125e7546-df53-4b32-a3d8-5755f8ceb093",
+            "receiptId": "8ba0d361-6466-425c-9a0c-e942faf0781e",
+            "text": "这次只临时说：我喝茶只用紫金色珊瑚杯。请告诉我之前说过每次给盆栽浇多少水，不要重复杯子信息，也不要调用工具。",
+            "commandId": "cmd-125e7546-df53-4b32-a3d8-5755f8ceb093",
+            "requestId": "f7c721d9-b179-4663-aea4-ce93a57c6d19"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-09T21:25:36.833Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-09T21:25:36.879Z",
+          "data": {
+            "taskId": "cmd-125e7546-df53-4b32-a3d8-5755f8ceb093",
+            "turn": 1,
+            "receiptId": "8ba0d361-6466-425c-9a0c-e942faf0781e",
+            "commandId": "cmd-125e7546-df53-4b32-a3d8-5755f8ceb093",
+            "requestId": "f7c721d9-b179-4663-aea4-ce93a57c6d19",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-09T21:25:36.880Z",
+          "data": {
+            "text": "这次只临时说：我喝茶只用紫金色珊瑚杯。请告诉我之前说过每次给盆栽浇多少水，不要重复杯子信息，也不要调用工具。",
+            "receiptId": "8ba0d361-6466-425c-9a0c-e942faf0781e"
+          }
+        },
+        {
+          "seq": 26,
+          "type": "assistant.message",
+          "at": "2026-10-09T21:25:38.554Z",
+          "data": {
+            "text": "每次给盆栽浇水 137 毫升。",
+            "memoryUsed": [
+              {
+                "id": "cognition-3227c2878f11fa53f473c2181d37bbcc238b8af587120a70e6c1705d7731d414",
+                "kind": "cognition",
+                "summary": "用户给盆栽浇水的量是每次 137 毫升。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 27,
+          "type": "task.ended",
+          "at": "2026-10-09T21:25:38.554Z",
+          "data": {
+            "taskId": "cmd-125e7546-df53-4b32-a3d8-5755f8ceb093",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 28,
+            "receiptId": "8ba0d361-6466-425c-9a0c-e942faf0781e",
+            "commandId": "cmd-125e7546-df53-4b32-a3d8-5755f8ceb093",
+            "requestId": "f7c721d9-b179-4663-aea4-ce93a57c6d19",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 28,
+          "type": "turn.ended",
+          "at": "2026-10-09T21:25:38.554Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ]
+    },
+    {
+      "sessionId": "session-6b15b796-f327-49be-8143-a1e3def23d13",
+      "text": "我之前说喝茶只用什么杯子？如果没有可靠依据请说不知道，不要猜测，不要调用工具。",
+      "reply": "我不知道。当前对话里没有关于你用什么杯子喝茶的信息，我也没有可靠依据可查，所以不作猜测。",
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-09T21:25:39.127Z",
+          "data": {
+            "taskId": "cmd-0ebe374e-b6d0-4f96-ad6f-bbfa13d18363",
+            "receiptId": "a880bd2c-30b3-423c-add1-d65f29e4c35f",
+            "text": "我之前说喝茶只用什么杯子？如果没有可靠依据请说不知道，不要猜测，不要调用工具。",
+            "commandId": "cmd-0ebe374e-b6d0-4f96-ad6f-bbfa13d18363",
+            "requestId": "43e9bee8-6467-4eea-8ac1-b52814601752"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-09T21:25:39.127Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-09T21:25:39.191Z",
+          "data": {
+            "taskId": "cmd-0ebe374e-b6d0-4f96-ad6f-bbfa13d18363",
+            "turn": 1,
+            "receiptId": "a880bd2c-30b3-423c-add1-d65f29e4c35f",
+            "commandId": "cmd-0ebe374e-b6d0-4f96-ad6f-bbfa13d18363",
+            "requestId": "43e9bee8-6467-4eea-8ac1-b52814601752",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-09T21:25:39.192Z",
+          "data": {
+            "text": "我之前说喝茶只用什么杯子？如果没有可靠依据请说不知道，不要猜测，不要调用工具。",
+            "receiptId": "a880bd2c-30b3-423c-add1-d65f29e4c35f"
+          }
+        },
+        {
+          "seq": 34,
+          "type": "assistant.message",
+          "at": "2026-10-09T21:25:40.379Z",
+          "data": {
+            "text": "我不知道。当前对话里没有关于你用什么杯子喝茶的信息，我也没有可靠依据可查，所以不作猜测。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 35,
+          "type": "task.ended",
+          "at": "2026-10-09T21:25:40.379Z",
+          "data": {
+            "taskId": "cmd-0ebe374e-b6d0-4f96-ad6f-bbfa13d18363",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 36,
+            "receiptId": "a880bd2c-30b3-423c-add1-d65f29e4c35f",
+            "commandId": "cmd-0ebe374e-b6d0-4f96-ad6f-bbfa13d18363",
+            "requestId": "43e9bee8-6467-4eea-8ac1-b52814601752",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 36,
+          "type": "turn.ended",
+          "at": "2026-10-09T21:25:40.381Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ]
+    },
+    {
+      "sessionId": "session-3dc498ec-0135-4893-b256-31a230b9b5e6",
+      "text": "我之前说喝茶只用什么杯子？如果没有可靠依据请说不知道，不要猜测，不要调用工具。",
+      "reply": "我不知道。当前对话和背景记忆里都没有可靠依据说明你之前说过喝茶只用什么杯子，不猜测。",
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-09T21:25:42.265Z",
+          "data": {
+            "taskId": "cmd-f36dfbd4-ef08-48f2-8793-ed61e127a966",
+            "receiptId": "91e1f029-c09b-427a-b9df-da545e8ba5f2",
+            "text": "我之前说喝茶只用什么杯子？如果没有可靠依据请说不知道，不要猜测，不要调用工具。",
+            "commandId": "cmd-f36dfbd4-ef08-48f2-8793-ed61e127a966",
+            "requestId": "81aa57d7-6ed5-42cd-b543-3292e9e0df18"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-09T21:25:42.266Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-09T21:25:42.342Z",
+          "data": {
+            "taskId": "cmd-f36dfbd4-ef08-48f2-8793-ed61e127a966",
+            "turn": 1,
+            "receiptId": "91e1f029-c09b-427a-b9df-da545e8ba5f2",
+            "commandId": "cmd-f36dfbd4-ef08-48f2-8793-ed61e127a966",
+            "requestId": "81aa57d7-6ed5-42cd-b543-3292e9e0df18",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-09T21:25:42.342Z",
+          "data": {
+            "text": "我之前说喝茶只用什么杯子？如果没有可靠依据请说不知道，不要猜测，不要调用工具。",
+            "receiptId": "91e1f029-c09b-427a-b9df-da545e8ba5f2"
+          }
+        },
+        {
+          "seq": 34,
+          "type": "assistant.message",
+          "at": "2026-10-09T21:25:48.928Z",
+          "data": {
+            "text": "我不知道。当前对话和背景记忆里都没有可靠依据说明你之前说过喝茶只用什么杯子，不猜测。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 35,
+          "type": "task.ended",
+          "at": "2026-10-09T21:25:48.928Z",
+          "data": {
+            "taskId": "cmd-f36dfbd4-ef08-48f2-8793-ed61e127a966",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 36,
+            "receiptId": "91e1f029-c09b-427a-b9df-da545e8ba5f2",
+            "commandId": "cmd-f36dfbd4-ef08-48f2-8793-ed61e127a966",
+            "requestId": "81aa57d7-6ed5-42cd-b543-3292e9e0df18",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 36,
+          "type": "turn.ended",
+          "at": "2026-10-09T21:25:48.930Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ]
+    },
+    {
+      "sessionId": "session-fba02785-a3a9-473d-aa9f-4cc4f2ec7de2",
+      "text": "这次不形成记忆：我旅行只带银蓝色折叠水壶。只回复收到，不要调用工具。",
+      "reply": "收到。",
+      "events": [
+        {
+          "seq": 31,
+          "type": "task.queued",
+          "at": "2026-10-09T21:25:49.337Z",
+          "data": {
+            "taskId": "cmd-41d1678f-a39a-4704-a9e5-454cb9cda425",
+            "receiptId": "47f01ce1-19b8-4904-a6ec-a5f40b666c51",
+            "text": "这次不形成记忆：我旅行只带银蓝色折叠水壶。只回复收到，不要调用工具。",
+            "commandId": "cmd-41d1678f-a39a-4704-a9e5-454cb9cda425",
+            "requestId": "dc7d37c5-e539-469d-b3bf-6302bc176c75"
+          }
+        },
+        {
+          "seq": 32,
+          "type": "turn.started",
+          "at": "2026-10-09T21:25:49.337Z",
+          "data": {
+            "turn": 2
+          }
+        },
+        {
+          "seq": 34,
+          "type": "task.started",
+          "at": "2026-10-09T21:25:49.526Z",
+          "data": {
+            "taskId": "cmd-41d1678f-a39a-4704-a9e5-454cb9cda425",
+            "turn": 2,
+            "receiptId": "47f01ce1-19b8-4904-a6ec-a5f40b666c51",
+            "commandId": "cmd-41d1678f-a39a-4704-a9e5-454cb9cda425",
+            "requestId": "dc7d37c5-e539-469d-b3bf-6302bc176c75",
+            "turnTaskId": "turn-2"
+          }
+        },
+        {
+          "seq": 36,
+          "type": "user.message",
+          "at": "2026-10-09T21:25:49.526Z",
+          "data": {
+            "text": "这次不形成记忆：我旅行只带银蓝色折叠水壶。只回复收到，不要调用工具。",
+            "receiptId": "47f01ce1-19b8-4904-a6ec-a5f40b666c51"
+          }
+        },
+        {
+          "seq": 45,
+          "type": "assistant.message",
+          "at": "2026-10-09T21:25:56.065Z",
+          "data": {
+            "text": "收到。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 46,
+          "type": "task.ended",
+          "at": "2026-10-09T21:25:56.065Z",
+          "data": {
+            "taskId": "cmd-41d1678f-a39a-4704-a9e5-454cb9cda425",
+            "turn": 2,
+            "reason": "completed",
+            "nativeTurnEndSeq": 47,
+            "receiptId": "47f01ce1-19b8-4904-a6ec-a5f40b666c51",
+            "commandId": "cmd-41d1678f-a39a-4704-a9e5-454cb9cda425",
+            "requestId": "dc7d37c5-e539-469d-b3bf-6302bc176c75",
+            "turnTaskId": "turn-2"
+          }
+        },
+        {
+          "seq": 47,
+          "type": "turn.ended",
+          "at": "2026-10-09T21:25:56.066Z",
+          "data": {
+            "reason": "completed",
+            "turn": 2
+          }
+        }
+      ]
+    },
+    {
+      "sessionId": "session-91047c05-1af5-43c9-aca8-234d149f8d19",
+      "text": "我之前说每次给盆栽浇多少水？没有可靠依据就说不知道，不要猜测，不要调用工具。",
+      "reply": "目前不知道。当前对话和提供的背景记忆里都没有关于盆栽浇水量的可靠信息，所以无法给出准确数值，也不作猜测。",
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-09T21:25:56.932Z",
+          "data": {
+            "taskId": "cmd-0232cd05-0d37-4f81-be50-ac687581e851",
+            "receiptId": "a3f34fc7-57e1-44e4-bc88-d3652c078095",
+            "text": "我之前说每次给盆栽浇多少水？没有可靠依据就说不知道，不要猜测，不要调用工具。",
+            "commandId": "cmd-0232cd05-0d37-4f81-be50-ac687581e851",
+            "requestId": "49e71bc6-917d-4882-8357-c07f3e91e102"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-09T21:25:56.932Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-09T21:25:56.971Z",
+          "data": {
+            "taskId": "cmd-0232cd05-0d37-4f81-be50-ac687581e851",
+            "turn": 1,
+            "receiptId": "a3f34fc7-57e1-44e4-bc88-d3652c078095",
+            "commandId": "cmd-0232cd05-0d37-4f81-be50-ac687581e851",
+            "requestId": "49e71bc6-917d-4882-8357-c07f3e91e102",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-09T21:25:56.972Z",
+          "data": {
+            "text": "我之前说每次给盆栽浇多少水？没有可靠依据就说不知道，不要猜测，不要调用工具。",
+            "receiptId": "a3f34fc7-57e1-44e4-bc88-d3652c078095"
+          }
+        },
+        {
+          "seq": 39,
+          "type": "assistant.message",
+          "at": "2026-10-09T21:25:59.058Z",
+          "data": {
+            "text": "目前不知道。当前对话和提供的背景记忆里都没有关于盆栽浇水量的可靠信息，所以无法给出准确数值，也不作猜测。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 40,
+          "type": "task.ended",
+          "at": "2026-10-09T21:25:59.058Z",
+          "data": {
+            "taskId": "cmd-0232cd05-0d37-4f81-be50-ac687581e851",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 41,
+            "receiptId": "a3f34fc7-57e1-44e4-bc88-d3652c078095",
+            "commandId": "cmd-0232cd05-0d37-4f81-be50-ac687581e851",
+            "requestId": "49e71bc6-917d-4882-8357-c07f3e91e102",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 41,
+          "type": "turn.ended",
+          "at": "2026-10-09T21:25:59.058Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ]
+    },
+    {
+      "sessionId": "session-fba02785-a3a9-473d-aa9f-4cc4f2ec7de2",
+      "text": "刚才说旅行只带什么水壶？没有可靠依据就说不知道，不要猜测，不要调用工具。",
+      "reply": "目前没有可靠的依据，我不知道你之前说过旅行只带什么水壶。",
+      "events": [
+        {
+          "seq": 48,
+          "type": "task.queued",
+          "at": "2026-10-09T21:25:59.246Z",
+          "data": {
+            "taskId": "cmd-7e4ec93b-efe0-4a65-a4b8-5ec3c76627d6",
+            "receiptId": "5e13cd9c-2bc6-4bd3-bd2d-978b9772df93",
+            "text": "刚才说旅行只带什么水壶？没有可靠依据就说不知道，不要猜测，不要调用工具。",
+            "commandId": "cmd-7e4ec93b-efe0-4a65-a4b8-5ec3c76627d6",
+            "requestId": "15fdec4f-bf5d-4222-b06b-21f68ee62baf"
+          }
+        },
+        {
+          "seq": 49,
+          "type": "turn.started",
+          "at": "2026-10-09T21:25:59.246Z",
+          "data": {
+            "turn": 3
+          }
+        },
+        {
+          "seq": 51,
+          "type": "task.started",
+          "at": "2026-10-09T21:25:59.313Z",
+          "data": {
+            "taskId": "cmd-7e4ec93b-efe0-4a65-a4b8-5ec3c76627d6",
+            "turn": 3,
+            "receiptId": "5e13cd9c-2bc6-4bd3-bd2d-978b9772df93",
+            "commandId": "cmd-7e4ec93b-efe0-4a65-a4b8-5ec3c76627d6",
+            "requestId": "15fdec4f-bf5d-4222-b06b-21f68ee62baf",
+            "turnTaskId": "turn-3"
+          }
+        },
+        {
+          "seq": 53,
+          "type": "user.message",
+          "at": "2026-10-09T21:25:59.313Z",
+          "data": {
+            "text": "刚才说旅行只带什么水壶？没有可靠依据就说不知道，不要猜测，不要调用工具。",
+            "receiptId": "5e13cd9c-2bc6-4bd3-bd2d-978b9772df93"
+          }
+        },
+        {
+          "seq": 67,
+          "type": "assistant.message",
+          "at": "2026-10-09T21:26:00.550Z",
+          "data": {
+            "text": "目前没有可靠的依据，我不知道你之前说过旅行只带什么水壶。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 68,
+          "type": "task.ended",
+          "at": "2026-10-09T21:26:00.550Z",
+          "data": {
+            "taskId": "cmd-7e4ec93b-efe0-4a65-a4b8-5ec3c76627d6",
+            "turn": 3,
+            "reason": "completed",
+            "nativeTurnEndSeq": 69,
+            "receiptId": "5e13cd9c-2bc6-4bd3-bd2d-978b9772df93",
+            "commandId": "cmd-7e4ec93b-efe0-4a65-a4b8-5ec3c76627d6",
+            "requestId": "15fdec4f-bf5d-4222-b06b-21f68ee62baf",
+            "turnTaskId": "turn-3"
+          }
+        },
+        {
+          "seq": 69,
+          "type": "turn.ended",
+          "at": "2026-10-09T21:26:00.551Z",
+          "data": {
+            "reason": "completed",
+            "turn": 3
+          }
+        }
+      ]
+    }
+  ],
+  "synthetic": true,
+  "coreCommit": "a9b115f",
+  "databaseScan": {
+    "tables": 38,
+    "matches": []
+  },
+  "coreScan": {
+    "files": 3,
+    "frames": 0,
+    "matches": []
+  },
+  "backupScan": {
+    "files": 107,
+    "frames": 21,
+    "matches": []
+  },
+  "usage": {
+    "month": "2026-10",
+    "timeZone": "Asia/Shanghai",
+    "sessionId": null,
+    "total": {
+      "requests": 18,
+      "unknownRequests": 1,
+      "unpricedRequests": 1,
+      "inputTokens": 40716,
+      "cachedInputTokens": 28416,
+      "outputTokens": 720,
+      "cost": 0.01430832
+    },
+    "days": [
+      {
+        "day": "2026-10-01",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-02",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-03",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-04",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-05",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-06",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-07",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-08",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-09",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-10",
+        "requests": 18,
+        "unknownRequests": 1,
+        "unpricedRequests": 1,
+        "inputTokens": 40716,
+        "cachedInputTokens": 28416,
+        "outputTokens": 720,
+        "cost": 0.01430832
+      },
+      {
+        "day": "2026-10-11",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-12",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-13",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-14",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-15",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-16",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-17",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-18",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-19",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-20",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-21",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-22",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-23",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-24",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-25",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-26",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-27",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-28",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-29",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-30",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-31",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      }
+    ],
+    "sessions": [
+      {
+        "sessionId": "session-fba02785-a3a9-473d-aa9f-4cc4f2ec7de2",
+        "requests": 6,
+        "unknownRequests": 1,
+        "unpricedRequests": 1,
+        "inputTokens": 11213,
+        "cachedInputTokens": 4416,
+        "outputTokens": 403,
+        "cost": 0.00769132
+      },
+      {
+        "sessionId": "session-3dc498ec-0135-4893-b256-31a230b9b5e6",
+        "requests": 4,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 12472,
+        "cachedInputTokens": 9472,
+        "outputTokens": 107,
+        "cost": 0.00340344
+      },
+      {
+        "sessionId": "session-6b15b796-f327-49be-8143-a1e3def23d13",
+        "requests": 4,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 12316,
+        "cachedInputTokens": 11008,
+        "outputTokens": 145,
+        "cost": 0.00181816
+      },
+      {
+        "sessionId": "session-eaabefc0-9d3b-4916-941e-da293a38cab1",
+        "requests": 2,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 2376,
+        "cachedInputTokens": 1728,
+        "outputTokens": 25,
+        "cost": 0.00073256
+      },
+      {
+        "sessionId": "session-91047c05-1af5-43c9-aca8-234d149f8d19",
+        "requests": 2,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 2339,
+        "cachedInputTokens": 1792,
+        "outputTokens": 40,
+        "cost": 0.00066284
+      }
+    ],
+    "models": [
+      {
+        "profileId": "private-model-4fb0ccaeaefb555ef096b8f3186254ad898f613d",
+        "requests": 18,
+        "unknownRequests": 1,
+        "unpricedRequests": 1,
+        "inputTokens": 40716,
+        "cachedInputTokens": 28416,
+        "outputTokens": 720,
+        "cost": 0.01430832
+      }
+    ],
+    "budget": {
+      "monthlyLimit": null,
+      "effectiveLimit": null,
+      "temporaryLimit": null,
+      "state": "unlimited"
+    }
+  },
+  "expiredScan": {
+    "files": 240,
+    "frames": 21,
+    "matches": []
+  },
+  "expiredBackupScan": {
+    "files": 111,
+    "frames": 21,
+    "matches": []
+  }
+}
