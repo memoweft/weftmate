@@ -1,5 +1,9 @@
 {
+  "authenticated": true,
+  "sendPressed": true,
   "ownWindowCapture": true,
+  "approvalBar": true,
+  "globalPermissionsRequested": false,
   "categories": [
     "general",
     "appearance",
@@ -15,15 +19,11 @@
     "backups",
     "about"
   ],
-  "globalPermissionsRequested": false,
-  "sendPressed": true,
-  "approvalBar": true,
-  "authenticated": true,
   "platform": "mac",
   "theme": "light",
-  "commit": "8961cf4fac7be6141558094adc31c080f0c3f4cc",
+  "commit": "4105cca2dd295bd093099da6f89f342dacd3955a",
   "workingDiffSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-  "generatedAt": "2026-10-09T11:38:12.320676+00:00",
+  "generatedAt": "2026-10-09T11:48:34.008783+00:00",
   "synthetic": true,
   "realPersonalHost": true,
   "realCloudMain": true,
@@ -34,15 +34,15 @@
   "screenshots": [
     {
       "file": "approval.png",
-      "sha256": "eac13c93dfa8309fc96108b46104ade4b5ec681ff0b124a77a54a042e7880cc9"
+      "sha256": "ab3aa6530d908ec2965644c6c399385d5ef8732bed7301d58abe227068dd77a7"
     },
     {
       "file": "main.png",
-      "sha256": "d37ab0eb7f3bee6874856c1ed99e449862f8d4685f8fed148b16f20ef03a00fb"
+      "sha256": "a024a750531d3912781fb8e397fc9383ead08f7e60acd544e145c5f6682acd5c"
     },
     {
       "file": "send-ready.png",
-      "sha256": "f3162d23ee81feee9b629b326b141669b36d430e9e267f70d2fe4ebe035fd753"
+      "sha256": "dc3cfe8db35644593f1aef2d2861e988558aad17c9b8f0535b547dfdacaffe8d"
     },
     {
       "file": "settings-about.png",
@@ -50,7 +50,7 @@
     },
     {
       "file": "settings-account.png",
-      "sha256": "ecb4ba8fd4a4c8017f66e80a5b817759a89da80e3505138c226f9276089ecc6a"
+      "sha256": "7cf07992b248baf48e0376822cd38156d8d9d6ec358cc973a0604f1168ed8234"
     },
     {
       "file": "settings-appearance.png",
@@ -58,27 +58,27 @@
     },
     {
       "file": "settings-approvals.png",
-      "sha256": "6eab27174284427f78e92625b1238a09978dfdc0bb181b98b8be1ea63ba0b07e"
+      "sha256": "09bc28233049e5f6bbc38e7f6af6b5f8483df5808e298a83363cd77f2d62c786"
     },
     {
       "file": "settings-archived.png",
-      "sha256": "eb619f925d5c6c2c5d3108c56352def98cd08a625859081307296b43cd9d2ae4"
+      "sha256": "a46f6ac768c0460e6316428aba96c52dec49b732551404ce8f43fecb1a18e943"
     },
     {
       "file": "settings-backups.png",
-      "sha256": "ebce60cac484d3e61cf4dd4cf95d87f6057297a794e9dc851c4d366f2d849d8e"
+      "sha256": "6dbffc1f3c1e8d6048809cccf65948985efae0c02b821e3425d54c10a9db6ec2"
     },
     {
       "file": "settings-devices.png",
-      "sha256": "ac26f53f13e9389b461a38e75575adf6be982d012a269db149d19f7504db58f6"
+      "sha256": "94e2755fe0926576a1cd1678801e665da7ed276392c86315526c6c6b92aca4a2"
     },
     {
       "file": "settings-general.png",
-      "sha256": "7237ddff31418a91846305cd2774730d5876f3c1ead2180ff15a9dce52c06792"
+      "sha256": "18daec854993c8100aacfdec8d96a15f776cb63ce0ea3067543198aa9c24cc27"
     },
     {
       "file": "settings-memory.png",
-      "sha256": "0f22b527b126fa80b81ab15164a82536eb0dca7c37f65ffac7b8de302e0a4ce2"
+      "sha256": "2af40d01fed8c722e63de14a9e7bd95c4962cb4d87dbf2bafeec617d3408acf0"
     },
     {
       "file": "settings-models.png",
@@ -90,11 +90,11 @@
     },
     {
       "file": "settings-system.png",
-      "sha256": "8df424f41555499fe943da32594cbd1fa69e5c94fc09edf4c4da0d4aff29900a"
+      "sha256": "05dd7177ebd406bdf23baefb55a9fa29ce90779f4aedea9a3871e98f926ec1c8"
     },
     {
       "file": "settings-usage.png",
-      "sha256": "97781d31ef58f94e58ded180f601d71bb0b69883fe4a8e0ceea8a30a39e48b94"
+      "sha256": "9a78473bb635b07945ff94f158e6588a52a41c78a1407e72fcf4e9e1c52c816f"
     }
   ]
 }
