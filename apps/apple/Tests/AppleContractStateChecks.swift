@@ -171,7 +171,15 @@ private actor ContractHTTP: HTTPTransport {
         let taskRequests = await http.counts().2
         try check(model.taskSessionID(for: conversation, accountEpoch: epoch) == nil && taskRequests == 0,
             "shared-chat exposed task detail/stop or requested tasks")
+        model.askToDelete(conversation)
+        try check(model.canDeleteConversation && !model.forgetConversationMemories && !model.conversationForget.deleteConversationSnippets, "Session deletion defaults changed")
+        await model.setConversationForget(true)
+        try check(!model.canDeleteConversation && model.conversationForget.preview == nil && model.lifecycleError != nil, "Failed session preview enabled deletion")
+        await model.setConversationForget(false)
+        try check(model.canDeleteConversation && !model.conversationForget.deleteConversationSnippets, "Leaving forget did not clear preview choice")
+        model.deletionCandidate = nil
         model.closeConversation()
+        print("PASS A7 session preview failure blocks confirmation, default original snippets remain unchecked")
         print("PASS shared-chat has no task entry and no /tasks request; isolated HTTP/account/data only")
     }
 }

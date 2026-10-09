@@ -154,12 +154,14 @@ struct MemoryWorkspaceView: View {
                 if let context = pendingAction {
                     VStack(alignment: .leading, spacing: AppleTokens.Space.p20) {
                         Text("忘掉这条记忆？").font(AppleTokens.Fonts.title2)
+                        Text("忘掉会清除来源及以下记忆，之后的记忆导出不再包含它们。")
                         ScrollView { ForgetPreviewList(preview: model.forgetConfirmation.preview, loading: model.forgetPreviewLoading, error: model.forgetPreviewError).frame(maxWidth: .infinity, alignment: .leading) }
                         OriginalSnippetsOption(checked: $model.forgetConfirmation.deleteConversationSnippets)
+                        Text("默认保留对话原文；勾选后删除对应原生对话片段及个人命令副本。以前的备份仍保留。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                         Button("重新读取遗忘范围") { Task { await model.prepareForget(context) } }.disabled(model.forgetPreviewLoading)
                         HStack {
                             Button("取消") { pendingAction = nil; model.cancelForget() }
-                            Button("忘掉", role: .destructive) { Task { await model.mutate(context); pendingAction = nil } }.disabled(!model.canForget(context)).accessibilityIdentifier("confirmForgetMemory")
+                            Button("确认忘掉", role: .destructive) { Task { await model.mutate(context); pendingAction = nil } }.disabled(!model.canForget(context)).accessibilityIdentifier("confirmForgetMemory")
                         }
                     }.padding(AppleTokens.Space.p24).frame(maxWidth: 600).background(Weave.surface)
                     .task { await model.prepareForget(context) }

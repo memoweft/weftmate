@@ -27,7 +27,7 @@ private let previewJSON = #"{"worldRevision":4,"itemCount":3,"evidenceCount":1,"
     let preview = try JSONDecoder().decode(ForgetPreview.self, from: Data(previewJSON.utf8))
     try preview.validate(ownerID: "owner", expectedRevision: 4)
     #expect(preview.items.map(\.summary) == ["合成人物（人物）", "合成关系（关系）", "合成决定（决定）"])
-    #expect(preview.summary == "将忘掉 3 项记忆和 1 条来源。")
+    #expect(preview.summary == "将忘掉 3 项记忆，清除 1 条来源。以下内容会一起忘掉：")
     var state = ForgetConfirmationState()
     #expect(!state.canConfirm && !state.deleteConversationSnippets)
     state.preview = preview
