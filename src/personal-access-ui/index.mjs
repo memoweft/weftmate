@@ -4,6 +4,8 @@ import { join } from 'node:path'
 import { uiCoreAssets } from '../ui-core/manifest.mjs'
 
 const files = new Map([
+  ...['components/onboarding.js'].map(name => [`/personal/v1/ui/${name}`, [name, 'text/javascript; charset=utf-8']]),
+  ['/personal/v1/ui/onboarding.css', ['onboarding.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/message-actions.js', ['message-actions.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/message-actions.css', ['message-actions.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/components/main-chat.js', ['components/main-chat.js', 'text/javascript; charset=utf-8']],

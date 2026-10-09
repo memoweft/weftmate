@@ -3,6 +3,7 @@
     const ui = globalThis.WeftUiComponents.createContext();
     const native = globalThis.weftmateDesktop;
     const initialPairing = globalThis.location?.hash.startsWith('#pair=') ? 'wm1.' + globalThis.location.hash.slice(6) : null;
+    ui.pairingJourney = !!initialPairing;
     if (initialPairing) history.replaceState(null, '', location.pathname + location.search);
     const request = async (url, options = {}) => {
         if (!native || !/^https?:/.test(String(url)) || new URL(url).origin === globalThis.location?.origin) return fetch(url, options);
@@ -32,6 +33,7 @@
         bindDesktop: core.cloudBindDesktop });
     for (const mount of ["mountAuth", "mountAccount", "mountSettings", "mountMemory", "mountApprovals", "mountComposer", "mountPhone", "mountSessions", "mountCloudSettings", "mountShell", "mountSettingsNavigation", "mountMainChat"])
         ui[mount]();
+    ui.mountOnboarding();
     globalThis.__WeftUiStarted = true;
     if (!native && globalThis.navigator?.serviceWorker) void globalThis.navigator.serviceWorker.register('/personal/v1/ui/offline-worker.js').catch(() => {});
     if (globalThis.indexedDB && globalThis.matchMedia?.('(max-width: 720px)')?.matches) globalThis.WeftOfflineView?.mount({ core, desktop: !!native,

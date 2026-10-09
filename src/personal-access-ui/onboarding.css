@@ -1,0 +1,42 @@
+.onboarding { position: fixed; inset: var(--wm-space-44) 0 0; z-index: 90; background: var(--canvas); color: var(--ink); overflow: auto; }
+.onboarding[hidden] { display: none; }
+.onboarding-inner { width: min(100%, 720px); min-height: 100%; margin: auto; padding: var(--wm-space-32); display: flex; flex-direction: column; }
+.onboarding h1 { margin: var(--wm-space-32) 0 var(--wm-space-12); font-size: var(--wm-font-size-28); line-height: var(--wm-line-height-1_35); font-weight: 600; }
+.onboarding-description { color: var(--ink-secondary, var(--muted)); margin: 0 0 var(--wm-space-24); max-width: 65ch; }
+.onboarding-progress { list-style: none; display: flex; justify-content: space-between; gap: var(--wm-space-8); padding: 0; margin: 0; color: var(--muted); font-size: var(--wm-font-size-12); }
+.onboarding-progress li { display: flex; flex-direction: column; align-items: center; gap: var(--wm-space-8); text-align: center; }
+.onboarding-progress li::before { content: ''; width: var(--wm-space-8); height: var(--wm-space-8); border-radius: var(--wm-radius-circle); background: var(--line); }
+.onboarding-progress .is-current { color: var(--ink); font-weight: 600; }
+.onboarding-progress .is-current::before, .onboarding-progress .is-done::before { background: var(--accent); }
+.onboarding-content { display: flex; flex-direction: column; align-items: stretch; gap: var(--wm-space-12); }
+.onboarding-content p { margin: 0; }
+.onboarding-content > .button { align-self: flex-start; }
+.onboarding-field { display: flex; flex-direction: column; gap: var(--wm-space-6); font-weight: 500; }
+.onboarding input, .onboarding select, .onboarding textarea { width: 100%; min-width: 0; font: inherit; color: var(--ink); background: var(--surface); border: var(--wm-space-1) solid var(--line); border-radius: var(--wm-radius-8); padding: var(--wm-space-10) var(--wm-space-12); }
+.onboarding textarea { height: 80px; overflow-wrap: anywhere; }
+.onboarding a { color: var(--accent); text-underline-offset: var(--wm-space-3); }
+.onboarding-status { min-height: var(--wm-space-24); margin: var(--wm-space-16) 0; }
+.onboarding-footer { display: flex; gap: var(--wm-space-8); padding-top: var(--wm-space-24); margin-top: auto; }
+.onboarding-footer > :last-child { margin-left: auto; }
+.onboarding-brand { width: 80px; height: 80px; margin: var(--wm-space-24) auto 0; }
+.onboarding-welcome { font-size: var(--wm-font-size-24); text-align: center; }
+.onboarding-auth .card, .onboarding-auth .cloud-auth-card { max-width: none; margin: 0; padding: var(--wm-space-20) 0; border: 0; box-shadow: none; background: transparent; }
+.onboarding-auth .auth-brand { display: none; }
+.onboarding-memory { margin: 0; }
+.onboarding-memory dt { font-weight: 600; margin-top: var(--wm-space-16); }
+.onboarding-memory dd { margin: var(--wm-space-4) 0 var(--wm-space-16); color: var(--ink-secondary, var(--muted)); }
+.onboarding-qr { width: min(240px, 100%); height: auto; }
+.onboarding-diagnostic { font-size: var(--wm-font-size-13); }
+.onboarding-device { display: flex; flex-wrap: wrap; gap: var(--wm-space-8); align-items: center; }
+.onboarding-content .onboarding-example { text-align: left; width: 100%; justify-content: flex-start; white-space: normal; }
+.onboarding-samples { display: flex; flex-wrap: wrap; gap: var(--wm-space-8); padding-bottom: var(--wm-space-12); }
+.onboarding-samples button { text-align: left; white-space: normal; font-size: var(--wm-font-size-13); }
+.onboarding-model-hint { display: flex; gap: var(--wm-space-12); justify-content: center; padding: var(--wm-space-12); background: var(--surface); }
+.onboarding-model-hint[hidden] { display: none; }
+@media (max-width: 600px) { .onboarding-inner { padding: var(--wm-space-20); } .onboarding h1 { font-size: var(--wm-font-size-24); } .onboarding-progress { gap: var(--wm-space-4); font-size: var(--wm-font-size-11); } }
+@media (prefers-reduced-motion: reduce) { .onboarding * { animation: none !important; transition: none !important; } }
+
+.onboarding h1:focus { outline: none; }
+.onboarding-footer { position: sticky; bottom: 0; background: var(--canvas); padding-bottom: var(--wm-space-12); border-top: var(--wm-space-1) solid var(--line); }
+.onboarding-advanced > label { margin-top: var(--wm-space-12); }
+.onboarding-advanced summary { cursor: pointer; }

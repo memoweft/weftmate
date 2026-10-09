@@ -54,6 +54,7 @@ try {
       const report = async () => { await home(); await conversation('整理项目进展').click(); };
       const settings = async () => { await home(); await button('设置与账户').click(); };
       const preparations = {
+        onboarding: async () => { await settings(); await button(/^设备 /).click(); await page.getByRole('heading', { name: '连接你的电脑', exact: true }).waitFor(); },
         sessions: home,
         'composer-menu': async()=>{await report();await button('添加图片或文件').click();await page.getByRole('menu',{name:'添加附件'}).waitFor();await page.getByRole('menuitem',{name:'相机'}).waitFor();},
         'composer-context': async()=>{await report();await button('背景信息窗口：86% 已用').click();await page.getByRole('tooltip').waitFor();},

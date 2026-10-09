@@ -310,7 +310,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     const localLoad = core.load, localExpired = core.sessionExpired, localClear = core.clearSession;
     core.clearSession = () => { bindingClaim = null; localClear(); if (auth.mode === 'offline') startCloudJourney(); };
     core.load = async () => {
-      if (core.state.setupGrant) return localLoad();
+
       if (environment.nativeIdentity) {
         const identity = await environment.nativeIdentity(); auth.deviceName = identity.deviceName;
         if (identity.clientId) client.clientId = identity.clientId;
@@ -321,11 +321,15 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       try { await client.configure(); } catch (error) {
         if (error.status === 404 || error.status === 401) {
           auth.localOnly = true;
+          if (await effects.startOnboarding?.(await core.api('/state'))) return;
+          if (core.state.setupGrant) return localLoad();
           try { core.acceptSession(await core.api('/me')); await core.enterAssistant(); return; } catch { /* no remembered legacy session */ }
           auth.error = '云服务尚未配置，请稍后重试。';
         } else auth.error = cloudError(error);
         core.show('login'); paint(); return;
       }
+      if (await effects.startOnboarding?.(await core.api('/state'))) return;
+      if (core.state.setupGrant) return localLoad();
       if (environment.nativeIdentity) {
         ownHost = { hostId: client.config.hostId, baseUrl: environment.hostOrigin };
         await effects.activateCloudHost?.(ownHost);
