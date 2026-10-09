@@ -25,8 +25,15 @@ const release = version => join(resolve(process.argv[2] || '.local/r0-1/final-re
 const v1 = '0.1.1-preview.1', v2 = '0.1.1-preview.2', v3 = '0.1.1-preview.3';
 const installer = version => join(release(version), 'build', `WeftMate-Setup-${version}.exe`);
 const builtIn = join(root, 'built-in');
-asar.extractAll(join(release(v1), 'build/win-unpacked/resources/app.asar'), builtIn);
-const baselineResources = new Map([...personalAccessUiResources].map(([name, file]) => [name, join(builtIn, 'src', relative(join(repository, 'src'), file))]).filter(([, file]) => existsSync(file)));
+const archive = join(release(v1), 'build/win-unpacked/resources/app.asar');
+const archivedPaths = new Set(asar.listPackage(archive).map(path => path.replace(/^[/\\]+/, '')));
+const baselineResources = new Map();
+for (const [name, file] of personalAccessUiResources) {
+  const path = join('src', relative(join(repository, 'src'), file));
+  if (!archivedPaths.has(path)) continue;
+  const target = join(builtIn, path); await mkdir(resolve(target, '..'), { recursive: true });
+  await writeFile(target, asar.extractFile(archive, path)); baselineResources.set(name, target);
+}
 const feedDir = join(root, 'feed'); await mkdir(feedDir);
 const privateKey = await readFile(join(repository, '.local/r0-1/private.pem'), 'utf8');
 const env = { ...process.env };
