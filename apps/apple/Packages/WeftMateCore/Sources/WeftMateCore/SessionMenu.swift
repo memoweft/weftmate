@@ -35,13 +35,19 @@ public enum SessionSidebar {
         return sections
     }
 }
+public enum ForgetPreviewKind: String, Decodable, Equatable, Sendable {
+    case cognition, entity, relationship, event
+    case interactionCommitment = "interaction_commitment"
+}
 public struct ForgetPreviewItem: Decodable, Identifiable, Equatable, Sendable {
-    public let id: String; public let kind: MemoryKind; public let text: String; public let itemType: String?
+    public let id: String; public let kind: ForgetPreviewKind; public let text: String; public let itemType: String?
     public var identity: String { kind.rawValue + ":" + id }
     public var typeLabel: String {
         switch itemType ?? kind.rawValue {
         case "entity": "人物与事物"; case "relationship": "关系"; case "event": "经历"; case "cognition": "理解"
-        case "person": "人物"; case "evaluation": "评价"; case "decision": "决定"; case "preference": "偏好"; default: kind.rawValue
+        case "person": "人物"; case "evaluation": "评价"; case "decision": "决定"; case "preference": "偏好"
+        case "commitment": "交互承诺"; case "recommendation": "交互建议"; case "agreement": "共同约定"
+        default: kind.rawValue
         }
     }
     public var summary: String { text + "（" + typeLabel + "）" }
