@@ -1,4 +1,11 @@
 /* Progressive native integration; this file is inert in remote browsers. */
+// Both native caption colors use the same alpha compositing as the CSS scrim.
+function blendDesktopColor(base, scrim) {
+  const channels = value => value.match(/[\d.]+/g).map(Number);
+  const background = channels(base), overlay = channels(scrim);
+  const alpha = overlay[3] ?? 1;
+  return `rgb(${background.slice(0, 3).map((value, index) => Math.round(value * (1 - alpha) + overlay[index] * alpha)).join(', ')})`;
+}
 (() => {
   const native = window.weftmateDesktop;
   if (!native) return;
@@ -7,16 +14,42 @@
   bar.className = 'desktop-titlebar'; bar.textContent = 'WeftMate'; bar.setAttribute('aria-hidden', 'true');
   const mark = document.createElement('span'); mark.className = 'wm-brand'; bar.prepend(mark);
   document.body.prepend(bar);
+  let modals = [], lastPalette = '';
   const updateTheme = () => {
     // UI-1 hides the site header in its full-height workspace. Reserve only the native bar there.
     const header = document.querySelector('.site-header');
     const workspace = header && getComputedStyle(header).display === 'none' ? 'full' : 'classic';
     if (document.documentElement.dataset.nativeWorkspace !== workspace) document.documentElement.dataset.nativeWorkspace = workspace;
     const style = getComputedStyle(bar);
-    void native.setTheme({ color: style.backgroundColor, symbolColor: style.color }).catch(() => {});
+    modals = modals.filter(dialog => dialog.isConnected && dialog.matches(':modal'));
+    const top = modals.at(-1);
+    // Read the actual token-backed backdrop, so theme/token changes and special
+    // dialogs stay in sync. A fullscreen image paints over the titlebar itself.
+    const scrim = top && getComputedStyle(top, top.classList.contains('phone-image-preview') ? null : '::backdrop').backgroundColor;
+    const palette = { color: style.backgroundColor, symbolColor: style.color };
+    if (native.platform === 'win32' && scrim) {
+      palette.color = blendDesktopColor(palette.color, scrim);
+      palette.symbolColor = blendDesktopColor(palette.symbolColor, scrim);
+    }
+    const key = JSON.stringify(palette);
+    if (key !== lastPalette) { lastPalette = key; void native.setTheme(palette).catch(() => { lastPalette = ''; }); }
   };
   new MutationObserver(updateTheme).observe(document.documentElement, { attributes: true });
   new MutationObserver(updateTheme).observe(document.body, { attributes: true });
+  if (native.platform === 'win32') {
+    // Track modal opening order rather than DOM order, including dynamically
+    // created confirmations, Esc/form closes, removal and close/reopen cycles.
+    new MutationObserver(records => {
+      for (const record of records) {
+        if (record.type === 'attributes' && record.attributeName === 'open' && record.oldValue === null) {
+          modals = modals.filter(dialog => dialog !== record.target);
+          if (record.target.matches(':modal')) modals.push(record.target);
+        }
+      }
+      for (const dialog of document.querySelectorAll('dialog:modal')) if (!modals.includes(dialog)) modals.push(dialog);
+      updateTheme();
+    }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeOldValue: true, attributeFilter: ['open', 'class', 'style', 'hidden'] });
+  }
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTheme);
   updateTheme();
   globalThis.WeftDesktopUI = {
