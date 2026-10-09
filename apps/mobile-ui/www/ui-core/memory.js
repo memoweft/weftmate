@@ -667,7 +667,8 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
     }
     function forgetItemSummary(item) {
         const label = { entity: '人物与事物', relationship: '关系', event: '经历', cognition: '理解',
-            person: '人物', evaluation: '评价', decision: '决定', preference: '偏好' }[item.itemType ?? item.kind] ?? core.memoryKinds[item.kind];
+            person: '人物', evaluation: '评价', decision: '决定', preference: '偏好',
+            commitment: '交互承诺', recommendation: '交互建议', agreement: '共同约定' }[item.itemType ?? item.kind] ?? core.memoryKinds[item.kind];
         return `${item.text.length > 160 ? item.text.slice(0, 160) + '…' : item.text}（${label}）`;
     }
     core.forgetItemSummary = forgetItemSummary;

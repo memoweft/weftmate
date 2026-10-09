@@ -465,7 +465,10 @@ async function baseline(modelName, fourOnly = false) {
         result.export.filesWithForgottenName = affected;
         result.export.files = manifest.files.length;
         result.checks.exportNoRecoverableBytes = affected.length === 0;
-        result.checks.exportNoRecoverableDatabase = !JSON.stringify(await storage(join(extracted, relative(profile, dbPath())))).includes('王小明');
+        const { stdout } = await run(python, [join(repository, 'tests/integration/m2-backup-text-scan.py'),
+          join(extracted, relative(profile, dbPath())), '王小明', '好兄弟', '表弟', original, correction]);
+        result.export.databaseTextScan = JSON.parse(stdout);
+        result.checks.exportNoRecoverableDatabase = result.export.databaseTextScan.hitCount === 0;
       }
       const turn = await message(await session(modelName, false), recallQuestion);
       result.checks.noRecallAfterForget = turn.status === 'completed' && !turn.memoryUsed.length && !/王小明/.test(turn.reply);
