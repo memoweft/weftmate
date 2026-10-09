@@ -30,8 +30,9 @@ test('account defaults migrate without changing history; prompt handles empty va
 
 test('native system prompt snapshots settings per turn, filters and denies disabled web tools, and inherits to children', async () => {
   const hooks:any={},agent:any={session:{id:'session',header:{agentPreset:'personal-remote'}}};
+  const agents = new Map([['session',agent]]);
   let settings:any={preferredName:'第一回合',webSearch:false};
-  installPersonalization({on:(name:string,fn:any)=>{hooks[name]=fn},get:()=>({get:()=>agent})},async()=>({personalization:settings}));
+  installPersonalization({on:(name:string,fn:any)=>{hooks[name]=fn},get:()=>({get:(id:string)=>agents.get(id)})},async owner=>{assert.equal(owner,agent);return {personalization:settings}});
   const assembly={sections:[{name:'weftmate:tools-catalog',text:'web_fetch: network\nread: local'}],tools:[{name:'web_fetch'},{name:'read'}]};
   await hooks['agent/pre-step']({agent,turn:1},async()=>({kind:'enter'}));
   settings={preferredName:'第二回合',webSearch:true};
@@ -40,7 +41,10 @@ test('native system prompt snapshots settings per turn, filters and denies disab
   assert.doesNotMatch(first.sections[0].text,/web_fetch/);assert.match(assembly.sections[0].text,/web_fetch/);
   assert.equal((await hooks['tools/pre-execute']({agent,name:'web_fetch'},async()=>({kind:'allow'}))).kind,'deny');
   const child={session:{header:{agentPreset:'personal-remote',origin:'subagent',parentSession:'session'}}};
+  agents.set('child',child);
   assert.equal((await hooks['tools/pre-execute']({agent:child,name:'browser'},async()=>({kind:'allow'}))).kind,'deny');
+  const nested={session:{header:{agentPreset:'personal-remote',origin:'subagent',parentSession:'child'}}};
+  assert.equal((await hooks['tools/pre-execute']({agent:nested,name:'browser'},async()=>({kind:'allow'}))).kind,'deny');
   await hooks['agent/pre-step']({agent,turn:2},async()=>({kind:'enter'}));
   const second=await hooks['system-prompt/assemble'](null,{scope:agent},async()=>assembly);
   assert.match(second.sections.at(-1).text,/第二回合/);assert.equal(second.tools.length,2);
