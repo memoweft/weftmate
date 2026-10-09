@@ -1856,139 +1856,79 @@ function task15QuestionFixture(config: NonNullable<Parameters<typeof harness>[3]
   return { page, question, questions, source, supplement }
 }
 function questionCard(page: ReturnType<typeof harness>, id = questionFixtureId) {
-  return page.get('transcript').children.find((row) => row.dataset.conversationQuestion === id)
+  const bar = page.get('question-bar');
+  if (!bar.hidden && bar.dataset.questionId === id && bar.children.length) return bar;
+  return page.get('transcript').children.find(row => row.dataset.conversationQuestion === id);
 }
-function questionAction(page: ReturnType<typeof harness>, action: string) {
-  return questionCard(page)?.querySelector(`[data-conversation-question-action="${action}"]`)
+function questionControl(page: ReturnType<typeof harness>, role: string, name: string) {
+  const all = (node: Element): Element[] => [node, ...node.children.flatMap(all)];
+  const matches = all(page.get('question-bar')).filter(node => (node.getAttribute('role') || (node.tagName === 'BUTTON' ? 'button' : node.tagName === 'INPUT' ? 'textbox' : '')) === role && (node.getAttribute('aria-label') || node.textContent) === name);
+  assert.equal(matches.length, 1, `one ${role} named ${name}`); return matches[0];
 }
-function questionForm(page: ReturnType<typeof harness>) { return questionCard(page)!.querySelector('form')! }
+function fillQuestionBatch(page: ReturnType<typeof harness>, questions: any[], custom = '合成备注') {
+  for (const [index, item] of questions.entries()) {
+    if (item.options?.length) questionControl(page, item.multiSelect ? 'button' : 'radio', item.options[0].label).fire('click');
+    else { const input = questionControl(page, 'textbox', '你的回答'); input.value = custom; input.fire('input'); }
+    if (index < questions.length - 1) questionControl(page, 'button', '下一题').fire('click');
+  }
+}
 async function questionReady(page: ReturnType<typeof harness>) {
-  await ready(page); for (let i = 0; i < 40 && !questionCard(page); i++) await flush(); assert.ok(questionCard(page))
+  await ready(page); for (let i = 0; i < 40 && !questionCard(page); i++) await flush(); assert.ok(questionCard(page));
 }
 function questionAnswered(question: Record<string, any>, requestId: string, answer: any) {
   return { ...question, status: 'answered', answerRequestId: requestId, answer, answeredAt: '2026-10-06T13:01:00.000Z' }
 }
 
-test('task15-question-client preserves native question order, exact labels, source receipt, drafts and information-only submission', async () => {
-  const empty = task15QuestionFixture({ questions: { A: [] } })
-  await ready(empty.page); for (let i = 0; i < 15; i++) await flush()
-  assert.equal(questionCard(empty.page), undefined)
-  const post = deferred<ReturnType<typeof reply>>()
-  const bodies: any[] = []
-  const f = task15QuestionFixture({ questionAnswer: (_url, options) => { bodies.push(JSON.parse(options.body)); return post.promise } })
-  const cancelled = { ...questionAnswered(f.question, 'cancelled-answer', { answers: f.question.questions.map((item) => ({ id: item.id, selected: [] })) }),
-    questionRpcId: '00000000-0000-4000-8000-000000000012', status: 'resolved', outcome: 'cancelled',
-    resolvedAt: '2026-10-06T13:02:00.000Z', answerAcceptedAt: '2026-10-06T13:01:30.000Z' }
-  f.questions.A.push(cancelled)
-  await questionReady(f.page)
-  const rows = f.page.get('transcript').children, card = questionCard(f.page)!
-  assert.equal(card.dataset.sourceReceiptId, f.supplement.receiptId)
-  assert.match(visibleText(card), /仅处理合成资料/)
-  assert.match(visibleText(questionCard(f.page, cancelled.questionRpcId)!), /已取消/)
-  const single = questionAction(f.page, 'option-0-0')!, customSingle = questionAction(f.page, 'custom-0')!
-  single.checked = true; single.fire('change')
-  customSingle.value = '自定义说明'; customSingle.fire('input')
-  assert.equal(single.checked, false, 'single choice is replaced by custom text')
-  single.checked = true; single.fire('change')
-  assert.equal(customSingle.value, '', 'single choice clears its mutually exclusive custom text')
-  for (const action of ['option-1-0', 'option-1-1']) { const option = questionAction(f.page, action)!; option.checked = true; option.fire('change') }
-  questionAction(f.page, 'custom-1')!.value = '额外信息'; questionAction(f.page, 'custom-1')!.fire('input')
-  const free = questionAction(f.page, 'custom-2')!; free.value = '合成备注'; free.fire('input'); free.focus()
-  const plan = questionAction(f.page, 'option-3-0')!; plan.checked = true; plan.fire('change')
-  f.page.getByRole('textbox', { name: '输入消息' }).value = '聊天草稿保留'
-  f.page.get('chat-scroll').scrollTop = 284
-  f.page.tick(); for (let i = 0; i < 15; i++) await flush()
-  assert.equal(f.page.document.activeElement, free)
-  assert.equal(questionAction(f.page, 'custom-2')!.value, '合成备注')
-  const detail = questionAction(f.page, 'detail')!; detail.focus(); detail.fire('click')
-  detail.fire('click'); await flush()
-  assert.equal(f.page.document.activeElement, questionAction(f.page, 'detail'))
-  assert.equal(f.page.get('chat-scroll').scrollTop, 284)
-  assert.equal(f.page.getByRole('textbox', { name: '输入消息' }).value, '聊天草稿保留')
-  questionForm(f.page).fire('submit'); questionForm(f.page).fire('submit')
-  for (let i = 0; i < 15 && bodies.length === 0; i++) await flush()
-  assert.equal(bodies.length, 1)
-  assert.deepEqual(Object.keys(bodies[0]).sort(), ['answer', 'requestId'])
-  assert.deepEqual(bodies[0].answer, { answers: [
-    { id: 'single', selected: ['同意'] }, { id: 'multi', selected: ['来源', '步骤'], custom: '额外信息' },
-    { id: 'free', selected: [], custom: '合成备注' }, { id: 'single', selected: ['继续'] },
-  ] }, 'batch position remains authoritative even when question IDs repeat')
-  assert.equal(f.page.requests.some((row) => row.options.method === 'POST' && row.url.includes('/approvals/')), false)
-  const answered = questionAnswered(f.question, bodies[0].requestId, bodies[0].answer)
-  f.questions.A[0] = answered
-  post.resolve(reply({ question: answered, requestId: bodies[0].requestId }))
-  for (let i = 0; i < 15; i++) await flush()
-  assert.match(visibleText(questionCard(f.page)!), /已提交回答/)
-  assert.doesNotMatch(visibleText(questionCard(f.page)!), /已确认接收|允许本次|目标已完成/)
-  f.questions.A[0] = { ...answered, status: 'resolved', outcome: 'answered', resolvedAt: '2026-10-06T13:02:00.000Z' }
-  f.page.tick(); for (let i = 0; i < 15; i++) await flush()
-  assert.match(visibleText(questionCard(f.page)!), /已结束/)
-})
+test('task15-question-client preserves native order, exact labels and drafts through the sequential bar without granting execution', async () => {
+  const empty = task15QuestionFixture({ questions: { A: [] } }); await ready(empty.page); for (let i=0;i<15;i++) await flush(); assert.equal(questionCard(empty.page),undefined);
+  const post = deferred<ReturnType<typeof reply>>(), bodies: any[] = [];
+  const f = task15QuestionFixture({questionAnswer:(_url,options)=>{bodies.push(JSON.parse(options.body));return post.promise}});
+  await questionReady(f.page);
+  assert.match(visibleText(questionCard(f.page)!), /还有 3 个问题/);
+  const first = f.question.questions[0];
+  questionControl(f.page,'radio',first.options[0].label).fire('click');
+  const other = questionControl(f.page,'textbox','其他回答'); other.value='自定义说明';other.fire('input');
+  assert.equal(questionControl(f.page,'radio',first.options[0].label).getAttribute('aria-checked'),'false');
+  questionControl(f.page,'radio',first.options[0].label).fire('click');assert.equal(other.value,'');
+  questionControl(f.page,'button','下一题').fire('click');
+  for(const option of f.question.questions[1].options) questionControl(f.page,'button',option.label).fire('click');
+  const mixed=questionControl(f.page,'textbox','其他回答');mixed.value='额外信息';mixed.fire('input');
+  questionControl(f.page,'button','下一题').fire('click');
+  const free=questionControl(f.page,'textbox','你的回答');free.value='合成备注';free.fire('input');
+  questionControl(f.page,'button','下一题').fire('click');questionControl(f.page,'radio',f.question.questions[3].options[0].label).fire('click');
+  f.page.get('message-text').value='聊天草稿保留';
+  questionControl(f.page,'button','提交回答').fire('click');await flush();
+  assert.deepEqual(bodies[0].answer.answers,[{id:first.id,selected:[first.options[0].label]}, {id:f.question.questions[1].id,selected:f.question.questions[1].options.map((row:any)=>row.label),custom:'额外信息'}, {id:f.question.questions[2].id,selected:[],custom:'合成备注'}, {id:f.question.questions[3].id,selected:[f.question.questions[3].options[0].label]}]);
+  assert.deepEqual(Object.keys(bodies[0]).sort(),['answer','requestId']);
+  assert.equal(f.page.requests.filter(row=>row.options.method==='POST'&&row.url.includes('/approvals/')).length,0);
+  f.questions.A[0]=questionAnswered(f.question,bodies[0].requestId,bodies[0].answer);
+  post.resolve(reply({requestId:bodies[0].requestId,question:f.questions.A[0]}));for(let i=0;i<15;i++)await flush();
+  assert.equal(f.page.get('question-bar').hidden,true);assert.match(visibleText(questionCard(f.page)!),/已回答：/);assert.equal(f.page.get('message-text').value,'聊天草稿保留');
+});
 
-test('task15-question-client rereads temporary uncertainty and reuses the exact answer request without losing native acceptance', async () => {
-  const firstPost = deferred<ReturnType<typeof reply>>(), secondPost = deferred<ReturnType<typeof reply>>()
-  const bodies: any[] = [], storage = new Map<string, string>()
-  let temporary = false
-  const f = task15QuestionFixture({ storage, questionAnswer: (_url, options) => {
-    bodies.push(JSON.parse(options.body)); return bodies.length === 1 ? firstPost.promise : secondPost.promise
-  }, questionRead: () => temporary ? reply({ error: { code: 'RUNTIME_UNAVAILABLE' } }, 503)
-    : reply({ questions: f.questions.A.map((row) => ({ ...row })), nextBefore: null, hasMore: false }) })
-  await questionReady(f.page)
-  questionAction(f.page, 'custom-2')!.value = '网络前的回答'; questionAction(f.page, 'custom-2')!.fire('input')
-  questionForm(f.page).fire('submit'); await flush()
-  temporary = true; firstPost.reject(new Error('synthetic uncertain network'))
-  for (let i = 0; i < 15; i++) await flush()
-  assert.match(visibleText(questionCard(f.page)!), /暂时无法核对.*已填写内容保留/)
-  assert.equal(questionAction(f.page, 'submit')!.disabled, true)
-  assert.doesNotMatch(visibleText(questionCard(f.page)!), /已失效/)
-  temporary = false; questionAction(f.page, 'check')!.fire('click')
-  for (let i = 0; i < 15 && questionAction(f.page, 'submit')?.disabled; i++) await flush()
-  assert.equal(questionAction(f.page, 'submit')!.textContent, '重试原回答')
-  assert.equal(bodies.length, 1)
-  const before = f.page.requests.length
-  questionForm(f.page).fire('submit')
-  for (let i = 0; i < 15 && bodies.length !== 2; i++) await flush()
-  assert.deepEqual(bodies[1], bodies[0])
-  assert.ok(f.page.requests[before].url.includes('/questions?'))
-  assert.ok(f.page.requests[before + 1].url.endsWith(`/questions/${questionFixtureId}`))
-  const accepted = { ...questionAnswered(f.question, bodies[1].requestId, bodies[1].answer), status: 'resolved', outcome: 'answered',
-    resolvedAt: '2026-10-06T13:02:00.000Z', answerAcceptedAt: '2026-10-06T13:01:30.000Z' }
-  f.questions.A[0] = accepted; f.page.tick()
-  for (let i = 0; i < 20 && !visibleText(questionCard(f.page)!).includes('已回答'); i++) await flush()
-  secondPost.resolve(reply({ question: questionAnswered(f.question, bodies[1].requestId, bodies[1].answer), requestId: bodies[1].requestId }))
-  for (let i = 0; i < 15; i++) await flush()
-  assert.match(visibleText(questionCard(f.page)!), /已回答/)
-  assert.doesNotMatch(visibleText(questionCard(f.page)!), /等待执行端确认接收|尚未确认采用/)
-  assert.equal(questionAction(f.page, 'submit'), null)
-})
+test('task15-question-client rereads uncertainty and reuses the exact answer request without losing native acceptance', async () => {
+  const first=deferred<ReturnType<typeof reply>>(),second=deferred<ReturnType<typeof reply>>(),bodies:any[]=[],storage=new Map<string,string>();let temporary=false;
+  const f=task15QuestionFixture({storage,questionAnswer:(_url,options)=>{bodies.push(JSON.parse(options.body));return bodies.length===1?first.promise:second.promise},questionRead:()=>temporary?reply({error:{code:'RUNTIME_UNAVAILABLE'}},503):reply({questions:f.questions.A,nextBefore:null,hasMore:false})});
+  await questionReady(f.page);fillQuestionBatch(f.page,f.question.questions,'网络前的回答');questionControl(f.page,'button','提交回答').fire('click');await flush();
+  temporary=true;first.reject(new Error('synthetic uncertain network'));for(let i=0;i<15;i++)await flush();
+  assert.match(visibleText(questionCard(f.page)!),/暂时无法核对/);assert.equal(questionControl(f.page,'button','重试原回答').disabled,true);
+  temporary=false;questionControl(f.page,'button','重新核对回答').fire('click');for(let i=0;i<15;i++)await flush();questionControl(f.page,'button','重试原回答').fire('click');for(let i=0;i<15&&bodies.length!==2;i++)await flush();
+  assert.deepEqual(bodies[1],bodies[0]);
+  const accepted={...questionAnswered(f.question,bodies[1].requestId,bodies[1].answer),status:'resolved',outcome:'answered',resolvedAt:'2026-10-06T13:02:00.000Z',answerAcceptedAt:'2026-10-06T13:01:30.000Z'};
+  f.questions.A[0]=accepted;f.page.tick();for(let i=0;i<15;i++)await flush();second.resolve(reply({question:questionAnswered(f.question,bodies[1].requestId,bodies[1].answer),requestId:bodies[1].requestId}));for(let i=0;i<15;i++)await flush();
+  assert.match(visibleText(questionCard(f.page)!),/已回答：/);assert.equal(f.page.get('question-bar').hidden,true);
+});
 
 test('task15-question-client ignores old conversation reads and account-device answer callbacks', async () => {
-  const oldRead = deferred<ReturnType<typeof reply>>()
-  let hold = false
-  const reading = task15QuestionFixture({ questionRead: (url) => hold && url.includes('/sessions/A/') ? oldRead.promise
-    : reply({ questions: [], nextBefore: null, hasMore: false }) })
-  await ready(reading.page); for (let i = 0; i < 15; i++) await flush()
-  hold = true; reading.page.tick()
-  for (let i = 0; i < 15 && !reading.page.requests.at(-1)?.url.includes('/questions?'); i++) await flush()
-  reading.page.getByRole('button',{name:'B'}).fire('click')
-  oldRead.resolve(reply({ questions: [reading.question], nextBefore: null, hasMore: false }))
-  for (let i = 0; i < 15; i++) await flush()
-  assert.equal(questionCard(reading.page), undefined)
-  const oldPost = deferred<ReturnType<typeof reply>>()
-  let body: any
-  const posting = task15QuestionFixture({ questionAnswer: (_url, options) => { body = JSON.parse(options.body); return oldPost.promise } })
-  await questionReady(posting.page)
-  const oldForm = questionForm(posting.page); oldForm.fire('submit'); await flush()
-  posting.questions.A = []; await switchToB(posting.page)
-  posting.page.getByRole('textbox', { name: '输入消息' }).value = 'B 的草稿'; posting.page.getByRole('textbox', { name: '输入消息' }).focus()
-  oldPost.resolve(reply({ question: questionAnswered(posting.question, body.requestId, body.answer), requestId: body.requestId }))
-  for (let i = 0; i < 15; i++) await flush()
-  oldForm.fire('submit'); await flush()
-  assert.equal(questionCard(posting.page), undefined)
-  assert.equal(posting.page.getByRole('textbox', { name: '输入消息' }).value, 'B 的草稿')
-  assert.equal(posting.page.document.activeElement, posting.page.getByRole('textbox', { name: '输入消息' }))
-  assert.equal(posting.page.requests.filter((row) => row.options.method === 'POST' && row.url.includes('/questions/')).length, 1)
-})
+  const oldRead=deferred<ReturnType<typeof reply>>();let hold=false;
+  const reading=task15QuestionFixture({questionRead:url=>hold&&url.includes('/sessions/A/')?oldRead.promise:reply({questions:[],nextBefore:null,hasMore:false})});
+  await ready(reading.page);for(let i=0;i<15;i++)await flush();hold=true;reading.page.tick();for(let i=0;i<15;i++)await flush();reading.page.getByRole('button',{name:'B'}).fire('click');oldRead.resolve(reply({questions:[reading.question],nextBefore:null,hasMore:false}));for(let i=0;i<15;i++)await flush();assert.equal(questionCard(reading.page),undefined);
+  const post=deferred<ReturnType<typeof reply>>();let body:any;
+  const posting=task15QuestionFixture({questionAnswer:(_url,options)=>{body=JSON.parse(options.body);return post.promise}});await questionReady(posting.page);fillQuestionBatch(posting.page,posting.question.questions);
+  const oldButton=questionControl(posting.page,'button','提交回答');oldButton.fire('click');await flush();posting.questions.A=[];await switchToB(posting.page);
+  posting.page.get('message-text').value='B 的草稿';posting.page.get('message-text').focus();post.resolve(reply({question:questionAnswered(posting.question,body.requestId,body.answer),requestId:body.requestId}));for(let i=0;i<15;i++)await flush();oldButton.fire('click');await flush();
+  assert.equal(questionCard(posting.page),undefined);assert.equal(posting.page.get('message-text').value,'B 的草稿');assert.equal(posting.page.document.activeElement,posting.page.get('message-text'));assert.equal(posting.page.requests.filter(row=>row.options.method==='POST'&&row.url.includes('/questions/')).length,1);
+});
 
 const profileFixture = () => ({
   A: { username: 'ProfileA', ownerId: 'profile-owner-a', displayName: '合成账户 A', avatar: null, profileRevision: 0 },

@@ -190,7 +190,7 @@ async function renderConversation({silent=false}={}){if(state.page!=='chat')retu
         for(const m of late)content.append(messageNode(m.role,m.text,m.thumbnails,previewScope,m.messageId||m.id))}
       const older=state.linkedEvents.get(id);if(older){state.sharedHasOlder=older.hasOlder===true;state.sharedNextBeforeSeq=older.nextBeforeSeq;olderControl(content)}content.append(handoffCard(id));
     }else content.append(handoffCard(id));
-    for(const receipt of result.receipts||[]){const card=el('div','receipt');card.append(el('strong','',toolLabel(receipt.toolName)+' · '+receiptStatus(receipt.status)),el('p','',receipt.summary||''));content.append(card)}
+    for(const receipt of result.receipts||[]){const card=el('div','receipt');card.append(el('strong','',toolLabel(receipt.toolName)+' · '+receiptStatus(receipt.status)),el('p','',uiCore.interfaceText(receipt.summary)));content.append(card)}
     if(result.turnStatus==='running'&&state.busy)renderLiveProgress();
     else if(result.turnStatus==='cancelled'||result.turnStatus==='failed'){
       const failed=result.turnStatus==='failed';const card=el('div',`turn-recovery${failed?' error':''}`);
@@ -257,7 +257,7 @@ function renderLiveProgress(){if(state.page!=='chat'||state.chatSource!=='phone'
   if(state.scrollPinned){if((globalThis.WeftMobileMotion?.reduced()??window.matchMedia('(prefers-reduced-motion: reduce)').matches))scrollBottom();
     else scheduleLiveMotion()}}
 
-function toolLabel(name){return {open_settings:'系统设置',open_app:'打开应用',list_launchable_apps:'应用列表'}[name]||'手机动作'}
+function toolLabel(name){return uiCore.toolLabel(name)}
 
 function applyTheme(value){state.appearance=value;const systemDark=window.weftNative&&typeof state.nativeSystemDark==='boolean'?state.nativeSystemDark:systemThemeMedia.matches;const dark=value==='dark'||value==='system'&&systemDark;
   document.documentElement.dataset.theme=dark?'dark':'light';document.documentElement.style.colorScheme=dark?'dark':'light';

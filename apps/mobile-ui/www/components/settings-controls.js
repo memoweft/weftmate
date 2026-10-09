@@ -20,5 +20,6 @@
         title.textContent = label; if (control.id) title.htmlFor = control.id;
         help.textContent = description; help.className = 'muted'; copy.append(title, help); line.append(copy, control); return line;
     }
-    globalThis.WeftSettingsControls = { segmented, toggle, row };
+    const select = source => globalThis.WeftPopover?.bindSettingsSelect(source);
+    globalThis.WeftSettingsControls = { segmented, toggle, row, select };
 })();
