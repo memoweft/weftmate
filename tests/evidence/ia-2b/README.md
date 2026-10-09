@@ -1,6 +1,6 @@
 # IA-2b · 主对话宿主
 
-按 2.5 → 2.4 → 2.6 分步交付；本目录只使用合成账户与内容。
+按 2.5 → 2.4 → 2.6 分步交付；本目录只使用合成账户与内容。依赖顺序：[2.5 / PR #147](https://github.com/memoweft/weftmate/pull/147) → [2.4 / PR #149](https://github.com/memoweft/weftmate/pull/149) → [2.6 / PR #150](https://github.com/memoweft/weftmate/pull/150)。
 
 ## 2.5 D33 清理
 
