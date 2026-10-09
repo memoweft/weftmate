@@ -43,7 +43,7 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         if (!active) ui.byId('devices-heading').closest('section').append(ui.byId('pending-devices'));
         for (const id of ['account-heading', 'devices-heading']) ui.byId(id).closest('section').hidden = active;
         ui.byId('cloud-account').hidden = true;
-        if (!active) return;
+        if (!active) { void ui.cloudUi?.refreshBinding(); return; }
         ui.byId('cloud-email').textContent = core.state.cloudAuth.email;
         select(tab); void refreshDirectory();
     }

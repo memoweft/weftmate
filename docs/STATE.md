@@ -2,7 +2,7 @@
 
 > 只写现在，整页覆盖，不追加日记。路线见 PLAN.md；旧记录见 archive/2026-10-07/。
 
-更新：2026-10-08
+更新：2026-10-09
 
 ## 当前里程碑：M0 重置 / 轻云并行
 
@@ -90,6 +90,8 @@
 MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌），缓存54,848，输出4,829，共95,668；按官方现价计**¥0.04674596（约¥0.05）**，不是账单，包含诊断与Qwen方向换模型时的MiMo调用。四个隔离根665实际文件密钥扫描0、凭据／宿主进程0；8081原模型、98,304/单槽及无切换／活动／排队／维护租约保持。未读日用保管库、未自起模型、未停止或重启8080。Core最新ee718d6由独立源码真实MiMo、正常形成路径真实Qwen及自身完整CI验证；本仓CI仍固定已合入M2b的0a0c54c，Core由Claude squash（压缩合并）后需更新固定提交。客户端接口无变更。
 
 ## 契约变更
+
+- **UP-2**：CLIENT_API 7.7 补桌面实际客户端 / 回调与旧本地账号绑定说明；复用 7.4 / 7.8 的 claims、binding、App（应用）内认证，无新增路径或请求 / 响应字段。绑定成功保留原本地会话，清除绑定专用云令牌；未登记远程浏览器回调。
 
 - **UI-5 / D34**：CLIENT_API 会话章节新增 PATCH `/sessions/{id}/metadata`、POST `/sessions/{id}/fork`、`/session-groups` CRUD；列表增加 `pinned,unread,groupId,parentSessionId?` 与 `groups`，置顶优先、助手新消息水位自动未读；写入沿用账号隔离 / CSRF（跨站请求伪造防护）与权限。分叉独立工作目录及经验、原生种子谱系、不复制 MemoWeft 来源；已归档迁到设置，旧客户端兼容。
 - **FG-1 / Windows-4**：CLIENT_API 3.9新增遗忘只读预览 GET `/memory/items/{kind}/{itemId}/forget-preview`、`/memory/evidence/{evidenceId}/forget-preview`；3.3新增 GET `/sessions/{sessionId}/forget-preview`，均返回范围／名称／数量／`worldRevision`。对话 DELETE 可另传 `deleteConversationSnippets:false`、`memoryWorldRevision`；D33两类界面确认框默认不勾原话删除，预览失败／修订变化不可确认。既有 `/memory/export`、状态 `memory:{state,inject}` 和受限原生错误字段保留。
