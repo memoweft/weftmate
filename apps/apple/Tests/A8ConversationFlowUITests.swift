@@ -49,8 +49,11 @@ final class A8ConversationFlowUITests: XCTestCase {
         try tap(group); XCTAssertEqual(group.value as? String, "已展开")
         let first = matching(app, "executionStep."); try tap(first)
         try expect(app.buttons["复制"]); keep(app, "expanded", theme)
+        try tap(first)
         _ = try await get("/a8/approvals")
         try expect(app.staticTexts["还有 1 个待批准"]); try expect(app.descendants(matching: .any)["approvalBar"])
+        XCTAssertEqual(group.value as? String, "已展开")
+        try tap(group)
         try expect(matching(app, "approveOnce.")); keep(app, "approval", theme, review: true)
         let approve = matching(app, "approveOnce."); let previousID = approve.identifier
         try tap(approve); try await waitGone(app.buttons[previousID])
@@ -95,6 +98,7 @@ final class A8ConversationFlowUITests: XCTestCase {
         XCTAssertEqual(app.buttons["sendButton"].label, "发送")
         try tap(app.buttons["sendButton"]); try expect(app.staticTexts["合成纯文字问候"])
         try expect(app.staticTexts["合成任务完成。"])
+        XCTAssertFalse(matching(app, "stopTask.").exists)
         XCTAssertFalse(matching(app, "executionBlock.").exists); XCTAssertFalse(app.staticTexts["processingLine"].exists)
         keep(app, "pure-text", theme)
     }

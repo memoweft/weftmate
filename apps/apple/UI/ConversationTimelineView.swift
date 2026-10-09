@@ -24,7 +24,7 @@ struct ConversationTimelineView: View {
         ForEach(appModel.messages.filter { !$0.id.hasPrefix("host|") && !$0.pendingContext && !appModel.timelineMessageIDs.values.contains($0.id) }) { message in
             MessageView(model: appModel, message: message, openAttachment: openAttachment).id(message.id)
         }
-        ForEach(TimelineProjection.entries(appModel.timeline.events).filter { !$0.event.type.hasPrefix("approval.") }) { entry in
+        ForEach(TimelineProjection.conversationEntries(appModel.timeline.events)) { entry in
             VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
                 if !entry.steps.isEmpty {
                     TimelineExecutionBlock(client: appModel.assistantClient, sessionID: sessionID, entry: entry, interactions: interactions, openSources: openSources)
@@ -45,10 +45,7 @@ struct ConversationTimelineView: View {
                                 .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                         }.buttonStyle(.plain).accessibilityIdentifier("memoryUsed.\(entry.seq)")
                     }
-                    if appModel.taskControlSessions.contains(sessionID), let receipt = entry.event.data["receiptId"]?.string,
-                       let command = commands.rootCommands.first(where: { $0.receiptId == receipt }) {
-                        TimelineTaskControl(appModel: appModel, command: command).id(command.id + appModel.accountEpoch.uuidString)
-                    }
+
                 } else if entry.event.type.hasPrefix("question.") {
                     TimelineInteractionCard(model: interactions, entry: entry, events: appModel.timeline.events)
                 } else if entry.event.type == "artifact.created" {
