@@ -1,0 +1,314 @@
+{
+  "startedAt": "2026-10-09T14:09:18.811Z",
+  "realCloudEntrypoint": "services/cloud/src/main.mjs",
+  "realElectronEntrypoint": ".",
+  "sourceCommit": "93a7b75eca241d5f3794bd67eab02a23f15945e6",
+  "phase": "android-new-retry",
+  "baselineHost": false,
+  "steps": [
+    "Real cloud entrypoint health",
+    "Mobile registration, real file mail, sixty-second resend deadline and bundled legal reading",
+    "Real desktop approves the waiting phone and recipient imports trusted host delivery",
+    "Settings device directory sees real desktop, connects through hosts/connect and adopts real host session"
+  ],
+  "cloudTransport": "WSL Ubuntu",
+  "visualChecks": [
+    {
+      "name": "login",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "login",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "waiting",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "waiting",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "devices",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "devices",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "task-approval",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "task-approval",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "task-result",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    }
+  ],
+  "nativeErrors": [
+    {
+      "method": "cloud.pending",
+      "errorCode": "LOGIN_REQUIRED",
+      "status": 401
+    },
+    {
+      "method": "cloud.pending",
+      "errorCode": "ACCOUNT_SWITCHED",
+      "status": 0
+    }
+  ],
+  "executionOwner": {
+    "executionAccount": true,
+    "session": "session-0b22fa7c-8bae-437e-983d-7024dbc5ed82",
+    "approvalMode": {
+      "status": 200,
+      "body": {
+        "mode": "ask",
+        "allowedCategories": []
+      }
+    }
+  },
+  "phoneTask": {
+    "passed": true,
+    "durationMs": 36172,
+    "approvals": 2,
+    "completed": true,
+    "fileContent": "FX9_PHONE_EXECUTED\n",
+    "noUnconfirmed": true,
+    "commandState": "accepted_by_dsh",
+    "taskStatus": 200,
+    "replyEvidence": {
+      "status": "completed",
+      "turn": 1,
+      "assistantChunks": 117,
+      "textChunks": 13,
+      "reasoningChunks": 48,
+      "assistantMessages": 4,
+      "toolSaveObserved": true,
+      "step": 4,
+      "observedAt": "2026-10-09T14:10:28.217Z",
+      "terminalAt": "2026-10-09T14:10:28.217Z",
+      "firstChunkAt": "2026-10-09T14:10:02.972Z",
+      "lastChunkAt": "2026-10-09T14:10:28.199Z"
+    },
+    "draft": "",
+    "pending": null,
+    "optimistic": [],
+    "text": "FX-9 手机办事\n本对话用量\n输出与来源\nWeftMate\n新对话\n最近对话\n未分组\nFX-9 手机办事\n电脑执行\n项目\n\n在电脑上添加项目后，可在这里开始对话。\n\n功能\n对话\n记忆\n能力与扩展\n项目与成果\n设备\n通知\n设置\n合\n合成电脑\n个人资料与设置\n请在电脑上创建 C:/Temp/fx9-phone-a7f5f579-16dc-4c30-a8c6-2a62ee32e4e2.txt，内容只写 FX9_PHONE_EXECUTED。只操作这个测试文件，并读回核验内容。完成后告诉我。\n\n正在处理…\n\n修改了 1 个文件\nfx9-phone-a7f5f579-16dc-4c30-a8c6-2a62ee32e4e2.txt\n已读回核验\n\n文件 · 19 B\n\n打开成果下载\n读取了 1 个文件\n每次询问\n当前模型\n电脑已受理消息，等待会话记录更新"
+  },
+  "visualOnly": true,
+  "passed": true,
+  "nativeCleanup": {
+    "applicationRemoved": true,
+    "reverseRemoved": true,
+    "forwardRemoved": true,
+    "probePassed": true,
+    "originalNightMode": "yes",
+    "nightModeRestored": true
+  },
+  "finishedAt": "2026-10-09T14:11:29.600Z",
+  "surface": "android",
+  "realNativeBridge": true,
+  "locators": "visible accessible names and roles",
+  "requests": [
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/config",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/authorization",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/auth/registration/request",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/registration/verify",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/registration/complete",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/authorization/resume",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/oidc/token",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/oidc/jwks",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/cloud/devices",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/auth/cloud-nonce",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/cloud-desktop",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/pending",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/models",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/models",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/projects",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/commands",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/usage",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sync/events",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/cloud-session",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/cloud/auth/device/confirm",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/96f0ac5b-4e8a-4454-b3d2-942d8c5fc20e/decision",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/96f0ac5b-4e8a-4454-b3d2-942d8c5fc20e/trust",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/cloud-session",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/account/models",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/account/models/by-request/15915fae-6bf7-4ff3-9c94-ad4772d501a5",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/commands",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/commands/cmd-40138bfa-2589-4d82-a739-07d69da1e49d",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-0b22fa7c-8bae-437e-983d-7024dbc5ed82/approval-mode",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-0b22fa7c-8bae-437e-983d-7024dbc5ed82/metadata",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-0b22fa7c-8bae-437e-983d-7024dbc5ed82/events",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-0b22fa7c-8bae-437e-983d-7024dbc5ed82/approvals",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-0b22fa7c-8bae-437e-983d-7024dbc5ed82/questions",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/tasks/cmd-c48cc0f4-0320-4236-86d0-e94dafb7b6d0",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-0b22fa7c-8bae-437e-983d-7024dbc5ed82/events/95/detail",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-0b22fa7c-8bae-437e-983d-7024dbc5ed82/events/129/detail",
+      "status": 200
+    }
+  ]
+}
