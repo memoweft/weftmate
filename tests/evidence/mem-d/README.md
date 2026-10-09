@@ -55,3 +55,5 @@ node tests/integration/mem-d-daily.mjs --backfill --verify --groups 3 --turns 2 
 开发失败保留：`backfill-synthetic/`的默认Playwright浏览器缺失，改用系统Edge；`verified-synthetic/`手机登录重载后未等界面绑定完成，后续等待可见页面修复；`verified-mimo/`宿主重启后评测凭据仍指向旧随机端口，后续更新评测入口修复。早期 `after-mimo/`在恢复完成前取样并关闭，16条不冒充最终结果。早期真实重启留下的Core作业等待原生租约，最终运行等到全部applied。未用成功目录覆盖失败目录。
 
 这些运行发生在开发工作树，`revision`是启动时HEAD（当前提交），不代表当时无未提交改动。之后的账户凭据隔离、游标分页和主干合并另有专项／合并后验证，最终以PR提交的CI为准。没有做日用迁移、长期浸泡或修改本人模型配置。
+
+合入 `origin/main` 后的 `post-merge-synthetic/` 再验20轮故障摄取（20条形成、无积压），`post-merge-mimo/` 再验两会话两轮（2条形成及来源）；`post-merge-tests.txt` 验证账户动态路线与61回合分页边界。`final-backfill/` 的暂停、继续、取消与重开均由真实界面点击完成。MiMo全包144次请求均有用量：输入579,787，其中缓存417,600，输出11,481词元；不提供未经本次核价的费用估算。

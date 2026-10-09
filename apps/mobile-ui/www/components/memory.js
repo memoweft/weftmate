@@ -94,7 +94,7 @@ function memoryIngestionPanel(target){
 }
 
 function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||state.page!=='memory')return;const memory=state.memory;clear(target);
-  target.append(heading('记忆','查看当前账户的理解与来源；可用时在详情中纠正、停用或删除。手机对话的自动记忆接入仍待验证。'));
+  target.append(heading('记忆','查看当前账户的理解与来源；整理过去的对话，或在详情中纠正、停用与忘掉。'));
   target.append(notice(memoryStatusText(),memory.error?'读取状态':''));
   renderMemoryReceipt(target);
   if(!state.loggedIn||!state.owner){target.append(action('连接个人账户',()=>page('connect')));return}
