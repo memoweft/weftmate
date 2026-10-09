@@ -125,6 +125,10 @@ export async function createOfflineService(context) {
         return { generation: account.generation, receipts };
       });
       context.authenticate(request, 'account:manage');
+      if (route !== '/sync') for (const receipt of result.receipts ?? []) await context.activity?.record(ownerId, {
+        key: `offline:${current.deviceId}:${receipt.id}`, type: 'memory.submission.completed', title: '补交完成',
+        summary: '离线对话已同步到电脑。', level: 'silent',
+      });
       return context.json(response, 200, result);
     },
   };

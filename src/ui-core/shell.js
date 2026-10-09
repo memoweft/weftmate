@@ -202,6 +202,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         try {
             await core.refreshStatus();
             await core.loadPersonalization().catch(() => {});
+            await core.refreshActivity?.();
             await core.refreshModels();
             await core.refreshSessions();
             await core.refreshTasks();
@@ -264,6 +265,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         }
     }
     function clearSession() {
+        core.resetActivity?.();
         core.resetLogicalSession?.();
         effects.cancelCloudLogin();
         effects.removeResourcePreview();

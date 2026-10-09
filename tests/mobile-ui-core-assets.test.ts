@@ -92,6 +92,7 @@ test('publish command refuses stale generated assets before creating a release',
   await cp(sourceDir, copiedSources, { recursive: true })
   for (const name of ['src/ui-core/manifest.mjs', 'apps/mobile-ui/src/build-ui-core.mjs',
     'src/personal-access-ui/components/personalization.js', 'src/personal-access-ui/personalization.css', 'apps/mobile-ui/www/components/personalization.js', 'apps/mobile-ui/www/personalization.css',
+    'src/personal-access-ui/components/activity-view.js', 'src/personal-access-ui/activity.css', 'apps/mobile-ui/www/components/activity-view.js', 'apps/mobile-ui/www/activity.css',
     'src/personal-access-ui/components/offline.js', 'src/personal-access-ui/offline.css', 'apps/mobile-ui/www/components/offline.js', 'apps/mobile-ui/www/offline.css',
     'apps/mobile-ui/src/check.mjs', 'scripts/build-mobile-ui.mjs', 'src/personal-access/mobile-ui-release.mjs', 'src/personal-update/manifest.mjs', 'src/personal-access-ui/components/question-bar.js', 'src/personal-access-ui/components/usage.js', 'src/personal-access-ui/components/settings-controls.js', 'src/personal-access-ui/components/schedules.js', 'src/personal-access-ui/usage.css', 'src/personal-access-ui/popovers.js', 'apps/mobile-ui/www/popovers.js',
     'src/personal-access-ui/conversation-scroll.js', 'apps/mobile-ui/www/conversation-scroll.js',
