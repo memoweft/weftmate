@@ -31,6 +31,8 @@
 
 ## 生成与新增
 
+UX-2 新增 `logout`（退出登录）动作图标；沿用 24 × 24 网格、1.75 线宽与圆角端点，16 像素版本使用 1.5 线宽。置顶、归档和用量分别复用 `pin`、`archive`、`chart`。
+
 在仓库根执行 `npm run icons:generate`。依赖仓库现有 Playwright（自动化测试工具）和 Electron（桌面程序框架），没有额外图像库；需要已安装 Electron 二进制。脚本从母版生成：
 
 - `src/assets/icons/` 与 `build/`：PNG（位图）和含 16、20、24、32、40、48、64、128、256 像素的 ICO（Windows 图标容器）。

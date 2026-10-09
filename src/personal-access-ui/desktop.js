@@ -230,6 +230,7 @@
         if (key === 'n') { e.preventDefault(); byId('new-session').click() }
         if (key === 'k') { e.preventDefault(); toggleRail(false); byId('session-search').focus(); byId('session-search').select() }
         if (key === 'b') { e.preventDefault(); toggleRail() }
+        if (key === ',') { e.preventDefault(); globalThis.WeftSettingsNavigation?.open('general') }
       } else if (e.key === 'Escape' && !e.defaultPrevented) {
         e.preventDefault()
         if (picker) { hidePicker(); byId('conversation-resources').focus() }

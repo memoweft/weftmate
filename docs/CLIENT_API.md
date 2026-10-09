@@ -119,6 +119,8 @@
 
 普通会话与项目 / 浏览器 / 接管会话均返回已绑定的 `modelProfileId`；旧会话无法确定时可为 `null`。A5 修复普通会话曾漏掉该既有字段、导致 Apple 无法确认原模型的问题。
 
+UX-2：`GET /sessions` 的可用会话另返回执行电脑的 `hostId`，以及可选 `updatedAt`（ISO 8601 时间）。`updatedAt` 取最近已读取历史事件的 `at` 与原会话登记时间中较新者；无有效时间则省略，不以请求或重命名时间伪造活动。项目列表按它倒序默认展示最近 5 条；旧宿主缺字段时客户端保留稳定顺序并显示暂无活动记录。账户菜单读取既有 `/settings/usage` 的统计时区，再读取同一时区的 `/usage`；以 `budget.effectiveLimit`（包含本月临时额度）与该完整月份金额计算上限余量，无上限显示金额与请求数，不新增用量接口。
+
 运行中的会话可另带 `processing:{phase,modelName?,ahead?}`：`phase` 为 `memory`（宿主正在读取记忆）、`queued`（宿主推理队列）、`loading`（本机 ModelSwitcher〔模型切换代理〕实测正在切换）、`waiting`（已开始模型请求，尚无内容）、`reasoning`（收到模型思考片段）、`answering`（收到文字片段）。`ahead` 仅在 `queued` 时表示该请求前面的实际请求数，其他阶段省略；`modelName` 为当前模型显示名称。无可观测阶段时省略 `processing`，客户端显示普通等待提示，不推测加载或思考。结束后不返回阶段；旧客户端可忽略新增字段。
 
 归档会话的 `sendAvailable:false`，发送新消息返回409 `SESSION_ARCHIVED`，先恢复再发送。已有运行不因归档停止。删除默认保留 MemoWeft 长期记忆；`forgetMemories:true` 需要 Cookie 与 `account:manage`，按账号及会话来源查询 Core（核心）的记忆任务证据，再走 `delete_evidence` 真正删除与储存清理。Core 不可用或遗忘失败时保留对话用于重试；已完成的证据遗忘不能撤销。再次删除已删除会话返回404。停止或后台形成未确认时不能宣称删除成功。

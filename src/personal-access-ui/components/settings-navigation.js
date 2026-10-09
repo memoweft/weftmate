@@ -46,6 +46,9 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
     }
     function showSettingsDialog() {
         if (!dialog?.open) { returnFocus = document.activeElement; dialog.showModal(); globalThis.WeftMotion?.reveal(dialog, '240ms'); }
+        const strip = ui.byId('settings-usage-strip');
+        strip.textContent = '正在读取本月用量…';
+        void core.loadUsageStrip().then(text => { if (text && dialog.open) strip.textContent = text; }).catch(() => { if (dialog.open) strip.textContent = '本月用量暂时无法读取，点此重试。'; });
         selectSettings(core.state.currentView === 'memory' ? 'memory' : selected);
     }
     function hideSettingsDialog() { if (dialog?.open) dialog.close(); }
@@ -79,6 +82,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
     function mountSettingsNavigation() {
         const account = ui.byId('account-view');
         dialog = node('dialog', 'settings-dialog'); dialog.id = 'settings-dialog'; dialog.setAttribute('aria-label', '设置');
+        const strip = node('button', 'settings-usage-strip'); strip.id = 'settings-usage-strip'; strip.type = 'button'; strip.setAttribute('aria-label', '用量详情'); strip.onclick = () => selectSettings('usage');
         const sidebar = node('aside', 'settings-sidebar');
         search = node('input', 'settings-search'); search.type = 'search'; search.placeholder = '搜索设置'; search.setAttribute('aria-label', '搜索设置');
         navigation = node('nav', 'settings-navigation'); navigation.setAttribute('aria-label', '设置分类'); sidebar.append(search, navigation);
@@ -167,13 +171,15 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         if (globalThis.weftmateDesktop) { panels.get('about').append(globalThis.WeftSettingsControls.row('版本', '当前桌面程序。', appVersion)); void globalThis.weftmateDesktop.settings().then(settings => { appVersion.textContent = settings.version; }); }
         const version = node('span', 'settings-value', '正在读取…'); version.id = 'settings-host-version';
         panels.get('about').append(globalThis.WeftSettingsControls.row('宿主版本', '来自当前连接的宿主。', version));
+        const feedback = node('a', 'button secondary', '反馈问题'); feedback.href = 'https://github.com/memoweft/weftmate/issues'; feedback.target = '_blank'; feedback.rel = 'noopener noreferrer';
+        panels.get('about').append(globalThis.WeftSettingsControls.row('帮助与反馈', '描述问题时请勿包含密码或私人对话。', feedback));
         for (const [name, kind] of [['服务条款', 'terms'], ['隐私政策', 'privacy']]) {
             const button = node('button', 'button secondary', '阅读' + name); button.type = 'button';
             button.addEventListener('click', () => { void ui.openLegal(kind); });
             panels.get('about').append(globalThis.WeftSettingsControls.row(name, '在应用内阅读。', button));
         }
         for (const original of originals) if (original.parentNode === account) original.hidden = true;
-        account.append(content); main.append(head, picker); if (cloudNotice) main.append(cloudNotice); main.append(account); dialog.append(sidebar, main); document.body.append(dialog);
+        account.append(content); main.append(head, strip, picker); if (cloudNotice) main.append(cloudNotice); main.append(account); dialog.append(sidebar, main); document.body.append(dialog);
         registry = globalThis.WeftUiCore.settingsRegistry({
             general: () => { messageMode.value = core.messageModePreference(); messageMode.dispatchEvent(new Event('weft:sync')); },
             account: () => { ui.selectCloudSettings?.('account'); ui.paintCloudSettings?.(); },
