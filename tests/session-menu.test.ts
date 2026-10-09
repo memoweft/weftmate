@@ -40,6 +40,9 @@ test('groups create, rename, move and delete restore membership without losing s
 test('all metadata, groups and forks deny another account; fork leaves source and memory bindings unchanged',async()=>{
   const f=fixture(),before=structuredClone(f.accounts.a.sessions['session-a']);
   for(const action of [()=>f.operations.metadata('b','session-a',{pinned:true}),()=>f.operations.fork('b','session-a'),()=>f.operations.summary('b','session-a')])await assert.rejects(action(),{code:'SESSION_UNAVAILABLE'});
+  await assert.rejects(f.operations.metadata('a','constructor',{pinned:true}),{code:'SESSION_UNAVAILABLE'});
+  await assert.rejects(f.operations.metadata('a','session-a',{groupId:'constructor'}),{code:'INVALID_REQUEST'});
+  await assert.rejects(f.operations.groups('a','DELETE','constructor',{}),{code:'NOT_FOUND'});
   const group=await f.operations.groups('a','POST',null,{name:'A'});await assert.rejects(f.operations.groups('b','PATCH',group.group.id,{name:'B'}),{code:'NOT_FOUND'});
   const child=await f.operations.fork('a','session-a');assert.deepEqual(f.accounts.a.sessions['session-a'],before);
   assert.equal(f.accounts.a.sessions[child.sessionId].parentSessionId,'session-a');assert.equal(f.accounts.a.sessions[child.sessionId].conversationId,undefined);
@@ -52,6 +55,8 @@ test('menu names, shortcuts and archived taxonomy are shared across renderers',(
   for(const [key,action] of Object.entries({P:'pin',U:'unread',R:'rename',F:'fork',A:'archive',D:'delete'})){assert.equal(core.sessionMenuKey(key),action);assert.equal(core.sessionMenuKey(key.toLowerCase()),action);}
   assert.equal(core.sessionMenuKey('x'),undefined);assert.equal(core.sessionMenuItems({unread:true})[1].label,'标记为已读');
   assert.equal(core.settingsRegistry().list({query:'已归档'})[0].id,'archived');
+  const ordered = [{id:'loose'}, {id:'group-b',groupId:'group-b'}, {id:'pinned',pinned:true}, {id:'group-a',groupId:'group-a'}].sort(core.compareSessionGroups);
+  assert.deepEqual(ordered.map(row=>row.id),['pinned','group-a','group-b','loose'],'ungrouped stays below groups independently of locale punctuation order');
 });
 test('backend fork copies workspace and experience independently, binds model and pins native title',async()=>{
   const root=await mkdtemp(path.join(tmpdir(),'weftmate-ui5-fork-')),calls:any[]=[];

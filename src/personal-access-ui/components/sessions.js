@@ -133,7 +133,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         const query = (ui.byId('session-search').value || '').normalize('NFKC').trim().toLocaleLowerCase();
         let currentGroup = null, matches = 0;
         const sessions = core.sessionList();
-        for (const session of [...sessions].sort((a,b)=>Number(b.pinned)-Number(a.pinned)||((a.groupId||'~').localeCompare(b.groupId||'~')))) {
+        for (const session of globalThis.WeftUiCore.sortSessions(sessions).sort(globalThis.WeftUiCore.compareSessionGroups)) {
             if (!core.sessionIdPattern.test(session.sessionId) || linkedSessionIds.has(session.sessionId))
                 continue;
             const title = typeof session.title === 'string' && session.title ? session.title : '新对话';

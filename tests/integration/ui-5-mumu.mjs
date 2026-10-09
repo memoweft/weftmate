@@ -100,7 +100,9 @@ try {
   }
   const A=await session('A');await api(`/sessions/${A}/metadata`,{title:'合成分叉验收',pinned:true,unread:false},'PATCH');
   const group=(await api('/session-groups',{name:'合成资料'})).body.group;await api(`/sessions/${A}/metadata`,{groupId:group.id},'PATCH');
+  const loose=await session('loose');await api(`/sessions/${loose}/metadata`,{title:'合成未分组'},'PATCH');
+  const grouped=await session('grouped');await api(`/sessions/${grouped}/metadata`,{title:'合成分组会话',groupId:group.id},'PATCH');
   const {verifyMobileMenus}=await import('./ui-5-mobile-menu.mjs');
-  await verifyMobileMenus({origin:new URL(page.url()).origin,credentials:{username,password},evidence,sessionId:A,api,mumu:true});
+  await verifyMobileMenus({origin:new URL(page.url()).origin,credentials:{username,password},evidence,sessionId:A,api,mumu:true,verifyGroupOrder:true});
   console.log('MuMu UI-5 passed');
 } finally {await app?.close().catch(()=>{});}

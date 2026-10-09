@@ -3,8 +3,9 @@ import { failure, plainObject, validId } from './common.mjs';
 
 export function createSessionMetadata(context) {
   const requireSession = (ownerId, sessionId) => {
-    const session = context.accountState(ownerId).sessions[sessionId];
-    if (!session) throw failure('SESSION_UNAVAILABLE', 404);
+    const sessions = context.accountState(ownerId).sessions;
+    if (!Object.hasOwn(sessions, sessionId)) throw failure('SESSION_UNAVAILABLE', 404);
+    const session = sessions[sessionId];
     if (session.deleting) throw failure('SESSION_BUSY', 409);
     return session;
   };
@@ -20,7 +21,7 @@ export function createSessionMetadata(context) {
       if (patch.title !== undefined) patch = { ...patch, title: name(patch.title) };
       return context.serial(async () => {
         const session = requireSession(ownerId, sessionId);
-        if (patch.groupId && !context.accountState(ownerId).sessionGroups?.[patch.groupId]) throw failure('NOT_FOUND', 404);
+        if (patch.groupId && !Object.hasOwn(context.accountState(ownerId).sessionGroups ?? {}, patch.groupId)) throw failure('NOT_FOUND', 404);
         if (patch.title !== undefined) {
           if (!context.backend.renameSession) throw failure('BACKEND_UNAVAILABLE', 503);
           const accepted = await context.callBackend(() => context.backend.renameSession({ ownerId, sessionId, title: patch.title }));
@@ -42,7 +43,7 @@ export function createSessionMetadata(context) {
       const label = method === 'DELETE' ? null : name(body.name);
       return context.serial(async () => {
         const groups = context.accountState(ownerId).sessionGroups ?? {};
-        if (method !== 'POST' && !groups[groupId]) throw failure('NOT_FOUND', 404);
+        if (method !== 'POST' && !Object.hasOwn(groups, groupId)) throw failure('NOT_FOUND', 404);
         const key = method === 'POST' ? `group-${randomUUID()}` : groupId;
         await context.mutate(ownerId, next => {
           next.sessionGroups ??= {};
