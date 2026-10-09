@@ -18,7 +18,7 @@ export function reconcileChatIdentity(account, hostId, now) {
   for (const [sessionId, session] of Object.entries(account.sessions)) {
     let segment = identity.segments[identity.sessionSegments[sessionId]];
     if (!segment) {
-      const chatId = makeId('chat'), segmentId = makeId('segment');
+      const chatId = session.sideChat?.chatId ?? makeId('chat'), segmentId = makeId('segment');
       identity.chats[chatId] = { chatId, kind: 'side', revision: 1, contentRevision: 1,
         createdAt: session.attachedAt ?? now, activeSegmentId: segmentId, sessionRevision: sessionRevision(session) };
       segment = { segmentId, chatId, ordinal: 0, hostId, sessionId, state: 'active', startedAt: session.attachedAt ?? now };
@@ -39,6 +39,11 @@ export function reconcileChatIdentity(account, hostId, now) {
     delete identity.segments[segmentId];
     if (chat.kind === 'side') delete identity.chats[chat.chatId];
     else { chat.activeSegmentId = null; chat.revision++; }
+  }
+  for (const result of Object.values(account.chatResults ?? {})) {
+    if (identity.chats[result.sourceChatId] || result.deleted) continue;
+    result.deleted = true; result.summary = ''; result.artifactRefs = []; result.requiresResponse = false;
+    result.resultRevision++; result.notificationRevision = result.resultRevision;
   }
 }
 
@@ -70,12 +75,38 @@ export function validateChatIdentity(account) {
   }
   if (Object.keys(identity.sessionSegments).length !== sessionIds.size ||
       Object.keys(account.sessions).some(id => !sessionIds.has(id))) corrupt();
+  for (const [sessionId, session] of Object.entries(account.sessions)) {
+    if (!session.sideChat) continue;
+    const creation = Object.values(account.commands).find(command => command.kind === 'session.create' && command.sessionId === sessionId);
+    if (chatForSession(account, sessionId)?.chatId !== session.sideChat.chatId ||
+        JSON.stringify(creation?.payload?.sideChat) !== JSON.stringify(session.sideChat)) corrupt();
+  }
   if (account.chatOperations !== undefined) {
     if (!plainObject(account.chatOperations)) corrupt();
     for (const [requestId, operation] of Object.entries(account.chatOperations)) {
       if (!REQUEST_ID.test(requestId) || !plainObject(operation) || !/^[a-f0-9]{64}$/.test(operation.fingerprint ?? '') ||
           !plainObject(operation.response) || !plainObject(operation.response.chat) ||
           operation.response.chat.chatId !== identity.mainChatId ||
+          Object.values(account.commands).some(command => command.requestId === requestId)) corrupt();
+    }
+  }
+  if (account.chatResults !== undefined) {
+    if (!plainObject(account.chatResults)) corrupt();
+    for (const [id, result] of Object.entries(account.chatResults)) {
+      if (!validId(id) || !plainObject(result) || result.resultId !== id || !validId(result.sourceChatId) ||
+          !validId(result.sourceEventId) || !validId(result.mainEventId) || !validId(result.activityId) ||
+          !Number.isSafeInteger(result.resultRevision) || result.resultRevision < 1 ||
+          !['completed','failed','stopped'].includes(result.state) || typeof result.summary !== 'string' ||
+          Array.from(result.summary).length > 160 || !Array.isArray(result.artifactRefs) ||
+          typeof result.orderKey !== 'string' || !plainObject(result.sourceRef) || result.sourceRef.resultId !== id ||
+          result.deleted && (result.summary || result.artifactRefs.length || result.requiresResponse)) corrupt();
+    }
+  }
+  if (account.sideOperations !== undefined) {
+    if (!plainObject(account.sideOperations)) corrupt();
+    for (const [requestId, operation] of Object.entries(account.sideOperations)) {
+      if (!REQUEST_ID.test(requestId) || !/^[a-f0-9]{64}$/.test(operation?.fingerprint ?? '') ||
+          !account.chatResults?.[operation.resultId] || account.chatOperations?.[requestId] ||
           Object.values(account.commands).some(command => command.requestId === requestId)) corrupt();
     }
   }

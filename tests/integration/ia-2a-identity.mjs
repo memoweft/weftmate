@@ -113,11 +113,79 @@ try {
   const link = (await api(`/sessions/${sessionId}/chat`)).body;
   const side = (await api(`/chats/${link.chatId}`)).body.chat;
   assert.equal(side.title, '迁移样本'); assert.equal(side.groupId, group.id); assert.equal(side.archived, true);
+  const timelineStart = performance.now();
+  const logical = await api(`/chats/${link.chatId}/events`);
+  const timelineMs = performance.now() - timelineStart;
+  assert.equal(logical.status, 200);
+  assert.ok(logical.body.items.some(event => event.type === 'assistant.message'));
+  const logicalUser = logical.body.items.find(event => event.type === 'user.message');
+  assert.equal(logicalUser.sourceRef.sessionId, sessionId);
+  assert.equal((await api(`/chats/${link.chatId}/changes?cursor=${encodeURIComponent(logical.body.syncCursor)}`)).status, 200);
+  const search = await until(async () => {
+    const value = await api(`/chats/${link.chatId}/search?q=${encodeURIComponent('蓝色纸船')}`);
+    return value.body.indexState === 'ready' && value;
+  });
+  assert.equal(search.status, 200); assert.ok(search.body.hits.length > 0);
+  const nativeDate = new Intl.DateTimeFormat('en-CA', { timeZone: logical.body.timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(logicalUser.at));
+  assert.ok((await api(`/chats/${link.chatId}/locate?date=${nativeDate}`)).body.eventId);
+  await writeFile(join(evidence, 'history-native.json'), JSON.stringify({ checkedAt: new Date().toISOString(),
+    fixedDsh: true, realElectronHost: true, syntheticAccount: true, randomPorts: true, coldLogicalTimelineMs: timelineMs,
+    publicMessagesAndOriginalSources: true, chineseSearch: true, dateLocate: true, independentChanges: true,
+    note: 'Small native migration fixture; native cold 10k/100k recovery is measured separately, not inferred from this time.' }, null, 2) + '\n');
   const after = (await api(`/sessions/${sessionId}/events?afterSeq=-1&limit=200`)).body.events;
   for (const event of history.filter(event => ['user.message', 'assistant.message'].includes(event.type))) {
     assert.deepEqual(after.find(row => row.seq === event.seq), event);
   }
   assert.equal((await api(`/commands/by-request/${sent.requestId}`)).body.command.receiptId, sent.receiptId);
+  if (process.argv.includes('--side')) {
+    const sideModelRequest = randomUUID();
+    assert.equal((await api('/account/models', { requestId: sideModelRequest, name: 'IA side MiMo', baseUrl: 'https://api.xiaomimimo.com/v1', modelId: 'mimo-v2.6-flash', apiKey: key })).status, 202);
+    const sideModelOperation = await until(async () => { const row = (await api(`/account/models/by-request/${sideModelRequest}`)).body.operation; return !['pending','applying'].includes(row.status) && row; });
+    assert.equal(sideModelOperation.status, 'succeeded');
+    const sideModelId = (await api('/models')).body.models.find(model => model.name === 'IA side MiMo').id;
+    const createBody = { requestId: randomUUID(), kind: 'session.side.create', targetDeviceId: hostId,
+      parent: { kind: 'main', id: mainId }, modelProfileId: sideModelId, title: '独立纸船任务',
+      originChatId: link.chatId, originEventId: logicalUser.eventId, entry: 'message' };
+    const child = await command(createBody);
+    assert.equal(child.kind, 'session.side.create'); assert.ok(child.chatId);
+    assert.equal((await api('/commands', createBody)).body.command.chatId, child.chatId);
+    const initialChild = (await api(`/chats/${child.chatId}/events`)).body;
+    assert.equal(initialChild.items.filter(row => ['user.message','assistant.message'].includes(row.type)).length, 0);
+    const childChat = (await api(`/chats/${child.chatId}`)).body.chat;
+    assert.equal(childChat.originRefs[0].eventId, logicalUser.eventId);
+    assert.equal(childChat.contextTransfer.state, 'references_only');
+    const task = await command({ requestId: randomUUID(), kind: 'session.message', targetDeviceId: hostId, sessionId: child.sessionId,
+      text: '这是隔离测试。请使用 shell 在当前工作目录创建 ia-side-result.txt，内容只写 synthetic paper boat，然后读取确认。只回复“纸船文件已写好”。' });
+    const completed = await until(async () => {
+      const result = await api(`/tasks/${task.commandId}`);
+      if (result.status !== 200) throw new Error(JSON.stringify(result.body));
+      const status = result.body.task?.replyEvidence?.status ?? result.body.replyEvidence?.status;
+      if (['failed','aborted'].includes(status)) throw new Error(`Synthetic task ${status}`);
+      return status === 'completed' && result.body;
+    }, 180000);
+    const mainEvents = await until(async () => {
+      const value = await api(`/chats/${mainId}/events`);
+      if (value.status !== 200) throw new Error(JSON.stringify(value.body));
+      return value.body.items.some(row => row.type === 'side.result' && row.data.taskId === task.commandId) && value.body;
+    });
+    const card = mainEvents.items.find(row => row.data.taskId === task.commandId);
+    assert.equal(card.sourceRef.kind, 'result'); assert.equal(card.seq, undefined); assert.equal(card.data.state, 'completed');
+    assert.equal((await api(`/chats/${mainId}/events`)).body.items.filter(row => row.eventId === card.eventId).length, 1);
+    const shareBody = { requestId: randomUUID(), taskId: task.commandId, sourceEventId: card.data.sourceEventId,
+      expectedRevision: (await api(`/chats/${child.chatId}`)).body.chat.revision };
+    const shared = await api(`/chats/${child.chatId}/results`, shareBody);
+    assert.equal(shared.status, 201, JSON.stringify(shared.body)); assert.equal(shared.body.mainEventId, card.eventId);
+    assert.equal(shared.body.activityId, card.data.activityId);
+    const nativeMain = (await api('/chats/main')).body.chat;
+    assert.equal(nativeMain.activeSessionId, null); // No invented main model turn.
+    await writeFile(join(evidence, 'side-native.json'), JSON.stringify({ checkedAt: new Date().toISOString(), fixedDsh: true,
+      realElectronHost: true, syntheticAccount: true, randomPorts: true, createIdempotent: true, noCopiedOrExecutedSourceMessage: true,
+      contextTransfer: 'references_only', independentNativeSession: child.sessionId !== sessionId,
+      actualToolTaskCompleted: true, resultState: card.data.state, mainCardHasNoNativeSeq: true,
+      explicitAndAutomaticShareSameIdentity: true, sharedActivityIdentity: true, mainHasNoModelSession: true,
+      summaryDisplayCharacters: Array.from(card.data.summary).length,
+      modelUsageRecordedIn: 'identity-native.json', note: 'No renderer changes, no relay or D33 multi-segment cleanup enabled.' }, null, 2)+'\n');
+  }
   await app.close(); app = null;
   await launch(rollback);
   assert.ok((await api(`/sessions/${sessionId}/events?afterSeq=-1&limit=200`)).body.events.some(event => event.type === 'assistant.message'));

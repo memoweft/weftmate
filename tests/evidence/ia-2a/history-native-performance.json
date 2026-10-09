@@ -1,0 +1,27 @@
+{
+  "checkedAt": "2026-10-09T17:31:13.395Z",
+  "fixedDsh": true,
+  "synthetic": true,
+  "pageSize": 50,
+  "results": [
+    {
+      "messages": 10000,
+      "freshProcesses": 30,
+      "physicalLogBytes": 7126772,
+      "inspectedNativeRows": 10000,
+      "coldP95Ms": 102.3933,
+      "warmP95Ms": 3.6274999999999977,
+      "tailBudgetMet": true
+    },
+    {
+      "messages": 100000,
+      "freshProcesses": 30,
+      "physicalLogBytes": 71566772,
+      "inspectedNativeRows": 100000,
+      "coldP95Ms": 593.588,
+      "warmP95Ms": 3.100400000000036,
+      "tailBudgetMet": false
+    }
+  ],
+  "limitation": "Pinned DSH inspect reads the full stored log before projection. Cold native read bytes grow linearly; logical indexing alone does not meet the non-linear cold-read budget. IA-2b must close this with a native range-read seam; no private log decoder is introduced here."
+}

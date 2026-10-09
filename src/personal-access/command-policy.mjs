@@ -49,7 +49,7 @@ export function canonicalCommand(value, hostId, internal = false) {
     'attachmentMessageId', 'originalAttachments', 'sourceSyncEventId',
     ...(internal ? ['taskId', 'artifactId', 'fileName', 'size', 'sha256', 'rootTaskId', 'taskAction',
       'projectId', 'projectRevision', 'sourceReceiptId', 'sourceSnapshotIds', 'workspaceKind', 'initialUrls',
-      'conversationId', 'cutoverSyncSeq', 'contextHash', 'acknowledgeUncertainLocalTurn', 'modelInputHash'] : [])],
+      'conversationId', 'cutoverSyncSeq', 'contextHash', 'acknowledgeUncertainLocalTurn', 'modelInputHash', 'sideChat'] : [])],
     ['requestId', 'kind', 'targetDeviceId']);
   if (typeof value.requestId !== 'string' || !REQUEST_ID.test(value.requestId) ||
       !(KINDS.has(value.kind) || (internal && value.kind === INTERNAL_ARTIFACT_KIND))) {
@@ -69,9 +69,26 @@ export function canonicalCommand(value, hostId, internal = false) {
   if (value.kind === 'session.create') {
     exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'modelProfileId',
       ...(internal ? ['projectId', 'projectRevision', 'workspaceKind',
-        'conversationId', 'cutoverSyncSeq', 'contextHash', 'acknowledgeUncertainLocalTurn'] : [])],
+        'conversationId', 'cutoverSyncSeq', 'contextHash', 'acknowledgeUncertainLocalTurn', 'sideChat'] : [])],
       ['requestId', 'kind', 'targetDeviceId', 'modelProfileId']);
     modelProfileId(value.modelProfileId);
+    if (value.sideChat !== undefined) {
+      const side = value.sideChat;
+      exactKeys(side, ['chatId','requestHash','parent','title','contextTransfer'], ['chatId','requestHash','parent','contextTransfer']);
+      exactKeys(side.parent, ['kind','id'], ['kind','id']);
+      exactKeys(side.contextTransfer, ['state','sourceRefs','truncated'], ['state','sourceRefs','truncated']);
+      if (!validId(side.chatId) || !/^[a-f0-9]{64}$/.test(side.requestHash) || !['main','project'].includes(side.parent.kind) ||
+          !validId(side.parent.id) || side.contextTransfer.state !== 'references_only' || side.contextTransfer.truncated !== false ||
+          !Array.isArray(side.contextTransfer.sourceRefs) || side.contextTransfer.sourceRefs.length > 1 ||
+          side.title !== undefined && (typeof side.title !== 'string' || !side.title.trim() || side.title.length > 256) ||
+          side.parent.kind === 'project' && value.projectId !== side.parent.id || side.parent.kind === 'main' && value.projectId !== undefined ||
+          value.conversationId !== undefined || value.workspaceKind !== undefined) throw failure('INVALID_REQUEST');
+      for (const ref of side.contextTransfer.sourceRefs) {
+        exactKeys(ref, ['chatId','eventId','kind','hostId','sessionId','seq','contentRevision'], ['chatId','eventId','kind','hostId','sessionId','seq','contentRevision']);
+        if (![ref.chatId,ref.eventId,ref.hostId,ref.sessionId].every(validId) || ref.kind !== 'native' ||
+            !Number.isSafeInteger(ref.seq) || ref.seq < 0 || !Number.isSafeInteger(ref.contentRevision) || ref.contentRevision < 1) throw failure('INVALID_REQUEST');
+      }
+    }
     if ((value.conversationId === undefined) !== (value.cutoverSyncSeq === undefined) ||
         (value.conversationId === undefined) !== (value.contextHash === undefined) ||
         (value.conversationId !== undefined && (!Number.isSafeInteger(value.cutoverSyncSeq) ||
@@ -161,7 +178,7 @@ export function canonicalCommand(value, hostId, internal = false) {
     'sourceSyncEventId',
     'taskId', 'artifactId', 'fileName', 'size', 'sha256', 'rootTaskId', 'taskAction',
     'projectId', 'projectRevision', 'sourceReceiptId', 'sourceSnapshotIds', 'workspaceKind', 'initialUrls',
-    'conversationId', 'cutoverSyncSeq', 'contextHash', 'acknowledgeUncertainLocalTurn', 'modelInputHash']
+    'conversationId', 'cutoverSyncSeq', 'contextHash', 'acknowledgeUncertainLocalTurn', 'modelInputHash', 'sideChat']
     .filter((key) => Object.hasOwn(value, key) || (key === 'mode' && value.kind === 'session.message'))
     .map((key) => [key, key === 'mode' ? (value.intent ?? value.mode ?? 'steer')
       : key === 'attachments' ? value.attachments.map(canonicalSharedAttachment)
@@ -180,6 +197,10 @@ export function publicCommand(command) {
     updatedAt: command.updatedAt,
   };
   if (command.sessionId) result.sessionId = command.sessionId;
+  if (command.payload?.sideChat) {
+    result.kind = 'session.side.create'; result.chatId = command.payload.sideChat.chatId;
+    result.contextTransfer = structuredClone(command.payload.sideChat.contextTransfer);
+  }
   if (command.kind === 'session.message') result.intent = command.payload.mode;
   if (command.payload?.attachmentMessageId) result.attachmentMessageId = command.payload.attachmentMessageId;
   if (command.payload?.originalAttachments) result.originalAttachments = command.payload.originalAttachments.map((item) => ({ ...item }));
