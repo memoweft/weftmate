@@ -81,13 +81,14 @@ globalThis.WeftUiComponents.factories.auth = (core, ui) => {
         const key = `${value.mode}:${value.step}`;
         if (key !== screenKey) {
             screenKey = key;
-            const registration = value.mode === 'registration', recovery = value.mode === 'recovery', offline = value.mode === 'offline-login';
+            const registration = value.mode === 'registration', recovery = value.mode === 'recovery', offline = ['offline-login', 'local-login'].includes(value.mode);
+            const localAccount = value.mode === 'local-login' || !value.offlineKnown;
             const title = registration ? '注册 WeftMate' : recovery ? '找回密码' : value.mode === 'confirm' ? '确认新设备' : offline ? '离线使用这台电脑' : '登录 WeftMate';
             let controls;
             if (value.step === 'code') controls = `<p class="muted">请输入邮箱收到的 6 位验证码。</p>${field('auth-code', '验证码')}<button type="submit" class="button primary submit">验证</button>${value.mode !== 'confirm' ? '<button type="button" id="auth-resend" class="button quiet">重新发送验证码</button>' : ''}`;
             else if (value.step === 'password') controls = `${field('auth-password', recovery ? '新密码' : '设置密码', 'password', 'new-password')}<p class="field-help" id="auth-strength">至少 8 位</p>${field('auth-confirm', '确认密码', 'password', 'new-password')}${registration ? field('auth-device', '设备名称') : ''}<button type="submit" class="button primary submit">${recovery ? '重设密码' : '完成注册'}</button>`;
             else if (registration || recovery) controls = `${field('auth-email', '邮箱', 'email', 'email')}<button type="submit" class="button primary submit">发送验证码</button>`;
-            else if (offline) controls = `${value.offlineKnown ? '' : field('auth-offline-account', value.localOnly ? '本地账户名' : '云端账号')}${field('auth-password', '离线密码', 'password', 'current-password')}<button type="submit" class="button primary submit">登录</button>`;
+            else if (offline) controls = `${localAccount ? field('auth-offline-account', '本地账户名') : ''}${field('auth-password', '离线密码', 'password', 'current-password')}<button type="submit" class="button primary submit">登录</button>${!localAccount ? '<button type="button" id="auth-local-account" class="button quiet">使用本地账户登录</button>' : ''}`;
             else controls = `${field('auth-email', '邮箱', 'email', 'username')}<label for="auth-password">密码</label><div class="password-row"><input id="auth-password" type="password" autocomplete="current-password" required><button type="button" id="auth-reveal" class="text-button" aria-label="显示密码">显示</button></div><button type="submit" class="button primary submit">登录</button><div class="auth-links"><button type="button" class="button quiet" id="auth-recovery">忘记密码？</button><button type="button" class="button quiet" id="auth-register">还没有账号？注册</button></div>`;
             ui.byId('login-view').innerHTML = `<span class="wm-brand auth-brand" aria-hidden="true"></span><h1>${title}</h1><form id="cloud-auth-form">${controls}<p class="form-error" id="cloud-auth-error" role="alert" hidden></p></form>${registration ? '<p class="auth-legal">注册即表示同意<button type="button" class="text-button" id="auth-terms">《服务条款》</button><button type="button" class="text-button" id="auth-privacy">《隐私政策》</button></p>' : ''}${value.mode !== 'login' ? '<button type="button" class="button quiet" id="auth-back">返回登录</button>' : globalThis.weftmateDesktop ? '<button type="button" class="button quiet auth-offline" id="auth-offline">离线使用这台电脑</button>' : ''}`;
             const email = ui.byId('auth-email'); if (email) email.value = value.email;
@@ -99,6 +100,7 @@ globalThis.WeftUiComponents.factories.auth = (core, ui) => {
             ui.byId('auth-back')?.addEventListener('click', () => core.startCloudJourney());
             ui.byId('auth-offline')?.addEventListener('click', () => core.startCloudJourney('offline-login'));
             ui.byId('auth-resend')?.addEventListener('click', () => void core.cloudRequestCode());
+            ui.byId('auth-local-account')?.addEventListener('click', () => core.startCloudJourney('local-login'));
             ui.byId('auth-terms')?.addEventListener('click', () => void showLegal('terms'));
             ui.byId('auth-privacy')?.addEventListener('click', () => void showLegal('privacy'));
             ui.byId('auth-password')?.addEventListener('input', () => { if (ui.byId('auth-strength')) ui.byId('auth-strength').textContent = core.cloudPasswordHint(ui.byId('auth-password').value); });
@@ -107,7 +109,7 @@ globalThis.WeftUiComponents.factories.auth = (core, ui) => {
                 if (value.step === 'code') await core.cloudVerifyCode(input('auth-code'));
                 else if (value.step === 'password') await core.cloudComplete({ password: input('auth-password'), confirmation: input('auth-confirm'), deviceName: input('auth-device') });
                 else if (registration || recovery) await core.cloudRequestCode(input('auth-email'));
-                else if (offline) await core.cloudOfflineLogin({ password: input('auth-password'), ...(value.localOnly ? { username: input('auth-offline-account') } : { cloudAccountId: input('auth-offline-account') }) });
+                else if (offline) await core.cloudOfflineLogin({ password: input('auth-password'), ...(localAccount ? { username: input('auth-offline-account') } : {}) });
                 else await core.cloudLogin({ email: input('auth-email'), password: input('auth-password') });
                 const password = ui.byId('auth-password'); if (password) password.value = '';
             });

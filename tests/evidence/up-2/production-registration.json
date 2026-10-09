@@ -1,0 +1,32 @@
+{
+  "success": true,
+  "backup": "/root/weftmate-deploy/up-2-20261009T021230Z/cloud.env",
+  "onlyChanged": "CLOUD_OIDC_CLIENTS",
+  "health": 200,
+  "discovery": 200,
+  "jwks": 200,
+  "authorization": 200,
+  "clients": [
+    {
+      "id": "weftmate-apple",
+      "callbacks": [
+        "com.weftmate.apple:/oauth/callback"
+      ]
+    },
+    {
+      "id": "weftmate-android",
+      "callbacks": [
+        "com.memoweft.weftmate:/oauth"
+      ]
+    },
+    {
+      "id": "weftmate-desktop",
+      "callbacks": [
+        "http://127.0.0.1:18186/personal/v1/ui/"
+      ]
+    }
+  ],
+  "cloudFrpsNginxActive": true,
+  "backupDirectoryMode": "0700",
+  "backupFileMode": "0600"
+}
