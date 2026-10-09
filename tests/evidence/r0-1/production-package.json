@@ -1,0 +1,11 @@
+{
+  "version": "0.1.0",
+  "bytes": 174208817,
+  "sha256": "e8bd883031a9bf631e9810aa4aab987eae39677e66d87fd90152180d03bf0331",
+  "appId": "com.memoweft.weftmate",
+  "perUser": true,
+  "authenticode": false,
+  "published": false,
+  "installedOnDailyMachine": false,
+  "feedTrust": "UPD-1 placeholder public key; owner release identity must be chosen before public updates"
+}
