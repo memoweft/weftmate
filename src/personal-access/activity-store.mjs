@@ -58,7 +58,7 @@ export function removeActivity(account, predicate) {
   if(removed){state.generation++;state.operations={};}
 }
 export function reconcileActivity(account) {
-  const state=account.activity;
+  const state=activityState(account);
   if(state) removeActivity(account,row=>row.source.sessionId && (!account.sessions[row.source.sessionId] ||
     account.sessions[row.source.sessionId].forgottenSeqs?.includes(row.source.seq)));
   for(const command of Object.values(account.commands)) {

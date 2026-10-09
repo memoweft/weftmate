@@ -54,7 +54,7 @@ import { createMainChat } from './main-chat.mjs';
 import { createChatLifecycle } from './chat-lifecycle.mjs';
 import { createSideChats } from './side-chats.mjs';
 import { createActivity } from './activity.mjs';
-import { reconcileActivity } from './activity-store.mjs';
+import { activityState, reconcileActivity } from './activity-store.mjs';
 export { explicitNotepadOpenIntent } from './command-policy.mjs';
 export { uniqueSessionOwner } from './store.mjs';
 
@@ -378,6 +378,13 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     catch (error) { if (error.code !== 'ENOENT') throw error; await durableWrite(before, rootState); }
     const migrated = structuredClone(rootState);
     for (const account of Object.values(migrated.accounts)) reconcileChatIdentity(account, migrated.hostId, new Date(clock()).toISOString());
+    validateStore(migrated);
+    await durableWrite(storeFile, migrated);
+    rootState = migrated;
+  }
+  if (Object.values(rootState.accounts).some(account => !account.activity)) {
+    const migrated = structuredClone(rootState);
+    for (const account of Object.values(migrated.accounts)) activityState(account);
     validateStore(migrated);
     await durableWrite(storeFile, migrated);
     rootState = migrated;
