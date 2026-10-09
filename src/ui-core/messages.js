@@ -57,6 +57,7 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
         }
         core.observeOptimistic?.(accepted);
         effects.paintHistoryMessages(accepted);
+        effects.updateAvailability();
     }
     async function refreshHistory(reset = false) {
         const sessionId = core.state.selectedSessionId;
@@ -173,7 +174,7 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
         if (core.state.activeChatSource === 'phone')
             return null;
         let message = '';
-        const isRunning = core.state.turnStatus === 'running' && core.state.sessions.find(item => item.sessionId === core.state.selectedSessionId)?.running === true;
+        const isRunning = core.state.turnStatus === 'running';
         if (core.state.historyHasMore) {
             message = '正在补读会话历史，尚未核对到本轮结束。';
             return { isRunning, message };

@@ -79,8 +79,10 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
                 const drafts = core.state.attachmentDrafts.get(oldKey);
                 if (drafts) { core.state.attachmentDrafts.set(`${row.ownerId}|${row.sessionId}`, drafts); core.state.attachmentDrafts.delete(oldKey); }
             }
-            await core.refreshSessions();
-            if (!current()) return;
+            // The creation receipt already identifies the durable session.
+            // Reading every older conversation is not a prerequisite for
+            // delivering its first message or observing the native turn.
+            void core.refreshSessions().catch(() => {});
             if (core.state.newConversation && core.state.selectedSessionId === null && core.state.newConversationId === row.draftId) await core.selectSession(row.sessionId);
         }
         if(row.approvalMode){
@@ -172,7 +174,15 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         effects.updateAvailability();
     }
     function composerInputMode(sessionId) {
-        return core.state.sessions.find(item => item.sessionId === sessionId)?.running ? messageModePreference() : 'queue';
+        return conversationRunning(sessionId) ? messageModePreference() : 'queue';
+    }
+    function conversationRunning(sessionId) {
+        // The selected conversation's native turn events can arrive before the
+        // slower session-list projection. Never infer running from acceptance:
+        // an accepted message may still be queued behind another task.
+        if (core.state.activeChatSource === 'desktop' && sessionId === core.state.selectedSessionId && core.state.turnStatus)
+            return core.state.turnStatus === 'running';
+        return core.state.sessions.find(item => item.sessionId === sessionId)?.running === true;
     }
     function messageModePreference() {
         const owner = core.state.account?.ownerId || core.state.ownerId;
@@ -214,7 +224,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         const session = core.state.activeChatSource === 'phone' ? core.phoneBinding()?.sessionId : core.state.selectedSessionId;
         const context = core.conversationTaskContext();
         const current = core.taskQueue().filter(row => row.state === 'running').at(-1);
-        if (session && core.state.sessions.find(item => item.sessionId === session)?.running && !core.state.cancelSubmitting) {
+        if (session && conversationRunning(session) && !core.state.cancelSubmitting) {
             const stoppedNotice = () => {
                 if (!core.conversationTaskCurrent(context)) return;
                 const queued = core.taskQueue().filter(row => row.state === 'queued').length;
@@ -259,7 +269,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         const attachmentCount = phoneChat ? 0 : core.currentAttachmentDrafts().length;
         const attachmentBusy = !!core.state.attachmentUpload;
         const messageDisabled = phoneChat ? !phoneReady || !!pendingPhone || !!recovery : !chat || !model || !canSendHere || attachmentBusy;
-        const running = (phoneChat ? boundSession : selected)?.running === true;
+        const running = phoneChat ? boundSession?.running === true : conversationRunning(core.state.selectedSessionId);
         const blockedDesktop = core.desktopBlocker();
         const hint = phoneChat && bound ? core.state.phoneSendNotice || '' : phoneChat
             ? pendingPhone && !pendingHere ? '另一条手机对话有未确认的同步请求。请先切回原对话核对。'
@@ -283,8 +293,8 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             attachmentsDisabled: phoneChat || !chat || !model || !canSendHere || core.state.submitting || attachmentBusy || core.state.unresolvedSubmission || attachmentCount >= 4,
             desktopText: blockedDesktop ? '查看原事情' : '打开记事本',
             desktopDisabled: blockedDesktop ? false : !core.state.online || core.state.capabilities?.desktopOpenApp?.available !== true || !core.state.capabilities.desktopOpenApp.appIds?.includes('notepad') || core.state.submitting || core.state.unresolvedSubmission,
-            cancelHidden: phoneChat || !selected?.running,
-            cancelDisabled: !core.state.online || !selected?.running || core.state.cancelSubmitting,
+            cancelHidden: phoneChat || !running,
+            cancelDisabled: !core.state.online || !running || core.state.cancelSubmitting,
         };
     }
     function selectModelProfile(id) {
