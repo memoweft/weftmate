@@ -1,0 +1,609 @@
+[
+  {
+    "id": "action-02-web-document",
+    "status": "passed",
+    "durationMs": 136877,
+    "foregroundModelRequests": [
+      {
+        "id": "51956-3",
+        "at": "2026-10-09T10:40:51.946Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 8035,
+        "durationMs": 2346,
+        "headersMs": 1209,
+        "firstMeaningfulMs": 1285,
+        "reasoningChars": 279,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 101,
+          "prompt_tokens": 2188,
+          "total_tokens": 2289,
+          "completion_tokens_details": {
+            "reasoning_tokens": 75
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 1664
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "51956-6",
+        "at": "2026-10-09T10:40:54.375Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 9283,
+        "durationMs": 3893,
+        "headersMs": 2199,
+        "firstMeaningfulMs": 2276,
+        "reasoningChars": 333,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 144,
+          "prompt_tokens": 2895,
+          "total_tokens": 3039,
+          "completion_tokens_details": {
+            "reasoning_tokens": 86
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "51956-8",
+        "at": "2026-10-09T10:41:03.014Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 10411,
+        "durationMs": 1819,
+        "headersMs": 742,
+        "firstMeaningfulMs": 833,
+        "reasoningChars": 133,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 106,
+          "prompt_tokens": 3097,
+          "total_tokens": 3203,
+          "completion_tokens_details": {
+            "reasoning_tokens": 42
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2688
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "51956-10",
+        "at": "2026-10-09T10:41:09.086Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 29096,
+        "durationMs": 9546,
+        "headersMs": 3673,
+        "firstMeaningfulMs": 3742,
+        "reasoningChars": 1535,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 465,
+          "prompt_tokens": 10296,
+          "total_tokens": 10761,
+          "completion_tokens_details": {
+            "reasoning_tokens": 440
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2688
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "51956-12",
+        "at": "2026-10-09T10:41:27.636Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 40530,
+        "durationMs": 53761,
+        "headersMs": 2603,
+        "firstMeaningfulMs": 2668,
+        "reasoningChars": 10589,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 3681,
+          "prompt_tokens": 13762,
+          "total_tokens": 17443,
+          "completion_tokens_details": {
+            "reasoning_tokens": 3648
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2752
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "51956-14",
+        "at": "2026-10-09T10:42:32.753Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 59821,
+        "durationMs": 30418,
+        "headersMs": 2323,
+        "firstMeaningfulMs": 2392,
+        "reasoningChars": 3558,
+        "contentChars": 22,
+        "usage": {
+          "completion_tokens": 2177,
+          "prompt_tokens": 19755,
+          "total_tokens": 21932,
+          "completion_tokens_details": {
+            "reasoning_tokens": 1014
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2752
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "51956-16",
+        "at": "2026-10-09T10:43:04.595Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 66833,
+        "durationMs": 3711,
+        "headersMs": 1836,
+        "firstMeaningfulMs": 1922,
+        "reasoningChars": 132,
+        "contentChars": 217,
+        "usage": {
+          "completion_tokens": 154,
+          "prompt_tokens": 22268,
+          "total_tokens": 22422,
+          "completion_tokens_details": {
+            "reasoning_tokens": 30
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2816
+          }
+        },
+        "terminal": "end"
+      }
+    ],
+    "maxRequestChars": 66833,
+    "toolDetailsCount": 15,
+    "toolWindows": [
+      {
+        "start": "2026-10-09T10:40:54.309Z",
+        "end": "2026-10-09T10:40:54.317Z",
+        "ms": 8
+      },
+      {
+        "start": "2026-10-09T10:40:58.298Z",
+        "end": "2026-10-09T10:41:02.876Z",
+        "ms": 4578
+      },
+      {
+        "start": "2026-10-09T10:41:04.852Z",
+        "end": "2026-10-09T10:41:08.666Z",
+        "ms": 3814
+      },
+      {
+        "start": "2026-10-09T10:41:18.654Z",
+        "end": "2026-10-09T10:41:27.591Z",
+        "ms": 8937
+      },
+      {
+        "start": "2026-10-09T10:42:21.412Z",
+        "end": "2026-10-09T10:42:32.702Z",
+        "ms": 11290
+      }
+    ]
+  },
+  {
+    "id": "action-02-web-document",
+    "status": "passed",
+    "durationMs": 878239,
+    "foregroundModelRequests": [
+      {
+        "id": "51956-19",
+        "at": "2026-10-09T10:43:09.987Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 8035,
+        "durationMs": 4634,
+        "headersMs": 1006,
+        "firstMeaningfulMs": 1090,
+        "reasoningChars": 669,
+        "contentChars": 41,
+        "usage": {
+          "completion_tokens": 239,
+          "prompt_tokens": 2188,
+          "total_tokens": 2427,
+          "completion_tokens_details": {
+            "reasoning_tokens": 184
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 1728
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "51956-22",
+        "at": "2026-10-09T10:43:14.694Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 9744,
+        "durationMs": 6286,
+        "headersMs": 5045,
+        "firstMeaningfulMs": 5680,
+        "reasoningChars": 74,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 78,
+          "prompt_tokens": 3219,
+          "total_tokens": 3297,
+          "completion_tokens_details": {
+            "reasoning_tokens": 17
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "51956-24",
+        "at": "2026-10-09T10:43:29.924Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 20001,
+        "durationMs": 5803,
+        "headersMs": 2492,
+        "firstMeaningfulMs": 2571,
+        "reasoningChars": 600,
+        "contentChars": 34,
+        "usage": {
+          "completion_tokens": 314,
+          "prompt_tokens": 6311,
+          "total_tokens": 6625,
+          "completion_tokens_details": {
+            "reasoning_tokens": 225
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2880
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "51956-26",
+        "at": "2026-10-09T10:43:44.123Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 30449,
+        "durationMs": 14702,
+        "headersMs": 4895,
+        "firstMeaningfulMs": 4968,
+        "reasoningChars": 1853,
+        "contentChars": 49,
+        "usage": {
+          "completion_tokens": 668,
+          "prompt_tokens": 9846,
+          "total_tokens": 10514,
+          "completion_tokens_details": {
+            "reasoning_tokens": 531
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2880
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "51956-28",
+        "at": "2026-10-09T10:44:02.958Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 55302,
+        "durationMs": 13806,
+        "headersMs": 1900,
+        "firstMeaningfulMs": 1968,
+        "reasoningChars": 2368,
+        "contentChars": 43,
+        "usage": {
+          "completion_tokens": 698,
+          "prompt_tokens": 19732,
+          "total_tokens": 20430,
+          "completion_tokens_details": {
+            "reasoning_tokens": 642
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2944
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "51956-30",
+        "at": "2026-10-09T10:44:20.660Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 59079,
+        "durationMs": 8326,
+        "headersMs": 2957,
+        "firstMeaningfulMs": 3031,
+        "reasoningChars": 1128,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 376,
+          "prompt_tokens": 20826,
+          "total_tokens": 21202,
+          "completion_tokens_details": {
+            "reasoning_tokens": 313
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2944
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "51956-32",
+        "at": "2026-10-09T10:44:35.486Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 77854,
+        "durationMs": 8874,
+        "headersMs": 4554,
+        "firstMeaningfulMs": 4621,
+        "reasoningChars": 984,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 272,
+          "prompt_tokens": 25066,
+          "total_tokens": 25338,
+          "completion_tokens_details": {
+            "reasoning_tokens": 239
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 2880
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "51956-34",
+        "at": "2026-10-09T10:44:50.682Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 87086,
+        "durationMs": 42824,
+        "headersMs": 5219,
+        "firstMeaningfulMs": 5266,
+        "reasoningChars": 7084,
+        "contentChars": 74,
+        "usage": {
+          "completion_tokens": 2386,
+          "prompt_tokens": 26973,
+          "total_tokens": 29359,
+          "completion_tokens_details": {
+            "reasoning_tokens": 2202
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 3008
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "51956-36",
+        "at": "2026-10-09T10:45:38.177Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 125510,
+        "durationMs": 114795,
+        "headersMs": 5199,
+        "firstMeaningfulMs": 70101,
+        "reasoningChars": 7968,
+        "contentChars": 24,
+        "usage": {
+          "completion_tokens": 2875,
+          "prompt_tokens": 40593,
+          "total_tokens": 43468,
+          "completion_tokens_details": {
+            "reasoning_tokens": 2828
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 3072
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "51956-38",
+        "at": "2026-10-09T10:47:43.661Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 138878,
+        "durationMs": 299999,
+        "headersMs": 5264,
+        "terminal": "error"
+      },
+      {
+        "id": "51956-40",
+        "at": "2026-10-09T10:52:44.150Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 138878,
+        "durationMs": 86810,
+        "headersMs": 5227,
+        "firstMeaningfulMs": 60083,
+        "reasoningChars": 582,
+        "contentChars": 16,
+        "usage": {
+          "completion_tokens": 2055,
+          "prompt_tokens": 44991,
+          "total_tokens": 47046,
+          "completion_tokens_details": {
+            "reasoning_tokens": 179
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 3136
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "51956-42",
+        "at": "2026-10-09T10:54:12.019Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 144500,
+        "durationMs": 56513,
+        "headersMs": 5087,
+        "firstMeaningfulMs": 55039,
+        "reasoningChars": 255,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 103,
+          "prompt_tokens": 47388,
+          "total_tokens": 47491,
+          "completion_tokens_details": {
+            "reasoning_tokens": 52
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 3136
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "51956-44",
+        "at": "2026-10-09T10:55:08.688Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 145357,
+        "durationMs": 58358,
+        "headersMs": 5065,
+        "firstMeaningfulMs": 57122,
+        "reasoningChars": 175,
+        "contentChars": 0,
+        "usage": {
+          "completion_tokens": 83,
+          "prompt_tokens": 47546,
+          "total_tokens": 47629,
+          "completion_tokens_details": {
+            "reasoning_tokens": 41
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 3136
+          }
+        },
+        "terminal": "end"
+      },
+      {
+        "id": "51956-46",
+        "at": "2026-10-09T10:56:07.211Z",
+        "origin": "https://api.xiaomimimo.com",
+        "stream": true,
+        "requestChars": 150252,
+        "durationMs": 100457,
+        "headersMs": 5059,
+        "firstMeaningfulMs": 97967,
+        "reasoningChars": 105,
+        "contentChars": 257,
+        "usage": {
+          "completion_tokens": 179,
+          "prompt_tokens": 49807,
+          "total_tokens": 49986,
+          "completion_tokens_details": {
+            "reasoning_tokens": 27
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 3264
+          }
+        },
+        "terminal": "end"
+      }
+    ],
+    "maxRequestChars": 150252,
+    "toolDetailsCount": 35,
+    "toolWindows": [
+      {
+        "start": "2026-10-09T10:43:14.634Z",
+        "end": "2026-10-09T10:43:14.640Z",
+        "ms": 6
+      },
+      {
+        "start": "2026-10-09T10:43:21.001Z",
+        "end": "2026-10-09T10:43:25.218Z",
+        "ms": 4217
+      },
+      {
+        "start": "2026-10-09T10:43:35.739Z",
+        "end": "2026-10-09T10:43:40.244Z",
+        "ms": 4505
+      },
+      {
+        "start": "2026-10-09T10:43:40.244Z",
+        "end": "2026-10-09T10:43:44.069Z",
+        "ms": 3825
+      },
+      {
+        "start": "2026-10-09T10:43:58.836Z",
+        "end": "2026-10-09T10:43:58.906Z",
+        "ms": 70
+      },
+      {
+        "start": "2026-10-09T10:43:58.906Z",
+        "end": "2026-10-09T10:44:02.904Z",
+        "ms": 3998
+      },
+      {
+        "start": "2026-10-09T10:44:16.777Z",
+        "end": "2026-10-09T10:44:20.602Z",
+        "ms": 3825
+      },
+      {
+        "start": "2026-10-09T10:44:29.007Z",
+        "end": "2026-10-09T10:44:35.430Z",
+        "ms": 6423
+      },
+      {
+        "start": "2026-10-09T10:44:44.371Z",
+        "end": "2026-10-09T10:44:50.616Z",
+        "ms": 6245
+      },
+      {
+        "start": "2026-10-09T10:45:33.518Z",
+        "end": "2026-10-09T10:45:33.589Z",
+        "ms": 71
+      },
+      {
+        "start": "2026-10-09T10:45:33.599Z",
+        "end": "2026-10-09T10:45:36.767Z",
+        "ms": 3168
+      },
+      {
+        "start": "2026-10-09T10:47:32.982Z",
+        "end": "2026-10-09T10:47:43.579Z",
+        "ms": 10597
+      },
+      {
+        "start": "2026-10-09T10:55:08.544Z",
+        "end": "2026-10-09T10:55:08.631Z",
+        "ms": 87
+      },
+      {
+        "start": "2026-10-09T10:56:07.068Z",
+        "end": "2026-10-09T10:56:07.158Z",
+        "ms": 90
+      }
+    ]
+  }
+]

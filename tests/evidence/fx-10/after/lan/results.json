@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-09T10:24:54.210Z",
+  "host": "http://127.0.0.1:50388",
+  "model": "lan/local-quality",
+  "results": [
+    {
+      "id": "action-01-organize",
+      "category": "action",
+      "title": "整理收件目录",
+      "status": "passed",
+      "durationMs": 63098,
+      "checks": [
+        {
+          "type": "file_contains",
+          "path": "inbox/文本/会议记录.txt",
+          "text": "周五讨论秋季活动",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/表格/预算.csv",
+          "text": "场地,300",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/文档/说明.md",
+          "text": "# 活动说明",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/不要动/保留.txt",
+          "text": "原样保留",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/会议记录.txt",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/预算.csv",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/说明.md",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-df5b5925-7470-4b55-ba4b-b2472918e433",
+          "modelProfileId": "private-model-0e5d14416b475155033ebecd88d9b54e9b4986e0",
+          "commandId": "cmd-1deeccda-cd33-48a9-aed3-3b664de3fcdf",
+          "startedAt": "2026-10-09T10:24:54.995Z",
+          "reply": "已收拾完成，文件名和内容都保留，未动「不要动」文件夹。\n\n收件箱结构现在是：\n- `[local path]\n  - 会议记录.txt\n- `[local path]\n  - 预算.csv\n- `[local path]\n  - 说明.md\n- `[local path]\n  - 保留.txt  原样保留\n\ntxt 已归入 文本，csv 归入 表格，md 归入 文档。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T10:24:55.055Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T10:24:55.055Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T10:24:55.102Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T10:24:55.103Z"
+            },
+            {
+              "seq": 501,
+              "type": "step.started",
+              "at": "2026-10-09T10:25:10.852Z"
+            },
+            {
+              "seq": 502,
+              "type": "step.completed",
+              "at": "2026-10-09T10:25:10.860Z"
+            },
+            {
+              "seq": 560,
+              "type": "step.started",
+              "at": "2026-10-09T10:25:17.960Z"
+            },
+            {
+              "seq": 561,
+              "type": "step.completed",
+              "at": "2026-10-09T10:25:18.667Z"
+            },
+            {
+              "seq": 784,
+              "type": "step.started",
+              "at": "2026-10-09T10:25:24.879Z"
+            },
+            {
+              "seq": 785,
+              "type": "step.completed",
+              "at": "2026-10-09T10:25:25.582Z"
+            },
+            {
+              "seq": 1032,
+              "type": "step.started",
+              "at": "2026-10-09T10:25:33.910Z"
+            },
+            {
+              "seq": 1033,
+              "type": "step.completed",
+              "at": "2026-10-09T10:25:34.760Z"
+            },
+            {
+              "seq": 1092,
+              "type": "step.started",
+              "at": "2026-10-09T10:25:39.799Z"
+            },
+            {
+              "seq": 1093,
+              "type": "step.completed",
+              "at": "2026-10-09T10:25:40.967Z"
+            },
+            {
+              "seq": 1382,
+              "type": "assistant.message",
+              "at": "2026-10-09T10:25:57.712Z"
+            },
+            {
+              "seq": 1383,
+              "type": "task.ended",
+              "at": "2026-10-09T10:25:57.713Z"
+            },
+            {
+              "seq": 1384,
+              "type": "turn.ended",
+              "at": "2026-10-09T10:25:57.714Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 62756,
+          "endedAt": "2026-10-09T10:25:57.751Z"
+        }
+      ],
+      "replySummary": "已收拾完成，文件名和内容都保留，未动「不要动」文件夹。\n\n收件箱结构现在是：\n- `[local path]\n  - 会议记录.txt\n- `[local path]\n  - 预算.csv\n- `[local path]\n  - 说明.md\n- `[local path]\n  - 保留.txt  原样保留\n\ntxt 已归入 文本，csv 归入 表格，md 归入 文档。",
+      "notes": "只在 runner 临时目录移动文件；任何未声明的审批会使场景失败并请求取消。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；360秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限180秒。",
+      "scratchDir": "C:\\temp\\weftmate-eval-action-01-organize-4Abi5V"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 0,
+    "manual": 0,
+    "unsupported": 0,
+    "skippedChecks": 0,
+    "passRate": 1,
+    "coverage": 1
+  }
+}

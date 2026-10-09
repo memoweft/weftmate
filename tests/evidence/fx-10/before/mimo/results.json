@@ -1,0 +1,264 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-09T10:16:48.156Z",
+  "host": "http://127.0.0.1:61955",
+  "model": "mimo",
+  "results": [
+    {
+      "id": "action-01-organize",
+      "category": "action",
+      "title": "整理收件目录",
+      "status": "failed",
+      "durationMs": 21939,
+      "checks": [],
+      "turns": [
+        {
+          "sessionId": "session-98948cd3-d111-432f-8e3e-e5164891e980",
+          "modelProfileId": "private-model-796d7eb1ee2878886dcdfc70323bed2eb72ac3c4",
+          "commandId": "cmd-e8086acc-c2dc-4b99-aa03-1905bd34b101",
+          "startedAt": "2026-10-09T10:16:48.843Z",
+          "reply": "",
+          "status": "running",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T10:16:48.878Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T10:16:48.879Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T10:16:48.912Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T10:16:48.912Z"
+            },
+            {
+              "seq": 60,
+              "type": "step.started",
+              "at": "2026-10-09T10:16:53.500Z"
+            },
+            {
+              "seq": 61,
+              "type": "step.completed",
+              "at": "2026-10-09T10:16:53.509Z"
+            },
+            {
+              "seq": 115,
+              "type": "step.started",
+              "at": "2026-10-09T10:16:57.176Z"
+            },
+            {
+              "seq": 116,
+              "type": "step.completed",
+              "at": "2026-10-09T10:16:57.288Z"
+            },
+            {
+              "seq": 117,
+              "type": "step.started",
+              "at": "2026-10-09T10:16:57.289Z"
+            },
+            {
+              "seq": 118,
+              "type": "step.completed",
+              "at": "2026-10-09T10:16:57.780Z"
+            },
+            {
+              "seq": 196,
+              "type": "step.started",
+              "at": "2026-10-09T10:17:05.850Z"
+            },
+            {
+              "seq": 197,
+              "type": "step.completed",
+              "at": "2026-10-09T10:17:06.308Z"
+            },
+            {
+              "seq": 327,
+              "type": "step.started",
+              "at": "2026-10-09T10:17:10.257Z"
+            },
+            {
+              "seq": 328,
+              "type": "approval.requested",
+              "at": "2026-10-09T10:17:10.265Z"
+            }
+          ],
+          "unexpectedApproval": {
+            "approvalId": "02b8a8e2-d683-4174-b7c3-ceddeb7fda19",
+            "toolName": "pwsh",
+            "reason": "[weftmate:overwrite] 修改或覆盖已有文件，恢复需要原内容或备份。操作：pwsh\n{\"command\":\"$base='C:\\\\temp\\\\weftmate-eval-action-01-organize-cmaszC\\\\inbox'\\nNew-Item -ItemType Directory -Force -Path (Join-Path $base '文本'),(Join-Path $base '表格'),(Join-Path $base '文档') | Out-Null\\nMove-Item -Force (Join-Path $base '会议记录.txt') (Join-Path $base '文本\\\\会议记录.txt')\\nMove-Item -Force (Join-Path $base '预算.csv') (Join-Path $base '表格\\\\预算.csv')\\nMove-Item -Force (Join-Path $base '说明.md') (Join-Path $base '文档\\\\说明.md')\\nGet-ChildItem -Force -Recurse $base | Select-Object FullName, Length | Format-Table -AutoSize | Out-String -Width 300\\nWrite-Host '--- contents after move ---'\\nforeach($f in @('文本\\\\会议记录.txt','表格\\\\预算.csv','文档\\\\说明.md','不要动\\\\保留.txt')){ Write-Host ('=== ' + $f); Get-Conte",
+            "riskCategories": [
+              "overwrite"
+            ],
+            "status": "pending"
+          },
+          "durationMs": 21621
+        }
+      ],
+      "replySummary": "",
+      "notes": "只在 runner 临时目录移动文件；任何未声明的审批会使场景失败并请求取消。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；360秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限180秒。",
+      "scratchDir": "C:\\temp\\weftmate-eval-action-01-organize-cmaszC",
+      "reason": "Unexpected approval; scenario has no matching decision (left pending)",
+      "timedOut": false,
+      "cleanup": "cancel requested; stopping side effects is unconfirmed"
+    },
+    {
+      "id": "action-02-web-document",
+      "category": "action",
+      "title": "查网页并保存说明",
+      "status": "passed",
+      "durationMs": 100697,
+      "checks": [
+        {
+          "type": "file_exists",
+          "path": "node24说明.md",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "node24说明.md",
+          "text": "https://nodejs.org/",
+          "status": "passed"
+        },
+        {
+          "type": "reply_matches",
+          "pattern": "说明|保存|写好",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "llm_judge",
+          "prompt": "回复应说明已经保存中文说明并提到官方来源；不能将尚未进行的检索/保存说成完成。仅凭回复不能验收文档事实准确性。",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-a4d59fdf-07de-4d7e-9eb8-0812a50e8390",
+          "modelProfileId": "private-model-796d7eb1ee2878886dcdfc70323bed2eb72ac3c4",
+          "commandId": "cmd-23b8ff6e-73f7-4a6a-8d3f-f102adc1dd73",
+          "startedAt": "2026-10-09T10:17:11.232Z",
+          "reply": "已写入 `[local path] Node 24 vs 22 的中文简要对比（版本状态、V8 新语法、ALS/URLPattern/权限模型等 API 变化、弃用项、构建工具链、升级建议与来源链接）。资料来自官方的 [Node 24.0.0 发布说明](https://nodejs.org/en/blog/release/v24.0.0)、[Node 22.0.0 发布说明](https://nodejs.org/en/blog/release/v22.0.0) 和[官方发布计划](https://github.com/nodejs/release#release-schedule)。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T10:17:11.276Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T10:17:11.276Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T10:17:11.302Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T10:17:11.302Z"
+            },
+            {
+              "seq": 42,
+              "type": "step.started",
+              "at": "2026-10-09T10:17:14.844Z"
+            },
+            {
+              "seq": 44,
+              "type": "step.completed",
+              "at": "2026-10-09T10:17:14.851Z"
+            },
+            {
+              "seq": 143,
+              "type": "step.started",
+              "at": "2026-10-09T10:17:25.216Z"
+            },
+            {
+              "seq": 144,
+              "type": "step.started",
+              "at": "2026-10-09T10:17:25.228Z"
+            },
+            {
+              "seq": 145,
+              "type": "step.completed",
+              "at": "2026-10-09T10:17:29.989Z"
+            },
+            {
+              "seq": 146,
+              "type": "step.completed",
+              "at": "2026-10-09T10:17:31.340Z"
+            },
+            {
+              "seq": 205,
+              "type": "step.started",
+              "at": "2026-10-09T10:17:36.643Z"
+            },
+            {
+              "seq": 206,
+              "type": "step.completed",
+              "at": "2026-10-09T10:17:47.431Z"
+            },
+            {
+              "seq": 1264,
+              "type": "step.started",
+              "at": "2026-10-09T10:18:43.807Z"
+            },
+            {
+              "seq": 1265,
+              "type": "artifact.created",
+              "at": "2026-10-09T10:18:45.012Z"
+            },
+            {
+              "seq": 1327,
+              "type": "assistant.message",
+              "at": "2026-10-09T10:18:51.552Z"
+            },
+            {
+              "seq": 1328,
+              "type": "task.ended",
+              "at": "2026-10-09T10:18:51.552Z"
+            },
+            {
+              "seq": 1329,
+              "type": "turn.ended",
+              "at": "2026-10-09T10:18:51.553Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 100368,
+          "endedAt": "2026-10-09T10:18:51.600Z"
+        }
+      ],
+      "replySummary": "已写入 `[local path] Node 24 vs 22 的中文简要对比（版本状态、V8 新语法、ALS/URLPattern/权限模型等 API 变化、弃用项、构建工具链、升级建议与来源链接）。资料来自官方的 [Node 24.0.0 发布说明](https://nodejs.org/en/blog/release/v24.0.0)、[Node 22.0.0 发布说明](https://nodejs.org/en/blog/release/v22.0.0) 和[官方发布计划](https://github.com/nodejs/release#release-schedule)。",
+      "notes": "需要联网；文件检查只确认保存和官方来源链接，具体事实准确性由 Windows 人工抽查，judge 为可选补充。本地 Qwen 27B 首轮 240 秒到期时仍在正常检索官方迁移指南，调整为 600 秒以覆盖检索、写入和核验。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；900秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限600秒。",
+      "scratchDir": "C:\\temp\\weftmate-eval-action-02-web-document-9EzJzh"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 1,
+    "manual": 0,
+    "unsupported": 0,
+    "skippedChecks": 1,
+    "passRate": 0.5,
+    "coverage": 0.5
+  }
+}
