@@ -20,7 +20,7 @@ const mobileMarkup = String.raw`
       <div id="conversation-list" class="conversation-list" aria-label="最近对话" aria-live="polite"></div>
       <div class="drawer-section-label drawer-function-label">功能</div>
       <div class="drawer-links">
-        <button data-page="chat">对话</button><button data-page="memory">记忆</button>
+        <button data-page="chat">对话</button><button data-page="activity">动态</button><button data-page="memory">记忆</button>
         <button data-page="capabilities">能力与扩展</button><button data-page="workspaces">项目与成果</button><button data-page="devices">设备</button>
         <button data-page="notifications">通知</button><button data-page="settings">设置</button>
       </div>

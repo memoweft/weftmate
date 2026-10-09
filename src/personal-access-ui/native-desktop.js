@@ -59,7 +59,10 @@ function blendDesktopColor(base, scrim) {
       const updateModel = () => { void native.setModelName(modelLabel.textContent).catch(() => {}); };
       new MutationObserver(updateModel).observe(modelLabel, { childList: true, subtree: true, characterData: true });
       updateModel();
-      native.onConversation(sessionId => { void openConversation(sessionId).catch(() => error('无法打开对话，请重新登录后重试。')); });
+      native.onConversation(target => {
+        if (target?.activityId) document.dispatchEvent(new CustomEvent('weftmate:activity', { detail: target.activityId }));
+        else void openConversation(target).catch(() => error('无法打开对话，请重新登录后重试。'));
+      });
       const account = document.getElementById('account-view');
       const section = document.createElement('section'); section.className = 'card group';
       const heading = document.createElement('h2'); heading.textContent = '桌面程序';

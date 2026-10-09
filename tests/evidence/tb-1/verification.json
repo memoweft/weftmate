@@ -1,0 +1,22 @@
+{
+  "realElectron": true,
+  "checks": [
+    "reminder",
+    "pending-question",
+    "memory-paused",
+    "native-approval-one-receipt",
+    "answer-opens-original-question-and-receipt",
+    "unread-to-zero",
+    "side-task-completed",
+    "keyboard-filter",
+    "narrow-no-overflow",
+    "restart-stable-identities",
+    "host-restart-reconnected-once",
+    "temporary-window-and-persisted-feed-redacted",
+    "mobile-390x844",
+    "mobile-direct-approval-native-receipt",
+    "mobile-original-question-receipt",
+    "forget-evidence-and-source-cleanup-in-electron"
+  ],
+  "errors": []
+}
