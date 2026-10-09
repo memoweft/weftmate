@@ -16,6 +16,10 @@ import WeftMateCore
             details[seq] = detail
         } catch { if !Task.isCancelled { errors[seq] = "暂时无法读取，收起后可重试。" } }
     }
+    func presentation(_ step: TimelineStep) -> ToolStepDetail? {
+        guard let seq = step.detailSeq, let detail = details[seq] else { return nil }
+        return ToolStepDetail(raw: detail.text, truncated: detail.truncated == true, failed: step.effectiveState == "failed")
+    }
     func summary(_ step: TimelineStep) -> String {
         guard let seq = step.detailSeq, let detail = details[seq] else { return step.summary }
         return ToolProgressSummary.readable(tool: step.data["toolName"]?.string ?? "", raw: detail.text)
