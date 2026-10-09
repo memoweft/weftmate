@@ -61,7 +61,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             }
         }
     }
-    function startNewConversation() {
+    function startNewConversation(temporary = false) {
         if (core.state.submitting || core.state.unresolvedSubmission) return;
         const fromPhone = core.state.activeChatSource === 'phone';
         if (fromPhone && core.state.selectedPhoneConversationId && !core.readPhoneOutbox())
@@ -75,6 +75,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             core.state.modelProfileId = defaultProfile; effects.paintModels();
         }
         core.state.newConversation = true;
+        core.state.newConversationTemporary = temporary;
         core.state.newConversationId = environment.crypto.randomUUID();
         core.state.newConversationApprovalMode = null;
         core.state.newConversationThinking = false;
@@ -101,7 +102,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             row.creating = true;
             core.creatingOptimisticSession = true;
             const submitted = row.creationCommand?.state === 'accepted_by_dsh' ? row.creationCommand
-                : await core.submitCommand('session.create', {modelProfileId: row.modelProfileId}, null, row.createRequestId);
+                : await core.submitCommand('session.create', {modelProfileId: row.modelProfileId, ...(row.temporary ? {temporary: true} : {})}, null, row.createRequestId);
             const created = row.creationCommand || core.state.tasks.find(command=>command.requestId===row.createRequestId) || submitted;
             core.creatingOptimisticSession = false;
             row.creating = false;
@@ -258,6 +259,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         const row = {ownerId: core.state.ownerId, identity: core.state.identityGeneration,
             sessionId: core.state.selectedSessionId, modelProfileId: core.state.modelProfileId,
             draftId: core.state.newConversationId,
+            temporary: core.state.newConversation && core.state.newConversationTemporary === true,
             requestId: attachments.length ? core.attachmentAttempt(core.attachmentDraftKey(), text, attachments).requestId : environment.crypto.randomUUID(), createRequestId: environment.crypto.randomUUID(),
             text, attachments: attachments.length > 0, files: attachments.map(item => item.file?.name || '附件'),
             deepThinking: core.state.newConversation ? thinkingView().supported && thinkingView().enabled : undefined,

@@ -1,3 +1,4 @@
+import { hasPrivateContent } from '../personal-access/temporary-chats.mjs';
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { failure, plainObject } from '../personal-access/common.mjs';
@@ -36,8 +37,9 @@ export async function createOfflineService(context) {
     const result = [];
     const cloudProfiles = new Set((await context.backend.listModels()).filter(model => model.sourceKind === 'cloud').map(model => model.id));
     for (const [sessionId, session] of Object.entries(context.accountState(ownerId).sessions).reverse()) {
-      if (session.deleting || session.archived || !cloudProfiles.has(session.modelProfileId)) continue;
+      if (hasPrivateContent(session) || session.deleting || session.archived || !cloudProfiles.has(session.modelProfileId)) continue;
       const page = await context.backend.readEvents({ ownerId, sessionId, limit: 20 }).catch(() => null);
+      if (hasPrivateContent(context.accountState(ownerId).sessions[sessionId])) continue;
       const messages = (page?.events ?? []).filter(e => ['user.message', 'assistant.message'].includes(e.type) && typeof e.data?.text === 'string' &&
         (!owner(ownerId).purgedAt || Date.parse(e.at ?? e.timestamp ?? '') > owner(ownerId).purgedAt))
         .slice(-20).map(e => ({ role: e.type === 'user.message' ? 'user' : 'assistant', text: e.data.text.slice(0, 4000) }));

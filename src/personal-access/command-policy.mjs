@@ -1,3 +1,4 @@
+import { validateMemorySettings } from './temporary-chats.mjs';
 import { digest, exactKeys, failure, id, modelProfileId, validId } from './common.mjs';
 import {
   CONVERSATION_ID,
@@ -56,7 +57,7 @@ export function canonicalCommand(value, hostId, internal = false) {
     delete native.sessionId;
     return { ...native, kind: 'chat.message', chatId, ...(profile ? { modelProfileId: profile } : {}), ...(attachmentSessionId ? { attachmentSessionId } : {}) };
   }
-  exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'modelProfileId', 'sessionId', 'text', 'mode', 'intent', 'appId', 'attachments',
+  exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'temporary', 'recallEnabled', 'autoDeleteDays', 'modelProfileId', 'sessionId', 'text', 'mode', 'intent', 'appId', 'attachments',
     'attachmentMessageId', 'originalAttachments', 'sourceSyncEventId',
     ...(internal ? ['taskId', 'artifactId', 'fileName', 'size', 'sha256', 'rootTaskId', 'taskAction',
       'projectId', 'projectRevision', 'sourceReceiptId', 'sourceSnapshotIds', 'workspaceKind', 'initialUrls',
@@ -78,10 +79,12 @@ export function canonicalCommand(value, hostId, internal = false) {
       value.projectId !== undefined && value.kind !== 'session.message' || value.workspaceKind !== undefined ||
       !['session.create', 'session.message'].includes(value.kind))) throw failure('INVALID_REQUEST');
   if (value.kind === 'session.create') {
-    exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'modelProfileId',
+    exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'temporary', 'recallEnabled', 'autoDeleteDays', 'modelProfileId',
       ...(internal ? ['projectId', 'projectRevision', 'workspaceKind',
         'conversationId', 'cutoverSyncSeq', 'contextHash', 'acknowledgeUncertainLocalTurn', 'sideChat'] : [])],
       ['requestId', 'kind', 'targetDeviceId', 'modelProfileId']);
+    validateMemorySettings(value);
+    if (!value.temporary && (value.recallEnabled !== undefined || value.autoDeleteDays !== undefined)) throw failure('INVALID_REQUEST');
     modelProfileId(value.modelProfileId);
     if (value.sideChat !== undefined) {
       const side = value.sideChat;
@@ -187,7 +190,7 @@ export function canonicalCommand(value, hostId, internal = false) {
       ['requestId', 'kind', 'targetDeviceId', 'appId']);
     if (value.appId !== 'notepad') throw failure('INVALID_COMMAND');
   }
-  return Object.fromEntries(['requestId', 'kind', 'targetDeviceId', 'modelProfileId', 'sessionId', 'text', 'mode', 'appId', 'attachments',
+  return Object.fromEntries(['requestId', 'kind', 'targetDeviceId', 'temporary', 'recallEnabled', 'autoDeleteDays', 'modelProfileId', 'sessionId', 'text', 'mode', 'appId', 'attachments',
     'attachmentMessageId', 'originalAttachments',
     'sourceSyncEventId',
     'taskId', 'artifactId', 'fileName', 'size', 'sha256', 'rootTaskId', 'taskAction',

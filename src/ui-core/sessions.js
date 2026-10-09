@@ -77,6 +77,23 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         if (identity !== core.state.identityGeneration) return null;
         await core.refreshSessions(); return result;
     }
+    async function createTemporaryConversation() {
+        const identity = core.state.identityGeneration;
+        const models = (await core.accessApi('/models')).models || [];
+        const model = models.find(row => row.id === core.state.modelProfileId && row.configured) || models.find(row => row.configured);
+        if (!model) throw new Error('MODEL_UNAVAILABLE');
+        const requestId = environment.crypto.randomUUID();
+        let command = (await core.accessApi('/sessions/temporary', {method:'POST', protectedWrite:true,
+            body:{requestId, modelProfileId:model.id}})).command;
+        const deadline = Date.now() + 45000;
+        while (identity === core.state.identityGeneration && Date.now() < deadline) {
+            if (command?.state === 'accepted_by_dsh') return command.sessionId;
+            if (command?.state === 'rejected') throw new Error(command.errorCode);
+            await new Promise(resolve => setTimeout(resolve, 250));
+            command = (await core.accessApi(`/commands/by-request/${requestId}`)).command;
+        }
+        throw new Error('BACKEND_TIMEOUT');
+    }
     async function createProjectConversation(project, modelProfileId) {
         const identity = core.state.identityGeneration, owner = core.state.ownerId;
         const key = `weftmate-project-conversation:${owner}:${project.projectId}`;
@@ -131,7 +148,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         return identity === core.state.identityGeneration ? result : null;
     }
     function sessionLifecycleMessage(error) {
-        return { SESSION_BUSY: '对话还在停止或核对执行结果，请稍后重试。', SESSION_ARCHIVED: '请先恢复对话，再发送消息。',
+        return { TEMPORARY_CONTEXT_CONFIRMATION_REQUIRED: '临时内容不会自动带入其他对话。请在新对话中明确分享需要保留的内容。', MAIN_CHAT_PROTECTED: '主对话不能关闭记忆，请开一个临时对话。', SESSION_BUSY: '对话还在停止或核对执行结果，请稍后重试。', SESSION_ARCHIVED: '请先恢复对话，再发送消息。',
             MEMORY_DELETE_UNAVAILABLE: '记忆暂时无法遗忘，对话仍保留。请稍后重试，或取消勾选。',
             MEMORY_REVISION_CHANGED: '记忆已变更，请重新打开确认框，核对新的遗忘范围。',
             MEMORY_DELETE_CONFLICT: '记忆遗忘尚未完成，对话仍保留。请稍后重试。' }[error?.code] || core.failureMessage(error);
@@ -165,7 +182,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         effects.renderSessions(); effects.updateAvailability();
         return result;
     }
-    return { projectExpanded, setProjectExpanded, projectConversations, sessionHoverDetails, refreshSessionProjects, saveProject, removeProject, createProjectConversation, refreshSessions, sessionList, updateSession, sessionGroupAction, forkSession, archiveSession, previewSessionForget, deleteSession, sessionLifecycleMessage };
+    return { createTemporaryConversation, projectExpanded, setProjectExpanded, projectConversations, sessionHoverDetails, refreshSessionProjects, saveProject, removeProject, createProjectConversation, refreshSessions, sessionList, updateSession, sessionGroupAction, forkSession, archiveSession, previewSessionForget, deleteSession, sessionLifecycleMessage };
 };
 globalThis.WeftUiCore.sessionMenuItems = session => [
     {id:'pin',label:session.pinned?'取消置顶':'置顶',key:'P'},

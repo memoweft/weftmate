@@ -22,6 +22,7 @@ data class HttpReply(val status: Int, val body: JSONObject, val cookie: String? 
 internal fun validBusinessPath(path: String): Boolean {
     if (path.length > 512) return false
     val route = path.substringBefore('?')
+    if (path == "/personal/v1/sessions/temporary") return true
     val query = path.substringAfter('?', "")
     if (query.isEmpty() && route.matches(Regex("/personal/v1/offline/(sync|turns)"))) return true
     if (route == "/personal/v1/usage" && (query.isEmpty() ||
