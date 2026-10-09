@@ -5,6 +5,7 @@ import { validConversationContext } from '../personal-conversations/context.mjs'
 import { rm } from 'node:fs/promises';
 import path from 'node:path';
 import { createSessionMetadata } from './session-metadata.mjs';
+import { protectMainSession } from './chat-identity.mjs';
 
 export function createSessionOperations(context) {
   const deletions = new Set();
@@ -157,6 +158,7 @@ export function createSessionOperations(context) {
     ...createSessionMetadata(context),
     async archiveSession(ownerId, sessionId, archived) {
       id(sessionId);
+      protectMainSession(context.accountState(ownerId), sessionId);
       await context.serial(() => context.mutate(ownerId, next => {
         if (!next.sessions[sessionId]) throw failure('SESSION_UNAVAILABLE', 404);
         if (next.sessions[sessionId].deleting) throw failure('SESSION_BUSY', 409);
@@ -173,6 +175,7 @@ export function createSessionOperations(context) {
     },
     async deleteSession(ownerId, sessionId, { forgetMemories = false, deleteConversationSnippets = false, memoryWorldRevision } = {}) {
       id(sessionId);
+      protectMainSession(context.accountState(ownerId), sessionId);
       const key = `${ownerId}\0${sessionId}`;
       if (deletions.has(key)) throw failure('SESSION_BUSY', 409);
       deletions.add(key);
