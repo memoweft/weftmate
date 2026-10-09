@@ -9,6 +9,7 @@ private struct Credential: Codable, Sendable {
 }
 private struct DevicesReply: Decodable { let devices: [DeviceRecord] }
 private struct RemoteSession: Decodable {
+    let projectId: String?; let projectName: String?; let projectNotice: String?; let taskAvailable: Bool?
     let contextUsage: ConversationContextUsage?; let processing: ConversationProcessing?
     let sessionId: String; let title: String; let running: Bool; let sendAvailable: Bool
     let conversationId: String?; let modelProfileId: String?; let unavailable: Bool?; let archived: Bool?; let pinned: Bool?; let unread: Bool?; let groupId: String?
@@ -295,10 +296,11 @@ public actor PersonalClient {
         let reply: SessionGroupReply = try await parityRequest(path: "/session-groups", method: "POST", body: JSONEncoder().encode(Body(name: name)))
         return reply.group
     }
-    public func updateSessionMetadata(sessionID: String, pinned: Bool? = nil, unread: Bool? = nil, title: String? = nil, groupID: String? = nil, changeGroup: Bool = false) async throws -> SessionMetadataReply {
+    public func updateSessionMetadata(sessionID: String, pinned: Bool? = nil, unread: Bool? = nil, title: String? = nil, groupID: String? = nil, changeGroup: Bool = false, projectID: String? = nil, changeProject: Bool = false) async throws -> SessionMetadataReply {
         var body: [String: Any] = [:]
         if let pinned { body["pinned"] = pinned }; if let unread { body["unread"] = unread }; if let title { body["title"] = title }
         if changeGroup { body["groupId"] = groupID.map { $0 as Any } ?? NSNull() }
+        if changeProject { body["projectId"] = projectID.map { $0 as Any } ?? NSNull() }
         return try await parityRequest(path: "/sessions/\(try checkedID(sessionID))/metadata", method: "PATCH", body: JSONSerialization.data(withJSONObject: body))
     }
     public func forkSession(sessionID: String) async throws -> SessionForkReply {
@@ -385,7 +387,7 @@ public actor PersonalClient {
         struct Body: Encodable { let id: String; let confirm = true }
         return try await parityRequest(path: "/backups/restore", method: "POST", body: JSONEncoder().encode(Body(id: try checkedID(id))))
     }
-    private func parityRequest<T: Decodable>(path: String, method: String = "GET", body: Data? = nil, timeoutInterval: TimeInterval = 60) async throws -> T {
+    func parityRequest<T: Decodable>(path: String, method: String = "GET", body: Data? = nil, timeoutInterval: TimeInterval = 60) async throws -> T {
         let (auth, generation) = try snapshot()
         try await verify(auth, generation)
         let response = try await sharedAuthorizedRequest(auth, generation, path: path, method: method, body: body, timeoutInterval: timeoutInterval)
@@ -409,13 +411,13 @@ public actor PersonalClient {
             guard bound.count <= 1 else { throw APIFailure.invalidResponse }
             let session = bound.first
             rows.append(.init(id: id, title: session?.title ?? title, conversationId: id, sessionId: session?.sessionId,
-                running: session?.running ?? false, sendAvailable: false, originalModelLabel: nil, archived: session?.archived ?? false, pinned: session?.pinned ?? false, unread: session?.unread ?? false, groupId: session?.groupId, contextUsage: session?.contextUsage, processing: session?.processing))
+                running: session?.running ?? false, sendAvailable: false, originalModelLabel: nil, archived: session?.archived ?? false, pinned: session?.pinned ?? false, unread: session?.unread ?? false, groupId: session?.groupId, contextUsage: session?.contextUsage, processing: session?.processing, projectId: session?.projectId, projectName: session?.projectName, projectNotice: session?.projectNotice, taskAvailable: session?.taskAvailable))
         }
         for session in host.sessions where session.conversationId == nil || grouped[session.conversationId!] == nil {
             rows.append(.init(id: session.conversationId ?? session.sessionId,
                 title: session.title.isEmpty ? "电脑会话" : session.title, conversationId: session.conversationId,
                 sessionId: session.sessionId, running: session.running, sendAvailable: false,
-                originalModelLabel: session.modelProfileId, archived: session.archived ?? false, pinned: session.pinned ?? false, unread: session.unread ?? false, groupId: session.groupId, contextUsage: session.contextUsage, processing: session.processing))
+                originalModelLabel: session.modelProfileId, archived: session.archived ?? false, pinned: session.pinned ?? false, unread: session.unread ?? false, groupId: session.groupId, contextUsage: session.contextUsage, processing: session.processing, projectId: session.projectId, projectName: session.projectName, projectNotice: session.projectNotice, taskAvailable: session.taskAvailable))
         }
         try check(generation)
         syncEvents = events
@@ -949,7 +951,8 @@ public actor PersonalClient {
         guard intent.server == auth.session.server, intent.ownerId == auth.session.account.ownerId,
               intent.hostId == auth.session.hostId else { throw APIFailure.accountChanged }
         let key = "\(generation)|\(intent.requestId)"
-        try retainSharedIntent(requestID: intent.requestId, payload: intent.payload, endpoint: "/commands")
+        let endpoint = intent.parsedPayload.projectId.map { "/projects/\($0)/sessions" } ?? "/commands"
+        try retainSharedIntent(requestID: intent.requestId, payload: intent.payload, endpoint: endpoint)
         guard sharedOperations.insert(key).inserted else {
             throw APIFailure.server(status: 409, code: "REQUEST_IN_PROGRESS")
         }
@@ -962,7 +965,9 @@ public actor PersonalClient {
         guard allowSubmission else { return .notFound }
         try check(generation)
         struct Reply: Decodable { let command: SharedCommandReceipt }
-        let response = try await sharedAuthorizedRequest(auth, generation, path: "/commands", method: "POST", body: intent.payload)
+        struct ProjectBody: Encodable { let requestId: String; let modelProfileId: String? }
+        let body = intent.parsedPayload.projectId == nil ? intent.payload : try JSONEncoder().encode(ProjectBody(requestId: intent.requestId, modelProfileId: intent.parsedPayload.modelProfileId))
+        let response = try await sharedAuthorizedRequest(auth, generation, path: endpoint, method: "POST", body: body)
         let reply: Reply = try decode(response.body)
         try reply.command.validate(intent: intent)
         return .found(reply.command)
@@ -1007,12 +1012,12 @@ public actor PersonalClient {
     public func taskControlSessionIDs(includeArchived: Bool = false) async throws -> Set<String> {
         let (auth, generation) = try snapshot()
         try await verify(auth, generation)
-        struct Status: Decodable { let ownerId: String; let hostId: String }
+        struct Status: Decodable { let ownerId: String; let hostId: String; let executionAccount: Bool? }
         let status: Status = try await authorized(auth, generation, path: "/status")
         guard status.ownerId == auth.session.account.ownerId, status.hostId == auth.session.hostId else { throw APIFailure.identityMismatch }
         // Root task controls are authorized by /tasks; opening desktop apps is an unrelated capability.
         let sessions: SessionsReply = try await authorized(auth, generation, path: includeArchived ? "/sessions?archived=all" : "/sessions")
-        return Set(sessions.sessions.filter { ($0.sendAvailable || ($0.archived == true && $0.running)) && $0.unavailable != true }.map(\.sessionId))
+        return Set(sessions.sessions.filter { ProjectPresentation.taskEnabled(taskAvailable: $0.taskAvailable, executionAccount: status.executionAccount) && ($0.sendAvailable || ($0.archived == true && $0.running)) && $0.unavailable != true }.map(\.sessionId))
     }
 
     public func uploadOriginalAttachment(_ metadata: OriginalAttachment, file: URL, conversationID: String,

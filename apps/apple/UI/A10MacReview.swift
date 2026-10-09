@@ -38,7 +38,7 @@ import WeftMateCore
         for window in NSApplication.shared.windows where window.isVisible {
             if let node = find(id, in: window) { return node }
         }
-        return nil
+        return find(id, in: NSApplication.shared)
     }
     static func wait(_ id: String) async throws -> NSObject {
         for _ in 0..<150 {
@@ -48,7 +48,10 @@ import WeftMateCore
         throw Failure(step: "Missing native control: " + id)
     }
     static func press(_ id: String) async throws {
-        let node = try await wait(id), selector = NSSelectorFromString("accessibilityPerformPress")
+        try pressNode(try await wait(id), id: id)
+    }
+    static func pressNode(_ node: NSObject, id: String) throws {
+        let selector = NSSelectorFromString("accessibilityPerformPress")
         guard node.responds(to: selector) else { throw Failure(step: "Native press unavailable: " + id) }
         typealias Press = @convention(c) (AnyObject, Selector) -> Bool
         if unsafeBitCast(node.method(for: selector), to: Press.self)(node, selector) { return }
@@ -60,16 +63,32 @@ import WeftMateCore
               let actions = node.perform(names)?.takeUnretainedValue() as? [String], actions.contains("AXPress") else { throw Failure(step: "Native press unavailable: " + id) }
         node.perform(action, with: "AXPress")
     }
-    static func capture(_ scene: String, settings: Bool = false) async throws {
-        let rootID = settings ? "settingsPage." + String(scene.dropFirst("settings-".count)) : "conversationDetail"
+    static func findButton(_ label: String, in element: Any) -> NSObject? {
+        var visited = Set<ObjectIdentifier>()
+        func visit(_ value: Any) -> NSObject? {
+            guard let node = value as? NSObject, visited.insert(ObjectIdentifier(node)).inserted else { return nil }
+            for name in ["accessibilityLabel", "accessibilityTitle", "title"] {
+                let selector = NSSelectorFromString(name)
+                if node.responds(to: selector), node.perform(selector)?.takeUnretainedValue() as? String == label { return node }
+            }
+            for child in object(node, "accessibilityChildren") as? [Any] ?? [] { if let found = visit(child) { return found } }
+            if let view = node as? NSView { for child in view.subviews { if let found = visit(child) { return found } } }
+            if let window = node as? NSWindow, let content = window.contentView { return visit(content) }
+            return nil
+        }
+        return visit(element)
+    }
+    static func capture(_ scene: String, settings: Bool = false, identifier: String? = nil) async throws {
+        let rootID = identifier ?? (settings ? "settingsPage." + String(scene.dropFirst("settings-".count)) : "conversationDetail")
         let window = NSApplication.shared.windows.first { $0.isVisible && find(rootID, in: $0) != nil }
         guard let window else { throw Failure(step: "Missing own window: " + scene) }
         window.makeKeyAndOrderFront(nil)
         try await Task.sleep(for: .milliseconds(500))
         typealias Images = @convention(c) (CGRect, CFArray, UInt32) -> Unmanaged<CGImage>?
         guard let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "CGWindowListCreateImageFromArray") else { throw Failure(step: "Window capture unavailable") }
-        var ids = [UnsafeRawPointer(bitPattern: window.windowNumber)]
-        let array = CFArrayCreate(kCFAllocatorDefault, &ids, 1, nil)!
+        let windows = identifier == nil || settings ? [window] : NSApplication.shared.orderedWindows.filter(\.isVisible)
+        var ids = windows.map { UnsafeRawPointer(bitPattern: $0.windowNumber) }
+        let array = CFArrayCreate(kCFAllocatorDefault, &ids, ids.count, nil)!
         guard let image = unsafeBitCast(symbol, to: Images.self)(.null, array, 1)?.takeRetainedValue(),
               let png = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) else { throw Failure(step: "Own window has no image: " + scene) }
         FileHandle.standardOutput.write(Data(("A10_CAPTURE:" + scene + ":" + png.base64EncodedString() + "\n").utf8))

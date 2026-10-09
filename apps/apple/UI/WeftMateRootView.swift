@@ -51,6 +51,8 @@ struct WeftMateRootView: View {
             VStack(alignment: .leading, spacing: AppleTokens.Space.p16) { SessionActions(app: model, conversation: row, onSelect: { model.sessionMenuCandidate = nil }) }
                 .padding(AppleTokens.Space.p24)
         }
+        .sheet(item: $model.projectEditor) { _ in ProjectEditorSheet(app: model) }
+        .sheet(item: $model.projectConversation) { _ in ProjectConversationSheet(app: model) }
         .sheet(item: $model.groupCandidate) { _ in SessionGroupSheet(app: model) }
         .task(id: "\(scenePhase)-\(model.accountEpoch)-\(model.session?.verification.rawValue ?? "none")") {
             guard scenePhase == .active else { return }
@@ -78,6 +80,11 @@ struct WeftMateRootView: View {
                         FileHandle.standardOutput.write(Data(("A5_CAPTURE_FAILED:" + String(describing: error) + "\n").utf8))
                         Darwin.exit(1)
                     }
+                    Darwin.exit(0)
+                }
+                if let index = ProcessInfo.processInfo.arguments.firstIndex(of: "--a5-review-scene"), ["a11-all", "a11-remote"].contains(ProcessInfo.processInfo.arguments[index + 1]) {
+                    do { try await A11MacReview.run(model, local: ProcessInfo.processInfo.arguments[index + 1] == "a11-all") }
+                    catch { FileHandle.standardOutput.write(Data(("A5_CAPTURE_FAILED:" + String(describing: error) + "\n").utf8)); Darwin.exit(1) }
                     Darwin.exit(0)
                 }
                 if ProcessInfo.processInfo.arguments.contains("--a5-review-scene") {
@@ -191,6 +198,7 @@ private struct MacWorkspace: View {
             let args = ProcessInfo.processInfo.arguments
             guard args.contains("--ui-testing"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1) else { return }
             switch args[index + 1] {
+            case "a11-all", "a11-remote": break
             case "memory", "memory-forget": selected = .memory
             case "appearance", "usage":
                 model.settingsRoute = .init(categoryID: args[index + 1]); openWindow(id: "settings")
@@ -238,6 +246,19 @@ private struct MacWorkspace: View {
                         }.buttonStyle(.plain).accessibilityIdentifier("sessionGroup." + section.id)
                         if !model.collapsedSessionGroups.contains(section.id) {
                             ForEach(section.rows) { conversation in
+                                EditableSessionRow(app: model, conversation: conversation, selected: selected == .conversation(conversation.id))
+                                    .tag(SidebarSelection.conversation(conversation.id))
+                                    .listRowBackground(selected == .conversation(conversation.id) ? Weave.accent : AppleTokens.Colors.clear)
+                            }
+                        }
+                    }
+                }
+                Section { ProjectsEmpty(app: model) } header: { ProjectsSectionTitle(app: model) }
+                ForEach(model.projects.filter { search.isEmpty || $0.name.localizedCaseInsensitiveContains(search) || !model.projectRows($0, query: search).isEmpty }) { project in
+                    Section {
+                        ProjectHeading(app: model, project: project)
+                        if !model.collapsedProjects.contains(project.id) || !search.isEmpty {
+                            ForEach(model.projectRows(project, query: search)) { conversation in
                                 EditableSessionRow(app: model, conversation: conversation, selected: selected == .conversation(conversation.id))
                                     .tag(SidebarSelection.conversation(conversation.id))
                                     .listRowBackground(selected == .conversation(conversation.id) ? Weave.accent : AppleTokens.Colors.clear)
@@ -324,6 +345,20 @@ private struct PhoneWorkspace: View {
                             } label: { Text(section.title) }
                         }
                     }
+                    Section {
+                        ProjectsEmpty(app: model)
+                        ForEach(model.projects.filter { search.isEmpty || $0.name.localizedCaseInsensitiveContains(search) || !model.projectRows($0, query: search).isEmpty }) { project in
+                            ProjectHeading(app: model, project: project)
+                            if !model.collapsedProjects.contains(project.id) || !search.isEmpty {
+                                ForEach(model.projectRows(project, query: search)) { conversation in
+                                    NavigationLink(value: conversation.id) { ConversationRow(conversation: conversation) }
+                                        .contextMenu { SessionActions(app: model, conversation: conversation) }
+                                        .swipeActions(allowsFullSwipe: false) { Button("对话操作") { model.sessionMenuCandidate = conversation }.tint(Weave.accent) }
+                                        .accessibilityIdentifier("conversationRow." + conversation.id)
+                                }
+                            }
+                        }
+                    } header: { ProjectsSectionTitle(app: model) }
                 }
                 .listStyle(.plain).scrollContentBackground(.hidden).background(Weave.canvas)
                 .searchable(text: $search, prompt: "搜索对话")

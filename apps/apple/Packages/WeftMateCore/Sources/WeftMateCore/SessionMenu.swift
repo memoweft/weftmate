@@ -1,12 +1,12 @@
 import Foundation
 
 public enum SessionMenuAction: String, CaseIterable, Sendable {
-    case pin, unread, rename, fork, group, archive, delete
+    case pin, unread, rename, fork, project, group, archive, delete
     public var shortcut: String? {
-        switch self { case .pin: "p"; case .unread: "u"; case .rename: "r"; case .fork: "f"; case .group: nil; case .archive: "a"; case .delete: "d" }
+        switch self { case .pin: "p"; case .unread: "u"; case .rename: "r"; case .fork: "f"; case .project, .group: nil; case .archive: "a"; case .delete: "d" }
     }
     public func title(for row: ConversationSummary) -> String {
-        switch self { case .pin: row.pinned ? "取消置顶" : "置顶"; case .unread: row.unread ? "标记为已读" : "标记为未读"; case .rename: "重命名"; case .fork: "分叉"; case .group: "移至分组"; case .archive: row.archived ? "恢复" : "归档"; case .delete: "删除" }
+        switch self { case .pin: row.pinned ? "取消置顶" : "置顶"; case .unread: row.unread ? "标记为已读" : "标记为未读"; case .rename: "重命名"; case .fork: "分叉"; case .project: "移至项目"; case .group: "移至分组"; case .archive: row.archived ? "恢复" : "归档"; case .delete: "删除" }
     }
 }
 public struct SessionGroup: Codable, Identifiable, Equatable, Sendable { public let id: String; public let name: String
@@ -15,13 +15,13 @@ public struct SessionGroup: Codable, Identifiable, Equatable, Sendable { public 
 public struct SessionGroupsReply: Decodable, Sendable { public let groups: [SessionGroup] }
 public struct SessionGroupReply: Decodable, Sendable { public let group: SessionGroup }
 public struct SessionForkReply: Decodable, Sendable { public let sessionId: String; public let title: String }
-public struct SessionMetadataReply: Decodable, Sendable { public let sessionId: String }
+public struct SessionMetadataReply: Decodable, Sendable { public let sessionId: String; public let projectId: String?; public let projectNotice: String? }
 public struct SessionSidebarSection: Identifiable, Sendable {
     public let id: String; public let title: String; public let rows: [ConversationSummary]
 }
 public enum SessionSidebar {
     public static func sections(rows: [ConversationSummary], groups: [SessionGroup], query: String = "") -> [SessionSidebarSection] {
-        let visible = rows.filter { !$0.archived && (query.isEmpty || $0.title.localizedCaseInsensitiveContains(query)) }
+        let visible = rows.filter { !$0.archived && $0.projectId == nil && (query.isEmpty || $0.title.localizedCaseInsensitiveContains(query)) }
         var sections: [SessionSidebarSection] = []
         let pinned = visible.filter(\.pinned)
         if !pinned.isEmpty { sections.append(.init(id: "pinned", title: "置顶", rows: pinned)) }

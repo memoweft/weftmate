@@ -69,6 +69,7 @@ public struct HostUpdateSnapshot: Codable, Sendable { public let layers: [HostUp
 public struct NativeHostStatus: Codable, Sendable {
     public let ownerId: String
     public let hostId: String
+    public let executionAccount: Bool?
     public let updates: HostUpdateSnapshot?
     /// Keys are ApplePlatform wire names. Android mobile-ui minimums are independent.
     public let nativeMinimumVersions: [String: String]?

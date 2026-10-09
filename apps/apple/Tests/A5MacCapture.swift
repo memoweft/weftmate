@@ -35,6 +35,11 @@ import Security
         let app = Process(); app.executableURL = executable
         app.arguments = ["--ui-testing", "--lg2-capture", "-ApplePersistenceIgnoreState", "YES", "--ui-testing-namespace", name,
                          "--ui-testing-data-dir", root.path, "--server-url", host, "--s1c-cloud-url", cloud, "--a5-review-scene", scene, "--a5-theme", theme, scene == "login" ? "--lg2-cloud" : "--a5-local-server"]
+        if let flag = CommandLine.arguments.dropFirst(7).first(where: { $0.hasPrefix("a11-local-host=") }) {
+            app.arguments?.append(contentsOf: ["--a11-local-host-id", String(flag.dropFirst("a11-local-host=".count)), "--a11-folder", root.appendingPathComponent("A11Folder").path])
+            try FileManager.default.createDirectory(at: root.appendingPathComponent("A11Folder"), withIntermediateDirectories: true)
+            try Data("Synthetic A11 folder retained after project removal.".utf8).write(to: root.appendingPathComponent("A11Folder/brief.md"))
+        }
         if CommandLine.arguments.count > 7, CommandLine.arguments[7] == "a8" { app.arguments?.append("--a8-flow") }
         if CommandLine.arguments.dropFirst(7).contains("ephemeral") { app.arguments?.append("--a10-ephemeral-credentials") }
         let output = Pipe(); app.standardOutput = output; app.standardError = output
@@ -56,7 +61,8 @@ import Security
             while let newline = pending.firstIndex(of: 10) {
                 let line = String(decoding: pending[..<newline], as: UTF8.self)
                 pending.removeSubrange(...newline)
-                if scene == "a10-all", line.hasPrefix("A10_CAPTURE:") {
+                if line.hasPrefix("A11_STEP:") { FileHandle.standardOutput.write(Data((line + "\n").utf8)) }
+                if ["a10-all", "a11-all", "a11-remote"].contains(scene), line.hasPrefix("A10_CAPTURE:") {
                     let parts = line.split(separator: ":", maxSplits: 2)
                     guard parts.count == 3, let png = Data(base64Encoded: String(parts[2])) else { throw CocoaError(.fileReadCorruptFile) }
                     try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
@@ -66,7 +72,7 @@ import Security
             }
         }
         app.waitUntilExit()
-        if scene == "a10-all", let text = String(data: bytes, encoding: .utf8), app.terminationStatus == 0 {
+        if ["a10-all", "a11-all", "a11-remote"].contains(scene), let text = String(data: bytes, encoding: .utf8), app.terminationStatus == 0 {
             try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
             for line in text.split(separator: "\n") where line.hasPrefix("A10_CAPTURE:") {
                 let parts = line.split(separator: ":", maxSplits: 2)

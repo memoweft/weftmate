@@ -9,7 +9,20 @@ struct SessionActions: View {
     var body: some View {
         if conversation.sessionId != nil {
             ForEach(SessionMenuAction.allCases, id: \.self) { action in
-                if action == .group {
+                if action == .project {
+                    Menu("移至项目") {
+                        Text(ProjectPresentation.moveNotice)
+                        ForEach(app.projects) { project in
+                            Button(project.name) { onSelect(); Task { await app.updateMetadata(conversation, projectID: project.id, changeProject: true) } }
+                                .accessibilityIdentifier("sessionProject." + project.id)
+                        }
+                        Button("移出项目") { onSelect(); Task { await app.updateMetadata(conversation, changeProject: true) } }
+                            .disabled(conversation.projectId == nil).accessibilityIdentifier("sessionProject.none")
+                    }.disabled(app.lifecycleBusy || conversation.running).accessibilityIdentifier("sessionAction.project")
+                    #if os(macOS)
+                    .menuStyle(.borderlessButton).foregroundStyle(Weave.ink).fixedSize()
+                    #endif
+                } else if action == .group {
                     Menu("移至分组") {
                         ForEach(app.sessionGroups) { group in
                             Button(group.name) { onSelect(); Task { await app.updateMetadata(conversation, groupID: group.id, changeGroup: true) } }
@@ -50,7 +63,7 @@ struct SessionActions: View {
         case .fork: Task { await app.fork(conversation) }
         case .archive: Task { await app.archive(conversation, archived: !conversation.archived) }
         case .delete: app.askToDelete(conversation)
-        case .group: break
+        case .project, .group: break
         }
     }
 }
@@ -128,7 +141,7 @@ struct SessionDeleteSheet: View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppleTokens.Space.p20) {
                 Text("删除对话？").font(AppleTokens.Fonts.title2)
-                Text("这会永久删除对话、工作目录与经验，无法恢复。运行中的对话会先停止。")
+                Text(app.deletionCandidate?.projectId != nil ? "这会永久删除对话与执行记录，项目文件夹里的文件不会删除。运行中的对话会先停止。" : "这会永久删除对话、工作目录与经验，无法恢复。运行中的对话会先停止。")
                 Button { Task { await app.setConversationForget(!app.forgetConversationMemories) } } label: {
                     HStack(spacing: AppleTokens.Space.p12) {
                         ZStack {

@@ -296,10 +296,10 @@ MS-1 增加 `POST /account/models/check`：Cookie（浏览器会话凭据）及 
 
 | 方法与路径 | 请求参数/体 | 响应示例 / 状态 | 主要领域错误 | 使用端 |
 |---|---|---|---|---|
-| GET `/projects` | 无 | 200 `{"projects":[{"projectId":"project-…","name":"资料","revision":1,"revoked":false,"createdAt":"…"}],"canManage":true}` | — | 桌、手、安 |
-| POST `/projects` | `requestId,name,rootPath,instructions?,permission?`；仅宿主所有者；permission 为 `read-only / write`，省略默认只读，instructions 默认空、≤16000字符 | 201，重放200 `{"project":{…}}`；不回传rootPath | 403 `FORBIDDEN`；409 `REQUEST_CONFLICT`；503 `PROJECT_WINDOWS_REQUIRED / PROJECT_UNSAFE_PATH` | 桌 |
+| GET `/projects` | 无 | 200 `{"projects":[{"projectId":"project-…","name":"资料","revision":1,"revoked":false,"createdAt":"…"}],"canManage":true}` | — | 桌、手、安、苹 |
+| POST `/projects` | `requestId,name,rootPath,instructions?,permission?`；仅宿主所有者；permission 为 `read-only / write`，省略默认只读，instructions 默认空、≤16000字符 | 201，重放200 `{"project":{…}}`；不回传rootPath | 403 `FORBIDDEN`；409 `REQUEST_CONFLICT`；503 `PROJECT_WINDOWS_REQUIRED / PROJECT_UNSAFE_PATH` | 桌、苹（Mac可信本机宿主身份） |
 | POST `/projects/{projectId}/revoke` | `requestId`；仅宿主所有者 | 200 `{"project":{"projectId":"project-…","revision":2,"revoked":true,"revokedAt":"…"}}` | 404 `NOT_FOUND`；409 `PROJECT_REVOKED / REQUEST_CONFLICT` | 桌 |
-| POST `/projects/{projectId}/sessions` | `requestId,modelProfileId` | 202 `{"command":Command}` | 404 `NOT_FOUND`；409 `PROJECT_REVOKED`；422 `MODEL_UNAVAILABLE` | 桌、手、安 |
+| POST `/projects/{projectId}/sessions` | `requestId,modelProfileId` | 202 `{"command":Command}` | 404 `NOT_FOUND`；409 `PROJECT_REVOKED`；422 `MODEL_UNAVAILABLE` | 桌、手、安、苹 |
 | GET `/workspaces/browser` | 无 | 200 `{"available":true,"hostId":"host-…","workspaceKind":"browser"}`；可有 `reasonCode` | — | 桌、手、安 |
 | POST `/workspaces/browser/sessions` | `requestId,modelProfileId`；宿主所有者 | 202 `{"command":Command}` | 503 `BROWSER_UNAVAILABLE / BROWSER_CLEANUP_FAILED`；422 `MODEL_UNAVAILABLE` | 桌、手、安 |
 
@@ -307,9 +307,9 @@ D37 项目实体公开字段为 `projectId,name,instructions,permission,revision
 
 | 路由 | 请求 | 响应 / 行为 | 错误 | 客户端 |
 |---|---|---|---|---|
-| PATCH `/projects/{projectId}` | `expectedRevision`（必填整数）、至少一项 `name / instructions / permission`；name 沿用项目名规则，instructions ≤16000字符 | 200 `{project:Project}`，修订号加一；更新成员会话修订，后续回合自动使用新说明与权限 | 400 INVALID_REQUEST；403 FORBIDDEN；404 NOT_FOUND；409 PROJECT_REVISION_CHANGED / SESSION_BUSY | 桌；Apple（苹果）后续包 |
-| DELETE `/projects/{projectId}` | `{expectedRevision}` | 200 `{deleted:true,projectId}`；只移除登记，不删除文件夹；成员解绑并得到 `projectNotice`，历史来源、成果与会话保留 | 同上；重复删除404 | 桌；Apple后续包 |
-| PATCH `/sessions/{id}/metadata` | 原字段外增加 `projectId`（项目ID或null）；项目与groupId互斥 | 200 `{sessionId,projectId,projectRevision,groupId?,projectNotice}`；仅空闲且属于本人电脑的个人对话可移动；本人手机接续到电脑的对话保留原 conversationId 绑定，可同时归入项目；移入自动移出分组，移入分组自动移出项目；下一回合生效，历史文件不复制或移动 | 409 PROJECT_REVOKED / SESSION_BUSY / SESSION_READ_ONLY；404 SESSION_UNAVAILABLE | 桌、手、安；Apple后续包 |
+| PATCH `/projects/{projectId}` | `expectedRevision`（必填整数）、至少一项 `name / instructions / permission`；name 沿用项目名规则，instructions ≤16000字符 | 200 `{project:Project}`，修订号加一；更新成员会话修订，后续回合自动使用新说明与权限 | 400 INVALID_REQUEST；403 FORBIDDEN；404 NOT_FOUND；409 PROJECT_REVISION_CHANGED / SESSION_BUSY | 桌、苹（Mac可信本机宿主身份） |
+| DELETE `/projects/{projectId}` | `{expectedRevision}` | 200 `{deleted:true,projectId}`；只移除登记，不删除文件夹；成员解绑并得到 `projectNotice`，历史来源、成果与会话保留 | 同上；重复删除404 | 桌、苹（Mac可信本机宿主身份） |
+| PATCH `/sessions/{id}/metadata` | 原字段外增加 `projectId`（项目ID或null）；项目与groupId互斥 | 200 `{sessionId,projectId,projectRevision,groupId?,projectNotice}`；仅空闲且属于本人电脑的个人对话可移动；本人手机接续到电脑的对话保留原 conversationId 绑定，可同时归入项目；移入自动移出分组，移入分组自动移出项目；下一回合生效，历史文件不复制或移动 | 409 PROJECT_REVOKED / SESSION_BUSY / SESSION_READ_ONLY；404 SESSION_UNAVAILABLE | 桌、手、安、苹 |
 
 旧状态启动时原地迁移：保留 ID、名称、目录身份、修订、撤销状态、会话与来源；缺失权限补 `read-only`、说明补空。再次启动幂等。移除保留内部墓碑，旧来源与旧请求仍可查询。项目设置与移除需 `account:manage`，移动会话沿用 `commands:write`、Cookie（会话凭据）与 CSRF（跨站请求伪造防护）；项目只属于宿主所有者。运行或待处理 / 回执不确定的成员会话返回 SESSION_BUSY，先结束或核对后再改。
 
@@ -577,7 +577,7 @@ Apple通用网络错误保留HTTP status与大写 `error.code`，无合法code�
 | 云账号页/目录（剩余缺口） | S1c-Web 已正式提供 7.7 原生 deviceId/JWK 浏览器 bootstrap，Apple 已接入；注册/找回密码尚无云浏览器页面。discover 必须传 hostId，尚无账号宿主列表；已有设备批准也没有原生可信 pin 转交接口。首次无配对材料的云登录仍不能自动发现宿主并固定可信 pin | 云轨道补账号页与账号宿主目录/已有信任通道的 pin 交付；部署登记 Apple client 并更新 S1c-Web 服务。Apple 不猜造接口、不信云目录替换 pin；系统浏览器与已取得配对信息的登录按现有正式契约实现 |
 | Apple 配对/密钥 | iPhone 相机或图片二维码读取 7.7 标准 URL `#pair=<base64url JSON>`、`wm1.` 复制码，兼容 7.4/7.6 裸 pairing JSON；Mac 粘贴电脑配对信息或在另一设备批准。P-256 优先 Secure Enclave，不可用用 Keychain；不跨设备同步。二维码过期/已用由宿主最终拒绝，重试不隐式允许 | S1c-Apple 已接入；真机 Secure Enclave/相机、可信 pin 转交与生产内容证书仍待对应轨道验证；电脑 QR 展示已由 S1c-Web 实现。Watch 无变更 |
 | 模型 | 有GET models与create选择modelProfileId；无verify、模型代理chat/completions、account/models九项管理/转移接口。未声明密钥转移，符合当前权限范围 | Apple模型设置/手机独立对话后续包 |
-| 项目/浏览器 | 无projects/workspaces/browser六项独立请求；已有会话可列/读/发送，但无法在此client登记项目、撤销或创建对应会话 | Apple工作区接入 |
+| 项目 / 浏览器 | A11 已接项目列表 / 项目内新对话（原回执恢复）/ 移动 / 说明与权限设置 / 移除；Mac 系统选择框仅在 canManage + 可信本机 hostId 匹配时启用，普通 Mac 远程连接只显示项目名；当前目录检查后端仍仅 Windows。浏览器工作区新建尚未接 | Mac 执行宿主 / 浏览器工作区后续包 |
 | 日常同步/本地turn | GET sync/events与共享接管已有；日常POST sync/events只有验收SPI，local-turns创建/查/续租/finish四项未接入 | M3离线对话与跨端合并 |
 | 分发更新 | 无认证app/native/downloads六项请求；Apple公开更新另有PublicUpdates，不能宣称缺所有更新能力 | 当前保持已有公开分发；本契约只记录认证入口 |
 | Watch | 旧首页没有任务进度、审批或完成触感 | 已在 A3 修复：通过 iPhone WatchConnectivity 读取一行进度、允许一次/拒绝、最近回复；前台/刷新观察到新完成才触感提醒。尚无远程推送，审批须手机可达，未验收真机配对 |
