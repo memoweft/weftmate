@@ -48,10 +48,19 @@ const files = walk(out), publicMatches = files.filter(file => privateValues.some
 const result = { at: new Date().toISOString(), roots: rows, publicScanned: files.length, publicMatches, usage };
 const pids = [...new Set(rows.flatMap(row => row.recordedProcessPids))];
 if (pids.length) {
+  const latest = new Map();
+  for (const root of roots) for (const line of readFileSync(join(root, 'requests.jsonl'), 'utf8').trim().split('\n').filter(Boolean)) {
+    const row = JSON.parse(line), pid = row.pid ?? (/^\d+-/.test(row.id ?? '') ? Number(row.id.split('-')[0]) : null);
+    if (Number.isSafeInteger(pid) && Number.isFinite(Date.parse(row.at))) latest.set(pid, Math.max(latest.get(pid) ?? 0, Date.parse(row.at)));
+  }
   const alive = await run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
-    `@(Get-Process -Id ${pids.join(',')} -ErrorAction SilentlyContinue | Select-Object Id,ProcessName) | ConvertTo-Json -Compress`], { windowsHide: true });
-  const live = alive.stdout.trim() ? JSON.parse(alive.stdout) : [];
-  result.recordedProcessesStillAlive = Array.isArray(live) ? live : [live];
+    `@(Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -in @(${pids.join(',')}) } | ForEach-Object { [pscustomobject]@{Id=$_.ProcessId;ProcessName=$_.Name;CreatedAt=$_.CreationDate.ToUniversalTime().ToString('o')} }) | ConvertTo-Json -Compress`], { windowsHide: true });
+  const parsed = alive.stdout.trim() ? JSON.parse(alive.stdout) : [];
+  const live = Array.isArray(parsed) ? parsed : [parsed];
+  // Windows reused a completed baseline's PID for a different parallel task.
+  // A process born after its recorded activity is not ours; never stop it.
+  result.reusedRecordedProcessIds = live.filter(process => Date.parse(process.CreatedAt) > (latest.get(process.Id) ?? 0) + 5000);
+  result.recordedProcessesStillAlive = live.filter(process => !result.reusedRecordedProcessIds.includes(process));
   assert.equal(result.recordedProcessesStillAlive.length, 0, 'Recorded EX-2 processes must exit before audit');
 }
 if (exportCheck) {

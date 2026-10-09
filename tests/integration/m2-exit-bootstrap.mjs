@@ -1,12 +1,17 @@
 // Test-only launch seams: volatile keys, request measurements, sustained Core outage.
 // All memory formation/recall/deletion and the desktop host remain production code.
-import { app } from 'electron';
+import { app, dialog } from 'electron';
 import { registerHooks } from 'node:module';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, mkdirSync } from 'node:fs';
+import { resolve, dirname, join, basename } from 'node:path';
 import { pathToFileURL } from 'node:url';
 const repository = resolve(import.meta.dirname, '../..');
 app.getAppPath = () => repository;
+if (process.env.WEFTMATE_BASELINE_TRACE) {
+  const directory = join(dirname(process.env.WEFTMATE_BASELINE_TRACE), 'downloads');
+  mkdirSync(directory, {recursive:true});
+  dialog.showSaveDialog = async (_window, options) => ({canceled:false,filePath:join(directory,basename(options.defaultPath))});
+}
 globalThis.m2ExitKeys = new Map();
 globalThis.m2ExitRpcs = new Set();
 globalThis.m2ExitFault = false;
@@ -20,6 +25,7 @@ globalThis.m2ExitSeedCredentials = async credentials => {
     if (key) vault.saveCredential(official.officialCredentialRef(routes.routeForProfile(model.id).provider), key);
   }
 };
+globalThis.m2ExitRestoreCore = () => { globalThis.m2ExitFault = false; };
 globalThis.m2ExitBreakCore = () => {
   globalThis.m2ExitFault = true;
   return [...globalThis.m2ExitRpcs].filter(rpc => rpc.child).map(rpc => {

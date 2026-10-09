@@ -145,7 +145,7 @@ export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagn
     if (!requestAllowed(req)) return writeJson(res, 403, { error: { code: 'origin-forbidden', message: 'Gateway request failed' } })
     const requestUrl = new URL(req.url ?? '/', 'http://gateway')
     const pathname = decodeURIComponent(requestUrl.pathname)
-    const match = /^\/weftmate\/api\/v1\/sessions\/([^/]+)(?:\/(resume|messages|cancel|events|models|approval|history|source|rename|fork))?$/.exec(pathname)
+    const match = /^\/weftmate\/api\/v1\/sessions\/([^/]+)(?:\/(resume|messages|cancel|events|models|approval|history|source|rename|fork|memory-cleanup))?$/.exec(pathname)
     const attachmentMatch = /^\/weftmate\/api\/v1\/sessions\/([^/]+)\/attachments\/(sha256:[a-f0-9]{64})$/.exec(pathname)
     const questionMatch = /^\/weftmate\/api\/v1\/sessions\/([^/]+)\/questions(?:\/([0-9a-f-]{36}))?$/i.exec(pathname)
     const workspaceMatch = /^\/weftmate\/api\/v1\/workspaces\/([^/]+)$/.exec(pathname)
@@ -234,6 +234,12 @@ export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagn
         records.set(value.sessionId, { events: [], listeners: new Set(), state: undefined, lastSeq: -1, nextId: 1 })
         return writeJson(res, 201, value)
       }
+      if (action === 'memory-cleanup' && req.method === 'POST') {
+        const body = await readJson(req, 1024 * 1024)
+        if (typeof body.deleteConversationSnippets !== 'boolean' || !Array.isArray(body.sourceTexts) ||
+            body.sourceTexts.some(text => typeof text !== 'string' || !text || text.length > 100000)) throw new TypeError('invalid memory cleanup')
+        return writeJson(res, 200, await sessions.cleanupMemory(sessionId, body))
+      }
       if (!action && req.method === 'DELETE') {
         const value = await sessions.remove(sessionId)
         records.delete(sessionId)
@@ -290,14 +296,14 @@ export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagn
         return writeJson(res, 200, await sessions.respondApproval({ sessionId, ...payload }))
       }
       if (action === 'models' && req.method === 'GET') {
-        // Native session.models reads the persisted selection for a cold session.
-        // Route reference scans must not depend on this Gateway's in-memory
-        // record, which is empty again after every managed DSH restart.
-        return writeJson(res, 200, await models.sessionModels(sessionId))
+        // Native session.models uses agentFor(), which resumes cold agents
+        // under the API proxy's private handle. Claim our personal lifecycle
+        // first so later deletion/forgetting can drain the right disposer.
+        return writeJson(res, 200, await sessions.withLifecycle(sessionId, () => models.sessionModels(sessionId)))
       }
       if (action === 'models' && req.method === 'PUT') {
         record(sessionId); const payload = await readJson(req)
-        const result = await models.selectSessionModel(sessionId, payload)
+        const result = await sessions.withLifecycle(sessionId, () => models.selectSessionModel(sessionId, payload))
         return writeJson(res, 200, result)
       }
       if (action === 'events' && req.method === 'GET') {
@@ -314,6 +320,9 @@ export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagn
       }
       return writeJson(res, 405, { error: { code: 'method-not-allowed', message: 'Gateway request failed' } })
     } catch (error) {
+      const nativeCode = typeof error?.code === 'string' && /^[A-Za-z0-9_-]{1,80}$/.test(error.code) ? error.code : 'unknown'
+      console.error(`[weftmate] gateway ${req.method} failed: ${nativeCode} ${error?.name ?? 'Error'}`)
+      if (nativeCode === 'unknown') console.error(String(error?.stack ?? '').split('\n').slice(1, 4).join('\n'))
       const safe = await gatewayError(error)
       diagnostics?.recordError(safe.code, safe.details?.digest ?? null)
       const notFound = error?.code === 'session-not-found' || error?.code === 'workspace-not-found'

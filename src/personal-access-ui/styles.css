@@ -709,8 +709,8 @@ kbd { font: inherit; font-size: var(--wm-font-size-10); color: var(--ink-muted);
 .archived-session-row { display: flex; align-items: center; gap: var(--wm-space-12); padding: var(--wm-space-16) 0; border-bottom: 1px solid var(--line); }
 .archived-session-row > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .confirm-dialog .dialog-body > button { margin-top: var(--wm-space-12); margin-right: var(--wm-space-8); }
-.confirm-dialog label { display: flex; align-items: start; gap: var(--wm-space-8); margin-top: var(--wm-space-18); }
-.confirm-dialog input[type=checkbox] { flex: none; width: var(--wm-space-18); height: var(--wm-space-18); min-height: 0; padding: 0; margin: var(--wm-space-4) 0 0; accent-color: var(--accent); }
+.confirm-dialog label, .memory-forget-option { display: flex; align-items: start; gap: var(--wm-space-8); margin-top: var(--wm-space-18); }
+.confirm-dialog input[type=checkbox], .memory-forget-option input[type=checkbox] { flex: none; width: var(--wm-space-18); height: var(--wm-space-18); min-height: 0; padding: 0; margin: var(--wm-space-4) 0 0; accent-color: var(--accent); }
 .confirm-dialog .form-error:empty { display: none; }
 .conversation-approval[data-motion-status="answered"] { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--wm-space-8); padding: 0; background: transparent; border: 0; font-size: var(--wm-font-size-12); }
 .conversation-approval[data-motion-status="answered"] > .conversation-task-title { display: none; }
