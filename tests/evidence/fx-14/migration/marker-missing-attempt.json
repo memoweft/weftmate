@@ -1,0 +1,11 @@
+{
+  "syntheticOnly": true,
+  "realInstaller": true,
+  "rehearsal": true,
+  "taskUntouched": true,
+  "publicConfigRemainsProtected": false,
+  "prepare": true,
+  "passed": false,
+  "error": "electron.launch: Process failed to launch!\nCall log:\n\u001b[2m  - <launching> \"[windows-home]\\AppData\\Local\\Temp\\weftmate-fx14-migration-VouI0I\\Programs\\WeftMate\\WeftMate.exe\" \"--inspect=0\" \"--remote-debugging-port=0\" \"--desktop-config=[windows-home]\\AppData\\Local\\Temp\\weftmate-fx14-migration-VouI0I\\config.json\"\u001b[22m\n\u001b[2m  - <launched> pid=56492\u001b[22m\n\u001b[2m  - [pid=56492][out]\u001b[22m\n\u001b[2m  - [pid=56492][err] Debugger listening on ws://127.0.0.1:50724/0210c5a8-1544-44cb-b8e8-14b4fe279044\u001b[22m\n\u001b[2m  - [pid=56492][err] For help, see: https://nodejs.org/learn/getting-started/debugging\u001b[22m\n\u001b[2m  - <ws connecting> ws://127.0.0.1:50724/0210c5a8-1544-44cb-b8e8-14b4fe279044\u001b[22m\n\u001b[2m  - <ws connected> ws://127.0.0.1:50724/0210c5a8-1544-44cb-b8e8-14b4fe279044\u001b[22m\n\u001b[2m  - [pid=56492][err] Debugger attached.\u001b[22m\n\u001b[2m  - [pid=56492][err] [weftmate] personal-host refused: personal-host requires an existing isolated profile marker\u001b[22m\n\u001b[2m  - <ws disconnected> ws://127.0.0.1:50724/0210c5a8-1544-44cb-b8e8-14b4fe279044 code=1006 reason=\u001b[22m\n\u001b[2m  - [pid=56492] <kill>\u001b[22m\n\u001b[2m  - [pid=56492] <will force kill>\u001b[22m\n\u001b[2m  - [pid=56492] <process did exit: exitCode=2, signal=null>\u001b[22m\n\u001b[2m  - [pid=56492] starting temporary directories cleanup\u001b[22m\n\u001b[2m  - [pid=56492] finished temporary directories cleanup\u001b[22m\n",
+  "temporaryDirectoryRemoved": true
+}
