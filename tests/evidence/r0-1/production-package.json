@@ -1,7 +1,7 @@
 {
   "version": "0.1.0",
-  "bytes": 174208817,
-  "sha256": "e8bd883031a9bf631e9810aa4aab987eae39677e66d87fd90152180d03bf0331",
+  "bytes": 174217160,
+  "sha256": "8732ae61bc130c7c0b6272b1a35b13907291dc3289f79362043c49ea80bad2da",
   "appId": "com.memoweft.weftmate",
   "perUser": true,
   "authenticode": false,
