@@ -1,5 +1,5 @@
 {
-  "scope": "All IA-2b model calls including failed development runs and final cache verification",
+  "scope": "All 65 external MiMo attempts, including development failures: 64 usage reports; 1 errored attempt has no provider usage and is excluded from token totals",
   "totals": {
     "requests": 64,
     "prompt": 379065,
@@ -801,5 +801,16 @@
         }
       ]
     }
-  ]
+  ],
+  "attempts": {
+    "externalStarts": 65,
+    "withUsage": 64,
+    "withoutUsage": [
+      {
+        "run": "weftmate-ia-2b-erasure-E0itbB",
+        "id": "33896-4",
+        "state": "AbortError"
+      }
+    ]
+  }
 }
