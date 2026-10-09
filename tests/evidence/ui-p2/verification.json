@@ -1,0 +1,52 @@
+{
+  "baseline": "d2f188deb7b15087a9d7202c66222fe59588b96e",
+  "syntheticData": true,
+  "isolatedProfile": true,
+  "productionDesktopShell": true,
+  "checks": [
+    {
+      "phase": "before",
+      "theme": "light",
+      "surface": "desktop"
+    },
+    {
+      "phase": "before",
+      "theme": "dark",
+      "surface": "desktop"
+    },
+    {
+      "phase": "after",
+      "theme": "light",
+      "surface": "desktop"
+    },
+    {
+      "phase": "after",
+      "theme": "dark",
+      "surface": "desktop"
+    },
+    {
+      "phase": "before",
+      "theme": "light",
+      "surface": "mobile",
+      "viewport": "390x844"
+    },
+    {
+      "phase": "before",
+      "theme": "dark",
+      "surface": "mobile",
+      "viewport": "390x844"
+    },
+    {
+      "phase": "after",
+      "theme": "light",
+      "surface": "mobile",
+      "viewport": "390x844"
+    },
+    {
+      "phase": "after",
+      "theme": "dark",
+      "surface": "mobile",
+      "viewport": "390x844"
+    }
+  ]
+}

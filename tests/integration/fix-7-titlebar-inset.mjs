@@ -19,7 +19,7 @@ writeFileSync(join(root, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MAR
 const env = { ...process.env };
 for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_)/.test(key) || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
 const baseline = '2a6aa9f7ad9fa02d77883940a32eb7083fae8641';
-const oldAssets = new Map(['native-desktop.css', 'native-desktop.js', 'popovers.js'].map(name => [name,
+const oldAssets = new Map(['native-desktop.css', 'native-desktop.js', 'popovers.js', 'components/settings-navigation.js', 'components/shell.js'].map(name => [name.split('/').at(-1),
   execFileSync('git', ['show', `${baseline}:src/personal-access-ui/${name}`], { cwd: repository, encoding: 'utf8' })]));
 const item = { id: 'fix7-memory', kind: 'cognition', text: '合成测试记忆：偏好简洁的中文说明。', currentState: 'current', sourceCount: 0 };
 const scopeOnly = process.argv.includes('--scope-only');
@@ -92,7 +92,8 @@ try {
         await page.getByRole('button', { name: '账户菜单' }).click();
         await page.getByRole('button', { name: '设置', exact: true }).click();
         if (size === 'wide') await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '外观', exact: true }).click();
-        else await page.getByRole('combobox', { name: '设置分类', exact: true }).selectOption('appearance');
+        else if (phase === 'before') await page.getByRole('combobox', { name: '设置分类', exact: true }).selectOption('appearance');
+        else { await page.getByRole('combobox', { name: '设置分类', exact: true }).click(); await page.getByRole('option', { name: '设置 · 外观', exact: true }).click(); }
         await page.getByRole('button', { name: theme === 'light' ? '浅色' : '深色', exact: true }).click();
         await capture(page, `${phase}-${theme}-${size}-settings`, page.locator('.settings-dialog'));
         await page.keyboard.press('Escape');
