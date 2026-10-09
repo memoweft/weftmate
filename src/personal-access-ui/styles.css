@@ -691,6 +691,23 @@ kbd { font: inherit; font-size: var(--wm-font-size-10); color: var(--ink-muted);
 .session-list .session-row { display: flex; align-items: center; }
 .session-list .session-row > button:first-child { flex: 1; min-width: 0; }
 .session-list .session-more { width: auto; flex: none; font-size: var(--wm-font-size-11); }
+.session-list .session-more { opacity: 0; width: var(--wm-space-32); height: var(--wm-space-32); padding: var(--wm-space-8); }
+.session-more svg { transform: rotate(90deg); }
+.session-row:hover .session-more, .session-row:focus-within .session-more { opacity: 1; }
+.session-list .is-unread .session-title-text { font-weight: 700; }
+.session-menu { width: var(--wm-size-220); padding: var(--wm-space-6); background: var(--surface); color: var(--ink); border: 0; border-radius: var(--wm-radius-12); box-shadow: var(--shadow); }
+.session-menu-item { display: flex; align-items: center; justify-content: space-between; gap: var(--wm-space-24); width: 100%; min-height: var(--wm-space-36); padding: var(--wm-space-8) var(--wm-space-12); background: transparent; color: inherit; border: 0; border-radius: var(--wm-radius-6); text-align: left; font: inherit; cursor: pointer; }
+.session-menu-item:hover, .session-menu-item:focus-visible { background: var(--accent-soft); }
+.session-menu-item.danger { color: var(--danger); }
+.session-menu-key { color: var(--muted); font-size: var(--wm-font-size-12); }
+.session-menu-separator { margin: var(--wm-space-6) var(--wm-space-12); border: 0; border-top: 1px solid var(--line); }
+.session-submenu-icon { transform: rotate(-90deg); }
+.session-group { display: flex; align-items: center; }
+.session-list .session-group-toggle { flex: 1; font-size: var(--wm-font-size-12); color: var(--muted); }
+.session-list .session-group-manage { flex: none; width: var(--wm-space-28); padding: var(--wm-space-6); }
+.session-rename { flex: 1; min-width: 0; }
+.archived-session-row { display: flex; align-items: center; gap: var(--wm-space-12); padding: var(--wm-space-16) 0; border-bottom: 1px solid var(--line); }
+.archived-session-row > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .confirm-dialog .dialog-body > button { margin-top: var(--wm-space-12); margin-right: var(--wm-space-8); }
 .confirm-dialog label { display: flex; align-items: start; gap: var(--wm-space-8); margin-top: var(--wm-space-18); }
 .confirm-dialog input[type=checkbox] { flex: none; width: var(--wm-space-18); height: var(--wm-space-18); min-height: 0; padding: 0; margin: var(--wm-space-4) 0 0; accent-color: var(--accent); }

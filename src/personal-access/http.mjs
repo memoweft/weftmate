@@ -1084,6 +1084,7 @@ export function createHttpHandler(context) {
               archived: state.sessions[sessionId].archived === true,
               modelProfileId: state.sessions[sessionId].modelProfileId ?? described.modelProfileId ?? null,
               title: bounded(described.title, 256) ?? '',
+              ...await context.sessionOperations.summary(ownerId, sessionId),
               running: described.running === true,
               ...(state.sessions[sessionId].workspaceKind ? {
                 workspaceKind: state.sessions[sessionId].workspaceKind,
@@ -1112,7 +1113,24 @@ export function createHttpHandler(context) {
             });
           } catch { sessions.push({ sessionId, title: '', running: false, sendAvailable: false, unavailable: true }); }
         }
-        return context.json(response, 200, { sessions });
+        sessions.sort((a, b) => Number(b.pinned) - Number(a.pinned));
+        return context.json(response, 200, { sessions, groups: Object.values(state.sessionGroups ?? {}) });
+      }
+      const groupMatch = /^\/personal\/v1\/session-groups(?:\/([A-Za-z0-9_-]+))?$/.exec(pathname);
+      if (groupMatch && (request.method === 'GET' && !groupMatch[1] || request.method === 'POST' && !groupMatch[1] || ['PATCH', 'DELETE'].includes(request.method) && groupMatch[1])) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const body = request.method === 'GET' ? {} : await context.readJson(request, 2048);
+        return context.json(response, request.method === 'POST' ? 201 : 200,
+          await context.sessionOperations.groups(ownerId, request.method, groupMatch[1], body));
+      }
+      const metadataMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/(metadata|fork)$/.exec(pathname);
+      if (metadataMatch && (request.method === 'PATCH' && metadataMatch[2] === 'metadata' || request.method === 'POST' && metadataMatch[2] === 'fork')) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const body = await context.readJson(request, 2048);
+        if (metadataMatch[2] === 'fork' && (!plainObject(body) || Object.keys(body).length)) throw failure('INVALID_REQUEST');
+        return context.json(response, metadataMatch[2] === 'fork' ? 201 : 200, metadataMatch[2] === 'fork'
+          ? await context.sessionOperations.fork(ownerId, metadataMatch[1])
+          : await context.sessionOperations.metadata(ownerId, metadataMatch[1], body));
       }
       const lifecycleMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)(?:\/(archive|unarchive))?$/.exec(pathname);
       if (lifecycleMatch && (request.method === 'POST' && lifecycleMatch[2] || request.method === 'DELETE' && !lifecycleMatch[2])) {

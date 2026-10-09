@@ -64,7 +64,7 @@ try {
       await page.getByRole('button', { name: '账户菜单' }).click();
       await check(page, page.getByRole('button', { name: '设置', exact: true }).locator('..'), 'account', size, enforce); await page.keyboard.press('Escape');
       await page.getByRole('button', { name: /^更多操作 / }).first().click();
-      await check(page, page.getByRole('dialog', { name: '对话操作', exact: true }), 'session', size, enforce); await page.getByRole('button', { name: '取消', exact: true }).click();
+      await check(page, page.getByRole('menu', { name: '对话操作', exact: true }), 'session', size, enforce); await page.keyboard.press('Escape');
       await page.getByRole('button', { name: '输出与来源', exact: true }).click();
       await check(page, page.getByRole('dialog', { name: '输出与来源' }), 'resources', size, enforce);
       await page.getByRole('dialog', { name: '输出与来源' }).getByRole('button', { name: /README/ }).click();

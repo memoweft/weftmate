@@ -25,6 +25,8 @@ internal fun validBusinessPath(path: String): Boolean {
     val query = path.substringAfter('?', "")
     if (route == "/personal/v1/usage" && (query.isEmpty() ||
         query.matches(Regex("(month=[0-9]{4}-(0[1-9]|1[0-2]))?(&?sessionId=[A-Za-z0-9_-]{1,128})?")))) return true
+    if (query.isEmpty() && (route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/(metadata|fork)")) ||
+        route.matches(Regex("/personal/v1/session-groups(/[A-Za-z0-9_-]{1,128})?")))) return true
     if (route == "/personal/v1/settings/usage" && query.isEmpty()) return true
     if (route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/resources")) &&
         (query.isEmpty() || query.matches(Regex("afterSeq=(-1|[0-9]+)")))) return true

@@ -1,7 +1,7 @@
 import { copySnapshotTree } from './snapshot-files.mjs';
 import { mkdirSync, existsSync } from 'node:fs';
 import { dirname, relative, resolve, isAbsolute } from 'node:path'
-import { rm, readFile } from 'node:fs/promises'
+import { rm, readFile, cp } from 'node:fs/promises'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 
 /** Own native AgentHandles so deletion drains precisely one DSH lifecycle. */
@@ -29,7 +29,8 @@ export function nativeSessionLifecycle(ctx) {
     }
     const handle = resume
       ? await ctx.agents.resume({ resumeSessionId: sessionId, setup })
-      : await ctx.agents.create({ sessionId, meta: { cwd: options.cwd, agentPreset: preset }, setup })
+      : await ctx.agents.create({ sessionId, ...(options.seed ? { seed: options.seed } : {}),
+        meta: { cwd: options.cwd, agentPreset: preset, ...(options.parentSession ? { parentSession: options.parentSession, seedLength: options.seed.length } : {}) }, setup })
     handles.set(sessionId, handle)
   }
   return {
@@ -52,6 +53,17 @@ export function nativeSessionLifecycle(ctx) {
     },
     create: options => ensure(options),
     resume: sessionId => ensure({ sessionId }, true),
+    async fork(sessionId, options) {
+      await ensure({ sessionId }, true)
+      const source = ctx.sessions.get(sessionId)
+      if (ctx.agents.get(sessionId)?.status !== 'idle') throw Object.assign(new Error('session busy'), { code: 'agent-busy' })
+      if (source.header.cwd) await cp(source.header.cwd, options.cwd, { recursive: true })
+      // Use the native fork transaction's immutable event seed and lineage.
+      // Agent creation owns the native session lifecycle, with a fresh cwd,
+      // rather than publishing a bare SessionStore child without an agent.
+      await ensure({ ...options, seed: source.events, parentSession: sessionId, agentPreset: source.header.agentPreset })
+      return { sessionId: options.sessionId, latestSeq: source.events.at(-1)?.seq ?? -1 }
+    },
     async remove(sessionId) {
       const persistence = ctx.get('sessionPersistence')
       const live = ctx.get('sessions')?.get(sessionId)

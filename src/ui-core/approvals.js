@@ -86,6 +86,7 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         core.state.activeChatSource = 'desktop';
         effects.paintDesktopComposer(fromPhone);
         core.state.selectedSessionId = sessionId;
+        void core.updateSession(sessionId, { unread: false }).catch(error => effects.historyNotice(core.failureMessage(error)));
         void core.refreshApprovalMode(sessionId);
         core.state.turnStatus = null;
         core.state.turnEndReasonKind = null;
