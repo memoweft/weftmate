@@ -42,7 +42,7 @@ export async function downloadFrp({ platform = process.platform, arch = process.
   await writeFile(archive, data, { mode: 0o600 });
   const run = promisify(execFile);
   if (suffix === 'zip') {
-    await run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', 'Expand-Archive -LiteralPath $env:WEFTMATE_FRP_ARCHIVE -DestinationPath $env:WEFTMATE_FRP_DEST -Force'],
+    await run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', "Add-Type -AssemblyName System.IO.Compression.FileSystem; $archive = [IO.Compression.ZipFile]::OpenRead($env:WEFTMATE_FRP_ARCHIVE); try { foreach ($entry in $archive.Entries) { $target = [IO.Path]::GetFullPath([IO.Path]::Combine($env:WEFTMATE_FRP_DEST, $entry.FullName)); $base = [IO.Path]::GetFullPath($env:WEFTMATE_FRP_DEST) + [IO.Path]::DirectorySeparatorChar; if (-not $target.StartsWith($base, [StringComparison]::OrdinalIgnoreCase)) { throw 'Unsafe archive entry' }; if ($entry.Name) { [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($target)) | Out-Null; [IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $target, $true) } else { [IO.Directory]::CreateDirectory($target) | Out-Null } } } finally { $archive.Dispose() }"],
       { env: { ...process.env, WEFTMATE_FRP_ARCHIVE: archive, WEFTMATE_FRP_DEST: destination } });
   } else await run('tar', ['-xzf', archive, '-C', destination]);
   const dir = path.join(destination, officialName);

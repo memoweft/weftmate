@@ -1,0 +1,41 @@
+{
+  "backupReadOnly": true,
+  "sourceTaskUntouched": true,
+  "randomPort": true,
+  "publicOrigin": null,
+  "rehearsalAccountPassword": "temporary synthetic password on the copy only",
+  "paidModelRequests": 0,
+  "networkBoundary": "loopback only; 8081 and 18186 denied",
+  "originalFileCount": 66050,
+  "generatedModuleFallbackRecreated": true,
+  "accountIdentityRetained": true,
+  "sourceRuntimeReady": "ready",
+  "installedRuntimeReady": true,
+  "localLogin": true,
+  "sameDataDirectory": true,
+  "components": {
+    "port": "random loopback, reachable",
+    "login": "copied owner with temporary local password, passed",
+    "memoryBridge": "disabled for the offline rehearsal; original Production reference parsed and preserved",
+    "relay": "disabled for the offline rehearsal",
+    "certificate": "ACME disabled; existing certificate files preserved in the backup"
+  },
+  "startupFileChanges": {
+    "added": 644,
+    "removed": 32787,
+    "changed": 57
+  },
+  "sourceRollback": true,
+  "restoredCopy": {
+    "added": 0,
+    "removed": 0,
+    "changed": 0
+  },
+  "backupAfter": {
+    "added": 0,
+    "removed": 0,
+    "changed": 0
+  },
+  "hashesMatchAfterRehearsalRestore": true,
+  "passed": true
+}

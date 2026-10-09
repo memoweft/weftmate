@@ -1,0 +1,23 @@
+[weftmate] ✓ 模型凭据保险库已就绪
+[weftmate] ✓ 伴侣状态就绪:星瑶
+[weftmate] DSH_HOME = <isolated>\profile\dsh-home
+[weftmate] [dsh] profile weftmate 已写入（<isolated>\profile\dsh-home）
+[weftmate] [dsh:stdout] dsh web: http://127.0.0.1:60143
+[weftmate] ✓ personal-host ready origin=http://127.0.0.1:60143
+[weftmate] ✓ personal-access listening origin=http://127.0.0.1:60148
+[weftmate] personal-host active; managed shutdown via launcher IPC
+[weftmate-updater] 更新未完成。当前版本保持不变，请稍后重试。
+[weftmate] [dsh] personal approval runtime invalidation failed
+[weftmate] ✓ 退出收尾:DSH web 运行时收口完成
+Waiting for the debugger to disconnect...
+[weftmate] ✓ 模型凭据保险库已就绪
+[weftmate] ✓ 伴侣状态就绪:星瑶
+[weftmate] DSH_HOME = <isolated>\profile\dsh-home
+[weftmate] [dsh:stdout] dsh web: http://127.0.0.1:58394
+[weftmate] ✓ personal-host ready origin=http://127.0.0.1:58394
+[weftmate] ✓ personal-access listening origin=http://127.0.0.1:58401
+[weftmate] personal-host active; managed shutdown via launcher IPC
+Debugger ending on ws://127.0.0.1:58378/3e9e8810-0ade-4876-b446-6cf2db6e5a6d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[weftmate] [dsh] personal approval runtime invalidation failed
+[weftmate] ✓ 退出收尾:DSH web 运行时收口完成
