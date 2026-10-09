@@ -184,6 +184,18 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
     else { const error = await shell.openPath(file); if (error) throw new Error('Default application unavailable'); }
     return { opened: true };
   });
+  handle('wm:desktop:conversation-export', async ({ contentType, bytes, ownerId } = {}) => {
+    if (!['text/markdown', 'image/png'].includes(contentType) || typeof ownerId !== 'string' ||
+        !(bytes instanceof Uint8Array)) throw new Error('Invalid conversation export');
+    if ((await jsonLocal('/auth/me')).account?.ownerId !== ownerId) throw new Error('Conversation export owner mismatch');
+    const extension = contentType === 'image/png' ? 'png' : 'md';
+    const selected = await dialog.showSaveDialog(win, { title: '导出对话', defaultPath: join(app.getPath('downloads'), `WeftMate-对话.${extension}`),
+      filters: [{ name: extension === 'png' ? 'PNG' : 'Markdown', extensions: [extension] }] });
+    if (selected.canceled || !selected.filePath) return { canceled: true };
+    if ((await jsonLocal('/auth/me')).account?.ownerId !== ownerId) throw new Error('Conversation export owner mismatch');
+    await writeFile(selected.filePath, bytes, { mode: 0o600 });
+    return { exported: true };
+  });
   handle('wm:desktop:memory-export', async ({ format, ownerId } = {}) => {
     if (!['json', 'markdown'].includes(format) || typeof ownerId !== 'string') throw new Error('Invalid memory export');
     const filename = format === 'json' ? 'weftmate-memory.json' : 'weftmate-memory.md';
@@ -294,6 +306,7 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
     stopped = true; clearTimeout(timer);
     for (const notification of notifications) notification.close();
     nativeTheme.removeListener('updated', updatePalette);
+    ipcMain.removeHandler('wm:desktop:conversation-export');
     for (const request of networkRequests.values()) request.abort();
     for (const channel of ['wm:desktop:capture-region', 'wm:desktop:clipboard-image', 'wm:desktop:project-folder', 'wm:desktop:settings', 'wm:desktop:identity', 'wm:desktop:credentials', 'wm:desktop:key', 'wm:desktop:key-reset', 'wm:desktop:proof', 'wm:desktop:connect-host', 'wm:desktop:activate-host', 'wm:desktop:fetch', 'wm:desktop:fetch-abort', 'wm:desktop:clear-sessions', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);
     await save(); await desktopSession.cookies.flushStore(); desktopSession.flushStorageData();

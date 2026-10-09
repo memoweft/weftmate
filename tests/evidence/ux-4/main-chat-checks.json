@@ -1,0 +1,11 @@
+{
+  "realElectron": true,
+  "mainCapabilitiesEnabled": true,
+  "mainQuote": true,
+  "editCreatesReferencedSide": true,
+  "regenerateCreatesReferencedSide": true,
+  "mainHistoryUnchanged": true,
+  "noWholeMainFork": true,
+  "sourceChatId": "chat-7ebaf85e-1f53-4e99-9a6c-69384889d235",
+  "sideChatId": "chat-8d6b2f2e-93b6-40b4-a070-ceba8c98dd57"
+}

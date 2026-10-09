@@ -1,5 +1,7 @@
 # WeftMate Android 客户端
 
+UX-4 当前壳 **0.8.14 / code27**：消息编辑 / 重生成的宿主原生分支路由与原命令发送接入业务桥；对话导出通过系统保存文件窗口写 Markdown（标记文本）或 PNG（图片文件），无需新增存储权限。手机本机消息也支持复制、反馈、引用与导出；编辑 / 重生成需先由电脑接续到 DSH（助手运行时），不另建手机分支执行器。界面发布最低 code27，见 [UX-4 验证与交接](../../tests/evidence/ux-4/README.md)。
+
 UX-3 当前壳 **0.8.12 / code25**：附件桥增加 `kind:"camera"`，通过系统相机与专用临时图片URI（资源标识）导入现有附件草稿；沿用已有相机权限，文件 / 照片仍用原生选择器。宿主对话推理偏好经 `/sessions/{id}/thinking` 业务桥，模型能力透传到共用输入区。发布此界面包需最低code25；取消 / 切账户 / 切对话结果隔离与原回执保持。构建与适用项证据见 [UX-3](../../tests/evidence/ux-3/README.md)。
 
 LG-1b 当前壳为 **0.8.8 / code21**：登录、注册、找回密码、等待批准和账户 / 设备设置复用 LG-1a 的共享业务。App 内的 `cloud.app.*` bridge（桥接）使用原生网络层的独立 Cookie jar（会话容器），只允许配置云 / 宿主的明确 `/personal/v1` 路由，不跳系统浏览器。`cloud.app.identity` 返回手机型号、`weftmate-android` 与登记的 `com.memoweft.weftmate:/oauth`；`configure` 返回云配置；`key` 只返回 P-256 `publicJwk` / `deviceId`；`sign` 返回 ES256 的 `signature`；`credentials` 返回非敏感展示数据与刷新令牌的不透明句柄；`request` 返回 `status/body/nonce/retryAfter`。私钥留在 Android Keystore（安卓密钥库），可用时优先 StrongBox（独立安全芯片），否则由 Keystore 的实现保存；签名始终在原生层完成。实际刷新令牌经 Keystore AES-GCM（认证加密）保存，WebView（网页视图）只得到随机 `wm-refresh:<uuid>`，旧 `cloud.tokens` 接口不能读取新存储。宿主 Cookie 与真实 CSRF（跨站请求伪造防护）也不进入页面；成功交换后沿用 `cloud.adopt` 的本机账户归属与同步。受信交付码 / 配对码建立 TLS pin（证书公钥固定）后才允许正式宿主内容交换；隔离 HTTP 回环调试仍可验收。
