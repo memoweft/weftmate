@@ -59,32 +59,36 @@ struct ConversationTimelineView: View {
             MessageView(model: appModel, message: message, openAttachment: openAttachment).id(message.id)
         }
         if commands.hasMore {
-            Button("查看更早记录") { Task { await commands.loadMore() } }.font(AppleTokens.Fonts.caption)
+            Button("查看更早记录") { Task { await commands.loadMore(); publishRootCommands() } }.font(AppleTokens.Fonts.caption)
         }
         if let error = interactions.approvalError ?? interactions.questionError { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
         if let error = interactions.persistenceError { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
         AppleTokens.Colors.clear.frame(height: 0)
-            .task(id: "\(scenePhase)|\(appModel.historyCachedAt != nil)|\(appModel.historyBusy)|\(appModel.taskControlSessions.contains(sessionID))|\(appModel.timeline.events.last?.seq ?? -1)") {
+            .task(id: "\(scenePhase)|\(appModel.historyCachedAt != nil)|\(appModel.historyBusy)|\(appModel.taskControlSessions.contains(sessionID))|\(conversation.running)") {
                 guard scenePhase == .active, !appModel.historyBusy, appModel.historyCachedAt == nil else { interactions.suspend(); commands.suspend(); return }
-                interactions.activate(); commands.activate()
-                if appModel.taskControlSessions.contains(sessionID) {
-                    await commands.refresh()
-                    if appModel.selectedConversation?.id == conversation.id { appModel.timelineRootCommands = commands.rootCommands }
-                }
+                commands.suspend(); commands.activate(); interactions.activate()
                 var policy = ConversationPollingPolicy()
                 while !Task.isCancelled {
-                    let old = interactions.approvals, oldQuestions = interactions.questions
+                    let old = interactions.approvals, oldQuestions = interactions.questions, oldRoots = commands.rootCommands
+                    if appModel.taskControlSessions.contains(sessionID) {
+                        await commands.refresh()
+                        guard !Task.isCancelled else { return }
+                        publishRootCommands()
+                    }
                     await interactions.refreshTimeline(sessionID: sessionID)
-                    do { try await Task.sleep(nanoseconds: policy.delayNanoseconds(madeProgress: old != interactions.approvals || oldQuestions != interactions.questions)) }
+                    do { try await Task.sleep(nanoseconds: policy.delayNanoseconds(madeProgress: conversation.running || old != interactions.approvals || oldQuestions != interactions.questions || oldRoots != commands.rootCommands)) }
                     catch { return }
                 }
-            }
-            .onChange(of: commands.rootCommands) { _, value in
-                if appModel.selectedConversation?.id == conversation.id { appModel.timelineRootCommands = value }
             }
             .onDisappear { interactions.suspend(); commands.suspend() }
             .onChange(of: appModel.accountEpoch) { _, _ in interactions.cancel(); commands.cancel() }
     }
+    private func publishRootCommands() {
+        guard commands.scopeIsCurrent, !commands.loading, commands.error == nil,
+              appModel.selectedConversation?.id == conversation.id else { return }
+        appModel.timelineRootCommands = commands.rootCommands
+    }
+
 }
 
 struct TimelineExecutionBlock: View {
