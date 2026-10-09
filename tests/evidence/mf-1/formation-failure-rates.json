@@ -1,16 +1,16 @@
 {
   "scope": "Real model jobs with retained complete first-response checkpoints in measurement, matrix and failed runs; synthetic model fixtures excluded. Successfully erased jobs are absent by design. This is not an unbiased reliability estimate.",
-  "receivedFirstResponses": 82,
+  "receivedFirstResponses": 83,
   "firstResponseClasses": {
     "no_recorded_first_error": 62,
     "invalid_model_result": 3,
-    "model_no_change": 15,
+    "model_no_change": 16,
     "entity_name_not_in_proposition": 1,
     "independent_person_claims_need_separate_clauses": 1
   },
   "outcomes": {
     "applied": 65,
-    "no_change": 15,
+    "no_change": 16,
     "processing": 2
   },
   "noChangeSources": {
@@ -18,6 +18,6 @@
     "我准备找阿岚聊聊，帮我写一句自然点的开场白。": 4,
     "替我给顾遥写一句下次碰面的招呼。": 4,
     "给我写一句挑选周末单车路线的要求。": 1,
-    "你好，请用一句中文打个招呼。": 2
+    "你好，请用一句中文打个招呼。": 3
   }
 }
