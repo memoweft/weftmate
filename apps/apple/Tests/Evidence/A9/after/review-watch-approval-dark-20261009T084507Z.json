@@ -1,0 +1,9 @@
+{
+  "platform": "watch",
+  "scene": "approval",
+  "theme": "dark",
+  "commit": "309754ccabb8afa524e46ff674b00d72f7883114",
+  "generatedAt": "2026-10-09T08:45:07.249Z",
+  "synthetic": true,
+  "source": "Actual standalone Watch App; synthetic approval and completion snapshot; one simulator, shut down and deleted after capture"
+}
