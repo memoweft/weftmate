@@ -503,11 +503,11 @@ MS-1：`defaultModelProfileId` 按账户保存，用于新对话；已有对话�
 
 每个补交轮次还携带 `memoryRefs:[{kind,id}]`（最多64个唯一引用）与 `dependencyComplete`（布尔值）。引用包含当前召回及有界对话上下文所继承的记忆依赖，不能填正文。宿主将它写入助手消息的 Core `model_context_dependencies`，使遗忘能级联清除已经补交的回复副本；旧客户端或近期对话无法完整追溯时标记 `unavailable`，不伪造完整依赖。接口 `timestamp` 使用毫秒，宿主转换为 Core 的秒值。去重绑定本地受信物理设备身份，不受云会话续期后新 Cookie 设备编号影响。
 
-解密副本为 `{generation,reset,worldRevision,items,remove,hashes,truncated,recent,model,control,syncedAt}`。`items` 是新增或变化项：`{id,kind,text,viewpoint,sources:[{id,summary}],updatedAt,currentState:"current"}`；`remove` 是删除标识；`hashes` 是当前完整项目哈希表。`reset:true` 必须先清除旧副本和待补交离线对话，再应用。任何删除项也清理可能引用旧内容的离线对话。`recent` 最多 10 段×20 条；`model` 含账户选定的 `profileId,name,baseUrl,modelId,apiKey`，只能在设备安全层解密，安卓不得传 API key（模型凭据）到页面。`control` 为云状态接口地址、`hostId` 与 `generation`。
+解密副本为 `{generation,reset,worldRevision,items,remove,hashes,truncated,recent,model,control,syncedAt}`。`items` 是新增或变化项：`{id,kind,text,viewpoint,sources:[{id,summary}],updatedAt,currentState:"current"}`；`remove` 是删除标识；`hashes` 是当前完整项目哈希表。`reset:true` 必须先清除旧副本和待补交离线对话，再应用。任何删除项也清理可能引用旧内容的离线对话。`recent` 最多 10 段×20 条；`model` 含账户选定的 `profileId,name,baseUrl,modelId,apiKey`，只能在设备安全层解密，安卓不得传 API key（模型凭据）到页面。`control` 为云状态接口地址、`hostId`、绑定的云 `accountId` 与 `generation`；核对授权时须逐一匹配账户和代次，不能把同一宿主另一账户的授权用于此副本。
 
 `OFFLINE_CLOUD_REQUIRED`／`OFFLINE_MODEL_REQUIRED`（409）表示需要绑定云账户／配置云模型；`OFFLINE_RESET_REQUIRED`（409）表示旧代次已无效，须删除副本与旧待补交内容。`MEMORY_REVISION_CHANGED`（409）重取快照。`synced` 只证明 Core（记忆核心）已接收，正式形成是原有后台任务。
 
-云端 `POST /personal/v1/cloud/hosts/offline/status`：请求 `{hostId}`，使用既有云 DPoP（设备密钥持有证明）授权。只有同账户宿主成员的已批准设备能取得 `{hostId,generation,authorized:true}`。手机每次读取副本用于模型请求前及模型响应落盘前都核对，失败不调用模型；401／403／404 或代次不一致立即清理本地钥匙、密文、内存与待补交内容。离线期间仍能接收云端撤权，不能宣称完全断网的设备已收到清理。
+云端 `POST /personal/v1/cloud/hosts/offline/status`：请求 `{hostId}`，使用既有云 DPoP（设备密钥持有证明）授权。只有同账户宿主成员的已批准设备能取得 `{hostId,accountId,generation,authorized:true}`。手机每次读取副本用于模型请求前及模型响应落盘前都核对，失败不调用模型；401／403／404 或代次不一致立即清理本地钥匙、密文、内存与待补交内容。离线期间仍能接收云端撤权，不能宣称完全断网的设备已收到清理。
 
 宿主通过既有安装签名 `POST /personal/v1/cloud/hosts/offline/publish` 发送 `{hostId,proof}`，签名载荷带 `action,sub,generation`；云只单调递增保存 `offline_controls`，不保存正文、模型密钥或设备解密私钥。云数据库 schema（结构版本）7，账号／宿主删除级联清除此表；本包未部署。
 

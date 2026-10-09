@@ -21,11 +21,11 @@ try {
   await page.exposeFunction('syntheticSync', body => {
     if (!online) throw Error('NETWORK');
     return sealReplica({ generation: 1, reset: body.generation !== 1, items: [{ id: 'c1', text: '用户喝咖啡加肉桂粉', sources: [{ id: 'e1' }] }],
-      remove: [], hashes: {}, model: { baseUrl: 'https://model.example/v1', modelId: 'test', apiKey: 'synthetic' }, recent: [] }, body.publicJwk, identity);
+      remove: [], hashes: {}, model: { baseUrl: 'https://model.example/v1', modelId: 'test', apiKey: 'synthetic' }, recent: [], control: { accountId: 'account-test' } }, body.publicJwk, identity);
   });
   await page.goto(`http://127.0.0.1:${server.address().port}/`);
   await page.evaluate(async identity => {
-    window.controller = WeftOfflineView.mount({ core: { cloudOfflineStatus: async () => ({ authorized: true, generation: 1 }) }, identity: async () => identity,
+    window.controller = WeftOfflineView.mount({ core: { cloudOfflineStatus: async () => ({ authorized: true, hostId: identity.hostId, accountId: 'account-test', generation: 1 }) }, identity: async () => identity,
       host: (_path, body) => syntheticSync(body) });
     await window.controller.tick();
   }, identity);

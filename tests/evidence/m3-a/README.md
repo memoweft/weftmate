@@ -10,7 +10,7 @@
 
 ## 验证命令与范围
 
-- `node --test tests/personal-offline.test.ts`：封装加解密、篡改／错身份拒绝、权限和来源摘要过滤、增量移除、相关记忆选择、撤权清空、旧代次拒绝、补交幂等、Core 时间戳及 Cookie（会话凭据）续期保持物理设备身份。
+- `node --test tests/personal-offline.test.ts`：封装加解密、篡改／错身份拒绝、权限和来源摘要过滤、增量移除、相关记忆选择、撤权清空、旧代次拒绝、补交幂等、同宿主跨云账户授权拒绝、Core 时间戳及 Cookie（会话凭据）续期保持物理设备身份。
 - `m3-a-core-forget.mjs`：在上述隔离世界的副本中，真实 Core 接收带记忆依赖的离线助手回复；遗忘后历史和磁盘均不含衍生回复标记，见 `core-forget.json`。无付费模型；`WEFTMATE_M3A_SOURCE_PROFILE` 指向本包隔离验收目录，禁止日用目录。
 - `node tests/integration/m3-a-offline.mjs`：真实桌面与网页闭环；`--android` 使用原生加密层、网络层、界面包和通过 ADB（安卓调试桥）映射的本地 TCP（传输控制协议）中继夹具。
 - 云 `offline-control.test.mjs`：真实 DPoP（设备密钥持有证明）、成员／设备隔离、代次单调性、电脑离线时设备撤销；在现有 WSL Node 环境运行，避免 Windows 目录同步落盘的既有夹具限制。

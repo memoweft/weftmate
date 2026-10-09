@@ -28,7 +28,8 @@ test('offline control is DPoP/device/member scoped, monotone, and rejects revoke
   await publish(1); await publish(3); await publish(2);
   const result = await control(phone, '/hosts/offline/status', { hostId: h.started.hostId });
   assert.equal(result.data.generation, 3); assert.equal(result.data.authorized, true);
-  assert.deepEqual(Object.keys(result.data).sort(), ['authorized', 'generation', 'hostId']);
+  assert.equal(result.data.accountId, account.cloudAccountId);
+  assert.deepEqual(Object.keys(result.data).sort(), ['accountId', 'authorized', 'generation', 'hostId']);
   await f.api(P + '/hosts/offline/status', { method: 'POST', body: { hostId: h.started.hostId }, status: 401 });
   await control(phone, '/hosts/offline/status', { hostId: 'other' }, 403);
   await h.host.close();

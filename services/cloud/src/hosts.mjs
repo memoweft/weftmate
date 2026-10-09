@@ -52,7 +52,7 @@ export function createHosts({ database: db, config, keys, authenticate, now, rel
       if (!member || device?.status !== 'trusted') throw new CloudError(403, 'DEVICE_NOT_TRUSTED');
       const control = db.prepare('SELECT generation FROM offline_controls WHERE host_id=? AND account_id=?').get(body.hostId, account.id);
       if (!control) throw new CloudError(404, 'NOT_FOUND');
-      return { hostId: body.hostId, generation: control.generation, authorized: true };
+      return { hostId: body.hostId, accountId: account.id, generation: control.generation, authorized: true };
     }
     if (route === '/hosts/claims') {
       requireFields(body, ['claimId', 'hostId', 'publicJwk', 'tlsSpki']);
