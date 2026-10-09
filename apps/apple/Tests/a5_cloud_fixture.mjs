@@ -132,6 +132,11 @@ const driver = createServer(async(req,res)=>{
             await host.syncCloudRevocations();result={ok:true};
         } else if(path==='/pending'){result=await direct('/cloud/devices/pending');}
         else if(path==='/a5/deny'){result=await synthetic.addApproval();}
+        else if(path==='/a8/prepare') {
+            synthetic.sessions.get(ids.review).title='A5 合成资料';
+            const flow=await synthetic.prepareA8(direct,started.hostId);ids.review=flow.sessionId;result=flow;
+        }
+        else if(path.startsWith('/a8/'))result=await synthetic.a8(path.slice(4),synthetic.sessions.get(ids.review));
         else if(path==='/a5/ids'){result=ids;}
         else if(path==='/a6/settings-report'){result={schedules:scheduleCalls,backups:await direct('/backups'),system:await direct('/system')};}
         else if(path==='/a7/seed-archived'){result=await direct('/sessions/'+ids.deletion+'/archive',{});}

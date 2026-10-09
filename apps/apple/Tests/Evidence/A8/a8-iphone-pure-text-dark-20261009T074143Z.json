@@ -1,0 +1,9 @@
+{
+  "platform": "iphone",
+  "scene": "pure-text",
+  "theme": "dark",
+  "commit": "cfab828f91a9a6be9f304e5615845d487f99938d",
+  "generatedAt": "2026-10-09T07:41:43.542Z",
+  "synthetic": true,
+  "source": "实际 iPhone 原生 App；真实隔离 cloud main / 宿主，合成 DSH 日志与模型"
+}

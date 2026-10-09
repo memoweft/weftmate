@@ -49,6 +49,10 @@ struct ConversationCommandPresentation: Identifiable, Sendable {
         }
     }
 
+    var optimisticMessage: ChatMessage {
+        ChatMessage(id: id, role: .user, text: record.intent.text ?? "", occurredAt: nil, sourceDeviceId: nil,
+            attachmentCount: record.intent.parsedPayload.originalAttachments?.count ?? 0, truncated: false, pendingContext: false)
+    }
     var ended: Bool {
         guard let progress else { return record.state == .rejected }
         return [.completed, .aborted, .failed, .blocked].contains(progress)

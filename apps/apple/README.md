@@ -143,3 +143,11 @@ python3 Scripts/package_mac_trial.py --artifacts /private/path/apple-delivery
 分享入口复用 `open`（打开系统分享面板），退出登录复用 `back`（返回登录），选中标记复用 `allow`。不再维护 SF Symbols 映射或手绘旧品牌。macOS 当前没有自定义菜单栏 / 托盘或通知附件图标；新增这类单色位置应使用 `wm-brand-monochrome` 模板，不从 AppIcon 手工裁图。操作系统自己绘制的导航、展开控件与系统分享面板保留系统行为。
 
 三端构建、浅 / 深色 iOS 界面、主屏幕及 Watch 取证见 [IC-2 证据](Tests/Evidence/IC-2/README.md)。Watch 仅 Debug 模拟器同时带 `--ui-testing --ic2-icons-fixture` 时显示合成审批卡；不启动手机连接，不模拟可达或实际批准，Release 不含此入口。
+
+## A8 对话流
+
+iPhone / Mac 已按 D35 / UI-P4 接入单行工具进展、输入区审批条、即时消息与原请求重试、贴底与回到底部、同一发送 / 停止按钮及真实上下文圆环。此节替代上面 A3 历史说明中的桌面默认展开、完成自动改变展开状态与对话流审批卡：两端默认收起，用户展开状态在事件更新中保留，失败步默认展开。加载 / 排队 / 思考只采用宿主阶段，首次文字 / 工具后隐藏；纯文字不再显示旧任务控制块。
+
+A8 运行中发送固定排队，输入区移除插话 / 新任务选择；D36 设置接线按派发边界留下一包。模型菜单沿用绑定模型与配置模型入口，现有契约没有会话换模型接口。麦克风按钮聚焦输入并提示使用系统听写，不增加录音权限。
+
+相关单测、隔离原生场景、截图与验证边界见 [A8 证据](Tests/Evidence/A8/README.md)。UI 测试使用 `run_a5_ui.py --phase a8-light` / `a8-dark`，Mac 自身窗口使用 `run_a8_mac.py`；构建串行 `-jobs 2`，只启动一个隔离 iPhone，测试后立即关闭全部模拟器，不启动 Watch 模拟器。
