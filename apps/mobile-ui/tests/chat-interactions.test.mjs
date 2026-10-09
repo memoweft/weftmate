@@ -37,6 +37,8 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
     get nextSibling(){return this.parent?.children[this.parent.children.indexOf(this)+1]||null}
     insertBefore(child,next){child.remove();child.parent=this;const index=next?this.children.indexOf(next):-1;
       if(index<0)this.children.push(child);else this.children.splice(index,0,child)}
+    before(...children){if(!this.parent)return;const i=this.parent.children.indexOf(this);this.parent.children.splice(i,0,...children);for(const child of children)child.parent=this.parent}
+    after(...children){if(!this.parent)return;const i=this.parent.children.indexOf(this);this.parent.children.splice(i+1,0,...children);for(const child of children)child.parent=this.parent}
     replaceChildren(...children){this.children=[];this.append(...children)}
     remove(){if(this.parent)this.parent.children=this.parent.children.filter(child=>child!==this)}
     setAttribute(key,value){this.attrs[key]=value}
@@ -45,14 +47,14 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
     focus(){document.activeElement=this}
     addEventListener(event,handler){this.listeners.set(event,[...(this.listeners.get(event)||[]),handler])}
     fire(event){for(const handler of this.listeners.get(event)||[])handler({target:this})}
-    querySelector(selector){if(selector===this.tagName||selector.startsWith('.')&&this.className?.split(' ').includes(selector.slice(1)))return this;
+    querySelector(selector){if(selector===this.tagName||selector==='[role=status]'&&this.attrs.role==='status'||selector.startsWith('.')&&this.className?.split(' ').includes(selector.slice(1)))return this;
       for(const child of this.children){const found=child.querySelector?.(selector);if(found)return found}return null}
     querySelectorAll(selector){const all=this.children.flatMap(child=>[child,...(child.querySelectorAll?.(selector)||[])]);return all.filter(node=>selector==='[data-question-control]'?node.dataset?.questionControl:selector===node.tagName||selector.startsWith('.')&&node.className?.split(' ').includes(selector.slice(1)))}
   }
   const frames=[];
   const document={activeElement:null,documentElement:new Node('html'),getElementById:id=>{
       if(id==='live-progress')return nodes.get('chat-content')?.children.find(child=>child.id==='live-progress')||null;
-      if(!htmlIds.has(id))return null;
+      if(!htmlIds.has(id)){const find=node=>node.id===id?node:node.children.map(child=>child instanceof Node?find(child):null).find(Boolean);return [...nodes.values()].map(find).find(Boolean)||null;}
       if(!nodes.has(id)){const node=new Node(id);
         if(['approval-bar','question-bar','toast','attachment-drafts','attachment-popover','model-popover','image-preview','resource-page'].includes(id))node.hidden=true;nodes.set(id,node)}return nodes.get(id)},
     createElement:tagName=>{const node=new Node();node.tagName=tagName;return node},createTextNode:value=>new TextNode(value),
@@ -60,9 +62,10 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
     querySelectorAll:()=>[],querySelector:()=>new Node()};
   const bridge=[];
   let observed=null;
-  class ResizeObserver{observe(node){assert.ok(node instanceof Node);assert.ok(htmlIds.has(node.id));observed=node}}
+  class ResizeObserver{observe(node){assert.ok(node instanceof Node);assert.ok(htmlIds.has(node.id));observed=node}unobserve(){}disconnect(){}}
   const window={innerHeight:700,matchMedia:()=>({matches:reduced,addEventListener(){}}),addEventListener:()=>{},ResizeObserver,
     weftNative:{postMessage(json){const request=JSON.parse(json);bridge.push(request);
+      if(!autoBoot&&request.method==='host.status')queueMicrotask(()=>vm.runInContext(`androidBridge.receive({data:${JSON.stringify(JSON.stringify({id:request.id,ok:true,result:{}}))}})`,context));
       if(autoBoot)queueMicrotask(()=>{
         const results={'app.bootstrap':{loggedIn:false,username:'',owner:'',model:null,busy:false},
           'settings.appearance':{value:'light'},'auth.me':{displayName:'本机个人空间'},...autoResults};
@@ -1474,7 +1477,7 @@ test('restart restores only a live owner-scoped shared session',async()=>{
       'shared.sessions.list':{source:'host',hostAvailable:true,sessions:[{sessionId:'pc-A',title:'电脑原会话',sendAvailable:true,source:'host'}]},
       'shared.sessions.events':{source:'host',sessionId:'pc-A',events:[],nextSeq:-1,hasMore:false},
       'shared.outbox.list':{source:'host',commands:[]},'auth.me':{displayName:'A',connectionVerified:true}}});
-  h.domReady();for(let i=0;i<40&&h.run('state.chatSource')!=='host';i++)await h.flush();
+  h.domReady();for(let i=0;i<40&&!h.run('state.booted');i++)await h.flush();
   assert.equal(h.run('state.chatSource'),'host');assert.equal(h.run('state.sharedSessionId'),'pc-A');
   assert.equal(h.bridge.some(item=>item.method==='shared.sessions.events'&&item.params.sessionId==='pc-A'),true);
   assert.equal(h.run('state.page'),'home');
