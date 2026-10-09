@@ -37,28 +37,34 @@
       "theme": "light",
       "projectLimit": true,
       "usageStrip": true,
-      "touchNoHover": true
+      "touchNoHover": true,
+      "longPressMenu": true
     },
     {
       "surface": "mobile-web",
       "theme": "dark",
       "projectLimit": true,
       "usageStrip": true,
-      "touchNoHover": true
+      "touchNoHover": true,
+      "longPressMenu": true
     },
     {
       "surface": "android-ui",
       "theme": "light",
       "projectLimit": true,
       "usageStrip": true,
-      "touchNoHover": true
+      "touchNoHover": true,
+      "longPressPin": true,
+      "longPressArchiveUndo": true
     },
     {
       "surface": "android-ui",
       "theme": "dark",
       "projectLimit": true,
       "usageStrip": true,
-      "touchNoHover": true
+      "touchNoHover": true,
+      "longPressPin": true,
+      "longPressArchiveUndo": true
     }
   ],
   "errors": []

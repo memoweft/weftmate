@@ -204,7 +204,7 @@ function closeToast(){const box=$('toast');clearTimeout(toast.timer);clearTimeou
 
 function toast(text,issue=false,undo){const box=$('toast');clearTimeout(toast.timer);clearTimeout(toast.hideTimer);
   box.textContent=text;box.classList.toggle('error',issue);box.classList.remove('leaving');box.hidden=false;
-  if(undo){const button=el('button','toast-undo','撤销归档');button.type='button';button.onclick=async()=>{button.disabled=true;try{await undo();closeToast()}catch(error){toast(safeError(error),true)}};box.append(button)}
+  if(undo){const button=el('button','toast-undo','撤销归档');button.type='button';button.onclick=async event=>{event.stopPropagation();button.disabled=true;try{await undo();closeToast()}catch(error){toast(safeError(error),true)}};box.append(button)}
   toast.timer=setTimeout(closeToast,undo?10000:issue?5200:3500)}
 
 function status(text,issue=false){const line=$('chat-status');line.textContent=issue?'':text;

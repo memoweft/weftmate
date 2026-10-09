@@ -120,6 +120,7 @@ export async function startTimelineCandidate(options = {}) {
     if (method === 'models.host') return { models: [{ profileId: 'local', displayName: '合成会话', configured: true }] }
     if (method === 'shared.sessions.list') return { source: 'host', hostAvailable: true, sessions: (await request('/sessions')).sessions.map(row=>({...row,source:'host'})) }
     if (options.sidebar && method === 'shared.projects.list') return request('/projects');
+    if (options.sidebar && method === 'shared.sessions.lifecycle') return request(`/sessions/${params.sessionId}/${params.action}`, {});
     if (method === 'shared.sessions.events') return { source: 'host', sessionId, hostAvailable: true, ...await request(`/sessions/${sessionId}/events?limit=100${params.afterSeq === undefined ? '' : `&afterSeq=${params.afterSeq}`}${params.beforeSeq === undefined ? '' : `&beforeSeq=${params.beforeSeq}`}`) }
     if (method === 'shared.sessions.eventDetail') return request(`/sessions/${sessionId}/events/${params.seq}/detail`)
     if (method === 'activity.list') return { hostAvailable: true, activities: [{ ...source, source: 'host', taskId }] }
