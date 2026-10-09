@@ -298,6 +298,6 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         mainOptimisticMessages: () => inMain() ? [...pending.values()].filter(row => row.ownerId === core.state.ownerId && row.chatId === core.state.selectedChatId) : legacy.optimisticMessages(true),
         retryMainRequest: async requestId => { const row = pending.get(requestId); if (row) await checkMainRequest(row); },
         mainAttachmentDraftKey: id => inMain() ? `${core.state.ownerId}|${core.state.mainChat.chatId}` : legacy.attachmentDraftKey(id, true),
-        resetLogicalSession: () => { clearLogical(); pending.clear(); drafts.clear(); core.state.mainChat = null; core.state.selectedChatId = null; core.state.chats = [];  }
+        resetLogicalSession: () => { historyWindow.reset();core.resourceCache=null;effects.resetMainChatView?.(); pending.clear(); drafts.clear(); core.state.mainChat = null; core.state.selectedChatId = null; core.state.chats = []; }
     };
 };
