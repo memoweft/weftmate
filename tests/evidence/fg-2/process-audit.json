@@ -6,5 +6,7 @@
     "creationTime": "2026-10-09 10:35:00",
     "pid": 33704,
     "reason": "Short diagnostic did not honor its declared timeout"
-  }
+  },
+  "lanLockOwnerAtAudit": "PF-1",
+  "ownLanLockReleased": true
 }
