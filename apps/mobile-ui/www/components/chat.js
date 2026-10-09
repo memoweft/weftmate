@@ -352,7 +352,7 @@ function updateComposer(){uiCore.syncMobileIdentity();const view=uiCore.mobile.c
   renderQueuedTasks();
   $('send-button').disabled=!view.ready;$('send-button').classList.toggle('ready',view.ready);$('send-button').hidden=view.sendHidden;
   $('stop-button').hidden=view.stopHidden;if(controlChanged){globalThis.WeftMobileMotion?.reveal($(view.stopHidden?'send-button':'stop-button'),'160ms');globalThis.WeftMobileMotion?.dismiss(oldControl);}$('draft').disabled=view.draftDisabled;$('draft').placeholder=view.placeholder;
-  $('device-line').textContent='';$('model-label').textContent=view.modelName;$('model-button').setAttribute('aria-label',view.modelLabel);
+  $('device-line').textContent=view.processingHint||'';$('device-line').setAttribute('role','status');$('model-label').textContent=view.modelName;$('model-button').setAttribute('aria-label',view.modelLabel);
   $('plus-button').disabled=view.attachmentsDisabled;
   for(const button of $('attachment-drafts').querySelectorAll('button'))button.disabled=view.attachmentItemDisabled;
   $('model-button').disabled=view.modelDisabled;$('voice-button').disabled=view.voiceDisabled;

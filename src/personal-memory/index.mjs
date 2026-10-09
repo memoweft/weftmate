@@ -28,7 +28,7 @@ const owner = (value) => {
 export function createPersonalMemoryManager({ root, enabled = false, python, pythonPath,
   baseUrl, model, credential = () => null, rpcFactory = (options) => new MemoWeftRpc(options),
   processingRoute = null, defaultProcessingRoute = null, maxActiveOwners = MAX_ACTIVE_OWNERS,
-  formationWaitMs = 330_000, cleanupDeletedMemory = null }) {
+  formationWaitMs = 0, cleanupDeletedMemory = null }) {
   if (typeof root !== 'string' || !path.isAbsolute(root) || typeof enabled !== 'boolean' ||
       typeof credential !== 'function' || typeof rpcFactory !== 'function' ||
       processingRoute !== null && typeof processingRoute !== 'function' ||

@@ -105,7 +105,7 @@
 
 | 方法与路径 | 请求参数/体 | 响应示例 / 状态 | 主要领域错误 | 使用端 |
 |---|---|---|---|---|
-| GET `/sessions` | 可选单值 `archived=false`（默认）、`true`（仅归档）、`all`（全部）；无列表分页/搜索参数 | 200 `{"sessions":[{"sessionId":"session-…","title":"资料整理","running":true,"sendAvailable":true,"archived":false,"modelProfileId":"local"}]}` | 后端整体失败/单会话降级 | 桌、手、安、苹 |
+| GET `/sessions` | 可选单值 `archived=false`（默认）、`true`（仅归档）、`all`（全部）；无列表分页/搜索参数 | 200 `{"sessions":[{"sessionId":"session-…","title":"资料整理","running":true,"sendAvailable":true,"archived":false,"modelProfileId":"local","processing":{"phase":"queued","ahead":1,"modelName":"Muse Q5"}}]}` | 后端整体失败/单会话降级 | 桌、手、安、苹 |
 | PATCH `/sessions/{sessionId}/metadata` | `pinned?,unread?,title?,groupId?`，至少一项；布尔值、非空标题≤256字符；groupId为本账号分组ID或null | 200 `{sessionId,pinned?,unread?,title?,groupId?,readMessageSeq?}`；原生 `sessionTitle.rename` 写用户标题，停止自动标题覆盖；手动已读记录最新助手消息水位 | 400 INVALID_REQUEST；404 SESSION_UNAVAILABLE / NOT_FOUND；409 SESSION_BUSY | 桌、手、安、苹 |
 | POST `/sessions/{sessionId}/fork` | 空对象 `{}`；原对话须空闲 | 201 `{sessionId,title}`；原生 DSH（助手运行时）事件种子及 parentSession 分叉谱系创建可继续的独立对话，标题加「（分叉）」；复制独立工作目录与经验，继承模型与分组；不复制 MemoWeft（记忆核心）的记忆来源/绑定，原对话不变 | 404 SESSION_UNAVAILABLE；409 SESSION_BUSY；503 BACKEND_UNAVAILABLE | 桌、手、安、苹 |
 | GET `/session-groups` | 无查询 | 200 `{groups:[{id,name}]}`，仅当前账号 | — | 桌、手、安、苹 |
@@ -118,6 +118,8 @@
 | DELETE `/sessions/{sessionId}` | `{forgetMemories:false}`（默认，可省略）；勾选遗忘可另传 `deleteConversationSnippets:false`（默认）及预览的 `memoryWorldRevision` | 200 `{sessionId,deleted:true,forgetMemories,forgottenEvidenceCount}`；永久删除对话日志、宿主记录、生成成果及专属工作目录，运行中先停止 | 409 `SESSION_BUSY`（执行或回执尚未确认，稍后重试）；503 `BACKEND_UNAVAILABLE`；勾选遗忘还可返回503 `MEMORY_DELETE_UNAVAILABLE`、409 `MEMORY_DELETE_CONFLICT` | 同上 |
 
 普通会话与项目 / 浏览器 / 接管会话均返回已绑定的 `modelProfileId`；旧会话无法确定时可为 `null`。A5 修复普通会话曾漏掉该既有字段、导致 Apple 无法确认原模型的问题。
+
+运行中的会话可另带 `processing:{phase,modelName?,ahead?}`：`phase` 为 `memory`（宿主正在读取记忆）、`queued`（宿主推理队列）、`loading`（本机 ModelSwitcher〔模型切换代理〕实测正在切换）、`waiting`（已开始模型请求，尚无内容）、`reasoning`（收到模型思考片段）、`answering`（收到文字片段）。`ahead` 仅在 `queued` 时表示该请求前面的实际请求数，其他阶段省略；`modelName` 为当前模型显示名称。无可观测阶段时省略 `processing`，客户端显示普通等待提示，不推测加载或思考。结束后不返回阶段；旧客户端可忽略新增字段。
 
 归档会话的 `sendAvailable:false`，发送新消息返回409 `SESSION_ARCHIVED`，先恢复再发送。已有运行不因归档停止。删除默认保留 MemoWeft 长期记忆；`forgetMemories:true` 需要 Cookie 与 `account:manage`，按账号及会话来源查询 Core（核心）的记忆任务证据，再走 `delete_evidence` 真正删除与储存清理。Core 不可用或遗忘失败时保留对话用于重试；已完成的证据遗忘不能撤销。再次删除已删除会话返回404。停止或后台形成未确认时不能宣称删除成功。
 

@@ -14,6 +14,7 @@ globalThis.WeftUiCore.factories.mobile = (core, effects, environment) => {
     const ready=(!!text.trim()||attachments>0)&&state.loggedIn&&!busy&&!state.modelSwitching&&!state.transitionPending&&
       !state.restorePending&&(host?!!session?.sendAvailable:!state.sendUncertain)&&(!linked||attachments===0);
     return {ready, host, busy,
+      processingHint:host&&state.sharedRunning?core.processingLabel(session?.processing):'',
       sendHidden:host?state.sharedRunning&&!text.trim()&&!attachments:busy,
       stopHidden:host?!state.sharedRunning:!busy,
       draftDisabled:!state.loggedIn||state.transitionPending||state.restorePending||host&&!session?.sendAvailable,
