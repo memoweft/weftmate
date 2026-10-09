@@ -60,10 +60,10 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
     try { return await resolveSession(id) }
     catch { fail('SESSION_UNAVAILABLE') }
   }
-  const describeItem = async (item) => {
+  const describeItem = async (item, sessionSnapshot) => {
     const sessionId = item.sessionId
     let modelProfileId = null
-    try { modelProfileId = (await resolveSession(sessionId))?.profile?.id ?? null } catch { /* History may remain readable. */ }
+    try { modelProfileId = (await resolveSession(sessionId, sessionSnapshot))?.profile?.id ?? null } catch { /* History may remain readable. */ }
     return { sessionId, title: typeof item.title === 'string' ? item.title : '新对话',
       running: item.running === true, agentPreset: item.agentPreset ?? null,
       modelProfileId, ...(item.contextUsage ? {contextUsage: item.contextUsage} : {}),
@@ -420,12 +420,12 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       const listed = await listSessions()
       const item = listed.items.find((row) => row.sessionId === sessionId)
       if (!item) fail('SESSION_UNAVAILABLE')
-      return describeItem(item)
+      return describeItem(item, listed)
     },
     async describeSessions(sessionIds) {
       requireRuntime()
       const listed = await listSessions(), requested = new Set(sessionIds)
-      return Promise.all(listed.items.filter(item => requested.has(item.sessionId)).map(describeItem))
+      return Promise.all(listed.items.filter(item => requested.has(item.sessionId)).map(item => describeItem(item, listed)))
     },
   }
 }
