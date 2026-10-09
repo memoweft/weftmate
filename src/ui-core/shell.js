@@ -188,8 +188,9 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         try {
             // Receipts and native history control the composer. Model settings,
             // host diagnostics and the complete session list must not delay them.
-            await Promise.all([core.refreshTasks(), core.refreshHistory()]);
-            await core.refreshConversationTasks();
+            await Promise.all([core.refreshHistory(), ...core.readMarkers()
+                .filter(marker => ['session.create', 'session.message', 'session.cancel'].includes(marker.kind))
+                .map(marker => core.lookupRequest(marker))]);
         } finally { core.state.liveRefreshing = false; }
     }
     async function refreshAssistant() {

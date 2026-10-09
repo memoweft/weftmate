@@ -68,7 +68,9 @@ test('FX-10 live conversation reads remain independent of slow host/model refres
   f.core.refreshStatus = () => host.promise
   let histories = 0, receipts = 0
   f.core.refreshHistory = async () => { histories++; await history.promise }
-  f.core.refreshTasks = async () => { receipts++ }
+  f.core.readMarkers = () => [{kind:'session.message',requestId:'pending-receipt'}]
+  f.core.lookupRequest = async () => { receipts++ }
+  f.core.refreshTasks = async () => { throw Error('live reads must not request the account task list') }
   f.core.refreshConversationTasks = async () => {}
   const background = f.core.refreshAssistant()
   const live = f.core.refreshLiveConversation()
@@ -76,7 +78,7 @@ test('FX-10 live conversation reads remain independent of slow host/model refres
   assert.equal(histories, 1)
   assert.equal(receipts, 1)
   history.resolve(undefined); await live
-  f.core.refreshModels = f.core.refreshSessions = f.core.restoreRequests = async () => {}
+  f.core.refreshModels = f.core.refreshSessions = f.core.refreshTasks = f.core.restoreRequests = async () => {}
   host.resolve(undefined); await background
   assert.equal(f.core.state.liveRefreshing, false)
 })
@@ -97,6 +99,19 @@ test('FX-10 an accepted new session delivers its first message while an older se
     assert.deepEqual(f.requests.filter(r=>r.options.method==='POST').map(r=>JSON.parse(r.options.body).kind), ['session.create','session.message'])
     assert.equal(f.core.state.selectedSessionId,'session-new')
   } finally { sessions.resolve(undefined); await sent }
+})
+
+test('FX-10 receipt lookup replaces a pending command snapshot before optimistic delivery reads it', async () => {
+  const command={commandId:'cmd-confirmed',requestId:'request-confirmed',sessionId:'session-test',kind:'session.message',state:'accepted_by_dsh',receiptId:'native-confirmed'}
+  const f=fixture(()=>response({command}))
+  f.core.state.tasks=[{...command,state:'pending',receiptId:undefined}]
+  const marker={requestId:command.requestId,kind:command.kind,sessionId:command.sessionId}
+  f.core.rememberMarker(marker)
+  f.core.beginOptimistic({sessionId:command.sessionId,requestId:command.requestId,text:'accepted message'})
+  await f.core.lookupRequest(marker)
+  assert.equal(f.core.state.tasks[0].state,'accepted_by_dsh')
+  assert.equal(f.core.state.tasks[0].receiptId,'native-confirmed')
+  assert.equal(f.core.optimisticMessages()[0].status,'accepted')
 })
 
 test('D35 chronology splits only at visible conversation boundaries and approvals stay on their own step', () => {
