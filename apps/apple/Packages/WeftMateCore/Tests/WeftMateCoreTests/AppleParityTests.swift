@@ -34,8 +34,8 @@ private func event(_ seq: Int, _ type: String, _ data: String) throws -> Timelin
 @Test func a5ReadableSummariesKeepRawArgumentsOutOfHeadline() throws {
     #expect(ReadableToolSummary.text(tool: "read_file", raw: #"{"path":"/synthetic/project/notes.md"}"#) == "读取文件 notes.md")
     #expect(ReadableToolSummary.text(tool: "shell", raw: #"{"command":"rm synthetic.txt","description":"删除合成临时文件"}"#) == "删除合成临时文件")
-    #expect(ReadableToolSummary.text(tool: "web_fetch", raw: #"{"url":"https://example.com/synthetic"}"#) == "打开网页 example.com")
-    #expect(ReadableToolSummary.text(tool: "shell", raw: "{broken") == "调用工具 shell")
+    #expect(ReadableToolSummary.text(tool: "web_fetch", raw: #"{"url":"https://example.com/synthetic"}"#) == "读取网页 example.com")
+    #expect(ReadableToolSummary.text(tool: "shell", raw: "{broken") == "运行命令")
 }
 @Test func a5OutputsRetainAlreadyReadOlderVersions() throws {
     var window = ConversationResourcesWindow()

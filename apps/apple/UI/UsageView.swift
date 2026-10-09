@@ -8,10 +8,7 @@ import WeftMateCore
     @Published var error: String?
     @Published var monthlyInput = ""
     @Published var temporaryInput = ""
-    @Published var month: String = {
-        let formatter = DateFormatter(); formatter.locale = Locale(identifier: "en_US_POSIX"); formatter.dateFormat = "yyyy-MM"; formatter.timeZone = .current
-        return formatter.string(from: Date())
-    }()
+    @Published var month = DeviceDateText.monthKey(Date())
     private weak var app: AppleAppModel?
     private let epoch: UUID
     let sessionID: String?
@@ -61,13 +58,13 @@ struct UsageView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppleTokens.Space.p20) {
                 HStack {
-                    TextField("月份 YYYY-MM", text: $model.month).accessibilityIdentifier("usageMonth")
-                    Button("读取月份") { Task { await model.refresh() } }.disabled(model.loading)
+                    UsageMonthPicker(month: $model.month)
+                    Button("读取月份") { Task { await model.refresh() } }.disabled(model.loading).accessibilityIdentifier("readUsageMonth")
                 }
                 if let value = model.summary {
                     WeaveCard {
                         VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
-                            Text(value.month + " · " + value.timeZone).font(AppleTokens.Fonts.headline)
+                            Text(DeviceDateText.month(value.month) + " · " + (TimeZone(identifier: value.timeZone)?.localizedName(for: .generic, locale: Locale(identifier: "zh_CN")) ?? "设备时区")).font(AppleTokens.Fonts.headline)
                             LabeledContent("本月合计", value: UsageModel.money(value.total.cost)).accessibilityIdentifier("usageTotalCost")
                             LabeledContent("输入", value: "\(value.total.inputTokens)")
                             LabeledContent("缓存命中", value: "\(value.total.cachedInputTokens)")
@@ -77,7 +74,7 @@ struct UsageView: View {
                             if let notice = value.budget.notice { InlineNotice(message: notice, isError: value.budget.state == "blocked").accessibilityIdentifier("usageBudgetNotice") }
                         }
                     }
-                    DisclosureGroup("按天") { ForEach(value.days) { row in usageRow(row.day ?? "", totals: row.totals) } }
+                    DisclosureGroup("按天") { ForEach(value.days) { row in usageRow(DeviceDateText.day(row.day ?? ""), totals: row.totals) } }
                     DisclosureGroup("按对话排行") { ForEach(value.sessions) { row in usageRow(model.sessionName(row.sessionId), totals: row.totals) } }
                     DisclosureGroup("按模型排行") { ForEach(value.models) { row in usageRow(model.modelName(row.profileId), totals: row.totals) } }
                 }
@@ -113,5 +110,21 @@ struct UsageView: View {
             LabeledContent(name, value: UsageModel.money(totals.cost))
             Text("\(totals.requests) 次 · 输入 \(totals.inputTokens) · 缓存 \(totals.cachedInputTokens) · 输出 \(totals.outputTokens)").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
         }.padding(.vertical, AppleTokens.Space.p8)
+    }
+}
+
+struct UsageMonthPicker: View {
+    @Binding var month: String
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
+            Picker("月份", selection: $month) {
+                ForEach(DeviceDateText.months(selected: month), id: \.self) { key in Text(DeviceDateText.month(key)).tag(key) }
+            }.accessibilityIdentifier("usageMonth")
+            HStack(spacing: AppleTokens.Space.p8) {
+                Button("上一年") { month = DeviceDateText.shiftYear(month, by: -1) }.accessibilityIdentifier("usagePreviousYear")
+                Button("下一年") { month = DeviceDateText.shiftYear(month, by: 1) }.accessibilityIdentifier("usageNextYear")
+            }.buttonStyle(OutlineActionStyle())
+        }
+
     }
 }

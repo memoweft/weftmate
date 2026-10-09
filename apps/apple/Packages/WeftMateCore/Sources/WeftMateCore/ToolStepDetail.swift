@@ -23,17 +23,21 @@ public struct ToolStepDetail: Equatable, Sendable {
         self.raw = raw; self.truncated = truncated
         guard let bytes = raw.data(using: .utf8), let object = try? JSONSerialization.jsonObject(with: bytes) as? [String: Any] else {
             let structured = raw.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("{") || raw.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("[")
-            let text = structured ? "内容无法完整解析，请查看原始数据。" : raw
+            let text: String
+            if let range = raw.range(of: "\n{"), let bytes = String(raw[raw.index(before: range.upperBound)...]).data(using: .utf8), (try? JSONSerialization.jsonObject(with: bytes)) != nil {
+                let prefix = String(raw[..<range.lowerBound]).replacingOccurrences(of: "^\\[weftmate:[a-z,\\-]+\\]\\s*", with: "", options: .regularExpression)
+                text = OperationNames.text(prefix) + "\n" + ToolStepDetail(raw: String(raw[raw.index(before: range.upperBound)...])).readableText
+            } else { text = structured ? "内容无法完整解析，请查看原始数据。" : (failed ? OperationNames.text(raw) : raw) }
             parameters = []; output = failed ? "" : text; error = failed ? text : nil; return
         }
-        var args = (object["arguments"] ?? object["parameters"]) as? [String: Any] ?? [:]
+        var args = (object["arguments"] ?? object["parameters"]) as? [String: Any] ?? (object["output"] == nil && object["result"] == nil && object["error"] == nil ? object : [:])
         if let string = (object["arguments"] ?? object["parameters"]) as? String {
             if let bytes = string.data(using: .utf8), let parsed = try? JSONSerialization.jsonObject(with: bytes) as? [String: Any] { args = parsed }
             else { args = ["arguments": string] }
         }
-        let names = ["path": "路径", "paths": "路径", "file_path": "路径", "filePath": "路径", "fileName": "文件名",
-                     "command": "命令", "cmd": "命令", "script": "脚本", "query": "查询", "pattern": "模式", "url": "网址", "cwd": "工作目录", "arguments": "参数"]
-        parameters = args.keys.sorted().map { .init(name: names[$0] ?? $0, value: Self.value(args[$0]!), id: $0) }
+        parameters = args.keys.sorted().enumerated().map { index, key in
+            .init(name: OperationNames.field(key, index: index), value: ["tool", "toolName"].contains(key) ? OperationNames.tool(String(describing: args[key]!)) : Self.value(args[key]!), id: key)
+        }
         var texts: [String] = [], errors: [String] = []
         func collect(_ item: Any, isError: Bool = false) {
             if let string = item as? String { if isError { errors.append(string) } else { texts.append(string) }; return }
@@ -47,13 +51,13 @@ public struct ToolStepDetail: Equatable, Sendable {
         if let value = object["output"] ?? object["result"] { collect(value, isError: failed || object["isError"] as? Bool == true) }
         if let value = object["error"] { collect(value, isError: true) }
         output = texts.filter { !$0.isEmpty }.joined(separator: "\n")
-        error = errors.isEmpty ? (failed ? "步骤失败，未返回错误信息。" : nil) : errors.joined(separator: "\n")
+        error = errors.isEmpty ? (failed ? "步骤失败，未返回错误信息。" : nil) : OperationNames.text(errors.joined(separator: "\n"))
     }
     private static func value(_ value: Any) -> String {
         if let string = value as? String { return string }
         if value is NSNull { return "空" }
         if let array = value as? [Any] { return array.map(Self.value).joined(separator: "、") }
-        if let object = value as? [String: Any] { return object.keys.sorted().map { $0 + "：" + Self.value(object[$0]!) }.joined(separator: "\n") }
+        if let object = value as? [String: Any] { return object.keys.sorted().enumerated().map { OperationNames.field($0.element, index: $0.offset) + "：" + (["tool", "toolName"].contains($0.element) ? OperationNames.tool(String(describing: object[$0.element]!)) : Self.value(object[$0.element]!)) }.joined(separator: "\n") }
         return String(describing: value)
     }
 }

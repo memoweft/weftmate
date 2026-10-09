@@ -37,6 +37,7 @@ public struct ConversationSource: Decodable, Equatable, Sendable, Identifiable {
     public let url: String?
     public var uses: [ResourceUse]
     public var id: String { key }
+    public var displayName: String { kind == "tool" ? (name.range(of: "^[A-Za-z_][A-Za-z0-9_.:-]*$", options: .regularExpression) != nil ? OperationNames.tool(name) : OperationNames.text(name)) : name }
 }
 public struct ConversationResourcesPage: Decodable, Sendable {
     public let outputs: [ConversationOutput]

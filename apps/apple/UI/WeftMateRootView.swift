@@ -74,6 +74,12 @@ struct WeftMateRootView: View {
                     Darwin.exit(1)
                 }
                 if let index = ProcessInfo.processInfo.arguments.firstIndex(of: "--a5-review-scene"),
+                   ProcessInfo.processInfo.arguments[index + 1] == "a13-all" {
+                    do { try await A13MacReview.run(model) { openWindow(id: "settings") } }
+                    catch { FileHandle.standardOutput.write(Data(("A5_CAPTURE_FAILED:" + String(describing: error) + "\n").utf8)); Darwin.exit(1) }
+                    Darwin.exit(0)
+                }
+                if let index = ProcessInfo.processInfo.arguments.firstIndex(of: "--a5-review-scene"),
                    ProcessInfo.processInfo.arguments[index + 1] == "a12-login" {
                     do { try await A12MacReview.run(model) { openWindow(id: "settings") } }
                     catch { FileHandle.standardOutput.write(Data(("A5_CAPTURE_FAILED:" + String(describing: error) + "\n").utf8)); Darwin.exit(1) }
@@ -212,7 +218,7 @@ private struct MacWorkspace: View {
                 model.settingsRoute = .init(categoryID: String(category.dropFirst(9))); openWindow(id: "settings")
             case "conversation-forget":
                 if let conversation = model.conversations.first(where: { $0.title == "可遗忘的合成对话" }) { selected = .conversation(conversation.id) }
-            case "a10-all", "a9-detail", "a9-send", "conversation", "composer-context", "approval", "question", "outputs-sources", "session-menu":
+            case "a13-all", "a10-all", "a9-detail", "a9-send", "conversation", "composer-context", "approval", "question", "outputs-sources", "session-menu":
                 if let conversation = model.conversations.first(where: { $0.title == "整理项目资料" }) { selected = .conversation(conversation.id) }
             default: selected = nil
             }
