@@ -12,7 +12,7 @@ import { createPersonalSyncStore } from '../src/personal-sync/index.mjs'
 
 const P = '/personal/v1'
 const PASSWORD = 'synthetic local account password'
-async function fixture(t: any) {
+async function fixture(t: any, { fresh = false } = {}) {
   const root = await realpath(await mkdtemp(join(tmpdir(), 'wm-host-cloud-')))
   const signing = await generateKeyPair('RS256')
   const jwk = { ...await exportJWK(signing.publicKey), kid: 'test-cloud-key', alg: 'RS256', use: 'sig' }
@@ -47,7 +47,7 @@ async function fixture(t: any) {
   const backend = { getStatus: async () => ({ runtime: 'ready' }),
     listModels: async () => [{ id: 'synthetic', model: 'synthetic', name: 'Synthetic cloud', configured: true, sourceKind: 'cloud' }],
     preflight: async () => ({ ok: true }), createSession: async ({ sessionId }: any) => ({ sessionId }), sendMessage: async () => ({}),
-    cancelSession: async () => ({}), readEvents: async ({ afterSeq }: any) => ({ events: [], nextSeq: afterSeq, hasMore: false }),
+    openDesktopApp: async () => ({}), cancelSession: async () => ({}), readEvents: async ({ afterSeq }: any) => ({ events: [], nextSeq: afterSeq, hasMore: false }),
     describeSession: async (sessionId: string) => ({ sessionId, title: 'synthetic', running: false }),
     modelCompletion: async ({ signal }: any) => new Response(new ReadableStream({ start(controller) {
       controller.enqueue(new TextEncoder().encode('data: {"choices":[]}\n\n'))
@@ -72,9 +72,11 @@ async function fixture(t: any) {
     if (cloud.listening) await new Promise<void>(resolve => { cloud.close(resolve); cloud.closeAllConnections() })
     await rm(root, { recursive: true, force: true })
   })
+  let a: any, b: any, oldStore = '', oldSync = '';
+  if (!fresh) {
   await start(false)
-  const a = await requests('POST', '/auth/setup', { grant: (await service.issueSetupGrant()).grant, username: 'account-a', password: PASSWORD, deviceName: 'Computer A' })
-  const b = await requests('POST', '/auth/register', { username: 'account-b', password: PASSWORD, deviceName: 'Computer B' })
+  a = await requests('POST', '/auth/setup', { grant: (await service.issueSetupGrant()).grant, username: 'account-a', password: PASSWORD, deviceName: 'Computer A' })
+  b = await requests('POST', '/auth/register', { username: 'account-b', password: PASSWORD, deviceName: 'Computer B' })
   assert.equal(a.status, 201, JSON.stringify(a))
   assert.equal(b.status, 201, JSON.stringify(b))
   await service.close()
@@ -86,8 +88,9 @@ async function fixture(t: any) {
   await writeFile(join(root, 'accounts', a.account.ownerId, 'health', 'synthetic.txt'), 'health fixture')
   await mkdir(join(root, 'memory-fixture'))
   await writeFile(join(root, 'memory-fixture', 'evidence'), 'private synthetic memory')
-  const oldStore = await readFile(join(root, 'store.json'), 'utf8')
-  const oldSync = await readFile(join(root, 'sync', 'events.json'), 'utf8')
+  oldStore = await readFile(join(root, 'store.json'), 'utf8')
+  oldSync = await readFile(join(root, 'sync', 'events.json'), 'utf8')
+  }
   await start()
   async function access(sub: string, device: string, key: any, overrides: any = {}, audience?: string) {
     return new SignJWT({ sub, device_id: device, auth_epoch: 0, host_id: hostId, scope: 'host:session',
@@ -358,3 +361,64 @@ test('cloud initialization backs up legacy v1 before existing migration and pres
     assert.equal(migrated.accounts[old.ownerId].devices['device-legacy-synthetic'].tokenHash, old.devices['device-legacy-synthetic'].tokenHash)
   } finally { await host.close() }
 })
+
+async function createdCloudSession(f: any, auth: any) {
+  const sent = await f.requests('POST', '/commands', {requestId: randomUUID(), kind: 'session.create',
+    targetDeviceId: f.hostId, modelProfileId: 'synthetic'}, auth);
+  assert.equal(sent.status, 202, JSON.stringify(sent));
+  for (let i = 0; i < 100; i++) {
+    const found = await f.requests('GET', '/commands/' + sent.command.commandId, undefined, auth);
+    if (found.command.state === 'accepted_by_dsh') return found.command.sessionId;
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+  assert.fail('session was not accepted');
+}
+
+test('FX-9 first cloud desktop on a fresh host becomes the durable execution account; a second identity stays isolated', async t => {
+  const f = await fixture(t, {fresh: true});
+  const legacy = f.service.legacyOwnerId();
+  const key = await generateKeyPair('ES256');
+  const token = await f.access('first-cloud', 'desktop-first', key, {scope: 'cloud:account'}, f.issuer.slice(0, -5));
+  const first = (await f.exchange(token, key, '/auth/cloud-desktop')).result;
+  assert.equal(first.status, 200, JSON.stringify(first));
+  assert.notEqual(first.account.ownerId, legacy);
+  assert.equal(f.service.executionOwnerId(), first.account.ownerId);
+  const sessionId = await createdCloudSession(f, first);
+  assert.equal((await f.requests('PATCH', '/sessions/' + sessionId + '/approval-mode', {mode: 'ask'}, first)).status, 200);
+  assert.equal((await f.requests('GET', '/sessions/' + sessionId + '/approval-mode', undefined, first)).mode, 'ask');
+  await f.restart();
+  assert.equal(f.service.executionOwnerId(), first.account.ownerId);
+  assert.equal(f.service.legacyOwnerId(), legacy, 'legacy storage paths are preserved');
+  const again = (await f.exchange(token, key, '/auth/cloud-desktop')).result;
+  assert.equal(again.account.ownerId, first.account.ownerId);
+  const otherKey = await generateKeyPair('ES256');
+  const otherToken = await f.access('second-cloud', 'desktop-second', otherKey, {scope: 'cloud:account'}, f.issuer.slice(0, -5));
+  const second = (await f.exchange(otherToken, otherKey, '/auth/cloud-desktop')).result;
+  assert.equal(second.status, 200, JSON.stringify(second));
+  assert.notEqual(second.account.ownerId, first.account.ownerId);
+  assert.equal(f.service.executionOwnerId(), first.account.ownerId);
+  assert.equal((await f.requests('GET', '/sessions/' + sessionId + '/events', undefined, second)).status, 404);
+  assert.equal((await f.requests('GET', '/status', undefined, second)).backend.capabilities.naturalLanguageDesktop.available, false);
+  assert.equal((await f.requests('POST', '/commands', {requestId:randomUUID(),kind:'desktop.open_app',targetDeviceId:f.hostId,appId:'notepad'},second)).status,403);
+  const stored = JSON.parse(await readFile(join(f.root, 'store.json'), 'utf8'));
+  assert.equal(stored.accounts[first.account.ownerId].sessions[sessionId].origin, 'personal-remote');
+  assert.deepEqual(stored.accounts[second.account.ownerId].sessions, {});
+});
+
+test('FX-9 legacy account binding retains execution and data; another desktop identity cannot claim it', async t => {
+  const f = await fixture(t);
+  const owner = f.a.account.ownerId;
+  assert.equal(f.service.executionOwnerId(), owner);
+  assert.equal((await f.bind()).result.status, 200);
+  const sessionId = await createdCloudSession(f, f.a);
+  assert.equal((await f.requests('PATCH', '/sessions/' + sessionId + '/approval-mode', {mode:'ask'}, f.a)).status, 200);
+  const key = await generateKeyPair('ES256');
+  const token = await f.access('different-cloud', 'second-desktop', key, {scope:'cloud:account'}, f.issuer.slice(0,-5));
+  const second = (await f.exchange(token,key,'/auth/cloud-desktop')).result;
+  assert.equal(second.status,200);
+  assert.notEqual(second.account.ownerId, owner);
+  assert.equal(f.service.executionOwnerId(), owner);
+  assert.equal(await readFile(join(f.root,'sync','events.json'),'utf8'), f.oldSync);
+  await f.restart();
+  assert.equal(f.service.executionOwnerId(), owner);
+});

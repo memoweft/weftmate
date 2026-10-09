@@ -9,9 +9,9 @@ import { proof, control } from './app-helpers.mjs';
 const sha = value => createHash('sha256').update(value).digest('base64url');
 const randomPassword = length => randomBytes(length).toString('base64url').slice(0, length);
 
-async function bootstrap(f, deviceId, { clientId = 'test-native', redirectUri = 'com.example.weftmate:/callback' } = {}) {
+async function bootstrap(f, deviceId, { clientId = 'test-native', redirectUri = 'com.example.weftmate:/callback', client = f.browser() } = {}) {
   const key = await generateKeyPair('ES256');
-  const client = f.browser(), publicJwk = await exportJWK(key.publicKey);
+  const publicJwk = await exportJWK(key.publicKey);
   const verifier = randomBytes(32).toString('base64url'), state = randomUUID(), nonce = randomUUID();
   const started = await client(`${P}/auth/authorization`, {
     method: 'POST', status: 200, body: {
@@ -175,4 +175,18 @@ test('seven- and 129-character registration passwords reject without activating 
     method: 'POST', body: { passwordTicket: ticket.passwordTicket, password }, status: 200,
   })).data;
   await exchange(desktop, await login(desktop, email, password, 200), result.account);
+});
+
+test('FX-9 one app cookie jar can log into a second synthetic account and return to the first without reusing its OIDC subject', async t => {
+  const f=await fixture(t),client=f.browser();
+  const emailA='fx9-first@example.com',emailB='fx9-second@example.com',password=randomPassword(24);
+  const accountA=await register(f,client,emailA,password),accountB=await register(f,client,emailB,password);
+  for (const [index,email,account] of [[1,emailA,accountA],[2,emailB,accountB],[3,emailA,accountA]]) {
+    const device=await bootstrap(f,'fx9-desktop-'+index,{client});
+    const begun=await login(device,email,password,202);
+    const confirmed=await client(`${P}/auth/device/confirm`,{method:'POST',status:200,body:{
+      interactionUid:device.interaction.interactionUid,csrfToken:device.interaction.csrfToken,
+      challengeId:begun.data.challengeId,code:await f.mailCode(begun.data.challengeId)}});
+    await exchange(device,confirmed,account);
+  }
 });

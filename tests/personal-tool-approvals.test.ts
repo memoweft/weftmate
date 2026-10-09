@@ -17,7 +17,7 @@ const deferred = () => {
 }
 const code = (expected: string) => (error: any) => error.code === expected
 
-async function fixture({ useReplyEvidence = true, clockFn = Date.now } = {}) {
+async function fixture({ useReplyEvidence = true, clockFn = Date.now, newExecutionOwner = false } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'personal-tool-approvals-'))
   const sessions = new Set<string>(), events: any[] = []
   let receiptNo = 0, running = true, describeHook: () => Promise<void> = async () => {}
@@ -62,7 +62,7 @@ async function fixture({ useReplyEvidence = true, clockFn = Date.now } = {}) {
     headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify({ grant: grant.grant,
       username: 'SyntheticApprovalOwner', password: 'synthetic approval fixture password', deviceName: 'Synthetic phone' }) })
   assert.equal(setup.status, 201)
-  const auth = await setup.json(), cookie = setup.headers.get('set-cookie')!.split(';')[0]
+  let auth = await setup.json(), cookie = setup.headers.get('set-cookie')!.split(';')[0]
   const request = async (path: string, body?: object, headers: Record<string, string> = {}, method = body ? 'POST' : 'GET') => {
     const response = await fetch(`${origin}/personal/v1/${path}`, { method,
       headers: { origin, cookie, 'x-weftmate-csrf': auth.csrfToken, 'content-type': 'application/json', ...headers },
@@ -78,6 +78,17 @@ async function fixture({ useReplyEvidence = true, clockFn = Date.now } = {}) {
       await new Promise(resolve => setTimeout(resolve, 10))
     }
     throw new Error('synthetic command did not acquire a receipt')
+  }
+  if (newExecutionOwner) {
+    const registered = await request('auth/register', {username:'FX9CloudOwner',password:'synthetic new owner password',deviceName:'Synthetic new computer'});
+    assert.equal(registered.status,201);
+    await service.close();
+    const saved = JSON.parse(readFileSync(join(root, 'store.json'), 'utf8'));
+    saved.executionOwnerId = registered.body.account.ownerId;
+    writeFileSync(join(root, 'store.json'), JSON.stringify(saved));
+    auth=registered.body; cookie=registered.cookie!;
+    service = await createPersonalAccessService({root, port:0, backend, clock:clockFn});
+    ({origin} = await service.start());
   }
   const created = await command({ requestId: 'approval-session', kind: 'session.create', targetDeviceId: hostId, modelProfileId: 'local' })
   const source = await command({ requestId: 'approval-source', kind: 'session.message', targetDeviceId: hostId,
@@ -556,3 +567,23 @@ test('22000+ step-heavy history approves the exact current source using only its
     } finally { await f.close() }
   }
 })
+
+test('FX-9 a non-legacy execution account receives approvals, executes, and records artifacts under its own owner', async () => {
+  const f = await fixture({newExecutionOwner:true});
+  try {
+    assert.notEqual(f.service.executionOwnerId(), f.service.legacyOwnerId());
+    const registered = await f.register();
+    assert.equal(registered.status,'pending');
+    const answer = await f.request(`${f.approvalsPath}/${f.input.approvalId}`, {requestId:'fx9-approve',outcome:'allowed-once'});
+    assert.equal(answer.status,200);
+    await f.resolve('allowed-once');
+    const execution = await f.authorize();
+    assert.equal(execution.state,'running');
+    const saved = await f.service.submitToolArtifact({sessionId:f.input.sessionId,turn:1,callId:'fx9-artifact',
+      receiptId:f.source.receiptId,messageHash:hash(sourceText),fileName:'fx9.txt',content:'FX9_EXECUTION_OWNER'});
+    assert.equal(saved.state,'observed');
+    const store=JSON.parse(f.raw());
+    assert.deepEqual(store.accounts[store.legacyOwnerId].commands,{});
+    assert.ok(Object.values(store.accounts[store.executionOwnerId].commands).some((command:any)=>command.artifactId===saved.artifactId));
+  } finally {await f.close();}
+});

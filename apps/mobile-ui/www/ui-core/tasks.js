@@ -168,6 +168,12 @@ globalThis.WeftUiCore.factories.tasks = (core, effects, environment) => {
         const context = core.conversationTaskContext();
         if (!core.conversationTaskCurrent(context) || !core.sessionIdPattern.test(context.sessionId || ''))
             return;
+        if (core.state.sessions.find(row => row.sessionId === context.sessionId)?.taskAvailable === false) {
+            for (const [id, entry] of core.conversationTasks.entries)
+                if (entry.sessionId === context.sessionId) core.conversationTasks.entries.delete(id);
+            effects.renderConversationTasks();
+            return;
+        }
         if (core.conversationTasks.ownerId !== context.ownerId || core.conversationTasks.identity !== context.identity) {
             core.conversationTasks.entries.clear();
             core.conversationTasks.ownerId = context.ownerId;

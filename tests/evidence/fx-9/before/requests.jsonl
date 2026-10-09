@@ -1,0 +1,12 @@
+{"id":"45984-1","at":"2026-10-09T10:29:05.114Z","elapsedMs":0,"kind":"lease","origin":"http://127.0.0.1:64707","phase":"start"}
+{"id":"45984-1","at":"2026-10-09T10:29:05.126Z","elapsedMs":12,"kind":"lease","origin":"http://127.0.0.1:64707","phase":"headers","status":200}
+{"id":"45984-1","at":"2026-10-09T10:29:05.128Z","elapsedMs":14,"kind":"lease","origin":"http://127.0.0.1:64707","phase":"first-chunk"}
+{"id":"45984-2","at":"2026-10-09T10:29:05.203Z","elapsedMs":0,"kind":"model","origin":"https://api.xiaomimimo.com","phase":"start","requestChars":5659,"requestedModel":"mimo-v2.6-flash","stream":true}
+{"id":"45984-2","at":"2026-10-09T10:29:10.356Z","elapsedMs":5153,"kind":"model","origin":"https://api.xiaomimimo.com","phase":"headers","status":200}
+{"id":"45984-2","at":"2026-10-09T10:29:10.358Z","elapsedMs":5155,"kind":"model","origin":"https://api.xiaomimimo.com","phase":"first-chunk"}
+{"id":"45984-2","at":"2026-10-09T10:29:11.220Z","elapsedMs":6017,"kind":"model","origin":"https://api.xiaomimimo.com","phase":"first-reasoning"}
+{"id":"45984-2","at":"2026-10-09T10:29:15.624Z","elapsedMs":10421,"kind":"model","origin":"https://api.xiaomimimo.com","phase":"progress","chunks":100,"bytes":29882}
+{"id":"45984-2","at":"2026-10-09T10:29:18.646Z","elapsedMs":13443,"kind":"model","origin":"https://api.xiaomimimo.com","phase":"first-content"}
+{"id":"45984-2","at":"2026-10-09T10:29:20.962Z","elapsedMs":15759,"kind":"model","origin":"https://api.xiaomimimo.com","phase":"progress","chunks":200,"bytes":60944}
+{"id":"45984-2","at":"2026-10-09T10:29:22.847Z","elapsedMs":17644,"kind":"model","origin":"https://api.xiaomimimo.com","phase":"end","chunks":236,"bytes":71773,"reasoningChars":2088,"contentChars":398,"usage":{"completion_tokens":680,"prompt_tokens":1735,"total_tokens":2415,"completion_tokens_details":{"reasoning_tokens":466},"prompt_tokens_details":{"cached_tokens":0}}}
+{"id":"45984-1","at":"2026-10-09T10:29:22.863Z","elapsedMs":17749,"kind":"lease","origin":"http://127.0.0.1:64707","phase":"cancel","chunks":1,"bytes":8}

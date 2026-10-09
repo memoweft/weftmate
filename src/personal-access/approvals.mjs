@@ -209,8 +209,7 @@ export function createApprovalOperations(context) {
         throw failure('INVALID_COMMAND');
       }
       context.requireOpen();
-      const ownerId = context.rootState.legacyOwnerId;
-      if (context.accountState(ownerId).sessions[sessionId]?.origin !== 'personal-remote') throw failure('SESSION_READ_ONLY', 409);
+      const ownerId = context.sessionOperations.executionOwnerForSession(sessionId);
       if (action === 'register_approval') {
         requireToolRuntime(runtimeId);
         // A real tool can ask before sendMessage has returned the native receipt.

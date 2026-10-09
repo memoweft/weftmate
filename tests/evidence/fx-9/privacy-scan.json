@@ -1,0 +1,5 @@
+{
+  "passed": true,
+  "findings": [],
+  "scope": "Evidence text credential / private-key / user-home-path scan; real screenshots separately inspected."
+}
