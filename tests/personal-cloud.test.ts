@@ -9,6 +9,7 @@ import { generateKeyPair, exportJWK, SignJWT, calculateJwkThumbprint } from 'jos
 import { createPersonalAccessService } from '../src/personal-access/index.mjs'
 import { hash } from '../src/personal-cloud/proofs.mjs'
 import { createPersonalSyncStore } from '../src/personal-sync/index.mjs'
+import { trackNativeFiles, appendNativeArtifacts } from '../src/plugins/personal-native-files.mjs'
 
 const P = '/personal/v1'
 const PASSWORD = 'synthetic local account password'
@@ -422,3 +423,89 @@ test('FX-9 legacy account binding retains execution and data; another desktop id
   await f.restart();
   assert.equal(f.service.executionOwnerId(), owner);
 });
+
+for (const scenario of ['ordinary', 'project', 'phone'] as const) {
+  test(`FX-11 first native write registers a cloud owner's artifact in ${scenario} conversation`, async t => {
+    const f = await fixture(t, { fresh: true })
+    const key = await generateKeyPair('ES256')
+    const token = await f.access('fx11-owner', 'fx11-desktop', key, {scope:'cloud:account'}, f.issuer.slice(0,-5))
+    const desktop = (await f.exchange(token, key, '/auth/cloud-desktop')).result
+    assert.equal(desktop.status, 200)
+    let caller = desktop
+    if (scenario === 'phone') {
+      const phoneKey = await generateKeyPair('ES256')
+      const phoneToken = await f.access('fx11-owner', 'fx11-phone', phoneKey)
+      const pending = (await f.exchange(phoneToken, phoneKey)).result
+      assert.equal(pending.status, 202)
+      assert.equal((await f.requests('POST', `/cloud/devices/${pending.requestId}/decision`, {decision:'allow'}, desktop)).status, 200)
+      caller = (await f.exchange(phoneToken, phoneKey)).result
+      assert.equal(caller.status, 200)
+      assert.notEqual(caller.device.id, desktop.device.id)
+    }
+    f.backend.describeSession = async sessionId => ({sessionId, title:'FX-11', running:true, agentPreset:'personal-remote', modelProfileId:'synthetic'} as any)
+    f.backend.sendMessage = async () => ({accepted:true, receiptId:randomUUID()} as any)
+    const workspace = join(f.root, 'first-write-workspace')
+    await mkdir(workspace)
+    let created: any
+    if (scenario === 'project') {
+      const project = await f.requests('POST', '/projects', {requestId:randomUUID(), name:'合成项目', rootPath:workspace, permission:'write'}, desktop)
+      assert.equal(project.status, 201, JSON.stringify(project))
+      created = await f.requests('POST', `/projects/${project.project.projectId}/sessions`, {requestId:randomUUID(), modelProfileId:'synthetic'}, desktop)
+    } else {
+      created = await f.requests('POST', '/commands', {requestId:randomUUID(), kind:'session.create', targetDeviceId:f.hostId, modelProfileId:'synthetic'}, desktop)
+    }
+    assert.equal(created.status, 202, JSON.stringify(created))
+    const settled = async (id: string) => {
+      for (let i=0;i<100;i++) {
+        const result = await f.requests('GET', `/commands/${id}`, undefined, caller)
+        if (result.command.state === 'accepted_by_dsh') return result.command
+        assert.ok(['pending','dispatching'].includes(result.command.state), JSON.stringify(result))
+        await new Promise(resolve => setTimeout(resolve, 10))
+      }
+      throw Error('synthetic command not accepted')
+    }
+    const sessionId = (await settled(created.command.commandId)).sessionId
+    const text = '直接创建 first.txt，内容 FX11_FIRST_WRITE'
+    const sent = await f.requests('POST', '/commands', {requestId:randomUUID(),kind:'session.message',targetDeviceId:f.hostId,sessionId,text}, caller)
+    assert.equal(sent.status, 202)
+    const source = await settled(sent.command.commandId)
+    const identity = {sessionId, turn:1, callId:'first-write', rootCallId:'first-write', receiptId:source.receiptId,
+      messageHash:createHash('sha256').update(text).digest('hex')}
+    const exec = {name:'write', arguments:{file_path:'first.txt'}, agent:{session:{header:{agentPreset:'personal-remote',cwd:workspace}}}}
+    const native = {isError:false,content:[{type:'text',text:'Created file'}]}
+    const frames: any[] = []
+    const bridge = {request: async frame => {
+      frames.push(frame)
+      const {action, ...payload} = frame
+      assert.equal(action, 'register_file')
+      return f.service.registerNativeFile(payload)
+    }}
+    const result = await trackNativeFiles(bridge, exec, async () => {
+      const grant = await f.service.trackToolExecution({...identity,action:'authorize_execution',toolName:'write',argumentsHash:createHash('sha256').update('first write arguments').digest('hex')})
+      await writeFile(join(workspace,'first.txt'),'FX11_FIRST_WRITE')
+      await f.service.trackToolExecution({...identity,action:'finish_execution',toolName:'write',argumentsHash:createHash('sha256').update('first write arguments').digest('hex'),executionId:grant.executionId,state:'completed',resultHash:createHash('sha256').update('created').digest('hex')})
+      return native
+    }, () => identity)
+    assert.equal(result,native)
+    const post = await appendNativeArtifacts(exec,result,async()=>({kind:'accept'}))
+    const artifact = JSON.parse(post.content.find(part=>part.text.startsWith('{')).text).artifact
+    assert.equal(artifact.state,'observed')
+    assert.equal(artifact.taskId,source.commandId)
+    assert.equal(frames.length,1)
+    assert.equal(await readFile(join(workspace,'first.txt'),'utf8'),'FX11_FIRST_WRITE')
+    const detail = await f.requests('GET', `/tasks/${source.commandId}`, undefined, caller)
+    assert.equal(detail.status,200)
+    assert.equal(detail.executionSteps[0].state,'completed')
+    const stored = JSON.parse(await readFile(join(f.root,'store.json'),'utf8'))
+    const account = stored.accounts[desktop.account.ownerId]
+    assert.equal(account.devices[account.commands[source.commandId].sourceDeviceId].authKind,'cloud')
+    const saved: any = Object.values(account.commands).find((row:any)=>row.artifactId===artifact.artifactId)
+    assert.equal(saved.toolSource.sourceCommandId,source.commandId)
+    assert.equal(saved.nativeFileObserved,true)
+    assert.equal(saved.verification.method,'sha256_readback')
+    assert.deepEqual(stored.accounts[stored.legacyOwnerId].commands,{})
+    await assert.rejects(f.service.registerNativeFile({...identity,receiptId:'foreign-receipt',filePath:join(workspace,'first.txt'),sha256:createHash('sha256').update('FX11_FIRST_WRITE').digest('hex')}), (error:any)=>error.code==='TOOL_SOURCE_UNAVAILABLE')
+    assert.equal((await f.requests('DELETE', `/auth/devices/${caller.device.id}`, {}, desktop)).status, 200)
+    await assert.rejects(f.service.registerNativeFile({...identity,filePath:join(workspace,'first.txt'),sha256:createHash('sha256').update('FX11_FIRST_WRITE').digest('hex')}), (error:any)=>error.code==='TOOL_SOURCE_UNAVAILABLE')
+  })
+}

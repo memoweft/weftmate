@@ -1,0 +1,47 @@
+[
+  {
+    "inputTokens": 652,
+    "outputTokens": 159,
+    "cacheReadTokens": 1536
+  },
+  {
+    "inputTokens": 235,
+    "outputTokens": 74,
+    "cacheReadTokens": 2176
+  },
+  {
+    "inputTokens": 1026,
+    "outputTokens": 83,
+    "cacheReadTokens": 1920
+  },
+  {
+    "inputTokens": 480,
+    "outputTokens": 72,
+    "cacheReadTokens": 2944
+  },
+  {
+    "inputTokens": 225,
+    "outputTokens": 97,
+    "cacheReadTokens": 3392
+  },
+  {
+    "inputTokens": 635,
+    "outputTokens": 75,
+    "cacheReadTokens": 1536
+  },
+  {
+    "inputTokens": 787,
+    "outputTokens": 63,
+    "cacheReadTokens": 1920
+  },
+  {
+    "inputTokens": 414,
+    "outputTokens": 56,
+    "cacheReadTokens": 2688
+  },
+  {
+    "inputTokens": 192,
+    "outputTokens": 75,
+    "cacheReadTokens": 3072
+  }
+]
