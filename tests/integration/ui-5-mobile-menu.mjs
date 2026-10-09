@@ -40,7 +40,7 @@ export async function verifyMobileMenus({origin,credentials,evidence,sessionId,a
       await page.addInitScript(()=>window.weftNative={postMessage(value){window.__ui5Native(JSON.parse(value)).then(result=>window.weftNative.onmessage({data:JSON.stringify(result)}));}});await page.goto(`http://127.0.0.1:${server.address().port}/`);
     }
     page.setDefaultTimeout(20000);page.on('pageerror',error=>errors.push(error.message));await page.waitForFunction(()=>state.booted&&state.loggedIn);
-    const click=async locator=>{await locator.waitFor();if(!mumu)return locator.click();let box;await until(async()=>{try{await locator.scrollIntoViewIfNeeded();box=await locator.boundingBox();return !!box}catch(error){if(error.message.includes('not attached'))return false;throw error}});const dpr=await page.evaluate(()=>devicePixelRatio);adbRun('shell','input','tap',String(Math.round((box.x+box.width/2)*dpr)),String(Math.round((box.y+box.height/2+24)*dpr)));await sleep(250);};
+    const click=async locator=>{await locator.click();};
     const shots=async name=>{for(const theme of ['light','dark']){await page.evaluate(t=>applyTheme(t),theme);await sleep(200);const file=join(evidence,`${surface}-${name}-${theme}.png`);if(mumu)writeFileSync(file,execFileSync(adb,['-s',serial,'exec-out','screencap','-p'],{windowsHide:true,maxBuffer:12*1024*1024}));else await page.screenshot({path:file,animations:'disabled'});}};
     const button=name=>page.getByRole('button',{name,exact:true});
     await page.evaluate(()=>page('home'));await page.waitForFunction(id=>state.sharedSessions.some(row=>row.sessionId===id),sessionId);
