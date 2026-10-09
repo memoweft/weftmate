@@ -968,3 +968,33 @@ App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协�
 包包含账号/设置、DSH（助手运行时）会话与日志、对话工作目录/经验、成果、用量、健康和 MemoWeft Core（记忆核心）数据库。数据库使用 SQLite（嵌入式数据库）安全在线备份，不复制活动 WAL（预写日志）或 SHM（共享内存文件）。模型密钥、云令牌、设备私钥、浏览器登录与缓存、自动生成的 DSH 依赖链接不进包；账号密码哈希保留供重新登录，历史设备仅留撤销后的元数据与不可用的校验值以维持命令引用；来源会话不能继续使用。换机后重新填写模型密钥；云端重新验证 subject（账号标识）与 issuer（发行者）、重新认领新安装后，使用包内不含凭据的归属映射接回原账号，不能靠邮箱推断归属。当前安装 ID 与其本机私钥保持，来源安装私钥不会被导入。
 
 默认保留最近 7 天全部成功包，再加最近 4 个日历周各最新一份；UTC 周从周一开始，始终保留最新成功包，坏包不自动删除。临时文件落盘后原子改名，包内含版本、时间、原因、逐文件大小/SHA-256 与清单 SHA-256。坏包 409 `BACKUP_CORRUPT`，数据中的链接 409 `BACKUP_SYMLINK`，活动任务 409 `SESSION_BUSY`，已有操作 409 `CONFLICT`，暂停写入超时 409 `BACKUP_PAUSE_TIMEOUT`，无备份能力 503 `CAPABILITY_UNAVAILABLE`，关闭期间 503 `SERVICE_CLOSING`。本地包未加密，应保存在可信磁盘；S4 云端加密备份尚未实现。
+
+## 9. 逻辑主对话与旁聊（IA-2）
+
+### 9.1 身份与能力（IA-2.1 正式）
+
+`GET /status` 增加 `personalCapabilities:{chats:1}`。只有精确支持的数字版本才可使用；缺失、0 或未知版本均退回原会话接口，不由客户端自行创建主对话。`chats:1` 在本步仅声明本节身份读取、列表和主对话已读偏好；不代表逻辑发送、跨段历史、搜索、旁聊创建、接力、动态或离线主对话可用。IA-2.2 / 2.3 单独增加子能力；首次主对话发送及执行段绑定由 IA-2b 的 2.4 实施，当前空主对话 `sendAvailable:false`。
+
+`chatId` 是账户内稳定逻辑身份，与 DSH（助手运行时）的 `sessionId`、同步 / 共享的 `conversationId` 分开。每账户恰有一个 `kind:main`；空主对话不创建原生会话，旧会话不作为主对话或复制到主对话。用户可见旧会话一对一映射为 `kind:side`，内部子任务不登记为旁聊。账户绑定云身份仍保留原本地账户的逻辑身份。
+
+| 方法与路径 | 请求 | 响应及语义 |
+|---|---|---|
+| GET `/chats/main` | 无 | 200 `{chat}`；唯一主对话。未初始化 503 `CHAT_INITIALIZING` |
+| GET `/chats/{chatId}` | 无 | 200 `{chat}`；非当前账户或不存在 404 `CHAT_UNAVAILABLE` |
+| GET `/sessions/{sessionId}/chat` | 无 | 200 `{chatId,segmentId,kind,archived}`；旧深链通过原 `seq` 定位。原历史接口不重定向；不存在 404 `SESSION_UNAVAILABLE` |
+| GET `/chats` | 可选 `kind=side,parentKind=main\|project,parentId,archived=false\|true\|all,q,cursor,limit` | 200 `{items,nextCursor,hasMore,groups,indexState:"ready"}`；默认活动旁聊 50 条，`limit` 1–200；`q` 最多 256 字符，仅搜标题，不搜全文 |
+| PATCH `/chats/{chatId}/metadata` | 主对话 `{requestId,expectedRevision,unread:boolean}` | 200 `{chat}`；同请求重放返回原结果，异体 409 `REQUEST_CONFLICT`，旧修订 409 `REVISION_CHANGED`。本步旁聊元数据仍调用原会话接口 |
+
+`Chat` 含 `{chatId,kind,title,parent,pinned,archived,unread,groupId,projectId,memoryMode,activeSegmentId,activeSessionId,revision,contentRevision,timeZone,running,sendAvailable,taskAvailable}`，按原事实附 `modelProfileId,projectName,projectRevoked,projectNotice,parentSessionId,conversationId,workspaceKind,processing,contextUsage`。主对话 `parent:null,title:"WeftMate",pinned:true,archived:false,groupId:null,projectId:null`；未建执行段时 active 字段为 `null`。普通旁聊父级为 `{kind:"main",id:mainChatId}`，项目旁聊为 `{kind:"project",id:projectId}`。标题、项目、分组、归档、模型、已读水位与发送权限继续投影原会话事实，不另建可独立修改的副本。`revision` 随会话元数据变更增加；`contentRevision` 留作原话删除后缓存失效水位。`timeZone` 在迁移 / 账户创建时固定为宿主实际时区并返回，客户端不自行猜测。
+
+旁聊列表置顶优先，再按最近宿主命令活动时间、创建时间和稳定 ID 排序。游标是 opaque cursor（不透明游标），固定本次列表的 ID 顺序与过滤条件；客户端原样续传同一过滤和页大小。后续新旁聊不会插入已开始的分页，已删除对象不返回。重启后或换账户 / 过滤的游标返回 409 `CURSOR_RESET_REQUIRED`，重新取第一页。每个页面的元数据取当前事实，游标不授予跨账户访问。
+
+读取沿用 `sessions:read`，写入沿用 `commands:write` 与既有 Cookie（会话凭据）/CSRF（跨站请求伪造防护）。主对话改名、取消置顶、分组、移项目、归档、分叉与删除均 409 `MAIN_CHAT_PROTECTED`；只允许已读偏好。旁聊继续通过原 `/sessions/{id}` 的生命周期接口更新，映射在同一账户事务提交。未来主对话段不出现在旧 `/sessions` 列表；持有段 ID 的旧客户端可读历史及原回执，直接发送 409 `MAIN_CHAT_ROUTE_REQUIRED`，生命周期操作 409 `MAIN_CHAT_PROTECTED`。已登记原请求优先返回原回执；原任务控制仍保留。
+
+### 9.2 迁移与回滚边界（IA-2.1 正式）
+
+启动监听前在原子私有存储写入边界发布完整 `chatIdentity`，含一对一执行段映射；没有半发布状态。重启重复迁移不改变身份。随后每次账户事务同时登记旧客户端新建会话、投影旧修改与删除；DSH 日志、命令 / 回执、附件、工作目录、项目 / 分组和 MemoWeft（记忆核心）原 `sessionId` 来源均不改写、不回放、不重新摄取，也不为历史完成任务生成回写或通知。
+
+升级沿第 8 节 BK-1（本地备份）完整快照；本功能另在首次迁移前保存私有 `personal-access/chat-identity-v1.before.json` 原始接入存储，覆盖应用版本未变的开发升级。原始副本只供停写后的演练 / 人工恢复，不自动读入；其中有原设备凭据校验值，因此不进入可携带备份，备份仍只保存撤销设备凭据后的当前接入存储。迁移提交失败保留旧存储；修复后可重跑。界面回退仍可使用旧旁聊，新逻辑元数据保留。
+
+新版产生数据后不能用旧副本覆盖正在使用的数据目录。需要宿主降级时先停写、保留新版完整快照，再把旧完整快照恢复至独立目录；只运行一份任务。单独的接入存储副本不能代替 DSH、记忆及成果完整备份。已经发生的遗忘 / 撤权必须按原清理水位前向恢复，不从备份自动重新摄取。本步不提供主对话区间归档或清空；D42-A 的全部历史保留政策不变。

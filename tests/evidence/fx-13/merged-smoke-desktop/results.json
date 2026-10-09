@@ -1,0 +1,140 @@
+{
+  "runnerPid": 12520,
+  "startedAt": "2026-10-09T17:35:10.655Z",
+  "realMain": true,
+  "realDsh": true,
+  "syntheticModel": true,
+  "checks": [
+    {
+      "name": "stability-cycle-1",
+      "status": "passed",
+      "durationMs": 26477,
+      "immediateMs": 3.600000023841858,
+      "stopMs": 901
+    },
+    {
+      "name": "stability-cycle-2",
+      "status": "passed",
+      "durationMs": 19988,
+      "immediateMs": 2,
+      "stopMs": 856
+    },
+    {
+      "name": "stability-cycle-3",
+      "status": "passed",
+      "durationMs": 2007,
+      "immediateMs": 1.9000000059604645,
+      "stopMs": 862
+    },
+    {
+      "name": "stability-cycle-4",
+      "status": "passed",
+      "durationMs": 19934,
+      "immediateMs": 2.100000023841858,
+      "stopMs": 873
+    },
+    {
+      "name": "stability-cycle-5",
+      "status": "passed",
+      "durationMs": 19959,
+      "immediateMs": 2.5,
+      "stopMs": 890
+    }
+  ],
+  "errors": [],
+  "requestCount": 997,
+  "stability": {
+    "elapsedMs": 148421,
+    "p99Ms": 32.784383,
+    "maxMs": 58.851327,
+    "storeWatchEvents": 78,
+    "exactStoreWrites": 0,
+    "samples": [
+      {
+        "at": 1791567316962,
+        "rss": 167096320,
+        "heapUsed": 22896748
+      },
+      {
+        "at": 1791567326977,
+        "rss": 176222208,
+        "heapUsed": 26417696
+      },
+      {
+        "at": 1791567336988,
+        "rss": 173400064,
+        "heapUsed": 21681792
+      },
+      {
+        "at": 1791567346988,
+        "rss": 163909632,
+        "heapUsed": 21240332
+      },
+      {
+        "at": 1791567356992,
+        "rss": 167104512,
+        "heapUsed": 23351304
+      },
+      {
+        "at": 1791567367001,
+        "rss": 171380736,
+        "heapUsed": 25500872
+      },
+      {
+        "at": 1791567377002,
+        "rss": 171974656,
+        "heapUsed": 22103376
+      },
+      {
+        "at": 1791567387003,
+        "rss": 172224512,
+        "heapUsed": 23094196
+      },
+      {
+        "at": 1791567397006,
+        "rss": 172298240,
+        "heapUsed": 25165520
+      },
+      {
+        "at": 1791567407006,
+        "rss": 174215168,
+        "heapUsed": 25900024
+      },
+      {
+        "at": 1791567417008,
+        "rss": 174321664,
+        "heapUsed": 26564468
+      },
+      {
+        "at": 1791567427019,
+        "rss": 176885760,
+        "heapUsed": 25621724
+      },
+      {
+        "at": 1791567437020,
+        "rss": 179384320,
+        "heapUsed": 28113920
+      },
+      {
+        "at": 1791567447025,
+        "rss": 182317056,
+        "heapUsed": 24034044
+      },
+      {
+        "at": 1791567457035,
+        "rss": 181444608,
+        "heapUsed": 27105320
+      }
+    ]
+  },
+  "logScan": {
+    "files": 1,
+    "bodyHits": 0,
+    "keyHits": 0,
+    "bytes": 5542
+  },
+  "modelCalls": 8,
+  "finishedAt": "2026-10-09T17:37:45.385Z",
+  "cleaned": true,
+  "root": "C:/Temp/weftmate-fx13-desktop-LKCjI8"
+}

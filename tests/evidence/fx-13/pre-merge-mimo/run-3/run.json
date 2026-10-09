@@ -1,0 +1,15 @@
+{
+  "iteration": 3,
+  "root": "C:/Temp/weftmate-fx13-mimo-0gynUn",
+  "runnerPid": 26604,
+  "electronPid": 28596,
+  "runtimePluginHashes": {
+    "personal-native-files.mjs": "ca9ad7b9b2f855ee01374ad82d4e3e1d00ba56ccd6a677a30d7a3ade892e1654",
+    "personal-write-targets.mjs": "72b39ce957ec5d5454a622c034eab87fc49f7c03285a90fd39a55f28fb033054",
+    "personal-approval-policy.mjs": "4ce360fbd7c9be96ff65145f2a01b31eb92909259b87c302c6f297e89e481c2e"
+  },
+  "status": "passed",
+  "durationMs": 64174,
+  "unexpectedApprovals": 0,
+  "cleaned": true
+}

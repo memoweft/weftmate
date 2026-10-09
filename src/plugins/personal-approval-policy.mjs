@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
-import { basename, resolve } from 'node:path';
-import { staticWriteTarget, shellWriteTargets, withoutJavaScriptComments } from './personal-write-targets.mjs';
+import { basename, isAbsolute, resolve } from 'node:path';
+import { staticWriteTarget, shellWriteTargets, shellScriptInvocations, withoutJavaScriptComments } from './personal-write-targets.mjs';
 
 export const APPROVAL_MODES = ['auto', 'ask', 'accept-edits', 'plan', 'allow-all'];
 export const RISK_CATEGORIES = ['delete', 'overwrite', 'system', 'install', 'external', 'spend', 'execute'];
@@ -43,7 +43,8 @@ export function classifyPersonalRisk(name, args = {}, cwd = process.cwd(), inspe
   const categories = new Set();
   const fileKey = file => process.platform === 'win32' ? resolve(file).toLowerCase() : resolve(file);
   const createdFiles = new Set([...(context.createdFiles ?? [])].map(fileKey));
-  const overwrites = target => !target || existsSync(resolve(cwd, target)) &&
+  const analysisCwd = context.unknownScriptCwd ? undefined : cwd;
+  const overwrites = target => !target || context.unknownScriptCwd && !isAbsolute(target) || existsSync(resolve(cwd, target)) &&
     !createdFiles.has(fileKey(resolve(cwd, target)));
   // Device/UI tools expose intent in their description even when the primitive
   // is a click or keypress. File content and fetched pages are not intent fields.
@@ -65,11 +66,11 @@ export function classifyPersonalRisk(name, args = {}, cwd = process.cwd(), inspe
   for (const match of source.matchAll(/\b(?:writeFile(?:Sync)?|truncate(?:Sync)?|(?:File\]?::)?WriteAll(?:Text|Bytes|Lines))\s*\(\s*(?:'([^']+)'|"([^"]+)"|([^,\n]+))/gi)) {
     if (/WriteAll/i.test(match[0]) && /(?:IO\.|IO\.File\]::|IO\.File::)$/i.test(source.slice(0, match.index))) continue;
     const target = match[1] ?? match[2];
-    if (overwrites(target ?? staticWriteTarget(match[3], source, cwd, context.scriptPath, context.scriptArgs))) categories.add('overwrite');
+    if (overwrites(target ?? staticWriteTarget(match[3], source, analysisCwd, context.scriptPath, context.scriptArgs))) categories.add('overwrite');
   }
   for (const match of source.matchAll(/\bcopyFile(?:Sync)?\s*\(\s*[^,]+,\s*(?:'([^']+)'|"([^"]+)"|([^,\n]+))/gi)) {
     const target = match[1] ?? match[2];
-    if (overwrites(target ?? staticWriteTarget(match[3], source, cwd, context.scriptPath, context.scriptArgs))) categories.add('overwrite');
+    if (overwrites(target ?? staticWriteTarget(match[3], source, analysisCwd, context.scriptPath, context.scriptArgs))) categories.add('overwrite');
   }
   for (const match of source.matchAll(/\bopen\s*\(\s*(?:'([^']+)'|"([^"]+)"),\s*['"]w[bt]?['"]/gi))
     if (overwrites(match[1] ?? match[2])) categories.add('overwrite');
@@ -77,7 +78,7 @@ export function classifyPersonalRisk(name, args = {}, cwd = process.cwd(), inspe
   const isShell = typeof args.command === 'string' || /^(?:pwsh|powershell|psh|bash|sh|shell)$/.test(name) ||
     /\.(?:ps1|sh)$/i.test(context.scriptPath ?? '') || !context.scriptPath && typeof args.script === 'string';
   const shellSource = isShell ? [args.command, args.code, args.script, args.action].filter(x => typeof x === 'string').join('\n') : '';
-  for (const write of shellWriteTargets(shellSource, cwd, powershell)) {
+  for (const write of shellWriteTargets(shellSource, analysisCwd, powershell)) {
     let target = write.target;
     // Creating a directory cannot replace a user file, including a multi-path
     // command or loop whose destination cannot be statically resolved.
@@ -99,17 +100,16 @@ export function classifyPersonalRisk(name, args = {}, cwd = process.cwd(), inspe
   }
   // Inspect scripts launched from disk as well as inline commands. The source is evidence,
   // never executed by this classifier. Missing scripts remain the tool's ordinary error.
-  for (const match of source.matchAll(/(?:\b(?:node|python|python3|pwsh|powershell|bash)\s+(?:-File\s+)?)(?:'([^']+)'|"([^"]+)"|([^\s;|]+\.(?:mjs|cjs|js|py|ps1|sh)))/gi)) {
-    const file = resolve(cwd, match[1] ?? match[2] ?? match[3]);
-    if (inspected.has(file)) continue;
-    inspected.add(file);
-    const tail = source.slice(match.index + match[0].length).split(/[;\n|]/)[0].trim();
-    // Only literal launch arguments are evidence. Shell variables remain unknown.
-    const scriptArgs = /[$`<>]/.test(tail) ? undefined : [...tail.matchAll(/'([^']*)'|"([^"]*)"|([^\s]+)/g)].map(arg => arg[1] ?? arg[2] ?? arg[3]);
+  for (const invocation of shellScriptInvocations(shellSource, analysisCwd, powershell)) {
+    const { file, args: scriptArgs, cwd: scriptCwd } = invocation;
+    const inspection = JSON.stringify([file, scriptCwd, scriptArgs]);
+    if (inspected.has(inspection)) continue;
+    inspected.add(inspection);
     try {
       const text = readFileSync(file, 'utf8');
       const code = /\.[cm]?js$/i.test(file) ? withoutJavaScriptComments(text) : text;
-      for (const risk of classifyPersonalRisk('script-source', { code }, cwd, inspected, { ...context, scriptPath: file, scriptArgs })) categories.add(risk);
+      for (const risk of classifyPersonalRisk('script-source', { code }, scriptCwd ?? cwd, inspected,
+        { ...context, scriptPath: file, scriptArgs, unknownScriptCwd: scriptCwd === undefined })) categories.add(risk);
     }
     catch { /* The producer reports unreadable scripts. */ }
   }
