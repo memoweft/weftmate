@@ -1,0 +1,4 @@
+{
+  "scene": "approval-priority",
+  "text": "0%\nA8_WAIT：读取项目资料，运行检查，并生成合成报告。\nWeftMate\nauto\nwm-account\nwm-approval-small\nwm-chevron-small\nwm-mic-small\nwm-more\nwm-outputs\nwm-plus\nwm-right-small\nwm-stop\n停止\n刷新记录\n合成模型\n垂直滚动条, 1页\n处理审批后还有 3 个问题\n审批模式\n对话菜单\n已收起\n批准\n拒绝\n整理项目资料\n模型选择\n水平滚动条, 1页\n添加附件\n等待批准：运行命令：npm run release…\n背景信息窗口：86% 已用 / 已用 713.1k 标记，共 828.0k\n自动\n要运行命令：npm run verify\n要运行命令：npm run verify，审批详情\n语音输入\n读取了 1 个文件、已运行 1 个命令\n账户菜单\n资料已经核对，接下来搜索并运行检查。\n输出与来源\n还有 1 个待批准"
+}

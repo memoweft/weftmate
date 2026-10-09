@@ -30,8 +30,6 @@ struct DevicesView: View {
                         }
                     }
                 }
-                Text("本版本提供设备查看。设备重命名和撤权管理将在后续接通。")
-                    .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
             }
             .padding(AppleTokens.Space.p24).frame(maxWidth: 760).frame(maxWidth: .infinity)
         }
@@ -85,11 +83,6 @@ private struct DeviceRow: View {
     }
 
     private func relativeDate(_ source: String) -> String? {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        guard let date = formatter.date(from: source) ?? ISO8601DateFormatter().date(from: source) else { return nil }
-        let relative = RelativeDateTimeFormatter()
-        relative.locale = Locale(identifier: "zh_CN")
-        return "最近联系：\(relative.localizedString(for: date, relativeTo: Date()))"
+        "最近联系：" + DeviceDateText.timestamp(source)
     }
 }

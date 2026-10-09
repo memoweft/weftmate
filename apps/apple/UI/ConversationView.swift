@@ -18,7 +18,7 @@ struct ConversationListContent: View {
     var body: some View {
         Group {
             if let cachedAt = model.conversationsCachedAt {
-                Text("本机缓存 · \(cachedAt.formatted(date: .abbreviated, time: .shortened))")
+                Text("本机缓存 · \(DeviceDateText.timestamp(cachedAt))")
                     .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
             }
             if model.refreshing && model.conversations.isEmpty {
@@ -223,7 +223,7 @@ struct ConversationView: View {
                         .id("older")
                     }
                     if let cachedAt = model.historyCachedAt {
-                        Text("离线记录 · \(cachedAt.formatted(date: .abbreviated, time: .shortened))，等待核对最新状态。")
+                        Text("离线记录 · \(DeviceDateText.timestamp(cachedAt))，等待核对最新状态。")
                             .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                             .accessibilityIdentifier("cachedHistoryNotice")
                     }

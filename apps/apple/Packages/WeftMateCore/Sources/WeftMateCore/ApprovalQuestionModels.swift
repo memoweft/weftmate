@@ -245,6 +245,10 @@ public struct SessionQuestionBatch: Codable, Equatable, Sendable, Identifiable {
     public let reasonCode: String?
     public let unavailableAt: String?
     public var canAnswer: Bool { status == .pending }
+    /// A validated page can reconcile a lost POST reply without implying native consumption.
+    public func registers(_ intent: QuestionAnswerIntent) -> Bool {
+        matchesIdentity(intent.question) && answerRequestId == intent.requestId && answer == intent.answer && answeredAt != nil && (status == .answered || status == .resolved)
+    }
     /// Native `outcome: answered` alone does not acknowledge an answer from this personal entry point.
     public func acceptedAnswer(requestID: String) -> Bool { answerRequestId == requestID && answerAcceptedAt != nil }
     func validate(scope: SessionInteractionScope) throws {
