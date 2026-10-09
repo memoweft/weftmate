@@ -199,6 +199,16 @@ extension AppleAppModel {
             .sorted { $0.record.createdAt < $1.record.createdAt }
     }
 
+    func optimisticRows(for conversation: ConversationSummary) -> [ConversationCommandPresentation] {
+        let received = observedUserReceipts.union(timeline.events.filter { $0.type == "user.message" }.compactMap { $0.data["receiptId"]?.string })
+        return commandRows(for: conversation).filter { row in
+            row.receipt?.receiptId.map { !received.contains($0) } ?? true
+        }
+    }
+    func retryMessage(_ requestID: String, accountEpoch: UUID) async {
+        await reconcileSavedRequest(requestID, accountEpoch: accountEpoch)
+        await continueSavedRequest(requestID, accountEpoch: accountEpoch)
+    }
     func isSupplement(_ receiptID: String, in conversation: ConversationSummary) -> Bool {
         commandRows(for: conversation).contains { $0.receipt?.receiptId == receiptID && $0.receipt?.taskAction == "supplement" }
     }
@@ -362,7 +372,7 @@ extension AppleAppModel {
         if attachmentDrafts[key]?.isEmpty == true { attachmentMessageIDs[key] = nil; attachmentSessionIDs[key] = nil }
     }
 
-    func send(_ conversation: ConversationSummary, accountEpoch: UUID, intent: MessageIntent = .steer) async {
+    func send(_ conversation: ConversationSummary, accountEpoch: UUID, intent: MessageIntent = .queue) async {
         guard accountEpoch == epoch, canSend(conversation), let accountSession = session,
               let local = commandStore, let target = sendTargets[Self.draftKey(for: conversation)] else { return }
         let key = Self.draftKey(for: conversation)
@@ -372,7 +382,9 @@ extension AppleAppModel {
             return
         }
         preparingConversations.insert(key)
-        defer { if accountEpoch == epoch { preparingConversations.remove(key) } }
+        preparingMessages[key] = ChatMessage(id: "sending-" + UUID().uuidString, role: .user, text: text,
+            occurredAt: nil, sourceDeviceId: nil, attachmentCount: attachmentDrafts[key]?.count ?? 0, truncated: false, pendingContext: false)
+        defer { if accountEpoch == epoch { preparingConversations.remove(key); preparingMessages[key] = nil } }
         do {
             guard await flushDrafts(), accountEpoch == epoch else { return }
             var selectedFiles = attachmentDrafts[key] ?? []
@@ -442,6 +454,7 @@ extension AppleAppModel {
                 selectedFiles.forEach { $0.removeTemporaryFiles() }
             }
             publish(record, note: "已保存原请求，正在核对服务端。", accountEpoch: accountEpoch)
+            preparingMessages[key] = nil
             await runCommand(record, allowSubmission: true, conversation: conversation, accountEpoch: accountEpoch)
         } catch {
             guard accountEpoch == epoch else { return }
@@ -601,12 +614,22 @@ extension AppleAppModel {
                 var tracker = try SharedTurnTracker(sessionID: sessionID, afterSeq: seedAfter)
                 let seed = try SharedHistoryPage.decode(JSONEncoder().encode(tail), sessionID: sessionID, afterSeq: seedAfter)
                 try tracker.apply(seed)
+                let seedMessages = try await self.client.timelineMessages(tail.events, sessionID: sessionID)
+                let seedIDs = await self.client.cachedTimelineMessageIDs(sessionID: sessionID)
+                guard self.observationVisible(conversation, accountEpoch: accountEpoch), !Task.isCancelled else { return }
+                self.timeline.apply(tail)
+                self.timelineMessageIDs = seedIDs
+                for message in seedMessages {
+                    if let index = self.messages.firstIndex(where: { $0.id == message.id }) { self.messages[index] = message }
+                    else { self.messages.append(message) }
+                }
                 while self.observationVisible(conversation, accountEpoch: accountEpoch) {
                     try Task.checkCancellation()
                     let page = try await self.client.sharedHistory(sessionID: sessionID, afterSeq: tracker.nextSeq)
 
                     try tracker.apply(page)
                     guard self.epoch == accountEpoch, !Task.isCancelled else { return }
+                    self.observedUserReceipts.formUnion((seed.events + page.events).filter { $0.type == "user.message" }.compactMap { $0.data.receiptId })
                     let progress = tracker.progress(for: currentReceipt)
                     self.commandPresentations[id] = .init(record: currentRecord, receipt: currentReceipt, progress: progress,
                         note: nil, lookupNotFound: false)
@@ -914,6 +937,8 @@ final class AppleAppModel: ObservableObject {
     @Published private(set) var sendTargets: [String: BoundConversationTarget] = [:]
     @Published private(set) var modelsToConfirm: [String: SharedHostModel] = [:]
     @Published private(set) var commandPresentations: [String: ConversationCommandPresentation] = [:]
+    @Published private(set) var observedUserReceipts = Set<String>()
+    @Published private(set) var preparingMessages: [String: ChatMessage] = [:]
     @Published private(set) var preparingConversations = Set<String>()
     @Published private(set) var reconcilingRequests = Set<String>()
     @Published private(set) var clearingDraftKeys = Set<String>()
@@ -1394,6 +1419,10 @@ final class AppleAppModel: ObservableObject {
                 let page = try await client.timelinePage(sessionID: sessionID, afterSeq: timeline.nextSeq)
                 guard actionEpoch == epoch, request == historyRequest, !Task.isCancelled else { return }
                 timeline.apply(page)
+                let summaries = try await client.conversations(includeArchived: true)
+                guard actionEpoch == epoch, request == historyRequest, !Task.isCancelled else { return }
+                conversations = summaries
+                liveConversations = Dictionary(uniqueKeysWithValues: summaries.map { ($0.id, $0) })
                 updateTimelineActivity(conversation)
                 let new = try await client.timelineMessages(page.events, sessionID: sessionID)
                 let mapped = await client.cachedTimelineMessageIDs(sessionID: sessionID)
@@ -1401,14 +1430,17 @@ final class AppleAppModel: ObservableObject {
                 timelineMessageIDs = mapped
                 let newIDs = Set(new.map(\.id))
                 messages.removeAll { $0.pendingContext && newIDs.contains($0.id) }
-                let known = Set(messages.map(\.id)); messages.append(contentsOf: new.filter { !known.contains($0.id) })
+                for message in new {
+                    if let index = messages.firstIndex(where: { $0.id == message.id }) { messages[index] = message }
+                    else { messages.append(message) }
+                }
                 if !page.events.isEmpty {
                     await persistTimeline(conversation)
                     #if os(iOS)
                     _ = await watchSnapshotBytes()
                     #endif
                 }
-                if !page.hasMore { try await Task.sleep(nanoseconds: policy.delayNanoseconds(madeProgress: !page.events.isEmpty)) }
+                if !page.hasMore { try await Task.sleep(nanoseconds: policy.delayNanoseconds(madeProgress: !page.events.isEmpty || self.conversations.first(where: { $0.id == conversation.id })?.running == true)) }
             } catch {
                 if error is CancellationError { return }
                 guard actionEpoch == epoch, request == historyRequest else { return }
@@ -1423,7 +1455,7 @@ final class AppleAppModel: ObservableObject {
         let old = conversations[index], running = last.type.hasSuffix("started")
         guard old.running != running else { return }
         conversations[index] = .init(id: old.id, title: old.title, conversationId: old.conversationId, sessionId: old.sessionId,
-            running: running, sendAvailable: old.sendAvailable, originalModelLabel: old.originalModelLabel, archived: old.archived)
+            running: running, sendAvailable: old.sendAvailable, originalModelLabel: old.originalModelLabel, archived: old.archived, pinned: old.pinned, unread: old.unread, groupId: old.groupId, contextUsage: old.contextUsage, processing: running ? old.processing : nil)
     }
     private func persistTimeline(_ conversation: ConversationSummary) async {
         guard historyCachedAt == nil, !timeline.events.isEmpty, let timelineCache, let account = draftAccount, let session,
@@ -1713,8 +1745,8 @@ final class AppleAppModel: ObservableObject {
         sendTargets = [:]
         modelsToConfirm = [:]
         confirmedModels = [:]
-        commandPresentations = [:]
-        preparingConversations = []
+        commandPresentations = [:]; observedUserReceipts = []
+        preparingConversations = []; preparingMessages = [:]
         reconcilingRequests = []
         clearingDraftKeys = []
         liveConversations = [:]
