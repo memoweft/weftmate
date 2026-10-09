@@ -374,6 +374,7 @@ struct ConversationView: View {
             #if DEBUG
             let args = ProcessInfo.processInfo.arguments
             if args.contains("--ui-testing"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1) {
+                if args[index + 1] == "composer-context" { contextPopover = true }
                 if args[index + 1] == "outputs-sources" { resources.showingList = true; resources.visible = true }
                 if args[index + 1] == "session-menu" { showingSessionActions = true }
                 if args[index + 1] == "conversation-forget" { model.askToDelete(conversation); await model.setConversationForget(true) }
