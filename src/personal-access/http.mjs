@@ -705,7 +705,7 @@ export function createHttpHandler(context) {
         }
         return context.json(response, 200, {
           ...context.service.status(ownerId),
-          personalCapabilities: { chats: 1 },
+          personalCapabilities: { chats: 1, chatTimeline: 1, chatSearch: 1 },
           executionAccount: context.hostOwner(ownerId),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
           backend: backendStatus, memory: { state: memoryStatus.state, inject: memoryStatus.capabilities?.inject === true },
@@ -1115,6 +1115,13 @@ export function createHttpHandler(context) {
       }
       if (request.method === 'GET' && pathname === '/personal/v1/chats') {
         return context.json(response, 200, await context.chats.list(ownerId, url.searchParams));
+      }
+      const chatTimelineMatch = /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)\/(events|changes|dates|locate|search)$/.exec(pathname);
+      if (request.method === 'GET' && chatTimelineMatch) {
+        const result = await context.chatTimeline.query(ownerId, chatTimelineMatch[1], chatTimelineMatch[2], url.searchParams);
+        const current = context.authenticate(request, 'sessions:read');
+        if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+        return context.json(response, 200, result);
       }
       const chatMatch = /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)$/.exec(pathname);
       if (request.method === 'GET' && chatMatch) {

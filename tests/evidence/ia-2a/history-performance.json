@@ -1,0 +1,57 @@
+{
+  "checkedAt": "2026-10-09T17:30:58.836Z",
+  "environment": {
+    "platform": "win32",
+    "release": "10.0.26200",
+    "node": "v24.15.0",
+    "cpu": "AMD Ryzen 7 9700X 8-Core Processor             "
+  },
+  "transport": "in-process synthetic projected history; RTT=0",
+  "results": [
+    {
+      "requestedMessages": 10000,
+      "segments": 3,
+      "pageSize": 50,
+      "iterations": 30,
+      "coldMs": 2.7515999999999963,
+      "buildMs": 87.91080000000002,
+      "firstPageReads": {
+        "calls": 3,
+        "rows": 100,
+        "bytes": 11884
+      },
+      "p95Ms": {
+        "coldIndexTail": 1.575300000000027,
+        "warmTail": 0.3392999999999802,
+        "older": 0.8419999999999845,
+        "locate": 1.6562000000000126,
+        "search": 3.348700000000008
+      }
+    },
+    {
+      "requestedMessages": 100000,
+      "segments": 3,
+      "pageSize": 50,
+      "iterations": 30,
+      "coldMs": 0.7030000000000314,
+      "buildMs": 4315.177900000001,
+      "firstPageReads": {
+        "calls": 3,
+        "rows": 100,
+        "bytes": 12088
+      },
+      "p95Ms": {
+        "coldIndexTail": 0.5311999999994441,
+        "warmTail": 0.32369999999991705,
+        "older": 4.144800000000032,
+        "locate": 12.872199999999793,
+        "search": 20.738099999999577
+      }
+    }
+  ],
+  "exclusions": [
+    "DSH cold log inspection/recovery is not simulated by this probe; native integration records that separately.",
+    "No renderer is modified in IA-2a. First readable/input, 60-second scroll/frame and renderer memory budgets are IA-3/IA-4/IA-5 acceptance.",
+    "Synthetic backend reports projected bytes/rows, not physical disk I/O."
+  ]
+}
