@@ -35,7 +35,7 @@ try {
       for (const [surface,page] of surfaces) {
         await page.screenshot({path:join(evidence,`${surface}-${theme}-${name}.png`)});
         const text = await page.locator('body').innerText();
-        assert.doesNotMatch(text,/\b(?:read|pwsh|shell|search|write|ask_user_question|load_tools|undefined|null)\b|Weave\s*组件/,'internal names in rendered screenshot text');
+        assert.doesNotMatch(text,/\b(?:read|pwsh|shell|search|write|ask_user_question|load_tools|mcp__[A-Za-z0-9_]+|undefined|null)\b|Weave\s*组件/,'internal names in rendered screenshot text');
         assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'no horizontal overflow');
         textFrames.push({surface,theme,scene:name,text});
       }
@@ -78,6 +78,7 @@ try {
     fixture.progress.call('read','ux1-read',{path:'使用说明.md'});fixture.progress.result('ux1-read','这是合成文件正文。');
     fixture.progress.call('search','ux1-search',{query:'报告'});fixture.progress.result('ux1-search','找到合成结果。');
     fixture.progress.call('load_tools','ux1-tools',{});fixture.progress.result('ux1-tools','工具已准备好。');
+    fixture.progress.call('mcp__calendar__list','ux1-extension',{});fixture.progress.result('ux1-extension','合成扩展已处理。');
     await fixture.progress.artifact();
     for (const [,page] of surfaces) { await page.getByText('已读回核验').first().waitFor(); await page.getByRole('button',{name:'输出与来源',exact:true}).click(); await page.getByRole('button',{name:/读取文件.*次|读取文件/}).first().waitFor(); if(await page.getByRole('button',{name:'查看全部',exact:true}).count()) await page.getByRole('button',{name:'查看全部',exact:true}).click(); await page.getByRole('button',{name:/读取文件.*次|读取文件/}).first().waitFor(); }
     await shot('09-chinese-sources');
