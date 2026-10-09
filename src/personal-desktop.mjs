@@ -17,6 +17,11 @@ export function desktopNotification(event) {
   return null;
 }
 
+export function desktopNotificationOptions(event) {
+  const message = desktopNotification(event);
+  return message && { ...message, icon: notificationIcon, title: `WeftMate · ${message.title}` };
+}
+
 export function restoreDesktopBounds(saved, displays) {
   const bounds = saved?.bounds;
   if (!bounds || !['x', 'y', 'width', 'height'].every(key => Number.isFinite(bounds[key])) ||
@@ -230,7 +235,7 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
             if (reminder && reminderNotified.has(reminderKey)) continue;
             const message = (reminder || last !== undefined || initialized) && desktopNotification(event);
             if (!message || stopped || !Notification.isSupported()) continue;
-            const notification = new Notification({ ...message, icon: notificationIcon, title: `WeftMate · ${message.title}` });
+            const notification = new Notification(desktopNotificationOptions(event));
             notifications.add(notification);
             notification.on('click', () => show(row.sessionId));
             notification.on('close', () => notifications.delete(notification));
