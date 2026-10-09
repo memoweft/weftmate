@@ -37,7 +37,7 @@ export function forgetPreviewView(result) {
     throw failure('MEMORY_RESPONSE_INVALID', 503);
   return { worldRevision: result.world_revision, itemCount: result.item_count, evidenceCount: result.evidence_count,
     evidenceIds: result.evidence_ids, items: result.items.map(item => {
-      if (!KINDS.has(item.object_kind) || typeof item.item_id !== 'string' || typeof item.name !== 'string')
+      if (!(KINDS.has(item.object_kind) || item.object_kind === 'interaction_commitment') || typeof item.item_id !== 'string' || typeof item.name !== 'string')
         throw failure('MEMORY_RESPONSE_INVALID', 503);
       return { kind: item.object_kind, id: item.item_id, text: item.name, itemType: item.item_type };
     }) };

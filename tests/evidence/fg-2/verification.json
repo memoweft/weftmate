@@ -1,0 +1,93 @@
+{
+  "completedAt": "2026-10-09T03:29:57.177932+00:00",
+  "m2ExitPassed": true,
+  "matrixRevision": {
+    "weftmate": "7ef5ca5ef6e2e0d8f3c319a28a01a30b860929cb",
+    "core": "98edcf1faab794812e229bb0361cec6c922d29ac"
+  },
+  "postMergeRevision": {
+    "weftmate": "eaf2a2d391445615a8de59d860c38d0b852d1f52",
+    "core": "163539980678dea3438729001a99c137feb1341a"
+  },
+  "eightSteps": {
+    "mimo": {
+      "passed": 8,
+      "failed": 0,
+      "eightStepGate": true
+    },
+    "lan": {
+      "passed": 8,
+      "failed": 0,
+      "eightStepGate": true
+    }
+  },
+  "backups": {
+    "mimo": {
+      "files": 103,
+      "tableCount": 38,
+      "hitCount": 0,
+      "byteHits": [],
+      "conversationDeletes": 8,
+      "commitmentsInPreview": 2
+    },
+    "lan": {
+      "files": 103,
+      "tableCount": 38,
+      "hitCount": 0,
+      "byteHits": [],
+      "conversationDeletes": 8,
+      "commitmentsInPreview": 4
+    }
+  },
+  "originalFour": {
+    "rawRunnerPassed": 1,
+    "rawRunnerTotal": 4,
+    "deterministicPassed": 4,
+    "semanticPassed": 3,
+    "semanticTotal": 3,
+    "combinedPassed": 4,
+    "threshold": 3,
+    "originalJudgementTransportFailures": 3
+  },
+  "speed": {
+    "mimo": {
+      "firstMs": 34316,
+      "secondMs": 12768,
+      "firstSteps": 3,
+      "secondSteps": 1,
+      "ratio": 0.37207133698566264,
+      "passed": true
+    },
+    "lan": {
+      "firstMs": 123279,
+      "secondMs": 42946,
+      "firstSteps": 8,
+      "secondSteps": 1,
+      "ratio": 0.34836427939876213,
+      "passed": true
+    }
+  },
+  "localValidation": {
+    "coreRelatedPassed": 63,
+    "strictMypyFiles": 3,
+    "nodeRelatedPassed": 50,
+    "weftmateTypecheck": "passed",
+    "swiftTest": "added, not run: Swift unavailable on Windows"
+  },
+  "postMergeFocusedSteps": [
+    {
+      "id": "06",
+      "status": "passed"
+    },
+    {
+      "id": "07",
+      "status": "passed"
+    },
+    {
+      "id": "08",
+      "status": "passed"
+    }
+  ],
+  "matrixDatabaseHasOptionalFts": false,
+  "optionalFtsRegression": "shadow blobs and disk bytes zero, unrelated index still searchable"
+}
