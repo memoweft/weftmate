@@ -21,6 +21,7 @@
         if (/(write|save|create_file)/i.test(name)) return `写入${suffix || '文件'}`;
         if (/(edit|patch|replace|modify)/i.test(name)) return `修改${suffix || '文件'}`;
         if (/^(read|read_file)$/.test(name)) return `读取${suffix || '文件'}`;
+        if (/(grep|search|glob)/i.test(name)) return `搜索 ${short(args.query || args.pattern || args.glob || args.path || name)}`;
         if (/(web|browser|fetch|navigate)/i.test(name) || args.url) {
             const url = args.url || args.urls?.[0];
             let site = short(url || args.query || args.action || name);
@@ -38,9 +39,50 @@
             hasArguments: Object.keys(args).length > 0 };
     }
 
-    function projectTimeline(events) {
+    function executionState(step) {
+        if (step.state === 'failed' || step.jobState === 'failed') return 'failed';
+        if (step.state === 'cancelled' || step.jobState === 'killed') return 'cancelled';
+        return ['running', 'stopping'].includes(step.jobState) ? 'running' : step.state;
+    }
+    function progressText(steps, terminal = false) {
+        const failed = steps.find(step => executionState(step) === 'failed');
+        if (failed) return { text: `第 ${failed.ordinal || steps.indexOf(failed) + 1} 步失败`, failed: true, running: false };
+        if (steps.some(step => executionState(step) === 'cancelled')) return { text: '已停止', running: false };
+        const current = !terminal && steps.filter(step => ['running', 'pending'].includes(executionState(step))).at(-1);
+        if (current) {
+            const summary = current.summary || toolSummary(current.toolName, current.arguments);
+            return { text: current.approvalStatus === 'pending' ? `等待批准：${summary}` : current.jobState === 'stopping' ? `正在停止：${summary}…` : `正在${summary.replace(/^运行命令：/, '运行命令 ')}…`, running: current.approvalStatus !== 'pending' };
+        }
+        const counts = new Map();
+        for (const step of steps) {
+            const name = step.toolName || '', summary = step.summary || '';
+            const kind = /^(shell|bash|pwsh|powershell|exec_command|run_command)$/.test(name) || /^运行命令/.test(summary) ? 'command'
+                : /^(read|read_file)$/.test(name) || /^读取.*文件/.test(summary) ? 'read'
+                : /grep|search|glob/.test(name) || /^搜索|^查找/.test(summary) ? 'search'
+                : /write|edit|patch/.test(name) || /^写入|^修改/.test(summary) ? 'write' : 'other';
+            const args = toolArguments(step.arguments), paths = [...new Set([args.paths, args.files, args.file_path, args.path].flat().filter(value => typeof value === 'string'))];
+            const amount = kind === 'read' || kind === 'write' ? paths.length || Number(/(\d+) 个文件/.exec(summary)?.[1]) || 1 : 1;
+            counts.set(kind, (counts.get(kind) || 0) + amount);
+        }
+        const labels = { command: n => `已运行 ${n} 个命令`, read: n => `读取了 ${n} 个文件`, search: n => `搜索了 ${n} 次`, write: n => `修改了 ${n} 个文件`, other: n => `执行了 ${n} 个工具步骤` };
+        return { text: [...counts].map(([kind, count]) => labels[kind](count)).join('、'), running: false };
+    }
+    function approvalProgress(row) {
+        return ({ 'allowed-once': '已批准', rejected: '已拒绝', cancelled: '已取消', unavailable: '已失效' })[row?.outcome || row?.decisionOutcome] || (row?.status === 'pending' ? '等待批准' : '');
+    }
+    function executionDetailText(text) {
+        try {
+            const data = JSON.parse(text), args = toolArguments(data);
+            const collect = value => typeof value === 'string' ? [value] : Array.isArray(value) ? value.flatMap(collect)
+                : value?.type === 'text' ? [value.text || ''] : value?.content ? collect(value.content) : [];
+            const output = collect(data.output).filter(Boolean).join('\n');
+            return Object.keys(args).length || output ? `${Object.keys(args).length ? `参数\n${JSON.stringify(args, null, 2)}` : ''}${output ? `\n\n输出\n${output}` : ''}`.trim() : text;
+        } catch { return text; }
+    }
+    function projectTimeline(events, approvals = []) {
         const ordered = [...events].sort((a, b) => a.seq - b.seq), groups = [], steps = new Map();
         let group = null;
+        const ordinals = new Map();
         for (const raw of ordered) {
             const event = raw.type === 'artifact.created' && raw.data?.completedStep ? { ...raw, type: 'step.completed', data: raw.data.completedStep } : raw;
             if (event.type.startsWith('step.')) {
@@ -51,7 +93,9 @@
                         group = { seq: event.seq, taskId: data.taskId, steps: [] };
                         groups.push(group);
                     }
-                    step = { ...data, at: event.at, endAt: event.type === 'step.completed' ? event.at : null };
+                    const ordinal = (ordinals.get(data.taskId) || 0) + 1;
+                    ordinals.set(data.taskId, ordinal);
+                    step = { ...data, ordinal, at: event.at, endAt: event.type === 'step.completed' ? event.at : null };
                     group.steps.push(step);
                     steps.set(key, step);
                 }
@@ -63,8 +107,17 @@
                 if (raw.type === 'artifact.created')
                     group = null;
             }
-            else if (!['turn.started', 'turn.ended', 'task.started', 'task.ended'].includes(event.type))
+            else if (!['turn.started', 'turn.ended', 'task.started', 'task.ended', 'approval.requested', 'approval.resolved'].includes(event.type))
                 group = null;
+        }
+        for (const step of steps.values()) {
+            const request = ordered.find(event => event.type === 'approval.requested' && event.data?.callId &&
+                (!event.data.taskId || event.data.taskId === step.taskId) && (event.data.callId === step.stepId || event.data.callId === step.callId));
+            const row = approvals.find(row => row.callId && (row.callId === step.stepId || row.callId === step.callId) && (!row.turn || step.taskId === `turn-${row.turn}` || row.taskId === step.taskId));
+            const resolved = request && ordered.find(event => event.type === 'approval.resolved' && event.data?.approvalId === request.data.approvalId);
+            const record = row || resolved?.data || request && { status: 'pending' };
+            step.approvalText = approvalProgress(record);
+            step.approvalStatus = row?.status || (resolved ? 'resolved' : request ? 'pending' : undefined);
         }
         const cards = ordered.flatMap(event => event.type === 'artifact.created' && event.data?.artifacts?.length
             ? event.data.artifacts.map(artifact => ({ ...event, data: { ...event.data, ...artifact } })) : [event]);
@@ -102,6 +155,6 @@
         }
         return references;
     }
-    Object.assign(globalThis.WeftUiCore, { projectTimeline, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, sourcePresentation });
-    globalThis.WeftUiCore.factories.timeline = () => ({ projectTimeline, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, sourcePresentation });
+    Object.assign(globalThis.WeftUiCore, { projectTimeline, executionState, progressText, approvalProgress, executionDetailText, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, sourcePresentation });
+    globalThis.WeftUiCore.factories.timeline = () => ({ projectTimeline, executionState, progressText, approvalProgress, executionDetailText, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, sourcePresentation });
 })();
