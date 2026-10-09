@@ -104,14 +104,14 @@ try {
   if (fixture) {
     app = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), cwd: root, env, args: ['tests/integration/desktop-ui-1.cjs', `http://127.0.0.1:${server.address().port}/`] });
     phone = await app.firstWindow(); await app.evaluate(({BrowserWindow}) => BrowserWindow.getAllWindows()[0].show()); await phone.setViewportSize({width:390,height:844});
-  } else { browser=await chromium.launch({headless:true});phone=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true}); }
+  } else { browser=await chromium.launch({headless:true,...(process.argv.includes('--chrome')?{channel:'chrome'}:{})});phone=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true}); }
   phone.setDefaultTimeout(15000);phone.on('pageerror',e=>errors.push(e.message));
   await phone.addInitScript(()=>{window.weftNative={postMessage(raw){const message=JSON.parse(raw);const result=message.method==='app.bootstrap'?{loggedIn:false}:message.method==='models.list'?{models:[{source:'phone',modelId:'fixture',displayName:'MiMo 定时验收',selected:true}]}:message.method==='models.host'?{models:[]}:{};queueMicrotask(()=>window.weftNative.onmessage({data:JSON.stringify({id:message.id,ok:true,result})}));}};});
   for(phase of capture?['before','after']:['after']) {
     await phone.goto(`http://127.0.0.1:${server.address().port}/`);await phone.waitForFunction(()=>typeof state!=='undefined'&&state.booted);
     await phone.evaluate(()=>{state.loggedIn=true;state.owner='synthetic-fix5';state.deviceId='synthetic-phone';state.transitionPending=false;state.chatSource='phone';state.restorePending=false;page('chat');updateComposer();});
     await phone.getByRole('button',{name:'选择模型',exact:true}).click();await check(phone,phone.getByRole('heading',{name:'选择模型',exact:true}).locator('..'),'model','390x844',phase==='after');
-    await phone.getByRole('button',{name:'添加图片或文件',exact:true}).click();await check(phone,phone.getByRole('dialog',{name:'添加附件'}),'attachment','390x844',phase==='after');
+    await phone.getByRole('button',{name:'添加图片或文件',exact:true}).click();await check(phone,phone.getByRole('menu',{name:'添加附件'}),'attachment','390x844',phase==='after');
     await phone.getByRole('button',{name:/^审批模式/}).click();await check(phone,phone.getByRole('menu',{name:'审批模式'}),'approval','390x844',phase==='after');
     await phone.evaluate(()=>{closeApprovalModeMenu();mobileSessionMenu({sessionId:'synthetic',title:'合成会话'});});
     await check(phone,phone.getByRole('dialog',{name:'对话操作',exact:true}),'session','390x844',phase==='after');await phone.getByRole('button',{name:'取消',exact:true}).click();
