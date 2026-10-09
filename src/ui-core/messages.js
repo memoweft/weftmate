@@ -175,6 +175,11 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
     function turnStatusViewModel(now = Date.now()) {
         if (core.state.activeChatSource === 'phone')
             return null;
+        const started = [...core.state.historyEvents.values()].filter(event => event.type === 'turn.started')
+            .sort((a, b) => a.seq - b.seq).at(-1);
+        const stop = core.taskStopView?.(started?.data?.turn);
+        if (stop && !core.state.historyHasMore) return { isRunning: false,
+            message: stop.terminal ? `${stop.text}。核对已执行的步骤与成果后，可写明下一步。` : stop.text };
         let message = '';
         const isRunning = core.state.turnStatus === 'running' && core.conversationRunning(core.state.selectedSessionId);
         if (core.state.historyHasMore) {

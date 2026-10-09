@@ -1,0 +1,88 @@
+{
+  "label": "after",
+  "scenarios": [
+    {
+      "scenario": "runtime-restart",
+      "control": {
+        "state": "stop_requested",
+        "updatedAt": "2026-10-09T13:38:21.821Z",
+        "backgroundJobs": {
+          "active": 0,
+          "unconfirmed": 0
+        },
+        "stopRequestedAt": "2026-10-09T13:38:21.821Z",
+        "canSupplement": false,
+        "canStop": false,
+        "canResume": true,
+        "stopStatus": "completed",
+        "pendingReceipts": 0,
+        "stopObservedAt": "2026-10-09T13:38:22.640Z",
+        "reasonCode": "TURN_ENDED_AFTER_STOP_REQUEST"
+      }
+    },
+    {
+      "scenario": "missing-turn",
+      "control": {
+        "state": "stop_requested",
+        "updatedAt": "2026-10-09T13:38:22.085Z",
+        "backgroundJobs": {
+          "active": 0,
+          "unconfirmed": 0
+        },
+        "stopRequestedAt": "2026-10-09T13:38:22.085Z",
+        "canSupplement": false,
+        "canStop": false,
+        "canResume": true,
+        "stopStatus": "completed",
+        "pendingReceipts": 0,
+        "stopObservedAt": "2026-10-09T13:38:22.640Z",
+        "reasonCode": "TURN_ENDED_AFTER_STOP_REQUEST"
+      }
+    },
+    {
+      "scenario": "model-switch-failed",
+      "control": {
+        "state": "stop_requested",
+        "updatedAt": "2026-10-09T13:38:22.353Z",
+        "backgroundJobs": {
+          "active": 0,
+          "unconfirmed": 0
+        },
+        "stopRequestedAt": "2026-10-09T13:38:22.353Z",
+        "canSupplement": false,
+        "canStop": false,
+        "canResume": true,
+        "stopStatus": "completed",
+        "pendingReceipts": 0,
+        "stopObservedAt": "2026-10-09T13:38:22.368Z",
+        "reasonCode": "TURN_ENDED_AFTER_STOP_REQUEST"
+      }
+    },
+    {
+      "scenario": "upstream-disconnect",
+      "control": {
+        "state": "stop_requested",
+        "updatedAt": "2026-10-09T13:38:22.616Z",
+        "backgroundJobs": {
+          "active": 0,
+          "unconfirmed": 0
+        },
+        "stopRequestedAt": "2026-10-09T13:38:22.616Z",
+        "canSupplement": false,
+        "canStop": false,
+        "canResume": true,
+        "stopStatus": "completed",
+        "pendingReceipts": 0,
+        "stopObservedAt": "2026-10-09T13:38:22.640Z",
+        "reasonCode": "TURN_ENDED_AFTER_STOP_REQUEST"
+      }
+    }
+  ],
+  "metrics": {
+    "stopCalls": 4,
+    "nativeReads": 12,
+    "sends": 5
+  },
+  "resumeDispatchedOnce": true,
+  "retriesAfterTerminal": 0
+}

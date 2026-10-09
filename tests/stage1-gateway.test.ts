@@ -67,4 +67,24 @@ describe('阶段 1 Gateway 会话恢复与逐次工具许可', () => {
     const event = await normalizeDshEvent({ rpcId: 'current-rpc', payload: { type: 'approval/requested', sessionId: 's-1', approvalId: 'approval-1', toolName: 'write', reason: 'write a test file', arguments: { secret: 'must-not-leak' } } });
     assert.deepEqual(event?.data, { rpcId: 'current-rpc', approvalId: 'approval-1', tool: 'write', reason: 'write a test file' });
   });
+
+  it('只读停止核对调用原生生命周期，不启动或取消缺失的历史会话', async () => {
+    const calls: any[] = [];
+    const client = { sessions: {}, events: {}, workspace: {}, llm: {}, settings: {} };
+    const gateway = createGatewayV1({ client, lifecycle: { taskStopState: async (input: any) => {
+      calls.push(input); return { status: 'not_running', observedAt: '2026-10-09T00:00:01.000Z' };
+    } } });
+    const server = createServer((req, res) => void gateway.handle(req, res));
+    server.listen(0, '127.0.0.1'); await once(server, 'listening');
+    const url = `http://127.0.0.1:${(server.address() as any).port}/weftmate/api/v1/sessions/missing/stop-state`;
+    try {
+      const query = '?receiptId=receipt&turn=1&stopRequestedAt=2026-10-09T00%3A00%3A00.000Z';
+      const response = await fetch(url + query);
+      assert.equal(response.status, 200);
+      assert.equal((await response.json()).status, 'not_running');
+      assert.deepEqual(calls, [{ sessionId: 'missing', receiptId: 'receipt', turn: 1, stopRequestedAt: '2026-10-09T00:00:00.000Z' }]);
+      assert.equal((await fetch(url + '?receiptId=receipt&turn=invalid')).status, 400);
+      assert.equal(calls.length, 1);
+    } finally { await new Promise<void>(resolve => server.close(() => resolve())); }
+  });
 });

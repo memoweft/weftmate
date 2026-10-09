@@ -4,7 +4,7 @@ function groupTaskActivities(rows){return uiCore.groupTaskActivities(rows)}
 
 function taskControlMeaning(control){if(control?.state==='stop_requested'&&typeof control.stopStatus==='string'){
   if(control.stopStatus==='stopped')return '电脑已核对这件事的实际停止。已执行的步骤与成果会保留。';
-  if(control.stopStatus==='completed')return '这件事的回合已正常结束；停止请求没有已证实的中断结果。核对成果后可写明下一步。';
+  if(control.stopStatus==='completed')return '这件事的回合已不在运行；未确认是停止请求使它结束。核对已执行的步骤与成果后，可写明下一步。';
   if(control.stopStatus==='cancel_requested')return '电脑已对准这件事发起取消，正在等待实际结束记录。';
   if(control.legacyStopIntent&&!control.canResume)return '旧停止记录缺少完整目标快照，结果仍待核对。请查看原会话与成果，稍后刷新任务。';
   if(control.stopStatus==='requested')return '停止请求已记录，正在核对电脑回合；目前还不能确认已停止。';
