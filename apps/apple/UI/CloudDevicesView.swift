@@ -44,7 +44,6 @@ struct CloudDevicesView: View {
                         .disabled(cloud.busy || app.serverInput.isEmpty)
                 }
             }
-            Section { Button("共享给其他账号 · 即将支持") {}.disabled(true) }
             if let error = cloud.error { Section { InlineNotice(message: error, isError: true) } }
         }.navigationTitle("设备").font(AppleTokens.Fonts.body)
             .accessibilityIdentifier("cloudDevices")

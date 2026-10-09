@@ -1,0 +1,26 @@
+{
+  "actualLoginRebootTested": false,
+  "afterOff": "notRegistered",
+  "afterOn": "enabled",
+  "initial": "notFound",
+  "isolatedBundle": true,
+  "realSMAppService": true,
+  "registerReadback": true,
+  "unregisterReadback": true,
+  "generatedAt": "2026-10-09T15:40:10.195098+00:00",
+  "binarySHA256": "909fd523f595f21a8b5653aae9ad847cdb3738871631846a04ef388691b648d4",
+  "screenshots": [
+    {
+      "file": "settings-general-before.png",
+      "sha256": "607a583ad5bdfecc1fcac7320b88f1b937ef6ff88d802c5bc50160aec527a5f9"
+    },
+    {
+      "file": "settings-general-off.png",
+      "sha256": "3626619141444008b0de512f573589973e09becaa78214748680d3934e169f1d"
+    },
+    {
+      "file": "settings-general-on.png",
+      "sha256": "88bbd9ff839c6ee08da2568b873250c5b204c58a136c14e8783b896e85d9756c"
+    }
+  ]
+}

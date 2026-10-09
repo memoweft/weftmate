@@ -12,7 +12,7 @@ public struct AppleSettingsCategory: Identifiable, Hashable, Sendable {
 /// D31 taxonomy mirrors the shared settings registry; renderers only choose platform navigation.
 public enum AppleSettingsRegistry {
     public static let categories: [AppleSettingsCategory] = [
-        .init(id: "general", group: "设置", name: "常规", icon: "settings", keywords: ["开机", "自启", "通知", "托盘", "语言", "连接", "健康", "回复", "发送", "排队", "引导"], desktopOnly: false),
+        .init(id: "general", group: "设置", name: "常规", icon: "settings", keywords: ["开机", "自启", "托盘", "语言", "连接", "健康", "回复", "发送", "排队", "引导"], desktopOnly: false),
         .init(id: "appearance", group: "设置", name: "外观", icon: "palette", keywords: ["主题", "浅色", "深色", "颜色", "字号", "字体", "密度"], desktopOnly: false),
         .init(id: "account", group: "设置", name: "账户", icon: "account", keywords: ["邮箱", "密码", "退出", "注销"], desktopOnly: false),
         .init(id: "devices", group: "设置", name: "设备", icon: "desktop", keywords: ["连接", "配对", "添加", "待批准", "二维码"], desktopOnly: false),

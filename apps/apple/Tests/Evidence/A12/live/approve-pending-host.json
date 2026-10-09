@@ -1,0 +1,31 @@
+{
+  "host": "Mac local isolated personal host",
+  "realAuthentication": true,
+  "realApprovalAPI": true,
+  "deterministicPlanner": true,
+  "compiledDSH": false,
+  "realSyntheticFileOperation": true,
+  "events": [
+    {
+      "time": "2026-10-09T15:32:10.874Z",
+      "event": "approval.requested",
+      "scenario": "approve",
+      "approvalId": "b71ccf55-71a8-4b54-953b-bd0ef0fd94ef",
+      "commandId": "cmd-d4193410-a4b6-45a8-a04d-38abf74fdc16",
+      "tool": "shell",
+      "object": "synthetic-approve-draft.txt",
+      "status": "pending"
+    }
+  ],
+  "receipts": [],
+  "approvalHTTP": [],
+  "scenarios": [
+    {
+      "name": "approve",
+      "filename": "synthetic-approve-draft.txt",
+      "approvalId": "b71ccf55-71a8-4b54-953b-bd0ef0fd94ef",
+      "commandId": "cmd-d4193410-a4b6-45a8-a04d-38abf74fdc16",
+      "done": false
+    }
+  ]
+}

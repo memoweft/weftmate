@@ -74,6 +74,12 @@ struct WeftMateRootView: View {
                     Darwin.exit(1)
                 }
                 if let index = ProcessInfo.processInfo.arguments.firstIndex(of: "--a5-review-scene"),
+                   ProcessInfo.processInfo.arguments[index + 1] == "a12-login" {
+                    do { try await A12MacReview.run(model) { openWindow(id: "settings") } }
+                    catch { FileHandle.standardOutput.write(Data(("A5_CAPTURE_FAILED:" + String(describing: error) + "\n").utf8)); Darwin.exit(1) }
+                    Darwin.exit(0)
+                }
+                if let index = ProcessInfo.processInfo.arguments.firstIndex(of: "--a5-review-scene"),
                    ProcessInfo.processInfo.arguments[index + 1] == "a10-all" {
                     do { try await A10MacReview.run(model) { openWindow(id: "settings") } }
                     catch {
@@ -385,6 +391,17 @@ private struct PhoneWorkspace: View {
                 .accessibilityIdentifier("conversationList")
         }
         .onChange(of: model.openedSessionID) { _, id in if let id { path = [id] } }
+        #if DEBUG
+        .task {
+            let args = ProcessInfo.processInfo.arguments
+            if args.contains("--ui-testing"), let index = args.firstIndex(of: "--a12-live-session"), args.indices.contains(index + 1) {
+                for _ in 0..<100 {
+                    if let row = model.conversations.first(where: { $0.sessionId == args[index + 1] }) { path = [row.id]; break }
+                    try? await Task.sleep(for: .milliseconds(100))
+                }
+            }
+        }
+        #endif
         .onChange(of: model.renamingSessionID) { _, id in if id != nil { path = [] } }
         .environmentObject(health)
         .task(id: "\(model.accountEpoch)-\(scenePhase)-\(model.session?.verification.rawValue ?? "none")") {
