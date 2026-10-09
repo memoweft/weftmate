@@ -1,0 +1,117 @@
+{
+  "realElectron": true,
+  "fixedDsh": true,
+  "realCore": true,
+  "model": "mimo-v2.6-flash",
+  "seededMemoryFixture": true,
+  "modelFormationClaim": false,
+  "checks": [
+    {
+      "deleteConversationSnippets": false,
+      "result": {
+        "ownerId": "owner-fc0b4a88-cb63-4c6a-a3ce-0481476c1113",
+        "receipt": {
+          "commandId": "memory-c3c0d0041cb06e49927e5d577fb95cf7ee7d7aa4a1d16e18",
+          "requestId": "70fc9ac3-a7b1-42fb-b652-87ee900e8974",
+          "state": "applied",
+          "worldRevision": 2,
+          "storageCleanup": {
+            "state": "complete",
+            "detailCode": "current_journal_committed"
+          }
+        }
+      },
+      "receipt": {
+        "ownerId": "owner-fc0b4a88-cb63-4c6a-a3ce-0481476c1113",
+        "receipt": {
+          "commandId": "memory-c3c0d0041cb06e49927e5d577fb95cf7ee7d7aa4a1d16e18",
+          "requestId": "70fc9ac3-a7b1-42fb-b652-87ee900e8974",
+          "state": "applied",
+          "worldRevision": 2,
+          "storageCleanup": {
+            "state": "complete",
+            "detailCode": "current_journal_committed"
+          }
+        }
+      }
+    },
+    "default preserves visible originals and native session resumes after surface pruning",
+    {
+      "deleteConversationSnippets": true,
+      "result": {
+        "ownerId": "owner-fc0b4a88-cb63-4c6a-a3ce-0481476c1113",
+        "receipt": {
+          "commandId": "memory-ee0c5ca3b045b484af46d22c8716df3b85c50eb97fd46b1b",
+          "requestId": "174a174c-f3b7-4902-83a0-d2b22b48e454",
+          "state": "applied",
+          "worldRevision": 4,
+          "storageCleanup": {
+            "state": "complete",
+            "detailCode": "current_journal_committed"
+          }
+        }
+      },
+      "receipt": {
+        "ownerId": "owner-fc0b4a88-cb63-4c6a-a3ce-0481476c1113",
+        "receipt": {
+          "commandId": "memory-ee0c5ca3b045b484af46d22c8716df3b85c50eb97fd46b1b",
+          "requestId": "174a174c-f3b7-4902-83a0-d2b22b48e454",
+          "state": "applied",
+          "worldRevision": 4,
+          "storageCleanup": {
+            "state": "complete",
+            "detailCode": "current_journal_committed"
+          }
+        }
+      }
+    },
+    "restart does not restore result summaries, side refs or search text"
+  ],
+  "zeroResidue": {
+    "files": 107,
+    "byteAndDecodedFrameHits": 0,
+    "databases": [
+      {
+        "file": "personal-access/accounts/owner-fc0b4a88-cb63-4c6a-a3ce-0481476c1113/memory-home/memoweft/memoweft.sqlite3",
+        "tables": 36,
+        "hits": []
+      }
+    ]
+  },
+  "usage": [
+    {
+      "completion_tokens": 50,
+      "prompt_tokens": 118,
+      "total_tokens": 168,
+      "completion_tokens_details": {
+        "reasoning_tokens": 41
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 64
+      }
+    },
+    {
+      "completion_tokens": 297,
+      "prompt_tokens": 2104,
+      "total_tokens": 2401,
+      "completion_tokens_details": {
+        "reasoning_tokens": 217
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    {
+      "completion_tokens": 33,
+      "prompt_tokens": 2123,
+      "total_tokens": 2156,
+      "completion_tokens_details": {
+        "reasoning_tokens": 28
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  ],
+  "electronLaunchesClosed": 2
+}

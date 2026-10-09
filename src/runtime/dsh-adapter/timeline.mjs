@@ -1,15 +1,39 @@
+import { resolve } from 'node:path';
+import { createHistoryCache } from './history-cache.mjs';
+
 /** Read the native immutable log without cloning it or activating an agent.
  * session-query.readEvent currently clones the whole source before slicing;
  * persistence.inspect uses DSH's revision-aware prepared-session cache instead.
  */
-export function nativeTimelineLog(ctx) {
-  return async (sessionId) => {
+export function nativeTimelineLog(ctx, { cache = true } = {}) {
+  const read = async (sessionId) => {
     const live = ctx.get('sessions')?.get(sessionId)
     if (live) return live.events
     const persistence = ctx.get('sessionPersistence')
     if (!persistence) throw Object.assign(new Error('session not found'), { code: 'session-not-found' })
     return (await persistence.inspect(sessionId)).events
   }
+  const persistence = ctx.get('sessionPersistence');
+  if (!cache || !persistence?.config?.root || !persistence.listSnapshots) return read;
+  const history = createHistoryCache({ file: resolve(persistence.config.root, '..', 'weftmate-history.sqlite'), readNative: read,
+    async source(id) {
+      const live = ctx.get('sessions')?.get(id);
+      if (live) await ctx.sessions.flush(live);
+      const snapshot = (await persistence.listSnapshots()).find(row => row.header.id === id);
+      return snapshot ? { revision: String(snapshot.revision), ...(live ? { events: live.events } : {}) } : null;
+    } });
+  read.historyPage = (id, options, project) => history.read(id, options, project);
+  read.invalidate = id => history.invalidate(id);
+  read.close = () => history.close();
+  read.setProjector = project => {
+    ctx.on?.('agent/status', ({ agent, status }) => {
+      if (status !== 'idle' || agent.session.header.agentPreset !== 'personal-remote') return;
+      // Native idle boundaries incrementally maintain a restart-ready cache.
+      void history.read(agent.session.id, { limit: 1 }, (entries, options) => project(agent.session.id, entries, options)).catch(() => {});
+    });
+  };
+  ctx.effect?.(() => () => history.close(), 'weftmate public history cache');
+  return read;
 }
 
 export function toolArguments(value) {

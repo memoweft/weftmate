@@ -1,0 +1,31 @@
+{
+  "checkedAt": "2026-10-09T18:53:48.332Z",
+  "fixedDsh": true,
+  "synthetic": true,
+  "pageSize": 50,
+  "results": [
+    {
+      "messages": 10000,
+      "freshProcesses": 30,
+      "physicalLogBytes": 7126772,
+      "indexMissMs": 224.776,
+      "indexMissNativeRows": 10000,
+      "cachedNativeRowsRead": 0,
+      "coldP95Ms": 7.813899999999997,
+      "warmP95Ms": 4.1976999999999975,
+      "tailBudgetMet": true
+    },
+    {
+      "messages": 100000,
+      "freshProcesses": 30,
+      "physicalLogBytes": 71566772,
+      "indexMissMs": 1539.3791999999999,
+      "indexMissNativeRows": 100000,
+      "cachedNativeRowsRead": 0,
+      "coldP95Ms": 7.586300000000001,
+      "warmP95Ms": 2.3734000000000037,
+      "tailBudgetMet": true
+    }
+  ],
+  "limitation": "Pinned JSONL readFrom lacks loadStoredFrom and still decodes the entire prefix. A native revision-checked public projection cache provides bounded cold SQL pages after one native build; live idle boundaries update it incrementally. Index misses still require the native full decoder and are measured separately. No private decoder or vendor change."
+}
