@@ -1,0 +1,17 @@
+{
+  "startedAt": "2026-10-09T16:53:09.627Z",
+  "realMain": true,
+  "realDsh": true,
+  "syntheticModel": true,
+  "checks": [
+    {
+      "name": "stability-cycle-1",
+      "status": "failed",
+      "durationMs": 12012,
+      "error": "locator.click: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '新对话 Ctrl N', exact: true })\u001b[22m\n",
+      "screenshot": "desktop/failure-0.png"
+    }
+  ],
+  "errors": [],
+  "requestCount": 176
+}
