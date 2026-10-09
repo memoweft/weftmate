@@ -43,6 +43,17 @@ export function createHosts({ database: db, config, keys, authenticate, now, rel
     return payload;
   }
   return { async handle(route, req, body) {
+    if (route === '/hosts/offline/status') {
+      requireFields(body, ['hostId']);
+      const account = await authenticate(req, true);
+      const device = db.prepare("SELECT status FROM host_device_status WHERE host_id=? AND account_id=? AND device_id=? AND jkt=?")
+        .get(body.hostId, account.id, req.cloudToken.device_id, req.cloudToken.cnf.jkt);
+      const member = db.prepare('SELECT 1 FROM host_memberships WHERE host_id=? AND account_id=?').get(body.hostId, account.id);
+      if (!member || device?.status !== 'trusted') throw new CloudError(403, 'DEVICE_NOT_TRUSTED');
+      const control = db.prepare('SELECT generation FROM offline_controls WHERE host_id=? AND account_id=?').get(body.hostId, account.id);
+      if (!control) throw new CloudError(404, 'NOT_FOUND');
+      return { hostId: body.hostId, accountId: account.id, generation: control.generation, authorized: true };
+    }
     if (route === '/hosts/claims') {
       requireFields(body, ['claimId', 'hostId', 'publicJwk', 'tlsSpki']);
       if (!validId(body.hostId) || !validId(body.claimId) || !publicKey(body.publicJwk) ||
@@ -145,6 +156,14 @@ export function createHosts({ database: db, config, keys, authenticate, now, rel
     const payload = await signed(body);
     if (payload.action !== route) throw new CloudError(401, 'UNAUTHORIZED');
     db.prepare('UPDATE cloud_hosts SET last_seen=? WHERE host_id=?').run(now(), body.hostId);
+    if (route === '/hosts/offline/publish') {
+      if (typeof payload.sub !== 'string' || !Number.isSafeInteger(payload.generation) || payload.generation < 1 ||
+          !db.prepare('SELECT 1 FROM host_memberships WHERE host_id=? AND account_id=?').get(body.hostId, payload.sub))
+        throw new CloudError(400, 'INVALID_REQUEST');
+      db.prepare(`INSERT INTO offline_controls VALUES(?,?,?) ON CONFLICT(host_id,account_id)
+        DO UPDATE SET generation=MAX(generation,excluded.generation)`).run(body.hostId, payload.sub, payload.generation);
+      return { updated: true };
+    }
     if (route === '/hosts/status') {
       if (typeof payload.name !== 'string' || !payload.name.trim() || payload.name.length > 128 ||
           typeof payload.sub !== 'string' || !db.prepare('SELECT 1 FROM host_memberships WHERE host_id=? AND account_id=?')

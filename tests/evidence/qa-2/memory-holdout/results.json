@@ -1,0 +1,564 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-09T14:11:13.758Z",
+  "host": "http://127.0.0.1:53864",
+  "model": "mimo",
+  "results": [
+    {
+      "id": "memory-1x-correction",
+      "category": "memory",
+      "title": "留出：浇水量省略主题纠正",
+      "status": "failed",
+      "durationMs": 11990,
+      "checks": [
+        {
+          "type": "turn_status",
+          "turn": 1,
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "turn": 2,
+          "status": "passed"
+        },
+        {
+          "type": "reply_contains",
+          "text": "150",
+          "status": "failed",
+          "reason": "reply_contains did not match expected value"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "memory_used",
+          "status": "failed",
+          "reason": "memory_used did not match expected value"
+        },
+        {
+          "type": "llm_judge",
+          "prompt": "应采用纠正后的150毫升，不能仍按300毫升浇水；纠正回合没有重复盆栽或浇水主题。",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-2d9d77e9-55ba-4e14-b0f2-92f2473b4447",
+          "modelProfileId": "private-model-1d4af4eb16956e5e3a9023c8ad3132737cd398b5",
+          "commandId": "cmd-b8886803-2e8a-41ae-95f3-870ce19fc441",
+          "startedAt": "2026-10-09T14:11:14.752Z",
+          "reply": "收到——你阳台盆栽每次浇水量固定为 300 毫升，之后涉及浇水或相关提醒时我按这个用量来。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T14:11:14.791Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T14:11:14.792Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T14:11:14.827Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T14:11:14.827Z"
+            },
+            {
+              "seq": 66,
+              "type": "assistant.message",
+              "at": "2026-10-09T14:11:18.736Z"
+            },
+            {
+              "seq": 67,
+              "type": "task.ended",
+              "at": "2026-10-09T14:11:18.737Z"
+            },
+            {
+              "seq": 68,
+              "type": "turn.ended",
+              "at": "2026-10-09T14:11:18.738Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 4114,
+          "endedAt": "2026-10-09T14:11:18.866Z"
+        },
+        {
+          "sessionId": "session-dc13f857-20fa-425f-a8e0-cca61ab2c808",
+          "modelProfileId": "private-model-1d4af4eb16956e5e3a9023c8ad3132737cd398b5",
+          "commandId": "cmd-1eec1a82-9fa0-421c-97dc-69d3e36822bb",
+          "startedAt": "2026-10-09T14:11:20.177Z",
+          "reply": "收到：浇水量改为每次 150 毫升，300 毫升作废，今后都以 150 毫升为准。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T14:11:20.222Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T14:11:20.222Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T14:11:20.267Z"
+            },
+            {
+              "seq": 11,
+              "type": "user.message",
+              "at": "2026-10-09T14:11:20.268Z"
+            },
+            {
+              "seq": 70,
+              "type": "assistant.message",
+              "at": "2026-10-09T14:11:22.930Z"
+            },
+            {
+              "seq": 71,
+              "type": "task.ended",
+              "at": "2026-10-09T14:11:22.931Z"
+            },
+            {
+              "seq": 72,
+              "type": "turn.ended",
+              "at": "2026-10-09T14:11:22.931Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 2840,
+          "endedAt": "2026-10-09T14:11:23.017Z"
+        },
+        {
+          "sessionId": "session-6b51d6eb-e603-4d2d-a090-9a2d3fbef5e1",
+          "modelProfileId": "private-model-1d4af4eb16956e5e3a9023c8ad3132737cd398b5",
+          "commandId": "cmd-2d08b4d9-d96d-440d-a9e9-accf23771854",
+          "startedAt": "2026-10-09T14:11:24.363Z",
+          "reply": "按你定下的固定用量，今天浇水给每盆 300 毫升即可。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T14:11:24.443Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T14:11:24.444Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T14:11:24.475Z"
+            },
+            {
+              "seq": 11,
+              "type": "user.message",
+              "at": "2026-10-09T14:11:24.476Z"
+            },
+            {
+              "seq": 44,
+              "type": "assistant.message",
+              "at": "2026-10-09T14:11:26.417Z"
+            },
+            {
+              "seq": 45,
+              "type": "task.ended",
+              "at": "2026-10-09T14:11:26.417Z"
+            },
+            {
+              "seq": 46,
+              "type": "turn.ended",
+              "at": "2026-10-09T14:11:26.418Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 2079,
+          "endedAt": "2026-10-09T14:11:26.442Z"
+        }
+      ],
+      "replySummary": "按你定下的固定用量，今天浇水给每盆 300 毫升即可。",
+      "notes": "M2e留出场景；园艺数量领域；三个独立会话。基线严格检查当前纠正项采用、旧项失效且排除、双方原话来源保留及未声明审批。",
+      "scratchDir": "C:\\temp\\weftmate-eval-memory-1x-correction-Y8ragA",
+      "reason": "reply_contains did not match expected value; memory_used did not match expected value; holdout must adopt its own current formal memory",
+      "holdoutVerification": {
+        "distinctSessions": true,
+        "noUndeclaredApprovals": true
+      },
+      "semanticJudgement": {
+        "model": "mimo-v2.6-flash",
+        "usage": {
+          "completion_tokens": 26,
+          "prompt_tokens": 201,
+          "total_tokens": 227,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "finishReason": "stop",
+        "rawVerdict": "{\"pass\":false,\"reason\":\"回复仍按300毫升，未采用纠正后的150毫升\"}",
+        "status": "failed",
+        "reason": "回复仍按300毫升，未采用纠正后的150毫升"
+      }
+    },
+    {
+      "id": "memory-1x-person",
+      "category": "memory",
+      "title": "留出：课程师生关系跨对话联系",
+      "status": "failed",
+      "durationMs": 13299,
+      "checks": [
+        {
+          "type": "turn_status",
+          "turn": 1,
+          "status": "passed"
+        },
+        {
+          "type": "reply_contains",
+          "text": "闻舟",
+          "status": "passed"
+        },
+        {
+          "type": "reply_matches",
+          "pattern": "陶艺|拉坯",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "memory_used",
+          "status": "failed",
+          "reason": "memory_used did not match expected value"
+        },
+        {
+          "type": "llm_judge",
+          "prompt": "问候应自然联系陶艺老师或拉坯，不捏造其他关系或事项。",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-9dcfac31-eb5f-4482-b8c3-21eee3e34dfb",
+          "modelProfileId": "private-model-1d4af4eb16956e5e3a9023c8ad3132737cd398b5",
+          "commandId": "cmd-155680df-7503-42b5-93dd-85e5dfa336e1",
+          "startedAt": "2026-10-09T14:11:32.174Z",
+          "reply": "好的，闻舟是教你陶艺、带你练拉坯的老师。要不要我在以后遇到相关情境时（比如你提到练陶、约课或拉坯遇到问题），提醒你去找闻舟请教？你确认一下，我之后就会留意。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T14:11:32.234Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T14:11:32.234Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T14:11:32.275Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T14:11:32.275Z"
+            },
+            {
+              "seq": 73,
+              "type": "assistant.message",
+              "at": "2026-10-09T14:11:36.466Z"
+            },
+            {
+              "seq": 74,
+              "type": "task.ended",
+              "at": "2026-10-09T14:11:36.466Z"
+            },
+            {
+              "seq": 75,
+              "type": "turn.ended",
+              "at": "2026-10-09T14:11:36.467Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 4433,
+          "endedAt": "2026-10-09T14:11:36.607Z"
+        },
+        {
+          "sessionId": "session-089d12c0-96cb-43d3-94cf-e2741bbed49e",
+          "modelProfileId": "private-model-1d4af4eb16956e5e3a9023c8ad3132737cd398b5",
+          "commandId": "cmd-11e25a67-f0bb-4935-9930-ac22ada0b4ea",
+          "startedAt": "2026-10-09T14:11:38.044Z",
+          "reply": "给闻舟的消息，一句自然的：\n\n> 闻舟老师，最近怎么样？上次练完拉坯手还有点酸，但感觉找到点门道了，想着跟你打个招呼，这周有空还想再去练练。\n\n如果想更短一点：\n\n> 闻舟，好久没去练坯了，怪想念转盘的，你最近什么时候方便？\n\n需要的话我可以帮你直接发出去——告诉我用哪个聊天渠道就行。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T14:11:38.102Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T14:11:38.103Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T14:11:38.135Z"
+            },
+            {
+              "seq": 11,
+              "type": "user.message",
+              "at": "2026-10-09T14:11:38.136Z"
+            },
+            {
+              "seq": 177,
+              "type": "assistant.message",
+              "at": "2026-10-09T14:11:45.064Z"
+            },
+            {
+              "seq": 178,
+              "type": "task.ended",
+              "at": "2026-10-09T14:11:45.065Z"
+            },
+            {
+              "seq": 179,
+              "type": "turn.ended",
+              "at": "2026-10-09T14:11:45.065Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 7060,
+          "endedAt": "2026-10-09T14:11:45.104Z"
+        }
+      ],
+      "replySummary": "给闻舟的消息，一句自然的：\n\n> 闻舟老师，最近怎么样？上次练完拉坯手还有点酸，但感觉找到点门道了，想着跟你打个招呼，这周有空还想再去练练。\n\n如果想更短一点：\n\n> 闻舟，好久没去练坯了，怪想念转盘的，你最近什么时候方便？\n\n需要的话我可以帮你直接发出去——告诉我用哪个聊天渠道就行。",
+      "notes": "M2e留出场景；陶艺师生关系领域。新会话只提姓名；基线另核对采用的正式关系、当前状态、完整原话来源、独立会话及未声明审批。",
+      "scratchDir": "C:\\temp\\weftmate-eval-memory-1x-person-c5ehT8",
+      "reason": "memory_used did not match expected value; holdout must adopt its own current formal memory",
+      "holdoutVerification": {
+        "distinctSessions": true,
+        "noUndeclaredApprovals": true
+      },
+      "semanticJudgement": {
+        "model": "mimo-v2.6-flash",
+        "usage": {
+          "completion_tokens": 28,
+          "prompt_tokens": 245,
+          "total_tokens": 273,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "finishReason": "stop",
+        "rawVerdict": "{\"pass\":true,\"reason\":\"问候自然联系陶艺老师与拉坯，未捏造其他关系或事项。\"}",
+        "status": "passed",
+        "reason": "问候自然联系陶艺老师与拉坯，未捏造其他关系或事项。"
+      }
+    },
+    {
+      "id": "memory-1x-preference",
+      "category": "memory",
+      "title": "留出：音乐选择偏好跨对话采用",
+      "status": "failed",
+      "durationMs": 12872,
+      "checks": [
+        {
+          "type": "turn_status",
+          "turn": 1,
+          "status": "passed"
+        },
+        {
+          "type": "reply_matches",
+          "pattern": "纯器乐|器乐|无歌词|没有歌词|无人声|没有人声",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "memory_used",
+          "status": "failed",
+          "reason": "memory_used did not match expected value"
+        },
+        {
+          "type": "llm_judge",
+          "prompt": "在新会话不重复偏好的情况下，应推荐不带人声的器乐曲，不推荐歌曲演唱版本。",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-34167748-96ba-495e-9600-0615d0a252d1",
+          "modelProfileId": "private-model-1d4af4eb16956e5e3a9023c8ad3132737cd398b5",
+          "commandId": "cmd-8167718b-78b5-4022-88ff-ba3442ffb1a2",
+          "startedAt": "2026-10-09T14:11:56.135Z",
+          "reply": "好的，以后给你挑音乐时我会排除带人声的曲目，只推荐纯器乐。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T14:11:56.210Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T14:11:56.210Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T14:11:56.255Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T14:11:56.255Z"
+            },
+            {
+              "seq": 70,
+              "type": "assistant.message",
+              "at": "2026-10-09T14:11:59.077Z"
+            },
+            {
+              "seq": 71,
+              "type": "task.ended",
+              "at": "2026-10-09T14:11:59.078Z"
+            },
+            {
+              "seq": 72,
+              "type": "turn.ended",
+              "at": "2026-10-09T14:11:59.078Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 3147,
+          "endedAt": "2026-10-09T14:11:59.282Z"
+        },
+        {
+          "sessionId": "session-bb33ee0d-5589-4e38-a4a1-3a80ee69328f",
+          "modelProfileId": "private-model-1d4af4eb16956e5e3a9023c8ad3132737cd398b5",
+          "commandId": "cmd-6ea1209a-f966-4831-92b2-2c14232a70fc",
+          "startedAt": "2026-10-09T14:12:00.731Z",
+          "reply": "推荐一首：**坂本龙一 —《Aqua》**（选自专辑《 Kevin Carter / New York Monitor》… 实际最易找到的版本在《1996》专辑）。\n\n纯器乐，钢琴为主，节奏缓慢、音色清澈，像水波一样一层层展开，没有起伏强烈的段落，非常适合放空或睡前听。\n\n如果想换换口味，也可以试试这两首纯器乐备选：\n\n- **Ludovico Einaudi —《Nuvole Bianche》**：钢琴独奏，温柔绵长\n- **Ólafur Arnalds —《Saman》**：钢琴加弦乐，安静带一点暖意\n\n需要更多同类的纯器乐推荐随时说。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T14:12:00.801Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T14:12:00.802Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T14:12:00.840Z"
+            },
+            {
+              "seq": 11,
+              "type": "user.message",
+              "at": "2026-10-09T14:12:00.841Z"
+            },
+            {
+              "seq": 131,
+              "type": "assistant.message",
+              "at": "2026-10-09T14:12:08.531Z"
+            },
+            {
+              "seq": 132,
+              "type": "task.ended",
+              "at": "2026-10-09T14:12:08.532Z"
+            },
+            {
+              "seq": 133,
+              "type": "turn.ended",
+              "at": "2026-10-09T14:12:08.532Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 7852,
+          "endedAt": "2026-10-09T14:12:08.583Z"
+        }
+      ],
+      "replySummary": "推荐一首：**坂本龙一 —《Aqua》**（选自专辑《 Kevin Carter / New York Monitor》… 实际最易找到的版本在《1996》专辑）。\n\n纯器乐，钢琴为主，节奏缓慢、音色清澈，像水波一样一层层展开，没有起伏强烈的段落，非常适合放空或睡前听。\n\n如果想换换口味，也可以试试这两首纯器乐备选：\n\n- **Ludovico Einaudi —《Nuvole Bianche》**：钢琴独奏，温柔绵长\n- **Ólafur Arnalds —《Saman》**：钢琴加弦乐，安静带一点暖意\n\n需要更多同类的纯器乐推荐随时说。",
+      "notes": "M2e留出场景；音乐领域与形成提示示例、原memory-01..04无关。基线另查采用项的当前状态、精确原话来源、独立会话及未声明审批。",
+      "scratchDir": "C:\\temp\\weftmate-eval-memory-1x-preference-F27ESf",
+      "reason": "memory_used did not match expected value; holdout must adopt its own current formal memory",
+      "holdoutVerification": {
+        "distinctSessions": true,
+        "noUndeclaredApprovals": true
+      },
+      "semanticJudgement": {
+        "model": "mimo-v2.6-flash",
+        "usage": {
+          "completion_tokens": 26,
+          "prompt_tokens": 312,
+          "total_tokens": 338,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "finishReason": "stop",
+        "rawVerdict": "{\"pass\":true,\"reason\":\"推荐均为纯器乐，未推荐带人声歌曲，符合偏好。\"}",
+        "status": "passed",
+        "reason": "推荐均为纯器乐，未推荐带人声歌曲，符合偏好。"
+      }
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 3,
+    "manual": 0,
+    "unsupported": 0,
+    "skippedChecks": 3,
+    "passRate": 0,
+    "coverage": 0
+  }
+}

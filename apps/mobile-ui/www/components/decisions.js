@@ -32,7 +32,7 @@ function taskQuestions(task,context){return uiCore.mobileDecisions.rows(context,
 function stopApprovalObservation(){clearTimeout(toolApprovals.pollTimer);toolApprovals.pollTimer=null;toolApprovals.detail=null}
 function stopQuestionObservation(){clearTimeout(toolQuestions.pollTimer);toolQuestions.pollTimer=null;toolQuestions.detail=null}
 function resetToolApprovals(){stopApprovalObservation();uiCore.mobileDecisions.reset();$('approval-bar').hidden=true;clear($('approval-bar'))}
-function resetToolQuestions(){stopQuestionObservation();uiCore.mobileDecisions.reset(true)}
+function resetToolQuestions(){if($('question-bar')){$('question-bar').hidden=true;clear($('question-bar'));delete $('question-bar').dataset.signature}stopQuestionObservation();uiCore.mobileDecisions.reset(true)}
 async function refreshToolApprovals(context=approvalContext(),{force=false}={}){return uiCore.mobileDecisions.refresh(context,force)}
 async function refreshToolQuestions(context=approvalContext(),{force=false}={}){return uiCore.mobileDecisions.refresh(context,force,true)}
 async function refreshConversationTasks(){return uiCore.mobileDecisions.refreshTasks()}
@@ -113,8 +113,7 @@ async function saveApprovalMode(mode,menu){if(!approvalModeCurrent(menu.context)
       approvalModeState.mode=null;approvalModeState.error=safeError(e);if(!menu.context.defaults)updateApprovalModeButton()}}
   finally{if(current())approvalModeState.loading=false}}
 
-function approvalOperation(row){return {pwsh:'运行命令',read:'读取文件',write:'写入文件',edit:'修改文件',glob:'查找文件',grep:'搜索内容',
-  shell:'运行命令',bash:'运行命令',weftmod:'设备操作',weftmod_script:'运行脚本',job_kill:'停止后台任务'}[row.toolName]||row.toolName}
+function approvalOperation(row){return uiCore.toolLabel(row.toolName)}
 
 function approvalRiskCategories(row){return Array.isArray(row.riskCategories)?row.riskCategories.filter(value=>Object.hasOwn(approvalRiskNames,value)):[]}
 
@@ -151,10 +150,10 @@ function fillApprovalCard(card,row,context,cache){const attempt=approvalAttempt(
   if(row.status==='pending'){const presentation=uiCore.approvalPresentation(row),description=el('p','approval-reason',`要${presentation.summary}`);
     card.append(description);if(presentation.reason)card.append(el('p','approval-risk-copy',presentation.reason));
     const details=el('details','approval-detail'),raw=el('pre','timeline-raw');
-    raw.textContent=typeof presentation.raw==='string'?presentation.raw:JSON.stringify(presentation.raw,null,2);
+    raw.textContent=uiCore.executionDetailText(typeof presentation.raw==='string'?presentation.raw:JSON.stringify(presentation.raw,null,2));
     details.append(el('summary','','详情'),raw);card.append(details);
     void uiCore.readApprovalPresentation(row).then(value=>{if(!approvalViewCurrent(context)||card.dataset.approvalId!==row.approvalId||!card.contains?.(description))return;
-      description.textContent=`要${value.summary}`;raw.textContent=typeof value.raw==='string'?value.raw:JSON.stringify(value.raw,null,2);});}
+      description.textContent=`要${value.summary}`;raw.textContent=uiCore.executionDetailText(typeof value.raw==='string'?value.raw:JSON.stringify(value.raw,null,2));});}
   if(row.status==='pending')card.append(el('p','approval-risk-copy',approvalRiskCopy(row)));
   card.classList.toggle('is-resolved',approvalTerminal(row));
   const message=el('p','approval-status',approvalMeaning(row,cache,attempt));message.setAttribute('role','status');message.setAttribute('aria-live','polite');
@@ -207,71 +206,34 @@ function questionMeaning(row,cache,attempt){if(attempt?.busy)return '正在提�
     row.answer?'问题已在执行端回答；这份登记回答是否被接收尚未确认。':'问题已在执行端回答。';
   return '这个问题当前已失效，原任务记录仍可查看。'}
 
-function fillQuestionCard(card,row,context,cache){const attempt=questionAttempt(context,row),draft=questionDraft(context,row);
-  const signature=JSON.stringify([row,cache.error,attempt?.busy,attempt?.unknown,attempt?.checked]);if(card.dataset.signature===signature)return;
-  const focused=document.activeElement,focusedIndex=focused?.dataset?.questionIndex,focusedField=focused?.dataset?.questionField;
-  let focusedParent=focused;while(focusedParent&&focusedParent!==card)focusedParent=focusedParent.parentElement||focusedParent.parent;
-  const ownsFocus=focusedParent===card;
-  card.dataset.signature=signature;clear(card);card.dataset.questionRpcId=row.questionRpcId;card.dataset.taskId=row.taskId;
-  card.append(el('strong','question-title',row.status==='pending'?'需要你的回答':'问题与回答'));
-  const message=el('p','question-status',questionMeaning(row,cache,attempt));message.setAttribute('role','status');message.setAttribute('aria-live','polite');card.append(message);
-  const form=el('form','question-form'),editable=row.status==='pending'&&!attempt?.unknown&&!attempt?.busy&&!cache.error;
-  const shownAnswer=row.answer||attempt?.answer,fields=[];
-  row.questions.forEach((question,index)=>{const field=el('fieldset','question-field');field.disabled=!editable;
-    field.append(el('legend','',question.header||question.question));
-    if(question.header&&question.header!==question.question)field.append(el('p','question-copy',question.question));
-    if(question.detail!==undefined){const detail=el('details','question-detail'),summary=el('summary','',question.intent?.kind==='plan-review'?'查看计划':'查看补充说明');
-      detail.append(summary,el('div','question-detail-text',question.detail));field.append(detail)}
-    if(row.status!=='pending'||attempt?.unknown){const answer=shownAnswer?.answers[index];
-      if(answer){for(const label of answer.selected)field.append(el('p','question-answer',label));
-        if(answer.custom!==undefined)field.append(el('p','question-answer',answer.custom));
-        if(!answer.selected.length&&answer.custom===undefined)field.append(el('p','question-answer','未作选择'))}
-      else field.append(el('p','question-answer','此入口未登记回答'));form.append(field);return}
-    const entry=draft.answers[index],choices=[];
-    for(const option of question.options||[]){const label=el('label','question-option'),input=el('input');input.type=question.multiSelect===true?'checkbox':'radio';
-      input.name=`question-${context.page}-${row.questionRpcId}-${index}`;input.value=option.label;input.checked=entry.selected.includes(option.label);
-      input.dataset.questionIndex=String(index);input.dataset.questionField='choice';const text=el('span','question-option-copy');text.append(el('span','',option.label));
-      if(option.description!==undefined)text.append(el('small','',option.description));label.append(input,text);field.append(label);choices.push(input);
-      input.addEventListener('change',()=>{if(!editable||!approvalViewCurrent(context))return;
-        const answer=uiCore.mobileDecisions.chooseOption(context,row,index,option.label,input.checked);if(!answer)return;
-        custom.value=answer.custom;for(const other of choices)other.checked=answer.selected.includes(other.value)})}
-    const customLabel=el('label','question-custom-label',(question.options||[]).length?'自行填写':'你的回答'),custom=el('textarea','question-custom');
-    custom.value=entry.custom;custom.rows=2;custom.dataset.questionIndex=String(index);custom.dataset.questionField='custom';
-    custom.setAttribute('aria-label',`${question.header||question.question} · ${(question.options||[]).length?'自行填写':'你的回答'}`);
-    custom.addEventListener('input',()=>{if(!editable||!approvalViewCurrent(context))return;
-      const answer=uiCore.mobileDecisions.setCustom(context,row,index,custom.value);if(!answer)return;
-      for(const input of choices)input.checked=answer.selected.includes(input.value)});
-    customLabel.append(custom);field.append(customLabel);fields.push(custom);form.append(field)});
-  const error=el('p','question-error');error.hidden=true;error.setAttribute('role','alert');form.append(error);
-  const controls=el('div','question-actions');
-  if(row.status==='pending'&&(editable||attempt?.unknown&&attempt.checked&&!cache.error)){
-    const submit=el('button','primary',attempt?.unknown?'重试原回答':'提交回答');submit.type='submit';submit.disabled=!!attempt?.busy;
-    submit.addEventListener('pointerdown',()=>{submit.dataset.restoreFocus=document.activeElement===$('draft')?'1':'0'});
-    submit.addEventListener('pointercancel',()=>{delete submit.dataset.restoreFocus});controls.append(submit);
-    form.addEventListener('submit',event=>{event.preventDefault?.();if(!approvalViewCurrent(context)||attempt?.busy)return;
-      const answer=attempt?.unknown?attempt.answer:canonicalQuestionAnswer({answers:draft.answers.map(item=>({id:item.id,selected:[...item.selected],
-        ...(item.custom.length?{custom:item.custom}:{})}))},row.questions);
-      if(!answer){error.hidden=false;error.textContent=safeError(new Error('QUESTION_ANSWER_INVALID'));return}
-      const restoreFocus=submit.dataset.restoreFocus==='1';delete submit.dataset.restoreFocus;void answerToolQuestion(row,answer,context,restoreFocus)})}
-  if(cache.error||attempt?.unknown||row.status==='answered'){
-    const check=el('button','secondary','检查问题状态');check.type='button';check.disabled=!!attempt?.busy;
-    check.addEventListener('click',()=>{if(approvalViewCurrent(context))void refreshToolQuestions(context,{force:true})});controls.append(check)}
-  if(controls.children.length)form.append(controls);form.hidden=approvalTerminal(row);card.classList.toggle('is-resolved',form.hidden);card.append(form);
-  if(ownsFocus&&focusedField==='custom'){const next=fields.find(input=>input.dataset.questionIndex===focusedIndex);if(next&&!next.disabled&&editable)next.focus({preventScroll:true})}}
-
-function renderConversationQuestions(){const context=approvalContext(),content=$('chat-content');if(!approvalViewCurrent(context)||!questionScopeCurrent(context))return;
-  const cache=toolQuestions.sessions.get(context.sessionId);if(!cache)return;const scroll=$('chat-scroll'),scrollTop=scroll.scrollTop,visible=new Set();
-  for(const row of [...cache.rows.values()].sort((a,b)=>a.createdAt.localeCompare(b.createdAt)||a.questionRpcId.localeCompare(b.questionRpcId))){
-    if(!relatedTaskApproval(conversationTasks.entries.get(row.taskId)?.task,row))continue;
-    const questionEvent=(state.chatSource==='phone'?state.linkedEvents.get(context.conversationId)?.events||[]:state.sharedEvents).filter(e=>e.type==='question.asked'&&e.data?.turn===row.turn&&Number.isSafeInteger(row.observedSeq)&&e.seq<=row.observedSeq).sort((a,b)=>b.seq-a.seq)[0];
-    const timelineAnchor=questionEvent&&[...content.children].find(node=>node.dataset?.timelineQuestion===questionEvent.data.callId);
-    const anchor=timelineAnchor||[...content.children].find(node=>node.dataset?.receiptId===row.sourceReceiptId);if(!anchor)continue;
-    visible.add(row.questionRpcId);let card=[...content.children].find(node=>node.dataset?.questionRpcId===row.questionRpcId);
-    if(!card)card=el('section','tool-question conversation-question');let next=anchor.nextSibling;
-    while(next&&(next.dataset?.conversationTask||next.dataset?.approvalId||next.dataset?.questionRpcId&&next.dataset.questionRpcId!==row.questionRpcId))next=next.nextSibling;
-    if(timelineAnchor){timelineAnchor.hidden=true;card.dataset.seq=timelineAnchor.dataset.seq;next=timelineAnchor}if(card!==next)content.insertBefore(card,next);fillQuestionCard(card,row,context,cache)}
-  for(const child of [...content.children])if(child.dataset?.questionRpcId&&!visible.has(child.dataset.questionRpcId))child.remove();
-  if(state.scrollPinned)scrollBottom();else if(scroll.scrollTop!==scrollTop)scroll.scrollTop=scrollTop}
+function renderConversationQuestions(){
+  const context=approvalContext(),content=$('chat-content'),approval=$('approval-bar'),bar=WeftQuestionBar.ensure(approval);
+  const cache=toolQuestions.sessions.get(context.sessionId);
+  const rows=approvalViewCurrent(context)&&questionScopeCurrent(context)&&cache?[...cache.rows.values()].filter(row=>relatedTaskApproval(conversationTasks.entries.get(row.taskId)?.task,row)).sort((a,b)=>a.createdAt.localeCompare(b.createdAt)):[];
+  renderTimeline(state.chatSource==='phone'?state.linkedEvents.get(context.conversationId)?.events||[]:state.sharedEvents);
+  const pending=rows.filter(row=>row.status==='pending'),hadFocus=bar.contains(document.activeElement);
+  WeftQuestionBar.waiting(approval,pending.reduce((n,row)=>n+row.questions.length,0));
+  bar.hidden=!pending.length||!approval.hidden;
+  if(bar.hidden&&hadFocus)$('draft').focus({preventScroll:true});
+  if(!pending.length){clear(bar);delete bar.dataset.signature}
+  for(const row of rows){
+    const questionEvent=(state.chatSource==='phone'?state.linkedEvents.get(context.conversationId)?.events||[]:state.sharedEvents).filter(e=>e.type==='question.asked'&&e.data?.turn===row.turn&&e.seq<=row.observedSeq).at(-1);
+    const anchor=questionEvent&&[...content.children].find(node=>node.dataset?.timelineQuestion===questionEvent.data.callId);
+    if(anchor){anchor.hidden=row.status==='pending';if(!anchor.hidden)anchor.textContent=WeftQuestionBar.record(row)}
+    for(const old of [...content.children])if(old.dataset?.questionRpcId===row.questionRpcId)old.remove();
+    if(!anchor&&row.status!=='pending'){const receipt=[...content.children].find(node=>node.dataset?.receiptId===row.sourceReceiptId);if(receipt){const record=el('section','question-record',WeftQuestionBar.record(row));record.dataset.questionRpcId=row.questionRpcId;content.insertBefore(record,receipt.nextSibling)}}
+  }
+  if(!pending.length)return;
+  const row=pending[0],attempt=questionAttempt(context,row),draft=questionDraft(context,row);
+  bar.dataset.scope=JSON.stringify(context);
+  WeftQuestionBar.paint(bar,{row,draft,remaining:pending.slice(1).reduce((n,row)=>n+row.questions.length,0),
+    retry:!!attempt?.unknown,locked:!!attempt?.busy||!!cache.error||!!attempt?.unknown&&!attempt.checked,
+    notice:attempt?.busy?'正在提交回答…':cache.error||attempt?.unknown?questionMeaning(row,cache,attempt):'',
+    current:()=>approvalViewCurrent(context),focusComposer:()=>$('draft').focus({preventScroll:true}),
+    choose:(index,label,checked)=>uiCore.mobileDecisions.chooseOption(context,row,index,label,checked),custom:(index,text)=>uiCore.mobileDecisions.setCustom(context,row,index,text),
+    submit:()=>{const answer=attempt?.unknown?attempt.answer:canonicalQuestionAnswer({answers:draft.answers.map(item=>({id:item.id,selected:[...item.selected],...(item.custom.trim()?{custom:item.custom}:{})}))},row.questions);if(answer)void answerToolQuestion(row,answer,context)},
+    check:cache.error||attempt?.unknown?()=>void refreshToolQuestions(context,{force:true}):null});
+}
 
 function renderQuestionView(context){if(approvalViewCurrent(context))renderConversationQuestions()}
 

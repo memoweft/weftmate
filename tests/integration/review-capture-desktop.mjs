@@ -59,7 +59,7 @@ for (const theme of ['light', 'dark']) {
       'composer-context': async()=>{await home();await button('背景信息窗口：86% 已用').focus();await page.getByRole('tooltip').waitFor();},
       conversation: async () => { await home(); await page.getByRole('button', {name:'读取了 3 个文件、已运行 1 个命令，已收起',exact:true}).click(); await page.getByText(/^读取 3 个文件/).evaluate(node => node.scrollIntoView({ block: 'center' })); },
       approval: async () => { await home(); await button('批准').evaluate(node => node.scrollIntoView({ block: 'center' })); },
-      question: async () => { await home(); await page.getByRole('radio', { name: '简要报告', exact: true }).evaluate(node => node.scrollIntoView({ block: 'center' })); },
+      question: async () => { await home(); await button('拒绝').click(); await page.getByRole('region',{name:'待回答问题'}).waitFor(); await page.getByRole('radio', { name: '简要报告', exact: true }).evaluate(node => node.scrollIntoView({ block: 'center' })); },
       'outputs-sources': async () => { await home(); await button('输出与来源').click(); await page.getByRole('button', { name: /README.md.*读取/ }).waitFor(); },
       memory: async () => { await home(); await button('查看这条回复采用的 1 条记忆来源').click(); await page.getByText('合成偏好：使用中文说明。', { exact: true }).waitFor(); },
       appearance: async () => { await settings(); await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '外观', exact: true }).click(); await page.getByRole('group', { name: '颜色模式' }).waitFor(); },
@@ -67,7 +67,7 @@ for (const theme of ['light', 'dark']) {
       usage: async () => { await settings(); await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '用量', exact: true }).click(); await page.getByRole('heading', { name: '用量与费用', exact: true }).waitFor(); await button('刷新用量').waitFor(); },
       'session-menu': async () => { await home(); await button('更多操作 项目进度报告').click(); await page.getByRole('menu', { name: '对话操作', exact: true }).waitFor(); await page.getByRole('menuitem', { name: '归档 A', exact: true }).waitFor(); await page.getByRole('menuitem', { name: '删除 D', exact: true }).waitFor(); },
     };
-    for (const scene of catalog.scenes.filter(row => row.id !== 'login')) await shot(scene.id, preparations[scene.id]);
+    for (const scene of catalog.scenes.filter(row => row.id !== 'login').sort((a,b)=>Number(a.id==='question')-Number(b.id==='question'))) await shot(scene.id, preparations[scene.id]);
     if (errors.length) throw Error('Desktop renderer or synthetic projection failed');
     console.log(`Desktop ${theme}: scene outcomes recorded.`);
   } finally {

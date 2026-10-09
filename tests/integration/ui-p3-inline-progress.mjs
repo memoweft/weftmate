@@ -35,7 +35,7 @@ try {
     for (const [, page] of surfaces) page.on('pageerror', error => errors.push(error.message));
     const shot = async name => { console.log(theme, name); for (const [surface, page] of surfaces) { await page.evaluate(() => document.activeElement?.blur()); if(capture)await page.screenshot({ path: join(evidence, `${surface}-${theme}-${name}.png`) }); } };
     const see = async text => { for (const [, page] of surfaces) await page.getByText(text, { exact: true }).first().waitFor(); };
-    await see('正在加载模型 合成模型…'); await shot('01-loading');
+    await see(/^正在加载模型 合成模型…/); await shot('01-loading');
     fixture.progress.call('pwsh', 'p3-command-1', { command: 'npm test' });
     await see('正在运行命令 npm test…'); await shot('02-working-command');
     // Native Space toggles disclosure; adding the next real step preserves it.
@@ -58,14 +58,14 @@ try {
       await page.emulateMedia({reducedMotion:'no-preference'});
     }
     fixture.progress.result('p3-search-1', 'Synthetic matches: 3.');
-    await see('已运行 1 个命令、读取了 2 个文件、搜索了 1 次');
+    await see(/^已运行 1 个命令、读取了 2 个文件、搜索了 1 次/);
     for (const [, page] of surfaces) {
-      const summary = page.getByRole('button', { name: '已运行 1 个命令、读取了 2 个文件、搜索了 1 次，已展开', exact: true });
+      const summary = page.getByRole('button', { name: /^已运行 1 个命令、读取了 2 个文件、搜索了 1 次(?: · .*)?，已展开$/ });
       await summary.press('Enter');
     }
     await shot('05-completed-collapsed');
     for (const [, page] of surfaces) {
-      await page.getByRole('button', { name: '已运行 1 个命令、读取了 2 个文件、搜索了 1 次，已收起', exact: true }).click();
+      await page.getByRole('button', { name: /^已运行 1 个命令、读取了 2 个文件、搜索了 1 次(?: · .*)?，已收起$/ }).click();
     }
     await shot('06-expanded');
     for (const [, page] of surfaces) {
@@ -73,7 +73,7 @@ try {
       await page.getByText(/Synthetic tests: 42 passed/).waitFor();
     }
     await shot('07-step-output');
-    for (const [, page] of surfaces) await page.getByRole('button', { name: '已运行 1 个命令、读取了 2 个文件、搜索了 1 次，已展开', exact: true }).click();
+    for (const [, page] of surfaces) await page.getByRole('button', { name: /^已运行 1 个命令、读取了 2 个文件、搜索了 1 次(?: · .*)?，已展开$/ }).click();
     fixture.progress.text('资料已经核对。接下来运行检查，并生成合成验收报告。');
     fixture.progress.call('pwsh', 'p3-command-2', { command: 'npm run typecheck' });
     await see('正在运行命令 npm run typecheck…');
@@ -85,9 +85,9 @@ try {
       assert.ok(first.seq < text.seq && text.seq < second.seq);
     }
     for (const [, page] of surfaces) {
-      const oldLine=page.getByRole('button',{name:'已运行 1 个命令、读取了 2 个文件、搜索了 1 次，已收起',exact:true});
+      const oldLine=page.getByRole('button',{name:/^已运行 1 个命令、读取了 2 个文件、搜索了 1 次(?: · .*)?，已收起$/});
       await oldLine.click();await page.getByText('正在运行命令 npm run typecheck…',{exact:true}).waitFor();
-      await page.getByRole('button',{name:'已运行 1 个命令、读取了 2 个文件、搜索了 1 次，已展开',exact:true}).click();
+      await page.getByRole('button',{name:/^已运行 1 个命令、读取了 2 个文件、搜索了 1 次(?: · .*)?，已展开$/}).click();
     }
     fixture.progress.result('p3-command-2', 'Synthetic typecheck passed.');
     const approvalA = await fixture.progress.approve('p3-approval-a', 'npm run verify');
@@ -112,7 +112,7 @@ try {
     await fixture.progress.resolve(approvalB, 'rejected'); fixture.progress.result('p3-approval-b', 'Synthetic command rejected.');
     await shot('10-rejected-bar-removed');
     for (const [, page] of surfaces) {
-      const line = page.getByRole('button', { name: /已运行 3 个命令，已收起/ });
+      const line = page.getByRole('button', { name: /已运行 3 个命令(?: · .*)?，已收起/ });
       await line.click(); await page.getByText(/运行命令[:： ]npm run verify.*已批准/).waitFor();
       await page.getByText(/运行命令[:： ]npm run release.*已拒绝/).waitFor();
     }

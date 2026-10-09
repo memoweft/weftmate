@@ -236,7 +236,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       if (boundaryFlights.has(`${ownerId}\0${boundary.event_id}`)) continue;
       try {
         await withOwner(ownerId, (entry) => entry.rpc.request('ingest_boundary', { boundary }),
-          boundary.parent_session_id);
+          row.offline === true ? null : boundary.parent_session_id);
         await queueOutbox(ownerId, async () => {
           const latest = await readOutbox(ownerId);
           latest.items = latest.items.filter((item) => item.boundary.event_id !== boundary.event_id);
@@ -400,6 +400,13 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
 
   return {
     enabled,
+    async discardOfflinePending(ownerId) {
+      return queueOutbox(ownerId, async () => {
+        const state = await readOutbox(ownerId);
+        state.items = state.items.filter(item => item.offline !== true);
+        await writeOutbox(ownerId, state);
+      });
+    },
     healthStore,
     flushObserved,
     // Expose remaining replay inputs; delivered revisions are acknowledged durably.
@@ -534,7 +541,11 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         const recentHeader = '【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。';
         const recentFragments = [];
         for (const item of [...recent.values()].sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))) {
-          const claim = (item.preceding_text ? `纠正所指的较早原话（仅解释主题）：${item.preceding_text}\n` : '') + `本人原话：${item.text}`;
+          const claim = item.correction_status === 'ambiguous'
+            ? `可能的纠正，待确认：以下较早原话均可能被指代，不得猜定主题或肯定旧值。\n${(item.preceding_candidates ?? []).map(prior => `较早：${prior.text}`).join('\n')}\n随后原话：${item.text}`
+            : item.preceding_text
+              ? `较早（已被随后原话纠正，不作为当前值）：${item.preceding_text}\n随后纠正（优先于较早原话与正式记忆）：${item.text}`
+              : `本人原话：${item.text}`;
           if (recentEvidence.length >= Math.min(4, recallMaxItems) ||
               recentHeader.length + recentFragments.join('\n\n').length + claim.length + 4 > Math.min(900, recallMaxChars)) continue;
           recentFragments.push(claim);
@@ -570,7 +581,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           ? world.world_revision : null, sourceCount: memories.length };
       }, sessionId);
     },
-    async ingest(ownerId, boundary) {
+    async ingest(ownerId, boundary, { offline = false } = {}) {
       owner(ownerId);
       if (!enabled) throw error('MEMORY_DISABLED');
       if (!boundary || typeof boundary !== 'object' || Array.isArray(boundary) ||
@@ -585,7 +596,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           return;
         }
         if (state.items.length >= MAX_OUTBOX_ITEMS) throw error('MEMORY_OUTBOX_FULL');
-        state.items.push({ boundary, blocked: false, lastFailureCode: null });
+        state.items.push({ boundary, blocked: false, lastFailureCode: null, ...(offline ? { offline: true } : {}) });
         await writeOutbox(ownerId, state);
       });
       const blocked = await queueOutbox(ownerId, async () => (await readOutbox(ownerId))
@@ -597,7 +608,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       boundaryFlights.add(flight);
       try {
         const result = await withOwner(ownerId, (entry) => entry.rpc.request('ingest_boundary', { boundary }),
-          boundary.parent_session_id);
+          offline ? null : boundary.parent_session_id);
         await queueOutbox(ownerId, async () => {
           const state = await readOutbox(ownerId);
           state.items = state.items.filter((item) => item.boundary.event_id !== boundary.event_id);
