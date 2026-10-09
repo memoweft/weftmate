@@ -73,8 +73,10 @@ import {
   verifyLegacyRouteMigration,
 } from './dsh-settings-migration.ts';
 import { formatHarnessStartupError } from './harness-startup-error.ts';
-import { checkForUpdates, initUpdater, quitAndInstall, updateState } from './update.ts';
+import { checkForUpdates, initUpdater, quitAndInstall, updateState, preparedInstallerPath, preparedInstallerHash } from './update.ts';
 import { createDesktopUpdates } from './personal-update/desktop.mjs';
+import { applyDesktopConfig } from './desktop-config.mjs';
+import { appBootSignal, prepareAppRollback } from './personal-update/app-rollback.mjs';
 import { initPerception } from './perception.ts';
 import { initDevices } from './devices.ts';
 import { ManagedAiGameRuntime } from './managed-ai-game-runtime.mjs';
@@ -94,6 +96,22 @@ import { memoryRecallDestination, memoryRecallModelTier, memorySessionPolicy } f
 import { ensurePrivateDirectory, ensurePrivateFile } from './private-host-storage.mjs';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT, assertLoopbackOrigin, hostRuntimeState, personalAccessPort, personalPublicOrigin as parsePersonalPublicOrigin, personalHostRequested, personalWorkspaceDirectory, startPersonalHost, validatePersonalHostProfile } from './host-mode.mjs';
 
+const desktopControlAppData = packageInfo.desktopIdentity ? join(app.getPath('appData'), packageInfo.desktopIdentity) : app.getPath('appData');
+if (process.argv.includes('--uninstall-cleanup')) {
+  try {
+    if (!app.isPackaged) throw new Error('UNINSTALL_REQUIRES_INSTALLED_PROGRAM');
+    const { uninstallDesktopData } = await import('./desktop-uninstall.mjs');
+    app.setLoginItemSettings({ openAtLogin: false, name: packageInfo.desktopIdentity || 'WeftMate', path: process.execPath });
+    await uninstallDesktopData({ appData: desktopControlAppData, deleteData: process.argv.includes('--delete-data') });
+    app.exit(0);
+  } catch { app.exit(1); }
+}
+const installedDesktopConfig = applyDesktopConfig({ appData: desktopControlAppData, packaged: app.isPackaged });
+if (app.isPackaged && process.env.WEFTMATE_RELAY_ENABLED === 'true') {
+  process.env.WEFTMATE_FRPC_FILE = join(process.resourcesPath, 'relay', 'frpc.exe');
+  process.env.WEFTMATE_RELAY_CA_FILE = join(process.resourcesPath, 'relay', 'transport-ca.pem');
+}
+await appBootSignal('starting', desktopControlAppData);
 const { syntheticStopFixtureRoute, syntheticBrowserFixtureSettings,
   createObservationRecorder, createPersonalModelObservationProxy,
   stage14R2ObservationProfile } = await loadPersonalDevelopmentTools();
@@ -198,7 +216,7 @@ if (wipeLaunch) {
 // 去掉 Electron 默认应用菜单(顶栏那条 File/Edit/View/Window)——桌面产品不该露原生菜单,不像成品。
 Menu.setApplicationMenu(null);
 // electron-builder removes build metadata from the packaged package.json.
-if (process.platform === 'win32') app.setAppUserModelId(packageInfo.build?.appId ?? 'com.memoweft.weftmate');
+if (process.platform === 'win32') app.setAppUserModelId(packageInfo.desktopAppId ?? packageInfo.build?.appId ?? 'com.memoweft.weftmate');
 
 // ── B4·崩溃/错误上报最小闭环（v2 遗产）──
 function redactSecretText(value) {
@@ -3270,8 +3288,14 @@ async function bootstrap() {
         },
       });
       if (accessPort !== null) {
-        desktopUpdates = await createDesktopUpdates({ getWindow: () => win, mobileUiDir,
-          beforeAppInstall: async () => { if (personalBackupManager) await personalBackupManager.request('before-upgrade'); }, isIdle: async () => {
+        desktopUpdates = await createDesktopUpdates({ getWindow: () => win, mobileUiDir, desktopConfig: installedDesktopConfig,
+          beforeAppInstall: async () => {
+            if (personalBackupManager) await personalBackupManager.request('before-upgrade');
+            if (app.isPackaged) await prepareAppRollback({ configFile: installedDesktopConfig.file, nextVersion: updateState().version, appData: desktopControlAppData,
+              installer: preparedInstallerPath(),
+              installerSha256: preparedInstallerHash(),
+              cacheDirectory: join(process.env.LOCALAPPDATA || app.getPath('appData'), packageInfo.name + '-updater') });
+          }, isIdle: async () => {
           if (activeStageOneTurns.size) return false;
           if (!runtimeOrigin) return !activeModelProfile();
           try { assertAuthoritativeSessionsIdle(await listSharedSessionsForReferenceGuard()); return true; }
@@ -3348,6 +3372,7 @@ async function bootstrap() {
           desktopUpdates.attach(win);
           setupTray();
           await personalDesktop.ready;
+          if (await win.webContents.executeJavaScript('globalThis.__WeftUiStarted === true')) await appBootSignal('healthy', desktopControlAppData);
         }
       }
     } else {
@@ -3469,7 +3494,7 @@ function refreshTrayMenu() {
       ? '正在检查或下载更新…'
       : update.enabled
         ? '检查更新…'
-        : '检查更新（未配置预览源）';
+        : '检查更新（未配置更新源）';
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: '打开 WeftMate', click: showWindow },
     ...(personalHostMode ? [{ label: `宿主：${desktopStatus.host} · 模型：${desktopStatus.model}`, enabled: false }] : []),

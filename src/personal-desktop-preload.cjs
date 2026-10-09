@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld('weftmateDesktop', {
   platform: process.platform,
   updateState: () => ipcRenderer.invoke('wm:desktop:update-state'),
   checkUpdates: () => ipcRenderer.invoke('wm:desktop:update-check'),
+  setUpdateChannel: channel => ipcRenderer.invoke('wm:desktop:update-channel', channel),
   restartForUpdate: () => ipcRenderer.invoke('wm:desktop:update-restart'),
   openLogs: () => ipcRenderer.invoke('wm:desktop:open-logs'),
   settings: () => ipcRenderer.invoke('wm:desktop:settings'),
