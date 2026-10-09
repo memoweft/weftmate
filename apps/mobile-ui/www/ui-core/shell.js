@@ -152,6 +152,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         }
         core.state.hostId = payload.hostId;
         core.state.capabilities = payload.backend?.capabilities ?? null;
+        core.state.executionAccount = payload.executionAccount;
         core.state.syncAvailable = payload.sync?.available === true;
         effects.paintMemoryAvailability?.(payload.memory ?? { state: payload.backend?.modules?.memory });
         if (!core.state.syncAvailable && core.state.phonePane)
@@ -333,6 +334,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         core.state.submitting = false;
         core.state.cancelSubmitting = false;
         core.state.capabilities = null;
+        core.state.executionAccount = undefined;
         core.state.sessions = [];
         core.state.sessionGroups = [];
         core.state.models = [];

@@ -1,0 +1,60 @@
+{
+  "model": "mimo-v2.6-flash",
+  "groups": [
+    {
+      "phase": "before",
+      "requests": 1,
+      "usageRecords": 1,
+      "requestsWithoutUsage": 0,
+      "inputTokens": 1735,
+      "cachedInputTokens": 0,
+      "outputTokens": 680
+    },
+    {
+      "phase": "fresh",
+      "requests": 6,
+      "usageRecords": 6,
+      "requestsWithoutUsage": 0,
+      "inputTokens": 19392,
+      "cachedInputTokens": 14400,
+      "outputTokens": 808
+    },
+    {
+      "phase": "legacy",
+      "requests": 7,
+      "usageRecords": 7,
+      "requestsWithoutUsage": 0,
+      "inputTokens": 23589,
+      "cachedInputTokens": 17856,
+      "outputTokens": 1050
+    },
+    {
+      "phase": "mobile-web",
+      "requests": 6,
+      "usageRecords": 6,
+      "requestsWithoutUsage": 0,
+      "inputTokens": 17385,
+      "cachedInputTokens": 14784,
+      "outputTokens": 673
+    },
+    {
+      "phase": "second",
+      "requests": 6,
+      "usageRecords": 6,
+      "requestsWithoutUsage": 0,
+      "inputTokens": 18650,
+      "cachedInputTokens": 15552,
+      "outputTokens": 692
+    }
+  ],
+  "uncapturedFailedRuns": 2,
+  "limitation": "Two early real model attempts failed at the approval bridge before the runner saved request traces. Their token counts are unknown. Totals are a known lower bound, not an account bill.",
+  "knownTotals": {
+    "requests": 26,
+    "usageRecords": 26,
+    "requestsWithoutUsage": 0,
+    "inputTokens": 80751,
+    "cachedInputTokens": 62592,
+    "outputTokens": 3903
+  }
+}

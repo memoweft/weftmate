@@ -969,8 +969,13 @@ class HybridActivity : Activity() {
         }
         "shared.commands.byRequest" -> {
             val host = requireHost()
+            val epoch = requestEpoch
+            val scope = owner(host)
             JSONObject().put("source", "host")
-                .put("command", api.commandByRequest(host, params.getString("requestId")))
+                .put("command", sharedChat.commandByRequest(host, params.getString("requestId")) {
+                    !closed.get() && !accountTransition.get() && epoch == accountEpoch.get() &&
+                        owner(secrets.host()) == scope
+                })
         }
         "shared.tasks.detail" -> {
             val host = requireHost()
@@ -1424,7 +1429,7 @@ class HybridActivity : Activity() {
         }
         "cloud.app.identity" -> JSONObject().put("deviceName", android.os.Build.MODEL)
             .put("clientId", "weftmate-android").put("redirectUri", CLOUD_CALLBACK)
-            .put("hostOrigin", if (BuildConfig.DEBUG && packageName == "com.memoweft.weftmate.mobile.lg1bqa")
+            .put("hostOrigin", if (BuildConfig.DEBUG && packageName in setOf("com.memoweft.weftmate.mobile.lg1bqa", "com.memoweft.weftmate.mobile.fx9qa"))
                 intent?.getStringExtra("lg1bHostOrigin") ?: CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com"
                 else CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com")
         "cloud.app.configure" -> CloudAppLogin(secrets, api).configure(params.getString("origin"))
@@ -1433,7 +1438,7 @@ class HybridActivity : Activity() {
         "cloud.app.credentials" -> CloudAppLogin(secrets, api).credentials(params)
         "cloud.app.request" -> CloudAppLogin(secrets, api).request(params)
         "cloud.app.status" -> {
-            require(BuildConfig.DEBUG && packageName == "com.memoweft.weftmate.mobile.lg1bqa")
+            require(BuildConfig.DEBUG && packageName in setOf("com.memoweft.weftmate.mobile.lg1bqa", "com.memoweft.weftmate.mobile.fx9qa"))
             CloudAppLogin(secrets, api).status()
         }
         "cloud.configure" -> CloudLogin(secrets, api).configure(params.getString("origin"), params.getString("pin"))

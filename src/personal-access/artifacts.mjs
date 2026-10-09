@@ -35,7 +35,7 @@ export function createArtifactOperations(context) {
     /** Main-process only: create a bounded document from one accepted owner turn. */
     async submitToolArtifact({ sessionId, turn, callId, messageHash, receiptId,
       sourceSnapshotIds, fileName, content, nativeFile }) {
-      const ownerId = context.rootState.legacyOwnerId;
+      const ownerId = context.sessionOperations.executionOwnerForSession(sessionId);
       id(sessionId);
       if (!Number.isSafeInteger(turn) || turn < 0 || typeof callId !== 'string' ||
           !/^[A-Za-z0-9._:-]{1,160}$/.test(callId) ||
