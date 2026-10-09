@@ -5,6 +5,13 @@ import WeftMateCore
 import UIKit
 #endif
 
+struct AppleProjectEditor: Identifiable {
+    let id = UUID()
+    let project: Project?
+    var draft: ProjectDraft
+    init(project: Project?) { self.project = project; draft = .init(project: project) }
+}
+
 protocol AppleDraftPersisting: Sendable {
     func loadDrafts(account: LocalAccountScope) async throws -> [String: String]
     func saveDraft(account: LocalAccountScope, conversationId: String, text: String) async throws
@@ -219,7 +226,7 @@ extension AppleAppModel {
 
     /// Read-only task navigation uses an observed session identity, independently of send/model readiness.
     func taskSessionID(for conversation: ConversationSummary, accountEpoch: UUID) -> String? {
-        guard accountEpoch == epoch, let session, let selected = selectedConversation,
+        guard tasksAvailable(conversation), accountEpoch == epoch, let session, let selected = selectedConversation,
               selected.id == conversation.id, selected.conversationId == conversation.conversationId,
               selected.sessionId == conversation.sessionId else { return nil }
         let candidate = knownBoundSessions[Self.draftKey(for: selected)] ?? selected.sessionId
@@ -727,7 +734,7 @@ final class AppleAppModel: ObservableObject {
     @Published var timelineRootCommands: [TaskRootCommandMetadata] = []
     @Published var stoppingActiveTask = false
     func stopActiveTask() async {
-        guard !stoppingActiveTask, historyCachedAt == nil, let conversation = selectedConversation,
+        guard !stoppingActiveTask, historyCachedAt == nil, let conversation = selectedConversation, tasksAvailable(conversation),
               let id = conversation.sessionId,
               let started = timeline.events.last(where: { $0.type == "task.started" }) ?? timeline.events.last(where: { $0.type == "user.message" }),
               let receipt = started.data["receiptId"]?.string,
@@ -743,6 +750,103 @@ final class AppleAppModel: ObservableObject {
         guard actionEpoch == epoch else { return }
         queueNotice = control.stopError ?? control.error
     }
+    @Published var projects: [Project] = []
+    @Published var projectCanManage = false
+    @Published var projectsError: String?
+    @Published var collapsedProjects = Set<String>()
+    @Published var projectEditor: AppleProjectEditor?
+    @Published var projectConversation: Project?
+    @Published var projectModelID = ""
+    @Published var projectModels: [SharedHostModel] = []
+    @Published var projectBusy = false
+    @Published var projectError: String?
+    @Published var executionAccount: Bool?
+    @Published var sessionProjectNotices: [String: String] = [:]
+    // Populated by an embedded local host, never by an arbitrary server URL.
+    private(set) var localHostID: String?
+    var canChooseProjectFolder: Bool {
+        ProjectPresentation.canChooseLocalFolder(canManage: projectCanManage, hostID: session?.hostId, localHostID: localHostID, platform: .current)
+    }
+    func tasksAvailable(_ row: ConversationSummary) -> Bool {
+        ProjectPresentation.taskEnabled(taskAvailable: liveConversations[row.id]?.taskAvailable ?? row.taskAvailable, executionAccount: executionAccount)
+    }
+    func projectRows(_ project: Project, query: String = "") -> [ConversationSummary] {
+        conversations.filter { !$0.archived && $0.projectId == project.id && (query.isEmpty || project.name.localizedCaseInsensitiveContains(query) || $0.title.localizedCaseInsensitiveContains(query)) }
+    }
+    func beginProject(_ project: Project? = nil) {
+        guard canChooseProjectFolder else { return }
+        projectError = nil; projectEditor = .init(project: project)
+    }
+    func saveProject() async {
+        guard !projectBusy, canChooseProjectFolder, let editor = projectEditor, editor.draft.valid,
+              editor.project != nil || !editor.draft.rootPath.isEmpty else { return }
+        let token = epoch; projectBusy = true; projectError = nil
+        defer { if token == epoch { projectBusy = false } }
+        do {
+            if let project = editor.project { _ = try await client.updateProject(project, draft: editor.draft) }
+            else { _ = try await client.createProject(editor.draft) }
+            guard token == epoch else { return }
+            projectEditor = nil; await refresh()
+        } catch { if token == epoch { projectError = ProjectPresentation.error(error); await refresh() } }
+    }
+    func removeProject() async {
+        guard !projectBusy, canChooseProjectFolder, let project = projectEditor?.project else { return }
+        let token = epoch; projectBusy = true; projectError = nil
+        defer { if token == epoch { projectBusy = false } }
+        do {
+            let reply = try await client.removeProject(project)
+            guard token == epoch else { return }
+            guard reply.deleted, reply.projectId == project.id else { throw APIFailure.identityMismatch }
+            projectEditor = nil; await refresh()
+        } catch { if token == epoch { projectError = ProjectPresentation.error(error); await refresh() } }
+    }
+    func beginProjectConversation(_ project: Project) async {
+        guard !projectBusy else { return }
+        let token = epoch; projectError = nil; projectModels = []; projectModelID = ""; projectConversation = project
+        do {
+            let models = try await client.hostModels().filter(\.configured)
+            guard token == epoch, projectConversation?.id == project.id else { return }
+            projectModels = models; projectModelID = models.first?.id ?? ""
+        } catch { if token == epoch { projectError = ProjectPresentation.error(error) } }
+    }
+    func createProjectConversation() async {
+        guard !projectBusy, let project = projectConversation, let accountSession = session, let local = commandStore,
+              projectModels.contains(where: { $0.id == projectModelID }) else { return }
+        let token = epoch; projectBusy = true; projectError = nil
+        defer { if token == epoch { projectBusy = false } }
+        do {
+            let records = try await local.commands(account: LocalAccountScope(server: accountSession.server, ownerId: accountSession.account.ownerId))
+            let existing = records.last { record in
+                record.intent.hostId == accountSession.hostId && record.intent.parsedPayload.projectId == project.id &&
+                ([.queued, .uncertain].contains(record.state) || (record.state == .accepted && !conversations.contains(where: { $0.sessionId == record.receipt?.sessionId })))
+            }
+            let intent = try existing?.intent ?? SharedCommandIntent(session: accountSession, command: SharedCommandPayload(requestId: "apple-project-session-" + UUID().uuidString.lowercased(), kind: .create, targetDeviceId: accountSession.hostId, modelProfileId: projectModelID, projectId: project.id))
+            var record = try await local.persist(intent)
+            let deadline = Date().addingTimeInterval(45)
+            var submit = true
+            while token == epoch, !Task.isCancelled, Date() < deadline {
+                let result = try await client.reconcileCommand(intent, allowSubmission: submit)
+                submit = false
+                guard token == epoch else { return }
+                if case .found(let receipt) = result {
+                    record = try await local.recordReceipt(receipt, for: intent, expectedRevision: record.revision)
+                    publish(record, accountEpoch: token)
+                    if receipt.state.isAccepted, let id = receipt.sessionId {
+                        await refresh(); guard token == epoch else { return }
+                        guard let row = conversations.first(where: { $0.sessionId == id }) else { throw APIFailure.invalidResponse }
+                        projectConversation = nil; openedSessionID = row.id; return
+                    }
+                    if receipt.state == .rejected { throw APIFailure.server(status: 409, code: receipt.errorCode ?? "REQUEST_FAILED") }
+                    if receipt.state == .uncertain { break }
+                }
+                try await Task.sleep(for: .milliseconds(250))
+            }
+            throw APIFailure.transport(.timeout)
+        } catch {
+            if token == epoch { projectError = "新建结果尚未确认。再次点新建会先核对原请求。" + ProjectPresentation.error(error) }
+        }
+    }
+
     @Published var sessionGroups: [SessionGroup] = []
     @Published var collapsedSessionGroups = Set<String>()
     @Published var openedSessionID: String?
@@ -761,14 +865,15 @@ final class AppleAppModel: ObservableObject {
         await updateMetadata(row, title: title)
         if lifecycleError == nil { renamingSessionID = nil }
     }
-    func updateMetadata(_ row: ConversationSummary, pinned: Bool? = nil, unread: Bool? = nil, title: String? = nil, groupID: String? = nil, changeGroup: Bool = false) async {
+    func updateMetadata(_ row: ConversationSummary, pinned: Bool? = nil, unread: Bool? = nil, title: String? = nil, groupID: String? = nil, changeGroup: Bool = false, projectID: String? = nil, changeProject: Bool = false) async {
         guard !lifecycleBusy, let id = row.sessionId else { return }
         let token = epoch; lifecycleBusy = true; lifecycleError = nil
         defer { if token == epoch { lifecycleBusy = false } }
         do {
-            let reply = try await client.updateSessionMetadata(sessionID: id, pinned: pinned, unread: unread, title: title, groupID: groupID, changeGroup: changeGroup)
+            let reply = try await client.updateSessionMetadata(sessionID: id, pinned: pinned, unread: unread, title: title, groupID: groupID, changeGroup: changeGroup, projectID: projectID, changeProject: changeProject)
             guard token == epoch else { return }
             guard reply.sessionId == id else { throw APIFailure.identityMismatch }
+            if let notice = reply.projectNotice { sessionProjectNotices[row.id] = notice }
             await refresh()
         } catch { if token == epoch { lifecycleError = friendly(error) } }
     }
@@ -840,7 +945,7 @@ final class AppleAppModel: ObservableObject {
             if let index = conversations.firstIndex(where: { $0.id == conversation.id }) {
                 let old = conversations[index]
                 conversations[index] = .init(id: old.id, title: old.title, conversationId: old.conversationId, sessionId: old.sessionId,
-                    running: old.running, sendAvailable: !archived && old.sendAvailable, originalModelLabel: old.originalModelLabel, archived: archived, pinned: old.pinned, unread: old.unread, groupId: old.groupId)
+                    running: old.running, sendAvailable: !archived && old.sendAvailable, originalModelLabel: old.originalModelLabel, archived: archived, pinned: old.pinned, unread: old.unread, groupId: old.groupId, projectId: old.projectId, projectName: old.projectName, projectNotice: old.projectNotice, taskAvailable: old.taskAvailable)
             }
             if selectedConversation?.id == conversation.id { selectedConversation = conversations.first { $0.id == conversation.id } }
             await refresh()
@@ -1019,7 +1124,8 @@ final class AppleAppModel: ObservableObject {
         let revision: UUID
     }
 
-    init() {
+    init(localHostID: String? = nil) {
+        self.localHostID = localHostID
         #if DEBUG
         let args = ProcessInfo.processInfo.arguments
         let uiTesting = args.contains("--ui-testing")
@@ -1049,6 +1155,7 @@ final class AppleAppModel: ObservableObject {
         var store: any CredentialStore = KeychainCredentialStore(service: uiTesting
             ? "\(testService).credentials" : "com.weftmate.apple.credentials")
         #if DEBUG && os(macOS)
+        if uiTesting, args.contains("--lg2-capture"), let i = args.firstIndex(of: "--a11-local-host-id"), args.indices.contains(i + 1) { self.localHostID = args[i + 1] }
         if uiTesting, args.contains("--lg2-capture"), args.contains("--a5-local-server"),
            args.contains("--a10-ephemeral-credentials"), let index = args.firstIndex(of: "--server-url"),
            args.indices.contains(index + 1), let url = URL(string: args[index + 1]), url.host == "127.0.0.1", url.scheme == "http" {
@@ -1303,6 +1410,8 @@ final class AppleAppModel: ObservableObject {
             conversations = result
             sessionGroups = try await client.sessionGroups()
             guard actionEpoch == epoch else { return }
+            executionAccount = try await client.nativeUpdateStatus().executionAccount
+            guard actionEpoch == epoch else { return }
             liveConversations = Dictionary(uniqueKeysWithValues: result.map { ($0.id, $0) })
             conversationsCachedAt = nil
             lastRefresh = Date()
@@ -1315,6 +1424,11 @@ final class AppleAppModel: ObservableObject {
             if await expireSessionIfNeeded(error) { return }
             conversationsError = friendly(error)
         }
+        do {
+            let reply = try await client.projects()
+            guard actionEpoch == epoch else { return }
+            projects = reply.projects.filter { !$0.revoked }; projectCanManage = reply.canManage; projectsError = nil
+        } catch { if actionEpoch == epoch { projectsError = "项目暂时无法读取，重新连接后再试。"; projectCanManage = false } }
         do {
             let result = try await client.devices()
             guard actionEpoch == epoch else { return }
@@ -1474,7 +1588,7 @@ final class AppleAppModel: ObservableObject {
         let old = conversations[index], running = last.type.hasSuffix("started")
         guard old.running != running else { return }
         conversations[index] = .init(id: old.id, title: old.title, conversationId: old.conversationId, sessionId: old.sessionId,
-            running: running, sendAvailable: old.sendAvailable, originalModelLabel: old.originalModelLabel, archived: old.archived, pinned: old.pinned, unread: old.unread, groupId: old.groupId, contextUsage: old.contextUsage, processing: running ? old.processing : nil)
+            running: running, sendAvailable: old.sendAvailable, originalModelLabel: old.originalModelLabel, archived: old.archived, pinned: old.pinned, unread: old.unread, groupId: old.groupId, contextUsage: old.contextUsage, processing: running ? old.processing : nil, projectId: old.projectId, projectName: old.projectName, projectNotice: old.projectNotice, taskAvailable: old.taskAvailable)
     }
     private func persistTimeline(_ conversation: ConversationSummary) async {
         guard historyCachedAt == nil, !timeline.events.isEmpty, let timelineCache, let account = draftAccount, let session,
@@ -1488,9 +1602,9 @@ final class AppleAppModel: ObservableObject {
     private lazy var watchBridge = PhoneWatchTimelineBridge(model: self)
     func watchSnapshotBytes() async -> Data? {
         let actionEpoch = epoch
-        guard let session, session.verification == .verified else { return nil }
+        guard let session, session.verification == .verified, selectedConversation.map({ tasksAvailable($0) }) != false else { return nil }
         do {
-            let live = try await client.sharedSessions(includeArchived: true)
+            let live = try await client.sharedSessions(includeArchived: true).filter { $0.taskAvailable != false }
             guard actionEpoch == epoch,
                   let currentSession = live.first(where: { $0.running && $0.sessionId == selectedConversation?.sessionId })
                     ?? live.first(where: \.running)
@@ -1740,6 +1854,7 @@ final class AppleAppModel: ObservableObject {
     private func clearVisibleAccount() {
         settingsRoute = .init(categoryID: "general")
         timelineRootCommands = []; stoppingActiveTask = false
+        projects = []; projectCanManage = false; projectsError = nil; projectEditor = nil; projectConversation = nil; projectModels = []; projectBusy = false; projectError = nil; executionAccount = nil; sessionProjectNotices = [:]; collapsedProjects = []
         sessionGroups = []; collapsedSessionGroups = []; openedSessionID = nil; renamingSessionID = nil; groupCandidate = nil; sessionMenuCandidate = nil; deletionInSettings = false; conversationForget = .init(); conversationPreviewToken = UUID(); conversationPreviewLoading = false; deletionCandidate = nil; forgetConversationMemories = false; lifecycleBusy = false; lifecycleError = nil
         queueNotice = nil; queueBusy = []; queueCancelRequests = [:]; canceledQueuedTasks = []
         attachmentDrafts.values.flatMap { $0 }.forEach { $0.removeTemporaryFiles() }

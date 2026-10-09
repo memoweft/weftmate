@@ -23,6 +23,7 @@ public struct SharedSessionRecord: Codable, Equatable, Sendable, Identifiable {
     public let sendAvailable: Bool
     public let conversationId: String?
     public let modelProfileId: String?
+    public let taskAvailable: Bool?
     public let unavailable: Bool?
     public let archived: Bool?
     func validate() throws {
@@ -137,6 +138,7 @@ public struct SharedCommandPayload: Codable, Equatable, Sendable {
     public let mode: String?
     public let intent: MessageIntent?
     public let modelProfileId: String?
+    public let projectId: String?
     public let sourceSyncEventId: String?
     public let attachments: [OriginalAttachment]?
     public let originalAttachments: [OriginalAttachment]?
@@ -144,10 +146,10 @@ public struct SharedCommandPayload: Codable, Equatable, Sendable {
     public init(requestId: String, kind: SharedCommandKind, targetDeviceId: String,
                 sessionId: String? = nil, text: String? = nil, modelProfileId: String? = nil,
                 sourceSyncEventId: String? = nil, attachments: [OriginalAttachment]? = nil,
-                originalAttachments: [OriginalAttachment]? = nil, attachmentMessageId: String? = nil, intent: MessageIntent = .steer) throws {
+                originalAttachments: [OriginalAttachment]? = nil, attachmentMessageId: String? = nil, intent: MessageIntent = .steer, projectId: String? = nil) throws {
         self.requestId = requestId; self.kind = kind; self.targetDeviceId = targetDeviceId
         self.sessionId = sessionId; self.text = text; self.modelProfileId = modelProfileId
-        self.sourceSyncEventId = sourceSyncEventId; mode = nil
+        self.sourceSyncEventId = sourceSyncEventId; mode = nil; self.projectId = projectId
         self.intent = kind == .message ? intent : nil
         self.attachments = attachments; self.originalAttachments = originalAttachments
         self.attachmentMessageId = attachmentMessageId
@@ -155,6 +157,7 @@ public struct SharedCommandPayload: Codable, Equatable, Sendable {
     }
     func validate() throws {
         if let text, text.utf16.count > 8_192 { throw ClientInputFailure.messageTooLong }
+        try SharedValidation.require(projectId == nil || (kind == .create && projectId.map(SharedValidation.id) == true))
         try SharedValidation.require(SharedValidation.request(requestId) && SharedValidation.id(targetDeviceId))
         if kind != .message {
             try SharedValidation.require(attachments == nil && originalAttachments == nil && attachmentMessageId == nil)
@@ -183,7 +186,7 @@ public struct SharedCommandPayload: Codable, Equatable, Sendable {
     static func decode(_ data: Data) throws -> Self {
         try SharedValidation.require(data.count <= 12_288)
         guard let keys = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
-              Set(keys.keys).isSubset(of: ["requestId", "kind", "targetDeviceId", "sessionId", "text", "mode", "intent", "modelProfileId", "sourceSyncEventId", "attachments", "originalAttachments", "attachmentMessageId"]) else {
+              Set(keys.keys).isSubset(of: ["requestId", "kind", "targetDeviceId", "sessionId", "text", "mode", "intent", "modelProfileId", "sourceSyncEventId", "attachments", "originalAttachments", "attachmentMessageId", "projectId"]) else {
             throw APIFailure.invalidResponse
         }
         let payload: Self
@@ -194,7 +197,7 @@ public struct SharedCommandPayload: Codable, Equatable, Sendable {
             keys["targetDeviceId"] as? String == payload.targetDeviceId && keys["sessionId"] as? String == payload.sessionId &&
             keys["text"] as? String == payload.text && keys["mode"] as? String == payload.mode &&
             keys["intent"] as? String == payload.intent?.rawValue &&
-            keys["modelProfileId"] as? String == payload.modelProfileId && keys["sourceSyncEventId"] as? String == payload.sourceSyncEventId &&
+            keys["modelProfileId"] as? String == payload.modelProfileId && keys["projectId"] as? String == payload.projectId && keys["sourceSyncEventId"] as? String == payload.sourceSyncEventId &&
             keys["attachmentMessageId"] as? String == payload.attachmentMessageId)
         for key in ["attachments", "originalAttachments"] {
             let raw = keys[key].map { try? JSONSerialization.data(withJSONObject: $0) } ?? nil
