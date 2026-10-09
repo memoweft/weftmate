@@ -23,6 +23,27 @@ function fixture(read: (path: string, options: any) => any = () => response({}))
 const plain = (value: any) => JSON.parse(JSON.stringify(value))
 const deferred = () => { let resolve!: (value: any) => void; const promise = new Promise(done => { resolve = done }); return { promise, resolve } }
 
+test('running composer reports observed phases and hides them on an idle session without changing stop availability', () => {
+  const f = fixture(), session: any = f.core.state.sessions[0]
+  session.running = true
+  for (const [processing, label] of [
+    [{ phase: 'memory' }, '正在读取记忆…'],
+    [{ phase: 'loading', modelName: 'Synthetic Muse' }, '正在加载模型 Synthetic Muse…'],
+    [{ phase: 'queued', ahead: 2 }, '模型排队中，前面还有 2 个请求'],
+    [{ phase: 'reasoning' }, '正在思考…'],
+    [{ phase: 'answering' }, '正在回复…'],
+    [null, '等待模型回复…'],
+  ]) {
+    session.processing = processing
+    const view = f.core.composerState('')
+    assert.equal(view.hint, label)
+    assert.equal(view.cancelHidden, false)
+    assert.equal(view.cancelDisabled, false)
+  }
+  session.running = false
+  assert.equal(f.core.composerState('').hint, '')
+})
+
 test('core registers distinct actions, constructs independent stores and has no DOM dependency', () => {
   assert.doesNotMatch(source, /\b(?:document|window)\.|\bbyId\(|\.textContent\b|\.hidden\b|\.querySelector\b/)
   const f = fixture(), seen = new Set<string>()

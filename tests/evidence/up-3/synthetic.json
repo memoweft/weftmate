@@ -1,0 +1,21 @@
+{
+  "syntheticOnly": true,
+  "realElectron": true,
+  "realDsh": true,
+  "checks": [
+    {
+      "surface": "desktop",
+      "loading": true,
+      "reply": true,
+      "emptyToolCards": 0,
+      "stopEnabledDuringWait": true
+    },
+    {
+      "surface": "mobile-web",
+      "loading": true,
+      "reply": true,
+      "emptyToolCards": 0,
+      "stopEnabledDuringWait": true
+    }
+  ]
+}

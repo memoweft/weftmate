@@ -101,7 +101,7 @@ export function apply(ctx, config) {
             options = { ...options, ...await response.json() };
           }
           const release = await acquireModelSlot(background ? 'background' : 'foreground', options.signal,
-            scheduler, { profileId: options.provider });
+            scheduler, { profileId: options.provider, ...(background ? {} : { sessionId: options.sessionId ?? '' }) });
           try {
           const modelInfo = await target.resolveModel(options.provider, options.model, options.signal);
           options = { ...options, messages: messagesForModelInput(options.messages, modelInfo.inputModalities) };
