@@ -19,6 +19,7 @@ if (capture) mkdirSync(evidence, { recursive: true });
 const env = { ...process.env };
 for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key.startsWith('MEMOWEFT_') || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
 let application, page, candidate;
+const retiredCandidates = [];
 const errors = [], results = [], performanceResults = [];
 async function until(check) { const deadline = performance.now() + 30000; while (performance.now() < deadline) { if (await check()) return; await new Promise(done => setTimeout(done, 50)); } throw Error('Motion fixture condition timed out'); }
 async function frames(phase, name, action) {
@@ -127,9 +128,12 @@ try {
     phase = current;
     const previous = candidate;
     candidate = await startTimelineCandidate({ historyCount: 0, interactive: true, riskApproval: true, baseTime: Date.now() - 80000 });
+    retiredCandidates.push(previous);
     await page.emulateMedia({ reducedMotion: phase === 'reduced' ? 'reduce' : 'no-preference' });
     console.log(`loading ${phase}`);
-    await page.reload(); console.log(`loaded ${phase}`); await previous.close(); console.log('old host closed');
+    await page.reload(); console.log(`loaded ${phase}`);
+    // A reload can leave a proxy fetch reading the old host. Keep that host
+    // alive until all route handlers have drained in the final cleanup.
     await page.getByRole('heading', { name: '登录 WeftMate' }).waitFor();
     await frames(phase, 'login-step', () => page.getByRole('button', { name: '还没有账号？注册', exact: true }).evaluate(button => button.click()));
     for (const step of ['code', 'password']) await frames(phase, `login-${step}`, () => page.evaluate(step => {
@@ -206,4 +210,4 @@ try {
   if (capture) writeFileSync(join(evidence, 'verification.json'), JSON.stringify({ baseline, realProgram: !fixture, syntheticLogModel: true, isolated: true, modelRequests: 0, framesAreDeterministicAnimationSamples: true, results, performance: performanceResults, reducedMotion: true, livePreferenceChange: true, longLists: true, keyboard: true, geometryStable: true, errors }, null, 2) + '\n');
   console.log('UI-P1 desktop motion and reduced-motion behavior passed.');
 } catch (error) { console.error(error); if (page) { console.error((await page.locator('body').innerText()).slice(-1800)); await page.screenshot({ path: join(root, 'failure.png'), timeout: 5000 }).catch(() => {}); console.error('Isolated diagnostics:', root); } throw error; }
-finally { await page?.unrouteAll({ behavior: 'wait' }).catch(() => {}); await application?.close().catch(() => {}); await candidate?.close(); }
+finally { await page?.unrouteAll({ behavior: 'wait' }).catch(() => {}); await application?.close().catch(() => {}); await candidate?.close(); await Promise.all(retiredCandidates.map(host => host.close())); }
