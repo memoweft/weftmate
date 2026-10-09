@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-09T08:11:37.649Z",
+  "model": "lan",
+  "revision": {
+    "weftmate": "960a5f28574c1348f30d93e9b7c6dc8508a36787",
+    "core": "234f2a50d8f646ae699e6a7791421d8216ad969e"
+  },
+  "electron": true,
+  "steps": [
+    {
+      "id": "01",
+      "title": "原话进入真实桌面对话",
+      "status": "running",
+      "checks": {},
+      "startedAt": "2026-10-09T08:11:56.006Z"
+    }
+  ],
+  "turns": [
+    {
+      "sessionId": "session-3de3475a-2603-49bf-a7ce-1a4a7cdc7918",
+      "model": "lan",
+      "modelProfileId": "private-model-c0ca138ca0ab2a878c13e5dd240f351f47e341ec",
+      "user": "王小明打游戏挺厉害，是我好兄弟。",
+      "reply": "",
+      "status": "running",
+      "memoryUsed": [],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-09T08:11:59.730Z",
+          "data": {
+            "taskId": "cmd-ce7eb6f1-ada5-43b2-8c5b-554ad64391f1",
+            "receiptId": "6e459d90-77dd-41ff-8f60-76c970a4c3e0",
+            "text": "王小明打游戏挺厉害，是我好兄弟。",
+            "commandId": "cmd-ce7eb6f1-ada5-43b2-8c5b-554ad64391f1",
+            "requestId": "d0a1511b-7659-438d-b734-4d2233eece5b"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-09T08:11:59.731Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-09T08:12:00.191Z",
+          "data": {
+            "taskId": "cmd-ce7eb6f1-ada5-43b2-8c5b-554ad64391f1",
+            "turn": 1,
+            "receiptId": "6e459d90-77dd-41ff-8f60-76c970a4c3e0",
+            "commandId": "cmd-ce7eb6f1-ada5-43b2-8c5b-554ad64391f1",
+            "requestId": "d0a1511b-7659-438d-b734-4d2233eece5b",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-09T08:12:00.191Z",
+          "data": {
+            "text": "王小明打游戏挺厉害，是我好兄弟。",
+            "receiptId": "6e459d90-77dd-41ff-8f60-76c970a4c3e0"
+          }
+        }
+      ]
+    }
+  ],
+  "initialMemory": {
+    "ownerId": "owner-6eb02128-61f0-43c3-a0b2-23cc50c2db45",
+    "state": "ready",
+    "version": "2.0.0",
+    "worldRevision": 0,
+    "capabilities": {
+      "list": true,
+      "source": true,
+      "inject": true,
+      "correct": true,
+      "mute": true,
+      "deleteEvidence": true,
+      "deleteWorldItem": true
+    },
+    "pendingBoundaryCount": 0,
+    "blockedBoundaryCount": 0,
+    "discardedBoundaryCount": 0,
+    "lastFailureCode": null
+  }
+}

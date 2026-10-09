@@ -1,0 +1,358 @@
+{
+  "runs": [
+    {
+      "model": "mimo",
+      "root": "C:\\Temp\\weftmate-m2f-mimo-99e09758-0f19-46db-9a7e-827fe24c66de",
+      "exitCode": 0,
+      "summary": {
+        "passed": 3,
+        "failed": 4,
+        "manual": 0,
+        "unsupported": 0,
+        "skippedChecks": 6,
+        "passRate": 0.42857142857142855,
+        "coverage": 0.42857142857142855
+      }
+    },
+    {
+      "model": "lan",
+      "root": "C:\\Temp\\weftmate-m2f-lan-3babed12-8ed8-43db-9fbc-43a11d6e7f84",
+      "exitCode": 0,
+      "summary": {
+        "passed": 3,
+        "failed": 4,
+        "manual": 0,
+        "unsupported": 0,
+        "skippedChecks": 6,
+        "passRate": 0.42857142857142855,
+        "coverage": 0.42857142857142855
+      }
+    }
+  ],
+  "timings": [
+    {
+      "scene": "greeting",
+      "repetition": 1,
+      "exitCode": 0,
+      "timings": [
+        {
+          "foreground": true,
+          "firstTextMs": 5778.2453000000005,
+          "firstDeltaMs": 1144.7378000000003,
+          "turnFirstTextMs": 6493.105600000001,
+          "turnFirstDeltaMs": 1859.5981000000006,
+          "totalMs": 6329.719300000001,
+          "text": "你好！我是 WeftMate，有什么我可以帮你做的吗？",
+          "tools": [],
+          "usage": {
+            "completion_tokens": 325,
+            "prompt_tokens": 2441,
+            "total_tokens": 2766,
+            "prompt_tokens_details": {
+              "cached_tokens": 1825
+            }
+          }
+        }
+      ]
+    },
+    {
+      "scene": "greeting",
+      "repetition": 2,
+      "exitCode": 0,
+      "timings": [
+        {
+          "foreground": true,
+          "firstTextMs": 3434.037,
+          "firstDeltaMs": 987.6825999999996,
+          "turnFirstTextMs": 4220.479799999999,
+          "turnFirstDeltaMs": 1774.1253999999994,
+          "totalMs": 4007.0710999999997,
+          "text": "你好！我是 WeftMate，有什么我可以帮你整理的？",
+          "tools": [],
+          "usage": {
+            "completion_tokens": 115,
+            "prompt_tokens": 2440,
+            "total_tokens": 2555,
+            "prompt_tokens_details": {
+              "cached_tokens": 1825
+            }
+          }
+        }
+      ]
+    },
+    {
+      "scene": "greeting",
+      "repetition": 3,
+      "exitCode": 0,
+      "timings": [
+        {
+          "foreground": true,
+          "firstTextMs": 3509.9987,
+          "firstDeltaMs": 1099.9485000000004,
+          "turnFirstTextMs": 4255.1949,
+          "turnFirstDeltaMs": 1845.1447000000003,
+          "totalMs": 3791.7478,
+          "text": "你好！有什么我可以帮你的？",
+          "tools": [],
+          "usage": {
+            "completion_tokens": 111,
+            "prompt_tokens": 2442,
+            "total_tokens": 2553,
+            "prompt_tokens_details": {
+              "cached_tokens": 1825
+            }
+          }
+        }
+      ]
+    },
+    {
+      "scene": "file",
+      "repetition": 1,
+      "exitCode": 0,
+      "timings": [
+        {
+          "foreground": true,
+          "firstTextMs": null,
+          "firstDeltaMs": 1118.7980000000002,
+          "turnFirstTextMs": null,
+          "turnFirstDeltaMs": 1848.2345,
+          "totalMs": 3742.1667,
+          "text": "",
+          "tools": [
+            "load_tools"
+          ],
+          "usage": {
+            "completion_tokens": 120,
+            "prompt_tokens": 2451,
+            "total_tokens": 2571,
+            "prompt_tokens_details": {
+              "cached_tokens": 1825
+            }
+          }
+        },
+        {
+          "foreground": false,
+          "firstTextMs": null,
+          "firstDeltaMs": 4021.7922,
+          "turnFirstTextMs": null,
+          "turnFirstDeltaMs": 4752.794599999999,
+          "totalMs": 5044.564200000001,
+          "text": "",
+          "tools": [],
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 141,
+            "total_tokens": 205,
+            "prompt_tokens_details": {
+              "cached_tokens": 100
+            }
+          }
+        },
+        {
+          "foreground": true,
+          "firstTextMs": null,
+          "firstDeltaMs": 3272.045,
+          "turnFirstTextMs": null,
+          "turnFirstDeltaMs": 7797.4352,
+          "totalMs": 4202.33,
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "usage": {
+            "completion_tokens": 55,
+            "prompt_tokens": 2796,
+            "total_tokens": 2851,
+            "prompt_tokens_details": {
+              "cached_tokens": 1989
+            }
+          }
+        },
+        {
+          "foreground": true,
+          "firstTextMs": 2324.2960000000003,
+          "firstDeltaMs": 1361.3629,
+          "turnFirstTextMs": 11095.4763,
+          "turnFirstDeltaMs": 10132.5432,
+          "totalMs": 2685.1332999999995,
+          "text": "文件原文：\n\nPF1_SYNTHETIC_OK",
+          "tools": [],
+          "usage": {
+            "completion_tokens": 54,
+            "prompt_tokens": 2971,
+            "total_tokens": 3025,
+            "prompt_tokens_details": {
+              "cached_tokens": 1989
+            }
+          }
+        }
+      ]
+    },
+    {
+      "scene": "file",
+      "repetition": 2,
+      "exitCode": 0,
+      "timings": [
+        {
+          "foreground": true,
+          "firstTextMs": null,
+          "firstDeltaMs": 1128.6565,
+          "turnFirstTextMs": null,
+          "turnFirstDeltaMs": 1925.1212,
+          "totalMs": 3020.9784,
+          "text": "",
+          "tools": [
+            "load_tools"
+          ],
+          "usage": {
+            "completion_tokens": 105,
+            "prompt_tokens": 2452,
+            "total_tokens": 2557,
+            "prompt_tokens_details": {
+              "cached_tokens": 1825
+            }
+          }
+        },
+        {
+          "foreground": false,
+          "firstTextMs": null,
+          "firstDeltaMs": 3205.9492999999998,
+          "turnFirstTextMs": null,
+          "turnFirstDeltaMs": 4005.3519999999994,
+          "totalMs": 4142.682699999999,
+          "text": "",
+          "tools": [],
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 141,
+            "total_tokens": 205,
+            "prompt_tokens_details": {
+              "cached_tokens": 136
+            }
+          }
+        },
+        {
+          "foreground": true,
+          "firstTextMs": null,
+          "firstDeltaMs": 2103.2637999999997,
+          "turnFirstTextMs": null,
+          "turnFirstDeltaMs": 5969.0627,
+          "totalMs": 3078.4147999999996,
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "usage": {
+            "completion_tokens": 55,
+            "prompt_tokens": 2781,
+            "total_tokens": 2836,
+            "prompt_tokens_details": {
+              "cached_tokens": 1989
+            }
+          }
+        },
+        {
+          "foreground": true,
+          "firstTextMs": 2690.663199999999,
+          "firstDeltaMs": 1256.4700999999986,
+          "turnFirstTextMs": 9673.7886,
+          "turnFirstDeltaMs": 8239.5955,
+          "totalMs": 3072.8405000000002,
+          "text": "文件 `pf1-input.txt` 原文：\n\nPF1_SYNTHETIC_OK",
+          "tools": [],
+          "usage": {
+            "completion_tokens": 87,
+            "prompt_tokens": 2957,
+            "total_tokens": 3044,
+            "prompt_tokens_details": {
+              "cached_tokens": 1989
+            }
+          }
+        }
+      ]
+    },
+    {
+      "scene": "file",
+      "repetition": 3,
+      "exitCode": 0,
+      "timings": [
+        {
+          "foreground": false,
+          "firstTextMs": null,
+          "firstDeltaMs": 334.1741999999999,
+          "turnFirstTextMs": null,
+          "turnFirstDeltaMs": 1058.0054,
+          "totalMs": 1358.051,
+          "text": "",
+          "tools": [],
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 141,
+            "total_tokens": 205,
+            "prompt_tokens_details": {
+              "cached_tokens": 136
+            }
+          }
+        },
+        {
+          "foreground": true,
+          "firstTextMs": null,
+          "firstDeltaMs": 2235.6177,
+          "turnFirstTextMs": null,
+          "turnFirstDeltaMs": 2958.08,
+          "totalMs": 3980.7169000000004,
+          "text": "",
+          "tools": [
+            "load_tools"
+          ],
+          "usage": {
+            "completion_tokens": 99,
+            "prompt_tokens": 2453,
+            "total_tokens": 2552,
+            "prompt_tokens_details": {
+              "cached_tokens": 1825
+            }
+          }
+        },
+        {
+          "foreground": true,
+          "firstTextMs": null,
+          "firstDeltaMs": 1244.4618,
+          "turnFirstTextMs": null,
+          "turnFirstDeltaMs": 5986.6266000000005,
+          "totalMs": 2284.237,
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "usage": {
+            "completion_tokens": 56,
+            "prompt_tokens": 2776,
+            "total_tokens": 2832,
+            "prompt_tokens_details": {
+              "cached_tokens": 1989
+            }
+          }
+        },
+        {
+          "foreground": true,
+          "firstTextMs": 2905.6682999999994,
+          "firstDeltaMs": 1262.1293999999998,
+          "turnFirstTextMs": 9971.468499999999,
+          "turnFirstDeltaMs": 8327.9296,
+          "totalMs": 3099.4174000000003,
+          "text": "PF1_SYNTHETIC_OK",
+          "tools": [],
+          "usage": {
+            "completion_tokens": 77,
+            "prompt_tokens": 2954,
+            "total_tokens": 3031,
+            "prompt_tokens_details": {
+              "cached_tokens": 1989
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

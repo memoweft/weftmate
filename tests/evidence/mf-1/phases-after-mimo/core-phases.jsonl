@@ -1,0 +1,3 @@
+{"phase": "_dispatch_once", "startEpochMs": 1791531121756.3315, "endEpochMs": 1791531156656.1177}
+{"phase": "_compile_checked", "startEpochMs": 1791531156668.4407, "endEpochMs": 1791531156671.235}
+{"phase": "_apply_atomically", "startEpochMs": 1791531156671.235, "endEpochMs": 1791531156689.495}

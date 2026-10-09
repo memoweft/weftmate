@@ -1,0 +1,9 @@
+{
+  "observedAt": "2026-10-09T08:08:26.723Z",
+  "file": "apps/apple/README.md",
+  "scope": "Inherited text exists in both HEAD and origin/main; not introduced by MF-1",
+  "matchedCategory": "LAN hostname substring",
+  "matchedSecretValuesPublished": false,
+  "apiKeyMatches": 0,
+  "action": "Scanner now selects package changes from merge-base plus all MF-1 evidence and synthetic roots. No Apple file edited."
+}

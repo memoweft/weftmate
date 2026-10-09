@@ -454,7 +454,14 @@ async function baseline(modelName, fourOnly = false) {
         await page.getByRole('button', { name: new RegExp(target.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) }).first().click();
         await until(async () => (await page.locator('.memory-source-raw').allTextContents()).some(text => text.includes(original) || text.includes(correction)));
         result.checks.uiSource = true;
-        await page.screenshot({ path: join(evidence, `${modelName}-sources.png`) });
+        // The restarted isolated desktop can be occluded by another test window.
+        // Restore its own compositor before capturing; keep semantic checks and
+        // screenshot errors unchanged instead of skipping the forget operation.
+        await app.evaluate(({ BrowserWindow }) => {
+          for (const window of BrowserWindow.getAllWindows()) { if (window.isMinimized()) window.restore(); window.show(); window.focus(); }
+        });
+        await page.bringToFront();
+        await page.screenshot({ path: join(evidence, `${modelName}-sources.png`), animations: 'disabled' });
         if (fgOnly) {
           const before = await api('/memory/export?format=json');
           result.checks.exportBeforeForget = before.status === 200 && before.body.content.includes('王小明');
@@ -634,6 +641,7 @@ try {
     return total;
   }, {});
   save(join(evidence, 'usage.json'), usage);
+  save(join(evidence, 'run-roots.json'), roots);
   const publicScan = scan(evidence); save(join(evidence, 'credential-scan.json'), publicScan); assert.equal(publicScan.matches, 0);
   // Optional assertion mode lets CI consume the same evidence without treating
   // a successfully completed baseline collection as a passing product exit.

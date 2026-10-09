@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-09T08:01:43.678Z",
+  "report": [
+    {
+      "path": "/health",
+      "status": 404,
+      "elapsedMs": 34,
+      "bodyBytes": 22
+    },
+    {
+      "path": "/props",
+      "status": 404,
+      "elapsedMs": 4,
+      "bodyBytes": 22
+    }
+  ]
+}
