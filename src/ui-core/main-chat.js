@@ -48,7 +48,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         if (inMain()) core.state.selectedSessionId = chat.activeSessionId;
     }
     async function refreshSessions() {
-        if (environment.mobileState || !supports('chats')) return legacy.refreshSessions(true);
+        if (!supports('chats')) return legacy.refreshSessions(true);
         const identity = core.state.identityGeneration;
         const main = await core.readMainChat();
         if (identity !== core.state.identityGeneration) return;
@@ -88,7 +88,8 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         if (core.state.mainChat?.activeSessionId === id) return selectMainChat();
         drafts.set(core.state.selectedChatId || core.state.selectedSessionId, effects.readMessageDraft());
         core.state.selectedChatId = null; clearLogical();
-        await legacy.selectSession(id, true);
+        if (environment.mobileState) await effects.selectNativeSideSession(id);
+        else await legacy.selectSession(id, true);
         const chat = core.state.chats?.find(row => row.activeSessionId === id);
         core.state.selectedChatId = chat?.chatId || null;
         effects.restoreMainChatDraft?.(drafts.get(chat?.chatId || id) || ''); effects.renderChatOrigin?.(chat); notify();
@@ -137,6 +138,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             if (historyWindow.state.contentRevision !== page.contentRevision) { clearLogical(true); notify(); return readPage({}, 'tail'); }
             historyWindow.state.anchorId=effects.mainChatAnchor?.() || null;
             historyWindow.merge(page, 'changes'); core.observeOptimistic(page.upserts || []); notify();
+            if(environment.mobileState) await Promise.all([core.refreshConversationTasks(),core.refreshConversationApprovals(),core.refreshConversationQuestions()]);
         for (const row of pending.values()) if (row.ownerId === core.state.ownerId && row.status === 'sending') await checkMainRequest(row);
             const main = await core.readMainChat(); if (token === scope()) { installMain(main.chat); notify(); }
         } catch (error) {
@@ -218,7 +220,8 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         core.updateFromCommand(command);
         core.sideCreateIntent = null; await refreshSessions(); if (token !== scope()) return;
         await selectSession(command.sessionId); effects.restoreMainChatDraft?.(draft);
-        if (files.length) core.state.attachmentDrafts.set(core.attachmentDraftKey(), files);
+        if (files.length && environment.mobileState) await effects.transferNativeAttachments(sourceAttachmentKey, core.attachmentDraftKey(), files);
+        else if (files.length) core.state.attachmentDrafts.set(core.attachmentDraftKey(), files);
         drafts.set(sourceDraftId,'');if(sourceAttachmentKey)core.state.attachmentDrafts.delete(sourceAttachmentKey);
         effects.renderAttachmentDrafts(); effects.renderChatOrigin?.((await core.readChat(command.chatId)).chat);
     }
@@ -246,12 +249,15 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         const attachments = core.currentAttachmentDrafts();
         const row = { ownerId: core.state.ownerId, chatId: core.state.selectedChatId, requestId: attachments.length ? core.attachmentAttempt(core.attachmentDraftKey(), text, attachments).requestId : environment.crypto.randomUUID(), text, status: 'sending', files: attachments.map(item => item.file.name) };
         pending.set(row.requestId, row); notify(); effects.scrollToLatest();
+        if(environment.mobileState && environment.logicalChats) {
+            core.rememberMarker({requestId:row.requestId,kind:'chat.message'});
+        }
         try {
             if (historyWindow.state.hasNewer) {
                 historyWindow.state.events.clear(); historyWindow.state.hasNewer = false;
                 await readPage({}, 'tail'); notify(); effects.scrollToLatest();
             }
-            const command = attachments.length ? await core.sendDesktopMessageWithAttachments(text, row.requestId, intent)
+            const command = environment.mobileState ? await effects.sendMainNativeMessage({chatId:row.chatId,text,requestId:row.requestId,modelProfileId:core.state.modelProfileId,intent:intent || core.composerInputMode(core.state.selectedSessionId),attachmentIds:attachments.map(item=>item.attachmentId)}) : attachments.length ? await core.sendDesktopMessageWithAttachments(text, row.requestId, intent)
                 : await core.submitCommand('chat.message', { chatId: row.chatId, text, modelProfileId: core.state.modelProfileId, mode: intent || core.composerInputMode(core.state.selectedSessionId) }, null, row.requestId);
             if (command) await checkMainRequest(row); else row.status = 'failed';
             await refreshHistory();
@@ -297,6 +303,10 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         sendMainDraft: sendDraft, observeMainOptimistic: observeOptimistic, mainComposerState: composerState, loadMainResources: loadConversationResources,
         mainOptimisticMessages: () => inMain() ? [...pending.values()].filter(row => row.ownerId === core.state.ownerId && row.chatId === core.state.selectedChatId) : legacy.optimisticMessages(true),
         retryMainRequest: async requestId => { const row = pending.get(requestId); if (row) await checkMainRequest(row); },
+        restoreMainRequests: rows => { for (const row of rows) {
+            if(row.kind!=='chat.message'||!row.chatId||!row.requestId||pending.has(row.requestId)||row.state==='rejected')continue;
+            pending.set(row.requestId,{...row,ownerId:core.state.ownerId,text:row.text||'',status:row.state==='accepted'?'accepted':'failed',receiptId:row.command?.receiptId});
+        } observeOptimistic(historyWindow.ordered());notify(); },
         mainAttachmentDraftKey: id => inMain() ? `${core.state.ownerId}|${core.state.mainChat.chatId}` : legacy.attachmentDraftKey(id, true),
         resetLogicalSession: () => { historyWindow.reset();core.resourceCache=null;effects.resetMainChatView?.(); pending.clear(); drafts.clear(); core.state.mainChat = null; core.state.selectedChatId = null; core.state.chats = []; }
     };

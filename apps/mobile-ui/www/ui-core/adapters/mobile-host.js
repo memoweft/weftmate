@@ -12,8 +12,14 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
     return sharedPhoneBinding(conversationId);
   }
   function syncMobileIdentity() {
+    if (state.logicalChats && core.state.ownerId === (state.owner || null) && core.state.identityGeneration === state.authEpoch) {
+      core.state.currentView = state.page === 'chat' ? 'assistant' : state.page;
+      core.state.online = state.sharedHostAvailable;
+      return;
+    }
     if (core.state.ownerId !== (state.owner || null)) {
       core.state.models = [];
+      core.state.modelProfileId = null;
       core.state.sessionGroups = []; core.state.projects = []; core.state.projectCanManage = false; core.state.projectsError = '';
     }
     Object.assign(core.state, {
@@ -110,6 +116,24 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
   async function listMobileSessions(){if(!state.loggedIn||state.transitionPending)return;
   const owner=state.owner,epoch=state.authEpoch,generation=state.sharedGeneration;
   syncMobileIdentity();
+  try {
+    const status = await core.accessApi('/status');
+    if (owner !== state.owner || epoch !== state.authEpoch) return;
+    const exact = ['chats','chatTimeline','chatSearch','chatSend','sideChats','chatResources'].every(key => status.personalCapabilities?.[key] === 1);
+    core.state.personalCapabilities = status.personalCapabilities || {};
+    core.state.hostId = status.hostId;
+    if (environment.logicalChats && exact) {
+      state.logicalChats = true; state.sharedHostAvailable = true; core.state.online = true;
+      await core.refreshThinkingModels();
+      core.state.modelProfileId ||= core.state.models[0]?.id;
+      if (!core.state.mainChat) { core.state.selectedSessionId = null; core.state.selectedChatId = null; }
+      await core.refreshLogicalSessions();
+      await effects.restoreMainNativeRequests?.();
+      state.sharedSessions = core.state.sessions.filter(row=>row.kind !== 'main').map(row=>({...row,source:'host'}));
+      effects.renderConversationList(); return;
+    }
+    if (state.logicalChats) { core.resetLogicalSession(); state.logicalChats = false; }
+  } catch (error) { if(state.logicalChats) { effects.status('主对话暂时无法读取，请重试');return; } /* Older native shells keep their existing list. */ }
   void refreshMobileMemoryAvailability();
   if (!core.state.models.length) void core.refreshThinkingModels().then(() => {
     if(owner===state.owner&&epoch===state.authEpoch)effects.updateComposer();
