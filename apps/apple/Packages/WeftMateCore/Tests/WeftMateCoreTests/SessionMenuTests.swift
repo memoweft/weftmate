@@ -6,10 +6,10 @@ private func row(_ id: String, pinned: Bool = false, group: String? = nil, archi
     .init(id: id, title: id, conversationId: nil, sessionId: id, running: false, sendAvailable: true, originalModelLabel: nil, archived: archived, pinned: pinned, groupId: group)
 }
 @Test func a7MenuActionsAndScopedShortcutsMatchD34() {
-    #expect(SessionMenuAction.allCases.map(\.rawValue) == ["pin", "unread", "rename", "fork", "group", "archive", "delete"])
+    #expect(SessionMenuAction.allCases.map(\.rawValue) == ["pin", "unread", "rename", "fork", "project", "group", "archive", "delete"])
     #expect(SessionMenuAction.allCases.compactMap(\.shortcut) == ["p", "u", "r", "f", "a", "d"])
     let normal = row("synthetic")
-    #expect(SessionMenuAction.allCases.map { $0.title(for: normal) } == ["置顶", "标记为未读", "重命名", "分叉", "移至分组", "归档", "删除"])
+    #expect(SessionMenuAction.allCases.map { $0.title(for: normal) } == ["置顶", "标记为未读", "重命名", "分叉", "移至项目", "移至分组", "归档", "删除"])
     let marked = ConversationSummary(id: "marked", title: "marked", conversationId: nil, sessionId: "marked", running: false, sendAvailable: true, originalModelLabel: nil, archived: true, pinned: true, unread: true)
     #expect(SessionMenuAction.pin.title(for: marked) == "取消置顶")
     #expect(SessionMenuAction.unread.title(for: marked) == "标记为已读")
