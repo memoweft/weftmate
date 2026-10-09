@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { defineTool } from '@deepseek-ai/dsh-tools';
 import { installModelSelection } from '@deepseek-ai/dsh-agent';
 import { setSandboxMode } from '@deepseek-ai/dsh-sandbox-policy';
+import { selectProjectContext, inheritProjectContext, routeProjectTool, installProjectSandbox, projectToolDecision, projectContextNotice, executionDirectory } from './personal-project-context.mjs';
 import { trackNativeFiles, appendNativeArtifacts, conversationCreatedFiles } from './personal-native-files.mjs';
 import { personalWebFetchProvider } from './personal-web-fetch.mjs';
 import { durableSourceRange } from '../runtime/dsh-adapter/source-range.mjs';
@@ -137,7 +138,10 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
     if (request.agent?.session?.header?.origin === 'subagent' ||
         request.agent?.session?.header?.agentPreset !== 'personal-remote') return next();
     if (closed || !liveAgent(request.agent)) return 'unavailable';
-    if (policyFor && (await policyFor(request.agent)).mode === 'allow-all') return 'allowed-once';
+    if (policyFor) {
+      const policy = await policyFor(request.agent);
+      if (policy.mode === 'allow-all' && !policy.project) return 'allowed-once';
+    }
     const identity = callsByAgent.get(request.agent)?.get(request.callId);
     // The shipped WeftMod script producer asks through its shared "weftmod" approval seam.
     // Keep the host receipt bound to the actual execution name and arguments.
@@ -637,6 +641,7 @@ export function personalToolAvailability(tools, exec) {
 
 export function apply(ctx) {
   const bridge = new PersonalDesktopBridge();
+  const disposeProjectSandbox = installProjectSandbox(ctx.get('sandboxPolicy'));
   ctx.plugin(PlanModeController, { section: 'You are planning. Present a complete Markdown plan with exit_plan_mode before executing tools. Ask for missing information if needed. Execute only after the user approves the plan.' });
   const policyFor = (agent) => bridge.request({ action: 'approval_policy', sessionId: agent.session.id,
     turn: 0, callId: 'approval-policy', messageHash: '0'.repeat(64) });
@@ -650,8 +655,16 @@ export function apply(ctx) {
   // Presets can be selected after agent/created, before the first native step.
   ctx.on('agent/pre-step', async (step, next) => {
     initializeFilePolicy(step.agent);
-    if (step.agent?.session?.header?.agentPreset !== 'personal-remote' || step.agent.session.header.origin === 'subagent') return next();
+    if (step.agent?.session?.header?.agentPreset !== 'personal-remote') return next();
+    if (step.agent.session.header.origin === 'subagent') {
+      const decision = await next(), notice = projectContextNotice(step.agent.session);
+      if (decision.kind !== 'enter' || !notice) return decision;
+      const { createUserMessage } = await import('@deepseek-ai/dsh-llm/message');
+      return { ...decision, messages: [...decision.messages.filter(message => message.source?.plugin !== 'weftmate-project'),
+        createUserMessage({ content: [{ type: 'text', text: notice }], source: { kind: 'plugin', plugin: 'weftmate-project' } })] };
+    }
     const policy = await policyFor(step.agent);
+    const projectNotice = await selectProjectContext(step.agent, policy);
     const prior = selectedModes.get(step.agent);
     const newUserMessage = step.messages?.some(message => message.source?.kind === 'user');
     if (policy.mode !== prior || policy.mode === 'plan' && newUserMessage) {
@@ -663,9 +676,11 @@ export function apply(ctx) {
     const decision = await next();
     if (decision.kind !== 'enter') return decision;
     const { createUserMessage } = await import('@deepseek-ai/dsh-llm/message');
-    return { ...decision, messages: [...decision.messages.filter(message => message.source?.plugin !== 'weftmate-approval-mode'),
+    return { ...decision, messages: [...decision.messages.filter(message => !['weftmate-approval-mode', 'weftmate-project'].includes(message.source?.plugin)),
       createUserMessage({ content: [{ type: 'text', text: approvalPrompt(policy.mode) }],
-        source: { kind: 'plugin', plugin: 'weftmate-approval-mode' } })] };
+        source: { kind: 'plugin', plugin: 'weftmate-approval-mode' } }),
+      ...(projectNotice ? [createUserMessage({ content: [{ type: 'text', text: projectNotice }],
+        source: { kind: 'plugin', plugin: 'weftmate-project' } })] : [])] };
   }, { prepend: true });
   // The pinned driver copies static AgentOptions, while the personal UI selects
   // models through DSH's scoped selection. Initialize a native child before its
@@ -678,6 +693,7 @@ export function apply(ctx) {
     const dispatch = webExecution.getStore();
     if (dispatch) delegatedExecutions.set(agent, delegatedExecutions.get(dispatch.agent) ?? dispatch);
     const parent = ctx.get('agents')?.get(agent.session.header.parentSession);
+    inheritProjectContext(agent, parent);
     const config = agent.session.requestHeader?.()?.config ?? parent?.session?.requestHeader?.()?.config;
     if (typeof config?.provider !== 'string' || typeof config?.model !== 'string') throw refused('MODEL_UNAVAILABLE');
     installModelSelection(agent.ctx, { current: { provider: config.provider, model: config.model,
@@ -687,6 +703,10 @@ export function apply(ctx) {
   const background = createPersonalBackgroundTracker(ctx, bridge);
   const approvals = installPersonalApprovalBridge(ctx, bridge, { policyFor });
   ctx.on('tools/pre-execute', async (exec, next) => {
+    routeProjectTool(exec);
+    return await projectToolDecision(exec) ?? next();
+  }, { prepend: true });
+  ctx.on('tools/pre-execute', async (exec, next) => {
     const decision = await next();
     if (exec.agent?.session?.header?.agentPreset !== 'personal-remote' || decision.kind === 'deny' ||
         NATIVE_SESSION_TOOLS.has(exec.name) || exec.name === 'exit_plan_mode' || exec.name === 'todo_write' || exec.name === 'run_code') return decision;
@@ -695,7 +715,7 @@ export function apply(ctx) {
     const delegated = delegatedExecutions.get(exec.agent);
     const owner = delegated?.agent ?? exec.agent;
     const policy = await policyFor(owner);
-    const cwd = resolve(exec.agent.session.header.cwd, exec.arguments?.workdir ?? '.');
+    const cwd = resolve(executionDirectory(exec.agent.session), exec.arguments?.workdir ?? '.');
     const risks = classifyPersonalRisk(exec.name, exec.arguments, cwd, new Set(),
       { createdFiles: conversationCreatedFiles(exec.agent.session) });
     if (policy.mode === 'plan' && foldPlanMode(owner.session.events))
@@ -713,7 +733,7 @@ export function apply(ctx) {
   ctx.on('tools/execute', (exec, next) => webExecution.run(exec, () => trackNativeFiles(bridge, exec,
     () => trackPersonalExecution(bridge, exec, next, background, approvals), personalExecutionIdentity)));
   ctx.on('tools/post-execute', appendNativeArtifacts);
-  ctx.effect(() => () => { disposeFetch(); disposeProof(); approvals.close(); background.close(); bridge.close(); },
+  ctx.effect(() => () => { disposeProjectSandbox(); disposeFetch(); disposeProof(); approvals.close(); background.close(); bridge.close(); },
     'weftmate-personal-desktop: lifecycle');
 }
 

@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('weftmateDesktop', {
   restartForUpdate: () => ipcRenderer.invoke('wm:desktop:update-restart'),
   openLogs: () => ipcRenderer.invoke('wm:desktop:open-logs'),
   settings: () => ipcRenderer.invoke('wm:desktop:settings'),
+  pickProjectFolder: () => ipcRenderer.invoke('wm:desktop:project-folder'),
   identity: () => ipcRenderer.invoke('wm:desktop:identity'),
   credentials: (key, value, remove) => ipcRenderer.invoke('wm:desktop:credentials', key, value, remove),
   cloudKey: (scope) => ipcRenderer.invoke('wm:desktop:key', scope),

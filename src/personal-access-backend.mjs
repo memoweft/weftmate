@@ -158,7 +158,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       } else fail('INVALID_COMMAND')
       return { ok: true }
     },
-    async createSession({ sessionId, modelProfileId, ownerId }) {
+    async createSession({ sessionId, modelProfileId, ownerId, project }) {
       requireRuntime()
       if (typeof sessionId !== 'string' || !idPattern.test(sessionId)) fail('SESSION_UNAVAILABLE')
       const preset = presetForOwner(ownerId)
@@ -166,9 +166,9 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         requireModelAllowed(ownerId, modelProfileId, 'new')
         const profile = modelProfile(modelProfileId)
         await requireCatalogRoute(profile)
-        const cwd = sessionWorkspaceRoot
-          ? sessionWorkspace(sessionWorkspaceRoot, ownerId ?? 'fixture', sessionId) : undefined
-        if (cwd) await mkdir(cwd, { recursive: true, mode: 0o700 })
+        const cwd = project?.rootPath ?? (sessionWorkspaceRoot
+          ? sessionWorkspace(sessionWorkspaceRoot, ownerId ?? 'fixture', sessionId) : undefined)
+        if (cwd && !project) await mkdir(cwd, { recursive: true, mode: 0o700 })
         const created = await gateway('/sessions', { method: 'POST',
           body: JSON.stringify({ sessionId, agentPreset: preset, ...(cwd ? { cwd } : {}) }) })
         if (created?.sessionId !== sessionId) fail('SESSION_UNAVAILABLE')
@@ -198,7 +198,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       await mkdir(cwd, { recursive: true, mode: 0o700 })
       try {
         try { await access(sourceCwd); await cp(sourceCwd, cwd, { recursive: true }) } catch (error) { if (error.code !== 'ENOENT') throw error }
-        const result = await gateway(`/sessions/${encodeURIComponent(sessionId)}/fork`, { method: 'POST', body: JSON.stringify({ sessionId: childId, cwd }) })
+        const result = await gateway(`/sessions/${encodeURIComponent(sessionId)}/fork`, { method: 'POST', body: JSON.stringify({ sessionId: childId, cwd, copyWorkspace: false }) })
         if (result.sessionId !== childId) fail('SESSION_UNAVAILABLE')
         bindSession(childId, profile.id)
         const route = routeForProfile(profile.id)
