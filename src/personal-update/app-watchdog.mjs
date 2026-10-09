@@ -90,12 +90,17 @@ try {
   await pause(500);
   const failedProgram = `${state.installation}.failed-${state.token}`;
   recoveryStep = 'move-failed-program';
-  await moveDirectory(state.installation, failedProgram);
+  let movedFailedProgram = false;
+  try { await moveDirectory(state.installation, failedProgram); movedFailedProgram = true; }
+  catch (error) {
+    // An open directory handle can outlive the stopped process. The signed
+    // previous ASAR and complete runtime can still be restored in that directory.
+    if (!['EPERM', 'EACCES', 'EBUSY'].includes(error.code)) throw error;
+  }
   recoveryStep = 'restore-program';
   await copyPhysicalTree(join(state.snapshot, 'program'), state.installation, ['WeftMateRecovery.exe']);
   if (state.cacheDirectory) {
     recoveryStep = 'restore-cache';
-    await removePhysicalTree(state.cacheDirectory);
     await copyPhysicalTree(join(state.snapshot, 'cache'), state.cacheDirectory);
   }
   if (state.uninstallRegistry) {
@@ -111,7 +116,7 @@ try {
   const env = { ...process.env }; delete env.ELECTRON_RUN_AS_NODE;
   const child = spawn(state.executable, [`--desktop-config=${state.configFile}`, '--start-in-tray'], { detached: true, windowsHide: true, stdio: 'ignore', env });
   child.unref();
-  await removePhysicalTree(failedProgram).catch(() => {});
+  if (movedFailedProgram) await removePhysicalTree(failedProgram).catch(() => {});
   if (movedProgram) await removePhysicalTree(replacedProgram).catch(() => {});
 } catch (error) {
   await save('last-result.json', { phase: 'recovery-failed', version: state.oldVersion, rejectedVersion: state.nextVersion,
