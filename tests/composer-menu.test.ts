@@ -79,4 +79,5 @@ test('UX-3 script-wrapped native background results retain the launch step and n
  const projected:any=projectHistoryEvent(result,call);assert.equal(projected.data.subtask.id,'job-script');
  const rows=api.composerSubtasks([projectHistoryEvent(call),projected],Date.parse(at)+10000);assert.equal(rows[0].duration,'10 秒');assert.equal(rows[0].stepId,'script-child');
  const fileCall={...call,data:{...call.data,name:'read'}};assert.equal((projectHistoryEvent(result,fileCall) as any).data.subtask,undefined);
+ const empty={...result,data:{...result.data,message:{...result.data.message,content:[{type:'tool-result',toolCallId:'script-child',content:[{type:'text',text:'null'}]}]}}};assert.equal((projectHistoryEvent(empty,call) as any).data.subtask,undefined);
 });

@@ -256,7 +256,7 @@ function closeAttachmentMenu({restoreFocus=false}={}){if(!state.attachmentMenu)r
 
 function renderAttachmentPickStatus(){const box=$('attachment-pick-status'),pick=state.attachmentPick;
   box.hidden=!pick;if(pick)$('attachment-pick-label').textContent=pick.requestId?
-    `正在系统中选择${pick.kind==='image'?'图片':'文件'}，返回后可取消等待。`:'正在打开系统选择器…';
+    `正在系统中选择${pick.kind==='file'?'文件':pick.kind==='camera'?'照片':'图片'}，返回后可取消等待。`:'正在打开系统选择器…';
   syncChatInsets()}
 
 function cancelAttachmentPick({announce=false}={}){if(!state.attachmentPick)return;
@@ -326,10 +326,10 @@ function finishAttachmentPick(data){const pick=state.attachmentPick;if(!pick||!p
     (data.viewGeneration!=null&&data.viewGeneration!==pick.viewGeneration)||data.conversationId!==pick.conversationId){
     cancelAttachmentPick();return}
   cancelAttachmentPick();if(data.status==='selected'){
-    status(pick.kind==='image'?'':'正在读取附件草稿…');refreshAttachmentDrafts(pick.viewGeneration).then(restored=>{
+    status(pick.kind==='file'?'正在读取附件草稿…':'');refreshAttachmentDrafts(pick.viewGeneration).then(restored=>{
       if(restored&&state.owner===pick.owner&&state.authEpoch===pick.epoch&&pick.source===state.chatSource&&
         attachmentViewGeneration===pick.viewGeneration)
-        status(currentAttachments().length?(pick.kind==='image'?'':'附件已加入草稿，确认后可发送'):
+        status(currentAttachments().length?(pick.kind==='file'?'附件已加入草稿，确认后可发送':''):
           '没有找到已选附件，请重新选择',!currentAttachments().length)});
   }else if(data.status==='cancelled')status('已取消选择，消息草稿保留');
   else{const message=safeError(new Error(data.errorCode||'OPERATION_FAILED'));status(message,true)}}
