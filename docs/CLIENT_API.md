@@ -494,7 +494,7 @@ MS-1：`defaultModelProfileId` 按账户保存，用于新对话；已有对话�
 
 ### 3.19 手机离线记忆副本（M3-A / S6）
 
-仅已批准内容设备的 Cookie（会话凭据）＋CSRF（跨站请求防护）会话可调用，需要 `account:manage`。内容仍经既有宿主中继，云端只持有删除代次。Android（安卓）最低原生版本 code24；网页使用 WebCrypto（浏览器密码接口）；iPhone 原生端后续接相同契约。细节见 [M3_OFFLINE.md](M3_OFFLINE.md)。
+仅已批准内容设备的 Cookie（会话凭据）＋CSRF（跨站请求防护）会话可调用，需要 `account:manage`。内容仍经既有宿主中继，云端只持有删除代次。Android（安卓）最低原生版本 code24；网页使用 WebCrypto（浏览器密码接口）；A14 的 iPhone / Mac 原生端已接相同契约。细节见 [M3_OFFLINE.md](M3_OFFLINE.md)。
 
 | 方法与路径 | 请求 | 响应 |
 |---|---|---|

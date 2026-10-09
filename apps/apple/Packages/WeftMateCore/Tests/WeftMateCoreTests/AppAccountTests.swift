@@ -70,6 +70,9 @@ private actor NativeAccountTransport: HTTPTransport {
             #expect(request.value(forHTTPHeaderField: "DPoP") != nil)
             return try reply(["devices": [], "hosts": []])
         }
+        if path.hasSuffix("/hosts/offline/status") {
+            return try reply(["hostId": "host-one", "accountId": subject, "generation": 3, "authorized": true])
+        }
         if path.hasSuffix("request") { return try reply(["error": ["code": "RATE_LIMITED"]], headers: ["retry-after": "37"], status: 429) }
         throw APIFailure.invalidResponse
     }
@@ -77,6 +80,27 @@ private actor NativeAccountTransport: HTTPTransport {
 }
 
 @Suite struct AppAccountTests {
+    @Test func offlineStatusUsesNativeDPoPAndRestoredAccount() async throws {
+        let config = CloudConfiguration(server: try ServerConfiguration(input: "https://cloud.example.com"))
+        let store = MemoryStore(), key = try CloudDeviceKey(softwareStore: MemoryStore())
+        let fixture = try NativeAccountTransport(configuration: config, thumbprint: key.thumbprint)
+        let client = CloudAccountClient(configuration: config, key: key, store: store, transport: fixture)
+        try await client.beginAppLogin()
+        let reply = try await client.appLogin(email: "synthetic@example.com", password: UUID().uuidString, name: "Test", type: "ios")
+        try await client.finishAppLogin(resumeURL: reply.resumeUrl!)
+        let restored = CloudAccountClient(configuration: config, key: key, store: store, transport: fixture)
+        let status = try await restored.offlineStatus(hostID: "host-one")
+        #expect(status.accountId == "synthetic-sub" && status.generation == 3 && status.authorized)
+        let request = await fixture.recorded().last!
+        #expect(request.httpMethod == "POST")
+        #expect(request.value(forHTTPHeaderField: "Authorization")?.hasPrefix("DPoP ") == true)
+        #expect(request.value(forHTTPHeaderField: "Cookie") == nil)
+        #expect(try JSONDecoder().decode([String: String].self, from: request.httpBody!) == ["hostId": "host-one"])
+        let proof = request.value(forHTTPHeaderField: "DPoP")!.split(separator: ".")
+        let payload = try JSONSerialization.jsonObject(with: OfflineVault.decode(String(proof[1]))) as! [String: Any]
+        #expect(payload["htu"] as? String == config.audience + "/hosts/offline/status")
+        #expect(payload["htm"] as? String == "POST"); #expect(payload["ath"] as? String != nil)
+    }
     @Test func formTransitionsClearSecretsPreserveEmailAndCountdown() {
         var form = AppAccountForm(); form.email = "synthetic@example.com"
         form.page = .registration; form.password = UUID().uuidString; form.repeatedPassword = form.password

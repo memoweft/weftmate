@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "syntheticOnly": true,
+  "realPersonalHTTP": true,
+  "realCloudDPoP": true,
+  "nativeCloudCallbackInjected": true,
+  "realCore": false,
+  "realMiMo": false,
+  "xcodeJobs": 2,
+  "generatedAt": "2026-10-09T19:40:11.703475+00:00"
+}

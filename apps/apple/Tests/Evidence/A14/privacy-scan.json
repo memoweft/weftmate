@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "changedFiles": 53,
+  "addedTextChecks": [
+    "privateHome",
+    "privateKey",
+    "githubToken",
+    "providerSecret"
+  ],
+  "privatePathOrCredentialMatches": 0,
+  "emailDomains": [
+    "example.com"
+  ],
+  "fixtureCredentials": "Only explicitly synthetic test placeholders; actual model keys are random in-process and never included in reports.",
+  "nativeScreenshotSamplesReviewed": [
+    "mac-light/a14-memory.png",
+    "mac-dark/a14-memory.png",
+    "iphone-light/a14-iphone-memory.png",
+    "iphone-light/a14-iphone-synced.png",
+    "iphone-light/a14-iphone-forgotten.png"
+  ]
+}
