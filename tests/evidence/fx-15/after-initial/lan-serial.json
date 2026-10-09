@@ -1,0 +1,176 @@
+{
+  "maxActive": 1,
+  "requests": [
+    {
+      "method": "POST",
+      "queuedAt": "2026-10-09T21:11:17.913Z",
+      "kind": "inference",
+      "startedAt": "2026-10-09T21:11:17.914Z",
+      "status": 200,
+      "endedAt": "2026-10-09T21:11:18.522Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:11:18.555Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:11:18.555Z",
+      "status": 404,
+      "endedAt": "2026-10-09T21:11:18.559Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:11:18.560Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:11:18.560Z",
+      "status": 200,
+      "endedAt": "2026-10-09T21:11:18.577Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:11:18.593Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:11:18.594Z",
+      "status": 404,
+      "endedAt": "2026-10-09T21:11:18.597Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:11:18.598Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:11:18.598Z",
+      "status": 200,
+      "endedAt": "2026-10-09T21:11:18.616Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:11:20.369Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:11:20.370Z",
+      "status": 404,
+      "endedAt": "2026-10-09T21:11:20.372Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:11:20.384Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:11:20.384Z",
+      "status": 200,
+      "endedAt": "2026-10-09T21:11:20.401Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:11:21.732Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:11:21.732Z",
+      "status": 404,
+      "endedAt": "2026-10-09T21:11:21.735Z"
+    },
+    {
+      "method": "POST",
+      "queuedAt": "2026-10-09T21:11:21.793Z",
+      "kind": "inference",
+      "startedAt": "2026-10-09T21:11:21.793Z",
+      "status": 200,
+      "endedAt": "2026-10-09T21:11:26.556Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:11:22.017Z",
+      "kind": "metadata",
+      "cancelled": true,
+      "endedAt": "2026-10-09T21:11:26.556Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:11:26.622Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:11:26.623Z",
+      "status": 404,
+      "endedAt": "2026-10-09T21:11:26.627Z"
+    },
+    {
+      "method": "POST",
+      "queuedAt": "2026-10-09T21:11:26.648Z",
+      "kind": "inference",
+      "startedAt": "2026-10-09T21:11:26.648Z",
+      "status": 200,
+      "endedAt": "2026-10-09T21:11:29.150Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:11:27.175Z",
+      "kind": "metadata",
+      "cancelled": true,
+      "endedAt": "2026-10-09T21:11:29.150Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:11:27.605Z",
+      "kind": "metadata",
+      "cancelled": true,
+      "endedAt": "2026-10-09T21:11:29.150Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:11:29.272Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:11:29.272Z",
+      "status": 404,
+      "endedAt": "2026-10-09T21:11:29.275Z"
+    },
+    {
+      "method": "POST",
+      "queuedAt": "2026-10-09T21:11:29.287Z",
+      "kind": "inference",
+      "startedAt": "2026-10-09T21:11:29.287Z",
+      "status": 200,
+      "endedAt": "2026-10-09T21:11:33.503Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:12:07.900Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:12:07.901Z",
+      "status": 404,
+      "endedAt": "2026-10-09T21:12:07.913Z"
+    },
+    {
+      "method": "POST",
+      "queuedAt": "2026-10-09T21:12:07.930Z",
+      "kind": "inference",
+      "startedAt": "2026-10-09T21:12:07.931Z",
+      "status": 200,
+      "endedAt": "2026-10-09T21:12:19.925Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:12:08.722Z",
+      "kind": "metadata",
+      "cancelled": true,
+      "endedAt": "2026-10-09T21:12:19.925Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:12:31.115Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:12:31.115Z",
+      "status": 404,
+      "endedAt": "2026-10-09T21:12:31.120Z"
+    },
+    {
+      "method": "POST",
+      "queuedAt": "2026-10-09T21:12:31.140Z",
+      "kind": "inference",
+      "startedAt": "2026-10-09T21:12:31.141Z",
+      "status": 200,
+      "endedAt": "2026-10-09T21:12:37.958Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:12:32.374Z",
+      "kind": "metadata",
+      "cancelled": true,
+      "endedAt": "2026-10-09T21:12:37.958Z"
+    }
+  ]
+}

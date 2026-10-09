@@ -157,7 +157,7 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
       if (route === '/progress' && request.method === 'POST') {
         let raw = ''; for await (const part of request) raw += part;
         const input = JSON.parse(raw), current = progress.get(input.sessionId);
-        if (current && ['reasoning', 'answering'].includes(input.phase)) current.phase = input.phase;
+        if (current && ['reasoning', 'answering', 'retrying'].includes(input.phase)) current.phase = input.phase;
         response.writeHead(204).end(); return;
       }
       if ((route === '/usage/start' || route === '/usage/finish') && request.method === 'POST') {
