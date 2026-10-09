@@ -28,13 +28,14 @@ export function createScheduleOperations(context) {
       const source = Object.values(next.commands).filter(c => c.kind === 'session.message' && c.sessionId === input.sessionId &&
         c.state === 'accepted_by_dsh' && c.receiptId === input.sourceReceiptId && !c.requestId.startsWith('scheduled-')).sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
       if (!source) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
-      const payload = canonicalCommand({ requestId, kind: 'session.message', sessionId: input.sessionId,
+      const payload = canonicalCommand({ requestId, ...(source.payload?.chatId ? { kind: 'chat.message', chatId: source.payload.chatId }
+        : { kind: 'session.message', sessionId: input.sessionId }),
         text: input.text, mode: 'queue', targetDeviceId: next.hostId }, next.hostId);
       const id = `cmd-${randomUUID()}`, at = new Date(context.timestamp()).toISOString();
       next.commands[id] = { commandId: id, ownerId, requestId, payloadHash: digest(JSON.stringify(payload)), payload,
         sourceDeviceId: source.sourceDeviceId, sourceAuthEpoch: next.devices?.[source.sourceDeviceId]?.authEpoch ?? source.sourceAuthEpoch,
         scheduleSourceId: source.commandId, targetDeviceId: next.hostId,
-        kind: 'session.message', sessionId: input.sessionId, state: 'pending', createdAt: at, updatedAt: at };
+        kind: payload.kind, ...(!source.payload?.chatId ? { sessionId: input.sessionId } : {}), state: 'pending', createdAt: at, updatedAt: at };
       return id;
     }));
     context.schedule(ownerId, commandId);

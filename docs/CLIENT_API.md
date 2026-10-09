@@ -502,7 +502,7 @@ MS-1：`defaultModelProfileId` 按账户保存，用于新对话；已有对话�
 
 ### 3.19 手机离线记忆副本（M3-A / S6）
 
-仅已批准内容设备的 Cookie（会话凭据）＋CSRF（跨站请求防护）会话可调用，需要 `account:manage`。内容仍经既有宿主中继，云端只持有删除代次。Android（安卓）最低原生版本 code24；网页使用 WebCrypto（浏览器密码接口）；iPhone 原生端后续接相同契约。细节见 [M3_OFFLINE.md](M3_OFFLINE.md)。
+仅已批准内容设备的 Cookie（会话凭据）＋CSRF（跨站请求防护）会话可调用，需要 `account:manage`。内容仍经既有宿主中继，云端只持有删除代次。Android（安卓）最低原生版本 code24；网页使用 WebCrypto（浏览器密码接口）；A14 的 iPhone / Mac 原生端已接相同契约。细节见 [M3_OFFLINE.md](M3_OFFLINE.md)。
 
 | 方法与路径 | 请求 | 响应 |
 |---|---|---|
@@ -983,7 +983,7 @@ App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协�
 
 ### 9.1 身份与能力（IA-2.1 正式）
 
-`GET /status` 增加 `personalCapabilities:{chats:1}`。只有精确支持的数字版本才可使用；缺失、0 或未知版本均退回原会话接口，不由客户端自行创建主对话。`chats:1` 在本步仅声明本节身份读取、列表和主对话已读偏好；不代表逻辑发送、跨段历史、搜索、旁聊创建、接力、动态或离线主对话可用。IA-2.2 / 2.3 单独增加子能力；首次主对话发送及执行段绑定由 IA-2b 的 2.4 实施，当前空主对话 `sendAvailable:false`。
+`GET /status` 增加 `personalCapabilities:{chats:1}`。只有精确支持的数字版本才可使用；缺失、0 或未知版本均退回原会话接口，不由客户端自行创建主对话。`chats:1` 在本步仅声明本节身份读取、列表和主对话已读偏好；不代表逻辑发送、跨段历史、搜索、旁聊创建、接力、动态或离线主对话可用。子能力分别见9.3/9.4/9.6/9.7；声明 `chatSend:1` 的空主对话可通过首次发送选模型并创建首段，未声明的旧宿主仍不可逻辑发送。
 
 `chatId` 是账户内稳定逻辑身份，与 DSH（助手运行时）的 `sessionId`、同步 / 共享的 `conversationId` 分开。每账户恰有一个 `kind:main`；空主对话不创建原生会话，旧会话不作为主对话或复制到主对话。用户可见旧会话一对一映射为 `kind:side`，内部子任务不登记为旁聊。账户绑定云身份仍保留原本地账户的逻辑身份。
 
@@ -993,19 +993,19 @@ App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协�
 | GET `/chats/{chatId}` | 无 | 200 `{chat}`；非当前账户或不存在 404 `CHAT_UNAVAILABLE` |
 | GET `/sessions/{sessionId}/chat` | 无 | 200 `{chatId,segmentId,kind,archived}`；旧深链通过原 `seq` 定位。原历史接口不重定向；不存在 404 `SESSION_UNAVAILABLE` |
 | GET `/chats` | 可选 `kind=side,parentKind=main\|project,parentId,archived=false\|true\|all,q,cursor,limit` | 200 `{items,nextCursor,hasMore,groups,indexState:"ready"}`；默认活动旁聊 50 条，`limit` 1–200；`q` 最多 256 字符，仅搜标题，不搜全文 |
-| PATCH `/chats/{chatId}/metadata` | 主对话 `{requestId,expectedRevision,unread:boolean}` | 200 `{chat}`；同请求重放返回原结果，异体 409 `REQUEST_CONFLICT`，旧修订 409 `REVISION_CHANGED`。本步旁聊元数据仍调用原会话接口 |
+| PATCH `/chats/{chatId}/metadata` | 主对话 `{requestId,expectedRevision,unread:boolean}` | 200 `{chat}`；同请求重放返回原结果，异体 409 `REQUEST_CONFLICT`，旧修订 409 `REVISION_CHANGED`。旁聊逻辑元数据见9.7，原会话接口兼容 |
 
 `Chat` 含 `{chatId,kind,title,parent,pinned,archived,unread,groupId,projectId,memoryMode,activeSegmentId,activeSessionId,revision,contentRevision,timeZone,running,sendAvailable,taskAvailable}`，按原事实附 `modelProfileId,projectName,projectRevoked,projectNotice,parentSessionId,conversationId,workspaceKind,processing,contextUsage`。主对话 `parent:null,title:"WeftMate",pinned:true,archived:false,groupId:null,projectId:null`；未建执行段时 active 字段为 `null`。普通旁聊父级为 `{kind:"main",id:mainChatId}`，项目旁聊为 `{kind:"project",id:projectId}`。标题、项目、分组、归档、模型、已读水位与发送权限继续投影原会话事实，不另建可独立修改的副本。`revision` 随会话元数据变更增加；`contentRevision` 留作原话删除后缓存失效水位。`timeZone` 在迁移 / 账户创建时固定为宿主实际时区并返回，客户端不自行猜测。
 
 旁聊列表置顶优先，再按最近宿主命令活动时间、创建时间和稳定 ID 排序。游标是 opaque cursor（不透明游标），固定本次列表的 ID 顺序与过滤条件；客户端原样续传同一过滤和页大小。后续新旁聊不会插入已开始的分页，已删除对象不返回。重启后或换账户 / 过滤的游标返回 409 `CURSOR_RESET_REQUIRED`，重新取第一页。每个页面的元数据取当前事实，游标不授予跨账户访问。
 
-读取沿用 `sessions:read`，写入沿用 `commands:write` 与既有 Cookie（会话凭据）/CSRF（跨站请求伪造防护）。主对话改名、取消置顶、分组、移项目、归档、分叉与删除均 409 `MAIN_CHAT_PROTECTED`；只允许已读偏好。旁聊继续通过原 `/sessions/{id}` 的生命周期接口更新，映射在同一账户事务提交。未来主对话段不出现在旧 `/sessions` 列表；持有段 ID 的旧客户端可读历史及原回执，直接发送 409 `MAIN_CHAT_ROUTE_REQUIRED`，生命周期操作 409 `MAIN_CHAT_PROTECTED`。已登记原请求优先返回原回执；原任务控制仍保留。
+读取沿用 `sessions:read`，写入沿用 `commands:write` 与既有 Cookie（会话凭据）/CSRF（跨站请求伪造防护）。主对话改名、取消置顶、分组、移项目、归档、分叉与删除均 409 `MAIN_CHAT_PROTECTED`；只允许已读偏好。旁聊可使用9.7的逻辑生命周期接口；原 `/sessions/{id}` 接口兼容，映射在同一账户事务提交。主对话段不出现在旧 `/sessions` 列表；持有段 ID 的旧客户端可读历史及原回执，直接发送 409 `MAIN_CHAT_ROUTE_REQUIRED`，生命周期操作 409 `MAIN_CHAT_PROTECTED`。已登记原请求优先返回原回执；原任务控制仍保留。
 
 ### 9.2 迁移与回滚边界（IA-2.1 正式）
 
 启动监听前在原子私有存储写入边界发布完整 `chatIdentity`，含一对一执行段映射；没有半发布状态。重启重复迁移不改变身份。随后每次账户事务同时登记旧客户端新建会话、投影旧修改与删除；DSH 日志、命令 / 回执、附件、工作目录、项目 / 分组和 MemoWeft（记忆核心）原 `sessionId` 来源均不改写、不回放、不重新摄取，也不为历史完成任务生成回写或通知。
 
-升级沿第 8 节 BK-1（本地备份）完整快照；本功能另在首次迁移前保存私有 `personal-access/chat-identity-v1.before.json` 原始接入存储，覆盖应用版本未变的开发升级。原始副本只供停写后的演练 / 人工恢复，不自动读入；其中有原设备凭据校验值，因此不进入可携带备份，备份仍只保存撤销设备凭据后的当前接入存储。迁移提交失败保留旧存储；修复后可重跑。界面回退仍可使用旧旁聊，新逻辑元数据保留。
+升级沿第 8 节 BK-1（本地备份）完整快照；本功能另在首次迁移前保存私有 `personal-access/chat-identity-v1.before.json` 原始接入存储，覆盖应用版本未变的开发升级。原始副本只供停写后的演练 / 人工恢复，不自动读入，发生遗忘时移除；其中有原设备凭据校验值，因此不进入可携带备份，备份仍只保存撤销设备凭据后的当前接入存储。迁移提交失败保留旧存储；修复后可重跑。界面回退仍可使用旧旁聊，新逻辑元数据保留。
 
 新版产生数据后不能用旧副本覆盖正在使用的数据目录。需要宿主降级时先停写、保留新版完整快照，再把旧完整快照恢复至独立目录；只运行一份任务。单独的接入存储副本不能代替 DSH、记忆及成果完整备份。已经发生的遗忘 / 撤权必须按原清理水位前向恢复，不从备份自动重新摄取。本步不提供主对话区间归档或清空；D42-A 的全部历史保留政策不变。
 
@@ -1027,7 +1027,7 @@ App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协�
 
 游标绑定账户、对话、索引代次、用途及搜索过滤；不透明且经宿主签名，客户端不能解码、拼接、加一或混用。历史页的 `syncCursor` 不覆盖已建立的增量水位；增量只续传 `nextCursor`。逐步索引早期内容也可能在增量出现，以 `eventId` 去重即可。搜索游标保持过滤/时区，新增匹配可在重新搜索时出现。重启、内容代次变化或不合法游标返回409 `CURSOR_RESET_REQUIRED`，客户端清理旧缓存再取尾页或保存的锚点。
 
-`removals=[{eventId,revision,reason:"deleted"|"forgotten"}]` 不带正文；`removeEvents` 为 IA-2b 的持久原文清理完成后通知接缝，跨重启清理由 `contentRevision` 提升触发全缓存失效。本步未上线 D33 多段清理或接力。D42-A 保留全部原始历史，不增加区间归档或清空。固定 DSH 的原生冷 `inspect` 仍物化整个日志，测量脚本分别记录逻辑页与冷进程读取；不能把逻辑页的有界返回声称为原生磁盘读取已经有界。范围读取及最终性能闭环交 IA-2b 的 2.6。
+`removals=[{eventId,revision,reason:"deleted"|"forgotten"}]` 不带正文；`removeEvents` 为 IA-2b 的持久原文清理完成后通知接缝，跨重启清理由 `contentRevision` 提升触发全缓存失效。D33 多段清理见9.5；接力见9.6。D42-A 保留全部原始历史，不增加区间归档或清空。固定 DSH 的原生冷 `inspect` 仍物化整个日志，测量脚本分别记录逻辑页与冷进程读取；不能把逻辑页的有界返回声称为原生磁盘读取已经有界。宿主公开投影缓存及首次未命中边界见9.7。
 
 ### 9.4 开旁聊与结果回写（IA-2.3 正式）
 
@@ -1067,4 +1067,51 @@ App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协�
 
 自动回写在主对话身份/历史/日期/搜索/增量读取时对账：仅处理主对话身份建立后新受理的普通/项目旁聊根任务，原生工具或成果事实表明它是执行任务；纯闲聊不因每条回复生成卡。不追溯迁移前旧任务。原生 `completed/failed/aborted` 分别显示完成/失败/停止，停止绝不显示完成；缺乏确定证据保留待对账。归档不阻止已受理任务回写。回写不启动主对话模型、不追加 DSH 消息、不重新摄取记忆；没有新增后台计时器。
 
-同一旁聊根任务保持同一 `resultId/mainEventId/activityId`，后续续做/显式更正增加 `resultRevision` 和 `notificationRevision`，更新原卡；手动分享已有自动结果也复用身份。普通手动分享以来源消息去重。`requiresResponse` 当前为false，不凭问号产生待办或代表用户认可/批准。TB-1（动态）复用这些来源和通知版本，不再复制消息或发第二份通知；动态已读、推送和结构化待回应接线留对应包。删除旁聊清空派生摘要、成果引用与搜索正文，保留 `deleted:true` 的无正文锚点；重复分享请求也只返回当前墓碑。D33 原话/派生数据跨段清理仍由 IA-2b 2.5 接入，接力未启用。
+同一旁聊根任务保持同一 `resultId/mainEventId/activityId`，后续续做/显式更正增加 `resultRevision` 和 `notificationRevision`，更新原卡；手动分享已有自动结果也复用身份。普通手动分享以来源消息去重。`requiresResponse` 当前为false，不凭问号产生待办或代表用户认可/批准。TB-1（动态）复用这些来源和通知版本，不再复制消息或发第二份通知；动态已读、推送和结构化待回应接线留对应包。删除旁聊清空派生摘要、成果引用与搜索正文，保留 `deleted:true` 的无正文锚点；重复分享请求也只返回当前墓碑。D33 原话/派生数据跨段清理见9.5，接力见9.6。
+
+
+### 9.5 D33 跨段清理（IA-2b / 2.5）
+
+记忆遗忘、删除旁聊及勾选删除原话继续使用原接口、预览修订和回执。遗忘同时清除逻辑索引、结果摘要、交接资料、旁聊来源引用及创建命令中的同份资料；无法精确归因的混合摘要整份弃用。`contextTransfer` 可新增 `sourceDeleted:true`，此时 `sourceRefs=[]` 且状态为 `references_only`。结果保留无正文 `deleted:true` 墓碑，自动对账及重试不能重新发布旧正文。
+
+受影响对话提升 `contentRevision`，旧游标409 `CURSOR_RESET_REQUIRED`；客户端必须清空旧正文、搜索及增量缓存，再取新页。正在读取的旧索引也会失效，不能以清理前响应填回新缓存。M3-A 同时提升既有副本代次并先丢弃待补交的旧离线内容；不可达设备不能视为已清理，重连先同步删除水位。
+
+默认不勾选原话删除：原聊天记录仍可浏览，匹配来源回合通过 DSH 原生 surface（模型上下文视图）替换移出未来请求及压缩输入；原生混合压缩摘要及记忆注入副本清空。勾选后再物理清理原生日志和命令副本。源序号墓碑阻止保留原话被重新建旁聊或分享成结果。清理未完成时回执保持 pending（待完成），新发送返回既有409 `SESSION_BUSY`，已排队输入在清理成功后继续。过去备份与已导出的用户文件沿既有边界，不承诺远程擦除。
+
+
+### 9.6 主对话发送与原生接力（IA-2b / 2.4）
+
+声明 `personalCapabilities.chatSend=1` 后，主对话使用 `POST /commands`，请求为 `{requestId,kind:"chat.message",targetDeviceId,chatId,text,modelProfileId?,mode?,attachments?,attachmentSessionId?,attachmentMessageId?,originalAttachments?}`。首次发送必需 `modelProfileId`，后续沿当前段模型；不匹配返回409 `REQUEST_CONFLICT`，切换模型仍沿原模型接口。`mode=queue|steer`，省略为queue（排队）。仅宿主账户主对话支持本命令，并沿原 `session.create` 的密码/云账号登录授权；旧登记令牌没有可执行个人会话权限，返回409 `SESSION_READ_ONLY`。旁聊沿原 `session.message`。
+
+返回202 `{command}`，查询仍用 `/commands/by-request/{requestId}` 或原命令ID。尚未派发时 `state=pending`、`sessionId` 可省略，正文已持久化；原子选定当前段后才附原生 `sessionId`，受理后沿原 `receiptId` 和任务端点。重复原请求只返回原回执，接力后也不改绑定。不同请求体同ID返回409。摘要失败保留旧段继续本次发送；创建/持久化失败按现有失败回执处理，未发布目标段保留用于下一次恢复，禁止另建重复目标。
+
+可先 `PUT /chats/{chatId}/attachments/{attachmentId}?requestId=...&name=...` 暂存首条或后续文字/图片附件，字节、散列、媒体类型及响应复用原会话附件上传；该逻辑暂存不创建原生段。随后发送省略 `attachmentSessionId` 即使用同一逻辑暂存。如果附件已通过旧会话上传，则提供来源段 `attachmentSessionId`，宿主校验它属于同一主对话；切段只绑定执行目的地，暂存/原附件引用不重上传到两个段。旧附件读取仍按真实来源身份授权。
+
+主对话 `sendAvailable` 表示逻辑入口可发送，空主对话仍需选择已配置模型；可选 `contextOrganizing:true` 表示正在整理上下文，`relayError` 为脱敏失败代码。客户端保留草稿，按原命令状态展示排队；时间线仍按9.3日期和全局事件身份显示，不展示执行段编号。旧会话直接发送及封段任务续做返回 `MAIN_CHAT_ROUTE_REQUIRED`；旧历史、已受理任务回执和停止按原身份保留。
+
+宿主按原生实际上下文容量、对应压缩配置阈值及压力压缩事实记待接力；当前个人预设阈值为85%，已有研究压力策略触发压缩后也记待接力，不按消息条数切段。无运行回合/队列、待审批/提问、未确认副作用、后台任务及未结束goal（长期目标）时，在下一发送的空闲边界复用原生 `compactNow`。交接按原生 surface（模型上下文视图）顺序覆盖摘要及保留尾部、未完成todo（待办），不复制隐藏推理或旧记忆召回包；资料来自插件，不摄取为新原话。未知容量或交接超过窗口20%时保留旧段。
+
+新段复用逻辑主对话工作目录、当前模型与审批设置，持久化及原生交接资料落盘后原子切换。崩溃前未发布仍指旧段，恢复复用已分配目标；发布后只向新段派发。定时规则原生管理身份不变，主对话执行投递通过同一逻辑命令队列选当前段；未来定时触发不永久阻塞接力。D33 同时清理在途交接、已发布摘要和分段索引；保留原话时不得从todo或压缩副本恢复。
+
+
+### 9.7 逻辑生命周期、资源与历史读取边界（IA-2b / 2.6）
+
+能力增加 `chatLifecycle:1,chatResources:1`。所有路径仍以 `/personal/v1` 开头，账户和原来源授权保持。旁聊当前只有一个原生段；本包不启用旁聊自动接力，也不提供主对话整段删除/归档入口。
+
+| 接口 | 请求 | 响应与语义 |
+|---|---|---|
+| PATCH `/chats/{id}/metadata` | `requestId,expectedRevision` + 原 `title,pinned,unread,groupId,projectId` | `{chat}`；旁聊复用原元数据/项目检查，主对话仍只允许已读偏好 |
+| POST `/chats/{id}/archive` 或 `/unarchive` | `{requestId,expectedRevision}` | `{chat}`；仅旁聊，归档保留历史、经验和记忆 |
+| DELETE `/chats/{id}` | `requestId,expectedRevision,forgetMemories=false,deleteConversationSnippets=false,memoryWorldRevision?,expectedContentRevision?` | `{chatId,deleted:true}`；仅旁聊，沿D16/D33与原删除流程；原请求重放跨重启仍为同一删除结果 |
+| GET `/chats/{id}/forget-preview` | 无 | 原遗忘预览加 `chatId,contentRevision,sessionCount,snippetCount`；按各原生段聚合来源、记忆项和evidenceIds（来源标识）去重，同一worldRevision（记忆修订）；修订改变409，需重新预览 |
+| GET `/chats/{id}/resources` | `cursor?,limit?`（默认50、1–200） | `{outputs,sources,nextCursor,hasMore,contentRevision}`；原资源形状加 `chatId,sessionId,segmentId`，详情/下载继续原来源端点 |
+
+生命周期写入沿既有账户事务及幂等请求表，先记目标身份，原请求重放先于修订检查；旁聊操作只保存结果身份，重放投影当前元数据，避免持久复制标题与来源；删除完成后不恢复缓存的标题/来源响应。普通写入沿 `commands:write`，遗忘操作和预览仍需账户管理权限，逻辑遗忘入口要求Cookie（会话凭据）。主对话生命周期保护在服务端执行。
+
+资源游标只包含受签名的位置与内容代次，不包含正文。每次最多读取一个原生公开历史页（200条），即使没有成果也可以返回空数组与前进游标；客户端继续取页，并按原资源身份合并重复来源/使用记录。内容代次变化或宿主重启返回409 `CURSOR_RESET_REQUIRED`，先清理旧缓存。该入口不是跨全账户成果库，TB-3继续复用原文件授权。
+
+固定DSH的JSONL（逐行结构化日志）后端未实现 `loadStoredFrom` 物理范围读取接缝；`readFrom` 虽返回后缀，仍解码完整前缀。宿主在 `dsh-home/weftmate-history.sqlite` 保存可重建的**公开历史投影缓存**，不解析原生物理日志、不保存隐藏推理或原始工具输出。每次读取通过DSH `listSnapshots` 的原生修订号核对；正常空闲边界增量维护，冷页命中只读SQL（结构化查询语言）范围。原工具详情仍按需读原日志，源日志更改/缓存缺失时仍通过原生解码重建，不宣称原生范围解码已经具备。
+
+同一固定日志、50条尾页、各30个新进程：十万条改前冷p95（第95百分位）531.94ms，缓存命中后7.59ms（原生日志事件读取0）；万条78.96ms→7.81ms。**首次未命中仍需一次全量建缓存**：本次万条224.78ms、十万条1539.38ms，不纳入缓存命中成绩，也不声称达到200ms。未来DSH需提供原生修订绑定的前/后范围、稳定水位及压缩帧索引，使旧日志首次无缓存打开也有物理范围保证。
+
+D33与删除会话清理同一缓存，SQLite使用安全删除及VACUUM（数据库重整），清理前后均失效并等待在途缓存工作；不会从新的备份或缓存重建恢复被忘内容。真实Electron（桌面程序框架）/Core（记忆核心）复验的新备份110文件、缓存2表与Core36表、全部日志帧均0命中。逻辑搜索索引仍为9.3的渐进内存索引；不把公开投影缓存当作另一份记忆来源。

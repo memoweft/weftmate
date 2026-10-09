@@ -26,7 +26,7 @@ export function reconcileChatIdentity(account, hostId, now) {
       identity.sessionSegments[sessionId] = segmentId;
     }
     const chat = identity.chats[segment.chatId], revision = sessionRevision(session);
-    if (chat.sessionRevision !== revision) {
+    if (chat.activeSegmentId === segment.segmentId && chat.sessionRevision !== revision) {
       chat.sessionRevision = revision;
       chat.revision++;
     }
@@ -37,8 +37,9 @@ export function reconcileChatIdentity(account, hostId, now) {
     // IA-2a only has single-segment side chats. Keep a main entity even empty.
     delete identity.sessionSegments[sessionId];
     delete identity.segments[segmentId];
-    if (chat.kind === 'side') delete identity.chats[chat.chatId];
-    else { chat.activeSegmentId = null; chat.revision++; }
+    const remaining = Object.values(identity.segments).filter(row => row.chatId === chat.chatId).sort((a,b)=>a.ordinal-b.ordinal);
+    if (chat.kind === 'side' && !remaining.length) delete identity.chats[chat.chatId];
+    else if (chat.activeSegmentId === segmentId) { chat.activeSegmentId = remaining.at(-1)?.segmentId ?? null; chat.revision++; }
   }
   for (const result of Object.values(account.chatResults ?? {})) {
     if (identity.chats[result.sourceChatId] || result.deleted) continue;
@@ -86,8 +87,8 @@ export function validateChatIdentity(account) {
     if (!plainObject(account.chatOperations)) corrupt();
     for (const [requestId, operation] of Object.entries(account.chatOperations)) {
       if (!REQUEST_ID.test(requestId) || !plainObject(operation) || !/^[a-f0-9]{64}$/.test(operation.fingerprint ?? '') ||
-          !plainObject(operation.response) || !plainObject(operation.response.chat) ||
-          operation.response.chat.chatId !== identity.mainChatId ||
+          (operation.phase === 'pending' ? !validId(operation.chatId) || !Array.isArray(operation.sessionIds) || !operation.sessionIds.every(validId)
+            : !plainObject(operation.response) || !(validId(operation.response.chat?.chatId) || validId(operation.response.chatId) && (operation.response.deleted === true || operation.response.completed === true))) ||
           Object.values(account.commands).some(command => command.requestId === requestId)) corrupt();
     }
   }

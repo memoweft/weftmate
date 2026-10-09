@@ -35,11 +35,7 @@ struct WeftMateRootView: View {
                         ProgressView("正在打开 WeftMate…").font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
                     }.frame(maxWidth: .infinity, maxHeight: .infinity).background(Weave.canvas)
                 } else if let session = model.session {
-                    #if os(macOS)
-                    MacWorkspace(model: model).id(session.account.ownerId)
-                    #else
-                    PhoneWorkspace(model: model).id(session.account.ownerId)
-                    #endif
+                    OfflineWorkspace(app: model, model: model.offline).id(session.account.ownerId)
                 } else {
                     AccountEntry(app: model, cloud: model.cloudLogin)
                 }
@@ -61,6 +57,13 @@ struct WeftMateRootView: View {
                 do { try await Task.sleep(for: .seconds(model.cloudLogin.waiting ? 3 : 30)) } catch { return }
             }
         }
+        .task(id: "offline-\(scenePhase)-\(model.accountEpoch)-\(model.session?.hostId ?? "none")") {
+            guard scenePhase == .active else { return }
+            while !Task.isCancelled {
+                await model.pollOffline()
+                do { try await Task.sleep(for: .seconds(5)) } catch { return }
+            }
+        }
         .tint(Weave.accent)
         .preferredColorScheme(AppleAppearance(rawValue: model.appearanceMode)?.colorScheme)
         .task {
@@ -72,6 +75,11 @@ struct WeftMateRootView: View {
                    ProcessInfo.processInfo.arguments[index + 1] != "login", model.session == nil {
                     FileHandle.standardOutput.write(Data(("A5_CAPTURE_FAILED:authentication: " + (model.authError ?? "no session") + "\n").utf8))
                     Darwin.exit(1)
+                }
+                if A14TestSupport.driver != nil {
+                    do { try await A14MacReview.run(model) }
+                    catch { FileHandle.standardOutput.write(Data(("A5_CAPTURE_FAILED:" + String(describing: error) + "\n").utf8)); Darwin.exit(1) }
+                    Darwin.exit(0)
                 }
                 if let index = ProcessInfo.processInfo.arguments.firstIndex(of: "--a5-review-scene"),
                    ProcessInfo.processInfo.arguments[index + 1] == "a13-all" {
@@ -176,7 +184,7 @@ private enum SidebarSelection: Hashable {
     case conversation(String), memory
 }
 
-private struct MacWorkspace: View {
+struct MacWorkspace: View {
     @ObservedObject var model: AppleAppModel
     @Environment(\.openWindow) private var openWindow
     @State private var selected: SidebarSelection?
@@ -330,7 +338,7 @@ private struct MacWorkspace: View {
     }
 }
 #else
-private struct PhoneWorkspace: View {
+struct PhoneWorkspace: View {
     @ObservedObject var model: AppleAppModel
     @StateObject private var health = HealthSettingsModel()
     @Environment(\.scenePhase) private var scenePhase

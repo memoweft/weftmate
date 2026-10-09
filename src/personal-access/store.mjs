@@ -481,6 +481,7 @@ export function validateSingleStore(store) {
                   command.toolSource.sourceCommandId) ||
                 store.commands[command.taskId]?.kind !== 'session.message' ||
                 store.commands[command.taskId]?.sessionId !== command.toolSource.sessionId))
+            : command.kind === 'chat.message' ? command.sessionId !== undefined || !['pending','rejected'].includes(command.state) || command.appId !== undefined
             : command.kind === INTERNAL_ARTIFACT_KIND ? command.appId !== undefined
             : !validId(command.sessionId) || command.appId !== undefined ||
               ['accepted_by_host'].includes(command.state) ||
