@@ -29,6 +29,8 @@ import { createUserQuestionOperations } from './user-questions.mjs';
 import { createApprovalOperations } from './approvals.mjs';
 import { createTaskOperations } from './tasks.mjs';
 import { createWorkspaceOperations } from './workspaces.mjs';
+import { migrateProjects } from '../personal-projects/projects.mjs';
+import { sessionWorkspace } from './session-workspace.mjs';
 import { createCommandOperations } from './commands.mjs';
 import { createAccountModelOperations } from './account-models.mjs';
 import { createArtifactOperations } from './artifacts.mjs';
@@ -295,6 +297,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     rootState = JSON.parse(await readFile(storeFile, 'utf8'));
     if (rootState.version === VERSION) {
       let upgraded = false;
+      for (const account of Object.values(rootState.accounts)) if (migrateProjects(account)) upgraded = true;
       if (!Object.hasOwn(rootState, 'unknownAuthLimits')) {
         rootState.unknownAuthLimits = { failures: 0, lastFailureAt: 0, lockUntil: 0 };
         upgraded = true;
@@ -307,7 +310,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       validateStore(rootState);
       if (upgraded) await durableWrite(storeFile, rootState);
     }
-    else validateSingleStore(rootState);
+    else { migrateProjects(rootState); validateSingleStore(rootState); }
   } catch (error) {
     if (error?.code !== 'ENOENT') throw failure('STORE_CORRUPT', 500);
     rootState = {
@@ -640,8 +643,14 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       const match = sessions.ownerForSession(sessionId);
       if (!match) throw failure('SESSION_UNAVAILABLE', 404);
       const account = accountState(match.ownerId), session = account.sessions[sessionId];
-      return { mode: session.approvalMode ?? account.defaultApprovalMode ?? 'auto',
-        allowedCategories: session.allowedApprovalCategories ?? [] };
+      const project = account.projects?.[session.projectId];
+      return { conversationWorkspace: sessionWorkspace(path.join(path.dirname(root), 'conversations'), match.ownerId, sessionId),
+        mode: session.approvalMode ?? account.defaultApprovalMode ?? 'auto',
+        allowedCategories: session.allowedApprovalCategories ?? [],
+        ...(project && !project.revoked ? { project: { projectId: project.projectId,
+          rootPath: project.rootPath, revision: project.revision, instructions: project.instructions ?? '',
+          name: project.name, permission: project.permission ?? 'read-only' } } : {}),
+        ...(session.projectNotice ? { projectNotice: session.projectNotice } : {}) };
     },
     hasUnissuedDshCommands: commands.hasUnissuedDshCommands,
     getConversationContext: sessions.getConversationContext,

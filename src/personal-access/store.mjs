@@ -251,6 +251,9 @@ export function validateSingleStore(store) {
   for (const [projectId, project] of Object.entries(store.projects ?? {})) {
     if (!validId(projectId) || !plainObject(project) || project.projectId !== projectId ||
         project.ownerId !== store.ownerId || !validProjectName(project.name) ||
+        project.permission !== undefined && !['read-only', 'write'].includes(project.permission) ||
+        project.instructions !== undefined && (typeof project.instructions !== 'string' || project.instructions.length > 16000) ||
+        project.removed !== undefined && typeof project.removed !== 'boolean' ||
         typeof project.rootPath !== 'string' || !/^[A-Za-z]:\\/.test(project.rootPath) ||
         typeof project.rootFinalPath !== 'string' || !/^\\\\\?\\[A-Za-z]:\\/.test(project.rootFinalPath) ||
         !/^[A-F0-9]{8}:[A-F0-9]{16}$/.test(project.rootIdentity ?? '') ||
@@ -410,25 +413,26 @@ export function validateSingleStore(store) {
         !(KINDS.has(command.kind) || command.kind === INTERNAL_ARTIFACT_KIND) ||
         !['pending', 'dispatching', 'accepted_by_dsh', 'accepted_by_host', 'observed', 'uncertain', 'rejected'].includes(command.state) ||
         !validId(command.sourceDeviceId) || !Object.hasOwn(store.devices, command.sourceDeviceId) ||
-        !plainObject(command.payload) || requestIds.has(command.requestId) || !validToolExecutions(command, store) ||
+        !plainObject(command.payload) || command.nativeFileObserved !== undefined && command.nativeFileObserved !== true || requestIds.has(command.requestId) || !validToolExecutions(command, store) ||
         !validToolApprovals(command, store) || !validUserQuestions(command, store)) {
       throw failure('STORE_CORRUPT', 500);
     }
     requestIds.add(command.requestId);
     try {
       const payload = canonicalCommand(command.payload, store.hostId, true);
+      const currentBinding = ['pending', 'dispatching', 'uncertain'].includes(command.state);
       if (JSON.stringify(payload) !== JSON.stringify(command.payload) ||
           digest(JSON.stringify(payload)) !== command.payloadHash ||
           command.kind !== payload.kind || command.requestId !== payload.requestId ||
           command.targetDeviceId !== store.hostId ||
            (payload.projectId !== undefined && (!['session.create', 'session.message'].includes(command.kind) ||
              !Object.hasOwn(store.projects ?? {}, payload.projectId) ||
-             (command.kind === 'session.message' &&
+             (currentBinding && command.kind === 'session.message' &&
                (store.sessions[command.sessionId]?.projectId !== payload.projectId ||
                  store.sessions[command.sessionId]?.projectRevision !== payload.projectRevision)))) ||
-           (command.kind === 'session.message' &&
+           (currentBinding && command.kind === 'session.message' &&
              (payload.projectId ?? null) !== (store.sessions[command.sessionId]?.projectId ?? null)) ||
-           (command.kind === 'session.message' &&
+           (currentBinding && command.kind === 'session.message' &&
              (payload.workspaceKind ?? null) !== (store.sessions[command.sessionId]?.workspaceKind ?? null)) ||
            (command.kind === 'session.message' &&
              ((payload.conversationId ?? null) !== (store.sessions[command.sessionId]?.conversationId ?? null) ||
@@ -448,13 +452,13 @@ export function validateSingleStore(store) {
               (command.contentType !== undefined && command.contentType !== artifactContentType(command.fileName)) ||
                JSON.stringify(command.sourceSnapshotIds ?? null) !== JSON.stringify(payload.sourceSnapshotIds ?? null) ||
                (command.sourceReceiptId ?? null) !== (payload.sourceReceiptId ?? null) ||
-               (store.sessions[command.sessionId]?.projectId !== undefined &&
+               (command.nativeFileObserved !== true && store.commands[command.taskId]?.payload.projectId !== undefined &&
                  (!payload.sourceSnapshotIds?.length ||
                    store.commands[command.toolSource?.sourceCommandId]?.receiptId !== payload.sourceReceiptId ||
                    payload.sourceSnapshotIds.some((sourceId) =>
                      store.projectSources?.[sourceId]?.taskId !== command.taskId ||
                      store.projectSources?.[sourceId]?.sourceReceiptId !== payload.sourceReceiptId))) ||
-               (store.sessions[command.sessionId]?.workspaceKind === 'browser' &&
+               (command.nativeFileObserved !== true && store.commands[command.taskId]?.payload.workspaceKind === 'browser' &&
                  (!payload.sourceSnapshotIds?.length ||
                    store.commands[command.toolSource?.sourceCommandId]?.receiptId !== payload.sourceReceiptId ||
                    payload.sourceSnapshotIds.some((sourceId) =>
@@ -485,9 +489,9 @@ export function validateSingleStore(store) {
             (!Object.hasOwn(store.sessions, command.sessionId) ||
               (store.sessions[command.sessionId].modelProfileId !== undefined &&
                  store.sessions[command.sessionId].modelProfileId !== payload.modelProfileId) ||
-               (store.sessions[command.sessionId].projectId ?? null) !== (payload.projectId ?? null) ||
-               (store.sessions[command.sessionId].projectRevision ?? null) !== (payload.projectRevision ?? null) ||
-               (store.sessions[command.sessionId].workspaceKind ?? null) !== (payload.workspaceKind ?? null))) ||
+               currentBinding && (store.sessions[command.sessionId].projectId ?? null) !== (payload.projectId ?? null) ||
+               currentBinding && (store.sessions[command.sessionId].projectRevision ?? null) !== (payload.projectRevision ?? null) ||
+               currentBinding && (store.sessions[command.sessionId].workspaceKind ?? null) !== (payload.workspaceKind ?? null))) ||
           (command.rootTaskId !== undefined && (command.kind !== 'session.message' ||
             (command.rootTaskId !== payload.rootTaskId || command.taskAction !== payload.taskAction) &&
               !(payload.rootTaskId === undefined && payload.mode === 'steer' && command.taskAction === 'supplement') ||
