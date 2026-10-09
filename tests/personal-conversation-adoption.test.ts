@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
@@ -474,3 +474,20 @@ test('Apple capability declarations map to compatible stored levels and can be d
     'legacy Android declarations retain their existing highest-build behavior')
   } finally { await host.service.close(); rmSync(root, { recursive: true, force: true }) }
 })
+
+
+test('D37 moving an adopted owner conversation into a project preserves its phone binding and sends with both contexts', {skip:process.platform!=='win32'}, async()=>{
+  const root=mkdtempSync(join(tmpdir(),'personal-adopt-project-')),folder=join(root,'project');mkdirSync(folder);
+  const fixture=backendFixture(),host=await setup(root,fixture.backend);
+  try{
+    assert.equal((await api(host.origin,host.auth,'POST','/personal/v1/sync/events',{events:[created,user,assistant,terminal]})).status,200);
+    const adopted=await api(host.origin,host.auth,'POST',`/personal/v1/sync/conversations/${conversationId}/shared`,{requestId:'adopt-for-project',modelProfileId:'local',expectedSyncSeq:4});
+    assert.equal(adopted.status,202,JSON.stringify(adopted.body));const command=await waitCommand(host.origin,host.auth,adopted.body.command.commandId);assert.equal(command.state,'accepted_by_dsh');
+    const registered=await api(host.origin,host.auth,'POST','/personal/v1/projects',{requestId:'folder-for-adopted',name:'合成手机项目',rootPath:folder,permission:'write'});assert.equal(registered.status,201);
+    const project=registered.body.project;
+    const moved=await api(host.origin,host.auth,'PATCH',`/personal/v1/sessions/${command.sessionId}/metadata`,{projectId:project.projectId});assert.equal(moved.status,200,JSON.stringify(moved.body));
+    const sent=await api(host.origin,host.auth,'POST','/personal/v1/commands',{requestId:'continue-in-project',kind:'session.message',targetDeviceId:host.hostId,sessionId:command.sessionId,text:'Continue in this project'});assert.equal(sent.status,202,JSON.stringify(sent.body));
+    const source=await waitCommand(host.origin,host.auth,sent.body.command.commandId);assert.equal(source.state,'accepted_by_dsh');assert.equal(source.projectId,project.projectId);assert.equal(source.conversationId,conversationId);
+    assert.equal((await api(host.origin,host.auth,'GET',`/personal/v1/sync/conversations/${conversationId}/shared`)).body.binding.sessionId,command.sessionId);
+  }finally{await host.service.close();rmSync(root,{recursive:true,force:true});}
+});

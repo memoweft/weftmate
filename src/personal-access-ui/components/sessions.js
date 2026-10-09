@@ -2,6 +2,101 @@
 globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
     const collapsedGroups = new Set();
     let activeMenu, activeSubmenu;
+    const collapsedProjects = new Set();
+    const canManageProjectFolders = () => core.state.projectCanManage && (!!globalThis.weftmateDesktop || !(globalThis.matchMedia?.('(max-width: 719px)')?.matches ?? false));
+    function projectError(error) {
+        return { PROJECT_REVISION_CHANGED: '项目已在其他设备更新，请关闭并重新打开设置。',
+            SESSION_BUSY: '项目对话仍在运行，请结束后再修改项目。', PROJECT_UNSAFE_PATH: '文件夹不可用，请选择本机已有文件夹。' }[error?.code] || core.failureMessage(error);
+    }
+    function confirmRemoveProject(project, parent) {
+        const dialog = ui.element('dialog', 'dialog confirm-dialog'); dialog.setAttribute('aria-label', '移除项目');
+        const body = ui.element('div', 'dialog-body'); body.append(ui.element('h2', '', `移除「${project.name}」？`),
+            ui.element('p', '', '只移除项目登记，不删除文件夹里的任何文件。对话保留，并从下一回合使用各自的独立工作目录。'));
+        const notice = ui.element('p', 'form-error'); notice.setAttribute('role', 'alert');
+        const footer = ui.element('div', 'dialog-footer');
+        const cancel = ui.element('button', 'button secondary', '取消'); cancel.onclick = () => dialog.close();
+        const remove = ui.element('button', 'button danger', '移除登记');
+        remove.onclick = async () => { remove.disabled = true; try { await core.removeProject(project); dialog.close(); parent?.close(); }
+            catch (error) { notice.textContent = projectError(error); remove.disabled = false; } };
+        footer.append(cancel, remove); dialog.append(body, notice, footer); dialog.onclose = () => dialog.remove(); document.body.append(dialog); dialog.showModal(); cancel.focus();
+    }
+    function editProject(project = null) {
+        if (!canManageProjectFolders()) return;
+        const dialog = ui.element('dialog', 'dialog project-dialog'); dialog.setAttribute('aria-label', project ? '项目设置' : '新建项目');
+        const form = ui.element('form', 'dialog-body'); form.append(ui.element('h2', '', project ? '项目设置' : '新建项目'));
+        const field = (caption, control) => { const label = ui.element('label', 'project-field', caption); label.append(control); form.append(label); control.setAttribute('aria-label', caption); return control; };
+        let folder;
+        const name = ui.element('input'); name.value = project?.name || ''; name.required = true; name.maxLength = 80;
+        if (!project) {
+            form.append(ui.element('p', 'muted', '一个项目对应电脑上的一个文件夹。项目对话默认在这里读写文件和运行命令。'));
+            folder = field('电脑上的文件夹', ui.element('input')); folder.required = true; folder.placeholder = '输入完整文件夹路径'; folder.autocomplete = 'off';
+            const suggestName = () => { if (!name.value) name.value = folder.value.replace(/[\\/]+$/, '').split(/[\\/]/).pop() || ''; };
+            folder.addEventListener('change', suggestName);
+            if (globalThis.weftmateDesktop?.pickProjectFolder) {
+                const choose = ui.element('button', 'button secondary', '选择文件夹…'); choose.type = 'button';
+                choose.onclick = async () => { try { const path = await globalThis.weftmateDesktop.pickProjectFolder(); if (path) { folder.value = path; suggestName(); } }
+                    catch { notice.textContent = '无法打开系统选择框，请输入文件夹路径。'; } }; form.append(choose);
+            }
+        }
+        field('项目名称', name);
+        const instructions = field('项目说明', ui.element('textarea')); instructions.value = project?.instructions || ''; instructions.rows = 5; instructions.maxLength = 16000;
+        instructions.placeholder = '给助手的固定说明，例如背景、编码规范或写作要求';
+        const permission = field('文件权限', ui.element('select')); permission.append(new Option('只读', 'read-only'), new Option('可写', 'write')); permission.value = project?.permission || 'write';
+        form.append(ui.element('p', 'field-help', '项目说明会自动带给模型。可写权限仅适用于项目文件夹；危险操作继续按对话审批模式处理。'));
+        const notice = ui.element('p', 'form-error'); notice.setAttribute('role', 'alert'); form.append(notice);
+        const footer = ui.element('div', 'dialog-footer');
+        const cancel = ui.element('button', 'button secondary', '取消'); cancel.type = 'button'; cancel.onclick = () => dialog.close();
+        const save = ui.element('button', 'button primary', project ? '保存' : '创建项目'); save.type = 'submit';
+        if (project) { const remove = ui.element('button', 'button danger', '移除项目'); remove.type = 'button'; remove.onclick = () => confirmRemoveProject(project, dialog); footer.append(remove); }
+        footer.append(cancel, save); form.append(footer); dialog.append(form);
+        const requestId = crypto.randomUUID();
+        form.onsubmit = async event => { event.preventDefault(); save.disabled = true; notice.textContent = '';
+            try { await core.saveProject(project, { name: name.value.trim().normalize('NFC'), instructions: instructions.value, permission: permission.value,
+                ...(!project ? { requestId, rootPath: folder.value.trim() } : {}) }); dialog.close(); }
+            catch (error) { notice.textContent = projectError(error); } finally { save.disabled = false; } };
+        dialog.onclose = () => dialog.remove(); document.body.append(dialog); dialog.showModal(); (folder || name).focus();
+    }
+    async function newProjectConversation(project, button) {
+        button.disabled = true;
+        try { const sessionId = await core.createProjectConversation(project, core.state.modelProfileId || core.state.models[0]?.id);
+            await core.refreshSessions(); if (sessionId) await core.selectSession(sessionId); }
+        catch (error) { ui.byId('sessions-status').textContent = projectError(error); }
+        finally { button.disabled = false; }
+    }
+    function renderSidebarProjects(list, query) {
+        const heading = ui.element('li', 'project-section-heading'); heading.append(ui.element('span', '', '项目'));
+        if (canManageProjectFolders()) { const add = ui.element('button', 'project-action'); add.type = 'button'; add.setAttribute('aria-label', '新建项目'); add.append(WeftIcons.create('plus', 16)); add.onclick = () => editProject(); heading.append(add); }
+        list.append(heading);
+        const projects = (core.state.projects || []).filter(project => !project.revoked); let projectMatches = 0;
+        if (!projects.length) list.append(ui.element('li', 'project-empty', core.state.projectsError || (core.state.projectCanManage ? '添加一个文件夹，开始项目对话。' : '在电脑上添加项目后，可在这里开始对话。')));
+        for (const project of projects) {
+            const sessions = core.sessionList().filter(session => session.projectId === project.projectId);
+            if (query && !project.name.toLocaleLowerCase().includes(query) && !sessions.some(session => (session.title || '新对话').toLocaleLowerCase().includes(query))) continue;
+            projectMatches++;
+            const row = ui.element('li', 'sidebar-project'); row.dataset.projectId = project.projectId;
+            const title = ui.element('div', 'sidebar-project-heading');
+            const toggle = ui.element('button', 'sidebar-project-toggle'); toggle.type = 'button'; toggle.setAttribute('aria-expanded', String(!collapsedProjects.has(project.projectId))); toggle.append(WeftIcons.create('folder', 16), ui.element('span', '', project.name));
+            toggle.onclick = () => { collapsedProjects.has(project.projectId) ? collapsedProjects.delete(project.projectId) : collapsedProjects.add(project.projectId); renderSessions(); };
+            const add = ui.element('button', 'project-action'); add.type = 'button'; add.setAttribute('aria-label', `在项目 ${project.name} 新建对话`); add.append(WeftIcons.create('plus', 16)); add.disabled = !core.state.models.length; add.onclick = () => newProjectConversation(project, add); title.append(toggle, add);
+            if (canManageProjectFolders()) { const settings = ui.element('button', 'project-action'); settings.type = 'button'; settings.setAttribute('aria-label', `项目设置 ${project.name}`); settings.append(WeftIcons.create('more', 16)); settings.onclick = () => editProject(project); title.append(settings); }
+            row.append(title);
+            if (!collapsedProjects.has(project.projectId) || query) {
+                const children = ui.element('ul', 'project-conversations');
+                for (const session of sessions) {
+                    if (query && !project.name.toLocaleLowerCase().includes(query) && !(session.title || '新对话').toLocaleLowerCase().includes(query)) continue;
+                    const child = ui.element('li', 'session-row' + (session.unread ? ' is-unread' : '')); child.dataset.sessionId = session.sessionId;
+                    const button = ui.element('button', core.state.selectedSessionId === session.sessionId ? 'is-current' : ''); button.type = 'button'; button.append(ui.element('span', 'session-title', session.title || '新对话'));
+                    if (session.running) { const dot = ui.element('span', 'session-running-dot'); dot.setAttribute('aria-label', '正在运行'); button.append(dot); }
+                    button.onclick = () => core.selectSession(session.sessionId);
+                    const more = ui.element('button', 'session-more'); more.type = 'button'; more.setAttribute('aria-label', `更多操作 ${session.title || '新对话'}`); more.append(WeftIcons.create('more', 16)); more.onclick = () => sessionMenu(session, more); button.oncontextmenu = event => { event.preventDefault(); sessionMenu(session, more); }; child.append(button, more); children.append(child);
+                }
+                if (!sessions.length) { const empty = ui.element('li', 'project-empty'); const button = ui.element('button', '', '新建项目对话'); button.type = 'button'; button.onclick = () => newProjectConversation(project, button); empty.append(button); children.append(empty); }
+                row.append(children);
+            }
+            list.append(row);
+        }
+        return projectMatches;
+    }
     function closeMenu() { activeSubmenu?.remove(); activeSubmenu=null; if (activeMenu) { activeMenu.remove(); activeMenu = null; } }
     function editName(title, initial, save) {
         const dialog = ui.element('dialog', 'dialog confirm-dialog'); dialog.setAttribute('aria-label', title);
@@ -35,7 +130,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
     }
     function sessionMenu(session, trigger, groupsOnly = false) {
         if(groupsOnly){activeSubmenu?.remove();}else closeMenu();
-        const menu = ui.element('div', 'session-menu'); if(groupsOnly)activeSubmenu=menu;else activeMenu = menu; menu.setAttribute('role','menu'); menu.setAttribute('aria-label',groupsOnly?'移至分组':'对话操作');
+        const menu = ui.element('div', 'session-menu'); if(groupsOnly)activeSubmenu=menu;else activeMenu = menu; menu.setAttribute('role','menu'); menu.setAttribute('aria-label',groupsOnly === 'project' ? '移至项目' : groupsOnly?'移至分组':'对话操作');
         const notice = ui.element('p','form-error'); notice.setAttribute('role','alert');
         const action = (label, run, options = {}) => {
             if(options.separator){const line=ui.element('div','session-menu-separator');line.setAttribute('role','separator');menu.append(line);}
@@ -46,17 +141,20 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             button.onclick=async()=>{button.disabled=true;try{await run();}catch(error){notice.textContent=core.sessionLifecycleMessage(error);menu.append(notice);}finally{button.disabled=false;}};
             menu.append(button); return button;
         };
-        if(groupsOnly){
+        if(groupsOnly === 'project') {
+            for (const project of core.state.projects.filter(project => !project.revoked)) action(project.name, async () => { await core.updateSession(session.sessionId, { projectId: project.projectId }); closeMenu(); await core.refreshSessions(); if (core.state.selectedSessionId === session.sessionId) paintSelectedSession(session.sessionId); });
+            action('移出项目', async () => { await core.updateSession(session.sessionId, { projectId: null }); closeMenu(); await core.refreshSessions(); });
+        } else if(groupsOnly){
             for(const group of core.state.sessionGroups || []) action(group.name,async()=>{await core.updateSession(session.sessionId,{groupId:group.id});closeMenu();});
             action('新建分组…',()=>{closeMenu();editName('新建分组','',async name=>{const result=await core.sessionGroupAction('POST',null,name);if(result)await core.updateSession(session.sessionId,{groupId:result.group.id});});},{separator:true});
             action('移出分组',async()=>{await core.updateSession(session.sessionId,{groupId:null});closeMenu();});
             action('管理分组',()=>{closeMenu();manageGroups();});
         }else{
-            const runs={pin:async()=>{await core.updateSession(session.sessionId,{pinned:!session.pinned});closeMenu();},unread:async()=>{await core.updateSession(session.sessionId,{unread:!session.unread});closeMenu();},
+            const runs={project:()=>sessionMenu(session,menu.querySelector('[data-project-menu]'),'project'),pin:async()=>{await core.updateSession(session.sessionId,{pinned:!session.pinned});closeMenu();},unread:async()=>{await core.updateSession(session.sessionId,{unread:!session.unread});closeMenu();},
                 rename:()=>{closeMenu();renameInline(session);},fork:async()=>{const child=await core.forkSession(session.sessionId);closeMenu();if(!child)return;await core.refreshSessions();await core.selectSession(child.sessionId);},
-                group:()=>sessionMenu(session,menu.querySelector('[aria-haspopup=menu]'),true),archive:async()=>{await core.archiveSession(session.sessionId,!session.archived);closeMenu();},delete:()=>{closeMenu();confirmDelete(session);}};
+                group:()=>sessionMenu(session,menu.querySelector('[data-group-menu]'),true),archive:async()=>{await core.archiveSession(session.sessionId,!session.archived);closeMenu();},delete:()=>{closeMenu();confirmDelete(session);}};
             const buttons = new Map();
-            for(const item of globalThis.WeftUiCore.sessionMenuItems(session))buttons.set(item.id,action(item.label,runs[item.id],item));
+            for(const item of globalThis.WeftUiCore.sessionMenuItems(session)){ const button = action(item.label,runs[item.id],item); if (item.id === 'project') button.dataset.projectMenu = ''; if (item.id === 'group') button.dataset.groupMenu = ''; buttons.set(item.id,button); }
             menu.onkeydown = event => {
                 if(event.ctrlKey || event.altKey || event.metaKey)return;
                 const id=globalThis.WeftUiCore.sessionMenuKey(event.key);if(id){event.preventDefault();buttons.get(id)?.click();}
@@ -75,7 +173,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
     function confirmDelete(session) {
         const dialog = ui.element('dialog', 'dialog confirm-dialog'); dialog.setAttribute('aria-label', '删除对话');
         const body = ui.element('div', 'dialog-body'); body.append(ui.element('h2', '', '删除对话？'),
-            ui.element('p', '', '这会永久删除对话、工作目录与经验，无法恢复。运行中的对话会先停止。'));
+            ui.element('p', '', session.projectId ? '这会永久删除对话与执行记录，项目文件夹里的文件不会删除。运行中的对话会先停止。' : '这会永久删除对话、工作目录与经验，无法恢复。运行中的对话会先停止。'));
         const label = ui.element('label'); const forget = ui.element('input'); forget.type = 'checkbox';
         label.append(forget, document.createTextNode('同时忘掉从这段对话形成的记忆')); body.append(label);
         const snippetsLabel = ui.element('label'), snippets = ui.element('input'); snippets.type = 'checkbox';
@@ -117,22 +215,23 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         ui.byId('desktop-action').hidden = true;
         const selected = core.state.sessions.find((item) => item.sessionId === sessionId);
         ui.byId('assistant-title').textContent = selected?.title || '新对话';
+        let notice = ui.byId('project-conversation-notice');
+        if (!notice) { notice = ui.element('p', 'project-conversation-notice'); notice.id = 'project-conversation-notice'; notice.setAttribute('role', 'status'); ui.byId('transcript').before(notice); }
+        notice.textContent = selected?.projectNotice || (selected?.projectName ? `项目：${selected.projectName}` : ''); notice.hidden = !notice.textContent;
         globalThis.WeftMotion?.changed(ui.byId('chat-scroll'), sessionId, 'base');
     }
     function renderSessions() {
         archivedRedraw?.();
         const list = ui.byId('session-list');
         list.replaceChildren();
-        const phone = core.phoneConversations();
+        const phone = core.phoneConversations().filter(record => !core.state.sessions.find(session =>
+            session.sessionId === core.phoneBinding(record.id)?.sessionId)?.projectId);
         const linkedSessionIds = new Set(phone.map((record) => core.phoneBinding(record.id)?.sessionId).filter(Boolean));
-        if (!core.state.sessions.length && !phone.length) {
-            ui.byId('sessions-status').textContent = '还没有会话。';
-            return;
-        }
+
         ui.byId('sessions-status').textContent = '';
         const query = (ui.byId('session-search').value || '').normalize('NFKC').trim().toLocaleLowerCase();
         let currentGroup = null, matches = 0;
-        const sessions = core.sessionList();
+        const sessions = core.sessionList().filter(session => !session.projectId);
         for (const session of globalThis.WeftUiCore.sortSessions(sessions).sort(globalThis.WeftUiCore.compareSessionGroups)) {
             if (!core.sessionIdPattern.test(session.sessionId) || linkedSessionIds.has(session.sessionId))
                 continue;
@@ -192,7 +291,8 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             row.append(button);
             list.append(row);
         }
-        ui.byId('sessions-status').textContent = matches ? '' : '没有找到会话。';
+        const projectMatches = renderSidebarProjects(list, query);
+        ui.byId('sessions-status').textContent = matches || projectMatches ? '' : query ? '没有找到会话。' : '还没有普通对话。';
         if (matches <= 20) globalThis.WeftMotion?.changed(list, JSON.stringify([query, sessions.map(row => row.sessionId)]), 'fast');
         else globalThis.WeftMotion?.cancel(list);
     }
@@ -211,5 +311,5 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         archivedRedraw=draw;
     }
     let archivedRedraw;
-    return { paintSelectedSession, renderSessions, mountSessions, showSettingsArchived };
+    return { canManageProjectFolders, editProject, paintSelectedSession, renderSessions, mountSessions, showSettingsArchived };
 };
