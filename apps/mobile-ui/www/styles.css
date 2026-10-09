@@ -239,13 +239,13 @@ main{min-height:0;flex:1;position:relative;display:flex;flex-direction:column}.p
 .message-image-placeholder{display:block;width:100%;aspect-ratio:4/3;border:1px solid var(--line);border-radius:var(--wm-radius-14);background:var(--soft)}
 .message-attachment-note{display:block;margin-top:var(--wm-space-7);color:var(--muted);font-size:var(--wm-font-size-11);line-height:var(--wm-line-height-1_4);white-space:normal}
 .message-native-note{display:block;margin-top:var(--wm-space-7);color:var(--muted);font-size:var(--wm-font-size-12);line-height:var(--wm-line-height-1_45);white-space:normal;overflow-wrap:anywhere}
-.image-preview{position:fixed;inset:0;z-index:100;display:grid;grid-template-rows:1fr;background:var(--wm-color-mobile-preview-canvas);color:var(--wm-color-mobile-preview-ink);isolation:isolate;animation:preview-in var(--wm-duration-fast) var(--ease)}
+.image-preview{position:fixed;inset:0;z-index:100;display:grid;grid-template-rows:1fr;background:var(--canvas);color:var(--ink);isolation:isolate;animation:preview-in var(--wm-duration-fast) var(--ease)}
 .image-preview.closing{animation:preview-out var(--wm-duration-160ms) var(--wm-easing-enter) forwards;pointer-events:none}
 .image-preview-stage{grid-area:1/1;min-width:0;min-height:0;display:grid;place-items:center}
 .image-preview-stage img{display:block;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain}
-.image-preview-topbar{grid-area:1/1;align-self:start;z-index:1;display:flex;justify-content:flex-end;padding:calc(var(--wm-space-8) + env(safe-area-inset-top)) var(--wm-space-16) var(--wm-space-14);background:linear-gradient(to bottom,var(--wm-color-preview-topbar-scrim),transparent)}
-.image-preview-close{width:48px;height:48px;display:grid;place-items:center;border-radius:var(--wm-radius-circle);background:var(--wm-color-preview-close);color:var(--wm-color-on-action);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.image-preview-close .icon{width:20px;height:20px}.image-preview-close:active{background:var(--wm-color-preview-close-active)}.image-preview-close:focus-visible{outline:2px solid var(--wm-color-on-action);outline-offset:var(--wm-space-2)}
+.image-preview-topbar{grid-area:1/1;align-self:start;z-index:1;display:flex;justify-content:flex-end;padding:calc(var(--wm-space-8) + env(safe-area-inset-top)) var(--wm-space-16) var(--wm-space-14);background:var(--surface)}
+.image-preview-close{width:48px;height:48px;display:grid;place-items:center;border-radius:var(--wm-radius-circle);background:var(--soft);color:var(--ink);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.image-preview-close .icon{width:20px;height:20px}.image-preview-close:active{background:var(--accent-soft)}.image-preview-close:focus-visible{outline:2px solid var(--accent);outline-offset:var(--wm-space-2)}
 .image-preview-caption{display:none}
 @keyframes preview-in{from{opacity:0}to{opacity:1}}@keyframes preview-out{from{opacity:1}to{opacity:0}}
 @media(prefers-reduced-motion:reduce){.image-preview,.image-preview.closing{animation:none}.attachment-preview-trigger,.message-thumbnail{transition:none}}
@@ -327,7 +327,7 @@ html,body{overflow:hidden}#app{height:var(--viewport-height,100dvh)}
 .welcome-signature,.welcome-bottom{display:none!important}
 .handoff-card{display:block;padding:0;border:0;background:transparent}.handoff-card summary{min-height:44px;padding:var(--wm-space-12) 0;color:var(--secondary);cursor:pointer}.handoff-card>p{margin:var(--wm-space-8) 0}.handoff-card>button{margin-top:var(--wm-space-8)}
 summary:focus-visible,.artifact-action:focus-visible,.resource-row:focus-visible{outline:2px solid var(--accent);outline-offset:var(--wm-space-3)}
-.popover{box-shadow:none}.message-body blockquote{border-left-width:1px}.image-preview{background:var(--wm-color-mobile-image-canvas)}
+.popover{box-shadow:none}.message-body blockquote{border-left-width:1px}.image-preview{background:var(--canvas)}
 @media(max-width:360px){.header-action{padding:0 var(--wm-space-6);font-size:var(--wm-font-size-12)}.brand strong{font-size:var(--wm-font-size-15)}.home-conversations{padding-left:var(--wm-space-16);padding-right:var(--wm-space-16)}}
 
 /* IC-1: C4 colour mark and optical stroke at compact sizes. */
@@ -402,3 +402,5 @@ html[data-reduced-motion] *,html[data-reduced-motion] *::before,html[data-reduce
 .settings-schedules-list { list-style: none; padding: 0; margin: var(--wm-space-20) 0; }
 .settings-schedule-row { display: flex; flex-wrap: wrap; gap: var(--wm-space-12); padding: var(--wm-space-20) 0; border-bottom: var(--wm-space-1) solid var(--line); }
 .settings-schedule-row .system-service-detail { flex-basis: 100%; display: flex; flex-direction: column; gap: var(--wm-space-8); }
+
+select, select option { color: var(--ink); background: var(--surface); }

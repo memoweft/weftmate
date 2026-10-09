@@ -98,11 +98,11 @@ try {
   await button('本对话用量').click(); await dialog.getByRole('heading', { name: '本对话用量', exact: true }).waitFor(); checks.push('conversation usage deep link');
   await application.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setContentSize(680, 800));
   await dialog.getByRole('combobox', { name: '设置分类', exact: true }).waitFor();
-  assert.equal(await nav.isVisible(), false); await dialog.getByRole('combobox', { name: '设置分类', exact: true }).selectOption('appearance');
+  assert.equal(await nav.isVisible(), false); await dialog.getByRole('combobox', { name: '设置分类', exact: true }).click(); await page.getByRole('option', { name: '设置 · 外观', exact: true }).click();
   await dialog.getByRole('group', { name: '颜色模式' }).waitFor(); checks.push('narrow category picker');
   await capture('desktop-narrow.png');
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await dialog.getByRole('combobox', { name: '设置分类', exact: true }).selectOption('general');
+  await dialog.getByRole('combobox', { name: '设置分类', exact: true }).click(); await page.getByRole('option', { name: '设置 · 常规', exact: true }).click();
   const remainingMotion = await page.evaluate(() => document.getElementById('settings-dialog').getAnimations({ subtree: true }).map(animation => ({ target: animation.effect.target?.id || animation.effect.target?.className, duration: animation.effect.getComputedTiming().duration, state: animation.playState })));
   if(remainingMotion.length) console.log('Remaining settings motion:', JSON.stringify(remainingMotion));
   assert.equal(remainingMotion.length, 0); checks.push('reduced motion');

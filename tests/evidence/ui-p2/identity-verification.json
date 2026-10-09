@@ -1,0 +1,15 @@
+{
+  "platform": "Windows",
+  "shells": ["PowerShell 7", "Windows PowerShell 5.1"],
+  "isolatedShortcutDirectory": true,
+  "userStartMenuTouched": false,
+  "appUserModelIdReadback": "com.memoweft.weftmate",
+  "developmentTargetExists": true,
+  "repositoryArgumentsMatch": true,
+  "c4IconExists": true,
+  "repeatInstallPassed": true,
+  "undoNewShortcutPassed": true,
+  "restorePreviousShortcutPassed": true,
+  "actualToastDisplayVerified": false,
+  "remaining": "Install and verify notification label in an isolated Windows user or VM; daily-user install explicitly prohibited."
+}
