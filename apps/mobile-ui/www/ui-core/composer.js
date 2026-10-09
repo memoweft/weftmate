@@ -36,7 +36,8 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         effects.renderOptimisticMessages?.();
         return row;
     }
-    function optimisticMessages() {
+    function optimisticMessages(legacy = false) {
+        if (!legacy && core.mainOptimisticMessages) return core.mainOptimisticMessages();
         return [...messages.values()].filter(row => row.ownerId === core.state.ownerId &&
             row.identity === core.state.identityGeneration && row.sessionId === core.state.selectedSessionId &&
             (row.sessionId !== null || row.draftId === core.state.newConversationId));
@@ -52,7 +53,8 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             effects.clearMessageDraft();
         effects.renderOptimisticMessages?.();
     }
-    function observeOptimistic(events) {
+    function observeOptimistic(events, legacy = false) {
+        if (!legacy && core.observeMainOptimistic) return core.observeMainOptimistic(events);
         for (const event of events) if (event.type === 'user.message' && event.data?.receiptId) {
             for (const row of optimisticMessages()) if (row.receiptId === event.data.receiptId) {
                 row.status = 'accepted';
@@ -61,7 +63,8 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             }
         }
     }
-    function startNewConversation() {
+    function startNewConversation(legacy = false) {
+        if (!legacy && core.startChatConversation) return core.startChatConversation();
         if (core.state.submitting || core.state.unresolvedSubmission) return;
         const fromPhone = core.state.activeChatSource === 'phone';
         if (fromPhone && core.state.selectedPhoneConversationId && !core.readPhoneOutbox())
@@ -246,7 +249,8 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         try { return await action(); }
         finally { if (intent && core.conversationTaskCurrent(context)) core.state.messageMode = previous; }
     }
-    async function sendDraft(text = effects.readMessageDraft(), intent) {
+    async function sendDraft(text = effects.readMessageDraft(), intent, legacy = false) {
+        if (!legacy && core.sendMainDraft) return core.sendMainDraft(text, intent);
         if (core.state.activeChatSource === 'phone')
             return sendIntentAction(() => core.sendPhoneMessage(), intent);
         const attachments = core.currentAttachmentDrafts();
@@ -299,7 +303,8 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             }
         }
     }
-    function composerState(text) {
+    function composerState(text, legacy = false) {
+        if (!legacy && core.mainComposerState) return core.mainComposerState(text);
         const phoneChat = core.state.activeChatSource === 'phone';
         const pendingPhone = phoneChat ? core.readPhoneOutbox() : null;
         const recovery = phoneChat && !pendingPhone ? core.readPhoneRecovery() : null;

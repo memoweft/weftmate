@@ -3,7 +3,7 @@ globalThis.WeftUiCore.factories.tasks = (core, effects, environment) => {
     function taskQueue(events = core.timelineEventsForContext(), commands = core.state.tasks) {
         const sessionId = core.conversationTaskContext().sessionId;
         const rows = new Map();
-        const roots = commands.filter(row => row.kind === 'session.message' && !row.rootTaskId && row.sessionId === sessionId);
+        const roots = commands.filter(row => ['session.message','chat.message'].includes(row.kind) && !row.rootTaskId && row.sessionId === sessionId);
         const root = data => roots.find(row => row.commandId === data.taskId || data.receiptId && row.receiptId === data.receiptId);
         for (const event of [...events].sort((a, b) => a.seq - b.seq)) {
             if (!['task.queued', 'task.started', 'task.ended'].includes(event.type)) continue;
@@ -70,7 +70,7 @@ globalThis.WeftUiCore.factories.tasks = (core, effects, environment) => {
             return '在电脑打开记事本';
         if (command.kind === 'session.create')
             return '新建对话';
-        if (command.kind === 'session.message')
+        if (['session.message','chat.message'].includes(command.kind))
             return !command.rootTaskId && typeof command.taskLabel === 'string' && command.taskLabel
                 ? command.taskLabel : '发送消息';
         if (command.kind === 'session.cancel')
@@ -89,7 +89,7 @@ globalThis.WeftUiCore.factories.tasks = (core, effects, environment) => {
             case 'accepted_by_dsh':
                 if (command.kind === 'session.create')
                     return '新对话已创建。';
-                if (command.kind === 'session.message')
+                if (['session.message','chat.message'].includes(command.kind))
                     return '消息已送达，回复见原会话。';
                 if (command.kind === 'session.cancel')
                     return '停止请求已受理，实际状态见会话。';
@@ -145,7 +145,7 @@ globalThis.WeftUiCore.factories.tasks = (core, effects, environment) => {
     }
     function relatedExecutionSteps(payload) {
         const commands = [payload.source, ...(Array.isArray(payload.supplements) ? payload.supplements : []),
-            ...(Array.isArray(payload.resumes) ? payload.resumes : [])].filter((row) => row?.kind === 'session.message' &&
+            ...(Array.isArray(payload.resumes) ? payload.resumes : [])].filter((row) => ['session.message','chat.message'].includes(row?.kind) &&
             row.sessionId === payload.sessionId && (row.commandId === payload.taskId && !row.rootTaskId || row.rootTaskId === payload.taskId));
         return (Array.isArray(payload.executionSteps) ? payload.executionSteps : []).filter((row) => row &&
             typeof row.executionId === 'string' && row.executionId.length > 0 && row.executionId.length <= 256 &&
@@ -179,7 +179,7 @@ globalThis.WeftUiCore.factories.tasks = (core, effects, environment) => {
         const key = JSON.stringify(context);
         if (core.conversationTasks.inFlight?.key === key)
             return core.conversationTasks.inFlight.promise;
-        const roots = core.state.tasks.filter((row) => row?.kind === 'session.message' && !row.rootTaskId &&
+        const roots = core.state.tasks.filter((row) => ['session.message','chat.message'].includes(row?.kind) && !row.rootTaskId &&
             row.sessionId === context.sessionId && core.sessionIdPattern.test(row.commandId || '') &&
             (!row.conversationId || row.conversationId === context.conversationId)).slice(0, 8);
         const run = async () => {
@@ -212,7 +212,7 @@ globalThis.WeftUiCore.factories.tasks = (core, effects, environment) => {
                         if (!core.conversationTaskCurrent(context))
                             return;
                         if (payload?.taskId !== taskId || payload.sessionId !== context.sessionId ||
-                            payload.source?.commandId !== taskId || payload.source.kind !== 'session.message' || payload.source.rootTaskId ||
+                            payload.source?.commandId !== taskId || !['session.message','chat.message'].includes(payload.source.kind) || payload.source.rootTaskId ||
                             payload.source.sessionId !== context.sessionId || !Array.isArray(payload.artifacts) ||
                             command.receiptId && payload.source.receiptId !== command.receiptId ||
                             payload.conversationId && payload.conversationId !== context.conversationId)
