@@ -2,6 +2,7 @@ import { digest, exactKeys, failure, modelProfileId, validId } from './common.mj
 import { REQUEST_ID } from './constants.mjs';
 import { readSourceEvents } from './source-history.mjs';
 import { chatForSession } from './chat-identity.mjs';
+import { hasPrivateContent } from './temporary-chats.mjs';
 import { randomUUID } from 'node:crypto';
 
 const short = value => Array.from(String(value ?? '').replace(/\s+/g, ' ').trim()).slice(0, 160).join('');
@@ -16,7 +17,7 @@ export function createSideChats(context) {
     const account = context.accountState(ownerId), chat = context.chats.requireChat(ownerId, chatId);
     if (account.memoryCleanupPending) throw failure('SOURCE_UNAVAILABLE', 404);
     const segment = account.chatIdentity.segments[chat.activeSegmentId], session = account.sessions[segment?.sessionId];
-    if (session?.memoryMode === 'off') throw failure('TEMPORARY_CONTEXT_CONFIRMATION_REQUIRED', 409);
+    if (hasPrivateContent(session)) throw failure('TEMPORARY_CONTEXT_CONFIRMATION_REQUIRED', 409);
     if (session?.conversationId || session?.origin === 'shared-chat') throw failure('SHARED_CONTEXT_UNAVAILABLE', 409);
     if (session?.deleting) throw failure('SOURCE_UNAVAILABLE', 404);
     return { account, chat, segment, session };
@@ -28,7 +29,7 @@ export function createSideChats(context) {
     const event = page.items.find(item => item.eventId === eventId);
     if (!event || !['user.message','assistant.message'].includes(event.type) || event.sourceRef.kind !== 'native') throw failure('SOURCE_UNAVAILABLE', 404);
     const account = context.accountState(ownerId), session = account.sessions[event.sourceRef.sessionId];
-    if (!session || session.deleting || session.memoryMode === 'off' || session.conversationId || session.origin === 'shared-chat') throw failure('SOURCE_UNAVAILABLE', 404);
+    if (!session || session.deleting || hasPrivateContent(session) || session.conversationId || session.origin === 'shared-chat') throw failure('SOURCE_UNAVAILABLE', 404);
     if (session.forgottenSeqs?.includes(event.sourceRef.seq)) throw failure('SOURCE_UNAVAILABLE', 404);
     return event;
   }

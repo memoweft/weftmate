@@ -14,6 +14,11 @@ class BusinessRouteUnitTest {
             "/personal/v1/sessions/session%2Fone/message-branches", "/personal/v1/commands/command/raw"))
             assertFalse(path, validBusinessPath(path))
     }
+    @Test fun temporaryCreationUsesOnlyItsExactBusinessRoute() {
+        assertTrue(validBusinessPath("/personal/v1/sessions/temporary"))
+        assertFalse(validBusinessPath("/personal/v1/sessions/temporary?recallEnabled=false"))
+        assertFalse(validBusinessPath("/personal/v1/sessions/temporary/events"))
+    }
     @Test fun conversationResourcesUseAnExactRouteAndForwardCursor() {
         assertTrue(validBusinessPath("/personal/v1/sessions/session-one/resources"))
         assertTrue(validBusinessPath("/personal/v1/sessions/session-one/resources?afterSeq=-1"))

@@ -57,8 +57,8 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
         }
         ui.byId('chat-intro').hidden = rows.length > 0 || list.children.length > 0;
     }
-    function paintHistoryMessages(events) {
-        const list = ui.byId('transcript'), sessionId = core.state.selectedSessionId;
+    function paintHistoryMessages(events, targetList = null) {
+        const list = targetList || ui.byId('transcript'), sessionId = events[0]?.sourceRef?.sessionId || core.state.selectedSessionId;
         const incremental = list.children.length > 0 && !core.state.olderLoading;
         for (const event of events) {
             if (!['user.message', 'assistant.message'].includes(event.type))
@@ -133,6 +133,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
                 globalThis.WeftMotion?.reveal(row.querySelector('.reply-memory'), '160ms');
             }
         }
+        if (targetList) return;
         ui.renderTimeline();
         ui.renderTurnStatus();
         ui.renderConversationTasks();

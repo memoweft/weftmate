@@ -1,0 +1,17 @@
+{
+  "actualUpstreamInferenceRequests": 21,
+  "usageRows": 21,
+  "missingUsage": 0,
+  "inputTokens": 66683,
+  "cachedInputTokens": 32832,
+  "outputTokens": 1329,
+  "byFile": {
+    "android-complete\\requests.jsonl": 4,
+    "android-final\\requests.jsonl": 4,
+    "android-inline\\requests.jsonl": 5,
+    "android-verified\\requests.jsonl": 4,
+    "mobile-web-retry\\requests.jsonl": 4,
+    "stop-desktop\\requests.jsonl": 0
+  },
+  "syntheticStopAndSlowStreamRequestsPaid": false
+}

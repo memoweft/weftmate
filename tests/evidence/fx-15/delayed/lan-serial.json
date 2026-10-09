@@ -1,0 +1,77 @@
+{
+  "maxActive": 1,
+  "requests": [
+    {
+      "method": "POST",
+      "queuedAt": "2026-10-09T21:41:02.075Z",
+      "kind": "inference",
+      "startedAt": "2026-10-09T21:41:02.075Z",
+      "status": 200,
+      "endedAt": "2026-10-09T21:41:02.691Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:41:02.723Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:41:02.723Z",
+      "status": 404,
+      "endedAt": "2026-10-09T21:41:02.726Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:41:02.727Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:41:02.727Z",
+      "status": 200,
+      "endedAt": "2026-10-09T21:41:02.745Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:41:02.767Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:41:02.767Z",
+      "status": 404,
+      "endedAt": "2026-10-09T21:41:02.771Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:41:02.772Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:41:02.772Z",
+      "status": 200,
+      "endedAt": "2026-10-09T21:41:02.790Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:41:04.619Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:41:04.620Z",
+      "status": 404,
+      "endedAt": "2026-10-09T21:41:04.624Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:41:04.634Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:41:04.634Z",
+      "status": 200,
+      "endedAt": "2026-10-09T21:41:04.656Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T21:41:05.978Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T21:41:05.978Z",
+      "status": 404,
+      "endedAt": "2026-10-09T21:41:05.981Z"
+    },
+    {
+      "method": "POST",
+      "queuedAt": "2026-10-09T21:41:06.032Z",
+      "kind": "inference",
+      "startedAt": "2026-10-09T21:41:06.032Z",
+      "status": 200,
+      "endedAt": "2026-10-09T21:41:13.620Z"
+    }
+  ]
+}

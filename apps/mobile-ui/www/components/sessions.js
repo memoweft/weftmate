@@ -94,6 +94,10 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
   uiCore.syncMobileIdentity();
   const scroll=$('chat-scroll'),previousScroll=scroll.scrollTop,content=$('chat-content'),saved=retainTimeline(content);clear(content);
   const session=selectedSharedSession();updatePageHeader();olderControl(content);
+  if (session?.memoryMode === 'off') {
+    content.append(el('p', 'shared-notice', `临时对话 · 不会形成记忆，${session.autoDeleteDays === null ? '不自动删除' : (session.expiresAt ? Math.max(0, Math.ceil((Date.parse(session.expiresAt) - Date.now()) / 86400000)) : session.autoDeleteDays ?? 30) + ' 天后自动删除'}`));
+    $('draft').placeholder = '这次聊的内容不会形成记忆…';
+  }
   if(session?.taskAvailable===false)content.append(el('div','shared-notice',
     '这台电脑已有执行账号。当前账号仅可聊天，不能操作电脑或读取原账号资料；请在电脑退出后登录原账号。'));
   if (session?.projectNotice || session?.projectName) content.append(el('p','shared-notice',session.projectNotice || `项目：${session.projectName}`));
@@ -374,6 +378,10 @@ function handoffCard(id){const view=state.handoffViews.get(id),binding=selectedB
     card.append(start)}
   return card}
 
+async function mobileNewTemporaryConversation() {
+  try { uiCore.syncMobileIdentity(); const sessionId = await uiCore.createTemporaryConversation(); await listSharedSessions(); selectSharedSession(sessionId); }
+  catch (error) { toast(safeError(error), true); }
+}
 function listSharedSessions(){uiCore.syncMobileIdentity();return uiCore.listMobileSessions()}
 
 const collapsedMobileGroups=new Set();
@@ -410,6 +418,14 @@ function mobileSessionMenu(session,confirming=false){
     const actions={project:()=>{close();void mobileSessionProjects(session);},pin:()=>uiCore.updateSession(session.sessionId,{pinned:!session.pinned}),unread:()=>uiCore.updateSession(session.sessionId,{unread:!session.unread}),
       rename,group,fork:async()=>{const child=await uiCore.forkSession(session.sessionId);if(!child)return;await listSharedSessions();selectSharedSession(child.sessionId)},
       archive:async()=>{const token=uiCore.accountToken();const archived=!session.archived;if(await uiCore.archiveSession(session.sessionId,archived)&&archived)toast('对话已归档。',false,async()=>{if(uiCore.accountIdentityCurrent(token)){await uiCore.archiveSession(session.sessionId,false);await listSharedSessions()}})},delete:()=>{close();mobileSessionMenu(session,true)}};
+    if (session.kind === 'main') add('这次别记：开临时对话', mobileNewTemporaryConversation);
+    else {
+      const toggle = add('此对话不形成记忆', async () => { await uiCore.updateSession(session.sessionId, {memoryMode:session.memoryMode === 'off' ? 'on' : 'off'}); toast('从下一回合生效。之前形成的记忆保留，可去记忆页遗忘。'); });
+      toggle.setAttribute('role', 'switch'); toggle.setAttribute('aria-checked', String(session.memoryMode === 'off'));
+      const recall = add('使用已有记忆', () => uiCore.updateSession(session.sessionId, {recallEnabled: session.recallEnabled === false}));
+      recall.setAttribute('role', 'switch'); recall.setAttribute('aria-checked', String(session.recallEnabled !== false));
+      if (session.memoryMode === 'off') for (const days of [1,7,30,null]) add(days === null ? '不自动删除' : `${days} 天后自动删除`, () => uiCore.updateSession(session.sessionId, {autoDeleteDays:days}));
+    }
     for(const item of WeftUiCore.sessionMenuItems(session))add(item.label,actions[item.id],item.danger,item.separator);
   }
   const cancel=el('button','secondary','取消');cancel.type='button';cancel.addEventListener('click',close);dialog.append(notice,cancel);

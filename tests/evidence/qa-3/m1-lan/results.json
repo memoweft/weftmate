@@ -1,0 +1,534 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-09T18:57:52.053Z",
+  "host": "http://127.0.0.1:57441",
+  "model": "lan/local-quality",
+  "results": [
+    {
+      "id": "action-01-organize",
+      "category": "action",
+      "title": "整理收件目录",
+      "status": "passed",
+      "durationMs": 87482,
+      "checks": [
+        {
+          "type": "file_contains",
+          "path": "inbox/文本/会议记录.txt",
+          "text": "周五讨论秋季活动",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/表格/预算.csv",
+          "text": "场地,300",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/文档/说明.md",
+          "text": "# 活动说明",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/不要动/保留.txt",
+          "text": "原样保留",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/会议记录.txt",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/预算.csv",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/说明.md",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-2c786438-5b00-4da9-ad17-fd12910c9520",
+          "modelProfileId": "private-model-524c7834ffc5d449a1671e7e1eafd27fb281ec65",
+          "commandId": "cmd-4dae361f-440b-4856-8268-95c6ad616c44",
+          "startedAt": "2026-10-09T18:57:52.782Z",
+          "reply": "已整理完成，[local path] 里的文件已按类型归类，文件名和内容保持不变，「不要动」文件夹原样保留。\n\n当前结构：\n- 文本\\\n  - 会议记录.txt\n- 表格\\\n  - 预算.csv\n- 文档\\\n  - 说明.md\n- 不要动\\\n  - 保留.txt  （未移动、未改动）\n\n三个目标文件夹已创建，.txt → 文本、.csv → 表格、.md → 文档 移动完成。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T18:57:52.833Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T18:57:52.834Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T18:57:52.875Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T18:57:52.875Z"
+            },
+            {
+              "seq": 469,
+              "type": "step.started",
+              "at": "2026-10-09T18:58:04.626Z"
+            },
+            {
+              "seq": 470,
+              "type": "step.completed",
+              "at": "2026-10-09T18:58:04.640Z"
+            },
+            {
+              "seq": 898,
+              "type": "step.started",
+              "at": "2026-10-09T18:58:23.924Z"
+            },
+            {
+              "seq": 899,
+              "type": "step.completed",
+              "at": "2026-10-09T18:58:23.931Z"
+            },
+            {
+              "seq": 997,
+              "type": "step.started",
+              "at": "2026-10-09T18:58:32.846Z"
+            },
+            {
+              "seq": 998,
+              "type": "step.completed",
+              "at": "2026-10-09T18:58:33.386Z"
+            },
+            {
+              "seq": 1155,
+              "type": "step.started",
+              "at": "2026-10-09T18:58:38.841Z"
+            },
+            {
+              "seq": 1156,
+              "type": "step.completed",
+              "at": "2026-10-09T18:58:39.421Z"
+            },
+            {
+              "seq": 1357,
+              "type": "step.started",
+              "at": "2026-10-09T18:58:46.395Z"
+            },
+            {
+              "seq": 1358,
+              "type": "step.completed",
+              "at": "2026-10-09T18:58:47.011Z"
+            },
+            {
+              "seq": 1454,
+              "type": "step.started",
+              "at": "2026-10-09T18:58:51.642Z"
+            },
+            {
+              "seq": 1455,
+              "type": "step.completed",
+              "at": "2026-10-09T18:58:52.138Z"
+            },
+            {
+              "seq": 1542,
+              "type": "step.started",
+              "at": "2026-10-09T18:58:57.125Z"
+            },
+            {
+              "seq": 1543,
+              "type": "step.completed",
+              "at": "2026-10-09T18:58:57.621Z"
+            },
+            {
+              "seq": 1629,
+              "type": "step.started",
+              "at": "2026-10-09T18:59:02.043Z"
+            },
+            {
+              "seq": 1630,
+              "type": "step.completed",
+              "at": "2026-10-09T18:59:02.642Z"
+            },
+            {
+              "seq": 1700,
+              "type": "step.started",
+              "at": "2026-10-09T18:59:07.776Z"
+            },
+            {
+              "seq": 1701,
+              "type": "step.completed",
+              "at": "2026-10-09T18:59:08.398Z"
+            },
+            {
+              "seq": 2022,
+              "type": "assistant.message",
+              "at": "2026-10-09T18:59:19.837Z"
+            },
+            {
+              "seq": 2023,
+              "type": "task.ended",
+              "at": "2026-10-09T18:59:19.838Z"
+            },
+            {
+              "seq": 2024,
+              "type": "turn.ended",
+              "at": "2026-10-09T18:59:19.839Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 87158,
+          "endedAt": "2026-10-09T18:59:19.940Z"
+        }
+      ],
+      "replySummary": "已整理完成，[local path] 里的文件已按类型归类，文件名和内容保持不变，「不要动」文件夹原样保留。\n\n当前结构：\n- 文本\\\n  - 会议记录.txt\n- 表格\\\n  - 预算.csv\n- 文档\\\n  - 说明.md\n- 不要动\\\n  - 保留.txt  （未移动、未改动）\n\n三个目标文件夹已创建，.txt → 文本、.csv → 表格、.md → 文档 移动完成。",
+      "notes": "只在 runner 临时目录移动文件；任何未声明的审批会使场景失败并请求取消。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；360秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限180秒。",
+      "scratchDir": "C:\\temp\\weftmate-eval-action-01-organize-htC9As"
+    },
+    {
+      "id": "action-03-read-code",
+      "category": "action",
+      "title": "读小项目解释金额计算",
+      "status": "passed",
+      "durationMs": 80612,
+      "checks": [
+        {
+          "type": "reply_matches",
+          "pattern": "20(?:\\.0{1,2})?",
+          "status": "passed"
+        },
+        {
+          "type": "reply_matches",
+          "pattern": "浮点|精度|分为|整数|分单位",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "project/pricing.mjs",
+          "text": "Math.round(cents * (1 - discount)) / 100",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "llm_judge",
+          "prompt": "回答应为 20 元，解释先转整数分有助于处理浮点精度，并结合实际 pricing.mjs，不应声称已修改代码。",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-13b0c7f4-1603-4375-ae3b-c6c3bd868b33",
+          "modelProfileId": "private-model-524c7834ffc5d449a1671e7e1eafd27fb281ec65",
+          "commandId": "cmd-1a4b9551-e937-4bed-8dde-5873f1da4716",
+          "startedAt": "2026-10-09T18:59:22.106Z",
+          "reply": "项目里 `[local path] 的计算是：\n\n```js\nexport function total(items, discount = 0) {\n  const cents = items.reduce((sum, x) => sum + Math.round(x.price * 100) * x.quantity, 0);\n  return Math.round(cents * (1 - discount)) / 100;\n}\n```\n\n* 先把价格转成整数分：`Math.round(x.price * 100)`。JS 的浮点数在 `12.50 * 100`、`0.1 + 0.2` 这类运算上会产生微小误差，先乘 100 再 `Math.round` 到 “分” 的整数，就能用整数做累加，避免 0.1 精度问题，最后再除回 100。\n* `cents` 是整张小票的总额，分单位。\n* 折扣参数 `discount` 是要减掉的比例，`1 - discount` 是实付比例。\n\n你说的场景：两件单价 12.50，打八折。\n\n总额 = 12.50 × 1 + 12.50 × 1 = 25.00\n打八折实付比例 = 0.8，即 `discount = 0.2`\n\n按代码：\ncents = Math.round(12.50*100)*1 + Math.round(12.50*100)*1 = 1250 + 1250 = 2500 分\n实付 = Math.round(2500 * (1 - 0.2)) / 100 = Math.round(2000) / 100 = 20.00\n\n最后实付 **20.00 元**。代码未改动。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T18:59:22.174Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T18:59:22.174Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T18:59:22.214Z"
+            },
+            {
+              "seq": 11,
+              "type": "user.message",
+              "at": "2026-10-09T18:59:22.215Z"
+            },
+            {
+              "seq": 442,
+              "type": "step.started",
+              "at": "2026-10-09T18:59:55.080Z"
+            },
+            {
+              "seq": 443,
+              "type": "step.completed",
+              "at": "2026-10-09T18:59:55.086Z"
+            },
+            {
+              "seq": 486,
+              "type": "step.started",
+              "at": "2026-10-09T19:00:15.493Z"
+            },
+            {
+              "seq": 487,
+              "type": "step.completed",
+              "at": "2026-10-09T19:00:15.583Z"
+            },
+            {
+              "seq": 532,
+              "type": "step.started",
+              "at": "2026-10-09T19:00:18.577Z"
+            },
+            {
+              "seq": 533,
+              "type": "step.completed",
+              "at": "2026-10-09T19:00:18.623Z"
+            },
+            {
+              "seq": 576,
+              "type": "step.started",
+              "at": "2026-10-09T19:00:21.798Z"
+            },
+            {
+              "seq": 577,
+              "type": "step.completed",
+              "at": "2026-10-09T19:00:21.841Z"
+            },
+            {
+              "seq": 1431,
+              "type": "assistant.message",
+              "at": "2026-10-09T19:00:42.154Z"
+            },
+            {
+              "seq": 1432,
+              "type": "task.ended",
+              "at": "2026-10-09T19:00:42.154Z"
+            },
+            {
+              "seq": 1433,
+              "type": "turn.ended",
+              "at": "2026-10-09T19:00:42.155Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 80286,
+          "endedAt": "2026-10-09T19:00:42.392Z"
+        }
+      ],
+      "replySummary": "项目里 `[local path] 的计算是：\n\n```js\nexport function total(items, discount = 0) {\n  const cents = items.reduce((sum, x) => sum + Math.round(x.price * 100) * x.quantity, 0);\n  return Math.round(cents * (1 - discount)) / 100;\n}\n```\n\n* 先把价格转成整数分：`Math.round(x.price * 100)`。JS 的浮点数在 `12.50 * 100`、`0.1 + 0.2` 这类运算上会产生微小误差，先乘 100 再 `Math.round` 到 “分” 的整数，就能用整数做累加，避免 0.1 精度问题，最后再除回 100。\n* `cents` 是整张小票的总额，分单位。\n* 折扣参数 `discount` 是要减掉的比例，`1 - discount` 是实付比例。\n\n你说的场景：两件单价 12.50，打八折。\n\n总额 = 12.50 × 1 + 12.50 × 1 ",
+      "notes": "固定项目由 runner 生成；评测读取代码与解释，文件内容检查验证关键代码仍在。本地 Qwen 27B 首轮 180 秒到期时仍在读取和运行核验，调整为 600 秒；关键代码不变的检查仍保留。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；360秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限600秒。",
+      "scratchDir": "C:\\temp\\weftmate-eval-action-03-read-code-ZQdrT9"
+    },
+    {
+      "id": "action-05-stop-resume",
+      "category": "action",
+      "title": "中途停下再接着办",
+      "status": "passed",
+      "durationMs": 61199,
+      "checks": [
+        {
+          "type": "turn_status",
+          "turn": 1,
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "turn": 1,
+          "path": "汇总.md",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "turn": 2,
+          "path": "汇总.md",
+          "text": "30",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "turn": 2,
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-e1a4ad1e-676c-4e8c-b331-6708a71152b3",
+          "modelProfileId": "private-model-524c7834ffc5d449a1671e7e1eafd27fb281ec65",
+          "commandId": "cmd-4cadab0a-55c4-4c1a-b846-850ab642f27e",
+          "startedAt": "2026-10-09T19:00:44.467Z",
+          "reply": "",
+          "status": "aborted",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T19:00:44.531Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T19:00:44.531Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T19:00:44.575Z"
+            },
+            {
+              "seq": 11,
+              "type": "user.message",
+              "at": "2026-10-09T19:00:44.576Z"
+            },
+            {
+              "seq": 18,
+              "type": "task.ended",
+              "at": "2026-10-09T19:00:47.163Z"
+            },
+            {
+              "seq": 19,
+              "type": "turn.ended",
+              "at": "2026-10-09T19:00:47.163Z"
+            }
+          ],
+          "durationMs": 2971,
+          "endedAt": "2026-10-09T19:00:47.438Z"
+        },
+        {
+          "sessionId": "session-e1a4ad1e-676c-4e8c-b331-6708a71152b3",
+          "modelProfileId": "private-model-524c7834ffc5d449a1671e7e1eafd27fb281ec65",
+          "commandId": "cmd-c6beaf4b-7353-4fcb-b673-affa6b68e4ea",
+          "startedAt": "2026-10-09T19:00:47.503Z",
+          "reply": "已完成整理。\n\n进度文件已写入 `开始整理`：`[local path]  \n汇总已生成至原位置：`[local path] `records.csv` 计算总金额为 30。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 20,
+              "type": "task.queued",
+              "at": "2026-10-09T19:00:47.593Z"
+            },
+            {
+              "seq": 21,
+              "type": "turn.started",
+              "at": "2026-10-09T19:00:47.594Z"
+            },
+            {
+              "seq": 23,
+              "type": "task.started",
+              "at": "2026-10-09T19:00:47.628Z"
+            },
+            {
+              "seq": 24,
+              "type": "user.message",
+              "at": "2026-10-09T19:00:47.629Z"
+            },
+            {
+              "seq": 416,
+              "type": "step.started",
+              "at": "2026-10-09T19:00:57.556Z"
+            },
+            {
+              "seq": 417,
+              "type": "step.completed",
+              "at": "2026-10-09T19:00:57.563Z"
+            },
+            {
+              "seq": 460,
+              "type": "step.started",
+              "at": "2026-10-09T19:01:21.946Z"
+            },
+            {
+              "seq": 461,
+              "type": "step.completed",
+              "at": "2026-10-09T19:01:21.990Z"
+            },
+            {
+              "seq": 546,
+              "type": "step.started",
+              "at": "2026-10-09T19:01:25.244Z"
+            },
+            {
+              "seq": 547,
+              "type": "step.completed",
+              "at": "2026-10-09T19:01:25.307Z"
+            },
+            {
+              "seq": 653,
+              "type": "step.started",
+              "at": "2026-10-09T19:01:29.457Z"
+            },
+            {
+              "seq": 654,
+              "type": "artifact.created",
+              "at": "2026-10-09T19:01:30.983Z"
+            },
+            {
+              "seq": 778,
+              "type": "step.started",
+              "at": "2026-10-09T19:01:35.890Z"
+            },
+            {
+              "seq": 779,
+              "type": "artifact.created",
+              "at": "2026-10-09T19:01:36.487Z"
+            },
+            {
+              "seq": 878,
+              "type": "step.started",
+              "at": "2026-10-09T19:01:40.945Z"
+            },
+            {
+              "seq": 879,
+              "type": "step.completed",
+              "at": "2026-10-09T19:01:40.996Z"
+            },
+            {
+              "seq": 981,
+              "type": "assistant.message",
+              "at": "2026-10-09T19:01:45.064Z"
+            },
+            {
+              "seq": 982,
+              "type": "task.ended",
+              "at": "2026-10-09T19:01:45.065Z"
+            },
+            {
+              "seq": 983,
+              "type": "turn.ended",
+              "at": "2026-10-09T19:01:45.065Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 57823,
+          "endedAt": "2026-10-09T19:01:45.326Z"
+        }
+      ],
+      "replySummary": "已完成整理。\n\n进度文件已写入 `开始整理`：`[local path]  \n汇总已生成至原位置：`[local path] `records.csv` 计算总金额为 30。",
+      "notes": "第一轮发送后 1 秒由 runner 调用任务 stop，等待 aborted，再调用同一根任务 resume；不把 HTTP 202 当停止完成。非 personal-remote 账号的任务接口可能不支持。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；600秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限180秒。",
+      "scratchDir": "C:\\temp\\weftmate-eval-action-05-stop-resume-JEWcZk"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "manual": 0,
+    "unsupported": 0,
+    "skippedChecks": 1,
+    "passRate": 1,
+    "coverage": 1
+  }
+}

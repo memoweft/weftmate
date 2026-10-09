@@ -36,7 +36,8 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         effects.renderOptimisticMessages?.();
         return row;
     }
-    function optimisticMessages() {
+    function optimisticMessages(legacy = false) {
+        if (!legacy && core.mainOptimisticMessages) return core.mainOptimisticMessages();
         return [...messages.values()].filter(row => row.ownerId === core.state.ownerId &&
             row.identity === core.state.identityGeneration && row.sessionId === core.state.selectedSessionId &&
             (row.sessionId !== null || row.draftId === core.state.newConversationId));
@@ -52,7 +53,8 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             effects.clearMessageDraft();
         effects.renderOptimisticMessages?.();
     }
-    function observeOptimistic(events) {
+    function observeOptimistic(events, legacy = false) {
+        if (!legacy && core.observeMainOptimistic) return core.observeMainOptimistic(events);
         for (const event of events) if (event.type === 'user.message' && event.data?.receiptId) {
             for (const row of optimisticMessages()) if (row.receiptId === event.data.receiptId) {
                 row.status = 'accepted';
@@ -61,7 +63,9 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             }
         }
     }
-    function startNewConversation() {
+    function startNewConversation(legacy = false, temporary = false) {
+        if (!legacy && !temporary && core.startChatConversation) return core.startChatConversation();
+        if (temporary) core.state.selectedChatId = null;
         if (core.state.submitting || core.state.unresolvedSubmission) return;
         const fromPhone = core.state.activeChatSource === 'phone';
         if (fromPhone && core.state.selectedPhoneConversationId && !core.readPhoneOutbox())
@@ -75,6 +79,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             core.state.modelProfileId = defaultProfile; effects.paintModels();
         }
         core.state.newConversation = true;
+        core.state.newConversationTemporary = temporary;
         core.state.newConversationId = environment.crypto.randomUUID();
         core.state.newConversationApprovalMode = null;
         core.state.newConversationThinking = false;
@@ -101,7 +106,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             row.creating = true;
             core.creatingOptimisticSession = true;
             const submitted = row.creationCommand?.state === 'accepted_by_dsh' ? row.creationCommand
-                : await core.submitCommand('session.create', {modelProfileId: row.modelProfileId}, null, row.createRequestId);
+                : await core.submitCommand('session.create', {modelProfileId: row.modelProfileId, ...(row.temporary ? {temporary: true} : {})}, null, row.createRequestId);
             const created = row.creationCommand || core.state.tasks.find(command=>command.requestId===row.createRequestId) || submitted;
             core.creatingOptimisticSession = false;
             row.creating = false;
@@ -246,7 +251,8 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         try { return await action(); }
         finally { if (intent && core.conversationTaskCurrent(context)) core.state.messageMode = previous; }
     }
-    async function sendDraft(text = effects.readMessageDraft(), intent) {
+    async function sendDraft(text = effects.readMessageDraft(), intent, legacy = false) {
+        if (!legacy && core.sendMainDraft) return core.sendMainDraft(text, intent);
         if (core.state.activeChatSource === 'phone')
             return sendIntentAction(() => core.sendPhoneMessage(), intent);
         const attachments = core.currentAttachmentDrafts();
@@ -258,6 +264,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         const row = {ownerId: core.state.ownerId, identity: core.state.identityGeneration,
             sessionId: core.state.selectedSessionId, modelProfileId: core.state.modelProfileId,
             draftId: core.state.newConversationId,
+            temporary: core.state.newConversation && core.state.newConversationTemporary === true,
             requestId: attachments.length ? core.attachmentAttempt(core.attachmentDraftKey(), text, attachments).requestId : environment.crypto.randomUUID(), createRequestId: environment.crypto.randomUUID(),
             text, attachments: attachments.length > 0, files: attachments.map(item => item.file?.name || '附件'),
             deepThinking: core.state.newConversation ? thinkingView().supported && thinkingView().enabled : undefined,
@@ -299,7 +306,8 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             }
         }
     }
-    function composerState(text) {
+    function composerState(text, legacy = false) {
+        if (!legacy && core.mainComposerState) return core.mainComposerState(text);
         const phoneChat = core.state.activeChatSource === 'phone';
         const pendingPhone = phoneChat ? core.readPhoneOutbox() : null;
         const recovery = phoneChat && !pendingPhone ? core.readPhoneRecovery() : null;
@@ -377,7 +385,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
     function processingLabel(value) {
         if (value?.phase === 'loading') return `正在加载模型${value.modelName ? ` ${value.modelName}` : ''}…`;
         if (value?.phase === 'queued' && Number.isSafeInteger(value.ahead) && value.ahead > 0) return `模型排队中，前面还有 ${value.ahead} 个请求`;
-        return { memory: '正在读取记忆…', reasoning: '正在思考…', answering: '正在回复…' }[value?.phase] || '等待模型回复…';
+        return { memory: '正在读取记忆…', retrying: '模型响应慢，正在重试…', reasoning: '正在思考…', answering: '正在回复…' }[value?.phase] || '等待模型回复…';
     }
     return { refreshThinkingModels, thinkingView, setDeepThinking, handleOptimisticCreation, beginOptimistic, optimisticMessages, reconcileOptimistic, observeOptimistic, startNewConversation, retryOptimistic,
         addAttachmentFiles, composerInputMode, conversationRunning, messageModePreference, loadMessageModePreference, sendDraft, stopCurrentTurn, composerState, selectModelProfile, setMessageMode, processingLabel, processingStageLabel };

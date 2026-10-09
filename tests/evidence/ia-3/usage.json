@@ -1,0 +1,44 @@
+{
+  "model": "mimo-v2.6-flash",
+  "reportedInferenceRequests": 3,
+  "promptTokens": 6847,
+  "completionTokens": 95,
+  "totalTokens": 6942,
+  "cachedTokens": 1536,
+  "requests": [
+    {
+      "prompt_tokens": 2282,
+      "completion_tokens": 43,
+      "total_tokens": 2325,
+      "prompt_tokens_details": {
+        "cached_tokens": 1536
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 32
+      }
+    },
+    {
+      "completion_tokens": 46,
+      "prompt_tokens": 2281,
+      "total_tokens": 2327,
+      "completion_tokens_details": {
+        "reasoning_tokens": 39
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    {
+      "completion_tokens": 6,
+      "prompt_tokens": 2284,
+      "total_tokens": 2290,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  ],
+  "source": "Usage receipts from three successful real desktop runs, including the latest main + UX-3 merge. Earlier locator failures issued no inference request."
+}

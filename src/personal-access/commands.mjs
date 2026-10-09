@@ -1,3 +1,4 @@
+import { initialMemorySettings } from './temporary-chats.mjs';
 import { chatForSession } from './chat-identity.mjs';
 import { scheduledCommandSource } from './schedules-authorization.mjs';
 import { digest, failure, id, modelTextWithAttachments, safeCode, withDeadline } from './common.mjs';
@@ -213,7 +214,7 @@ export function createCommandOperations(context) {
         }
         if (command.kind === 'session.message') {
           const session = context.accountState(ownerId).sessions[command.sessionId];
-          if (!session || session.archived === true || session.deleting === true || session.ownerId !== ownerId || !pendingSession ||
+          if (!session || session.expiresAt && Date.parse(session.expiresAt) <= context.timestamp() || session.archived === true || session.deleting === true || session.ownerId !== ownerId || !pendingSession ||
               session.modelProfileId !== pendingSession.modelProfileId ||
               session.conversationId !== pendingSession.conversationId ||
               !context.messageModelUsable(ownerId, session)) {
@@ -359,6 +360,7 @@ export function createCommandOperations(context) {
           if (snapshot.kind === 'session.create') {
             next.sessions[snapshot.sessionId] = { ownerId: next.ownerId, attachedAt: new Date().toISOString(),
               approvalMode: next.defaultApprovalMode ?? 'auto',
+              ...initialMemorySettings(snapshot.payload, context.timestamp()),
               origin: !['password', 'cloud'].includes(next.devices[snapshot.sourceDeviceId]?.authKind)
                 ? 'legacy-local' : context.hostOwner(ownerId) ? 'personal-remote' : 'shared-chat',
               modelProfileId: snapshot.payload.modelProfileId,

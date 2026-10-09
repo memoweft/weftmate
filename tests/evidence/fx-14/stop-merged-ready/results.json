@@ -1,0 +1,150 @@
+{
+  "runnerPid": 41856,
+  "startedAt": "2026-10-09T21:59:05.755Z",
+  "realMain": true,
+  "realDsh": true,
+  "syntheticModel": true,
+  "checks": [
+    {
+      "name": "stability-cycle-1",
+      "status": "passed",
+      "durationMs": 31441,
+      "immediateMs": 3.9000000059604645,
+      "stopMs": 5402
+    },
+    {
+      "name": "stability-cycle-2",
+      "status": "passed",
+      "durationMs": 23828,
+      "immediateMs": 2.5,
+      "stopMs": 3890
+    },
+    {
+      "name": "stability-cycle-3",
+      "status": "passed",
+      "durationMs": 6202,
+      "immediateMs": 2.0999999940395355,
+      "stopMs": 4359
+    },
+    {
+      "name": "stability-cycle-4",
+      "status": "passed",
+      "durationMs": 24104,
+      "immediateMs": 2.300000011920929,
+      "stopMs": 3857
+    },
+    {
+      "name": "stability-cycle-5",
+      "status": "passed",
+      "durationMs": 23590,
+      "immediateMs": 2.2000000178813934,
+      "stopMs": 3352
+    }
+  ],
+  "errors": [],
+  "requestCount": 1122,
+  "stability": {
+    "elapsedMs": 169176,
+    "p99Ms": 21.708799,
+    "maxMs": 47.677439,
+    "storeWatchEvents": 78,
+    "exactStoreWrites": 0,
+    "samples": [
+      {
+        "at": 1791583155828,
+        "rss": 170459136,
+        "heapUsed": 24670952
+      },
+      {
+        "at": 1791583165828,
+        "rss": 175038464,
+        "heapUsed": 24716784
+      },
+      {
+        "at": 1791583175828,
+        "rss": 175632384,
+        "heapUsed": 25931300
+      },
+      {
+        "at": 1791583185829,
+        "rss": 169807872,
+        "heapUsed": 23569116
+      },
+      {
+        "at": 1791583195830,
+        "rss": 169426944,
+        "heapUsed": 22979636
+      },
+      {
+        "at": 1791583205830,
+        "rss": 174948352,
+        "heapUsed": 25992016
+      },
+      {
+        "at": 1791583215833,
+        "rss": 175603712,
+        "heapUsed": 28373212
+      },
+      {
+        "at": 1791583225833,
+        "rss": 173666304,
+        "heapUsed": 23184708
+      },
+      {
+        "at": 1791583235832,
+        "rss": 175308800,
+        "heapUsed": 25344592
+      },
+      {
+        "at": 1791583245832,
+        "rss": 174821376,
+        "heapUsed": 24530248
+      },
+      {
+        "at": 1791583255833,
+        "rss": 174600192,
+        "heapUsed": 26488392
+      },
+      {
+        "at": 1791583265834,
+        "rss": 175624192,
+        "heapUsed": 25346180
+      },
+      {
+        "at": 1791583275833,
+        "rss": 179666944,
+        "heapUsed": 26731488
+      },
+      {
+        "at": 1791583285833,
+        "rss": 182960128,
+        "heapUsed": 31476028
+      },
+      {
+        "at": 1791583295833,
+        "rss": 184008704,
+        "heapUsed": 30997016
+      },
+      {
+        "at": 1791583305833,
+        "rss": 187645952,
+        "heapUsed": 36485512
+      },
+      {
+        "at": 1791583315833,
+        "rss": 197083136,
+        "heapUsed": 28398872
+      }
+    ]
+  },
+  "logScan": {
+    "files": 1,
+    "bodyHits": 0,
+    "keyHits": 0,
+    "bytes": 5141
+  },
+  "modelCalls": 10,
+  "finishedAt": "2026-10-09T22:02:05.008Z",
+  "cleaned": true,
+  "root": "removed isolated FX14 profile"
+}

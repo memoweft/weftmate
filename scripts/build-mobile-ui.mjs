@@ -11,7 +11,7 @@ for (let index = 2; index < process.argv.length; index += 2) {
   const name = process.argv[index], value = process.argv[index + 1];
   if (!name?.startsWith('--') || !value || value.startsWith('--') || options.has(name) ||
       !['--output-dir', '--ui-version', '--min-native-version-code', '--release-notes', '--activate-release', '--channel', '--min-host-version', '--min-native-version'].includes(name)) {
-    throw new Error('usage: node scripts/build-mobile-ui.mjs --output-dir <absolute release directory> [--ui-version 0.8.12] [--min-native-version-code 24] [--release-notes text] [--channel stable|preview] [--min-host-version 0.1.0] [--min-native-version 0.8.12] [--activate-release version-hash]');
+    throw new Error('usage: node scripts/build-mobile-ui.mjs --output-dir <absolute release directory> [--ui-version 0.8.13] [--min-native-version-code 26] [--release-notes text] [--channel stable|preview] [--min-host-version 0.1.0] [--min-native-version 0.8.13] [--activate-release version-hash]');
   }
   options.set(name, value);
 }
