@@ -36,7 +36,7 @@
       state.sharedRunning=!!uiCore.state.sessions.find(row=>row.sessionId===id)?.running;
       state.sharedPending=null;state.sharedOutboxLoading=false;state.sharedError='';updatePageHeader();
     },
-    renderOlderControl:()=>{},renderOptimisticMessages:()=>{},renderTurnStatus:()=>{},renderTimeline:()=>{},
+    renderOlderControl:()=>{},renderOptimisticMessages:()=>renderOptimisticMessages(),renderTurnStatus:()=>{},renderTimeline:()=>{},
     renderConversationTasks,renderConversationApprovals,renderConversationQuestions,
     beginOlderHistory:()=>{},restoreOlderHistoryPosition:()=>{},scrollToLatest:()=>scrollBottom(true),
     updateAvailability:updateComposer, openTimelinePreview:(context,path,title)=>openTimelinePreview(context,()=>uiCore.readResource(path),title),
@@ -55,6 +55,8 @@
     clearHistoryView:()=>{state.sharedEvents=[];$('chat-content').replaceChildren();},
     historyNotice:view.historyNotice,paintCommandOperation:message=>status(message),renderOperation:message=>status(message),
     paintOperation:message=>status(message),setApprovalModeBusy:busy=>{$('approval-mode-button').disabled=busy;},
+    paintHistoryMessages:events=>{for(const event of events)trackSharedAcceptedTurn(event);if(state.logicalChats&&!main()){
+      state.sharedEvents=[...uiCore.state.historyEvents.values()].sort((a,b)=>a.seq-b.seq);renderSharedConversation();}},
     paintAttachmentStatus:message=>status(message),
     restoreMainNativeRequests:async()=>{if(window.weftNative){const rows=await call('shared.outbox.list');uiCore.restoreMainRequests(rows.commands||[]);}await uiCore.restoreRequests();},
     loadAttachmentHasher:async()=>({hashBlobSha256:async blob=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',await blob.arrayBuffer()))].map(value=>value.toString(16).padStart(2,'0')).join('')}),

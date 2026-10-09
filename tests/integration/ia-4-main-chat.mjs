@@ -57,6 +57,8 @@ try{
       await page.getByRole('textbox',{name:'旁聊名称'}).fill('合成手机旁聊');await page.getByRole('textbox',{name:'旁聊第一句话'}).fill('合成草稿');await b('确认开旁聊').click();
       await page.getByRole('dialog',{name:'开旁聊',exact:true}).waitFor({state:'hidden'});
       await page.getByText('相关上下文尚未带入',{exact:true}).waitFor();assert.equal(await page.getByRole('textbox',{name:'输入消息',exact:true}).inputValue(),'合成草稿');
+      if(web&&theme==='light'){const previous=new Set((await f.request('/commands?limit=50')).commands.map(row=>row.commandId));await b('发送').click();
+        await page.waitForFunction(()=>document.querySelector('#draft').value==='');const rows=(await f.request('/commands?limit=50')).commands;assert.ok(rows.some(row=>row.kind==='session.message'&&row.state==='accepted_by_dsh'&&!previous.has(row.commandId)));await page.getByText('合成草稿',{exact:true}).waitFor();}
       await page.screenshot({path:join(evidence,`web-${size.width}-${theme}-origin.png`)});await b('回到主对话原消息').click();
       await b('打开导航').click();await b('WeftMate 主对话').click();
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
