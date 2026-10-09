@@ -37,6 +37,10 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         core.state.activeChatSource = 'desktop';
         core.state.selectedPhoneConversationId = null;
         effects.paintDesktopComposer(fromPhone);
+        const defaultProfile = core.state.modelSettings?.defaultModelProfileId;
+        if (defaultProfile && core.state.models.some(model => model.id === defaultProfile)) {
+            core.state.modelProfileId = defaultProfile; effects.paintModels();
+        }
         core.state.newConversation = true;
         core.state.newConversationId = environment.crypto.randomUUID();
         core.state.newConversationApprovalMode = null;

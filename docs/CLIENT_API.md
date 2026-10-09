@@ -278,6 +278,10 @@ D33：`deleteConversationSnippets` 默认 `false`。桌面、手机网页及手�
 | POST `/account/models/{accountModelId}/transfer` | `requestId,expectedRevision`；Cookie密码设备且已声明转移能力 | 200 `{"model":AccountModel,"apiKey":"<secret>"}` | 403 `FORBIDDEN`；409 `ACCOUNT_MODEL_REVISION_CHANGED / ACCOUNT_MODEL_UNAVAILABLE / REQUEST_CONFLICT` | 手、安 |
 | GET `/account/models/by-request/{requestId}` | 无 | 200 `ModelOperation` | 404 `NOT_FOUND` | 桌、手、安 |
 
+MS-1 增加 `POST /account/models/check`：Cookie（浏览器会话凭据）及 `account:manage` 权限、CSRF（跨站请求伪造防护）；体为 `{profileId? ,baseUrl?,modelId?,apiKey?,sendTestMessage?}`，最多 12 KiB。未保存的草稿须提供地址、模型 ID（标识）和密钥；已保存的可见模型可通过 `profileId` 复用密钥，换地址须提供新密钥。仅在进程内检查，不保存草稿或密钥。默认只读 `/models`；只有目录明确返回 404 / 405 / 501 且本人点击「发送测试消息」传 `sendTestMessage:true` 时，发送 `max_tokens:8` 的极小测试，计入用量且遵守账户云端上限。地址拒绝重定向。官方 MiMo 地址的模型 ID 在保存时规范为小写；其他提供方大小写保持原样。
+
+检查结果保留 `configured,reachable,modelListed,inferenceVerified`，增加 `address: reachable|unreachable`、`authentication: missing|unchecked|accepted|rejected`、`catalog: unchecked|available|unsupported|failed|invalid`、`model: unchecked|listed|missing|tested|test_failed`；可有 `httpStatus,requiresTestMessage,suggestedModelId`。401 / 403 为密钥被拒；目录无 ID 与无模型列表分开。`configured` 仅表示密钥已配置，不能证明提供方检查通过。`/models/{id}/verify` 与账户 `/test` 也返回 / 保存这些安全诊断字段，旧客户端可忽略新增字段。GET `/models` 增加不含地址的 `location: computer|lan|cloud` 以分组；本机实际已加载状态仍来自 `/system.model.currentModelId`。
+
 `AccountModel`：`{"accountModelId":"account-model-<uuid>","revision":1,"profileId":"private-model-…","name":"自用","provider":"openai-compatible","baseUrl":"https://model.example/v1","modelId":"model","modelTier":"auto","sourceKind":"cloud","routeFingerprint":"…","configured":true,"status":"active","createdAt":"…","updatedAt":"…"}`。列表不含密钥；`transfer` 是已有的显式传密钥接口，重复 `requestId` 不作为可重放的密钥回执。改 `baseUrl` 必须同时给新 `apiKey`。账号模型变更要求密码Cookie管理权限，登记后由 `by-request` 核对。
 
 模型配置的可选 `modelTier` 为 `auto / local / cloud`：POST 省略或设 auto 按地址判断，PATCH 省略保留原值、auto 恢复自动判断，local/cloud 为用户覆盖（例如把 loopback 云端代理设为 cloud）。`AccountModel` 与 GET `/models` 返回 modelTier（旧配置显示 auto）和最终 `sourceKind: local | cloud`。自动判断使用实际 base URL 主机：127.0.0.0/8、::1、localhost、10/8、172.16/12、192.168/16、`*.local` 为 local，其余为 cloud；不要求正式本地 profile。HTTP 地址可用于上述本机/局域网范围，其他地址仍要求 HTTPS。字段跟随模型 runtime 修订持久化、可转移；仅改变位置也生成新的 profileId，旧会话保留原配置。无字段的旧请求/存储继续兼容，非法值返回 400 `INVALID_REQUEST`。
@@ -407,12 +411,12 @@ UPD-1：资源服务从当前已验证 `ui` 版本读取既有白名单中的路
 | POST `/system/model/restart` | `{}` | 200，同 `/system`，操作完成后读取实际状态；客户端使用维护等待窗口（桌面 / 手机 / Android 为 6 分钟），不按普通短请求提前中断 | `commands:write`，仅宿主原账户；其他账户 403 `FORBIDDEN`；未配置入口维护能力 503 | 桌、手 |
 | POST `/system/host/restart` | `{}` | 200，同 `/system`；替换 DSH（模型运行时），个人 API 保持可达 | 同上；进行中的运行会中断 | 桌、手 |
 | POST `/system/memory/restart` | `{}` | 200，同 `/system`；关闭并重新初始化当前账户的 MemoWeft（记忆服务）进程，保留数据库与待写队列 | 同上；记忆未启用 503 | 桌、手 |
-| GET `/settings/models` | 无查询 | 200 `{"backgroundModelProfileId":null}` 或已保存的模型配置 ID | `sessions:read`；按账户隔离 | 桌、手（只读） |
-| PATCH `/settings/models` | `{"backgroundModelProfileId":"private-model-example"}`；`null` 恢复跟随主模型 | 200，同 GET；只影响后续后台请求 | `account:manage`；须为当前账户可见、已配置的模型，否则 409 `MODEL_UNAVAILABLE` | 桌 |
+| GET `/settings/models` | 无查询 | 200 `{"backgroundModelProfileId":null,"defaultModelProfileId":null,"currentChatModelProfileId":null}`；当前聊天模型为账户最近使用的可用模型 | `sessions:read`；按账户隔离 | 桌、手（只读） |
+| PATCH `/settings/models` | 至少一个 `backgroundModelProfileId,defaultModelProfileId`；`null` 分别恢复跟随主模型、沿用对话选择 | 200，同 GET；只影响后续后台请求 | `account:manage`；须为当前账户可见、已配置的模型，否则 409 `MODEL_UNAVAILABLE` | 桌 |
 
 每项服务有 `state`、`version`（未知为 `null`）、`lastError`（最近安全错误码或 `null`）、`canRestart`。模型服务另有实际 `contextWindow` 与 `slots`、`currentModelId`（当前装载模型或 `null`）、`lastSwitch`（`{action,modelId,at,ok}` 或 `null`）。状态来自配置入口的 `/switch/status` 与 `/props`；未配置为 `unconfigured`，读取失败为 `unavailable`。模型重启经入口 `/switch/restart` 等待请求租约结束后调用现有控制脚本，保留当前模型与配置。不返回模型文件路径、控制脚本输出或入口凭据。宿主版本来自应用包；模型版本来自 llama.cpp `/props`；MemoWeft 优先用服务版本，再用其 Python（运行环境）源码包的声明版本；两者均未知时返回 `null`。`queue` 含 `active: "foreground"|"background"|null`、`foregroundPending`、`backgroundPending`，不包含提示或账户信息。手机只显示后台配置，不提供修改控件；重启仍走相同认证与 CSRF（跨站请求伪造防护）规则。
 
-主模型由每个对话选择。后台配置默认跟随该对话的主模型；标题、记忆整理以及后续关心/健康归纳按后台路由。仅本机回环且 `/props.total_slots=1` 的入口排队，云 API、多槽和未知槽数直接并行。单槽主对话整轮运行（含工具间隙）时后台推理等待，主请求在等待队列中优先；已开始的后台推理会完成后释放单槽。原生 compaction（上下文压缩）属于当前主请求，继续按主模型执行。记忆形成使用后台路由；World/interactions（记忆与经历）召回的来源权限按接收内容的主模型 modelTier 判定。
+MS-1：`defaultModelProfileId` 按账户保存，用于新对话；已有对话继续使用原绑定。后台配置默认跟随账户当前 / 最近聊天的模型，有会话和无会话的积压任务使用同一规则；没有最近聊天时才使用账户默认或已授权会话绑定，绝不回退到启动配置 `authRef`。标题、记忆整理以及后续关心/健康归纳按后台路由。仅本机回环且 `/props.total_slots=1` 的入口排队，云 API、多槽和未知槽数直接并行。本机 ModelSwitcher（模型切换代理）的后台请求仅在所选模型已经加载且未切换时进入推理；模型不一致则等待并释放槽位给聊天，后台不主动触发装卸。状态未知的已确认单槽服务也等待。单槽主对话整轮运行（含工具间隙）时后台推理等待，主请求在等待队列中优先；已开始的后台推理会完成后释放单槽。原生 compaction（上下文压缩）属于当前主请求，继续按主模型执行。记忆形成使用后台路由；World/interactions（记忆与经历）召回的来源权限按接收内容的主模型 modelTier 判定。
 
 ### 3.16 对话输出与来源（UI-1b，1）
 

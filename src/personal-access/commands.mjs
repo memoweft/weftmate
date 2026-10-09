@@ -273,6 +273,8 @@ export function createCommandOperations(context) {
         }
         await context.mutate(ownerId, (next) => {
           next.commands[commandId].state = 'dispatching';
+          if (command.kind === 'session.message' && next.sessions[command.sessionId]?.modelProfileId)
+            next.lastChatModelProfileId = next.sessions[command.sessionId].modelProfileId;
           next.commands[commandId].updatedAt = new Date().toISOString();
         });
         context.requireOpen();
