@@ -1,0 +1,8 @@
+{
+  "coreCommit": "a9b115f2d0de10bdf79bd7000057da6cbda7c046",
+  "archiveSha256": "e23db34f4f062b23c11dc3ee24ed657c0e367e7355f36cd6085422ed9b9e3d6d",
+  "filesCompared": 722,
+  "changed": [],
+  "missing": [],
+  "rawRunnerRevisionWarning": "m2/baseline-mimo.json revision.core inherited the enclosing WeftMate Git repository because the pinned Core is a git archive, not a checkout. Actual imported files match this pinned archive. Raw result left unchanged."
+}

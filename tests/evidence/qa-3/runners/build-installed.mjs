@@ -1,0 +1,12 @@
+import {generateKeyPairSync} from 'node:crypto';
+import {mkdir,writeFile} from 'node:fs/promises';
+import {resolve} from 'node:path';
+import {buildWindowsRelease} from '../../../../scripts/release/windows.mjs';
+import {keyId} from '../../../../src/personal-update/manifest.mjs';
+const root=resolve('.local/qa-3');await mkdir(root,{recursive:true});
+const pair=generateKeyPairSync('ed25519');
+const pub=pair.publicKey.export({type:'spki',format:'pem'});
+await writeFile(root+'/private.pem',pair.privateKey.export({type:'pkcs8',format:'pem'}));
+await writeFile(root+'/keys.json',JSON.stringify({[keyId(pub)]:pub}));
+process.env.WEFTMATE_UPDATE_PRIVATE_KEY_PATH=root+'/private.pem';
+for(const n of [1,2,3])await buildWindowsRelease({version:`0.1.1-preview.${n}`,channel:'preview',output:root+'/releases','trusted-keys':root+'/keys.json','test-identity':'qa3','prebuilt-stage':'.local/r0-1/stage',...(n===3?{'test-bad-main':'true'}:{})});

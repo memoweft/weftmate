@@ -1,0 +1,154 @@
+[
+  {
+    "file": "accounts.mjs",
+    "passed": true
+  },
+  {
+    "file": "android-all.mjs",
+    "passed": true
+  },
+  {
+    "file": "android-extras.mjs",
+    "passed": true
+  },
+  {
+    "file": "android-task-flow.mjs",
+    "passed": true
+  },
+  {
+    "file": "android-task.mjs",
+    "passed": true
+  },
+  {
+    "file": "build-installed.mjs",
+    "passed": true
+  },
+  {
+    "file": "cleanup-known-roots.mjs",
+    "passed": true
+  },
+  {
+    "file": "collect-baselines.mjs",
+    "passed": true
+  },
+  {
+    "file": "d36.mjs",
+    "passed": true
+  },
+  {
+    "file": "desktop.mjs",
+    "passed": true
+  },
+  {
+    "file": "ia-2a-identity.mjs",
+    "passed": true
+  },
+  {
+    "file": "immediate-after.mjs",
+    "passed": true
+  },
+  {
+    "file": "lan-batch.mjs",
+    "passed": true
+  },
+  {
+    "file": "legacy.mjs",
+    "passed": true
+  },
+  {
+    "file": "m1.mjs",
+    "passed": true
+  },
+  {
+    "file": "m3-a-offline.mjs",
+    "passed": true
+  },
+  {
+    "file": "menus.mjs",
+    "passed": true
+  },
+  {
+    "file": "models.mjs",
+    "passed": true
+  },
+  {
+    "file": "offline-transport-proof.mjs",
+    "passed": true
+  },
+  {
+    "file": "orphan.mjs",
+    "passed": true
+  },
+  {
+    "file": "prepare-runners.mjs",
+    "passed": true
+  },
+  {
+    "file": "privacy-scan.mjs",
+    "passed": true
+  },
+  {
+    "file": "progress.mjs",
+    "passed": true
+  },
+  {
+    "file": "project-lifecycle.mjs",
+    "passed": true
+  },
+  {
+    "file": "r0-1-installed.mjs",
+    "passed": true
+  },
+  {
+    "file": "r0-1-migration.mjs",
+    "passed": true
+  },
+  {
+    "file": "r0-1-rollback.mjs",
+    "passed": true
+  },
+  {
+    "file": "relay-bootstrap.mjs",
+    "passed": true
+  },
+  {
+    "file": "relay-infra.mjs",
+    "passed": true
+  },
+  {
+    "file": "relay-task.mjs",
+    "passed": true
+  },
+  {
+    "file": "scroll-focused.mjs",
+    "passed": true
+  },
+  {
+    "file": "settings.mjs",
+    "passed": true
+  },
+  {
+    "file": "ui-batch.mjs",
+    "passed": true
+  },
+  {
+    "file": "usage.mjs",
+    "passed": true
+  },
+  {
+    "file": "ux-1-consistency.mjs",
+    "passed": true
+  },
+  {
+    "file": "write-project-flow.mjs",
+    "passed": true
+  },
+  {
+    "file": "write-project.mjs",
+    "passed": true
+  },
+  {
+    "file": "write-sample.mjs",
+    "passed": true
+  }
+]

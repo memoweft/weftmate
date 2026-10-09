@@ -1,0 +1,12 @@
+{
+  "observedAt": "2026-10-10T03:14:11.8888616+08:00",
+  "phase": "installing",
+  "oldVersion": "0.1.1-preview.2",
+  "nextVersion": "0.1.1-preview.3",
+  "createdAt": "2026-10-09T19:08:33.75Z",
+  "oldProcessAlive": false,
+  "oldProcessCreated": null,
+  "monitorPhase": "checking-startup",
+  "monitorTokenMatches": true,
+  "timeoutMs": 180000
+}
