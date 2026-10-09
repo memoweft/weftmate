@@ -76,7 +76,7 @@ try {
     await page.getByText('正在加载模型 Synthetic Muse…', { exact: true }).waitFor({ timeout: 20000 });
     assert.equal(await page.locator('.conversation-task').count(), 0);
     assert.equal(await page.locator('.queued-task').count(), 0);
-    assert.equal(await page.getByRole('button', { name: '停止', exact: true }).isEnabled(), true);
+    assert.equal(await page.getByRole('button', { name: /^停止(?:回复)?$/, exact: true }).isEnabled(), true);
     await page.screenshot({ path: join(evidence, `${name}-loading.png`) });
     await page.getByText('你好，合成测试已收到。', { exact: true }).waitFor({ timeout: 30000 });
     await until(async () => !(await api(page, '/sessions')).body.sessions.find(row => row.sessionId === command.sessionId)?.running);

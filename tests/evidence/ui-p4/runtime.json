@@ -1,0 +1,29 @@
+{
+  "syntheticOnly": true,
+  "realMain": true,
+  "realDsh": true,
+  "paidModelRequests": 0,
+  "themes": [
+    {
+      "theme": "light",
+      "firstMessageMs": 3.5999999940395355,
+      "contextUsage": {
+        "usedTokens": 713111,
+        "contextWindow": 828000
+      },
+      "newDraftApprovalMode": "ask"
+    },
+    {
+      "theme": "dark",
+      "firstMessageMs": 2.300000011920929,
+      "contextUsage": {
+        "usedTokens": 713111,
+        "contextWindow": 828000
+      },
+      "newDraftApprovalMode": "ask"
+    }
+  ],
+  "modelCalls": 4,
+  "streamingFrames": 81,
+  "errors": []
+}

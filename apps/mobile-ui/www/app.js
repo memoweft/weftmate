@@ -44,12 +44,13 @@ const mobileEffects = {
   clearAcceptedHostAttachments: (...args) => clearAcceptedHostAttachments(...args),
   updateComposer: () => updateComposer(), updateAvailability: () => updateComposer(), paintConnection: () => {}, paintMemoryAvailability: value => paintChatMemoryAvailability(value),
   renderSharedConversation: () => renderSharedConversation(),
+  renderOptimisticMessages: () => renderOptimisticMessages(),
   renderConversation: (...args) => renderConversation(...args),
   renderConversationList: () => renderConversationList(), renderSessions: () => renderConversationList(),
   refreshAttachmentDrafts: (...args) => refreshAttachmentDrafts(...args),
   listConversations: () => listConversations(),
   loadSharedHistory: () => loadSharedHistory(), listSharedSessions: () => listSharedSessions(),
-  scrollBottom: () => scrollBottom(), refreshConversationTasks: () => refreshConversationTasks(),
+  scrollBottom: force => scrollBottom(force), refreshConversationTasks: () => refreshConversationTasks(),
   renderConversationTasks: () => renderConversationTasks(),
   renderConversationApprovals: () => renderConversationApprovals(),
   renderConversationQuestions: () => renderConversationQuestions(),
@@ -530,8 +531,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('[data-page]').forEach(button=>button.addEventListener('click',()=>page(button.dataset.page)));
   document.querySelector('[data-action="new-chat"]').addEventListener('click',()=>selectConversation(null));
   $('conversation-search').addEventListener('input',renderConversationList);
-  $('draft').addEventListener('input',updateComposer);$('send-button').addEventListener('click',send);$('stop-button').addEventListener('click',stop);
-  $('message-mode').addEventListener('change',()=>uiCore.setMessageMode($('message-mode').value));
+  $('draft').addEventListener('input',updateComposer);$('send-button').addEventListener('click',()=> $('send-button').dataset.action==='stop'?stop():send());
   $('draft').addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){
     event.preventDefault();if(!$('send-button').disabled)void send({intent:event.ctrlKey||event.metaKey?'queue':undefined});}});
   $('model-button').addEventListener('click',openModels);$('plus-button').addEventListener('click',openAttachmentMenu);
@@ -551,7 +551,14 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('toast').addEventListener('click',closeToast);
   $('voice-button').addEventListener('click',async()=>{try{await call('voice.start',{conversationId:state.chatSource==='host'?'':state.conversationId||'',viewGeneration:state.generation});
       status('等待系统语音输入；识别结果只会填入草稿')}catch(e){status(safeError(e),true)}});
-  $('jump-latest').addEventListener('click',()=>{state.scrollPinned=true;scrollBottom(true)});
+  ensureConversationScroll();
+  const context=$('context-usage'),tooltip=$('context-tooltip');
+  const showContext=()=>{tooltip.hidden=false;globalThis.WeftPopover.position(tooltip,context)};
+  context.addEventListener('mouseenter',showContext);context.addEventListener('mouseleave',()=>tooltip.hidden=true);
+  context.addEventListener('focus',showContext);context.addEventListener('blur',()=>tooltip.hidden=true);
+  context.addEventListener('click',showContext);
+  document.addEventListener('click',event=>{if(!context.contains(event.target))tooltip.hidden=true});
+  context.addEventListener('keydown',event=>{if(event.key==='Escape'){event.stopPropagation();tooltip.hidden=true}});
   $('chat-scroll').addEventListener('scroll',handleChatScroll);
   document.addEventListener('click',event=>{if(state.menu&&!$('model-popover').contains(event.target)&&!$('model-button').contains(event.target))closeModelMenu();
     if(approvalModeState.menu&&!$('approval-mode-popover').contains(event.target)&&!approvalModeState.menu.trigger.contains(event.target))closeApprovalModeMenu();

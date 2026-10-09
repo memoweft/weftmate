@@ -84,7 +84,7 @@ async function refreshAttachmentDrafts(generation=attachmentViewGeneration){if(!
 function selectConversation(id){closeImagePreview({restoreFocus:false});invalidateLiveProgress();stopSharedPoll();clearTimeout(state.linkedPollTimer);state.linkedPollTimer=null;state.sharedGeneration++;state.chatSource='phone';state.restorePending=false;state.sharedAwaiting=null;state.scrollPinned=true;
   try{localStorage.removeItem(chatSourceKey())}catch{}status('');closeToast();
   state.activeSend=null;state.sendUncertain=false;state.conversationId=id;try{if(id)localStorage.setItem(selectionKey(),id);else localStorage.removeItem(selectionKey())}catch{}
-  closeAttachmentMenu();loadDraft();page('chat');if(id)void refreshHandoff(id)}
+  closeAttachmentMenu();loadDraft();page('chat');scrollBottom(true);if(id)void refreshHandoff(id)}
 
 function safeError(error) {
   const code = error?.message || error?.code || 'OPERATION_FAILED';
@@ -344,15 +344,15 @@ async function removeAttachment(attachmentId){if(state.busy||state.transitionPen
 function placeModelMenu(){globalThis.WeftPopover.position($('model-popover'),$('model-button'))}
 
 function updateComposer(){uiCore.syncMobileIdentity();const view=uiCore.mobile.composerState($('draft').value);reportDraftState();
-  const controlChanged=$('stop-button').hidden!==view.stopHidden;
-  const oldControl=controlChanged?globalThis.WeftMobileMotion?.snapshot($($('stop-button').hidden?'send-button':'stop-button')):null;
-  $('message-mode-control').hidden=!view.host||!state.sharedRunning;
-  $('message-mode').value=uiCore.composerInputMode(state.sharedSessionId);
-  $('message-mode').disabled=!state.loggedIn||view.busy||state.transitionPending;
   renderQueuedTasks();
-  $('send-button').disabled=!view.ready;$('send-button').classList.toggle('ready',view.ready);$('send-button').hidden=view.sendHidden;
-  $('stop-button').hidden=view.stopHidden;if(controlChanged){globalThis.WeftMobileMotion?.reveal($(view.stopHidden?'send-button':'stop-button'),'160ms');globalThis.WeftMobileMotion?.dismiss(oldControl);}$('draft').disabled=view.draftDisabled;$('draft').placeholder=view.placeholder;
-  $('device-line').textContent=view.processingHint||'';$('device-line').setAttribute('role','status');$('model-label').textContent=view.modelName;$('model-button').setAttribute('aria-label',view.modelLabel);
+  const button=$('send-button'), stop=view.sendHidden;
+  globalThis.WeftMobileMotion?.changed(button,String(stop),'160ms');
+  button.hidden=false;button.disabled=stop?!!state.sharedStopping||state.transitionPending:!view.ready;
+  button.classList.toggle('ready',stop||view.ready);button.classList.toggle('is-stop',stop);button.dataset.action=stop?'stop':'send';
+  button.setAttribute('aria-label',stop?'停止回复':'发送');button.replaceChildren(el('span',`icon icon-${stop?'stop':'send'}`));
+  $('draft').disabled=view.draftDisabled;$('draft').placeholder=view.placeholder;
+  renderContextUsage();
+  $('device-line').hidden=true;$('device-line').textContent='';$('device-line').setAttribute('role','status');$('model-label').textContent=view.modelName;$('model-button').setAttribute('aria-label',view.modelLabel);
   $('plus-button').disabled=view.attachmentsDisabled;
   for(const button of $('attachment-drafts').querySelectorAll('button'))button.disabled=view.attachmentItemDisabled;
   $('model-button').disabled=view.modelDisabled;$('voice-button').disabled=view.voiceDisabled;
@@ -377,21 +377,16 @@ function renderQueuedTasks(){uiCore.syncMobileIdentity();const context=conversat
   syncChatInsets();
 }
 
-function scrollBottom(force=false){if(!force&&!state.scrollPinned)return;
-  const box=$('chat-scroll'),bottom=Math.max(0,(Number.isFinite(box.scrollHeight)?box.scrollHeight:0)-
-    (Number.isFinite(box.clientHeight)?box.clientHeight:0));
-  if(state.busy&&state.scrollPinned)liveFollowTop=bottom;
-  if(!Number.isFinite(box.scrollTop)||Math.abs(box.scrollTop-bottom)>1)box.scrollTop=bottom;
-  $('jump-latest').hidden=true}
-
-function handleChatScroll(){const box=$('chat-scroll');
-  if(box.scrollTop<40)void loadOlderHistory();
-  if(state.busy&&state.scrollPinned&&liveFollowTop!==null){
-    if(Math.abs(box.scrollTop-liveFollowTop)<=2)return;
-    if(box.scrollTop<liveFollowTop-2){state.scrollPinned=false;liveFollowTop=null;
-      $('jump-latest').hidden=false;return}}
-  state.scrollPinned=box.scrollHeight-box.scrollTop-box.clientHeight<80;
-  if(!state.scrollPinned)liveFollowTop=null;$('jump-latest').hidden=state.scrollPinned}
+let conversationScroll;
+function ensureConversationScroll(){return conversationScroll ||= globalThis.WeftConversationScroll($('chat-scroll'),$('chat-content'),$('jump-latest'),pinned=>state.scrollPinned=pinned)}
+function scrollBottom(force=false){const wasPinned=state.scrollPinned,scroll=ensureConversationScroll();
+  if(force)scroll.latest();else if(wasPinned)scroll.follow();else scroll.hold()}
+function handleChatScroll(){const scroll=ensureConversationScroll();scroll.scrolled();if(!scroll.pinned&&$('chat-scroll').scrollTop<40)void loadOlderHistory()}
+function renderContextUsage(){const value=globalThis.WeftUiCore.contextUsageView(selectedSharedSession()?.contextUsage),button=$('context-usage');
+  button.setAttribute('aria-label',value.label);button.classList.toggle('is-warning',value.warning);button.classList.toggle('is-indeterminate',value.ratio===null);
+  const fill=button.querySelector('.context-fill');if(fill)fill.style.strokeDasharray=`${Math.min(1,Math.max(0,value.ratio||0))*100} 100`;
+  $('context-tooltip-label').textContent=value.label;$('context-tooltip-detail').textContent=value.detail;
+}
 
 function normalizedMessageThumbnail(item,scope,messageId){if(typeof item?.attachmentId!=='string')return null;
   const previewUrl=safeImagePreviewUrl(item.previewUrl,item.attachmentId,scope?.conversationId,messageId);
@@ -507,4 +502,3 @@ function refreshCloudDevices(){const owner=state.owner,epoch=state.authEpoch;
 }
 
 /* Keep the existing mode value/change contract; use shared menu geometry. */
-globalThis.WeftPopover?.bindSelect($('message-mode'), 'popover message-mode-popover');

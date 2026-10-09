@@ -46,26 +46,26 @@ const mobileMarkup = String.raw`
       </section>
       <section id="chat-page" class="page" aria-label="对话">
         <div id="chat-scroll" class="chat-scroll"><div id="chat-content" class="chat-content"></div></div>
-        <button id="jump-latest" class="jump-latest" hidden>回到最新 <span class="icon icon-down"></span></button>
+        <button id="jump-latest" class="jump-latest" aria-label="回到底部" hidden>回到底部</button>
         <div id="composer-dock" class="composer-dock">
+          <section id="approval-bar" class="approval-bar" aria-label="待批准操作" hidden></section>
           <div id="device-line" class="device-line" role="status"></div>
           <details id="queued-tasks" class="queued-tasks" hidden>
             <summary id="queued-count">排队中</summary>
             <div id="queued-cards" aria-label="排队任务"></div>
           </details>
-          <label id="message-mode-control" class="message-mode-control" hidden>运行中输入
-            <select id="message-mode" aria-label="运行中输入方式"><option value="steer">插话</option><option value="queue">新任务</option></select>
-          </label>
           <div class="composer-card">
             <textarea id="draft" rows="2" placeholder="和 WeftMate 聊聊…" aria-label="输入消息"></textarea>
             <div id="attachment-drafts" class="attachment-drafts" aria-label="待发送附件" hidden></div>
             <div class="composer-actions">
               <button id="plus-button" class="icon-button" aria-label="添加图片或文件" aria-expanded="false" aria-controls="attachment-popover"><span class="icon icon-plus"></span></button>
+              <button id="approval-mode-button" class="approval-mode-button" type="button" aria-label="审批模式" aria-haspopup="menu" aria-expanded="false" aria-controls="approval-mode-popover"><span class="icon icon-shield approval-shield" aria-hidden="true" hidden></span><span id="approval-mode-label">审批</span><span class="icon icon-down" aria-hidden="true"></span></button>
+              <div class="composer-spacer"></div>
+              <button type="button" id="context-usage" class="icon-button context-usage" aria-label="背景信息窗口" aria-describedby="context-tooltip"><svg viewBox="0 0 24 24" aria-hidden="true"><circle class="context-track" cx="12" cy="12" r="8"/><circle class="context-fill" cx="12" cy="12" r="8" pathLength="100"/></svg></button>
+              <div id="context-tooltip" class="context-tooltip" role="tooltip" hidden><span id="context-tooltip-label"></span><strong id="context-tooltip-detail"></strong></div>
               <button id="model-button" class="model-button" aria-label="选择模型" aria-expanded="false" aria-controls="model-popover"><span id="model-label">选择模型</span><span class="icon icon-down"></span></button>
-              <button id="approval-mode-button" class="approval-mode-button" type="button" aria-label="审批模式" aria-haspopup="menu" aria-expanded="false" aria-controls="approval-mode-popover"><span id="approval-mode-label">审批</span><span class="icon icon-down" aria-hidden="true"></span></button>
               <button id="voice-button" class="icon-button" aria-label="语音输入"><span class="icon icon-mic"></span></button>
               <button id="send-button" class="send-button" aria-label="发送"><span class="icon icon-arrow"></span></button>
-              <button id="stop-button" class="send-button" aria-label="停止" hidden><span class="icon icon-stop"></span></button>
             </div>
           </div>
           <div id="attachment-pick-status" class="attachment-pick-status" hidden>

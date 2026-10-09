@@ -53,11 +53,13 @@ try {
       const settings = async () => { await home(); await button('设置与账户').click(); };
       const preparations = {
         sessions: home,
-        conversation: async () => { await report(); await page.getByText(/执行了 1 步/).click(); await page.getByText('读取项目记录 · notes.md', { exact: true }).waitFor(); },
+        'composer-context': async()=>{await report();await button('背景信息窗口：86% 已用').click();await page.getByRole('tooltip').waitFor();},
+        conversation: async () => { await report(); await page.getByText(/读取了 1 个文件/).click(); await page.getByText(/^读取(?: 1 个文件|项目记录)/).waitFor(); },
         'outputs-sources': async () => { await report(); await button('输出与来源').click(); await button(/^notes.md 1 次使用$/).waitFor(); },
-        approval: async () => { await home(); await conversation('整理临时文件').click(); await button('允许一次').waitFor(); },
+        approval: async () => { await home(); await conversation('整理临时文件').click(); await button('批准').waitFor(); },
         memory: async () => { await home(); await button('打开导航').click(); await button('记忆').click(); await button(/使用中文说明/).waitFor(); },
         appearance: async () => { await settings(); await button(/^外观 /).click(); await button(new RegExp(`^${theme === 'dark' ? '深色' : '浅色'}`)).click(); },
+        general: async () => { await settings(); await button(/^常规 /).click(); await page.getByRole('combobox', { name: '回复进行中时发送的消息', exact: true }).waitFor(); },
         usage: async () => { await settings(); await button(/^用量 /).click(); await page.getByRole('heading', { name: '用量与费用', exact: true }).waitFor(); await button('刷新用量').waitFor(); },
         'session-menu': async () => { await home(); await page.getByRole('main').getByRole('button', { name: '更多操作 整理项目进展', exact: true }).click(); await page.getByRole('dialog', { name: '对话操作', exact: true }).waitFor(); await button('归档').waitFor(); await button('删除').waitFor(); },
       };

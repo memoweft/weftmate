@@ -26,12 +26,14 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
         contains:v=>this.classList.values.has(v)};}
     get scrollTop(){return this._scrollTop}
     set scrollTop(value){this._scrollTop=value;this.scrollWrites++;this.scrollHistory.push(value)}
-    append(...children){for(const child of children)if(child instanceof Node||child instanceof TextNode)child.parent=this;
+    append(...children){for(const child of children)if(child instanceof Node||child instanceof TextNode){child.remove?.();child.parent=this;}
       this.children.push(...children)}
     prepend(...children){for(const child of children){child.remove?.();if(child instanceof Node||child instanceof TextNode)child.parent=this;}this.children.unshift(...children)}
     get parentNode(){return this.parent}
     closest(selector){return selector.split(',').some(part=>part.trim().startsWith('.')&&this.className?.split(' ').includes(part.trim().slice(1)))?this:this.parent?.closest(selector)||null}
     get childNodes(){return this.children}
+    get firstElementChild(){return this.children[0]||null}
+    contains(node){return node===this||this.children.some(child=>child.contains?.(node))}
     get nextSibling(){return this.parent?.children[this.parent.children.indexOf(this)+1]||null}
     insertBefore(child,next){child.remove();child.parent=this;const index=next?this.children.indexOf(next):-1;
       if(index<0)this.children.push(child);else this.children.splice(index,0,child)}
@@ -707,7 +709,7 @@ for(const hz of [60,120,180])test(`100 growing snapshots follow monotonically at
   assert.ok(box.scrollWrites<=frameCount+1,'at most one scroll write per animation frame');
   box._scrollTop-=1.4;h.run('handleChatScroll()');
   assert.equal(h.run('state.scrollPinned'),true,'a rounded delayed programmatic event stays pinned');
-  box.scrollTop=box.scrollHeight-box.clientHeight-30;h.run('handleChatScroll()');
+  box.scrollTop=box.scrollHeight-box.clientHeight-60;h.run('handleChatScroll()');
   assert.equal(h.run('state.scrollPinned'),false,'manual scroll-back releases live follow');
   const writes=box.scrollWrites;
   h.run('processEvent({event:"chat.progress",data:{conversationId:"c1",text:"'+ 'x'.repeat(500)+' more"}})');
@@ -962,14 +964,15 @@ function prepareApprovalChat(h,{deviceId='phone-a'}={}){prepareSyntheticTaskChat
 async function readApprovals(h,rows,context='approvalContext()'){const reading=h.run(`refreshToolApprovals(${context})`);
   const request=h.bridge.findLastIndex(item=>item.method==='shared.approvals.list');
   h.reply(request,{approvals:rows,nextBefore:null,hasMore:false});await reading;return request}
-function approvalCard(h){return h.node('chat-content').children.find(node=>node.dataset.approvalId)}
+function approvalCard(h){return h.node('approval-bar').children.find(node=>node.dataset.approvalId)}
+function approvalRecordText(h){return h.run(`approvalRecord([...toolApprovals.sessions.get('s1').rows.values()][0])`)}
 function answeredApproval(row,requestId,outcome){return {...row,status:'answered',decisionRequestId:requestId,decisionOutcome:outcome,
   answeredAt:'2026-10-06T13:01:00.000Z'}}
 
 test('UI-2a category approval preserves scope and original request through timeout and restart',async()=>{
   const h=harness();prepareApprovalChat(h);const row=syntheticApproval({riskCategories:['delete','overwrite']});await readApprovals(h,[row]);
-  assert.equal(approvalCard(h).querySelector('.approval-actions').children.length,3);
-  assert.equal(approvalCard(h).querySelector('.approval-actions').children[1].disabled,false);
+  assert.equal(approvalCard(h).querySelector('.approval-actions').children.length,2);
+  assert.equal(approvalCard(h).querySelector('.approval-detail').children.find(node=>node.dataset.approvalChoice==='conversation-category').disabled,false);
   assert.match(allText(approvalCard(h)),/删除文件、覆盖文件.*可能无法撤销/);
   const deciding=h.run("decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],'allowed-once',approvalContext(),false,'conversation-category')");
   const request=h.bridge.findLastIndex(item=>item.method==='shared.approvals.decide'),params=h.bridge[request].params;
@@ -983,12 +986,12 @@ test('UI-2a category approval preserves scope and original request through timeo
   const answered={...answeredApproval(row,params.requestId,'allowed-once'),decisionScope:'conversation-category'};
   restored.reply(repeated,{approval:answered,requestId:params.requestId});await restored.flush();
   restored.reply(restored.bridge.findLastIndex(item=>item.method==='shared.approvals.list'),{approvals:[answered],nextBefore:null,hasMore:false});await retry;
-  assert.equal(allText(approvalCard(restored)).trim(),'已总是允许此类 · 运行命令');
+  assert.equal(approvalRecordText(restored),'已总是允许此类 · 运行命令');assert.equal(restored.node('approval-bar').hidden,true);
 });
 
 test('UI-2a category permission remains unavailable without a server risk category',async()=>{
   const h=harness();prepareApprovalChat(h);await readApprovals(h,[syntheticApproval()]);
-  assert.equal(approvalCard(h).querySelector('.approval-actions').children[1].disabled,true);
+  assert.equal(approvalCard(h).querySelector('.approval-detail').children.find(node=>node.dataset.approvalChoice==='conversation-category').disabled,true);
   await h.run("decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],'allowed-once',approvalContext(),false,'conversation-category')");
   assert.equal(h.bridge.some(item=>item.method==='shared.approvals.decide'),false);
 });
@@ -1040,7 +1043,7 @@ test('dedicated approvals and questions stay actionable when the general activit
   const details=h.bridge.map((request,index)=>({request,index})).filter(({request})=>request.method==='shared.tasks.detail');
   assert.ok(details.length>0,'exact source is checked through its dedicated task endpoint');
   for(const {index} of details)h.reply(index,fixture.task);await h.flush();
-  assert.match(allText(approvalCard(h)),/允许一次.*拒绝/);
+  assert.match(allText(approvalCard(h)),/批准.*拒绝/);
   assert.match(allText(questionCard(h)),/确认计划.*提交回答/);
   assert.equal(h.run("conversationTasks.entries.get('root-inline').notice"),'');
   const deciding=h.run("decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],'allowed-once')");
@@ -1049,7 +1052,7 @@ test('dedicated approvals and questions stay actionable when the general activit
   const requestId=h.bridge[request].params.requestId,answered=answeredApproval(approval,requestId,'allowed-once');
   h.reply(request,{approval:answered,requestId});await h.flush();
   h.reply(h.bridge.findLastIndex(item=>item.method==='shared.approvals.list'),{approvals:[answered],nextBefore:null,hasMore:false});await deciding;
-  assert.match(allText(approvalCard(h)),/已允许 · 运行命令/);
+  assert.match(approvalRecordText(h),/已允许 · 运行命令/);assert.equal(h.node('approval-bar').hidden,true);
 });
 
 test('task15-question-client natural single multiple and free answers preserve original position and plan intent without granting a tool permission',async()=>{
@@ -1172,13 +1175,12 @@ test('task15-approval-client pending approvals follow exact root and supplement 
   await readApprovals(h,[row,supplement,syntheticApproval({approvalId:'32345678-1234-4234-8234-123456789abc',
     sourceCommandId:'foreign-source',reason:'错误来源不应可审批'}),syntheticApproval({approvalId:'42345678-1234-4234-8234-123456789abc',
     sourceReceiptId:'rpc:other.2',reason:'错误回执不应可审批'})]);
-  const cards=h.node('chat-content').children.filter(node=>node.dataset.approvalId);
-  assert.equal(cards.length,2);assert.match(allText(cards[0]),/需要审批 · 运行命令.*需要执行这次命令.*允许一次.*拒绝/);
-  assert.match(allText(cards[1]),/需要审批 · 写入文件.*保存这次生成的文件/);
-  const children=h.node('chat-content').children;
-  assert.ok(children.indexOf(cards[0])>children.findIndex(node=>node.dataset.receiptId===fixture.source.receiptId));
-  assert.equal(children.indexOf(cards[1]),children.findIndex(node=>node.dataset.receiptId===supplement.sourceReceiptId)+1);
-  assert.doesNotMatch(allText(h.node('chat-content')),/错误来源|错误回执|永久允许|长期偏好/);
+  const cards=h.node('approval-bar').children.filter(node=>node.dataset.approvalId);
+  assert.equal(cards.length,1);assert.match(allText(cards[0]),/需要执行这次命令.*批准.*拒绝/);
+  assert.match(allText(cards[0]),/还有 1 个待批准/);
+  assert.equal(h.run("toolApprovals.sessions.get('s1').rows.get('22345678-1234-4234-8234-123456789abc').sourceReceiptId"),supplement.sourceReceiptId);
+  assert.equal(h.node('chat-content').children.some(node=>node.dataset.approvalId),false);
+  assert.doesNotMatch(allText(h.node('approval-bar')),/错误来源|错误回执|永久允许|长期偏好/);
   assert.equal(h.node('chat-scroll').scrollTop,151);assert.equal(h.node('draft').value,'保留尚未发送的要求');
   assert.equal(h.document.activeElement,h.node('draft'));
   await readApprovals(h,[]);assert.equal(approvalCard(h),undefined,'no approval controls when there is no approval');
@@ -1198,12 +1200,12 @@ for(const outcome of ['allowed-once','rejected'])test(`task15-approval-client ${
   const answered=answeredApproval(row,params.requestId,outcome);h.reply(request,{approval:answered,requestId:params.requestId});await h.flush();
   const checking=h.bridge.findLastIndex(item=>item.method==='shared.approvals.list');assert.ok(checking>request);
   h.reply(checking,{approvals:[answered],nextBefore:null,hasMore:false});await deciding;
-  assert.match(allText(approvalCard(h)),outcome==='allowed-once'?/已允许 · 运行命令/:/已拒绝 · 运行命令/);
-  assert.equal(approvalCard(h).querySelector('.approval-actions'),null);
+  assert.match(approvalRecordText(h),outcome==='allowed-once'?/已允许 · 运行命令/:/已拒绝 · 运行命令/);assert.equal(h.node('approval-bar').hidden,true);
+  assert.equal(approvalCard(h),undefined);assert.equal(h.node('approval-bar').hidden,true);
   assert.equal(h.node('draft').value,'审批期间也保留草稿');assert.equal(h.document.activeElement,h.node('draft'));assert.equal(h.node('chat-scroll').scrollTop,143);
   await readApprovals(h,[{...answered,status:'resolved',outcome,resolvedAt:'2026-10-06T13:02:00.000Z'}]);
-  assert.match(allText(approvalCard(h)),outcome==='allowed-once'?/已允许 · 运行命令/:/已拒绝 · 运行命令/);
-  assert.doesNotMatch(allText(approvalCard(h)),/目标已完成|任务已完成/);
+  assert.match(approvalRecordText(h),outcome==='allowed-once'?/已允许 · 运行命令/:/已拒绝 · 运行命令/);assert.equal(h.node('approval-bar').hidden,true);
+  assert.doesNotMatch(approvalRecordText(h),/目标已完成|任务已完成/);
 });
 
 test('task15-approval-client an unknown network reply is read back and can retry only its persisted request on the same device',async()=>{
@@ -1224,7 +1226,7 @@ test('task15-approval-client an unknown network reply is read back and can retry
     {approvals:[{...answered,status:'resolved',outcome:'allowed-once',resolvedAt:'2026-10-06T13:02:00.000Z'}],nextBefore:null,hasMore:false});await retry;
   assert.equal([...restarted.storage.keys()].some(key=>key.startsWith('weftmate-approval:')),false);
   const other=harness({storage:saved});prepareApprovalChat(other,{deviceId:'phone-b'});await readApprovals(other,[row]);
-  assert.match(allText(approvalCard(other)),/允许一次.*拒绝/);assert.doesNotMatch(allText(approvalCard(other)),/重试允许/);
+  assert.match(allText(approvalCard(other)),/批准.*拒绝/);assert.doesNotMatch(allText(approvalCard(other)),/重试允许/);
 });
 
 test('task15-approval-client replayed answered receipts cannot regress an already-read resolved or unavailable approval',async()=>{
@@ -1237,15 +1239,15 @@ test('task15-approval-client replayed answered receipts cannot regress an alread
     await readApprovals(h,[final]);h.reply(request,{approval:answered,requestId});await h.flush();
     assert.equal(h.run("toolApprovals.sessions.get('s1').rows.values().next().value.status"),terminal);
     h.reply(h.bridge.findLastIndex(item=>item.method==='shared.approvals.list'),{approvals:[final],nextBefore:null,hasMore:false});await deciding;
-    assert.equal(approvalCard(h).querySelector('.approval-actions'),null);assert.doesNotMatch(allText(approvalCard(h)),/等待执行端处理/);
+    assert.equal(approvalCard(h),undefined);assert.equal(h.node('approval-bar').hidden,true);assert.doesNotMatch(approvalRecordText(h),/等待执行端处理/);
   }
 });
 
 test('task15-approval-client task cancellation and other invalidation have different messages and no decision buttons',async()=>{
   for(const outcome of ['cancelled','unavailable']){
     const h=harness();prepareApprovalChat(h);await readApprovals(h,[syntheticApproval({status:'unavailable',outcome})]);
-    assert.match(allText(approvalCard(h)),outcome==='cancelled'?/已取消 · 运行命令/:/审批已失效 · 运行命令/);
-    assert.equal(approvalCard(h).querySelector('.approval-actions'),null);
+    assert.match(approvalRecordText(h),outcome==='cancelled'?/已取消 · 运行命令/:/审批已失效 · 运行命令/);
+    assert.equal(approvalCard(h),undefined);assert.equal(h.node('approval-bar').hidden,true);
   }
 });
 
@@ -1259,7 +1261,7 @@ test('task15-approval-client paging omits the first cursor and loads older pendi
   h.reply(request,{approvals:[second],nextBefore:null,hasMore:false});await h.flush();
   request=h.bridge.findLastIndex(item=>item.method==='shared.tasks.detail');assert.deepEqual(h.bridge[request].params,{taskId:'root-inline'});
   h.reply(request,fixture.task);await reading;
-  assert.equal(h.node('chat-content').children.filter(node=>node.dataset.approvalId).length,2);
+  assert.equal(h.node('approval-bar').children.filter(node=>node.dataset.approvalId).length,1);assert.match(allText(h.node('approval-bar')),/还有 1 个待批准/);
 });
 
 test('task15-approval-client a changed call tuple cannot update a known approval and late account/device/session results stay out of the new view',async()=>{
@@ -1285,8 +1287,8 @@ test('task15-approval-client leaving during a decision retains its marker and re
   const answered=answeredApproval(row,requestId,'allowed-once');h.reply(request,{approval:answered,requestId});await deciding;
   assert.equal(h.node('chat-content').children.length,0);assert.equal(h.run("toolApprovals.attempts.values().next().value.busy"),false);
   h.run("state.sharedSessionId='s1';state.generation++;renderSharedConversation()");
-  await readApprovals(h,[answered]);assert.match(allText(approvalCard(h)),/已允许 · 运行命令/);
-  assert.equal(approvalCard(h).querySelector('.approval-actions'),null);
+  await readApprovals(h,[answered]);assert.match(approvalRecordText(h),/已允许 · 运行命令/);
+  assert.equal(approvalCard(h),undefined);assert.equal(h.node('approval-bar').hidden,true);
 });
 
 
@@ -1386,7 +1388,7 @@ test('synthetic mobile tool progress follows dotted RPC identity and keeps unrel
   await feedSyntheticTask(h,fixture.task,fixture.activity);
   const children=h.node('chat-content').children,card=children.find(node=>node.dataset.conversationTask);
   assert.ok(card);assert.equal(children.indexOf(card),children.findIndex(node=>node.dataset.receiptId===fixture.source.receiptId)+1);
-  assert.match(allText(card),/运行命令 · 后台运行中.*读取文件 · 执行结束.*回复回合已正常结束/);
+  assert.match(allText(card),/运行命令 · 后台运行中.*读取文件 · 执行结束/);
   assert.doesNotMatch(allText(card),/搜索内容|rpc:|exec-|目标已完成|已核验/);
   assert.equal(h.node('chat-scroll').scrollTop,180,'a tool update preserves manual scroll-back');
   assert.equal(h.bridge.filter(request=>request.method.startsWith('shared.tasks.')&&request.method!=='shared.tasks.detail').length,0);
@@ -1420,7 +1422,7 @@ test('synthetic mobile failed detail stays recoverable, and a late receipt reloc
   await feedSyntheticTask(h,fixture.task,fixture.activity);
   const offline=h.run('refreshConversationTasks()');h.reply(h.bridge.length-1,{activities:[],hostAvailable:false});await offline;
   const stale=h.node('chat-content').children.find(node=>node.dataset.conversationTask);
-  assert.match(allText(stale),/待更新.*电脑暂不可达.*上次记录：运行命令 · 后台运行中/);
+  assert.match(allText(stale),/电脑暂不可达.*待更新.*运行命令 · 后台运行中/);
   assert.doesNotMatch(allText(stale),/回复回合已正常结束/);
   fixture.task.control={state:'stop_requested',stopStatus:'cancel_requested'};
   fixture.task.executionSteps[0].jobState='stopping';await feedSyntheticTask(h,fixture.task,fixture.activity);
@@ -1524,9 +1526,9 @@ test('M1-0 mobile execution is collapsed by default, groups calls once, and ends
     {seq:4,type:'step.started',data:{taskId:'turn-1',stepId:'s2',summary:'运行命令 npm test',state:'running'}},
     {seq:5,type:'task.ended',data:{taskId:'turn-1'}}];renderSharedConversation()`);
   const blocks=h.node('chat-content').children.filter(node=>node.dataset.timeline?.startsWith('steps-'));
-  assert.equal(blocks.length,2);assert.equal(blocks[0].querySelector('details').open,false);
-  assert.match(allText(blocks[0]),/执行了 1 步.*用时 2 秒/);assert.match(allText(blocks[1]),/执行了 1 步/);
-  assert.equal(h.node('chat-content').children.some(node=>node.dataset.timelineApproval==='approval-one'),true);
+  assert.equal(blocks.length,1);assert.equal(blocks[0].querySelector('details').open,false);
+  assert.match(allText(blocks[0]),/读取了 1 个文件、已运行 1 个命令/);
+  assert.equal(h.node('chat-content').children.some(node=>node.dataset.timelineApproval==='approval-one'),false);
   const counts=h.node('chat-content').children.length;h.run('renderTimeline()');assert.equal(h.node('chat-content').children.length,counts);
 })
 
@@ -1555,8 +1557,8 @@ test('consecutive steps show readable descriptions before their raw detail',()=>
     {seq:1,type:'step.completed',data:{taskId:'turn-1',stepId:'read-a',toolName:'read',groupHint:'read',summary:'读取文件',state:'completed',detailRef:{seq:1}}},
     {seq:2,type:'step.completed',data:{taskId:'turn-1',stepId:'read-b',toolName:'read_file',groupHint:'read_file',summary:'读取文件',state:'completed',detailRef:{seq:2}}}];renderSharedConversation()`);
   const subgroup=h.node('chat-content').querySelector('.execution-block');assert.ok(subgroup);
-  assert.match(allText(subgroup),/执行了 2 步/);assert.equal(subgroup.open,false);
-  assert.equal(subgroup.children.filter(node=>node.className==='execution-step').length,2);
+  assert.match(allText(subgroup),/读取了 2 个文件/);assert.equal(subgroup.open,false);
+  assert.equal(subgroup.querySelector('.execution-records').children.filter(node=>node.className==='execution-step').length,2);
 })
 
 test('model restart stays pending on mobile through a two-minute native load and is not resubmitted',async()=>{

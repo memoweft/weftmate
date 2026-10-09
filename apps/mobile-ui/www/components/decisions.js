@@ -31,7 +31,7 @@ function taskApprovals(task,context){return uiCore.mobileDecisions.rows(context)
 function taskQuestions(task,context){return uiCore.mobileDecisions.rows(context,true).filter(row=>relatedTaskApproval(task,row))}
 function stopApprovalObservation(){clearTimeout(toolApprovals.pollTimer);toolApprovals.pollTimer=null;toolApprovals.detail=null}
 function stopQuestionObservation(){clearTimeout(toolQuestions.pollTimer);toolQuestions.pollTimer=null;toolQuestions.detail=null}
-function resetToolApprovals(){stopApprovalObservation();uiCore.mobileDecisions.reset()}
+function resetToolApprovals(){stopApprovalObservation();uiCore.mobileDecisions.reset();$('approval-bar').hidden=true;clear($('approval-bar'))}
 function resetToolQuestions(){stopQuestionObservation();uiCore.mobileDecisions.reset(true)}
 async function refreshToolApprovals(context=approvalContext(),{force=false}={}){return uiCore.mobileDecisions.refresh(context,force)}
 async function refreshToolQuestions(context=approvalContext(),{force=false}={}){return uiCore.mobileDecisions.refresh(context,force,true)}
@@ -57,6 +57,7 @@ function updateApprovalModeButton(){if(state.page!=='chat')return;const context=
     if(context.sessionId&&state.loggedIn&&!state.transitionPending)void loadApprovalMode(context)}
   const mode=approvalModes.find(item=>item.mode===approvalModeState.mode);
   $('approval-mode-label').textContent=mode?.short||'审批';
+  button.classList.toggle('is-warning',mode?.mode==='allow-all');const shield=button.querySelector('.approval-shield');if(shield)shield.hidden=mode?.mode!=='allow-all';
   button.setAttribute('aria-label',`审批模式${mode?`：${mode.label}`:''}`)}
 
 async function loadApprovalMode(context){const key=JSON.stringify(context),revision=++approvalModeState.revision;approvalModeState.loading=true;
@@ -146,18 +147,18 @@ function fillApprovalCard(card,row,context,cache){const attempt=approvalAttempt(
     record.setAttribute('aria-live','polite');record.setAttribute('aria-label',`${approvalRecord(row)}。${approvalMeaning(row,cache,attempt)}`);
     card.append(record);globalThis.WeftMobileMotion?.dismiss(copy,true);if(hadFocus){record.setAttribute('tabindex','-1');record.focus({preventScroll:true})}return}
   if(entering)globalThis.WeftMobileMotion?.reveal(card,'base');
-  card.append(el('strong','approval-title',`${row.status==='pending'?'需要审批':'审批记录'} · ${approvalOperation(row)}`));
-  if(row.status==='pending'){const presentation=uiCore.approvalPresentation(row),description=el('p','approval-reason',presentation.summary);
+
+  if(row.status==='pending'){const presentation=uiCore.approvalPresentation(row),description=el('p','approval-reason',`要${presentation.summary}`);
     card.append(description);if(presentation.reason)card.append(el('p','approval-risk-copy',presentation.reason));
     const details=el('details','approval-detail'),raw=el('pre','timeline-raw');
     raw.textContent=typeof presentation.raw==='string'?presentation.raw:JSON.stringify(presentation.raw,null,2);
     details.append(el('summary','','详情'),raw);card.append(details);
     void uiCore.readApprovalPresentation(row).then(value=>{if(!approvalViewCurrent(context)||card.dataset.approvalId!==row.approvalId||!card.contains?.(description))return;
-      description.textContent=value.summary;raw.textContent=typeof value.raw==='string'?value.raw:JSON.stringify(value.raw,null,2);});}
+      description.textContent=`要${value.summary}`;raw.textContent=typeof value.raw==='string'?value.raw:JSON.stringify(value.raw,null,2);});}
   if(row.status==='pending')card.append(el('p','approval-risk-copy',approvalRiskCopy(row)));
   card.classList.toggle('is-resolved',approvalTerminal(row));
   const message=el('p','approval-status',approvalMeaning(row,cache,attempt));message.setAttribute('role','status');message.setAttribute('aria-live','polite');
-  card.append(message);
+  message.hidden=row.status==='pending'&&!cache.error&&!attempt?.busy&&!attempt?.unknown;card.append(message);
   if(row.status==='pending'||row.status==='answered'&&cache.error){const controls=el('div','approval-actions');
     const add=(label,choice,handler,primary=false)=>{const button=el('button',primary?'primary':'secondary',label);button.type='button';
       button.dataset.approvalChoice=choice;button.disabled=!!attempt?.busy;
@@ -168,31 +169,32 @@ function fillApprovalCard(card,row,context,cache){const attempt=approvalAttempt(
     if(row.status==='pending'&&!cache.error&&(!attempt?.unknown||attempt.checked)){
       if(attempt?.unknown)add(attempt.outcome==='allowed-once'?(attempt.scope==='conversation-category'?'重试总是允许此类':'重试允许一次'):'重试拒绝',attempt.outcome,
         restoreFocus=>decideToolApproval(row,attempt.outcome,context,restoreFocus,attempt.scope),attempt.outcome==='allowed-once');
-      else{add('允许一次','allowed-once',restoreFocus=>decideToolApproval(row,'allowed-once',context,restoreFocus),true);
+      else{add('批准','allowed-once',restoreFocus=>decideToolApproval(row,'allowed-once',context,restoreFocus),true);
         add('总是允许此类','conversation-category',restoreFocus=>decideToolApproval(row,'allowed-once',context,restoreFocus,'conversation-category'));
-        controls.children[1].disabled=!approvalRiskCategories(row).length;
-        controls.children[1].title=approvalRiskCategories(row).length?'仅允许这段对话后续的同类操作':'这次审批未提供风险类别，可选择允许一次';
+        const always=controls.children[1];card.querySelector('.approval-detail')?.append(always);
+        always.disabled=!approvalRiskCategories(row).length;
+        always.title=approvalRiskCategories(row).length?'仅允许这段对话后续的同类操作':'这次审批未提供风险类别，可选择允许一次';
         add('拒绝','rejected',restoreFocus=>decideToolApproval(row,'rejected',context,restoreFocus))}}
     if(cache.error||attempt?.unknown)add('检查审批状态','check',()=>refreshToolApprovals(context,{force:true}));
     card.append(controls);
+    const parameters=card.querySelector('.approval-detail');
+    if(parameters)for(const child of [...card.children])if(child.className==='approval-risk-copy')parameters.append(child);
     if(hadFocus){const next=[...controls.children].find(button=>button.dataset.approvalChoice===focusChoice);next?.focus({preventScroll:true})}}
   else if(hadFocus){message.setAttribute('tabindex','-1');message.focus({preventScroll:true})}}
 
-function renderConversationApprovals(){const context=approvalContext(),content=$('chat-content');
-  if(!approvalViewCurrent(context)||!approvalScopeCurrent(context))return;
-  const cache=toolApprovals.sessions.get(context.sessionId);if(!cache)return;
-  const scroll=$('chat-scroll'),scrollTop=scroll.scrollTop,visible=new Set();
-  for(const row of [...cache.rows.values()].sort((a,b)=>a.createdAt.localeCompare(b.createdAt)||a.approvalId.localeCompare(b.approvalId))){
-    const task=conversationTasks.entries.get(row.taskId)?.task;
-    if(!relatedTaskApproval(task,row))continue;
-    const timelineAnchor=[...content.children].find(node=>node.dataset?.timelineApproval===row.approvalId);
-    const anchor=timelineAnchor||[...content.children].find(node=>node.dataset?.receiptId===row.sourceReceiptId);if(!anchor)continue;
-    visible.add(row.approvalId);let card=[...content.children].find(node=>node.dataset?.approvalId===row.approvalId);
-    if(!card)card=el('section','tool-approval conversation-approval');
-    let next=anchor.nextSibling;while(next&&(next.dataset?.conversationTask||next.dataset?.approvalId&&next.dataset.approvalId!==row.approvalId))next=next.nextSibling;
-    if(timelineAnchor){timelineAnchor.hidden=true;card.dataset.seq=timelineAnchor.dataset.seq;next=timelineAnchor}if(card!==next)content.insertBefore(card,next);fillApprovalCard(card,row,context,cache)}
-  for(const node of [...content.children])if(node.dataset?.approvalId&&!visible.has(node.dataset.approvalId))node.remove();
-  if(state.scrollPinned)scrollBottom();else if(scroll.scrollTop!==scrollTop)scroll.scrollTop=scrollTop}
+function renderConversationApprovals(){const context=approvalContext(),bar=$('approval-bar');
+  if(!bar)return;
+  const cache=approvalViewCurrent(context)&&approvalScopeCurrent(context)?toolApprovals.sessions.get(context.sessionId):null;
+  const rows=cache?[...cache.rows.values()].filter(row=>row.status==='pending'&&relatedTaskApproval(conversationTasks.entries.get(row.taskId)?.task,row))
+    .sort((a,b)=>a.createdAt.localeCompare(b.createdAt)||a.approvalId.localeCompare(b.approvalId)):[];
+  const focused=bar.contains?.(document.activeElement),wasHidden=bar.hidden;
+  bar.hidden=!rows.length;$('device-line').hidden=!bar.hidden;
+  if(!rows.length){clear(bar);if(focused)$('draft').focus({preventScroll:true});renderTimeline();syncChatInsets();return}
+  let card=bar.firstElementChild;
+  if(!card||card.dataset.approvalId!==rows[0].approvalId){clear(bar);card=el('section','tool-approval approval-bar-content');bar.append(card);if(focused)$('draft').focus({preventScroll:true})}
+  fillApprovalCard(card,rows[0],context,cache);
+  let remaining=card.querySelector('.approval-remaining');if(rows.length>1){if(!remaining){remaining=el('small','approval-remaining');card.append(remaining)}remaining.textContent=`还有 ${rows.length-1} 个待批准`}else remaining?.remove();
+  if(wasHidden)globalThis.WeftMobileMotion?.reveal(bar,'base');renderTimeline();syncChatInsets()}
 
 function renderApprovalView(context){if(approvalViewCurrent(context))renderConversationApprovals()}
 
@@ -288,28 +290,33 @@ function renderConversationTasks(){const context=conversationTaskContext(),conte
     const artifacts=(Array.isArray(task?.artifacts)?task.artifacts:[]).filter(item=>item?.taskId===entry.taskId&&
       item.sessionId===context.sessionId&&sessionIdPattern.test(item.artifactId||''));
     const outputLimited=task?.replyEvidence?.status==='failed'&&task.replyEvidence.endReasonKind==='max-tokens';
+    const turn=task?.source?.dshTurn??task?.replyEvidence?.turn;
+    const events=state.chatSource==='phone'?state.linkedEvents.get(context.conversationId)?.events||[]:state.sharedEvents;
+    const hasTimeline=Number.isSafeInteger(turn)&&events.some(event=>event.type.startsWith('step.')&&event.data?.taskId===`turn-${turn}`);
+    const visibleArtifacts=artifacts.filter(artifact=>!content.querySelector(`[data-timeline-artifact="${artifact.artifactId}"]`));
     let card=[...content.children].find(node=>node.dataset?.conversationTask===entry.taskId);
-    if(!steps.length&&!artifacts.length&&!outputLimited){card?.remove();continue}
+    if(!(!hasTimeline&&steps.length)&&!visibleArtifacts.length&&!entry.notice&&!outputLimited&&control?.state!=='stopped'){card?.remove();continue}
     const receiptId=task?.source?.receiptId||entry.receiptId,anchor=[...content.children].find(node=>node.dataset?.receiptId===receiptId);
     if(!anchor&&!entry.notice)continue;
     if(card&&anchor&&anchor.nextSibling!==card)content.insertBefore(card,anchor.nextSibling);
     const signature=JSON.stringify([task,entry.notice]);if(card?.dataset.signature===signature)continue;
     if(!card){card=el('section','conversation-task');card.dataset.conversationTask=entry.taskId;
       if(anchor)content.insertBefore(card,anchor.nextSibling);else content.append(card)}
-    const expanded=card.querySelector('details')?.open===true;card.dataset.signature=signature;clear(card);
-    card.append(el('strong','conversation-task-title',entry.notice?'工具进展 · 待更新':
-      outputLimited&&!steps.length&&!artifacts.length?'回复状态':'工具进展'));
+    const expanded=card.querySelector('details')?.open===true;const savedSteps=new Map([...card.querySelectorAll('.execution-step')].map(detail=>[detail.dataset.step,detail]));card.dataset.signature=signature;clear(card);
+    if(outputLimited)card.append(el('strong','conversation-task-title','回复状态'));
     if(entry.notice)card.append(el('p','conversation-task-notice',entry.notice));
-    if(steps.length){const records=el('ul','conversation-task-steps');
-      for(const step of steps.slice(-3))records.append(el('li','',`${entry.notice?'上次记录：':''}${executionName(step)} · ${executionProgress(step)}`));card.append(records);
-      if(steps.length>3){const details=el('details','conversation-task-more');details.open=expanded;
-        details.append(el('summary','',`查看全部 ${steps.length} 条执行记录`));
-        for(const step of steps)details.append(el('p','',`${executionName(step)} · ${executionProgress(step)}`));card.append(details)}}
+    if(steps.length&&!hasTimeline){const view=uiCore.progressText(steps.map(step=>({...step,summary:step.summary||executionName(step)})),control?.state==='stopped');
+      card.classList.toggle('has-failure',!!view.failed);const details=el('details','execution-block');details.open=expanded||!!view.failed&&card.dataset.failed!=='true';card.dataset.failed=String(!!view.failed);
+      const summary=el('summary','inline-progress-summary',view.text);summary.setAttribute('role','button');const arrow=el('span','progress-chevron');arrow.setAttribute('aria-hidden','true');summary.append(arrow);
+      const label=()=>summary.setAttribute('aria-label',`${view.text}，${details.open?'已展开':'已收起'}`);details.addEventListener('toggle',label);label();
+      const records=el('div','execution-records');for(const step of steps){const record=el('details','execution-step');const saved=savedSteps.get(step.executionId),state=uiCore.executionState(step);record.dataset.step=step.executionId;record.dataset.state=state;record.open=saved?.open===true||state==='failed'&&saved?.dataset.state!=='failed';
+        record.append(el('summary','',`${executionName(step)} · ${executionProgress(step)}`),el('p','',step.summary||executionProgress(step)));records.append(record)}
+      details.append(summary,records);card.append(details)}
     if(!entry.notice&&control&&control.state!=='active')card.append(el('p','conversation-task-state',taskControlMeaning(control)));
-    if(!entry.notice&&task?.replyEvidence)card.append(el('p','conversation-task-reply',taskReplyProgress(task.replyEvidence)));
+    if(!entry.notice&&outputLimited)card.append(el('p','conversation-task-reply',taskReplyProgress(task.replyEvidence)));
     const verified=artifacts.filter(item=>item.state==='observed'&&item.verification?.status==='observed'&&item.verification?.method==='sha256_readback');
-    for(const artifact of artifacts)appendTimelineArtifact(card,artifact,context);
-    if(artifacts.length)card.append(el('p','conversation-task-result',verified.length?`${verified.length} 个成果文件已读回核验`:'成果文件仍待核验'));
+    for(const artifact of visibleArtifacts)appendTimelineArtifact(card,artifact,context);
+    if(visibleArtifacts.length)card.append(el('p','conversation-task-result',verified.length?`${verified.length} 个成果文件已读回核验`:'成果文件仍待核验'));
     const controls=el('div','conversation-task-actions'),detail=el('button','secondary',verified.length?'查看来源与成果':'查看来源与成果');detail.type='button';
     detail.addEventListener('pointerdown',()=>{detail.dataset.restoreFocus=document.activeElement===$('draft')?'1':'0'});
     detail.addEventListener('pointercancel',()=>{delete detail.dataset.restoreFocus});

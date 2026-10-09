@@ -8,6 +8,7 @@
         return n;
     };
     function artifactCard(row, data, options) {
+        row.append(node('small', 'artifact-verification', data.verification?.method === 'sha256_readback' && data.verification?.status === 'observed' ? '已读回核验' : '仍待核验'));
         row.append(node('p', '', options.fileLabel ? options.fileLabel(data) : `${data.contentType || '文件'} · ${data.size || 0} 字节`));
         const open = node('button', 'artifact-action', '打开成果');
         open.type = 'button';
