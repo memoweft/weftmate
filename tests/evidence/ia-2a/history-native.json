@@ -1,10 +1,10 @@
 {
-  "checkedAt": "2026-10-09T17:29:13.810Z",
+  "checkedAt": "2026-10-09T17:52:56.143Z",
   "fixedDsh": true,
   "realElectronHost": true,
   "syntheticAccount": true,
   "randomPorts": true,
-  "coldLogicalTimelineMs": 18.033800000001065,
+  "coldLogicalTimelineMs": 16.699799999998504,
   "publicMessagesAndOriginalSources": true,
   "chineseSearch": true,
   "dateLocate": true,

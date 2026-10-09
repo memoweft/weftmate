@@ -1,6 +1,6 @@
 {
   "step": "2.1",
-  "checkedAt": "2026-10-09T17:29:19.985Z",
+  "checkedAt": "2026-10-09T17:53:10.167Z",
   "pinnedDsh": {
     "repo": "https://github.com/deepseek-ai/deepseek-harness.git",
     "packageVersion": "0.1.0-rc.5",
@@ -19,29 +19,51 @@
   "model": "mimo-v2.6-flash",
   "usage": [
     {
-      "completion_tokens": 24,
-      "prompt_tokens": 138,
-      "total_tokens": 162,
+      "completion_tokens": 17,
+      "prompt_tokens": 2118,
+      "total_tokens": 2135,
       "completion_tokens_details": {
-        "reasoning_tokens": 17
+        "reasoning_tokens": 8
       },
       "prompt_tokens_details": {
         "cached_tokens": 0
       }
     },
     {
-      "completion_tokens": 38,
-      "prompt_tokens": 2114,
-      "total_tokens": 2152,
+      "completion_tokens": 100,
+      "prompt_tokens": 2132,
+      "total_tokens": 2232,
       "completion_tokens_details": {
-        "reasoning_tokens": 29
+        "reasoning_tokens": 74
       },
       "prompt_tokens_details": {
         "cached_tokens": 0
       }
+    },
+    {
+      "completion_tokens": 78,
+      "prompt_tokens": 2913,
+      "total_tokens": 2991,
+      "completion_tokens_details": {
+        "reasoning_tokens": 9
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 2304
+      }
+    },
+    {
+      "completion_tokens": 31,
+      "prompt_tokens": 3389,
+      "total_tokens": 3420,
+      "completion_tokens_details": {
+        "reasoning_tokens": 22
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 2880
+      }
     }
   ],
-  "nativeFilesUnchangedByMigration": 104,
+  "nativeFilesUnchangedByMigration": 103,
   "oldMessagesAndDeepLinksReadable": true,
   "originalCommandAndReceiptPreserved": true,
   "groupAndArchivePreserved": true,
