@@ -1018,3 +1018,43 @@ App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协�
 游标绑定账户、对话、索引代次、用途及搜索过滤；不透明且经宿主签名，客户端不能解码、拼接、加一或混用。历史页的 `syncCursor` 不覆盖已建立的增量水位；增量只续传 `nextCursor`。逐步索引早期内容也可能在增量出现，以 `eventId` 去重即可。搜索游标保持过滤/时区，新增匹配可在重新搜索时出现。重启、内容代次变化或不合法游标返回409 `CURSOR_RESET_REQUIRED`，客户端清理旧缓存再取尾页或保存的锚点。
 
 `removals=[{eventId,revision,reason:"deleted"|"forgotten"}]` 不带正文；`removeEvents` 为 IA-2b 的持久原文清理完成后通知接缝，跨重启清理由 `contentRevision` 提升触发全缓存失效。本步未上线 D33 多段清理或接力。D42-A 保留全部原始历史，不增加区间归档或清空。固定 DSH 的原生冷 `inspect` 仍物化整个日志，测量脚本分别记录逻辑页与冷进程读取；不能把逻辑页的有界返回声称为原生磁盘读取已经有界。范围读取及最终性能闭环交 IA-2b 的 2.6。
+
+### 9.4 开旁聊与结果回写（IA-2.3 正式）
+
+能力增加 `sideChats:1`。沿用原 `/commands` 的 `commands:write`、设备归属、模型/项目权限、Cookie（会话凭据）/CSRF（跨站请求伪造防护）及原命令查询回执，不增加执行器或新的模型授权。
+
+`POST /commands` 新增客户端命令：
+
+```json
+{
+  "requestId": "side-example",
+  "kind": "session.side.create",
+  "targetDeviceId": "host-example",
+  "parent": {"kind": "main", "id": "chat-main-example"},
+  "modelProfileId": "local",
+  "title": "纸船安排",
+  "originChatId": "chat-source-example",
+  "originEventId": "event-source-example",
+  "entry": "message"
+}
+```
+
+必填 `requestId,kind,targetDeviceId,parent,modelProfileId`；`parent.kind=main|project`，`parent.id` 必须是当前账户主对话或已授权且未撤销项目。`title` 可选，去首尾空白后1–256字符；来源两个字段同时出现或省略，只能是当前账户可读的完整公开用户/助手消息。来源与组织父级分别保存：项目来源移到主对话父级不会继承项目写权限，目标项目使用原 D37 权限及目录。旁聊开出的新旁聊仍直接属于所选主对话或项目，不嵌套。
+
+`entry` 可选 `composer|message|suggestion`；缺省有来源为 `message`、无来源为 `composer`。`message` 必须有来源。模型建议入口必须另传 `confirmed:true`，否则409 `SIDE_CHAT_CONFIRMATION_REQUIRED`；客户端只在用户点确认后提交。此 API（应用接口）没有注册成模型自动建聊工具。输入区草稿和待上传附件留在客户端，创建不发送首句、不执行原消息、不改变审批模式。
+
+返回202 `{command}`，附 `kind:"session.side.create",chatId,sessionId,contextTransfer`；内部复用原持久 `session.create` 的创建/恢复流程。两项身份在首次受理时确定，同请求并发或重试返回同一命令；不同请求体409 `REQUEST_CONFLICT`。客户端等原 `/commands/by-request/{requestId}` 到 `accepted_by_dsh` 后才能使用旁聊。失败/不确定沿原回执处理，不换新请求编号重发。新旁聊使用独立原生会话与工作目录；项目旁聊沿原项目目录。
+
+本步 `contextTransfer={state:"references_only",sourceRefs:[{chatId,eventId,kind:"native",hostId,sessionId,seq,contentRevision}],truncated:false}`，`Chat` 同时返回 `originRefs` 与 `contextTransfer`。**尚未接入原生摘要转移**；采用 IA_MAIN_CHAT 3.1 允许的仅引用回退，界面必须提示“相关上下文尚未带入”，允许用户编辑首句继续。不能把引用就绪显示为完整上下文已转移；不把客户端摘要当事实，也不复制整条历史或注入伪造真人消息。来源删除后原链接返回不可用，引用不能恢复正文。原 D34 分叉继续完整事件种子语义，本接口不等同分叉。临时来源409 `TEMPORARY_CONTEXT_CONFIRMATION_REQUIRED`，共享来源409 `SHARED_CONTEXT_UNAVAILABLE`；未实现绕过提示的确认布尔开关。
+
+| 接口 | 请求 | 响应与规则 |
+|---|---|---|
+| POST `/chats/{sideChatId}/results` | `{requestId,sourceEventId,expectedRevision,taskId?}` | 201 `{result,mainEventId,activityId}`；原请求重放先于修订核对，异体409；新请求旧修订409 `REVISION_CHANGED`；正文由授权来源读取，客户端不提交摘要/成功状态 |
+| `result` | — | `{resultId,sourceChatId,sourceEventId,sourceRef,taskId?,state,summary,resultRevision,requiresResponse,artifactRefs[],deleted?}`；`state=completed|failed|stopped`；摘要最多160个 Unicode（统一字符编码）码点，不额外调用模型 |
+| 主对话 `items[]` | — | `type:"side.result"`，`sourceRef={kind:"result",resultId,sourceChatId,sourceEventId,native:{kind:"native",hostId,sessionId,seq}}`，没有伪造 `seq`；`data` 包含结果字段及 `activityId,notificationRevision`；历史、日期、搜索、增量走9.3 |
+
+不带 `taskId` 是显式分享选中的完整助手答复，`completed` 只表示该答复可分享，不证明某项任务成功。带 `taskId` 时必须属于该旁聊原根任务，原生回合已确定完成/失败/停止，且后台工作无活动或未确认状态；否则409 `TASK_NOT_READY`。宿主先用原来源接口核对回合边界，再按范围读取公开答复；不会读取下一回合或工具原始输出作为摘要。找不到来源404 `SOURCE_UNAVAILABLE`。临时及共享旁聊同样拒绝回写；主对话409 `MAIN_CHAT_PROTECTED`。
+
+自动回写在主对话身份/历史/日期/搜索/增量读取时对账：仅处理主对话身份建立后新受理的普通/项目旁聊根任务，原生工具或成果事实表明它是执行任务；纯闲聊不因每条回复生成卡。不追溯迁移前旧任务。原生 `completed/failed/aborted` 分别显示完成/失败/停止，停止绝不显示完成；缺乏确定证据保留待对账。归档不阻止已受理任务回写。回写不启动主对话模型、不追加 DSH 消息、不重新摄取记忆；没有新增后台计时器。
+
+同一旁聊根任务保持同一 `resultId/mainEventId/activityId`，后续续做/显式更正增加 `resultRevision` 和 `notificationRevision`，更新原卡；手动分享已有自动结果也复用身份。普通手动分享以来源消息去重。`requiresResponse` 当前为false，不凭问号产生待办或代表用户认可/批准。TB-1（动态）复用这些来源和通知版本，不再复制消息或发第二份通知；动态已读、推送和结构化待回应接线留对应包。删除旁聊清空派生摘要、成果引用与搜索正文，保留 `deleted:true` 的无正文锚点；重复分享请求也只返回当前墓碑。D33 原话/派生数据跨段清理仍由 IA-2b 2.5 接入，接力未启用。

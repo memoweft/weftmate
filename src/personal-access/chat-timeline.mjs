@@ -123,7 +123,7 @@ export function createChatTimeline(context) {
   async function hydrate(index, rows) {
     const bodies = new Map();
     // Coalesce contiguous source ranges; never copy all history to hydrate a page.
-    for (const sessionId of new Set(rows.map(row => row.sessionId))) {
+    for (const sessionId of new Set(rows.filter(row => !row.product).map(row => row.sessionId))) {
       const selected = rows.filter(row => row.sessionId === sessionId).sort((a,b) => a.seq-b.seq);
       const wanted = new Set(selected.map(row => row.seq));
       let afterSeq = selected[0].seq - 1;
@@ -135,6 +135,16 @@ export function createChatTimeline(context) {
       }
     }
     return rows.flatMap(row => {
+      if (row.product) {
+        const result = context.accountState(index.ownerId).chatResults?.[row.resultId];
+        if (!result) return [];
+        return [{ eventId: row.eventId, chatId: index.chatId, orderKey: row.orderKey, revision: row.revision,
+          type: 'side.result', at: row.at, sourceRef: result.sourceRef,
+          data: { resultId: result.resultId, sourceChatId: result.sourceChatId, sourceEventId: result.sourceEventId,
+            ...(result.taskId ? { taskId: result.taskId } : {}), state: result.state, summary: result.summary,
+            resultRevision: result.resultRevision, requiresResponse: result.requiresResponse, artifactRefs: result.artifactRefs,
+            activityId: result.activityId, notificationRevision: result.notificationRevision, ...(result.deleted ? { deleted: true } : {}) } }];
+      }
       const event = bodies.get(`${row.sessionId}/${row.seq}`);
       if (!event) return [];
       return [{ eventId: row.eventId, chatId: index.chatId, orderKey: row.orderKey, revision: row.revision,
@@ -158,13 +168,32 @@ export function createChatTimeline(context) {
     if (row.dateZone !== timeZone) { row.dateZone = timeZone; row.date = day(row.at, timeZone); }
     return row.date;
   }
+  function products(index) {
+    const account = context.accountState(index.ownerId);
+    if (index.chatId !== account.chatIdentity.mainChatId) return;
+    for (const result of Object.values(account.chatResults ?? {})) {
+      const old = index.rows.get(result.mainEventId);
+      if (old?.revision === result.resultRevision) continue;
+      const row = { product: true, resultId: result.resultId, eventId: result.mainEventId, orderKey: result.orderKey,
+        revision: result.resultRevision, type: 'side.result', at: result.at, text: result.deleted ? '' : result.summary,
+        hasArtifact: result.artifactRefs.length > 0, sourceRef: result.sourceRef };
+      index.rows.set(row.eventId, row);
+      if (old) index.ordered[index.ordered.indexOf(old)] = row;
+      else { let lo = 0, hi = index.ordered.length; while (lo < hi) { const mid=(lo+hi)>>>1; if (index.ordered[mid].orderKey < row.orderKey) lo=mid+1; else hi=mid; } index.ordered.splice(lo,0,row); }
+      index.changes.push({ revision: ++index.revision, eventId: row.eventId });
+    }
+  }
   return {
+    async lastOrderKey(ownerId, chatId) {
+      const index = current(ownerId, chatId);
+      return serial(index, async () => { await seed(index); await refresh(index); return index.ordered.findLast(row => !row.product)?.orderKey ?? '!'; });
+    },
     async query(ownerId, chatId, action, params) {
       const keys = { events: ['before','after','around','limit'], changes: ['cursor','limit'],
         dates: ['from','to'], locate: ['date'], search: ['q','from','to','role','hasArtifact','cursor','limit'] };
       const limit = parse(params, keys[action] ?? []), index = current(ownerId, chatId);
       const result = await serial(index, async () => {
-        await seed(index); await refresh(index);
+        await seed(index); await refresh(index); products(index);
         const rows = index.ordered;
         if (action === 'events') {
           if (['before','after','around'].filter(key => params.has(key)).length > 1) throw failure('INVALID_REQUEST');
@@ -208,7 +237,7 @@ export function createChatTimeline(context) {
           (!to || dateOf(row, timeZone) <= to) && row.text.toLowerCase().includes(q.toLowerCase()));
         const selected = matches.slice(0, limit), hits = selected.map(row => {
           const offset = row.text.toLowerCase().indexOf(q.toLowerCase()), start = Math.max(0, offset - 60), snippet = row.text.slice(start, start + Math.max(200, q.length));
-          return { eventId: row.eventId, sourceRef: { kind: 'native', hostId: row.hostId, sessionId: row.sessionId, seq: row.seq }, at: row.at,
+          return { eventId: row.eventId, sourceRef: row.sourceRef ?? { kind: 'native', hostId: row.hostId, sessionId: row.sessionId, seq: row.seq }, at: row.at,
             snippet, highlights: [{ start: offset - start, end: offset - start + q.length }] };
         });
         return { hits, nextCursor: matches.length > limit ? token(index, 'search', selected.at(-1).orderKey, filter) : null, hasMore: matches.length > limit, ...info(index) };
