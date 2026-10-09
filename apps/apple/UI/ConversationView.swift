@@ -69,9 +69,13 @@ struct ConversationRow: View {
 struct ConversationView: View {
     @ObservedObject var model: AppleAppModel
     let conversation: ConversationSummary
+    @StateObject private var interactions: TaskInteractionModel
     @StateObject private var resources: ConversationResourcesModel
     init(model: AppleAppModel, conversation: ConversationSummary) {
         self.model = model; self.conversation = conversation
+        _interactions = StateObject(wrappedValue: TaskInteractionModel(client: model.assistantClient, account: model.session,
+            epoch: model.accountEpoch, stateDirectory: model.assistantStateDirectory,
+            currentEpoch: { [weak model] in model?.accountEpoch ?? UUID() }, currentSession: { [weak model] in model?.session }))
         _resources = StateObject(wrappedValue: ConversationResourcesModel(app: model,
             sessionID: conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) ?? ""))
     }
@@ -79,12 +83,16 @@ struct ConversationView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @FocusState private var draftFocused: Bool
     @State private var visibleMessageID: String?
-    @State private var nearEnd = true
+    @State private var follow = ConversationFollowState()
+    @State private var viewportHeight: CGFloat = 0
+    @State private var waitingSince = Date()
+    @State private var contextPopover = false
+    @State private var dictationPopover = false
     @State private var previousTailID: String?
     @State private var composerIdentity = UUID()
     @State private var resourcePopover = false
-    @State private var sendIntent: MessageIntent = .steer
     @State private var showingUsage = false
+    @State private var showingModels = false
     @State private var usageAfterActions = false
     #if os(macOS)
     @Environment(\.openWindow) private var openWindow
@@ -120,6 +128,7 @@ struct ConversationView: View {
             if showingPreview { Divider(); attachmentPreview.frame(minWidth: 320, idealWidth: 400, maxWidth: 480) }
             #endif
         }
+        .sheet(isPresented: $showingModels) { SettingsView(model: model, route: .init(categoryID: "models"), onClose: { showingModels = false }) }
         .sheet(isPresented: $showingUsage) {
             SettingsView(model: model, route: .usage(sessionID: conversation.sessionId), onClose: { showingUsage = false })
         }
@@ -236,7 +245,7 @@ struct ConversationView: View {
                     }
                     if let sessionID = conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) {
                         VStack(alignment: .leading, spacing: AppleTokens.Space.p22) {
-                        ConversationTimelineView(appModel: model, conversation: conversation, sessionID: sessionID, openAttachment: openAttachment, openArtifact: openArtifact, openMemory: { event in
+                        ConversationTimelineView(appModel: model, conversation: conversation, sessionID: sessionID, interactions: interactions, openAttachment: openAttachment, openArtifact: openArtifact, openMemory: { event in
                             endDraftFocus(); closePreview(); resources.open(.memory(event.seq, UsedMemory.references(in: event)))
                         }, openSources: { resources.visible = true; resources.showingList = true })
                             .id(sessionID + model.accountEpoch.uuidString)
@@ -246,15 +255,34 @@ struct ConversationView: View {
                             MessageView(model: model, message: message, openAttachment: openAttachment).id(message.id)
                         }
                     }
+                    optimisticMessages
+                    if ConversationProcessing.visible(events: model.timeline.events, running: conversation.running, phase: conversation.processing?.phase) {
+                        TimelineView(.periodic(from: waitingSince, by: 1)) { clock in
+                            Text((conversation.processing ?? .init(phase: "waiting")).label + " · \(max(0, Int(clock.date.timeIntervalSince(waitingSince)))) 秒")
+                                .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("processingLine")
+                        }
+                    }
                     commandStatusCards
                     adoptionStatusCards
                     AppleTokens.Colors.clear.frame(height: 1).id("latest")
                 }
+                .background(GeometryReader { geometry in AppleTokens.Colors.clear.preference(key: ConversationContentHeight.self, value: geometry.size.height) })
                 .scrollTargetLayout()
                 .padding(.horizontal, AppleTokens.Space.p24).padding(.vertical, AppleTokens.Space.p26)
                 .frame(maxWidth: 760).frame(maxWidth: .infinity)
             }
-            .modifier(ConversationScrollTracking(visibleID: $visibleMessageID, nearEnd: $nearEnd))
+              .modifier(ConversationScrollTracking(visibleID: $visibleMessageID, follow: $follow))
+            .background(GeometryReader { geometry in AppleTokens.Colors.clear.preference(key: ConversationViewportHeight.self, value: geometry.size.height) })
+            .onPreferenceChange(ConversationViewportHeight.self) { value in viewportHeight = value; if follow.following { proxy.scrollTo("latest", anchor: .bottom) } }
+            .onChange(of: model.preparingMessages) { _, _ in if follow.contentChanged() { proxy.scrollTo("latest", anchor: .bottom) } }
+            .onChange(of: conversation.processing) { _, _ in waitingSince = Date() }
+            .onPreferenceChange(ConversationContentHeight.self) { _ in if follow.contentChanged() { proxy.scrollTo("latest", anchor: .bottom) } }
+            .overlay(alignment: .bottomTrailing) {
+                if !follow.following {
+                    Button(follow.hasNewContent ? "有新内容 · 回到底部" : "回到底部") { follow.returnToBottom(); proxy.scrollTo("latest", anchor: .bottom) }
+                        .buttonStyle(OutlineActionStyle()).padding(AppleTokens.Space.p12).accessibilityIdentifier("returnToBottom")
+                }
+            }
             .onChange(of: visibleMessageID) { _, value in
                 if value == "older", !model.olderBusy, !model.historyBusy { Task { await readOlder(proxy: proxy) } }
             }
@@ -265,7 +293,7 @@ struct ConversationView: View {
             #if DEBUG
             .onChange(of: model.timeline.events.count) { _, _ in
                 let args = ProcessInfo.processInfo.arguments
-                if args.contains("--ui-testing"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1) {
+                if args.contains("--ui-testing"), !args.contains("--a8-flow"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1) {
                     let type = args[index + 1] == "approval" ? "approval.requested" : args[index + 1] == "question" ? "question.asked" : "step.started"
                     if let entry = TimelineProjection.entries(model.timeline.events).first(where: { $0.event.type == type || (type == "step.started" && !$0.steps.isEmpty) }) {
                         proxy.scrollTo(entry.id, anchor: .top)
@@ -275,15 +303,10 @@ struct ConversationView: View {
             #endif
             .onChange(of: model.timeline.events.last?.seq) { _, _ in
                 #if DEBUG
-                if ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--a5-review-scene") { return }
+                if ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--a5-review-scene") && !ProcessInfo.processInfo.arguments.contains("--a8-flow") { return }
                 #endif
-                let oldTail = previousTailID
                 previousTailID = TimelineProjection.entries(model.timeline.events).last?.id ?? model.messages.last?.id
-                // Follow new messages only when already at the end; preserve reading position otherwise.
-                if !draftFocused, previousTailID != nil,
-                   oldTail == nil || nearEnd || visibleMessageID == "latest" || visibleMessageID == oldTail {
-                    proxy.scrollTo("latest", anchor: .bottom)
-                }
+                if follow.contentChanged() { proxy.scrollTo("latest", anchor: .bottom) }
             }
         }
         .background(Weave.surface)
@@ -366,7 +389,7 @@ struct ConversationView: View {
         .onDisappear { endDraftFocus(); composerIdentity = UUID() }
         .onAppear { endDraftFocus() }
         .onChange(of: conversation.id) { _, _ in
-            previousTailID = nil; visibleMessageID = nil
+            previousTailID = nil; visibleMessageID = nil; follow.returnToBottom(); waitingSince = Date()
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("conversationDetail")
@@ -389,10 +412,22 @@ struct ConversationView: View {
         #endif
     }
 
+    private var optimisticMessages: some View {
+        VStack(alignment: .trailing, spacing: AppleTokens.Space.p12) {
+            if let message = model.preparingMessages[AppleAppModel.draftKey(for: conversation)] {
+                MessageView(model: model, message: message, openAttachment: openAttachment).opacity(AppleTokens.Opacity.disabled)
+                Text("发送中").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+            }
+            ForEach(model.optimisticRows(for: conversation)) { row in
+                OptimisticMessageRow(model: model, row: row, openAttachment: openAttachment)
+            }
+        }.accessibilityIdentifier("optimisticMessages")
+    }
+
     private var commandStatusCards: some View {
         let accountEpoch = model.accountEpoch
         let key = AppleAppModel.draftKey(for: conversation)
-        let rows = model.commandStatusRows(for: conversation)
+        let rows = model.commandStatusRows(for: conversation).filter { $0.observationPaused || $0.lookupNotFound }
         return ForEach(rows) { row in
             VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
                 HStack {
@@ -440,7 +475,7 @@ struct ConversationView: View {
                                 HStack {
                                     Text(task.text).font(AppleTokens.Fonts.callout).lineLimit(3)
                                     Spacer()
-                                    Button("编辑后重排") { sendIntent = .queue; Task { await model.cancelQueued(task, conversation: conversation, edit: true) } }
+                                    Button("编辑后重排") { Task { await model.cancelQueued(task, conversation: conversation, edit: true) } }
                                         .accessibilityLabel("编辑排队任务 " + task.text)
                                     Button("取消") { Task { await model.cancelQueued(task, conversation: conversation) } }
                                         .accessibilityLabel("取消排队任务 " + task.text)
@@ -452,21 +487,18 @@ struct ConversationView: View {
                 }.font(AppleTokens.Fonts.caption)
             }
             if let notice = model.queueNotice { Text(notice).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
-            if conversation.running {
-                Picker("发送方式", selection: $sendIntent) { Text("插话").tag(MessageIntent.steer); Text("新任务").tag(MessageIntent.queue) }
-                    .pickerStyle(.segmented).accessibilityIdentifier("sendIntent")
-            }
+            ConversationApprovalBar(model: interactions, events: model.timeline.events)
             VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
                 TextField("向 WeftMate 说说你的目标", text: draft, axis: .vertical)
                     .lineLimit(2...6).textFieldStyle(.plain).font(AppleTokens.Fonts.body)
                     .focused($draftFocused).padding(.horizontal, AppleTokens.Space.p9).padding(.top, AppleTokens.Space.p7)
                     .disabled(!model.canEditDraft(for: conversation))
                     .accessibilityIdentifier("conversationDraft")
-                    .onSubmit { Task { await model.send(conversation, accountEpoch: accountEpoch, intent: sendIntent) } }
+                    .onSubmit { Task { await model.send(conversation, accountEpoch: accountEpoch, intent: .queue) } }
                     #if os(macOS)
                     .onKeyPress(.return, phases: .down) { press in
                         if press.modifiers.contains(.shift) { return .ignored }
-                        Task { await model.send(conversation, accountEpoch: accountEpoch, intent: press.modifiers.contains(.command) || press.modifiers.contains(.control) ? .queue : sendIntent) }
+                        Task { await model.send(conversation, accountEpoch: accountEpoch, intent: .queue) }
                         return .handled
                     }
                     #endif
@@ -487,7 +519,7 @@ struct ConversationView: View {
                 if dynamicTypeSize.isAccessibilitySize {
                     composerApprovalMode(accountEpoch: accountEpoch)
                 }
-                HStack(spacing: AppleTokens.Space.p12) {
+                HStack(spacing: AppleTokens.Space.p4) {
                     Menu {
                         Button("添加文件或图片") { importingAttachments = true }
                         #if DEBUG
@@ -512,25 +544,43 @@ struct ConversationView: View {
                         composerApprovalMode(accountEpoch: accountEpoch)
                     }
                     if model.loadingAttachments.contains(key) { ProgressView().controlSize(.small) }
-                    Text(model.sendTargets[key]?.modelName ?? conversation.originalModelLabel ?? "当前模型")
-                        .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).lineLimit(1)
-                        .accessibilityLabel("当前模型")
-                    Spacer()
-                    if conversation.running {
-                        Button { Task { await model.stopActiveTask() } } label: { WeftIcon("stop") }
-                            .accessibilityLabel("停止").accessibilityIdentifier("stopActiveTask")
-                            .disabled(model.stoppingActiveTask || model.timelineRootCommands.isEmpty || model.historyCachedAt != nil)
+                    Spacer(minLength: AppleTokens.Space.p4)
+                    if let usage = conversation.contextUsage {
+                        Button { contextPopover.toggle() } label: {
+                            ZStack {
+                                Circle().stroke(Weave.line, lineWidth: AppleTokens.Space.p2)
+                                if let value = usage.fraction { Circle().trim(from: 0, to: min(1, value)).stroke(usage.warning ? Weave.danger : Weave.muted, style: StrokeStyle(lineWidth: AppleTokens.Space.p2, lineCap: .round)).rotationEffect(.degrees(-90)) }
+                            }.frame(width: AppleTokens.Space.p18, height: AppleTokens.Space.p18).frame(minWidth: AppleTokens.Space.p28, minHeight: AppleTokens.Space.p44)
+                        }.buttonStyle(.plain).accessibilityLabel(usage.label).accessibilityIdentifier("contextUsage")
+                            .help(usage.label).popover(isPresented: $contextPopover) { Text(usage.label).font(AppleTokens.Fonts.caption).padding(AppleTokens.Space.p16).presentationCompactAdaptation(.popover) }
+                    }
+                    Menu {
+                        Text(model.sendTargets[key]?.modelName ?? conversation.originalModelLabel ?? "当前模型")
+                        Button("配置模型") {
                             #if os(macOS)
-                            .keyboardShortcut(.escape, modifiers: [])
+                            model.settingsRoute = .init(categoryID: "models"); openWindow(id: "settings")
+                            #else
+                            showingModels = true
                             #endif
-                    }
-                    Button { Task { await model.send(conversation, accountEpoch: accountEpoch, intent: sendIntent) } } label: {
-                        WeftIcon("send")
-                            .font(AppleTokens.Fonts.body.weight(.semibold)).frame(width: 20, height: 44)
-                    }
-                    .buttonStyle(PrimaryActionStyle(fillsWidth: false))
-                    .disabled(!model.canSend(conversation)).accessibilityLabel("发送")
-                    .accessibilityIdentifier("sendButton")
+                        }
+                    } label: {
+                        HStack(spacing: AppleTokens.Space.p3) { Text(model.sendTargets[key]?.modelName ?? "模型").lineLimit(1); WeftIcon("chevron", size: 12) }
+                    }.font(AppleTokens.Fonts.caption).accessibilityLabel("模型选择").accessibilityIdentifier("composerModel")
+                    Button { draftFocused = true; dictationPopover = true } label: { WeftIcon("mic", size: AppleTokens.Space.p16).frame(minWidth: AppleTokens.Space.p28, minHeight: AppleTokens.Space.p44) }
+                        .buttonStyle(.plain).accessibilityLabel("语音输入").popover(isPresented: $dictationPopover) {
+                            Text("使用系统听写输入文字").font(AppleTokens.Fonts.caption).padding(AppleTokens.Space.p16).presentationCompactAdaptation(.popover)
+                        }
+                    let action = ComposerAction.resolve(running: conversation.running, text: draft.wrappedValue, attachments: !(model.attachmentDrafts[key] ?? []).isEmpty)
+                    Button {
+                        if action == .stop { Task { await model.stopActiveTask() } }
+                        else { Task { await model.send(conversation, accountEpoch: accountEpoch, intent: .queue) } }
+                    } label: { WeftIcon(action == .stop ? "stop" : "send").frame(width: AppleTokens.Space.p20, height: AppleTokens.Space.p44) }
+                        .buttonStyle(PrimaryActionStyle(fillsWidth: false))
+                        .disabled(action == .stop ? model.stoppingActiveTask || model.timelineRootCommands.isEmpty || model.historyCachedAt != nil : !model.canSend(conversation))
+                        .accessibilityLabel(action == .stop ? "停止" : "发送").accessibilityIdentifier("sendButton")
+                    #if os(macOS)
+                    Button("停止") { Task { await model.stopActiveTask() } }.keyboardShortcut(.escape, modifiers: []).hidden().frame(width: 0, height: 0)
+                    #endif
                 }
             }
             .padding(AppleTokens.Space.p9)
@@ -691,20 +741,28 @@ struct MessageView: View {
 
 /// Track visibility without feeding a changing LazyStack target back into its layout on iOS 18+.
 /// Older systems retain their existing position binding.
+private struct ConversationViewportHeight: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+}
+private struct ConversationContentHeight: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+}
 private struct ConversationScrollTracking: ViewModifier {
     @Binding var visibleID: String?
-    @Binding var nearEnd: Bool
+    @Binding var follow: ConversationFollowState
+    @State private var userScrolling = false
     func body(content: Content) -> some View {
         if #available(iOS 18, macOS 15, *) {
             content
-                .onScrollTargetVisibilityChange(idType: String.self) { ids in
-                    visibleID = ids.contains("older") ? "older" : ids.contains("latest") ? "latest" : ids.first
-                }
-                .onScrollGeometryChange(for: Bool.self) { geometry in
-                    geometry.contentOffset.y + geometry.containerSize.height >= geometry.contentSize.height + geometry.contentInsets.bottom - AppleTokens.Space.p24
-                } action: { _, value in nearEnd = value }
+                .onScrollTargetVisibilityChange(idType: String.self) { ids in visibleID = ids.contains("older") ? "older" : ids.contains("latest") ? "latest" : ids.first }
+                .onScrollPhaseChange { _, phase in userScrolling = phase == .interacting || phase == .decelerating }
+                .onScrollGeometryChange(for: Double.self) { geometry in
+                    Double(geometry.contentSize.height + geometry.contentInsets.bottom - geometry.contentOffset.y - geometry.containerSize.height)
+                } action: { _, distance in if userScrolling { follow.userScrolled(distanceFromBottom: distance) } }
         } else {
-            content.scrollPosition(id: $visibleID, anchor: .bottom)
+            content.scrollPosition(id: $visibleID, anchor: .bottom).onChange(of: visibleID) { _, value in follow.userScrolled(distanceFromBottom: value == "latest" ? 0 : 100) }
         }
     }
 }
