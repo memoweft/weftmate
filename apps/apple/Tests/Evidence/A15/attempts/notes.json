@@ -1,0 +1,9 @@
+{
+  "syntheticOnly": true,
+  "attempts": [
+    {"surface":"mac", "failure":"XCUITest runner could not enable automation mode", "resolution":"Own-app native AX runner; XCUITest remains unavailable"},
+    {"surface":"mac", "failure":"Row-local tooltip was clipped", "resolution":"Sidebar anchor overlay with native hover tracking"},
+    {"surface":"mac", "failure":"Disclosure container did not expose the expected native press action", "resolution":"Explicit capsule button and expanded state"},
+    {"surface":"iphone", "failure":"Root accessibility identifier propagated to undo button", "resolution":"Containing undo region and visible-name button lookup"}
+  ]
+}

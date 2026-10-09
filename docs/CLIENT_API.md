@@ -275,7 +275,7 @@ D33：`deleteConversationSnippets` 默认 `false`。桌面、手机网页及手�
 - `GET /personal/v1/sessions/{sessionId}/thinking` 返回 `{supported,enabled}`；`PATCH` 同一路径接受严格 `{enabled:boolean}`，沿用 Cookie（会话凭据）/ 原令牌、`commands:write` 与 CSRF（跨站请求伪造防护）。只允许本账户可发送的非归档会话，不支持的模型不能开启。幂等布尔偏好持久保存，不中断当前回合。`GET /sessions` / 对话视图增加 `deepThinking:boolean`，旧客户端可忽略。
 - 偏好同时保存到逻辑对话与当前会话；发送时优先逻辑对话，后续接力段沿用。宿主在后续原生回合的 `agent/request`（请求构造钩子）读取并固定偏好；开启只给该回合请求配置加 `reasoningEffort:"high"`，关闭透传模型原配置。同一回合中途切换不改变已固定的偏好。不改变账户模型默认值。原生已有能力声明优先；旧受管路由仅补缺失的能力与等价字段声明。
 - 原有 `step.started|step.completed` 可选 `subtask:{name,id?,background?}`：名称来自真实委派描述 / 后台命令；`id` 是原生子任务 / 作业标识，`background=true` 表示启动工具结束仍未结束任务。新增只读 `subtask.updated` 事件携带 `{id,state:"completed"|"failed"}`，来自 DSH 的后台结束通知，不包含子任务正文或隐藏推理。事件仍沿用真实 `seq` / `at` 和当前账户历史权限。客户端按同一 ID 合并，背景任务在原生终态前保持进行中，不因主回合结束推测终态。
-- Android（安卓）code25：`attachments.pick` 新增 `kind:"camera"`（已有 `image|file` 保持），结果仍走原 `attachment.result` 与原账户 / 对话 / `viewGeneration`（视图代次）核对。`/sessions/{id}/thinking` 加入原生业务桥。系统相机使用已有相机权限、仅专用缓存路径的临时 URI（资源标识）；返回导入后删除临时原图。发布 UX-3 手机包要求最低原生 code25。Apple（苹果端）原生接线见 `tests/evidence/ux-3/README.md`。
+- Android（安卓）code25：`attachments.pick` 新增 `kind:"camera"`（已有 `image|file` 保持），结果仍走原 `attachment.result` 与原账户 / 对话 / `viewGeneration`（视图代次）核对。`/sessions/{id}/thinking` 加入原生业务桥。系统相机使用已有相机权限、仅专用缓存路径的临时 URI（资源标识）；返回导入后删除临时原图。发布 UX-3 手机包要求最低原生 code25。Apple（苹果端）A15 已消费上述模型能力、会话偏好与子任务投影；客户端只提交 `{enabled}`，不构造提供方字段。原生验证与边界见 `apps/apple/Tests/Evidence/A15/README.md`。
 
 ### 3.10 模型（12）
 
@@ -477,7 +477,7 @@ MS-1：`defaultModelProfileId` 按账户保存，用于新对话；已有对话�
 
 原生 DSH（模型执行框架）用量事件优先；OpenAI-compatible（OpenAI 兼容协议）JSON（结构化数据）或 SSE（服务端事件流）响应 `usage` 用于手机代理 / 记忆后台。缓存输入使用 `prompt_tokens_details.cached_tokens` 或 `prompt_cache_hit_tokens`，原生适配器的缓存读写计数按实际语义合并；DSH 适配器合成的全零事件无法证明供应商提供了用量，保留未知。缺失或不完整用量的整次请求计 `unknownRequests`，该请求费用不计入 `cost`，保留请求标识与时间；没有自行估算。只存账号 / 对话 / 模型 / 请求标识、时间、数字与来源类别，不存消息正文、工具参数或响应正文。宿主账本保留已删除对话的费用统计，不恢复对话内容；历史账单 / 外部供应商账单导入未实现。
 
-桌面与手机功能读取 / 保存统一位于 `src/ui-core/usage.js`；实际手机页面使用同一宿主账本。手机独立离线直连模型尚无宿主回传，离线聊天记账随 S6 接入；Apple（苹果客户端）已在 A5 接入本节的统计 / 上限 / 402 提示，并同步 FIX-3 的本机时区查询与账号时区上报。Android（安卓）原生 `host.business` 已增加精确用量路径，旧原生壳未升级时返回不支持，不能以未知错误显示为零费用。
+桌面与手机功能读取 / 保存统一位于 `src/ui-core/usage.js`；实际手机页面使用同一宿主账本。手机独立离线直连模型尚无宿主回传，离线聊天记账随 S6 接入；Apple（苹果客户端）已在 A5 接入本节的统计 / 上限 / 402 提示，A15 起先读账户 `UsageSettings.timeZone`，再读该时区的月份统计；用量读取不写账户时区。Android（安卓）原生 `host.business` 已增加精确用量路径，旧原生壳未升级时返回不支持，不能以未知错误显示为零费用。
 
 
 ### 3.18 提醒与定时任务（SCH-1，M2）

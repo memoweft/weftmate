@@ -41,6 +41,9 @@ struct WeftMateRootView: View {
                 }
             }
         }
+        #if os(iOS)
+        .overlay(alignment: .bottom) { ArchiveUndoBar(app: model) }
+        #endif
         .overlay { CloudAccessPresenter(cloud: model.cloudLogin) }
         .sheet(item: Binding(get: { model.deletionInSettings ? nil : model.deletionCandidate }, set: { model.deletionCandidate = $0 })) { _ in SessionDeleteSheet(app: model) }
         .sheet(item: $model.sessionMenuCandidate) { row in
@@ -75,6 +78,11 @@ struct WeftMateRootView: View {
                    ProcessInfo.processInfo.arguments[index + 1] != "login", model.session == nil {
                     FileHandle.standardOutput.write(Data(("A5_CAPTURE_FAILED:authentication: " + (model.authError ?? "no session") + "\n").utf8))
                     Darwin.exit(1)
+                }
+                if ProcessInfo.processInfo.arguments.contains("--a15-driver") {
+                    do { try await A15MacReview.run(model) { openWindow(id: "settings") } }
+                    catch { try? await A10MacReview.capture("failure", identifier: "weftmateRoot"); FileHandle.standardOutput.write(Data(("A5_CAPTURE_FAILED:" + String(describing: error) + "\n").utf8)); Darwin.exit(1) }
+                    Darwin.exit(0)
                 }
                 if A14TestSupport.driver != nil {
                     do { try await A14MacReview.run(model) }
@@ -218,7 +226,7 @@ struct MacWorkspace: View {
             let args = ProcessInfo.processInfo.arguments
             guard args.contains("--ui-testing"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1) else { return }
             switch args[index + 1] {
-            case "a11-all", "a11-remote": break
+            case "a15-all", "a11-all", "a11-remote": break
             case "memory", "memory-forget": selected = .memory
             case "appearance", "usage":
                 model.settingsRoute = .init(categoryID: args[index + 1]); openWindow(id: "settings")
@@ -283,6 +291,7 @@ struct MacWorkspace: View {
                                     .tag(SidebarSelection.conversation(conversation.id))
                                     .listRowBackground(selected == .conversation(conversation.id) ? Weave.accent : AppleTokens.Colors.clear)
                             }
+                            ProjectMoreRows(app: model, project: project, search: search)
                         }
                     }
                 }
@@ -298,26 +307,11 @@ struct MacWorkspace: View {
             .scrollContentBackground(.hidden)
             .accessibilityIdentifier("conversationList")
 
+            ArchiveUndoBar(app: model)
             Divider()
-            Button { model.settingsRoute = .init(categoryID: "account"); openWindow(id: "settings") } label: {
-                HStack(spacing: AppleTokens.Space.p11) {
-                    Text(String(model.accountName.prefix(1)).uppercased())
-                        .font(AppleTokens.Fonts.body.weight(.medium)).foregroundStyle(Weave.accent)
-                        .frame(width: 34, height: 34).background(Weave.accentSoft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r11))
-                    VStack(alignment: .leading, spacing: AppleTokens.Space.p3) {
-                        Text(model.accountName).font(AppleTokens.Fonts.callout.weight(.medium)).lineLimit(1)
-                        if model.verificationPending {
-                            Text("重新登录").font(AppleTokens.Fonts.caption2).foregroundStyle(Weave.muted)
-                        }
-                    }
-                    Spacer()
-                    WeftIcon("right", size: 16).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
-                }
-                .padding(AppleTokens.Space.p16).contentShape(Rectangle())
-            }
-            .buttonStyle(.plain).accessibilityLabel("账户与设置")
+            MacAccountMenu(app: model)
         }
-        .background(Weave.soft)
+        .background(Weave.soft).modifier(SessionHoverOverlay(app: model))
     }
 
     @ViewBuilder private var detail: some View {
@@ -376,6 +370,7 @@ struct PhoneWorkspace: View {
                                         .swipeActions(allowsFullSwipe: false) { Button("对话操作") { model.sessionMenuCandidate = conversation }.tint(Weave.accent) }
                                         .accessibilityIdentifier("conversationRow." + conversation.id)
                                 }
+                                ProjectMoreRows(app: model, project: project, search: search)
                             }
                         }
                     } header: { ProjectsSectionTitle(app: model) }
