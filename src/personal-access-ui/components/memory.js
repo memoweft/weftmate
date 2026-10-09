@@ -1,5 +1,6 @@
 /* Desktop memory component: paint data, bind controls, invoke shared actions. */
 globalThis.WeftUiComponents.factories.memory = (core, ui) => {
+    let resetIngestion = () => {};
     function paintMemoryAvailability(status) {
         let node = ui.byId('chat-memory-notice');
         if (!node) {
@@ -8,7 +9,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             ui.byId('connection-banner').after(node);
         }
         node.hidden = status?.state !== 'unavailable';
-        node.textContent = node.hidden ? '' : '记忆暂时不可用，这次对话不会用到或记住新内容';
+        node.textContent = node.hidden ? '' : '记忆暂时不可用，普通对话已保存，恢复后会自动补交。';
     }
     async function exportMemories(format) {
         const button = ui.byId(`memory-export-${format}`); button.disabled = true;
@@ -32,6 +33,8 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
     }
     function memoryStatus(message, error = false) {
         const node = ui.byId('memory-status');
+        const health = ui.byId('memory-health');
+        if (health) health.textContent = core.memoryHealthText(core.memory.status);
         const degraded = core.memory.status?.state === 'degraded';
         const modelNote = degraded && core.memory.status?.capabilities?.inject === false
             ? (core.memory.status?.reasonCode === 'MEMORY_MODEL_UNAVAILABLE'
@@ -169,6 +172,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             void core.recoverMemoryReceipt();
     }
     function resetMemoryControls() {
+        resetIngestion();
         ui.byId('memory-kind').value = 'cognition';
         ui.byId('memory-query').value = '';
         ui.byId('memory-list').replaceChildren();
@@ -230,7 +234,62 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         if (ui.byId('memory-detail-dialog').open)
             ui.byId('memory-detail-dialog').close();
     }
+    function mountIngestion() {
+        const section = ui.element('section', 'memory-ingestion');
+        section.setAttribute('aria-label', '记忆健康与过去的对话');
+        const health = ui.element('p', 'muted', '正在检查记忆健康…'); health.id = 'memory-health'; health.setAttribute('role', 'status');
+        const progress = ui.element('p', 'muted'); progress.setAttribute('role', 'status');
+        const explanation = ui.element('p', 'muted');
+        const actions = ui.element('div', 'form-actions');
+        const preview = ui.element('button', 'button secondary small', '整理过去的对话'); preview.type = 'button';
+        const confirm = ui.element('button', 'button primary small', '确认开始整理'); confirm.type = 'button'; confirm.hidden = true;
+        const pause = ui.element('button', 'button secondary small', '暂停整理'); pause.type = 'button'; pause.hidden = true;
+        const cancel = ui.element('button', 'button secondary small', '取消整理'); cancel.type = 'button'; cancel.hidden = true;
+        let prepared = null, identity = null, job = null, busy = false;
+        resetIngestion = () => { prepared = null; identity = null; job = null; explanation.textContent = ''; progress.textContent = ''; confirm.hidden = pause.hidden = cancel.hidden = true; health.textContent = '正在检查记忆健康…'; };
+        function paint(status) {
+            health.textContent = core.memoryHealthText(status);
+            job = status?.backfill;
+            const active = job && ['running', 'paused'].includes(job.state);
+            preview.disabled = busy || !!active;
+            pause.hidden = cancel.hidden = !active;
+            pause.textContent = job?.state === 'paused' ? '继续整理' : '暂停整理';
+            progress.textContent = job ? `${({running:'正在补整理',paused:'已暂停',cancelled:'已取消',completed:'补交完成'})[job.state] ?? '整理中'}：已提交 ${job.submittedTurns - job.skippedTurns} / ${job.totalTurns} 回合${job.skippedTurns ? `，已跳过 ${job.skippedTurns} 回合` : ''}。${active ? '暂停或取消后不再提交后续回合；已提交的回合继续整理。' : ''}` : '';
+        }
+        async function refresh() {
+            if (core.state.currentView !== 'memory' || busy) return;
+            const token = core.memoryIdentity();
+            try { const status = await core.memoryRequest('/status'); if (!core.memoryViewCurrent(token)) return;
+                core.memory.status = status; paint(status);
+            } catch { if (core.memoryViewCurrent(token)) health.textContent = '记忆状态暂时无法读取，请刷新重试。'; }
+        }
+        preview.addEventListener('click', async () => {
+            const previewIdentity = core.memoryIdentity(); identity = previewIdentity; busy = true; preview.disabled = true;
+            explanation.textContent = '正在统计可整理的过去对话…';
+            try { prepared = await core.memoryRequest('/backfill'); if (!core.memoryIdentityCurrent(previewIdentity)) return;
+                explanation.textContent = !prepared.turnCount ? '过去的对话已全部补交，没有需要重复整理的回合。' : `可整理 ${prepared.sessionCount} 个会话、${prepared.turnCount} 个回合。预计输入约 ${prepared.estimatedUsage.inputTokens.toLocaleString()}、输出约 ${prepared.estimatedUsage.outputTokens.toLocaleString()} 个词元；实际用量取决于模型与重试。跳过临时对话、已关闭记忆的对话及已遗忘内容。`;
+                confirm.hidden = !prepared.turnCount;
+            } catch { if (core.memoryIdentityCurrent(previewIdentity)) explanation.textContent = '统计失败，请检查连接后重试。'; }
+            finally { busy = false; preview.disabled = false; }
+        });
+        async function change(input) {
+            const token = core.memoryIdentity(); busy = true;
+            for (const button of [preview, confirm, pause, cancel]) button.disabled = true;
+            try { await core.memoryRequest('/backfill', { method: 'POST', body: input }); if (!core.memoryIdentityCurrent(token)) return;
+                confirm.hidden = true; explanation.textContent = ''; prepared = null;
+            } catch { if (core.memoryIdentityCurrent(token)) explanation.textContent = '操作未确认，请刷新核对进度后重试。'; }
+            finally { busy = false; for (const button of [confirm, pause, cancel]) button.disabled = false; await refresh(); }
+        }
+        confirm.addEventListener('click', () => { if (prepared && core.memoryIdentityCurrent(identity)) void change({action:'start',previewId:prepared.previewId,confirm:true}); });
+        pause.addEventListener('click', () => { if(job) void change({action:job.state==='paused'?'resume':'pause',jobId:job.id}); });
+        cancel.addEventListener('click', () => { if(job) void change({action:'cancel',jobId:job.id}); });
+        actions.append(preview, confirm, pause, cancel); section.append(health, actions, explanation, progress);
+        ui.byId('memory-search-form').before(section);
+        setInterval(() => { void refresh(); }, 3000);
+        ui.byId('memory-refresh').addEventListener('click', () => { void refresh(); });
+    }
     function mountMemory() {
+        mountIngestion();
         ui.byId('memory-delete-action').textContent = '忘掉';
         ui.byId('rail-memory').addEventListener('click', () => { void core.openMemory(); });
         ui.byId('memory-back').addEventListener('click', () => { core.closeMemoryDetail(); void core.enterAssistant(); });

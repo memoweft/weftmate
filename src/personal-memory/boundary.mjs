@@ -22,14 +22,12 @@ export function assertOwnerBoundBoundary(sessionId, boundary) {
       boundary.result_session_id !== sessionId || !EVENT.test(boundary.event_id ?? '') ||
       !/^[a-f0-9]{64}$/.test(boundary.payload_hash ?? '') ||
       !Array.isArray(boundary.source_messages) || boundary.source_messages.length < 1 ||
-      boundary.source_messages.length > 50 ||
-      Buffer.byteLength(JSON.stringify(boundary), 'utf8') > 128 * 1024) throw fail();
-  let userCount = 0;
+      Buffer.byteLength(JSON.stringify(boundary), 'utf8') > 4 * 1024 * 1024) throw fail();
+  const userCount = boundary.source_messages.filter(message => message?.role === 'user').length;
   for (const [index, message] of boundary.source_messages.entries()) {
     if (!message || typeof message !== 'object' || Array.isArray(message) ||
         !['user', 'assistant'].includes(message.role) ||
-        (message.role === 'user' && ++userCount > 25) ||
-        typeof message.content !== 'string' || !message.content.trim() || message.content.length > 16_384 ||
+        typeof message.content !== 'string' || !message.content.trim() ||
         message.source_ref !== `source:${index}` ||
         (message.message_id !== undefined && (typeof message.message_id !== 'string' || message.message_id.length > 160)) ||
         (message.timestamp !== undefined && (!Number.isSafeInteger(message.timestamp) || message.timestamp < 0)) ||

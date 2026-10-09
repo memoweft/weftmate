@@ -145,7 +145,7 @@ export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagn
     if (!requestAllowed(req)) return writeJson(res, 403, { error: { code: 'origin-forbidden', message: 'Gateway request failed' } })
     const requestUrl = new URL(req.url ?? '/', 'http://gateway')
     const pathname = decodeURIComponent(requestUrl.pathname)
-      const match = /^\/weftmate\/api\/v1\/sessions\/([^/]+)(?:\/(resume|messages|cancel|events|models|approval|history|source|stop-state|rename|fork|memory-cleanup|chat-handoff))?$/.exec(pathname)
+      const match = /^\/weftmate\/api\/v1\/sessions\/([^/]+)(?:\/(resume|messages|cancel|events|models|approval|history|source|stop-state|rename|fork|memory-cleanup|memory-boundaries|chat-handoff))?$/.exec(pathname)
     const attachmentMatch = /^\/weftmate\/api\/v1\/sessions\/([^/]+)\/attachments\/(sha256:[a-f0-9]{64})$/.exec(pathname)
     const questionMatch = /^\/weftmate\/api\/v1\/sessions\/([^/]+)\/questions(?:\/([0-9a-f-]{36}))?$/i.exec(pathname)
     const workspaceMatch = /^\/weftmate\/api\/v1\/workspaces\/([^/]+)$/.exec(pathname)
@@ -249,6 +249,7 @@ export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagn
         records.set(value.sessionId, { events: [], listeners: new Set(), state: undefined, lastSeq: -1, nextId: 1 })
         return writeJson(res, 201, value)
       }
+      if (action === 'memory-boundaries' && req.method === 'GET') return writeJson(res, 200, await sessions.memoryBoundaries(sessionId, Number(requestUrl.searchParams.get('afterSeq') ?? -1)))
       if (action === 'memory-cleanup' && req.method === 'POST') {
         const body = await readJson(req, 1024 * 1024)
         if (typeof body.deleteConversationSnippets !== 'boolean' || !Array.isArray(body.sourceTexts) ||
