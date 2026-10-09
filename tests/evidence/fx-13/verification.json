@@ -22,5 +22,14 @@
       "Fixture resolves its existing project-context dependency by file URL.",
       "Bash fixture uses forward slash paths; all original collision assertions remain."
     ]
+  },
+  "mergedMainVerification": {
+    "commit": "47694578",
+    "main": "122fe00e",
+    "targetedTests": 65,
+    "passed": 65,
+    "failed": 0,
+    "durationMs": 3317.6938,
+    "typecheckExitCode": 0
   }
 }

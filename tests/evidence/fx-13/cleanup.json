@@ -14,7 +14,9 @@
   ],
   "forcedTerminationCount": 11,
   "reason": "Discarded first pressure attempt after obsolete login/reload flow; no valid latency cycles.",
-  "remainingAuditPending": true,
+  "remainingAuditPending": false,
   "simulatorsStarted": false,
-  "lanUsed": false
+  "lanUsed": false,
+  "finalAuditedAt": "2026-10-10T01:45:59.6697800+08:00",
+  "finalRemainingCount": 0
 }

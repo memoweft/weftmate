@@ -1,0 +1,107 @@
+{
+  "scope": "All direct MiMo upstream chat completion requests, including preparation failures (zero requests), both pre-merge and final acceptance, and background work. Internal proxy trace duplicates excluded.",
+  "knownUsage": {
+    "requests": 64,
+    "withUsage": 64,
+    "missingUsage": 0,
+    "promptTokens": 591278,
+    "completionTokens": 16695,
+    "cachedTokens": 426752
+  },
+  "notAnAccountBill": true,
+  "batches": [
+    {
+      "batch": "mimo-setup-failure",
+      "runs": [
+        {
+          "iteration": 1,
+          "status": "failed",
+          "durationMs": 0,
+          "unexpectedApprovals": 0
+        },
+        {
+          "iteration": 2,
+          "status": "failed",
+          "durationMs": 0,
+          "unexpectedApprovals": 0
+        },
+        {
+          "iteration": 3,
+          "status": "failed",
+          "durationMs": 0,
+          "unexpectedApprovals": 0
+        }
+      ],
+      "usage": {
+        "requests": 0,
+        "withUsage": 0,
+        "missingUsage": 0,
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "cachedTokens": 0
+      }
+    },
+    {
+      "batch": "pre-merge-mimo",
+      "runs": [
+        {
+          "iteration": 1,
+          "status": "passed",
+          "durationMs": 55685,
+          "unexpectedApprovals": 0
+        },
+        {
+          "iteration": 2,
+          "status": "passed",
+          "durationMs": 67143,
+          "unexpectedApprovals": 0
+        },
+        {
+          "iteration": 3,
+          "status": "passed",
+          "durationMs": 64174,
+          "unexpectedApprovals": 0
+        }
+      ],
+      "usage": {
+        "requests": 31,
+        "withUsage": 31,
+        "missingUsage": 0,
+        "promptTokens": 342614,
+        "completionTokens": 6725,
+        "cachedTokens": 255616
+      }
+    },
+    {
+      "batch": "mimo",
+      "runs": [
+        {
+          "iteration": 1,
+          "status": "passed",
+          "durationMs": 74731,
+          "unexpectedApprovals": 0
+        },
+        {
+          "iteration": 2,
+          "status": "passed",
+          "durationMs": 108168,
+          "unexpectedApprovals": 0
+        },
+        {
+          "iteration": 3,
+          "status": "passed",
+          "durationMs": 45068,
+          "unexpectedApprovals": 0
+        }
+      ],
+      "usage": {
+        "requests": 33,
+        "withUsage": 33,
+        "missingUsage": 0,
+        "promptTokens": 248664,
+        "completionTokens": 9970,
+        "cachedTokens": 171136
+      }
+    }
+  ]
+}
