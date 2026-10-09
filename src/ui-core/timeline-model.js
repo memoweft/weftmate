@@ -1,5 +1,46 @@
 /* Pure timeline projection: events and step updates never depend on a renderer. */
 (() => {
+    const toolLabels = {
+        open_settings:'系统设置', open_app:'打开应用', list_launchable_apps:'应用列表',
+        read:'读取文件', read_file:'读取文件', pwsh:'运行命令', powershell:'运行命令', shell:'运行命令', bash:'运行命令', exec_command:'运行命令', run_command:'运行命令',
+        search:'搜索内容', grep:'搜索内容', glob:'查找文件', write:'写入文件', write_file:'写入文件', edit:'修改文件', apply_patch:'修改文件',
+        ask_user_question:'请求补充信息', load_tools:'准备可用工具', web_fetch:'读取网页', web_search:'搜索网页',
+        create_goal:'建立任务目标', get_goal:'查看任务目标', update_goal:'更新任务目标', todo:'整理执行计划', todo_write:'整理执行计划',
+        run_code:'运行脚本', weftmod:'操作电脑应用', weftmod_script:'运行脚本', job_output:'读取后台输出', job_list:'查看后台任务', job_kill:'停止后台任务',
+        spawn_agent:'启动子任务', subagent:'处理子任务', enter_plan_mode:'开始制定计划', exit_plan_mode:'提交执行计划',
+        memory:'查询记忆', recall:'查询记忆', remember:'记录记忆', delete:'删除文件', remove:'删除文件',
+    };
+    const fieldLabels = { arguments:'参数', parameters:'参数', command:'命令', cmd:'命令', script:'脚本', cwd:'执行目录', workdir:'执行目录', workingDirectory:'执行目录',
+        path:'路径', paths:'路径', files:'文件', file_path:'文件路径', filePath:'文件路径', target:'目标', query:'查询内容', pattern:'匹配内容', glob:'文件范围',
+        url:'网页地址', urls:'网页地址', output:'输出', content:'内容', text:'正文', type:'类型', tool:'操作', toolName:'操作', name:'名称',
+        description:'说明', message:'消息', prompt:'任务说明', task:'任务', action:'操作', questions:'问题', question:'问题', header:'标题', detail:'说明',
+        options:'选项', label:'名称', multiSelect:'可多选', id:'编号', selected:'已选', custom:'补充回答', answers:'回答', approval:'审批',
+        status:'状态', state:'状态', reason:'原因', riskCategories:'风险类别', rootCallId:'关联操作', callId:'操作编号', approvalId:'审批编号',
+        fileName:'文件名', size:'大小', contentType:'文件类型', artifactId:'成果编号', timeout:'等待时间', timeout_ms:'等待时间（毫秒）',
+        exitCode:'退出状态', exit_code:'退出状态', success:'成功', error:'错误', errorCode:'错误类别', code:'类别' };
+    function toolLabel(name) {
+        name = String(name || '');
+        return toolLabels[name] || toolActivity(name)?.summary || (/search|grep|glob/.test(name) ? '搜索内容' : /read/.test(name) ? '读取文件' : /write|save/.test(name) ? '写入文件' : /edit|patch/.test(name) ? '修改文件' : /web|browser|fetch/.test(name) ? '访问网页' : '扩展服务');
+    }
+    function interfaceText(value) {
+        if (value == null) return '';
+        return String(value).replace(/\b(?:ask_user_question|load_tools|read_file|write_file|exec_command|run_command|pwsh|powershell|shell|bash|read|write|search|grep|glob|weftmod_script|weftmod|job_output|job_list|job_kill|spawn_agent)\b/gi, name => toolLabel(name.toLowerCase()))
+            .replace(/Weave\s*组件/gi, '界面扩展').replace(/\b(?:undefined|null)\b/g, '未提供');
+    }
+    function readableParameters(value) {
+        if (Array.isArray(value)) return value.map(readableParameters);
+        if (!value || typeof value !== 'object') return value;
+        return Object.fromEntries(Object.entries(value).map(([key, item], index) => [fieldLabels[key] || (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key) ? `附加信息 ${index + 1}` : key),
+            ['tool','toolName'].includes(key) ? toolLabel(item) : readableParameters(item)]));
+    }
+    function dateText(value, { year = false, timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone } = {}) {
+        const date = new Date(value);
+        if (value == null || !Number.isFinite(date.getTime())) return '未记录';
+        const parts = Object.fromEntries(new Intl.DateTimeFormat('zh-CN', { timeZone, year:'numeric',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23' }).formatToParts(date).map(part => [part.type, part.value]));
+        return `${year ? `${parts.year} 年 ` : ''}${parts.month} 月 ${parts.day} 日 ${parts.hour}:${parts.minute}`;
+    }
+    function monthText(value) { const match = /^(\d{4})-(\d{2})$/.exec(value || ''); return match ? `${match[1]} 年 ${Number(match[2])} 月` : '未记录'; }
+    function dayText(value) { const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || ''); return match ? `${Number(match[2])} 月 ${Number(match[3])} 日` : '未记录'; }
     function toolArguments(value) {
         try {
             const parsed = typeof value === 'string' ? JSON.parse(value) : value;
@@ -48,7 +89,7 @@
     }
     function sourcePresentation(tool, text) {
         const args = toolArguments(text);
-        return { summary: toolSummary(tool, args), raw: typeof text === 'string' ? text : JSON.stringify(text, null, 2),
+        return { summary: toolSummary(tool, args), raw: executionDetailText(typeof text === 'string' ? text : JSON.stringify(text, null, 2)),
             hasArguments: Object.keys(args).length > 0 };
     }
 
@@ -94,7 +135,7 @@
             const collect = value => typeof value === 'string' ? [value] : Array.isArray(value) ? value.flatMap(collect)
                 : value?.type === 'text' ? [value.text || ''] : value?.content ? collect(value.content) : [];
             const output = collect(data.output).filter(Boolean).join('\n');
-            return Object.keys(args).length || output ? `${Object.keys(args).length ? `参数\n${JSON.stringify(args, null, 2)}` : ''}${output ? `\n\n输出\n${output}` : ''}`.trim() : text;
+            return Object.keys(args).length || output ? `${Object.keys(args).length ? `参数\n${JSON.stringify(readableParameters(args), null, 2)}` : ''}${output ? `\n\n输出\n${output}` : ''}`.trim() : text;
         } catch { return text; }
     }
     function projectTimeline(events, approvals = []) {
@@ -174,6 +215,6 @@
         }
         return references;
     }
-    Object.assign(globalThis.WeftUiCore, { projectTimeline, executionState, progressText, approvalProgress, executionDetailText, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, sourcePresentation });
-    globalThis.WeftUiCore.factories.timeline = () => ({ projectTimeline, executionState, progressText, approvalProgress, executionDetailText, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, sourcePresentation });
+    Object.assign(globalThis.WeftUiCore, { projectTimeline, executionState, progressText, approvalProgress, executionDetailText, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, toolLabel, interfaceText, readableParameters, dateText, monthText, dayText, sourcePresentation });
+    globalThis.WeftUiCore.factories.timeline = () => ({ projectTimeline, executionState, progressText, approvalProgress, executionDetailText, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, toolLabel, interfaceText, readableParameters, dateText, monthText, dayText, sourcePresentation });
 })();

@@ -173,9 +173,12 @@
     window.addEventListener('resize', sync); sync();
   }
   function bindSettings(dialog) {
-    if (matchMedia('(pointer: coarse)').matches && !globalThis.weftmateDesktop) return;
     const bind = () => dialog.querySelectorAll('select').forEach(bindSettingsSelect);
     bind(); new MutationObserver(bind).observe(dialog, { childList: true, subtree: true });
   }
+  if (typeof MutationObserver === 'function') document.addEventListener('DOMContentLoaded', () => {
+    const bind = () => document.querySelectorAll('select').forEach(bindSettingsSelect);
+    bind(); new MutationObserver(records => { if (records.some(record => [...record.addedNodes].some(node => node.matches?.('select') || node.querySelector?.('select')))) bind(); }).observe(document.body, { childList: true, subtree: true });
+  });
   globalThis.WeftPopover = { position, bindSelect, bindSettings, bindSettingsSelect };
 })();

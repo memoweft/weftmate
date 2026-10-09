@@ -40,20 +40,21 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
     replaceChildren(...children){this.children=[];this.append(...children)}
     remove(){if(this.parent)this.parent.children=this.parent.children.filter(child=>child!==this)}
     setAttribute(key,value){this.attrs[key]=value}
+    getAttribute(key){return this.attrs[key]??null}
     getBoundingClientRect(){return {top:500,height:132}}
     focus(){document.activeElement=this}
     addEventListener(event,handler){this.listeners.set(event,[...(this.listeners.get(event)||[]),handler])}
     fire(event){for(const handler of this.listeners.get(event)||[])handler({target:this})}
     querySelector(selector){if(selector===this.tagName||selector.startsWith('.')&&this.className?.split(' ').includes(selector.slice(1)))return this;
       for(const child of this.children){const found=child.querySelector?.(selector);if(found)return found}return null}
-    querySelectorAll(){return []}
+    querySelectorAll(selector){const all=this.children.flatMap(child=>[child,...(child.querySelectorAll?.(selector)||[])]);return all.filter(node=>selector==='[data-question-control]'?node.dataset?.questionControl:selector===node.tagName||selector.startsWith('.')&&node.className?.split(' ').includes(selector.slice(1)))}
   }
   const frames=[];
   const document={activeElement:null,documentElement:new Node('html'),getElementById:id=>{
       if(id==='live-progress')return nodes.get('chat-content')?.children.find(child=>child.id==='live-progress')||null;
       if(!htmlIds.has(id))return null;
       if(!nodes.has(id)){const node=new Node(id);
-        if(['toast','attachment-drafts','attachment-popover','model-popover','image-preview','resource-page'].includes(id))node.hidden=true;nodes.set(id,node)}return nodes.get(id)},
+        if(['approval-bar','question-bar','toast','attachment-drafts','attachment-popover','model-popover','image-preview','resource-page'].includes(id))node.hidden=true;nodes.set(id,node)}return nodes.get(id)},
     createElement:tagName=>{const node=new Node();node.tagName=tagName;return node},createTextNode:value=>new TextNode(value),
     addEventListener:(event,handler)=>{if(event==='DOMContentLoaded')domReady=handler},
     querySelectorAll:()=>[],querySelector:()=>new Node()};
@@ -1025,7 +1026,9 @@ function syntheticQuestionBatch(overrides={}){return {questionRpcId:'52345678-12
 async function readQuestions(h,rows,context='approvalContext()'){const reading=h.run(`refreshToolQuestions(${context})`);
   const request=h.bridge.findLastIndex(item=>item.method==='shared.questions.list');
   h.reply(request,{questions:rows,nextBefore:null,hasMore:false});await reading;return request}
-function questionCard(h){return h.node('chat-content').children.find(node=>node.dataset.questionRpcId)}
+function questionCard(h){const bar=h.node('question-bar');return !bar.hidden&&bar.children.length?bar:h.node('chat-content').children.find(node=>node.dataset.questionRpcId)}
+function questionControl(h,role,name){const walk=node=>[node,...node.children.flatMap(walk)];const matches=walk(h.node('question-bar')).filter(node=>(node.attrs?.role||(node.tagName==='button'?'button':node.tagName==='input'?'textbox':''))===role&&(node.attrs?.['aria-label']||node.textContent)===name);assert.equal(matches.length,1,`one ${role} named ${name}`);return matches[0]}
+
 function answeredQuestion(row,requestId,answer){return {...row,status:'answered',answerRequestId:requestId,answer,
   answeredAt:'2026-10-06T14:01:00.000Z'}}
 
@@ -1044,7 +1047,7 @@ test('dedicated approvals and questions stay actionable when the general activit
   assert.ok(details.length>0,'exact source is checked through its dedicated task endpoint');
   for(const {index} of details)h.reply(index,fixture.task);await h.flush();
   assert.match(allText(approvalCard(h)),/批准.*拒绝/);
-  assert.match(allText(questionCard(h)),/确认计划.*提交回答/);
+  assert.equal(h.node('question-bar').hidden,true);assert.match(allText(h.node('question-bar')),/是否按这份计划继续.*下一题/);
   assert.equal(h.run("conversationTasks.entries.get('root-inline').notice"),'');
   const deciding=h.run("decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],'allowed-once')");
   const request=h.bridge.findLastIndex(item=>item.method==='shared.approvals.decide');
@@ -1055,32 +1058,21 @@ test('dedicated approvals and questions stay actionable when the general activit
   assert.match(approvalRecordText(h),/已允许 · 运行命令/);assert.equal(h.node('approval-bar').hidden,true);
 });
 
-test('task15-question-client natural single multiple and free answers preserve original position and plan intent without granting a tool permission',async()=>{
-  const h=harness();prepareApprovalChat(h);const row=syntheticQuestionBatch();
-  await readQuestions(h,[row,syntheticQuestionBatch({questionRpcId:'62345678-1234-4234-8234-123456789abc',sourceReceiptId:'rpc:other.2',
-    questions:[{id:'foreign',question:'错误来源不应出现'}]})]);
-  const card=questionCard(h),form=card.querySelector('.question-form'),fields=form.children.filter(node=>node.tagName==='fieldset');
-  assert.equal(h.node('chat-content').children.filter(node=>node.dataset.questionRpcId).length,1);
-  assert.match(allText(card),/确认计划.*是否按这份计划继续.*先整理资料，再核对文件内容.*同意.*按上面的计划继续/);
-  assert.doesNotMatch(allText(h.node('chat-content')),/错误来源|永久允许|允许一次/);assert.equal(fields.length,3);
-  const selected=fields[0].querySelector('input');assert.equal(selected.type,'radio');selected.checked=true;selected.fire('change');
-  const multi=fields[1].children.filter(node=>node.className==='question-option').map(node=>node.querySelector('input'));
-  assert.equal(multi.every(input=>input.type==='checkbox'),true);for(const input of multi){input.checked=true;input.fire('change')}
-  const mixed=fields[1].querySelector('.question-custom');mixed.value='保留一份简短目录';mixed.fire('input');
-  const custom=fields[2].querySelector('.question-custom');custom.value='按这段原话填写';custom.fire('input');
-  h.node('draft').value='聊天草稿仍在';h.node('draft').focus();h.run('state.scrollPinned=false');h.node('chat-scroll').scrollTop=163;
-  form.fire('submit');const request=h.bridge.findLastIndex(item=>item.method==='shared.questions.answer'),params=h.bridge[request].params;
-  assert.deepEqual(Object.keys(params).sort(),['answer','questionRpcId','requestId','sessionId']);assert.equal(params.questionRpcId,row.questionRpcId);
-  assert.deepEqual(params.answer,{answers:[{id:'plan',selected:['同意']},{id:'repeated-id',selected:['文字记录','源文件'],custom:'保留一份简短目录'},
-    {id:'repeated-id',selected:[],custom:'按这段原话填写'}]});
-  assert.equal(h.bridge.some(item=>item.method==='shared.approvals.decide'),false,'plan-review is an information answer');
-  const answered=answeredQuestion(row,params.requestId,params.answer);h.reply(request,{question:answered,requestId:params.requestId});await h.flush();
-  h.reply(h.bridge.findLastIndex(item=>item.method==='shared.questions.list'),{questions:[answered],nextBefore:null,hasMore:false});await h.flush();
-  assert.match(allText(questionCard(h)),/回答已登记，等待执行端确认/);assert.doesNotMatch(allText(questionCard(h)),/已确认接收/);
-  await readQuestions(h,[{...answered,status:'resolved',outcome:'answered',resolvedAt:'2026-10-06T14:02:00.000Z',reasonCode:'QUESTION_NOT_PENDING'}]);
-  assert.match(allText(questionCard(h)),/这份登记回答是否被接收尚未确认/);
+test('task15-question-client sequential single, multiple and free answers preserve exact labels without granting a tool permission',async()=>{
+  const h=harness();prepareApprovalChat(h);const row=syntheticQuestionBatch();await readQuestions(h,[row,syntheticQuestionBatch({questionRpcId:'62345678-1234-4234-8234-123456789abc',sourceReceiptId:'rpc:other.2',questions:[{id:'foreign',question:'错误来源不应出现'}]})]);
+  assert.match(allText(questionCard(h)),/还有 2 个问题/);assert.doesNotMatch(allText(h.node('question-bar')),/错误来源|永久允许|允许一次/);assert.equal(h.node('chat-content').children.filter(node=>node.dataset.questionRpcId).length,0);
+  questionControl(h,'radio','同意').fire('click');questionControl(h,'button','下一题').fire('click');
+  for(const name of ['文字记录','源文件'])questionControl(h,'button',name).fire('click');
+  const mixed=questionControl(h,'textbox','其他回答');mixed.value='保留一份简短目录';mixed.fire('input');questionControl(h,'button','下一题').fire('click');
+  const free=questionControl(h,'textbox','你的回答');free.value='按这段原话填写';free.fire('input');
+  h.node('draft').value='聊天草稿仍在';h.run('state.scrollPinned=false');h.node('chat-scroll').scrollTop=163;questionControl(h,'button','提交回答').fire('click');
+  const request=h.bridge.findLastIndex(item=>item.method==='shared.questions.answer'),params=h.bridge[request].params;
+  assert.deepEqual(Object.keys(params).sort(),['answer','questionRpcId','requestId','sessionId']);assert.deepEqual(params.answer,{answers:[{id:'plan',selected:['同意']},{id:'repeated-id',selected:['文字记录','源文件'],custom:'保留一份简短目录'},{id:'repeated-id',selected:[],custom:'按这段原话填写'}]});
+  assert.equal(h.bridge.some(item=>item.method==='shared.approvals.decide'),false);
+  const answered=answeredQuestion(row,params.requestId,params.answer);h.reply(request,{question:answered,requestId:params.requestId});await h.flush();h.reply(h.bridge.findLastIndex(item=>item.method==='shared.questions.list'),{questions:[answered],nextBefore:null,hasMore:false});await h.flush();
+  assert.equal(h.node('question-bar').hidden,true);assert.match(allText(questionCard(h)),/已回答：同意；文字记录、源文件、保留一份简短目录；按这段原话填写/);
   await readQuestions(h,[{...answered,status:'resolved',outcome:'answered',resolvedAt:'2026-10-06T14:02:00.000Z',answerAcceptedAt:'2026-10-06T14:02:00.000Z'}]);
-  assert.match(allText(questionCard(h)),/执行端已确认接收这份回答/);assert.equal(h.node('draft').value,'聊天草稿仍在');assert.equal(h.node('chat-scroll').scrollTop,163);
+  assert.equal(h.node('draft').value,'聊天草稿仍在');assert.equal(h.node('chat-scroll').scrollTop,163);
 });
 
 test('task15-question-client original repeated or empty IDs and empty selections remain legal while answer shape follows each original question',()=>{
@@ -1105,9 +1097,9 @@ test('task15-question-client an uncertain source or network result keeps the sam
   h.reply(request,null,'TOOL_SOURCE_UNAVAILABLE');await h.flush();
   h.reply(h.bridge.findLastIndex(item=>item.method==='shared.questions.list'),{questions:[row],nextBefore:null,hasMore:false});await deciding;
   assert.equal(h.run("toolQuestions.sessions.get('s1').rows.values().next().value.status"),'pending');
-  assert.match(allText(questionCard(h)),/上次回答尚未登记.*同一份原回答.*重试原回答/);
+  assert.match(allText(questionCard(h)),/上次回答尚未登记.*重试原回答/);assert.equal(questionControl(h,'textbox','你的回答').value,'同一份原回答');
   const restored=harness({storage:Object.fromEntries(h.storage)});prepareApprovalChat(restored);await readQuestions(restored,[row]);
-  assert.match(allText(questionCard(restored)),/同一份原回答.*重试原回答/);
+  assert.match(allText(questionCard(restored)),/重试原回答/);assert.equal(questionControl(restored,'textbox','你的回答').value,'同一份原回答');
   const retry=restored.run(`answerToolQuestion([...toolQuestions.sessions.get('s1').rows.values()][0],${JSON.stringify(answer)})`);
   restored.reply(restored.bridge.findLastIndex(item=>item.method==='shared.questions.list'),{questions:[row],nextBefore:null,hasMore:false});await restored.flush();
   const repeated=restored.bridge.findLastIndex(item=>item.method==='shared.questions.answer');assert.equal(restored.bridge[repeated].params.requestId,requestId);
@@ -1124,10 +1116,10 @@ test('task15-question-client a replayed answered snapshot cannot downgrade nativ
   const answered=answeredQuestion(row,requestId,answer),final={...answered,status:'resolved',outcome:'answered',
     resolvedAt:'2026-10-06T14:02:00.000Z',answerAcceptedAt:'2026-10-06T14:02:00.000Z'};
   await readQuestions(h,[final]);h.reply(request,{question:answered,requestId});await h.flush();
-  assert.match(allText(questionCard(h)),/已确认接收这份回答/);
+  assert.match(allText(questionCard(h)),/已回答：未作选择/);
   h.reply(h.bridge.findLastIndex(item=>item.method==='shared.questions.list'),{questions:[final],nextBefore:null,hasMore:false});await deciding;
   const cancelled=harness();prepareApprovalChat(cancelled);await readQuestions(cancelled,[{...row,status:'resolved',outcome:'cancelled',resolvedAt:'2026-10-06T14:02:00.000Z'}]);
-  assert.match(allText(questionCard(cancelled)),/任务已停止，这个问题不再等待回答/);assert.equal(questionCard(cancelled).querySelector('.question-actions'),null);
+  assert.match(allText(questionCard(cancelled)),/提问已取消/);assert.equal(questionCard(cancelled).querySelector('.question-actions'),null);
   assert.equal(cancelled.bridge.some(item=>item.method==='shared.questions.answer'||item.method==='shared.approvals.decide'),false);
 });
 
@@ -1140,14 +1132,14 @@ test('task15-question-client pagination uses the batch UUID and reads an older p
   request=h.bridge.findLastIndex(item=>item.method==='shared.questions.list');assert.deepEqual(h.bridge[request].params,{sessionId:'s1',before:row.questionRpcId});
   h.reply(request,{questions:[older],nextBefore:null,hasMore:false});await h.flush();
   request=h.bridge.findLastIndex(item=>item.method==='shared.tasks.detail');h.reply(request,fixture.task);await reading;
-  assert.equal(h.node('chat-content').children.filter(node=>node.dataset.questionRpcId).length,2);
+  assert.equal(h.run("toolQuestions.sessions.get('s1').rows.size"),2);assert.match(allText(questionCard(h)),/还有 1 个问题/);assert.equal(h.node('chat-content').children.filter(node=>node.dataset.questionRpcId).length,0);
 });
 
 test('task15-question-client closing a view preserves question drafts and late account replies cannot display another account answer',async()=>{
   const h=harness();prepareApprovalChat(h);const row=syntheticQuestionBatch({questions:[{id:'q',question:'说明'}]});await readQuestions(h,[row]);
   const custom=questionCard(h).querySelector('.question-custom');custom.value='返回以后继续填写';custom.fire('input');
   custom.focus();await readQuestions(h,[row,syntheticQuestionBatch({questionRpcId:'82345678-1234-4234-8234-123456789abc',questions:[{id:'q',question:'另一批问题'}]})]);
-  assert.equal(h.document.activeElement,custom,'a new batch cannot steal focus from the first batch answer');
+  assert.equal(h.document.activeElement,questionControl(h,'textbox','你的回答'),'a new batch retains focus on the answer input');
   h.run("page('settings');page('chat')");assert.equal(questionCard(h).querySelector('.question-custom').value,'返回以后继续填写');
   assert.equal(h.bridge.some(item=>['shared.stop','shared.tasks.stop','shared.questions.answer'].includes(item.method)),false);
   const checking=h.run('refreshToolQuestions()'),request=h.bridge.findLastIndex(item=>item.method==='shared.questions.list');

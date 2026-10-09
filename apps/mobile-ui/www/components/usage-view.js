@@ -10,21 +10,26 @@ globalThis.WeftUsageView = function (core, target, { sessionId = '', current = (
             const value = await core.loadUsage({ sessionId, month });
             if (!value || !current()) return;
             const { summary, settings } = value;
-            let timeZoneLabel = summary.timeZone;
+            let timeZoneLabel = '本机时区';
             try {
                 const name = new Intl.DateTimeFormat('zh-CN', { timeZone: summary.timeZone, timeZoneName: 'longGeneric' })
                     .formatToParts(new Date(`${summary.month}-15T12:00:00Z`)).find(part => part.type === 'timeZoneName')?.value;
-                if (name && name !== summary.timeZone) timeZoneLabel = `${name}（${summary.timeZone}）`;
+                if (name && name !== summary.timeZone) timeZoneLabel = name;
             } catch { /* Fall back to the API's IANA name when localization is unavailable. */ }
             // day is already a calendar date in summary.timeZone, not a UTC timestamp.
-            const dateLabel = day => `${day.day}（${timeZoneLabel}）`;
+            const dateLabel = day => core.dayText(day.day);
             target.replaceChildren();
             const head = node('div', '', 'usage-toolbar');
             head.append(node('h2', sessionId ? '本对话用量' : '用量与费用'));
-            const picker = node('input', ''); picker.type = 'month'; picker.value = summary.month; picker.setAttribute('aria-label', '统计月份');
+            const picker = node('select', '');
+            const selected = new Date(`${summary.month}-01T12:00:00Z`), now = new Date();
+            const start = Math.max(selected.getUTCFullYear(), now.getFullYear());
+            for (let year = start; year >= Math.min(selected.getUTCFullYear(), now.getFullYear() - 5); year--) for (let m = 12; m >= 1; m--) { const value = `${year}-${String(m).padStart(2, '0')}`; picker.append(new Option(core.monthText(value), value)); }
+            picker.value = summary.month; picker.setAttribute('aria-label', '统计月份');
             picker.addEventListener('change', () => { month = picker.value; void render(); });
             const refresh = node('button', '刷新用量', 'button secondary'); refresh.type = 'button'; refresh.addEventListener('click', () => { void render(); });
-            head.append(picker, refresh); target.append(head);
+            const shift = (label, delta) => { const button = node('button',label,'button secondary'); button.type='button'; button.addEventListener('click',()=>{const date=new Date(`${summary.month}-01T12:00:00Z`);date.setUTCFullYear(date.getUTCFullYear()+delta);month=`${date.getUTCFullYear()}-${String(date.getUTCMonth()+1).padStart(2,'0')}`;void render();});return button; };
+            head.append(picker, shift('上一年', -1), shift('下一年', 1), refresh); target.append(head); globalThis.WeftSettingsControls?.select(picker);
             target.append(node('p', `${month ? '所选月份' : '本月合计'} ${core.usageMoney(summary.total.cost)} · ${summary.total.requests} 次请求`, 'usage-total'));
             target.append(node('p', `输入 ${summary.total.inputTokens.toLocaleString()}（含缓存 ${summary.total.cachedInputTokens.toLocaleString()}） · 输出 ${summary.total.outputTokens.toLocaleString()}`, 'usage-tokens'));
             target.append(node('p', `按 ${timeZoneLabel} 统计，金额按请求时单价计算，供参考，以服务商账单为准。`, 'muted'));
@@ -32,7 +37,7 @@ globalThis.WeftUsageView = function (core, target, { sessionId = '', current = (
             const notice = node('p', value.notice || (summary.budget.effectiveLimit === null ? '未设置月度上限。' : `本月有效上限 ${core.usageMoney(summary.budget.effectiveLimit)}。`), 'usage-notice');
             notice.setAttribute('role', summary.budget.state === 'blocked' ? 'alert' : 'status'); target.append(notice);
             target.append(node('h3', '每日费用'));
-            const chart = node('div', '', 'usage-chart'); chart.setAttribute('role', 'img'); chart.setAttribute('aria-label', `${summary.month} 每日费用柱状图（${timeZoneLabel}）`);
+            const chart = node('div', '', 'usage-chart'); chart.setAttribute('role', 'img'); chart.setAttribute('aria-label', `${core.monthText(summary.month)} 每日费用柱状图（${timeZoneLabel}）`);
             const max = Math.max(...summary.days.map(day => day.cost), 0.000000001);
             for (const day of summary.days) {
                 const column = node('div', '', 'usage-column'); column.title = `${dateLabel(day)} ${core.usageMoney(day.cost)} · ${day.requests} 次 · 未知 ${day.unknownRequests}`;
@@ -69,7 +74,7 @@ globalThis.WeftUsageView = function (core, target, { sessionId = '', current = (
                     try { await core.saveUsageSettings({ monthlyLimit: permanent.input.value === '' ? null : Number(permanent.input.value), temporaryLimit: temporary.input.value === '' ? null : Number(temporary.input.value) }); month = ''; await render(); }
                     catch (error) { showError(error); } finally { save.disabled = false; }
                 }); target.append(limits);
-                const pricing = node('details', '', 'usage-pricing'); pricing.append(node('summary', '模型单价（元 / 百万 token）'));
+                const pricing = node('details', '', 'usage-pricing'); pricing.append(node('summary', '模型单价（元 / 百万词元）'));
                 pricing.append(node('p', 'MiMo Flash 预置官方价格。其他云模型请填写单价；未设置时费用为未知。修改只影响后续请求。', 'muted'));
                 for (const model of settings.models) {
                     const form = node('form', '', 'usage-form'); form.append(node('h4', `${model.name}${model.local ? ' · 本地' : ''}`));
@@ -87,7 +92,7 @@ globalThis.WeftUsageView = function (core, target, { sessionId = '', current = (
             }
         } catch (error) { if (current()) { target.replaceChildren(status); showError(error); const retry = node('button', '重试读取用量', 'button secondary'); retry.addEventListener('click', () => { void render(); }); target.append(retry); } }
     }
-    function showError(error) { status.textContent = error instanceof Error ? error.message : core.failureMessage(error); status.setAttribute('role', 'alert'); if (!status.isConnected) target.append(status); }
+    function showError(error) { status.textContent = error instanceof Error && /[\u4e00-\u9fff]/.test(error.message) ? core.interfaceText(error.message) : core.failureMessage(error); status.setAttribute('role', 'alert'); if (!status.isConnected) target.append(status); }
     void render();
 };
 if (globalThis.WeftUiComponents) globalThis.WeftUiComponents.factories.usage = (core, ui) => {
