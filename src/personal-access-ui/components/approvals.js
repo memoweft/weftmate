@@ -39,137 +39,61 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
         return mode !== 'allow-all' || window.confirm('全部允许会直接执行删除或覆盖文件、修改系统、安装软件、对外发送或发布和付款等操作，可能无法撤销。确定启用？');
     }
     function renderConversationApprovals() {
-        const context = core.approvalContext(), list = ui.byId('transcript');
-        if (!core.approvalContextCurrent(context))
-            return;
-        const scroll = ui.byId('chat-scroll'), top = scroll.scrollTop;
-        const reading = [...list.children].find((node) => node.getBoundingClientRect().bottom > scroll.getBoundingClientRect().top);
-        const readingTop = reading?.getBoundingClientRect().top;
-        const visible = new Set();
-        for (const entry of core.conversationApprovals.entries.values()) {
-            const row = entry.row;
-            if (row.sessionId !== context.sessionId || !core.approvalSource(row))
-                continue;
-            const timelineAnchor = [...list.children].find(node => node.dataset?.timelineApproval === row.approvalId);
-            const anchor = timelineAnchor || [...list.children].find((node) => node.dataset?.receiptId === row.sourceReceiptId);
-            if (!anchor)
-                continue;
-            visible.add(row.approvalId);
-            const marker = core.approvalMarker(context, row), operation = core.conversationApprovals.operations.get(row.approvalId);
-            const sourceNotice = core.conversationTasks.entries.get(row.taskId)?.notice || '';
-            const signature = JSON.stringify([row, entry.notice, sourceNotice, entry.authoritative, marker, operation?.requestId]);
-            const scope = JSON.stringify(context);
-            let card = [...list.children].find((node) => node.dataset?.conversationApproval === row.approvalId);
-            if (timelineAnchor) {
-                timelineAnchor.hidden = true;
-                if (card) {
-                    card.dataset.seq = timelineAnchor.dataset.seq;
-                    list.insertBefore(card, timelineAnchor);
-                }
-            }
-            if (card?.dataset.signature === signature && card.dataset.scope === scope)
-                continue;
-            const active = document.activeElement, focusAction = card?.dataset.scope === scope && card.contains(active) &&
-                !document.querySelector('dialog[open]') ? active.dataset?.conversationApprovalAction : null;
-            if (!card) {
-                card = ui.element('li', 'conversation-task conversation-approval');
-                card.dataset.conversationApproval = row.approvalId;
-                let next = anchor.nextSibling;
-                while (next?.dataset?.conversationTask || next?.dataset?.conversationApproval && next.dataset.sourceReceiptId === row.sourceReceiptId)
-                    next = next.nextSibling;
-                list.insertBefore(card, next);
-            }
-            if (timelineAnchor) {
-                card.dataset.seq = timelineAnchor.dataset.seq;
-                list.insertBefore(card, timelineAnchor);
-            }
-            const firstPaint = !card.dataset.signature;
-            const resolution = card.dataset.motionStatus && card.dataset.motionStatus !== row.status && row.status !== 'pending' && core.conversationApprovals.entries.size <= 20 ? globalThis.WeftMotion?.snapshot(card) : null;
-            card.dataset.motionStatus = row.status;
-            card.dataset.sourceReceiptId = row.sourceReceiptId;
-            card.dataset.signature = signature;
-            card.dataset.scope = scope;
-            card.replaceChildren();
-            const heading = ui.element('strong', 'conversation-task-title', `${core.executionName(row)} · ${row.status === 'pending' ? '需要你批准' : '审批回执'}`);
-            heading.prepend(window.WeftIcons.create('approval', 16));
-            card.append(heading);
-            card.classList.toggle('is-resolved', row.status !== 'pending');
-            const presentation = core.approvalPresentation(row);
-            const reason = ui.element('p', 'conversation-approval-reason', presentation.summary);
-            const explanation = ui.element('p', 'conversation-approval-reason');
-            const details = ui.element('details', 'conversation-task-more');
-            const raw = ui.element('pre', 'timeline-raw');
-            details.append(ui.element('summary', '', '详情'), raw);
-            const paint = value => { raw.textContent = typeof value.raw === 'string' ? value.raw : JSON.stringify(value.raw, null, 2); reason.textContent = value.summary; explanation.textContent = value.reason; explanation.hidden = !value.reason || row.status !== 'pending'; };
-            paint(presentation);
-            details.hidden = row.status !== 'pending';
-
-            void core.readApprovalPresentation(row).then(value => {
-                if (card.isConnected && card.dataset.signature === signature && core.approvalContextCurrent(context)) paint(value);
-            });
-            reason.hidden = row.status !== 'pending';
-            card.append(reason, explanation, details);
-            const notice = entry.notice || (sourceNotice ? '原任务暂时无法核对，请重新核对答复。' : '');
-            const status = ui.element('p', 'conversation-approval-status', row.status === 'pending' && operation ? '正在提交本次决定…'
-                : notice || (row.status === 'pending' && marker ? '上次答复结果尚未确认。已核对仍在等待，可用原答复重试。' : core.approvalStatusText(row)));
-            status.setAttribute('role', 'status');
-            status.tabIndex = -1;
-            status.dataset.conversationApprovalAction = 'status';
-            card.append(status);
-            const actions = ui.element('div', 'conversation-task-actions');
-            if (row.status === 'pending')
-                for (const action of ['allowed-once', ...(row.riskCategories?.length ? ['allowed-always'] : []), 'rejected']) {
-                    const outcome = action === 'allowed-always' ? 'allowed-once' : action;
-                    const button = ui.element('button', `button ${action === 'allowed-once' ? 'primary' : 'secondary'} small`, action === 'allowed-once' ? '允许一次' : action === 'allowed-always' ? '总是允许此类' : '拒绝');
-                    button.prepend(window.WeftIcons.create(action === 'rejected' ? 'deny' : 'allow', 16));
-                    button.type = 'button';
-                    button.dataset.conversationApprovalAction = action;
-                    button.disabled = !!operation || !entry.authoritative || !!notice || !!marker && (marker.outcome !== outcome ||
-                        (marker.scope ?? 'once') !== (action === 'allowed-always' ? 'conversation-category' : 'once'));
-                    button.addEventListener('click', () => {
-                        if (core.approvalContextCurrent(context))
-                            void core.submitApproval(context, row, outcome, action === 'allowed-always' ? 'conversation-category' : 'once');
-                    });
-                    actions.append(button);
-                }
-            if (notice || marker || row.status === 'answered') {
-                const check = ui.element('button', 'button secondary small', '重新核对答复');
-                check.type = 'button';
-                check.dataset.conversationApprovalAction = 'check';
-                check.disabled = !!operation;
-                check.addEventListener('click', () => {
-                    if (core.approvalContextCurrent(context)) {
-                        if (sourceNotice)
-                            void core.refreshConversationTasks();
-                        else
-                            void core.refreshConversationApprovals(context, true);
-                    }
-                });
-                actions.append(check);
-            }
-            const detail = ui.element('button', 'button secondary small', '查看来源与成果');
-            detail.type = 'button';
-            detail.dataset.conversationApprovalAction = 'detail';
-            detail.addEventListener('click', () => ui.inlineTaskInfo(row.taskId, detail));
-            actions.hidden = ['resolved', 'unavailable'].includes(row.status);
-            card.classList.toggle('is-resolved', ['resolved', 'unavailable'].includes(row.status));
-            actions.append(detail);
-            card.append(actions);
-            if (firstPaint && core.conversationApprovals.entries.size <= 20) globalThis.WeftMotion?.reveal(card, 'base');
-            globalThis.WeftMotion?.dismiss(resolution, true);
-            if (focusAction && !document.querySelector('dialog[open]') &&
-                (document.activeElement === active || document.activeElement === document.body)) {
-                const replacement = card.querySelector(`[data-conversation-approval-action="${focusAction}"]`);
-                (replacement && !replacement.disabled ? replacement : status).focus({ preventScroll: true });
-            }
+        const context = core.approvalContext(), bar = ui.byId('approval-bar');
+        if (!bar) return;
+        const rows = core.approvalContextCurrent(context) ? [...core.conversationApprovals.entries.values()]
+            .filter(entry => entry.row.sessionId === context.sessionId && core.approvalSource(entry.row) && entry.row.status === 'pending')
+            .sort((a, b) => a.row.createdAt.localeCompare(b.row.createdAt)) : [];
+        const hadFocus = bar.contains(document.activeElement), action = document.activeElement?.dataset?.conversationApprovalAction;
+        bar.hidden = rows.length === 0;
+        ui.byId('timeline-status').hidden = !bar.hidden;
+        ui.byId('model-hint').hidden = !bar.hidden || core.state.sessions.some(session => session.sessionId === context.sessionId && session.running) || !ui.byId('model-hint').textContent;
+        if (!rows.length) {
+            bar.replaceChildren(); delete bar.dataset.signature;
+            if (hadFocus) ui.byId('message-text').focus({ preventScroll: true });
+            ui.renderTimeline(); return;
         }
-        for (const card of [...list.children])
-            if (card.dataset?.conversationApproval && !visible.has(card.dataset.conversationApproval))
-                card.remove();
-        if (reading?.isConnected && Number.isFinite(readingTop) && Number.isFinite(scroll.scrollTop))
-            scroll.scrollTop += reading.getBoundingClientRect().top - readingTop;
-        else if (Number.isFinite(top))
-            scroll.scrollTop = top;
+        const entry = rows[0], row = entry.row, marker = core.approvalMarker(context, row);
+        const operation = core.conversationApprovals.operations.get(row.approvalId);
+        const notice = entry.notice || (core.conversationTasks.entries.get(row.taskId)?.notice ? '原任务暂时无法核对，请重新核对答复。' : '');
+        const signature = JSON.stringify([context, row, notice, entry.authoritative, marker, operation, rows.length]);
+        if (bar.dataset.signature === signature) return;
+        const sameApproval = bar.dataset.approvalId === row.approvalId;
+        const expanded = bar.querySelector('details')?.open === true && bar.dataset.approvalId === row.approvalId;
+        bar.dataset.signature = signature; bar.dataset.approvalId = row.approvalId;
+        bar.replaceChildren();
+        const card = ui.element('div', 'approval-bar-content'); card.dataset.conversationApproval = row.approvalId;
+        const presentation = core.approvalPresentation(row), details = ui.element('details', 'approval-detail'); details.open = expanded;
+        const summary = ui.element('summary', '', `要${presentation.summary}`), raw = ui.element('pre', 'timeline-raw');
+        summary.dataset.conversationApprovalAction = 'parameters';
+        const reason = ui.element('p', 'approval-explanation');
+        const paint = value => { summary.textContent = `要${value.summary}`; raw.textContent = typeof value.raw === 'string' ? value.raw : JSON.stringify(value.raw, null, 2); reason.textContent = value.reason; reason.hidden = !value.reason; };
+        paint(presentation); details.append(summary, reason, raw); card.append(details);
+        void core.readApprovalPresentation(row).then(value => { if (bar.dataset.signature === signature && core.approvalContextCurrent(context)) paint(value); });
+        if (rows.length > 1) card.append(ui.element('small', 'approval-remaining', `还有 ${rows.length - 1} 个待批准`));
+        const status = ui.element('p', 'approval-status', operation ? '正在提交本次决定…' : notice || (marker ? '上次答复尚未确认，请核对或重试原答复。' : ''));
+        status.setAttribute('role', 'status'); status.hidden = !status.textContent; card.append(status);
+        const actions = ui.element('div', 'approval-bar-actions');
+        for (const [outcome, label] of [['allowed-once', '批准'], ['rejected', '拒绝']]) {
+            const button = ui.element('button', `button ${outcome === 'allowed-once' ? 'primary' : 'secondary'} small`, label); button.type = 'button';
+            button.dataset.conversationApprovalAction = outcome;
+            button.disabled = !!operation || !entry.authoritative || !!notice || !!marker && (marker.outcome !== outcome || (marker.scope ?? 'once') !== 'once');
+            button.addEventListener('click', () => { if (core.approvalContextCurrent(context)) void core.submitApproval(context, row, outcome); }); actions.append(button);
+        }
+        if (row.riskCategories?.length) {
+            const always = ui.element('button', 'button quiet small', '总是允许此类'); always.type = 'button';
+            always.dataset.conversationApprovalAction = 'allowed-always';
+            always.disabled = !!operation || !entry.authoritative || !!notice || !!marker && (marker.outcome !== 'allowed-once' || marker.scope !== 'conversation-category');
+            always.addEventListener('click', () => { if (core.approvalContextCurrent(context)) void core.submitApproval(context, row, 'allowed-once', 'conversation-category'); }); details.append(always);
+        }
+        if (notice || marker) {
+            const check = ui.element('button', 'button quiet small', '重新核对答复'); check.type = 'button'; check.disabled = !!operation;
+            check.dataset.conversationApprovalAction = 'check';
+            check.addEventListener('click', () => { if (core.approvalContextCurrent(context)) { void core.refreshConversationTasks(); void core.refreshConversationApprovals(context, true); } }); card.append(check);
+        }
+        card.append(actions); bar.append(card);
+        if (hadFocus) { const replacement = [...card.querySelectorAll('[data-conversation-approval-action]')].find(node => node.dataset.conversationApprovalAction === action); if (sameApproval && replacement && !replacement.disabled) replacement.focus({ preventScroll: true }); else ui.byId('message-text').focus({ preventScroll: true }); }
+        ui.renderTimeline();
     }
     function defaultApprovalBusy(busy) {
         ui.byId('default-approval-mode').disabled = busy;

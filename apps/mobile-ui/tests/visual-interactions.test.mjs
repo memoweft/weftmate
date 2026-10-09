@@ -81,7 +81,7 @@ test('UI-2 mobile home, themes, progressive detail, full-screen sources, drafts 
       assert.equal(await page.locator('.execution-block').evaluate(n=>n.open),false);await capture(`${theme}-running.png`);
       assert.equal(await page.locator('#stop-button').isVisible(),true);await page.locator('#page-back').click();
       await page.locator('#home-conversations [data-id="approve"]').click();await page.evaluate(()=>refreshToolApprovals());
-      await page.getByRole('button',{name:'允许一次',exact:true}).waitFor();await capture(`${theme}-approval.png`);await page.locator('#page-back').click();
+      await page.getByRole('button',{name:'批准',exact:true}).waitFor();await capture(`${theme}-approval.png`);await page.locator('#page-back').click();
       await page.locator('#home-conversations [data-id="report"]').click();await page.getByText('报告已保存，点文件即可查看。',{exact:false}).waitFor();
       await page.locator('#draft').fill('稍后补充验收结果');
       const detailReads=await page.evaluate(()=>fixture.requests.filter(r=>r.method==='shared.sessions.eventDetail').length);

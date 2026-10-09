@@ -404,3 +404,46 @@ html[data-reduced-motion] *,html[data-reduced-motion] *::before,html[data-reduce
 .settings-schedule-row .system-service-detail { flex-basis: 100%; display: flex; flex-direction: column; gap: var(--wm-space-8); }
 
 select, select option { color: var(--ink); background: var(--surface); }
+
+:root { --progress-ink: var(--secondary); --progress-soft: var(--soft); }
+/* D35: progress belongs to the conversation; only opened records have a frame. */
+.execution-block { padding: 0; border: 0; border-radius: 0; background: transparent; }
+.execution-block > .inline-progress-summary { display: flex; align-items: center; gap: var(--wm-space-4); min-height: var(--wm-space-32); padding: var(--wm-space-4) 0; list-style: none; font-size: var(--wm-font-size-13); font-weight: 400; color: var(--progress-ink); cursor: pointer; width: fit-content; max-width: 100%; }
+.execution-block summary::-webkit-details-marker { display: none; }
+.inline-progress-summary:hover, .execution-step > summary:hover { color: var(--ink); }
+.execution-block summary:focus-visible { outline: var(--wm-space-2) solid var(--accent); outline-offset: var(--wm-space-3); border-radius: var(--wm-radius-4); }
+.progress-chevron { display: inline-flex; width: var(--wm-space-16); height: var(--wm-space-16); flex: none; align-items: center; justify-content: center; transform: rotate(-90deg); transition: transform var(--wm-duration-base) var(--wm-easing-desktop); }
+details[open] > summary > .progress-chevron { transform: rotate(0deg); }
+.progress-chevron .wm-icon { width: 100%; height: 100%; margin: 0; }
+.execution-records { border: 1px solid var(--line); border-radius: var(--wm-radius-12); overflow: hidden; margin: var(--wm-space-4) 0 var(--wm-space-8); }
+.execution-records .execution-step { padding: 0; margin: 0; }
+.execution-records .execution-step + .execution-step { border-top: 1px solid var(--line); }
+.execution-records .execution-step > summary { display: flex; align-items: center; gap: var(--wm-space-6); justify-content: space-between; min-height: var(--wm-space-40); padding: var(--wm-space-8) var(--wm-space-12); font-weight: 400; color: var(--progress-ink); font-size: var(--wm-font-size-13); list-style: none; }
+.execution-records .timeline-raw { margin: var(--wm-space-8) var(--wm-space-12); }
+.execution-step[data-state="failed"] > summary, .has-failure > .execution-block > summary { color: var(--danger); }
+.inline-progress-text.is-running { animation: progress-breathe var(--wm-duration-working) var(--wm-easing-smooth) infinite; }
+@keyframes progress-breathe { 0%, 100% { opacity: 1; } 50% { opacity: .65; } }
+.conversation-task { border: 0; padding: 0; background: transparent; }
+.artifact-verification { color: var(--progress-ink); }
+.approval-bar { background: var(--progress-soft); border-radius: var(--wm-radius-12); padding: var(--wm-space-10) var(--wm-space-12); margin-bottom: var(--wm-space-10); color: var(--ink); font-size: var(--wm-font-size-13); overflow-wrap: anywhere; }
+.approval-bar[hidden] { display: none; }
+.approval-bar-content { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--wm-space-12); }
+.approval-bar .approval-detail { min-width: 0; grid-column: 1; }
+.approval-bar .approval-detail > summary { min-height: var(--wm-space-32); cursor: pointer; font-size: var(--wm-font-size-13); color: var(--ink); }
+.approval-bar .approval-detail > summary:focus-visible { outline: var(--wm-space-2) solid var(--accent); outline-offset: var(--wm-space-2); }
+.approval-bar-actions, .approval-bar .approval-actions { grid-column: 2; grid-row: 1; display: flex; gap: var(--wm-space-8); margin: 0; }
+.approval-bar button { min-height: var(--wm-space-40); }
+.approval-bar .approval-status, .approval-remaining { grid-column: 1 / -1; color: var(--progress-ink); margin: var(--wm-space-4) 0 0; }
+@media (max-width: 640px) { .execution-block > .inline-progress-summary, .execution-records .execution-step > summary { min-height: var(--wm-space-44); } .approval-bar button { min-height: var(--wm-space-44); } }
+@media (prefers-reduced-motion: reduce) { .inline-progress-text.is-running { animation: none; } .progress-chevron { transition: none; } }
+
+.progress-chevron:empty { -webkit-mask: url('icons/16/chevron.svg') center / contain no-repeat; mask: url('icons/16/chevron.svg') center / contain no-repeat; background: currentColor; }
+.approval-bar .approval-bar-content { padding: 0; margin: 0; border: 0; border-radius: 0; }
+.approval-bar .approval-reason { grid-column: 1; margin: 0; font-size: var(--wm-font-size-13); line-height: var(--wm-line-height-1_5); }
+.approval-bar .approval-detail { grid-row: 2; }
+.approval-bar .approval-risk-copy { grid-column: 1 / -1; font-size: var(--wm-font-size-12); margin: var(--wm-space-4) 0; }
+.approval-bar .approval-actions button { grid-column: auto; padding: var(--wm-space-8); font-size: var(--wm-font-size-13); }
+
+/* Keep native/web focus scrolling inside the conversation viewport. */
+html, body { overflow: hidden; }
+.artifact-verification { display: block; margin-top: var(--wm-space-2); }

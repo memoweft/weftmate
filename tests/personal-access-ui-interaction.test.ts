@@ -450,7 +450,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
    }, clearTimeout(id: number) { taskTimers.delete(id) }, setInterval: (callback: () => void) => { refreshTick = callback; return 1 }, clearInterval() {} }
   runInNewContext(readFileSync(join(repository, 'src/personal-access-ui/icons.js'), 'utf8') + '\nwindow.WeftIcons = globalThis.WeftIcons;', context)
   runInNewContext(readFileSync(join(repository, 'src/personal-access-ui/timeline.js'), 'utf8'), context)
-  runInNewContext(executableSource, context)
+  runInNewContext(executableSource.replace('    ui.loadAttachmentHasher', '    globalThis.__testCore = core;\n    ui.loadAttachmentHasher'), context)
   const named = (label: string, name: string | RegExp) => typeof name === 'string' ? label === name : name.test(label);
   const dynamicButtons = () => get('session-list').querySelectorAll('button');
   const buttonName = (node: Element) => node.attributes.get('aria-label') || visibleText(node).trim();
@@ -465,7 +465,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     assert.equal(matches.length, 1, `one ${role} named ${name}`);
     return matches[0];
   }
-  return { get, getByRole, conversationButtons, document, requests, storage, history, objectUrls, setDeferHistory: (value: boolean) => { deferHistory = value },
+  return { core: runInNewContext('globalThis.__testCore', context), get, getByRole, conversationButtons, document, requests, storage, history, objectUrls, setDeferHistory: (value: boolean) => { deferHistory = value },
     deferMe: () => { deferNextMe = true }, resolveMe: (value: object, status = 200) => { deferredMe?.resolve(reply(value, status)); deferredMe = null },
     deferDevices: () => { deferNextDevices = true }, resolveDevices: (value: object) => { deferredDevices?.resolve(reply(value)); deferredDevices = null },
     resolveTaskDetail: (value: object, status = 200) => { deferredTaskDetail?.resolve(reply(value, status)); deferredTaskDetail = null },
@@ -824,7 +824,7 @@ test('synthetic conversation progress attaches to the exact dotted RPC receipt a
   assert.ok(card)
   assert.equal(rows[0].dataset.receiptId, source.receiptId)
   assert.equal(rows[1], card, 'progress belongs to the exact receipt, even when message text repeats')
-  assert.match(visibleText(card), /运行命令 · 后台运行中.*读取文件 · 执行结束.*回复.*已正常结束/)
+  assert.match(visibleText(card), /运行命令 · 后台运行中.*读取文件 · 执行结束/)
   assert.doesNotMatch(visibleText(card), /搜索内容|目标已完成|已核验|rpc:|exec-/)
   assert.equal(page.requests.some((row) => row.url.endsWith('/tasks/follow-inline')), false)
   card.children.at(-1)!.children[0].fire('click')
@@ -990,7 +990,7 @@ test('synthetic cached progress becomes visibly stale and a late receipt moves i
   assert.match(visibleText(card), /后台已停止.*实际停止/)
   delete taskDetails[source.commandId]
   page.tick(); for (let i = 0; i < 15; i++) await flush()
-  assert.match(visibleText(card), /待更新.*上次记录：运行命令 · 后台已停止/)
+  assert.match(visibleText(card), /待更新.*运行命令 · 后台已停止/)
   assert.doesNotMatch(visibleText(card), /电脑已核对这件事的实际停止/)
   assert.equal(page.requests.filter((row) => row.options.method === 'POST').length, 0)
 })
@@ -1627,7 +1627,7 @@ function task15ApprovalFixture(config: NonNullable<Parameters<typeof harness>[3]
   return { page, source, supplement, task, approval, approvals }
 }
 function approvalCard(page: ReturnType<typeof harness>, approvalId = approvalFixtureId) {
-  return page.get('transcript').children.find((row) => row.dataset.conversationApproval === approvalId)
+  return page.get('approval-bar').children.find((row) => row.dataset.conversationApproval === approvalId)
 }
 function approvalAction(page: ReturnType<typeof harness>, action: string, approvalId = approvalFixtureId) {
   return approvalCard(page, approvalId)?.querySelector(`[data-conversation-approval-action="${action}"]`)
@@ -1661,25 +1661,24 @@ test('task15-approval-client shows only real receipt-bound requests and distingu
   )
   await approvalReady(f.page)
   const rows = f.page.get('transcript').children
-  const pending = approvalCard(f.page)!, resolved = approvalCard(f.page, '00000000-0000-4000-8000-000000000003')!
+  const pending = approvalCard(f.page)!
   assert.equal(rows[0].dataset.receiptId, f.source.receiptId)
-  assert.equal(pending.dataset.sourceReceiptId, f.source.receiptId)
-  assert.equal(resolved.dataset.sourceReceiptId, f.supplement.receiptId)
-  assert.equal(approvalAction(f.page, 'allowed-once')?.textContent, '允许一次')
+  assert.equal(approvalAction(f.page, 'allowed-once')?.textContent, '批准')
   assert.equal(approvalAction(f.page, 'rejected')?.textContent, '拒绝')
-  assert.match(visibleText(approvalCard(f.page, '00000000-0000-4000-8000-000000000002')!), /已提交拒绝/)
-  assert.match(visibleText(resolved), /已允许/)
-  assert.match(visibleText(approvalCard(f.page, '00000000-0000-4000-8000-000000000004')!), /已取消/)
-  assert.match(visibleText(approvalCard(f.page, '00000000-0000-4000-8000-000000000005')!), /已失效/)
+  const records = f.page.core.conversationApprovals.entries
+  assert.equal(records.get('00000000-0000-4000-8000-000000000002').row.decisionOutcome, 'rejected')
+  assert.equal(records.get('00000000-0000-4000-8000-000000000003').row.outcome, 'allowed-once')
+  assert.equal(records.get('00000000-0000-4000-8000-000000000004').row.outcome, 'cancelled')
+  assert.equal(records.get('00000000-0000-4000-8000-000000000005').row.outcome, 'unavailable')
   assert.equal(approvalCard(f.page, '00000000-0000-4000-8000-000000000006'), undefined)
   assert.equal(approvalCard(f.page, '00000000-0000-4000-8000-000000000007'), undefined)
-  assert.doesNotMatch(visibleText(f.page.get('transcript')), /永久允许|目标已完成|approval-call|rpc:approval/)
+  assert.equal(rows.some(row => row.dataset.conversationApproval), false, 'approvals belong above the input')
   f.page.getByRole('textbox', { name: '输入消息' }).value = '保留草稿'
   f.page.get('chat-scroll').scrollTop = 312
-  const detail = approvalAction(f.page, 'detail')!
+  const detail = approvalAction(f.page, 'parameters')!
   detail.focus(); detail.fire('click')
   detail.fire('click'); await flush()
-  assert.equal(f.page.document.activeElement, approvalAction(f.page, 'detail'))
+  assert.equal(f.page.document.activeElement, approvalAction(f.page, 'parameters'))
   assert.equal(f.page.getByRole('textbox', { name: '输入消息' }).value, '保留草稿')
   assert.equal(f.page.get('chat-scroll').scrollTop, 312)
 })
@@ -1702,7 +1701,7 @@ test('task15-approval-client retries an uncertain answer with the same request a
   first.page.getByRole('textbox', { name: '输入消息' }).focus()
   firstPost.reject(new Error('synthetic uncertain network'))
   for (let i = 0; i < 25 && approvalAction(first.page, 'allowed-once')?.disabled; i++) await flush()
-  assert.match(visibleText(approvalCard(first.page)!), /上次答复结果尚未确认/)
+  assert.match(visibleText(approvalCard(first.page)!), /上次答复尚未确认/)
   assert.equal(approvalAction(first.page, 'rejected')!.disabled, true)
   assert.equal(first.page.document.activeElement, first.page.getByRole('textbox', { name: '输入消息' }))
   assert.equal(first.page.getByRole('textbox', { name: '输入消息' }).value, '提交期间继续写草稿')
@@ -1726,13 +1725,15 @@ test('task15-approval-client retries an uncertain answer with the same request a
   first.approvals.A[0] = { ...approvalAnswered(first.approval, bodies[1].requestId), status: 'resolved',
     outcome: 'allowed-once', resolvedAt: '2026-10-06T12:02:00.000Z' }
   second.page.tick()
-  for (let i = 0; i < 25 && !visibleText(approvalCard(second.page)!).includes('已允许'); i++) await flush()
-  assert.match(visibleText(approvalCard(second.page)!), /已允许/)
+  for (let i = 0; i < 25 && approvalCard(second.page); i++) await flush()
+  assert.equal(approvalCard(second.page), undefined)
+  assert.equal(second.page.get('approval-bar').hidden, true)
+  assert.equal(second.page.core.conversationApprovals.entries.get(approvalFixtureId).row.outcome, 'allowed-once')
   secondPost.resolve(reply({ approval: approvalAnswered(first.approval, bodies[1].requestId), requestId: bodies[1].requestId }))
   for (let i = 0; i < 15; i++) await flush()
-  assert.match(visibleText(approvalCard(second.page)!), /已允许/)
-  assert.doesNotMatch(visibleText(approvalCard(second.page)!), /等待执行端确认|目标已完成/)
-  assert.equal(approvalAction(second.page, 'allowed-once'), null)
+  assert.equal(second.page.core.conversationApprovals.entries.get(approvalFixtureId).row.status, 'resolved')
+  assert.equal(approvalCard(second.page), undefined)
+  assert.equal(approvalAction(second.page, 'allowed-once'), undefined)
 })
 
 test('task15-approval-client ignores old list callbacks after switching conversations', async () => {
