@@ -36,6 +36,7 @@ export function createChatTimeline(context) {
       .filter(s => s.chatId === chatId).sort((a, b) => a.ordinal - b.ordinal || a.segmentId.localeCompare(b.segmentId));
   }
   function current(ownerId, chatId) {
+    if (context.accountState(ownerId).memoryCleanupPending) throw failure('SESSION_BUSY', 409);
     const chat = context.chats.requireChat(ownerId, chatId), key = `${ownerId}/${chatId}`;
     let index = indexes.get(key);
     if (!index || index.contentRevision !== chat.contentRevision) {
@@ -71,6 +72,7 @@ export function createChatTimeline(context) {
   async function read(index, segment, options) {
     if (closed || context.accountState(index.ownerId).chatIdentity.segments[segment.segmentId]?.chatId !== index.chatId) return null;
     const page = await context.callBackend(() => context.backend.readEvents({ ownerId: index.ownerId, sessionId: segment.sessionId, ...options }));
+    if (index.retired) throw failure('CURSOR_RESET_REQUIRED', 409);
     if (!Array.isArray(page?.events) || !Number.isSafeInteger(page.nextSeq)) throw failure('BACKEND_UNAVAILABLE', 503);
     for (const event of page.events) put(index, segment, event);
     return page;
@@ -242,6 +244,7 @@ export function createChatTimeline(context) {
         });
         return { hits, nextCursor: matches.length > limit ? token(index, 'search', selected.at(-1).orderKey, filter) : null, hasMore: matches.length > limit, ...info(index) };
       });
+      if (index.retired) throw failure('CURSOR_RESET_REQUIRED', 409);
       backfill(index); return result;
     },
     async ready(ownerId, chatId) { const index = current(ownerId, chatId); await serial(index, () => seed(index)); backfill(index); await index.job; if (index.error) throw index.error; },

@@ -158,7 +158,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       } else fail('INVALID_COMMAND')
       return { ok: true }
     },
-    async createSession({ sessionId, modelProfileId, ownerId, project, title }) {
+    async createSession({ sessionId, modelProfileId, ownerId, project, title, workspaceChatId }) {
       requireRuntime()
       if (typeof sessionId !== 'string' || !idPattern.test(sessionId)) fail('SESSION_UNAVAILABLE')
       const preset = presetForOwner(ownerId)
@@ -167,9 +167,10 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         const profile = modelProfile(modelProfileId)
         await requireCatalogRoute(profile)
         const cwd = project?.rootPath ?? (sessionWorkspaceRoot
-          ? sessionWorkspace(sessionWorkspaceRoot, ownerId ?? 'fixture', sessionId) : undefined)
+          ? sessionWorkspace(sessionWorkspaceRoot, ownerId ?? 'fixture', workspaceChatId ?? sessionId) : undefined)
         if (cwd && !project) await mkdir(cwd, { recursive: true, mode: 0o700 })
-        const created = await gateway('/sessions', { method: 'POST',
+        const exists = workspaceChatId && (await listSessions()).items?.some(item => item.sessionId === sessionId);
+        const created = exists ? { sessionId } : await gateway('/sessions', { method: 'POST',
           body: JSON.stringify({ sessionId, agentPreset: preset, ...(cwd ? { cwd } : {}) }) })
         if (created?.sessionId !== sessionId) fail('SESSION_UNAVAILABLE')
         const listed = await listSessions()
@@ -188,6 +189,18 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
     async renameSession({ sessionId, ownerId, title }) {
       await requireSession(sessionId, ownerId)
       return gateway(`/sessions/${encodeURIComponent(sessionId)}/rename`, { method: 'POST', body: JSON.stringify({ title }) })
+    },
+    async chatRelayState({ sessionId, ownerId }) {
+      await requireSession(sessionId, ownerId);
+      return gateway(`/sessions/${encodeURIComponent(sessionId)}/chat-handoff`, { method: 'POST', body: JSON.stringify({ action: 'state' }) });
+    },
+    async prepareChatHandoff({ sessionId, ownerId }) {
+      await requireSession(sessionId, ownerId);
+      return gateway(`/sessions/${encodeURIComponent(sessionId)}/chat-handoff`, { method: 'POST', body: JSON.stringify({ action: 'prepare' }) });
+    },
+    async installChatHandoff({ sessionId, ownerId, handoff }) {
+      await requireSession(sessionId, ownerId);
+      return gateway(`/sessions/${encodeURIComponent(sessionId)}/chat-handoff`, { method: 'POST', body: JSON.stringify({ action: 'install', handoff }) });
     },
     async forkSession({ sessionId, ownerId, childId, modelProfileId, title: sourceTitle }) {
       requireRuntime()
