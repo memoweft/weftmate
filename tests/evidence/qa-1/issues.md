@@ -38,6 +38,14 @@
 - **证据**：[MiMo 原题与事件](m1-mimo/results.json)，第一个结果 `approval.requested`；[LAN 对照](m1-lan/results.json)。`mimo-action-01-organize.png` 为当时主窗口概览，未选中该 API 驱动会话，**不是审批卡特写**。
 - **初步定位**：DSH 原生审批判定与模型选用命令；本次证据不足以认定宿主代码错误，先作为模型行为 / 审批可用性问题派查。
 
+## 一般 · QA1-07 · iPhone“已归档”显示应用版本号作为摘要
+
+- **端**：iPhone；Mac 共用摘要函数，但本次没有进入 Mac 设置确认。
+- **步骤**：打开设置首页，查看“已归档”右侧摘要。
+- **实际 / 期望**：右侧显示 `0.1.0`，这是应用版本号，不能说明归档状态；应显示归档数量、相关说明或空摘要。
+- **证据**：[设置首页实际帧](apple/iphone-settings-about-failure.png)；这是原设置遍历录像第 140 秒的原尺寸帧，没有重绘界面。
+- **初步定位**：`apps/apple/UI/AppleSettingsModel.swift:92` 的 `summary(_:)` 缺少 `archived` 分支，落入返回 `CFBundleShortVersionString` 的默认分支。
+
 ## 体验 · QA1-05 · 网页搜集并成文虽然完成，但等待约九分半
 
 - **端**：Windows / MiMo。

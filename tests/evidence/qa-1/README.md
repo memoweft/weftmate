@@ -25,7 +25,7 @@
 | Android 长按菜单、未读、分组、归档恢复 | 展示及操作取证；旧本地登录探针随后失去登录状态，**仅局部证据** | `android/`；[探针失败](android/failure.json)。没有把绕过云页面的探针当作正式登录通过 |
 | Android 发任务、电脑写文件、手机审批 | **两次失败**；已批准设备但会话仅有提醒工具，审批 0 次，文件未创建；任务查询 404、草稿仍未确认 | [复现](android-task-recheck/phone-task.json)，193.564 秒；[实际截图](android-task-recheck/android-task-timeout-light.png)。前次 193.172 秒，完整用量计入 |
 | iPhone 浅深对话进展、详情、原始数据二级展开、排队 / 引导、重启持久化、失败提示 | 原生 XCTest（界面测试）各 1/1 通过；本地云 / 宿主是真实代码，执行事件和模型为合成 | [浅](apple/iphone/validation-a9-after-light.json)、[深](apple/iphone/validation-a9-after-dark.json)，浅色测试 196.724 秒，深色见元数据；`apple/iphone/` 截图 |
-| iPhone 全设置遍历 | **失败**，最后未进入“关于”；更早的分类遍历已运行，不能宣布全部通过 | [测试汇总](apple/iphone-settings-summary.json)、[当时画面](apple/iphone-settings-about-failure.png)、`apple/iphone-failure/` 原生树；约 155 秒至失败 |
+| iPhone 全设置遍历 | **失败**，最后未进入“关于”；另发现“已归档”摘要错误显示版本号，更早的分类遍历已运行，不能宣布全部通过 | [测试汇总](apple/iphone-settings-summary.json)、[当时画面](apple/iphone-settings-about-failure.png)、`apple/iphone-failure/` 原生树；约 155 秒至失败 |
 | Mac 浅深、对话 / 设置 | **验收阻断**：捕获到登录页；重编捕获器、重建 Mac 程序后相同；设置捕获失败 | `apple/mac/`、`apple/mac-retry/`、[诊断](apple/acceptance.json)。图片原文件名含 conversation 不代表进入了对话，JSON 已补 `qaObservation` |
 | Watch 审批卡 | 最后只开一台 Watch，合成审批 / 完成卡显示；批准按钮因手机不可达禁用 | [截图](apple/watch/approval.png)。没有验证实时手机→手表审批回执、触感或推送 |
 | 云中继完整链路 | **未完成**；完成本地云身份和直接回环 / ADB 反向映射，未接真实 frp / 本地中继数据链路 | 独立于“注册 / 绑定通过”；新用户执行阻断仍须先修复。未复用生产 UP-2 中继 |
