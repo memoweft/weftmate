@@ -470,6 +470,7 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
       logs.delete(sessionId); callIndexes.delete(sessionId); owned.delete(sessionId)
       return value
     },
+    chatHandoff(sessionId, action, handoff) { return lifecycle.chatHandoff(sessionId, action, handoff) },
     async remove(sessionId) {
       if (!lifecycle) throw new DshAdapterError('internal', 'delete')
       const value = await lifecycle.remove(sessionId)

@@ -334,9 +334,21 @@ export function createHttpHandler(context) {
         } finally { await opened.handle.close(); }
       }
       const sharedImageMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]{1,128})\/attachments\/((?:attachment-[0-9a-f-]{36})|(?:sha256:[a-f0-9]{64}))$/i.exec(pathname.replace(/%3a/ig, ':'));
-      if (sharedImageMatch) {
-        const [, sessionId, attachmentId] = sharedImageMatch;
+      const chatImageMatch = request.method === 'PUT' && /^\/personal\/v1\/chats\/([A-Za-z0-9_-]{1,128})\/attachments\/(attachment-[0-9a-f-]{36})$/i.exec(pathname);
+      if (sharedImageMatch || chatImageMatch) {
+        let [, sessionId, attachmentId] = sharedImageMatch || chatImageMatch;
+        if (chatImageMatch) {
+          const selected = context.chats.requireChat(ownerId, sessionId);
+          if (selected.kind !== 'main' || !context.hostOwner(ownerId)) throw failure('CHAT_UNAVAILABLE', 404);
+          sessionId = await context.serial(async () => {
+            if (!context.chats.requireChat(ownerId, selected.chatId).attachmentSessionId) await context.mutate(ownerId, next => {
+              next.chatIdentity.chats[selected.chatId].attachmentSessionId = `session-${randomUUID()}`;
+            });
+            return context.chats.requireChat(ownerId, selected.chatId).attachmentSessionId;
+          });
+        }
         const ownedSession = () => {
+          if (chatImageMatch) { context.chats.requireChat(ownerId, chatImageMatch[1]); return; }
           const session = context.accountState(ownerId).sessions[sessionId];
           if (!session || session.ownerId !== ownerId ||
               !['personal-remote', 'shared-chat'].includes(session.origin)) throw failure('SESSION_UNAVAILABLE', 404);
@@ -705,7 +717,7 @@ export function createHttpHandler(context) {
         }
         return context.json(response, 200, {
           ...context.service.status(ownerId),
-          personalCapabilities: { chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1 },
+          personalCapabilities: { chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, chatSend: 1 },
           executionAccount: context.hostOwner(ownerId),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
           backend: backendStatus, memory: { state: memoryStatus.state, inject: memoryStatus.capabilities?.inject === true },
@@ -1566,12 +1578,22 @@ export function createHttpHandler(context) {
         const rootTaskId = taskAction ? id(taskActionMatch[1]) : null;
         const body = await context.readJson(request);
         if (taskAction) exactKeys(body, ['requestId', 'text'], ['requestId', 'text']);
+        if (pathname === '/personal/v1/commands' && body.kind === 'chat.message') {
+          return context.json(response, 202, { command: await context.mainChat.submit(ownerId, deviceId, body,
+            () => context.authenticate(request, 'commands:write')) });
+        }
         if (projectSessionMatch) exactKeys(body, ['requestId', 'modelProfileId'], ['requestId', 'modelProfileId']);
         if (browserSessionPath) exactKeys(body, ['requestId', 'modelProfileId'], ['requestId', 'modelProfileId']);
         if (sharedConversationMatch) exactKeys(body, ['requestId', 'modelProfileId', 'expectedSyncSeq',
           'acknowledgeUncertainLocalTurn'],
           ['requestId', 'modelProfileId', 'expectedSyncSeq']);
         const rootSource = taskAction ? context.taskSource(state, rootTaskId) : null;
+        if (rootSource) {
+          const segment = state.chatIdentity.segments[state.chatIdentity.sessionSegments[rootSource.sessionId]];
+          const logical = state.chatIdentity.chats[segment?.chatId];
+          if (logical?.kind === 'main' && segment.state === 'sealed') throw failure('MAIN_CHAT_ROUTE_REQUIRED', 409);
+          if (logical?.kind === 'main' && logical.relay) throw failure('SESSION_BUSY', 409);
+        }
         const requestedProjectId = projectSessionMatch ? id(projectSessionMatch[1]) : null;
         const requestedProject = requestedProjectId ? state.projects?.[requestedProjectId] : null;
         const adoptionId = sharedConversationMatch?.[1] ?? null;

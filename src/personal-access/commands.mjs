@@ -20,6 +20,8 @@ export function createCommandOperations(context) {
   async function dispatch(ownerId, commandId) {
     try {
       if (context.closing || context.storageFault) return;
+      if (context.accountState(ownerId).commands[commandId]?.kind === 'chat.message') await context.mainChat.bind(ownerId, commandId);
+      if (context.accountState(ownerId).commands[commandId]?.kind === 'chat.message') return;
       let snapshot;
       let callback;
       const pending = context.accountState(ownerId).commands[commandId];
@@ -304,7 +306,7 @@ export function createCommandOperations(context) {
           }));
           else if (snapshot.kind === 'session.message') {
             const staged = snapshot.payload.attachments
-              ? await context.sharedAttachmentStores.get(ownerId).resolve({ sessionId: snapshot.sessionId,
+              ? await context.sharedAttachmentStores.get(ownerId).resolve({ sessionId: snapshot.payload.attachmentSessionId ?? snapshot.sessionId,
                 requestId: snapshot.requestId, attachments: snapshot.payload.attachments }) : [];
             callback = Promise.resolve(context.backend.sendMessage({
               sessionId: snapshot.sessionId, text: modelTextWithAttachments(snapshot.payload.text, staged,
@@ -400,7 +402,7 @@ export function createCommandOperations(context) {
       }));
       if (snapshot.kind === 'session.message' && snapshot.payload.attachments &&
           context.accountState(ownerId).commands[commandId]?.state === 'accepted_by_dsh') {
-        await context.sharedAttachmentStores.get(ownerId).release({ sessionId: snapshot.sessionId,
+        await context.sharedAttachmentStores.get(ownerId).release({ sessionId: snapshot.payload.attachmentSessionId ?? snapshot.sessionId,
           requestId: snapshot.requestId, attachments: snapshot.payload.attachments });
       }
       if (snapshot.kind === 'session.message') {
@@ -420,7 +422,7 @@ export function createCommandOperations(context) {
     if (context.scheduled.has(key) || context.closing) return;
     context.scheduled.add(key);
     const command = context.accountState(ownerId).commands[commandId];
-    const sessionKey = command?.kind === 'session.message' ? `${ownerId}|${command.sessionId}` : null;
+    const sessionKey = command?.payload.chatId ? `${ownerId}|${command.payload.chatId}` : command?.kind === 'session.message' ? `${ownerId}|${command.sessionId}` : null;
     const previous = sessionKey ? messageDispatches.get(sessionKey) : null;
     const work = Promise.resolve(previous).catch(() => {}).then(() => dispatch(ownerId, commandId)).finally(() => {
       if (sessionKey && messageDispatches.get(sessionKey) === work) messageDispatches.delete(sessionKey);

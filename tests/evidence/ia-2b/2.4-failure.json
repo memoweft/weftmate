@@ -1,0 +1,29 @@
+{
+  "error": "Command rejected: BACKEND_UNAVAILABLE",
+  "report": {
+    "realElectron": true,
+    "fixedDsh": true,
+    "model": "mimo-v2.6-flash",
+    "turns": [
+      {
+        "commandId": "cmd-ed322584-686f-4e52-a870-505f1232fdc2",
+        "sessionId": "session-666a2d2e-e722-4ef3-9628-ea8349379f07",
+        "activeSessionId": "session-666a2d2e-e722-4ef3-9628-ea8349379f07"
+      }
+    ],
+    "switches": []
+  },
+  "usage": [
+    {
+      "completion_tokens": 62,
+      "prompt_tokens": 2122,
+      "total_tokens": 2184,
+      "completion_tokens_details": {
+        "reasoning_tokens": 58
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  ]
+}

@@ -26,7 +26,7 @@ export function reconcileChatIdentity(account, hostId, now) {
       identity.sessionSegments[sessionId] = segmentId;
     }
     const chat = identity.chats[segment.chatId], revision = sessionRevision(session);
-    if (chat.sessionRevision !== revision) {
+    if (chat.activeSegmentId === segment.segmentId && chat.sessionRevision !== revision) {
       chat.sessionRevision = revision;
       chat.revision++;
     }

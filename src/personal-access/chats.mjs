@@ -23,7 +23,7 @@ export function createChatOperations(context) {
       parent: chat.kind === 'main' ? null : session?.projectId
         ? { kind: 'project', id: session.projectId } : { kind: 'main', id: identity.mainChatId } };
     if (!session) return { ...base, title: 'WeftMate', pinned: true, archived: false,
-      unread: chat.unread, groupId: null, projectId: null, running: false, sendAvailable: false,
+      unread: chat.unread, groupId: null, projectId: null, running: false, sendAvailable: !account.memoryCleanupPending,
       taskAvailable: false };
     let described, summary;
     try {
@@ -47,7 +47,8 @@ export function createChatOperations(context) {
       ...(session.conversationId ? { conversationId: session.conversationId } : {}),
       ...(session.workspaceKind ? { workspaceKind: session.workspaceKind } : {}),
       modelProfileId: session.modelProfileId ?? described.modelProfileId ?? null,
-      running: described.running === true, sendAvailable: Boolean(canSend), taskAvailable: session.origin === 'personal-remote',
+      running: described.running === true, sendAvailable: Boolean(canSend) && !account.memoryCleanupPending, taskAvailable: session.origin === 'personal-remote',
+      ...(chat.relay ? { contextOrganizing: true } : {}), ...(chat.relayError ? { relayError: chat.relayError } : {}),
       ...(described.contextUsage ? { contextUsage: described.contextUsage } : {}),
       ...(described.running && described.processing ? { processing: described.processing } : {}) };
   }

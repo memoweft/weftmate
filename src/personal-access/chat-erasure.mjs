@@ -36,6 +36,7 @@ export function eraseChatCopies(account, { sessionId = null, forgotten = false }
   if (forgotten) for (const id of Object.keys(identity?.chats ?? {})) changed.add(id);
   else if (sourceChatId) changed.add(sourceChatId);
   for (const id of changed) if (identity?.chats[id]) {
+    if (identity.chats[id].relay) delete identity.chats[id].relay.handoff;
     identity.chats[id].contentRevision++; identity.chats[id].revision++;
   }
   return [...changed].filter(Boolean);

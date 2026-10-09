@@ -5,6 +5,7 @@ import { promisify } from 'node:util';
 import { execFile } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { mkdtemp, mkdir, writeFile, readFile } from 'node:fs/promises';
+import { appendFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
@@ -55,7 +56,8 @@ export async function harness(label, { memory = true } = {}) {
     app = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), args: [join(repository, 'tests/integration/ia-2b-bootstrap.mjs'),
       `--user-data-dir=${profile}`, '--personal-host', '--access-port=0', ...(memory ? [`--personal-memory-config=${config}`] : [])], cwd: repository, env, timeout: 90000 });
     let errors = '';
-    app.process().stderr.on('data', part => { errors += String(part); });
+    app.process().stderr.on('data', part => { errors += String(part); appendFileSync(join(base, 'host.log'), String(part).replaceAll(key, '[redacted]')); });
+    app.process().stdout.on('data', part => appendFileSync(join(base, 'host.log'), String(part).replaceAll(key, '[redacted]')));
     launches++;
     try { page = await app.firstWindow({ timeout: 90000 }); await page.waitForURL('**/personal/v1/ui'); }
     catch (error) { await writeFile(join(base, 'launch-error.log'), errors); console.error(errors.replaceAll(key, '[redacted]').slice(-8000)); throw error; }
