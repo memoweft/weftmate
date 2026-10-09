@@ -1,0 +1,71 @@
+{
+  "syntheticOnly": true,
+  "realPersonalHTTP": true,
+  "realCloudDPoP": true,
+  "offlineRelay": "503 while the actual host process is stopped",
+  "compiledDSH": false,
+  "realCore": false,
+  "model": "deterministic substitute; Windows Machine environment unavailable on Mac",
+  "syncs": 7,
+  "submissions": 1,
+  "statusChecks": 14,
+  "modelCalls": 2,
+  "recalledTea": true,
+  "unrelatedSent": false,
+  "toolsSent": false,
+  "ingested": [
+    {
+      "eventID": "weftmate-turn-boundary-v1:038c8f1cb157c68077a2a45d9a521668:cfb5df727c52188cb6e60c69a5bd52ad728cfc598e915546e28d757ace0af8f0",
+      "messages": [
+        {
+          "role": "user",
+          "content": "我喝茶喜欢什么？",
+          "timestamp": 1791573726
+        },
+        {
+          "role": "assistant",
+          "content": "你喜欢茉莉花茶，不加糖。",
+          "dependencies": {
+            "schema_version": 1,
+            "capture_status": "complete",
+            "world_items": [
+              {
+                "object_kind": "cognition",
+                "item_id": "tea"
+              }
+            ],
+            "interaction_ids": []
+          },
+          "timestamp": 1791573726
+        }
+      ]
+    },
+    {
+      "eventID": "weftmate-turn-boundary-v1:8a0d0e5e37b473c4592b360d842558c4:2eb8b078b43bcd2935071348dd90f2d22c2442c94ab1c002491fb8fcb162150f",
+      "messages": [
+        {
+          "role": "user",
+          "content": "我徒步用墨绿色双肩背包。",
+          "timestamp": 1791573728
+        },
+        {
+          "role": "assistant",
+          "content": "收到，你徒步用墨绿色双肩背包。",
+          "dependencies": {
+            "schema_version": 1,
+            "capture_status": "complete",
+            "world_items": [
+              {
+                "object_kind": "cognition",
+                "item_id": "tea"
+              }
+            ],
+            "interaction_ids": []
+          },
+          "timestamp": 1791573728
+        }
+      ]
+    }
+  ],
+  "forgotten": true
+}

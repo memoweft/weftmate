@@ -1,0 +1,59 @@
+{
+  "passed": true,
+  "syntheticOnly": true,
+  "swiftFocusedTests": 12,
+  "hostOfflineTests": 7,
+  "cloudRevocationTests": 1,
+  "designAndCopyTests": 8,
+  "stateCheck": "AppleContractStateChecks passed",
+  "iphoneXCUITest": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0
+  },
+  "macThemes": [
+    "light",
+    "dark"
+  ],
+  "nativeBuilds": [
+    "macOS Debug",
+    "iOS Simulator Debug",
+    "watchOS Simulator Debug"
+  ],
+  "xcodeJobs": 2,
+  "simulatorsAtOnce": 1,
+  "offlineRelay": "503 while actual personal host is stopped; earlier connection-reset path also passed",
+  "realMiMo": false,
+  "realCore": false,
+  "nativeCloudCallbackInjected": true,
+  "productionDeployment": false,
+  "generatedAt": "2026-10-09T19:23:28.431490+00:00",
+  "sourceSHA256": {
+    "apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/CloudAccountClient.swift": "8f6e7365235bae9d4d8557670f985e0a816a189cd4e1bfdcfd4a81ebd0392b5f",
+    "apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/OfflineModels.swift": "9d832f350ffe10066a63409311e2682378f803952340491cc1e7ecc33b399af0",
+    "apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/OfflineReplica.swift": "6d4eff80b00c419ce648d015d4739b5bb26255ef603f303c9b632e0d26162816",
+    "apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/OfflineVault.swift": "5dfb11298df2c06d1eedfd53d34896d22cd2b3a6519e2f718d6b02ff99c13e0b",
+    "apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PersonalClient.swift": "bd03c49a2a3f053f0f4a1a4ebd78115a162cc50c2a676dbe74cf44f09667cf22",
+    "apps/apple/Packages/WeftMateCore/Tests/WeftMateCoreTests/AppAccountTests.swift": "730d880b0e9d611947d3bc6f172b03fd4899fb22290779a1b757cd5f86efdb58",
+    "apps/apple/Packages/WeftMateCore/Tests/WeftMateCoreTests/OfflineTests.swift": "ee97f3a1fbd8461a22f601ca4486da6c4fb2bd3a25a17dc35167dd3a2e40eee3",
+    "apps/apple/Scripts/generate_project.py": "d3b2a2cf914b2029c5f6a663d1b4b355ce0f89fed2eb359666506adf2b3a3d3a",
+    "apps/apple/Scripts/run_state_checks.py": "becbee3f6d8b0aaad77c404d7211806f21a63f79e414eff3e2e737e229a590ff",
+    "apps/apple/Tests/A14OfflineUITests.swift": "f8833c5fcd0ebe7a4a50e91e9e464097546e3028a64d3cafa443cbd18b4452bd",
+    "apps/apple/Tests/A5MacCapture.swift": "922097c324d90babcb972ee3795cc0fc6f76b54298e5d0b87c4e3233951306d9",
+    "apps/apple/Tests/a14_fixture.mjs": "f9cc094da623c4bf3154b1154b4a834bcbc3232811f61e7c12331ca6aee13545",
+    "apps/apple/Tests/a14_vector.mjs": "603abcae5cea6f31b75a6bdafce8d066bde862520924c4a701f8fcd59f8431f3",
+    "apps/apple/Tests/run_a14.py": "79be540cdedb5bd3741a0863e07a0215a2f09b054392b89e65380d0d1e67e98a",
+    "apps/apple/UI/A14MacReview.swift": "b7cd901fc7aeb07f8bcf2b354d3125b67b9d2679bf3e53fd9d7afcfb7a472385",
+    "apps/apple/UI/A14TestSupport.swift": "080f19d677ec2c55d7730ec1c65a63fa449c37b64dfaf082c438fe8868293d3d",
+    "apps/apple/UI/AppleAppModel.swift": "9f42a214bdf7612be57a3d81361a4814a0fa7b0b81699f0c1cb9332a014df75a",
+    "apps/apple/UI/CloudLoginModel.swift": "6e9509f2442f127a5ebddd1b9578d6ef13bdd6ba77217fcc5b8dc7f61245cbcc",
+    "apps/apple/UI/OfflineChatModel.swift": "45f88ee1056011e9e3437890c09350e34aabcb6d163f8fd093dee7a02d85ec7d",
+    "apps/apple/UI/OfflineChatView.swift": "b0c8aa65df89f2d4105df11ead4ff1f9b0b8c5c30fdd67e6b7fa45244195a83e",
+    "apps/apple/UI/WeftMateRootView.swift": "b527fd45d8d0c2f32f79fd4de33f27c5e437e9efe77c30366e913f8038bf834f",
+    "apps/apple/WeftMate.xcodeproj/project.pbxproj": "e4411b299b3a3e1d6e2d6121c697e56b15fa88843245f60ea1662e4aea312107"
+  },
+  "binarySHA256": {
+    "Mac Debug implementation": "124278e33d99394853ceca0a74d7a31a03aeae5497311f28aba61321c723ab2c",
+    "iPhone Debug implementation": "b656635032f100c9254a3b5b7d42dac7ab0d1f5c6230c8f27eb653905cad37f2"
+  }
+}
