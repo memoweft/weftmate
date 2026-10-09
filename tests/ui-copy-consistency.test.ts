@@ -9,7 +9,7 @@ test('UX-1 authored interface copy and synthetic screenshot text contain no inte
   assert.ok(await scanUiCopy() >= 60);
 });
 test('UX-1 copy scanner rejects tool and field leaks, while code identifiers remain legal', () => {
-  for (const text of ['来源：read', '运行 pwsh', 'ask_user_question', 'load_tools', 'Weave 组件', 'toolName: shell', 'undefined', 'null']) assert.throws(()=>checkVisibleCopy(text));
+  for (const text of ['来源：read', '运行 pwsh', 'ask_user_question', 'load_tools', 'mcp__calendar__list', 'Weave 组件', 'toolName: shell', 'undefined', 'null']) assert.throws(()=>checkVisibleCopy(text));
   const source = "const toolName='read'; const option={value:'shell'}; el('strong','','读取文件'); label.textContent='准备可用工具';";
   assert.deepEqual(authoredCopy(source,'component.js'),['读取文件','准备可用工具']);
   for(const copy of authoredCopy("el('span','','read'); label.textContent='Weave 组件';",'component.js')) assert.throws(()=>checkVisibleCopy(copy));
@@ -24,5 +24,6 @@ test('UX-1 shared dates honor the person’s timezone across day and month bound
 test('UX-1 every operation uses the shared Chinese label and detail keys', () => {
   const {api}=fixture();
   for(const name of ['read','pwsh','shell','search','write','ask_user_question','load_tools','weftmod','unknown_connector']) { const label=api.toolLabel(name);assert.match(label,/[\u4e00-\u9fff]/);checkVisibleCopy(label); }
+  assert.equal(api.interfaceText('执行工具 mcp__calendar__list'),'扩展服务');
   checkVisibleCopy(api.executionDetailText(JSON.stringify({arguments:{file_path:'使用说明.md',toolName:'read',query:'报告'},output:[{type:'text',text:'已读取。'}]})));
 });

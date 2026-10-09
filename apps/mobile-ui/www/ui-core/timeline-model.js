@@ -24,7 +24,7 @@
     }
     function interfaceText(value) {
         if (value == null) return '';
-        return String(value).replace(/\b(?:ask_user_question|load_tools|read_file|write_file|exec_command|run_command|pwsh|powershell|shell|bash|read|write|search|grep|glob|weftmod_script|weftmod|job_output|job_list|job_kill|spawn_agent)\b/gi, name => toolLabel(name.toLowerCase()))
+        return String(value).replace(/(?:执行工具|调用工具)(?:[:：]\s*|\s+)([A-Za-z][A-Za-z0-9_.:-]*)/g, (_, name) => toolLabel(name)).replace(/\b(?:ask_user_question|load_tools|read_file|write_file|exec_command|run_command|pwsh|powershell|shell|bash|read|write|search|grep|glob|weftmod_script|weftmod|job_output|job_list|job_kill|spawn_agent)\b/gi, name => toolLabel(name.toLowerCase()))
             .replace(/Weave\s*组件/gi, '界面扩展').replace(/\b(?:undefined|null)\b/g, '未提供');
     }
     function readableParameters(value) {

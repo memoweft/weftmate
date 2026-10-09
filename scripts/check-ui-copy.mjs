@@ -3,7 +3,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import ts from 'typescript';
 import { pathToFileURL } from 'node:url';
-export const internalNamePattern = /\b(?:read|read_file|pwsh|powershell|shell|bash|exec_command|run_command|search|grep|glob|write|write_file|edit|apply_patch|ask_user_question|load_tools|weftmod|weftmod_script|job_output|job_list|job_kill|spawn_agent|undefined|null|toolName|file_path|multiSelect|questionRpcId|sourceReceiptId)\b|Weave\s*组件/i;
+export const internalNamePattern = /\b(?:read|read_file|pwsh|powershell|shell|bash|exec_command|run_command|search|grep|glob|write|write_file|edit|apply_patch|ask_user_question|load_tools|weftmod|weftmod_script|job_output|job_list|job_kill|spawn_agent|undefined|null|toolName|file_path|multiSelect|questionRpcId|sourceReceiptId)\b|\bmcp__[A-Za-z0-9_]+\b|Weave\s*组件/i;
 export function checkVisibleCopy(text, context = '界面文案') {
   const match = internalNamePattern.exec(text);
   if (match) throw new Error(`${context}: internal name ${match[0]}`);
