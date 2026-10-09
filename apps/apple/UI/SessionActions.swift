@@ -87,12 +87,13 @@ struct ForgetPreviewList: View {
     let preview: ForgetPreview?
     let loading: Bool
     let error: String?
+    var conversation = false
     var body: some View {
         VStack(alignment: .leading, spacing: AppleTokens.Space.p10) {
             if loading { ProgressView("正在读取将一起忘掉的记忆…") }
             if let error { InlineNotice(message: error, isError: true) }
             if let preview {
-                Text(preview.summary).font(AppleTokens.Fonts.headline).accessibilityIdentifier("forgetPreviewSummary")
+                Text(conversation ? preview.conversationSummary : preview.summary).font(AppleTokens.Fonts.headline).accessibilityIdentifier("forgetPreviewSummary")
                 ForEach(preview.items, id: \.identity) { item in Text(item.summary).accessibilityIdentifier("forgetPreviewItem." + item.id) }
             }
         }
@@ -121,7 +122,7 @@ struct SessionDeleteSheet: View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppleTokens.Space.p20) {
                 Text("删除对话？").font(AppleTokens.Fonts.title2)
-                Text("永久删除这段对话、专属工作目录与经验，无法恢复。运行中的任务会先停止。长期记忆默认保留。")
+                Text("这会永久删除对话、工作目录与经验，无法恢复。运行中的对话会先停止。")
                 Button { Task { await app.setConversationForget(!app.forgetConversationMemories) } } label: {
                     HStack(spacing: AppleTokens.Space.p12) {
                         ZStack {
@@ -135,7 +136,7 @@ struct SessionDeleteSheet: View {
                     .accessibilityValue(app.forgetConversationMemories ? "已勾选" : "未勾选")
                     .accessibilityIdentifier("forgetConversationMemories").disabled(app.lifecycleBusy)
                 if app.forgetConversationMemories {
-                    ForgetPreviewList(preview: app.conversationForget.preview, loading: app.conversationPreviewLoading, error: nil)
+                    ForgetPreviewList(preview: app.conversationForget.preview, loading: app.conversationPreviewLoading, error: nil, conversation: true)
                     OriginalSnippetsOption(checked: $app.conversationForget.deleteConversationSnippets).disabled(app.lifecycleBusy)
                     Button("重新读取遗忘范围") { Task { await app.setConversationForget(true) } }.disabled(app.lifecycleBusy || app.conversationPreviewLoading)
                 }
@@ -185,9 +186,9 @@ struct ArchivedSessionsView: View {
                         Button("删除", role: .destructive) { app.askToDelete(row, inSettings: true) }.accessibilityIdentifier("deleteArchived." + row.id)
                     }.buttonStyle(.borderless).disabled(app.lifecycleBusy)
                 }
-                if rows.isEmpty { Text(search.isEmpty ? "暂无已归档对话" : "没有找到已归档对话").foregroundStyle(Weave.muted) }
+                if rows.isEmpty { Text("没有已归档对话。").foregroundStyle(Weave.muted) }
             }.scrollContentBackground(.hidden)
-        }.background(Weave.canvas).task { await app.refresh() }.accessibilityIdentifier("archivedSessions")
+        }.background(Weave.canvas).task { await app.refresh() }.accessibilityElement(children: .contain).accessibilityIdentifier("archivedSessions")
         // The settings scene or phone settings sheet owns this confirmation.
         .sheet(item: Binding(get: { app.deletionInSettings ? app.deletionCandidate : nil }, set: { app.deletionCandidate = $0 })) { _ in SessionDeleteSheet(app: app) }
     }

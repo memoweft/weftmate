@@ -49,7 +49,8 @@ public struct ForgetPreviewItem: Decodable, Identifiable, Equatable, Sendable {
 public struct ForgetPreview: Decodable, Equatable, Sendable {
     public let ownerId: String?; public let worldRevision: Int; public let itemCount: Int
     public let evidenceCount: Int; public let evidenceIds: [String]; public let items: [ForgetPreviewItem]
-    public var summary: String { "将忘掉 \(itemCount) 项记忆和 \(evidenceCount) 条来源。" }
+    public var summary: String { "将忘掉 \(itemCount) 项记忆，清除 \(evidenceCount) 条来源。以下内容会一起忘掉：" }
+    public var conversationSummary: String { "将一起忘掉 \(itemCount) 项记忆，清除 \(evidenceCount) 条来源。勾选删除原话也会清除其他对话里的对应片段。" }
     public func validate(ownerID: String, expectedRevision: Int? = nil) throws {
         guard ownerId == nil || ownerId == ownerID else { throw APIFailure.identityMismatch }
         guard worldRevision >= 0, itemCount == items.count, evidenceCount == evidenceIds.count,

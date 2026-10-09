@@ -9,7 +9,7 @@ final class A7SessionMenuUITests: XCTestCase {
         return try JSONSerialization.jsonObject(with: data) as! [String: Any]
     }
     @MainActor private func expect(_ item: XCUIElement) throws {
-        guard item.waitForExistence(timeout: 30) else { XCTFail("Missing: " + item.identifier); throw NSError(domain: "A7UI", code: 1) }
+        guard item.waitForExistence(timeout: 30) else { throw NSError(domain: "A7UI.Missing." + item.identifier, code: 1) }
     }
     @MainActor private func tap(_ app: XCUIApplication, _ name: String) throws {
         let button = app.buttons[name]; try expect(button)
@@ -79,7 +79,7 @@ final class A7SessionMenuUITests: XCTestCase {
         try expect(app.staticTexts["合成人物蓝色纸鹤（人物）"])
         let snippets = app.buttons["deleteConversationSnippets"]; try expect(snippets); XCTAssertEqual(snippets.value as? String, "未勾选")
         keep(app, "conversation-forget", theme); try tap(app, "confirmDeleteConversation")
-        try expect(app.staticTexts["暂无已归档对话"])
+        try expect(app.staticTexts["没有已归档对话。"])
         try tap(app, "完成")
         try tap(app, "phoneAccountMenu"); try tap(app, "phoneMenu.memory")
         try tap(app, "memoryItem.memory-synthetic"); try tap(app, "deleteMemoryButton")
