@@ -72,7 +72,7 @@ for (const [surface, { themes }] of entries(tokens.surfaces)) {
   }
 }
 const apple = tokens.apple;
-const swiftID = value => value.replaceAll('.', '_');
+const swiftID = value => value.replace(/[^A-Za-z0-9_]/g, '_');
 const constants = (name, values, type, expression = value => value) =>
   `    public enum ${name} {\n${entries(values).map(([key, value]) => `        public static let ${key}: ${type} = ${expression(value)}`).join('\n')}\n    }\n`;
 const pointValues = (shared, native, prefix) => Object.fromEntries(entries({ ...numeric(shared), ...native })
