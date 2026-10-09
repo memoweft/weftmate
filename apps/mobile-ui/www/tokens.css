@@ -203,6 +203,10 @@
   --success: var(--wm-color-mobile-success);
   --success-soft: var(--wm-color-success-soft);
   --warning: var(--wm-color-mobile-warning);
+  --window-frame: var(--canvas);
+  --sidebar: var(--window-frame);
+  --panel: var(--surface);
+  --panel-divider: var(--line);
 }
 :root[data-theme=dark] {
   --accent: #e0e3da;
@@ -220,6 +224,10 @@
   --success: #a7e7cf;
   --success-soft: #253c32;
   --warning: var(--wm-color-mobile-warning);
+  --window-frame: var(--canvas);
+  --sidebar: var(--window-frame);
+  --panel: var(--surface);
+  --panel-divider: var(--line);
 }
 :root[data-theme=dark] .approval-actions .primary,:root[data-theme=dark] .approval-risk-actions .primary {
   --success: #a7e7cf;

@@ -155,13 +155,23 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         effects.updateAvailability();
     }
     function composerInputMode(sessionId) {
-        return core.state.sessions.find(item => item.sessionId === sessionId)?.running ? core.state.messageMode || 'steer' : 'queue';
+        return core.state.sessions.find(item => item.sessionId === sessionId)?.running ? messageModePreference() : 'queue';
+    }
+    function messageModePreference() {
+        const owner = core.state.account?.ownerId || core.state.ownerId;
+        if (core.state.messageModeOwner !== owner) {
+            core.state.messageModeOwner = owner;
+            let saved;
+            try { saved = owner && environment.storage.getItem(`weftmate:message-mode:${owner}`); } catch { /* unavailable device storage */ }
+            core.state.messageMode = saved === 'steer' ? 'steer' : 'queue';
+        }
+        return core.state.messageMode === 'steer' ? 'steer' : 'queue';
     }
     async function sendIntentAction(action, intent) {
-        const previous = core.state.messageMode, context = core.conversationTaskContext();
-        if (intent) core.setMessageMode(intent);
+        const previous = messageModePreference(), context = core.conversationTaskContext();
+        if (intent) core.state.messageMode = intent;
         try { return await action(); }
-        finally { if (intent && core.conversationTaskCurrent(context)) core.setMessageMode(previous); }
+        finally { if (intent && core.conversationTaskCurrent(context)) core.state.messageMode = previous; }
     }
     async function sendDraft(text = effects.readMessageDraft(), intent) {
         if (core.state.activeChatSource === 'phone')
@@ -260,14 +270,34 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         effects.updateAvailability();
         return true;
     }
-    function setMessageMode(mode) { core.state.messageMode = mode === 'queue' ? 'queue' : 'steer'; effects.updateAvailability(); }
+    function setMessageMode(mode) {
+        messageModePreference();
+        core.state.messageMode = mode === 'steer' ? 'steer' : 'queue';
+        if (core.state.messageModeOwner) try { environment.storage.setItem(`weftmate:message-mode:${core.state.messageModeOwner}`, core.state.messageMode); } catch { /* unavailable device storage */ }
+        if (core.state.messageModeOwner && environment.messageModeStorage) void environment.messageModeStorage(`weftmate:message-mode:${core.state.messageModeOwner}`, core.state.messageMode).catch(() => {});
+        effects.updateAvailability();
+    }
+    async function loadMessageModePreference() {
+        const value = messageModePreference(), owner = core.state.messageModeOwner, identity = core.state.identityGeneration;
+        if (!owner || !environment.messageModeStorage) return value;
+        try {
+            const saved = await environment.messageModeStorage(`weftmate:message-mode:${owner}`);
+            if (identity === core.state.identityGeneration && owner === core.state.messageModeOwner && ['steer', 'queue'].includes(saved)) core.state.messageMode = saved;
+        } catch { /* keep this origin's account preference when native storage is unavailable */ }
+        return core.state.messageMode;
+    }
+    function processingStageLabel(value, events = [...core.state.historyEvents.values()], now = Date.now()) {
+        const started = [...events].filter(event => event.type === 'turn.started').sort((a, b) => a.seq - b.seq).at(-1);
+        const elapsed = now - Date.parse(started?.at);
+        return processingLabel(value) + (Number.isFinite(elapsed) && elapsed >= 0 ? ` ${Math.floor(elapsed / 1000)} 秒` : '');
+    }
     function processingLabel(value) {
         if (value?.phase === 'loading') return `正在加载模型${value.modelName ? ` ${value.modelName}` : ''}…`;
         if (value?.phase === 'queued' && Number.isSafeInteger(value.ahead) && value.ahead > 0) return `模型排队中，前面还有 ${value.ahead} 个请求`;
         return { memory: '正在读取记忆…', reasoning: '正在思考…', answering: '正在回复…' }[value?.phase] || '等待模型回复…';
     }
     return { handleOptimisticCreation, beginOptimistic, optimisticMessages, reconcileOptimistic, observeOptimistic, startNewConversation, retryOptimistic,
-        addAttachmentFiles, composerInputMode, sendDraft, stopCurrentTurn, composerState, selectModelProfile, setMessageMode, processingLabel };
+        addAttachmentFiles, composerInputMode, messageModePreference, loadMessageModePreference, sendDraft, stopCurrentTurn, composerState, selectModelProfile, setMessageMode, processingLabel, processingStageLabel };
 };
 
 globalThis.WeftUiCore.contextUsageView = value => {

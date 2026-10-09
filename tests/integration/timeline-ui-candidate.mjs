@@ -36,7 +36,9 @@ export async function startTimelineCandidate(options = {}) {
       operations.push({ kind: 'message', mode: input.mode, text: input.text })
       if (events.length && options.interactive) {
         const rpc = `synthetic-${randomUUID()}`
-        append('user/message', { source: { kind: 'user', rpcId: rpc }, content: [{ type: 'text', text: input.text }] })
+        if(options.windowChrome && input.mode==='queue') append('agent/inbox/spliced', {target:'next-turn',start:events.filter(event=>event.type==='agent/inbox/spliced').length,
+          inserted:[{id:rpc,source:{kind:'user',rpcId:rpc},content:[{type:'text',text:input.text}]}]})
+        else append('user/message', { source: { kind: 'user', rpcId: rpc }, content: [{ type: 'text', text: input.text }] })
         return { accepted: true, receiptId: rpc }
       }
       for (let i = 0; i < (options.historyCount ?? 2100); i++) append('assistant/message', { content: [{ type: 'text', text: `历史记录 ${i + 1}：已核对项目资料。` }] })
@@ -95,7 +97,7 @@ export async function startTimelineCandidate(options = {}) {
     if (['app.ready', 'app.activity', 'events.subscribe'].includes(method)) return {}
     if (method === 'app.bootstrap') return { loggedIn: true, username: credentials.username, owner: hash(`${origin}|${auth.account.ownerId}`), busy: false, model: { source: 'host', displayName: '合成会话' } }
     if (method === 'auth.me') return { device: auth.device, deviceId: auth.device.id, displayName: '隔离测试账号', connectionVerified: true }
-    if (method === 'settings.appearance') return { value: 'light' }
+    if (method === 'settings.appearance') return { value: options.appearanceTheme || 'light' }
     if (method === 'attachments.list') return {attachments:[]}
     if (method === 'clipboard.copy') return {}
     if (method === 'conversations.list') return { conversations: [] }

@@ -148,9 +148,10 @@ test('shared send/stop actions choose steer or queue and block unresolved submis
   f.core.submitCommand = async (...args: any[]) => { commands.push(args); return { state: 'accepted_by_dsh' } }
   await f.core.sendDraft('普通消息'); assert.equal(commands.at(-1)[1].intent, 'queue')
   f.core.state.sessions[0].running = true
-  await f.core.sendDraft('调整目标'); assert.equal(commands.at(-1)[1].intent, 'steer')
+  await f.core.sendDraft('调整目标'); assert.equal(commands.at(-1)[1].intent, 'queue')
+  f.core.setMessageMode('steer'); await f.core.sendDraft('引导调整'); assert.equal(commands.at(-1)[1].intent, 'steer')
   f.core.setMessageMode('queue'); await f.core.sendDraft('下一件事'); assert.equal(commands.at(-1)[1].intent, 'queue')
-  f.core.state.unresolvedSubmission = true; await f.core.sendDraft('送达未确认时'); assert.equal(commands.length, 3)
+  f.core.state.unresolvedSubmission = true; await f.core.sendDraft('送达未确认时'); assert.equal(commands.length, 4)
   await f.core.stopCurrentTurn(); assert.equal(commands.at(-1)[0], 'session.cancel')
   const view = f.core.composerState('未发送的草稿')
   assert.equal(view.running, true); assert.equal(view.sendDisabled, true)
@@ -257,10 +258,10 @@ test('UI-3 intent overrides do not change the composer selection and empty runni
   const f = fixture(), sent: any[] = []
   f.core.state.sessions[0].running = true
   f.core.submitCommand = async (...args: any[]) => { sent.push(args); return {} }
-  assert.equal(f.core.composerInputMode('session-test'), 'steer')
+  assert.equal(f.core.composerInputMode('session-test'), 'queue')
   await f.core.sendDraft('快捷键排队', 'queue')
-  assert.equal(sent[0][1].intent, 'queue'); assert.equal(f.core.composerInputMode('session-test'), 'steer')
-  f.core.setMessageMode('invalid'); assert.equal(f.core.composerInputMode('session-test'), 'steer')
+  assert.equal(sent[0][1].intent, 'queue'); assert.equal(f.core.composerInputMode('session-test'), 'queue')
+  f.core.setMessageMode('invalid'); assert.equal(f.core.composerInputMode('session-test'), 'queue')
   assert.equal(f.core.composerState('').sendDisabled, true)
   assert.equal(f.core.composerState('补充').sendText, '发送')
 })
@@ -359,15 +360,59 @@ test('UI-3 attachment shortcuts respect unresolved submissions and restore the s
   f.core.sendDesktopMessageWithAttachments = async () => { intents.push(f.core.composerInputMode('session-test')); return {} }
   f.core.state.unresolvedSubmission = true; await f.core.sendDraft('带附件排队', 'queue'); assert.equal(intents.length, 0)
   f.core.state.unresolvedSubmission = false; await f.core.sendDraft('带附件排队', 'queue')
-  assert.deepEqual(intents, ['queue']); assert.equal(f.core.composerInputMode('session-test'), 'steer')
+  assert.deepEqual(intents, ['queue']); assert.equal(f.core.composerInputMode('session-test'), 'queue')
 })
 
-test('UI-3 switching to another conversation resets the running-input default to steer', async () => {
+test('D36 switching conversations preserves the account running-input preference', async () => {
   const f = fixture()
   f.core.state.sessions.push({ sessionId: 'next-session', sendAvailable: true, running: true })
   f.core.refreshHistory = async () => {}; f.core.refreshApprovalMode = async () => {}; f.core.refreshConversationTasks = async () => {}
-  f.core.setMessageMode('queue'); await f.core.selectSession('next-session')
+  f.core.setMessageMode('steer'); await f.core.selectSession('next-session')
   assert.equal(f.core.composerInputMode('next-session'), 'steer')
+})
+
+test('D36 account preferences survive recreation, isolate accounts and preserve temporary send overrides', async () => {
+  const f = fixture(); f.core.state.sessions[0].running = true;
+  assert.equal(f.core.composerInputMode('session-test'), 'queue');
+  f.core.setMessageMode('steer');
+  const reloaded = f.api.create({ effects: f.effects, ...f.environment });
+  Object.assign(reloaded.state, { ownerId: 'owner-test', sessions: f.core.state.sessions });
+  assert.equal(reloaded.composerInputMode('session-test'), 'steer');
+  reloaded.state.ownerId = 'another-account';
+  assert.equal(reloaded.composerInputMode('session-test'), 'queue');
+  reloaded.setMessageMode('queue'); reloaded.state.ownerId = 'owner-test';
+  assert.equal(reloaded.composerInputMode('session-test'), 'steer');
+  f.core.submitCommand = async () => ({});
+  await f.core.sendDraft('临时排队', 'queue');
+  assert.equal(f.values.get('weftmate:message-mode:owner-test'), 'steer');
+  f.core.state.sessions[0].running = false;
+  assert.equal(f.core.composerInputMode('session-test'), 'queue');
+})
+
+test('D36 stage timer uses the latest persisted turn and omits unknown or future timestamps', () => {
+  const f = fixture(), now = Date.parse('2026-10-09T00:01:16Z');
+  const events = [{seq:1,type:'turn.started',at:'2026-10-09T00:00:00Z'}, {seq:4,type:'turn.started',at:'2026-10-09T00:01:00Z'}];
+  assert.equal(f.core.processingStageLabel({phase:'loading',modelName:'Muse Q5'}, events, now),'正在加载模型 Muse Q5… 16 秒');
+  assert.equal(f.core.processingStageLabel({phase:'reasoning'}, [], now),'正在思考…');
+  assert.equal(f.core.processingStageLabel({phase:'reasoning'}, events, now-20000),'正在思考…');
+})
+
+test('D36 native account storage survives an origin change and rejects a late previous account read', async () => {
+  const f = fixture(), nativeValues = new Map<string,string>();
+  const messageModeStorage = async (key: string, value?: string) => {
+    if (value !== undefined) nativeValues.set(key, value);
+    return nativeValues.get(key);
+  };
+  const first = f.api.create({ effects:f.effects, ...f.environment, messageModeStorage });
+  first.state.account = {ownerId:'owner-test'}; first.setMessageMode('steer'); await Promise.resolve();
+  const second = f.api.create({ effects:f.effects, ...f.environment, storage:{getItem:()=>null,setItem(){}}, messageModeStorage });
+  second.state.account = {ownerId:'owner-test'};
+  await second.loadMessageModePreference(); assert.equal(second.messageModePreference(),'steer');
+  const delayed = deferred();
+  const switching = f.api.create({ effects:f.effects, ...f.environment, messageModeStorage:()=>delayed.promise });
+  switching.state.account = {ownerId:'owner-test'}; const loading=switching.loadMessageModePreference();
+  switching.state.identityGeneration++; switching.state.account={ownerId:'another-account'};switching.messageModePreference();
+  delayed.resolve('steer');await loading;assert.equal(switching.messageModePreference(),'queue');
 })
 test('session lifecycle actions use protected writes and never enable an archived/read-only session by inference',async()=>{
   const f=fixture((url:string)=>({ok:true,json:async()=>url.endsWith('archived=all')?{sessions:[{sessionId:'session-test',archived:true,sendAvailable:false}]}:{archived:true}}));

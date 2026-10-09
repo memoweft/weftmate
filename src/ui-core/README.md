@@ -34,7 +34,7 @@ const core = globalThis.WeftUiCore.create({
 |---|---|
 | 登录与连接 | `state.account/device/online/capabilities`；`load()`、`loginAccount(input)`、`setupAccount(input)`、`acceptSession(payload)`、`clearSession()`、`refreshStatus()` |
 | 会话与历史 | `state.sessions/historyEvents/afterSeq/nextBeforeSeq/hasOlder`；`selectSession(id)`、`refreshHistory(reset)`、`loadOlderHistory()`、`appendHistory(events)`、`projectTimeline(events)`、`turnStatusViewModel()` |
-| 发送、停止、插话、排队 | `composerState(text)`；`sendDraft(text)`、`stopCurrentTurn()`、`setMessageMode(mode)`、`composerInputMode(sessionId)`；手机来源的同一发送恢复流程在 `phone.js` |
+| 发送、停止、引导、排队 | `composerState(text)`；`sendDraft(text)`、`stopCurrentTurn()`、`setMessageMode(mode)`、`composerInputMode(sessionId)`；手机来源的同一发送恢复流程在 `phone.js` |
 | 审批与模式 | `conversationApprovals`、`approvalModes`；`refreshConversationApprovals()`、`submitApproval(context, row, outcome, scope)`、`refreshApprovalMode(id)`、`saveApprovalMode(mode)`、`saveDefaultApprovalMode(mode)` |
 | 提问 | `conversationQuestions`；`questionDraft(context, row)`、`chooseQuestionOption(...)`、`setQuestionCustom(...)`、`submitQuestion(context, row)`；保留原问题顺序和完整选项文字 |
 | 成果与来源 | `loadConversationResources()`、`readTimelineDetail(sessionId, seq)`、`readResource(path)`、`resourceReferences(text)`；资源页游标与调用去重、最新成果和捕获来源优先在功能层处理 |

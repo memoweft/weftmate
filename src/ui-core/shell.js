@@ -203,6 +203,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
     async function enterAssistant() {
         core.show('assistant');
         effects.closeRail();
+        await core.loadMessageModePreference();
         await core.refreshAssistant();
         effects.startAssistantRefresh();
     }

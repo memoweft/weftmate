@@ -94,7 +94,6 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         const fromPhone = core.state.activeChatSource === 'phone';
         if (core.state.selectedSessionId !== sessionId) {
             core.cancelAttachmentUpload();
-            core.state.messageMode = 'steer';
         }
         if (fromPhone && core.state.selectedPhoneConversationId && !core.readPhoneOutbox())
             core.state.phoneDrafts.set(core.state.selectedPhoneConversationId, effects.readMessageDraft());
