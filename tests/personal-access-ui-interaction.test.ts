@@ -313,6 +313,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
         config.accountModelWrite ? 200 : 404))
     if (url.endsWith('/models')) return Promise.resolve(reply({ models: config.modelCatalog ??
       [{ id: 'model-test', name: 'Synthetic', configured: true }] }))
+    if (/\/sessions\/[^/]+\/metadata$/.test(url) && options.method === 'PATCH') return Promise.resolve(reply(JSON.parse(options.body)))
     if (url.split('?')[0].endsWith('/sessions')) return Promise.resolve(reply({ sessions: config.sessions ?? [
       { sessionId: 'A', title: 'A', sendAvailable: true, running: aRunning }, { sessionId: 'B', title: 'B', sendAvailable: true },
     ] }))
@@ -450,13 +451,21 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
   runInNewContext(readFileSync(join(repository, 'src/personal-access-ui/icons.js'), 'utf8') + '\nwindow.WeftIcons = globalThis.WeftIcons;', context)
   runInNewContext(readFileSync(join(repository, 'src/personal-access-ui/timeline.js'), 'utf8'), context)
   runInNewContext(executableSource, context)
+  const named = (label: string, name: string | RegExp) => typeof name === 'string' ? label === name : name.test(label);
+  const dynamicButtons = () => get('session-list').querySelectorAll('button');
+  const buttonName = (node: Element) => node.attributes.get('aria-label') || visibleText(node).trim();
+  const conversationButtons = () => {
+    const names = new Set([...(config.sessions ?? [{title:'A'},{title:'B'}]).map(row=>row.title),
+      ...(config.syncEvents ?? []).filter((row:any)=>row.kind==='conversation.created').map((row:any)=>row.payload.title)]);
+    return dynamicButtons().filter(node=>names.has(buttonName(node)));
+  };
   const getByRole = (role: string, { name }: { name: string | RegExp }) => {
-    const matches = [...controlMetadata].filter(([, control]) => control.role === role &&
-      (typeof name === 'string' ? control.name === name : name.test(control.name)))
-    assert.equal(matches.length, 1, `one ${role} named ${name}`)
-    return get(matches[0][0])
+    const matches = [...controlMetadata].filter(([, control]) => control.role === role && named(control.name,name)).map(([id])=>get(id));
+    if(role==='button')matches.push(...dynamicButtons().filter(node=>named(buttonName(node),name)));
+    assert.equal(matches.length, 1, `one ${role} named ${name}`);
+    return matches[0];
   }
-  return { get, getByRole, document, requests, storage, history, objectUrls, setDeferHistory: (value: boolean) => { deferHistory = value },
+  return { get, getByRole, conversationButtons, document, requests, storage, history, objectUrls, setDeferHistory: (value: boolean) => { deferHistory = value },
     deferMe: () => { deferNextMe = true }, resolveMe: (value: object, status = 200) => { deferredMe?.resolve(reply(value, status)); deferredMe = null },
     deferDevices: () => { deferNextDevices = true }, resolveDevices: (value: object) => { deferredDevices?.resolve(reply(value)); deferredDevices = null },
     resolveTaskDetail: (value: object, status = 200) => { deferredTaskDetail?.resolve(reply(value, status)); deferredTaskDetail = null },
@@ -565,12 +574,11 @@ test('switching sessions aborts a late original upload and keeps the file only i
   page.get('message-attachments').fire('change')
   page.get('message-form').fire('submit')
   for (let attempt = 0; attempt < 40 && !page.requests.some((request) => request.url.includes('/sync/attachments/')); attempt++) await flush()
-  const sessionButtons = page.get('session-list').children.map((item) => item.children[0])
-  sessionButtons[1].fire('click')
+  page.getByRole('button',{name:'B'}).fire('click')
   for (let attempt = 0; attempt < 20 && page.get('assistant-title').textContent !== 'B'; attempt++) await flush()
   assert.equal(page.get('attachment-draft-list').children.length, 0)
   assert.equal(page.requests.some((request) => request.url.endsWith('/commands') && request.options.method === 'POST'), false)
-  sessionButtons[0].fire('click')
+  page.getByRole('button',{name:'A'}).fire('click')
   for (let attempt = 0; attempt < 20 && page.get('assistant-title').textContent !== 'A'; attempt++) await flush()
   assert.equal(page.get('attachment-draft-list').children.length, 1)
   assert.equal(page.get('send-message').disabled, false)
@@ -759,10 +767,10 @@ test('a delayed create failure updates its real receipt without clearing the sel
 
 test('A to B to A discards old history responses even when the session ID matches again', async () => {
   const page = harness()
-  for (let attempt = 0; attempt < 10 && page.get('session-list').children.length === 0; attempt++) await flush()
-  assert.equal(page.get('session-list').children.length, 2)
+  for (let attempt = 0; attempt < 10 && page.conversationButtons().length === 0; attempt++) await flush()
+  assert.equal(page.conversationButtons().length, 2)
   page.setDeferHistory(true)
-  const [a, b] = page.get('session-list').children.map((item) => item.children[0])
+  const [a, b] = [page.getByRole('button',{name:'A'}),page.getByRole('button',{name:'B'})]
   a.fire('click') // A1
   b.fire('click') // B1
   a.fire('click') // A2
@@ -886,7 +894,7 @@ test('task15-narrow late task refresh cannot reclaim focus after switching sessi
   await task15NarrowClose(page)
   const oldEntry = page.document.activeElement
   page.deferOneTaskDetail(); page.tick(); await flush()
-  page.get('session-list').children[1].children[0].fire('click'); await flush()
+  page.getByRole('button',{name:'B'}).fire('click'); await flush()
   page.getByRole('textbox', { name: '输入消息' }).focus()
   page.resolveTaskDetail({ ...task, replyEvidence: { status: 'aborted' } }); await flush()
   assert.equal(page.get('assistant-title').textContent, 'B')
@@ -918,8 +926,8 @@ test('task15-narrow late task refresh cannot reclaim focus after switching to th
   await task15NarrowClose(page)
   const oldEntry = page.document.activeElement
   page.deferOneTaskDetail(); page.tick(); await flush()
-  const phone = page.get('session-list').children.find((row) => visibleText(row).includes('另一来源'))!
-  assert.ok(phone); phone.children[0].fire('click'); await flush()
+  const phone = page.getByRole('button',{name:'另一来源'})
+  assert.ok(phone); phone.fire('click'); await flush()
   page.getByRole('textbox', { name: '输入消息' }).focus()
   page.resolveTaskDetail({ ...task, replyEvidence: { status: 'aborted' } }); await flush()
   assert.match(page.get('assistant-title').textContent, /另一来源/)
@@ -976,7 +984,7 @@ test('synthetic late inline task payload is discarded after selecting another co
   const page = harness([source], [{ seq: 0, type: 'user.message', data: { text: 'A目标', receiptId: source.receiptId } }], false,
     { deferTaskDetail: true })
   for (let i = 0; i < 20 && !page.requests.some((row) => row.url.endsWith('/tasks/late-inline')); i++) await flush()
-  page.get('session-list').children[1].children[0].fire('click'); await flush()
+  page.getByRole('button',{name:'B'}).fire('click'); await flush()
   page.resolveTaskDetail({ taskId: source.commandId, sessionId: 'A', source, artifacts: [], executionSteps: [{ executionId: 'exec-late',
     toolName: 'pwsh', state: 'completed', sourceCommandId: source.commandId, sourceReceiptId: source.receiptId }] })
   await flush()
@@ -1073,7 +1081,7 @@ test('terminal-output-limit desktop offline session selection and account reset 
   page.tick()
   for (let attempt = 0; attempt < 20 && page.get('connection-banner').hidden; attempt++) await flush()
   assert.equal(page.get('connection-banner').hidden, false)
-  const [a, b] = page.get('session-list').children.map((row) => row.children[0])
+  const [a, b] = [page.getByRole('button',{name:'A'}),page.getByRole('button',{name:'B'})]
   b.fire('click')
   assert.equal(page.get('timeline-status').textContent, '', 'selection clears even when refreshHistory exits before its reset branch')
   config.statusOffline = false
@@ -1100,7 +1108,7 @@ test('durable turn errors remain visible while a later completed turn clears the
   events.push({ seq: 4, type: 'turn.started', data: {} },
     { seq: 5, type: 'assistant.message', data: { text: 'reply' } },
     { seq: 6, type: 'turn.ended', data: { reason: 'completed' } })
-  page.get('session-list').children[0].children[0].fire('click')
+  page.getByRole('button',{name:'A'}).fire('click')
   for (let attempt = 0; attempt < 10 && page.get('transcript').children.length < 2; attempt++) await flush()
   assert.equal(page.get('timeline-status').textContent, '')
   assert.match(page.get('transcript').children.map(visibleText).join(' '), /hello.*reply/)
@@ -1180,11 +1188,11 @@ test('main chat rail opens the same phone MiMo conversation and its authenticate
     } },
   ]
   const page = harness([], [], false, { syncAvailable: true, syncEvents: rows })
-  for (let attempt = 0; attempt < 20 && page.get('session-list').children.length < 3; attempt++) await flush()
+  for (let attempt = 0; attempt < 20 && page.conversationButtons().length < 3; attempt++) await flush()
   const rail = page.get('session-list')
-  assert.equal(rail.children.length, 3, 'desktop and phone conversations share one rail')
-  assert.match(visibleText(rail.children[2]), /路上的图片/)
-  rail.children[2].children[0].fire('click')
+  assert.equal(page.conversationButtons().length, 3, 'desktop and phone conversations share one rail')
+  assert.match(visibleText(page.getByRole('button',{name:'路上的图片'})), /路上的图片/)
+  page.getByRole('button',{name:'路上的图片'}).fire('click')
   assert.equal(page.get('assistant-title').textContent, '路上的图片')
   assert.equal(page.get('conversation-pane').hidden, false)
   assert.equal(page.getByRole('textbox', { name: '输入消息' }).disabled, false)
@@ -1211,7 +1219,7 @@ test('main chat rail opens the same phone MiMo conversation and its authenticate
   preview.fire('cancel')
   assert.equal(preview.hidden, true, 'Escape closes the native dialog')
   assert.equal(thumbnail.children[0].focused, true, 'Escape returns focus to the trigger')
-  rail.children[0].children[0].fire('click')
+  page.getByRole('button',{name:'A'}).fire('click')
   await flush()
   assert.equal(page.get('assistant-title').textContent, 'A')
   assert.equal(page.getByRole('textbox', { name: '输入消息' }).disabled, false, 'desktop DSH conversation remains sendable')
@@ -1237,9 +1245,9 @@ test('bound phone conversation keeps one rail card and exact receipt renders its
     { seq: 11, type: 'assistant.message', data: { text: '电脑基于手机事实回答' } }]
   const page = harness([], history, false, { syncAvailable: true, syncEvents: rows,
     conversationViews: { [conversationId]: view } })
-  for (let attempt = 0; attempt < 30 && page.get('session-list').children.length !== 2; attempt++) await flush()
-  assert.equal(page.get('session-list').children.length, 2, 'bound A is represented by the original phone card')
-  page.get('session-list').children[1].children[0].fire('click')
+  for (let attempt = 0; attempt < 30 && page.conversationButtons().length !== 2; attempt++) await flush()
+  assert.equal(page.conversationButtons().length, 2, 'bound A is represented by the original phone card')
+  page.getByRole('button',{name:'同一段对话'}).fire('click')
   for (let attempt = 0; attempt < 30 && !visibleText(page.get('transcript')).includes('电脑基于手机事实回答'); attempt++) await flush()
   const text = visibleText(page.get('transcript'))
   assert.match(text, /手机事实.*本机回应.*电脑基于手机事实回答/)
@@ -1263,8 +1271,8 @@ test('phone handoff prefers only one exact original route and never defaults to 
   async function opened(originalModel: object | null) {
     const page = harness([], [], false, { syncAvailable: true, syncEvents: events,
       modelCatalog: catalog, conversationViews: { [conversationId]: view(originalModel) } })
-    for (let attempt = 0; attempt < 25 && page.get('session-list').children.length < 3; attempt++) await flush()
-    page.get('session-list').children[2].children[0].fire('click')
+    for (let attempt = 0; attempt < 25 && page.conversationButtons().length < 3; attempt++) await flush()
+    page.getByRole('button',{name:'模型选择'}).fire('click')
     for (let attempt = 0; attempt < 25 && !visibleText(page.get('transcript')).includes('刷新电脑模型目录'); attempt++) await flush()
     const controls = page.get('transcript').children.at(-1)!
     const select = controls.children.find((item) => item.textContent === '电脑模型')?.children[0]
@@ -1361,8 +1369,8 @@ test('phone image timeline bounds large originals and recovers small images with
     } },
   ]
   const page = harness([], [], false, { syncAvailable: true, syncEvents: rows })
-  for (let attempt = 0; attempt < 20 && page.get('session-list').children.length < 3; attempt++) await flush()
-  page.get('session-list').children.at(-1)!.children[0].fire('click')
+  for (let attempt = 0; attempt < 20 && page.conversationButtons().length < 3; attempt++) await flush()
+  page.getByRole('button',{name:'长图对话'}).fire('click')
   const messages = page.get('transcript').children
   assert.match(visibleText(messages[0]), /看这张.*notes\.txt/)
   assert.doesNotMatch(visibleText(messages[0]), /旧图\.png|跨端暂不可见/)
@@ -1412,7 +1420,7 @@ test('DSH history renders image-only and mixed user turns from owner-scoped GET,
   const viewer = page.get('body').children.find((child) => child.id === 'phone-image-preview')!
   assert.equal(viewer.hidden, false)
   assert.equal(viewer.children[0].src, url)
-  page.get('session-list').children[1].children[0].fire('click')
+  page.getByRole('button',{name:'B'}).fire('click')
   await flush()
   assert.equal(viewer.hidden, true)
   assert.equal(viewer.children[0].src, '')
@@ -1479,8 +1487,8 @@ test('desktop appends one user text event to the original phone conversation wit
   const page = harness([], [], false, { syncAvailable: true, uuidForSync: true, syncEvents: [
     { seq: 1, conversationId, sourceDeviceId: 'device-phone', kind: 'conversation.created', payload: { title: '同一条对话' } },
   ] })
-  for (let attempt = 0; attempt < 20 && page.get('session-list').children.length < 3; attempt++) await flush()
-  page.get('session-list').children[2].children[0].fire('click')
+  for (let attempt = 0; attempt < 20 && page.conversationButtons().length < 3; attempt++) await flush()
+  page.getByRole('button',{name:'同一条对话'}).fire('click')
   page.getByRole('textbox', { name: '输入消息' }).value = '电脑补充的文字'
   page.getByRole('textbox', { name: '输入消息' }).fire('input')
   page.get('message-form').fire('submit')
@@ -1504,8 +1512,8 @@ test('timeout keeps exact phone event and draft; retry reconciles then posts the
   const page = harness([], [], false, { syncAvailable: true, uuidForSync: true, syncPost: 'timeout-no-commit', syncEvents: [
     { seq: 1, conversationId, sourceDeviceId: 'device-phone', kind: 'conversation.created', payload: { title: '离线文字' } },
   ] })
-  for (let attempt = 0; attempt < 20 && page.get('session-list').children.length < 3; attempt++) await flush()
-  page.get('session-list').children[2].children[0].fire('click')
+  for (let attempt = 0; attempt < 20 && page.conversationButtons().length < 3; attempt++) await flush()
+  page.getByRole('button',{name:'离线文字'}).fire('click')
   page.getByRole('textbox', { name: '输入消息' }).value = '原文保留'
   page.get('message-form').fire('submit')
   for (let attempt = 0; attempt < 20 && !page.storage.has('weftmate:phone-sync-outbox:v1:owner-test:device-test'); attempt++) await flush()
@@ -1529,8 +1537,8 @@ test('lost receipt after server commit reconciles the same event without a secon
   const page = harness([], [], false, { syncAvailable: true, uuidForSync: true, syncPost: 'timeout-committed', syncEvents: [
     { seq: 1, conversationId, sourceDeviceId: 'device-phone', kind: 'conversation.created', payload: { title: '已接收的文字' } },
   ] })
-  for (let attempt = 0; attempt < 20 && page.get('session-list').children.length < 3; attempt++) await flush()
-  page.get('session-list').children[2].children[0].fire('click')
+  for (let attempt = 0; attempt < 20 && page.conversationButtons().length < 3; attempt++) await flush()
+  page.getByRole('button',{name:'已接收的文字'}).fire('click')
   page.getByRole('textbox', { name: '输入消息' }).value = '只保存一次'
   page.get('message-form').fire('submit')
   for (let attempt = 0; attempt < 20 && !/只保存一次/.test(visibleText(page.get('transcript'))); attempt++) await flush()
@@ -1544,8 +1552,8 @@ test('409 keeps the original phone draft and exact event for explicit review', a
   const page = harness([], [], false, { syncAvailable: true, uuidForSync: true, syncPost: 'conflict', syncEvents: [
     { seq: 1, conversationId, sourceDeviceId: 'device-phone', kind: 'conversation.created', payload: { title: '冲突会话' } },
   ] })
-  for (let attempt = 0; attempt < 20 && page.get('session-list').children.length < 3; attempt++) await flush()
-  page.get('session-list').children[2].children[0].fire('click')
+  for (let attempt = 0; attempt < 20 && page.conversationButtons().length < 3; attempt++) await flush()
+  page.getByRole('button',{name:'冲突会话'}).fire('click')
   page.getByRole('textbox', { name: '输入消息' }).value = '冲突时保留'
   page.get('message-form').fire('submit')
   for (let attempt = 0; attempt < 20 && !/编号发生冲突/.test(page.get('model-hint').textContent); attempt++) await flush()
@@ -1720,8 +1728,8 @@ test('task15-approval-client ignores old list callbacks after switching conversa
   for (let i = 0; i < 15; i++) await flush()
   hold = true; f.page.tick()
   for (let i = 0; i < 15 && !f.page.requests.at(-1)?.url.includes('/approvals?'); i++) await flush()
-  const sessionB = f.page.get('session-list').children.find((row) => visibleText(row).includes('B'))!
-  sessionB.children[0].fire('click')
+  const sessionB = f.page.getByRole('button',{name:'B'})
+  sessionB.fire('click')
   await flush()
   oldRead.resolve(reply({ approvals: [f.approval], nextBefore: null, hasMore: false }))
   for (let i = 0; i < 20; i++) await flush()
@@ -1891,7 +1899,7 @@ test('task15-question-client ignores old conversation reads and account-device a
   await ready(reading.page); for (let i = 0; i < 15; i++) await flush()
   hold = true; reading.page.tick()
   for (let i = 0; i < 15 && !reading.page.requests.at(-1)?.url.includes('/questions?'); i++) await flush()
-  reading.page.get('session-list').children.find((row) => visibleText(row).includes('B'))!.children[0].fire('click')
+  reading.page.getByRole('button',{name:'B'}).fire('click')
   oldRead.resolve(reply({ questions: [reading.question], nextBefore: null, hasMore: false }))
   for (let i = 0; i < 15; i++) await flush()
   assert.equal(questionCard(reading.page), undefined)
@@ -2000,16 +2008,16 @@ test('A pending phone text stays under A device key after B signs in', async () 
       { seq: 1, conversationId, sourceDeviceId: 'device-phone', kind: 'conversation.created', payload: { title: '原手机对话' } },
     ] })
   await ready(page)
-  for (let attempt = 0; attempt < 20 && page.get('session-list').children.length < 3; attempt++) await flush()
-  page.get('session-list').children[2].children[0].fire('click')
+  for (let attempt = 0; attempt < 20 && page.conversationButtons().length < 3; attempt++) await flush()
+  page.getByRole('button',{name:'原手机对话'}).fire('click')
   page.getByRole('textbox', { name: '输入消息' }).value = 'A 的待核对文字'
   page.get('message-form').fire('submit')
   const aKey = 'weftmate:phone-sync-outbox:v1:profile-owner-a:profile-device-A'
   for (let attempt = 0; attempt < 20 && !page.storage.has(aKey); attempt++) await flush()
   assert.equal(JSON.parse(page.storage.get(aKey)!).event.payload.text, 'A 的待核对文字')
   await switchToB(page)
-  for (let attempt = 0; attempt < 20 && page.get('session-list').children.length < 3; attempt++) await flush()
-  page.get('session-list').children[2].children[0].fire('click')
+  for (let attempt = 0; attempt < 20 && page.conversationButtons().length < 3; attempt++) await flush()
+  page.getByRole('button',{name:'原手机对话'}).fire('click')
   assert.equal(page.getByRole('textbox', { name: '输入消息' }).value, '')
   assert.equal(page.get('send-message').textContent, '同步文字')
   assert.doesNotMatch(page.get('model-hint').textContent, /待核对/)
@@ -2024,16 +2032,16 @@ test('same owner on a new device recovers old text by checking the server before
   const first = harness([], [], false, { profileAccounts: profileFixture(), syncAvailable: true,
     uuidForSync: true, syncPost: 'timeout-no-commit', syncEvents: rows, storage })
   await ready(first)
-  for (let attempt = 0; attempt < 20 && first.get('session-list').children.length < 3; attempt++) await flush()
-  first.get('session-list').children[2].children[0].fire('click')
+  for (let attempt = 0; attempt < 20 && first.conversationButtons().length < 3; attempt++) await flush()
+  first.getByRole('button',{name:'恢复草稿'}).fire('click')
   first.getByRole('textbox', { name: '输入消息' }).value = '登录前的文字'
   first.get('message-form').fire('submit')
   for (let attempt = 0; attempt < 20 && !storage.has('weftmate:phone-sync-recovery:v1:profile-owner-a'); attempt++) await flush()
   const second = harness([], [], false, { profileAccounts: profileFixture(), syncAvailable: true,
     uuidForSync: true, deviceSuffix: '-renewed', syncEvents: rows, storage })
   await ready(second)
-  for (let attempt = 0; attempt < 20 && second.get('session-list').children.length < 3; attempt++) await flush()
-  second.get('session-list').children[2].children[0].fire('click')
+  for (let attempt = 0; attempt < 20 && second.conversationButtons().length < 3; attempt++) await flush()
+  second.getByRole('button',{name:'恢复草稿'}).fire('click')
   assert.equal(second.getByRole('textbox', { name: '输入消息' }).value, '登录前的文字')
   assert.equal(second.get('send-message').textContent, '核对旧请求')
   second.get('message-form').fire('submit')

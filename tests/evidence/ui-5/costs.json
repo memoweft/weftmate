@@ -1,0 +1,78 @@
+{
+  "runs": [
+    {
+      "run": "weftmate-ui-5-mimo-0b97a455-d5dd-4117-a68f-2d8ce9fd3d1c",
+      "requests": 6,
+      "unknownRequests": 0,
+      "inputTokens": 46102,
+      "cachedInputTokens": 30976,
+      "outputTokens": 574,
+      "knownCostCny": 0.01689352
+    },
+    {
+      "run": "weftmate-ui-5-mimo-14a72822-0911-4870-a7d5-63021d0bc237",
+      "requests": 4,
+      "unknownRequests": 0,
+      "inputTokens": 27572,
+      "cachedInputTokens": 18624,
+      "outputTokens": 564,
+      "knownCostCny": 0.01044848
+    },
+    {
+      "run": "weftmate-ui-5-mimo-24d33361-c9d1-401a-954b-6e52cb3f7735",
+      "requests": 6,
+      "unknownRequests": 0,
+      "inputTokens": 46297,
+      "cachedInputTokens": 30976,
+      "outputTokens": 703,
+      "knownCostCny": 0.01734652
+    },
+    {
+      "run": "weftmate-ui-5-mimo-434a9ace-a23c-4b02-b283-1a0459e06378",
+      "requests": 6,
+      "unknownRequests": 1,
+      "inputTokens": 41315,
+      "cachedInputTokens": 26688,
+      "outputTokens": 281,
+      "knownCostCny": 0.01572276
+    },
+    {
+      "run": "weftmate-ui-5-mimo-5b46158b-3383-4cce-811f-eead02640584",
+      "requests": 6,
+      "unknownRequests": 0,
+      "inputTokens": 45607,
+      "cachedInputTokens": 30976,
+      "outputTokens": 332,
+      "knownCostCny": 0.01591452
+    },
+    {
+      "run": "weftmate-ui-5-mimo-82facec0-2283-4e86-971d-207bcb9f09d9",
+      "requests": 4,
+      "unknownRequests": 0,
+      "inputTokens": 27347,
+      "cachedInputTokens": 18624,
+      "outputTokens": 235,
+      "knownCostCny": 0.00956548
+    },
+    {
+      "run": "weftmate-ui-5-mimo-cb602ac4-0fd1-4cb4-866d-8a0827e26b0a",
+      "requests": 4,
+      "unknownRequests": 0,
+      "inputTokens": 27285,
+      "cachedInputTokens": 18496,
+      "outputTokens": 201,
+      "knownCostCny": 0.00956092
+    },
+    {
+      "run": "weftmate-ui-5-mimo-f12a8f81-a919-4be8-acd8-9d552c57d33b",
+      "requests": 6,
+      "unknownRequests": 0,
+      "inputTokens": 46304,
+      "cachedInputTokens": 30976,
+      "outputTokens": 680,
+      "knownCostCny": 0.01730752
+    }
+  ],
+  "knownCostCny": 0.11275972,
+  "note": "宿主用量账本合计；包括失败的合成验收批次。缺用量请求未估算，费用为下界。"
+}

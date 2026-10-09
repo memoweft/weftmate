@@ -45,6 +45,7 @@ function connectionLabel(){return {connected:'电脑连接正常',checking:'已�
   expired:'登录已失效，请重新登录',local:'未登录'}[state.connection]||'连接状态待确认'}
 
 const mobileSettingsRegistry = WeftUiCore.settingsRegistry({
+  archived: target => archivedSettingsPage(target),
   general: target => generalSettingsPage(target), appearance: target => appearancePage(target),
   account: target => accountPage(target), devices: target => devicesPage(target),
   usage: target => usagePage(target, state.usageSessionId || ''), models: target => modelsPage(target),

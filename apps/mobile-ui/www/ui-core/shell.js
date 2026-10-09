@@ -309,6 +309,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         core.state.cancelSubmitting = false;
         core.state.capabilities = null;
         core.state.sessions = [];
+        core.state.sessionGroups = [];
         core.state.models = [];
         core.state.tasks = [];
         core.state.projects = [];
