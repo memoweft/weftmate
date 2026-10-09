@@ -216,7 +216,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       await requireSession(sessionId, ownerId);
       return gateway(`/sessions/${encodeURIComponent(sessionId)}/chat-handoff`, { method: 'POST', body: JSON.stringify({ action: 'install', handoff }) });
     },
-    async forkSession({ sessionId, ownerId, childId, modelProfileId, title: sourceTitle }) {
+    async forkSession({ sessionId, ownerId, childId, modelProfileId, title: sourceTitle, beforeSeq }) {
       requireRuntime()
       const source = await requireSession(sessionId, ownerId)
       const profile = modelProfile(modelProfileId ?? source.profile.id)
@@ -226,7 +226,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       await mkdir(cwd, { recursive: true, mode: 0o700 })
       try {
         try { await access(sourceCwd); await cp(sourceCwd, cwd, { recursive: true }) } catch (error) { if (error.code !== 'ENOENT') throw error }
-        const result = await gateway(`/sessions/${encodeURIComponent(sessionId)}/fork`, { method: 'POST', body: JSON.stringify({ sessionId: childId, cwd, copyWorkspace: false }) })
+        const result = await gateway(`/sessions/${encodeURIComponent(sessionId)}/fork`, { method: 'POST', body: JSON.stringify({ sessionId: childId, cwd, copyWorkspace: false, ...(beforeSeq !== undefined ? { beforeSeq } : {}) }) })
         if (result.sessionId !== childId) fail('SESSION_UNAVAILABLE')
         bindSession(childId, profile.id)
         const route = routeForProfile(profile.id)
@@ -445,6 +445,12 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       if (!listed?.items?.some(item => item.sessionId === sessionId && item.agentPreset === presetForOwner(ownerId)) ||
           hostOwnerId() !== null && ownerForSession(sessionId) !== ownerId) fail('SESSION_UNAVAILABLE')
       return gateway(`/sessions/${encodeURIComponent(sessionId)}/source?receiptId=${encodeURIComponent(receiptId)}${turn === undefined ? '' : `&turn=${turn}`}`)
+    },
+    async readMemoryBoundaries({ sessionId, ownerId, afterSeq = -1 }) {
+      requireRuntime()
+      if (!idPattern.test(sessionId) || ownerForSession(sessionId) !== ownerId) fail('SESSION_UNAVAILABLE')
+      if (!Number.isSafeInteger(afterSeq) || afterSeq < -1) fail('INVALID_COMMAND')
+      return gateway(`/sessions/${encodeURIComponent(sessionId)}/memory-boundaries?afterSeq=${afterSeq}`)
     },
     async readEvents({ sessionId, afterSeq, beforeSeq, limit = 50 }) {
       requireRuntime()

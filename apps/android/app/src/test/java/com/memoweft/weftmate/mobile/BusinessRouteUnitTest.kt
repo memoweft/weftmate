@@ -15,6 +15,15 @@ class BusinessRouteUnitTest {
         for(path in listOf("/personal/v1/chats/../events", "/personal/v1/chats/chat%2Fone/events", "/personal/v1/chats/chat-one/credentials"))
             assertFalse(path, validBusinessPath(path))
     }
+    @Test fun messageBranchesUseExactSessionAndCommandRoutes() {
+        assertTrue(validBusinessPath("/personal/v1/sessions/session-one/message-branches"))
+        assertTrue(validBusinessPath("/personal/v1/sessions/session-one/chat"))
+        assertTrue(validBusinessPath("/personal/v1/chats/main"))
+        assertTrue(validBusinessPath("/personal/v1/commands"))
+        for (path in listOf("/personal/v1/sessions/../message-branches", "/personal/v1/commands?key=secret",
+            "/personal/v1/sessions/session%2Fone/message-branches", "/personal/v1/commands/command/raw"))
+            assertFalse(path, validBusinessPath(path))
+    }
     @Test fun temporaryCreationUsesOnlyItsExactBusinessRoute() {
         assertTrue(validBusinessPath("/personal/v1/sessions/temporary"))
         assertFalse(validBusinessPath("/personal/v1/sessions/temporary?recallEnabled=false"))

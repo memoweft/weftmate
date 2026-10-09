@@ -31,6 +31,12 @@ export function createSessionOperations(context) {
   function publicHistoryEvent(ownerId, sessionId, event) {
     if (!plainObject(event.data)) return event;
     const { messageHash, ...publicData } = event.data;
+    // DSH's native Inbox excludes all constructor seed events. An anchor fork
+    // may contain the old insertion before its claim; it is historical input,
+    // never a pending task of the child. Match that native seed boundary in UI.
+    if (event.type === 'task.queued' && Object.values(context.accountState(ownerId).messageBranches ?? {}).some(operation =>
+        operation.response.sessionId === sessionId && event.seq <= operation.response.seedThroughSeq))
+      return { ...event, data: { ...publicData, inherited: true } };
     if (event.type.startsWith('task.')) {
       const bind = data => {
         const source = Object.values(context.accountState(ownerId).commands).find(command =>
@@ -47,22 +53,26 @@ export function createSessionOperations(context) {
     if (event.type !== 'user.message') return { ...event, data: publicData };
     if (typeof messageHash !== 'string' || !/^[a-f0-9]{64}$/.test(messageHash) ||
         typeof publicData.receiptId !== 'string') return { ...event, data: publicData };
+    const account = context.accountState(ownerId), ancestry = new Set();
+    // A native fork replays its parent's input receipts. Restore only an
+    // owner-bound ancestor's exact input, still verified by the native hash.
+    for (let sourceId = sessionId; sourceId && account.sessions[sourceId] && !ancestry.has(sourceId);
+        sourceId = account.sessions[sourceId].parentSessionId) ancestry.add(sourceId);
     const matching = Object.values(context.accountState(ownerId).commands).filter((command) =>
-      command.kind === 'session.message' && command.rootTaskId === undefined &&
-      command.sessionId === sessionId && command.state === 'accepted_by_dsh' &&
-      command.receiptId === publicData.receiptId && command.payload?.modelInputHash === messageHash &&
-      typeof command.payload.text === 'string' && Array.isArray(command.payload.originalAttachments) &&
-      typeof command.payload.attachmentMessageId === 'string');
+      command.kind === 'session.message' &&
+      ancestry.has(command.sessionId) && command.state === 'accepted_by_dsh' &&
+      command.receiptId === publicData.receiptId && typeof command.payload?.text === 'string' &&
+      (command.payload.modelInputHash ?? digest(command.payload.text)) === messageHash);
     if (matching.length !== 1) return { ...event, data: publicData };
     const source = matching[0];
     const stagedIds = new Set((source.payload.attachments ?? []).map((item) => item.attachmentId));
-    const unpreviewedOriginalImageIds = source.payload.originalAttachments
+    const unpreviewedOriginalImageIds = (source.payload.originalAttachments ?? [])
       .filter((item) => IMAGE_CONTENT_TYPES.has(item.contentType) && !stagedIds.has(item.attachmentId))
       .map((item) => item.attachmentId);
     return { ...event, data: {
       ...publicData, text: source.payload.text,
-      originalAttachments: source.payload.originalAttachments.map((item) => ({ ...item })),
-      attachmentMessageId: source.payload.attachmentMessageId,
+      ...(source.payload.originalAttachments ? { originalAttachments: source.payload.originalAttachments.map((item) => ({ ...item })),
+        attachmentMessageId: source.payload.attachmentMessageId } : {}),
       ...(unpreviewedOriginalImageIds.length ? { unpreviewedOriginalImageIds } : {}),
       truncated: false,
     } };
@@ -225,6 +235,7 @@ export function createSessionOperations(context) {
         }
         let forgottenEvidenceCount = 0;
         if (forgetMemories) {
+          await context.memoryManager?.discardPendingSources?.(ownerId, { sessionId });
           const manager = context.memoryManager;
           const status = await manager?.status(ownerId);
           if (!status?.capabilities?.deleteEvidence) throw failure('MEMORY_DELETE_UNAVAILABLE', 503);

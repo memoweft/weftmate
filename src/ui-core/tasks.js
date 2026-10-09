@@ -6,6 +6,7 @@ globalThis.WeftUiCore.factories.tasks = (core, effects, environment) => {
         const roots = commands.filter(row => ['session.message','chat.message'].includes(row.kind) && !row.rootTaskId && row.sessionId === sessionId);
         const root = data => roots.find(row => row.commandId === data.taskId || data.receiptId && row.receiptId === data.receiptId);
         for (const event of [...events].sort((a, b) => a.seq - b.seq)) {
+            if (event.type === 'task.queued' && event.data?.inherited) continue;
             if (!['task.queued', 'task.started', 'task.ended'].includes(event.type)) continue;
             for (const data of event.data?.tasks || [event.data || {}]) {
                 const command = root(data), taskId = command?.commandId || data.taskId;

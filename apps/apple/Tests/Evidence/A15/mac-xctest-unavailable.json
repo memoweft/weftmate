@@ -1,0 +1,17 @@
+{
+  "title": "Test - WeftMateMac",
+  "result": "Failed",
+  "passedTests": 0,
+  "failedTests": 1,
+  "skippedTests": 0,
+  "totalTestCount": 1,
+  "testFailures": [
+    {
+      "failureText": "The test runner failed to initialize for UI testing. (Underlying Error: Timed out while enabling automation mode.)",
+      "targetName": "WeftMateMacUITests",
+      "testIdentifier": 1,
+      "testIdentifierString": "WeftMateMacUITests-Runner (15813) encountered an error",
+      "testName": "WeftMateMacUITests-Runner (15813) encountered an error"
+    }
+  ]
+}

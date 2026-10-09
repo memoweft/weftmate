@@ -69,6 +69,17 @@ const mobileEffects = {
 const uiCore = WeftUiCore.create({ fetch: mobileWebBridge?.fetch || androidBridge.fetch, storage: localStorage,
   crypto: globalThis.crypto, effects: mobileEffects, mobileState: state, attachmentDrafts, logicalChats:true });
 uiCore.android = androidBridge;
+const mobileMessageActions = globalThis.WeftMessageActions?.create({core:uiCore, draft:()=>$('draft'),
+  selectSession:async id=>{await listSharedSessions();await selectSharedSession(id)},
+  copy: text=>call('clipboard.copy',{text}), save:async(blob,name)=>{
+    const bytes=new Uint8Array(await blob.arrayBuffer());let binary='';for(const byte of bytes)binary+=String.fromCharCode(byte);
+    return call('conversation.export',{name,contentType:blob.type.startsWith('image/')?'image/png':'text/markdown',data:btoa(binary)},120000);
+  }, notice:message=>toast(message), events:()=>state.sharedEvents,sessionId:()=>state.sharedSessionId,
+  title:()=>state.chatSource==='phone'?state.conversations.find(row=>row.id===state.conversationId)?.title:selectedSharedSession()?.title,
+  localEvents:async id=>{const result=await call('conversations.messages',{conversationId:id});return [
+    ...result.messages.map(message=>({type:message.role==='user'?'user.message':'assistant.message',data:{text:message.text,
+      originalAttachments:(message.thumbnails||[]).map(image=>({name:image.name||'图片'}))}})),
+    ...(result.receipts||[]).map(receipt=>({type:'step.completed',data:{summary:uiCore.interfaceText(receipt.summary),toolName:receipt.toolName}}))];}});
 const conversationTasks=uiCore.mobileDecisions.tasks;
 const toolApprovals=uiCore.mobileDecisions.approvals;
 const toolQuestions=uiCore.mobileDecisions.questions;
@@ -208,6 +219,7 @@ function page(name){
 
 
 function processEvent(message){const {event,data}=message;
+  if(event==='conversation.exported')toast(data.saved?'对话已保存':'导出未完成，请重试',!data.saved);
   if(event==='cloud.callback')void resumeCloudLogin();if(event==='chat.started'){
     invalidateLiveProgress();
     if(state.activeSend)acceptSend(state.activeSend,data.conversationId,data.turnId);
@@ -514,7 +526,7 @@ const approvalRequestPattern=/^[A-Za-z0-9_.:-]{1,128}$/;
 
 
 
-function handleBack(){if(!$('resource-page').hidden){closeResourcePage();return}
+function handleBack(){if(mobileMessageActions?.dismiss())return;if(!$('resource-page').hidden){closeResourcePage();return}
   if(!$('image-preview').hidden){closeImagePreview();return}
   if(approvalModeState.confirmation){closeApprovalRisk();return}if(approvalModeState.menu){closeApprovalModeMenu({restoreFocus:true});return}
   if(state.attachmentMenu){closeAttachmentMenu({restoreFocus:true});return}if(state.attachmentPick){cancelAttachmentPick({announce:true});return}if(state.menu){closeModelMenu();$('model-button').focus();return}

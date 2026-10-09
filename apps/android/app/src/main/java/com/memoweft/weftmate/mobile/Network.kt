@@ -28,9 +28,12 @@ internal fun validBusinessPath(path: String): Boolean {
     if (query.matches(Regex("[A-Za-z0-9._~=&%+-]*")) && route.matches(Regex("/personal/v1/chats(/main|/[A-Za-z0-9_-]{1,128}(/(events|changes|dates|locate|search|resources|metadata|archive|unarchive|results))?)?"))) return true
     if (query.isEmpty() && route == "/personal/v1/commands") return true
     if (query.isEmpty() && route.matches(Regex("/personal/v1/offline/(sync|turns)"))) return true
+    if (query.isEmpty() && (route == "/personal/v1/status" || route == "/personal/v1/commands" ||
+        route.matches(Regex("/personal/v1/commands/[A-Za-z0-9_-]{1,128}")) ||
+        route.matches(Regex("/personal/v1/chats/(main|[A-Za-z0-9_-]{1,128})")))) return true
     if (route == "/personal/v1/usage" && (query.isEmpty() ||
         query.matches(Regex("(month=[0-9]{4}-(0[1-9]|1[0-2]))?(&?sessionId=[A-Za-z0-9_-]{1,128})?")))) return true
-    if (query.isEmpty() && (route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/(metadata|fork)")) ||
+    if (query.isEmpty() && (route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/(metadata|fork|chat|message-branches)")) ||
         route.matches(Regex("/personal/v1/session-groups(/[A-Za-z0-9_-]{1,128})?")))) return true
     if (route == "/personal/v1/settings/usage" && query.isEmpty()) return true
     if (route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/resources")) &&
@@ -783,7 +786,7 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
         val restarting = method == "POST" && path.matches(Regex("/personal/v1/system/(model|host|memory)/restart"))
         return http.request("${host.origin}$path", method, body,
             if (method == "GET") mapOf("Cookie" to host.cookie) else authWriteHeaders(host),
-            readTimeoutMs = if (restarting) 360_000 else 20_000).body
+            readTimeoutMs = if (restarting) 360_000 else if (path.endsWith("/message-branches")) 120_000 else 20_000).body
     }
 
     private fun authWriteHeaders(host: HostIdentity) = mapOf("Cookie" to host.cookie,
