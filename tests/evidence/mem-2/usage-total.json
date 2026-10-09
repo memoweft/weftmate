@@ -1,0 +1,122 @@
+{
+  "requests": 126,
+  "knownUsage": 122,
+  "unknownUsage": 4,
+  "inputTokens": 306207,
+  "cachedInputTokens": 201664,
+  "outputTokens": 5310,
+  "hostRecordedCost": 0.11858699999999998,
+  "runs": [
+    {
+      "run": "weftmate-mem2-real-6DfR0Z",
+      "requests": 19,
+      "knownUsage": 18,
+      "unknownUsage": 1,
+      "inputTokens": 45624,
+      "cachedInputTokens": 32768,
+      "outputTokens": 778,
+      "hostRecordedCost": 0.015067359999999998
+    },
+    {
+      "run": "weftmate-mem2-real-7cAw0v",
+      "requests": 0,
+      "knownUsage": 0,
+      "unknownUsage": 0,
+      "inputTokens": 0,
+      "cachedInputTokens": 0,
+      "outputTokens": 0,
+      "hostRecordedCost": 0
+    },
+    {
+      "run": "weftmate-mem2-real-8xgsRO",
+      "requests": 17,
+      "knownUsage": 17,
+      "unknownUsage": 0,
+      "inputTokens": 41835,
+      "cachedInputTokens": 25088,
+      "outputTokens": 606,
+      "hostRecordedCost": 0.01846076
+    },
+    {
+      "run": "weftmate-mem2-real-9VluPT",
+      "requests": 19,
+      "knownUsage": 18,
+      "unknownUsage": 1,
+      "inputTokens": 45521,
+      "cachedInputTokens": 27392,
+      "outputTokens": 741,
+      "hostRecordedCost": 0.020158839999999997
+    },
+    {
+      "run": "weftmate-mem2-real-C9ThEF",
+      "requests": 14,
+      "knownUsage": 14,
+      "unknownUsage": 0,
+      "inputTokens": 36515,
+      "cachedInputTokens": 23488,
+      "outputTokens": 589,
+      "hostRecordedCost": 0.014674760000000002
+    },
+    {
+      "run": "weftmate-mem2-real-DIR8D2",
+      "requests": 0,
+      "knownUsage": 0,
+      "unknownUsage": 0,
+      "inputTokens": 0,
+      "cachedInputTokens": 0,
+      "outputTokens": 0,
+      "hostRecordedCost": 0
+    },
+    {
+      "run": "weftmate-mem2-real-jMEzQX",
+      "requests": 18,
+      "knownUsage": 17,
+      "unknownUsage": 1,
+      "inputTokens": 40574,
+      "cachedInputTokens": 30016,
+      "outputTokens": 716,
+      "hostRecordedCost": 0.012590319999999999
+    },
+    {
+      "run": "weftmate-mem2-real-nbhvbT",
+      "requests": 0,
+      "knownUsage": 0,
+      "unknownUsage": 0,
+      "inputTokens": 0,
+      "cachedInputTokens": 0,
+      "outputTokens": 0,
+      "hostRecordedCost": 0
+    },
+    {
+      "run": "weftmate-mem2-real-RpPce9",
+      "requests": 14,
+      "knownUsage": 13,
+      "unknownUsage": 1,
+      "inputTokens": 31385,
+      "cachedInputTokens": 18368,
+      "outputTokens": 649,
+      "hostRecordedCost": 0.01468236
+    },
+    {
+      "run": "weftmate-mem2-real-TGGePe",
+      "requests": 6,
+      "knownUsage": 6,
+      "unknownUsage": 0,
+      "inputTokens": 14022,
+      "cachedInputTokens": 5248,
+      "outputTokens": 467,
+      "hostRecordedCost": 0.00981296
+    },
+    {
+      "run": "weftmate-mem2-real-tYV82P",
+      "requests": 19,
+      "knownUsage": 19,
+      "unknownUsage": 0,
+      "inputTokens": 50731,
+      "cachedInputTokens": 39296,
+      "outputTokens": 764,
+      "hostRecordedCost": 0.01313964
+    }
+  ],
+  "costBasis": "Existing host price configuration, known recorded costs only; not a supplier invoice. Missing usage is not zero."
+}
