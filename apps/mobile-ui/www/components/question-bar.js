@@ -23,11 +23,11 @@
         for (const option of question.options || []) if (option.description) details.append(node('p', `${option.label}：${option.description}`));
         body.append(details);
         const choices = node('div', '', 'question-bar-options');
-        choices.setAttribute('role', question.multiSelect ? 'group' : 'radiogroup'); choices.setAttribute('aria-label', question.question);
+        choices.setAttribute('role', question.multiSelect ? 'group' : 'radiogroup'); choices.setAttribute('aria-label', question.question || question.header || '补充信息');
         const controls = [];
         const update = answer => { if (!answer) return; input.value = answer.custom || ''; for (const button of controls) { const selected = answer.selected.includes(button.dataset.value); button.setAttribute(question.multiSelect ? 'aria-pressed' : 'aria-checked', String(selected)); button.choiceCheck.hidden = !selected; } };
         for (const [at, option] of (question.options || []).entries()) {
-            const button = node('button', option.label, 'button secondary question-choice'); button.type = 'button';
+            const button = node('button', option.label || '空白选项', 'button secondary question-choice'); button.type = 'button';
             button.dataset.value = option.label; button.dataset.questionControl = `option-${at}`;
             if (!question.multiSelect) button.setAttribute('role', 'radio');
             button.setAttribute(question.multiSelect ? 'aria-pressed' : 'aria-checked', String(draft.answers[index].selected.includes(option.label))); button.disabled = editLocked;
@@ -64,7 +64,7 @@
     }
     function record(row) {
         if (row.outcome === 'cancelled') return '提问已取消';
-        if (row.answer) return `已回答：${row.answer.answers.map(answer => [...answer.selected, answer.custom].filter(Boolean).join('、') || '未作选择').join('；')}`;
+        if (row.answer) return `已回答：${row.answer.answers.map(answer => [...answer.selected.map(label => label || '空白选项'), answer.custom].filter(Boolean).join('、') || '未作选择').join('；')}`;
         return row.outcome === 'cancelled' ? '提问已取消' : '提问已结束';
     }
     function ensure(approval) {

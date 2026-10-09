@@ -1,6 +1,6 @@
 /* Pure timeline projection: events and step updates never depend on a renderer. */
 (() => {
-    const toolLabels = {
+    const toolLabels = { __proto__: null,
         open_settings:'系统设置', open_app:'打开应用', list_launchable_apps:'应用列表',
         read:'读取文件', read_file:'读取文件', pwsh:'运行命令', powershell:'运行命令', shell:'运行命令', bash:'运行命令', exec_command:'运行命令', run_command:'运行命令',
         search:'搜索内容', grep:'搜索内容', glob:'查找文件', write:'写入文件', write_file:'写入文件', edit:'修改文件', apply_patch:'修改文件',
@@ -10,7 +10,7 @@
         spawn_agent:'启动子任务', subagent:'处理子任务', enter_plan_mode:'开始制定计划', exit_plan_mode:'提交执行计划',
         memory:'查询记忆', recall:'查询记忆', remember:'记录记忆', delete:'删除文件', remove:'删除文件',
     };
-    const fieldLabels = { arguments:'参数', parameters:'参数', command:'命令', cmd:'命令', script:'脚本', cwd:'执行目录', workdir:'执行目录', workingDirectory:'执行目录',
+    const fieldLabels = { __proto__: null, arguments:'参数', parameters:'参数', command:'命令', cmd:'命令', script:'脚本', cwd:'执行目录', workdir:'执行目录', workingDirectory:'执行目录',
         path:'路径', paths:'路径', files:'文件', file_path:'文件路径', filePath:'文件路径', target:'目标', query:'查询内容', pattern:'匹配内容', glob:'文件范围',
         url:'网页地址', urls:'网页地址', output:'输出', content:'内容', text:'正文', type:'类型', tool:'操作', toolName:'操作', name:'名称',
         description:'说明', message:'消息', prompt:'任务说明', task:'任务', action:'操作', questions:'问题', question:'问题', header:'标题', detail:'说明',
