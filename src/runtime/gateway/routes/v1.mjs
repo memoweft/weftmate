@@ -276,7 +276,7 @@ export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagn
           await sessions.historyDetail(sessionId, Number(requestUrl.searchParams.get('detailSeq'))))
         return writeJson(res, 200, await sessions.historyPage(sessionId, {
           ...(afterRaw === null ? {} : { afterSeq: Number(afterRaw) }),
-          ...(beforeRaw === null ? {} : { beforeSeq: Number(beforeRaw) }), limit: Number(limitRaw) }))
+          ...(beforeRaw === null ? {} : { beforeSeq: Number(beforeRaw) }), limit: Number(limitRaw), includeThinking: requestUrl.searchParams.get('includeThinking') === 'true' }))
       }
       if (action === 'resume' && req.method === 'POST') {
         const resumed = await sessions.resume(sessionId)

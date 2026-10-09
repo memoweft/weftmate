@@ -5,6 +5,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @Test fun personalizationUsesOnlyExactSettingsRoutes() {
+        assertTrue(validBusinessPath("/personal/v1/settings/personalization"))
+        assertTrue(validBusinessPath("/personal/v1/settings/personalization/style"))
+        assertFalse(validBusinessPath("/personal/v1/settings/personalization?ownerId=other"))
+        assertFalse(validBusinessPath("/personal/v1/settings/personalization/style/raw"))
+    }
     @Test fun temporaryCreationUsesOnlyItsExactBusinessRoute() {
         assertTrue(validBusinessPath("/personal/v1/sessions/temporary"))
         assertFalse(validBusinessPath("/personal/v1/sessions/temporary?recallEnabled=false"))

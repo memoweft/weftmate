@@ -108,8 +108,10 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
                 ui.appendOriginalFiles(row, event);
             if (originalImages.length)
                 ui.appendUnpreviewedOriginalImages(row, originalImages);
-            if (event.type === 'assistant.message')
+            if (event.type === 'assistant.message') {
+                globalThis.WeftModelThinking?.(core, row, event);
                 ui.appendReplyMemory(row, event);
+            }
             const taskLabel = core.messageTaskLabel(event);
             if (event.type === 'user.message' && taskLabel) row.append(ui.element('small', 'message-task-label', taskLabel));
             if (event.data.truncated === true)

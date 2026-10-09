@@ -1,3 +1,4 @@
+import { handlePersonalization } from './personalization.mjs';
 import { hasPrivateContent } from './temporary-chats.mjs';
 import { canonicalProviderModelId } from '../model-connection-check.mjs';
 import { currentChatProfile } from '../background-model-selection.mjs';
@@ -629,6 +630,7 @@ export function createHttpHandler(context) {
         }
       }
       if (await context.scheduleOperations.handleHttp(request, response, url, ownerId)) return;
+      if (['/personal/v1/settings/personalization', '/personal/v1/settings/personalization/style'].includes(pathname)) return await handlePersonalization(context, request, response, url, ownerId);
       const thinkingMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/thinking$/.exec(pathname);
       if (thinkingMatch && ['GET', 'PATCH'].includes(request.method)) {
         if (url.search) throw failure('INVALID_REQUEST');

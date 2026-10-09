@@ -1,0 +1,29 @@
+{
+  "checks": [
+    {
+      "surface": "desktop",
+      "settingsSaved": true,
+      "localStyleEditableAndCleared": true,
+      "accountSynced": true,
+      "overflow": false
+    },
+    {
+      "surface": "mobile-web",
+      "settingsSaved": true,
+      "localStyleEditableAndCleared": true,
+      "accountSynced": true,
+      "overflow": false
+    },
+    {
+      "surface": "android-ui",
+      "settingsSaved": true,
+      "localStyleEditableAndCleared": true,
+      "accountSynced": true,
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "realElectron": true,
+  "mobileViewport": "390×844",
+  "androidUiPackage": true
+}

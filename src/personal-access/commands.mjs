@@ -360,6 +360,7 @@ export function createCommandOperations(context) {
           if (snapshot.kind === 'session.create') {
             next.sessions[snapshot.sessionId] = { ownerId: next.ownerId, attachedAt: new Date().toISOString(),
               approvalMode: next.defaultApprovalMode ?? 'auto',
+              deepThinking: next.personalization?.defaultDeepThinking === true,
               ...initialMemorySettings(snapshot.payload, context.timestamp()),
               origin: !['password', 'cloud'].includes(next.devices[snapshot.sourceDeviceId]?.authKind)
                 ? 'legacy-local' : context.hostOwner(ownerId) ? 'personal-remote' : 'shared-chat',

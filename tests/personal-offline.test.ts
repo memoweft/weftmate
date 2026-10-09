@@ -108,6 +108,19 @@ test('online sync → cloud-only relevant recall → offline preference → idem
   await engine.sync(); assert.equal(engine.view().snapshot.items.length, 0); engine.close();
 });
 
+test('encrypted offline replica carries only account personalization and uses the shared prompt without making settings Evidence', async t => {
+  const f=await fixture(t), vault=await W.browserVault('st1-personalization',{indexedDB:new IDBFactory(),crypto:webcrypto});
+  const settings={preferredName:'小合成',tone:'concise',fixedInstructions:'末尾加 —WM',webSearch:false};
+  f.context.accountState=()=>({sessions:{},personalization:settings});let sent:any;
+  vault.complete=async(body:any)=>{sent=body;return {choices:[{message:{content:'好的。\n—WM'}}]}};
+  const engine=await W.create({vault,identity,host:f.host,control:async()=>({authorized:true,hostId:identity.hostId,accountId:'account-test',generation:1}),crypto:webcrypto});
+  try {
+    await engine.sync();assert.equal(engine.view().snapshot.personalization.preferredName,'小合成');
+    await engine.send('你好');assert.match(sent.messages[0].content,/小合成/);assert.match(sent.messages[0].content,/末尾加 —WM/);assert.equal(sent.tools,undefined);
+    await engine.sync();assert.doesNotMatch(JSON.stringify(f.accepted),/末尾加 —WM|preferredName/);
+  } finally {engine.close()}
+});
+
 test('revocation erases pending conversations, and unavailable control plane sends no model request', async t => {
   const f = await fixture(t), vault = await W.browserVault('revoke', { indexedDB: new IDBFactory(), crypto: webcrypto });
   let calls = 0, status = 0;
