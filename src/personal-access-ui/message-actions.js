@@ -198,12 +198,17 @@
         const useful = button('有用', 'thumb-up', () => void guarded(async () => { await core.saveMessageFeedback(id, event.seq, 'helpful'); refresh(); notice('已保存本机反馈'); })); useful.dataset.feedback = `${id}:${event.seq}:helpful`;
         const bad = button('没用', 'thumb-down', () => feedback(id, event, bad)); bad.dataset.feedback = `${id}:${event.seq}:unhelpful`;
         const share = button('分享 / 导出对话', 'share', () => void guarded(() => exportConversation(id, share, local)));
-        const more = button('更多回复操作', 'more', () => menu(more, [
-          { name: local ? '重新生成（需由电脑接续）' : '重新生成', disabled: local || core.messageBusy(id) || event.data.reminder, ...(!local && !event.data.reminder ? { mutationId: id } : {}), action: () => regenerate(id, event, null, more) },
+        const more = button('更多回复操作', 'more', () => void guarded(async () => {
+          const source = local ? null : await resolveSource(id, event);
+          if (!more.isConnected) return;
+          menu(more, [
+          { name: local ? '重新生成（需由电脑接续）' : source?.kind === 'main' ? '开旁聊重新生成' : '重新生成', disabled: local || core.messageBusy(id) || event.data.reminder, ...(!local && !event.data.reminder ? { mutationId: id } : {}), action: () => regenerate(id, event, null, more) },
           { name: '换模型重新生成', disabled: local || core.messageBusy(id) || event.data.reminder, ...(!local && !event.data.reminder ? { mutationId: id } : {}), action: async () => {
             const models = (await core.accessApi('/models')).models;
             menu(more, models.filter(model => model.configured !== false && model.available !== false).map(model => ({ name: model.name || model.id, action: () => regenerate(id, event, model.id, more) })));
-          } }, { name: '核对并重试发送', action: () => core.retryMessageBranch() }]));
+          } }, { name: '核对并重试发送', action: () => core.retryMessageBranch() }]);
+        }));
+        more.setAttribute('aria-haspopup', 'menu'); more.setAttribute('aria-expanded', 'false');
         const quoteButton = button('引用选中文字', 'quote', () => quote(quoteButton.closest('.message'))); quoteButton.dataset.messageQuote = 'true'; quoteButton.hidden = true;
         quoteButton.addEventListener('mousedown', event => event.preventDefault()); bar.append(useful, bad, share, more, quoteButton);
       }

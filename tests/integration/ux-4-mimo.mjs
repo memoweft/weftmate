@@ -24,11 +24,16 @@ let app,page,api;const failures=[];
 async function until(read,timeout=120000){const deadline=Date.now()+timeout;while(Date.now()<deadline){const value=await read();if(value)return value;await new Promise(resolve=>setTimeout(resolve,200));}throw new Error('Isolated UX-4 runtime timed out');}
 try {
   app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:resolve('.'),args:['tests/integration/ux-3-runtime-electron.mjs',`--user-data-dir=${profile}`,'--personal-host','--access-port=0'],env,timeout:90000});
-  page=await app.firstWindow();page.setDefaultTimeout(60000);page.on('pageerror',error=>failures.push(error.message));await page.waitForURL('**/personal/v1/ui');await localUiSession(page,credentials);
+  page=await app.firstWindow();page.setDefaultTimeout(60000);page.on('pageerror',error=>failures.push(error.message));await page.waitForURL('**/personal/v1/ui');await localUiSession(page,credentials,'UX-4 real main enabled',{mainChat:true});
   api=(path,body,method)=>page.evaluate(async({path,body,method})=>{const me=body?await(await fetch('/personal/v1/auth/me')).json():{};const response=await fetch('/personal/v1'+path,{method:method||(body?'POST':'GET'),headers:body?{'content-type':'application/json','x-weftmate-csrf':me.csrfToken}:{},body:body?JSON.stringify(body):undefined});const value=await response.json();if(!response.ok)throw new Error(value.error?.code);return value;},{path,body,method});
   await api('/account/models',{requestId:'ux4-model',name:'合成账号 MiMo',baseUrl:'https://api.xiaomimimo.com/v1',modelId:'mimo-v2.6-flash',apiKey:'synthetic-not-provider-key'});
   await until(async()=>{const data=await api('/account/models/by-request/ux4-model');return data.operation?.status==='succeeded';});await page.reload();
-  await page.getByRole('button',{name:'新对话 Ctrl N',exact:true}).click();
+  const selectedModel=(await api('/models')).models.find(model=>model.name==='合成账号 MiMo');
+  const hostId=(await api('/status')).hostId;
+  const created=await api('/commands',{requestId:'ux4-native-side',kind:'session.create',targetDeviceId:hostId,modelProfileId:selectedModel.id});
+  const ready=await until(async()=>{const command=(await api('/commands/'+created.command.commandId)).command;return command.state==='accepted_by_dsh'&&command;});
+  await api(`/sessions/${ready.sessionId}/metadata`,{title:'消息操作真实验收'},'PATCH');await page.reload();
+  await page.getByRole('button',{name:'消息操作真实验收',exact:true}).click();
   const initial='这是合成验证，请只回复“第一版完成”，不要调用工具。';
   await page.getByRole('textbox',{name:'输入消息',exact:true}).fill(initial);await page.getByRole('button',{name:'发送',exact:true}).click();
   const original=await until(async()=>{const rows=(await api('/sessions')).sessions;for(const session of rows){const events=(await api(`/sessions/${session.sessionId}/events?afterSeq=-1&limit=200`)).events;if(events.some(event=>event.type==='turn.ended'))return {session,events};}return false;});
