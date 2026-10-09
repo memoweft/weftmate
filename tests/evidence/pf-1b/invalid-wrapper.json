@@ -1,0 +1,8 @@
+{
+  "reason": "Promise resolve shadowed path.resolve in child cwd; start resolved stage before close, concurrent child launches and early lease release. Batch discarded as acceptance/performance. Actual requests retained for cost. Corrected to finish callback; actual delayed child exit 7/output self-test passed.",
+  "roots": [
+    "C:/Temp/weftmate-m2f-mimo-184b1d32-963a-472a-a92d-6eb7f2b96657",
+    "C:/Temp/weftmate-m2f-lan-e8cb2900-c20c-4d95-9084-9927720822bf"
+  ],
+  "newEvidence": "memory-performance-final"
+}

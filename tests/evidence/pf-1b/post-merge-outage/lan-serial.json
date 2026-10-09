@@ -1,0 +1,61 @@
+{
+  "maxActive": 1,
+  "requests": [
+    {
+      "method": "POST",
+      "queuedAt": "2026-10-09T06:40:10.857Z",
+      "kind": "inference",
+      "startedAt": "2026-10-09T06:40:10.858Z",
+      "status": 200,
+      "endedAt": "2026-10-09T06:40:11.708Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T06:40:12.547Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T06:40:12.548Z",
+      "status": 404,
+      "endedAt": "2026-10-09T06:40:12.551Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T06:40:12.552Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T06:40:12.552Z",
+      "status": 200,
+      "endedAt": "2026-10-09T06:40:12.568Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T06:40:12.597Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T06:40:12.597Z",
+      "status": 404,
+      "endedAt": "2026-10-09T06:40:12.601Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T06:40:12.605Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T06:40:12.605Z",
+      "status": 200,
+      "endedAt": "2026-10-09T06:40:12.624Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T06:40:14.130Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T06:40:14.130Z",
+      "status": 404,
+      "endedAt": "2026-10-09T06:40:14.133Z"
+    },
+    {
+      "method": "GET",
+      "queuedAt": "2026-10-09T06:40:14.141Z",
+      "kind": "metadata",
+      "startedAt": "2026-10-09T06:40:14.141Z",
+      "status": 200,
+      "endedAt": "2026-10-09T06:40:14.154Z"
+    }
+  ]
+}

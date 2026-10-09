@@ -1,0 +1,134 @@
+{
+  "eight": {
+    "mimo": {
+      "passed": 8,
+      "failed": 0,
+      "core": "5d91823a36d8154531e62db1eb76165a1f479cbb",
+      "backupFiles": 104,
+      "backupTextHits": 0
+    },
+    "lan": {
+      "passed": 8,
+      "failed": 0,
+      "core": "5d91823a36d8154531e62db1eb76165a1f479cbb",
+      "backupFiles": 104,
+      "backupTextHits": 0
+    }
+  },
+  "reminders": {
+    "mimo": {
+      "passed": 6,
+      "failed": 0
+    },
+    "lan": {
+      "passed": 6,
+      "failed": 0
+    }
+  },
+  "memory": {
+    "mimo": {
+      "initialFour": 4,
+      "C": 2,
+      "semanticPassed": 5,
+      "formationWaitMs": 330000,
+      "finalFour": 4
+    },
+    "lan": {
+      "initialFour": 3,
+      "C": 2,
+      "semanticPassed": 4,
+      "formationWaitMs": 330000,
+      "finalFour": 4,
+      "finalFourSemanticPassed": 3,
+      "finalEvidence": "m2f-lan-four-semantic/lan.json"
+    }
+  },
+  "defaultTiming": {
+    "mimo-before": {
+      "four": 1,
+      "C": 0,
+      "formationWaitMs": 0
+    },
+    "mimo-after": {
+      "four": 0,
+      "C": 1,
+      "formationWaitMs": 0
+    },
+    "lan-before": {
+      "four": 1,
+      "C": 0,
+      "formationWaitMs": 0
+    },
+    "lan-after": {
+      "four": 0,
+      "C": 0,
+      "formationWaitMs": 0
+    }
+  },
+  "performance": [
+    {
+      "scene": "greeting",
+      "repetition": 1,
+      "promptTokens": 2441,
+      "cachedTokens": 1825,
+      "firstTextMs": 2705.1906,
+      "firstDeltaMs": 1294.5506999999998,
+      "toolCalls": []
+    },
+    {
+      "scene": "greeting",
+      "repetition": 2,
+      "promptTokens": 2442,
+      "cachedTokens": 1825,
+      "firstTextMs": 6472.911700000001,
+      "firstDeltaMs": 1912.2427000000002,
+      "toolCalls": []
+    },
+    {
+      "scene": "greeting",
+      "repetition": 3,
+      "promptTokens": 2440,
+      "cachedTokens": 1825,
+      "firstTextMs": 3554.5153,
+      "firstDeltaMs": 1887.9469,
+      "toolCalls": []
+    },
+    {
+      "scene": "file",
+      "repetition": 1,
+      "promptTokens": 2451,
+      "cachedTokens": 1825,
+      "firstTextMs": 12238.1099,
+      "firstDeltaMs": 2261.8475999999996,
+      "toolCalls": [
+        "load_tools",
+        "read"
+      ]
+    },
+    {
+      "scene": "file",
+      "repetition": 2,
+      "promptTokens": 2452,
+      "cachedTokens": 1825,
+      "firstTextMs": 13568.6652,
+      "firstDeltaMs": 2133.1591999999996,
+      "toolCalls": [
+        "load_tools",
+        "load_tools",
+        "read"
+      ]
+    },
+    {
+      "scene": "file",
+      "repetition": 3,
+      "promptTokens": 2451,
+      "cachedTokens": 1825,
+      "firstTextMs": 10096.4746,
+      "firstDeltaMs": 1047.1632,
+      "toolCalls": [
+        "load_tools",
+        "read"
+      ]
+    }
+  ]
+}

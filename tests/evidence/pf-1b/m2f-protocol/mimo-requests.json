@@ -1,0 +1,6373 @@
+[
+  {
+    "kind": "formation-fixture",
+    "waitMs": 330000,
+    "at": "2026-10-09T05:41:45.961Z"
+  },
+  {
+    "id": "35984-1",
+    "at": "2026-10-09T05:42:03.741Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-1",
+    "at": "2026-10-09T05:42:03.745Z",
+    "elapsedMs": 4,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-2",
+    "at": "2026-10-09T05:42:03.746Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-1",
+    "at": "2026-10-09T05:42:03.745Z",
+    "elapsedMs": 4,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-2",
+    "at": "2026-10-09T05:42:03.749Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-2",
+    "at": "2026-10-09T05:42:03.754Z",
+    "elapsedMs": 5,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-3",
+    "at": "2026-10-09T05:42:04.519Z",
+    "elapsedMs": 768,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-3",
+    "at": "2026-10-09T05:42:04.571Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 7919,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true
+  },
+  {
+    "id": "scheduler-5",
+    "at": "2026-10-09T05:42:05.190Z",
+    "elapsedMs": 1435,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-4",
+    "at": "2026-10-09T05:42:05.192Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 569,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true
+  },
+  {
+    "id": "35984-4",
+    "at": "2026-10-09T05:42:05.721Z",
+    "elapsedMs": 529,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-4",
+    "at": "2026-10-09T05:42:05.722Z",
+    "elapsedMs": 530,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-3",
+    "at": "2026-10-09T05:42:05.875Z",
+    "elapsedMs": 1304,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-3",
+    "at": "2026-10-09T05:42:05.876Z",
+    "elapsedMs": 1305,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-4",
+    "at": "2026-10-09T05:42:05.917Z",
+    "elapsedMs": 725,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35984-3",
+    "at": "2026-10-09T05:42:05.955Z",
+    "elapsedMs": 1384,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-6",
+    "at": "2026-10-09T05:42:05.958Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-4",
+    "at": "2026-10-09T05:42:06.527Z",
+    "elapsedMs": 1335,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "35984-4",
+    "at": "2026-10-09T05:42:06.683Z",
+    "elapsedMs": 1491,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 21,
+    "bytes": 6692,
+    "reasoningChars": 182,
+    "contentChars": 10,
+    "usage": {
+      "completion_tokens": 56,
+      "prompt_tokens": 147,
+      "total_tokens": 203,
+      "completion_tokens_details": {
+        "reasoning_tokens": 47
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  },
+  {
+    "id": "scheduler-7",
+    "at": "2026-10-09T05:42:07.103Z",
+    "elapsedMs": 418,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-3",
+    "at": "2026-10-09T05:42:07.797Z",
+    "elapsedMs": 3226,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-8",
+    "at": "2026-10-09T05:42:07.800Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-3",
+    "at": "2026-10-09T05:42:09.172Z",
+    "elapsedMs": 4601,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 58,
+    "bytes": 17345,
+    "reasoningChars": 479,
+    "contentChars": 62,
+    "usage": {
+      "completion_tokens": 160,
+      "prompt_tokens": 2142,
+      "total_tokens": 2302,
+      "completion_tokens_details": {
+        "reasoning_tokens": 116
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1664
+      }
+    }
+  },
+  {
+    "id": "scheduler-9",
+    "at": "2026-10-09T05:42:09.614Z",
+    "elapsedMs": 440,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-1",
+    "at": "2026-10-09T05:42:09.615Z",
+    "elapsedMs": 5874,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "14244-1",
+    "at": "2026-10-09T05:42:11.134Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 10773,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": false
+  },
+  {
+    "id": "14244-1",
+    "at": "2026-10-09T05:42:19.679Z",
+    "elapsedMs": 8545,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-10",
+    "at": "2026-10-09T05:42:19.680Z",
+    "elapsedMs": 8985,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "14244-1",
+    "at": "2026-10-09T05:42:19.681Z",
+    "elapsedMs": 8547,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "14244-1",
+    "at": "2026-10-09T05:42:21.834Z",
+    "elapsedMs": 10700,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 2,
+    "bytes": 1986,
+    "reasoningChars": 905,
+    "contentChars": 357,
+    "usage": {
+      "completion_tokens": 359,
+      "prompt_tokens": 4637,
+      "total_tokens": 4996,
+      "completion_tokens_details": {
+        "reasoning_tokens": 225
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 4352
+      }
+    }
+  },
+  {
+    "id": "scheduler-10",
+    "at": "2026-10-09T05:42:22.273Z",
+    "elapsedMs": 11578,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-5",
+    "at": "2026-10-09T05:42:22.554Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-5",
+    "at": "2026-10-09T05:42:22.556Z",
+    "elapsedMs": 2,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-12",
+    "at": "2026-10-09T05:42:22.556Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-5",
+    "at": "2026-10-09T05:42:22.556Z",
+    "elapsedMs": 2,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-6",
+    "at": "2026-10-09T05:42:22.558Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-6",
+    "at": "2026-10-09T05:42:22.560Z",
+    "elapsedMs": 2,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-13",
+    "at": "2026-10-09T05:42:22.980Z",
+    "elapsedMs": 421,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-7",
+    "at": "2026-10-09T05:42:22.983Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 8028,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-15",
+    "at": "2026-10-09T05:42:23.462Z",
+    "elapsedMs": 901,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-8",
+    "at": "2026-10-09T05:42:23.464Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 533,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true
+  },
+  {
+    "id": "35984-7",
+    "at": "2026-10-09T05:42:26.846Z",
+    "elapsedMs": 3864,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-7",
+    "at": "2026-10-09T05:42:26.847Z",
+    "elapsedMs": 3865,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-7",
+    "at": "2026-10-09T05:42:26.924Z",
+    "elapsedMs": 3942,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-16",
+    "at": "2026-10-09T05:42:27.002Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-8",
+    "at": "2026-10-09T05:42:27.775Z",
+    "elapsedMs": 4312,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-8",
+    "at": "2026-10-09T05:42:27.776Z",
+    "elapsedMs": 4313,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-8",
+    "at": "2026-10-09T05:42:27.848Z",
+    "elapsedMs": 4385,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35984-8",
+    "at": "2026-10-09T05:42:28.295Z",
+    "elapsedMs": 4832,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "35984-8",
+    "at": "2026-10-09T05:42:28.448Z",
+    "elapsedMs": 4985,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 16,
+    "bytes": 4600,
+    "reasoningChars": 100,
+    "contentChars": 9,
+    "usage": {
+      "completion_tokens": 44,
+      "prompt_tokens": 121,
+      "total_tokens": 165,
+      "completion_tokens_details": {
+        "reasoning_tokens": 37
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  },
+  {
+    "id": "scheduler-17",
+    "at": "2026-10-09T05:42:28.865Z",
+    "elapsedMs": 416,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-7",
+    "at": "2026-10-09T05:42:31.869Z",
+    "elapsedMs": 8887,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 29991
+  },
+  {
+    "id": "35984-7",
+    "at": "2026-10-09T05:42:32.937Z",
+    "elapsedMs": 9955,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-18",
+    "at": "2026-10-09T05:42:32.939Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-7",
+    "at": "2026-10-09T05:42:37.095Z",
+    "elapsedMs": 14113,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "progress",
+    "chunks": 200,
+    "bytes": 60741
+  },
+  {
+    "id": "35984-7",
+    "at": "2026-10-09T05:42:42.079Z",
+    "elapsedMs": 19097,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "progress",
+    "chunks": 300,
+    "bytes": 90512
+  },
+  {
+    "id": "35984-7",
+    "at": "2026-10-09T05:42:47.573Z",
+    "elapsedMs": 24591,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "progress",
+    "chunks": 400,
+    "bytes": 120305
+  },
+  {
+    "id": "35984-7",
+    "at": "2026-10-09T05:42:52.838Z",
+    "elapsedMs": 29856,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 499,
+    "bytes": 149567,
+    "reasoningChars": 858,
+    "contentChars": 1472,
+    "usage": {
+      "completion_tokens": 1273,
+      "prompt_tokens": 2194,
+      "total_tokens": 3467,
+      "completion_tokens_details": {
+        "reasoning_tokens": 332
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1728
+      }
+    }
+  },
+  {
+    "id": "scheduler-19",
+    "at": "2026-10-09T05:42:53.297Z",
+    "elapsedMs": 456,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-5",
+    "at": "2026-10-09T05:42:53.297Z",
+    "elapsedMs": 30743,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "35984-9",
+    "at": "2026-10-09T05:43:01.120Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-9",
+    "at": "2026-10-09T05:43:01.122Z",
+    "elapsedMs": 2,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-21",
+    "at": "2026-10-09T05:43:01.122Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-9",
+    "at": "2026-10-09T05:43:01.122Z",
+    "elapsedMs": 2,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-10",
+    "at": "2026-10-09T05:43:01.123Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-10",
+    "at": "2026-10-09T05:43:01.126Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-22",
+    "at": "2026-10-09T05:43:01.525Z",
+    "elapsedMs": 401,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-11",
+    "at": "2026-10-09T05:43:01.527Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 8040,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-24",
+    "at": "2026-10-09T05:43:01.925Z",
+    "elapsedMs": 798,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-12",
+    "at": "2026-10-09T05:43:01.927Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 545,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true
+  },
+  {
+    "id": "35984-12",
+    "at": "2026-10-09T05:43:03.570Z",
+    "elapsedMs": 1643,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-12",
+    "at": "2026-10-09T05:43:03.570Z",
+    "elapsedMs": 1643,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-12",
+    "at": "2026-10-09T05:43:03.601Z",
+    "elapsedMs": 1674,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35984-12",
+    "at": "2026-10-09T05:43:04.300Z",
+    "elapsedMs": 2373,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "35984-11",
+    "at": "2026-10-09T05:43:04.412Z",
+    "elapsedMs": 2885,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-11",
+    "at": "2026-10-09T05:43:04.412Z",
+    "elapsedMs": 2885,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-12",
+    "at": "2026-10-09T05:43:04.580Z",
+    "elapsedMs": 2653,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 22,
+    "bytes": 6437,
+    "reasoningChars": 175,
+    "contentChars": 9,
+    "usage": {
+      "completion_tokens": 63,
+      "prompt_tokens": 130,
+      "total_tokens": 193,
+      "completion_tokens_details": {
+        "reasoning_tokens": 56
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  },
+  {
+    "id": "scheduler-25",
+    "at": "2026-10-09T05:43:05.016Z",
+    "elapsedMs": 434,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-11",
+    "at": "2026-10-09T05:43:05.576Z",
+    "elapsedMs": 4049,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-26",
+    "at": "2026-10-09T05:43:05.578Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-11",
+    "at": "2026-10-09T05:43:21.684Z",
+    "elapsedMs": 20157,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-27",
+    "at": "2026-10-09T05:43:21.687Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-11",
+    "at": "2026-10-09T05:43:25.074Z",
+    "elapsedMs": 23547,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 52,
+    "bytes": 15356,
+    "reasoningChars": 131,
+    "contentChars": 62,
+    "usage": {
+      "completion_tokens": 114,
+      "prompt_tokens": 2201,
+      "total_tokens": 2315,
+      "completion_tokens_details": {
+        "reasoning_tokens": 73
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1728
+      }
+    }
+  },
+  {
+    "id": "scheduler-28",
+    "at": "2026-10-09T05:43:25.508Z",
+    "elapsedMs": 432,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-9",
+    "at": "2026-10-09T05:43:25.509Z",
+    "elapsedMs": 24389,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "14244-2",
+    "at": "2026-10-09T05:43:27.496Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 10812,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": false
+  },
+  {
+    "id": "14244-2",
+    "at": "2026-10-09T05:43:33.323Z",
+    "elapsedMs": 5828,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-29",
+    "at": "2026-10-09T05:43:33.323Z",
+    "elapsedMs": 6754,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "14244-2",
+    "at": "2026-10-09T05:43:33.324Z",
+    "elapsedMs": 5829,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "14244-2",
+    "at": "2026-10-09T05:43:33.325Z",
+    "elapsedMs": 5830,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 1,
+    "bytes": 1446,
+    "reasoningChars": 446,
+    "contentChars": 339,
+    "usage": {
+      "completion_tokens": 238,
+      "prompt_tokens": 4689,
+      "total_tokens": 4927,
+      "completion_tokens_details": {
+        "reasoning_tokens": 116
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 4352
+      }
+    }
+  },
+  {
+    "id": "scheduler-29",
+    "at": "2026-10-09T05:43:33.786Z",
+    "elapsedMs": 7217,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-13",
+    "at": "2026-10-09T05:43:34.501Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-13",
+    "at": "2026-10-09T05:43:34.503Z",
+    "elapsedMs": 2,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-13",
+    "at": "2026-10-09T05:43:34.503Z",
+    "elapsedMs": 2,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "scheduler-31",
+    "at": "2026-10-09T05:43:35.050Z",
+    "elapsedMs": 545,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-14",
+    "at": "2026-10-09T05:43:35.054Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 9170,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 7,
+      "lastUserIndex": 10,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "35984-14",
+    "at": "2026-10-09T05:43:37.343Z",
+    "elapsedMs": 2290,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-14",
+    "at": "2026-10-09T05:43:37.344Z",
+    "elapsedMs": 2291,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-14",
+    "at": "2026-10-09T05:43:37.603Z",
+    "elapsedMs": 2550,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-32",
+    "at": "2026-10-09T05:43:37.605Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-14",
+    "at": "2026-10-09T05:43:42.621Z",
+    "elapsedMs": 7568,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-33",
+    "at": "2026-10-09T05:43:42.623Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-14",
+    "at": "2026-10-09T05:43:45.401Z",
+    "elapsedMs": 10348,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 33,
+    "bytes": 9926,
+    "reasoningChars": 131,
+    "contentChars": 55,
+    "usage": {
+      "completion_tokens": 61,
+      "prompt_tokens": 2646,
+      "total_tokens": 2707,
+      "completion_tokens_details": {
+        "reasoning_tokens": 24
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1792
+      }
+    }
+  },
+  {
+    "id": "scheduler-34",
+    "at": "2026-10-09T05:43:46.012Z",
+    "elapsedMs": 437,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-13",
+    "at": "2026-10-09T05:43:46.013Z",
+    "elapsedMs": 11512,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "14244-3",
+    "at": "2026-10-09T05:43:47.786Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 11438,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": false
+  },
+  {
+    "id": "14244-3",
+    "at": "2026-10-09T05:43:55.650Z",
+    "elapsedMs": 7864,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-35",
+    "at": "2026-10-09T05:43:55.650Z",
+    "elapsedMs": 8403,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "14244-3",
+    "at": "2026-10-09T05:43:55.651Z",
+    "elapsedMs": 7865,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "14244-3",
+    "at": "2026-10-09T05:43:55.652Z",
+    "elapsedMs": 7866,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 1,
+    "bytes": 1698,
+    "reasoningChars": 696,
+    "contentChars": 393,
+    "usage": {
+      "completion_tokens": 338,
+      "prompt_tokens": 4967,
+      "total_tokens": 5305,
+      "completion_tokens_details": {
+        "reasoning_tokens": 161
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 4352
+      }
+    }
+  },
+  {
+    "id": "scheduler-35",
+    "at": "2026-10-09T05:43:56.155Z",
+    "elapsedMs": 8908,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-15",
+    "at": "2026-10-09T05:43:56.442Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-15",
+    "at": "2026-10-09T05:43:56.446Z",
+    "elapsedMs": 4,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-37",
+    "at": "2026-10-09T05:43:56.446Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-15",
+    "at": "2026-10-09T05:43:56.447Z",
+    "elapsedMs": 5,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-16",
+    "at": "2026-10-09T05:43:56.448Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-16",
+    "at": "2026-10-09T05:43:56.451Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-38",
+    "at": "2026-10-09T05:43:56.948Z",
+    "elapsedMs": 499,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-17",
+    "at": "2026-10-09T05:43:56.950Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 8084,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": 6,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": true,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-40",
+    "at": "2026-10-09T05:43:57.477Z",
+    "elapsedMs": 1024,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-18",
+    "at": "2026-10-09T05:43:57.481Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 543,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true
+  },
+  {
+    "id": "35984-17",
+    "at": "2026-10-09T05:43:57.894Z",
+    "elapsedMs": 944,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-17",
+    "at": "2026-10-09T05:43:57.895Z",
+    "elapsedMs": 945,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-17",
+    "at": "2026-10-09T05:43:57.966Z",
+    "elapsedMs": 1016,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-41",
+    "at": "2026-10-09T05:43:58.115Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-18",
+    "at": "2026-10-09T05:43:58.753Z",
+    "elapsedMs": 1273,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-18",
+    "at": "2026-10-09T05:43:58.754Z",
+    "elapsedMs": 1274,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-18",
+    "at": "2026-10-09T05:43:58.838Z",
+    "elapsedMs": 1358,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35984-18",
+    "at": "2026-10-09T05:43:59.082Z",
+    "elapsedMs": 1602,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "35984-18",
+    "at": "2026-10-09T05:43:59.293Z",
+    "elapsedMs": 1813,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 13,
+    "bytes": 3645,
+    "reasoningChars": 57,
+    "contentChars": 8,
+    "usage": {
+      "completion_tokens": 23,
+      "prompt_tokens": 128,
+      "total_tokens": 151,
+      "completion_tokens_details": {
+        "reasoning_tokens": 17
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  },
+  {
+    "id": "scheduler-42",
+    "at": "2026-10-09T05:43:59.861Z",
+    "elapsedMs": 568,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-17",
+    "at": "2026-10-09T05:44:03.063Z",
+    "elapsedMs": 6113,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 30142
+  },
+  {
+    "id": "35984-17",
+    "at": "2026-10-09T05:44:25.407Z",
+    "elapsedMs": 28457,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "progress",
+    "chunks": 200,
+    "bytes": 59961
+  },
+  {
+    "id": "35984-17",
+    "at": "2026-10-09T05:44:33.550Z",
+    "elapsedMs": 36600,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "progress",
+    "chunks": 300,
+    "bytes": 90017
+  },
+  {
+    "id": "35984-17",
+    "at": "2026-10-09T05:44:49.089Z",
+    "elapsedMs": 52139,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "progress",
+    "chunks": 400,
+    "bytes": 120060
+  },
+  {
+    "id": "35984-17",
+    "at": "2026-10-09T05:45:27.018Z",
+    "elapsedMs": 90068,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "progress",
+    "chunks": 500,
+    "bytes": 150056
+  },
+  {
+    "id": "35984-17",
+    "at": "2026-10-09T05:45:27.688Z",
+    "elapsedMs": 90738,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-tool-call"
+  },
+  {
+    "id": "35984-17",
+    "at": "2026-10-09T05:45:28.019Z",
+    "elapsedMs": 91069,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 507,
+    "bytes": 152887,
+    "reasoningChars": 4985,
+    "contentChars": 0,
+    "usage": {
+      "completion_tokens": 1366,
+      "prompt_tokens": 2225,
+      "total_tokens": 3591,
+      "completion_tokens_details": {
+        "reasoning_tokens": 1343
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1728
+      }
+    }
+  },
+  {
+    "id": "scheduler-43",
+    "at": "2026-10-09T05:45:28.505Z",
+    "elapsedMs": 483,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-15",
+    "at": "2026-10-09T05:45:28.506Z",
+    "elapsedMs": 92064,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "35984-19",
+    "at": "2026-10-09T05:45:28.821Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-19",
+    "at": "2026-10-09T05:45:28.822Z",
+    "elapsedMs": 1,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-19",
+    "at": "2026-10-09T05:45:28.823Z",
+    "elapsedMs": 2,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "scheduler-45",
+    "at": "2026-10-09T05:45:29.326Z",
+    "elapsedMs": 502,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-20",
+    "at": "2026-10-09T05:45:29.329Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 13691,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 5,
+      "lastUserIndex": 7,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": 7,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": true,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "35984-20",
+    "at": "2026-10-09T05:45:31.083Z",
+    "elapsedMs": 1754,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-20",
+    "at": "2026-10-09T05:45:31.083Z",
+    "elapsedMs": 1754,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-20",
+    "at": "2026-10-09T05:45:31.172Z",
+    "elapsedMs": 1843,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-46",
+    "at": "2026-10-09T05:45:31.174Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-20",
+    "at": "2026-10-09T05:45:31.502Z",
+    "elapsedMs": 2173,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-tool-call"
+  },
+  {
+    "id": "35984-20",
+    "at": "2026-10-09T05:45:33.083Z",
+    "elapsedMs": 3754,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 75,
+    "bytes": 28146,
+    "reasoningChars": 68,
+    "contentChars": 0,
+    "usage": {
+      "completion_tokens": 126,
+      "prompt_tokens": 4054,
+      "total_tokens": 4180,
+      "completion_tokens_details": {
+        "reasoning_tokens": 28
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1216
+      }
+    }
+  },
+  {
+    "id": "scheduler-47",
+    "at": "2026-10-09T05:45:33.534Z",
+    "elapsedMs": 449,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-19",
+    "at": "2026-10-09T05:45:33.535Z",
+    "elapsedMs": 4714,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "35984-21",
+    "at": "2026-10-09T05:45:34.054Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-21",
+    "at": "2026-10-09T05:45:34.056Z",
+    "elapsedMs": 2,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-21",
+    "at": "2026-10-09T05:45:34.056Z",
+    "elapsedMs": 2,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "scheduler-49",
+    "at": "2026-10-09T05:45:34.536Z",
+    "elapsedMs": 478,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-22",
+    "at": "2026-10-09T05:45:34.539Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 14592,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 6,
+      "lastUserIndex": 8,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": 8,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": true,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "35984-22",
+    "at": "2026-10-09T05:45:36.694Z",
+    "elapsedMs": 2155,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-22",
+    "at": "2026-10-09T05:45:36.694Z",
+    "elapsedMs": 2155,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-22",
+    "at": "2026-10-09T05:45:36.769Z",
+    "elapsedMs": 2230,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-50",
+    "at": "2026-10-09T05:45:36.771Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-22",
+    "at": "2026-10-09T05:45:36.983Z",
+    "elapsedMs": 2444,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-tool-call"
+  },
+  {
+    "id": "35984-22",
+    "at": "2026-10-09T05:45:37.670Z",
+    "elapsedMs": 3131,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 61,
+    "bytes": 22083,
+    "reasoningChars": 18,
+    "contentChars": 0,
+    "usage": {
+      "completion_tokens": 114,
+      "prompt_tokens": 4259,
+      "total_tokens": 4373,
+      "completion_tokens_details": {
+        "reasoning_tokens": 10
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 2496
+      }
+    }
+  },
+  {
+    "id": "scheduler-51",
+    "at": "2026-10-09T05:45:38.123Z",
+    "elapsedMs": 450,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-21",
+    "at": "2026-10-09T05:45:38.123Z",
+    "elapsedMs": 4069,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "35984-23",
+    "at": "2026-10-09T05:45:38.404Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-23",
+    "at": "2026-10-09T05:45:38.406Z",
+    "elapsedMs": 2,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-23",
+    "at": "2026-10-09T05:45:38.406Z",
+    "elapsedMs": 2,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "scheduler-53",
+    "at": "2026-10-09T05:45:38.835Z",
+    "elapsedMs": 427,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-24",
+    "at": "2026-10-09T05:45:38.838Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 15449,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 7,
+      "lastUserIndex": 9,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": 9,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": true,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "35984-24",
+    "at": "2026-10-09T05:45:40.489Z",
+    "elapsedMs": 1651,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-24",
+    "at": "2026-10-09T05:45:40.490Z",
+    "elapsedMs": 1652,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-24",
+    "at": "2026-10-09T05:45:40.565Z",
+    "elapsedMs": 1727,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-54",
+    "at": "2026-10-09T05:45:40.568Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-24",
+    "at": "2026-10-09T05:45:41.890Z",
+    "elapsedMs": 3052,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-tool-call"
+  },
+  {
+    "id": "35984-24",
+    "at": "2026-10-09T05:45:42.513Z",
+    "elapsedMs": 3675,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 76,
+    "bytes": 26027,
+    "reasoningChars": 294,
+    "contentChars": 0,
+    "usage": {
+      "completion_tokens": 198,
+      "prompt_tokens": 4452,
+      "total_tokens": 4650,
+      "completion_tokens_details": {
+        "reasoning_tokens": 103
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 2560
+      }
+    }
+  },
+  {
+    "id": "scheduler-55",
+    "at": "2026-10-09T05:45:43.068Z",
+    "elapsedMs": 553,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-23",
+    "at": "2026-10-09T05:45:43.068Z",
+    "elapsedMs": 4664,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "35984-25",
+    "at": "2026-10-09T05:45:43.450Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-25",
+    "at": "2026-10-09T05:45:43.452Z",
+    "elapsedMs": 2,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-25",
+    "at": "2026-10-09T05:45:43.452Z",
+    "elapsedMs": 2,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "scheduler-57",
+    "at": "2026-10-09T05:45:44.000Z",
+    "elapsedMs": 546,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-26",
+    "at": "2026-10-09T05:45:44.003Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 16544,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 8,
+      "lastUserIndex": 10,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": 10,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": true,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "35984-26",
+    "at": "2026-10-09T05:45:46.388Z",
+    "elapsedMs": 2386,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-26",
+    "at": "2026-10-09T05:45:46.389Z",
+    "elapsedMs": 2387,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-26",
+    "at": "2026-10-09T05:45:46.543Z",
+    "elapsedMs": 2541,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-58",
+    "at": "2026-10-09T05:45:46.623Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-26",
+    "at": "2026-10-09T05:45:49.632Z",
+    "elapsedMs": 5630,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-tool-call"
+  },
+  {
+    "id": "35984-26",
+    "at": "2026-10-09T05:45:49.995Z",
+    "elapsedMs": 5993,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 32918
+  },
+  {
+    "id": "35984-26",
+    "at": "2026-10-09T05:45:50.360Z",
+    "elapsedMs": 6358,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 125,
+    "bytes": 41868,
+    "reasoningChars": 718,
+    "contentChars": 0,
+    "usage": {
+      "completion_tokens": 307,
+      "prompt_tokens": 4729,
+      "total_tokens": 5036,
+      "completion_tokens_details": {
+        "reasoning_tokens": 205
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 2560
+      }
+    }
+  },
+  {
+    "id": "scheduler-59",
+    "at": "2026-10-09T05:45:50.794Z",
+    "elapsedMs": 432,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-25",
+    "at": "2026-10-09T05:45:50.794Z",
+    "elapsedMs": 7344,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "35984-27",
+    "at": "2026-10-09T05:45:51.067Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-27",
+    "at": "2026-10-09T05:45:51.069Z",
+    "elapsedMs": 2,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-27",
+    "at": "2026-10-09T05:45:51.069Z",
+    "elapsedMs": 2,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "scheduler-61",
+    "at": "2026-10-09T05:45:51.547Z",
+    "elapsedMs": 477,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-28",
+    "at": "2026-10-09T05:45:51.551Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 18134,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 9,
+      "lastUserIndex": 11,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": 11,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": true,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "35984-28",
+    "at": "2026-10-09T05:45:53.953Z",
+    "elapsedMs": 2402,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-28",
+    "at": "2026-10-09T05:45:53.953Z",
+    "elapsedMs": 2402,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-28",
+    "at": "2026-10-09T05:45:54.753Z",
+    "elapsedMs": 3202,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-62",
+    "at": "2026-10-09T05:45:54.756Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-28",
+    "at": "2026-10-09T05:45:56.689Z",
+    "elapsedMs": 5138,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-tool-call"
+  },
+  {
+    "id": "35984-28",
+    "at": "2026-10-09T05:45:57.383Z",
+    "elapsedMs": 5832,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 49,
+    "bytes": 17250,
+    "reasoningChars": 60,
+    "contentChars": 0,
+    "usage": {
+      "completion_tokens": 126,
+      "prompt_tokens": 5115,
+      "total_tokens": 5241,
+      "completion_tokens_details": {
+        "reasoning_tokens": 35
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 2624
+      }
+    }
+  },
+  {
+    "id": "scheduler-63",
+    "at": "2026-10-09T05:45:58.118Z",
+    "elapsedMs": 495,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-27",
+    "at": "2026-10-09T05:45:58.119Z",
+    "elapsedMs": 7052,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "35984-29",
+    "at": "2026-10-09T05:45:58.438Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-29",
+    "at": "2026-10-09T05:45:58.439Z",
+    "elapsedMs": 1,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-29",
+    "at": "2026-10-09T05:45:58.440Z",
+    "elapsedMs": 2,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "scheduler-65",
+    "at": "2026-10-09T05:45:58.953Z",
+    "elapsedMs": 512,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-30",
+    "at": "2026-10-09T05:45:58.957Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 19085,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 10,
+      "lastUserIndex": 12,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": 12,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": true,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "35984-30",
+    "at": "2026-10-09T05:46:00.786Z",
+    "elapsedMs": 1830,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-30",
+    "at": "2026-10-09T05:46:00.787Z",
+    "elapsedMs": 1831,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-30",
+    "at": "2026-10-09T05:46:00.869Z",
+    "elapsedMs": 1913,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-66",
+    "at": "2026-10-09T05:46:00.871Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-30",
+    "at": "2026-10-09T05:46:01.328Z",
+    "elapsedMs": 2372,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-67",
+    "at": "2026-10-09T05:46:01.330Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-30",
+    "at": "2026-10-09T05:46:02.893Z",
+    "elapsedMs": 3937,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 42,
+    "bytes": 12625,
+    "reasoningChars": 82,
+    "contentChars": 115,
+    "usage": {
+      "completion_tokens": 117,
+      "prompt_tokens": 5378,
+      "total_tokens": 5495,
+      "completion_tokens_details": {
+        "reasoning_tokens": 37
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 2624
+      }
+    }
+  },
+  {
+    "id": "scheduler-68",
+    "at": "2026-10-09T05:46:03.344Z",
+    "elapsedMs": 449,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-29",
+    "at": "2026-10-09T05:46:03.344Z",
+    "elapsedMs": 4906,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "35984-31",
+    "at": "2026-10-09T05:46:10.546Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-31",
+    "at": "2026-10-09T05:46:10.549Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-70",
+    "at": "2026-10-09T05:46:10.549Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-31",
+    "at": "2026-10-09T05:46:10.549Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-32",
+    "at": "2026-10-09T05:46:10.551Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-32",
+    "at": "2026-10-09T05:46:10.556Z",
+    "elapsedMs": 5,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-71",
+    "at": "2026-10-09T05:46:11.038Z",
+    "elapsedMs": 486,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-33",
+    "at": "2026-10-09T05:46:11.040Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 8044,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-73",
+    "at": "2026-10-09T05:46:11.574Z",
+    "elapsedMs": 1017,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-34",
+    "at": "2026-10-09T05:46:11.578Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 549,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true
+  },
+  {
+    "id": "35984-34",
+    "at": "2026-10-09T05:46:12.312Z",
+    "elapsedMs": 735,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-34",
+    "at": "2026-10-09T05:46:12.313Z",
+    "elapsedMs": 736,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-34",
+    "at": "2026-10-09T05:46:12.358Z",
+    "elapsedMs": 781,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35984-34",
+    "at": "2026-10-09T05:46:12.513Z",
+    "elapsedMs": 936,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "35984-34",
+    "at": "2026-10-09T05:46:12.726Z",
+    "elapsedMs": 1149,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 10,
+    "bytes": 2747,
+    "reasoningChars": 28,
+    "contentChars": 6,
+    "usage": {
+      "completion_tokens": 17,
+      "prompt_tokens": 134,
+      "total_tokens": 151,
+      "completion_tokens_details": {
+        "reasoning_tokens": 10
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  },
+  {
+    "id": "scheduler-74",
+    "at": "2026-10-09T05:46:13.183Z",
+    "elapsedMs": 456,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-33",
+    "at": "2026-10-09T05:46:13.240Z",
+    "elapsedMs": 2200,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-33",
+    "at": "2026-10-09T05:46:13.240Z",
+    "elapsedMs": 2200,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-33",
+    "at": "2026-10-09T05:46:13.316Z",
+    "elapsedMs": 2276,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-75",
+    "at": "2026-10-09T05:46:13.318Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-33",
+    "at": "2026-10-09T05:46:14.607Z",
+    "elapsedMs": 3567,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-76",
+    "at": "2026-10-09T05:46:14.608Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-33",
+    "at": "2026-10-09T05:46:14.927Z",
+    "elapsedMs": 3887,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 36,
+    "bytes": 10948,
+    "reasoningChars": 337,
+    "contentChars": 16,
+    "usage": {
+      "completion_tokens": 99,
+      "prompt_tokens": 2202,
+      "total_tokens": 2301,
+      "completion_tokens_details": {
+        "reasoning_tokens": 85
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1728
+      }
+    }
+  },
+  {
+    "id": "scheduler-77",
+    "at": "2026-10-09T05:46:15.450Z",
+    "elapsedMs": 521,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-31",
+    "at": "2026-10-09T05:46:15.451Z",
+    "elapsedMs": 4905,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "14244-4",
+    "at": "2026-10-09T05:46:17.968Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 11261,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": false
+  },
+  {
+    "id": "14244-4",
+    "at": "2026-10-09T05:46:24.475Z",
+    "elapsedMs": 6507,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-78",
+    "at": "2026-10-09T05:46:24.476Z",
+    "elapsedMs": 7461,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "14244-4",
+    "at": "2026-10-09T05:46:24.476Z",
+    "elapsedMs": 6508,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "14244-4",
+    "at": "2026-10-09T05:46:24.477Z",
+    "elapsedMs": 6509,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 1,
+    "bytes": 1405,
+    "reasoningChars": 456,
+    "contentChars": 278,
+    "usage": {
+      "completion_tokens": 240,
+      "prompt_tokens": 4900,
+      "total_tokens": 5140,
+      "completion_tokens_details": {
+        "reasoning_tokens": 133
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 4416
+      }
+    }
+  },
+  {
+    "id": "scheduler-78",
+    "at": "2026-10-09T05:46:24.895Z",
+    "elapsedMs": 7880,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-35",
+    "at": "2026-10-09T05:46:25.295Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "scheduler-80",
+    "at": "2026-10-09T05:46:25.298Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-36",
+    "at": "2026-10-09T05:46:25.299Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-36",
+    "at": "2026-10-09T05:46:25.300Z",
+    "elapsedMs": 1,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "35984-35",
+    "at": "2026-10-09T05:46:25.305Z",
+    "elapsedMs": 10,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-35",
+    "at": "2026-10-09T05:46:25.306Z",
+    "elapsedMs": 11,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "scheduler-82",
+    "at": "2026-10-09T05:46:25.745Z",
+    "elapsedMs": 444,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-37",
+    "at": "2026-10-09T05:46:25.747Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 545,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true
+  },
+  {
+    "id": "scheduler-83",
+    "at": "2026-10-09T05:46:26.205Z",
+    "elapsedMs": 898,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-38",
+    "at": "2026-10-09T05:46:26.207Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:52229",
+    "phase": "start",
+    "requestChars": 8074,
+    "requestedModel": "local-quality",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "35984-38",
+    "at": "2026-10-09T05:46:27.271Z",
+    "elapsedMs": 1065,
+    "kind": "model",
+    "origin": "http://127.0.0.1:52229",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-38",
+    "at": "2026-10-09T05:46:27.271Z",
+    "elapsedMs": 1065,
+    "kind": "model",
+    "origin": "http://127.0.0.1:52229",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-38",
+    "at": "2026-10-09T05:46:27.329Z",
+    "elapsedMs": 1123,
+    "kind": "model",
+    "origin": "http://127.0.0.1:52229",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-84",
+    "at": "2026-10-09T05:46:27.330Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-37",
+    "at": "2026-10-09T05:46:27.590Z",
+    "elapsedMs": 1843,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-37",
+    "at": "2026-10-09T05:46:27.591Z",
+    "elapsedMs": 1844,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-37",
+    "at": "2026-10-09T05:46:27.671Z",
+    "elapsedMs": 1924,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35984-37",
+    "at": "2026-10-09T05:46:27.672Z",
+    "elapsedMs": 1925,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "35984-37",
+    "at": "2026-10-09T05:46:28.007Z",
+    "elapsedMs": 2260,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 13,
+    "bytes": 3962,
+    "reasoningChars": 88,
+    "contentChars": 7,
+    "usage": {
+      "completion_tokens": 29,
+      "prompt_tokens": 131,
+      "total_tokens": 160,
+      "completion_tokens_details": {
+        "reasoning_tokens": 22
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  },
+  {
+    "id": "scheduler-85",
+    "at": "2026-10-09T05:46:28.495Z",
+    "elapsedMs": 487,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-38",
+    "at": "2026-10-09T05:46:31.050Z",
+    "elapsedMs": 4844,
+    "kind": "model",
+    "origin": "http://127.0.0.1:52229",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-86",
+    "at": "2026-10-09T05:46:31.052Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-38",
+    "at": "2026-10-09T05:46:31.162Z",
+    "elapsedMs": 4956,
+    "kind": "model",
+    "origin": "http://127.0.0.1:52229",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 52155
+  },
+  {
+    "id": "35984-38",
+    "at": "2026-10-09T05:46:34.739Z",
+    "elapsedMs": 8533,
+    "kind": "model",
+    "origin": "http://127.0.0.1:52229",
+    "phase": "end",
+    "chunks": 167,
+    "bytes": 75413,
+    "reasoningChars": 772,
+    "contentChars": 137,
+    "usage": {
+      "completion_tokens": 298,
+      "prompt_tokens": 2436,
+      "total_tokens": 2734,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  },
+  {
+    "id": "scheduler-87",
+    "at": "2026-10-09T05:46:35.186Z",
+    "elapsedMs": 444,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-35",
+    "at": "2026-10-09T05:46:35.187Z",
+    "elapsedMs": 9892,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "14244-5",
+    "at": "2026-10-09T05:46:37.566Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 11413,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": false
+  },
+  {
+    "id": "14244-5",
+    "at": "2026-10-09T05:46:40.323Z",
+    "elapsedMs": 2758,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-88",
+    "at": "2026-10-09T05:46:40.323Z",
+    "elapsedMs": 3747,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "14244-5",
+    "at": "2026-10-09T05:46:40.324Z",
+    "elapsedMs": 2759,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "14244-5",
+    "at": "2026-10-09T05:46:40.325Z",
+    "elapsedMs": 2760,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 1,
+    "bytes": 602,
+    "reasoningChars": 96,
+    "contentChars": 41,
+    "usage": {
+      "completion_tokens": 35,
+      "prompt_tokens": 4978,
+      "total_tokens": 5013,
+      "completion_tokens_details": {
+        "reasoning_tokens": 22
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 4352
+      }
+    }
+  },
+  {
+    "id": "scheduler-88",
+    "at": "2026-10-09T05:46:40.745Z",
+    "elapsedMs": 4169,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-39",
+    "at": "2026-10-09T05:46:42.408Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-39",
+    "at": "2026-10-09T05:46:42.410Z",
+    "elapsedMs": 2,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-90",
+    "at": "2026-10-09T05:46:42.410Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-39",
+    "at": "2026-10-09T05:46:42.410Z",
+    "elapsedMs": 2,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-40",
+    "at": "2026-10-09T05:46:42.411Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-40",
+    "at": "2026-10-09T05:46:42.414Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-91",
+    "at": "2026-10-09T05:46:43.032Z",
+    "elapsedMs": 620,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-41",
+    "at": "2026-10-09T05:46:43.033Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 8086,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-93",
+    "at": "2026-10-09T05:46:43.458Z",
+    "elapsedMs": 1044,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-42",
+    "at": "2026-10-09T05:46:43.460Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 557,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true
+  },
+  {
+    "id": "35984-41",
+    "at": "2026-10-09T05:46:44.649Z",
+    "elapsedMs": 1616,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-41",
+    "at": "2026-10-09T05:46:44.649Z",
+    "elapsedMs": 1616,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-42",
+    "at": "2026-10-09T05:46:44.678Z",
+    "elapsedMs": 1218,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-42",
+    "at": "2026-10-09T05:46:44.679Z",
+    "elapsedMs": 1219,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-41",
+    "at": "2026-10-09T05:46:44.738Z",
+    "elapsedMs": 1705,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-94",
+    "at": "2026-10-09T05:46:44.739Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-42",
+    "at": "2026-10-09T05:46:44.777Z",
+    "elapsedMs": 1317,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35984-42",
+    "at": "2026-10-09T05:46:45.790Z",
+    "elapsedMs": 2330,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "35984-42",
+    "at": "2026-10-09T05:46:45.963Z",
+    "elapsedMs": 2503,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 25,
+    "bytes": 7520,
+    "reasoningChars": 143,
+    "contentChars": 11,
+    "usage": {
+      "completion_tokens": 48,
+      "prompt_tokens": 137,
+      "total_tokens": 185,
+      "completion_tokens_details": {
+        "reasoning_tokens": 39
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 64
+      }
+    }
+  },
+  {
+    "id": "scheduler-95",
+    "at": "2026-10-09T05:46:46.395Z",
+    "elapsedMs": 431,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-41",
+    "at": "2026-10-09T05:46:48.637Z",
+    "elapsedMs": 5604,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-96",
+    "at": "2026-10-09T05:46:48.639Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-41",
+    "at": "2026-10-09T05:46:49.718Z",
+    "elapsedMs": 6685,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 99,
+    "bytes": 29988,
+    "reasoningChars": 940,
+    "contentChars": 82,
+    "usage": {
+      "completion_tokens": 262,
+      "prompt_tokens": 2228,
+      "total_tokens": 2490,
+      "completion_tokens_details": {
+        "reasoning_tokens": 208
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1728
+      }
+    }
+  },
+  {
+    "id": "scheduler-97",
+    "at": "2026-10-09T05:46:50.336Z",
+    "elapsedMs": 451,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-39",
+    "at": "2026-10-09T05:46:50.336Z",
+    "elapsedMs": 7928,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "14244-6",
+    "at": "2026-10-09T05:46:51.984Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 11451,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": false
+  },
+  {
+    "id": "14244-6",
+    "at": "2026-10-09T05:47:00.520Z",
+    "elapsedMs": 8537,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-98",
+    "at": "2026-10-09T05:47:00.521Z",
+    "elapsedMs": 9025,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "14244-6",
+    "at": "2026-10-09T05:47:00.521Z",
+    "elapsedMs": 8538,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "14244-6",
+    "at": "2026-10-09T05:47:10.652Z",
+    "elapsedMs": 18669,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 4,
+    "bytes": 3256,
+    "reasoningChars": 1730,
+    "contentChars": 652,
+    "usage": {
+      "completion_tokens": 637,
+      "prompt_tokens": 5000,
+      "total_tokens": 5637,
+      "completion_tokens_details": {
+        "reasoning_tokens": 416
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 4544
+      }
+    }
+  },
+  {
+    "id": "scheduler-98",
+    "at": "2026-10-09T05:47:11.048Z",
+    "elapsedMs": 19552,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "14244-7",
+    "at": "2026-10-09T05:47:11.551Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 13048,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": false
+  },
+  {
+    "id": "14244-7",
+    "at": "2026-10-09T05:47:19.605Z",
+    "elapsedMs": 8054,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-99",
+    "at": "2026-10-09T05:47:19.606Z",
+    "elapsedMs": 8490,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "14244-7",
+    "at": "2026-10-09T05:47:19.606Z",
+    "elapsedMs": 8055,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "14244-7",
+    "at": "2026-10-09T05:47:24.823Z",
+    "elapsedMs": 13272,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 4,
+    "bytes": 3178,
+    "reasoningChars": 1698,
+    "contentChars": 707,
+    "usage": {
+      "completion_tokens": 637,
+      "prompt_tokens": 5477,
+      "total_tokens": 6114,
+      "completion_tokens_details": {
+        "reasoning_tokens": 370
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 4992
+      }
+    }
+  },
+  {
+    "id": "scheduler-99",
+    "at": "2026-10-09T05:47:25.268Z",
+    "elapsedMs": 14152,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-43",
+    "at": "2026-10-09T05:47:25.561Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-43",
+    "at": "2026-10-09T05:47:25.564Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-101",
+    "at": "2026-10-09T05:47:25.564Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-43",
+    "at": "2026-10-09T05:47:25.564Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-44",
+    "at": "2026-10-09T05:47:25.565Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-44",
+    "at": "2026-10-09T05:47:25.569Z",
+    "elapsedMs": 4,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-102",
+    "at": "2026-10-09T05:47:26.023Z",
+    "elapsedMs": 457,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-45",
+    "at": "2026-10-09T05:47:26.025Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 8124,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-104",
+    "at": "2026-10-09T05:47:26.472Z",
+    "elapsedMs": 903,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-46",
+    "at": "2026-10-09T05:47:26.473Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 545,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true
+  },
+  {
+    "id": "35984-45",
+    "at": "2026-10-09T05:47:28.175Z",
+    "elapsedMs": 2150,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-45",
+    "at": "2026-10-09T05:47:28.176Z",
+    "elapsedMs": 2151,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-45",
+    "at": "2026-10-09T05:47:29.006Z",
+    "elapsedMs": 2981,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-105",
+    "at": "2026-10-09T05:47:29.007Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-46",
+    "at": "2026-10-09T05:47:29.189Z",
+    "elapsedMs": 2716,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-46",
+    "at": "2026-10-09T05:47:29.190Z",
+    "elapsedMs": 2717,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-46",
+    "at": "2026-10-09T05:47:29.823Z",
+    "elapsedMs": 3350,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35984-46",
+    "at": "2026-10-09T05:47:33.300Z",
+    "elapsedMs": 6827,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "35984-46",
+    "at": "2026-10-09T05:47:34.005Z",
+    "elapsedMs": 7532,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 12,
+    "bytes": 3686,
+    "reasoningChars": 90,
+    "contentChars": 9,
+    "usage": {
+      "completion_tokens": 36,
+      "prompt_tokens": 132,
+      "total_tokens": 168,
+      "completion_tokens_details": {
+        "reasoning_tokens": 27
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 64
+      }
+    }
+  },
+  {
+    "id": "scheduler-106",
+    "at": "2026-10-09T05:47:34.436Z",
+    "elapsedMs": 430,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-45",
+    "at": "2026-10-09T05:47:37.164Z",
+    "elapsedMs": 11139,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-107",
+    "at": "2026-10-09T05:47:37.166Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-45",
+    "at": "2026-10-09T05:47:42.467Z",
+    "elapsedMs": 16442,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 49,
+    "bytes": 14344,
+    "reasoningChars": 43,
+    "contentChars": 82,
+    "usage": {
+      "completion_tokens": 88,
+      "prompt_tokens": 2250,
+      "total_tokens": 2338,
+      "completion_tokens_details": {
+        "reasoning_tokens": 29
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1728
+      }
+    }
+  },
+  {
+    "id": "scheduler-108",
+    "at": "2026-10-09T05:47:42.900Z",
+    "elapsedMs": 430,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-43",
+    "at": "2026-10-09T05:47:42.901Z",
+    "elapsedMs": 17340,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "14244-8",
+    "at": "2026-10-09T05:47:44.517Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 12252,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": false
+  },
+  {
+    "id": "14244-8",
+    "at": "2026-10-09T05:47:50.072Z",
+    "elapsedMs": 5556,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-109",
+    "at": "2026-10-09T05:47:50.073Z",
+    "elapsedMs": 6004,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "14244-8",
+    "at": "2026-10-09T05:47:50.074Z",
+    "elapsedMs": 5558,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "14244-8",
+    "at": "2026-10-09T05:47:50.076Z",
+    "elapsedMs": 5560,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 1,
+    "bytes": 616,
+    "reasoningChars": 112,
+    "contentChars": 41,
+    "usage": {
+      "completion_tokens": 39,
+      "prompt_tokens": 5459,
+      "total_tokens": 5498,
+      "completion_tokens_details": {
+        "reasoning_tokens": 26
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 4608
+      }
+    }
+  },
+  {
+    "id": "scheduler-109",
+    "at": "2026-10-09T05:47:50.905Z",
+    "elapsedMs": 6837,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-47",
+    "at": "2026-10-09T05:47:51.221Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "scheduler-110",
+    "at": "2026-10-09T05:47:51.411Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-48",
+    "at": "2026-10-09T05:47:51.411Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-47",
+    "at": "2026-10-09T05:47:51.412Z",
+    "elapsedMs": 191,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-47",
+    "at": "2026-10-09T05:47:51.413Z",
+    "elapsedMs": 192,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-48",
+    "at": "2026-10-09T05:47:51.414Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-113",
+    "at": "2026-10-09T05:47:52.103Z",
+    "elapsedMs": 689,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-49",
+    "at": "2026-10-09T05:47:52.105Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 8080,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-114",
+    "at": "2026-10-09T05:47:52.560Z",
+    "elapsedMs": 1138,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-50",
+    "at": "2026-10-09T05:47:52.563Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 551,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true
+  },
+  {
+    "id": "35984-50",
+    "at": "2026-10-09T05:47:53.775Z",
+    "elapsedMs": 1212,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-50",
+    "at": "2026-10-09T05:47:53.775Z",
+    "elapsedMs": 1212,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-50",
+    "at": "2026-10-09T05:47:53.820Z",
+    "elapsedMs": 1257,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35984-49",
+    "at": "2026-10-09T05:47:54.258Z",
+    "elapsedMs": 2153,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-49",
+    "at": "2026-10-09T05:47:54.259Z",
+    "elapsedMs": 2154,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-49",
+    "at": "2026-10-09T05:47:54.328Z",
+    "elapsedMs": 2223,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-115",
+    "at": "2026-10-09T05:47:54.330Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-50",
+    "at": "2026-10-09T05:47:54.562Z",
+    "elapsedMs": 1999,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 22,
+    "bytes": 6670,
+    "reasoningChars": 150,
+    "contentChars": 0,
+    "usage": {
+      "completion_tokens": 64,
+      "prompt_tokens": 138,
+      "total_tokens": 202,
+      "completion_tokens_details": {
+        "reasoning_tokens": 63
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  },
+  {
+    "id": "scheduler-116",
+    "at": "2026-10-09T05:47:54.981Z",
+    "elapsedMs": 418,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-49",
+    "at": "2026-10-09T05:47:55.862Z",
+    "elapsedMs": 3757,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-117",
+    "at": "2026-10-09T05:47:55.863Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-49",
+    "at": "2026-10-09T05:47:56.770Z",
+    "elapsedMs": 4665,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 49,
+    "bytes": 14477,
+    "reasoningChars": 303,
+    "contentChars": 64,
+    "usage": {
+      "completion_tokens": 145,
+      "prompt_tokens": 2231,
+      "total_tokens": 2376,
+      "completion_tokens_details": {
+        "reasoning_tokens": 86
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1728
+      }
+    }
+  },
+  {
+    "id": "scheduler-118",
+    "at": "2026-10-09T05:47:57.218Z",
+    "elapsedMs": 447,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-47",
+    "at": "2026-10-09T05:47:57.219Z",
+    "elapsedMs": 5998,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "14244-9",
+    "at": "2026-10-09T05:47:58.937Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 12272,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": false
+  },
+  {
+    "id": "14244-9",
+    "at": "2026-10-09T05:48:05.814Z",
+    "elapsedMs": 6878,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-119",
+    "at": "2026-10-09T05:48:05.815Z",
+    "elapsedMs": 7306,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "14244-9",
+    "at": "2026-10-09T05:48:05.815Z",
+    "elapsedMs": 6879,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "14244-9",
+    "at": "2026-10-09T05:48:05.816Z",
+    "elapsedMs": 6880,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 1,
+    "bytes": 1648,
+    "reasoningChars": 668,
+    "contentChars": 345,
+    "usage": {
+      "completion_tokens": 290,
+      "prompt_tokens": 5476,
+      "total_tokens": 5766,
+      "completion_tokens_details": {
+        "reasoning_tokens": 164
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 5248
+      }
+    }
+  },
+  {
+    "id": "scheduler-119",
+    "at": "2026-10-09T05:48:06.321Z",
+    "elapsedMs": 7812,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-51",
+    "at": "2026-10-09T05:48:06.627Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-51",
+    "at": "2026-10-09T05:48:06.630Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-121",
+    "at": "2026-10-09T05:48:06.630Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-51",
+    "at": "2026-10-09T05:48:06.630Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-52",
+    "at": "2026-10-09T05:48:06.631Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-52",
+    "at": "2026-10-09T05:48:06.634Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-122",
+    "at": "2026-10-09T05:48:07.080Z",
+    "elapsedMs": 448,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-53",
+    "at": "2026-10-09T05:48:07.082Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 8111,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-124",
+    "at": "2026-10-09T05:48:07.650Z",
+    "elapsedMs": 1015,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-54",
+    "at": "2026-10-09T05:48:07.652Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 546,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true
+  },
+  {
+    "id": "35984-54",
+    "at": "2026-10-09T05:48:08.526Z",
+    "elapsedMs": 876,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-54",
+    "at": "2026-10-09T05:48:08.527Z",
+    "elapsedMs": 876,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-54",
+    "at": "2026-10-09T05:48:08.532Z",
+    "elapsedMs": 881,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35984-53",
+    "at": "2026-10-09T05:48:08.713Z",
+    "elapsedMs": 1631,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-53",
+    "at": "2026-10-09T05:48:08.715Z",
+    "elapsedMs": 1633,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-53",
+    "at": "2026-10-09T05:48:08.792Z",
+    "elapsedMs": 1710,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-125",
+    "at": "2026-10-09T05:48:08.795Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-54",
+    "at": "2026-10-09T05:48:09.162Z",
+    "elapsedMs": 1511,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "35984-53",
+    "at": "2026-10-09T05:48:09.424Z",
+    "elapsedMs": 2342,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "35984-54",
+    "at": "2026-10-09T05:48:09.437Z",
+    "elapsedMs": 1786,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 17,
+    "bytes": 5431,
+    "reasoningChars": 107,
+    "contentChars": 10,
+    "usage": {
+      "completion_tokens": 46,
+      "prompt_tokens": 135,
+      "total_tokens": 181,
+      "completion_tokens_details": {
+        "reasoning_tokens": 35
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  },
+  {
+    "id": "scheduler-127",
+    "at": "2026-10-09T05:48:09.589Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "scheduler-126",
+    "at": "2026-10-09T05:48:10.034Z",
+    "elapsedMs": 445,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-53",
+    "at": "2026-10-09T05:48:10.433Z",
+    "elapsedMs": 3351,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 35,
+    "bytes": 10550,
+    "reasoningChars": 176,
+    "contentChars": 68,
+    "usage": {
+      "completion_tokens": 99,
+      "prompt_tokens": 2250,
+      "total_tokens": 2349,
+      "completion_tokens_details": {
+        "reasoning_tokens": 42
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1728
+      }
+    }
+  },
+  {
+    "id": "scheduler-128",
+    "at": "2026-10-09T05:48:10.889Z",
+    "elapsedMs": 454,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-51",
+    "at": "2026-10-09T05:48:10.889Z",
+    "elapsedMs": 4262,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "14244-10",
+    "at": "2026-10-09T05:48:12.947Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 12624,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": false
+  },
+  {
+    "id": "14244-10",
+    "at": "2026-10-09T05:48:20.518Z",
+    "elapsedMs": 7571,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-129",
+    "at": "2026-10-09T05:48:20.519Z",
+    "elapsedMs": 8196,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "14244-10",
+    "at": "2026-10-09T05:48:20.519Z",
+    "elapsedMs": 7572,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "14244-10",
+    "at": "2026-10-09T05:48:20.520Z",
+    "elapsedMs": 7573,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 1,
+    "bytes": 1537,
+    "reasoningChars": 573,
+    "contentChars": 379,
+    "usage": {
+      "completion_tokens": 326,
+      "prompt_tokens": 5654,
+      "total_tokens": 5980,
+      "completion_tokens_details": {
+        "reasoning_tokens": 151
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 4736
+      }
+    }
+  },
+  {
+    "id": "scheduler-129",
+    "at": "2026-10-09T05:48:20.945Z",
+    "elapsedMs": 8622,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-55",
+    "at": "2026-10-09T05:48:21.048Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "scheduler-131",
+    "at": "2026-10-09T05:48:21.051Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-55",
+    "at": "2026-10-09T05:48:21.051Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-55",
+    "at": "2026-10-09T05:48:21.052Z",
+    "elapsedMs": 4,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-56",
+    "at": "2026-10-09T05:48:21.053Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-56",
+    "at": "2026-10-09T05:48:21.056Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-132",
+    "at": "2026-10-09T05:48:21.505Z",
+    "elapsedMs": 451,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-57",
+    "at": "2026-10-09T05:48:21.511Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 8100,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-134",
+    "at": "2026-10-09T05:48:22.155Z",
+    "elapsedMs": 1098,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-58",
+    "at": "2026-10-09T05:48:22.158Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 539,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true
+  },
+  {
+    "id": "35984-57",
+    "at": "2026-10-09T05:48:23.996Z",
+    "elapsedMs": 2485,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-57",
+    "at": "2026-10-09T05:48:23.997Z",
+    "elapsedMs": 2486,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-57",
+    "at": "2026-10-09T05:48:24.071Z",
+    "elapsedMs": 2560,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-135",
+    "at": "2026-10-09T05:48:24.073Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-57",
+    "at": "2026-10-09T05:48:26.297Z",
+    "elapsedMs": 4786,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-136",
+    "at": "2026-10-09T05:48:26.299Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-58",
+    "at": "2026-10-09T05:48:27.148Z",
+    "elapsedMs": 4990,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-58",
+    "at": "2026-10-09T05:48:27.149Z",
+    "elapsedMs": 4991,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-58",
+    "at": "2026-10-09T05:48:27.165Z",
+    "elapsedMs": 5007,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35984-58",
+    "at": "2026-10-09T05:48:27.688Z",
+    "elapsedMs": 5530,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "35984-58",
+    "at": "2026-10-09T05:48:27.837Z",
+    "elapsedMs": 5679,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 17,
+    "bytes": 4856,
+    "reasoningChars": 87,
+    "contentChars": 9,
+    "usage": {
+      "completion_tokens": 36,
+      "prompt_tokens": 129,
+      "total_tokens": 165,
+      "completion_tokens_details": {
+        "reasoning_tokens": 27
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  },
+  {
+    "id": "scheduler-137",
+    "at": "2026-10-09T05:48:28.388Z",
+    "elapsedMs": 444,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-57",
+    "at": "2026-10-09T05:48:28.408Z",
+    "elapsedMs": 6897,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 85,
+    "bytes": 25508,
+    "reasoningChars": 506,
+    "contentChars": 152,
+    "usage": {
+      "completion_tokens": 263,
+      "prompt_tokens": 2241,
+      "total_tokens": 2504,
+      "completion_tokens_details": {
+        "reasoning_tokens": 131
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1728
+      }
+    }
+  },
+  {
+    "id": "scheduler-138",
+    "at": "2026-10-09T05:48:28.803Z",
+    "elapsedMs": 393,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-55",
+    "at": "2026-10-09T05:48:28.804Z",
+    "elapsedMs": 7756,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "35984-59",
+    "at": "2026-10-09T05:48:37.109Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "scheduler-139",
+    "at": "2026-10-09T05:48:37.111Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-60",
+    "at": "2026-10-09T05:48:37.111Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-59",
+    "at": "2026-10-09T05:48:37.112Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-59",
+    "at": "2026-10-09T05:48:37.112Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-60",
+    "at": "2026-10-09T05:48:37.113Z",
+    "elapsedMs": 2,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-142",
+    "at": "2026-10-09T05:48:37.549Z",
+    "elapsedMs": 435,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-61",
+    "at": "2026-10-09T05:48:37.551Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 8083,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-143",
+    "at": "2026-10-09T05:48:37.990Z",
+    "elapsedMs": 875,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-62",
+    "at": "2026-10-09T05:48:37.992Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 554,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true
+  },
+  {
+    "id": "35984-61",
+    "at": "2026-10-09T05:48:38.866Z",
+    "elapsedMs": 1315,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-61",
+    "at": "2026-10-09T05:48:38.867Z",
+    "elapsedMs": 1316,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-61",
+    "at": "2026-10-09T05:48:38.934Z",
+    "elapsedMs": 1383,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-144",
+    "at": "2026-10-09T05:48:38.937Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-61",
+    "at": "2026-10-09T05:48:41.300Z",
+    "elapsedMs": 3749,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-145",
+    "at": "2026-10-09T05:48:41.475Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-62",
+    "at": "2026-10-09T05:48:42.857Z",
+    "elapsedMs": 4865,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-62",
+    "at": "2026-10-09T05:48:42.857Z",
+    "elapsedMs": 4865,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-62",
+    "at": "2026-10-09T05:48:42.891Z",
+    "elapsedMs": 4899,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35984-62",
+    "at": "2026-10-09T05:48:42.952Z",
+    "elapsedMs": 4960,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "35984-61",
+    "at": "2026-10-09T05:48:43.143Z",
+    "elapsedMs": 5592,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 89,
+    "bytes": 26469,
+    "reasoningChars": 562,
+    "contentChars": 118,
+    "usage": {
+      "completion_tokens": 193,
+      "prompt_tokens": 2227,
+      "total_tokens": 2420,
+      "completion_tokens_details": {
+        "reasoning_tokens": 115
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1728
+      }
+    }
+  },
+  {
+    "id": "35984-62",
+    "at": "2026-10-09T05:48:43.157Z",
+    "elapsedMs": 5165,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 18,
+    "bytes": 5233,
+    "reasoningChars": 117,
+    "contentChars": 9,
+    "usage": {
+      "completion_tokens": 55,
+      "prompt_tokens": 135,
+      "total_tokens": 190,
+      "completion_tokens_details": {
+        "reasoning_tokens": 48
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  },
+  {
+    "id": "scheduler-146",
+    "at": "2026-10-09T05:48:43.570Z",
+    "elapsedMs": 425,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-59",
+    "at": "2026-10-09T05:48:43.570Z",
+    "elapsedMs": 6461,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "scheduler-147",
+    "at": "2026-10-09T05:48:44.318Z",
+    "elapsedMs": 967,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "14244-11",
+    "at": "2026-10-09T05:48:45.599Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 12652,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": false
+  },
+  {
+    "id": "14244-11",
+    "at": "2026-10-09T05:48:51.670Z",
+    "elapsedMs": 6071,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-148",
+    "at": "2026-10-09T05:48:51.670Z",
+    "elapsedMs": 6486,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "14244-11",
+    "at": "2026-10-09T05:48:51.671Z",
+    "elapsedMs": 6072,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "14244-11",
+    "at": "2026-10-09T05:48:51.672Z",
+    "elapsedMs": 6073,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 1,
+    "bytes": 1494,
+    "reasoningChars": 458,
+    "contentChars": 377,
+    "usage": {
+      "completion_tokens": 251,
+      "prompt_tokens": 5662,
+      "total_tokens": 5913,
+      "completion_tokens_details": {
+        "reasoning_tokens": 124
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 4736
+      }
+    }
+  },
+  {
+    "id": "scheduler-148",
+    "at": "2026-10-09T05:48:52.151Z",
+    "elapsedMs": 6967,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-63",
+    "at": "2026-10-09T05:48:52.460Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-63",
+    "at": "2026-10-09T05:48:52.463Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-150",
+    "at": "2026-10-09T05:48:52.463Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-63",
+    "at": "2026-10-09T05:48:52.463Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-64",
+    "at": "2026-10-09T05:48:52.465Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-64",
+    "at": "2026-10-09T05:48:52.467Z",
+    "elapsedMs": 2,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-151",
+    "at": "2026-10-09T05:48:52.903Z",
+    "elapsedMs": 438,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-65",
+    "at": "2026-10-09T05:48:52.904Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 8108,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-153",
+    "at": "2026-10-09T05:48:53.324Z",
+    "elapsedMs": 856,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-66",
+    "at": "2026-10-09T05:48:53.327Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 539,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true
+  },
+  {
+    "id": "35984-65",
+    "at": "2026-10-09T05:48:54.224Z",
+    "elapsedMs": 1320,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-65",
+    "at": "2026-10-09T05:48:54.225Z",
+    "elapsedMs": 1321,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-66",
+    "at": "2026-10-09T05:48:54.232Z",
+    "elapsedMs": 905,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-66",
+    "at": "2026-10-09T05:48:54.233Z",
+    "elapsedMs": 906,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-66",
+    "at": "2026-10-09T05:48:54.277Z",
+    "elapsedMs": 950,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35984-65",
+    "at": "2026-10-09T05:48:54.317Z",
+    "elapsedMs": 1413,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-154",
+    "at": "2026-10-09T05:48:54.319Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-66",
+    "at": "2026-10-09T05:48:54.760Z",
+    "elapsedMs": 1433,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "35984-66",
+    "at": "2026-10-09T05:48:54.880Z",
+    "elapsedMs": 1553,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 14,
+    "bytes": 4228,
+    "reasoningChars": 59,
+    "contentChars": 9,
+    "usage": {
+      "completion_tokens": 26,
+      "prompt_tokens": 129,
+      "total_tokens": 155,
+      "completion_tokens_details": {
+        "reasoning_tokens": 17
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  },
+  {
+    "id": "scheduler-155",
+    "at": "2026-10-09T05:48:55.287Z",
+    "elapsedMs": 405,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-65",
+    "at": "2026-10-09T05:48:56.266Z",
+    "elapsedMs": 3362,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-156",
+    "at": "2026-10-09T05:48:56.268Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-65",
+    "at": "2026-10-09T05:48:58.762Z",
+    "elapsedMs": 5858,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 86,
+    "bytes": 25704,
+    "reasoningChars": 133,
+    "contentChars": 121,
+    "usage": {
+      "completion_tokens": 169,
+      "prompt_tokens": 2238,
+      "total_tokens": 2407,
+      "completion_tokens_details": {
+        "reasoning_tokens": 85
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1728
+      }
+    }
+  },
+  {
+    "id": "scheduler-157",
+    "at": "2026-10-09T05:48:59.211Z",
+    "elapsedMs": 447,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-63",
+    "at": "2026-10-09T05:48:59.213Z",
+    "elapsedMs": 6753,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "14244-12",
+    "at": "2026-10-09T05:49:00.839Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 13074,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": false
+  },
+  {
+    "id": "14244-12",
+    "at": "2026-10-09T05:49:05.388Z",
+    "elapsedMs": 4549,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-158",
+    "at": "2026-10-09T05:49:05.388Z",
+    "elapsedMs": 4975,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "14244-12",
+    "at": "2026-10-09T05:49:05.390Z",
+    "elapsedMs": 4551,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "14244-12",
+    "at": "2026-10-09T05:49:05.390Z",
+    "elapsedMs": 4551,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 1,
+    "bytes": 599,
+    "reasoningChars": 95,
+    "contentChars": 41,
+    "usage": {
+      "completion_tokens": 32,
+      "prompt_tokens": 5921,
+      "total_tokens": 5953,
+      "completion_tokens_details": {
+        "reasoning_tokens": 19
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 4736
+      }
+    }
+  },
+  {
+    "id": "scheduler-158",
+    "at": "2026-10-09T05:49:05.985Z",
+    "elapsedMs": 5572,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-67",
+    "at": "2026-10-09T05:49:09.147Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-67",
+    "at": "2026-10-09T05:49:09.150Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-160",
+    "at": "2026-10-09T05:49:09.150Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-67",
+    "at": "2026-10-09T05:49:09.150Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-68",
+    "at": "2026-10-09T05:49:09.151Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-68",
+    "at": "2026-10-09T05:49:09.154Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-161",
+    "at": "2026-10-09T05:49:09.572Z",
+    "elapsedMs": 421,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-69",
+    "at": "2026-10-09T05:49:09.575Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 8076,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-163",
+    "at": "2026-10-09T05:49:10.192Z",
+    "elapsedMs": 1038,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-70",
+    "at": "2026-10-09T05:49:10.195Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 547,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true
+  },
+  {
+    "id": "35984-70",
+    "at": "2026-10-09T05:49:11.221Z",
+    "elapsedMs": 1026,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-70",
+    "at": "2026-10-09T05:49:11.221Z",
+    "elapsedMs": 1026,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-70",
+    "at": "2026-10-09T05:49:11.264Z",
+    "elapsedMs": 1069,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35984-69",
+    "at": "2026-10-09T05:49:11.390Z",
+    "elapsedMs": 1815,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-69",
+    "at": "2026-10-09T05:49:11.391Z",
+    "elapsedMs": 1816,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-69",
+    "at": "2026-10-09T05:49:11.479Z",
+    "elapsedMs": 1904,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "scheduler-164",
+    "at": "2026-10-09T05:49:11.481Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-70",
+    "at": "2026-10-09T05:49:11.550Z",
+    "elapsedMs": 1355,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "35984-70",
+    "at": "2026-10-09T05:49:11.758Z",
+    "elapsedMs": 1563,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 15,
+    "bytes": 4310,
+    "reasoningChars": 138,
+    "contentChars": 10,
+    "usage": {
+      "completion_tokens": 38,
+      "prompt_tokens": 134,
+      "total_tokens": 172,
+      "completion_tokens_details": {
+        "reasoning_tokens": 29
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  },
+  {
+    "id": "scheduler-165",
+    "at": "2026-10-09T05:49:12.217Z",
+    "elapsedMs": 458,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-69",
+    "at": "2026-10-09T05:49:13.100Z",
+    "elapsedMs": 3525,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-166",
+    "at": "2026-10-09T05:49:13.101Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-69",
+    "at": "2026-10-09T05:49:13.817Z",
+    "elapsedMs": 4242,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 49,
+    "bytes": 14853,
+    "reasoningChars": 413,
+    "contentChars": 47,
+    "usage": {
+      "completion_tokens": 126,
+      "prompt_tokens": 2225,
+      "total_tokens": 2351,
+      "completion_tokens_details": {
+        "reasoning_tokens": 91
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1728
+      }
+    }
+  },
+  {
+    "id": "scheduler-167",
+    "at": "2026-10-09T05:49:14.243Z",
+    "elapsedMs": 424,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-67",
+    "at": "2026-10-09T05:49:14.244Z",
+    "elapsedMs": 5097,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "14244-13",
+    "at": "2026-10-09T05:49:16.159Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 13152,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": false
+  },
+  {
+    "id": "14244-13",
+    "at": "2026-10-09T05:49:21.760Z",
+    "elapsedMs": 5602,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-168",
+    "at": "2026-10-09T05:49:21.761Z",
+    "elapsedMs": 6364,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "14244-13",
+    "at": "2026-10-09T05:49:21.761Z",
+    "elapsedMs": 5603,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "14244-13",
+    "at": "2026-10-09T05:49:21.762Z",
+    "elapsedMs": 5604,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 1,
+    "bytes": 1771,
+    "reasoningChars": 735,
+    "contentChars": 343,
+    "usage": {
+      "completion_tokens": 309,
+      "prompt_tokens": 5952,
+      "total_tokens": 6261,
+      "completion_tokens_details": {
+        "reasoning_tokens": 183
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 4608
+      }
+    }
+  },
+  {
+    "id": "scheduler-168",
+    "at": "2026-10-09T05:49:22.205Z",
+    "elapsedMs": 6808,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-71",
+    "at": "2026-10-09T05:49:22.704Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-71",
+    "at": "2026-10-09T05:49:22.706Z",
+    "elapsedMs": 2,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-170",
+    "at": "2026-10-09T05:49:22.706Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-71",
+    "at": "2026-10-09T05:49:22.707Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-72",
+    "at": "2026-10-09T05:49:22.708Z",
+    "elapsedMs": 0,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "start"
+  },
+  {
+    "id": "35984-72",
+    "at": "2026-10-09T05:49:22.711Z",
+    "elapsedMs": 3,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "headers",
+    "status": 204
+  },
+  {
+    "id": "scheduler-171",
+    "at": "2026-10-09T05:49:23.096Z",
+    "elapsedMs": 388,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-73",
+    "at": "2026-10-09T05:49:23.099Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 8069,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true,
+    "memoryOrder": {
+      "memoryIndex": 3,
+      "lastUserIndex": 6,
+      "backgroundBeforeLastUser": true,
+      "exerciseQuestionIndex": -1,
+      "swimmingQuestionIndex": -1,
+      "lastUserIsExerciseQuestion": false,
+      "lastUserIsSwimmingQuestion": false
+    }
+  },
+  {
+    "id": "scheduler-173",
+    "at": "2026-10-09T05:49:23.491Z",
+    "elapsedMs": 780,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-74",
+    "at": "2026-10-09T05:49:23.496Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 540,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": true
+  },
+  {
+    "id": "35984-73",
+    "at": "2026-10-09T05:49:25.230Z",
+    "elapsedMs": 2132,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-73",
+    "at": "2026-10-09T05:49:25.231Z",
+    "elapsedMs": 2133,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-74",
+    "at": "2026-10-09T05:49:25.234Z",
+    "elapsedMs": 1738,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "35984-74",
+    "at": "2026-10-09T05:49:25.235Z",
+    "elapsedMs": 1739,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "35984-74",
+    "at": "2026-10-09T05:49:25.287Z",
+    "elapsedMs": 1791,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35984-73",
+    "at": "2026-10-09T05:49:25.322Z",
+    "elapsedMs": 2224,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "35984-74",
+    "at": "2026-10-09T05:49:25.435Z",
+    "elapsedMs": 1939,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-174",
+    "at": "2026-10-09T05:49:25.442Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-74",
+    "at": "2026-10-09T05:49:25.626Z",
+    "elapsedMs": 2130,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 10,
+    "bytes": 3112,
+    "reasoningChars": 84,
+    "contentChars": 14,
+    "usage": {
+      "completion_tokens": 23,
+      "prompt_tokens": 125,
+      "total_tokens": 148,
+      "completion_tokens_details": {
+        "reasoning_tokens": 15
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  },
+  {
+    "id": "scheduler-175",
+    "at": "2026-10-09T05:49:26.155Z",
+    "elapsedMs": 528,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-73",
+    "at": "2026-10-09T05:49:26.343Z",
+    "elapsedMs": 3245,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-content"
+  },
+  {
+    "id": "scheduler-176",
+    "at": "2026-10-09T05:49:26.409Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-73",
+    "at": "2026-10-09T05:49:28.788Z",
+    "elapsedMs": 5690,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 70,
+    "bytes": 20883,
+    "reasoningChars": 79,
+    "contentChars": 116,
+    "usage": {
+      "completion_tokens": 131,
+      "prompt_tokens": 2217,
+      "total_tokens": 2348,
+      "completion_tokens_details": {
+        "reasoning_tokens": 48
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1728
+      }
+    }
+  },
+  {
+    "id": "scheduler-177",
+    "at": "2026-10-09T05:49:29.213Z",
+    "elapsedMs": 424,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "35984-71",
+    "at": "2026-10-09T05:49:29.214Z",
+    "elapsedMs": 6510,
+    "kind": "lease",
+    "origin": "http://127.0.0.1:52263",
+    "phase": "cancel",
+    "chunks": 1,
+    "bytes": 8
+  },
+  {
+    "id": "14244-14",
+    "at": "2026-10-09T05:49:30.998Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "start",
+    "requestChars": 13394,
+    "requestedModel": "mimo-v2.6-flash",
+    "stream": false
+  },
+  {
+    "id": "14244-14",
+    "at": "2026-10-09T05:49:34.402Z",
+    "elapsedMs": 3404,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "scheduler-178",
+    "at": "2026-10-09T05:49:34.403Z",
+    "elapsedMs": 4051,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "14244-14",
+    "at": "2026-10-09T05:49:34.403Z",
+    "elapsedMs": 3405,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "14244-14",
+    "at": "2026-10-09T05:49:34.404Z",
+    "elapsedMs": 3406,
+    "kind": "model",
+    "origin": "https://api.xiaomimimo.com",
+    "phase": "end",
+    "chunks": 1,
+    "bytes": 732,
+    "reasoningChars": 190,
+    "contentChars": 41,
+    "usage": {
+      "completion_tokens": 61,
+      "prompt_tokens": 6068,
+      "total_tokens": 6129,
+      "completion_tokens_details": {
+        "reasoning_tokens": 48
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 4864
+      }
+    }
+  },
+  {
+    "id": "scheduler-178",
+    "at": "2026-10-09T05:49:34.811Z",
+    "elapsedMs": 4460,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "scene": "greeting",
+    "repetition": 1,
+    "exitCode": "D:\\AIProjects\\WeftMate\\Worktrees\\w2\\tests\\integration",
+    "timings": null
+  },
+  {
+    "scene": "greeting",
+    "repetition": 2,
+    "exitCode": "D:\\AIProjects\\WeftMate\\Worktrees\\w2\\tests\\integration",
+    "timings": null
+  },
+  {
+    "scene": "greeting",
+    "repetition": 3,
+    "exitCode": "D:\\AIProjects\\WeftMate\\Worktrees\\w2\\tests\\integration",
+    "timings": null
+  },
+  {
+    "scene": "file",
+    "repetition": 1,
+    "exitCode": "D:\\AIProjects\\WeftMate\\Worktrees\\w2\\tests\\integration",
+    "timings": null
+  },
+  {
+    "scene": "file",
+    "repetition": 2,
+    "exitCode": "D:\\AIProjects\\WeftMate\\Worktrees\\w2\\tests\\integration",
+    "timings": null
+  },
+  {
+    "scene": "file",
+    "repetition": 3,
+    "exitCode": "D:\\AIProjects\\WeftMate\\Worktrees\\w2\\tests\\integration",
+    "timings": null
+  }
+]
