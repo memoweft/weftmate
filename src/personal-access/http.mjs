@@ -1111,6 +1111,7 @@ export function createHttpHandler(context) {
             url.searchParams.has('archived') && !['true', 'false', 'all'].includes(url.searchParams.get('archived')))
           throw failure('INVALID_REQUEST');
         const archived = url.searchParams.get('archived') ?? 'false';
+        const snapshotAt = new Date(context.timestamp()).toISOString();
         const sessions = [];
         let descriptions;
         if (typeof context.backend.describeSessions === 'function') {
@@ -1163,7 +1164,7 @@ export function createHttpHandler(context) {
           } catch { sessions.push({ sessionId, title: '', running: false, sendAvailable: false, unavailable: true }); }
         }
         sessions.sort((a, b) => Number(b.pinned) - Number(a.pinned));
-        return context.json(response, 200, { sessions, groups: Object.values(state.sessionGroups ?? {}) });
+        return context.json(response, 200, { sessions, groups: Object.values(state.sessionGroups ?? {}), snapshotAt });
       }
       const groupMatch = /^\/personal\/v1\/session-groups(?:\/([A-Za-z0-9_-]+))?$/.exec(pathname);
       if (groupMatch && (request.method === 'GET' && !groupMatch[1] || request.method === 'POST' && !groupMatch[1] || ['PATCH', 'DELETE'].includes(request.method) && groupMatch[1])) {

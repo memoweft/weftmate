@@ -46,7 +46,8 @@ test('D35 progress uses real kinds/objects and prioritizes failure and stopped s
 
 test('FX-10 native turn history makes stop usable before the session list catches up and removes it on terminal evidence', async () => {
   const f = fixture()
-  f.core.appendHistory([{sessionId:'session-test',seq:1,type:'turn.started',data:{}}])
+  f.core.state.sessionSnapshotAt='2026-10-09T00:00:00.000Z'
+  f.core.appendHistory([{sessionId:'session-test',seq:1,at:'2026-10-09T00:00:01.000Z',type:'turn.started',data:{}}])
   assert.equal(f.core.state.sessions[0].running, false)
   assert.equal(f.core.composerState('').running, true)
   assert.equal(f.core.composerState('').cancelDisabled, false)
@@ -56,7 +57,7 @@ test('FX-10 native turn history makes stop usable before the session list catche
   await f.core.stopCurrentTurn()
   assert.equal(stopped, true)
   f.core.state.sessions[0].running = true
-  f.core.appendHistory([{sessionId:'session-test',seq:2,type:'turn.ended',data:{reason:'completed'}}])
+  f.core.appendHistory([{sessionId:'session-test',seq:2,at:'2026-10-09T00:00:02.000Z',type:'turn.ended',data:{reason:'completed'}}])
   assert.equal(f.core.composerState('').running, false)
   assert.equal(f.core.composerState('').cancelHidden, true)
   f.core.beginOptimistic({sessionId:'session-test',requestId:'queued',status:'accepted'})
@@ -81,6 +82,17 @@ test('FX-10 live conversation reads remain independent of slow host/model refres
   f.core.refreshModels = f.core.refreshSessions = f.core.refreshTasks = f.core.restoreRequests = async () => {}
   host.resolve(undefined); await background
   assert.equal(f.core.state.liveRefreshing, false)
+})
+
+test('FX-10 a newer idle snapshot overrides an old unended start without inventing an ending', () => {
+  const f=fixture()
+  f.core.state.sessionSnapshotAt='2026-10-09T00:00:00.000Z'
+  f.core.appendHistory([{sessionId:'session-test',seq:1,at:'2026-10-09T00:00:01.000Z',type:'turn.started',data:{}}])
+  assert.equal(f.core.composerState('').running,true)
+  f.core.state.sessionSnapshotAt='2026-10-09T00:00:02.000Z'
+  assert.equal(f.core.composerState('').running,false)
+  assert.match(f.core.turnStatusViewModel().message,/尚无结束记录/)
+  assert.equal(f.core.state.turnStatus,'running','no terminal record was fabricated')
 })
 
 test('FX-10 an accepted new session delivers its first message while an older session list is still loading', async () => {

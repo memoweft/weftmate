@@ -91,6 +91,8 @@ MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌）�
 
 ## 契约变更
 
+- **FX-10 / Windows-4**：GET `/sessions` 新增可选 `snapshotAt`（服务端起读 ISO 8601 时刻），与原生事件同一时钟；用于区分旧会话投影与更新的回合证据，缺字段保持旧 running 行为。字段不新增执行权限，停止与审批接口不变。
+
 - **FX-9**：CLIENT_API 3.2 / 3.3 / 7.8 增加可选 `/status.executionAccount`、会话 `taskAvailable`；空白宿主首个云账号自动成为执行账号，已有旧归属不转移。受限聊天不查询任务详情，发送确认以原命令回执与匹配会话记录判断。路径、请求体和认证不变；原生回执持久化增强须包含新版 APK（安卓安装包）。
 - **PJ-1 / D37 / Windows-2**：CLIENT_API 3.11项目公开对象增加 `instructions,permission`；新增 PATCH / DELETE `/projects/{id}`（必填 `expectedRevision`），移除只登记、不删除文件；3.3会话 metadata（元数据）增加 `projectId`，列表可含 `projectNotice`。旧登记默认只读原地迁移，旧六项接口兼容；项目目录只存宿主、不回传客户端。Apple 原生需接项目列表 / 新建项目对话及移动 / 设置，见3.11。
 

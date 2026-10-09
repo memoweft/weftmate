@@ -184,8 +184,13 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         // The selected conversation's native turn events can arrive before the
         // slower session-list projection. Never infer running from acceptance:
         // an accepted message may still be queued behind another task.
-        if (core.state.activeChatSource === 'desktop' && sessionId === core.state.selectedSessionId && core.state.turnStatus)
-            return core.state.turnStatus === 'running';
+        if (core.state.activeChatSource === 'desktop' && sessionId === core.state.selectedSessionId && core.state.turnStatus) {
+            const boundary = [...core.state.historyEvents.values()].filter(event => ['turn.started', 'turn.ended'].includes(event.type)).sort((a,b) => a.seq-b.seq).at(-1);
+            const snapshot = Date.parse(core.state.sessionSnapshotAt);
+            if (Number.isFinite(snapshot) && Date.parse(boundary?.at) > snapshot)
+                return core.state.turnStatus === 'running';
+            if (!Number.isFinite(snapshot) && core.state.turnStatus !== 'running') return false;
+        }
         return core.state.sessions.find(item => item.sessionId === sessionId)?.running === true;
     }
     function messageModePreference() {
@@ -336,7 +341,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         return { memory: '正在读取记忆…', reasoning: '正在思考…', answering: '正在回复…' }[value?.phase] || '等待模型回复…';
     }
     return { handleOptimisticCreation, beginOptimistic, optimisticMessages, reconcileOptimistic, observeOptimistic, startNewConversation, retryOptimistic,
-        addAttachmentFiles, composerInputMode, messageModePreference, loadMessageModePreference, sendDraft, stopCurrentTurn, composerState, selectModelProfile, setMessageMode, processingLabel, processingStageLabel };
+        addAttachmentFiles, composerInputMode, conversationRunning, messageModePreference, loadMessageModePreference, sendDraft, stopCurrentTurn, composerState, selectModelProfile, setMessageMode, processingLabel, processingStageLabel };
 };
 
 globalThis.WeftUiCore.contextUsageView = value => {

@@ -5,6 +5,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         const payload = await core.accessApi('/sessions?archived=all');
         if (identity !== core.state.identityGeneration) return;
         core.state.sessions = Array.isArray(payload.sessions) ? payload.sessions : [];
+        core.state.sessionSnapshotAt = payload.snapshotAt ?? null;
         core.state.sessionGroups = payload.groups || [];
         await refreshSessionProjects();
         if (!core.state.selectedSessionId && !core.state.newConversation && core.state.sessions.length && core.state.ownerId) {

@@ -105,7 +105,7 @@
 
 | 方法与路径 | 请求参数/体 | 响应示例 / 状态 | 主要领域错误 | 使用端 |
 |---|---|---|---|---|
-| GET `/sessions` | 可选单值 `archived=false`（默认）、`true`（仅归档）、`all`（全部）；无列表分页/搜索参数 | 200 `{"sessions":[{"sessionId":"session-…","title":"资料整理","running":true,"sendAvailable":true,"archived":false,"modelProfileId":"local","processing":{"phase":"queued","ahead":1,"modelName":"Muse Q5"}}]}` | 后端整体失败/单会话降级 | 桌、手、安、苹 |
+| GET `/sessions` | 可选单值 `archived=false`（默认）、`true`（仅归档）、`all`（全部）；无列表分页/搜索参数 | 200 `{"sessions":[{"sessionId":"session-…","title":"资料整理","running":true,"sendAvailable":true,"archived":false,"modelProfileId":"local","processing":{"phase":"queued","ahead":1,"modelName":"Muse Q5"}}],"snapshotAt":"2026-10-09T00:00:00.000Z"}` | 后端整体失败/单会话降级 | 桌、手、安、苹 |
 | PATCH `/sessions/{sessionId}/metadata` | `pinned?,unread?,title?,groupId?,projectId?`，至少一项；布尔值、非空标题≤256字符；groupId为本账号分组ID或null | 200 `{sessionId,pinned?,unread?,title?,groupId?,readMessageSeq?}`；原生 `sessionTitle.rename` 写用户标题，停止自动标题覆盖；手动已读记录最新助手消息水位 | 400 INVALID_REQUEST；404 SESSION_UNAVAILABLE / NOT_FOUND；409 SESSION_BUSY | 桌、手、安、苹 |
 | POST `/sessions/{sessionId}/fork` | 空对象 `{}`；原对话须空闲 | 201 `{sessionId,title}`；原生 DSH（助手运行时）事件种子及 parentSession 分叉谱系创建可继续的独立对话，标题加「（分叉）」；复制独立工作目录与经验，继承模型、分组或项目绑定；项目文件夹不复制，普通对话复制独立工作目录；不复制 MemoWeft（记忆核心）的记忆来源/绑定，原对话不变 | 404 SESSION_UNAVAILABLE；409 SESSION_BUSY；503 BACKEND_UNAVAILABLE | 桌、手、安、苹 |
 | GET `/session-groups` | 无查询 | 200 `{groups:[{id,name}]}`，仅当前账号 | — | 桌、手、安、苹 |
@@ -128,6 +128,8 @@
 项目会话可带 `projectId,projectRevision,projectName,projectRevoked`，移动或移除后可带 `projectNotice`（可显示的目录变更提示），浏览器会话带 `workspaceKind:"browser"`，共享会话带 `conversationId`。无法描述的会话返回 `title:"",running:false,sendAvailable:false,unavailable:true`。`sendAvailable` 是可发送权限，不是「当前空闲」；列表置顶项优先，同层按既有会话顺序；客户端按分组折叠显示，未分组在下。列表响应增加 `groups:[{id,name}]`，每会话增加 `pinned,unread,groupId` 及可选 `parentSessionId`；旧客户端可忽略。助手新消息水位超过已读水位时自动未读，打开对话由客户端 PATCH（部分更新）`unread:false` 自动已读；手动 `unread:true` 保留到下次打开/手动已读。分组与元数据持久保存且账号隔离，所有写操作沿用现有 `commands:write`、Cookie（会话凭据）/设备授权与 CSRF（跨站请求伪造防护）；已归档列表只在设置 → 已归档呈现，支持客户端标题搜索、恢复和既有删除确认。Android（安卓）原生 code23 起支持本节新增元数据、分组与分叉路由；新版界面包最低原生 code23，旧壳保留原版界面。创建走 `/commands`，没有 POST `/sessions`。FX-9 会话增加可选 `taskAvailable:boolean`；`false` 表示受限聊天会话不提供任务详情、任务控制与执行审批，客户端不轮询其 `/tasks/{id}`。发送是否已受理仍以原 `/commands/by-request/{requestId}` 回执和匹配 `receiptId` 的会话记录判定，与任务详情读取分开。缺字段沿用旧行为。
 
 UI-P4：每会话可选只读 `contextUsage:{usedTokens,contextWindow}`。`usedTokens` 是 DSH（助手运行时）原生 `contextPressure.projectedTokens`（缺失时用 `pressureTokens`）的当前上下文占用，会随压缩及有效上下文增减；不是请求用量的累加。`contextWindow` 来自原生最新 `request/context` 上限，缺失为 `null`。宿主未提供有效占用时省略整个字段，旧客户端可忽略；客户端未知上限不计算比例，不能用计费用量或默认模型容量伪造圆环。Android（安卓）现有宿主会话透传保留此字段，不新增原生业务路径。
+
+`snapshotAt` 是可选的服务端起读时刻（ISO 8601），与原生事件 `at` 使用同一宿主时钟；不保证每个会话的实际读取都恰好发生在该时刻。客户端可让晚于此时刻的原生回合开始/结束证据优先于旧列表投影；新列表已确认空闲且没有更新的开始证据时，不能把旧未结束记录当成仍在运行。旧服务缺字段时沿用其 `running` 投影。
 
 ### 3.4 历史与事件流（2）
 
