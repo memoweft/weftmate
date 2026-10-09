@@ -91,7 +91,7 @@ test('publish command refuses stale generated assets before creating a release',
   const copiedSources = path.join(isolatedRepository, 'src', 'ui-core')
   await cp(sourceDir, copiedSources, { recursive: true })
   for (const name of ['src/ui-core/manifest.mjs', 'apps/mobile-ui/src/build-ui-core.mjs',
-    'apps/mobile-ui/src/check.mjs', 'scripts/build-mobile-ui.mjs', 'src/personal-access/mobile-ui-release.mjs', 'src/personal-update/manifest.mjs', 'src/personal-access-ui/components/usage.js', 'src/personal-access-ui/components/settings-controls.js', 'src/personal-access-ui/components/schedules.js', 'src/personal-access-ui/usage.css', 'src/personal-access-ui/popovers.js', 'apps/mobile-ui/www/popovers.js',
+    'apps/mobile-ui/src/check.mjs', 'scripts/build-mobile-ui.mjs', 'src/personal-access/mobile-ui-release.mjs', 'src/personal-update/manifest.mjs', 'src/personal-access-ui/components/question-bar.js', 'src/personal-access-ui/components/usage.js', 'src/personal-access-ui/components/settings-controls.js', 'src/personal-access-ui/components/schedules.js', 'src/personal-access-ui/usage.css', 'src/personal-access-ui/popovers.js', 'apps/mobile-ui/www/popovers.js',
     'src/personal-access-ui/conversation-scroll.js', 'apps/mobile-ui/www/conversation-scroll.js',
     'docs/legal/terms-zh.md', 'docs/legal/privacy-zh.md', 'apps/mobile-ui/www/legal/terms-zh.txt', 'apps/mobile-ui/www/legal/privacy-zh.txt']) {
     const destination = path.join(isolatedRepository, name)
@@ -101,6 +101,7 @@ test('publish command refuses stale generated assets before creating a release',
   const wwwDir = path.join(isolatedRepository, 'apps', 'mobile-ui', 'www')
   const targetDir = path.join(wwwDir, 'ui-core')
   await mkdir(path.join(wwwDir, 'components'), { recursive: true })
+  await copyFile(path.join(repository, 'src/personal-access-ui/components/question-bar.js'), path.join(wwwDir, 'components/question-bar.js'))
   await copyFile(path.join(repository, 'src/personal-access-ui/components/usage.js'), path.join(wwwDir, 'components/usage-view.js'))
   await copyFile(path.join(repository, 'src/personal-access-ui/components/schedules.js'), path.join(wwwDir, 'components/schedules-view.js'))
   await copyFile(path.join(repository, 'src/personal-access-ui/components/settings-controls.js'), path.join(wwwDir, 'components/settings-controls.js'))

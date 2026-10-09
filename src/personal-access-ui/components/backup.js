@@ -46,7 +46,7 @@ globalThis.WeftUiComponents.factories.backup = (core, ui) => {
             inputs.enabled.checked = value.settings.enabled; list.replaceChildren();
             for (const backup of value.backups) {
                 const row = ui.element('li', 'system-service'), details = ui.element('div', 'system-service-detail');
-                const label = new Date(backup.createdAt).toLocaleString();
+                const label = core.dateText(backup.createdAt, { year: true });
                 details.append(ui.element('strong', '', label), ui.element('small', 'muted', `${(backup.size / 1048576).toFixed(2)} MB · ${backup.verification === 'valid' ? '校验通过' : '校验失败'}`));
                 const restore = ui.element('button', 'button secondary small', '恢复'); restore.setAttribute('aria-label', `恢复 ${label}`);
                 restore.dataset.invalid = String(backup.verification !== 'valid'); restore.disabled = backup.verification !== 'valid';

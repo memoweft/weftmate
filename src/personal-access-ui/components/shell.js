@@ -267,6 +267,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
     }
     function resetConversationControls() {
         ui.byId('timeline-status').textContent = '';
+        if (ui.byId('question-bar')) { ui.byId('question-bar').hidden = true; ui.byId('question-bar').replaceChildren(); delete ui.byId('question-bar').dataset.signature; }
         ui.byId('approval-bar').hidden = true; ui.byId('approval-bar').replaceChildren(); delete ui.byId('approval-bar').dataset.signature;
         ui.byId('transcript').replaceChildren();
         ui.byId('session-list').replaceChildren();

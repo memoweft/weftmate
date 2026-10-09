@@ -160,10 +160,7 @@ globalThis.WeftUiCore.factories.tasks = (core, effects, environment) => {
         return Object.hasOwn(jobs, row.jobState) ? jobs[row.jobState] : row.jobId ? '后台状态待确认'
             : { running: '正在执行', completed: '执行结束', failed: '未完成', cancelled: '已停止', uncertain: '待确认' }[row.state];
     }
-    function executionName(row) {
-        return { pwsh: '运行命令', read: '读取文件', write: '写入文件', edit: '修改文件', glob: '查找文件', grep: '搜索内容',
-            weftmod: '设备操作', weftmod_script: '运行脚本', job_output: '读取后台输出', job_list: '查看后台任务', job_kill: '停止后台任务' }[row.toolName] || core.toolSummary(row.toolName, row.arguments);
-    }
+    function executionName(row) { return core.toolLabel(row.toolName); }
     async function refreshConversationTasks() {
         const context = core.conversationTaskContext();
         if (!core.conversationTaskCurrent(context) || !core.sessionIdPattern.test(context.sessionId || ''))

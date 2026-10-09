@@ -54,7 +54,7 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
                     throw { code: 'REQUEST_FAILED' };
                 cache.cursor = page.nextSeq;
             } while (more);
-            return { outputs: cache.outputs, sources: [...cache.sources.values()] };
+            return { outputs: cache.outputs, sources: [...cache.sources.values()].map(item => ({ ...item, toolName: item.kind === 'tool' ? item.name : undefined, name: item.kind === 'tool' ? core.toolLabel(item.name) : item.name, uses: item.uses.map(use => ({ ...use, summary: core.interfaceText(use.summary) })) })) };
         };
         cache.pending = read();
         try {

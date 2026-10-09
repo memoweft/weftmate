@@ -49,6 +49,7 @@ const mobileMarkup = String.raw`
         <button id="jump-latest" class="jump-latest" aria-label="回到底部" hidden>回到底部</button>
         <div id="composer-dock" class="composer-dock">
           <section id="approval-bar" class="approval-bar" aria-label="待批准操作" hidden></section>
+          <section id="question-bar" class="approval-bar question-bar" role="region" aria-label="待回答问题" hidden></section>
           <div id="device-line" class="device-line" role="status"></div>
           <details id="queued-tasks" class="queued-tasks" hidden>
             <summary id="queued-count">排队中</summary>
