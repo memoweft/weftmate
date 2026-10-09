@@ -1,0 +1,41 @@
+{
+  "matched" : true,
+  "samples" : [
+    {
+      "colorSpace" : "Generic RGB",
+      "file" : "review-mac-composer-context-light-20261009T083827Z.png",
+      "rgb" : [
+        36,
+        40,
+        35
+      ],
+      "sourceTokenRGB" : [
+        48,
+        53,
+        47
+      ],
+      "uniformPatchPixels" : 64,
+      "x" : 1003,
+      "y" : 698
+    },
+    {
+      "colorSpace" : "Generic RGB",
+      "file" : "a9-mac-send-light-20261009T083938Z.png",
+      "rgb" : [
+        36,
+        40,
+        35
+      ],
+      "sourceTokenRGB" : [
+        48,
+        53,
+        47
+      ],
+      "uniformPatchPixels" : 64,
+      "x" : 1003,
+      "y" : 698
+    }
+  ],
+  "theme" : "light",
+  "themeAccent" : "#30352F"
+}

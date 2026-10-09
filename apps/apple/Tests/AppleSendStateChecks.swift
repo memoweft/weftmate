@@ -44,6 +44,8 @@ private actor CommandHTTP: HTTPTransport {
     func submitted() -> [Data] { posts }
     func eventReadCount() -> Int { eventReads }
     func lookupReadCount() -> Int { lookupReads }
+    private var running = false
+    func setRunning() { running = true }
     func send(_ request: URLRequest) async throws -> HTTPResponse {
         if offline { throw APIFailure.transport(.unavailable) }
         let path = request.url!.path
@@ -62,7 +64,7 @@ private actor CommandHTTP: HTTPTransport {
         case "/personal/v1/sync/events": object = ["events": [], "nextSeq": 0, "hasMore": false]
         case "/personal/v1/session-groups": object = ["groups": []]
         case "/personal/v1/sessions":
-            var session: [String: Any] = ["sessionId": "session-host", "title": "Synthetic", "running": false, "sendAvailable": true]
+            var session: [String: Any] = ["sessionId": "session-host", "title": "Synthetic", "running": running, "sendAvailable": true]
             if !omitProfile { session["modelProfileId"] = "profile-one" }
             object = ["sessions": [session, ["sessionId": "session-other", "title": "Other", "running": false,
                 "sendAvailable": true, "modelProfileId": "profile-one"]]]
@@ -109,10 +111,10 @@ private actor CommandHTTP: HTTPTransport {
     @MainActor static func main() async throws {
         let server = try ServerConfiguration(input: "https://unit.weftmate.example:8443")
         let base = URL(fileURLWithPath: CommandLine.arguments[1])
-        func model(_ http: CommandHTTP, directory: URL, credentials: Credentials = Credentials()) throws -> AppleAppModel {
+        func model(_ http: CommandHTTP, directory: URL, credentials: Credentials = Credentials(), preferences: UserDefaults? = nil) throws -> AppleAppModel {
             let store = try LocalConversationStore(directory: directory)
             return AppleAppModel(client: PersonalClient(credentialStore: credentials, transport: http),
-                draftPersistence: Drafts(store: store), server: server, commandStore: store)
+                draftPersistence: Drafts(store: store), server: server, commandStore: store, preferences: preferences)
         }
         func opened(_ model: AppleAppModel) async throws -> ConversationSummary {
             await model.authenticate(username: "ownerA", password: "synthetic-test-only", displayName: nil, register: false)
@@ -282,6 +284,23 @@ private actor CommandHTTP: HTTPTransport {
         try check(recovered.draftText(for: otherConversation, accountEpoch: recovered.accountEpoch) == "same bytes",
                   "Old A receipt cleared B draft")
         print("PASS old A message action cannot query or clear selected B draft")
-        print("11 controlled send-flow checks passed; real HTTP/model/GUI/Keychain: 0")
+        let namespace = "a9-send-" + UUID().uuidString
+        let preferences = UserDefaults(suiteName: namespace)!
+        defer { preferences.removePersistentDomain(forName: namespace) }
+        for mode in RunningMessageMode.allCases {
+            let transport = CommandHTTP(); await transport.setRunning()
+            let app = try model(transport, directory: base.appendingPathComponent("a9-" + mode.rawValue), preferences: preferences)
+            let active = try await opened(app)
+            try check(active.running, "Fixture must be running to verify D36")
+            app.runningMessageMode = mode
+            app.setDraft("synthetic " + mode.rawValue, for: active, accountEpoch: app.accountEpoch)
+            await app.send(active, accountEpoch: app.accountEpoch)
+            let bytes = await transport.submitted()
+            let body = try JSONSerialization.jsonObject(with: bytes[0]) as! [String: String]
+            try check(body["intent"] == mode.rawValue, "D36 did not reach the actual command body")
+            app.setForeground(false)
+        }
+        print("PASS D36 account preference reaches actual queue and steer command bodies")
+        print("12 controlled send-flow checks passed; real HTTP/model/GUI/Keychain: 0")
     }
 }
