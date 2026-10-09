@@ -212,7 +212,7 @@ export function projectHistoryEvent(raw, call = null, contextTurn = null, closin
 
     if (type === 'tool/result' && projected?.type === 'step.completed') {
       const artifacts = (part?.content?.filter(p => p.type === 'text').map(p => toolArguments(p.text)) ?? [])
-        .map(value => value.artifact ?? value).filter(value => typeof value?.artifactId === 'string')
+        .map(value => value?.artifact ?? value).filter(value => typeof value?.artifactId === 'string')
         .map(value => ({ taskId: value.taskId ?? taskId, artifactId: value.artifactId,
           fileName: safeHistoryText(value.fileName ?? '成果文件').text,
           contentType: value.contentType ?? 'text/plain', size: value.size ?? 0 }))
