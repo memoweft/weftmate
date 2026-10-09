@@ -12,7 +12,7 @@ const hash = value => createHash('sha256').update(value).digest('hex')
 const ok = value => ({ result: { ok: true, value } })
 export async function startTimelineCandidate(options = {}) {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-m0-3-')); let events = [];
-  const dailySessions = new Map();
+  const dailySessions = new Map(), questionFrames = [];
   let sessionId, taskId, running = true, artifact, service, questionFrame, processing = {phase: 'loading', modelName: '合成模型'}
   let contextUsage=options.composer?{usedTokens:713000,contextWindow:828000}:null;
   const receiptId = 'timeline-synthetic-receipt', runtimeId = randomUUID(), approvalId = randomUUID()
@@ -75,8 +75,8 @@ export async function startTimelineCandidate(options = {}) {
     readEventDetail: async ({ sessionId: id, seq }) => adapter.historyDetail(id, seq),
     getTaskReplyEvidence: async () => ({ status: running ? 'waiting' : 'completed', turn: 1,
       assistantChunks: 0, textChunks: 0, reasoningChunks: 0, assistantMessages: running ? 1 : 2, toolSaveObserved: !!artifact }),
-    listUserQuestions: async () => ({ runtimeId, questions: questionFrame ? [questionFrame] : [] }),
-    respondUserQuestion: async () => { questionFrame.nativeState = 'answered'; result('question-1', '{"answers":[{"id":"format","selected":["简要报告"]}]}'); return { accepted: true } },
+    listUserQuestions: async () => ({ runtimeId, questions: [...(questionFrame ? [questionFrame] : []), ...questionFrames.map(({callId, ...frame}) => frame)] }),
+    respondUserQuestion: async input => { const frame = questionFrames.find(frame => frame.questionRpcId === input.questionRpcId) || questionFrame; frame.nativeState = 'answered'; result(frame.callId || 'question-1', '{"answers":[{"id":"format","selected":["简要报告"]}]}'); return { accepted: true } },
   }
   const backupSettings = { enabled: true, directory: 'D:/Synthetic/UI-4-Backups', dailyDays: 7, weeklyCopies: 4 }, backupRows = [], backupOperations = [];
   const backupManager = options.backups ? {
@@ -110,7 +110,7 @@ export async function startTimelineCandidate(options = {}) {
     if (method === 'shared.commands.byRequest') return request(`/commands/by-request/${encodeURIComponent(params.requestId)}`);
     if (['app.ready', 'app.activity', 'events.subscribe'].includes(method)) return {}
     if (method === 'app.bootstrap') return { loggedIn: true, username: credentials.username, owner: hash(`${origin}|${auth.account.ownerId}`), busy: false, model: { source: 'host', displayName: '合成会话' } }
-    if (method === 'auth.me') return { device: auth.device, deviceId: auth.device.id, displayName: '隔离测试账号', connectionVerified: true }
+    if (method === 'auth.me') return { device: auth.device, deviceId: auth.device.id, displayName: '隔离测试账号', connectionVerified: true, owner: hash(`${origin}|${auth.account.ownerId}`) }
     if (method === 'settings.appearance') return { value: options.appearanceTheme || 'light' }
     if (method === 'attachments.list') return {attachments:[]}
     if (method === 'clipboard.copy') return {}
@@ -124,10 +124,13 @@ export async function startTimelineCandidate(options = {}) {
     if (method === 'shared.tasks.detail') return request(`/tasks/${params.taskId}`)
     if (method === 'shared.artifacts.preview') return request(`/artifacts/${params.artifactId}/preview`)
     if (method === 'shared.artifacts.save') return { requestId: 'synthetic-save' }
+    if (options.consistency && method === 'host.business' && params.path === '/personal/v1/memory/status') return {ownerId:auth.account.ownerId,state:'ready',worldRevision:1,capabilities:{list:true,source:true}};
+    if (options.consistency && method === 'host.business' && params.path.startsWith('/personal/v1/memory/items')) return {ownerId:auth.account.ownerId,worldRevision:1,searchScope:'account_snapshot',items:[],nextCursor:null,hasMore:false};
     if (method === 'host.business') return request(params.path.replace('/personal/v1',''), params.body, params.method);
     if (method === 'shared.approvals.decide') return request(`/sessions/${sessionId}/approvals/${params.approvalId}`, {requestId:params.requestId,outcome:params.outcome,...(params.scope?{scope:params.scope}:{})});
     if (method === 'shared.outbox.list') return {commands:[],source:'host'};
     if (method === 'shared.approvals.list') return request(`/sessions/${sessionId}/approvals?limit=100`)
+    if (method === 'shared.questions.answer') return request(`/sessions/${sessionId}/questions/${params.questionRpcId}`, {requestId:params.requestId,answer:params.answer});
     if (method === 'shared.questions.list') return request(`/sessions/${sessionId}/questions?limit=100`)
     throw Error(`unsupported fixture method: ${method}`)
   }
@@ -155,6 +158,9 @@ export async function startTimelineCandidate(options = {}) {
       return origin;
     },
     progress: {
+      ask: questions => { const id = 'question-' + randomUUID(), event = call('ask_user_question', id, {questions}); const user = events.find(event => event.type === 'user/message');
+        const frame = {sessionId,questionRpcId:randomUUID(),callId:id,sourceReady:true,sourceReceiptId:receiptId,messageHash:hash(goal),turn:1,sourceSeq:user.seq,observedSeq:event.seq,questions,nativeState:'pending'};
+        questionFrames.push(frame);return frame; },
       context: value=>{contextUsage=value},
       call, result,
       text: text => append('assistant/message', {content:[{type:'text',text}]}),
