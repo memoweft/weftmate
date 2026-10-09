@@ -507,14 +507,19 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           // A stalled new job must not hide older usable memories. At the
           // deadline, recall the current World and let the foreground answer.
         }
-        const [world, style, identity, interaction] = await Promise.all([
-          entry.rpc.request('preview_recall', { query, model_tier: destinationTier }),
+        const queries = [query,
           // Standing conversational preferences apply even when today's topic
           // shares no words with the earlier preference (e.g. a new concept).
           // Explicit communication cues use Core's existing query fallback;
           // exact source facts need not contain a synthesized "用户希望" phrase.
-          entry.rpc.request('preview_recall', { query: '“语言”“例子”“术语”的表达偏好？', model_tier: destinationTier }),
-          entry.rpc.request('preview_recall', { query: '我叫什么？', model_tier: destinationTier }),
+          '“语言”“例子”“术语”的表达偏好？', '我叫什么？'];
+        // Topic, style and identity must share a read transaction: formation can
+        // commit between separate RPCs, otherwise a quote and its formal successor
+        // can both be injected. Older Core versions have no recent quote bridge.
+        const [[world, style, identity], interaction] = await Promise.all([
+          entry.capabilities?.methods?.includes('preview_recall_batch')
+            ? entry.rpc.request('preview_recall_batch', { queries, model_tier: destinationTier }).then(value => value.snapshots)
+            : Promise.all(queries.map(query => entry.rpc.request('preview_recall', { query, model_tier: destinationTier }))),
           entry.rpc.request('query_interactions', { query, session_id: sessionId, projection: 'model', model_tier: destinationTier }),
         ]);
         // Summaries come from permission-filtered rendered snapshots, never
