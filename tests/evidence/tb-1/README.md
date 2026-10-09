@@ -1,0 +1,37 @@
+# TB-1 · 动态验收与交接
+
+动态现在通过宿主持久化原生事实，桌面 / 手机共用功能层与呈现；审批、问题和调度均沿原有身份与回执。正式接口见 [CLIENT_API 9.8](../../../docs/CLIENT_API.md)。截图均为合成账号、随机端口和临时目录；参照产品截图没有复制入仓库。
+
+## 实际验证
+
+- [verification.json](verification.json)：生产 Electron（桌面程序框架）窗口，13场景通过、页面错误0。覆盖提醒、旁聊任务完成、待审批 / 待回答、记忆暂停；动态直接批准并重放同一回执，不重复决定；回答打开原问题条并提交；全部已读归零；浅 / 深、480×600窄窗与键盘筛选；重启稳定ID与正文保留；实际窗口中临时任务摘要固定、动态存储无合成秘密；带遗忘原话的删除走真实宿主HTTP（网络请求）路径，合成记忆边界恰好删除1次，动态与窗口同时清理。手机网页390×844、浅 / 深、无横向溢出。
+- [real-mimo.json](real-mimo.json)：生产入口、固定 DSH（助手运行时）与真实 MiMo（小米模型服务）创建一分钟提醒；原生调度送达 → 持久动态 → 同ID桌面系统通知，仅通知一次。4个实际请求，输入10,114 token（令牌）、缓存8,384、输出159、合计10,273。用量来自宿主真实请求记录，含后台标题及工具轮次；没有请求8081。
+- `tests/personal-activity.test.ts`：4项，覆盖临时正文在持久化前脱敏、账户签名游标、原审批状态更新、后台任务未终态时不报完成、原结果身份合一、快照分页 / 筛选全部已读 / 新事件与旧版本保护 / 请求冲突 / 删除增量 / 重启。
+- 相关原审批 / 提问 / 定时任务、主对话结果、临时对话、账户隔离、离线补交、共用功能层、桌面交互回归通过；其中桌面按名称 / 角色的旧功能62项全部通过，功能层与静态界面55项、离线与动态11项通过，有重复。`npm run typecheck` 通过。完整单测和审稿页交本包PR的CI（持续集成）。
+
+## 复现
+
+```powershell
+node --test tests/personal-activity.test.ts
+node tests/integration/tb-1-activity.mjs
+node tests/integration/tb-1-mimo.mjs
+npm run typecheck
+```
+
+手机资产由 `node apps/mobile-ui/src/build-ui-core.mjs` 生成。MiMo脚本只在进程内读取Machine（系统）环境变量中的密钥，并使用既有隔离入口；不会把密钥写到证据。临时目录在脚本 `finally`（收尾分支）清理，启动的宿主与窗口由同一脚本关闭。
+
+## 图像
+
+- [桌面浅色](desktop-light.png)、[桌面深色](desktop-dark.png)、[480×600](desktop-narrow.png)、[临时任务](desktop-temporary.png)
+- [手机浅色](mobile-light.png)、[手机深色](mobile-dark.png)、[真实一分钟提醒](real-mimo-reminder.png)
+
+## 边界与后续
+
+合成场景的工具 / 记忆删除边界是夹具，不是实际文件修改或MemoWeft（记忆核心）形成成绩；真实DSH与模型的部分是原生提醒闭环。记忆暂停通过可信宿主接缝注入。没有安装本人应用、写日用数据、复制参照截图、调用8081、跑浸泡或宣称安卓 / Apple（苹果端）原生接线已经完成。
+
+- TB-4：桌面母版 `src/ui-core/activity.js` 与 `components/activity-view.js`，手机生成副本；现菜单入口 `page('activity')`，底部容器收口时复用该页面，不另写事件模型。动态增量保留已加载旧页；删除先清旧正文再读。桌面入口容器由IA-3的 `fixedPageNavigation()` 提供。
+- IA-5 / Apple：新增 `Activity` / 来源 / 类型化动作 / 三档通知等级模型；精确能力1；读列表 / 增量 / 未读及版本 / 快照已读；账户时区分天；原审批 / 问题回执与请求身份；临时泛化文案、删除代次与迟到响应清理；通知点击 `activityId` 深链、每账户 / 条目ID去重。Mac侧栏固定入口；iPhone动态页由TB-4导航原则接线；Watch只做可识别事件的简短通知和原审批动作，不新增登录 / 设置。需要Swift（苹果客户端语言）测试与原生截图；本包未修改Apple文件。
+- S3a：消费 `notification={level,type}` 与稳定 `activityId`，重要 / 普通 / 静默见契约9.8。安卓后台补发复用同一事实与去重ID，不再创建调度或重发原任务；约15分钟以上延迟沿D41说明。ST-6未来类型开关 / 勿扰 / 活跃度限制必须在通知适配层共用。
+- MEM-D / MEM-3：可信 `service.recordActivity(ownerId,{key,type,at?,title,summary,source?,actions?,level?})`；key取上游稳定事实ID，来源带原会话 / 任务ID便于D33清理。`memory.paused` 与 `memory.report` 已登记；周报尚未产生，不能把补交回执当正式记忆形成。M3-A补交完成是静默动态，只有泛化文案。
+
+初次窗口验收发现隐藏范围不足导致输入区挡住动态按钮，已改为隐藏整个对话面板；旧DOM（文档对象模型）功能夹具不挂载没有布局引擎的主对话 / 动态导航，由真实Electron用例补齐。手机本机使用Edge（浏览器）绕过缺失的Playwright（界面自动化工具）浏览器；缺失的 `fake-indexeddb`（索引数据库测试替身）依赖在本工作树补齐，未改锁文件。没有降低断言或新增CI跳过。

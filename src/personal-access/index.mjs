@@ -52,6 +52,8 @@ import { eraseChatCopies } from './chat-erasure.mjs';
 import { createMainChat } from './main-chat.mjs';
 import { createChatLifecycle } from './chat-lifecycle.mjs';
 import { createSideChats } from './side-chats.mjs';
+import { createActivity } from './activity.mjs';
+import { reconcileActivity } from './activity-store.mjs';
 export { explicitNotepadOpenIntent } from './command-policy.mjs';
 export { uniqueSessionOwner } from './store.mjs';
 
@@ -118,6 +120,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const usage = await createUsageStore({ root, clock });
   // Accessors preserve the original service's live state across module boundaries.
   const context = {
+    get activity() { return activity; },
+    ownerIds: () => Object.keys(rootState.accounts),
     get chats() { return chats; },
     get chatTimeline() { return chatTimeline; },
     get sideChats() { return sideChats; },
@@ -523,6 +527,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     assertCurrent();
     for (const account of Object.values(next.accounts)) {
       reconcileChatIdentity(account, next.hostId, new Date(timestamp()).toISOString());
+      reconcileActivity(account);
       for (const [conversationId, binding] of Object.entries(account.conversationBindings ?? {})) {
         const state = account.commands[binding.adoptCommandId]?.state;
         if (state === 'rejected') delete account.conversationBindings[conversationId];
@@ -563,9 +568,11 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   }
 
   const scheduleOperations = createScheduleOperations(context);
+  const activity = createActivity(context);
   const offline = await createOfflineService(context);
   const temporaryChats = createTemporaryChats(context);
   const service = {
+    recordActivity: activity.record,
     memoryTurnPolicy: temporaryChats.policy,
     expireTemporaryChats: temporaryChats.sweep,
     async cleanupMemoryCopies(ownerId, { sourceTexts = [], deleteConversationSnippets = false }) {
@@ -643,6 +650,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       };
       await restoreSchedulesWithRetry();
       temporaryChats.start();
+      activity.start();
       hostCloudIdentity?.start();
       hostRelay?.start(origin);
       for (const [ownerId, account] of Object.entries(rootState.accounts)) {
@@ -757,6 +765,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       }
       closePromise = (async () => {
         await temporaryChats.close();
+        await activity.close();
         await sideChats.close();
         await chatTimeline.close();
         await offline.close();

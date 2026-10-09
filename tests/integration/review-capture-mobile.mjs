@@ -54,6 +54,7 @@ try {
       const report = async () => { await home(); await conversation('整理项目进展').click(); };
       const settings = async () => { await home(); await button('设置与账户').click(); };
       const preparations = {
+        activity: async () => { await home(); await fixture.recordActivity({ key:'gallery-paused', type:'memory.paused', title:'记忆已暂停', summary:'记忆暂时无法更新，可在记忆页查看状态。', level:'normal' }); await button('打开导航').click(); await button('动态').click(); await page.getByRole('heading',{name:'动态',exact:true}).waitFor(); await page.getByText('记忆已暂停',{exact:true}).waitFor(); },
         sessions: home,
         'composer-menu': async()=>{await report();await button('添加图片或文件').click();await page.getByRole('menu',{name:'添加附件'}).waitFor();await page.getByRole('menuitem',{name:'相机'}).waitFor();},
         'composer-context': async()=>{await report();await button('背景信息窗口：86% 已用').click();await page.getByRole('tooltip').waitFor();},
