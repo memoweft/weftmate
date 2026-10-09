@@ -1,0 +1,216 @@
+{
+  "testedImplementationCommit": "73c0eee35b691bfd02f665e4c34e1652098c2b96",
+  "sourceFilesSHA256": {
+    "apps/apple/Scripts/run_state_checks.py": "9dd5df295f6ea187e4ac486ea123940f6eecdd80beb63a32a704bdf3273899d8",
+    "apps/apple/Tests/A5MacCapture.swift": "491195f52c1fc0be866b850318a0b50c3359f89fa0ceb5bcb53d5480f51c6d8a",
+    "apps/apple/Tests/A6SettingsUITests.swift": "104457a85ce6809704caa1ddb3d0e8c9e9ad5c6bfed9cee7d2b9dd1b249f193d",
+    "apps/apple/Tests/AppleSettingsSummaryChecks.swift": "0118b6eb11d7415953f64389e80cb688141179dd67025c267f86dcae514bb04a",
+    "apps/apple/Tests/run_a10_mac.py": "d19c98cee345b3ad1fec72f2bd32458ef20bf2953e729510339f918be14b5094",
+    "apps/apple/Tests/run_a5_mac.py": "1eb3167eba19c324681bb7db47910e65dcddc6fdeaefd2959a7520cc01aea492",
+    "apps/apple/Tests/run_a5_ui.py": "0b15b481c4e7b9ae82dc3f3e2db8fb3b0098a6056385b2f66f424456d93fc2a0",
+    "apps/apple/Tests/run_a9_mac.py": "c80359895872e5b1b90ece12b5b59aaf3342feac3a7be98a8e03b619c429449e",
+    "apps/apple/UI/A10MacReview.swift": "788d59dc1bc94d13f9fe69a5efa22c68acf2f57cfa15cb5a22b7b7a05b9a50c8",
+    "apps/apple/UI/AppleAppModel.swift": "c06cc6766bcccf57f4ccba878794f2b9836ba173ac5c0c84fbdfdc3b39414912",
+    "apps/apple/UI/AppleSettingsModel.swift": "a03d98a6eae2699c25803f4a363c296f9b429fe3c8f863701d9708d18539d1bf",
+    "apps/apple/UI/ConversationTimelineView.swift": "974481c251c0163c96c762d2575ebf001b8e1d2beed02891e6cf4e744833c419",
+    "apps/apple/UI/ConversationView.swift": "e652f3edb495e778b3f7cdac81271a84187310701ae2c9c97f997db8014a0ee7",
+    "apps/apple/UI/WeftMateRootView.swift": "36b6037d58d6f619c34acb9c25f1147dea6a254f9125c07a0a9e764f6737254c",
+    "apps/apple/WeftMate.xcodeproj/project.pbxproj": "8175971804c7a58c135b8ce750967a1956b33550111f99c5adc2f235731656d5"
+  },
+  "testedBinarySHA256": {
+    "macApp": "65c29e732fde5c3ef3dd3107281e66fdd75d258f3c32d4012a4b567fc6b8947f",
+    "phoneApp": "7d58755bfa97f5f2c2613ceb5a29c91e31fdb66de39634b2790230c9bb6b8dc1",
+    "captureHelper": "a63dd2bdb24c3488380bea5d244859870123a92165b116c1dc72b8e224c9c1ca"
+  },
+  "iphone": {
+    "settingsLight": {
+      "passedTests": 1,
+      "failedTests": 0,
+      "skippedTests": 0,
+      "startTime": 1791543293.029,
+      "finishTime": 1791543557.434
+    },
+    "settingsDark": {
+      "passedTests": 1,
+      "failedTests": 0,
+      "skippedTests": 0,
+      "startTime": 1791541900.733,
+      "finishTime": 1791542132.332
+    },
+    "detailLight": {
+      "passedTests": 1,
+      "failedTests": 0,
+      "skippedTests": 0,
+      "startTime": 1791542303.724,
+      "finishTime": 1791542514.373
+    },
+    "detailDark": {
+      "passedTests": 1,
+      "failedTests": 0,
+      "skippedTests": 0,
+      "startTime": 1791542961.6,
+      "finishTime": 1791543199.871
+    }
+  },
+  "swiftCoreSettings": {
+    "passed": 8,
+    "failed": 0
+  },
+  "swiftSummaryCheck": {
+    "registeredCategories": 13,
+    "passed": true,
+    "archiveCounts": [
+      0,
+      1,
+      2
+    ],
+    "appearanceModes": [
+      "system",
+      "light",
+      "dark"
+    ],
+    "localAccountAndDevices": true,
+    "unknownCategoryEmpty": true
+  },
+  "nodeCaptureTests": {
+    "passed": 4,
+    "failed": 0
+  },
+  "builds": {
+    "macDebug": true,
+    "phoneBuildForTesting": true,
+    "watchCompanionDebug": true
+  },
+  "legacyA9": {
+    "captures": 12,
+    "passed": true,
+    "ephemeralCredentials": true
+  },
+  "legacyA5": {
+    "aboutCapture": true,
+    "keychainCredentials": true
+  },
+  "negativeCapture": {
+    "configuration": {
+      "expectedCaptureExit": 1,
+      "actualCaptureExit": 1,
+      "pngGenerated": false,
+      "diagnosticPhase": "configuration"
+    },
+    "authentication": {
+      "expectedCaptureExit": 1,
+      "actualCaptureExit": 1,
+      "pngGenerated": false,
+      "diagnosticPhase": "authentication"
+    },
+    "synthetic": true,
+    "ambiguousCocoa256": false,
+    "newPermissionRequested": false
+  },
+  "simulatorsAtOnce": 1,
+  "xcodeJobs": 2,
+  "watchSimulatorStarted": false,
+  "realDshEngine": false,
+  "syntheticModelsAndContent": true,
+  "sourceNote": "iPhone screenshots record the pre-commit main baseline; tests used the same final iPhone behavior. Later app changes were confined to macOS conditionals. Mac full flow was repeated on this committed source with the final Debug-preflight helper.",
+  "mac": {
+    "light": {
+      "authenticated": true,
+      "categories": [
+        "general",
+        "appearance",
+        "account",
+        "devices",
+        "usage",
+        "archived",
+        "models",
+        "approvals",
+        "memory",
+        "schedules",
+        "system",
+        "backups",
+        "about"
+      ],
+      "sendPressed": true,
+      "hostSendCount": 1,
+      "hostSendMode": "queue",
+      "approvalBar": true,
+      "ownWindowCapture": true,
+      "globalPermissionsRequested": false,
+      "credentialStorage": "ephemeral capture only",
+      "commit": "4105cca2dd295bd093099da6f89f342dacd3955a"
+    },
+    "dark": {
+      "authenticated": true,
+      "categories": [
+        "general",
+        "appearance",
+        "account",
+        "devices",
+        "usage",
+        "archived",
+        "models",
+        "approvals",
+        "memory",
+        "schedules",
+        "system",
+        "backups",
+        "about"
+      ],
+      "sendPressed": true,
+      "hostSendCount": 1,
+      "hostSendMode": "queue",
+      "approvalBar": true,
+      "ownWindowCapture": true,
+      "globalPermissionsRequested": false,
+      "credentialStorage": "ephemeral capture only",
+      "commit": "8961cf4fac7be6141558094adc31c080f0c3f4cc"
+    }
+  },
+  "postMergeIntegration": {
+    "mergeCommit": "8961cf4fac7be6141558094adc31c080f0c3f4cc",
+    "mainCommit": "7a88544fefbfb1c7f09651d12c69158a185c6f04",
+    "iphoneSettingsLight": {
+      "passedTests": 1,
+      "failedTests": 0,
+      "skippedTests": 0,
+      "startTime": 1791545889.434,
+      "finishTime": 1791546133.1
+    },
+    "mac": {
+      "light": {
+        "passed": true,
+        "categories": 13,
+        "hostSendCount": 1,
+        "hostSendMode": "queue"
+      },
+      "dark": {
+        "passed": true,
+        "categories": 13,
+        "hostSendCount": 1,
+        "hostSendMode": "queue"
+      }
+    }
+  },
+  "finalHostIntegration": {
+    "sourceHead": "4105cca2dd295bd093099da6f89f342dacd3955a",
+    "mainCommit": "d50e93c",
+    "upstreamPackages": [
+      "PJ-1",
+      "FX-9"
+    ],
+    "macLight": {
+      "passed": true,
+      "categories": 13,
+      "hostSendCount": 1,
+      "hostSendMode": "queue"
+    },
+    "iphoneSettingsLight": {
+      "passedTests": 1,
+      "failedTests": 0,
+      "skippedTests": 0,
+      "startTime": 1791546509.037,
+      "finishTime": 1791546737.82
+    }
+  }
+}

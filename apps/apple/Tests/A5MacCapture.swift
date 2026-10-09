@@ -4,9 +4,26 @@ import Security
 
 /// Capture only the newly launched native app window. No Accessibility or permission prompt.
 @main enum A5MacCapture {
-    @MainActor static func main() async throws {
+    @MainActor static func main() async {
+        do { try await capture() }
+        catch {
+            FileHandle.standardError.write(Data(("Native Mac capture failed: " + error.localizedDescription + "\n").utf8))
+            exit(1)
+        }
+    }
+    @MainActor private static func capture() async throws {
         let executable = URL(fileURLWithPath: CommandLine.arguments[1])
         let destination = URL(fileURLWithPath: CommandLine.arguments[2])
+        // Match the existing Mac AX harness: Xcode's small Debug launcher keeps
+        // the implementation in a sibling dylib. Reject Release before launch,
+        // because Release intentionally ignores the isolated UI-test switches.
+        let images = [executable, executable.deletingLastPathComponent().appendingPathComponent(executable.lastPathComponent + ".debug.dylib")]
+        let captureEnabled = images.contains { image in
+            guard let code = try? Data(contentsOf: image, options: .mappedIfSafe) else { return false }
+            return code.range(of: Data("--ui-testing-namespace".utf8)) != nil
+                && code.range(of: Data("CGWindowListCreateImageFromArray".utf8)) != nil
+        }
+        guard captureEnabled else { throw NSError(domain: "A5MacCapture", code: 2, userInfo: [NSLocalizedDescriptionKey: "Requires capture-enabled Debug app; no app was launched."]) }
         let name = "a5-mac-" + UUID().uuidString.prefix(8)
         let scene = CommandLine.arguments[3], theme = CommandLine.arguments[4], host = CommandLine.arguments[5], cloud = CommandLine.arguments[6]
         let service = "com.weftmate.apple.ui-tests." + name
@@ -19,7 +36,8 @@ import Security
         app.arguments = ["--ui-testing", "--lg2-capture", "-ApplePersistenceIgnoreState", "YES", "--ui-testing-namespace", name,
                          "--ui-testing-data-dir", root.path, "--server-url", host, "--s1c-cloud-url", cloud, "--a5-review-scene", scene, "--a5-theme", theme, scene == "login" ? "--lg2-cloud" : "--a5-local-server"]
         if CommandLine.arguments.count > 7, CommandLine.arguments[7] == "a8" { app.arguments?.append("--a8-flow") }
-        let output = Pipe(); app.standardOutput = output; app.standardError = FileHandle.nullDevice
+        if CommandLine.arguments.dropFirst(7).contains("ephemeral") { app.arguments?.append("--a10-ephemeral-credentials") }
+        let output = Pipe(); app.standardOutput = output; app.standardError = output
         try app.run()
         defer {
             if app.isRunning { app.terminate(); app.waitUntilExit() }
@@ -30,11 +48,42 @@ import Security
             UserDefaults().removePersistentDomain(forName: service)
             try? FileManager.default.removeItem(at: root)
         }
-        let bytes = output.fileHandleForReading.readDataToEndOfFile()
+        var bytes = Data(), pending = Data()
+        while true {
+            let chunk = output.fileHandleForReading.availableData
+            if chunk.isEmpty { break }
+            bytes.append(chunk); pending.append(chunk)
+            while let newline = pending.firstIndex(of: 10) {
+                let line = String(decoding: pending[..<newline], as: UTF8.self)
+                pending.removeSubrange(...newline)
+                if scene == "a10-all", line.hasPrefix("A10_CAPTURE:") {
+                    let parts = line.split(separator: ":", maxSplits: 2)
+                    guard parts.count == 3, let png = Data(base64Encoded: String(parts[2])) else { throw CocoaError(.fileReadCorruptFile) }
+                    try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
+                    try png.write(to: destination.appendingPathComponent(String(parts[1]) + ".png"))
+                    FileHandle.standardOutput.write(Data(("Captured native Mac " + parts[1] + "\n").utf8))
+                }
+            }
+        }
         app.waitUntilExit()
-        guard let text = String(data: bytes, encoding: .utf8),
+        if scene == "a10-all", let text = String(data: bytes, encoding: .utf8), app.terminationStatus == 0 {
+            try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
+            for line in text.split(separator: "\n") where line.hasPrefix("A10_CAPTURE:") {
+                let parts = line.split(separator: ":", maxSplits: 2)
+                guard parts.count == 3, let png = Data(base64Encoded: String(parts[2])) else { throw CocoaError(.fileReadCorruptFile) }
+                try png.write(to: destination.appendingPathComponent(String(parts[1]) + ".png"))
+            }
+            guard let report = text.split(separator: "\n").first(where: { $0.hasPrefix("A10_REPORT:") }) else { throw NSError(domain: "A5MacCapture", code: 1, userInfo: [NSLocalizedDescriptionKey: "Native flow produced no completion report."]) }
+            try Data(report.dropFirst("A10_REPORT:".count).utf8).write(to: destination.appendingPathComponent("native-report.json"))
+            print("A10 native flow captured; temporary app state removed.")
+            return
+        }
+        guard app.terminationStatus == 0, let text = String(data: bytes, encoding: .utf8),
               let line = text.split(separator: "\n").first(where: { $0.hasPrefix("LG2_CAPTURE:") }),
-              let png = Data(base64Encoded: String(line.dropFirst("LG2_CAPTURE:".count))) else { throw CocoaError(.fileReadUnknown) }
+              let png = Data(base64Encoded: String(line.dropFirst("LG2_CAPTURE:".count))) else {
+            let diagnostic = String(data: bytes, encoding: .utf8)?.split(separator: "\n").first(where: { $0.hasPrefix("A5_CAPTURE_FAILED:") })
+            throw NSError(domain: "A5MacCapture", code: Int(app.terminationStatus), userInfo: [NSLocalizedDescriptionKey: diagnostic.map(String.init) ?? "Native app produced no PNG (exit \(app.terminationStatus))."])
+        }
         try png.write(to: destination)
         print("Native Mac screenshot captured; temporary app state removed.")
     }
