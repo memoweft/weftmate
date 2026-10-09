@@ -16,6 +16,8 @@ test('async snapshots coalesce concurrent writes and preserve the last complete 
     assert.equal((await stat(file)).mtimeMs, before.mtimeMs)
     await write(JSON.stringify({ n: 1000 }))
     assert.deepEqual(JSON.parse(await readFile(file, 'utf8')), { n: 1000 })
+    await Promise.all([write(JSON.stringify({ n: 1000 })), write(JSON.stringify({ n: 1001 }))])
+    assert.deepEqual(JSON.parse(await readFile(file, 'utf8')), { n: 1001 }, 'a newer update behind an unchanged snapshot must still drain')
   } finally { await rm(root, { recursive: true, force: true }) }
 })
 
