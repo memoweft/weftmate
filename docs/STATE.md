@@ -8,6 +8,7 @@
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
+| Codex · Windows-3 | FIX-6 标题栏遮罩 / 通知身份 | `wp/fix-6-titlebar-scrim`：Windows 原生按钮背景与符号按最上层令牌遮罩共用混色，动态确认框 / Esc / 移除 / 主题切换同步并恢复；启动身份统一读取打包 appId，通知共用 WeftMate 标题与图标。真实 main.mjs + 隔离账号浅深前后8图、嵌套遮罩与原生通知 show 通过；相关桌面交互 / 动效 / IPC / 记忆 / 设置单测及 typecheck 通过，[证据](../tests/evidence/fix-6/README.md)。完整 CI 见本包 PR，待 Claude 审查；未重打安装包，无客户端接口变更。 |
 | Codex · Windows-5 | UI-4 设置分类与浮层重做 | [PR #92](https://github.com/memoweft/weftmate/pull/92) · `wp/ui-4-settings-redesign`：桌面 / 网页分类浮层、搜索、用量深链、680px 顶部分类下拉；手机同注册表列表 / 子页与返回恢复；开关 / 分段控件共用。账户、设备、模型、审批、用量及资料访问动作保持；真实 Electron 浅 / 深每分类与手机 390×844 证据见 `tests/evidence/ui-4/`。相关回归与类型 / 令牌 / 图标检查通过，完整测试交 PR CI。SCH-1 已合入并接桌面 / 手机提醒分类；BK-1 已接「此电脑 → 备份与恢复」，领域动作与接口不变。 |
 | Codex · Windows-4 | FG-1 真正遗忘、导出与故障提示（返工） | [PR #102](https://github.com/memoweft/weftmate/pull/102) · `wp/fg-1-forget-and-degrade`：按原文／被删ID清除前置AI上下文，无关内容原样保留；Core（记忆核心）只读遗忘预览与实际级联同算法，确认前列出人物／关系／决定及数量。D33桌面、手机网页与手机界面两类确认框暴露原话删除选项，默认不勾；会话遗忘预览含失去批次索引的来源，按预览修订核对。原生400修复、真正来源删除、导出与故障提示保留。Core 37项、宿主／界面48项＋预览失败／真实Core集成相关回归及类型检查通过；真实Electron（桌面程序框架）／DSH（助手运行时）／Core与手机宽度网页按名称和角色验收；[返工截图与证据](../tests/evidence/fg-1/rework/README.md)。Core依赖[PR #91](https://github.com/memoweft/memoweft/pull/91)，Observed bridge（观测桥接）固定最新Core提交；两仓完整CI（持续集成）见PR。不改M2g形成代码 |
 | Codex · Windows | M0-6 现有模型入口、后台路由与系统状态 | [PR（合并请求）#33](https://github.com/memoweft/weftmate/pull/33) 方向调整完成：接入 D:\AI 的 8081 ModelSwitcher（模型切换代理），删除自起模型与参数；98,304 / 单槽 / 12 步与后台排队冒烟通过，M1-1b 完成后真实按钮重启通过；最终 CI（持续集成）见 PR 当前提交 |
