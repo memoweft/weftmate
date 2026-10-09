@@ -1,0 +1,130 @@
+{
+  "roots": [
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-mimo-IYWTXK",
+      "usage": {
+        "requests": 0,
+        "returnedUsage": 0,
+        "missingUsage": 0,
+        "input": 0,
+        "cached": 0,
+        "output": 0,
+        "knownCnyLowerBound": 0
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-mimo-JF9DZP",
+      "usage": {
+        "requests": 59,
+        "returnedUsage": 59,
+        "missingUsage": 0,
+        "input": 1555295,
+        "cached": 515712,
+        "output": 12798,
+        "knownCnyLowerBound": 1.07549324
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-mimo-69aUA5",
+      "usage": {
+        "requests": 46,
+        "returnedUsage": 45,
+        "missingUsage": 1,
+        "input": 289050,
+        "cached": 214848,
+        "output": 5830,
+        "knownCnyLowerBound": 0.09015896000000001
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-lan-WQiHkn",
+      "usage": {
+        "requests": 20,
+        "returnedUsage": 20,
+        "missingUsage": 0,
+        "input": 200442,
+        "cached": 132608,
+        "output": 2062,
+        "knownCnyLowerBound": 0.07461016000000001
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-mimo-HvjHm0",
+      "usage": {
+        "requests": 41,
+        "returnedUsage": 41,
+        "missingUsage": 0,
+        "input": 398246,
+        "cached": 212992,
+        "output": 5503,
+        "knownCnyLowerBound": 0.20051984
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-lan-GgkWn4",
+      "usage": {
+        "requests": 10,
+        "returnedUsage": 10,
+        "missingUsage": 0,
+        "input": 32697,
+        "cached": 22528,
+        "output": 586,
+        "knownCnyLowerBound": 0.01179156
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-lan-GqHA6M",
+      "usage": {
+        "requests": 1,
+        "returnedUsage": 1,
+        "missingUsage": 0,
+        "input": 146,
+        "cached": 0,
+        "output": 29,
+        "knownCnyLowerBound": 0.000204
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-mimo-2qjIQP",
+      "usage": {
+        "requests": 28,
+        "returnedUsage": 27,
+        "missingUsage": 1,
+        "input": 103466,
+        "cached": 58368,
+        "output": 2983,
+        "knownCnyLowerBound": 0.05223136
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-lan-P7C0L0",
+      "usage": {
+        "requests": 10,
+        "returnedUsage": 10,
+        "missingUsage": 0,
+        "input": 33332,
+        "cached": 22656,
+        "output": 614,
+        "knownCnyLowerBound": 0.012357120000000001
+      }
+    }
+  ],
+  "supplementaryJudge": {
+    "requests": 7,
+    "returnedUsage": 7,
+    "missingUsage": 0,
+    "input": 973,
+    "cached": 192,
+    "output": 175
+  },
+  "total": {
+    "requests": 222,
+    "returnedUsage": 220,
+    "missingUsage": 2,
+    "input": 2613647,
+    "cached": 1179904,
+    "output": 30580,
+    "knownCnyLowerBound": 1.51850108
+  },
+  "excludesRegression": true
+}

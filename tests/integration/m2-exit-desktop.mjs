@@ -16,9 +16,10 @@ import { createPersonalAccessService } from '../../src/personal-access/index.mjs
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 import { PersonalClient, checkOne, loadScenarios, runEvaluation } from '../../scripts/eval.mjs';
 import { createLanBaselineBridge } from './baseline-lan-model.mjs';
+import { judgeMemorySemantics } from './baseline-memory-verification.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { verify } from '../../src/personal-backup/archive.mjs';
-import { original, confirmation, correction, recallQuestion, formationChecks, correctionChecks, speedComparison, fourScenarioSummary, exportHasForgottenName } from './m2-exit-checks.mjs';
+import { original, confirmation, correction, recallQuestion, proposalCheck, formationChecks, correctionChecks, speedComparison, fourScenarioSummary, exportHasForgottenName } from './m2-exit-checks.mjs';
 
 const repository = resolve(import.meta.dirname, '../..');
 const run = promisify(execFile), pause = ms => new Promise(r => setTimeout(r, ms));
@@ -27,12 +28,13 @@ const fgOnly = process.argv.includes('--fg-1');
 const outageOnly = process.argv.includes('--fg-1-outage');
 const settingsOnly = process.argv.includes('--fg-1-settings');
 const provider = option('--model', fgOnly ? 'mimo' : null), judgeModel = option('--judge-model', undefined);
+const eightOnly = process.argv.includes('--eight-only');
 assert.ok(provider === null || ['mimo', 'lan'].includes(provider), '--model mimo|lan');
 const coreSource = resolve(option('--memory-core-source', 'D:/AIProjects/MemoWeft/Core/py/src'));
 const python = option('--python', 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe');
 const evidence = resolve(option('--out', join(repository, 'tests/evidence/m2-exit')));
 const lockPath = 'D:/AIProjects/WeftMate/Runtime/Orchestrator/lan.lock';
-const lockToken = `EX-2 ${randomUUID()}`;
+const lockToken = `${option('--lock-owner', 'EX-2')} ${randomUUID()}`;
 let bridge, lockTimer, ownsLock = false;
 const roots = [], reports = [];
 process.env.TEMP = process.env.TMP = 'C:/Temp';
@@ -109,6 +111,7 @@ async function baseline(modelName, fourOnly = false) {
   const env = { ...process.env };
   for (const name of Object.keys(env)) if (/^(?:WEFTMATE_|MEMOWEFT_)/.test(name) || ['ELECTRON_RUN_AS_NODE', 'MIMO_API_KEY', 'MODEL_SWITCH_UNIFIED_KEY'].includes(name)) delete env[name];
   env.WEFTMATE_BASELINE_TRACE = join(root, 'requests.jsonl');
+  if (process.argv.includes('--memory-trace')) env.WEFTMATE_BASELINE_MEMORY_TRACE = join(root, 'memory-requests.jsonl');
   let app, page, ownerId, models = [], client, log = '', A, previous = [], corrected = [];
   const capturedSessions = new Set();
   async function api(path, body, method = body === undefined ? 'GET' : 'POST') {
@@ -171,6 +174,7 @@ async function baseline(modelName, fourOnly = false) {
     await page.getByRole('option', { name, exact: true }).click();
     await until(async () => await page.locator('#new-session').isEnabled(), 30000, 'new conversation available');
     const response = page.waitForResponse(r => new URL(r.url()).pathname === '/personal/v1/commands' && r.request().postDataJSON()?.kind === 'session.create');
+    response.catch(() => {}); // Await below owns failure; prevent an early UI timeout from aborting cleanup.
     await page.locator('#new-session').click();
     const created = await response, body = await created.json(); assert.equal(created.status(), 202);
     const cmd = await until(async () => { const cmd = (await api(`/commands/${body.command.commandId}`)).body.command;
@@ -193,6 +197,7 @@ async function baseline(modelName, fourOnly = false) {
     report.turns.push(turn); persist();
     await page.locator('#message-text').fill(text);
     const response = page.waitForResponse(r => new URL(r.url()).pathname === '/personal/v1/commands' && r.request().postDataJSON()?.kind === 'session.message');
+    response.catch(() => {});
     await page.locator('#send-message').click();
     const sent = await response; assert.equal(sent.status(), 202, await sent.text());
     let savedEventCount = -1;
@@ -254,6 +259,12 @@ async function baseline(modelName, fourOnly = false) {
     return result;
   }
   async function semantic(turn, criterion) {
+    if (judgeModel === 'mimo') {
+      const verdict = await judgeMemorySemantics({ result: { turns: [turn] },
+        scenario: { turns: [{ user: turn.user }], checks: [{ type: 'llm_judge', prompt: criterion }] }, key });
+      (report.directJudgements ??= []).push(verdict);
+      return { type: 'llm_judge', prompt: criterion, turn: report.turns.indexOf(turn) + 1, ...verdict };
+    }
     return checkOne({ type: 'llm_judge', prompt: criterion, turn: report.turns.indexOf(turn) + 1 }, { judgeModel, models, client, turns: report.turns,
       scenario: { turns: report.turns.map(t => ({ user: t.user })) }, scratchDir: root, deadline: Date.now() + 180000 });
   }
@@ -329,12 +340,13 @@ async function baseline(modelName, fourOnly = false) {
     });
     await step('02', '模型提议、用户确认组队提醒', async result => {
       const first = report.turns[0];
-      result.checks.proposal = /组队|开黑/.test(first.reply) && /提醒|找他|叫他|叫上|拉上/.test(first.reply) && /[？?]|要不要|可以|以后/.test(first.reply);
+      result.checks.proposal = proposalCheck(first.reply);
       result.semantic = await semantic(first, '应主动提议以后用户想组队时提醒找王小明，邀请用户确认。');
       const turn = await message(A, confirmation);
       result.checks.confirmationCompleted = turn.status === 'completed';
       result.checks.confirmationSource = turn.events?.some(row => row.type === 'user.message' && row.data.text === confirmation) === true;
     });
+    if (process.argv.includes('--proposal-only')) return;
     await step('03', '人物、关系、评价、决定和原话来源', async result => {
       await settled(); previous = await items(); const provenance = await sources(previous);
       result.items = previous; result.sources = provenance; result.storage = await storage();
@@ -363,6 +375,13 @@ async function baseline(modelName, fourOnly = false) {
       result.checks = { correctionCompleted: turn.status === 'completed', ...correctionChecks(corrected, previous, turns, provenance),
         replacementReason: result.storage.relationship_transitions.some(row => row.reason && previous.some(item => item.id === row.prior_relationship_id) && corrected.some(item => item.id === row.replacement_relationship_id && /表弟/.test(item.text))) };
       result.semantic = await Promise.all(turns.map(turn => semantic(turn, '当前关系是表弟，已纠正好兄弟的旧说法；组队仍找王小明。')));
+      result.explanations = [];
+      for (const name of [modelName, alternate]) {
+        const explanation = await message(await session(name), '为什么之前说王小明是好兄弟，现在那个说法不算了？', name);
+        result.explanations.push(explanation);
+      }
+      result.checks.bothExplainReplacement = result.explanations.every(turn => turn.status === 'completed' &&
+        /纠正|更正|改口|修正|更改/.test(turn.reply) && /表弟/.test(turn.reply));
     });
     await step('06', '重启宿主、持久化后仍采用最新理解', async result => {
       const oldPid = app.process().pid; await settled(); await close(); await launch(true);
@@ -484,7 +503,7 @@ async function baseline(modelName, fourOnly = false) {
       }
       result.semantic = await semantic(turn, '记忆服务故障时普通问候仍可用。');
     });
-    await step('speed', '同一对话重复任务的步骤与耗时', async result => {
+    if (!eightOnly) await step('speed', '同一对话重复任务的步骤与耗时', async result => {
       // Restore only the isolated Core process seam before this independent task.
       await close(); await launch(true);
       const id = await session(modelName, false);
@@ -517,6 +536,14 @@ async function baseline(modelName, fourOnly = false) {
     const sum = field => uses.reduce((total, row) => total + (field(row.usage) ?? 0), 0);
     report.mimoUsage = { requests: starts.length, returnedUsage: uses.length, missingUsage: starts.length - uses.length,
       input: sum(u => u.prompt_tokens), cached: sum(u => u.prompt_tokens_details?.cached_tokens), output: sum(u => u.completion_tokens) };
+    for (const verdict of report.directJudgements ?? []) {
+      report.mimoUsage.requests++;
+      if (!verdict.usage) { report.mimoUsage.missingUsage++; continue; }
+      report.mimoUsage.returnedUsage++;
+      report.mimoUsage.input += verdict.usage.prompt_tokens ?? 0;
+      report.mimoUsage.cached += verdict.usage.prompt_tokens_details?.cached_tokens ?? 0;
+      report.mimoUsage.output += verdict.usage.completion_tokens ?? 0;
+    }
     report.mimoUsage.knownCnyLowerBound = (report.mimoUsage.input - report.mimoUsage.cached + report.mimoUsage.cached * 0.02 + report.mimoUsage.output * 2) / 1000000;
     // No synthetic passwords, setup grants, API keys, private endpoints in artifacts.
     const sensitive = /credentials\.json$|(?:Cookies|Trust Tokens)(?:-journal)?$|setup-[^/]+\.json$|secure-snapshot.*\.yml$|security-credentials\.patch\.yml$/;
@@ -540,7 +567,7 @@ try {
   else {
     if (!provider || provider === 'mimo') await baseline('mimo');
     if (!provider || provider === 'lan') { await acquireLan(); await baseline('lan'); }
-    if (!provider) await baseline('lan', true);
+    if (!provider && !eightOnly) await baseline('lan', true);
   }
 } finally {
   if (bridge) { await bridge.close(); save(join(evidence, 'lan-serial.json'), bridge.metrics()); }
@@ -555,6 +582,6 @@ try {
   // Optional assertion mode lets CI consume the same evidence without treating
   // a successfully completed baseline collection as a passing product exit.
   if (process.argv.includes('--require-pass') && reports.some(report => report.fatal ||
-    (report.four ? !report.four.passedGate : fgOnly ? !report.steps.length || report.steps.some(step => step.status !== 'passed') : !report.summary?.eightStepGate || report.steps.find(step => step.id === 'speed')?.status !== 'passed'))) process.exitCode = 1;
+    (report.four ? !report.four.passedGate : fgOnly ? !report.steps.length || report.steps.some(step => step.status !== 'passed') : !report.summary?.eightStepGate || (!eightOnly && report.steps.find(step => step.id === 'speed')?.status !== 'passed')))) process.exitCode = 1;
   console.log(JSON.stringify({ roots, usage, credentialScan: publicScan }));
 }

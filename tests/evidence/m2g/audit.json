@@ -1,0 +1,311 @@
+{
+  "at": "2026-10-09T01:32:00.945Z",
+  "roots": [
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-mimo-IYWTXK",
+      "removedCredentials": 0,
+      "scanned": 214,
+      "privateMatches": 0,
+      "recordedProcessPids": [
+        46084
+      ],
+      "usage": {
+        "requests": 0,
+        "returnedUsage": 0,
+        "missingUsage": 0,
+        "input": 0,
+        "cached": 0,
+        "output": 0,
+        "knownCnyLowerBound": 0
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-mimo-JF9DZP",
+      "removedCredentials": 0,
+      "scanned": 479,
+      "privateMatches": 0,
+      "recordedProcessPids": [
+        9808,
+        51804,
+        32716,
+        51232,
+        9968,
+        55196,
+        32384,
+        52532,
+        46580,
+        55756,
+        55452,
+        21664,
+        36448,
+        33592
+      ],
+      "usage": {
+        "requests": 59,
+        "returnedUsage": 59,
+        "missingUsage": 0,
+        "input": 1555295,
+        "cached": 515712,
+        "output": 12798,
+        "knownCnyLowerBound": 1.07549324
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-mimo-69aUA5",
+      "removedCredentials": 0,
+      "scanned": 464,
+      "privateMatches": 0,
+      "recordedProcessPids": [
+        52732,
+        50004,
+        57028,
+        46200,
+        35160,
+        56744,
+        39700,
+        57788,
+        7676,
+        28312
+      ],
+      "usage": {
+        "requests": 46,
+        "returnedUsage": 45,
+        "missingUsage": 1,
+        "input": 289050,
+        "cached": 214848,
+        "output": 5830,
+        "knownCnyLowerBound": 0.09015896000000001
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-lan-WQiHkn",
+      "removedCredentials": 0,
+      "scanned": 464,
+      "privateMatches": 0,
+      "recordedProcessPids": [
+        56772,
+        55428,
+        49584,
+        44016,
+        47284,
+        51328,
+        48124,
+        15816
+      ],
+      "usage": {
+        "requests": 13,
+        "returnedUsage": 13,
+        "missingUsage": 0,
+        "input": 199380,
+        "cached": 132544,
+        "output": 1857,
+        "knownCnyLowerBound": 0.07320088000000001
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-mimo-HvjHm0",
+      "removedCredentials": 0,
+      "scanned": 398,
+      "privateMatches": 0,
+      "recordedProcessPids": [
+        28372,
+        44260,
+        55212,
+        47280,
+        33344,
+        55288
+      ],
+      "usage": {
+        "requests": 34,
+        "returnedUsage": 34,
+        "missingUsage": 0,
+        "input": 397294,
+        "cached": 212864,
+        "output": 5318,
+        "knownCnyLowerBound": 0.19932328
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-lan-GgkWn4",
+      "removedCredentials": 0,
+      "scanned": 398,
+      "privateMatches": 0,
+      "recordedProcessPids": [
+        37708,
+        43024,
+        32016,
+        48980,
+        52912
+      ],
+      "usage": {
+        "requests": 3,
+        "returnedUsage": 3,
+        "missingUsage": 0,
+        "input": 31648,
+        "cached": 22528,
+        "output": 392,
+        "knownCnyLowerBound": 0.010354559999999999
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-lan-GqHA6M",
+      "removedCredentials": 0,
+      "scanned": 219,
+      "privateMatches": 0,
+      "recordedProcessPids": [
+        54876,
+        49584,
+        56144
+      ],
+      "usage": {
+        "requests": 0,
+        "returnedUsage": 0,
+        "missingUsage": 0,
+        "input": 0,
+        "cached": 0,
+        "output": 0,
+        "knownCnyLowerBound": 0
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-mimo-2qjIQP",
+      "removedCredentials": 0,
+      "scanned": 386,
+      "privateMatches": 0,
+      "recordedProcessPids": [
+        52216,
+        36916,
+        2284,
+        40252,
+        48756,
+        46596
+      ],
+      "usage": {
+        "requests": 21,
+        "returnedUsage": 20,
+        "missingUsage": 1,
+        "input": 102440,
+        "cached": 58304,
+        "output": 2782,
+        "knownCnyLowerBound": 0.05086608
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-lan-P7C0L0",
+      "removedCredentials": 0,
+      "scanned": 386,
+      "privateMatches": 0,
+      "recordedProcessPids": [
+        32128,
+        39476,
+        33456,
+        50836,
+        50276
+      ],
+      "usage": {
+        "requests": 3,
+        "returnedUsage": 3,
+        "missingUsage": 0,
+        "input": 32284,
+        "cached": 22528,
+        "output": 418,
+        "knownCnyLowerBound": 0.01104256
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2f-lan-82c52d85-e776-4e54-aa81-e3ed68e0780d",
+      "removedCredentials": 0,
+      "scanned": 255,
+      "privateMatches": 0,
+      "recordedProcessPids": [
+        48928,
+        20980
+      ],
+      "usage": {
+        "requests": 1,
+        "returnedUsage": 1,
+        "missingUsage": 0,
+        "input": 10784,
+        "cached": 6144,
+        "output": 110,
+        "knownCnyLowerBound": 0.00498288
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2f-lan-46f1c849-d9a8-4eff-ac88-c1799fc7f853",
+      "removedCredentials": 0,
+      "scanned": 241,
+      "privateMatches": 0,
+      "recordedProcessPids": [
+        23276,
+        41108
+      ],
+      "usage": {
+        "requests": 0,
+        "returnedUsage": 0,
+        "missingUsage": 0,
+        "input": 0,
+        "cached": 0,
+        "output": 0,
+        "knownCnyLowerBound": 0
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2f-mimo-66c855bd-23f9-4ff3-824e-ebbc8ed9619e",
+      "removedCredentials": 0,
+      "scanned": 255,
+      "privateMatches": 0,
+      "recordedProcessPids": [
+        36792,
+        55748
+      ],
+      "usage": {
+        "requests": 67,
+        "returnedUsage": 67,
+        "missingUsage": 0,
+        "input": 379637,
+        "cached": 296128,
+        "output": 13001,
+        "knownCnyLowerBound": 0.11543356
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2f-mimo-0cf783b5-985f-4d98-b973-c107d3050a3d",
+      "removedCredentials": 0,
+      "scanned": 238,
+      "privateMatches": 0,
+      "recordedProcessPids": [
+        37564,
+        56392
+      ],
+      "usage": {
+        "requests": 21,
+        "returnedUsage": 21,
+        "missingUsage": 0,
+        "input": 117508,
+        "cached": 89792,
+        "output": 4891,
+        "knownCnyLowerBound": 0.03929384
+      }
+    }
+  ],
+  "publicScanned": 41,
+  "publicMatches": 0,
+  "usage": {
+    "requests": 268,
+    "returnedUsage": 266,
+    "missingUsage": 2,
+    "input": 3115320,
+    "cached": 1571392,
+    "output": 47397,
+    "knownCnyLowerBound": 1.6701498399999997
+  },
+  "reusedRecordedProcessIds": [
+    {
+      "Id": 43024,
+      "ProcessName": "conhost.exe",
+      "CreatedAt": "2026-10-08T23:49:20.6667200Z"
+    }
+  ],
+  "recordedProcessesStillAlive": []
+}

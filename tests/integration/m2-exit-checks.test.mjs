@@ -1,7 +1,15 @@
 import test from 'node:test';
+
 import assert from 'node:assert/strict';
 import { zstdCompressSync } from 'node:zlib';
-import { formationChecks, correctionChecks, speedComparison, fourScenarioSummary, exportHasForgottenName } from './m2-exit-checks.mjs';
+import { proposalCheck, formationChecks, correctionChecks, speedComparison, fourScenarioSummary, exportHasForgottenName } from './m2-exit-checks.mjs';
+test('proposal accepts relevant future contact and requires the assistant to remind the user', () => {
+  assert.equal(proposalCheck('王小明是你好兄弟。以后组队时，我提醒你找他，好吗？'), true);
+  assert.equal(proposalCheck('记下了，王小明游戏很厉害。需要我以后在游戏相关的事情上提醒你可以联系他吗？'), true);
+  assert.equal(proposalCheck('已记录，王小明游戏很厉害，是你的好兄弟。'), false);
+  assert.equal(proposalCheck('以后组队，可以提醒我找他。'), false);
+  assert.equal(proposalCheck('以后游戏组队时我会提醒你找王小明。'), false);
+});
 test('forgotten content in later compressed native-log frames is recoverable', () => {
   const bytes = Buffer.concat([zstdCompressSync(Buffer.from('{"type":"session"}\n')), zstdCompressSync(Buffer.from('王小明打游戏挺厉害\n'))]);
   assert.equal(exportHasForgottenName(bytes, 'session.jsonl.zstd'), true);

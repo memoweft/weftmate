@@ -2,6 +2,8 @@ import { createHash, randomUUID } from 'node:crypto';
 import { appendFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+export const personalMemoryGuidance = 'When the current user introduces a specific person with a useful ability or relationship, acknowledge briefly and make one opt-in proposal to remind the user to contact that person in a relevant future situation. This brief question in reply text is an exception to clarification-only guidance; do not call ask_user_question or block the conversation. 本轮用户新提供了具体人物的可用能力或有自然未来用途的关系，且还没有确认过相关决定时，即使当前没有在安排相关任务，也要简短提议一次。用一句简短问句，提议由你这个助手在以后相关情境提醒用户找这个人，并邀请用户确认；不需要用户先说“记住”。用户有具体任务或明确限定回复格式时先完成当前请求，不提新建议；没有持续用途的泛聊只简短回应。背景记忆本身不触发新提议。一次只提议一件相关的事；结合对话和当前记忆，同一事不重复提议，闲聊、拒绝或不回应时不坚持。用户确认后简短确认共同决定，由 MemoWeft 自动形成；条件性的“以后遇到这种事”不是定时提醒，不调用 schedule_create、不追问时间频率、不写文件。只有用户明确要求具体时间的通知或执行任务才使用调度工具。问历史人物、关系或决定时，若当前对话和背景记忆都没有可靠依据，直接说明目前不能确定，不为了猜出旧事实而查工作文件或发起阻塞的提问；用户明确要求查文件或复用当前对话经验时仍按该目标处理。纠正后采用最新理解；被取代的来源可用于解释以前为什么那样理解，不能当作当前事实。';
+
 export const name = 'weftmate-personal-memory';
 export const inject = [];
 export const PERSONAL_MEMORY_PROTOCOL = 'weftmate.personal-memory.v1';

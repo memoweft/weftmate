@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-08T22:48:51.992Z",
+  "model": "mimo",
+  "revision": {
+    "weftmate": "f2f28ec9ac3f6559f975dbde9c9bea64a44bdce3",
+    "core": "8d2cde297e4e9fc010fccf0a9aba4c2e2d30d3d7"
+  },
+  "electron": true,
+  "steps": [
+    {
+      "id": "01",
+      "title": "原话进入真实桌面对话",
+      "status": "failed",
+      "checks": {},
+      "startedAt": "2026-10-08T22:49:03.676Z",
+      "reason": "session.create uncertain",
+      "finishedAt": "2026-10-08T22:49:05.076Z"
+    },
+    {
+      "id": "02",
+      "title": "模型提议、用户确认组队提醒",
+      "status": "failed",
+      "checks": {},
+      "startedAt": "2026-10-08T22:49:05.077Z",
+      "reason": "Cannot read properties of undefined (reading 'reply')",
+      "finishedAt": "2026-10-08T22:49:05.078Z"
+    },
+    {
+      "id": "03",
+      "title": "人物、关系、评价、决定和原话来源",
+      "status": "failed",
+      "checks": {
+        "person": false,
+        "relationship": false,
+        "evaluation": false,
+        "decision": false,
+        "personSource": false,
+        "relationshipSource": false,
+        "evaluationSource": false,
+        "decisionSource": false
+      },
+      "startedAt": "2026-10-08T22:49:05.078Z",
+      "items": [],
+      "sources": {},
+      "storage": {
+        "entity": [],
+        "relationship": [],
+        "cognition": [],
+        "cognition_transitions": [],
+        "relationship_transitions": [],
+        "interaction_commitment": [],
+        "memory_world_job": []
+      },
+      "finishedAt": "2026-10-08T22:49:06.356Z"
+    },
+    {
+      "id": "04",
+      "title": "新会话、换模型、改写问题仍召回",
+      "status": "running",
+      "checks": {},
+      "startedAt": "2026-10-08T22:49:10.176Z"
+    }
+  ],
+  "turns": [],
+  "initialMemory": {
+    "ownerId": "owner-58f60618-9853-4c82-983b-af7bd40651d7",
+    "state": "ready",
+    "version": "2.0.0",
+    "worldRevision": 0,
+    "capabilities": {
+      "list": true,
+      "source": true,
+      "inject": true,
+      "correct": true,
+      "mute": true,
+      "deleteEvidence": true,
+      "deleteWorldItem": true
+    },
+    "pendingBoundaryCount": 0,
+    "blockedBoundaryCount": 0,
+    "discardedBoundaryCount": 0,
+    "lastFailureCode": null
+  }
+}

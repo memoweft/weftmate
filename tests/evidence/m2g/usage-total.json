@@ -1,0 +1,29 @@
+{
+  "eightAndDevelopment": {
+    "requests": 222,
+    "returnedUsage": 220,
+    "missingUsage": 2,
+    "input": 2613647,
+    "cached": 1179904,
+    "output": 30580,
+    "knownCnyLowerBound": 1.51850108
+  },
+  "regression": {
+    "requests": 113,
+    "returnedUsage": 113,
+    "missingUsage": 0,
+    "input": 516428,
+    "cached": 392128,
+    "output": 18715,
+    "knownCnyLowerBound": 0.16957256
+  },
+  "total": {
+    "requests": 335,
+    "returnedUsage": 333,
+    "missingUsage": 2,
+    "input": 3130075,
+    "cached": 1572032,
+    "output": 49295,
+    "knownCnyLowerBound": 1.6880736399999998
+  }
+}
