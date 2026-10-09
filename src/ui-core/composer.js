@@ -377,7 +377,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
     function processingLabel(value) {
         if (value?.phase === 'loading') return `正在加载模型${value.modelName ? ` ${value.modelName}` : ''}…`;
         if (value?.phase === 'queued' && Number.isSafeInteger(value.ahead) && value.ahead > 0) return `模型排队中，前面还有 ${value.ahead} 个请求`;
-        return { memory: '正在读取记忆…', reasoning: '正在思考…', answering: '正在回复…' }[value?.phase] || '等待模型回复…';
+        return { memory: '正在读取记忆…', retrying: '模型响应慢，正在重试…', reasoning: '正在思考…', answering: '正在回复…' }[value?.phase] || '等待模型回复…';
     }
     return { refreshThinkingModels, thinkingView, setDeepThinking, handleOptimisticCreation, beginOptimistic, optimisticMessages, reconcileOptimistic, observeOptimistic, startNewConversation, retryOptimistic,
         addAttachmentFiles, composerInputMode, conversationRunning, messageModePreference, loadMessageModePreference, sendDraft, stopCurrentTurn, composerState, selectModelProfile, setMessageMode, processingLabel, processingStageLabel };
