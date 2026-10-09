@@ -1,5 +1,5 @@
-import { statSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { readFileSync, statSync } from 'node:fs';
+import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 
 export function withoutJavaScriptComments(source) {
@@ -45,6 +45,7 @@ export function staticWriteTarget(expression, source, cwd, scriptPath, scriptArg
     if (scriptPath && text === '__dirname') return dirname(scriptPath);
     if (scriptPath && text === '__filename') return scriptPath;
     if (scriptPath && text === 'import.meta.url') return pathToFileURL(scriptPath).href;
+    if (text === 'process.cwd()') return cwd;
     const url = /^new\s+URL\(\s*('[^']*'|"[^"]*")\s*,\s*import\.meta\.url\s*\)$/.exec(text);
     if (url && scriptPath) {
       const reference = value(url[1]);
@@ -73,7 +74,10 @@ export function staticWriteTarget(expression, source, cwd, scriptPath, scriptArg
     if (args.some(arg => typeof arg !== 'string')) return;
     try {
       if (call[1] === 'join') return join(...args);
-      if (call[1] === 'resolve') return resolve(cwd, ...args);
+      if (call[1] === 'resolve') {
+        if (cwd === undefined) return args.some(isAbsolute) ? resolve(...args) : undefined;
+        return resolve(cwd, ...args);
+      }
       if (args.length !== 1) return;
       return call[1] === 'dirname' ? dirname(args[0]) : fileURLToPath(args[0]);
     } catch { /* Unresolved, never execute an expression. */ }
@@ -81,10 +85,37 @@ export function staticWriteTarget(expression, source, cwd, scriptPath, scriptArg
   return value(expression);
 }
 
+/** Known Node output paths only. Source is inspected, never evaluated. */
+export function scriptWriteTargets({ file, cwd, args }) {
+  if (!/\.[cm]?js$/i.test(file)) return [];
+  let source;
+  try { source = withoutJavaScriptComments(readFileSync(file, 'utf8')); }
+  catch { return []; }
+  const targets = [];
+  const record = (literal, expression) => {
+    const target = literal ?? staticWriteTarget(expression, source, cwd, file, args);
+    if (typeof target !== 'string' || !isAbsolute(target) && cwd === undefined) return;
+    targets.push(resolve(cwd ?? '', target));
+  };
+  for (const match of source.matchAll(/\b(?:writeFile(?:Sync)?|truncate(?:Sync)?)\s*\(\s*(?:'([^']+)'|"([^"]+)"|([^,\n]+))/gi))
+    record(match[1] ?? match[2], match[3]);
+  for (const match of source.matchAll(/\bcopyFile(?:Sync)?\s*\(\s*[^,]+,\s*(?:'([^']+)'|"([^"]+)"|([^,\n]+))/gi))
+    record(match[1] ?? match[2], match[3]);
+  return [...new Set(targets)];
+}
+
 // A deliberately small shell interpreter: it evaluates strings and locations,
 // never commands. Every write has a result, including an undefined target when
 // its expression or control flow cannot be proved from this invocation.
 export function shellWriteTargets(source, cwd, powershell = true) {
+  return shellOperations(source, cwd, powershell).writes;
+}
+
+export function shellScriptInvocations(source, cwd, powershell = true) {
+  return shellOperations(source, cwd, powershell).scripts;
+}
+
+function shellOperations(source, cwd, powershell) {
   const tokens = [];
   for (let i = 0; i < source.length;) {
     const start = i, c = source[i];
@@ -116,6 +147,7 @@ export function shellWriteTargets(source, cwd, powershell = true) {
   let location = cwd;
   const stack = [], bindings = new Map(), environment = new Map(Object.entries(process.env));
   const writes = [];
+  const scripts = [];
   const key = name => powershell ? name.toLowerCase() : name;
   const env = name => [...environment].find(([k]) => key(k) === key(name))?.[1];
   const variable = name => {
@@ -200,11 +232,15 @@ export function shellWriteTargets(source, cwd, powershell = true) {
     if (target === undefined || /[*?\[\]]/.test(target)) return;
     // resolve needs a known current directory even for a relative Join-Path.
     if (location === undefined && !/^(?:[A-Za-z]:[\\/]|\/)/.test(target)) return;
-    try { return resolve(location ?? cwd, target); } catch { return; }
+    try { return resolve(location ?? cwd ?? '', target); } catch { return; }
   };
   const invalidate = () => { bindings.clear(); environment.clear(); location = undefined; stack.length = 0; };
   function statement(parts, uncertain = false) {
     if (!parts.length) return;
+    // PowerShell's literal call operator launches the same executable. Keep
+    // its location/argument evidence instead of losing the disk script scan.
+    if (powershell && parts[0] === '&' && /^(?:node|python3?|pwsh|powershell|bash|sh)$/i.test(parts[1] ?? ''))
+      return statement(parts.slice(1), uncertain);
     const assignment = parts[1] === '=' ? (powershell ? /^(?:\[(?:string|System\.String)\])?\$([\w:]+)$/i.exec(parts[0]) : /^(?:[A-Za-z_]\w*)$/.exec(parts[0])) : null;
     if (assignment && parts[1] === '=') {
       const name = powershell ? assignment[1] : parts[0], result = uncertain ? undefined : value(parts.slice(2), !powershell);
@@ -242,6 +278,24 @@ export function shellWriteTargets(source, cwd, powershell = true) {
       }
     }
     const add = (expression, kind = 'write', from) => writes.push({ target: uncertain ? undefined : absolute(value(expression)), kind, from });
+    if (/^(?:node|python3?|pwsh|powershell|bash|sh)$/.test(command)) {
+      if (/^(?:pwsh|powershell|bash|sh)$/.test(command) && /^(?:-Command|-c)$/i.test(parts[1] ?? '')) {
+        const nested = string(parts[2]);
+        if (nested !== undefined) {
+          const operations = shellOperations(nested, uncertain ? undefined : location, /^(?:pwsh|powershell)$/.test(command));
+          scripts.push(...operations.scripts);
+        }
+      }
+      const offset = /^-File$/i.test(parts[1] ?? '') ? 2 : 1;
+      const file = absolute(value(parts.slice(offset, offset + 1)));
+      if (file && /\.(?:mjs|cjs|js|py|ps1|sh)$/i.test(file)) {
+        const tail = parts.slice(offset + 1);
+        const redirect = tail.findIndex(part => ['>', '>>', '<', '<<'].includes(part));
+        const args = tail.slice(0, redirect < 0 ? tail.length : redirect).map(part => string(part));
+        scripts.push({ file, cwd: uncertain ? undefined : location,
+          args: uncertain || args.some(arg => arg === undefined) ? undefined : args });
+      }
+    }
     for (let i = 0; i < parts.length; i++) {
       if (parts[i].includes('$(') && /(?:WriteAll(?:Text|Bytes|Lines)|AppendAll(?:Text|Lines)|Set-Content|Add-Content|Out-File|New-Item|\s>>?)/i.test(parts[i])) {
         writes.push({ target: undefined, kind: 'write' }); invalidate();
@@ -341,5 +395,5 @@ export function shellWriteTargets(source, cwd, powershell = true) {
   }
   if (/\b(?:pwsh|powershell|bash|sh)\b[^\n]*\s(?:-Command|-c)\s/i.test(source) && /(?:WriteAll(?:Text|Bytes|Lines)|AppendAll(?:Text|Lines)|Set-Content|Add-Content|Out-File|New-Item|\s>>?)/i.test(source)) writes.push({ target: undefined, kind: 'write' });
   block(tokens);
-  return writes;
+  return { writes, scripts };
 }

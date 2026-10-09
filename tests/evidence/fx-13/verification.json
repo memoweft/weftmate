@@ -1,0 +1,26 @@
+{
+  "targetedTests": {
+    "command": "node --test tests/personal-script-output-provenance.test.ts tests/personal-approval-modes.test.ts tests/personal-dynamic-write-targets.test.ts tests/personal-native-files.test.ts tests/personal-project-tool-proof.test.ts",
+    "tests": 65,
+    "passed": 65,
+    "failed": 0,
+    "durationMs": 3294.676
+  },
+  "typecheck": {
+    "command": "npm run typecheck",
+    "exitCode": 0
+  },
+  "initialTargetedRun": {
+    "tests": 65,
+    "passed": 60,
+    "failed": 5,
+    "reasons": [
+      "Four existing project proof cases could not load personal-project-context.mjs from the temporary plugin fixture.",
+      "New Bash case used Windows backslashes that Bash cannot interpret as the intended script path."
+    ],
+    "corrections": [
+      "Fixture resolves its existing project-context dependency by file URL.",
+      "Bash fixture uses forward slash paths; all original collision assertions remain."
+    ]
+  }
+}

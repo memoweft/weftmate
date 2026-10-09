@@ -1,0 +1,20 @@
+{
+  "forcedTerminations": [
+    34992,
+    40328,
+    3272,
+    26592,
+    40816,
+    34004,
+    51604,
+    34548,
+    2704,
+    24052,
+    41848
+  ],
+  "forcedTerminationCount": 11,
+  "reason": "Discarded first pressure attempt after obsolete login/reload flow; no valid latency cycles.",
+  "remainingAuditPending": true,
+  "simulatorsStarted": false,
+  "lanUsed": false
+}

@@ -1,0 +1,9 @@
+{
+  "source": "sales.csv",
+  "generatedAt": "2026-10-09T17:33:39.283Z",
+  "subtotals": {
+    "茶": 25,
+    "咖啡": 24
+  },
+  "total": 49
+}
