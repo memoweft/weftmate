@@ -237,6 +237,9 @@ M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在�
 | GET `/memory/items/{kind}/{itemId}` | 无 | 200 `{"item":{…},"worldRevision":8,"availableActions":{"correct":{"available":true},"mute":{"available":true},"delete":{"available":false,"reasonCode":"MEMORY_DELETE_UNAVAILABLE"}}}` | 404 `NOT_FOUND`；503 `MEMORY_RESPONSE_INVALID` | 桌、手、安、苹 |
 | GET `/memory/items/{kind}/{itemId}/sources` | 无 | 200 `{"sources":[{"evidenceId":"evidence:1","relation":"supports","currentnessState":"current","permissions":{"allowLocalRead":true,"allowCloudRead":false,"allowInference":true},"contentAvailable":true,"summary":"…","rawContent":"…","rawContentTruncated":false,"recordedAt":"…"}],"worldRevision":8}` | 404 `NOT_FOUND`；503 `MEMORY_RESPONSE_INVALID` | 桌、手、安、苹 |
 | GET `/memory/items/{kind}/{itemId}/forget-preview` | 无 | 200 `{ownerId,worldRevision,itemCount,evidenceCount,evidenceIds,items:[{id,kind,text,itemType}]}`；当前项与将级联删除的全部记忆，名称完整返回；原库只读 | 404 `NOT_FOUND`；503记忆不可用 | 桌、手、安（界面）；苹（接口） |
+
+遗忘预览的 `items[].kind` 可为 `interaction_commitment`（交互承诺）；其 `itemType` 为 `commitment` / `recommendation` / `agreement`，与正式项一起计入 `itemCount`，表示将随来源或会话清除的派生记录。此类型只用于预览，独立记忆列表与命令目标的 kind 不扩展。
+
 | GET `/memory/evidence/{evidenceId}/forget-preview` | 无 | 同上，预览单条来源的级联范围 | 同上 | 桌、手、安（界面）；苹（接口） |
 | POST `/memory/items/{kind}/{itemId}/correct` | `requestId,expectedWorldRevision,text`；非entity，非空文字≤4,000 UTF-16 | 200或409 `Receipt` | 422 `MEMORY_ACTION_UNSUPPORTED`；409 `MEMORY_REQUEST_CONFLICT / MEMORY_REPLAY_REDACTED` | 桌、手、安、苹 |
 | POST `/memory/items/{kind}/{itemId}/mute` | `requestId,expectedWorldRevision` | 200或409 `Receipt` | 503 `MEMORY_ACTION_UNSUPPORTED / MEMORY_UNAVAILABLE`；409请求冲突 | 桌、手、安、苹 |

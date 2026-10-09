@@ -2,6 +2,11 @@ import test from 'node:test';
 
 import assert from 'node:assert/strict';
 import { zstdCompressSync } from 'node:zlib';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { forgetPreviewView } from '../../src/personal-memory/http.mjs';
 import { proposalCheck, formationChecks, correctionChecks, speedComparison, fourScenarioSummary, exportHasForgottenName } from './m2-exit-checks.mjs';
 test('proposal accepts relevant future contact and requires the assistant to remind the user', () => {
   assert.equal(proposalCheck('王小明是你好兄弟。以后组队时，我提醒你找他，好吗？'), true);
@@ -18,6 +23,24 @@ test('forgotten content in later compressed native-log frames is recoverable', (
 test('escaped JSON and UTF-16 export text are also recoverable', () => {
   assert.equal(exportHasForgottenName(Buffer.from(JSON.stringify({ model_result_json: '\\u738b\\u5c0f\\u660e' })), 'jobs.json'), true);
   assert.equal(exportHasForgottenName(Buffer.from('王小明', 'utf16le'), 'text.bin'), true);
+});
+test('forget preview includes interaction commitments in its count and named items', () => {
+  const view = forgetPreviewView({ world_revision: 3, item_count: 1, evidence_count: 0, evidence_ids: [],
+    items: [{object_kind: 'interaction_commitment', item_id: 'promise', name: '提醒联系王小明', item_type: 'commitment'}] });
+  assert.equal(view.itemCount, 1);
+  assert.equal(view.items[0].kind, 'interaction_commitment');
+});
+test('backup SQLite scan reaches all columns, legacy commitments and escaped JSON', { skip: process.platform !== 'win32' }, () => {
+  const root = mkdtempSync(join(tmpdir(), 'm2-backup-scan-'));
+  const python = 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe';
+  const path = join(root, 'memory.sqlite3');
+  try {
+    execFileSync(python, ['-c', 'import sqlite3,sys,json; c=sqlite3.connect(sys.argv[1]); c.execute("CREATE TABLE interaction_commitment(content, raw_quote)"); c.execute("INSERT INTO interaction_commitment VALUES (?,?)", ("clean", sys.argv[2])); c.execute("CREATE TABLE new_text_table(unknown_json)"); c.execute("INSERT INTO new_text_table VALUES (?)", (json.dumps({"source":sys.argv[2]}),)); c.commit(); c.close()', path, '王小明']);
+    const result = JSON.parse(execFileSync(python, [join(import.meta.dirname, 'm2-backup-text-scan.py'), path, '王小明'], {encoding: 'utf8'}));
+    assert.equal(result.tableCount, 2);
+    assert.equal(result.hitCount, 2);
+    assert.deepEqual(result.hits.map(row => row.column), ['raw_quote', 'unknown_json']);
+  } finally { rmSync(root, {recursive: true, force: true}); }
 });
 test('reply-only and invalid memories cannot satisfy formal formation', () => {
   assert.deepEqual(formationChecks([{ kind: 'cognition', text: '王小明好兄弟游戏厉害组队找他', currentState: 'not_current' }]),
