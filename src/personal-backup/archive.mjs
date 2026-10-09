@@ -18,6 +18,9 @@ const omitted = new Set(['cloud-identity', 'personal-backup', 'Backups', 'Cache'
   'SingletonCookie', 'SingletonSocket', 'Local State', 'Preferences', 'DevTools Extensions', 'DevToolsActivePort']);
 export function included(relative) {
   const parts = relative.split('/');
+  // Local migration preimages retain original credential hashes for stopped
+  // rollback. Portable backups use the scrubbed current store exclusively.
+  if (relative === 'personal-access/chat-identity-v1.before.json') return false;
   if (omitted.has(parts[0]) || relative === 'lockfile' || /^personal-access\/(?:cloud-identity|relay|relay-tls)(?:\/|$)/.test(relative)) return false;
   if (/^dsh-home\/profiles\/(?:[^/]+\/)?node_modules(?:\/|$)/.test(relative)) return false;
   if (/\.(?:sqlite3?|db)-(?:wal|shm)$/.test(relative)) return false;

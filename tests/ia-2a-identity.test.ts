@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createPersonalAccessService } from '../src/personal-access/index.mjs';
 import { reconcileChatIdentity, validateChatIdentity, protectMainSession } from '../src/personal-access/chat-identity.mjs';
+import { included } from '../src/personal-backup/archive.mjs';
 
 const now = '2026-10-10T00:00:00.000Z';
 const backend = () => ({
@@ -17,6 +18,8 @@ const backend = () => ({
 });
 
 test('identity mapping is additive, idempotent and keeps project/group/fork/shared provenance', () => {
+  assert.equal(included('personal-access/chat-identity-v1.before.json'), false);
+  assert.equal(included('personal-access/store.json'), true);
   const sessions = {
     original: { ownerId: 'owner', title: '旧标题', groupId: 'group', pinned: true, unread: true,
       archived: true, readMessageSeq: 41, origin: 'personal-remote', modelProfileId: 'fixture', attachedAt: now },
