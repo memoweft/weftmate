@@ -130,7 +130,7 @@ API 与 relay 共用本次双名称证书，2027-01-05 到期，续期由现有 
 
 ## 宿主内容证书（S2b）：阿里云 DNS-01
 
-**本包只交付代码和说明，没有部署，也没有联系真实阿里云或生产 CA。** hosts 的 A 记录已经就绪；本人完成以下私有配置并升级 cloud/宿主后，才能取得普通浏览器认可的宿主内容证书。nginx/frps 仍透传内容 TLS，内容私钥始终留在宿主。
+S2b 开发包只交付代码和说明；**2026-10-09 DEP-1 第二轮已在生产升级 cloud，并用隔离宿主完成真实阿里云 DNS-01 staging（测试环境）及一次正式签发**，详见本文末的升级记录。本人日用宿主尚未升级。nginx/frps 仍透传内容 TLS，内容私钥始终留在宿主。
 
 1. 本人登录阿里云 RAM 控制台，创建专用 RAM 用户，例如 `weftmate-dns`，只开 OpenAPI AccessKey 使用，不授予管理员或其他服务权限。不要用阿里云主账号密钥。
 2. 新建自定义权限策略，只允许 `alidns:AddDomainRecord` 与 `alidns:DeleteDomainRecord`，资源限定到自己的 DNS 区。下面是公开示例；本人把 `example.com` 替换为 weftmate.com、账号占位符替换为自己的阿里云主账号 ID，再只授权给该 RAM 用户：
@@ -187,6 +187,8 @@ WEFTMATE_RELAY_CERT_FILE=/opt/weftmate/private/host-fullchain.pem
 
 自动签发使用 Node ACME.js 与宿主已有内容 key，不需要 Windows certbot/OpenSSL。首次签发约需等待 DNS 发布；present 每个权威 NS 都查到值才返回，90 秒内未齐返回 `DNS_PROPAGATION_TIMEOUT`，API 拒绝/网络失败返回 `DNS_PROVIDER_ERROR`。免费 AliDNS 区使用最低 **600 秒 TTL**；签名接口的内部 60 秒提示被适配器提升，不更改域名 A 记录。系统/网络需允许 cloud 出站 HTTPS 与权威 DNS UDP/TCP 53。
 
+DEP-1 第二轮增加 cloud 自己的 `dns.provider_failed` 运维日志：`providerCode`、`providerRequestId`、`httpStatus`、`action` 与 `failure`（`provider_rejected` / `network` / `invalid_response`）。只接受有长度及字符约束的服务商标识，并过滤回显的 AccessKey（访问密钥）与本次签名；不记录自由格式 Message（错误消息）、异常正文、完整请求 URL（网址）或请求头。客户端仍只收到 `DNS_PROVIDER_ERROR`。读取本服务日志使用 `journalctl --namespace=weftmate-cloud -u weftmate-cloud`，不要转储环境或签名请求。
+
 6. 从已认证的**直接宿主地址**查 `/personal/v1/status`：`relay.certificateExpiresAt` 应有 UTC 到期日期，`certificateErrorCode` 为 null；签发完成后 frpc 联通时 state=online。从普通浏览器打开自己获配的 hosts HTTPS 地址，确认系统 CA 验证成功；原生端还应核对配对的 tlsSpki。不要用 `curl -k` 代替验证成功。staging 证书不能通过浏览器 CA 验证；正式签发需切生产目录和独立生产证书路径。
 
 续期不依赖服务器 certbot：宿主每天检查、剩余 <30 天签发，失败按天重试（重启也保留日期），签发后原子安装并热载，不重启宿主或 frpc，SPKI 保持。API/relay 的既有 certbot timer 继续负责外层证书。RAM 凭据轮换只需本人在私有 env 替换后重启 cloud；不用重建宿主内容 key。可观察本机状态/正常握手验证续期，长时间浸泡与真实 Windows/Apple 客户端验收另包。
@@ -225,3 +227,81 @@ file transport（文件邮件传输）只写 `/var/lib/weftmate-cloud/mail-outbo
 ```
 
 回滚脚本保存当前 nginx，精确恢复备份配置，`nginx -t` 后 reload，并 disable/stop 两个新服务。不恢复数据库、不删除账号。代码回退只在 schema 兼容时把 current 指回旧 release；schema 不兼容时保留新库，提交报告由本人决定是否恢复旧一致快照，恢复会丢失之后的注册和撤权。
+
+## 2026-10-09 升级记录（DEP-1 第一轮：失败后完整回滚，历史结果）
+
+本人已授权本次升级及失败时恢复升级前一致快照。尝试从 `46b4beccd91827364fc6ff837736bd51f93862f8` 升至当时最新 main（主分支）`b65cae8f532aefcf9fbd7815643c7eb06578054b`；新 release（发布版本）实际启动并完成 schema（数据库结构版本）4→5→6，但隔离宿主的 Let's Encrypt staging（测试环境）DNS-01 签发返回 `DNS_PROVIDER_ERROR`。按照第一轮授权，已恢复旧 release、schema 4、完整数据及原配置；**第一轮收尾时为 `46b4bec…`，当时生产升级与宿主证书验收未完成；当前结果见下面的第二轮记录**。第一轮正式 CA（证书机构）签发没有发起，没有改 RAM（阿里云访问控制）权限、DNS 区或密钥。
+
+升级前在 `/root/weftmate-deploy/dep-1-backup-20261009T010903Z`（0700、root 所有）保存：停 cloud/frps 后完整 StateDirectory（状态目录，含 SQLite/WAL/SHM、identity-keys、邮件）、全套 nginx、frps 配置、cloud.env、两个 systemd unit（服务单元）、原 current 链接与旧 release 路径。原日志命名空间配置不存在，另存不存在标记。备份文件为 `state.tar.gz`、`config.tar.gz`、`current-link.tar.gz`、`old-release` 与 `SHA256SUMS`；私有配置和备份都没有下载或进入 Git。
+
+首次部署的 `rollback.sh` 会禁用服务，不能用于此次数据升级回退。新增 `rollback-upgrade.sh` 专用于本次已授权的完整恢复，保留替换下来的数据和 nginx 在同一私有备份目录，再恢复原数据、代码、环境与服务配置。升级前实际执行 dry-run（试运行）：校验全部备份散列、解包完整数据并执行 SQLite `integrity_check`，结果为 `ok`。配置预检失败及最终 DNS-01 失败时也实际执行完整恢复。
+
+```sh
+# 仅在本次明确授权的升级回滚场景使用；恢复会撤回快照之后的云数据。
+backup=/root/weftmate-deploy/dep-1-backup-20261009T010903Z
+/root/weftmate-deploy/rollback-upgrade.sh "$backup" --dry-run
+/root/weftmate-deploy/rollback-upgrade.sh "$backup"
+```
+
+本次验证结果：
+
+| 项目 | 实测结果 |
+|---|---|
+| 独立 cloud 依赖 / 数据迁移 | 从 main 的 `services/cloud/package-lock.json` 安装 40 个生产依赖；新库迁移序列 1–6、完整性通过。Node 24.21.0 / frp 0.71.0 沿用；frps 的有效配置未变 |
+| 公开 API / 中继 | 新版本 `/healthz` 200/schema 6；OIDC（开放身份连接协议）discovery（发现文档）200、issuer 正确；JWKS（签名公钥集合）200且不含私钥；`relay.weftmate.com:443` TLS（传输层安全）1.3 与标准域名/CA 校验通过 |
+| App（应用）账号交互 | 运维专用合成账号在隔离进程内持有随机密码与设备私钥；预置已确认的合成设备公钥，不向 example.com 发邮件。Apple / Android 正式 client（客户端）授权接口均 200；合成账号实际通过登录、resume（授权恢复）、PKCE（授权码校验）和 DPoP（设备密钥持有证明）令牌交换 |
+| `/personal/v1/cloud/config` | 按 CLIENT_API 7.7 由隔离宿主提供，200且 issuer 正确；这个接口不是 cloud 服务的路由 |
+| 邮件 | 仅 `delivered@resend.dev`，注册请求 200；服务自身日志确认一次 `mail.accepted` / `transport=resend`。这是 Resend 接受，不能声称已读到验证码或完成邮件注册 |
+| 宿主 staging DNS-01 | 本机 w5 工作树中的真实个人访问服务、系统临时目录、随机回环端口及官方 frpc；认领 `h-3fd96590f27f1f037511c856f2061c70.hosts.weftmate.com`。首次 present（写入挑战）返回 `DNS_PROVIDER_ERROR`，没有取得/保存 RecordId（记录标识），证书未签发 |
+| DNS 故障定位边界 | `aliyun` provider（域名解析适配器）、`weftmate.com` zone（域名区）匹配，两项 AccessKey（访问密钥）配置各有一项；未输出任何值。现有适配器将 API/网络拒绝统一为 `DNS_PROVIDER_ERROR`，因此无法从此响应确认具体 RAM 策略或 API 拒绝原因；没有把推测写成已确认的权限问题 |
+| 正式宿主证书 | staging 未通过，未发起正式签发；普通浏览器宿主 HTTPS 与正式内容证书验证未完成 |
+| 临时资源清理 | 宿主已解绑/关闭、运维合成账号已通过账号删除接口清除、本机临时目录已移除；云 `relay_dns_records` 始终为空；两台权威 NS（域名服务器）均确认挑战 TXT 不存在。回滚还移除了本次 pending（待验证）的 Resend 测试账号 |
+| 既有服务 / 最终回滚 | 新版本和回滚后各比较 16 个 HTTP/HTTPS 入口，网站、证书及其他服务差异均为零；只排除本次允许重启的 WeftMate 六个内部端口的进程 ID 变化。最终旧 release/schema 4 的公开健康、中继域名/CA、数据库完整性、原有三个账号数量及备份内所有配置文件逐字节一致性均通过；三个服务 active（运行中） |
+
+OIDC 登记只改过 `CLOUD_OIDC_CLIENTS`，JSON 整体使用 systemd 要求的单引号，尝试期间没有部署测试 client：
+
+| client_id | application_type | 文档规定的 redirect_uri（回调地址） | 最终状态 |
+|---|---|---|---|
+| `weftmate-apple` | `native` | `com.weftmate.apple:/oauth/callback` | 尝试期间登记并验证；完整回滚恢复原 `[]` |
+| `weftmate-android` | `native` | `com.memoweft.weftmate:/oauth` | 尝试期间登记并验证；完整回滚恢复原 `[]` |
+| `weftmate-web`（网页与桌面默认复用） | `web` | 实际宿主 `<origin>/personal/v1/ui/`，逐个精确登记 | 未登记：服务器只有一个已撤销的历史测试中继，没有活跃的正式宿主 origin；没有添加通配符、虚构地址或保留临时宿主回调 |
+
+LG-1a 桌面支持 `WEFTMATE_CLOUD_DESKTOP_CLIENT_ID` / `WEFTMATE_CLOUD_DESKTOP_REDIRECT_URI` 配置固定程序回调，当前仓库没有规定独立桌面默认回调；默认仍使用宿主的 `weftmate-web` 与 `<origin>/personal/v1/ui/`。本包按指示没有升级或读取本人日用 Windows 宿主，因此不能从日用配置获取实际地址，也没有自创 custom scheme（自定义协议）或登记开发回环地址。
+
+第一轮留下的后续项为服务商安全错误码、重新备份/部署、staging/正式签发及客户端登记；第二轮处理结果如下。私有结果位于 `Runtime/Orchestrator/dep-1.result.md`；长时间稳定性、本人日用宿主升级及五端真机验收未做。
+
+## 2026-10-09 升级记录（DEP-1 第二轮：生产升级及 DNS-01 验收成功）
+
+当前生产 release（发布版本）为 `dfe56ec2302df89ebc9f4c4cf27b8a6ef42477e7`，目录 `/opt/weftmate-cloud/releases/dfe56ec2302df89ebc9f4c4cf27b8a6ef42477e7`。这个提交包含安全 AliDNS 运维日志，部署前 PR（拉取请求）#104 六项 CI（持续集成）全部 SUCCESS（成功）。原 release 为 `46b4beccd91827364fc6ff837736bd51f93862f8`；schema（数据库结构版本）4→5→6 成功，独立锁文件安装 40 个生产依赖，Node 24.21.0 / frp 0.71.0 沿用。
+
+本人已授权第二轮部署。新的自动回滚条件只包含核心失败：服务启动、迁移、`/healthz`、OIDC（开放身份连接协议）discovery（发现文档）/JWKS（签名公钥集合）、账号登录链路及其他网站/服务。DNS-01 失败单独报告并保留新版本，不再触发整体恢复。**本轮核心和证书都通过，没有实际回滚。**
+
+新备份 `/root/weftmate-deploy/dep-1-backup-20261009T012948Z` 为 0700、root（管理员）所有。备份范围同第一轮：停 cloud/frps 后完整 StateDirectory（状态目录）、nginx 全部配置、frps、cloud.env、服务单元、current 链接、旧 release 路径及日志配置原不存在标记。实际 dry-run（试运行）通过全部 SHA256（安全散列）、完整数据解包、SQLite（嵌入式数据库）`integrity_check=ok` 与 `nginx -t`。旧版本及备份继续保留。
+
+```sh
+backup=/root/weftmate-deploy/dep-1-backup-20261009T012948Z
+/root/weftmate-deploy/rollback-upgrade.sh "$backup" --dry-run
+# 只在已授权的核心升级故障场景使用；恢复会撤回快照之后的云数据。
+/root/weftmate-deploy/rollback-upgrade.sh "$backup"
+```
+
+| 验证项 | 第二轮结果 |
+|---|---|
+| 服务 / 数据 | cloud、frps、nginx 均 active（运行中）；schema 6、迁移序列 1–6、数据库完整性通过；原有三个账号及 identity-keys 与新备份一致 |
+| 公开身份 / 中继 | `/healthz` 200/schema 6；OIDC discovery 200且 issuer 正确；JWKS 200、RSA 公钥且无私钥；API/relay 443 标准 CA（证书机构）与域名验证通过，relay TLS（传输层安全协议）1.3 |
+| 正式客户端 | `weftmate-apple` → `com.weftmate.apple:/oauth/callback`；`weftmate-android` → `com.memoweft.weftmate:/oauth`。两者均为 native（原生）公开客户端；各自实测 authorization（授权）、login（登录）、resume（授权恢复）、PKCE（授权码校验）/DPoP（设备密钥持有证明）令牌交换 200，`token_type=DPoP` |
+| 宿主 / 邮件 | 隔离宿主 `/personal/v1/cloud/config` 200、issuer 正确；邮件只发 `delivered@resend.dev`，请求 200且本服务日志确认 1 次 Resend 接受；未读取验证码或声称完成邮件注册 |
+| DNS-01 staging | 隔离临时宿主 `host-fb54b40a-1158-4e18-b929-a2b56ed92449`，域名 `h-3991a665d31bc900c76f13a9f6da35fa.hosts.weftmate.com`；Let's Encrypt staging 签发成功，证书到期 `2027-01-07T00:40:46Z`，随后中继 online（在线） |
+| DNS-01 正式 | staging 通过后只正式签发一次；Let's Encrypt YE1 证书到期 `2027-01-07T00:41:15Z`，中继 online、`certificateErrorCode=null`。真实公网内容 443 标准 CA/域名及 `/cloud/config` 200 通过；宿主证书管理器/TLS 适配器检查原内容 SPKI（公钥指纹）与域名匹配 |
+| TXT / RecordId | `_acme-challenge.<该临时域>`：staging `2108371667696581632`，正式 `2108371781479740416`。每次从空表→该域的一条持久化 RecordId（记录标识）→空表；present（写入挑战）等待所有权威 TXT 可见、CA 验证成功；完成后两台权威 NS（域名服务器）均无 TXT，数据库无残留 |
+| AliDNS 错误码 | 本轮 `dns.provider_failed` 事件 0，无阿里云拒绝码或 RequestId（请求标识）可报告；本轮无需本人修正 RAM（阿里云访问控制）策略、账号 ID 或 AccessKey。上一轮泛化错误的原因仍未被证实，没有把这次成功反推为某种已修复错误 |
+| 清理 | 两次隔离验收的合成账号均通过正式注销接口删除；首次请求的 Resend pending（待验证）注册按本轮 challenge（挑战）限定清除；临时宿主解绑、撤销、关闭，临时目录与私钥移除，无正式或测试临时 OIDC 回调残留 |
+| 其他服务 / 配置 | 最终 16 个既有 HTTP（网页传输协议）/HTTPS（加密网页连接）入口、证书及其他服务差异 0；只排除本轮重启的六个 WeftMate 内部端口进程 ID。nginx/frps 配置逐字节未变，cloud.env 只有 `CLOUD_OIDC_CLIENTS` 改动，cloud 服务单元及本服务日志命名空间按新版本安装 |
+
+首次网站比较中 `power.weftmate.com` 的单次 HEAD（只取响应头）请求出现 curl exit 6（DNS 解析失败），同轮 GET（读取请求）正常；立即完整复查和最终比较均零差异。首次验收脚本过早读取尚未分配的中继地址而中止，临时资源清理后修正读取时机、重新完整验收成功；没有重发测试邮件或增加正式签发次数。
+
+本地 DNS 单测 6/6 通过，覆盖拒绝码/RequestId 留存、凭据与签名回显过滤、网络/无效响应和既有 RecordId 幂等清理。额外本地入口测试 1/2：Windows 已记录的目录同步 `EPERM` 导致真实启动用例失败；部署前 Linux CI 全绿，生产真实入口启动与线上核心验证通过。最终文档提交的完整 CI 见 [PR #104 checks（检查项）](https://github.com/memoweft/weftmate/pull/104/checks)。
+
+服务器私有证据：`baseline-20261009T012959Z`、`round2-upgraded-recheck-20261009T013756Z`、`round2-final-20261009T014115Z`（均位于 `/root/weftmate-deploy/`）及 `dep-1-dns-evidence.json`。本地无秘密报告在 `.local/dep-1/smoke-core-round2.json` 与 `smoke-result.json`，不进 Git；最终结果覆盖写 `Runtime/Orchestrator/dep-1.result.md`。
+
+未做：本人日用宿主升级、实际网页/桌面正式宿主回调、五端真机与长时间稳定性。当前只登记文档指定的 Apple/Android，未登记虚构/通配符/临时宿主回调。临时证书与私钥随隔离目录清理，成功验收不等于已给本人日用电脑配置远程内容证书。
