@@ -70,7 +70,7 @@ function selectSharedSession(sessionId){if(!state.sharedSessions.some(item=>item
   const listed=state.sharedSessions.find(item=>item.sessionId===sessionId);
   const linked=state.conversations.find(item=>item.id===listed?.conversationId||item.binding?.sessionId===sessionId||
     state.handoffViews.get(item.id)?.binding?.sessionId===sessionId);
-  if(linked){selectConversation(linked.id);return}
+  if(linked&&!listed?.projectId){selectConversation(linked.id);return}
   closeImagePreview({restoreFocus:false});invalidateLiveProgress();stopSharedPoll();clearTimeout(state.linkedPollTimer);state.linkedPollTimer=null;state.sharedGeneration++;state.chatSource='host';state.restorePending=false;state.sharedSessionId=sessionId;state.scrollPinned=true;
   try{localStorage.setItem(chatSourceKey(),JSON.stringify({source:'host',sessionId}))}catch{}status('');closeToast();
   state.sharedEvents=[];state.sharedNextSeq=-1;state.sharedHasOlder=false;state.sharedNextBeforeSeq=null;state.sharedOlderLoading=false;state.sharedLoading=false;state.sharedRunning=!!selectedSharedSession()?.running;
@@ -403,7 +403,8 @@ function mobileSessionMenu(session,confirming=false){
 }
 function renderConversationList(){const target=$('conversation-list'),previousScroll=target.scrollTop;clear(target);const filter=$('conversation-search').value.trim().toLocaleLowerCase();
   target.setAttribute('aria-label','最近对话');
-  const phone=state.conversations.filter(v=>typeof v?.id==='string'&&typeof v?.title==='string')
+  const phone=state.conversations.filter(v=>typeof v?.id==='string'&&typeof v?.title==='string'&&
+      !state.sharedSessions.find(session=>session.sessionId===(state.handoffViews.get(v.id)?.binding?.sessionId||v.binding?.sessionId))?.projectId)
     .map(item=>({source:'phone',id:item.id,title:item.title,createdAt:item.updatedAt||item.createdAt,
       model:item.modelName||item.modelDisplayName||null,record:item}));
   const linkedIds=new Set(phone.map(item=>state.handoffViews.get(item.id)?.binding?.sessionId||
@@ -454,6 +455,7 @@ function pendingApprovalFor(sessionId){if(toolApprovals.owner!==state.owner||too
 function renderHome(){const target=$('home-conversations'),top=target.scrollTop;clear(target);
   const filter=$('home-search').value.trim().toLocaleLowerCase(),entries=[],linked=new Set();
   for(const item of state.conversations){const sessionId=state.handoffViews.get(item.id)?.binding?.sessionId||item.binding?.sessionId;
+    if(state.sharedSessions.find(session=>session.sessionId===sessionId)?.projectId)continue;
     if(sessionId)linked.add(sessionId);entries.push({id:item.id,source:'phone',sessionId,title:item.title||'新对话',at:item.updatedAt||item.createdAt,
       running:!!item.running||state.busy&&state.conversationId===item.id||!!state.sharedSessions.find(s=>s.sessionId===sessionId)?.running})}
   for(const item of state.sharedSessions){if(item.archived===true||linked.has(item.sessionId)||state.conversations.some(c=>c.id===item.conversationId))continue;

@@ -224,7 +224,8 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         archivedRedraw?.();
         const list = ui.byId('session-list');
         list.replaceChildren();
-        const phone = core.phoneConversations();
+        const phone = core.phoneConversations().filter(record => !core.state.sessions.find(session =>
+            session.sessionId === core.phoneBinding(record.id)?.sessionId)?.projectId);
         const linkedSessionIds = new Set(phone.map((record) => core.phoneBinding(record.id)?.sessionId).filter(Boolean));
 
         ui.byId('sessions-status').textContent = '';

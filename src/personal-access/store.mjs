@@ -237,7 +237,7 @@ export function validateSingleStore(store) {
           store.conversationBindings?.[session.conversationId]?.sessionId !== sessionId ||
           store.conversationBindings[session.conversationId].status !== 'active' ||
           store.conversationBindings[session.conversationId].modelProfileId !== session.modelProfileId ||
-          session.projectId !== undefined || session.workspaceKind !== undefined)) ||
+          session.workspaceKind !== undefined)) ||
         (session.workspaceKind !== undefined && (session.workspaceKind !== 'browser' ||
           session.projectId !== undefined || session.origin !== 'personal-remote' ||
           !MODEL_PROFILE_ID.test(session.modelProfileId ?? '')))) {
