@@ -15,7 +15,17 @@ async function start() {
   candidate = await startTimelineCandidate({ historyCount: 0, interactive: true, riskApproval: true, baseTime: Date.now() - 80000 })
   application = await _electron.launch({ executablePath, args: ['tests/integration/desktop-ui-1.cjs', candidate.origin + '/personal/v1/ui/'], cwd: root, env })
   const page = await application.firstWindow(); page.setDefaultTimeout(25000)
-  await page.addInitScript(() => { Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async text => { globalThis.syntheticClipboardText = text; } } }); });
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async text => { globalThis.syntheticClipboardText = text; } } });
+    let api;
+    Object.defineProperty(globalThis, 'WeftUiCore', { configurable: true, get: () => api, set(value) {
+      api = value; const create = value.create;
+      value.create = (...args) => { const core = create(...args); const submit = core.submitQuestion; globalThis.syntheticQuestionCalls = [];
+        core.submitQuestion = (...values) => { const [context, row] = values, entry = core.conversationQuestions.entries.get(row.questionRpcId), source = core.conversationTasks.entries.get(row.taskId);
+          globalThis.syntheticQuestionCalls.push({current:core.approvalContextCurrent(context),authoritative:entry?.authoritative,notice:entry?.notice,same:entry&&core.sameQuestion(entry.row,row),sourceFresh:!!core.approvalSource(row,true),source:source?.payload?.source,sourceNotice:source?.notice,row:core.questionIdentity(row),busy:core.conversationQuestions.operations.has(row.questionRpcId)});
+          return submit(...values); }; return core; };
+    }});
+  });
   page.on('pageerror', error => errors.push(error.message))
   await localUiSession(page, candidate.credentials)
   await page.getByRole('button', { name: '停止回复', exact: true }).waitFor()
@@ -142,5 +152,5 @@ try {
   }
   assert.deepEqual(errors, [])
   console.log('UI-1 Chromium interactions passed (semantic names/roles, isolated Electron).')
-} catch (error) { console.error('Synthetic operations:', candidate?.operations); if (application) console.error((await (await application.firstWindow()).locator('body').innerText()).slice(-1200)); throw error; } finally { await close() }
+} catch (error) { console.error('Synthetic operations:', candidate?.operations); if (application) { const page = await application.firstWindow(); console.error((await page.locator('body').innerText()).slice(-1200)); console.error('Synthetic question guards:', JSON.stringify(await page.evaluate(() => globalThis.syntheticQuestionCalls))); } throw error; } finally { await close() }
 
