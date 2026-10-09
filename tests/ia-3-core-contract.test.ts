@@ -14,6 +14,21 @@ function setup(read: (path:string,options:any)=>any) {
   Object.assign(core.state,{ownerId:'owner',account:{ownerId:'owner'},device:{id:'device'},hostId:'host',csrfToken:'synthetic',online:true,currentView:'assistant',mainChat:main,selectedChatId:main.chatId,modelProfileId:'local',models:[{id:'local'}],capabilities:{chat:{available:true}},personalCapabilities:{chats:1,chatTimeline:1,chatSearch:1,chatSend:1}});
   return {core,requests,draft,main};
 }
+
+test('logical sidebar preserves the native snapshot clock so newer side-chat turn events enable stop immediately',async()=>{
+  let snapshot='2026-10-10T00:00:00.000Z';
+  const f=setup(path=>path.includes('/chats/main')?{chat:{chatId:'chat-main',activeSessionId:null}}
+    :path.includes('/sessions?')?{snapshotAt:snapshot,sessions:[{sessionId:'side-session',running:false,sendAvailable:true}]}
+    :path.includes('/chats?')?{items:[{chatId:'side-chat',kind:'side',activeSessionId:'side-session',running:false}],hasMore:false}
+    :path.includes('/projects')?{projects:[],canManage:false}:{});
+  Object.assign(f.core.state,{selectedChatId:'side-chat',selectedSessionId:'side-session',activeChatSource:'desktop',turnStatus:'running'});
+  f.core.state.historyEvents.set(1,{seq:1,type:'turn.started',at:'2026-10-10T00:00:01.000Z'});
+  await f.core.refreshSessions();
+  assert.equal(f.core.conversationRunning('side-session'),true,'native start is newer than the idle sidebar snapshot');
+  assert.equal(f.core.composerState('').cancelHidden,false);
+  snapshot='2026-10-10T00:00:02.000Z';await f.core.refreshSessions();
+  assert.equal(f.core.conversationRunning('side-session'),false,'newer idle snapshot still supersedes an old start event');
+});
 test('undispatched main send keeps its original request without a native session and only queries on retry', async()=>{
   let command:any;
   const f=setup((path,options)=>{
