@@ -1,0 +1,68 @@
+{
+  "reviewMenuCells": [
+    {
+      "platform": "iphone",
+      "scene": "session-menu",
+      "theme": "light",
+      "commit": "7fa9447a1fb5427b9cfa29f16100cccba18dc647",
+      "generatedAt": "2026-10-09T01:29:27.599Z",
+      "synthetic": true,
+      "source": "apps/apple/Tests/Evidence/A7/review-iphone-session-menu-light-20261009T012927Z.png"
+    },
+    {
+      "platform": "iphone",
+      "scene": "session-menu",
+      "theme": "dark",
+      "commit": "7fa9447a1fb5427b9cfa29f16100cccba18dc647",
+      "generatedAt": "2026-10-09T01:34:15.884Z",
+      "synthetic": true,
+      "source": "apps/apple/Tests/Evidence/A7/review-iphone-session-menu-dark-20261009T013415Z.png"
+    },
+    {
+      "platform": "mac",
+      "scene": "session-menu",
+      "theme": "light",
+      "commit": "1b4ad67ddec16913a186c9119185217f9bbc1b93",
+      "generatedAt": "2026-10-09T01:40:17.728Z",
+      "synthetic": true,
+      "source": "apps/apple/Tests/Evidence/A7/review-mac-session-menu-light-20261009T014017Z.png"
+    },
+    {
+      "platform": "mac",
+      "scene": "session-menu",
+      "theme": "dark",
+      "commit": "1b4ad67ddec16913a186c9119185217f9bbc1b93",
+      "generatedAt": "2026-10-09T01:40:26.720Z",
+      "synthetic": true,
+      "source": "apps/apple/Tests/Evidence/A7/review-mac-session-menu-dark-20261009T014026Z.png"
+    }
+  ],
+  "checks": [
+    {
+      "width": 1600,
+      "theme": "light",
+      "noOverflow": true,
+      "menuImagesDecoded": true
+    },
+    {
+      "width": 1600,
+      "theme": "dark",
+      "noOverflow": true,
+      "menuImagesDecoded": true
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "noOverflow": true,
+      "menuImagesDecoded": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "noOverflow": true,
+      "menuImagesDecoded": true
+    }
+  ],
+  "all16NativePngsDecoded": true,
+  "sourceProvenancePreserved": true
+}
