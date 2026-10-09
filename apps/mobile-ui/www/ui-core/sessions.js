@@ -1,5 +1,26 @@
 /* Shared sessions state, data and actions. Presentation is supplied through named effects. */
 globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
+    const expansionKey = projectId => `weftmate-project-expanded:${core.state.ownerId}:${projectId}`;
+    const expandedProjects = new Map();
+    function projectExpanded(projectId) {
+        if (expandedProjects.has(expansionKey(projectId))) return expandedProjects.get(expansionKey(projectId));
+        try { return environment.storage.getItem(expansionKey(projectId)) === 'true'; } catch { return false; }
+    }
+    function setProjectExpanded(projectId, expanded) {
+        expandedProjects.set(expansionKey(projectId), expanded);
+        try { environment.storage.setItem(expansionKey(projectId), String(expanded)); } catch { /* Device storage may be unavailable. */ }
+    }
+    function projectConversations(projectId, sessions = core.sessionList()) {
+        return sessions.filter(row => !row.archived && row.projectId === projectId).sort((a, b) =>
+            (Date.parse(b.updatedAt || b.lastMessageAt || b.createdAt || b.attachedAt) || 0) - (Date.parse(a.updatedAt || a.lastMessageAt || a.createdAt || a.attachedAt) || 0));
+    }
+    function sessionHoverDetails(session) {
+        const project = core.state.projects?.find(row => row.projectId === session.projectId);
+        const group = core.state.sessionGroups?.find(row => row.id === session.groupId);
+        const device = core.state.cachedDevices?.find(row => row.id === (session.hostId || core.state.hostId));
+        return { title: session.title || '新对话', location: [project?.name, group?.name].filter(Boolean).join(' / ') || '未分组',
+            activity: session.updatedAt || session.lastMessageAt || session.createdAt || session.attachedAt, device: device?.name || session.deviceName || '当前连接的电脑' };
+    }
     async function refreshSessions() {
         const identity = core.state.identityGeneration;
         const payload = await core.accessApi('/sessions?archived=all');
@@ -144,7 +165,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         effects.renderSessions(); effects.updateAvailability();
         return result;
     }
-    return { refreshSessionProjects, saveProject, removeProject, createProjectConversation, refreshSessions, sessionList, updateSession, sessionGroupAction, forkSession, archiveSession, previewSessionForget, deleteSession, sessionLifecycleMessage };
+    return { projectExpanded, setProjectExpanded, projectConversations, sessionHoverDetails, refreshSessionProjects, saveProject, removeProject, createProjectConversation, refreshSessions, sessionList, updateSession, sessionGroupAction, forkSession, archiveSession, previewSessionForget, deleteSession, sessionLifecycleMessage };
 };
 globalThis.WeftUiCore.sessionMenuItems = session => [
     {id:'pin',label:session.pinned?'取消置顶':'置顶',key:'P'},

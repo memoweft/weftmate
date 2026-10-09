@@ -1,0 +1,65 @@
+{
+  "syntheticOnly": true,
+  "realElectron": true,
+  "androidUiBundle": true,
+  "androidNativeShell": false,
+  "unlimitedRequests": true,
+  "logoutConfirmed": true,
+  "checks": [
+    {
+      "theme": "light",
+      "hoverButtons": true,
+      "hoverCard": true,
+      "keyboardPin": true,
+      "archiveUndo": true,
+      "projectPersistence": true,
+      "independentProjects": true,
+      "accountBudget": true,
+      "help": true,
+      "settingsShortcut": true,
+      "logoutCancel": true
+    },
+    {
+      "theme": "dark",
+      "hoverButtons": true,
+      "hoverCard": true,
+      "keyboardPin": true,
+      "archiveUndo": true,
+      "projectPersistence": true,
+      "independentProjects": true,
+      "accountBudget": true,
+      "help": true,
+      "settingsShortcut": true,
+      "logoutCancel": true
+    },
+    {
+      "surface": "mobile-web",
+      "theme": "light",
+      "projectLimit": true,
+      "usageStrip": true,
+      "touchNoHover": true
+    },
+    {
+      "surface": "mobile-web",
+      "theme": "dark",
+      "projectLimit": true,
+      "usageStrip": true,
+      "touchNoHover": true
+    },
+    {
+      "surface": "android-ui",
+      "theme": "light",
+      "projectLimit": true,
+      "usageStrip": true,
+      "touchNoHover": true
+    },
+    {
+      "surface": "android-ui",
+      "theme": "dark",
+      "projectLimit": true,
+      "usageStrip": true,
+      "touchNoHover": true
+    }
+  ],
+  "errors": []
+}

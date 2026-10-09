@@ -4,6 +4,22 @@ globalThis.WeftUiCore.factories.usage = (core, effects) => {
     const current = token => { const now = core.accountToken(); return ['generation', 'ownerId', 'deviceId', 'csrf'].every(key => now[key] === token[key]); };
     const money = value => `¥${Number(value).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 8 })}`;
     const timeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
+    async function loadUsageStrip() {
+        core.syncMobileIdentity?.();
+        const token = core.accountToken();
+        const settings = await core.accessApi('/settings/usage');
+        if (!current(token)) return null;
+        // The amount and remaining percentage must use the same account budget month.
+        const summary = await core.accessApi(`/usage?${new URLSearchParams({ timeZone: settings.timeZone || timeZone() })}`);
+        return current(token) ? usageStripText(summary) : null;
+    }
+    function usageStripText(summary) {
+        const total = summary.total, limit = summary.budget?.effectiveLimit;
+        const detail = typeof limit === 'number'
+            ? `上限剩余 ${limit > 0 ? Math.max(0, Math.min(100, Math.round((1 - total.cost / limit) * 100))) : 0}%`
+            : `${total.requests} 次请求`;
+        return `本月 ${money(total.cost)} · ${detail}${total.unpricedRequests ? '（部分请求未计价）' : ''}`;
+    }
     const budgetText = budget => budget.state === 'blocked'
         ? '本月用量已达到上限，云端模型请求已暂停。请提高本月上限或切换本地模型。'
         : budget.state === 'warning' ? '本月用量已达到上限的 80%，请留意剩余额度。' : '';
@@ -47,5 +63,5 @@ globalThis.WeftUiCore.factories.usage = (core, effects) => {
             warned = key;
         } catch { /* Existing host connectivity UI owns read failures. */ }
     }
-    return { loadUsage, saveUsageSettings, usageMoney: money, usageBudgetText: budgetText, refreshUsageBudget };
+    return { loadUsageStrip, usageStripText, loadUsage, saveUsageSettings, usageMoney: money, usageBudgetText: budgetText, refreshUsageBudget };
 };

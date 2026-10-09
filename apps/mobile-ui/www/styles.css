@@ -509,5 +509,8 @@ html, body { overflow: hidden; }
 .question-bar-detail p { white-space: pre-wrap; overflow-wrap: anywhere; }
 .question-bar summary { cursor: pointer; }
 .question-record { color: var(--ink-muted, var(--muted)); font-size: var(--wm-font-size-13); overflow-wrap: anywhere; }
+.settings-usage-strip { display: block; width: 100%; padding: var(--wm-space-16); border: 0; border-bottom: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; text-align: left; overflow-wrap: anywhere; }
+.project-expand { margin-left: var(--wm-space-28); padding: var(--wm-space-12); color: var(--muted); border: 0; background: transparent; font: inherit; }
+.toast-undo { margin-left: var(--wm-space-12); padding: var(--wm-space-6); border: 0; background: transparent; color: inherit; font: inherit; text-decoration: underline; }
 
 @media (max-width: 600px) { .settings-select-menu { inset: auto 0 0 !important; width: 100% !important; max-height: 55vh !important; border-radius: var(--wm-radius-12) var(--wm-radius-12) 0 0; padding-bottom: max(var(--wm-space-12), env(safe-area-inset-bottom)); } }

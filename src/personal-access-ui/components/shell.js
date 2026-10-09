@@ -146,13 +146,19 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         element.textContent = message;
         element.hidden = !message;
     }
-    function toast(message) {
+    function toast(message, undo) {
         const element = ui.byId('toast');
         element.textContent = message;
         element.hidden = false;
+        if (undo) {
+            const button = ui.element('button', 'toast-undo', '撤销归档'); button.type = 'button';
+            button.onclick = async () => { button.disabled = true; try { await undo(); element.hidden = true; }
+                catch (error) { ui.toast(core.failureMessage(error)); } };
+            element.append(button);
+        }
         if (core.state.toastTimer)
             clearTimeout(core.state.toastTimer);
-        core.state.toastTimer = setTimeout(() => { element.hidden = true; element.textContent = ''; }, 5000);
+        core.state.toastTimer = setTimeout(() => { element.hidden = true; element.textContent = ''; }, undo ? 10000 : 5000);
     }
     function clearPasswords(...ids) {
         for (const id of ids) {
@@ -258,6 +264,9 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         ui.byId('rail-avatar-image').hidden = true;
         ui.byId('rail-avatar-initial').textContent = 'W';
         ui.byId('rail-avatar-initial').hidden = false;
+        ui.byId('account-menu-name').textContent = '';
+        ui.byId('account-menu-email').textContent = '';
+        ui.byId('account-menu-usage').textContent = '';
         ui.byId('session-search').value = '';
         ui.byId('device-list').replaceChildren();
         if (ui.byId('password-dialog').open)
@@ -284,6 +293,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
     }
     function closeAccountMenu() {
         ui.byId('account-menu').hidden = true;
+        ui.byId('account-menu-trigger').setAttribute('aria-expanded', 'false');
     }
     function stopCloudPairing() {
         ui.cloudUi?.stopPairing();
@@ -304,6 +314,42 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
     }
     function mountShell() {
         ui.byId('account-menu-trigger').setAttribute('aria-label', '账户菜单');
+        const menu = ui.byId('account-menu');
+        menu.setAttribute('aria-label', '账户选项'); menu.setAttribute('role', 'region');
+        const identity = ui.element('div', 'account-menu-identity');
+        const name = ui.element('strong'), email = ui.element('span', 'muted'); name.id = 'account-menu-name'; email.id = 'account-menu-email'; identity.append(name, email);
+        const usage = ui.element('p', 'account-usage-strip', '正在读取本月用量…'); usage.setAttribute('role', 'status');
+        usage.id = 'account-menu-usage';
+        menu.prepend(identity, usage);
+        ui.byId('rail-account').append(ui.element('kbd', 'account-menu-key', 'Ctrl+,'));
+        ui.byId('rail-account').setAttribute('aria-label', '设置');
+        const add = (label, icon, run) => { const button = ui.element('button', 'rail-link'); button.type = 'button';
+            button.append(WeftIcons.create(icon, 16), ui.element('span', '', label));
+            button.onclick = () => { closeAccountMenu(); run(); }; menu.append(button); return button; };
+        add('用量详情', 'chart', () => ui.openSettings('usage'));
+        add('帮助与反馈', 'info', () => ui.openSettings('about'));
+        add('退出登录', 'logout', () => {
+            const token = core.accountToken(), dialog = ui.element('dialog', 'dialog confirm-dialog'); dialog.setAttribute('aria-label', '退出登录');
+            const body = ui.element('div', 'dialog-body'); body.append(ui.element('h2', '', '退出当前设备？'), ui.element('p', '', '退出后需要重新登录。电脑上的对话与文件会保留。'));
+            const cancel = ui.element('button', 'button secondary', '取消'); cancel.onclick = () => dialog.close();
+            const confirm = ui.element('button', 'button primary', '确认退出'); confirm.onclick = () => { dialog.close(); if (core.accountIdentityCurrent(token)) ui.byId('logout-button').click(); };
+            const footer = ui.element('div', 'dialog-footer'); footer.append(cancel, confirm); dialog.append(body, footer);
+            dialog.onclose = () => { dialog.remove(); ui.byId('account-menu-trigger').focus(); }; document.body.append(dialog); dialog.showModal(); cancel.focus();
+        });
+        ui.byId('account-menu-trigger').addEventListener('click', async () => {
+            name.textContent = core.state.account?.displayName || core.state.account?.username || '我的账户';
+            email.textContent = (core.state.cloudAuth?.mode === 'authenticated' ? core.state.cloudAuth.email : '') || core.state.account?.email || `本机账户：${core.state.account?.username || ''}`;
+            usage.textContent = '正在读取本月用量…';
+            const token = core.accountToken();
+            try { const text = await core.loadUsageStrip(); if (text && core.accountIdentityCurrent(token) && !menu.hidden) usage.textContent = text; }
+            catch { if (core.accountIdentityCurrent(token) && !menu.hidden) usage.textContent = '本月用量暂时无法读取，请在用量详情重试。'; }
+        });
+        menu.addEventListener('keydown', event => {
+            const buttons = [...menu.querySelectorAll('button')], index = buttons.indexOf(document.activeElement);
+            if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+                event.preventDefault(); buttons[event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length]?.focus();
+            }
+        });
         core.state.setupGrant = ui.takeSetupGrant();
         ui.byId('account-back').addEventListener('click', () => { ui.resetProfileDraft(); core.state.deviceEditing = null; void core.enterAssistant(); });
         ui.byId('rail-account').addEventListener('click', core.openAccount);

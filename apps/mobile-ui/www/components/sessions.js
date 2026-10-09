@@ -7,7 +7,7 @@ function renderMobileProjects(target, filter = '') {
   const projects = (uiCore.state.projects || []).filter(project => !project.revoked);
   if (!projects.length) section.append(el('p', 'muted', uiCore.state.projectsError || '在电脑上添加项目后，可在这里开始对话。'));
   for (const project of projects) {
-    const conversations = state.sharedSessions.filter(session => !session.archived && session.projectId === project.projectId);
+    const conversations = uiCore.projectConversations(project.projectId, state.sharedSessions);
     if (filter && !project.name.toLocaleLowerCase().includes(filter) && !conversations.some(session => (session.title || '新对话').toLocaleLowerCase().includes(filter))) continue;
     const row = el('div', 'mobile-project-heading');
     const toggle = el('button', 'mobile-project-toggle'); toggle.type = 'button'; toggle.setAttribute('aria-expanded', String(!collapsedMobileProjects.has(project.projectId)));
@@ -15,13 +15,20 @@ function renderMobileProjects(target, filter = '') {
     toggle.onclick = () => { collapsedMobileProjects.has(project.projectId) ? collapsedMobileProjects.delete(project.projectId) : collapsedMobileProjects.add(project.projectId); renderConversationList(); };
     const create = el('button', 'session-more'); create.type = 'button'; create.setAttribute('aria-label', `在项目 ${project.name} 新建对话`); const plus = el('img'); plus.src = 'icons/plus.svg'; plus.alt = ''; create.append(plus); create.onclick = () => mobileNewProjectConversation(project); row.append(toggle, create); section.append(row);
     if (!collapsedMobileProjects.has(project.projectId) || filter) {
-      for (const session of conversations) {
+      for (const session of filter || uiCore.projectExpanded(project.projectId) ? conversations : conversations.slice(0, 5)) {
         if (filter && !project.name.toLocaleLowerCase().includes(filter) && !(session.title || '新对话').toLocaleLowerCase().includes(filter)) continue;
         const row = el('div', 'session-row mobile-project-conversation');
         const button = el('button', state.sharedSessionId === session.sessionId ? 'active' : '', session.title || '新对话'); button.type = 'button'; let longPressed = false; button.onclick = () => { if (longPressed) { longPressed = false; return; } selectSharedSession(session.sessionId); };
         const more = el('button', 'session-more'); more.type = 'button'; more.setAttribute('aria-label', `更多操作 ${session.title || '新对话'}`); const icon = el('img'); icon.src = 'icons/more.svg'; icon.alt = ''; more.append(icon); more.onclick = () => mobileSessionMenu(session);
         let timer; button.onpointerdown = () => { longPressed = false; timer = setTimeout(() => { timer = null; longPressed = true; mobileSessionMenu(session); }, 500); }; button.onpointerup = button.onpointercancel = () => clearTimeout(timer);
         row.append(button, more); section.append(row);
+      }
+      if (!filter && conversations.length > 5) {
+        const expanded = uiCore.projectExpanded(project.projectId), more = el('button', 'project-expand', expanded ? '收起对话' : `展开显示（${conversations.length - 5}）`);
+        more.type = 'button'; more.setAttribute('aria-expanded', String(expanded)); more.setAttribute('aria-label', `${more.textContent} ${project.name}`);
+        more.dataset.projectExpand = project.projectId;
+        more.onclick = () => { uiCore.setProjectExpanded(project.projectId, !expanded); renderConversationList();
+          [...target.querySelectorAll('.project-expand')].find(button=>button.dataset.projectExpand===project.projectId)?.focus(); }; section.append(more);
       }
       if (!conversations.length) section.append(el('p', 'muted mobile-project-empty', '还没有项目对话，点加号开始。'));
     }
@@ -397,7 +404,7 @@ function mobileSessionMenu(session,confirming=false){
     const group=async()=>{close();mobileSessionGroups(session)};
     const actions={project:()=>{close();void mobileSessionProjects(session);},pin:()=>uiCore.updateSession(session.sessionId,{pinned:!session.pinned}),unread:()=>uiCore.updateSession(session.sessionId,{unread:!session.unread}),
       rename,group,fork:async()=>{const child=await uiCore.forkSession(session.sessionId);if(!child)return;await listSharedSessions();selectSharedSession(child.sessionId)},
-      archive:()=>uiCore.archiveSession(session.sessionId,!session.archived),delete:()=>{close();mobileSessionMenu(session,true)}};
+      archive:async()=>{const token=uiCore.accountToken();const archived=!session.archived;if(await uiCore.archiveSession(session.sessionId,archived)&&archived)toast('对话已归档。',false,async()=>{if(uiCore.accountIdentityCurrent(token)){await uiCore.archiveSession(session.sessionId,false);await listSharedSessions()}})},delete:()=>{close();mobileSessionMenu(session,true)}};
     for(const item of WeftUiCore.sessionMenuItems(session))add(item.label,actions[item.id],item.danger,item.separator);
   }
   const cancel=el('button','secondary','取消');cancel.type='button';cancel.addEventListener('click',close);dialog.append(notice,cancel);

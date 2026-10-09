@@ -202,9 +202,10 @@ function closeToast(){const box=$('toast');clearTimeout(toast.timer);clearTimeou
   if(box.hidden)return;box.classList.add('leaving');toast.hideTimer=setTimeout(()=>{if(box.classList.contains('leaving'))box.hidden=true},
     window.matchMedia('(prefers-reduced-motion: reduce)').matches?0:420)}
 
-function toast(text,issue=false){const box=$('toast');clearTimeout(toast.timer);clearTimeout(toast.hideTimer);
+function toast(text,issue=false,undo){const box=$('toast');clearTimeout(toast.timer);clearTimeout(toast.hideTimer);
   box.textContent=text;box.classList.toggle('error',issue);box.classList.remove('leaving');box.hidden=false;
-  toast.timer=setTimeout(closeToast,issue?5200:3500)}
+  if(undo){const button=el('button','toast-undo','撤销归档');button.type='button';button.onclick=async()=>{button.disabled=true;try{await undo();closeToast()}catch(error){toast(safeError(error),true)}};box.append(button)}
+  toast.timer=setTimeout(closeToast,undo?10000:issue?5200:3500)}
 
 function status(text,issue=false){const line=$('chat-status');line.textContent=issue?'':text;
   line.classList.remove('error');if(issue&&text)toast(text,true)}
