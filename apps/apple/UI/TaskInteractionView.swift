@@ -21,8 +21,7 @@ struct TimelineInteractionCard: View {
                             .accessibilityIdentifier("approvalSummary.\(approval.id)") }
                 } else { unavailableCard }
             } else if let batch = questionBatch {
-                if batch.canAnswer && entry.resolved == nil { questionCard(batch) }
-                else { WeftLabel(model.notices["question:" + batch.id] ?? "已回答", icon: "chat", size: 16).font(AppleTokens.Fonts.caption) }
+                if let summary = model.answeredSummary(batch) { Text(summary).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("answeredQuestion." + batch.id) }
             } else { unavailableCard }
         }
     }
@@ -36,7 +35,7 @@ struct TimelineInteractionCard: View {
     private var unavailableCard: some View {
         VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
             Text(entry.resolved != nil ? "已处理" : entry.event.type.hasPrefix("approval.") ? "需要审批" : "需要补充信息").font(AppleTokens.Fonts.headline)
-            Text(entry.event.data["summary"]?.string ?? "").font(AppleTokens.Fonts.callout)
+            Text(OperationNames.text(entry.event.data["summary"]?.string ?? "")).font(AppleTokens.Fonts.callout)
             if entry.resolved == nil {
                 Text("回应状态尚未核对。" ).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                 if model.hasMoreApprovals && entry.event.type.hasPrefix("approval.") {
@@ -52,7 +51,7 @@ struct TimelineInteractionCard: View {
             WeftLabel("需要审批", icon: "approval").font(AppleTokens.Fonts.subheadline.weight(.semibold)).foregroundStyle(Weave.ink)
             Text(model.readableApprovals[approval.id] ?? approval.readableSummary).font(AppleTokens.Fonts.callout).foregroundStyle(Weave.ink).textSelection(.enabled)
             if let reason = approval.readableRisk { Text(reason).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
-            DisclosureGroup("详情") { Text(model.approvalDetails[approval.id] ?? approval.reason).font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled) }
+            DisclosureGroup("详情") { Text(ToolStepDetail(raw: model.approvalDetails[approval.id] ?? approval.reason).readableText).font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled) }
             if !approval.riskLabels.isEmpty {
                 Text("风险类别：" + approval.riskLabels.joined(separator: "、"))
                     .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.secondary)
@@ -96,107 +95,6 @@ struct TimelineInteractionCard: View {
                 .accessibilityIdentifier("rejectApproval.\(approval.id)")
         }
         .buttonStyle(OutlineActionStyle()).tint(Weave.accent).disabled(!model.canRespond(key))
-    }
-
-    private func questionCard(_ batch: SessionQuestionBatch) -> some View {
-        let key = "question:" + batch.id
-        let planReview = batch.questions.contains { $0.intent?["kind"]?.string == "plan-review" }
-        let editable = batch.canAnswer && !model.hasSaved(key)
-        return VStack(alignment: .leading, spacing: AppleTokens.Space.p14) {
-            WeftLabel(planReview ? "确认执行计划" : "补充信息", icon: "chat")
-                .font(AppleTokens.Fonts.subheadline.weight(.semibold)).foregroundStyle(Weave.ink)
-            if planReview {
-                Text("确认计划后开始执行；危险操作仍会询问。")
-                    .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
-            }
-            ForEach(batch.questions) { question in
-                VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
-                    if let header = question.header, !header.isEmpty {
-                        Text(header).font(AppleTokens.Fonts.caption.weight(.semibold)).foregroundStyle(Weave.muted)
-                    }
-                    Text(question.question).font(AppleTokens.Fonts.callout.weight(.medium)).foregroundStyle(Weave.ink)
-                    if let detail = question.detail, !detail.isEmpty {
-                        Text(detail).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.secondary).textSelection(.enabled)
-                    }
-                    if editable {
-                        questionEditor(question, batch: batch).disabled(!model.isCurrent ||
-                            model.persistenceError != nil || model.busy.contains(key))
-                    } else if let answer = model.savedAnswers(batch)?.first(where: { $0.id == question.id }) {
-                        Text((answer.selected + (answer.custom.map { [$0] } ?? [])).joined(separator: "；"))
-                            .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.secondary).textSelection(.enabled)
-                            .accessibilityIdentifier("submittedQuestionAnswer.\(batch.id).\(question.id)")
-                    }
-                }
-            }
-            if editable {
-                Button("提交回答") {
-                    endInput()
-                    let values = answers(for: batch)
-                    Task { await model.answer(batch, answers: values) }
-                }
-                .buttonStyle(PrimaryActionStyle(fillsWidth: false)).tint(Weave.accent)
-                .disabled(!model.canRespond(key) || !complete(batch))
-                .accessibilityIdentifier("submitQuestion.\(batch.id)")
-            }
-            responseState(key, status: batch.status, observed: model.currentQuestions.contains(batch.id))
-        }
-        .padding(AppleTokens.Space.p14).frame(maxWidth: .infinity, alignment: .leading)
-        .background(Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r14))
-        .overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r14).strokeBorder(Weave.line))
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("questionCard.\(batch.id)")
-    }
-
-    private func questionEditor(_ question: SessionQuestion, batch: SessionQuestionBatch) -> some View {
-        let field = batch.id + ":" + question.id
-        return VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
-            if question.multiSelect == true { Text("可多选，也可补充说明").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
-            ForEach(question.options ?? [], id: \.label) { option in
-                Button {
-                    var selected = choices[field] ?? []
-                    if question.multiSelect == true {
-                        if !selected.insert(option.label).inserted { selected.remove(option.label) }
-                    } else { selected = [option.label]; text[field] = "" }
-                    choices[field] = selected; endInput()
-                } label: {
-                    HStack(alignment: .top, spacing: AppleTokens.Space.p10) {
-                        WeftIcon("allow", size: 16)
-                            .opacity((choices[field] ?? []).contains(option.label) ? 1 : 0).foregroundStyle(Weave.accent)
-                        VStack(alignment: .leading, spacing: AppleTokens.Space.p3) {
-                            Text(option.label).foregroundStyle(Weave.ink)
-                            if let description = option.description, !description.isEmpty {
-                                Text(description).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
-                            }
-                        }
-                        Spacer(minLength: AppleTokens.Space.p0)
-                    }.frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, AppleTokens.Space.p6).contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(option.label)
-                .accessibilityValue((choices[field] ?? []).contains(option.label) ? "已选择" : "未选择")
-                .accessibilityIdentifier("questionOption.\(batch.id).\(question.id).\(option.label)")
-            }
-            TextField((question.options ?? []).isEmpty ? "写下回答" : "填写补充回答",
-                text: Binding(get: { text[field] ?? "" }, set: { value in
-                    text[field] = value
-                    if question.multiSelect != true, !value.isEmpty { choices[field] = [] }
-                }), axis: .vertical)
-                .lineLimit(1...5).textFieldStyle(.roundedBorder).focused($focusedQuestion, equals: field)
-                .accessibilityIdentifier("questionCustom.\(batch.id).\(question.id)")
-        }
-    }
-
-    private func answers(for batch: SessionQuestionBatch) -> [QuestionAnswerItem] {
-        batch.questions.map { question in
-            let field = batch.id + ":" + question.id
-            let value = text[field] ?? ""
-            let selected = (question.options ?? []).map(\.label).filter { (choices[field] ?? []).contains($0) }
-            return QuestionAnswerItem(id: question.id, selected: selected,
-                custom: value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : value)
-        }
-    }
-    private func complete(_ batch: SessionQuestionBatch) -> Bool {
-        answers(for: batch).allSatisfy { !$0.selected.isEmpty || $0.custom != nil }
     }
 
     private func endInput() {

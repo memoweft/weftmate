@@ -30,7 +30,7 @@ struct WatchHealthView: View {
                 Text("恢复：\((latest.derived?.recovery?.value).map { String(format: "%.0f", $0) } ?? "数据不足")")
                 if let stress = latest.hourly?.last(where: { $0.stress != nil })?.stress {
                     Text("压力：\(stress.lower, specifier: "%.0f")–\(stress.upper, specifier: "%.0f")")
-                    Text(stress.latestSampleAt).font(AppleTokens.Fonts.caption)
+                    Text(DeviceDateText.timestamp(stress.latestSampleAt)).font(AppleTokens.Fonts.caption)
                 } else { Text("压力：数据不足") }
                 Text("负荷：\((latest.derived?.load?.value).map { String(format: "%.1f", $0) } ?? "数据不足")")
                 Text("睡眠：\(latest.sleep.map { String(format: "%.1f 小时", $0.totalMinutes / 60) } ?? "数据不足")")

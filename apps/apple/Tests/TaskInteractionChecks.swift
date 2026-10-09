@@ -133,7 +133,11 @@ private actor InteractionHTTP: HTTPTransport {
         await model.refresh(snapshot)
         try require(model.approvals.count == 1 && model.questions.count == 1, "Prompt projection failed")
         try require(model.pendingApprovals.count == 1, "Verified pending approval missing from composer queue")
-        print("PASS 1 same task and source receipt")
+        try require(model.pendingQuestions.count == 1 && model.pendingQuestionCount == 1, "Pending question missing")
+        let batch = model.questions[0]
+        var draft = QuestionBarDraft(); draft.write("保留草稿", question: batch.questions[0]); model.questionDrafts[batch.id] = draft
+        try require(!QuestionBarDraft.visible(pending: true, registered: false, approvals: model.pendingApprovals.count), "Approval did not win shared position")
+        print("PASS 1 same task and source receipt; approval priority")
 
         await transport.pauseRead()
         let reading = Task { await model.refresh(snapshot) }
@@ -147,6 +151,7 @@ private actor InteractionHTTP: HTTPTransport {
         await transport.configure(lostQuestion: true)
         await model.answer(model.questions[0], answers: [.init(id: "information", selected: [], custom: "同意")])
         try require(model.hasSaved(key) && model.questions[0].canAnswer && model.responseNeedsReadback(key), "Lost submission was not retained")
+        try require(model.pendingQuestions.count == 1 && model.questionDrafts[batch.id] == draft, "Lost answer removed retry or draft")
         try require(model.approvals[0].canDecide, "Information answer granted permission")
         print("PASS 2 lost answer retained and affirmative text is information only")
 
@@ -158,7 +163,8 @@ private actor InteractionHTTP: HTTPTransport {
         let (_, questionBodies) = await transport.submissions()
         try require(questionBodies.count == 2 && questionBodies[0] == questionBodies[1], "Retry changed request or payload")
         try require(reopened.questions[0].status == .answered && reopened.notices[key] != "执行端已接收这次回答。", "200 was mistaken for native acceptance")
-        print("PASS 3 reopened retry uses exact bytes and 200 does not imply native acceptance")
+        try require(reopened.pendingQuestions.isEmpty && reopened.answeredSummary(reopened.questions[0]) == "已回答：同意", "Registered answer did not disappear immediately")
+        print("PASS 3 reopened retry uses exact bytes; valid receipt removes bar and keeps answered line; native acceptance separate")
 
         await transport.configure()
         await reopened.refresh(snapshot)

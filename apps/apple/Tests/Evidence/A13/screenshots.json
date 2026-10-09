@@ -1,0 +1,377 @@
+{
+  "syntheticOnly": true,
+  "originalUnmodifiedPNGs": true,
+  "screenshots": [
+    {
+      "file": "mac-dark/chinese-detail.png",
+      "sha256": "86d2f1d09e2a70c4a7f544445b98d02da4586645412ea7a2236f8468f9556cb4",
+      "surface": "mac",
+      "theme": "dark",
+      "scene": "chinese-detail"
+    },
+    {
+      "file": "mac-dark/multiple-choice.png",
+      "sha256": "0714a6f15a111bcba7d15b0fdfbc7dd99ffc1c3b0e116036ab356ffe2af3b80f",
+      "surface": "mac",
+      "theme": "dark",
+      "scene": "multiple-choice"
+    },
+    {
+      "file": "mac-dark/other-input-return.png",
+      "sha256": "31b4f9185830eb23271faa0adb8f7d21d102135d80879de537825253cc9193c4",
+      "surface": "mac",
+      "theme": "dark",
+      "scene": "other-input-return"
+    },
+    {
+      "file": "mac-dark/free-answer.png",
+      "sha256": "5ecc49d325bcf29defce7c4c18539b7580b166e9e7b349cdf6e60c685e29f9d8",
+      "surface": "mac",
+      "theme": "dark",
+      "scene": "free-answer"
+    },
+    {
+      "file": "mac-dark/single-choice.png",
+      "sha256": "e48023c1ecead18c03e2a9948dfc77c879d12c1ae855bd859030c2a3d39b395a",
+      "surface": "mac",
+      "theme": "dark",
+      "scene": "single-choice"
+    },
+    {
+      "file": "mac-dark/approval-priority.png",
+      "sha256": "43ed24d2dd7321fff9e0560969e12f809b550c346ead0827f35ed9b691d4d889",
+      "surface": "mac",
+      "theme": "dark",
+      "scene": "approval-priority"
+    },
+    {
+      "file": "mac-dark/usage-month-picker.png",
+      "sha256": "abeb531bad90f2ace6077539e7e286970a85c1beb15e88740bccb3f39f2a0ef9",
+      "surface": "mac",
+      "theme": "dark",
+      "scene": "usage-month-picker"
+    },
+    {
+      "file": "mac-dark/retry-reconciled.png",
+      "sha256": "606cf9fbd6065222781499408ec25248d519ec598ca4b22ff75bb24fcb3d5159",
+      "surface": "mac",
+      "theme": "dark",
+      "scene": "retry-reconciled"
+    },
+    {
+      "file": "mac-dark/answered.png",
+      "sha256": "b8e64e8d95cdfc2d89df2f467161cb4dee9d74e5445eb76dfc0088bdddcc361b",
+      "surface": "mac",
+      "theme": "dark",
+      "scene": "answered"
+    },
+    {
+      "file": "mac-dark/description.png",
+      "sha256": "b555e4691fe0b7e1b541fdd01cbb31d6242ba7004aca6fdec8f523e28373bd5f",
+      "surface": "mac",
+      "theme": "dark",
+      "scene": "description"
+    },
+    {
+      "file": "mac-dark/chinese-sources.png",
+      "sha256": "606cf9fbd6065222781499408ec25248d519ec598ca4b22ff75bb24fcb3d5159",
+      "surface": "mac",
+      "theme": "dark",
+      "scene": "chinese-sources"
+    },
+    {
+      "file": "mac-dark/usage-month-selected.png",
+      "sha256": "633418334cc773f951efbdb44702b6a0b4088e8a363d2f885aaeaa35620dd008",
+      "surface": "mac",
+      "theme": "dark",
+      "scene": "usage-month-selected"
+    },
+    {
+      "file": "mac-dark/usage-month.png",
+      "sha256": "339a1351ec2034de686bc87a924f23bca5f874c139d1052e548f03a4298c5132",
+      "surface": "mac",
+      "theme": "dark",
+      "scene": "usage-month"
+    },
+    {
+      "file": "iphone-light/a13-iphone-retry-reconciled-light.png",
+      "sha256": "09ef18ad4c6eb1eafc79f290a80d4ddcf6aa9301e6aee0fca0e5f801f7ff4f28",
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "retry-reconciled"
+    },
+    {
+      "file": "iphone-light/a13-iphone-chinese-sources-light.png",
+      "sha256": "2864fd88c2d5ebe862544a5fabedec4d805eeda81cc06b3fd57cd796448b8f08",
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "chinese-sources"
+    },
+    {
+      "file": "iphone-light/a13-iphone-usage-month-light.png",
+      "sha256": "c8b70c9f02a923ba6b811c207054c9ccac1f8bafbb502ce73676b6a1eb02cef7",
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "usage-month"
+    },
+    {
+      "file": "iphone-light/a13-iphone-single-choice-light.png",
+      "sha256": "9392cbaf01d0c23dc1ab56e383264b2d840eb4f3f54ff4ad39508f05ac8519e0",
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "single-choice"
+    },
+    {
+      "file": "iphone-light/a13-iphone-answered-light.png",
+      "sha256": "9cc61214a4810cf5b5e91df9bf6feddd8f599573eaa81832e0e2c5f91432211d",
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "answered"
+    },
+    {
+      "file": "iphone-light/a13-iphone-chinese-detail-light.png",
+      "sha256": "e44788dd14a37948b11c394e94b11609c8879d481147ac86133fa4bb009ec5b8",
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "chinese-detail"
+    },
+    {
+      "file": "iphone-light/a13-iphone-other-input-return-light.png",
+      "sha256": "8ed63bfc0ba898b14258f022775ede7b5dfccc66563170044b1fc5e8e3459ef8",
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "other-input-return"
+    },
+    {
+      "file": "iphone-light/a13-iphone-usage-month-selected-light.png",
+      "sha256": "4214aa1195277e79ac1c906a11c9d56575320952502bbc63eb2829116e7e48d1",
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "usage-month-selected"
+    },
+    {
+      "file": "iphone-light/a13-iphone-free-answer-light.png",
+      "sha256": "a518ca2939403cbce8230b6b96b2a6c138d9703736c60a04868602a7640e26b2",
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "free-answer"
+    },
+    {
+      "file": "iphone-light/a13-iphone-usage-month-picker-light.png",
+      "sha256": "f4e09b4516de96778a646e9776c08b6797ef7c0db0c5d990a51837f092ee7ffa",
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "usage-month-picker"
+    },
+    {
+      "file": "iphone-light/a13-iphone-description-light.png",
+      "sha256": "4fb41a2d96e67e40fdd7fc62e64fe9d641d4fd21efe342dfe8f6318c18a27a6c",
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "description"
+    },
+    {
+      "file": "iphone-light/a13-iphone-approval-priority-light.png",
+      "sha256": "2fef108056cc7f2c4696a032aadd7ed1b7d109fa8ac9f6218cbe29aed006eb2a",
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "approval-priority"
+    },
+    {
+      "file": "iphone-light/a13-iphone-multiple-choice-light.png",
+      "sha256": "4613a6e7848a128e6f61884ad2206ed809e2b9eed4ba3649d51c0eb63b03180e",
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "multiple-choice"
+    },
+    {
+      "file": "mac-light/chinese-detail.png",
+      "sha256": "3a5bc7cd8a2d73ee7e3d10654975d888c95fb86c8bc3fd4767950bd453ba2b99",
+      "surface": "mac",
+      "theme": "light",
+      "scene": "chinese-detail"
+    },
+    {
+      "file": "mac-light/multiple-choice.png",
+      "sha256": "c53f6165a8a79dc6baa1f80c76d6ab0cd63c30905f6f2d073da4646b14e0bb60",
+      "surface": "mac",
+      "theme": "light",
+      "scene": "multiple-choice"
+    },
+    {
+      "file": "mac-light/other-input-return.png",
+      "sha256": "19b89560455fe94d3fe61e0ec0ab72040c8d808834388ccda8c2bd8f4124c3a0",
+      "surface": "mac",
+      "theme": "light",
+      "scene": "other-input-return"
+    },
+    {
+      "file": "mac-light/free-answer.png",
+      "sha256": "941c738f97ddf07a1a807c856679eab2997ccb95e586bb7ecf31c3877ca92c65",
+      "surface": "mac",
+      "theme": "light",
+      "scene": "free-answer"
+    },
+    {
+      "file": "mac-light/single-choice.png",
+      "sha256": "c4a04969b00d7103478203195ee4bd021dde57a4a09e4423964f93a0dbca1dee",
+      "surface": "mac",
+      "theme": "light",
+      "scene": "single-choice"
+    },
+    {
+      "file": "mac-light/approval-priority.png",
+      "sha256": "af2cf8dfd1873c3a67e6b82389857306ccf2319fbdd36909b0d190ba80fdca56",
+      "surface": "mac",
+      "theme": "light",
+      "scene": "approval-priority"
+    },
+    {
+      "file": "mac-light/usage-month-picker.png",
+      "sha256": "eb5bbc242d1ee89c74e3b6c259f9ca510282c0c7c894d80b41f416ce5283a5ec",
+      "surface": "mac",
+      "theme": "light",
+      "scene": "usage-month-picker"
+    },
+    {
+      "file": "mac-light/retry-reconciled.png",
+      "sha256": "e11ec7ff6d51e0ec971298b3b2fb6c883d92cbf2014021374b0df3645756b0f8",
+      "surface": "mac",
+      "theme": "light",
+      "scene": "retry-reconciled"
+    },
+    {
+      "file": "mac-light/answered.png",
+      "sha256": "359128b7256847925fb28f99a6e9967caad82d160d348559580382c3ce5fb4a0",
+      "surface": "mac",
+      "theme": "light",
+      "scene": "answered"
+    },
+    {
+      "file": "mac-light/description.png",
+      "sha256": "3fed042360957d3036abc5e6f8ab59c21aae3e20b2280d858ad473eb7d0f3ada",
+      "surface": "mac",
+      "theme": "light",
+      "scene": "description"
+    },
+    {
+      "file": "mac-light/chinese-sources.png",
+      "sha256": "e11ec7ff6d51e0ec971298b3b2fb6c883d92cbf2014021374b0df3645756b0f8",
+      "surface": "mac",
+      "theme": "light",
+      "scene": "chinese-sources"
+    },
+    {
+      "file": "mac-light/usage-month-selected.png",
+      "sha256": "f427f18b5da389a9e7fc936e49358f2b4ac4f43c5c6c478b9f0f60fe137c41cd",
+      "surface": "mac",
+      "theme": "light",
+      "scene": "usage-month-selected"
+    },
+    {
+      "file": "mac-light/usage-month.png",
+      "sha256": "eb5bbc242d1ee89c74e3b6c259f9ca510282c0c7c894d80b41f416ce5283a5ec",
+      "surface": "mac",
+      "theme": "light",
+      "scene": "usage-month"
+    },
+    {
+      "file": "iphone-dark/a13-iphone-free-answer-dark.png",
+      "sha256": "11684f5c65465e8dcdf741c7c751c03b782b03c49053973208d9ff606a893ce5",
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "free-answer"
+    },
+    {
+      "file": "iphone-dark/a13-iphone-chinese-detail-dark.png",
+      "sha256": "3fe3bf29ae7197f53c5e816c9ff26f89c1b31e5d6a87a73fa6c3e1b2a2f34043",
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "chinese-detail"
+    },
+    {
+      "file": "iphone-dark/a13-iphone-single-choice-dark.png",
+      "sha256": "19d7bee30d1783e58017d9ad91c6b78310121fe42c3f3eaabd2e28b101c5c255",
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "single-choice"
+    },
+    {
+      "file": "iphone-dark/a13-iphone-retry-reconciled-dark.png",
+      "sha256": "3fea4d50bcf55fac8b9666fb0495b997325e5f59c4c1cc01c71504a2a24a466b",
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "retry-reconciled"
+    },
+    {
+      "file": "iphone-dark/a13-iphone-chinese-sources-dark.png",
+      "sha256": "03d55c9b1d8c79c3a142b27e1a9eb502f7006fdd949376f0a207cd5a51cd1fbb",
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "chinese-sources"
+    },
+    {
+      "file": "iphone-dark/a13-iphone-usage-month-picker-dark.png",
+      "sha256": "57e76df81277a2a80e1721cc979c13928717aa6dfc90865571c3fc07b4260443",
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "usage-month-picker"
+    },
+    {
+      "file": "iphone-dark/a13-iphone-description-dark.png",
+      "sha256": "82934143ee4d7726b5b1d42a7b71be85509586751cede552387664bc6b6f7024",
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "description"
+    },
+    {
+      "file": "iphone-dark/a13-iphone-usage-month-dark.png",
+      "sha256": "a4c81258d336623ff8fcd4a2e5e1987598bd1d51bcf98c7db1f753f0868339c7",
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "usage-month"
+    },
+    {
+      "file": "iphone-dark/a13-iphone-answered-dark.png",
+      "sha256": "477752b6647184da227bfde8d4785343ac4c867eb5d9dcb0488b3a3d0ff2c95d",
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "answered"
+    },
+    {
+      "file": "iphone-dark/a13-iphone-approval-priority-dark.png",
+      "sha256": "bc16d5f991925f58491a49a77daa4e8fc2b40497cab8a0c063f533593451d71a",
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "approval-priority"
+    },
+    {
+      "file": "iphone-dark/a13-iphone-multiple-choice-dark.png",
+      "sha256": "e526e0afd8d47848b204b54186b589e3063497b1c496e2c78d59da618d154ecb",
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "multiple-choice"
+    },
+    {
+      "file": "iphone-dark/a13-iphone-other-input-return-dark.png",
+      "sha256": "f4505cf6b281f9c51eba95323c1c4693ebe5b3e005141f8a79481551291d2801",
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "other-input-return"
+    },
+    {
+      "file": "iphone-dark/a13-iphone-usage-month-selected-dark.png",
+      "sha256": "d39d6296725deca9beedbc08d4a2f5c8e7a7911fc4919e2f7b63a1ab140c40fc",
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "usage-month-selected"
+    },
+    {
+      "file": "watch/approval.png",
+      "sha256": "c9ff33642785a39745d25766e8a294120662d49764e099bb33f657caaae6120e",
+      "surface": "watch",
+      "theme": "light",
+      "scene": "approval"
+    }
+  ]
+}

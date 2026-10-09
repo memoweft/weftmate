@@ -12,7 +12,7 @@ struct HealthMetricsView: View {
     var body: some View {
         Section("最新健康指标") {
             if let latest {
-                Text("\(latest.date) · \(latest.timeZone)").font(AppleTokens.Fonts.caption).foregroundStyle(AppleTokens.Styles.secondary)
+                Text("\(DeviceDateText.day(latest.date))").font(AppleTokens.Fonts.caption).foregroundStyle(AppleTokens.Styles.secondary)
                 Text("身体电量：\(value(latest.hourly?.last?.bodyBattery)) / 100").accessibilityIdentifier("healthMetric.battery")
                 Text("恢复度：\(value(latest.derived?.recovery?.value)) / 100").accessibilityIdentifier("healthMetric.recovery")
                 if let recovery = latest.derived?.recovery {
@@ -26,7 +26,7 @@ struct HealthMetricsView: View {
                 }
                 if let hour = latest.hourly?.last(where: { $0.stress != nil }), let stress = hour.stress {
                     Text("压力：\(stress.lower, specifier: "%.0f")–\(stress.upper, specifier: "%.0f") / 100").accessibilityIdentifier("healthMetric.stress")
-                    Text("最近采样 \(stress.latestSampleAt) · \(stress.sampleCount) 组 · \(stress.confidence == "sparse" ? "采样稀疏" : "离散采样")")
+                    Text("最近采样 \(DeviceDateText.timestamp(stress.latestSampleAt)) · \(stress.sampleCount) 组 · \(stress.confidence == "sparse" ? "采样稀疏" : "离散采样")")
                         .font(AppleTokens.Fonts.caption).foregroundStyle(AppleTokens.Styles.secondary)
                 } else { Text("压力：数据不足").accessibilityIdentifier("healthMetric.stress") }
                 Text("睡眠：\(latest.sleep.map { String(format: "%.1f 小时", $0.totalMinutes / 60) } ?? "数据不足")").accessibilityIdentifier("healthMetric.sleep")
@@ -81,7 +81,7 @@ struct HealthMetricsView: View {
                     AxisMarks(values: .automatic) { axis in
                         AxisGridLine(); AxisTick()
                         AxisValueLabel {
-                            if let date = axis.as(Date.self) { Text(axisLabel(date, format: "M/d")).fixedSize() }
+                            if let date = axis.as(Date.self) { Text(axisLabel(date, format: "M 月 d 日")).fixedSize() }
                         }
                     }
                 }.environment(\.timeZone, TimeZone(identifier: latest?.timeZone ?? "UTC") ?? .current).accessibilityIdentifier("healthDailyTrend.\(kind)")
