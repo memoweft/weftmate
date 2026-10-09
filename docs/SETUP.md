@@ -47,6 +47,29 @@ node scripts/run-personal-host.mjs --user-data-dir C:\WeftMate-Test\profile --ac
 - Apple（macOS / iOS / watchOS）：[apps/apple/README](../apps/apple/README.md)
 - 设备与验证环境：[DEVELOPMENT_ENVIRONMENT](DEVELOPMENT_ENVIRONMENT.md)
 
+### 日用 Windows 云账号（UP-2）
+
+计划任务 `WeftMate Personal Host` 使用主仓 `scripts/run-personal-host-task.ps1 -Mode Production`；工作树的改动合入并更新主仓后，在下一次由本人安排的重启生效。此脚本的 Probe（隔离探测）分支保持原样。不要为验证执行 Production，也不要停止日用程序或复制其数据。
+
+Production 只配置以下公开值；账号密码、云令牌、阿里云凭据不在脚本中：
+
+| 环境变量 | 值 / 用途 |
+|---|---|
+| `WEFTMATE_CLOUD_ISSUER` | `https://api.weftmate.com/personal/v1/cloud/oidc`；宿主验签及桌面云账号请求 |
+| `WEFTMATE_CLOUD_DESKTOP_CLIENT_ID` | `weftmate-desktop` |
+| `WEFTMATE_CLOUD_DESKTOP_REDIRECT_URI` | `http://127.0.0.1:18186/personal/v1/ui/`；桌面 Code + PKCE（授权码与校验）回调，App（应用）内只解析回调数据 |
+| `WEFTMATE_CLOUD_WEB_CLIENT_ID` | `weftmate-desktop`；此部署的 `/cloud/config` 默认值，与桌面一致 |
+| `WEFTMATE_RELAY_ENABLED` / `WEFTMATE_RELAY_ACME_ENABLED` | `true`；绑定后开启内容中继、自动证书 |
+| `WEFTMATE_ACME_DIRECTORY_URL` | `https://acme-v02.api.letsencrypt.org/directory`；正式证书 |
+| `WEFTMATE_FRPC_FILE` | `<主仓>/.local/frp/frp_0.71.0_windows_amd64/frpc.exe`；缺失时使用仓库下载器校验官方包后安装 |
+| `WEFTMATE_RELAY_CA_FILE` | `<主仓>/.local/frp/transport-ca.pem`；从 Node（运行时）的公开 CA（证书机构）根证书生成，用于验证外层中继 |
+
+内容证书使用宿主私有默认路径 `<personal-access>/relay-tls/host-fullchain.pem`，私钥和安装身份仍由宿主生成并保存；中继地址及连接凭据由绑定后的云签名接口取得，不需要在电脑上填写云服务器秘密。可选 `WEFTMATE_ACME_EMAIL` 从本人进程环境继承，不写仓库；已有私有证书路径配置仍可通过 `WEFTMATE_RELAY_CERT_FILE` 继承。首次重启前可在主仓运行 `node scripts/download-frp.mjs`，提前完成官方公开依赖安装；否则首次启动需要联网下载。
+
+桌面回调使用字面 `127.0.0.1`、HTTP（网页传输协议）和准确路径，按 [RFC 8252 第 7.3 节](https://www.rfc-editor.org/rfc/rfc8252#section-7.3) 的 loopback（回环）规则登记为 native（原生）公开客户端，无客户端密钥。测试随机宿主端口不会新增生产回调：桌面按照固定配置解析 App 返回的回调数据。这里仅应用回环回调规则，账号交互仍遵循项目 D29 / CLIENT_API 7.8 的 App 内流程，不声称完整采用 RFC 8252 的外部浏览器流程。
+
+旧本地账号应先点「离线使用这台电脑」，以本地账户名和原密码登录，再在「设置 → 账户」点「绑定 WeftMate 账号」。如果离线页已记住一个云账号，可点「使用本地账户登录」显示本地账户名。绑定按钮先认领，再显示现有云账号登录 / 注册页面，绑定成功返回原本地账号设置。不要先在首页直接云登录来迁移旧数据：`/auth/cloud-desktop` 会为新的云身份创建独立账号。远程 `https://home.weftmate.com:8443` 及随机中继地址的浏览器云登录回调未在本包登记；需要另按 CLIENT_API 7.7 登记实际使用地址，不加通配符。本包保留现有 `--public-origin`，不改变日用反向代理。
+
 ### 用 MuMu 模拟器验收安卓
 
 本机 MuMu Android 15 的 ADB（安卓调试桥）位于 `D:\Software\MuMuPlayer\nx_main\adb.exe`。本人启动模拟器后连接 `127.0.0.1:7555`；明确指定该序列号，避免操作其他设备：
