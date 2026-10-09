@@ -1,0 +1,26 @@
+{
+  "elapsedMs": 1809401,
+  "eventLoopP99Ms": 31.211519,
+  "eventLoopMaxMs": 215.089151,
+  "rssStartBytes": 199217152,
+  "rssEndBytes": 264822784,
+  "rssGrowthMiB": 62.56640625,
+  "heapStartBytes": 21522080,
+  "heapEndBytes": 34062956,
+  "cycles": 54,
+  "cyclePassed": 36,
+  "stopButtonDeadlineMissed": 18,
+  "successfulImmediateMessageMedianMs": 2.0499999970197678,
+  "storeNotifications": 880,
+  "exactStoreWriteSample": {
+    "elapsedMs": 520167,
+    "successfulRenames": 147,
+    "perMinute": 16.95609294707277
+  },
+  "caveats": [
+    "Synthetic streaming model; complete main.mjs and DSH. Other QA processes ran concurrently.",
+    "The fixture reports one slot via /props but has no /switch/status. Background model readiness timeouts occurred and may contribute to delayed states.",
+    "RSS grew while 54 conversations/history were retained; this single run does not establish a memory leak.",
+    "Store notifications are not write counts. Successful rename measurement started after 21.5 minutes; it is an 8.7-minute sample, not the whole 30-minute count."
+  ]
+}
