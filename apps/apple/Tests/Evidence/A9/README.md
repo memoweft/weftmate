@@ -20,7 +20,7 @@
 
 ## 验证与重跑
 
-Swift 定向 13/13；发送 12 项、审批 11 项、详情共享读取 1 项状态检查全部通过；令牌 4/4、证据 4/4 与令牌生成一致性通过。iPhone 最终浅深 2/2，均零跳过；Mac Debug 与 iOS / Watch 伴随 Debug 构建通过，发送 / 停止浅深四组像素断言通过。本地只跑定向检查，不跑完整单测。完整跨平台 CI 在本包 PR 的最终提交上检查。
+Swift 定向 13/13；发送 12 项、审批 11 项、详情共享读取 1 项状态检查全部通过；令牌 4/4、证据 4/4 与令牌生成一致性通过。iPhone 最终浅深 2/2，均零跳过；Mac Debug 与 iOS / Watch 伴随 Debug 构建通过，发送 / 停止浅深四组像素断言通过。本地只跑定向检查，不跑完整单测。完整仓库测试由本 PR 配置的 CI 执行并核对最终提交；当前 PR 的 Node 矩阵仅 Ubuntu，Windows 在合入 main 后运行，macOS 周期 / 手动运行，Apple 原生验证在本机完成。
 
 ```sh
 python3 apps/apple/Scripts/generate_project.py
