@@ -114,6 +114,9 @@ try {
       return route.fulfill({ json });
     }
     const response = await route.fetch({ url: candidate.origin + url.pathname + url.search, headers: { ...route.request().headers(), origin: candidate.origin } });
+    if (url.pathname === '/personal/v1/status') {
+      const data=await response.json();return route.fulfill({response,json:{...data,personalCapabilities:{}}});
+    }
     if (url.pathname === '/personal/v1/sessions') {
       const data = await response.json(); data.sessions.push({ sessionId: '22222222-2222-4222-8222-222222222222', title: '合成空白对话', running: false });
       return route.fulfill({ response, json: data });
@@ -143,7 +146,7 @@ try {
     }, step));
     await page.reload();
     await page.getByRole('heading', { name: '登录 WeftMate' }).waitFor();
-    await frames(phase, 'approval-enter', async () => { await localUiSession(page, candidate.credentials); await page.getByRole('button', { name: phase === 'before' ? '允许一次' : '批准', exact: true }).waitFor(); });
+    await frames(phase, 'approval-enter', async () => { await localUiSession(page, candidate.credentials,'Synthetic motion regression',{interceptLegacyStatus:false}); await page.getByRole('button', { name: phase === 'before' ? '允许一次' : '批准', exact: true }).waitFor(); });
     await page.getByRole('button', { name: phase === 'before' ? '允许一次' : '批准', exact: true }).waitFor();
     const summary = page.getByText(phase === 'before' ? '执行了 2 步 · 用时 2 秒' : '读取了 3 个文件、已运行 1 个命令', { exact: true });
     await frames(phase, 'execution-expand', () => summary.evaluate(element => element.click()));

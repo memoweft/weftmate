@@ -16,8 +16,13 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             return { key: `artifact:${artifact.artifactId}`, kind: 'file', name: artifact.fileName || '成果文件', artifact, versions: versions.slice(1) };
         });
     }
-    function timelineEventsForContext(context = core.conversationTaskContext()) { return context.source === 'phone' ? core.state.phoneHostEvents.get(context.conversationId) || [] : [...core.state.historyEvents.values()]; }
-    async function loadConversationResources() {
+    function timelineEventsForContext(context = core.conversationTaskContext()) {
+        if (core.inMainChat?.()) return [...core.state.chatWindow.events.values()].filter(event => event.sourceRef?.kind === 'native' && event.sourceRef.sessionId === context.sessionId)
+            .map(event => ({...event,seq:event.sourceRef.seq,sessionId:event.sourceRef.sessionId}));
+        return context.source === 'phone' ? core.state.phoneHostEvents.get(context.conversationId) || [] : [...core.state.historyEvents.values()];
+    }
+    async function loadConversationResources(legacy = false) {
+        if (!legacy && core.loadMainResources) return core.loadMainResources();
         const context = core.conversationTaskContext(), key = JSON.stringify(context);
         if (!core.conversationTaskCurrent(context) || !context.sessionId)
             return { outputs: [], sources: [] };
@@ -119,7 +124,7 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             core.forgetMarker(command.requestId);
         }
         const locked = command.kind !== 'desktop.open_app' && (pending || command.state === 'uncertain');
-        core.operation(command.state === 'accepted_by_dsh' && ['session.create', 'session.message'].includes(command.kind) ? '' : core.commandStatus(command), locked, command.requestId, command.state === 'uncertain');
+        core.operation(command.state === 'accepted_by_dsh' && ['session.create', 'session.side.create', 'session.message', 'chat.message'].includes(command.kind) ? '' : core.commandStatus(command), locked, command.requestId, command.state === 'uncertain');
         if (command.kind === 'session.create' && command.state === 'accepted_by_dsh' && command.sessionId && !core.creatingOptimisticSession && !optimisticCreate) {
             void core.refreshSessions().then(() => core.selectSession(command.sessionId));
         }
