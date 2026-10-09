@@ -71,8 +71,7 @@ struct WeftMateRootView: View {
                 // Capture only this process's own displayed window; never enumerate other apps.
                 typealias WindowImages = @convention(c) (CGRect, CFArray, UInt32) -> Unmanaged<CGImage>?
                 let settingsCapture = argsForSettingsCapture()
-                let windows = NSApplication.shared.windows.filter { $0.isVisible && (!settingsCapture || $0.title != "WeftMate") }
-                    .sorted { ($0.sheetParent == nil ? 1 : 0) < ($1.sheetParent == nil ? 1 : 0) }
+                let windows = NSApplication.shared.orderedWindows.filter { $0.isVisible && (!settingsCapture || $0.title != "WeftMate") }
                 if settingsCapture {
                     // The launch workaround can refocus the main window. Capture the
                     // independent settings window in its actual active appearance.
