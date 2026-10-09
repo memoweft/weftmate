@@ -225,6 +225,8 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         ui.cloudUi?.cancel();
     }
     function resetAccountControls() {
+        ui.byId('account-model-key').value = '';
+        if (ui.byId('account-model-dialog')?.open) ui.byId('account-model-dialog').close();
         ui.byId('pending-device-list').replaceChildren();
         ui.byId('pending-devices').hidden = true;
         ui.byId('pending-device-badge').hidden = true;

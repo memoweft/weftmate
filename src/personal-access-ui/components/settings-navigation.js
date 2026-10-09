@@ -96,11 +96,26 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         move('schedules', ui.byId('settings-schedules'));
         move('backups', document.querySelector('.backup-settings'));
         const system = ui.byId('system-heading').closest('section');
-        for (const id of ['background-model-select', 'background-model-notice']) {
-            const element = ui.byId(id); if (id === 'background-model-select') { move('models', element.previousElementSibling); move('models', element.nextElementSibling); }
-            move('models', element);
-        }
+        const background = ui.byId('background-model-select');
+        background.previousElementSibling.remove(); background.nextElementSibling.remove();
+        const defaultModel = node('select'); defaultModel.id = 'default-model-select'; defaultModel.setAttribute('aria-label', '对话默认模型');
+        panels.get('models').append(globalThis.WeftSettingsControls.row('对话默认模型', '用于新建对话；已有对话继续使用原模型。', defaultModel));
+        const backgroundRow = globalThis.WeftSettingsControls.row('后台模型', '标题、记忆整理和关心使用此模型；本机模型共用一张显卡，后台等待所选模型已加载且聊天空闲，以免触发切换。', background);
+        const currentModel = node('p', 'model-current'); currentModel.id = 'background-current-model';
+        backgroundRow.firstElementChild.append(currentModel); panels.get('models').append(backgroundRow);
+        move('models', ui.byId('background-model-notice'));
         move(globalThis.weftmateDesktop ? 'system' : 'general', system); move('models', ui.byId('account-model-section'));
+        const form = ui.byId('account-model-form'), editor = node('dialog', 'dialog model-editor-dialog');
+        editor.id = 'account-model-dialog'; editor.setAttribute('aria-labelledby', 'model-editor-title');
+        const editorHead = node('div', 'dialog-head'), editorTitle = node('h2', '', '添加模型'); editorTitle.id = 'model-editor-title';
+        const editorClose = node('button', 'icon-close'); editorClose.type = 'button'; editorClose.setAttribute('aria-label', '关闭模型表单'); editorClose.append(globalThis.WeftIcons.create('deny', 24));
+        editorClose.addEventListener('click', () => editor.close()); editorHead.append(editorTitle, editorClose);
+        const test = node('button', 'button secondary small', '测试连接'); test.id = 'account-model-draft-test'; test.type = 'button';
+        form.querySelector('.actions').prepend(test); form.classList.add('model-editor-form');
+        ui.byId('account-model-cancel').hidden = false; ui.byId('account-model-cancel').textContent = '取消';
+        const checks = node('div', 'model-check-result'); checks.id = 'account-model-draft-result'; checks.setAttribute('aria-live', 'polite');
+        editor.append(editorHead, form, checks); document.body.append(editor);
+        editor.addEventListener('close', () => { ui.byId('account-model-key').value = ''; core.state.accountModelEditing = null; });
         const tools = account.querySelector('.tool-settings');
         for (const section of [...tools.querySelectorAll('section')]) move('resources', section);
         move(globalThis.weftmateDesktop ? 'system' : 'general', ui.byId('connection-copy').closest('section'));
@@ -114,6 +129,11 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         if (!nativeSettings) description('general', '开机自启', '在 WeftMate 桌面程序中设置。', '仅桌面程序');
         description('general', '通知', '审批、提问与任务完成会通过系统通知提醒。', globalThis.weftmateDesktop ? '由系统管理' : '在桌面程序中管理');
         description('general', '关闭窗口时最小化到托盘', '关闭窗口后，WeftMate 继续在后台运行。', globalThis.weftmateDesktop ? '已启用' : '仅桌面程序');
+        if (globalThis.weftmateDesktop?.openLogs) {
+            const logs = node('button', 'button secondary small', '打开日志文件夹'); logs.type = 'button';
+            logs.addEventListener('click', async () => { try { await globalThis.weftmateDesktop.openLogs(); } catch { ui.toast('日志文件夹暂时无法打开，请重试。'); } });
+            panels.get('general').append(globalThis.WeftSettingsControls.row('运行日志', '保留最近 7 天的运行状态，不记录对话、记忆内容或密钥。', logs));
+        }
         description('general', '语言', '当前界面使用简体中文。', '简体中文');
         const messageSetting = globalThis.WeftUiCore.messageModeSetting;
         const messageMode = node('select'); messageMode.id = 'settings-message-mode'; messageMode.setAttribute('aria-label', messageSetting.name);
@@ -130,7 +150,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         }
         description('appearance', '界面密度', '当前布局使用标准间距。', '标准');
         move('memory', ui.byId('memory-view'));
-        description('models', '主模型', '每段对话在输入区单独选择主模型。', '在对话中选择');
+
         const updates = node('section', 'settings-updates'); updates.id = 'settings-updates'; panels.get('about').append(updates);
         description('about', 'WeftMate', '跨设备、跨对话的个人助手。', globalThis.weftmateDesktop ? '桌面程序' : '远程网页');
         const appVersion = node('span', 'settings-value', '正在读取…');
@@ -161,6 +181,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         dialog.addEventListener('close', () => { ui.stopAccountPairing?.(); returnFocus?.focus(); });
         renderSettingsNavigation(); selectSettings(selected);
         globalThis.WeftPopover.bindSettings(dialog);
+        globalThis.WeftPopover.bindSettings(editor);
         globalThis.WeftSettingsNavigation = { open: openSettings, register: entry => { registry.register(entry); renderSettingsNavigation(); } };
     }
     return { mountSettingsNavigation, openSettings, selectSettings, showSettingsDialog, hideSettingsDialog };
