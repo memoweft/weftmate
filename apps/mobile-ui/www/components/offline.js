@@ -89,6 +89,12 @@
           try { if (await engine.sync()) { offline = false; error = ''; } }
           catch (cause) {
             const failure = globalThis.WeftOfflineView.syncFailure(cause);
+            // A replica request can time out while the host still serves tasks.
+            // Confirm transport loss separately before offering offline mode.
+            if ((cause.code || cause.message) === 'NETWORK') {
+              try { await core.accessApi('/status'); failure.unreachable = false; failure.message = '离线副本同步未完成，请稍后重试。'; }
+              catch (probeError) { Object.assign(failure, globalThis.WeftOfflineView.syncFailure(probeError)); }
+            }
             offline = failure.unreachable; error = failure.message;
             if (failure.clear) { showHistory = false; await engine.clear(); }
             else if (offline && engine.view().ready) {
