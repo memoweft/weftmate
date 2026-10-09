@@ -1,13 +1,14 @@
 /* Real timeline steps and native settlement notices; no guessed agents. */
 globalThis.WeftUiCore.composerSubtasks = (events, now = Date.now()) => {
-    const ordered = [...events].sort((a,b) => a.seq-b.seq), tasks = new Map(), ids = new Map();
+    const ordered = [...events].sort((a,b) => a.seq-b.seq), tasks = new Map(), ids = new Map(), starts = new Map();
     const latestTurn = ordered.filter(event => event.type === 'turn.started').at(-1)?.seq ?? -1;
     for (const event of ordered) {
         const data = event.data || {}, key = `${data.taskId}/${data.stepId}`;
+        if(event.type === 'step.started')starts.set(key,event);
         if (event.type.startsWith('step.') && data.subtask) {
             let row = tasks.get(key);
             if (!row) { row = {key,stepId:data.stepId,seq:event.seq,name:data.subtask.name || '子任务',
-                startedAt:event.at,state:'running'}; tasks.set(key,row); }
+                startedAt:starts.get(key)?.at ?? event.at,state:'running'}; tasks.set(key,row); }
             if (data.subtask.id) { ids.set(data.subtask.id,row); row.background = true; }
             if (data.state === 'failed' || event.type === 'step.completed' && !row.background) {
                 row.state = data.state === 'failed' ? 'failed' : 'completed'; row.endedAt = event.at;

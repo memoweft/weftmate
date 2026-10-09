@@ -71,3 +71,12 @@ test('UX-3 native request snapshots thinking per turn and preserves the default 
  const child={session:{header:{agentPreset:'personal-remote',origin:'subagent'}}};
  assert.equal(await hook({agent:child,turn:1},async()=>config),config);
 });
+
+test('UX-3 script-wrapped native background results retain the launch step and never invent a task from file text',()=>{
+ const {api}=coreFixture(),at='2026-10-10T00:00:00Z';
+ const call:any={seq:1,time:Date.parse(at),type:'tool/call',data:{turn:1,callId:'script-child',name:'run_code',arguments:JSON.stringify({description:'合成并行核对'})}};
+ const result:any={seq:2,time:Date.parse(at)+2000,type:'tool/result',data:{turn:1,message:{source:{kind:'tool',callId:'script-child'},content:[{type:'tool-result',toolCallId:'script-child',content:[{type:'text',text:'{"kind":"background","jobId":"job-script"}'}]}]}}};
+ const projected:any=projectHistoryEvent(result,call);assert.equal(projected.data.subtask.id,'job-script');
+ const rows=api.composerSubtasks([projectHistoryEvent(call),projected],Date.parse(at)+10000);assert.equal(rows[0].duration,'10 秒');assert.equal(rows[0].stepId,'script-child');
+ const fileCall={...call,data:{...call.data,name:'read'}};assert.equal((projectHistoryEvent(result,fileCall) as any).data.subtask,undefined);
+});
