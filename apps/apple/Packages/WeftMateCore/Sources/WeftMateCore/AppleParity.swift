@@ -78,28 +78,30 @@ public enum TaskQueueProjection {
 
 public enum ReadableToolSummary {
     public static func text(tool: String, raw: String) -> String {
+        if ["load_tools", "ask_user_question", "get_goal", "create_goal", "update_goal", "run_code", "weftmod", "weftmod_script", "todo", "todo_write", "enter_plan_mode", "exit_plan_mode"].contains(tool) { return OperationNames.tool(tool) }
         if let data = raw.data(using: .utf8), let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-            if let description = object["description"] as? String, !description.isEmpty { return description }
+            if let description = object["description"] as? String, !description.isEmpty { return OperationNames.text(description) }
             var argument = object["arguments"] as? [String: Any] ?? object["parameters"] as? [String: Any] ?? object
             if let rawArguments = (object["arguments"] ?? object["parameters"]) as? String,
                let bytes = rawArguments.data(using: .utf8), let parsed = try? JSONSerialization.jsonObject(with: bytes) as? [String: Any] { argument = parsed }
-            if let description = argument["description"] as? String, !description.isEmpty { return description }
+            if let description = argument["description"] as? String, !description.isEmpty { return OperationNames.text(description) }
             let path = (argument["path"] ?? argument["file_path"] ?? argument["filePath"] ?? argument["fileName"]) as? String
             let name = path.map { URL(fileURLWithPath: $0).lastPathComponent }
             if let paths = argument["paths"] as? [String], !paths.isEmpty {
-                return "读取 \(paths.count) 个文件：" + paths.prefix(3).map { URL(fileURLWithPath: $0).lastPathComponent }.joined(separator: "、")
+                return OperationNames.tool(tool).replacingOccurrences(of: "文件", with: "") + " \(paths.count) 个文件：" + paths.prefix(3).map { URL(fileURLWithPath: $0).lastPathComponent }.joined(separator: "、")
             }
             if let name {
-                if tool.contains("write") || tool.contains("edit") { return "修改文件 " + name }
+                if tool.contains("write") || tool.contains("save") { return "写入文件 " + name }
+                if tool.contains("edit") || tool.contains("patch") { return "修改文件 " + name }
                 if tool.contains("delete") || tool.contains("remove") { return "删除文件 " + name }
                 return "读取文件 " + name
             }
-            if let url = argument["url"] as? String { return "打开网页 " + (URL(string: url)?.host ?? "") }
+            if let url = argument["url"] as? String { return OperationNames.tool(tool) + " " + (URL(string: url)?.host ?? "") }
             if argument["command"] != nil || argument["code"] != nil { return "运行命令" }
-            return "调用工具 " + tool
+            return OperationNames.tool(tool)
         }
-        if raw.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("{") { return "调用工具 " + tool }
-        return raw.isEmpty ? "调用工具 " + tool : raw
+        if raw.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("{") { return OperationNames.tool(tool) }
+        return raw.isEmpty ? OperationNames.tool(tool) : OperationNames.text(raw)
     }
 }
 
@@ -111,6 +113,6 @@ extension SessionApproval {
     }
     public var readableRisk: String? {
         guard let range = cleanReason.range(of: "\n{") else { return nil }
-        return String(cleanReason[..<range.lowerBound])
+        return OperationNames.text(String(cleanReason[..<range.lowerBound]))
     }
 }

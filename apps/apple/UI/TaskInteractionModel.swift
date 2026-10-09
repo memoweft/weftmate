@@ -86,7 +86,7 @@ private struct SavedTaskResponse: Codable {
     func cancel() {
         suspend(); task = nil; approvals = []; questions = []
         loading = false; notices = [:]; errors = [:]; approvalError = nil; questionError = nil
-        currentApprovals = []; currentQuestions = []
+        currentApprovals = []; currentQuestions = []; questionDrafts = [:]
     }
     func refresh(_ snapshot: TaskSnapshot) async {
         guard isCurrent, !loading, matches(snapshot.scope) else { return }
@@ -208,6 +208,19 @@ private struct SavedTaskResponse: Codable {
         let outcome = row.outcome?.rawValue ?? row.decisionOutcome?.rawValue ?? (record?.registered == true ? record?.approval?.outcome.rawValue : nil)
         return outcome == "allowed-once" ? "已批准" : outcome == "rejected" ? "已拒绝" : step.decision
     }
+    @Published var questionDrafts: [String: QuestionBarDraft] = [:]
+    var pendingQuestions: [SessionQuestionBatch] {
+        questions.filter {
+            let key = "question:" + $0.id
+            return ($0.canAnswer || (hasSaved(key) && !$0.status.isTerminal)) && (currentQuestions.contains($0.id) || hasSaved(key)) && !isRegistered(key)
+        }
+            .sorted { $0.createdAt == $1.createdAt ? $0.id < $1.id : $0.createdAt < $1.createdAt }
+    }
+    var pendingQuestionCount: Int { pendingQuestions.reduce(0) { $0 + $1.questions.count } }
+    func answeredSummary(_ batch: SessionQuestionBatch) -> String? {
+        guard isRegistered("question:" + batch.id) || batch.status == .answered || batch.status == .resolved, let answers = savedAnswers(batch) else { return nil }
+        return "已回答：" + answers.flatMap { $0.selected + ($0.custom.map { [$0] } ?? []) }.joined(separator: "；")
+    }
     var needsObservation: Bool {
         approvals.contains { !$0.status.isTerminal } || questions.contains { !$0.status.isTerminal }
     }
@@ -316,6 +329,10 @@ private struct SavedTaskResponse: Codable {
         }
         for row in questions {
             let key = "question:" + row.id
+            if var record = response(key), !record.registered, let intent = record.question, row.registers(intent) {
+                record.registered = true
+                do { try save(record) } catch { errors[key] = message(error) }
+            }
             if row.status == .unavailable || row.outcome == .cancelled { notices[key] = "这个问题当前已失效，未取消其他任务。" }
             else if let request = response(key)?.requestId, row.acceptedAnswer(requestID: request) { notices[key] = "执行端已接收这次回答。" }
             else if row.status == .answered || row.status == .resolved { notices[key] = "已记录回答状态，这次提交是否被采用仍待核对。" }

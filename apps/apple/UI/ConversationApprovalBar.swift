@@ -31,8 +31,9 @@ struct ConversationApprovalBar: View {
                         .buttonStyle(OutlineActionStyle()).disabled(!model.canRespond(key)).accessibilityIdentifier("rejectApproval." + approval.id)
                 }
                 if model.pendingApprovals.count > 1 { Text("还有 \(model.pendingApprovals.count - 1) 个待批准").foregroundStyle(Weave.muted) }
+                if model.pendingQuestionCount > 0 { Text("处理审批后还有 \(model.pendingQuestionCount) 个问题").foregroundStyle(Weave.muted) }
                 if expanded {
-                    Text(model.approvalDetails[approval.id] ?? approval.reason).font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled)
+                    Text(ToolStepDetail(raw: model.approvalDetails[approval.id] ?? approval.reason).readableText).font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled)
                     if let risk = approval.readableRisk { Text(risk).foregroundStyle(Weave.muted) }
                     Text(approval.reversalNotice).foregroundStyle(Weave.muted)
                     if !(approval.riskCategories ?? []).isEmpty {
@@ -48,6 +49,6 @@ struct ConversationApprovalBar: View {
                 .accessibilityElement(children: .contain)
                 .accessibilityIdentifier("approvalBar")
                 .task(id: approval.id) { expanded = false; approveFocused = false; await model.readApprovalPresentation(approval, events: events) }
-        }
+        } else { ConversationQuestionBar(model: model) }
     }
 }

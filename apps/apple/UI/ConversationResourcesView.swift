@@ -17,7 +17,7 @@ struct ConversationResourceList: View {
                     if !resources.window.olderVersions(of: output).isEmpty {
                         DisclosureGroup("旧版 · \(output.fileName ?? "成果")") {
                             ForEach(resources.window.olderVersions(of: output)) { old in
-                                Button(old.createdAt ?? "旧版") { resources.open(.output(old.id, old.fileName ?? "成果")); onOpen() }
+                                Button(old.createdAt.map { DeviceDateText.timestamp($0) } ?? "旧版") { resources.open(.output(old.id, old.fileName ?? "成果")); onOpen() }
                             }
                         }
                     }
@@ -26,8 +26,8 @@ struct ConversationResourceList: View {
                 Text("来源").font(AppleTokens.Fonts.headline)
                 if resources.window.sources.isEmpty && memories.isEmpty { Text("还没有来源").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
                 ForEach(resources.window.sources) { source in
-                    Button { resources.open(.source(source.key, source.name)); onOpen() } label: {
-                        WeftLabel(source.name + " · \(source.uses.count) 次", icon: source.kind == "tool" ? "code" : "source")
+                    Button { resources.open(.source(source.key, source.displayName)); onOpen() } label: {
+                        WeftLabel(source.displayName + " · \(source.uses.count) 次", icon: source.kind == "tool" ? "code" : "source")
                             .lineLimit(2).multilineTextAlignment(.leading)
                     }.accessibilityIdentifier("resourceSource.\(source.key)")
                 }
@@ -162,7 +162,7 @@ private struct ResourceTabContent: View {
                                         if value.sources.isEmpty { Text("当前没有可读取的来源。") }
                                         ForEach(value.sources, id: \.evidenceId) { source in
                                             VStack(alignment: .leading, spacing: AppleTokens.Space.p6) {
-                                                Text("记录于 " + source.recordedAt).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+                                                Text("记录于 " + DeviceDateText.timestamp(source.recordedAt)).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                                                 Text(source.rawContent ?? source.summary ?? (source.contentAvailable ? "当前权限不允许读取这条原话。" : "来源已不可读。"))
                                                     .textSelection(.enabled)
                                                 if source.rawContentTruncated { Text("原话仅显示部分内容。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
@@ -194,7 +194,7 @@ private struct ResourceUseView: View {
             DisclosureGroup("详情", isExpanded: $expanded) {
                 if resources.loadingUses.contains(use.id) { ProgressView() }
                 if let detail = resources.useDetails[use.id] {
-                    Text(detail.text).font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled)
+                    Text(ToolStepDetail(raw: detail.text).readableText).font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading).accessibilityIdentifier("resourceRaw.\(use.id)")
                     if detail.truncated == true { Text("内容已截断。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
                     Button("复制原始内容") {
@@ -206,7 +206,7 @@ private struct ResourceUseView: View {
                     }
                 }
                 if let error = resources.useErrors[use.id] { Text(error); Button("重新读取") { Task { await resources.loadUse(use) } } }
-            }
+            }.accessibilityIdentifier("sourceDetails." + use.id)
         }.accessibilityIdentifier("resourceUse.\(use.id)")
             .task(id: expanded) { if expanded && resources.useDetails[use.id] == nil { await resources.loadUse(use) } }
     }

@@ -43,6 +43,7 @@ import Security
         }
         if CommandLine.arguments.count > 7, CommandLine.arguments[7] == "a8" { app.arguments?.append("--a8-flow") }
         if CommandLine.arguments.dropFirst(7).contains("ephemeral") { app.arguments?.append("--a10-ephemeral-credentials") }
+        if let driver = CommandLine.arguments.dropFirst(7).first(where: { $0.hasPrefix("a13-driver=") }) { app.arguments?.append(contentsOf: ["--a13-driver", String(driver.dropFirst("a13-driver=".count))]) }
         let output = Pipe(); app.standardOutput = output; app.standardError = output
         try app.run()
         defer {
@@ -62,8 +63,13 @@ import Security
             while let newline = pending.firstIndex(of: 10) {
                 let line = String(decoding: pending[..<newline], as: UTF8.self)
                 pending.removeSubrange(...newline)
-                if line.hasPrefix("A11_STEP:") { FileHandle.standardOutput.write(Data((line + "\n").utf8)) }
-                if ["a10-all", "a11-all", "a11-remote", "a12-login"].contains(scene), line.hasPrefix("A10_CAPTURE:") {
+                if line.hasPrefix("A13_TEXT:") {
+                    try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
+                    let entry = try JSONSerialization.jsonObject(with: Data(line.dropFirst("A13_TEXT:".count).utf8)) as! [String: Any]
+                    try JSONSerialization.data(withJSONObject: entry, options: [.prettyPrinted, .sortedKeys]).write(to: destination.appendingPathComponent((entry["scene"] as! String) + "-text.json"))
+                }
+                if line.hasPrefix("A11_STEP:") || line.hasPrefix("A13_NATIVE:") || line.hasPrefix("A13_RESPONDER:") || line.hasPrefix("A13_KEY_STATE:") { FileHandle.standardOutput.write(Data((line + "\n").utf8)) }
+                if ["a13-all", "a10-all", "a11-all", "a11-remote", "a12-login"].contains(scene), line.hasPrefix("A10_CAPTURE:") {
                     let parts = line.split(separator: ":", maxSplits: 2)
                     guard parts.count == 3, let png = Data(base64Encoded: String(parts[2])) else { throw CocoaError(.fileReadCorruptFile) }
                     try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
@@ -73,7 +79,7 @@ import Security
             }
         }
         app.waitUntilExit()
-        if ["a10-all", "a11-all", "a11-remote", "a12-login"].contains(scene), let text = String(data: bytes, encoding: .utf8), app.terminationStatus == 0 {
+        if ["a13-all", "a10-all", "a11-all", "a11-remote", "a12-login"].contains(scene), let text = String(data: bytes, encoding: .utf8), app.terminationStatus == 0 {
             try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
             for line in text.split(separator: "\n") where line.hasPrefix("A10_CAPTURE:") {
                 let parts = line.split(separator: ":", maxSplits: 2)

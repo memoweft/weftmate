@@ -53,6 +53,7 @@ public struct ConversationFollowState: Equatable, Sendable {
 }
 public enum ToolProgressSummary {
     public static func readable(tool: String, raw: String) -> String {
+        if ["load_tools", "ask_user_question", "get_goal", "create_goal", "update_goal", "run_code", "weftmod", "weftmod_script", "todo", "todo_write", "enter_plan_mode", "exit_plan_mode"].contains(tool) { return OperationNames.tool(tool) }
         if let bytes = raw.data(using: .utf8), let object = try? JSONSerialization.jsonObject(with: bytes) as? [String: Any] {
             var args = object["arguments"] as? [String: Any] ?? object["parameters"] as? [String: Any] ?? object
             if let text = (object["arguments"] ?? object["parameters"]) as? String, let bytes = text.data(using: .utf8),
