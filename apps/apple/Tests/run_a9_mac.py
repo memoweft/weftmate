@@ -7,6 +7,7 @@ ROOT=Path(__file__).resolve().parents[3]
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('--app',type=Path,required=True);p.add_argument('--capture',type=Path,required=True);p.add_argument('--evidence',type=Path,required=True)
 p.add_argument('--phase',choices=['before','after'],required=True)
+p.add_argument('--ephemeral-credentials',action='store_true')
 a=p.parse_args();a.evidence.mkdir(parents=True,exist_ok=True)
 cases={'stop':[], 'progress':['tools'], 'error':['tools','failure'], 'general':[], 'detail':['tools'], 'send':[]}
 if a.phase=='before': cases.pop('detail'); cases.pop('send')
@@ -24,7 +25,7 @@ for theme in ['light','dark']:
    gallery={'progress':'conversation','stop':'composer-context','general':'general'} if a.phase=='after' else {}
    evidenceScene=gallery.get(scene,scene)
    stem=('review' if scene in gallery else 'a9')+'-mac-'+evidenceScene+'-'+theme+'-'+stamp
-   subprocess.run([str(a.capture.resolve()),str(a.app.resolve()),str((a.evidence/(stem+'.png')).resolve()),'settings-general' if scene=='general' else 'a9-detail' if scene=='detail' else 'a9-send' if scene=='send' else 'conversation',theme,ready['host'],ready['cloud'],'a8'],check=True)
+   subprocess.run([str(a.capture.resolve()),str(a.app.resolve()),str((a.evidence/(stem+'.png')).resolve()),'settings-general' if scene=='general' else 'a9-detail' if scene=='detail' else 'a9-send' if scene=='send' else 'conversation',theme,ready['host'],ready['cloud'],'a8',*(['ephemeral'] if a.ephemeral_credentials else [])],check=True)
    (a.evidence/(stem+'.json')).write_text(json.dumps({'platform':'mac','scene':evidenceScene,'theme':theme,'commit':commit,'generatedAt':now.isoformat(timespec='milliseconds').replace('+00:00','Z'),'synthetic':True,'source':'实际 Mac 原生 App 自身窗口；真实隔离 cloud main / 宿主，合成 DSH 日志与模型'},ensure_ascii=False,indent=2)+'\n')
    print('Captured',theme,scene,flush=True)
   finally:

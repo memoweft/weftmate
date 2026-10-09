@@ -13,6 +13,9 @@ struct WeftMateRootView: View {
         return ["appearance", "usage"].contains(args[index + 1]) || args[index + 1].hasPrefix("settings-")
     }
     #endif
+    #if os(macOS)
+    @Environment(\.openWindow) private var openWindow
+    #endif
     @ObservedObject var model: AppleAppModel
     @Environment(\.scenePhase) private var scenePhase
 
@@ -62,16 +65,44 @@ struct WeftMateRootView: View {
             await model.start()
             #if DEBUG && os(macOS)
             if ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--lg2-capture") {
+                NSApplication.shared.accessibilitySetValue(true, forAttribute: NSAccessibility.Attribute(rawValue: "AXEnhancedUserInterface"))
+                if let index = ProcessInfo.processInfo.arguments.firstIndex(of: "--a5-review-scene"),
+                   ProcessInfo.processInfo.arguments[index + 1] != "login", model.session == nil {
+                    FileHandle.standardOutput.write(Data(("A5_CAPTURE_FAILED:authentication: " + (model.authError ?? "no session") + "\n").utf8))
+                    Darwin.exit(1)
+                }
+                if let index = ProcessInfo.processInfo.arguments.firstIndex(of: "--a5-review-scene"),
+                   ProcessInfo.processInfo.arguments[index + 1] == "a10-all" {
+                    do { try await A10MacReview.run(model) { openWindow(id: "settings") } }
+                    catch {
+                        FileHandle.standardOutput.write(Data(("A5_CAPTURE_FAILED:" + String(describing: error) + "\n").utf8))
+                        Darwin.exit(1)
+                    }
+                    Darwin.exit(0)
+                }
                 if ProcessInfo.processInfo.arguments.contains("--a5-review-scene") {
                     NSApplication.shared.setActivationPolicy(.regular)
                     NSApplication.shared.activate(ignoringOtherApps: true)
                     for window in NSApplication.shared.windows { window.makeKeyAndOrderFront(nil) }
                 }
                 try? await Task.sleep(for: .seconds(ProcessInfo.processInfo.arguments.contains("--a5-review-scene") ? 8 : 1))
+                if let index = ProcessInfo.processInfo.arguments.firstIndex(of: "--a5-review-scene") {
+                    let scene = ProcessInfo.processInfo.arguments[index + 1]
+                    let identifier = scene.hasPrefix("settings-") ? "settingsPage." + String(scene.dropFirst(9))
+                        : ["appearance", "usage"].contains(scene) ? "settingsPage." + scene
+                        : ["conversation", "composer-context", "a9-detail", "a9-send", "approval", "question", "outputs-sources", "session-menu"].contains(scene) ? "conversationDetail" : nil
+                    if let identifier {
+                        do { _ = try await A10MacReview.wait(identifier) }
+                        catch {
+                            FileHandle.standardOutput.write(Data(("A5_CAPTURE_FAILED:missing scene: " + identifier + "\n").utf8))
+                            Darwin.exit(1)
+                        }
+                    }
+                }
                 // Capture only this process's own displayed window; never enumerate other apps.
                 typealias WindowImages = @convention(c) (CGRect, CFArray, UInt32) -> Unmanaged<CGImage>?
                 let settingsCapture = argsForSettingsCapture()
-                let windows = NSApplication.shared.orderedWindows.filter { $0.isVisible && (!settingsCapture || $0.title != "WeftMate") }
+                let windows = NSApplication.shared.orderedWindows.filter { $0.isVisible && (!settingsCapture || A10MacReview.find("settingsPage." + model.settingsRoute.categoryID, in: $0) != nil) }
                 if settingsCapture {
                     // The launch workaround can refocus the main window. Capture the
                     // independent settings window in its actual active appearance.
@@ -167,7 +198,7 @@ private struct MacWorkspace: View {
                 model.settingsRoute = .init(categoryID: String(category.dropFirst(9))); openWindow(id: "settings")
             case "conversation-forget":
                 if let conversation = model.conversations.first(where: { $0.title == "可遗忘的合成对话" }) { selected = .conversation(conversation.id) }
-            case "a9-detail", "a9-send", "conversation", "composer-context", "approval", "question", "outputs-sources", "session-menu":
+            case "a10-all", "a9-detail", "a9-send", "conversation", "composer-context", "approval", "question", "outputs-sources", "session-menu":
                 if let conversation = model.conversations.first(where: { $0.title == "整理项目资料" }) { selected = .conversation(conversation.id) }
             default: selected = nil
             }
