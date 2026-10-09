@@ -100,7 +100,7 @@ private struct SavedTaskResponse: Codable {
         do {
             let detail = try await client.timelineDetail(sessionID: approval.sessionId, seq: seq)
             guard isCurrent, !Task.isCancelled else { return }
-            readableApprovals[approval.id] = ReadableToolSummary.text(tool: approval.toolName, raw: detail.text)
+            readableApprovals[approval.id] = "要" + ToolProgressSummary.readable(tool: approval.toolName, raw: detail.text)
             approvalDetails[approval.id] = detail.text
         } catch { /* The authorized human reason remains available if detail cannot be read. */ }
     }
@@ -193,6 +193,24 @@ private struct SavedTaskResponse: Codable {
         response("question:" + batch.id)?.question?.answer.answers ?? batch.answer?.answers
     }
     func responseNeedsReadback(_ key: String) -> Bool { response(key)?.registered == false }
+    func approvalHeadline(_ approval: SessionApproval) -> String {
+        if let known = readableApprovals[approval.id] { return known }
+        if let range = approval.reason.range(of: "\n{") {
+            let raw = String(approval.reason[approval.reason.index(before: range.upperBound)...])
+            return "要" + ToolProgressSummary.readable(tool: approval.toolName, raw: raw)
+        }
+        return approval.readableSummary
+    }
+    var pendingApprovals: [SessionApproval] {
+        approvals.filter { $0.canDecide && (currentApprovals.contains($0.id) || hasSaved("approval:" + $0.id)) && response("approval:" + $0.id)?.registered != true }
+            .sorted { $0.createdAt == $1.createdAt ? $0.id < $1.id : $0.createdAt < $1.createdAt }
+    }
+    func decisionLabel(for step: TimelineStep) -> String? {
+        guard let row = approvals.first(where: { $0.callId == step.data["callId"]?.string || $0.callId == step.data["stepId"]?.string }) else { return step.decision }
+        let record = response("approval:" + row.id)
+        let outcome = row.outcome?.rawValue ?? row.decisionOutcome?.rawValue ?? (record?.registered == true ? record?.approval?.outcome.rawValue : nil)
+        return outcome == "allowed-once" ? "已批准" : outcome == "rejected" ? "已拒绝" : step.decision
+    }
     var needsObservation: Bool {
         approvals.contains { !$0.status.isTerminal } || questions.contains { !$0.status.isTerminal }
     }

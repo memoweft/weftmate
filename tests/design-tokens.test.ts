@@ -51,3 +51,12 @@ test('Apple views consume generated typed tokens compiled by all three native ta
     assert.ok(declaration?.includes(relativeSource), `${target} does not compile generated tokens`);
   }
 });
+
+test('named shared spacing tokens generate valid Swift declarations', () => {
+  const generated = readFileSync(resolve(root, 'design/tokens/generated/apple/DesignTokens.swift'), 'utf8');
+  assert.match(generated, /public static let psettings_nav_gap: CGFloat = 4/);
+  for (const [, declaration] of generated.matchAll(/public static let ([^=\n]+)=/g)) {
+    const name = declaration.split(':')[0].trim();
+    assert.match(name, /^[A-Za-z_][A-Za-z0-9_]*$/, `Invalid Swift token declaration: ${name}`);
+  }
+});

@@ -9,15 +9,13 @@ struct ConversationTimelineView: View {
     let openArtifact: (TimelineEvent) -> Void
     let openMemory: (TimelineEvent) -> Void
     let openSources: () -> Void
-    @StateObject private var interactions: TaskInteractionModel
+    @ObservedObject var interactions: TaskInteractionModel
     @StateObject private var commands: TaskDirectoryModel
     @Environment(\.scenePhase) private var scenePhase
-    init(appModel: AppleAppModel, conversation: ConversationSummary, sessionID: String,
+    init(appModel: AppleAppModel, conversation: ConversationSummary, sessionID: String, interactions: TaskInteractionModel,
          openAttachment: @escaping (ConversationAttachmentReference) -> Void, openArtifact: @escaping (TimelineEvent) -> Void, openMemory: @escaping (TimelineEvent) -> Void, openSources: @escaping () -> Void) {
         self.appModel = appModel; self.conversation = conversation; self.sessionID = sessionID; self.openAttachment = openAttachment; self.openArtifact = openArtifact; self.openMemory = openMemory; self.openSources = openSources
-        _interactions = StateObject(wrappedValue: TaskInteractionModel(client: appModel.assistantClient, account: appModel.session,
-            epoch: appModel.accountEpoch, stateDirectory: appModel.assistantStateDirectory,
-            currentEpoch: { [weak appModel] in appModel?.accountEpoch ?? UUID() }, currentSession: { [weak appModel] in appModel?.session }))
+        self.interactions = interactions
         _commands = StateObject(wrappedValue: TaskDirectoryModel(client: appModel.assistantClient, sessionId: sessionID,
             expectedHostId: appModel.session?.hostId ?? "", accountEpoch: appModel.accountEpoch,
             currentEpoch: { [weak appModel] in appModel?.accountEpoch ?? UUID() }, currentSession: { [weak appModel] in appModel?.session }))
@@ -26,10 +24,10 @@ struct ConversationTimelineView: View {
         ForEach(appModel.messages.filter { !$0.id.hasPrefix("host|") && !$0.pendingContext && !appModel.timelineMessageIDs.values.contains($0.id) }) { message in
             MessageView(model: appModel, message: message, openAttachment: openAttachment).id(message.id)
         }
-        ForEach(TimelineProjection.entries(appModel.timeline.events)) { entry in
+        ForEach(TimelineProjection.conversationEntries(appModel.timeline.events)) { entry in
             VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
                 if !entry.steps.isEmpty {
-                    TimelineExecutionBlock(client: appModel.assistantClient, sessionID: sessionID, entry: entry, openSources: openSources)
+                    TimelineExecutionBlock(client: appModel.assistantClient, sessionID: sessionID, entry: entry, interactions: interactions, openSources: openSources)
                         .id(entry.id + appModel.accountEpoch.uuidString)
                 } else if entry.event.type.hasSuffix(".message") {
                     if let message = appModel.messages.first(where: { $0.id == (appModel.timelineMessageIDs[entry.seq] ?? "host|\(sessionID)|\(entry.seq)") }) {
@@ -47,16 +45,13 @@ struct ConversationTimelineView: View {
                                 .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                         }.buttonStyle(.plain).accessibilityIdentifier("memoryUsed.\(entry.seq)")
                     }
-                    if appModel.taskControlSessions.contains(sessionID), let receipt = entry.event.data["receiptId"]?.string,
-                       let command = commands.rootCommands.first(where: { $0.receiptId == receipt }) {
-                        TimelineTaskControl(appModel: appModel, command: command).id(command.id + appModel.accountEpoch.uuidString)
-                    }
-                } else if entry.event.type.hasPrefix("approval.") || entry.event.type.hasPrefix("question.") {
+
+                } else if entry.event.type.hasPrefix("question.") {
                     TimelineInteractionCard(model: interactions, entry: entry, events: appModel.timeline.events)
                 } else if entry.event.type == "artifact.created" {
                     TimelineArtifactCard(appModel: appModel, sessionID: sessionID, entry: entry, openPreview: openArtifact)
                         .id(entry.id + appModel.accountEpoch.uuidString)
-                } else { Text("排队中").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
+                } else if entry.event.type == "task.queued" { Text("排队中").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
             }.id(entry.id)
         }
         // Original sync messages are outside the DSH sequence space.
@@ -64,67 +59,79 @@ struct ConversationTimelineView: View {
             MessageView(model: appModel, message: message, openAttachment: openAttachment).id(message.id)
         }
         if commands.hasMore {
-            Button("查看更早记录") { Task { await commands.loadMore() } }.font(AppleTokens.Fonts.caption)
+            Button("查看更早记录") { Task { await commands.loadMore(); publishRootCommands() } }.font(AppleTokens.Fonts.caption)
         }
         if let error = interactions.approvalError ?? interactions.questionError { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
         if let error = interactions.persistenceError { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
         AppleTokens.Colors.clear.frame(height: 0)
-            .task(id: "\(scenePhase)|\(appModel.historyCachedAt != nil)|\(appModel.historyBusy)|\(appModel.timeline.events.last?.seq ?? -1)") {
+            .task(id: "\(scenePhase)|\(appModel.historyCachedAt != nil)|\(appModel.historyBusy)|\(appModel.taskControlSessions.contains(sessionID))|\(conversation.running)") {
                 guard scenePhase == .active, !appModel.historyBusy, appModel.historyCachedAt == nil else { interactions.suspend(); commands.suspend(); return }
-                interactions.activate(); commands.activate()
-                if appModel.taskControlSessions.contains(sessionID) {
-                    await commands.refresh()
-                    if appModel.selectedConversation?.id == conversation.id { appModel.timelineRootCommands = commands.rootCommands }
-                }
+                commands.suspend(); commands.activate(); interactions.activate()
                 var policy = ConversationPollingPolicy()
                 while !Task.isCancelled {
-                    let old = interactions.approvals, oldQuestions = interactions.questions
+                    let old = interactions.approvals, oldQuestions = interactions.questions, oldRoots = commands.rootCommands
+                    if appModel.taskControlSessions.contains(sessionID) {
+                        await commands.refresh()
+                        guard !Task.isCancelled else { return }
+                        publishRootCommands()
+                    }
                     await interactions.refreshTimeline(sessionID: sessionID)
-                    do { try await Task.sleep(nanoseconds: policy.delayNanoseconds(madeProgress: old != interactions.approvals || oldQuestions != interactions.questions)) }
+                    do { try await Task.sleep(nanoseconds: policy.delayNanoseconds(madeProgress: conversation.running || old != interactions.approvals || oldQuestions != interactions.questions || oldRoots != commands.rootCommands)) }
                     catch { return }
                 }
-            }
-            .onChange(of: commands.rootCommands) { _, value in
-                if appModel.selectedConversation?.id == conversation.id { appModel.timelineRootCommands = value }
             }
             .onDisappear { interactions.suspend(); commands.suspend() }
             .onChange(of: appModel.accountEpoch) { _, _ in interactions.cancel(); commands.cancel() }
     }
+    private func publishRootCommands() {
+        guard commands.scopeIsCurrent, !commands.loading, commands.error == nil,
+              appModel.selectedConversation?.id == conversation.id else { return }
+        appModel.timelineRootCommands = commands.rootCommands
+    }
+
 }
 
 struct TimelineExecutionBlock: View {
     let client: PersonalClient
     let sessionID: String
     let entry: TimelineEntry
+    @ObservedObject var interactions: TaskInteractionModel
     let openSources: () -> Void
     @State private var expanded = false
     @State private var initialized = false
-    #if os(macOS)
-    private let desktop = true
-    #else
-    private let desktop = false
-    #endif
+    @StateObject private var progress = ToolProgressModel()
+    private var failed: Bool { entry.steps.contains { $0.effectiveState == "failed" } }
+    private var summary: String {
+        guard entry.running, !failed, let step = entry.steps.last(where: \.running) else { return ToolProgressSummary.text(entry) }
+        let pending = interactions.pendingApprovals.contains { $0.callId == step.data["stepId"]?.string }
+        return (pending ? "等待批准：" : "正在") + progress.summary(step) + "…"
+    }
     var body: some View {
         VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
             Button { withAnimation(AppleTokens.Motion.disclosure) { expanded.toggle() } } label: {
                 HStack {
-                    WeftLabel(entry.running ? "正在执行 \(entry.steps.count) 步" : "执行了 \(entry.steps.count) 步 · 用时 \(entry.elapsed)",
-                          icon: entry.running ? "tool" : "allow")
+                    Text(summary)
                     Spacer(minLength: AppleTokens.Space.p4)
                     WeftIcon(expanded ? "chevron" : "right")
-                }.font(AppleTokens.Fonts.callout).foregroundStyle(Weave.secondary).contentShape(Rectangle()).frame(minHeight: 28)
+                }.font(AppleTokens.Fonts.caption).foregroundStyle(entry.steps.contains { $0.effectiveState == "failed" } ? Weave.danger : Weave.muted).contentShape(Rectangle()).frame(minHeight: 28)
             }.buttonStyle(.plain).accessibilityIdentifier("executionBlock.\(entry.seq)")
                 .accessibilityValue(expanded ? "已展开" : "已收起")
             if expanded {
                 Button("查看来源") { openSources() }.font(AppleTokens.Fonts.caption).accessibilityIdentifier("executionSources.\(entry.seq)")
+                VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
                 ForEach(entry.steps) { step in
-                    TimelineStepView(client: client, sessionID: sessionID, step: step, running: entry.running)
-                }.transition(.opacity.combined(with: .move(edge: .top)))
+                    TimelineStepView(client: client, sessionID: sessionID, step: step, running: entry.running, decision: interactions.decisionLabel(for: step), progress: progress)
+                }
+                }.padding(AppleTokens.Space.p10).overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r12).strokeBorder(Weave.line))
+                .transition(.opacity)
             }
         }
         .padding(.vertical, AppleTokens.Space.p6)
-        .onAppear { if !initialized { expanded = entry.running && desktop; initialized = true } }
-        .onChange(of: entry.running) { _, running in withAnimation(AppleTokens.Motion.disclosure) { expanded = running && desktop } }
+        .task(id: entry.steps.last(where: \.running)?.detailSeq) {
+            if let step = entry.steps.last(where: \.running), entry.running { await progress.read(client: client, sessionID: sessionID, step: step) }
+        }
+        .onAppear { if !initialized { expanded = failed; initialized = true } }
+        .onChange(of: failed) { _, value in if value { expanded = true } }
     }
 }
 private struct TimelineStepView: View {
@@ -132,15 +139,16 @@ private struct TimelineStepView: View {
     let sessionID: String
     let step: TimelineStep
     let running: Bool
+    let decision: String?
+    @ObservedObject var progress: ToolProgressModel
     @State private var expanded = false
-    @State private var detail: TimelineDetail?
-    @State private var error: String?
-    @State private var loading = false
+    private var detail: TimelineDetail? { step.detailSeq.flatMap { progress.details[$0] } }
+    private var error: String? { step.detailSeq.flatMap { progress.errors[$0] } }
     var body: some View {
         VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
             Button { withAnimation(AppleTokens.Motion.disclosure) { expanded.toggle() } } label: {
                 HStack(alignment: .top) {
-                    Text(step.summary + (step.running && running ? " · 运行中" : step.data["state"]?.string == "failed" ? " · 未完成" : ""))
+                    Text(progress.summary(step) + (decision.map { " · " + $0 } ?? "") + (step.running && running ? " · 运行中" : step.effectiveState == "failed" ? " · 失败" : ""))
                         .font(AppleTokens.Fonts.callout).multilineTextAlignment(.leading)
                     Spacer(minLength: AppleTokens.Space.p4)
                     WeftIcon(expanded ? "chevron" : "right", size: 16).font(AppleTokens.Fonts.caption)
@@ -148,7 +156,7 @@ private struct TimelineStepView: View {
             }.buttonStyle(.plain).accessibilityIdentifier("executionStep.\(step.seq)")
                 .accessibilityValue(expanded ? "已展开" : "已收起")
             if expanded {
-                if loading { ProgressView() }
+                if detail == nil && error == nil { ProgressView() }
                 if let detail {
                     Text(detail.text + (detail.truncated == true ? "\n[内容已截断]" : ""))
                         .font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
@@ -163,12 +171,11 @@ private struct TimelineStepView: View {
                 if let error { Text(error).font(AppleTokens.Fonts.caption) }
             }
         }
+        .onAppear { if step.effectiveState == "failed" { expanded = true } }
+        .onChange(of: step.effectiveState) { _, value in if value == "failed" { expanded = true } }
         .task(id: "\(expanded)-\(step.detailSeq ?? -1)") {
-            guard expanded, detail?.seq != step.detailSeq, let seq = step.detailSeq else { return }
-            loading = true; error = nil
-            do { let value = try await client.timelineDetail(sessionID: sessionID, seq: seq); if !Task.isCancelled { detail = value } }
-            catch { if !Task.isCancelled { self.error = "暂时无法读取，收起后可重试。" } }
-            loading = false
+            guard expanded else { return }
+            await progress.read(client: client, sessionID: sessionID, step: step)
         }
     }
 }
