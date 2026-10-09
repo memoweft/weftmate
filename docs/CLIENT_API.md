@@ -237,9 +237,6 @@ M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在�
 | GET `/memory/items/{kind}/{itemId}` | 无 | 200 `{"item":{…},"worldRevision":8,"availableActions":{"correct":{"available":true},"mute":{"available":true},"delete":{"available":false,"reasonCode":"MEMORY_DELETE_UNAVAILABLE"}}}` | 404 `NOT_FOUND`；503 `MEMORY_RESPONSE_INVALID` | 桌、手、安、苹 |
 | GET `/memory/items/{kind}/{itemId}/sources` | 无 | 200 `{"sources":[{"evidenceId":"evidence:1","relation":"supports","currentnessState":"current","permissions":{"allowLocalRead":true,"allowCloudRead":false,"allowInference":true},"contentAvailable":true,"summary":"…","rawContent":"…","rawContentTruncated":false,"recordedAt":"…"}],"worldRevision":8}` | 404 `NOT_FOUND`；503 `MEMORY_RESPONSE_INVALID` | 桌、手、安、苹 |
 | GET `/memory/items/{kind}/{itemId}/forget-preview` | 无 | 200 `{ownerId,worldRevision,itemCount,evidenceCount,evidenceIds,items:[{id,kind,text,itemType}]}`；当前项与将级联删除的全部记忆，名称完整返回；原库只读 | 404 `NOT_FOUND`；503记忆不可用 | 桌、手、安（界面）；苹（接口） |
-
-遗忘预览的 `items[].kind` 可为 `interaction_commitment`（交互承诺）；其 `itemType` 为 `commitment` / `recommendation` / `agreement`，与正式项一起计入 `itemCount`，表示将随来源或会话清除的派生记录。此类型只用于预览，独立记忆列表与命令目标的 kind 不扩展。
-
 | GET `/memory/evidence/{evidenceId}/forget-preview` | 无 | 同上，预览单条来源的级联范围 | 同上 | 桌、手、安（界面）；苹（接口） |
 | POST `/memory/items/{kind}/{itemId}/correct` | `requestId,expectedWorldRevision,text`；非entity，非空文字≤4,000 UTF-16 | 200或409 `Receipt` | 422 `MEMORY_ACTION_UNSUPPORTED`；409 `MEMORY_REQUEST_CONFLICT / MEMORY_REPLAY_REDACTED` | 桌、手、安、苹 |
 | POST `/memory/items/{kind}/{itemId}/mute` | `requestId,expectedWorldRevision` | 200或409 `Receipt` | 503 `MEMORY_ACTION_UNSUPPORTED / MEMORY_UNAVAILABLE`；409请求冲突 | 桌、手、安、苹 |
@@ -247,6 +244,8 @@ M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在�
 | DELETE `/memory/evidence/{evidenceId}` | `requestId,expectedWorldRevision`；可选 `deleteConversationSnippets:false`（JSON体） | 200或409 `Receipt` | 404 `NOT_FOUND`；503 `MEMORY_DELETE_UNAVAILABLE` | 桌、手、安、苹 |
 | GET `/memory/commands/by-request/{requestId}` | 无 | 200 `Receipt`（也可包含拒绝/冲突状态） | 404 `NOT_FOUND`；409 `MEMORY_REPLAY_REDACTED` | 桌、手、安、苹 |
 | POST `/memory/commands/by-request/{requestId}/retry-cleanup` | `{}`，≤1 KiB；只重试原删除的底层清理 | 200 `Receipt` | 404 `NOT_FOUND`；422 `MEMORY_ACTION_UNSUPPORTED`；503 `SERVICE_UNAVAILABLE` | 桌、安（能力）、苹 |
+
+遗忘预览的 `items[].kind` 可为 `interaction_commitment`（交互承诺）；其 `itemType` 为 `commitment` / `recommendation` / `agreement`，与正式项一起计入 `itemCount`，表示将随来源或会话清除的派生记录。此类型只用于预览，独立记忆列表与命令目标的 kind 不扩展。
 
 查询对当前账号快照搜索，`query` 经 NFKC/trim/小写规范化；游标绑定账号、kind、query、worldRevision，修订变化后重新查首屏。`currentState` 另可 `not_current`。来源最多200条，摘要≤2,000、原文≤8,192 UTF-16；详情/来源内部大小上限256 KiB。拒绝删除的原因在 `receipt.reasonCode`，可为 `MEMORY_DELETE_CONFLICT / MEMORY_SOURCE_UNRECOVERABLE / MEMORY_DELETE_SOURCE_UNKNOWN / MEMORY_COMMAND_REJECTED`；外层未知错误会投影为 `SERVICE_UNAVAILABLE`。`capabilities.inject` 仅表示能力，当前没有公开「注入/采用记忆」HTTP路由。
 
