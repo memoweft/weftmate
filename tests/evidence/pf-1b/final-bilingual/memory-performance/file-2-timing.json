@@ -1,0 +1,98 @@
+[
+  {
+    "foreground": false,
+    "firstTextMs": null,
+    "firstDeltaMs": 400.8530999999998,
+    "turnFirstTextMs": null,
+    "turnFirstDeltaMs": 1231.2316999999998,
+    "totalMs": 1290.5769,
+    "text": "",
+    "tools": [],
+    "usage": {
+      "completion_tokens": 64,
+      "prompt_tokens": 141,
+      "total_tokens": 205,
+      "prompt_tokens_details": {
+        "cached_tokens": 136
+      }
+    }
+  },
+  {
+    "foreground": true,
+    "firstTextMs": null,
+    "firstDeltaMs": 2133.1591999999996,
+    "turnFirstTextMs": null,
+    "turnFirstDeltaMs": 2960.1513999999997,
+    "totalMs": 5656.634699999999,
+    "text": "",
+    "tools": [
+      "load_tools"
+    ],
+    "usage": {
+      "completion_tokens": 178,
+      "prompt_tokens": 2452,
+      "total_tokens": 2630,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  },
+  {
+    "foreground": true,
+    "firstTextMs": null,
+    "firstDeltaMs": 1172.5468,
+    "turnFirstTextMs": null,
+    "turnFirstDeltaMs": 7692.1908,
+    "totalMs": 2604.1584000000003,
+    "text": "",
+    "tools": [
+      "load_tools"
+    ],
+    "usage": {
+      "completion_tokens": 72,
+      "prompt_tokens": 2697,
+      "total_tokens": 2769,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  },
+  {
+    "foreground": true,
+    "firstTextMs": null,
+    "firstDeltaMs": 1270.0200000000004,
+    "turnFirstTextMs": null,
+    "turnFirstDeltaMs": 10432.3935,
+    "totalMs": 2039.4218,
+    "text": "",
+    "tools": [
+      "read"
+    ],
+    "usage": {
+      "completion_tokens": 56,
+      "prompt_tokens": 2994,
+      "total_tokens": 3050,
+      "prompt_tokens_details": {
+        "cached_tokens": 1989
+      }
+    }
+  },
+  {
+    "foreground": true,
+    "firstTextMs": 2330.9197999999997,
+    "firstDeltaMs": 1306.6304999999993,
+    "turnFirstTextMs": 13568.6652,
+    "turnFirstDeltaMs": 12544.3759,
+    "totalMs": 2779.423100000002,
+    "text": "文件 `pf1-input.txt` 原文：\n\n```\nPF1_SYNTHETIC_OK\n```",
+    "tools": [],
+    "usage": {
+      "completion_tokens": 65,
+      "prompt_tokens": 3171,
+      "total_tokens": 3236,
+      "prompt_tokens_details": {
+        "cached_tokens": 1989
+      }
+    }
+  }
+]

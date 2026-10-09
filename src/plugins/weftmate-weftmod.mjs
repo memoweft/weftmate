@@ -156,7 +156,10 @@ export function registerWeftMod(ctx, { transport, identity, approve }) {
     runtimeCtx.on('agent/pre-step', async (payload, next) => {
       const decision = await next()
       if (decision.kind !== 'enter') return decision
-      const guide = `${TOOL_GUIDE}\nCurrent workspace: ${payload.agent?.session?.header?.cwd ?? 'not set'}. File tools resolve relative paths here. weftmod_script help also returns this workspace path.`
+      const loaded = payload.agent?.[Symbol.for('weftmate.loadedTools')];
+      const deferred = payload.agent?.session?.header?.agentPreset === 'personal-remote' &&
+        !loaded?.has('weftmod') && !loaded?.has('weftmod_script');
+      const guide = `${deferred ? 'Windows desktop and Android automation are available through weftmod and weftmod_script. Load these tools when needed; their full workflow guidance follows after loading.' : TOOL_GUIDE}\nCurrent workspace: ${payload.agent?.session?.header?.cwd ?? 'not set'}.`
       const hasGuide = message => message.source?.kind === 'plugin' && message.source.plugin === 'weftmod'
         && message.content?.some(block => block.type === 'text' && block.text === guide)
       // Read the live surface, so restored sessions deduplicate and compaction

@@ -37,6 +37,12 @@ globalThis.m2ExitBreakCore = () => {
 await import('./baseline-request-trace.mjs');
 registerHooks({ load(url, context, nextLoad) {
   const file = name => pathToFileURL(resolve(repository, name)).href;
+  if (process.env.WEFTMATE_BASELINE_RECALL_TRACE && url === file('src/personal-memory/index.mjs')) {
+    const source = "import { appendFileSync as trackRecall } from 'node:fs';\n" + readFileSync(new URL(url), 'utf8')
+      .replace("const contextText = fragments.join('\\n\\n').slice(0, recallMaxChars);",
+        "const contextText = fragments.join('\\n\\n').slice(0, recallMaxChars); trackRecall(process.env.WEFTMATE_BASELINE_RECALL_TRACE, JSON.stringify({query,sessionId,recallMaxItems,recallMaxChars,world,style,identity,interaction,contextText,memories})+'\\n');");
+    return { format: 'module', source, shortCircuit: true };
+  }
   if (url === file('src/config-store.ts')) {
     const source = readFileSync(new URL(url), 'utf8')
       .replace('return readSecrets().credentials[id] ?? null;', 'return globalThis.m2ExitKeys.get(id) ?? null;')

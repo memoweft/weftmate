@@ -1,13 +1,22 @@
 // Isolated baseline entry: memory-only vault and a timing-only DSH preload.
 import { app } from 'electron';
 import { registerHooks } from 'node:module';
-import { readFileSync } from 'node:fs';
+import { readFileSync, appendFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 const repository = resolve(import.meta.dirname, '../..');
 app.getAppPath = () => repository;
 await import('./baseline-request-trace.mjs');
 registerHooks({ load(url, context, nextLoad) {
+  if (process.env.WEFTMATE_BASELINE_FORMATION_WAIT_MS && url === pathToFileURL(resolve(repository, 'src/personal-memory/index.mjs')).href) {
+    // Explicit fixture configuration reproduces M2f's original formation wait.
+    // Product startup continues to use the unchanged default of zero.
+    const source = readFileSync(new URL(url), 'utf8').replace('formationWaitMs = 0,',
+      'formationWaitMs = Number(process.env.WEFTMATE_BASELINE_FORMATION_WAIT_MS),');
+    appendFileSync(process.env.WEFTMATE_BASELINE_TRACE, JSON.stringify({kind:'formation-fixture',
+      waitMs:Number(process.env.WEFTMATE_BASELINE_FORMATION_WAIT_MS), at:new Date().toISOString()})+'\n');
+    return { format: 'module', source, shortCircuit: true };
+  }
   if (url === pathToFileURL(resolve(repository, 'src/personal-memory/rpc.mjs')).href) {
     const source = "import { appendFileSync as appendCoreLog } from 'node:fs';\n" + readFileSync(new URL(url), 'utf8')
       .replace('child.stderr.resume();', `child.stderr.on('data', part => appendCoreLog(process.env.WEFTMATE_BASELINE_TRACE.replace('requests.jsonl', 'core.log'), String(part)));`);

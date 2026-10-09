@@ -1,0 +1,78 @@
+[
+  {
+    "foreground": true,
+    "firstTextMs": null,
+    "firstDeltaMs": 1047.1632,
+    "turnFirstTextMs": null,
+    "turnFirstDeltaMs": 1800.6834,
+    "totalMs": 4145.7819,
+    "text": "",
+    "tools": [
+      "load_tools"
+    ],
+    "usage": {
+      "completion_tokens": 160,
+      "prompt_tokens": 2451,
+      "total_tokens": 2611,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  },
+  {
+    "foreground": false,
+    "firstTextMs": null,
+    "firstDeltaMs": 4292.9605,
+    "turnFirstTextMs": null,
+    "turnFirstDeltaMs": 5047.9745,
+    "totalMs": 5156.0937,
+    "text": "",
+    "tools": [],
+    "usage": {
+      "completion_tokens": 64,
+      "prompt_tokens": 141,
+      "total_tokens": 205,
+      "prompt_tokens_details": {
+        "cached_tokens": 136
+      }
+    }
+  },
+  {
+    "foreground": true,
+    "firstTextMs": null,
+    "firstDeltaMs": 1966.0913,
+    "turnFirstTextMs": null,
+    "turnFirstDeltaMs": 6915.215,
+    "totalMs": 2881.6337000000003,
+    "text": "",
+    "tools": [
+      "read"
+    ],
+    "usage": {
+      "completion_tokens": 56,
+      "prompt_tokens": 2835,
+      "total_tokens": 2891,
+      "prompt_tokens_details": {
+        "cached_tokens": 1989
+      }
+    }
+  },
+  {
+    "foreground": true,
+    "firstTextMs": 2219.9846,
+    "firstDeltaMs": 1200.6921999999995,
+    "turnFirstTextMs": 10096.4746,
+    "turnFirstDeltaMs": 9077.1822,
+    "totalMs": 2537.441500000001,
+    "text": "文件原文：\n\nPF1_SYNTHETIC_OK",
+    "tools": [],
+    "usage": {
+      "completion_tokens": 66,
+      "prompt_tokens": 3011,
+      "total_tokens": 3077,
+      "prompt_tokens_details": {
+        "cached_tokens": 1989
+      }
+    }
+  }
+]
