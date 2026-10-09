@@ -165,18 +165,22 @@ struct ProjectConversationSheet: View {
                 .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
             Picker("项目对话使用的电脑模型", selection: $app.projectModelID) {
                 ForEach(app.projectModels) { Text($0.name).tag($0.id) }
-            }.accessibilityIdentifier("projectConversationModel")
+            }.disabled(app.projectBusy || app.projectCreatedSessionID != nil).accessibilityIdentifier("projectConversationModel")
             Text(app.projectModels.isEmpty ? "请先在电脑配置可用模型。" : app.projectConversation?.permission == .readOnly ? "此项目只读，可阅读与分析资料。" : "可读写项目文件，危险操作仍需审批。")
                 .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+            if app.projectModels.first(where: { $0.id == app.projectModelID })?.deepThinking?.supported == true {
+                Toggle("深入思考", isOn: $app.projectThinking).disabled(app.projectBusy).accessibilityIdentifier("draftThinking")
+            }
             if let error = app.projectError { InlineNotice(message: error, isError: true) }
             HStack {
                 Button("取消") { app.projectConversation = nil }.disabled(app.projectBusy)
                 Spacer()
-                Button(app.projectBusy ? "正在新建…" : "新建对话") { Task { await app.createProjectConversation() } }
+                Button(app.projectBusy ? "正在保存…" : app.projectCreatedSessionID == nil ? "新建对话" : "重试保存") { Task { await app.createProjectConversation() } }
                     .disabled(app.projectBusy || app.projectModelID.isEmpty).accessibilityIdentifier("projectStartConversation")
             }
         }.padding(AppleTokens.Space.p24).background(Weave.surface).foregroundStyle(Weave.ink)
             .accessibilityElement(children: .contain).accessibilityIdentifier("projectConversationSheet")
+            .interactiveDismissDisabled(app.projectBusy)
             #if os(macOS)
             .frame(minWidth: 480, idealWidth: 560)
             #endif

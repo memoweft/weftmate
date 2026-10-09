@@ -73,6 +73,7 @@ struct EditableSessionRow: View {
     var selected = false
     @FocusState private var editing: Bool
     @State private var hovering = false
+    @FocusState private var rowFocused: Bool
     var body: some View {
         Group {
             if app.renamingSessionID == conversation.id {
@@ -88,15 +89,32 @@ struct EditableSessionRow: View {
                 }.onAppear { editing = true }
             } else {
                 HStack {
-                    ConversationRow(conversation: conversation, selected: selected)
+                    ConversationRow(conversation: conversation, selected: selected).accessibilityIdentifier("conversationRow." + conversation.id)
                     Spacer(minLength: AppleTokens.Space.p4)
                     #if os(macOS)
+                    Button { Task { await app.updateMetadata(conversation, pinned: !conversation.pinned) } } label: { WeftIcon("pin", size: 16) }
+                        .buttonStyle(.plain).opacity(hovering || rowFocused ? 1 : 0).disabled(app.lifecycleBusy)
+                        .accessibilityLabel(conversation.pinned ? "取消置顶" : "置顶").accessibilityValue(conversation.pinned ? "已开启" : "已关闭")
+                        .accessibilityIdentifier("sessionPin." + conversation.id)
+                    Button { Task { await app.archive(conversation, archived: true) } } label: { WeftIcon("archive", size: 16) }
+                        .buttonStyle(.plain).opacity(hovering || rowFocused ? 1 : 0).disabled(app.lifecycleBusy)
+                        .accessibilityLabel("归档").accessibilityIdentifier("sessionArchive." + conversation.id)
                     Menu { SessionActions(app: app, conversation: conversation) } label: { WeftIcon("more", size: 16) }
-                        .menuStyle(.borderlessButton).fixedSize().opacity(hovering ? 1 : 0)
+                        .menuStyle(.borderlessButton).fixedSize().opacity(hovering || rowFocused ? 1 : 0)
                         .accessibilityLabel("对话操作：" + conversation.title)
                     #endif
                 }
-                .onHover { hovering = $0 }
+                #if os(macOS)
+                .background(SessionHoverRegion { hovering = $0; if !$0, app.hoveredSession?.id == conversation.id { app.hoveredSession = nil } })
+                .focusable().focused($rowFocused)
+                .task(id: hovering) {
+                    guard hovering else { return }
+                    do { try await Task.sleep(for: .milliseconds(500)) } catch { return }
+                    if hovering { app.hoveredSession = conversation }
+                }
+                .anchorPreference(key: SessionRowBounds.self, value: .bounds) { [conversation.id: $0] }
+                .onDisappear { if app.hoveredSession?.id == conversation.id { app.hoveredSession = nil } }
+                #endif
                 .contextMenu { SessionActions(app: app, conversation: conversation) }
             }
         }

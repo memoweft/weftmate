@@ -1,0 +1,354 @@
+{
+  "syntheticOnly": true,
+  "originalUnmodifiedPNGs": true,
+  "screenshots": [
+    {
+      "file": "mac-light/account-menu.png",
+      "sha256": "e37ab5e00e743a5738835560a4cdfa470fb8612f7af9eb9893fd7a04079a77fc",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-light/archive-undo.png",
+      "sha256": "08e5012f817c8287a8c02d9e4576abf80c2b64683708d7963ed767e0dabd2c37",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-light/draft-thinking-retry.png",
+      "sha256": "736e41d073e12329c57948010e70073c409535dca9d78ba2731b77131e2d5214",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-light/draft-thinking-saved.png",
+      "sha256": "94bb6405ed26e33741f211bf6420b06908ddb0a8f66244a8397992e41f069c76",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-light/hover-details.png",
+      "sha256": "43d2cc8c3f561ad472aff898413f7a2c85a4a2dc8c867942679b811df6894de0",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-light/narrow.png",
+      "sha256": "a5e53ce26c5cb8d743ce873af8a7587bfe2258e6c3ea2c9e2582c295dd5411a7",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-light/plus-menu.png",
+      "sha256": "964b9799fbb301b931de9e8993158a7098cc9dfac697e72ea56f862b03a4994b",
+      "width": 780,
+      "height": 745
+    },
+    {
+      "file": "mac-light/project-expanded.png",
+      "sha256": "8aca4de1864d1e42af28ff2667124c5c5f23e977e7f61aef235a2c47bd86c4b8",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-light/recent-five.png",
+      "sha256": "d202295434aec9f797eba89679ee29ce1ead2f601d59dc9b304d40bc0fdf5ab1",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-light/running-queue.png",
+      "sha256": "0ba422e339846feb1d7465f81f28324d89f266000b5ac6af9d2b57b2b293b1c5",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-light/running-steer.png",
+      "sha256": "5156af4f91aaf0d67d9ad8faceb61553773eeefaaaa116ee22e2b040457e30e8",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-light/subtask-list.png",
+      "sha256": "420fc34c4093432dc8af0c2ccda733a35068a626d3190498008aacf3e7ce793a",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-light/subtask-step.png",
+      "sha256": "5c13ba1ccf2336c72dc41e7fd6e627f2e08e86db048cbfee4a56fe3d203caa80",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-light/subtasks-ended.png",
+      "sha256": "0de3ce7d38a8a886f8d67a657576ccf4bfb63d9b6e97e3d56fb18c3e2e596736",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-light/synthetic-attachments.png",
+      "sha256": "56cad4d35c687658118c4bef1c7ad6326d041fa585b5bc07f6d7cbcea5df4793",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-light/thinking-enabled.png",
+      "sha256": "0e5f390191f59fb310d78318407abba6239854bce3ae1ff864d09412f01c3c31",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-dark/account-menu.png",
+      "sha256": "b7580a8ce057cfa09a0b457ed27808c655e5f397e9de82d449f9c1fa7f7983de",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-dark/archive-undo.png",
+      "sha256": "53be405862e055af11279f61b54d93dddecebc7950fedf66a3b7868a6c742eb6",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-dark/draft-thinking-retry.png",
+      "sha256": "3533d0f1063b445dfece3cbbfb574a4b1bb4b09b049554b2658c60bbf055fe50",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-dark/draft-thinking-saved.png",
+      "sha256": "80e64df87c74104d19cf289a136677f5d49750b9afb5ee42c447001e7d6b5f12",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-dark/hover-details.png",
+      "sha256": "6b65a2f0628c1248782236323a4f0e745aaeab16a0da264f4c4227650b9ab7db",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-dark/narrow.png",
+      "sha256": "3f7e783cd48c3afa7790a9e333376a1f2fa9bd523154ad6b666c3ce4e282f931",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-dark/plus-menu.png",
+      "sha256": "a430887dfae0c409ead31d444854d20d39a7e38211726e0e69b5a5951c7546a3",
+      "width": 780,
+      "height": 745
+    },
+    {
+      "file": "mac-dark/project-expanded.png",
+      "sha256": "962b5f73fc99f8404b2a0585ea6091afba32feabaa0aaf87d407d2ac09063773",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-dark/recent-five.png",
+      "sha256": "ca762aa530992c007bc863f50b9f71d422e1328f8bca5d70a5cbe93ab3ae74fe",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-dark/running-queue.png",
+      "sha256": "b09a3aadb6df45689254319bc4e6744d1f8ed417edc67c7958de17ce92b5ec42",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-dark/running-steer.png",
+      "sha256": "446efcb17ab79050ba8de95dd1b1f0da339d3e67192751445ce3930489f9d438",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-dark/subtask-list.png",
+      "sha256": "f378bd1f30fbef9450a1abcad3f3d421f90d1c25d39579791ccba9625009886c",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-dark/subtask-step.png",
+      "sha256": "0a1b3763a3a8699992a8f6ce6928e8ee8aeef10cd5c539b4f04a0c3b21e23baf",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-dark/subtasks-ended.png",
+      "sha256": "c9e02b1609bf772cdb90e650771905d6d528f1f2074043bc8c16160dfa3f7b0b",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-dark/synthetic-attachments.png",
+      "sha256": "a3049e5ddc31e9029abb02191f22ae7028804dce603dd1a6b810b54f5014edd0",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "mac-dark/thinking-enabled.png",
+      "sha256": "97abe664b0ed1d176a9903816d3bbbb3a320777da62ac96ccca92abf776576a9",
+      "width": 780,
+      "height": 640
+    },
+    {
+      "file": "iphone-light/a15-account-menu-light.png",
+      "sha256": "dd63492c519c8896eff5f4d585d12ae7c430f9722c5d05681758e23f6b8ce2ae",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-light/a15-archive-undo-light.png",
+      "sha256": "fcfc0e58b5cf62717502c53b91656cc3814c0e56f71c0d7a93207b4e8c7d5ade",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-light/a15-plus-menu-light.png",
+      "sha256": "71de0eae663ac9a8c1e1496bc21e7b842c5c119ffc6487ead1c3c8c5f3321ac2",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-light/a15-project-expanded-light.png",
+      "sha256": "ff0355907185061dd8a5038620a660368a10b075cefbdc89c89796ff54fc2a52",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-light/a15-recent-five-light.png",
+      "sha256": "122e04c7c2716d6e572d2c326163064808d19cf3f4840b476835851365426d3f",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-light/a15-running-queue-light.png",
+      "sha256": "bf99f4611aefcec48775c032efc089ffd2d5611f2430dcceefe081fee4572bc0",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-light/a15-running-steer-light.png",
+      "sha256": "7cc0b608d66f9e82aac086199c55acd4cc52b69b61b87a7e7cd81664ee46a198",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-light/a15-settings-usage-light.png",
+      "sha256": "1a3d17af460a420203a6917277f9727b7a8888c7a7378ec63a4777c10cd125b7",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-light/a15-subtask-list-light.png",
+      "sha256": "0e534c107daae5c34ff0929023177f516a1769baf24ee112bbdd07c2d11342ab",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-light/a15-subtask-step-light.png",
+      "sha256": "2111b27f00e4170d54c54ff5bdfa877a3940821d0c596d9c4100d33caf8685a0",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-light/a15-subtasks-ended-light.png",
+      "sha256": "a8ef8ddc58fa9bcb5be2a8ef86e0b6d3488d51800b40bf33752d704b094e4e58",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-light/a15-synthetic-attachments-light.png",
+      "sha256": "d64f538c2acb6e51faa53de93871f58de8e80b535e9b97e2ddf42a751093ac29",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-light/a15-thinking-enabled-light.png",
+      "sha256": "0e3f3841f13834dceddfff6f964a1cb0a6cb3cce8a3bdef749b09dc5105ee159",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-dark/a15-account-menu-dark.png",
+      "sha256": "69ac15ec95b7a3a8acbc74f2f349673ab6baa4ead05b4b039676a433840a226f",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-dark/a15-archive-undo-dark.png",
+      "sha256": "6449e567475f1e2f205d4bb93875711aa9c30d855c4845e2077a563adfc45627",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-dark/a15-plus-menu-dark.png",
+      "sha256": "6865c2b67223762cf21e93602ccf3d97a894f2150ebbbac77805ca4de675cc7c",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-dark/a15-project-expanded-dark.png",
+      "sha256": "1f14b45c50dadf30355f0e3a5d0f400200f880c1ec6b5742d44c4591cc316563",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-dark/a15-recent-five-dark.png",
+      "sha256": "174cd937217457a9c3e79cd3c4f83be50569ae8dc360b6bd80cf9687f5eea6c6",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-dark/a15-running-queue-dark.png",
+      "sha256": "41c13659f87e298cbb8b3c05f622be6c8e328669af8860fc89367ea3c208f1d5",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-dark/a15-running-steer-dark.png",
+      "sha256": "081450dc0aaeeb11d482ad90df2d5dcf37ea3ea79382b7f803b8e893d0247997",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-dark/a15-settings-usage-dark.png",
+      "sha256": "9281aa99de3e2097c490f8973981f86b12aca4a91507a38e7cd379ac2795b242",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-dark/a15-subtask-list-dark.png",
+      "sha256": "b4ba8c43a538b582665fa973c1f2023247256045744feeceb875dcaf28934e44",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-dark/a15-subtask-step-dark.png",
+      "sha256": "deaeeaf1b7d867c2901ef64a449d2cb0a72c2fad92576cb436ff37812b52205a",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-dark/a15-subtasks-ended-dark.png",
+      "sha256": "c42291a8cbcd3000c433ea4c71ab66a95f2a73113360227672cc49908d59f9dd",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-dark/a15-synthetic-attachments-dark.png",
+      "sha256": "c0981efddb4d3f2c0556a89b653c53953ffaa2292c28e1b0d14966340ceb16f9",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-dark/a15-thinking-enabled-dark.png",
+      "sha256": "a29737797cae3c5203bc1d3cbf354cd7af21869c9da4aa292341409bc3b4e69c",
+      "width": 1206,
+      "height": 2622
+    }
+  ]
+}
