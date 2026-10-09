@@ -193,8 +193,16 @@ private struct SavedTaskResponse: Codable {
         response("question:" + batch.id)?.question?.answer.answers ?? batch.answer?.answers
     }
     func responseNeedsReadback(_ key: String) -> Bool { response(key)?.registered == false }
+    func approvalHeadline(_ approval: SessionApproval) -> String {
+        if let known = readableApprovals[approval.id] { return known }
+        if let range = approval.reason.range(of: "\n{") {
+            let raw = String(approval.reason[approval.reason.index(before: range.upperBound)...])
+            return "要" + ToolProgressSummary.readable(tool: approval.toolName, raw: raw)
+        }
+        return approval.readableSummary
+    }
     var pendingApprovals: [SessionApproval] {
-        approvals.filter { $0.canDecide && currentApprovals.contains($0.id) && response("approval:" + $0.id)?.registered != true }
+        approvals.filter { $0.canDecide && (currentApprovals.contains($0.id) || hasSaved("approval:" + $0.id)) && response("approval:" + $0.id)?.registered != true }
             .sorted { $0.createdAt == $1.createdAt ? $0.id < $1.id : $0.createdAt < $1.createdAt }
     }
     func decisionLabel(for step: TimelineStep) -> String? {
