@@ -77,32 +77,32 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
     function editProject(project = null) {
         if (!canManageProjectFolders()) return;
         const dialog = ui.element('dialog', 'dialog project-dialog'); dialog.setAttribute('aria-label', project ? '项目设置' : '新建项目');
-        const form = ui.element('form', 'dialog-body'); form.append(ui.element('h2', '', project ? '项目设置' : '新建项目'));
-        const field = (caption, control) => { const label = ui.element('label', 'project-field', caption); label.append(control); form.append(label); control.setAttribute('aria-label', caption); return control; };
+        const form = ui.element('form'), body = ui.element('div', 'dialog-body'); body.append(ui.element('h2', '', project ? '项目设置' : '新建项目'));
+        const field = (caption, control) => { const label = ui.element('label', 'project-field', caption); label.append(control); body.append(label); control.setAttribute('aria-label', caption); return control; };
         let folder;
         const name = ui.element('input'); name.value = project?.name || ''; name.required = true; name.maxLength = 80;
         if (!project) {
-            form.append(ui.element('p', 'muted', '一个项目对应电脑上的一个文件夹。项目对话默认在这里读写文件和运行命令。'));
+            body.append(ui.element('p', 'muted', '一个项目对应电脑上的一个文件夹。项目对话默认在这里读写文件和运行命令。'));
             folder = field('电脑上的文件夹', ui.element('input')); folder.required = true; folder.placeholder = '输入完整文件夹路径'; folder.autocomplete = 'off';
             const suggestName = () => { if (!name.value) name.value = folder.value.replace(/[\\/]+$/, '').split(/[\\/]/).pop() || ''; };
             folder.addEventListener('change', suggestName);
             if (globalThis.weftmateDesktop?.pickProjectFolder) {
                 const choose = ui.element('button', 'button secondary', '选择文件夹…'); choose.type = 'button';
                 choose.onclick = async () => { try { const path = await globalThis.weftmateDesktop.pickProjectFolder(); if (path) { folder.value = path; suggestName(); } }
-                    catch { notice.textContent = '无法打开系统选择框，请输入文件夹路径。'; } }; form.append(choose);
+                    catch { notice.textContent = '无法打开系统选择框，请输入文件夹路径。'; } }; body.append(choose);
             }
         }
         field('项目名称', name);
         const instructions = field('项目说明', ui.element('textarea')); instructions.value = project?.instructions || ''; instructions.rows = 5; instructions.maxLength = 16000;
         instructions.placeholder = '给助手的固定说明，例如背景、编码规范或写作要求';
         const permission = field('文件权限', ui.element('select')); permission.append(new Option('只读', 'read-only'), new Option('可写', 'write')); permission.value = project?.permission || 'write';
-        form.append(ui.element('p', 'field-help', '项目说明会自动带给模型。可写权限仅适用于项目文件夹；危险操作继续按对话审批模式处理。'));
-        const notice = ui.element('p', 'form-error'); notice.setAttribute('role', 'alert'); form.append(notice);
+        body.append(ui.element('p', 'field-help', '项目说明会自动带给模型。可写权限仅适用于项目文件夹；危险操作继续按对话审批模式处理。'));
+        const notice = ui.element('p', 'form-error'); notice.setAttribute('role', 'alert'); body.append(notice);
         const footer = ui.element('div', 'dialog-footer');
         const cancel = ui.element('button', 'button secondary', '取消'); cancel.type = 'button'; cancel.onclick = () => dialog.close();
         const save = ui.element('button', 'button primary', project ? '保存' : '创建项目'); save.type = 'submit';
         if (project) { const remove = ui.element('button', 'button danger', '移除项目'); remove.type = 'button'; remove.onclick = () => confirmRemoveProject(project, dialog); footer.append(remove); }
-        footer.append(cancel, save); form.append(footer); dialog.append(form);
+        footer.append(cancel, save); form.append(body, footer); dialog.append(form);
         const requestId = crypto.randomUUID();
         form.onsubmit = async event => { event.preventDefault(); save.disabled = true; notice.textContent = '';
             try { await core.saveProject(project, { name: name.value.trim().normalize('NFC'), instructions: instructions.value, permission: permission.value,
