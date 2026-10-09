@@ -1,0 +1,13 @@
+{
+  "source": "android-all-retry/extra-checks.json",
+  "passedSettingPages": 22,
+  "notApplicable": [
+    "light-settings-系统状态",
+    "light-settings-备份与恢复",
+    "dark-settings-系统状态",
+    "dark-settings-备份与恢复"
+  ],
+  "reason": "UI_SPEC.md 6c lines 157-158 and 176 explicitly hide the 此电脑 group on phones. These four raw failures are test expectation errors, not product defects.",
+  "projects": "Initial strict locator matched both main list and drawer. Scoped to visible main; android-projects/extra-checks.json passed without product edits.",
+  "pageErrors": "The :popover-open exceptions are independent real WebView runtime errors and remain a finding."
+}

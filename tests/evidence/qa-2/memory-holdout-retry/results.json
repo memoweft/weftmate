@@ -1,0 +1,235 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-09T14:20:20.732Z",
+  "host": "http://127.0.0.1:57812",
+  "model": "mimo",
+  "results": [
+    {
+      "id": "memory-1x-correction",
+      "category": "memory",
+      "title": "留出：浇水量省略主题纠正",
+      "status": "failed",
+      "durationMs": 13875,
+      "checks": [
+        {
+          "type": "turn_status",
+          "turn": 1,
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "turn": 2,
+          "status": "passed"
+        },
+        {
+          "type": "reply_contains",
+          "text": "150",
+          "status": "failed",
+          "reason": "reply_contains did not match expected value"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "memory_used",
+          "status": "failed",
+          "reason": "memory_used did not match expected value"
+        },
+        {
+          "type": "llm_judge",
+          "prompt": "应采用纠正后的150毫升，不能仍按300毫升浇水；纠正回合没有重复盆栽或浇水主题。",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-db266f58-dddb-4aee-94be-ec5840fed3f7",
+          "modelProfileId": "private-model-cb5c7044456432629b85e0ef9fbb302133f92998",
+          "commandId": "cmd-19a99f5a-2840-42aa-900c-d271ba5720fe",
+          "startedAt": "2026-10-09T14:20:21.897Z",
+          "reply": "好的，已了解：你阳台盆栽每次浇水固定用 300 毫升。以后涉及浇水安排或用量建议时，我会按这个固定用量来。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T14:20:21.939Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T14:20:21.940Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T14:20:21.980Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T14:20:21.980Z"
+            },
+            {
+              "seq": 55,
+              "type": "assistant.message",
+              "at": "2026-10-09T14:20:25.865Z"
+            },
+            {
+              "seq": 56,
+              "type": "task.ended",
+              "at": "2026-10-09T14:20:25.866Z"
+            },
+            {
+              "seq": 57,
+              "type": "turn.ended",
+              "at": "2026-10-09T14:20:25.867Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 4123,
+          "endedAt": "2026-10-09T14:20:26.020Z"
+        },
+        {
+          "sessionId": "session-9dcf20a9-2bd1-45da-a661-bb1fc774c02d",
+          "modelProfileId": "private-model-cb5c7044456432629b85e0ef9fbb302133f92998",
+          "commandId": "cmd-6fc5fb61-fced-4e69-a108-659f0d899634",
+          "startedAt": "2026-10-09T14:20:27.336Z",
+          "reply": "已更正：以后浇水用量以 **150毫升** 为准，300毫升作废。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T14:20:27.384Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T14:20:27.384Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T14:20:27.420Z"
+            },
+            {
+              "seq": 11,
+              "type": "user.message",
+              "at": "2026-10-09T14:20:27.421Z"
+            },
+            {
+              "seq": 50,
+              "type": "assistant.message",
+              "at": "2026-10-09T14:20:30.634Z"
+            },
+            {
+              "seq": 51,
+              "type": "task.ended",
+              "at": "2026-10-09T14:20:30.635Z"
+            },
+            {
+              "seq": 52,
+              "type": "turn.ended",
+              "at": "2026-10-09T14:20:30.635Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 3370,
+          "endedAt": "2026-10-09T14:20:30.706Z"
+        },
+        {
+          "sessionId": "session-964159ba-a845-45cf-a354-3741941ce382",
+          "modelProfileId": "private-model-cb5c7044456432629b85e0ef9fbb302133f92998",
+          "commandId": "cmd-2c1a0aed-c127-4357-9d85-d6ab074283b2",
+          "startedAt": "2026-10-09T14:20:32.055Z",
+          "reply": "按你固定的习惯，每盆浇 300 毫升即可。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T14:20:32.113Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T14:20:32.114Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T14:20:32.143Z"
+            },
+            {
+              "seq": 11,
+              "type": "user.message",
+              "at": "2026-10-09T14:20:32.143Z"
+            },
+            {
+              "seq": 41,
+              "type": "assistant.message",
+              "at": "2026-10-09T14:20:35.359Z"
+            },
+            {
+              "seq": 42,
+              "type": "task.ended",
+              "at": "2026-10-09T14:20:35.360Z"
+            },
+            {
+              "seq": 43,
+              "type": "turn.ended",
+              "at": "2026-10-09T14:20:35.360Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 3403,
+          "endedAt": "2026-10-09T14:20:35.458Z"
+        }
+      ],
+      "replySummary": "按你固定的习惯，每盆浇 300 毫升即可。",
+      "notes": "M2e留出场景；园艺数量领域；三个独立会话。基线严格检查当前纠正项采用、旧项失效且排除、双方原话来源保留及未声明审批。",
+      "scratchDir": "C:\\temp\\weftmate-eval-memory-1x-correction-eXLfm4",
+      "reason": "reply_contains did not match expected value; memory_used did not match expected value; holdout must adopt its own current formal memory",
+      "holdoutVerification": {
+        "distinctSessions": true,
+        "noUndeclaredApprovals": true
+      },
+      "semanticJudgement": {
+        "model": "mimo-v2.6-flash",
+        "usage": {
+          "completion_tokens": 26,
+          "prompt_tokens": 197,
+          "total_tokens": 223,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "finishReason": "stop",
+        "rawVerdict": "{\"pass\":false,\"reason\":\"回复仍按300毫升，未采用纠正后的150毫升\"}",
+        "status": "failed",
+        "reason": "回复仍按300毫升，未采用纠正后的150毫升"
+      }
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 1,
+    "manual": 0,
+    "unsupported": 0,
+    "skippedChecks": 1,
+    "passRate": 0,
+    "coverage": 0
+  }
+}
