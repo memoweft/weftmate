@@ -636,7 +636,7 @@ struct ConversationView: View {
 
     @ViewBuilder private func composerApprovalMode(accountEpoch: UUID) -> some View {
         if let sessionID = conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: accountEpoch) {
-            ApprovalModeControl(model: model, sessionID: sessionID).id(sessionID + accountEpoch.uuidString)
+            ApprovalModeControl(model: model, sessionID: sessionID, compact: true).id(sessionID + accountEpoch.uuidString)
         }
     }
 

@@ -44,6 +44,7 @@ struct ConversationApprovalBar: View {
                 }
             }.font(AppleTokens.Fonts.caption).padding(AppleTokens.Space.p10)
                 .background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r12))
+                .accessibilityElement(children: .contain)
                 .accessibilityIdentifier("approvalBar")
                 .task(id: approval.id) { expanded = false; approveFocused = false; await model.readApprovalPresentation(approval, events: events) }
         }

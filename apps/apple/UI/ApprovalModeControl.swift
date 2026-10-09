@@ -5,6 +5,7 @@ import WeftMateCore
 struct ApprovalModeControl: View {
     @ObservedObject var model: AppleAppModel
     let sessionID: String?
+    var compact = false
     @Environment(\.scenePhase) private var scenePhase
     @State private var settings: ApprovalModeSettings?
     @State private var busy = false
@@ -19,15 +20,15 @@ struct ApprovalModeControl: View {
             Button {
                 showingMenu = true
             } label: {
-                HStack(spacing: AppleTokens.Space.p5) {
-                    WeftIcon("approval")
+                HStack(spacing: AppleTokens.Space.p3) {
+                    WeftIcon("approval", size: compact ? AppleTokens.Space.p16 : AppleTokens.Space.p20)
                     Text(settings?.mode.shortTitle ?? "审批模式")
-                        .lineLimit(2).fixedSize(horizontal: false, vertical: true)
-                    WeftIcon("chevron", size: 16).font(AppleTokens.Fonts.caption)
+                        .lineLimit(compact ? 1 : 2).fixedSize(horizontal: compact, vertical: true)
+                    WeftIcon("chevron", size: compact ? AppleTokens.Space.p12 : AppleTokens.Space.p16).font(AppleTokens.Fonts.caption)
                     if busy { ProgressView().controlSize(.mini) }
                 }.font(AppleTokens.Fonts.caption).foregroundStyle(settings?.mode == .allowAll ? Weave.danger : Weave.ink)
             }
-            .buttonStyle(OutlineActionStyle())
+            .buttonStyle(ApprovalModeButtonStyle(compact: compact))
             .disabled(busy || !isVerified)
             .accessibilityLabel(sessionID == nil ? "默认审批模式" : "审批模式")
             .accessibilityValue(settings?.mode.rawValue ?? "尚未读取")
@@ -122,5 +123,14 @@ struct ApprovalModeControl: View {
     private func failureMessage(_ error: Error) -> String {
         if case APIFailure.server(404, _) = error { return "当前宿主尚未提供审批模式，请更新宿主后重试。" }
         return "审批模式未能核对，请重新连接后读取。"
+    }
+}
+
+private struct ApprovalModeButtonStyle: ButtonStyle {
+    let compact: Bool
+    func makeBody(configuration: Configuration) -> some View {
+        if compact {
+            configuration.label.frame(minHeight: AppleTokens.Space.p44).opacity(configuration.isPressed ? AppleTokens.Opacity.pressed : 1)
+        } else { OutlineActionStyle().makeBody(configuration: configuration) }
     }
 }
