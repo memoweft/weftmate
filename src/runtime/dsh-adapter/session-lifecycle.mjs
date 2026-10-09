@@ -5,9 +5,11 @@ import { dirname, relative, resolve, isAbsolute } from 'node:path'
 import { rm, readFile, cp } from 'node:fs/promises'
 import { eraseSessionMemoryArtifact } from './memory-erasure.mjs'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
+import { readNativeTaskStopState } from './task-stop-state.mjs'
 
 /** Own native AgentHandles so deletion drains precisely one DSH lifecycle. */
 export function nativeSessionLifecycle(ctx) {
+  const runtimeStartedAt = Date.now()
   const handles = new Map()
   const queues = new Map()
   const serial = (sessionId, task) => {
@@ -44,6 +46,7 @@ export function nativeSessionLifecycle(ctx) {
     handles.set(sessionId, handle)
   }
   return {
+    taskStopState: input => readNativeTaskStopState(ctx, runtimeStartedAt, input),
     async flushIdle({ stage, deadline }) {
       const agents = ctx.agents.list();
       if (!Array.isArray(agents) || agents.some(agent => agent.status !== 'idle' || agent.inbox?.hasPending !== false))

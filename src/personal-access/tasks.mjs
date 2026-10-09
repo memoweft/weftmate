@@ -67,13 +67,32 @@ export function createTaskOperations(context) {
     const source = taskSource(account, taskId);
     const stop = latestStop(account, taskId);
     if (!stop) return { ready: false, status: 'unconfirmed', pendingCount: 1 };
+    if (stop.resolution && !taskHasUnknownEffects(account, taskId) &&
+        ![source, ...taskChildren(account, taskId)].some(command => command.toolExecutions?.some(row =>
+          row.jobId && ['running', 'stopping'].includes(row.jobState)))) {
+      return { ready: true, status: stop.resolution.status, pendingCount: 0, observedAt: stop.resolution.observedAt };
+    }
     // Stage 08 recorded intent without a target snapshot. Derive only the
     // commands that already existed at that instant for read-only history
     // observation. Never send these inferred identities to stopTask.
     const legacy = !stop.targets;
     const targets = stop.targets ?? stopTargets(account, taskId).filter((target) =>
       Date.parse(account.commands[target.commandId].createdAt) <= Date.parse(stop.at));
-    const needsHistory = targets.some((target) => target.receiptId && target.ack !== 'queue_removed');
+    const native = new Map();
+    if (typeof context.backend.getTaskStopState === 'function') {
+      await Promise.all(targets.filter(target => target.receiptId && target.ack !== 'queue_removed' &&
+        account.commands[target.commandId]?.state === 'accepted_by_dsh').map(async target => {
+        try {
+          const result = await observe(() => context.backend.getTaskStopState({ sessionId: source.sessionId,
+            receiptId: target.receiptId, turn: account.commands[target.commandId]?.dshTurn,
+            stopRequestedAt: stop.at, ownerId: account.ownerId }));
+          if (['ended', 'cancelled', 'not_running'].includes(result?.status) && validTime(result.observedAt)) {
+            native.set(target.receiptId, result);
+          }
+        } catch { /* Unavailable native state cannot confirm a stop. */ }
+      }));
+    }
+    const needsHistory = targets.some((target) => target.receiptId && target.ack !== 'queue_removed' && !native.has(target.receiptId));
     const turns = new Map();
     const receiptTurns = new Map();
     let historyComplete = !needsHistory;
@@ -142,6 +161,13 @@ export function createTaskOperations(context) {
     const targetReceipts = new Set(targets.map((item) => item.receiptId).filter(Boolean));
     for (const target of targets) {
       const command = account.commands[target.commandId];
+      const actual = native.get(target.receiptId);
+      if (actual) {
+        if (actual.status === 'cancelled') aborted = true;
+        else completed = true;
+        terminalTimes.push(actual.observedAt);
+        continue;
+      }
       if (target.ack === 'queue_removed' && target.receiptId) {
         removed = true;
         if (target.ackAt) terminalTimes.push(target.ackAt);
@@ -169,7 +195,7 @@ export function createTaskOperations(context) {
       }
       if (turn.reason === 'aborted' && validTime(turn.endedAt) &&
           Date.parse(turn.endedAt) >= Date.parse(stop.at)) aborted = true;
-      else if (turn.reason === 'completed') completed = true;
+      else completed = true; // Any native terminal reason ends execution, including errors.
       if (validTime(turn.endedAt)) terminalTimes.push(turn.endedAt);
     }
     const effectsUnknown = taskHasUnknownEffects(account, taskId);
@@ -190,7 +216,7 @@ export function createTaskOperations(context) {
       if (retry?.requestId === stop.requestId) retry.done = true;
     }
     return { ready: pendingCount === 0, legacy,
-      ...(status === 'stopped' && terminalTimes.length ? {
+      ...(['stopped', 'completed'].includes(status) && terminalTimes.length ? {
         observedAt: terminalTimes.sort((a, b) => Date.parse(a) - Date.parse(b)).at(-1) } : {}),
       status, pendingCount };
   }
@@ -289,7 +315,7 @@ export function createTaskOperations(context) {
       const source = taskSource(account, taskId);
       if (source.taskControl?.state !== 'stop_requested') { stopAttempts.delete(key); return; }
       const stop = latestStop(account, taskId);
-      if (!stop?.targets) return;
+      if (!stop) return;
       retry = stopAttempts.get(key);
       if (retry?.requestId !== stop.requestId) {
         // Legacy attempt timestamps are accepted on restart, but never updated.
@@ -299,7 +325,19 @@ export function createTaskOperations(context) {
         stopAttempts.set(key, retry);
       }
       // Reads can observe a closed native turn immediately, even during backoff.
-      if ((await taskStopEvidence(account, taskId)).ready) { retry.done = true; return; }
+      const evidence = await taskStopEvidence(account, taskId);
+      if (evidence.ready) {
+        if (['stopped', 'completed'].includes(evidence.status) && validTime(evidence.observedAt) && !stop.resolution) {
+          await context.serial(() => context.mutate(ownerId, next => {
+            const current = latestStop(next, taskId);
+            if (taskSource(next, taskId).taskControl?.state === 'stop_requested' && current?.requestId === stop.requestId) {
+              current.resolution = { status: evidence.status, observedAt: evidence.observedAt };
+            }
+          }));
+        }
+        retry.done = true; return;
+      }
+      if (!stop.targets) return;
       if (retry.done || context.closing) return;
       account = context.accountState(ownerId);
       const candidates = latestStop(account, taskId)?.targets?.filter((target) => target.receiptId &&
@@ -307,13 +345,13 @@ export function createTaskOperations(context) {
         account.commands[target.commandId]?.state === 'accepted_by_dsh')
         .sort((left, right) => (retry.attempts.get(left.receiptId) ?? 0) -
           (retry.attempts.get(right.receiptId) ?? 0)).slice(0, 16) ?? [];
-      if (!candidates.length) return;
       // A newly accepted frozen receipt bypasses backoff; replayed stop requests do not.
       if (context.timestamp() < retry.nextAt && !(force && candidates.some(target => !retry.attempts.has(target.receiptId)))) return;
       retry.nextAt = context.timestamp() + retry.delay;
       const delay = retry.delay;
       attemptDelay = delay;
       retry.delay = Math.min(30_000, delay * 2);
+      if (!candidates.length) return; // Cancel acknowledged: keep checking native state with backoff.
       const receipts = candidates.map(item => item.receiptId);
       for (const receipt of receipts) retry.attempts.set(receipt, context.timestamp());
       const described = await withDeadline(() => context.backend.describeSession(source.sessionId, ownerId), 2_500)
@@ -357,8 +395,8 @@ export function createTaskOperations(context) {
       const account = context.accountState(ownerId);
       const source = account.commands[taskId];
       const stop = source?.taskControl?.state === 'stop_requested' ? source.taskControl.stopRequests.at(-1) : null;
-      if (stop?.requestId !== retry.requestId || !stop.targets?.some(target => target.receiptId &&
-          (!target.ack || target.ack === 'unconfirmed') && account.commands[target.commandId]?.state === 'accepted_by_dsh')) return;
+      if (stop?.requestId !== retry.requestId || stop.resolution || !stop.targets?.some(target => target.receiptId &&
+          account.commands[target.commandId]?.state === 'accepted_by_dsh')) return;
       const timer = setTimeout(() => {
         stopRetryTimers.delete(key);
         driveTaskStop(ownerId, taskId).catch(() => {});
