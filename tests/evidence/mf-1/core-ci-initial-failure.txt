@@ -1,0 +1,523 @@
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	﻿2026-10-09T07:33:58.9455226Z ##[group]Run uv run pytest -q
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:33:58.9455507Z ^[[36;1muv run pytest -q^[[0m
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:33:58.9512733Z shell: /usr/bin/bash -e {0}
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:33:58.9512970Z env:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:33:58.9513232Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:33:58.9513547Z   UV_PYTHON: 3.11
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:33:58.9513788Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:33:58.9514050Z ##[endgroup]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:34:16.1464918Z ........................................................................ [  3%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:34:18.4379190Z ........................................................................ [  7%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:34:18.4761693Z ........................................................................ [ 11%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:34:23.1126396Z ........................................................................ [ 15%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:34:26.3179566Z ........................................................................ [ 19%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:34:39.4381067Z ........................................................................ [ 23%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:34:45.0261775Z ........................................................................ [ 26%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:34:49.0362323Z ..................................FF.................................... [ 30%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:34:57.6567023Z .....................FF.......................F......................... [ 34%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:03.0786029Z ........................................................................ [ 38%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:05.9831642Z ........................................................................ [ 42%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:12.9002287Z ........................................................................ [ 46%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:18.9428631Z ........................................................................ [ 50%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:19.6502245Z ........................................................................ [ 53%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:19.7303398Z ........................................................................ [ 57%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:19.7877353Z ........................................................................ [ 61%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:25.0403047Z ........................................................................ [ 65%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:28.5078857Z ........................................................................ [ 69%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:30.3221162Z ........................................................................ [ 73%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:31.9533159Z ........................................................................ [ 76%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.0977991Z ........................................................................ [ 80%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.1353650Z ........................................................................ [ 84%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.3437704Z ........................................................................ [ 88%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.4078270Z ........................................................................ [ 92%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.4590573Z ........................................................................ [ 96%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5366255Z ........................................................................ [100%]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5367228Z =================================== FAILURES ===================================
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5367847Z _ test_formation_payload_excludes_restricted_history_and_closes_entities[False] _
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5368444Z 
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5368782Z tmp_path = PosixPath('/tmp/pytest-of-runner/pytest-0/test_formation_payload_exclude0')
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5369356Z foreign_history_subject = False
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5369579Z 
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5369828Z     @pytest.mark.parametrize("foreign_history_subject", [False, True])
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5370487Z     def test_formation_payload_excludes_restricted_history_and_closes_entities(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5371109Z         tmp_path: Path, foreign_history_subject: bool
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5371539Z     ) -> None:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5372076Z         db_path = tmp_path / "memoweft.sqlite3"
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5372463Z         clock = MutableClock()
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5372792Z         _initialize_database(db_path)
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5373163Z         _insert_job(db_path, clock)
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5373511Z         now = "2026-08-14T12:00:00.000Z"
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5373847Z     
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5374090Z         def add_evidence(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5374569Z             db: sqlite3.Connection, evidence_id: str, cloud: int, *, subject: str = "owner"
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5375108Z         ) -> None:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5375411Z             db.execute(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5375743Z                 """INSERT INTO evidence (
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5376234Z                        id, subject_id, source_kind, host_id, origin_id, occurred_at,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5376814Z                        recorded_at, raw_content, summary, allow_local_read,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5377364Z                        allow_cloud_read, allow_inference, corrects_evidence_id,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5377868Z                        deleted_at, preceding_ai_context
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5378557Z                      ) VALUES (?, ?, 'spoken', 'hermes:test', ?, ?, ?, ?, ?, 1, ?, 1, NULL, NULL, NULL)""",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5379318Z                 (evidence_id, subject, f"origin-{evidence_id}", now, now, evidence_id, evidence_id, cloud),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5379898Z             )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5380147Z     
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5380474Z         db = sqlite3.connect(db_path, isolation_level=None)
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5380873Z         try:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5381131Z             add_evidence(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5381417Z                 db,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5381691Z                 "history-good",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5382002Z                 1,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5382381Z                 subject="foreign" if foreign_history_subject else "owner",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5382833Z             )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5383144Z             add_evidence(db, "history-restricted", 0)
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5383554Z             entities = (
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5383874Z                 "entity-ledger",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5384242Z                 "entity-cognition-target",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5384636Z                 "entity-relationship-source",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5385035Z                 "entity-relationship-target",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5385420Z                 "entity-event-participant",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5385791Z                 "entity-event-object",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5386143Z                 "entity-restricted",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5386467Z             )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5386733Z             for entity_id in entities:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5387067Z                 db.execute(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5387375Z                     """INSERT INTO entity (
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5387845Z                            id, world_id, kind, canonical_name, invalid_at, created_at,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5388466Z                            updated_at, aliases_json
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5388977Z                          ) VALUES (?, 'owner', 'person', ?, NULL, ?, ?, ?)""",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5389416Z                     (
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5389712Z                         entity_id,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5390051Z                         entity_id,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5390556Z                         now,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5390861Z                         now,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5391362Z                         json.dumps(["restricted-alias"]) if entity_id == "entity-ledger" else "[]",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5391934Z                     ),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5392220Z                 )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5392504Z             for entity_id, evidence_id in (
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5392903Z                 ("entity-ledger", "history-good"),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5393435Z                 ("entity-restricted", "history-restricted"),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5393929Z             ):
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5394196Z                 db.execute(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5394669Z                     "INSERT INTO evidence_ledger (id, content, payload_json) VALUES (?, ?, ?)",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5395412Z                     (
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5395720Z                         f"ledger-{entity_id}",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5396119Z                         json.dumps(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5396670Z                             {"entity_id": entity_id, "evidence_id": evidence_id, "relation": "support"},
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5397235Z                             sort_keys=True,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5397592Z                         ),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5397988Z                         json.dumps({"schema_version": 1}, sort_keys=True),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5398544Z                     ),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5398803Z                 )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5399059Z             db.execute(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5399504Z                 "INSERT INTO evidence_ledger (id, content, payload_json) VALUES (?, ?, ?)",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5400147Z                 (
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5400464Z                     "ledger-restricted-alias",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5400840Z                     json.dumps(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5401159Z                         {
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5401461Z                             "relation": "alias",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5401847Z                             "canonical_entity_id": "entity-ledger",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5402271Z                             "merged_entity_id": "entity-restricted",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5402678Z                             "alias_name": "restricted-alias",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5403030Z                         },
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5403300Z                         sort_keys=True,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5403595Z                     ),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5403846Z                     json.dumps(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5404243Z                         {"schema_version": 1, "evidence_ids": ["history-restricted"]},
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5404701Z                         sort_keys=True,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5405017Z                     ),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5405263Z                 ),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5405507Z             )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5405752Z             db.execute(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5406024Z                 """INSERT INTO cognition (
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5406453Z                        id, subject_id, content, content_type, formed_by, confidence,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5407018Z                        cred_status, scope, invalid_at, asked_at, archived_at, muted_at,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5407466Z                        created_at, updated_at
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5407915Z                      ) VALUES ('cognition-good', 'owner', 'known', 'attribute', 'stated',
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5408623Z                                600, 'limited', NULL, NULL, NULL, NULL, NULL, ?, ?)""",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5409038Z                 (now, now),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5409293Z             )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5409509Z             db.execute(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5410099Z                 "INSERT INTO cognition_evidence (cognition_id, evidence_id, relation) VALUES ('cognition-good', 'history-good', 'support')"
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5410757Z             )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5410987Z             db.execute(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5411669Z                 "INSERT INTO cognition_target (cognition_id, target_entity_id, perspective_entity_id) VALUES ('cognition-good', 'entity-cognition-target', NULL)"
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5412552Z             )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5412778Z             db.execute(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5413037Z                 """INSERT INTO relationship (
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5413452Z                        id, world_id, source_entity_id, target_entity_id, relation_type,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5413955Z                        content, formed_by, confidence, cred_status, invalid_at,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5414369Z                        created_at, updated_at
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5414817Z                      ) VALUES ('relationship-good', 'owner', 'entity-relationship-source',
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5415385Z                                'entity-relationship-target', 'friend', 'friends', 'stated',
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5415843Z                                600, 'limited', NULL, ?, ?)""",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5416305Z                 (now, now),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5416551Z             )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5416768Z             db.execute(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5417397Z                 "INSERT INTO relationship_evidence (relationship_id, evidence_id, relation) VALUES ('relationship-good', 'history-good', 'support')"
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5418066Z             )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5418273Z             db.execute(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5418657Z                 """INSERT INTO world_event (
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5419043Z                        id, world_id, content, occurred_at, time_expression,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5419519Z                        participants_json, objects_json, formed_by, confidence,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5419978Z                        cred_status, invalid_at, created_at, updated_at
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5420460Z                      ) VALUES ('event-good', 'owner', 'went', NULL, NULL, ?, ?, 'stated',
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5420914Z                                600, 'limited', NULL, ?, ?)""",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5421235Z                 (
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5421518Z                     json.dumps(["entity-event-participant"]),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5421906Z                     json.dumps(["entity-event-object"]),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5422245Z                     now,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5444609Z                     now,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5444947Z                 ),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5445184Z             )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5445408Z             db.execute(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5446018Z                 "INSERT INTO world_event_evidence (world_event_id, evidence_id, relation) VALUES ('event-good', 'history-good', 'support')"
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5446640Z             )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5446867Z         finally:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5447097Z             db.close()
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5447346Z     
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5447591Z         payloads: list[dict[str, object]] = []
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5447904Z     
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5448266Z         def route(messages: list[dict[str, str]], *, session_id: str) -> dict[str, object]:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5448886Z             del session_id
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5449218Z             payloads.append(json.loads(messages[1]["content"]))
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5449588Z             return {
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5449950Z                 "content": json.dumps({"schema_version": 1, "result": "no_change"}),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5450384Z                 "model": "scripted",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5450668Z             }
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5450881Z     
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5451240Z         processor = HermesBatchAdapterProcessor(str(db_path), route, clock=clock)
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5451888Z         worker = WorldJobWorker(db_path, processor=processor, policy=_policy(), clock=clock)
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5452401Z         assert worker.run_until_quiescent() == 1
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5452741Z >       assert len(payloads) == 1
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5453050Z E       AssertionError: assert 2 == 1
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5454104Z E        +  where 2 = len([{'conversation_context': [], 'current_cognitions': [{'content': 'known', 'id': 'cognition-good', 'statement_kind': 'a...events': [{'content': 'went', 'id': 'event-good', 'objects': ['entity-event-object'], 'occurred_at': None, ...}], ...}])
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5455358Z 
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5455550Z tests/test_hermes_currentness_formation.py:668: AssertionError
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5456091Z _ test_formation_payload_excludes_restricted_history_and_closes_entities[True] _
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5456470Z 
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5456755Z tmp_path = PosixPath('/tmp/pytest-of-runner/pytest-0/test_formation_payload_exclude1')
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5457255Z foreign_history_subject = True
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5457442Z 
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5457651Z     @pytest.mark.parametrize("foreign_history_subject", [False, True])
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5458234Z     def test_formation_payload_excludes_restricted_history_and_closes_entities(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5458866Z         tmp_path: Path, foreign_history_subject: bool
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5459205Z     ) -> None:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5459644Z         db_path = tmp_path / "memoweft.sqlite3"
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5459975Z         clock = MutableClock()
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5460263Z         _initialize_database(db_path)
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5460582Z         _insert_job(db_path, clock)
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5460876Z         now = "2026-08-14T12:00:00.000Z"
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5461155Z     
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5461361Z         def add_evidence(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5461790Z             db: sqlite3.Connection, evidence_id: str, cloud: int, *, subject: str = "owner"
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5462240Z         ) -> None:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5462481Z             db.execute(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5462746Z                 """INSERT INTO evidence (
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5463145Z                        id, subject_id, source_kind, host_id, origin_id, occurred_at,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5463635Z                        recorded_at, raw_content, summary, allow_local_read,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5464111Z                        allow_cloud_read, allow_inference, corrects_evidence_id,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5464546Z                        deleted_at, preceding_ai_context
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5465038Z                      ) VALUES (?, ?, 'spoken', 'hermes:test', ?, ?, ?, ?, ?, 1, ?, 1, NULL, NULL, NULL)""",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5465691Z                 (evidence_id, subject, f"origin-{evidence_id}", now, now, evidence_id, evidence_id, cloud),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5466184Z             )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5466397Z     
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5466673Z         db = sqlite3.connect(db_path, isolation_level=None)
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5467013Z         try:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5467230Z             add_evidence(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5467474Z                 db,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5467725Z                 "history-good",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5468009Z                 1,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5468472Z                 subject="foreign" if foreign_history_subject else "owner",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5468858Z             )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5469118Z             add_evidence(db, "history-restricted", 0)
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5469453Z             entities = (
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5469715Z                 "entity-ledger",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5470020Z                 "entity-cognition-target",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5470357Z                 "entity-relationship-source",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5470695Z                 "entity-relationship-target",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5471029Z                 "entity-event-participant",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5471364Z                 "entity-event-object",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5471679Z                 "entity-restricted",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5471959Z             )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5472187Z             for entity_id in entities:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5472489Z                 db.execute(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5472757Z                     """INSERT INTO entity (
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5473151Z                            id, world_id, kind, canonical_name, invalid_at, created_at,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5473577Z                            updated_at, aliases_json
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5473963Z                          ) VALUES (?, 'owner', 'person', ?, NULL, ?, ?, ?)""",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5474329Z                     (
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5474567Z                         entity_id,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5474984Z                         entity_id,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5475264Z                         now,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5475518Z                         now,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5475929Z                         json.dumps(["restricted-alias"]) if entity_id == "entity-ledger" else "[]",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5476393Z                     ),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5476641Z                 )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5476884Z             for entity_id, evidence_id in (
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5477213Z                 ("entity-ledger", "history-good"),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5477579Z                 ("entity-restricted", "history-restricted"),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5477921Z             ):
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5478140Z                 db.execute(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5478657Z                     "INSERT INTO evidence_ledger (id, content, payload_json) VALUES (?, ?, ?)",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5479268Z                     (
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5479528Z                         f"ledger-{entity_id}",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5479834Z                         json.dumps(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5480285Z                             {"entity_id": entity_id, "evidence_id": evidence_id, "relation": "support"},
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5480745Z                             sort_keys=True,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5481036Z                         ),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5481353Z                         json.dumps({"schema_version": 1}, sort_keys=True),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5481707Z                     ),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5481935Z                 )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5482170Z             db.execute(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5482558Z                 "INSERT INTO evidence_ledger (id, content, payload_json) VALUES (?, ?, ?)",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5482995Z                 (
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5483235Z                     "ledger-restricted-alias",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5483551Z                     json.dumps(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5483832Z                         {
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5484092Z                             "relation": "alias",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5484445Z                             "canonical_entity_id": "entity-ledger",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5484853Z                             "merged_entity_id": "entity-restricted",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5485255Z                             "alias_name": "restricted-alias",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5485598Z                         },
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5485854Z                         sort_keys=True,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5486157Z                     ),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5486405Z                     json.dumps(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5486780Z                         {"schema_version": 1, "evidence_ids": ["history-restricted"]},
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5487204Z                         sort_keys=True,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5487494Z                     ),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5487724Z                 ),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5487950Z             )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5488190Z             db.execute(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5488600Z                 """INSERT INTO cognition (
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5488996Z                        id, subject_id, content, content_type, formed_by, confidence,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5489524Z                        cred_status, scope, invalid_at, asked_at, archived_at, muted_at,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5489964Z                        created_at, updated_at
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5490398Z                      ) VALUES ('cognition-good', 'owner', 'known', 'attribute', 'stated',
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5490894Z                                600, 'limited', NULL, NULL, NULL, NULL, NULL, ?, ?)""",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5491287Z                 (now, now),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5491538Z             )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5491763Z             db.execute(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5492345Z                 "INSERT INTO cognition_evidence (cognition_id, evidence_id, relation) VALUES ('cognition-good', 'history-good', 'support')"
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5492959Z             )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5493181Z             db.execute(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5493915Z                 "INSERT INTO cognition_target (cognition_id, target_entity_id, perspective_entity_id) VALUES ('cognition-good', 'entity-cognition-target', NULL)"
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5494763Z             )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5494978Z             db.execute(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5495242Z                 """INSERT INTO relationship (
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5495676Z                        id, world_id, source_entity_id, target_entity_id, relation_type,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5496194Z                        content, formed_by, confidence, cred_status, invalid_at,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5496600Z                        created_at, updated_at
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5497040Z                      ) VALUES ('relationship-good', 'owner', 'entity-relationship-source',
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5497604Z                                'entity-relationship-target', 'friend', 'friends', 'stated',
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5498053Z                                600, 'limited', NULL, ?, ?)""",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5498655Z                 (now, now),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5498907Z             )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5499132Z             db.execute(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5499747Z                 "INSERT INTO relationship_evidence (relationship_id, evidence_id, relation) VALUES ('relationship-good', 'history-good', 'support')"
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5500426Z             )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5500651Z             db.execute(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5500927Z                 """INSERT INTO world_event (
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5501307Z                        id, world_id, content, occurred_at, time_expression,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5501776Z                        participants_json, objects_json, formed_by, confidence,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5502231Z                        cred_status, invalid_at, created_at, updated_at
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5502717Z                      ) VALUES ('event-good', 'owner', 'went', NULL, NULL, ?, ?, 'stated',
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5503163Z                                600, 'limited', NULL, ?, ?)""",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5503489Z                 (
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5503782Z                     json.dumps(["entity-event-participant"]),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5504184Z                     json.dumps(["entity-event-object"]),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5504520Z                     now,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5504762Z                     now,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5504998Z                 ),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5505228Z             )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5505448Z             db.execute(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5506012Z                 "INSERT INTO world_event_evidence (world_event_id, evidence_id, relation) VALUES ('event-good', 'history-good', 'support')"
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5506617Z             )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5506835Z         finally:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5507064Z             db.close()
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5507300Z     
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5507536Z         payloads: list[dict[str, object]] = []
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5507851Z     
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5508213Z         def route(messages: list[dict[str, str]], *, session_id: str) -> dict[str, object]:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5509022Z             del session_id
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5509311Z             payloads.append(json.loads(messages[1]["content"]))
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5509610Z             return {
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5509880Z                 "content": json.dumps({"schema_version": 1, "result": "no_change"}),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5510195Z                 "model": "scripted",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5510409Z             }
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5510580Z     
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5510853Z         processor = HermesBatchAdapterProcessor(str(db_path), route, clock=clock)
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5511299Z         worker = WorldJobWorker(db_path, processor=processor, policy=_policy(), clock=clock)
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5511667Z         assert worker.run_until_quiescent() == 1
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5511927Z >       assert len(payloads) == 1
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5512156Z E       AssertionError: assert 2 == 1
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5512798Z E        +  where 2 = len([{'conversation_context': [], 'current_cognitions': [], 'current_entities': [], 'current_events': [], ...}, {'conversation_context': [], 'current_cognitions': [], 'current_entities': [], 'current_events': [], ...}])
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5513576Z 
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5513728Z tests/test_hermes_currentness_formation.py:668: AssertionError
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5514130Z __ test_dsh_route_tier_controls_dispatch_after_local_read_revocation[None-1] ___
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5514375Z 
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5514577Z tmp_path = PosixPath('/tmp/pytest-of-runner/pytest-0/test_dsh_route_tier_controls_d0')
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5514940Z model_tier = None, expected_route_calls = 1
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5515105Z 
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5515202Z     @pytest.mark.parametrize(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5515437Z         ("model_tier", "expected_route_calls"),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5515686Z         ((None, 1), ("cloud", 1), ("local", 0)),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5515909Z     )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5516160Z     def test_dsh_route_tier_controls_dispatch_after_local_read_revocation(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5516649Z         tmp_path: Path, model_tier: str | None, expected_route_calls: int
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5516936Z     ) -> None:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5517126Z         calls: list[object] = []
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5517338Z     
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5517582Z         def route(messages: object, session_id: str = "") -> dict[str, object]:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5517893Z             del messages, session_id
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5518117Z             calls.append(object())
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5518549Z             return {"content": '{"schema_version":8,"result":"no_change"}', "model": "test"}
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5518868Z     
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5519044Z         runtime = DshMemoWeftRuntime()
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5519284Z         init_kwargs: dict[str, object] = {
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5519522Z             "dsh_home": str(tmp_path),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5519744Z             "platform": "desktop",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5519968Z             "user_id": "route-tier-owner",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5954061Z             "one_shot_llm": route,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5954451Z         }
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5954645Z         if model_tier is not None:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5954895Z             init_kwargs["model_tier"] = model_tier
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5955198Z         runtime.initialize("route-tier", **init_kwargs)
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5955476Z         worker = runtime._world_worker
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5955705Z         assert worker is not None
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5955931Z         processor = worker.processor
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5956159Z         worker.shutdown()
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5956364Z         try:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5956576Z             runtime.ingest_durable_boundary(_boundary())
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5956853Z             db = open_db(str(runtime.db_path))
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5957082Z             try:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5957319Z                 db.execute("UPDATE evidence SET allow_local_read = 0")
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5957595Z                 db.commit()
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5957787Z             finally:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5957974Z                 db.close()
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5958181Z             assert runtime.db_path is not None
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5958779Z             runner = WorldJobWorker(runtime.db_path, processor=processor)
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5959075Z             try:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5959280Z                 assert runner.run_until_quiescent() == 1
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5959520Z             finally:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5959714Z                 runner.shutdown()
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5959964Z >           assert len(calls) == expected_route_calls
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5960219Z E           assert 2 == 1
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5960541Z E            +  where 2 = len([<object object at 0x7f58d8cb2bf0>, <object object at 0x7f58d8cb3dd0>])
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5960817Z 
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5960934Z tests/test_hermes_dsh_bridge.py:440: AssertionError
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5961271Z ------------------------------ Captured log call -------------------------------
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5961782Z WARNING  memoweft.integrations.dsh_bridge:__init__.py:863 MemoWeft World worker was unavailable after receipt
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5962294Z __ test_dsh_route_tier_controls_dispatch_after_local_read_revocation[cloud-1] __
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5962532Z 
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5963056Z tmp_path = PosixPath('/tmp/pytest-of-runner/pytest-0/test_dsh_route_tier_controls_d1')
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5963460Z model_tier = 'cloud', expected_route_calls = 1
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5963651Z 
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5963750Z     @pytest.mark.parametrize(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5963982Z         ("model_tier", "expected_route_calls"),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5964229Z         ((None, 1), ("cloud", 1), ("local", 0)),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5964448Z     )
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5964696Z     def test_dsh_route_tier_controls_dispatch_after_local_read_revocation(
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5965072Z         tmp_path: Path, model_tier: str | None, expected_route_calls: int
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5965358Z     ) -> None:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5965538Z         calls: list[object] = []
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5965743Z     
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5966163Z         def route(messages: object, session_id: str = "") -> dict[str, object]:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5966470Z             del messages, session_id
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5966696Z             calls.append(object())
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5967017Z             return {"content": '{"schema_version":8,"result":"no_change"}', "model": "test"}
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5967330Z     
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5967504Z         runtime = DshMemoWeftRuntime()
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5967736Z         init_kwargs: dict[str, object] = {
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5967971Z             "dsh_home": str(tmp_path),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5968196Z             "platform": "desktop",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5968533Z             "user_id": "route-tier-owner",
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5968756Z             "one_shot_llm": route,
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5968955Z         }
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5969131Z         if model_tier is not None:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5969357Z             init_kwargs["model_tier"] = model_tier
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5969637Z         runtime.initialize("route-tier", **init_kwargs)
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5969908Z         worker = runtime._world_worker
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5970137Z         assert worker is not None
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5970369Z         processor = worker.processor
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5970597Z         worker.shutdown()
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5970791Z         try:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5970995Z             runtime.ingest_durable_boundary(_boundary())
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5971274Z             db = open_db(str(runtime.db_path))
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5971498Z             try:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5971723Z                 db.execute("UPDATE evidence SET allow_local_read = 0")
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5972001Z                 db.commit()
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5972199Z             finally:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5972381Z                 db.close()
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5972592Z             assert runtime.db_path is not None
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5972890Z             runner = WorldJobWorker(runtime.db_path, processor=processor)
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5973184Z             try:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5973397Z                 assert runner.run_until_quiescent() == 1
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5973638Z             finally:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5973826Z                 runner.shutdown()
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5974071Z >           assert len(calls) == expected_route_calls
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5974314Z E           assert 2 == 1
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5974621Z E            +  where 2 = len([<object object at 0x7f58d8cb2400>, <object object at 0x7f58d8cb2510>])
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5974900Z 
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5975015Z tests/test_hermes_dsh_bridge.py:440: AssertionError
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5975355Z ------------------------------ Captured log call -------------------------------
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5975833Z WARNING  memoweft.integrations.dsh_bridge:__init__.py:863 MemoWeft World worker was unavailable after receipt
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5976335Z _ test_formation_resolves_short_correction_topic_from_existing_transition_sources _
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5976596Z 
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5976794Z tmp_path = PosixPath('/tmp/pytest-of-runner/pytest-0/test_formation_resolves_short_0')
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5977055Z 
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5977311Z     def test_formation_resolves_short_correction_topic_from_existing_transition_sources(tmp_path: Path) -> None:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5977863Z         path = tmp_path / 'world.sqlite3'
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5978098Z         clock = MutableClock()
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5978709Z         raw = '我最近只能周三晚上锻炼。'
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5978956Z         first = _form(raw, (0, len(raw)))
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5979236Z         first['supports'] = [{'evidence_id': 'evidence-1', 'quote': raw}]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5979576Z         _run(path, clock, [_model(_batch(first))], ('evidence-1',),
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5979918Z              lambda db_path: _set_evidence(db_path, 'evidence-1', raw))
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5980208Z         with sqlite3.connect(path) as db:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5980493Z             prior_id = db.execute('SELECT id FROM cognition').fetchone()[0]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5980852Z         _insert_job(path, clock, job_id='job-2', evidence_ids=('evidence-2',))
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5981319Z         correction = '不对，是周五晚上。'
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5981565Z         _set_evidence(path, 'evidence-2', correction)
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5981912Z         item = _form(correction, (0, len(correction)), evidence_id='evidence-2')
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5982306Z         item['supports'] = [{'evidence_id': 'evidence-2', 'quote': correction}]
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5982693Z         item.update(action='correct', corrects_cognition_id=prior_id)
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5983156Z         processor = HermesBatchAdapterProcessor(str(path), lambda *a, **kw: _model(_batch(item)), clock=clock)
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5983653Z         worker = WorldJobWorker(path, processor=processor, policy=_policy(), clock=clock)
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5984014Z         assert worker.run_until_quiescent() == 1
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5984338Z         _insert_job(path, clock, job_id='job-3', evidence_ids=('evidence-3',))
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5984720Z         _set_evidence(path, 'evidence-3', '再改成周六晚上。')
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5984994Z         captured: list[dict[str, object]] = []
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5985226Z     
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5985492Z         def route(messages: list[dict[str, str]], **kwargs: object) -> dict[str, object]:
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5985879Z             captured.append(json.loads(messages[-1]['content']))
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5986208Z             return _model({'schema_version': 8, 'result': 'no_change'})
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5986523Z     
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5986773Z         processor = HermesBatchAdapterProcessor(str(path), route, clock=clock)
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5987185Z         worker = WorldJobWorker(path, processor=processor, policy=_policy(), clock=clock)
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5987528Z         assert worker.run_until_quiescent() == 1
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5987797Z >       current = captured[-1]['current_cognitions']
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5988046Z                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5988364Z E       KeyError: 'current_cognitions'
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5988531Z 
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5988655Z tests/test_hermes_local_model_formation.py:161: KeyError
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5988964Z =========================== short test summary info ============================
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5989652Z FAILED tests/test_hermes_currentness_formation.py::test_formation_payload_excludes_restricted_history_and_closes_entities[False] - AssertionError: assert 2 == 1
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5990651Z  +  where 2 = len([{'conversation_context': [], 'current_cognitions': [{'content': 'known', 'id': 'cognition-good', 'statement_kind': 'a...events': [{'content': 'went', 'id': 'event-good', 'objects': ['entity-event-object'], 'occurred_at': None, ...}], ...}])
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5991653Z FAILED tests/test_hermes_currentness_formation.py::test_formation_payload_excludes_restricted_history_and_closes_entities[True] - AssertionError: assert 2 == 1
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5992592Z  +  where 2 = len([{'conversation_context': [], 'current_cognitions': [], 'current_entities': [], 'current_events': [], ...}, {'conversation_context': [], 'current_cognitions': [], 'current_entities': [], 'current_events': [], ...}])
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5993439Z FAILED tests/test_hermes_dsh_bridge.py::test_dsh_route_tier_controls_dispatch_after_local_read_revocation[None-1] - assert 2 == 1
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5994106Z  +  where 2 = len([<object object at 0x7f58d8cb2bf0>, <object object at 0x7f58d8cb3dd0>])
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5994648Z FAILED tests/test_hermes_dsh_bridge.py::test_dsh_route_tier_controls_dispatch_after_local_read_revocation[cloud-1] - assert 2 == 1
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5995172Z  +  where 2 = len([<object object at 0x7f58d8cb2400>, <object object at 0x7f58d8cb2510>])
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5995798Z FAILED tests/test_hermes_local_model_formation.py::test_formation_resolves_short_correction_topic_from_existing_transition_sources - KeyError: 'current_cognitions'
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.5996343Z 5 failed, 1867 passed in 92.89s (0:01:32)
+Python parity (uv · pytest + mypy)	Parity suite (bit-exact vs TS via shared/parity)	2026-10-09T07:35:32.7033216Z ##[error]Process completed with exit code 1.
+CI Gate	Verify required jobs	﻿2026-10-09T07:35:43.6508127Z ##[group]Run test "success" = "success"
+CI Gate	Verify required jobs	2026-10-09T07:35:43.6509035Z ^[[36;1mtest "success" = "success"^[[0m
+CI Gate	Verify required jobs	2026-10-09T07:35:43.6509944Z ^[[36;1mtest "success" = "success"^[[0m
+CI Gate	Verify required jobs	2026-10-09T07:35:43.6510814Z ^[[36;1mtest "success" = "success"^[[0m
+CI Gate	Verify required jobs	2026-10-09T07:35:43.6511630Z ^[[36;1mtest "success" = "success"^[[0m
+CI Gate	Verify required jobs	2026-10-09T07:35:43.6512387Z ^[[36;1mtest "failure" = "success"^[[0m
+CI Gate	Verify required jobs	2026-10-09T07:35:43.8417268Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+CI Gate	Verify required jobs	2026-10-09T07:35:43.8418105Z ##[endgroup]
+CI Gate	Verify required jobs	2026-10-09T07:35:43.8618854Z ##[error]Process completed with exit code 1.

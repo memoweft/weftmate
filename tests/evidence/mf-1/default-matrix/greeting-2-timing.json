@@ -1,0 +1,20 @@
+[
+  {
+    "foreground": true,
+    "firstTextMs": 3434.037,
+    "firstDeltaMs": 987.6825999999996,
+    "turnFirstTextMs": 4220.479799999999,
+    "turnFirstDeltaMs": 1774.1253999999994,
+    "totalMs": 4007.0710999999997,
+    "text": "你好！我是 WeftMate，有什么我可以帮你整理的？",
+    "tools": [],
+    "usage": {
+      "completion_tokens": 115,
+      "prompt_tokens": 2440,
+      "total_tokens": 2555,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  }
+]

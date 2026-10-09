@@ -1,0 +1,78 @@
+[
+  {
+    "foreground": true,
+    "firstTextMs": null,
+    "firstDeltaMs": 1128.6565,
+    "turnFirstTextMs": null,
+    "turnFirstDeltaMs": 1925.1212,
+    "totalMs": 3020.9784,
+    "text": "",
+    "tools": [
+      "load_tools"
+    ],
+    "usage": {
+      "completion_tokens": 105,
+      "prompt_tokens": 2452,
+      "total_tokens": 2557,
+      "prompt_tokens_details": {
+        "cached_tokens": 1825
+      }
+    }
+  },
+  {
+    "foreground": false,
+    "firstTextMs": null,
+    "firstDeltaMs": 3205.9492999999998,
+    "turnFirstTextMs": null,
+    "turnFirstDeltaMs": 4005.3519999999994,
+    "totalMs": 4142.682699999999,
+    "text": "",
+    "tools": [],
+    "usage": {
+      "completion_tokens": 64,
+      "prompt_tokens": 141,
+      "total_tokens": 205,
+      "prompt_tokens_details": {
+        "cached_tokens": 136
+      }
+    }
+  },
+  {
+    "foreground": true,
+    "firstTextMs": null,
+    "firstDeltaMs": 2103.2637999999997,
+    "turnFirstTextMs": null,
+    "turnFirstDeltaMs": 5969.0627,
+    "totalMs": 3078.4147999999996,
+    "text": "",
+    "tools": [
+      "read"
+    ],
+    "usage": {
+      "completion_tokens": 55,
+      "prompt_tokens": 2781,
+      "total_tokens": 2836,
+      "prompt_tokens_details": {
+        "cached_tokens": 1989
+      }
+    }
+  },
+  {
+    "foreground": true,
+    "firstTextMs": 2690.663199999999,
+    "firstDeltaMs": 1256.4700999999986,
+    "turnFirstTextMs": 9673.7886,
+    "turnFirstDeltaMs": 8239.5955,
+    "totalMs": 3072.8405000000002,
+    "text": "文件 `pf1-input.txt` 原文：\n\nPF1_SYNTHETIC_OK",
+    "tools": [],
+    "usage": {
+      "completion_tokens": 87,
+      "prompt_tokens": 2957,
+      "total_tokens": 3044,
+      "prompt_tokens_details": {
+        "cached_tokens": 1989
+      }
+    }
+  }
+]

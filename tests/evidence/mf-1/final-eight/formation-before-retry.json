@@ -1,0 +1,112 @@
+[
+  {
+    "root": "C:\\temp\\weftmate-m2-exit-mimo-7uBZqy",
+    "account": "owner-f7ad8cea-71a5-4ebb-9c05-7e709d9265ca",
+    "jobs": [
+      {
+        "job_id": "memory-world-job-b01bc321bd2ef87e9b8130a4d8d68881958baaf06641ff52766639e6d5d091ed",
+        "state": "no_change",
+        "attempts": 1,
+        "created_at": "2026-10-09T08:07:42.965Z",
+        "claimed_at": "2026-10-09T08:07:43.052Z",
+        "model_dispatch_started_at": "2026-10-09T08:07:43.088Z",
+        "model_completed_at": "2026-10-09T08:08:22.333Z",
+        "completed_at": "2026-10-09T08:08:22.333Z",
+        "sources": [
+          "王小明打游戏挺厉害，是我好兄弟。"
+        ],
+        "model_result": {
+          "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"form\",\"target\":\"owner_self\",\"statement_kind\":\"attribute\",\"formed_by\":\"stated\",\"proposition\":\"王小明打游戏挺厉害\",\"supports\":[{\"evidence_id\":\"70d857a8-456c-48f1-858c-73f77118e25a\",\"segment_id\":\"s0\"}],\"entity\":{\"canonical_name\":\"王小明\",\"kind\":\"person\"}},{\"action\":\"form\",\"target\":\"owner_self\",\"statement_kind\":\"relationship\",\"formed_by\":\"stated\",\"proposition\":\"王小明打游戏挺厉害，是我好兄弟。\",\"supports\":[{\"evidence_id\":\"70d857a8-456c-48f1-858c-73f77118e25a\",\"sentence_id\":\"t0\"}],\"source_entity\":{\"canonical_name\":\"王小明\",\"kind\":\"person\"},\"target_entity\":{\"canonical_name\":\"用户\",\"kind\":\"person\"},\"relation_type\":\"friend\"}]}",
+          "finish_reason": "stop",
+          "formation_rewrite": {
+            "error": {
+              "code": "entity_name_not_in_proposition",
+              "instruction": "Rewrite the complete interpretation JSON once. Fix the reported compiler error; every cognition must include a nonempty proposition and valid supports. Copy names, forms of address, numbers and dates exactly from user evidence. Never invent facts."
+            },
+            "final_error": "entity_name_not_in_proposition",
+            "first_result": {
+              "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"form\",\"target\":\"owner_self\",\"statement_kind\":\"attribute\",\"formed_by\":\"stated\",\"proposition\":\"王小明打游戏挺厉害\",\"supports\":[{\"evidence_id\":\"70d857a8-456c-48f1-858c-73f77118e25a\",\"segment_id\":\"s0\"}],\"entity\":{\"canonical_name\":\"王小明\",\"kind\":\"person\"}},{\"action\":\"form\",\"target\":\"owner_self\",\"statement_kind\":\"relationship\",\"formed_by\":\"stated\",\"proposition\":\"是我好兄弟\",\"supports\":[{\"evidence_id\":\"70d857a8-456c-48f1-858c-73f77118e25a\",\"segment_id\":\"s1\"}],\"source_entity\":{\"canonical_name\":\"王小明\",\"kind\":\"person\"},\"target_entity\":{\"canonical_name\":\"用户\",\"kind\":\"person\"},\"relation_type\":\"friend\"}]}",
+              "finish_reason": "stop",
+              "model": "mimo-v2.6-flash",
+              "usage": {
+                "completion_tokens": 1485,
+                "completion_tokens_details": {
+                  "reasoning_tokens": 1263
+                },
+                "prompt_tokens": 4508,
+                "prompt_tokens_details": {
+                  "cached_tokens": 4352
+                },
+                "total_tokens": 5993
+              }
+            },
+            "state": "completed"
+          },
+          "model": "mimo-v2.6-flash",
+          "usage": {
+            "completion_tokens": 350,
+            "completion_tokens_details": {
+              "reasoning_tokens": 117
+            },
+            "prompt_tokens": 4941,
+            "prompt_tokens_details": {
+              "cached_tokens": 4480
+            },
+            "total_tokens": 5291
+          }
+        },
+        "world_result": {
+          "reason": "entity_name_not_in_proposition",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      },
+      {
+        "job_id": "memory-world-job-fd04e5e7feadef07c23ded900ee67c2eb7e133b464147a7234941b7ac212d3d4",
+        "state": "applied",
+        "attempts": 1,
+        "created_at": "2026-10-09T08:07:50.691Z",
+        "claimed_at": "2026-10-09T08:08:22.352Z",
+        "model_dispatch_started_at": "2026-10-09T08:08:22.389Z",
+        "model_completed_at": "2026-10-09T08:08:34.882Z",
+        "completed_at": "2026-10-09T08:08:34.900Z",
+        "sources": [
+          "好，以后我想组队时，就提醒我找王小明。"
+        ],
+        "model_result": {
+          "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"form\",\"target\":\"owner_self\",\"statement_kind\":\"preference\",\"formed_by\":\"stated\",\"proposition\":\"以后我想组队时，就提醒我找王小明。\",\"supports\":[{\"evidence_id\":\"f207bb6e-344f-4f71-9d14-78445c6d7edd\",\"sentence_id\":\"t0\"}]}]}",
+          "finish_reason": "stop",
+          "model": "mimo-v2.6-flash",
+          "usage": {
+            "completion_tokens": 396,
+            "completion_tokens_details": {
+              "reasoning_tokens": 291
+            },
+            "prompt_tokens": 4601,
+            "prompt_tokens_details": {
+              "cached_tokens": 4352
+            },
+            "total_tokens": 4997
+          }
+        },
+        "world_result": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:1c1cb24fc114c974d1eac9b42bd8105c:ae734a1f272f5070f82f40e55ab53223d987330a2f9216bffd94b285b76ca76a",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-adbc6cb4e2ce6190f64fef444329138c190f50b4bf02ec3ba9d7e37957e3e37a",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      }
+    ]
+  }
+]
