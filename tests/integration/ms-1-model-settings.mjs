@@ -122,7 +122,9 @@ try {
   assert.equal(await page.locator('#account-model-key').inputValue(), '');
   // Edit uses the same protected-focus dialog.
   await page.locator('#account-models-list .project-row').filter({ hasText: 'Muse Q5' }).getByRole('button', { name: '编辑', exact: true }).click();
-  assert.equal(await page.locator('#model-editor-title').innerText(), '编辑模型'); await screenshot('desktop-edit.png'); await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#model-editor-title').innerText(), '编辑模型');
+  assert.equal(await page.locator('#account-model-tier').inputValue(), 'local');
+  assert.ok((await page.getByRole('dialog', { name: '编辑模型', exact: true }).getByRole('combobox', { name: '位置', exact: true }).innerText()).includes('本地'));  await screenshot('desktop-edit.png'); await page.keyboard.press('Escape');
   browser = await chromium.launch(); const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const mobile = await context.newPage(); mobile.on('pageerror', error => errors.push(error.message));
   const cookies = await application.evaluate(async ({ session }) => session.fromPartition('persist:weftmate-desktop').cookies.get({}));
