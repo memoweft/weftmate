@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import test from 'node:test';
 import { getEncoding } from 'js-tiktoken';
-import { presentPersonalPrompt } from '../src/plugins/personal-prompt.mjs';
+import { presentPersonalPrompt, personalToolDescriptions } from '../src/plugins/personal-prompt.mjs';
 import { createPersonalMemoryManager } from '../src/personal-memory/index.mjs';
 
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/pf1-prompt.json', import.meta.url), 'utf8'));
@@ -29,7 +29,7 @@ test('loading tools preserves exact schemas and relevant workflow guidance', () 
   const names = new Set(['read', 'write', 'create_goal', 'subagent']);
   const projected = presentPersonalPrompt(assembly, names);
   for (const name of names) assert.deepEqual(projected.tools.find((tool: any) => tool.name === name),
-    assembly.tools.find((tool: any) => tool.name === name));
+    { ...assembly.tools.find((tool: any) => tool.name === name), description: personalToolDescriptions[name] ?? assembly.tools.find((tool: any) => tool.name === name).description });
   assert.ok(projected.sections.some((section: any) => section.name === 'tool:read'));
   assert.ok(projected.sections.some((section: any) => section.name === 'tool:goal'));
   assert.ok(projected.sections.some((section: any) => section.name === 'weftmate:delegation-guidance'));
@@ -39,12 +39,27 @@ test('loading tools preserves exact schemas and relevant workflow guidance', () 
     'projection must not duplicate guidance');
 });
 
+test('deferred scheduling and questions receive WeftMate overrides while keeping native parameters', () => {
+  const names = ['schedule_create', 'schedule_manage', 'ask_user_question'];
+  const native = { ...assembly, tools: assembly.tools.map((tool: any) => names.includes(tool.name)
+    ? { ...tool, description: 'Uncustomized runtime description' } : tool) };
+  const projected = presentPersonalPrompt(native, new Set(names));
+  for (const name of names) {
+    const tool = projected.tools.find((tool: any) => tool.name === name);
+    assert.equal(tool.description, personalToolDescriptions[name]);
+    assert.deepEqual(tool.parameters, native.tools.find((tool: any) => tool.name === name).parameters);
+  }
+  // A later job collection request also needs the ownership/result instructions.
+  const collection = presentPersonalPrompt(assembly, new Set(['job_output']));
+  assert.ok(collection.sections.some((section: any) => section.name === 'weftmate:delegation-guidance'));
+});
+
 test('automatic recall includes only complete bounded claims and matching source metadata', async t => {
   const root = mkdtempSync(join(tmpdir(), 'pf1-memory-limit-'));
   const owner = 'owner-00000000-0000-4000-8000-000000000001';
   const methods = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_boundary', 'preview_recall',
     'query_interactions', 'query_world', 'query_evidence', 'query_provenance', 'submit_command', 'query_command_receipt', 'retry_delete_storage_cleanup'];
-  const create = (limits = {}) => createPersonalMemoryManager({ root, enabled: true,
+  const create = (limits = {}, interaction = '不相关的过长交互'.repeat(500)) => createPersonalMemoryManager({ root, enabled: true,
     python: join(root, 'python.exe'), pythonPath: join(root, 'py'), baseUrl: 'http://127.0.0.1:12345/v1', model: '@current',
     credential: () => 'synthetic', ...limits, rpcFactory: () => ({ child: {}, async close() {}, async request(method: string, params: any) {
       if (method === 'capabilities') return { protocol: 'memoweft.dsh_rpc', protocol_version: 2, schema_version: 1, methods };
@@ -53,7 +68,7 @@ test('automatic recall includes only complete bounded claims and matching source
       if (method === 'health') return { runtime: { subject_id: owner, route_ready: true } };
       if (method === 'preview_recall') return { preview: { selected_item_ids: Array.from({ length: 40 }, (_, i) => ['cognition', `c-${i}`]),
         rendered_recall: Array.from({ length: 40 }, (_, i) => `记忆：相关条目${i}完整内容。`).join('\n') } };
-      if (method === 'query_interactions') return { rendered_context: '不相关的过长交互'.repeat(500) };
+      if (method === 'query_interactions') return { rendered_context: interaction };
       return {};
     } }) });
   const manager = create({ recallMaxItems: 3, recallMaxChars: 100 });
@@ -63,6 +78,17 @@ test('automatic recall includes only complete bounded claims and matching source
   for (const source of result.memories) assert.ok(result.contextText.includes(source.summary));
   assert.doesNotMatch(result.contextText, /过长交互|条目3/);
   assert.throws(() => create({ recallMaxChars: 0 }), /MEMORY_CONFIGURATION_INVALID/);
+
+  const defaults = create();
+  const fitting = create({}, '共同决定：以后组队提醒用户找王小明。');
+  t.after(async () => { await defaults.close(); await fitting.close(); });
+  const bounded = await defaults.recall(owner, { query: '相关条目', sessionId: 'synthetic-session' });
+  assert.equal(bounded.sourceCount, 6);
+  assert.ok(bounded.contextText.length <= 1200);
+  assert.doesNotMatch(bounded.contextText, /过长交互/,
+    'a whole oversized interaction snapshot is omitted; complete formal claims remain');
+  const withDecision = await fitting.recall(owner, { query: '组队', sessionId: 'synthetic-session' });
+  assert.match(withDecision.contextText, /共同决定：以后组队提醒用户找王小明。/);
 });
 
 test('real pinned DSH greeting wire obeys the token ceiling', {
