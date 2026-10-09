@@ -63,9 +63,21 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         const names = {ui:'电脑界面',app:'程序版本','mobile-ui':'手机界面'};
         if(value) {target.replaceChildren();for(const layer of value.layers) target.append(globalThis.WeftSettingsControls.row(names[layer.layer] || '版本',
             `当前 ${layer.currentVersion || '版本未知'}${layer.availableVersion ? ` · 可用 ${layer.availableVersion}` : ''}`,node('span','settings-value',core.updateStatusText(layer))));}
+        if (value?.channel) {
+            const channel = node('select', ''); channel.setAttribute('aria-label', '更新通道');
+            for (const [id, label] of [['stable', '正式'], ['preview', '预览']]) { const option = node('option', '', label); option.value = id; channel.append(option); }
+            channel.value = value.channel; channel.disabled = !value.canChangeChannel;
+            channel.addEventListener('change', async () => { channel.disabled = true; try { await core.setUpdateChannel(channel.value); if (current()) await renderSettingsUpdates(); }
+                catch { if (current()) { loading.textContent = '更新通道暂时无法切换，请等下载完成后重试。'; target.prepend(loading); channel.value = value.channel; channel.disabled = !value.canChangeChannel; } } });
+            target.append(globalThis.WeftSettingsControls.row('更新通道', '正式版本适合日常使用；预览版本可提前体验新功能。', channel));
+        }
+        for (const layer of value?.layers || []) if (layer.releaseNotes) target.append(globalThis.WeftSettingsControls.row(`${names[layer.layer] || '版本'}更新内容`, layer.releaseNotes, node('span', '', '')));
         const actions=node('div','actions'), refresh=node('button','button secondary','检查更新');refresh.type='button';refresh.addEventListener('click',()=>{void renderSettingsUpdates(true)});actions.append(refresh);
         if(value?.canRestart){const restart=node('button','button primary','重启并更新');restart.type='button';restart.addEventListener('click',async()=>{restart.disabled=true;try{const result=await core.restartForUpdate();if(!current())return;if(!result?.restarted){loading.textContent=result?.reason||'更新尚未就绪，请重新检查。';target.prepend(loading);restart.disabled=false}}catch{if(current()){loading.textContent='更新未完成，请重新检查。';target.prepend(loading);restart.disabled=false}}});actions.append(restart)}
         target.append(actions);
+        if (value?.canRestart) target.append(node('p', 'muted', '可以稍后再更新。重启前会等待进行中的任务结束，并创建备份。'));
+        clearTimeout(renderSettingsUpdates.timer);
+        if (value?.layers.some(layer => ['checking', 'available', 'downloading'].includes(layer.status))) renderSettingsUpdates.timer = setTimeout(() => { if (current()) void renderSettingsUpdates(); }, 1500);
     }
     function mountSettingsNavigation() {
         const account = ui.byId('account-view');
