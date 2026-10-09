@@ -216,7 +216,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       await requireSession(sessionId, ownerId);
       return gateway(`/sessions/${encodeURIComponent(sessionId)}/chat-handoff`, { method: 'POST', body: JSON.stringify({ action: 'install', handoff }) });
     },
-    async forkSession({ sessionId, ownerId, childId, modelProfileId, title: sourceTitle }) {
+    async forkSession({ sessionId, ownerId, childId, modelProfileId, title: sourceTitle, beforeSeq }) {
       requireRuntime()
       const source = await requireSession(sessionId, ownerId)
       const profile = modelProfile(modelProfileId ?? source.profile.id)
@@ -226,7 +226,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       await mkdir(cwd, { recursive: true, mode: 0o700 })
       try {
         try { await access(sourceCwd); await cp(sourceCwd, cwd, { recursive: true }) } catch (error) { if (error.code !== 'ENOENT') throw error }
-        const result = await gateway(`/sessions/${encodeURIComponent(sessionId)}/fork`, { method: 'POST', body: JSON.stringify({ sessionId: childId, cwd, copyWorkspace: false }) })
+        const result = await gateway(`/sessions/${encodeURIComponent(sessionId)}/fork`, { method: 'POST', body: JSON.stringify({ sessionId: childId, cwd, copyWorkspace: false, ...(beforeSeq !== undefined ? { beforeSeq } : {}) }) })
         if (result.sessionId !== childId) fail('SESSION_UNAVAILABLE')
         bindSession(childId, profile.id)
         const route = routeForProfile(profile.id)

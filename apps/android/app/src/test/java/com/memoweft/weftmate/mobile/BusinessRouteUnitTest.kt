@@ -5,6 +5,15 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @Test fun messageBranchesUseExactSessionAndCommandRoutes() {
+        assertTrue(validBusinessPath("/personal/v1/sessions/session-one/message-branches"))
+        assertTrue(validBusinessPath("/personal/v1/sessions/session-one/chat"))
+        assertTrue(validBusinessPath("/personal/v1/chats/main"))
+        assertTrue(validBusinessPath("/personal/v1/commands"))
+        for (path in listOf("/personal/v1/sessions/../message-branches", "/personal/v1/commands?key=secret",
+            "/personal/v1/sessions/session%2Fone/message-branches", "/personal/v1/commands/command/raw"))
+            assertFalse(path, validBusinessPath(path))
+    }
     @Test fun conversationResourcesUseAnExactRouteAndForwardCursor() {
         assertTrue(validBusinessPath("/personal/v1/sessions/session-one/resources"))
         assertTrue(validBusinessPath("/personal/v1/sessions/session-one/resources?afterSeq=-1"))
