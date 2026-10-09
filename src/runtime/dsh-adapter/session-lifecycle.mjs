@@ -3,7 +3,7 @@ import { copySnapshotTree } from './snapshot-files.mjs';
 import { mkdirSync, existsSync } from 'node:fs';
 import { dirname, relative, resolve, isAbsolute } from 'node:path'
 import { rm, readFile, cp } from 'node:fs/promises'
-import { eraseSessionMemoryArtifact } from './memory-erasure.mjs'
+import { eraseSessionMemoryArtifact, shadowForgottenSurface } from './memory-erasure.mjs'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { readNativeTaskStopState } from './task-stop-state.mjs'
 
@@ -80,11 +80,12 @@ export function nativeSessionLifecycle(ctx) {
       }
       await ensure({ sessionId }, true)
       const handle = handles.get(sessionId)
+      const forgottenSeqs = shadowForgottenSurface(handle.agent.session, sourceTexts, createUserMessage)
       await ctx.sessions.flush(handle.agent.session)
       await handle.dispose(); handles.delete(sessionId)
       await eraseSessionMemoryArtifact(persistence, sessionId, { sourceTexts, deleteConversationSnippets })
       await ctx.get('storageDomain')?.get('session_projcache')?.table('sessions').delete(sessionId)
-      return { cleaned: true }
+      return { cleaned: true, forgottenSeqs }
     }),
     fork: (sessionId, options) => serial(sessionId, async () => {
       await ensure({ sessionId }, true)

@@ -1,0 +1,27 @@
+{
+  "message": "Expected values to be strictly equal:\n\n1 !== 0\n",
+  "usage": [
+    {
+      "completion_tokens": 58,
+      "prompt_tokens": 118,
+      "total_tokens": 176,
+      "completion_tokens_details": {
+        "reasoning_tokens": 48
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    {
+      "completion_tokens": 128,
+      "prompt_tokens": 2095,
+      "total_tokens": 2223,
+      "completion_tokens_details": {
+        "reasoning_tokens": 104
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  ]
+}

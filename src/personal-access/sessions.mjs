@@ -283,6 +283,7 @@ export function createSessionOperations(context) {
             await rm(path.join(context.root, 'artifacts', ownerId, command.taskId ?? command.rootTaskId ?? command.commandId), { recursive: true, force: true });
         }
         await context.serial(() => context.mutate(ownerId, next => {
+          for (const chatId of context.eraseChatCopies(next, { sessionId })) context.chatTimeline.invalidate(ownerId, chatId);
           delete next.sessions[sessionId];
           for (const field of ['commands', 'toolApprovals', 'userQuestions', 'projectSources', 'browserSources', 'conversationBindings'])
             for (const [key, value] of Object.entries(next[field] ?? {}))

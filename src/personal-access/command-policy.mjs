@@ -76,10 +76,11 @@ export function canonicalCommand(value, hostId, internal = false) {
       const side = value.sideChat;
       exactKeys(side, ['chatId','requestHash','parent','title','contextTransfer'], ['chatId','requestHash','parent','contextTransfer']);
       exactKeys(side.parent, ['kind','id'], ['kind','id']);
-      exactKeys(side.contextTransfer, ['state','sourceRefs','truncated'], ['state','sourceRefs','truncated']);
+      exactKeys(side.contextTransfer, ['state','sourceRefs','truncated','sourceDeleted'], ['state','sourceRefs','truncated']);
       if (!validId(side.chatId) || !/^[a-f0-9]{64}$/.test(side.requestHash) || !['main','project'].includes(side.parent.kind) ||
           !validId(side.parent.id) || side.contextTransfer.state !== 'references_only' || side.contextTransfer.truncated !== false ||
           !Array.isArray(side.contextTransfer.sourceRefs) || side.contextTransfer.sourceRefs.length > 1 ||
+          side.contextTransfer.sourceDeleted !== undefined && (side.contextTransfer.sourceDeleted !== true || side.contextTransfer.sourceRefs.length) ||
           side.title !== undefined && (typeof side.title !== 'string' || !side.title.trim() || side.title.length > 256) ||
           side.parent.kind === 'project' && value.projectId !== side.parent.id || side.parent.kind === 'main' && value.projectId !== undefined ||
           value.conversationId !== undefined || value.workspaceKind !== undefined) throw failure('INVALID_REQUEST');

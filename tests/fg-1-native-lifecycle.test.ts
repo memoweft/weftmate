@@ -10,7 +10,7 @@ test('concurrent cold resumes share a native handle and model reads finish befor
   const persistence={config:{root:'C:/synthetic'},inspect:async()=>({meta:{id:'session',agentPreset:'personal-remote'}}),readRaw:async()=>({meta:{id:'session'},content:'{"kind":"header"}\n'})};
   const ctx={get(name){return {sessionPersistence:persistence,agents:{get:()=>agent},sessions:{get:()=>undefined},
     agentPresets:{resolve:async()=>({id:'personal-remote'})},storageDomain:{get:()=>({table:()=>({delete:async()=>calls.push('cache-delete')})})}}[name]},
-    agents:{resume:async()=>{starts++;await started;agent={session:{id:'session'},status:'idle',inbox:{hasPending:false}};return {agent,dispose:async()=>{calls.push('dispose');agent=undefined}}}},
+    agents:{resume:async()=>{starts++;await started;agent={session:{id:'session',events:[],surface:{nodes:[]}},status:'idle',inbox:{hasPending:false}};return {agent,dispose:async()=>{calls.push('dispose');agent=undefined}}}},
     sessions:{flush:async()=>calls.push('flush')}};
   const lifecycle=nativeSessionLifecycle(ctx),one=lifecycle.resume('session'),two=lifecycle.resume('session');
   await tick();assert.equal(starts,1);release();await Promise.all([one,two]);assert.equal(starts,1);

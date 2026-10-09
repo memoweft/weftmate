@@ -174,6 +174,7 @@ export function createCommandOperations(context) {
         if (context.storageFault) throw failure('STORAGE_UNAVAILABLE', 503);
         const command = context.accountState(ownerId).commands[commandId];
         if (!command || command.state !== 'pending') return;
+        if (context.accountState(ownerId).memoryCleanupPending) return;
         if (command.payload.projectId && (context.accountState(ownerId).projects?.[command.payload.projectId]?.revoked ||
             context.accountState(ownerId).projects?.[command.payload.projectId]?.revision !== command.payload.projectRevision)) {
           await context.mutate(ownerId, (next) => {

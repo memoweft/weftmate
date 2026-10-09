@@ -4,7 +4,7 @@ import path from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import { digest, failure, plainObject, withDeadline } from './common.mjs';
 import { ensurePrivateDirectory, ensurePrivateFile } from '../private-host-storage.mjs';
-import { lstat, readdir, readFile } from 'node:fs/promises';
+import { lstat, readdir, readFile, rm } from 'node:fs/promises';
 import {
   CLOSE_TIMEOUT_MS,
   DISPATCH_TIMEOUT_MS,
@@ -47,6 +47,7 @@ import { createOfflineService } from '../personal-offline/index.mjs';
 import { reconcileChatIdentity } from './chat-identity.mjs';
 import { createChatOperations } from './chats.mjs';
 import { createChatTimeline } from './chat-timeline.mjs';
+import { eraseChatCopies } from './chat-erasure.mjs';
 import { createSideChats } from './side-chats.mjs';
 export { explicitNotepadOpenIntent } from './command-policy.mjs';
 export { uniqueSessionOwner } from './store.mjs';
@@ -117,6 +118,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get chats() { return chats; },
     get chatTimeline() { return chatTimeline; },
     get sideChats() { return sideChats; },
+    eraseChatCopies,
     get offline() { return offline; },
     get backupManager() { return backupManager; },
     backupOwner: ownerId => hostOwner(ownerId) || hostCloudIdentity?.isInstallationOwner(ownerId) === true,
@@ -557,10 +559,21 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const offline = await createOfflineService(context);
   const service = {
     async cleanupMemoryCopies(ownerId, { sourceTexts = [], deleteConversationSnippets = false }) {
+      await serial(() => mutate(ownerId, next => { next.memoryCleanupPending = true; }));
       await offline.invalidate(ownerId);
+      // This managed migration preimage is included in new profile backups.
+      // Once erasure occurs it must not retain an older access-store copy.
+      await rm(path.join(root, 'chat-identity-v1.before.json'), { force: true });
+      await serial(() => mutate(ownerId, next => {
+        for (const chatId of eraseChatCopies(next, { forgotten: true })) chatTimeline.invalidate(ownerId, chatId);
+      }));
       const account = accountState(ownerId);
       for (const sessionId of Object.keys(account.sessions)) {
-        await callBackend(() => backend.cleanupMemoryCopies({ sessionId, ownerId, sourceTexts, deleteConversationSnippets }));
+        const cleaned = await callBackend(() => backend.cleanupMemoryCopies({ sessionId, ownerId, sourceTexts, deleteConversationSnippets }));
+        if (cleaned?.forgottenSeqs?.length) await serial(() => mutate(ownerId, next => {
+          const session = next.sessions[sessionId];
+          if (session) session.forgottenSeqs = [...new Set([...(session.forgottenSeqs ?? []), ...cleaned.forgottenSeqs])];
+        }));
       }
       if (deleteConversationSnippets && sourceTexts.length) await serial(() => mutate(ownerId, next => {
         for (const command of Object.values(next.commands)) {
@@ -571,6 +584,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           }
         }
       }));
+      await serial(() => mutate(ownerId, next => { delete next.memoryCleanupPending; }));
+      for (const command of Object.values(accountState(ownerId).commands)) if (command.state === 'pending') void dispatch(ownerId, command.commandId);
       return { cleaned: true };
     },
     handleScheduleRuntime: scheduleOperations.handleRuntime,
