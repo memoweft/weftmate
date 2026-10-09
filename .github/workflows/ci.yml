@@ -126,7 +126,7 @@ jobs:
         with:
           repository: memoweft/memoweft
           # UP-3 legacy startup fix (Core #94); replace after Claude squash.
-          ref: 69ce63559275ca46de002d8894ad8869589fb812
+          ref: cfded709894942b57801f73489e64f98003895e3
           path: memoweft-core
           persist-credentials: false
       - name: Setup Node
