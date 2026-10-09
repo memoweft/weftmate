@@ -512,12 +512,27 @@ async function reconcileMemoryMarker(marker=state.memory?.pendingMarker){const m
     memory.receiptMessage='原请求结果仍待确认。请稍后核对回执；不会自动重发。';
     if(memory.view==='detail')effects.renderMemoryDetail(memory.target,token);else effects.renderMemoryList(memory.target)}}
 
+async function previewMemoryForget(choice){const memory=state.memory,token=memoryToken();
+  choice.deleteConversationSnippets=false;choice.preview=null;choice.previewError='';
+  const kind=choice.operation==='deleteEvidence'?'evidence':memory.detail.item.kind,
+    id=choice.operation==='deleteEvidence'?choice.id:memory.detail.item.id;
+  const path=`/personal/v1/memory/${kind==='evidence'?'evidence':`items/${memoryPathEncode(kind)}`}/${memoryPathEncode(id)}/forget-preview`;
+  try{const result=await business({path,method:'GET'});
+    if(!memoryCurrent(token)||memory.confirmation!==choice)return;
+    if(result.worldRevision!==memory.detailRevision)throw {code:'MEMORY_REVISION_CHANGED'};
+    choice.preview=result;
+  }catch(error){if(!memoryCurrent(token)||memory.confirmation!==choice)return;
+    choice.previewError='无法读取遗忘范围，请取消后重新打开。';}
+  effects.renderMemoryDetail(memory.target,token)}
+core.mobilePreviewMemoryForget=previewMemoryForget;
 async function submitMemoryAction(operation,evidenceId=null,correction=''){const memory=state.memory,detail=memory?.detail;
   if(!detail||!memoryCurrent(memoryToken())||!memoryActionAllowed(operation,
     operation==='deleteEvidence'?memory.sources.find(source=>source.evidenceId===evidenceId):null))return;
   const text=correction.trim();if(operation==='correct'&&(!text||text.length>4000)){
     memory.detailError='纠正内容须为 1–4000 个字符。';effects.renderMemoryDetail(memory.target);return}
   if(['deleteItem','deleteEvidence'].includes(operation)&&memory.confirmation?.confirmText?.trim()!=='删除')return;
+  if(['deleteItem','deleteEvidence'].includes(operation)&&memory.confirmation?.preview?.worldRevision!==memory.detailRevision)return;
+  const deleteConversationSnippets=memory.confirmation?.deleteConversationSnippets===true;
   const requestId=newMemoryRequestId(),kind=detail.item.kind,itemId=detail.item.id,
     id=operation==='deleteEvidence'?evidenceId:itemId,revision=memory.detailRevision;
   if(!Number.isSafeInteger(revision)||!memoryPathIdSupported(id))return;
@@ -529,7 +544,8 @@ async function submitMemoryAction(operation,evidenceId=null,correction=''){const
     `/personal/v1/memory/items/${memoryPathEncode(kind)}/${memoryPathEncode(id)}`;
   const path=operation==='correct'?`${base}/correct`:operation==='mute'?`${base}/mute`:base,
     method=['deleteItem','deleteEvidence'].includes(operation)?'DELETE':'POST',
-    body={requestId,expectedWorldRevision:revision,...(operation==='correct'?{text}:{})};
+    body={requestId,expectedWorldRevision:revision,...(operation==='correct'?{text}:{}),
+      ...(['deleteItem','deleteEvidence'].includes(operation)?{deleteConversationSnippets}:{})};
   try{const result=await business({path,method,body});if(!memoryCurrent(token))return;
     if(!handleMemoryReceipt(result?.receipt,marker,token)){
       memory.activeOperation=null;memory.receiptMessage='回执内容无法确认；原请求仍待核对，不会自动重发。';

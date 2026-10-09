@@ -53,6 +53,13 @@ test('account memory routes keep health, list, source, search cursor and Trust r
       }, reasonCode: 'MEMORY_UNAVAILABLE' },
     query: async (ownerId: string, method: string, params: any) => {
       calls.push({ ownerId, method, params })
+      if (method === 'preview_forget') {
+        if (params.target_id.includes('owner-') && !params.target_id.includes(ownerId)) throw Object.assign(new Error('not found'), { code: 'world_item_not_found' });
+        return { world_revision: 3, item_count: 2, evidence_count: 1, evidence_ids: [`e-${ownerId}`], items: [
+          { object_kind: 'entity', item_id: 'person', name: '王小明', item_type: 'person' },
+          { object_kind: 'relationship', item_id: 'rel', name: '好兄弟', item_type: 'relationship' },
+        ] };
+      }
       if (method === 'query_world' && params.operation === 'list') return { world_revision: 3,
         items: [item(ownerId, `c-${ownerId}-one`, '合成短记忆'),
           item(ownerId, `c-${ownerId}-two`, '合成另一记忆'),
@@ -124,6 +131,13 @@ test('account memory routes keep health, list, source, search cursor and Trust r
     }
     const a = await register('MemoryOwnerA'), b = await register('MemoryOwnerB')
     aOwner = a.ownerId; bOwner = b.ownerId
+    const preview = await api(origin, 'GET', `/personal/v1/memory/items/cognition/c-${aOwner}-one/forget-preview`, undefined, a);
+    assert.equal(preview.status, 200); assert.equal(preview.body.itemCount, 2);
+    assert.deepEqual(preview.body.items.map((item: any) => item.text), ['王小明', '好兄弟']);
+    assert.equal(preview.body.worldRevision, 3);
+    assert.equal((await api(origin, 'GET', `/personal/v1/memory/items/cognition/c-${aOwner}-one/forget-preview`, undefined, b)).status, 404);
+    const sourcePreview = await api(origin, 'GET', `/personal/v1/memory/evidence/e-${aOwner}/forget-preview`, undefined, a);
+    assert.equal(sourcePreview.status, 200); assert.equal(calls.at(-1).params.target_kind, 'evidence');
     await service.setSharedModelProfiles([{ id: 'formal-local', model: 'synthetic-model',
       baseUrl: 'http://127.0.0.1:8081/v1', provider: 'openai-compatible',
       source: 'formal-host-catalog',

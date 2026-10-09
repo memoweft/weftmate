@@ -151,6 +151,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         core.state.hostId = payload.hostId;
         core.state.capabilities = payload.backend?.capabilities ?? null;
         core.state.syncAvailable = payload.sync?.available === true;
+        effects.paintMemoryAvailability?.(payload.memory ?? { state: payload.backend?.modules?.memory });
         if (!core.state.syncAvailable && core.state.phonePane)
             effects.showConversation();
         effects.updateAvailability();

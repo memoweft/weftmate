@@ -33,6 +33,7 @@ globalThis.WeftUiCore.factories.client = (core) => {
         readMemoryPage: params => core.memoryRequest(`/items?${params}`),
         readMemoryItem: (kind, id) => core.memoryRequest(`/items/${kind}/${core.memoryPathId(id)}`),
         readMemorySources: (kind, id) => core.memoryRequest(`/items/${encodeURIComponent(kind)}/${encodeURIComponent(id)}/sources`),
+        readForgetPreview: (kind, id) => core.memoryRequest(`/${kind === 'evidence' ? 'evidence' : `items/${kind}`}/${core.memoryPathId(id)}/forget-preview`),
         requestMemoryCleanup: requestId => core.memoryRequest(`/commands/by-request/${encodeURIComponent(requestId)}/retry-cleanup`, { method: 'POST', body: {} }),
         submitMemoryCommand: (selected, operation, body) => core.memoryRequest(`/items/${selected.kind}/${core.memoryPathId(selected.id)}${operation === 'delete' ? '' : `/${operation}`}`, { method: operation === 'delete' ? 'DELETE' : 'POST', body }),
         readResource: path => core.accessApi(path),

@@ -1,0 +1,10 @@
+{
+  "scenario": "restart -> checked forget -> delete original conversation",
+  "before": {
+    "nativeStatus": 400,
+    "nativeCode": "agent-busy"
+  },
+  "rootCause": "Native session.models calls agentFor(), which restores cold personal agents under the API proxy private handle. Host deletion has no native disposer until it claims the lifecycle before model access.",
+  "after": "Model access, resume, cleanup and deletion use the host native lifecycle; model access and disposal are serialized per session.",
+  "storageCopies": "Entity aliases without direct provenance, retained Core original interaction contexts, and historical SQLite free pages were separately reproduced and erased."
+}

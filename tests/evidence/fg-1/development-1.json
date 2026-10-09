@@ -1,0 +1,584 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-08T21:26:57.126Z",
+  "model": "mimo",
+  "revision": {
+    "weftmate": "d274a80ca5a80dad12395fdb5e76ef7a9cd4df20",
+    "core": "ea1d9d11aca0f839c76026b89ec46c9f85d439fd"
+  },
+  "electron": true,
+  "steps": [
+    {
+      "id": "06",
+      "title": "重启宿主、持久化后仍采用最新理解",
+      "status": "passed",
+      "checks": {
+        "restarted": true,
+        "persistedLatest": true,
+        "latestReply": true,
+        "latestAdopted": true
+      },
+      "startedAt": "2026-10-08T21:27:40.323Z",
+      "items": [
+        {
+          "id": "entity-5d2bc716ea0a258206df982851ab43175d0ae87eac0cf76c9a8242840c4b320b",
+          "kind": "entity",
+          "text": "用户",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-08T21:27:23.887Z",
+          "updatedAt": "2026-10-08T21:27:23.887Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 0
+        },
+        {
+          "id": "entity-aa83020f280273fede1f2da21b04bd24f1d8684a42722ff2418e93a433423214",
+          "kind": "entity",
+          "text": "王小明",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-08T21:27:23.887Z",
+          "updatedAt": "2026-10-08T21:27:23.887Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 0
+        },
+        {
+          "id": "relationship-08f80bea597df66545c0298c35879564e855300ecf885aea0aca9e8e4da806e7",
+          "kind": "relationship",
+          "text": "用户王小明打游戏挺厉害，是我好兄弟。",
+          "truncated": false,
+          "currentState": "not_current",
+          "createdAt": "2026-10-08T21:27:23.887Z",
+          "updatedAt": "2026-10-08T21:27:38.598Z",
+          "lifecycle": {
+            "invalidAt": "2026-10-08T21:27:38.598Z",
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        },
+        {
+          "id": "relationship-6c92950e8c17985f538c9db8f6057c3bc078b01f9266e8ffa555a8665dfe25bd",
+          "kind": "relationship",
+          "text": "用户更正一下：王小明是我的表弟，不是好兄弟。",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-08T21:27:38.598Z",
+          "updatedAt": "2026-10-08T21:27:38.598Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        }
+      ],
+      "semantic": {
+        "type": "llm_judge",
+        "prompt": "重启后当前关系仍是表弟；组队找王小明。",
+        "turn": 3,
+        "status": "skipped",
+        "reason": "No judge configured; enable --judge-model same or a configured model name."
+      },
+      "finishedAt": "2026-10-08T21:28:12.014Z"
+    },
+    {
+      "id": "07",
+      "title": "界面看来源、真正遗忘、导出不可恢复",
+      "status": "failed",
+      "checks": {
+        "uiSource": true,
+        "exportBeforeForget": true,
+        "memoryPageForget": false,
+        "originalChatRetained": true
+      },
+      "startedAt": "2026-10-08T21:28:12.015Z",
+      "memoryPageForget": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-ebe3c82e-d897-426a-9899-421271ee7d35",
+          "receipt": {
+            "commandId": "memory-63906cabbc1fbb12b53edfb35c34c988d505ce4353abcd02",
+            "requestId": "memory-aba5db4e-a17a-48ff-9b06-697ef6256a61",
+            "state": "applied",
+            "worldRevision": 3,
+            "storageCleanup": {
+              "state": "pending",
+              "detailCode": "host_journal_cleanup_pending"
+            }
+          }
+        }
+      },
+      "reason": "locator.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '关闭记忆详情', exact: true })\u001b[22m\n",
+      "finishedAt": "2026-10-08T21:28:34.503Z"
+    },
+    {
+      "id": "08",
+      "title": "Core 真进程停止且无法重启、普通聊天和提示",
+      "status": "passed",
+      "checks": {
+        "actualCoreStopped": true,
+        "unavailable": true,
+        "chatCompleted": true,
+        "noMemoryInjected": true,
+        "chatNotice": true,
+        "memoryPageNotice": true
+      },
+      "startedAt": "2026-10-08T21:28:34.504Z",
+      "killedCoreProcesses": 1,
+      "memory": {
+        "ownerId": "owner-ebe3c82e-d897-426a-9899-421271ee7d35",
+        "state": "unavailable",
+        "worldRevision": null,
+        "capabilities": {
+          "list": false,
+          "source": false,
+          "inject": false,
+          "correct": false,
+          "mute": false,
+          "deleteEvidence": false,
+          "deleteWorldItem": false
+        },
+        "pendingBoundaryCount": null,
+        "blockedBoundaryCount": null,
+        "discardedBoundaryCount": null,
+        "lastFailureCode": "MEMORY_PROCESS_UNAVAILABLE",
+        "reasonCode": "MEMORY_PROCESS_UNAVAILABLE"
+      },
+      "chatNotice": "WeftMate\n新对话\nCtrl N\nCtrl K\n\n已归档\n会话\n新对话\n更多\n新对话\n更多\n新对话\n更多\ne\neval-f3893475-2e79-484b-8720-827427f6cbf5\n新对话\n本对话用量\n输出与来源\n\n记忆暂时不可用，这次对话不会用到或记住新内容\n\n今天想做什么？\n\n请求已记录，等待派发。\n\n输入消息\nmimo\n自动",
+      "memoryNotice": "记忆服务暂时不可用，请稍后刷新。",
+      "semantic": {
+        "type": "llm_judge",
+        "prompt": "记忆服务故障时普通问候仍可用。",
+        "turn": 4,
+        "status": "skipped",
+        "reason": "No judge configured; enable --judge-model same or a configured model name."
+      },
+      "finishedAt": "2026-10-08T21:28:42.662Z"
+    }
+  ],
+  "turns": [
+    {
+      "sessionId": "session-8f7cc310-870c-4b95-93ca-bb02464e4e30",
+      "model": "mimo",
+      "modelProfileId": "private-model-8bd6470aea07e78b97ecc86b81c938682a4efbc9",
+      "user": "王小明打游戏挺厉害，是我好兄弟。",
+      "reply": "王小明游戏打得好，看来是你靠谱的兄弟，记下了。有什么需要我帮忙的随时说。",
+      "status": "completed",
+      "memoryUsed": [],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-08T21:27:11.557Z",
+          "data": {
+            "taskId": "cmd-b673c01b-a9ad-453a-99d9-b3d70115ea50",
+            "receiptId": "8bfc82e8-a685-4ba7-96ba-5269b90caf7e",
+            "text": "王小明打游戏挺厉害，是我好兄弟。",
+            "commandId": "cmd-b673c01b-a9ad-453a-99d9-b3d70115ea50",
+            "requestId": "68217b73-60c6-4ae3-927b-7664f91c6afd"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-08T21:27:11.558Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-08T21:27:11.941Z",
+          "data": {
+            "taskId": "cmd-b673c01b-a9ad-453a-99d9-b3d70115ea50",
+            "turn": 1,
+            "receiptId": "8bfc82e8-a685-4ba7-96ba-5269b90caf7e",
+            "commandId": "cmd-b673c01b-a9ad-453a-99d9-b3d70115ea50",
+            "requestId": "68217b73-60c6-4ae3-927b-7664f91c6afd",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-08T21:27:11.942Z",
+          "data": {
+            "text": "王小明打游戏挺厉害，是我好兄弟。",
+            "receiptId": "8bfc82e8-a685-4ba7-96ba-5269b90caf7e"
+          }
+        },
+        {
+          "seq": 47,
+          "type": "assistant.message",
+          "at": "2026-10-08T21:27:15.659Z",
+          "data": {
+            "text": "王小明游戏打得好，看来是你靠谱的兄弟，记下了。有什么需要我帮忙的随时说。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 48,
+          "type": "task.ended",
+          "at": "2026-10-08T21:27:15.660Z",
+          "data": {
+            "taskId": "cmd-b673c01b-a9ad-453a-99d9-b3d70115ea50",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 49,
+            "receiptId": "8bfc82e8-a685-4ba7-96ba-5269b90caf7e",
+            "commandId": "cmd-b673c01b-a9ad-453a-99d9-b3d70115ea50",
+            "requestId": "68217b73-60c6-4ae3-927b-7664f91c6afd",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 49,
+          "type": "turn.ended",
+          "at": "2026-10-08T21:27:15.662Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 5857,
+      "steps": 0
+    },
+    {
+      "sessionId": "session-8f7cc310-870c-4b95-93ca-bb02464e4e30",
+      "model": "mimo",
+      "modelProfileId": "private-model-8bd6470aea07e78b97ecc86b81c938682a4efbc9",
+      "user": "更正一下：王小明是我的表弟，不是好兄弟。以后组队还是找他。",
+      "reply": "明白，已更正：王小明是你的表弟，以后组队还是找他。",
+      "status": "completed",
+      "memoryUsed": [
+        {
+          "id": "relationship-08f80bea597df66545c0298c35879564e855300ecf885aea0aca9e8e4da806e7",
+          "kind": "relationship",
+          "summary": "用户王小明打游戏挺厉害，是我好兄弟。"
+        }
+      ],
+      "events": [
+        {
+          "seq": 50,
+          "type": "task.queued",
+          "at": "2026-10-08T21:27:19.340Z",
+          "data": {
+            "taskId": "cmd-d40aad8a-dbe4-44e3-9b97-6ac965091e87",
+            "receiptId": "19842b4b-34ec-4a7b-b270-f6bf543d4bda",
+            "text": "更正一下：王小明是我的表弟，不是好兄弟。以后组队还是找他。",
+            "commandId": "cmd-d40aad8a-dbe4-44e3-9b97-6ac965091e87",
+            "requestId": "62aec410-ccf5-42bc-bc1f-70e33fc75fad"
+          }
+        },
+        {
+          "seq": 51,
+          "type": "turn.started",
+          "at": "2026-10-08T21:27:19.341Z",
+          "data": {
+            "turn": 2
+          }
+        },
+        {
+          "seq": 53,
+          "type": "task.started",
+          "at": "2026-10-08T21:27:24.086Z",
+          "data": {
+            "taskId": "cmd-d40aad8a-dbe4-44e3-9b97-6ac965091e87",
+            "turn": 2,
+            "receiptId": "19842b4b-34ec-4a7b-b270-f6bf543d4bda",
+            "commandId": "cmd-d40aad8a-dbe4-44e3-9b97-6ac965091e87",
+            "requestId": "62aec410-ccf5-42bc-bc1f-70e33fc75fad",
+            "turnTaskId": "turn-2"
+          }
+        },
+        {
+          "seq": 55,
+          "type": "user.message",
+          "at": "2026-10-08T21:27:24.087Z",
+          "data": {
+            "text": "更正一下：王小明是我的表弟，不是好兄弟。以后组队还是找他。",
+            "receiptId": "19842b4b-34ec-4a7b-b270-f6bf543d4bda"
+          }
+        },
+        {
+          "seq": 79,
+          "type": "assistant.message",
+          "at": "2026-10-08T21:27:29.118Z",
+          "data": {
+            "text": "明白，已更正：王小明是你的表弟，以后组队还是找他。",
+            "memoryUsed": [
+              {
+                "id": "relationship-08f80bea597df66545c0298c35879564e855300ecf885aea0aca9e8e4da806e7",
+                "kind": "relationship",
+                "summary": "用户王小明打游戏挺厉害，是我好兄弟。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 80,
+          "type": "task.ended",
+          "at": "2026-10-08T21:27:29.119Z",
+          "data": {
+            "taskId": "cmd-d40aad8a-dbe4-44e3-9b97-6ac965091e87",
+            "turn": 2,
+            "reason": "completed",
+            "nativeTurnEndSeq": 81,
+            "receiptId": "19842b4b-34ec-4a7b-b270-f6bf543d4bda",
+            "commandId": "cmd-d40aad8a-dbe4-44e3-9b97-6ac965091e87",
+            "requestId": "62aec410-ccf5-42bc-bc1f-70e33fc75fad",
+            "turnTaskId": "turn-2"
+          }
+        },
+        {
+          "seq": 81,
+          "type": "turn.ended",
+          "at": "2026-10-08T21:27:29.120Z",
+          "data": {
+            "reason": "completed",
+            "turn": 2
+          }
+        }
+      ],
+      "durationMs": 11768,
+      "steps": 0
+    },
+    {
+      "sessionId": "session-fc0c637d-f1df-461e-a24f-a30c9e40213b",
+      "model": "mimo",
+      "modelProfileId": "private-model-8bd6470aea07e78b97ecc86b81c938682a4efbc9",
+      "user": "王小明跟我是什么关系？我们组队该找谁？",
+      "reply": "王小明是你的表弟（不是好兄弟）。\n\n至于\"组队该找谁\"——目前我这边没有相关的背景信息：你指的是什么组队（游戏、运动，还是工作/项目）？有哪些候选人？告诉我场景，我再帮你出主意。",
+      "status": "completed",
+      "memoryUsed": [
+        {
+          "id": "relationship-6c92950e8c17985f538c9db8f6057c3bc078b01f9266e8ffa555a8665dfe25bd",
+          "kind": "relationship",
+          "summary": "用户更正一下：王小明是我的表弟，不是好兄弟。"
+        }
+      ],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-08T21:27:55.243Z",
+          "data": {
+            "taskId": "cmd-0665a012-6e16-42e9-99bf-06eaa49b4aea",
+            "receiptId": "734733b5-331e-44d1-a0f7-44f4e26b41ec",
+            "text": "王小明跟我是什么关系？我们组队该找谁？",
+            "commandId": "cmd-0665a012-6e16-42e9-99bf-06eaa49b4aea",
+            "requestId": "76090f42-6d42-4122-a4a5-bfa0e18bf3da"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-08T21:27:55.243Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-08T21:27:55.794Z",
+          "data": {
+            "taskId": "cmd-0665a012-6e16-42e9-99bf-06eaa49b4aea",
+            "turn": 1,
+            "receiptId": "734733b5-331e-44d1-a0f7-44f4e26b41ec",
+            "commandId": "cmd-0665a012-6e16-42e9-99bf-06eaa49b4aea",
+            "requestId": "76090f42-6d42-4122-a4a5-bfa0e18bf3da",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-08T21:27:55.794Z",
+          "data": {
+            "text": "王小明跟我是什么关系？我们组队该找谁？",
+            "receiptId": "734733b5-331e-44d1-a0f7-44f4e26b41ec"
+          }
+        },
+        {
+          "seq": 205,
+          "type": "assistant.message",
+          "at": "2026-10-08T21:28:10.434Z",
+          "data": {
+            "text": "王小明是你的表弟（不是好兄弟）。\n\n至于\"组队该找谁\"——目前我这边没有相关的背景信息：你指的是什么组队（游戏、运动，还是工作/项目）？有哪些候选人？告诉我场景，我再帮你出主意。",
+            "memoryUsed": [
+              {
+                "id": "relationship-6c92950e8c17985f538c9db8f6057c3bc078b01f9266e8ffa555a8665dfe25bd",
+                "kind": "relationship",
+                "summary": "用户更正一下：王小明是我的表弟，不是好兄弟。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 206,
+          "type": "task.ended",
+          "at": "2026-10-08T21:28:10.435Z",
+          "data": {
+            "taskId": "cmd-0665a012-6e16-42e9-99bf-06eaa49b4aea",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 207,
+            "receiptId": "734733b5-331e-44d1-a0f7-44f4e26b41ec",
+            "commandId": "cmd-0665a012-6e16-42e9-99bf-06eaa49b4aea",
+            "requestId": "76090f42-6d42-4122-a4a5-bfa0e18bf3da",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 207,
+          "type": "turn.ended",
+          "at": "2026-10-08T21:28:10.436Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 17587,
+      "steps": 0
+    },
+    {
+      "sessionId": "session-36ef62c6-002c-423c-b39b-cc9b58ff03b5",
+      "model": "mimo",
+      "modelProfileId": "private-model-8bd6470aea07e78b97ecc86b81c938682a4efbc9",
+      "user": "你好，请用一句中文打个招呼。",
+      "reply": "你好！",
+      "status": "completed",
+      "memoryUsed": [],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-08T21:28:38.116Z",
+          "data": {
+            "taskId": "cmd-8aecf42f-db37-45d2-9faf-1fe3c18aa153",
+            "receiptId": "b6aff294-3ae8-4459-a8f7-33af81318c0e",
+            "text": "你好，请用一句中文打个招呼。",
+            "commandId": "cmd-8aecf42f-db37-45d2-9faf-1fe3c18aa153",
+            "requestId": "fb5e6b39-5194-4751-93ff-c8ee4b0cb19a"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-08T21:28:38.117Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-08T21:28:38.318Z",
+          "data": {
+            "taskId": "cmd-8aecf42f-db37-45d2-9faf-1fe3c18aa153",
+            "turn": 1,
+            "receiptId": "b6aff294-3ae8-4459-a8f7-33af81318c0e",
+            "commandId": "cmd-8aecf42f-db37-45d2-9faf-1fe3c18aa153",
+            "requestId": "fb5e6b39-5194-4751-93ff-c8ee4b0cb19a",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-08T21:28:38.318Z",
+          "data": {
+            "text": "你好，请用一句中文打个招呼。",
+            "receiptId": "b6aff294-3ae8-4459-a8f7-33af81318c0e"
+          }
+        },
+        {
+          "seq": 27,
+          "type": "assistant.message",
+          "at": "2026-10-08T21:28:40.352Z",
+          "data": {
+            "text": "你好！",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 28,
+          "type": "task.ended",
+          "at": "2026-10-08T21:28:40.353Z",
+          "data": {
+            "taskId": "cmd-8aecf42f-db37-45d2-9faf-1fe3c18aa153",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 29,
+            "receiptId": "b6aff294-3ae8-4459-a8f7-33af81318c0e",
+            "commandId": "cmd-8aecf42f-db37-45d2-9faf-1fe3c18aa153",
+            "requestId": "fb5e6b39-5194-4751-93ff-c8ee4b0cb19a",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 29,
+          "type": "turn.ended",
+          "at": "2026-10-08T21:28:40.353Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 4414,
+      "steps": 0
+    }
+  ],
+  "initialMemory": {
+    "ownerId": "owner-ebe3c82e-d897-426a-9899-421271ee7d35",
+    "state": "ready",
+    "version": "2.0.0",
+    "worldRevision": 0,
+    "capabilities": {
+      "list": true,
+      "source": true,
+      "inject": true,
+      "correct": true,
+      "mute": true,
+      "deleteEvidence": true,
+      "deleteWorldItem": true
+    },
+    "pendingBoundaryCount": 0,
+    "blockedBoundaryCount": 0,
+    "discardedBoundaryCount": 0,
+    "lastFailureCode": null
+  },
+  "finishedAt": "2026-10-08T21:28:43.032Z",
+  "summary": {
+    "passed": 2,
+    "failed": 1,
+    "eightStepGate": false
+  },
+  "mimoUsage": {
+    "requests": 9,
+    "returnedUsage": 9,
+    "missingUsage": 0,
+    "input": 49823,
+    "cached": 32896,
+    "output": 1309,
+    "knownCnyLowerBound": 0.02020292
+  },
+  "credentialScan": {
+    "scanned": 284,
+    "matches": 0
+  }
+}

@@ -683,6 +683,7 @@ export function createHttpHandler(context) {
       if (request.method === 'GET' && pathname === '/personal/v1/status') {
         if (url.search) throw failure('INVALID_REQUEST');
         const backendStatus = statusProjection(await context.callBackend(() => context.backend.getStatus({ ownerId })));
+        const memoryStatus = context.memoryManager ? await context.memoryManager.status(ownerId) : { state: 'disabled' };
         backendStatus.modules.memory = context.memoryManager?.peek(ownerId) ?? 'disabled';
         if (!context.hostOwner(ownerId)) {
           const models = modelProjection(await context.callBackend(() => context.backend.listModels({ ownerId })))
@@ -700,7 +701,7 @@ export function createHttpHandler(context) {
         return context.json(response, 200, {
           ...context.service.status(ownerId),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
-          backend: backendStatus,
+          backend: backendStatus, memory: { state: memoryStatus.state, inject: memoryStatus.capabilities?.inject === true },
           updates: await context.updateStatus(), nativeMinimumVersions: context.nativeMinimumVersions,
         });
       }
@@ -1114,12 +1115,22 @@ export function createHttpHandler(context) {
         }
         return context.json(response, 200, { sessions });
       }
+      const forgetPreviewMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/forget-preview$/.exec(pathname);
+      if (request.method === 'GET' && forgetPreviewMatch) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        context.authenticate(request, 'account:manage');
+        return context.json(response, 200, await context.sessionOperations.previewSessionForget(ownerId, forgetPreviewMatch[1]));
+      }
       const lifecycleMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)(?:\/(archive|unarchive))?$/.exec(pathname);
       if (lifecycleMatch && (request.method === 'POST' && lifecycleMatch[2] || request.method === 'DELETE' && !lifecycleMatch[2])) {
         if (url.search) throw failure('INVALID_REQUEST');
         const body = await context.readJson(request, 1024);
-        if (!plainObject(body) || Object.keys(body).some(key => key !== 'forgetMemories') ||
-            body.forgetMemories !== undefined && (request.method !== 'DELETE' || typeof body.forgetMemories !== 'boolean'))
+        if (!plainObject(body) || Object.keys(body).some(key => !['forgetMemories', 'deleteConversationSnippets', 'memoryWorldRevision'].includes(key)) ||
+            Object.keys(body).length > 0 && request.method !== 'DELETE' ||
+            body.forgetMemories !== undefined && typeof body.forgetMemories !== 'boolean' ||
+            body.deleteConversationSnippets !== undefined && typeof body.deleteConversationSnippets !== 'boolean' ||
+            body.deleteConversationSnippets === true && body.forgetMemories !== true ||
+            body.memoryWorldRevision !== undefined && (!Number.isSafeInteger(body.memoryWorldRevision) || body.memoryWorldRevision < 0 || body.forgetMemories !== true))
           throw failure('INVALID_REQUEST');
         if (body.forgetMemories) context.authenticate(request, 'account:manage');
         const result = request.method === 'DELETE'
@@ -1759,7 +1770,8 @@ export function createHttpHandler(context) {
       const code = PUBLIC_CODES.has(error?.code) ? error.code : 'SERVICE_UNAVAILABLE';
       const status = code === 'SERVICE_UNAVAILABLE' ? 503
         : Number.isInteger(error?.status) && error.status >= 400 && error.status <= 599 ? error.status : 503;
-      context.json(response, status, { error: { code } });
+      context.json(response, status, { error: { code,
+        ...(Number.isInteger(error?.nativeStatus) ? { nativeStatus: error.nativeStatus, nativeCode: error.nativeCode } : {}) } });
     }
   }
 

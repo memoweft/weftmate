@@ -42,7 +42,7 @@ const mobileEffects = {
   renderAttachmentDrafts: (...args) => renderAttachmentDrafts(...args),
   markAttachmentRevision: (...args) => markAttachmentRevision(...args),
   clearAcceptedHostAttachments: (...args) => clearAcceptedHostAttachments(...args),
-  updateComposer: () => updateComposer(), updateAvailability: () => updateComposer(), paintConnection: () => {},
+  updateComposer: () => updateComposer(), updateAvailability: () => updateComposer(), paintConnection: () => {}, paintMemoryAvailability: value => paintChatMemoryAvailability(value),
   renderSharedConversation: () => renderSharedConversation(),
   renderConversation: (...args) => renderConversation(...args),
   renderConversationList: () => renderConversationList(), renderSessions: () => renderConversationList(),
