@@ -18,7 +18,7 @@ const fixture=await startTimelineCandidate({interactive:true,historyCount:0,memo
 const profile=await mkdtemp(join(tmpdir(),'weftmate-tb-1-desktop-'));
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
 Object.assign(env,{REVIEW_PROFILE:profile,REVIEW_THEME:'light',REVIEW_ORIGIN:fixture.origin});
-let app,browser;const report={realElectron:true,checks:[],errors:[]};
+let app,browser,mobileFixture;const report={realElectron:true,checks:[],errors:[]};
 const wait=async check=>{const end=Date.now()+30000;while(Date.now()<end){if(await check())return;await new Promise(r=>setTimeout(r,100));}throw Error('TB-1 condition timeout');};
 try{
   await fixture.recordActivity({key:'paused',type:'memory.paused',title:'记忆已暂停',summary:'记忆暂时无法更新，可在记忆页查看状态。',level:'normal',actions:[{kind:'view_memory',label:'查看记忆',target:{}}]});
@@ -63,9 +63,20 @@ try{
   await phone.getByRole('button',{name:'动态',exact:true}).click();await phone.getByRole('heading',{name:'动态',exact:true}).waitFor();await phone.getByText('记忆已暂停',{exact:true}).waitFor();
   assert.ok(await phone.locator('#page-content').evaluate(el=>el.scrollWidth<=el.clientWidth));await phone.screenshot({path:join(out,'mobile-light.png')});
   await phone.evaluate(()=>document.documentElement.dataset.theme='dark');await phone.screenshot({path:join(out,'mobile-dark.png')});report.checks.push('mobile-390x844');
+  mobileFixture=await startTimelineCandidate({interactive:true,historyCount:0});
+  const decisions=await browser.newPage({viewport:{width:390,height:844}});decisions.setDefaultTimeout(15000);
+  await decisions.goto(mobileFixture.mobileUrl);await decisions.waitForFunction(()=>state.booted&&state.loggedIn);await decisions.getByRole('button',{name:'打开导航',exact:true}).click();await decisions.getByRole('button',{name:'动态',exact:true}).click();
+  await decisions.getByRole('button',{name:'批准',exact:true}).click();
+  await wait(async()=>!(await mobileFixture.request('/activity?filter=actionable')).items.some(row=>row.type==='approval.pending'));
+  await decisions.getByRole('heading',{name:'动态',exact:true}).waitFor();report.checks.push('mobile-direct-approval-native-receipt');
+  await decisions.getByRole('button',{name:'回答',exact:true}).click();
+  await decisions.getByRole('region',{name:'待回答问题'}).getByRole('radio',{name:'简要报告',exact:true}).click();
+  await decisions.getByRole('region',{name:'待回答问题'}).getByRole('button',{name:/提交|回答/}).click();
+  await wait(async()=>!(await mobileFixture.request('/activity?filter=actionable')).items.some(row=>row.type==='question.pending'));report.checks.push('mobile-original-question-receipt');
+  await mobileFixture.close();mobileFixture=null;
   await fixture.request(`/sessions/${fixture.sessionId}`,{forgetMemories:true,deleteConversationSnippets:true,memoryWorldRevision:1},'DELETE');assert.equal(erasedEvidence,1);
   assert.equal((await fixture.request('/activity')).items.some(row=>row.source.sessionId===fixture.sessionId),false);
   await restarted.getByRole('button',{name:'全部',exact:true}).click();assert.equal(await restarted.getByText('临时对话中的任务已完成',{exact:true}).count(),0);report.checks.push('forget-evidence-and-source-cleanup-in-electron');
   assert.deepEqual(report.errors,[]);await writeFile(join(out,'verification.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));
 }catch(error){await writeFile(join(out,'failure.json'),JSON.stringify({message:error.message,report},null,2));throw error;}
-finally{await app?.close();await browser?.close();await fixture.close();await rm(profile,{recursive:true,force:true});}
+finally{await app?.close();await browser?.close();await mobileFixture?.close();await fixture.close();await rm(profile,{recursive:true,force:true});}

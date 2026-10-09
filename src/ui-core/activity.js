@@ -55,6 +55,7 @@ globalThis.WeftUiCore.factories.activity = (core,effects,environment) => {
                 const current=core.conversationApprovals.entries.get(original.approvalId);
                 if(current?.row.status==='pending'||current?.notice)throw {code:'REQUEST_FAILED'};
             }else if(action.kind==='view_memory')await effects.openActivityMemory?.();
+            else if(action.kind==='view_settings'&&action.target.category==='about')await effects.openActivitySettings?.('about');
             else if(['open_chat','answer_question'].includes(action.kind))await effects.openActivitySource?.(action.target,action.kind);
             else return;
             if(scope()===token){try{await markActivityRead(row);}catch{/* A resolved approval has a new attention revision. */}await readActivity();}

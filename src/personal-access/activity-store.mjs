@@ -15,7 +15,9 @@ export function activityCounts(account) {
 }
 export function activitySource(account, sessionId, extra={}) {
   const chat = chatForSession(account, sessionId), session=account.sessions[sessionId];
-  return { ...(chat ? {chatId:chat.chatId,chatKind:chat.kind} : {}), sessionId, ...(session?.projectId ? {projectId:session.projectId}:{}), ...extra };
+  const segment=account.chatIdentity?.segments[account.chatIdentity?.sessionSegments[sessionId]];
+  return { ...(chat ? {chatId:chat.chatId,chatKind:chat.kind} : {}), sessionId, ...(session?.projectId ? {projectId:session.projectId}:{}),
+    ...(Number.isSafeInteger(extra.seq)&&segment?.hostId ? {eventId:`event-${digest(`${segment.hostId}/${sessionId}/${extra.seq}`)}`} : {}), ...extra };
 }
 export function nativeTaskActivity(account,sessionId,terminal){
   if(!terminal)return;
@@ -24,10 +26,11 @@ export function nativeTaskActivity(account,sessionId,terminal){
     if(commands.some(row=>['dispatching','uncertain','pending'].includes(row.state)||row.toolExecutions?.some(exec=>['running','uncertain'].includes(exec.state)||exec.jobId&&!['completed','failed','killed'].includes(exec.jobState))))return;
   }
   const chat=chatForSession(account,sessionId);
+  const source=activitySource(account,sessionId,{seq:terminal.seq,...(terminal.taskId?{taskId:terminal.taskId}:{})});
   const id=terminal.taskId&&chat?.kind==='side'?`activity-result-${digest(`${chat.chatId}/${terminal.taskId}`).slice(0,40)}`:undefined;
   return putActivity(account,terminal.taskId?`task:${terminal.taskId}`:`turn:${sessionId}:${terminal.turn??terminal.seq}`,{id,at:terminal.at,type:`task.${terminal.state}`,
     title:{completed:'任务完成',failed:'任务失败',stopped:'任务已停止'}[terminal.state],summary:terminal.summary??'打开对话查看结果。',
-    source:activitySource(account,sessionId,{seq:terminal.seq,...(terminal.taskId?{taskId:terminal.taskId}:{})}),actions:[{kind:'open_chat',label:'打开对话',target:activitySource(account,sessionId)}],level:terminal.state==='failed'?'important':'normal'});
+    source,actions:[{kind:'open_chat',label:'打开对话',target:source}],level:terminal.state==='failed'?'important':'normal'});
 }
 export function putActivity(account, key, input) {
   const state=activityState(account);
@@ -65,7 +68,7 @@ export function reconcileActivity(account) {
       const pending=row.status==='pending', type=`${kind}.pending`, target={sessionId:command.sessionId,taskId:source.taskId,
         ...(kind==='approval'?{approvalId:row.approvalId}:{questionRpcId:row.questionRpcId})};
       putActivity(account,`${kind}:${command.sessionId}:${row.approvalId??row.questionRpcId}`,{at:row.createdAt,type,source,
-        title:kind==='approval'?'需要审批':'需要回答',summary:pending ? (kind==='approval'?`允许 ${row.toolName??'这项操作'}？`:row.questions?.[0]?.question??'补充信息后继续。') :
+        title:kind==='approval'?'需要审批':'需要回答',summary:pending ? (kind==='approval'?row.reason??`允许 ${row.toolName??'这项操作'}？`:row.questions?.[0]?.question??'补充信息后继续。') :
           row.status==='unavailable'?'已失效':kind==='approval'?(row.decisionOutcome==='deny'?'已拒绝':'已处理'):'已回答',state:pending?'pending':row.status==='unavailable'?'unavailable':'completed',level:pending?'important':'silent',
         actions:[...(pending?[{kind:kind==='approval'?'respond_approval':'answer_question',label:kind==='approval'?'审批':'回答',target}]:[]),{kind:'open_chat',label:'打开对话',target:source}]});
     }

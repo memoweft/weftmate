@@ -20,9 +20,11 @@ globalThis.WeftUiComponents.factories.activity=(core,ui)=>{
         document.addEventListener('weftmate:activity',event=>void open(event.detail));
     },openActivity:open,renderActivity(){badge();if(opened)view?.render();},renderActivityBadge:badge,activityVisible:()=>opened,
     async prepareActivityApproval(target){preparing=true;try{await core.selectSession(target.sessionId);}finally{preparing=false;}},
-    async openActivitySource(target,kind){close();await core.enterAssistant();if(target.chatId&&core.readChat){const chat=(await core.readChat(target.chatId)).chat;await core.selectSession(chat.activeSessionId);}else await core.selectSession(target.sessionId);
+    async openActivitySource(target,kind){close();await core.enterAssistant();if(target.chatId&&core.readChat){const chat=(await core.readChat(target.chatId)).chat;if(chat.kind==='main')await core.selectMainChat(target.eventId);else await core.selectSession(target.sessionId??chat.activeSessionId);}else await core.selectSession(target.sessionId);
+        if(!core.inMainChat?.()&&Number.isSafeInteger(target.seq)){while(core.state.hasOlder&&!core.state.historyEvents.has(target.seq))await core.loadOlderHistory();const row=ui.byId('transcript').querySelector(`[data-seq="${target.seq}"]`);if(row){row.tabIndex=-1;row.scrollIntoView({block:'center'});row.focus();}}
         if(target.eventId&&core.inMainChat?.())ui.focusMainEvent?.(target.eventId);if(kind==='answer_question')ui.byId('question-bar')?.querySelector('input,button')?.focus();},
     openActivityMemory:()=>{close();return core.openMemory();},
+    openActivitySettings:async()=>{close();await core.openAccount();ui.openSettings('about');},
     paintSelectedSession(...args){const result=selected(...args);if(opened)chat().hidden=true;return result;},
     resetIdentityControls(...args){close();core.resetActivity();return reset(...args);}};
 };

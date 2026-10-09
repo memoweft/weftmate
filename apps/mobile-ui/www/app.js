@@ -37,6 +37,7 @@ const mobileEffects = {
   activityActionFinished:()=>{if(activityReturn){activityReturn=false;page('activity');}},
   openActivitySource:target=>selectSharedSession(target.sessionId),
   openActivityMemory:()=>page('memory'),
+  openActivitySettings:()=>page('about'),
   nativeCall: (...args) => call(...args),
   readMessageDraft: () => $('draft').value,
   clearMessageDraft: () => { $('draft').value = ''; },
@@ -148,7 +149,7 @@ function call(method, params={}, timeoutMs=45000) { return androidBridge.call(me
 
 
 function page(name){
-  if(name!=='activity'){clearInterval(activityTimer);activityTimer=null;activityView=null;}
+  if(name!=='activity'){if(activityTimer)clearInterval(activityTimer);activityTimer=null;activityView=null;}
   if(name==='memory')state.settingsChild=true;
   $('cloud-auth-page')?.classList.remove('active'); $('cloud-settings-page')?.classList.remove('active');
   workspaceNotices.clear();
@@ -361,7 +362,7 @@ window.addEventListener('unhandledrejection',reportBootFailure);
 
 
 
-function renderPage(name){const target=$('page-content');clear(target);if(name!=='settings')$('generic-page').scrollTop=0;const category=mobileSettingsRegistry.get(name);if(category)return category.mount(target);switch(name){
+function renderPage(name){const target=$('page-content');clear(target);if(name!=='activity')target.classList.remove('activity-page');if(name!=='settings')$('generic-page').scrollTop=0;const category=mobileSettingsRegistry.get(name);if(category)return category.mount(target);switch(name){
   case 'activity':return activityPage(target);
   case 'usage':return usagePage(target, state.usageSessionId || '');
   case 'memory':return memoryPage(target);
