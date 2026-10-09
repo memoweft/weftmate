@@ -1,0 +1,16 @@
+[
+  {
+    "theme": "light",
+    "durationMs": 21370,
+    "exitCode": 0,
+    "flow": "A10 login, 13 categories, native send, approval bar",
+    "substepDurationMs": null
+  },
+  {
+    "theme": "dark",
+    "durationMs": 20102,
+    "exitCode": 0,
+    "flow": "A10 login, 13 categories, native send, approval bar",
+    "substepDurationMs": null
+  }
+]

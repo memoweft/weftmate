@@ -1,0 +1,26 @@
+[
+  {
+    "name": "light-settings-常规",
+    "status": "failed",
+    "durationMs": 30002,
+    "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '设置与账户', exact: true })\u001b[22m\n"
+  },
+  {
+    "name": "light-settings-外观",
+    "status": "failed",
+    "durationMs": 30000,
+    "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '设置与账户', exact: true })\u001b[22m\n"
+  },
+  {
+    "name": "light-settings-账户",
+    "status": "passed",
+    "durationMs": 24354,
+    "text": "设置设置常规通知、离线与同步›外观浅色›账户cloud-969d25bb-4381-4ed1-96ac-456f3cd03b21›设备连接、配对与待批准›用量本月费用、用量与月度上限›已归档›助手模型管理手机与账户模型›审批新对话的默认模式›记忆查看理解与来源›提醒与定时任务管理提醒与定时任务›资料访问项目与网页资料›关于关于0.8.10（内置）›"
+  },
+  {
+    "name": "light-settings-设备",
+    "status": "failed",
+    "durationMs": 30001,
+    "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '设置与账户', exact: true })\u001b[22m\n"
+  }
+]
