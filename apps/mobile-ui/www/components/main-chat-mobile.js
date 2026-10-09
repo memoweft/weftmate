@@ -95,10 +95,11 @@
   uiCore.mobile.composerState=text=>{
     if(!main())return nativeComposer(text);
     const running=!!uiCore.state.mainChat.running,available=state.loggedIn&&state.sharedHostAvailable&&uiCore.state.mainChat.sendAvailable;
+    const modelReady=uiCore.state.models.some(model=>model.id===uiCore.state.modelProfileId);
     const attachments=currentAttachments().length;state.sharedRunning=running;
     const hasDraft=!!text.trim()||attachments>0;
     try{const key=sharedDraftKey(uiCore.state.selectedChatId);if(text)localStorage.setItem(key,text);else localStorage.removeItem(key);}catch{}
-    return {ready:available&&hasDraft&&!uiCore.state.submitting&&!uiCore.state.unresolvedSubmission,sendHidden:running&&!hasDraft,
+    return {ready:available&&modelReady&&hasDraft&&!uiCore.state.submitting&&!uiCore.state.unresolvedSubmission,sendHidden:running&&!hasDraft,
       draftDisabled:!available,placeholder:running?WeftUiCore.runningPlaceholder(uiCore.composerInputMode(state.sharedSessionId)):'和 WeftMate 聊聊…',
       modelName:uiCore.state.mainChat.modelDisplayName||uiCore.state.models.find(row=>row.id===uiCore.state.modelProfileId)?.name||'选择模型',
       modelLabel:'当前模型',modelDisabled:!!state.sharedSessionId,attachmentsDisabled:!available||!!state.attachmentPick||uiCore.state.submitting,
