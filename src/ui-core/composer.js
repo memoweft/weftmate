@@ -9,7 +9,8 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
     }
     function optimisticMessages() {
         return [...messages.values()].filter(row => row.ownerId === core.state.ownerId &&
-            row.identity === core.state.identityGeneration && row.sessionId === core.state.selectedSessionId);
+            row.identity === core.state.identityGeneration && row.sessionId === core.state.selectedSessionId &&
+            (row.sessionId !== null || row.draftId === core.state.newConversationId));
     }
     function reconcileOptimistic(command) {
         const row = messages.get(command?.requestId);
@@ -30,6 +31,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
     function startNewConversation() {
         if (core.state.submitting || core.state.unresolvedSubmission) return;
         core.state.newConversation = true;
+        core.state.newConversationId = environment.crypto.randomUUID();
         core.state.newConversationApprovalMode = null;
         core.state.selectedSessionId = null;
         core.state.historyGeneration++;
@@ -172,6 +174,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             return;
         const row = {ownerId: core.state.ownerId, identity: core.state.identityGeneration,
             sessionId: core.state.selectedSessionId, modelProfileId: core.state.modelProfileId,
+            draftId: core.state.newConversationId,
             requestId: attachments.length ? core.attachmentAttempt(core.attachmentDraftKey(), text, attachments).requestId : environment.crypto.randomUUID(), createRequestId: environment.crypto.randomUUID(),
             text, attachments: attachments.length > 0, files: attachments.map(item => item.file?.name || '附件'),
             approvalMode: core.state.newConversation ? core.state.newConversationApprovalMode : null,

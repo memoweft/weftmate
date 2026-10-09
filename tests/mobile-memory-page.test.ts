@@ -248,13 +248,14 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
       Promise.resolve(result).then((value) => send(true, value), (error) => send(false, error))
     },
   }
+  let readyListener: ((event?: any)=>unknown)|undefined;
   const document: any = { body: get('body'), documentElement: new FakeElement('html'), activeElement: null,
     visibilityState: 'visible', getElementById: (id: string) => htmlIds.has(id) ? get(id) : null,
     createElement: (tag: string) => new FakeElement(tag),
     createTextNode: (text: string) => { const node = new FakeElement(); node.textContent = text; return node },
     querySelector: (selector: string) => selector === '[data-action="new-chat"]' ? newChat : selector === '.brand strong' ? brandTitle : null,
     querySelectorAll: (selector: string) => selector === '[data-page]' ? nav : [],
-    addEventListener(name: string, listener: (event?: any) => unknown) { if (name === 'DOMContentLoaded') listener({}) },
+    addEventListener(name: string, listener: (event?: any) => unknown) { if (name === 'DOMContentLoaded') readyListener=listener },
   }
   const window: any = { weftNative: bridge, innerHeight: 844, matchMedia: () => ({ matches: false, addEventListener() {} }),
     addEventListener() {}, WeftFormat: null }
@@ -270,6 +271,7 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
   runInNewContext(source, { document, window, localStorage: timers.localStorage, setTimeout: timers.setTimeout,
     clearTimeout: timers.clearTimeout, requestAnimationFrame: timers.requestAnimationFrame, URLSearchParams,
     console, Intl, Date, Error, Map, Set, Promise, URL, crypto: webcrypto, AbortSignal, TextEncoder })
+  readyListener?.({}); // Like deferred browser scripts, finish registering every component before DOMContentLoaded.
   return { get, nav, calls, businessPaths, deferred, storage, itemsByOwner, setDeferredOwner: (owner: string) => { deferOwner = owner },
     flushAnimationFrames() { for (const frame of animationFrames.splice(0)) frame(0) },
     setDeferMore: () => { deferMore = true }, resolveDeferred(index: number, value: object) { deferred[index].resolve(value) },

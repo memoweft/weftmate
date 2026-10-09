@@ -40,7 +40,7 @@
 
 - `node tests/integration/ui-p4-composer.mjs`：生产 Electron 窗口 + 两种手机网页表面浅深合成流，全部断言通过。
 - `node tests/integration/ui-p4-runtime.mjs`：真实 main.mjs + 固定 DSH + 合成流式模型，首条消息和原生当前上下文投影通过。
-- `tests/ui-core.test.ts`、`tests/personal-access-ui-interaction.test.ts`、`tests/p1-03-dsh-adapter.test.ts`、`tests/design-tokens.test.ts`、`tests/mobile-ui-core-assets.test.ts`、手机 `chat-interactions.test.mjs`：定向回归211/211通过。
+- `tests/ui-core.test.ts`、`tests/personal-access-ui-interaction.test.ts`、`tests/p1-03-dsh-adapter.test.ts`、`tests/design-tokens.test.ts`、`tests/mobile-ui-core-assets.test.ts`、手机 `chat-interactions.test.mjs`：核心与桌面 / 手机消息、适配、令牌及资产212项，加记忆界面35项，定向回归247/247通过。
 - 本地审稿页44个实时合成场景、132格目录及公开证据验证通过。现有桌面语义交互（浅深 / 按钮停止 / Esc）、手机审批 / 队列 / 外观 / 动效四组通过。共用下拉改用 combobox（组合框）/ listbox（列表框）/ option（选项）断言；新的停止名为「停止回复」。
 - `npm run typecheck`、`node scripts/generate-tokens.mjs --check`、ui-core（共享界面核心）生成资产检查通过。完整测试由 PR 的 CI（持续集成）运行。
 
@@ -51,3 +51,5 @@
 `GET /personal/v1/sessions` 添加可选只读 `contextUsage:{usedTokens,contextWindow}`，来自 DSH 原生 contextPressure（当前上下文压力）投影：当前 projectedTokens（随有效上下文增减的占用），缺失时 pressureTokens（最近实际请求占用）；原生上限缺失为null，整个占用未知时省略字段。不用累计计费 tokens（令牌数），也不伪造上限。CLIENT_API 3.1 和 STATE「契约变更」已登记。Android（安卓）现有会话透传保留该字段，没有新增原生桥接或权限。
 
 PF-1b提示词组装未改；Apple（苹果）原生界面接线、安装包 / 界面更新包发布与本人日用升级不在本包范围。额外范围：按客户端契约规则补齐 `docs/CLIENT_API.md`；审稿页的场景目录增加「输入区 / 上下文用量」，桌面与手机实时截图共44场景，避免该控件只依赖历史证据。全部新增图片是合成场景实际截图。
+
+完整CI首次发现两个模拟页面适配缺口：手机记忆测试在所有延迟脚本注册前触发页面就绪，桌面记忆测试未提供实际下拉控件使用的Event（页面事件）分发。已按真实浏览器顺序和事件接口补齐，相关记忆界面35/35通过；没有跳过测试、添加已知失败或改记忆功能。新草稿还按独立编号隔离未创建的失败消息，避免点击另一条「新对话」时显示上一草稿的气泡。

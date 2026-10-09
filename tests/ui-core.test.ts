@@ -450,6 +450,12 @@ test('UI-P4 a new draft reads the account approval mode and applies its chosen m
   f.core.accessApi=async(_path,options)=>{operations.push('approval-mode:'+options.body.mode);return {mode:options.body.mode};};
   await f.core.sendDraft('先出计划');assert.deepEqual(operations,['session.create','approval-mode:plan','session.message']);
 });
+
+test('UI-P4 starting another new conversation does not display an earlier uncreated failed message',async()=>{
+  const f=fixture();f.core.refreshNewConversationApprovalMode=async()=>{};
+  f.core.startNewConversation();f.core.beginOptimistic({sessionId:null,draftId:f.core.state.newConversationId,requestId:'failed-first',text:'旧草稿',status:'failed'});
+  assert.equal(f.core.optimisticMessages().length,1);f.core.startNewConversation();assert.equal(f.core.optimisticMessages().length,0);
+});
 test('a delayed lifecycle response cannot replace another account session list',async()=>{
   const pending=deferred(),f=fixture(()=>pending.promise);
   const work=f.core.archiveSession('session-test');f.core.state.identityGeneration++;f.core.state.sessions=[{sessionId:'other-account'}];pending.resolve({ok:true,json:async()=>({archived:true})});
