@@ -2,6 +2,8 @@
  * Default: MiMo 8 steps + LAN 8 steps + original LAN memory-01..04 + speed each.
  * --model mimo|lan runs one baseline; --four runs only original LAN four.
  * --judge-model same|mimo enables the existing optional semantic evaluator.
+ * --reminders runs the two unchanged scheduling requests three times each.
+ * --recall-trace retains synthetic Core snapshots and the exact injected context.
  * No product fixes, seeded memories, daily vault, private LAN address or key files.
  */
 import assert from 'node:assert/strict';
@@ -28,6 +30,7 @@ const fgOnly = process.argv.includes('--fg-1');
 const outageOnly = process.argv.includes('--fg-1-outage');
 const settingsOnly = process.argv.includes('--fg-1-settings');
 const provider = option('--model', fgOnly ? 'mimo' : null), judgeModel = option('--judge-model', undefined);
+const remindersOnly = process.argv.includes('--reminders');
 const eightOnly = process.argv.includes('--eight-only');
 assert.ok(provider === null || ['mimo', 'lan'].includes(provider), '--model mimo|lan');
 const coreSource = resolve(option('--memory-core-source', 'D:/AIProjects/MemoWeft/Core/py/src'));
@@ -93,7 +96,7 @@ async function baseline(modelName, fourOnly = false) {
   const profile = join(root, 'profile'), out = join(root, 'eval');
   mkdirSync(profile, { recursive: true }); mkdirSync(out);
   const report = { schemaVersion: 1, startedAt: new Date().toISOString(), model: modelName, revision, electron: true, steps: [], turns: [] };
-  const reportFile = join(evidence, `${fourOnly ? 'four' : 'baseline'}-${modelName}.json`);
+  const reportFile = join(evidence, `${remindersOnly ? 'reminders' : fourOnly ? 'four' : 'baseline'}-${modelName}.json`);
   const persist = () => { save(join(root, 'progress.json'), report); save(reportFile, report); };
   reports.push(report);
   console.log(`Isolated ${modelName} root: ${root}`);
@@ -111,6 +114,7 @@ async function baseline(modelName, fourOnly = false) {
   const env = { ...process.env };
   for (const name of Object.keys(env)) if (/^(?:WEFTMATE_|MEMOWEFT_)/.test(name) || ['ELECTRON_RUN_AS_NODE', 'MIMO_API_KEY', 'MODEL_SWITCH_UNIFIED_KEY'].includes(name)) delete env[name];
   env.WEFTMATE_BASELINE_TRACE = join(root, 'requests.jsonl');
+  if (process.argv.includes('--recall-trace')) env.WEFTMATE_BASELINE_RECALL_TRACE = join(root, 'recall.jsonl');
   if (process.argv.includes('--memory-trace')) env.WEFTMATE_BASELINE_MEMORY_TRACE = join(root, 'memory-requests.jsonl');
   let app, page, ownerId, models = [], client, log = '', A, previous = [], corrected = [];
   const capturedSessions = new Set();
@@ -189,10 +193,15 @@ async function baseline(modelName, fourOnly = false) {
     await page.locator('#model-trigger').click();
     await page.getByRole('option', { name, exact: true }).click();
     await until(async () => await page.locator('#new-session').isEnabled(), 30000, 'new conversation available');
-    const response = page.waitForResponse(r => new URL(r.url()).pathname === '/personal/v1/commands' && r.request().postDataJSON()?.kind === 'session.create');
-    response.catch(() => {}); // Await below owns failure; prevent an early UI timeout from aborting cleanup.
     await page.locator('#new-session').click();
-    const created = await response, body = await created.json(); assert.equal(created.status(), 202);
+    // UI-P4 keeps a new conversation as a draft until its first send. The
+    // original fixture needs an id before that send; create it through the
+    // same authorized command, then send all original text in the real app.
+    const status = (await api('/status')).body;
+    const created = await api('/commands', { requestId: randomUUID(), kind: 'session.create',
+      targetDeviceId: status.hostId, modelProfileId: models.find(model => model.name === name).id });
+    assert.equal(created.status, 202);
+    const body = created.body;
     const cmd = await until(async () => { const cmd = (await api(`/commands/${body.command.commandId}`)).body.command;
       if (['rejected', 'uncertain'].includes(cmd.state)) throw new Error(`session.create ${cmd.state}`);
       return cmd.state === 'accepted_by_dsh' && cmd; });
@@ -303,6 +312,32 @@ async function baseline(modelName, fourOnly = false) {
     await api('/settings/models', { backgroundModelProfileId: models.find(m => m.name === modelName).id }, 'PATCH');
     report.initialMemory = (await api('/memory/status')).body; persist();
     if (!fourOnly && ['mimo', 'lan'].includes(judgeModel) && judgeModel !== modelName) await configure(judgeModel);
+    if (remindersOnly) {
+      for (const kind of ['reminder', 'task']) for (let repetition = 1; repetition <= 3; repetition++) {
+        await step(`${kind}-${repetition}`, kind === 'reminder' ? '明天早上 8 点提醒我交报告' : '每周一 8 点生成周报', async result => {
+          const id = await session();
+          const before = Date.now();
+          const turn = await message(id, result.title);
+          const rows = (await api('/schedules')).body.items.filter(row => row.sessionId === id);
+          result.schedules = rows;
+          const schedule = rows[0];
+          const local = schedule?.nextRunAt && new Date(schedule.nextRunAt);
+          const parts = value => new Intl.DateTimeFormat('en-CA', {timeZone: schedule?.timeZone ?? 'Asia/Shanghai', year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23',weekday:'short'}).formatToParts(new Date(value)).reduce((out,part)=>({...out,[part.type]:part.value}),{});
+          const actual = local && parts(local);
+          const tomorrow = parts(before + 86400000);
+          result.checks = { completed: turn.status === 'completed', exactlyOne: rows.length === 1,
+            kind: schedule?.kind === kind, content: (schedule?.text ?? '').includes(kind === 'reminder' ? '交报告' : '周报'),
+            hour: actual?.hour === '08' && actual?.minute === '00' && actual?.second === '00',
+            calendar: kind === 'reminder' ? actual?.year === tomorrow.year && actual?.month === tomorrow.month && actual?.day === tomorrow.day && !schedule?.repeat
+              : schedule?.repeat?.kind === 'weekly' && schedule.repeat.weekday === 1 && schedule.repeat.time === '08:00:00' && actual?.weekday === 'Mon',
+            nativeTool: turn.events?.some(row => row.type === 'step.started' && row.data.toolName === 'schedule_create') === true,
+            noSourceOrTimers: !(turn.events ?? []).some(row => row.type === 'step.started' && ['read','grep','glob','pwsh','bash','write','edit'].includes(row.data.toolName)),
+            confirmation: /8|八|08/.test(turn.reply) && /报告|周报/.test(turn.reply),
+          };
+        });
+      }
+      return;
+    }
     if (fourOnly) {
       await configure('mimo');
       writeFileSync(join(out, 'credentials.json'), JSON.stringify({ host: new URL(page.url()).origin, username, password, deviceName: 'EX-2 four', provisioned: true }));
@@ -588,7 +623,7 @@ try {
   else {
     if (!provider || provider === 'mimo') await baseline('mimo');
     if (!provider || provider === 'lan') { await acquireLan(); await baseline('lan'); }
-    if (!provider && !eightOnly) await baseline('lan', true);
+    if (!provider && !eightOnly && !remindersOnly) await baseline('lan', true);
   }
 } finally {
   if (bridge) { await bridge.close(); save(join(evidence, 'lan-serial.json'), bridge.metrics()); }
@@ -603,6 +638,6 @@ try {
   // Optional assertion mode lets CI consume the same evidence without treating
   // a successfully completed baseline collection as a passing product exit.
   if (process.argv.includes('--require-pass') && reports.some(report => report.fatal ||
-    (report.four ? !report.four.passedGate : fgOnly ? !report.steps.length || report.steps.some(step => step.status !== 'passed') : !report.summary?.eightStepGate || (!eightOnly && report.steps.find(step => step.id === 'speed')?.status !== 'passed')))) process.exitCode = 1;
+    (report.four ? !report.four.passedGate : remindersOnly ? report.steps.length !== 6 || report.steps.some(step => step.status !== 'passed') : fgOnly ? !report.steps.length || report.steps.some(step => step.status !== 'passed') : !report.summary?.eightStepGate || (!eightOnly && report.steps.find(step => step.id === 'speed')?.status !== 'passed')))) process.exitCode = 1;
   console.log(JSON.stringify({ roots, usage, credentialScan: publicScan }));
 }
