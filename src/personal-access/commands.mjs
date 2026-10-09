@@ -341,6 +341,9 @@ export function createCommandOperations(context) {
         return;
       }
       if (context.closing) return;
+      const defaultThinking = snapshot.kind === 'session.create' && context.accountState(ownerId).personalization?.defaultDeepThinking === true &&
+        (await context.callBackend(() => context.backend.listModels({ ownerId }))).find(model => model.id === snapshot.payload.modelProfileId)?.deepThinking?.supported === true;
+      if (context.closing) return;
       await context.serial(() => context.mutate(ownerId, (next) => {
         const command = next.commands[commandId];
         if (command.state !== 'dispatching') return;
@@ -360,7 +363,7 @@ export function createCommandOperations(context) {
           if (snapshot.kind === 'session.create') {
             next.sessions[snapshot.sessionId] = { ownerId: next.ownerId, attachedAt: new Date().toISOString(),
               approvalMode: next.defaultApprovalMode ?? 'auto',
-              deepThinking: next.personalization?.defaultDeepThinking === true,
+              deepThinking: defaultThinking,
               ...initialMemorySettings(snapshot.payload, context.timestamp()),
               origin: !['password', 'cloud'].includes(next.devices[snapshot.sourceDeviceId]?.authKind)
                 ? 'legacy-local' : context.hostOwner(ownerId) ? 'personal-remote' : 'shared-chat',

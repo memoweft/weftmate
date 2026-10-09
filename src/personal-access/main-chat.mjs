@@ -98,6 +98,8 @@ export function createMainChat(context) {
           }
           if (relay) {
             if (context.accountState(ownerId).memoryCleanupPending || chat(ownerId).contentRevision !== initialRevision) throw failure('SESSION_BUSY', 409);
+            const defaultThinking = context.accountState(ownerId).personalization?.defaultDeepThinking === true &&
+              (await context.callBackend(() => context.backend.listModels({ ownerId }))).find(model => model.id === relay.modelProfileId)?.deepThinking?.supported === true;
             await context.callBackend(() => context.backend.createSession({ ownerId, sessionId: relay.sessionId,
               modelProfileId: relay.modelProfileId, workspaceChatId: request.chatId, title: 'WeftMate' }));
             if (relay.handoff) await context.callBackend(() => context.backend.installChatHandoff({ ownerId, sessionId: relay.sessionId, handoff: relay.handoff }));
@@ -108,7 +110,7 @@ export function createMainChat(context) {
               const now = new Date(context.timestamp()).toISOString();
               next.sessions[relay.sessionId] = { ownerId, origin: 'personal-remote', attachedAt: now, modelProfileId: relay.modelProfileId,
                 approvalMode: previous ? next.sessions[previous.sessionId].approvalMode : next.defaultApprovalMode ?? 'auto', workspaceChatId: request.chatId,
-                deepThinking: previous ? next.sessions[previous.sessionId].deepThinking === true : next.personalization?.defaultDeepThinking === true,
+                deepThinking: previous ? next.sessions[previous.sessionId].deepThinking === true : defaultThinking,
                 ...(previous && next.sessions[previous.sessionId].allowedApprovalCategories ? { allowedApprovalCategories: structuredClone(next.sessions[previous.sessionId].allowedApprovalCategories) } : {}) };
               next.chatIdentity.segments[relay.segmentId] = { segmentId: relay.segmentId, chatId: request.chatId, sessionId: relay.sessionId,
                 hostId: next.hostId, ordinal: previous ? previous.ordinal + 1 : 0, state: 'active', startedAt: now,

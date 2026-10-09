@@ -84,3 +84,21 @@ test('old queue preference migrates once, account changes ignore late reads and 
   assert.equal((await core.loadPersonalization()).settings.messageMode,'steer');
   let resolve:any;core.accessApi=()=>new Promise(done=>resolve=done);const read=core.loadPersonalization();core.state.identityGeneration++;core.state.ownerId='b';resolve({settings:{preferredName:'OLD'},updatedAt:'saved'});await read;assert.notEqual(core.state.personalization.preferredName,'OLD');
 });
+
+test('default deep thinking is applied only to newly created capable models', async t => {
+  const root=await mkdtemp(join(tmpdir(),'weftmate-st1-capability-'));
+  const models=[{id:'supported',name:'合成支持模型',configured:true,deepThinking:{supported:true}},{id:'ordinary',name:'合成普通模型',configured:true,deepThinking:{supported:false}}];
+  const backend:any={getStatus:async()=>({runtime:'ready'}),listModels:async()=>models,preflight:async()=>({ok:true}),createSession:async({sessionId}:any)=>({sessionId}),sendMessage:async()=>({accepted:true}),cancelSession:async()=>({accepted:true}),readEvents:async()=>({events:[]}),describeSession:async()=>null};
+  const service=await createPersonalAccessService({root,port:0,backend});t.after(async()=>{await service.close();await rm(root,{recursive:true,force:true})});
+  const {origin,hostId}=await service.start(),grant=await service.issueSetupGrant();
+  const setup=await fetch(origin+'/personal/v1/auth/setup',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify({grant:grant.grant,username:'ST1Capability',password:'Synthetic-ST1-capability-password',deviceName:'合成能力测试'})});
+  assert.equal(setup.status,201);const account=await setup.json(),headers={origin,cookie:setup.headers.getSetCookie()[0].split(';')[0],'content-type':'application/json','x-weftmate-csrf':account.csrfToken};
+  const request=async(path:string,body?:any)=>{const response=await fetch(origin+'/personal/v1'+path,{method:body?'POST':'GET',headers,body:body?JSON.stringify(body):undefined});assert.ok(response.ok);return response.json()};
+  const patch=await fetch(origin+'/personal/v1/settings/personalization',{method:'PATCH',headers,body:JSON.stringify({defaultDeepThinking:true})});assert.equal(patch.status,200);
+  for (const model of models) {
+    const created=await request('/commands',{kind:'session.create',requestId:'st1-capability-'+model.id,targetDeviceId:hostId,modelProfileId:model.id});
+    let command=created.command;
+    for(let i=0;i<100&&command.state!=='accepted_by_dsh';i++){await new Promise(resolve=>setTimeout(resolve,10));command=(await request('/commands/'+command.commandId)).command;}
+    assert.equal(command.state,'accepted_by_dsh');assert.equal(service.getApprovalPolicy({sessionId:command.sessionId}).deepThinking,model.deepThinking.supported);
+  }
+});
