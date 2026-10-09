@@ -61,6 +61,17 @@ test('official MiMo IDs normalize while other providers retain case', async () =
   assert.equal(result.modelListed, true); assert.equal(result.suggestedModelId, 'mimo-v2.6-flash');
 });
 
+test('Anthropic compatibility diagnostics use native catalog headers without sending a conversation', async () => {
+  let calls = 0;
+  const result = await checkModelConnection({ baseUrl: 'https://api.anthropic.com/v1', modelId: 'synthetic-claude', apiKey: 'synthetic-key',
+    fetchImpl: async (url: URL, options: any) => {
+      calls++; assert.equal(url.pathname, '/v1/models'); assert.equal(options.method, undefined);
+      assert.equal(options.headers['x-api-key'], 'synthetic-key'); assert.equal(options.headers['anthropic-version'], '2023-06-01');
+      return Response.json({ data: [{ id: 'synthetic-claude' }] });
+    } });
+  assert.equal(calls, 1); assert.equal(result.modelListed, true); assert.equal(result.inferenceVerified, false);
+});
+
 test('background local request waits for already loaded model, releases queue for chat, then rechecks before inference', async () => {
   let loaded = 'muse', switching = false, requests = 0;
   const profile = { id: 'occamy', model: 'occamy', baseUrl: 'http://127.0.0.1:1/v1' };
