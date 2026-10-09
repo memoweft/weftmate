@@ -5,6 +5,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
     }
     function historyNotice(message) {
         ui.byId('timeline-status').textContent = message;
+        ui.byId('timeline-status').hidden = !message;
     }
     function beginOlderHistory() {
         ui.conversationScroll?.hold();
@@ -204,8 +205,12 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
         if (!value)
             return;
         const status = ui.byId('timeline-status');
-        status.classList.toggle('is-running', value.isRunning);
-        status.textContent = value.message;
+        status.hidden = value.isRunning || !value.message;
+        status.textContent = value.isRunning ? '' : value.message;
+        if (value.isRunning) {
+            const waiting = ui.byId('transcript').querySelector('.inline-waiting .inline-progress-text');
+            if (waiting) waiting.textContent = core.processingStageLabel(core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId)?.processing);
+        }
     }
     function renderOlderControl() {
         const button = ui.byId('load-older');
