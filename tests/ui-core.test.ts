@@ -520,3 +520,15 @@ test('reminder reads work in the mobile settings category and discard a late acc
   late.resolve(response({ items: [{ id: 'old-owner-reminder' }] }));
   assert.equal(await oldRead, null);
 });
+
+
+test('MS-1 saved default selects the next new conversation without rebinding the existing session', async () => {
+  const f = fixture(() => response({ defaultModelProfileId: 'cloud', backgroundModelProfileId: null }));
+  f.core.state.models.push({ id: 'cloud', name: 'Synthetic cloud', configured: true });
+  f.core.state.sessions[0].modelProfileId = 'local';
+  await f.core.saveDefaultModel('cloud');
+  assert.equal(f.core.state.modelProfileId, 'local');
+  f.core.startNewConversation();
+  assert.equal(f.core.state.modelProfileId, 'cloud');
+  assert.equal(f.core.state.sessions[0].modelProfileId, 'local');
+});

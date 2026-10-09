@@ -71,7 +71,7 @@ export function createAccountModelOperations(context) {
       model.revision++;
       model.updatedAt = now;
     } else if (operation.kind === 'test') {
-      operation.testResult = { configured: result?.configured === true,
+      operation.testResult = { ...result, configured: result?.configured === true,
         reachable: result?.reachable === true, modelListed: result?.modelListed === true };
     }
     operation.status = 'succeeded'; operation.resultRevision = model.revision;

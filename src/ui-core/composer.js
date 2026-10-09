@@ -30,6 +30,10 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
     }
     function startNewConversation() {
         if (core.state.submitting || core.state.unresolvedSubmission) return;
+        const defaultProfile = core.state.modelSettings?.defaultModelProfileId;
+        if (defaultProfile && core.state.models.some(model => model.id === defaultProfile)) {
+            core.state.modelProfileId = defaultProfile; effects.paintModels();
+        }
         core.state.newConversation = true;
         core.state.newConversationId = environment.crypto.randomUUID();
         core.state.newConversationApprovalMode = null;

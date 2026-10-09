@@ -81,7 +81,7 @@ test('account-authenticated host model uses its stored key for catalog, JSON and
       const verified = await fetch(`${origin}/personal/v1/models/profile-qwen3.8/verify`, { method: 'POST',
         headers, body: '{}' })
       assert.deepEqual(await verified.json(), { configured: true, reachable: true,
-        modelListed: true, inferenceVerified: false })
+        modelListed: true, inferenceVerified: false, address: 'reachable', authentication: 'accepted', catalog: 'available', model: 'listed', httpStatus: 200 })
       const body = { model: 'synthetic-local-model', messages: [{ role: 'user', content: 'hello' }], stream: false }
       assert.equal((await fetch(`${origin}/personal/v1/models/profile-qwen3.8/chat/completions`, {
         method: 'POST', headers: { ...headers, origin: 'https://wrong.example' }, body: JSON.stringify(body) })).status, 403)
