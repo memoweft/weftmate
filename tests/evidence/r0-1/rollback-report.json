@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "automatic": true,
+  "manualRecovery": false,
+  "realNsis": true,
+  "realElectron": true,
+  "realDsh": true,
+  "phase": "rolled-back",
+  "version": "0.1.1-preview.2",
+  "rejectedVersion": "0.1.1-preview.3",
+  "badVersionRejected": true,
+  "uninstallRetainsData": true
+}

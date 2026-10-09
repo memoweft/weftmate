@@ -14,6 +14,8 @@ import { join } from 'node:path'
 import { sanitizeUpdateFailure } from './update-policy.ts'
 import { readAppUpdateManifest, verifyDownloadedApp } from './personal-update/app-package.mjs'
 import type { UpdateManifest } from './personal-update/manifest.mjs'
+import { compareVersions } from './personal-update/manifest.mjs'
+import { rejectedAppVersion } from './personal-update/app-rollback.mjs'
 
 export type UpdateStatus =
   | 'disabled'      // 未打包或未配置渠道
@@ -31,6 +33,7 @@ export interface UpdateState {
   version: string | null
   /** 错误信息（error 时，普通用户可读）。 */
   error: string | null
+  releaseNotes?: string
 }
 
 const state: UpdateState = { enabled: false, status: 'disabled', version: null, error: null }
@@ -39,6 +42,7 @@ let installed = false
 let stateListener: ((state: UpdateState) => void) | null = null
 let signedAppManifest: UpdateManifest | null = null
 let checking = false
+let downloadedInstaller: string | null = null
 
 function publishState(getWindow?: () => BrowserWindow | null): void {
   const snapshot = updateState()
@@ -48,6 +52,7 @@ function publishState(getWindow?: () => BrowserWindow | null): void {
 
 /** 更新渠道：app-update.yml（打包内）或 WEFTMATE_UPDATE_FEED 环境变量（预发布验证）。 */
 function resolveFeed(): string | null {
+  if (process.env.WEFTMATE_UPDATES_DISABLED === 'true') return null
   const envFeed = process.env.WEFTMATE_UPDATE_FEED
   if (typeof envFeed === 'string' && envFeed.length > 0) return envFeed
   if (!app.isPackaged) return null
@@ -88,7 +93,7 @@ export async function initUpdater(getWindow: () => BrowserWindow | null, onState
     // env 来源（WEFTMATE_UPDATE_FEED，预发布验证）必须显式 setFeedURL——否则默认去找
     // resources/app-update.yml（普通构建没有）直接 ENOENT。
     if (feed !== 'packaged') {
-      updater.setFeedURL({ provider: 'generic', url: feed })
+      updater.setFeedURL({ provider: 'generic', url: feed, useMultipleRangeRequest: false })
     }
     updater.logger = {
       info: () => undefined,
@@ -101,6 +106,7 @@ export async function initUpdater(getWindow: () => BrowserWindow | null, onState
     updater.disableDifferentialDownload = false
     updater.allowPrerelease = process.env.WEFTMATE_UPDATE_CHANNEL === 'preview'
     updater.channel = updater.allowPrerelease ? 'preview' : 'latest'
+    updater.allowDowngrade = false
     // Preview updates are installed only after the user chooses the explicit
     // tray action. A normal app exit must never silently mutate the install.
     updater.autoInstallOnAppQuit = false
@@ -118,6 +124,7 @@ export async function initUpdater(getWindow: () => BrowserWindow | null, onState
       try {
         if (!signedAppManifest || info.version !== signedAppManifest.version) throw new Error('signature version mismatch')
         await verifyDownloadedApp(signedAppManifest, info.downloadedFile)
+        downloadedInstaller = info.downloadedFile
         state.status = 'downloaded'; state.version = info.version; state.error = null
       } catch (error) { state.status = 'error'; state.error = sanitizeUpdateFailure(error) }
       publishState(getWindow)
@@ -151,6 +158,11 @@ export async function checkForUpdates(getWindow: () => BrowserWindow | null): Pr
     const manifestFeed = process.env.WEFTMATE_APP_MANIFEST_FEED || (feed !== 'packaged' ? feed : null)
     if (!manifestFeed) throw new Error('signature manifest source missing')
     signedAppManifest = await readAppUpdateManifest(manifestFeed, app.getVersion(), process.env.WEFTMATE_UPDATE_CHANNEL || 'stable')
+    if (await rejectedAppVersion(signedAppManifest.version)) throw new Error('startup version rejected')
+    state.releaseNotes = typeof signedAppManifest.releaseNotes === 'string' ? signedAppManifest.releaseNotes : ''
+    if (compareVersions(signedAppManifest.version, app.getVersion()) <= 0) {
+      state.status = 'not-available'; state.version = null; publishState(getWindow); return updateState()
+    }
     await autoUpdater.checkForUpdates()
   } catch (error) {
     state.status = 'error'
@@ -164,7 +176,30 @@ export async function checkForUpdates(getWindow: () => BrowserWindow | null): Pr
 export function quitAndInstall(): boolean {
   if (!state.enabled || autoUpdater === null || state.status !== 'downloaded') return false
   try {
-    autoUpdater.quitAndInstall()
+    // The recovery monitor owns the reviewed NSIS installer. Main's shutdown
+    // deliberately calls app.exit(), which does not emit will-quit.
+    app.quit()
     return true
   } catch { return false }
+}
+
+/** Channel changes discard authorization for the previous feed and its downloaded installer. */
+export function changeUpdateChannel(): void {
+  if (checking || state.status === 'available') throw new Error('UPDATE_DOWNLOAD_IN_PROGRESS')
+  signedAppManifest = null
+  downloadedInstaller = null
+  state.version = null; state.releaseNotes = ''; state.error = null
+  if (autoUpdater) {
+    const feed = resolveFeed()
+    if (feed && feed !== 'packaged') autoUpdater.setFeedURL({ provider: 'generic', url: feed, useMultipleRangeRequest: false })
+    autoUpdater.allowPrerelease = process.env.WEFTMATE_UPDATE_CHANNEL === 'preview'
+    autoUpdater.channel = autoUpdater.allowPrerelease ? 'preview' : 'latest'
+    autoUpdater.allowDowngrade = false
+    state.enabled = !!feed; state.status = feed ? 'idle' : 'disabled'
+  }
+}
+export function preparedInstallerPath(): string | null { return state.status === 'downloaded' ? downloadedInstaller : null }
+export function preparedInstallerHash(): string | null {
+  const file = downloadedInstaller?.split(/[\\/]/).at(-1)
+  return state.status === 'downloaded' ? signedAppManifest?.files.find(row => row.path === file)?.sha256 || null : null
 }

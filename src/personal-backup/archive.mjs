@@ -69,14 +69,14 @@ export function scrubStore(document) {
 // writing while the online API copies even a large database after file admission
 // resumes. A read transaction keeps the archive at this view, not a later one.
 function pinDatabase(source) {
-  const db = new DatabaseSync(source, { readOnly: true });
+  const db = new DatabaseSync(process.platform === 'win32' ? path.toNamespacedPath(source) : source, { readOnly: true });
   let open = true;
   const close = () => { if (open) { open = false; db.close(); } };
   try {
     db.exec('BEGIN');
     db.prepare('SELECT count(*) FROM sqlite_schema').get();
     return { async copy(destination, check = () => {}) {
-      try { await backup(db, destination, { progress: () => check() }); check(); }
+      try { await backup(db, process.platform === 'win32' ? path.toNamespacedPath(destination) : destination, { progress: () => check() }); check(); }
       finally { close(); }
     }, close };
   } catch (error) { close(); throw error; }

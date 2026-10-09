@@ -4,9 +4,12 @@ import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 import { downloadBytes } from './store.mjs';
 import { verifyManifest } from './manifest.mjs';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 
 export async function readAppUpdateManifest(feed, appVersion, channel = 'stable') {
-  const trustedKeys = JSON.parse(await readFile(new URL('./trusted-keys.json', import.meta.url), 'utf8'));
+  const packagedKeys = process.resourcesPath && join(process.resourcesPath, 'update-trusted-keys.json');
+  const trustedKeys = JSON.parse(await readFile(packagedKeys && existsSync(packagedKeys) ? packagedKeys : new URL('./trusted-keys.json', import.meta.url), 'utf8'));
   const manifest = JSON.parse((await downloadBytes(new URL('manifest-app.json', feed.endsWith('/') ? feed : feed + '/').href, 1024 * 1024)).toString('utf8'));
   return verifyManifest(manifest, trustedKeys, { layer: 'app', channel, versions: { app: appVersion, host: appVersion } });
 }

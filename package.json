@@ -23,6 +23,7 @@
     "dist:win": "npm run vendor:verify && node scripts/stage-dsh-runtime.mjs && electron-builder --win",
     "dist:win:feed": "npm run vendor:verify && node scripts/stage-dsh-runtime.mjs && node scripts/electron-builder-feed.mjs",
     "dist:win:candidate": "node scripts/build-windows-candidate.mjs",
+    "release:windows": "node scripts/release/windows.mjs",
     "verify:win-package": "node scripts/verify-windows-package.mjs",
     "verify:mod-window:electron": "electron scripts/verify-mod-window-electron.mjs",
     "verify:dsh-view:electron": "electron scripts/verify-dsh-view-seam.mjs",
@@ -42,11 +43,13 @@
       "package.json"
     ],
     "extraResources": [
+      { "from": "src/personal-update/trusted-keys.json", "to": "update-trusted-keys.json" },
       {
         "from": ".stage",
         "to": "",
         "filter": [
-          "dsh-runtime/**/*"
+          "dsh-runtime/**/*",
+          "relay/**/*"
         ]
       }
     ],
@@ -67,7 +70,10 @@
     "nsis": {
       "differentialPackage": true,
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
+      "allowToChangeInstallationDirectory": false,
+      "allowElevation": false,
+      "packElevateHelper": false,
+      "include": "build/installer.nsh",
       "perMachine": false,
       "installerLanguages": [
         "zh_CN",
