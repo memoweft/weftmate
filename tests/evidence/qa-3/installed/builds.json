@@ -1,0 +1,29 @@
+[
+  {
+    "version": "0.1.1-preview.1",
+    "intentionalBadMain": false,
+    "sourceCommit": "1bbc863aa664d58105c0f1b086c5f8dc702c9235",
+    "bytes": 174217360,
+    "sha256": "1176f9784cc626a0fc66312328ac30ea5c6c8554d6f6a371347787ddce06354a",
+    "uploaded": false,
+    "authenticode": "NotSigned"
+  },
+  {
+    "version": "0.1.1-preview.2",
+    "intentionalBadMain": false,
+    "sourceCommit": "1bbc863aa664d58105c0f1b086c5f8dc702c9235",
+    "bytes": 174217285,
+    "sha256": "bf88c41f45085814d3dda1aadf40c11160b34712531689c6873b9aeaeab45874",
+    "uploaded": false,
+    "authenticode": "NotSigned"
+  },
+  {
+    "version": "0.1.1-preview.3",
+    "intentionalBadMain": true,
+    "sourceCommit": "1bbc863aa664d58105c0f1b086c5f8dc702c9235",
+    "bytes": 174192453,
+    "sha256": "cca2d7e0c89010eee66c05f5df85d9cfc8a967f0cac6a80085ca5f4aa0418074",
+    "uploaded": false,
+    "authenticode": "NotSigned"
+  }
+]

@@ -9,6 +9,7 @@
   "originalFileCount": 66050,
   "generatedModuleFallbackRecreated": true,
   "legacyAccountChosen": true,
+  "accountProbeScope": "All stored account identities; synthetic local login aliases/passwords exist only on disposable copy. No account names, ids or private memory text exported.",
   "accountIdentityRetained": true,
   "prepareScript": true,
   "rehearsalRefused": [
@@ -17,48 +18,210 @@
   ],
   "sourceRuntimeReady": "ready",
   "sourceVisibility": {
-    "conversationsVisible": true,
-    "memory": [
+    "accounts": [
       {
-        "kind": "entity",
-        "httpStatus": 200,
-        "visible": false
+        "syntheticIndex": 0,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationsVisible": true,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 200,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 200,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 200,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
       },
       {
-        "kind": "relationship",
-        "httpStatus": 200,
-        "visible": false
+        "syntheticIndex": 1,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationsVisible": false,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 503,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 503,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 503,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
       },
       {
-        "kind": "cognition",
-        "httpStatus": 200,
-        "visible": false
+        "syntheticIndex": 2,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationsVisible": false,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 503,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 503,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 503,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
+      },
+      {
+        "syntheticIndex": 3,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationsVisible": false,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 503,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 503,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 503,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
       }
     ],
+    "conversationsVisible": true,
     "memoryVisible": false
   },
   "installedRuntimeReady": true,
   "localLogin": true,
   "sameDataDirectory": true,
   "installedVisibility": {
-    "conversationsVisible": true,
-    "memory": [
+    "accounts": [
       {
-        "kind": "entity",
-        "httpStatus": 200,
-        "visible": false
+        "syntheticIndex": 0,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationsVisible": true,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 200,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 200,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 200,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
       },
       {
-        "kind": "relationship",
-        "httpStatus": 200,
-        "visible": false
+        "syntheticIndex": 1,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationsVisible": false,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 503,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 503,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 503,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
       },
       {
-        "kind": "cognition",
-        "httpStatus": 200,
-        "visible": false
+        "syntheticIndex": 2,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationsVisible": false,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 503,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 503,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 503,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
+      },
+      {
+        "syntheticIndex": 3,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationsVisible": false,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 503,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 503,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 503,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
       }
     ],
+    "conversationsVisible": true,
     "memoryVisible": false
   },
   "verifyScript": false,
@@ -81,24 +244,105 @@
   },
   "sourceRollback": true,
   "rollbackVisibility": {
-    "conversationsVisible": true,
-    "memory": [
+    "accounts": [
       {
-        "kind": "entity",
-        "httpStatus": 200,
-        "visible": false
+        "syntheticIndex": 0,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationsVisible": true,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 200,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 200,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 200,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
       },
       {
-        "kind": "relationship",
-        "httpStatus": 200,
-        "visible": false
+        "syntheticIndex": 1,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationsVisible": false,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 503,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 503,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 503,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
       },
       {
-        "kind": "cognition",
-        "httpStatus": 200,
-        "visible": false
+        "syntheticIndex": 2,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationsVisible": false,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 503,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 503,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 503,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
+      },
+      {
+        "syntheticIndex": 3,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationsVisible": false,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 503,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 503,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 503,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
       }
     ],
+    "conversationsVisible": true,
     "memoryVisible": false
   },
   "restoredCopy": {

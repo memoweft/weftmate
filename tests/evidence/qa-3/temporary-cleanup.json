@@ -1,0 +1,111 @@
+{
+  "checkedAt": "2026-10-09T19:50:21.378Z",
+  "roots": [
+    {
+      "name": "weftmate-m0-7c-mimo-46677c7f-96cc-40ee-82f2-5d32f0bbaf40",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-m0-7b-lan-ec43a987-3f6c-4d70-8dfb-d414c5ec69c6",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-m0-7c-mimo-02dcbd99-69af-4958-8942-a2a33952038c",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-m2-exit-mimo-kmoHQE",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-ia-2a-4CjDL3",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-pj-1-mimo-a82f3e55-4054-42f3-96f0-6faea4ae1caf",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-ui-5-mimo-a29fdb19-88f1-45bd-8206-8524bd57151e",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-m3a-e2e-d16n1V",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-m3a-e2e-DDIaQ8",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-ms1-alc3FW",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-qa3-desktop-7zvwxq",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-qa3-settings-l9vrQ0",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-m2-exit-mimo-kmoHQE",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-mf2-Ugvid7",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-eval-action-01-organize-4OAjPL",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-eval-action-02-web-document-Pci8p6",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-eval-action-03-read-code-QuFymm",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-eval-action-04-research-script-gZXJEl",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-eval-action-05-stop-resume-bVDTO5",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-eval-action-06-delete-approval-SzbGPu",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-eval-action-01-organize-htC9As",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-eval-action-03-read-code-ZQdrT9",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-eval-action-05-stop-resume-JEWcZk",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-eval-memory-01-preference-6Cxt8G",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-eval-memory-02-correction-JyqRP3",
+      "remaining": false
+    },
+    {
+      "name": "weftmate-eval-memory-04-person-y3BSgV",
+      "remaining": false
+    }
+  ],
+  "privateBackupCopiesHandledByMigrationFinally": true,
+  "testSigningPrivateKeyRemoved": true
+}

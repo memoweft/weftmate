@@ -24,6 +24,10 @@
     "passed": true
   },
   {
+    "file": "cleanup-known-roots.mjs",
+    "passed": true
+  },
+  {
     "file": "collect-baselines.mjs",
     "passed": true
   },

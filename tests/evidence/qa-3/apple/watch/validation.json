@@ -1,0 +1,57 @@
+{
+  "sourcesSHA256": "2e8f70c24e9db94eeebfdc033bdc0e29777fffa9fb8d6806844eec8b0de2c133",
+  "phoneBinarySHA256": "92bb8f75a0f933f076e521ef5142c984584c93cf06e1ed529b893cf5b5eb1779",
+  "watchBinarySHA256": "3fd03e78de5fad824fa3573b422e9119b658c33f970f42362805e7a398acd978",
+  "baseCommit": "b034e9eaddd4a732eb771235c3e0eaea1564921d",
+  "generatedAt": "2026-10-09T20:25:08.421727+00:00",
+  "pairedSimulators": true,
+  "simulatorsAtOnce": 2,
+  "xcodeJobs": 2,
+  "realWatchConnectivity": true,
+  "realPersonalApprovalHTTP": true,
+  "deterministicPlanner": true,
+  "compiledDSH": false,
+  "realSyntheticFileDelete": true,
+  "approved": true,
+  "rejected": true,
+  "completionHapticEvents": 1,
+  "passedTests": 1,
+  "failedTests": 0,
+  "skippedTests": 0,
+  "screenshots": [
+    {
+      "file": "approve-ended-iphone.png",
+      "sha256": "a220f70c48885b2db03da0a4fc92f9a38c171af00162df9b8474defb90c6498a"
+    },
+    {
+      "file": "approve-ended-watch.png",
+      "sha256": "1c05b11c31d186f5510f91479331a7462c61738ffd5b7be771321bd3aaadcd09"
+    },
+    {
+      "file": "approve-pending-iphone.png",
+      "sha256": "bdd99fab45805f07c2a86692d9ba4c28b7921b566a7de5f3dce5f3c885fdb3da"
+    },
+    {
+      "file": "approve-pending-watch.png",
+      "sha256": "7956907b36f78afdac151dd42ea61d0c99edebe7ac6fe3779032d2eef14ff286"
+    },
+    {
+      "file": "reject-ended-iphone.png",
+      "sha256": "6fa355e716fca2d1377ac287da6334aa05734dc3324f3e81949bd9ff170c21bc"
+    },
+    {
+      "file": "reject-ended-watch.png",
+      "sha256": "45c1a6044b17bce4f7899b33bf819476df3b16a06440e1af542437adf8fb2940"
+    },
+    {
+      "file": "reject-pending-iphone.png",
+      "sha256": "b26bfa91e53411d485bc4a3b950d754cd57a6d1e911cc35d01f24e56edbc56a0"
+    },
+    {
+      "file": "reject-pending-watch.png",
+      "sha256": "5d9c356513f34114b370e78f72fd746264bff812864ac1206fa077310b78ccec"
+    }
+  ],
+  "phoneImplementationSHA256": "0df4b6f30b45520e67fc3e1399d0990f3a6a3d9ba35e3896283f0084e59d05fd",
+  "watchImplementationSHA256": "019d06f41c143cad5e653cd27630e41f9e8ce9042e9393418c5b7617f615bf93"
+}
