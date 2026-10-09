@@ -1,0 +1,655 @@
+{
+  "syntheticOnly": true,
+  "before": false,
+  "checks": [
+    {
+      "surface": "desktop",
+      "theme": "light",
+      "name": "01-running-risk",
+      "pixels": {
+        "caption": [
+          250,
+          249,
+          247,
+          255
+        ],
+        "nativeButtons": [
+          250,
+          249,
+          247,
+          255
+        ],
+        "sidebar": [
+          250,
+          249,
+          247,
+          255
+        ],
+        "panel": [
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "surfaces": {
+        "frame": "rgb(250, 249, 247)",
+        "sidebar": "rgb(250, 249, 247)",
+        "modal": false
+      }
+    },
+    {
+      "surface": "desktop",
+      "theme": "light",
+      "name": "02-input-mode",
+      "pixels": {
+        "caption": [
+          187,
+          191,
+          195,
+          255
+        ],
+        "nativeButtons": [
+          187,
+          190,
+          195,
+          255
+        ],
+        "sidebar": [
+          184,
+          188,
+          193,
+          255
+        ],
+        "panel": [
+          187,
+          191,
+          198,
+          255
+        ]
+      },
+      "surfaces": {
+        "frame": "rgb(250, 249, 247)",
+        "sidebar": "rgb(250, 249, 247)",
+        "modal": true
+      }
+    },
+    {
+      "surface": "desktop",
+      "theme": "light",
+      "name": "08-queued",
+      "pixels": {
+        "caption": [
+          250,
+          249,
+          247,
+          255
+        ],
+        "nativeButtons": [
+          250,
+          249,
+          247,
+          255
+        ],
+        "sidebar": [
+          250,
+          249,
+          247,
+          255
+        ],
+        "panel": [
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "surfaces": {
+        "frame": "rgb(250, 249, 247)",
+        "sidebar": "rgb(250, 249, 247)",
+        "modal": false
+      }
+    },
+    {
+      "surface": "desktop",
+      "theme": "light",
+      "shield": 14,
+      "shieldDisplay": "block",
+      "shieldColor": "rgb(179, 117, 29)",
+      "riskColor": "rgb(179, 117, 29)",
+      "stopColor": "rgb(61, 69, 66)",
+      "accent": "#3d4542",
+      "statusVisible": false,
+      "overflow": false
+    },
+    {
+      "surface": "desktop",
+      "theme": "light",
+      "name": "03-collapsed",
+      "pixels": {
+        "caption": [
+          250,
+          249,
+          247,
+          255
+        ],
+        "nativeButtons": [
+          250,
+          249,
+          247,
+          255
+        ],
+        "sidebar": [
+          255,
+          255,
+          255,
+          255
+        ],
+        "panel": [
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "surfaces": {
+        "frame": "rgb(250, 249, 247)",
+        "sidebar": "rgb(250, 249, 247)",
+        "modal": false
+      }
+    },
+    {
+      "surface": "desktop",
+      "theme": "light",
+      "name": "04-maximized",
+      "pixels": {
+        "caption": [
+          250,
+          249,
+          247,
+          255
+        ],
+        "nativeButtons": [
+          250,
+          249,
+          247,
+          255
+        ],
+        "sidebar": [
+          250,
+          249,
+          247,
+          255
+        ],
+        "panel": [
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "surfaces": {
+        "frame": "rgb(250, 249, 247)",
+        "sidebar": "rgb(250, 249, 247)",
+        "modal": false
+      }
+    },
+    {
+      "surface": "desktop",
+      "theme": "light",
+      "name": "05-settings",
+      "pixels": {
+        "caption": [
+          187,
+          191,
+          195,
+          255
+        ],
+        "nativeButtons": [
+          187,
+          190,
+          195,
+          255
+        ],
+        "sidebar": [
+          184,
+          188,
+          193,
+          255
+        ],
+        "panel": [
+          187,
+          191,
+          198,
+          255
+        ]
+      },
+      "surfaces": {
+        "frame": "rgb(250, 249, 247)",
+        "sidebar": "rgb(250, 249, 247)",
+        "modal": true
+      }
+    },
+    {
+      "surface": "mobile-web",
+      "theme": "light",
+      "shield": 14,
+      "shieldDisplay": "block",
+      "shieldColor": "rgb(179, 117, 29)",
+      "riskColor": "rgb(179, 117, 29)",
+      "stopColor": "rgb(61, 69, 66)",
+      "accent": "#3d4542",
+      "statusVisible": false,
+      "overflow": false
+    },
+    {
+      "surface": "mobile",
+      "theme": "light",
+      "shield": 14,
+      "shieldDisplay": "block",
+      "shieldColor": "rgb(184, 132, 54)",
+      "riskColor": "rgb(184, 132, 54)",
+      "stopColor": "rgb(48, 51, 45)",
+      "accent": "#30332d",
+      "statusVisible": false,
+      "overflow": false
+    },
+    {
+      "surface": "desktop",
+      "theme": "light",
+      "name": "06-approval",
+      "pixels": {
+        "caption": [
+          250,
+          249,
+          247,
+          255
+        ],
+        "nativeButtons": [
+          250,
+          249,
+          247,
+          255
+        ],
+        "sidebar": [
+          250,
+          249,
+          247,
+          255
+        ],
+        "panel": [
+          225,
+          224,
+          219,
+          255
+        ]
+      },
+      "surfaces": {
+        "frame": "rgb(250, 249, 247)",
+        "sidebar": "rgb(250, 249, 247)",
+        "modal": false
+      }
+    },
+    {
+      "surface": "desktop",
+      "theme": "light",
+      "name": "07-idle",
+      "pixels": {
+        "caption": [
+          250,
+          249,
+          247,
+          255
+        ],
+        "nativeButtons": [
+          250,
+          249,
+          247,
+          255
+        ],
+        "sidebar": [
+          250,
+          249,
+          247,
+          255
+        ],
+        "panel": [
+          225,
+          224,
+          219,
+          255
+        ]
+      },
+      "surfaces": {
+        "frame": "rgb(250, 249, 247)",
+        "sidebar": "rgb(250, 249, 247)",
+        "modal": false
+      }
+    },
+    {
+      "surface": "desktop",
+      "theme": "dark",
+      "name": "01-running-risk",
+      "pixels": {
+        "caption": [
+          32,
+          33,
+          31,
+          255
+        ],
+        "nativeButtons": [
+          32,
+          33,
+          31,
+          255
+        ],
+        "sidebar": [
+          32,
+          33,
+          31,
+          255
+        ],
+        "panel": [
+          38,
+          39,
+          36,
+          255
+        ]
+      },
+      "surfaces": {
+        "frame": "rgb(32, 33, 31)",
+        "sidebar": "rgb(32, 33, 31)",
+        "modal": false
+      }
+    },
+    {
+      "surface": "desktop",
+      "theme": "dark",
+      "name": "02-input-mode",
+      "pixels": {
+        "caption": [
+          30,
+          35,
+          39,
+          255
+        ],
+        "nativeButtons": [
+          30,
+          34,
+          40,
+          255
+        ],
+        "sidebar": [
+          30,
+          35,
+          39,
+          255
+        ],
+        "panel": [
+          34,
+          39,
+          43,
+          255
+        ]
+      },
+      "surfaces": {
+        "frame": "rgb(32, 33, 31)",
+        "sidebar": "rgb(32, 33, 31)",
+        "modal": true
+      }
+    },
+    {
+      "surface": "desktop",
+      "theme": "dark",
+      "name": "08-queued",
+      "pixels": {
+        "caption": [
+          32,
+          33,
+          31,
+          255
+        ],
+        "nativeButtons": [
+          32,
+          33,
+          31,
+          255
+        ],
+        "sidebar": [
+          32,
+          33,
+          31,
+          255
+        ],
+        "panel": [
+          38,
+          39,
+          36,
+          255
+        ]
+      },
+      "surfaces": {
+        "frame": "rgb(32, 33, 31)",
+        "sidebar": "rgb(32, 33, 31)",
+        "modal": false
+      }
+    },
+    {
+      "surface": "desktop",
+      "theme": "dark",
+      "shield": 14,
+      "shieldDisplay": "block",
+      "shieldColor": "rgb(179, 117, 29)",
+      "riskColor": "rgb(179, 117, 29)",
+      "stopColor": "rgb(185, 198, 185)",
+      "accent": "#b9c6b9",
+      "statusVisible": false,
+      "overflow": false
+    },
+    {
+      "surface": "desktop",
+      "theme": "dark",
+      "name": "03-collapsed",
+      "pixels": {
+        "caption": [
+          32,
+          33,
+          31,
+          255
+        ],
+        "nativeButtons": [
+          32,
+          33,
+          31,
+          255
+        ],
+        "sidebar": [
+          38,
+          39,
+          36,
+          255
+        ],
+        "panel": [
+          38,
+          39,
+          36,
+          255
+        ]
+      },
+      "surfaces": {
+        "frame": "rgb(32, 33, 31)",
+        "sidebar": "rgb(32, 33, 31)",
+        "modal": false
+      }
+    },
+    {
+      "surface": "desktop",
+      "theme": "dark",
+      "name": "04-maximized",
+      "pixels": {
+        "caption": [
+          32,
+          33,
+          31,
+          255
+        ],
+        "nativeButtons": [
+          32,
+          33,
+          31,
+          255
+        ],
+        "sidebar": [
+          32,
+          33,
+          31,
+          255
+        ],
+        "panel": [
+          38,
+          39,
+          36,
+          255
+        ]
+      },
+      "surfaces": {
+        "frame": "rgb(32, 33, 31)",
+        "sidebar": "rgb(32, 33, 31)",
+        "modal": false
+      }
+    },
+    {
+      "surface": "desktop",
+      "theme": "dark",
+      "name": "05-settings",
+      "pixels": {
+        "caption": [
+          30,
+          35,
+          39,
+          255
+        ],
+        "nativeButtons": [
+          30,
+          34,
+          40,
+          255
+        ],
+        "sidebar": [
+          30,
+          35,
+          39,
+          255
+        ],
+        "panel": [
+          34,
+          39,
+          43,
+          255
+        ]
+      },
+      "surfaces": {
+        "frame": "rgb(32, 33, 31)",
+        "sidebar": "rgb(32, 33, 31)",
+        "modal": true
+      }
+    },
+    {
+      "surface": "mobile-web",
+      "theme": "dark",
+      "shield": 14,
+      "shieldDisplay": "block",
+      "shieldColor": "rgb(179, 117, 29)",
+      "riskColor": "rgb(179, 117, 29)",
+      "stopColor": "rgb(185, 198, 185)",
+      "accent": "#b9c6b9",
+      "statusVisible": false,
+      "overflow": false
+    },
+    {
+      "surface": "mobile",
+      "theme": "dark",
+      "shield": 14,
+      "shieldDisplay": "block",
+      "shieldColor": "rgb(184, 132, 54)",
+      "riskColor": "rgb(184, 132, 54)",
+      "stopColor": "rgb(224, 227, 218)",
+      "accent": "#e0e3da",
+      "statusVisible": false,
+      "overflow": false
+    },
+    {
+      "surface": "desktop",
+      "theme": "dark",
+      "name": "06-approval",
+      "pixels": {
+        "caption": [
+          32,
+          33,
+          31,
+          255
+        ],
+        "nativeButtons": [
+          32,
+          33,
+          31,
+          255
+        ],
+        "sidebar": [
+          32,
+          33,
+          31,
+          255
+        ],
+        "panel": [
+          64,
+          66,
+          59,
+          255
+        ]
+      },
+      "surfaces": {
+        "frame": "rgb(32, 33, 31)",
+        "sidebar": "rgb(32, 33, 31)",
+        "modal": false
+      }
+    },
+    {
+      "surface": "desktop",
+      "theme": "dark",
+      "name": "07-idle",
+      "pixels": {
+        "caption": [
+          32,
+          33,
+          31,
+          255
+        ],
+        "nativeButtons": [
+          32,
+          33,
+          31,
+          255
+        ],
+        "sidebar": [
+          32,
+          33,
+          31,
+          255
+        ],
+        "panel": [
+          64,
+          66,
+          59,
+          255
+        ]
+      },
+      "surfaces": {
+        "frame": "rgb(32, 33, 31)",
+        "sidebar": "rgb(32, 33, 31)",
+        "modal": false
+      }
+    }
+  ],
+  "errors": []
+}

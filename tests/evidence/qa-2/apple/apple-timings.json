@@ -1,0 +1,71 @@
+{
+  "settings-dark": {
+    "passedTestDurationsSec": [],
+    "runnerFailure": true,
+    "failureKind": "runner startup/connection"
+  },
+  "settings-dark-retry": {
+    "passedTestDurationsSec": [
+      168.672
+    ],
+    "runnerFailure": false,
+    "failureKind": null
+  },
+  "phone-flow": {
+    "passedTestDurationsSec": [
+      188.672
+    ],
+    "runnerFailure": false,
+    "failureKind": null
+  },
+  "settings-light": {
+    "passedTestDurationsSec": [
+      172.088
+    ],
+    "runnerFailure": false,
+    "failureKind": null
+  },
+  "projects-phone-dark": {
+    "passedTestDurationsSec": [
+      71.175
+    ],
+    "runnerFailure": false,
+    "failureKind": null
+  },
+  "projects-phone-light-retry": {
+    "passedTestDurationsSec": [
+      72.361
+    ],
+    "runnerFailure": false,
+    "failureKind": null
+  },
+  "projects-phone-light": {
+    "passedTestDurationsSec": [],
+    "runnerFailure": true,
+    "failureKind": "runner startup/connection"
+  },
+  "apple/a10/mac-light": {
+    "screenshotCount": 16,
+    "note": "Existing native runner writes buffered PNG results at completion. File timestamps measure serialization only and MUST NOT be interpreted as UI duration. This native phase has no independent duration measurement.",
+    "fileSerializationSpanSec": 0.006,
+    "durationMs": null
+  },
+  "apple/a10/mac-dark": {
+    "screenshotCount": 16,
+    "note": "Existing native runner writes buffered PNG results at completion. File timestamps measure serialization only and MUST NOT be interpreted as UI duration. This native phase has no independent duration measurement.",
+    "fileSerializationSpanSec": 0.006,
+    "durationMs": null
+  },
+  "apple/projects-mac-dark": {
+    "screenshotCount": 7,
+    "note": "Existing native runner writes buffered PNG results at completion. File timestamps measure serialization only and MUST NOT be interpreted as UI duration. This native phase has no independent duration measurement.",
+    "fileSerializationSpanSec": 0.002,
+    "durationMs": null
+  },
+  "apple/projects-mac-light": {
+    "screenshotCount": 7,
+    "note": "Existing native runner writes buffered PNG results at completion. File timestamps measure serialization only and MUST NOT be interpreted as UI duration. This native phase has no independent duration measurement.",
+    "fileSerializationSpanSec": 0.002,
+    "durationMs": null
+  }
+}

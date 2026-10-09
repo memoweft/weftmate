@@ -1,0 +1,269 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-09T14:24:15.650Z",
+  "host": "http://127.0.0.1:49407",
+  "model": "mimo",
+  "results": [
+    {
+      "id": "action-04-research-script",
+      "category": "action",
+      "title": "查资料写脚本并实际运行",
+      "status": "passed",
+      "durationMs": 70994,
+      "checks": [
+        {
+          "type": "file_exists",
+          "path": "sum.mjs",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "result.json",
+          "text": "49",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "result.json",
+          "text": "25",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "result.json",
+          "text": "24",
+          "status": "passed"
+        },
+        {
+          "type": "reply_contains",
+          "text": "49",
+          "status": "passed"
+        },
+        {
+          "type": "reply_matches",
+          "pattern": "https://nodejs\\.org/",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "llm_judge",
+          "prompt": "回复需报告实际运行结果：茶 25、咖啡 24、总计 49，并给出 Node.js 官方参考资料链接。应区分实际执行和预计结果。",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-c397bc00-69d9-4146-9f48-ec1420120453",
+          "modelProfileId": "private-model-98feba0500e0e148cbe0d89f525f154724817e1d",
+          "commandId": "cmd-4fb62165-7c87-4bf0-a809-c9f693ca80bc",
+          "startedAt": "2026-10-09T14:24:16.798Z",
+          "reply": "<tool_call><function=load_tools><parameter(names>[\"read\", \"write\", \"pwsh\", \"web_fetch\", \"browser\"]</parameter></function></tool_call>\n脚本已写好并实际跑通：`[local path] Node.js 内置的 `node:fs` 的 `readFileSync` + `writeFileSync`，没有安装任何包；每次运行都会重读 `sales.csv` 覆盖写出 `[local path] CSV 直接重跑即可。\n\n**算出来**（已核对 result.json）：茶 小计 25、咖啡 小计 24，**合计 49**。\n\n**参考资料**：Node.js 官方教程 [Reading files with Node.js](https://nodejs.org/learn/manipulating-files/reading-files-with-nodejs)（介绍了 `fs.readFile` / `fs.readFileSync` / `fsPromises.readFile` 三种读文本文件的方式），以及 API 手册 [File system — node:fs](https://nodejs.org/api/fs.html)。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T14:24:16.864Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T14:24:16.864Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T14:24:16.920Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T14:24:16.921Z"
+            },
+            {
+              "seq": 41,
+              "type": "assistant.message",
+              "at": "2026-10-09T14:24:18.436Z"
+            },
+            {
+              "seq": 42,
+              "type": "step.started",
+              "at": "2026-10-09T14:24:18.438Z"
+            },
+            {
+              "seq": 43,
+              "type": "step.completed",
+              "at": "2026-10-09T14:24:18.448Z"
+            },
+            {
+              "seq": 74,
+              "type": "step.started",
+              "at": "2026-10-09T14:24:20.537Z"
+            },
+            {
+              "seq": 75,
+              "type": "step.completed",
+              "at": "2026-10-09T14:24:20.544Z"
+            },
+            {
+              "seq": 98,
+              "type": "step.started",
+              "at": "2026-10-09T14:24:21.357Z"
+            },
+            {
+              "seq": 99,
+              "type": "step.completed",
+              "at": "2026-10-09T14:24:21.410Z"
+            },
+            {
+              "seq": 191,
+              "type": "step.started",
+              "at": "2026-10-09T14:24:27.165Z"
+            },
+            {
+              "seq": 192,
+              "type": "step.started",
+              "at": "2026-10-09T14:24:27.172Z"
+            },
+            {
+              "seq": 193,
+              "type": "step.completed",
+              "at": "2026-10-09T14:24:30.339Z"
+            },
+            {
+              "seq": 194,
+              "type": "step.completed",
+              "at": "2026-10-09T14:24:34.289Z"
+            },
+            {
+              "seq": 272,
+              "type": "step.started",
+              "at": "2026-10-09T14:24:41.209Z"
+            },
+            {
+              "seq": 273,
+              "type": "step.completed",
+              "at": "2026-10-09T14:24:44.940Z"
+            },
+            {
+              "seq": 274,
+              "type": "step.started",
+              "at": "2026-10-09T14:24:44.941Z"
+            },
+            {
+              "seq": 275,
+              "type": "step.completed",
+              "at": "2026-10-09T14:24:48.789Z"
+            },
+            {
+              "seq": 309,
+              "type": "step.started",
+              "at": "2026-10-09T14:24:50.089Z"
+            },
+            {
+              "seq": 310,
+              "type": "step.started",
+              "at": "2026-10-09T14:24:50.096Z"
+            },
+            {
+              "seq": 311,
+              "type": "step.completed",
+              "at": "2026-10-09T14:24:52.843Z"
+            },
+            {
+              "seq": 312,
+              "type": "step.completed",
+              "at": "2026-10-09T14:24:54.997Z"
+            },
+            {
+              "seq": 378,
+              "type": "step.started",
+              "at": "2026-10-09T14:24:57.872Z"
+            },
+            {
+              "seq": 379,
+              "type": "step.completed",
+              "at": "2026-10-09T14:25:02.193Z"
+            },
+            {
+              "seq": 404,
+              "type": "step.started",
+              "at": "2026-10-09T14:25:03.577Z"
+            },
+            {
+              "seq": 405,
+              "type": "step.completed",
+              "at": "2026-10-09T14:25:07.530Z"
+            },
+            {
+              "seq": 724,
+              "type": "step.started",
+              "at": "2026-10-09T14:25:17.494Z"
+            },
+            {
+              "seq": 725,
+              "type": "artifact.created",
+              "at": "2026-10-09T14:25:18.817Z"
+            },
+            {
+              "seq": 756,
+              "type": "step.started",
+              "at": "2026-10-09T14:25:20.321Z"
+            },
+            {
+              "seq": 757,
+              "type": "step.completed",
+              "at": "2026-10-09T14:25:20.867Z"
+            },
+            {
+              "seq": 779,
+              "type": "step.started",
+              "at": "2026-10-09T14:25:22.627Z"
+            },
+            {
+              "seq": 780,
+              "type": "step.completed",
+              "at": "2026-10-09T14:25:22.679Z"
+            },
+            {
+              "seq": 866,
+              "type": "assistant.message",
+              "at": "2026-10-09T14:25:27.376Z"
+            },
+            {
+              "seq": 867,
+              "type": "task.ended",
+              "at": "2026-10-09T14:25:27.376Z"
+            },
+            {
+              "seq": 868,
+              "type": "turn.ended",
+              "at": "2026-10-09T14:25:27.377Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 70657,
+          "endedAt": "2026-10-09T14:25:27.455Z"
+        }
+      ],
+      "replySummary": "<tool_call><function=load_tools><parameter(names>[\"read\", \"write\", \"pwsh\", \"web_fetch\", \"browser\"]</parameter></function></tool_call>\n脚本已写好并实际跑通：`[local path] Node.js 内置的 `node:fs` 的 `readFileSync` + `writeFileSync`，没有安装任何包；每次运行都会重读 `sales.csv` 覆盖写出 `[local path] CSV 直接重跑即可。\n\n**算出来**（已核对 result.json）：茶 小计 25、咖啡 小计 24，**合计 49**。\n\n**参考资料**：Node.js 官方教程 [Reading files with Node.js](https://nodejs.org/learn/manipulating-files/reading-files-with-nodejs)（介绍了 `fs.readFile` / `fs.readFileSync` / `fsProm",
+      "notes": "需要联网和宿主 Node；输出数字字符串检查配合回复检查，实际脚本可在 Windows 复查。本地 Qwen 27B 首轮 300 秒到期时仍在网页读取和命令执行，调整为 600 秒；修复 web_fetch 提供方后重跑。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；900秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限600秒。",
+      "scratchDir": "C:\\temp\\weftmate-eval-action-04-research-script-eFt2Qe"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 0,
+    "manual": 0,
+    "unsupported": 0,
+    "skippedChecks": 1,
+    "passRate": 1,
+    "coverage": 1
+  }
+}
