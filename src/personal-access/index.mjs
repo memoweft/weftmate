@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 import { failure, plainObject, withDeadline } from './common.mjs';
 import { ensurePrivateDirectory, ensurePrivateFile } from '../private-host-storage.mjs';
 import { lstat, readdir, readFile } from 'node:fs/promises';
@@ -492,6 +493,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       }
     }
     validateStore(next);
+    if (isDeepStrictEqual(next, rootState)) return value;
     try { await durableWrite(storeFile, next, () => {
       if (closing) return false;
       assertCurrent();

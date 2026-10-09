@@ -53,7 +53,9 @@ describe('R6-01 桌面感知接缝契约', () => {
     assert.match(perception, /if \(config\.clipboard\)/);
     assert.match(perception, /CLIPBOARD_MAX_CHARS = 500/);
     assert.match(perception, /TITLE_MAX_CHARS = 300/);
-    assert.match(perception, /writeFileSync\(`\$\{stateFile\}\.tmp`, text, 'utf8'\)[\s\S]*renameSync/);
+    assert.match(perception, /createLatestFileWriter\(stateFile\)/);
+    assert.match(perception, /writeSnapshot\(/);
+    assert.doesNotMatch(perception, /writeFileSync|renameSync/);
     // 采样只写本地 dsh-home 文件，无网络出口。
     assert.doesNotMatch(perception, /fetch\(|http:\/\/|https:\/\//);
   });
