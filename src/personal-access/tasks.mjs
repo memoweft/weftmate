@@ -15,10 +15,12 @@ import { publicCommand } from './command-policy.mjs';
 
 export function createTaskOperations(context) {
   const stopRetryTimers = new Map();
+  const stopAttempts = new Map();
 
   function cancelTaskStopRetries() {
     for (const timer of stopRetryTimers.values()) clearTimeout(timer);
     stopRetryTimers.clear();
+    stopAttempts.clear();
   }
 
   function taskSource(account, taskId) {
@@ -176,9 +178,17 @@ export function createTaskOperations(context) {
     if (jobSteps.some(row => ['running', 'stopping'].includes(row.jobState))) { pendingCount++; uncertain = true; }
     for (const row of jobSteps) if (row.jobState === 'killed' && validTime(row.jobObservedAt)) terminalTimes.push(row.jobObservedAt);
     if (effectsUnknown) { pendingCount++; uncertain = true; }
-    if (targets.some((target) => target.attemptAt || target.ack === 'unconfirmed')) uncertain = true;
+    if (targets.some((target) => target.attemptAt || target.ack === 'unconfirmed') ||
+        stopAttempts.get(`${account.ownerId}|${taskId}`)?.attempts.size) uncertain = true;
     const status = pendingCount ? cancelRequested ? 'cancel_requested' : uncertain || legacy ? 'unconfirmed' : 'requested'
       : aborted || removed || jobSteps.some(row => row.jobState === 'killed') ? 'stopped' : completed ? 'completed' : 'unconfirmed';
+    if (pendingCount === 0) {
+      const key = `${account.ownerId}|${taskId}`;
+      clearTimeout(stopRetryTimers.get(key));
+      stopRetryTimers.delete(key);
+      const retry = stopAttempts.get(key);
+      if (retry?.requestId === stop.requestId) retry.done = true;
+    }
     return { ready: pendingCount === 0, legacy,
       ...(status === 'stopped' && terminalTimes.length ? {
         observedAt: terminalTimes.sort((a, b) => Date.parse(a) - Date.parse(b)).at(-1) } : {}),
@@ -271,86 +281,88 @@ export function createTaskOperations(context) {
     if (context.stopping.has(key)) return context.stopping.get(key);
     clearTimeout(stopRetryTimers.get(key));
     stopRetryTimers.delete(key);
-    let retryAt = context.timestamp() + 1_000;
+    let retry;
+    let attemptDelay;
     const work = (async () => {
       if (context.closing || context.storageFault || typeof context.backend.stopTask !== 'function') return;
-      const account = context.accountState(ownerId);
+      let account = context.accountState(ownerId);
       const source = taskSource(account, taskId);
-      if (source.taskControl?.state !== 'stop_requested') return;
+      if (source.taskControl?.state !== 'stop_requested') { stopAttempts.delete(key); return; }
       const stop = latestStop(account, taskId);
       if (!stop?.targets) return;
-      if (!force && stop.lastAttemptAt && context.timestamp() - Date.parse(stop.lastAttemptAt) < 1_000) {
-        retryAt = Date.parse(stop.lastAttemptAt) + 1_000;
-        return;
+      retry = stopAttempts.get(key);
+      if (retry?.requestId !== stop.requestId) {
+        // Legacy attempt timestamps are accepted on restart, but never updated.
+        retry = { requestId: stop.requestId, attempts: new Map(), delay: 1_000,
+          nextAt: stop.lastAttemptAt ? Math.min(context.timestamp() + 1_000, Date.parse(stop.lastAttemptAt) + 1_000) : 0,
+          done: false };
+        stopAttempts.set(key, retry);
       }
-      const candidates = stop.targets.filter((target) => target.receiptId && target.ack !== 'queue_removed' &&
+      // Reads can observe a closed native turn immediately, even during backoff.
+      if ((await taskStopEvidence(account, taskId)).ready) { retry.done = true; return; }
+      if (retry.done || context.closing) return;
+      account = context.accountState(ownerId);
+      const candidates = latestStop(account, taskId)?.targets?.filter((target) => target.receiptId &&
+        (!target.ack || target.ack === 'unconfirmed') &&
         account.commands[target.commandId]?.state === 'accepted_by_dsh')
-        .sort((left, right) => (left.attemptAt ? Date.parse(left.attemptAt) : 0) -
-          (right.attemptAt ? Date.parse(right.attemptAt) : 0)).slice(0, 16);
+        .sort((left, right) => (retry.attempts.get(left.receiptId) ?? 0) -
+          (retry.attempts.get(right.receiptId) ?? 0)).slice(0, 16) ?? [];
       if (!candidates.length) return;
+      // A newly accepted frozen receipt bypasses backoff; replayed stop requests do not.
+      if (context.timestamp() < retry.nextAt && !(force && candidates.some(target => !retry.attempts.has(target.receiptId)))) return;
+      retry.nextAt = context.timestamp() + retry.delay;
+      const delay = retry.delay;
+      attemptDelay = delay;
+      retry.delay = Math.min(30_000, delay * 2);
+      const receipts = candidates.map(item => item.receiptId);
+      for (const receipt of receipts) retry.attempts.set(receipt, context.timestamp());
       const described = await withDeadline(() => context.backend.describeSession(source.sessionId, ownerId), 2_500)
         .catch(() => null);
       if (described?.sessionId !== source.sessionId || described.agentPreset !== 'personal-remote') return;
-      await context.serial(() => context.mutate(ownerId, (next) => {
+      let result;
+      try {
+        result = await withDeadline(() => context.backend.stopTask({ sessionId: source.sessionId,
+          ownerId, requestId: stop.requestId, receiptIds: receipts,
+          ...(stop.queuedOnly ? { queuedOnly: true } : {}) }), 3_000);
+      } catch { return; }
+      if (!Array.isArray(result?.outcomes) || result.outcomes.length !== receipts.length ||
+          new Set(result.outcomes.map(item => item.receiptId)).size !== receipts.length ||
+          result.outcomes.some(item => !receipts.includes(item.receiptId) ||
+            !['cancel_requested', 'queue_removed', 'unconfirmed'].includes(item.status))) return;
+      if (context.closing) return;
+      await context.serial(() => context.mutate(ownerId, next => {
         const current = latestStop(next, taskId);
         if (current?.requestId !== stop.requestId) return;
         const at = new Date(context.timestamp()).toISOString();
-        current.lastAttemptAt = at;
-        retryAt = Date.parse(at) + 1_000;
-        for (const candidate of candidates) {
-          const target = current.targets.find((item) => item.commandId === candidate.commandId);
-          if (target?.receiptId === candidate.receiptId) target.attemptAt = at;
-        }
-      }));
-      {
-        const receipts = candidates.map((item) => item.receiptId);
-        let result;
-        try {
-          result = await withDeadline(() => context.backend.stopTask({ sessionId: source.sessionId,
-            ownerId, requestId: stop.requestId, receiptIds: receipts,
-            ...(stop.queuedOnly ? { queuedOnly: true } : {}) }), 3_000);
-        } catch { return; }
-        if (!Array.isArray(result?.outcomes) || result.outcomes.length !== receipts.length ||
-            new Set(result.outcomes.map((item) => item.receiptId)).size !== receipts.length ||
-            result.outcomes.some((item) => !receipts.includes(item.receiptId) ||
-              !['cancel_requested', 'queue_removed', 'unconfirmed'].includes(item.status))) return;
-        if (context.closing) return;
-        await context.serial(() => context.mutate(ownerId, (next) => {
-          const current = latestStop(next, taskId);
-          if (current?.requestId !== stop.requestId) return;
-          const at = new Date(context.timestamp()).toISOString();
-          for (const outcome of result.outcomes) {
-            const target = current.targets.find((item) => item.receiptId === outcome.receiptId);
-            if (!target || target.ack === 'queue_removed') continue;
-            target.ack = outcome.status;
-            target.ackAt = at;
-            for (const observed of outcome.backgroundJobs ?? []) {
-              if (!plainObject(observed) || !REQUEST_ID.test(observed.jobId ?? '') || !JOB_STATES.has(observed.state)) continue;
-              for (const command of [taskSource(next, taskId), ...taskChildren(next, taskId)]) {
-                for (const row of command.toolExecutions ?? []) {
-                  if (row.sourceReceiptId !== outcome.receiptId || row.jobId !== observed.jobId) continue;
-                  if (['completed', 'killed', 'failed'].includes(row.jobState) && row.jobState !== observed.state) continue;
-                  row.jobState = observed.state; row.jobObservedAt = row.updatedAt = at;
-                }
+        for (const outcome of result.outcomes) {
+          const target = current.targets.find(item => item.receiptId === outcome.receiptId);
+          if (!target || target.ack === 'queue_removed') continue;
+          if (target.ack !== outcome.status) { target.ack = outcome.status; target.ackAt = at; }
+          for (const observed of outcome.backgroundJobs ?? []) {
+            if (!plainObject(observed) || !REQUEST_ID.test(observed.jobId ?? '') || !JOB_STATES.has(observed.state)) continue;
+            for (const command of [taskSource(next, taskId), ...taskChildren(next, taskId)]) {
+              for (const row of command.toolExecutions ?? []) {
+                if (row.sourceReceiptId !== outcome.receiptId || row.jobId !== observed.jobId || row.jobState === observed.state) continue;
+                if (['completed', 'killed', 'failed'].includes(row.jobState)) continue;
+                row.jobState = observed.state; row.jobObservedAt = row.updatedAt = at;
               }
             }
           }
-        }));
-      }
+        }
+      }));
     })().finally(() => {
       context.stopping.delete(key);
-      if (context.closing || context.storageFault || typeof context.backend.stopTask !== 'function') return;
-      const source = context.accountState(ownerId).commands[taskId];
+      if (attemptDelay !== undefined) retry.nextAt = Math.max(retry.nextAt, context.timestamp() + attemptDelay);
+      if (!retry || retry.done || context.closing || context.storageFault || typeof context.backend.stopTask !== 'function') return;
+      const account = context.accountState(ownerId);
+      const source = account.commands[taskId];
       const stop = source?.taskControl?.state === 'stop_requested' ? source.taskControl.stopRequests.at(-1) : null;
-      if (!stop?.targets?.some(target => target.receiptId &&
-          (!target.ack || target.ack === 'unconfirmed') &&
-          context.accountState(ownerId).commands[target.commandId]?.state === 'accepted_by_dsh')) return;
-      // Recovery may run inside the persisted backoff window. Keep a wakeup
-      // even when that attempt was skipped or its acknowledgement was lost.
+      if (stop?.requestId !== retry.requestId || !stop.targets?.some(target => target.receiptId &&
+          (!target.ack || target.ack === 'unconfirmed') && account.commands[target.commandId]?.state === 'accepted_by_dsh')) return;
       const timer = setTimeout(() => {
         stopRetryTimers.delete(key);
         driveTaskStop(ownerId, taskId).catch(() => {});
-      }, Math.max(1, retryAt - context.timestamp()));
+      }, Math.max(1, retry.nextAt - context.timestamp()));
       timer.unref?.();
       stopRetryTimers.set(key, timer);
     });
@@ -407,7 +419,7 @@ export function createTaskOperations(context) {
           if (!prior || input.executionId !== executionId || prior.jobId !== input.jobId || prior.rootCallId !== rootCallId || prior.turn !== turn ||
               prior.toolName !== toolName || prior.argumentsHash !== argumentsHash || prior.runtimeId !== input.runtimeId ||
               !['running', 'stopping', 'completed', 'killed', 'failed'].includes(input.jobState)) throw failure('REQUEST_CONFLICT', 409);
-          if (!(['completed', 'killed', 'failed'].includes(prior.jobState) && prior.jobState !== input.jobState)) {
+          if (prior.jobState !== input.jobState && !['completed', 'killed', 'failed'].includes(prior.jobState)) {
             prior.jobState = input.jobState; prior.jobObservedAt = prior.updatedAt = new Date(context.timestamp()).toISOString();
           }
           return { executionId, taskId: root.commandId, state: prior.state };

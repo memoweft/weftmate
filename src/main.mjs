@@ -1,3 +1,5 @@
+import { readFile as readFileAsync, rm as rmAsync, writeFile as writeFileAsync } from 'node:fs/promises';
+import { createLatestFileWriter } from './latest-file-writer.mjs';
 /**
  * WeftMate · Electron 主进程：个人宿主 + 原生桌面窗口。
  *
@@ -1413,6 +1415,7 @@ async function bootstrap() {
     WEFTMATE_MEMOWEFT_ENABLED: process.env.WEFTMATE_MEMOWEFT_ENABLED === '1' ? '1' : '0',
     WEFTMATE_PERSONAL_MEMORY_ENABLED: personalMemoryConfigPath ? '1' : '0',
   });
+  const writeHostSnapshot = createLatestFileWriter(HOST_STATE_FILE);
   function writeHostState() {
     try {
       // 故障路径也要留下可读诊断：DSH checkout 的预检失败可能发生在 profile
@@ -1457,30 +1460,30 @@ async function bootstrap() {
           freeActivity: desktopPetFreeActivity(),
         },
       };
-      writeFileSync(HOST_STATE_FILE, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+      void writeHostSnapshot(`${JSON.stringify(payload, null, 2)}\n`).catch(error => logCrash('host-state-write', error));
     } catch (error) { logCrash('host-state-write', error); }
   }
   writeHostStateForLifecycle = writeHostState;
   /** 消费 UI 侧发来的更新请求（check / install）；消费即删，防重复触发。 */
-  function handleUpdateRequests() {
+  async function handleUpdateRequests() {
     let raw = null;
     try {
-      if (existsSync(UPDATE_REQUEST_FILE)) raw = JSON.parse(readFileSync(UPDATE_REQUEST_FILE, 'utf8'));
+      raw = JSON.parse(await readFileAsync(UPDATE_REQUEST_FILE, 'utf8'));
     } catch { return; } // 半写/坏文件：下轮再读
     if (!raw || typeof raw.action !== 'string') return;
-    try { rmSync(UPDATE_REQUEST_FILE, { force: true }); } catch { /* 删不掉下轮再试 */ }
+    try { await rmAsync(UPDATE_REQUEST_FILE, { force: true }); } catch { /* 删不掉下轮再试 */ }
     if (raw.action === 'check') void checkForUpdates(() => win);
     else if (raw.action === 'install') installPreviewUpdateFromTray();
   }
   // ── R6-01 · 感知请求面：官方 UI（客户端插件）→ 宿主插件写请求文件 → main 消费切换开关 ──
   const PERCEPTION_REQUEST_FILE = join(dshHome, 'weftmate-perception-request.json');
-  function handlePerceptionRequests() {
+  async function handlePerceptionRequests() {
     let raw = null;
     try {
-      if (existsSync(PERCEPTION_REQUEST_FILE)) raw = JSON.parse(readFileSync(PERCEPTION_REQUEST_FILE, 'utf8'));
+      raw = JSON.parse(await readFileAsync(PERCEPTION_REQUEST_FILE, 'utf8'));
     } catch { return; } // 半写/坏文件：下轮再读
     if (!raw || typeof raw.action !== 'string') return;
-    try { rmSync(PERCEPTION_REQUEST_FILE, { force: true }); } catch { /* 删不掉下轮再试 */ }
+    try { await rmAsync(PERCEPTION_REQUEST_FILE, { force: true }); } catch { /* 删不掉下轮再试 */ }
     enqueueSettingsFileWrite('perception-request', () => {
       if (raw.action === 'set-enabled') {
         settingsMod?.setPerceptionEnabled?.(raw.value === true);
@@ -1504,14 +1507,14 @@ async function bootstrap() {
   });
   // ── R6-02 · 桌宠动作请求面：官方 UI 胶囊 → 宿主插件写请求文件 → main 消费 ──
   const PET_REQUEST_FILE = join(dshHome, 'weftmate-pet-request.json');
-  function handlePetRequests() {
+  async function handlePetRequests() {
     if (headless) return;
     let raw = null;
     try {
-      if (existsSync(PET_REQUEST_FILE)) raw = JSON.parse(readFileSync(PET_REQUEST_FILE, 'utf8'));
+      raw = JSON.parse(await readFileAsync(PET_REQUEST_FILE, 'utf8'));
     } catch { return; } // 半写/坏文件：下轮再读
     if (!raw || typeof raw.action !== 'string') return;
-    try { rmSync(PET_REQUEST_FILE, { force: true }); } catch { /* 删不掉下轮再试 */ }
+    try { await rmAsync(PET_REQUEST_FILE, { force: true }); } catch { /* 删不掉下轮再试 */ }
     try {
       if (raw.action === 'set-visible') {
         const want = raw.value === true;
@@ -1527,9 +1530,11 @@ async function bootstrap() {
   }
   writeHostState();
   setInterval(writeHostState, 5_000).unref?.();
-  setInterval(handleUpdateRequests, 1_000).unref?.();
-  setInterval(handlePerceptionRequests, 1_000).unref?.();
-  setInterval(handlePetRequests, 1_000).unref?.();
+  let requestPolling = Promise.resolve();
+  setInterval(() => {
+    requestPolling = requestPolling.then(handleUpdateRequests).then(handlePerceptionRequests)
+      .then(handlePetRequests).catch(error => logCrash('host-request-poll', error));
+  }, 1_000).unref?.();
 
   const routeMutationJournal = createRouteMutationJournal({ journalPath: ROUTE_MUTATION_JOURNAL, patchPath: ROUTES_PATCH,
     restoreSettingsBytes: (bytes) => settingsMod.restoreSettingsBytes(bytes), restoreVaultBytes: (bytes) => configStoreMod.restoreVaultBytes(bytes) });
@@ -2944,7 +2949,7 @@ async function bootstrap() {
     if (!desktopPetWin || desktopPetWin.isDestroyed() || event.sender !== desktopPetWin.webContents) return null;
     if (name !== 'xingyao') return null;
     try {
-      const buffer = readFileSync(join(import.meta.dirname, 'pets', 'assets', name, 'spritesheet.webp'));
+      const buffer = await readFileAsync(join(import.meta.dirname, 'pets', 'assets', name, 'spritesheet.webp'));
       return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
     } catch (error) {
       logCrash('pet-sprite', error);
@@ -3362,7 +3367,7 @@ async function exportRedactedDiagnosticsFromMain() {
     aiGame: aiGameRuntime?.diagnostics?.(),
     update: updateState(),
   });
-  writeFileSync(choice.filePath, `${JSON.stringify(redacted, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
+  await writeFileAsync(choice.filePath, `${JSON.stringify(redacted, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
   return { ok: true, canceled: false };
 }
 
