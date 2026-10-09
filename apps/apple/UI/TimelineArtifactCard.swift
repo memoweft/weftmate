@@ -19,6 +19,8 @@ struct TimelineArtifactCard: View {
             WeftLabel(name, icon: "outputs").font(AppleTokens.Fonts.headline)
             Text("\(entry.event.data["contentType"]?.string ?? "文件") · \(entry.event.data["size"]?.int ?? 0) 字节")
                 .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+            Text(entry.event.data["verification"]?["method"]?.string == "sha256_readback" && entry.event.data["verification"]?["status"]?.string == "observed" ? "已读回核验" : "仍待核验")
+                .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
             HStack {
                 Button("预览") { openPreview(entry.event) }.accessibilityIdentifier("previewArtifact.\(entry.seq)")
                 Button("保存") { Task { await prepare(); if file != nil { exporting = true } } }

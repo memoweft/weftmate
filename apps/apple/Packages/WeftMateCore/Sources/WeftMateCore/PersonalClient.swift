@@ -9,6 +9,7 @@ private struct Credential: Codable, Sendable {
 }
 private struct DevicesReply: Decodable { let devices: [DeviceRecord] }
 private struct RemoteSession: Decodable {
+    let contextUsage: ConversationContextUsage?; let processing: ConversationProcessing?
     let sessionId: String; let title: String; let running: Bool; let sendAvailable: Bool
     let conversationId: String?; let modelProfileId: String?; let unavailable: Bool?; let archived: Bool?; let pinned: Bool?; let unread: Bool?; let groupId: String?
 }
@@ -408,13 +409,13 @@ public actor PersonalClient {
             guard bound.count <= 1 else { throw APIFailure.invalidResponse }
             let session = bound.first
             rows.append(.init(id: id, title: session?.title ?? title, conversationId: id, sessionId: session?.sessionId,
-                running: session?.running ?? false, sendAvailable: false, originalModelLabel: nil, archived: session?.archived ?? false, pinned: session?.pinned ?? false, unread: session?.unread ?? false, groupId: session?.groupId))
+                running: session?.running ?? false, sendAvailable: false, originalModelLabel: nil, archived: session?.archived ?? false, pinned: session?.pinned ?? false, unread: session?.unread ?? false, groupId: session?.groupId, contextUsage: session?.contextUsage, processing: session?.processing))
         }
         for session in host.sessions where session.conversationId == nil || grouped[session.conversationId!] == nil {
             rows.append(.init(id: session.conversationId ?? session.sessionId,
                 title: session.title.isEmpty ? "电脑会话" : session.title, conversationId: session.conversationId,
                 sessionId: session.sessionId, running: session.running, sendAvailable: false,
-                originalModelLabel: session.modelProfileId, archived: session.archived ?? false, pinned: session.pinned ?? false, unread: session.unread ?? false, groupId: session.groupId))
+                originalModelLabel: session.modelProfileId, archived: session.archived ?? false, pinned: session.pinned ?? false, unread: session.unread ?? false, groupId: session.groupId, contextUsage: session.contextUsage, processing: session.processing))
         }
         try check(generation)
         syncEvents = events
