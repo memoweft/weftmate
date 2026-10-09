@@ -9,6 +9,7 @@ import WeftMateCore
     @Published var busy = false
     @Published var reachable = false
     private var feedback = WatchFeedbackTracker()
+    private var decisions = WatchDecisionState()
     private let session = WCSession.default
     override init() {
         super.init()
@@ -40,14 +41,16 @@ import WeftMateCore
     }
     private func receive(_ payload: [String: Any]) { apply(payload["snapshot"] as? Data, clear: payload["clear"] as? Bool == true) }
     private func apply(_ data: Data?, clear: Bool = false) {
-        if clear { snapshot = nil; feedback = WatchFeedbackTracker(); return }
+        if clear { snapshot = nil; feedback = WatchFeedbackTracker(); decisions.apply(nil); return }
         guard let data, let value = try? JSONDecoder().decode(WatchTimelineSnapshot.self, from: data) else { return }
         snapshot = value
+        decisions.apply(value)
+        record("snapshot", ["sessionID": value.sessionID, "running": value.running, "progress": value.progress, "approvals": value.approvals.map(\.summary)])
         // No remote push yet: feedback is emitted only while this Watch app is active or refreshed.
         if WKExtension.shared().applicationState == .active {
             let effects = feedback.apply(value)
-            if effects.completed { WKInterfaceDevice.current().play(.success) }
-            else if effects.approval { WKInterfaceDevice.current().play(.notification) }
+            if effects.completed { WKInterfaceDevice.current().play(.success); record("haptic", ["type": "success"]) }
+            else if effects.approval { WKInterfaceDevice.current().play(.notification); record("haptic", ["type": "notification"]) }
         }
     }
     func refresh() {
@@ -56,21 +59,44 @@ import WeftMateCore
         send(["action": "refresh"])
     }
     func decide(_ approval: WatchApproval, allowed: Bool) {
-        guard let snapshot else { return }
-        send(["action": "approval", "sessionID": snapshot.sessionID, "approvalID": approval.id,
-              "outcome": allowed ? "allowed-once" : "rejected"])
+        guard let snapshot, snapshot.approvals.contains(where: { $0.id == approval.id }), !busy,
+              decisions.begin(approval.id, allowed: allowed, reachable: session.isReachable) else { return }
+        send(WatchDecisionMessage(sessionID: snapshot.sessionID, approvalID: approval.id, allowed: allowed).payload)
+    }
+    var pendingApprovals: [WatchApproval] { snapshot?.approvals.filter { !decisions.isRegistered($0.id) } ?? [] }
+    func canDecide(_ approval: WatchApproval, allowed: Bool) -> Bool {
+        !busy && decisions.canDecide(approval.id, allowed: allowed, reachable: reachable)
+    }
+    private func record(_ event: String, _ fields: [String: Any] = [:]) {
+        #if DEBUG && targetEnvironment(simulator)
+        guard ProcessInfo.processInfo.arguments.contains("--a12-live-evidence") else { return }
+        let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("a12-watch.jsonl")
+        let row = fields.merging(["event": event, "time": ISO8601DateFormatter().string(from: Date())]) { _, new in new }
+        guard var data = try? JSONSerialization.data(withJSONObject: row, options: [.sortedKeys]) else { return }
+        data.append(10)
+        if !FileManager.default.fileExists(atPath: url.path) { FileManager.default.createFile(atPath: url.path, contents: nil) }
+        if let file = try? FileHandle(forWritingTo: url) { try? file.seekToEnd(); try? file.write(contentsOf: data); try? file.close() }
+        #endif
     }
     private func send(_ message: [String: Any]) {
         guard session.isReachable, !busy else { notice = "打开手机上的 WeftMate 后重试。"; return }
         busy = true; notice = nil
-        session.sendMessage(message, replyHandler: { reply in
-            let data = reply["snapshot"] as? Data, error = reply["error"] as? String, registered = reply["registered"] as? Bool == true
-            Task { @MainActor in
-                self.busy = false; self.apply(data)
-                self.notice = error ?? (registered ? "决定已登记" : nil)
-                if registered { self.refresh() }
-            }
-        }, errorHandler: { _ in Task { @MainActor in self.busy = false; self.notice = "手机未响应，请刷新后重试。" } })
+        let approvalID = message["approvalID"] as? String
+        record("send", message)
+        session.sendMessage(message, replyHandler: WatchMessageDelivery.reply { reply in
+            let data = reply.snapshot, error = reply.error, registered = reply.registered
+            self.busy = false
+            if let approvalID { self.decisions.finish(approvalID, registered: registered) }
+            self.record("reply", ["registered": registered, "error": error ?? "", "approvalID": approvalID ?? ""])
+            self.apply(data)
+            self.notice = error ?? (registered ? "决定已登记" : nil)
+            if registered { self.refresh() }
+        }, errorHandler: WatchMessageDelivery.failure {
+            self.busy = false
+            if let approvalID { self.decisions.finish(approvalID, registered: false) }
+            self.record("transportError")
+            self.notice = "手机未响应，请刷新后重试。"
+        })
     }
 }
 struct WatchHomeView: View {
@@ -84,13 +110,15 @@ struct WatchHomeView: View {
                         if !snapshot.running && snapshot.progress == "已完成" {
                             WeftLabel("已完成", icon: "allow", size: AppleTokens.Space.p16)
                                 .font(AppleTokens.Fonts.caption).accessibilityIdentifier("watchCompletion")
+                        } else if !snapshot.running && snapshot.progress == "已停止" {
+                            Text("已停止").font(AppleTokens.Fonts.caption).accessibilityIdentifier("watchStopped")
                         }
-                        ForEach(snapshot.approvals) { approval in
+                        ForEach(model.pendingApprovals) { approval in
                             VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
                                 WeftLabel(approval.summary, icon: "approval", size: AppleTokens.Space.p16).font(AppleTokens.Fonts.caption)
                                 HStack {
-                                    Button { model.decide(approval, allowed: true) } label: { WeftLabel("批准", icon: "allow", size: AppleTokens.Space.p16) }
-                                    Button { model.decide(approval, allowed: false) } label: { WeftLabel("拒绝", icon: "deny", size: AppleTokens.Space.p16) }
+                                    Button { model.decide(approval, allowed: true) } label: { WeftLabel("批准", icon: "allow", size: AppleTokens.Space.p16) }.disabled(!model.canDecide(approval, allowed: true)).accessibilityIdentifier("watchApprove")
+                                    Button { model.decide(approval, allowed: false) } label: { WeftLabel("拒绝", icon: "deny", size: AppleTokens.Space.p16) }.disabled(!model.canDecide(approval, allowed: false)).accessibilityIdentifier("watchReject")
                                 }.disabled(model.busy || !model.reachable)
                             }.padding(AppleTokens.Space.p8).background(AppleTokens.Styles.quaternary, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r10))
                         }

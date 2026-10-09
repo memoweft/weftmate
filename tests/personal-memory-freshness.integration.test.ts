@@ -74,3 +74,57 @@ test('default immediate new-session recall bridges only accepted permitted quote
     assert.doesNotMatch(JSON.stringify(await manager.query(owner, 'portable_export', {})), /小禾/)
   } finally { finish(); await manager.close(); await new Promise<void>(resolve => server.close(() => resolve())); await rm(root, { recursive: true, force: true }) }
 })
+
+test('elliptical numeric corrections are paired immediately; ambiguous topics and forgetting keep their boundaries', { skip }, async () => {
+  const root = await realpath(await mkdtemp(path.join(tmpdir(), 'mf2-correction-')))
+  let finish!: () => void
+  const gate = new Promise<void>(resolve => { finish = resolve })
+  const server = createServer(async (request, response) => {
+    for await (const _chunk of request) { /* Drain a held formation request. */ }
+    await gate
+    response.writeHead(200, { 'content-type': 'application/json' })
+    response.end(JSON.stringify({ choices: [{ message: { content: '{"schema_version":8,"result":"no_change"}' } }] }))
+  })
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
+  const baseUrl = `http://127.0.0.1:${(server.address() as any).port}/v1`
+  const manager = createPersonalMemoryManager({ root, enabled: true, python, pythonPath, baseUrl,
+    model: '@current', credential: () => 'synthetic', processingRoute: () => ({ profileId: 'fake', baseUrl,
+      model: 'fake', credential: 'synthetic', routeFingerprint: null, modelTier: 'cloud' }) })
+  const accept = async (account: string, session: string, text: string) => {
+    const events = [{ seq: 1, type: 'turn/start', data: { turn: 1 } },
+      { seq: 2, type: 'user/message', data: { id: `${session}-user`, source: { kind: 'user' }, content: [{ type: 'text', text }] } },
+      { seq: 3, type: 'assistant/message', data: { message: { id: `${session}-assistant`, content: [{ type: 'text', text: '收到' }] } } },
+      { seq: 4, type: 'turn/end', data: { turn: 1, reason: { kind: 'stop' } } }]
+    await manager.ingest(account, boundaryForCompletedTurn({ id: session, header: { agentPreset: 'personal-shared-chat' }, events }, events.at(-1)))
+  }
+  const recall = (account = owner) => manager.recall(account, { query: '今天给阳台盆栽浇水，该量多少？', sessionId: 'third', modelTier: 'cloud' })
+  try {
+    await accept(owner, 'water', '我养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。')
+    await accept(owner, 'correction', '前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。')
+    const paired = await recall()
+    assert.match(paired.contextText, /较早（已被随后原话纠正/)
+    assert.match(paired.contextText, /随后纠正（优先于较早原话与正式记忆）：前面那个数报大了/)
+    assert.equal(paired.recentEvidence.length, 1)
+    assert.ok(paired.recentEvidence[0].precedingEvidenceId)
+    assert.equal(paired.memories.length, 0)
+    assert.ok(paired.contextText.length <= 1200)
+    assert.doesNotMatch((await recall(other)).contextText, /150|300/)
+    await accept(other, 'other-water', '阳台盆栽每次浇水300毫升。')
+    await accept(other, 'other-cake', '我做蛋糕每次用牛奶300毫升。')
+    await accept(other, 'other-correction', '前面那个数报大了，150毫升才对，300毫升作废。')
+    const ambiguous = await recall(other)
+    assert.match(ambiguous.contextText, /可能的纠正，待确认/)
+    assert.match(ambiguous.contextText, /牛奶300毫升/)
+    assert.match(ambiguous.contextText, /阳台盆栽每次浇水300毫升/)
+    assert.doesNotMatch(ambiguous.contextText, /已被随后原话纠正/)
+    for (const [i, id] of [paired.recentEvidence[0].id, paired.recentEvidence[0].precedingEvidenceId].entries()) {
+      const revision = (await recall()).worldRevision
+      const receipt = await manager.submit(owner, { schema_version: 1, command_id: `mf2-forget-${i}`, subject_id: owner,
+        actor: 'owner', expected_world_revision: revision, operation: 'delete_evidence', target_kind: 'evidence',
+        target_id: id, payload: {}, submitted_at: new Date().toISOString() })
+      assert.equal(receipt.receipt?.result_state ?? receipt.result_state, 'applied')
+    }
+    assert.doesNotMatch((await recall()).contextText, /阳台盆栽|150|300/)
+    assert.doesNotMatch(JSON.stringify(await manager.query(owner, 'portable_export', {})), /阳台盆栽|150毫升|300毫升/)
+  } finally { finish(); await manager.close(); server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); await rm(root, { recursive: true, force: true }) }
+})

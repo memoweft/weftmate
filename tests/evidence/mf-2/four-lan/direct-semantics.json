@@ -1,0 +1,119 @@
+{
+  "input": "D:\\AIProjects\\WeftMate\\Worktrees\\w5\\tests\\evidence\\mf-2\\four-lan\\four-lan.json",
+  "results": [
+    {
+      "id": "memory-01-preference",
+      "originalStatus": "failed",
+      "originalReason": "memory_used did not match expected value; POST /models/private-model-75729959a76964dd5cec6710c6b8fcebcbca06d1/chat/completions: HTTP 503 BACKEND_UNAVAILABLE",
+      "semantic": {
+        "model": "mimo-v2.6-flash",
+        "usage": {
+          "completion_tokens": 35,
+          "prompt_tokens": 512,
+          "total_tokens": 547,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "finishReason": "stop",
+        "rawVerdict": "{\"pass\":true,\"reason\":\"回复为中文，先用买菜冰箱例子解释缓存，再讲原理，未上来堆术语，符合要求。\"}",
+        "status": "passed",
+        "reason": "回复为中文，先用买菜冰箱例子解释缓存，再讲原理，未上来堆术语，符合要求。"
+      },
+      "behaviorPass": true,
+      "formalMemoryUsed": [],
+      "answer": "缓存就是“先把常要的东西放近一点，下次直接拿”，省去再跑一趟的麻烦。\n\n**先用买菜的小例子**\n你家楼下有菜市场，平时每周都要买青菜、鸡蛋。\n* 不用缓存：每次都要出门坐公交去菜市场，挑好再回来。远、慢、花时间。\n* 用缓存：你在家冰箱里常备一点青菜和鸡蛋。今天吃完还剩一点，下次做饭先从冰箱拿。冰箱里的就是缓存，离你很近。\n冰箱满了就得扔旧的换新的，这就是“缓存要更新/淘汰”。如果冰箱里放的是上周的菜，拿出来会坏掉，这就是“缓存过期/脏数据”。\n\n**原理就是这三件事**\n1. **放近**：把访问频率高、拿取成本高的东西，复制一份放在离你更近、更快的地方。冰箱近，CPU里的缓存离芯片更近，浏览器缓存离网络更近。\n2. **先查缓存**：需要用时先看冰箱里有没有、够不够、新不新鲜。有就直接用，没有或过期了再去菜市场拿，然后把新买的放进冰箱。\n3. **维护成本**：缓存要占地方，冰箱空间有限；放错东西会误导你。所以要规定放多久就扔、放什么可以放、多久更新一次。\n\n所以缓存不是魔法，只是用一点空间换速度：把“要跑很远才拿得到的东西”临时放在“手边”，下次快一点。"
+    },
+    {
+      "id": "memory-02-correction",
+      "originalStatus": "failed",
+      "originalReason": "POST /models/private-model-75729959a76964dd5cec6710c6b8fcebcbca06d1/chat/completions: HTTP 503 BACKEND_UNAVAILABLE",
+      "semantic": {
+        "model": "mimo-v2.6-flash",
+        "usage": {
+          "completion_tokens": 33,
+          "prompt_tokens": 249,
+          "total_tokens": 282,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "finishReason": "stop",
+        "rawVerdict": "{\"pass\":true,\"reason\":\"回复正确以周五晚上为当前空闲时间安排锻炼，未把周三当当前事实，符合标准。\"}",
+        "status": "passed",
+        "reason": "回复正确以周五晚上为当前空闲时间安排锻炼，未把周三当当前事实，符合标准。"
+      },
+      "behaviorPass": true,
+      "formalMemoryUsed": [
+        {
+          "id": "cognition-1760c3076f401cd8563a39ac05c88f343cff55ea8f85c2117b27be49aa8c2d19",
+          "kind": "cognition",
+          "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+        }
+      ],
+      "answer": "根据你之前纠正过的记忆，现在固定空出来的是**周五晚上**，周三已经没空了，以后按周五安排。\n\n所以下周比较合适的锻炼时间是**下周五晚上**，也就是 2026-10-16 晚上。你要我直接帮你建一个周五晚上的锻炼提醒/定时任务吗？"
+    },
+    {
+      "id": "memory-03-switch-model",
+      "originalStatus": "passed",
+      "semantic": {
+        "status": "skipped",
+        "reason": "No semantic criterion declared."
+      },
+      "behaviorPass": true,
+      "formalMemoryUsed": [
+        {
+          "id": "cognition-1760c3076f401cd8563a39ac05c88f343cff55ea8f85c2117b27be49aa8c2d19",
+          "kind": "cognition",
+          "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+        }
+      ],
+      "answer": "小禾，你好呀！☀️\n\n今天事情多不怕，咱们一件一件来——事情多说明你有本事被信任呀。先把最要紧的一件啃下来，剩下的就会越来越顺。累的时候就喝口水、伸个懒腰，不用逼自己一口气全做完。\n\n你已经在往前走了，这本身就值得给自己点个赞💪 加油，小禾！"
+    },
+    {
+      "id": "memory-04-person",
+      "originalStatus": "failed",
+      "originalReason": "POST /models/private-model-75729959a76964dd5cec6710c6b8fcebcbca06d1/chat/completions: HTTP 503 BACKEND_UNAVAILABLE",
+      "semantic": {
+        "model": "mimo-v2.6-flash",
+        "usage": {
+          "completion_tokens": 27,
+          "prompt_tokens": 226,
+          "total_tokens": 253,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "finishReason": "stop",
+        "rawVerdict": "{\"pass\":true,\"reason\":\"开场白自然联系海报与周六进度，未捏造其他关系或事项。\"}",
+        "status": "passed",
+        "reason": "开场白自然联系海报与周六进度，未捏造其他关系或事项。"
+      },
+      "behaviorPass": true,
+      "formalMemoryUsed": [
+        {
+          "id": "cognition-1760c3076f401cd8563a39ac05c88f343cff55ea8f85c2117b27be49aa8c2d19",
+          "kind": "cognition",
+          "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+        },
+        {
+          "id": "cognition-667fc0f03e7ad408f4a02f60f986bb17810ddc2145481262885c22791451e87b",
+          "kind": "cognition",
+          "summary": "用户习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。"
+        }
+      ],
+      "answer": "可以这么开，轻松自然又点到周六的事：\n\n“阿岚，最近海报进度怎么样？周六碰一下的话，我这边先把要对齐的点整理好，你看什么时候方便聊？”\n\n要更随意的也可以：\n“嘿，展览海报的事跟你同步下，周六碰进度前先跟你聊聊想法？”"
+    }
+  ],
+  "behaviorPassed": 4,
+  "total": 4
+}

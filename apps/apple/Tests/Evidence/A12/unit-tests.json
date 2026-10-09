@@ -1,0 +1,37 @@
+{
+  "suite": "A12 Swift Testing",
+  "command": "swift test --package-path apps/apple/Packages/WeftMateCore --jobs 2 --filter a12",
+  "passed": 8,
+  "failed": 0,
+  "tests": [
+    "watch decision and duplicate click",
+    "unreachable and uncertain original decision",
+    "completion feedback once",
+    "login item readback and external change",
+    "login item requiresApproval failure and unconfirmed write",
+    "Watch decision payload has only projection IDs",
+    "SDK background reply and failure callbacks hop to MainActor",
+    "rejected aborted failed and unknown tasks never buzz success"
+  ],
+  "TaskInteractionChecks": {
+    "passed": 11,
+    "failed": 0,
+    "newAssertions": [
+      "saved uncertain request is not registered",
+      "matched host receipt is registered"
+    ]
+  },
+  "hostHTTPSmoke": {
+    "approveDeletesSyntheticFile": true,
+    "rejectPreservesSyntheticFile": true,
+    "realPersonalApprovalAPI": true
+  },
+  "settingsRegistryRegression": {
+    "passed": 2,
+    "failed": 0,
+    "tests": [
+      "D31 order and platform scope",
+      "settings keyword search"
+    ]
+  }
+}
