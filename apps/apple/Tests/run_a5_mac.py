@@ -11,15 +11,17 @@ try:
  meta=json.loads(fixture.stdout.readline())
  def get(path):return json.load(urllib.request.urlopen(meta['driver']+path))
  get('/a5/setup');get('/bootstrap');ready=get('/ready');get('/a5/review-login')
+ if a.settings_categories and a.scene=='archived':get('/a7/seed-archived')
  commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
  catalog=json.loads((ROOT/'scripts/review-gallery/scenes.json').read_text())
  themes=[a.theme] if a.theme else catalog['themes']
- scenes=([{'id': 'settings-'+id} for id in ['general','appearance','account','devices','usage','models','approvals','memory','schedules','system','backups','about'] if not a.scene or id == a.scene] if a.settings_categories else [scene for scene in catalog['scenes'] if not a.scene or scene['id']==a.scene])
+ scenes=([{'id': 'settings-'+id} for id in ['general','appearance','account','devices','usage','models','approvals','memory','schedules','system','backups','archived','about'] if not a.scene or id == a.scene] if a.settings_categories else [scene for scene in catalog['scenes'] if not a.scene or scene['id']==a.scene])
+ if a.scene in ['memory-forget','conversation-forget']:scenes=[{'id':a.scene}]
  if not scenes:raise ValueError('Unknown review scene')
  for theme in themes:
   for scene in scenes:
    now=datetime.now(timezone.utc);review_scene=scene['id'].removeprefix('settings-')
-   prefix='review' if review_scene in ['appearance','usage'] or not a.settings_categories else 'category'
+   prefix='a7' if review_scene in ['memory-forget','conversation-forget','archived'] else 'review' if review_scene in ['appearance','usage'] or not a.settings_categories else 'category'
    stem=prefix+'-mac-'+review_scene+'-'+theme+'-'+now.strftime('%Y%m%dT%H%M%SZ')
    subprocess.run([str(a.capture.resolve()),str(a.app.resolve()),str((a.evidence/(stem+'.png')).resolve()),scene['id'],theme,ready['host'],ready['cloud']],check=True)
    (a.evidence/(stem+'.json')).write_text(json.dumps({'platform':'mac','scene':review_scene,'theme':theme,'commit':commit,'generatedAt':now.isoformat(timespec='milliseconds').replace('+00:00','Z'),'synthetic':True,'source':'实际 Mac 原生 App 自身窗口；真实隔离 cloud main / 宿主，合成 DSH 日志与模型'},ensure_ascii=False,indent=2)+'\n')

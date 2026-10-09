@@ -67,6 +67,7 @@ enum AppleContractUIFixture {
                 let body = try JSONSerialization.jsonObject(with: request.httpBody!) as! [String: Any]
                 return try json(["deviceId": "device-fixture", "platform": body["platform"]!, "sharedConversations": 1])
             case "/personal/v1/sync/events": return try json(["events": [], "nextSeq": 0, "hasMore": false])
+            case "/personal/v1/session-groups": return try json(["groups": []])
             case "/personal/v1/sessions": return try json(["sessions": [["sessionId": AppleContractUIFixture.sessionID, "title": "A2 附件契约验收",
                 "modelProfileId": "fixture", "running": false, "sendAvailable": true]]])
             case "/personal/v1/models": return try json(["models": [["id": "fixture", "name": "测试模型", "model": "fixture", "configured": true]]])

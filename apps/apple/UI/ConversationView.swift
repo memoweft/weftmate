@@ -49,6 +49,8 @@ struct ConversationRow: View {
             HStack(alignment: .firstTextBaseline, spacing: AppleTokens.Space.p8) {
                 Text(conversation.title.isEmpty ? "未命名对话" : conversation.title)
                     .font(AppleTokens.Fonts.body.weight(.medium)).foregroundStyle(selected ? Weave.onAccent : Weave.ink).lineLimit(2)
+                if conversation.pinned { WeftIcon("pin", size: 16).foregroundStyle(selected ? Weave.onAccent : Weave.muted) }
+                if conversation.unread { Text("未读").font(AppleTokens.Fonts.caption).foregroundStyle(selected ? Weave.onAccent : Weave.accent) }
                 if conversation.running {
                     Circle().fill(selected ? Weave.onAccent : Weave.status).frame(width: 6, height: 6)
                         .accessibilityLabel("正在处理")
@@ -351,6 +353,7 @@ struct ConversationView: View {
             if args.contains("--ui-testing"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1) {
                 if args[index + 1] == "outputs-sources" { resources.showingList = true; resources.visible = true }
                 if args[index + 1] == "session-menu" { showingSessionActions = true }
+                if args[index + 1] == "conversation-forget" { model.askToDelete(conversation); await model.setConversationForget(true) }
             }
             #endif
         }

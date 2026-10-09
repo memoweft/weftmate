@@ -62,7 +62,17 @@ struct MemoryWorkspaceView: View {
                     .disabled(model.loading).accessibilityIdentifier("refreshMemoryButton")
             }
         }
-        .task { await model.reload() }
+        .task {
+            await model.reload()
+            #if DEBUG && os(macOS)
+            let args = ProcessInfo.processInfo.arguments
+            if args.contains("--ui-testing"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1), args[index + 1] == "memory-forget", let item = model.items.first {
+                await model.open(item); showingDetail = true
+                try? await Task.sleep(for: .milliseconds(500))
+                pendingAction = model.actionContext(.deleteItem)
+            }
+            #endif
+        }
         .onDisappear { clearPresentation(); model.invalidate() }
         .onChange(of: model.detail?.item.id) { old, new in
             if old != nil && new == nil { showingDetail = false; expandedSources = false; pendingAction = nil }
@@ -140,20 +150,33 @@ struct MemoryWorkspaceView: View {
             }
             .background(Weave.canvas).navigationTitle("记忆详情")
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("完成") { showingDetail = false; model.closeDetail() } } }
-            .confirmationDialog("删除这条记忆？", isPresented: $confirmingItemDeletion, titleVisibility: .visible) {
-                Button("删除记忆", role: .destructive) { submitPendingAction() }
-                Button("取消", role: .cancel) { pendingAction = nil }
-            } message: { Text("服务确认后移除这条记忆。存储清理如果尚未完成，会单独显示。") }
+            .sheet(isPresented: Binding(get: { pendingAction?.operation.isDeletion == true }, set: { if !$0 { pendingAction = nil; model.cancelForget() } })) {
+                if let context = pendingAction {
+                    VStack(alignment: .leading, spacing: AppleTokens.Space.p20) {
+                        Text("忘掉这条记忆？").font(AppleTokens.Fonts.title2)
+                        Text("忘掉会清除来源及以下记忆，之后的记忆导出不再包含它们。")
+                        ScrollView { ForgetPreviewList(preview: model.forgetConfirmation.preview, loading: model.forgetPreviewLoading, error: model.forgetPreviewError).frame(maxWidth: .infinity, alignment: .leading) }
+                        OriginalSnippetsOption(checked: $model.forgetConfirmation.deleteConversationSnippets)
+                        Text("默认保留对话原文；勾选后删除对应原生对话片段及个人命令副本。以前的备份仍保留。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+                        Button("重新读取遗忘范围") { Task { await model.prepareForget(context) } }.disabled(model.forgetPreviewLoading)
+                        HStack {
+                            Button("取消") { pendingAction = nil; model.cancelForget() }
+                            Button("确认忘掉", role: .destructive) { Task { await model.mutate(context); pendingAction = nil } }.disabled(!model.canForget(context)).accessibilityIdentifier("confirmForgetMemory")
+                                #if os(macOS)
+                                .foregroundStyle(Weave.danger)
+                                #endif
+                        }
+                    }.padding(AppleTokens.Space.p24).frame(maxWidth: 600).background(Weave.surface)
+                    .task { await model.prepareForget(context) }
+                    #if os(macOS)
+                    .frame(minWidth: 440, idealWidth: 580, minHeight: 460)
+                    #endif
+                }
+            }
             .confirmationDialog("停用这条记忆？", isPresented: $confirmingMute, titleVisibility: .visible) {
                 Button("停用记忆") { submitPendingAction() }
                 Button("取消", role: .cancel) { pendingAction = nil }
             } message: { Text("停用与删除分别处理，来源记录仍保留。") }
-            .confirmationDialog("删除这个来源？", isPresented: Binding(get: { pendingAction?.operation == .deleteEvidence }, set: { if !$0 { pendingAction = nil } }), titleVisibility: .visible) {
-                Button("删除来源", role: .destructive) {
-                    submitPendingAction()
-                }
-                Button("取消", role: .cancel) { pendingAction = nil }
-            } message: { Text("仅删除选定来源，其他记忆和来源不会因此被声明已删除。") }
             .accessibilityIdentifier("memoryDetail")
         }
         #if os(macOS)
@@ -209,7 +232,7 @@ struct MemoryWorkspaceView: View {
             HStack {
                 Button("停用") { pendingAction = model.actionContext(.mute); confirmingMute = pendingAction != nil }
                     .disabled(!model.canMutate || !detail.availableActions.mute.available).accessibilityIdentifier("muteMemoryButton")
-                Button("删除记忆", role: .destructive) { pendingAction = model.actionContext(.deleteItem); confirmingItemDeletion = pendingAction != nil }
+                Button("忘掉", role: .destructive) { pendingAction = model.actionContext(.deleteItem) }
                     .disabled(!model.canMutate || !detail.availableActions.delete.available).accessibilityIdentifier("deleteMemoryButton")
             }.buttonStyle(OutlineActionStyle())
             if !model.canMutate { Text("当前修改暂不可用；进行中的操作会显示在最近操作中。") .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }

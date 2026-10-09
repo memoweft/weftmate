@@ -17,6 +17,7 @@ public enum AppleSettingsRegistry {
         .init(id: "account", group: "设置", name: "账户", icon: "account", keywords: ["邮箱", "密码", "退出", "注销"], desktopOnly: false),
         .init(id: "devices", group: "设置", name: "设备", icon: "desktop", keywords: ["连接", "配对", "添加", "待批准", "二维码"], desktopOnly: false),
         .init(id: "usage", group: "设置", name: "用量", icon: "chart", keywords: ["费用", "账单", "月度", "上限", "排行", "token"], desktopOnly: false),
+        .init(id: "archived", group: "设置", name: "已归档", icon: "archive", keywords: ["对话", "恢复", "删除"], desktopOnly: false),
         .init(id: "models", group: "助手", name: "模型", icon: "model", keywords: ["主模型", "后台", "档案", "提供方", "API"], desktopOnly: false),
         .init(id: "approvals", group: "助手", name: "审批", icon: "approval", keywords: ["默认", "模式", "权限", "自动", "询问"], desktopOnly: false),
         .init(id: "memory", group: "助手", name: "记忆", icon: "memory", keywords: ["理解", "来源", "纠正", "管理"], desktopOnly: false),

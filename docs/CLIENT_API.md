@@ -106,13 +106,13 @@
 | 方法与路径 | 请求参数/体 | 响应示例 / 状态 | 主要领域错误 | 使用端 |
 |---|---|---|---|---|
 | GET `/sessions` | 可选单值 `archived=false`（默认）、`true`（仅归档）、`all`（全部）；无列表分页/搜索参数 | 200 `{"sessions":[{"sessionId":"session-…","title":"资料整理","running":true,"sendAvailable":true,"archived":false,"modelProfileId":"local"}]}` | 后端整体失败/单会话降级 | 桌、手、安、苹 |
-| PATCH `/sessions/{sessionId}/metadata` | `pinned?,unread?,title?,groupId?`，至少一项；布尔值、非空标题≤256字符；groupId为本账号分组ID或null | 200 `{sessionId,pinned?,unread?,title?,groupId?,readMessageSeq?}`；原生 `sessionTitle.rename` 写用户标题，停止自动标题覆盖；手动已读记录最新助手消息水位 | 400 INVALID_REQUEST；404 SESSION_UNAVAILABLE / NOT_FOUND；409 SESSION_BUSY | 桌、手、安 |
-| POST `/sessions/{sessionId}/fork` | 空对象 `{}`；原对话须空闲 | 201 `{sessionId,title}`；原生 DSH（助手运行时）事件种子及 parentSession 分叉谱系创建可继续的独立对话，标题加「（分叉）」；复制独立工作目录与经验，继承模型与分组；不复制 MemoWeft（记忆核心）的记忆来源/绑定，原对话不变 | 404 SESSION_UNAVAILABLE；409 SESSION_BUSY；503 BACKEND_UNAVAILABLE | 桌、手、安 |
-| GET `/session-groups` | 无查询 | 200 `{groups:[{id,name}]}`，仅当前账号 | — | 桌、手、安 |
-| POST `/session-groups` | `{name}`，去首尾空白、非空、≤256字符 | 201 `{group:{id,name}}` | 400 INVALID_REQUEST | 桌、手、安 |
-| PATCH `/session-groups/{id}` | `{name}`，同上 | 200 `{group:{id,name}}` | 404 NOT_FOUND | 桌、手、安 |
-| DELETE `/session-groups/{id}` | 空对象 `{}` | 200 `{deleted:true,id}`；成员会话移至未分组，保留全部内容 | 404 NOT_FOUND | 桌、手、安 |
-| POST `/sessions/{sessionId}/archive` | 空对象 `{}` | 200 `{sessionId,archived:true}`；幂等归档，保留历史、经验与工作目录 | 404 `SESSION_UNAVAILABLE` | 桌、手、安；Apple 可按契约接入 |
+| PATCH `/sessions/{sessionId}/metadata` | `pinned?,unread?,title?,groupId?`，至少一项；布尔值、非空标题≤256字符；groupId为本账号分组ID或null | 200 `{sessionId,pinned?,unread?,title?,groupId?,readMessageSeq?}`；原生 `sessionTitle.rename` 写用户标题，停止自动标题覆盖；手动已读记录最新助手消息水位 | 400 INVALID_REQUEST；404 SESSION_UNAVAILABLE / NOT_FOUND；409 SESSION_BUSY | 桌、手、安、苹 |
+| POST `/sessions/{sessionId}/fork` | 空对象 `{}`；原对话须空闲 | 201 `{sessionId,title}`；原生 DSH（助手运行时）事件种子及 parentSession 分叉谱系创建可继续的独立对话，标题加「（分叉）」；复制独立工作目录与经验，继承模型与分组；不复制 MemoWeft（记忆核心）的记忆来源/绑定，原对话不变 | 404 SESSION_UNAVAILABLE；409 SESSION_BUSY；503 BACKEND_UNAVAILABLE | 桌、手、安、苹 |
+| GET `/session-groups` | 无查询 | 200 `{groups:[{id,name}]}`，仅当前账号 | — | 桌、手、安、苹 |
+| POST `/session-groups` | `{name}`，去首尾空白、非空、≤256字符 | 201 `{group:{id,name}}` | 400 INVALID_REQUEST | 桌、手、安、苹 |
+| PATCH `/session-groups/{id}` | `{name}`，同上 | 200 `{group:{id,name}}` | 404 NOT_FOUND | 桌、手、安、苹 |
+| DELETE `/session-groups/{id}` | 空对象 `{}` | 200 `{deleted:true,id}`；成员会话移至未分组，保留全部内容 | 404 NOT_FOUND | 桌、手、安、苹 |
+| POST `/sessions/{sessionId}/archive` | 空对象 `{}` | 200 `{sessionId,archived:true}`；幂等归档，保留历史、经验与工作目录 | 404 `SESSION_UNAVAILABLE` | 桌、手、安、苹（A7 已接入） |
 | POST `/sessions/{sessionId}/unarchive` | 空对象 `{}` | 200 `{sessionId,archived:false}`；幂等恢复 | 404 `SESSION_UNAVAILABLE` | 同上 |
 | GET `/sessions/{sessionId}/forget-preview` | 无；Cookie 与 `account:manage` | 200 `{ownerId,worldRevision,itemCount,evidenceCount,evidenceIds,items:[{id,kind,text,itemType}]}`；只读，预览该对话全部来源遗忘的级联范围 | 404 `SESSION_UNAVAILABLE`；503记忆不可用 | 同上 |
 | DELETE `/sessions/{sessionId}` | `{forgetMemories:false}`（默认，可省略）；勾选遗忘可另传 `deleteConversationSnippets:false`（默认）及预览的 `memoryWorldRevision` | 200 `{sessionId,deleted:true,forgetMemories,forgottenEvidenceCount}`；永久删除对话日志、宿主记录、生成成果及专属工作目录，运行中先停止 | 409 `SESSION_BUSY`（执行或回执尚未确认，稍后重试）；503 `BACKEND_UNAVAILABLE`；勾选遗忘还可返回503 `MEMORY_DELETE_UNAVAILABLE`、409 `MEMORY_DELETE_CONFLICT` | 同上 |
@@ -514,6 +514,8 @@ M1-1：个人入口使用 DSH native tools（原生工具），包括 Windows �
 | POST `/auth/cloud-nonce`；POST `/auth/cloud-session`；POST `/cloud/pairings/redeem` | S1c-Apple：host:session resource + 设备 P-256 DPoP；每次新 nonce/jti/ath/精确 htu，无 Authorization；202 保持等待，不建立内容 session，允许/拒绝与重试/取消有明确界面；200 Cookie/CSRF 后再核对 status 的 ownerId/hostId |
 | GET `/cloud/devices/pending`；POST `/cloud/devices/{id}/decision` | S1c-Apple：已登录前台读取，显示设备名、平台（官方客户端在 deviceName 中带 Mac/iPhone）、请求时间，允许/拒绝使用当前 Cookie/CSRF；现有响应无独立 platform 字段，其他名称显示「平台未提供」 |
 | POST 云 `/personal/v1/cloud/hosts/relay/discover` | S1c-Apple：cloud:account Bearer + hostId 取得 relay base URL；offline/revoked/网络断流显示连接不可用，保留云登录。目录不含 pin；HTTPS 用系统 CA/域名验证再比较当面配对得到的 P-256 SPKI，上传/下载沿用同一验证；不接受目录覆盖旧 pin |
+| PATCH `/sessions/{id}/metadata`；POST `/sessions/{id}/fork`；`/session-groups` | A7 接入置顶 / 未读 / 用户标题 / 分组与分叉；已归档迁入设置；UI-5 既有契约不变 |
+| GET `…/forget-preview`；记忆 / 会话 DELETE | A7 接入只读级联名称 / 类型 / 数量、默认不勾原话删除与预览修订核对；记忆选项随不可变原请求保存；FG-1 既有契约不变 |
 | GET `/sessions`；GET `/models` | A5 已接入 `archived`、归档 / 恢复 / 删除（默认不勾 `forgetMemories`）；会话 `running,sendAvailable,unavailable?,conversationId?,modelProfileId?` 与模型 `id,name,model,configured,routeFingerprint` 一致；Apple限制会话≤20,000、模型≤500 |
 | GET `/sessions/{id}/events` | 已在 A3 修复：无游标尾页、beforeSeq 上翻、afterSeq 增量；上翻不覆盖正向水位，按 seq 去重。公开事件 data（含 endReasonKind）完整缓存/投影；步骤详情走按 seq 详情接口，historyLimit 枚举与全量扫描路径已移除 |
 | GET `/commands` | before/limit/nextBefore一致；服务端按账号列全部命令，Apple读一页后过滤选中会话根任务，不是服务端按session过滤；可能需继续翻页才找到当前会话任务 |

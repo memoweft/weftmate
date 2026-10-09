@@ -15,6 +15,7 @@ public struct MemoryMutationIntent: Codable, Equatable, Sendable {
     public let requestId: String
     public let expectedWorldRevision: Int
     public let correction: String?
+    public let deleteConversationSnippets: Bool?
     public let payload: Data
     var endpointPath: String {
         if operation == .deleteEvidence { return "/memory/evidence/\(targetId)" }
@@ -23,35 +24,36 @@ public struct MemoryMutationIntent: Codable, Equatable, Sendable {
     }
     var httpMethod: String { operation.isDeletion ? "DELETE" : "POST" }
     public init(session: AccountSession, operation: MemoryMutationKind, itemKind: MemoryKind? = nil,
-                targetID: String, requestID: String, expectedWorldRevision: Int, correction: String? = nil) throws {
+                targetID: String, requestID: String, expectedWorldRevision: Int, correction: String? = nil, deleteConversationSnippets: Bool? = nil) throws {
         try self.init(server: session.server, ownerId: session.account.ownerId, hostId: session.hostId, operation: operation,
-            itemKind: itemKind, targetId: targetID, requestId: requestID, expectedWorldRevision: expectedWorldRevision, correction: correction)
+            itemKind: itemKind, targetId: targetID, requestId: requestID, expectedWorldRevision: expectedWorldRevision, correction: correction, deleteConversationSnippets: deleteConversationSnippets)
     }
     private init(server: ServerConfiguration, ownerId: String, hostId: String, operation: MemoryMutationKind,
-                 itemKind: MemoryKind?, targetId: String, requestId: String, expectedWorldRevision: Int, correction: String?) throws {
+                 itemKind: MemoryKind?, targetId: String, requestId: String, expectedWorldRevision: Int, correction: String?, deleteConversationSnippets: Bool?) throws {
         let reserved = Set(["constructor", "__defineGetter__", "__defineSetter__", "hasOwnProperty", "__lookupGetter__", "__lookupSetter__",
             "isPrototypeOf", "propertyIsEnumerable", "toString", "valueOf", "__proto__", "toLocaleString"])
         try SharedValidation.require(SharedValidation.id(ownerId) && SharedValidation.id(hostId) && MemoryValidation.itemID(targetId) &&
             SharedValidation.request(requestId) && !reserved.contains(requestId) && MemoryValidation.revision(expectedWorldRevision) &&
             (operation == .deleteEvidence ? itemKind == nil : itemKind != nil))
+        try SharedValidation.require(operation.isDeletion || deleteConversationSnippets == nil)
         if operation == .correct {
             try SharedValidation.require(itemKind != .entity && correction.map { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && $0.utf16.count <= 4_000 } == true)
         } else { try SharedValidation.require(correction == nil) }
-        struct Body: Encodable { let requestId: String; let expectedWorldRevision: Int; let text: String? }
+        struct Body: Encodable { let requestId: String; let expectedWorldRevision: Int; let text: String?; let deleteConversationSnippets: Bool? }
         let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
-        let payload = try encoder.encode(Body(requestId: requestId, expectedWorldRevision: expectedWorldRevision, text: correction))
+        let payload = try encoder.encode(Body(requestId: requestId, expectedWorldRevision: expectedWorldRevision, text: correction, deleteConversationSnippets: deleteConversationSnippets))
         guard payload.count <= 12_288 else { throw ClientInputFailure.correctionTooLarge }
         self.server = server; self.ownerId = ownerId; self.hostId = hostId; self.operation = operation; self.itemKind = itemKind
-        self.targetId = targetId; self.requestId = requestId; self.expectedWorldRevision = expectedWorldRevision; self.correction = correction; self.payload = payload
+        self.targetId = targetId; self.requestId = requestId; self.expectedWorldRevision = expectedWorldRevision; self.correction = correction; self.payload = payload; self.deleteConversationSnippets = deleteConversationSnippets
     }
-    enum CodingKeys: String, CodingKey { case server, ownerId, hostId, operation, itemKind, targetId, requestId, expectedWorldRevision, correction, payload }
+    enum CodingKeys: String, CodingKey { case server, ownerId, hostId, operation, itemKind, targetId, requestId, expectedWorldRevision, correction, deleteConversationSnippets, payload }
     public init(from decoder: any Decoder) throws {
         let box = try decoder.container(keyedBy: CodingKeys.self)
         try self.init(server: box.decode(ServerConfiguration.self, forKey: .server), ownerId: box.decode(String.self, forKey: .ownerId),
             hostId: box.decode(String.self, forKey: .hostId), operation: box.decode(MemoryMutationKind.self, forKey: .operation),
             itemKind: box.decodeIfPresent(MemoryKind.self, forKey: .itemKind), targetId: box.decode(String.self, forKey: .targetId),
             requestId: box.decode(String.self, forKey: .requestId), expectedWorldRevision: box.decode(Int.self, forKey: .expectedWorldRevision),
-            correction: box.decodeIfPresent(String.self, forKey: .correction))
+            correction: box.decodeIfPresent(String.self, forKey: .correction), deleteConversationSnippets: box.decodeIfPresent(Bool.self, forKey: .deleteConversationSnippets))
         guard try box.decode(Data.self, forKey: .payload) == payload else { throw APIFailure.invalidResponse }
     }
 }
