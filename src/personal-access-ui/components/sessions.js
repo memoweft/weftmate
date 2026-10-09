@@ -25,7 +25,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             button.dataset.quickAction = icon;
             button.title = label; button.setAttribute('aria-label', `${label} ${title}`);
             if (icon === 'pin') button.setAttribute('aria-pressed', String(!!session.pinned));
-            button.append(WeftIcons.create(icon, 16));
+            button.append(globalThis.WeftIcons.create(icon, 16));
             button.onclick = async () => { closeHoverCard(); button.disabled = true;
                 try { await run(); } catch (error) { ui.toast(core.sessionLifecycleMessage(error)); }
                 finally { button.disabled = false; } };
@@ -43,7 +43,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
                 hoverCard.append(ui.element('strong', '', details.title), ui.element('p', '', `所属项目 / 分组：${details.location}`),
                     ui.element('p', '', `最后活动：${details.activity ? core.formatDate(details.activity) : '暂无活动记录'}`),
                     ui.element('p', '', `执行设备：${details.device}`));
-                document.body.append(hoverCard); WeftPopover.position(hoverCard, row, {side:'bottom'});
+                document.body.append(hoverCard); globalThis.WeftPopover.position(hoverCard, row, {side:'bottom'});
             }, 500);
         };
         row.addEventListener('pointerenter', event => { if (event.pointerType === 'mouse' && matchMedia('(hover: hover) and (pointer: fine)').matches) show(); });
