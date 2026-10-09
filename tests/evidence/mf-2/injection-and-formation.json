@@ -1,0 +1,2796 @@
+[
+  {
+    "run": "after-lan-default\\",
+    "id": "qa2-01-water",
+    "model": "lan",
+    "settledMode": false,
+    "answer": "按你最近的纠正，阳台盆栽每次浇水的用量是 **150 毫升**。\n\n你之前说过是 300 毫升，但随后纠正说报大了，300 毫升作废，后面都以 150 毫升为准。今天就按 150 毫升浇。",
+    "automaticPass": false,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n较早（已被随后原话纠正，不作为当前值）：我养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。\n随后纠正（优先于较早原话与正式记忆）：前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。",
+        "worldRevision": 1,
+        "recentEvidence": [
+          {
+            "id": "59581184-7677-4863-b987-188c64aad0c9",
+            "text": "前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。",
+            "session_id": "session-b7c07daf-40fd-45a6-857b-9d66743ea29c",
+            "created_at": "2026-10-09T15:20:19.295Z",
+            "preceding_text": "我养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。",
+            "preceding_evidence_id": "6ddc9459-85fe-47b9-bb25-6f656ab762ed",
+            "correction_status": "certain"
+          }
+        ],
+        "formalItems": [
+          {
+            "id": "cognition-951ede5622d5cd5a34ec8e86b969c1bcc460196786125d5766ff4aaf97bd04cd",
+            "kind": "cognition",
+            "summary": "用户养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:79f9278369edd266e482a3b69ffa9892:dc2b1149fb19ef0cd7282a10e86132fb39c6fd5f2703ad4b5e2326bb1630a78a",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-951ede5622d5cd5a34ec8e86b969c1bcc460196786125d5766ff4aaf97bd04cd",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:1504a555cda8d3bdf4683be151c8171f:1ad695883c5098463ec945d2daab74131da3630af8b01c5d1fd6307e3a23e81f",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-951ede5622d5cd5a34ec8e86b969c1bcc460196786125d5766ff4aaf97bd04cd",
+              "replacement_cognition_id": "cognition-4731e5f065281da3d51aefb5846f9f7473e7b4bb1511058fb1e7b3f6b52e02b3",
+              "statement_kind": "preference"
+            }
+          ],
+          "normalizations": [
+            {
+              "item_index": 0,
+              "rule": "form_with_current_correction_target"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户应当是150毫升，"
+    ],
+    "currentEntities": []
+  },
+  {
+    "run": "after-lan-default\\",
+    "id": "holdout-time",
+    "model": "lan",
+    "settledMode": false,
+    "answer": "根据你最新的纠正，线上读书会的时间已改为 **周四 20:15**，19:30 已取消，以后都用新时间。\n\n现在是 2026-10-09 Asia/Shanghai 周五 23:22，所以本周四 2026-10-08 的场次已经过去，下一次是下周四 2026-10-15 20:15 开始。",
+    "automaticPass": false,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户每周的线上读书会固定在周四晚上19点30分开始。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n较早（已被随后原话纠正，不作为当前值）：我每周的线上读书会固定在周四晚上19点30分开始。\n随后纠正（优先于较早原话与正式记忆）：刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。",
+        "worldRevision": 1,
+        "recentEvidence": [
+          {
+            "id": "6a02fbd2-10e2-4826-bb66-03d715f1b557",
+            "text": "刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。",
+            "session_id": "session-01097f01-a60f-4705-8de2-5ef44520e7d9",
+            "created_at": "2026-10-09T15:22:01.601Z",
+            "preceding_text": "我每周的线上读书会固定在周四晚上19点30分开始。",
+            "preceding_evidence_id": "7988e69c-ebfe-4576-89ff-45c51c9d0763",
+            "correction_status": "certain"
+          }
+        ],
+        "formalItems": [
+          {
+            "id": "cognition-5f437cce301e8e28a50706945d084be1b90eed8d10139e131cfec4518c865014",
+            "kind": "cognition",
+            "summary": "用户每周的线上读书会固定在周四晚上19点30分开始。"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:ff72bd6e126d2f43a0caa0e3d361017c:fa3862f655f4796c9f4141a081c25cc0276d0a5544977cf10bd824cf914163db",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-5f437cce301e8e28a50706945d084be1b90eed8d10139e131cfec4518c865014",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "attribute"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:e80a24efd4a187876a631b580e5db4fe:9cbfb6e9277151993db644430e394e6cbfe986f3309332ca723ed4429fff3cee",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-5f437cce301e8e28a50706945d084be1b90eed8d10139e131cfec4518c865014",
+              "replacement_cognition_id": "cognition-42aa5bbe21341c36286d9da1b8a572a80d9bf35e72b3296b2af9ff6e74be0f38",
+              "statement_kind": "attribute"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。"
+    ],
+    "currentEntities": []
+  },
+  {
+    "run": "after-lan-default\\",
+    "id": "holdout-name",
+    "model": "lan",
+    "settledMode": false,
+    "answer": "找林洲报名就行。记忆里你之前说固定联系人是林舟，后来纠正为林洲，以后按林洲这个名字来。",
+    "automaticPass": false,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户陶艺兴趣组的固定联系人叫林舟，每次报名都找他。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n较早（已被随后原话纠正，不作为当前值）：我们陶艺兴趣组的固定联系人叫林舟，每次报名都找他。\n随后纠正（优先于较早原话与正式记忆）：那个人名写错了，应该是林洲，不是林舟，以后按林洲这个名字来。",
+        "worldRevision": 1,
+        "recentEvidence": [
+          {
+            "id": "0033eca6-01f0-408a-a210-543019899e77",
+            "text": "那个人名写错了，应该是林洲，不是林舟，以后按林洲这个名字来。",
+            "session_id": "session-3b30e7a7-8fd6-4b06-ae1e-78d98a3e0251",
+            "created_at": "2026-10-09T15:23:11.682Z",
+            "preceding_text": "我们陶艺兴趣组的固定联系人叫林舟，每次报名都找他。",
+            "preceding_evidence_id": "70938ffc-e2d5-4123-89ca-fad5de15ffdc",
+            "correction_status": "certain"
+          }
+        ],
+        "formalItems": [
+          {
+            "id": "cognition-decff19da4d16eaf62f7ae274806ffd84bc052894bdcc75434bd355f3b040bbc",
+            "kind": "cognition",
+            "summary": "用户陶艺兴趣组的固定联系人叫林舟，每次报名都找他。"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:eff979e13121c889a137a87817405860:f98dbecbe0f41cc2a19ef6d54345ab0b67fc9dcf4a6efad5d0d4afa986b1363f",
+          "cognitions": [
+            {
+              "action": "form",
+              "canonical_name": "林舟",
+              "cognition_id": "cognition-decff19da4d16eaf62f7ae274806ffd84bc052894bdcc75434bd355f3b040bbc",
+              "confidence": 600,
+              "cred_status": "limited",
+              "entity_id": "entity-a99cbde2f38a7ba06ad1dd9ff04046baae8b022d675b32af3183381ade9f98e7",
+              "entity_kind": "person",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "naming"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "unexpected_correction_target",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户陶艺兴趣组的固定联系人叫林舟，每次报名都找他。"
+    ],
+    "currentEntities": [
+      "林舟"
+    ]
+  },
+  {
+    "run": "after-lan-default\\",
+    "id": "holdout-price",
+    "model": "lan",
+    "settledMode": false,
+    "answer": "邻居买两块手工香皂，按你最新纠正的价格 36 元/块 计算：\n\n2 × 36 元 = **72 元**\n\n你之前说的 48 元/块 已作废，后续按 36 元算。",
+    "automaticPass": true,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户给邻居做的手工香皂固定每块卖48元。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n较早（已被随后原话纠正，不作为当前值）：我给邻居做的手工香皂固定每块卖48元。\n随后纠正（优先于较早原话与正式记忆）：上一句的价格多报了，应当是36元，48元作废，后面按36元算。",
+        "worldRevision": 1,
+        "recentEvidence": [
+          {
+            "id": "88692d44-a04e-4a13-956a-351badbfca9f",
+            "text": "上一句的价格多报了，应当是36元，48元作废，后面按36元算。",
+            "session_id": "session-89f4e366-18ce-4789-9176-cfccd2982d22",
+            "created_at": "2026-10-09T15:24:58.307Z",
+            "preceding_text": "我给邻居做的手工香皂固定每块卖48元。",
+            "preceding_evidence_id": "bbc4d76e-2b9f-46c6-9d8e-3a9d33cf3557",
+            "correction_status": "certain"
+          }
+        ],
+        "formalItems": [
+          {
+            "id": "cognition-7caf7eeb9f7d5a05e30151ae3c78f942de93c6a1c90c482c6acd9ce1da5a4561",
+            "kind": "cognition",
+            "summary": "用户给邻居做的手工香皂固定每块卖48元。"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:d0bf3df80660e0529dbbe7e34be38e10:fce0475643684d027daf1be00d16a583ed270c526f47f212745ae84295f964f5",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-7caf7eeb9f7d5a05e30151ae3c78f942de93c6a1c90c482c6acd9ce1da5a4561",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "attribute"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:bd8eea76bddaf95e4bc4d3554a24b5b9:589827bdbfda22485f7fcebf97d04c9ad89f4d2e4de38cc46a8537d836e7bb95",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-7caf7eeb9f7d5a05e30151ae3c78f942de93c6a1c90c482c6acd9ce1da5a4561",
+              "replacement_cognition_id": "cognition-cdc51cda0f852b8d06a1af3db367d2bda60f6215db3ceac686ba9c326a3c5bf8",
+              "statement_kind": "attribute"
+            }
+          ],
+          "normalizations": [
+            {
+              "item_index": 0,
+              "rule": "form_with_current_correction_target"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户上一句的价格多报了，应当是36元，48元作废，后面按36元算。"
+    ],
+    "currentEntities": []
+  },
+  {
+    "run": "after-lan-default\\",
+    "id": "holdout-address",
+    "model": "lan",
+    "settledMode": false,
+    "answer": "星桥书社这次寄书应该写 **白榆路26号**。\n\n你之前说的“青禾路18号”已作废，你纠正过改成白榆路26号，今后都送新地址。",
+    "automaticPass": false,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户以后我在星桥书社订的书都寄到青禾路18号。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n较早（已被随后原话纠正，不作为当前值）：以后我在星桥书社订的书都寄到青禾路18号。\n随后纠正（优先于较早原话与正式记忆）：前面那个地址作废，青禾路18号写错了，改成白榆路26号，今后都送新地址。",
+        "worldRevision": 1,
+        "recentEvidence": [
+          {
+            "id": "b4a05430-5885-4f10-b793-1f40fbc65c8e",
+            "text": "前面那个地址作废，青禾路18号写错了，改成白榆路26号，今后都送新地址。",
+            "session_id": "session-8694b23c-70fd-47e2-b7df-17a990f19e4c",
+            "created_at": "2026-10-09T15:26:11.403Z",
+            "preceding_text": "以后我在星桥书社订的书都寄到青禾路18号。",
+            "preceding_evidence_id": "fd070202-befc-429f-b0d5-a1426054e28a",
+            "correction_status": "certain"
+          }
+        ],
+        "formalItems": [
+          {
+            "id": "cognition-b66d662787ae8c419208aca702f74b7972fb515bbfbe62cd5dc24e038928875f",
+            "kind": "cognition",
+            "summary": "用户以后我在星桥书社订的书都寄到青禾路18号。"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:d59af885d796a3fbf74f5bed14397319:c9754be00f2c0461828de2cc5150d69a85c521ce16f75411f9048660fe9a9fae",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-b66d662787ae8c419208aca702f74b7972fb515bbfbe62cd5dc24e038928875f",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:08754e770eb6a3794326b34f7d8d6983:c9b2e7036688460aa5fe7c88359389c0f995fe900c95d446f864e35dbfedf5a1",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-b66d662787ae8c419208aca702f74b7972fb515bbfbe62cd5dc24e038928875f",
+              "replacement_cognition_id": "cognition-b2c205712b082663b92197afabf436ab55e07720a1ff3cf0c9af9480f50e92f1",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户前面那个地址作废，青禾路18号写错了，改成白榆路26号，今后都送新地址。"
+    ],
+    "currentEntities": [
+      "星桥书社"
+    ]
+  },
+  {
+    "run": "after-lan-settled\\",
+    "id": "qa2-01-water",
+    "model": "lan",
+    "settledMode": true,
+    "answer": "根据你之前的记录，阳台盆栽浇水量以 **150 毫升** 为准，300 毫升的数作废，后面都按小的这个数来。\n\n今天浇水就按 150 ml/盆控制即可。如果是多盆，统一按这个量别超。\n",
+    "automaticPass": false,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户应当是150毫升，300毫升作废，后面都以小的这个数为准。",
+        "worldRevision": 2,
+        "recentEvidence": [],
+        "formalItems": [
+          {
+            "id": "cognition-4a420a0271100d134d8bf596956827f941787a533486a35f4a4125a04a50b4f6",
+            "kind": "cognition",
+            "summary": "用户应当是150毫升，300毫升作废，后面都以小的这个数为准。"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:f9fac4071948afb3d837abdc37b4d8fb:7c011477f14026852ec66ccb64d9000d34c36eaf6d15ba4829fd53ba3df9a544",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-3dbcfe65234cc40e9f6a564240c9f0d50351823c67e84d96143713a856dd171a",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:b3a789f8015bfb820a60a28a8795bc36:f72a091eee7a93cf0140300de6794385a0f56f36938e390a58a7273d7ce6ba19",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-3dbcfe65234cc40e9f6a564240c9f0d50351823c67e84d96143713a856dd171a",
+              "replacement_cognition_id": "cognition-4a420a0271100d134d8bf596956827f941787a533486a35f4a4125a04a50b4f6",
+              "statement_kind": "preference"
+            }
+          ],
+          "normalizations": [
+            {
+              "item_index": 0,
+              "rule": "form_with_current_correction_target"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户应当是150毫升，300毫升作废，后面都以小的这个数为准。"
+    ],
+    "currentEntities": []
+  },
+  {
+    "run": "after-lan-settled\\",
+    "id": "holdout-time",
+    "model": "lan",
+    "settledMode": true,
+    "answer": "根据你刚调整过的记忆，你把线上读书会的开始时间改成了 **20:15**，19:30 的旧时间已取消，以后都用新时间。\n\n当前账号时区 Asia/Shanghai，现在是 2026-10-09 周五 23:31。  \n本周的周四是 2026-10-08，已经过去，若按你最新的 20:15 来算，那场是在昨天 20:15 开始。  \n你说的“这周四”如果是指下个周四 2026-10-15，则仍按新时间 20:15 开始。",
+    "automaticPass": false,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。",
+        "worldRevision": 2,
+        "recentEvidence": [],
+        "formalItems": [
+          {
+            "id": "cognition-38628ad42216919b152e1826100fb4e4eb12f2abb698990ff099fabbb9d431ce",
+            "kind": "cognition",
+            "summary": "用户刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。"
+          }
+        ]
+      },
+      {
+        "contextText": "记忆：用户刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。",
+        "worldRevision": 2,
+        "recentEvidence": [],
+        "formalItems": [
+          {
+            "id": "cognition-38628ad42216919b152e1826100fb4e4eb12f2abb698990ff099fabbb9d431ce",
+            "kind": "cognition",
+            "summary": "用户刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。"
+          }
+        ]
+      },
+      {
+        "contextText": "记忆：用户刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。",
+        "worldRevision": 2,
+        "recentEvidence": [],
+        "formalItems": [
+          {
+            "id": "cognition-38628ad42216919b152e1826100fb4e4eb12f2abb698990ff099fabbb9d431ce",
+            "kind": "cognition",
+            "summary": "用户刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:cfd300719a2de6f13e412aa8fb40dbe9:613090910b54c3b4bb7cbc06a2ede4cd0422ad72d8b45f90842c7768ee60eb95",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-7ad307370a3ed3c55d2ac022348fc654ca53916ce15e9014cadf632a127f7023",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:d77d9a02e557077b9b875622e6c257b3:d86728f3e1d1c21693563980345c4b4b634b55fe06811616f746aa18b00f9bd9",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-7ad307370a3ed3c55d2ac022348fc654ca53916ce15e9014cadf632a127f7023",
+              "replacement_cognition_id": "cognition-38628ad42216919b152e1826100fb4e4eb12f2abb698990ff099fabbb9d431ce",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。"
+    ],
+    "currentEntities": []
+  },
+  {
+    "run": "after-lan-settled\\",
+    "id": "holdout-name",
+    "model": "lan",
+    "settledMode": true,
+    "answer": "陶艺兴趣组的固定联系人是 **林洲**，报名就找他。",
+    "automaticPass": true,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户陶艺兴趣组的固定联系人叫林洲，",
+        "worldRevision": 2,
+        "recentEvidence": [],
+        "formalItems": [
+          {
+            "id": "cognition-4c89766ea8b89ac42c4557580ae80aaf",
+            "kind": "cognition",
+            "summary": "用户陶艺兴趣组的固定联系人叫林洲，"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:ae024af99b9efe44e44832329c5f913d:886b882dcb60c2bf17b9b16bf670c3f40d66279bddadca275b2092fb9fc569c7",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-efb041dc7b27038fd037577ae06842e6f2c779be9f4b7b230c4133fe6e6698ab",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "attribute",
+              "target_entity_id": "entity-a5572a3b5e78d29ace1799f1c122ca37eadab69be9362e771e4982a0ac65460a"
+            },
+            {
+              "action": "form",
+              "cognition_id": "cognition-ad82477e581c2f3ebd396764bca3155c0cf3a268e63b90c1151f4150fa9edac5",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:a4cf66b82505cdd1e1ce915d7b8920b0:5c5aa7af5569fd6a994455f9e596f0bb38733183dbb4ba56b91bb4f844de1f6c",
+          "cognitions": [
+            {
+              "action": "correct",
+              "prior_entity_id": "entity-a5572a3b5e78d29ace1799f1c122ca37eadab69be9362e771e4982a0ac65460a",
+              "reason": "name_corrected",
+              "replacement_entity_id": "entity-b18b9f09b76bccd544857dd122a1fd5461ca0e98f907d2e28e9a1a0020e7a1f3",
+              "statement_kind": "alias"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户每次报名都找他。",
+      "用户陶艺兴趣组的固定联系人叫林洲，"
+    ],
+    "currentEntities": [
+      "林洲"
+    ]
+  },
+  {
+    "run": "after-lan-settled\\",
+    "id": "holdout-price",
+    "model": "lan",
+    "settledMode": true,
+    "answer": "两块手工香皂按你修正后的单价算：\n\n单块 36 元 × 2 = 72 元\n\n一共 72 元。",
+    "automaticPass": true,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户上一句的价格多报了，应当是36元，48元作废，后面按36元算。",
+        "worldRevision": 2,
+        "recentEvidence": [],
+        "formalItems": [
+          {
+            "id": "cognition-d18260aa70e3eafeac4db0683d48b64b0799af1e71fd732b6a6b6457b286ab57",
+            "kind": "cognition",
+            "summary": "用户上一句的价格多报了，应当是36元，48元作废，后面按36元算。"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:7ef3c950a9679c2b0c6e3d51a1d76262:e36b59886f45b987e65500ec360e684961a7ab031342b6869c36e30d42950671",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-37bdff26c552c029e68956af85b84d24662e6fdd918b9d00496e5fafd1e9a0fd",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:8ee6a86254415b27ca586f14b68a774b:19cd9dae060d98102c2127830c2228cd15c780739019657bef118c28edfb7dc3",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-37bdff26c552c029e68956af85b84d24662e6fdd918b9d00496e5fafd1e9a0fd",
+              "replacement_cognition_id": "cognition-d18260aa70e3eafeac4db0683d48b64b0799af1e71fd732b6a6b6457b286ab57",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户上一句的价格多报了，应当是36元，48元作废，后面按36元算。"
+    ],
+    "currentEntities": []
+  },
+  {
+    "run": "after-lan-settled\\",
+    "id": "holdout-address",
+    "model": "lan",
+    "settledMode": true,
+    "answer": "星桥书社这次寄书请用新地址 **白榆路26号**。\n\n你之前说的青禾路18号已作废，后续都送白榆路26号。",
+    "automaticPass": false,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户前面那个地址作废，青禾路18号写错了，改成白榆路26号，今后都送新地址。",
+        "worldRevision": 2,
+        "recentEvidence": [],
+        "formalItems": [
+          {
+            "id": "cognition-e614dd2816fb09d1cbc17a88f05112df8908066e9e897df4d032c998dc508079",
+            "kind": "cognition",
+            "summary": "用户前面那个地址作废，青禾路18号写错了，改成白榆路26号，今后都送新地址。"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:8c5ec7a5caae37dd6194c7865f9adcf8:9856042eb8f5aeb274e50625ff6b36dfda2e26d57ace579915df6df3078db748",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-199f654d08ffdf538fbdf1268de20c739b5bb32548c5ddd06c7feca773fa174f",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:27dddfc42edd24405f626b92eb045eec:f76b04d02fff919845bb7d85859ed4e2ec72899adf020acc44d00e236e0d5028",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-199f654d08ffdf538fbdf1268de20c739b5bb32548c5ddd06c7feca773fa174f",
+              "replacement_cognition_id": "cognition-e614dd2816fb09d1cbc17a88f05112df8908066e9e897df4d032c998dc508079",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户前面那个地址作废，青禾路18号写错了，改成白榆路26号，今后都送新地址。"
+    ],
+    "currentEntities": []
+  },
+  {
+    "run": "after-mimo-default\\",
+    "id": "qa2-01-water",
+    "model": "mimo",
+    "settledMode": false,
+    "answer": "今天浇水按 **150 毫升** 来量（之前说的 300 毫升已作废，以这个小的数值为准）。",
+    "automaticPass": false,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n较早（已被随后原话纠正，不作为当前值）：我养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。\n随后纠正（优先于较早原话与正式记忆）：前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。",
+        "worldRevision": 1,
+        "recentEvidence": [
+          {
+            "id": "fa9fdcc0-2156-4729-8f85-24fb58c3bf86",
+            "text": "前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。",
+            "session_id": "session-dbdb4a7d-42ec-4df9-ba11-df9e6931d247",
+            "created_at": "2026-10-09T15:10:54.362Z",
+            "preceding_text": "我养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。",
+            "preceding_evidence_id": "f656d3e9-89ed-45db-8085-b649214b79cf",
+            "correction_status": "certain"
+          }
+        ],
+        "formalItems": [
+          {
+            "id": "cognition-bc979b169182426e6c9bbb60c77f037c991cf799f5207a49811a222c07c5a1ce",
+            "kind": "cognition",
+            "summary": "用户养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:da586b83613181cb613b709fc87056dc:38e446b854b940ff0043afa2c8abf39a286f3dea70df6d1579889da74612ee9f",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-bc979b169182426e6c9bbb60c77f037c991cf799f5207a49811a222c07c5a1ce",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:d5435ef3ac2f2e27e8f9be9ab6ea8300:1bdaaf42f5c4bf7e9cf3cdf380076a8f7597004219ed14cee09597907b56a848",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-bc979b169182426e6c9bbb60c77f037c991cf799f5207a49811a222c07c5a1ce",
+              "replacement_cognition_id": "cognition-8af9c15dfb02dad11c6a4f7016911fdb5998cd3f6c1ca65c46e7260b46f04cd7",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。"
+    ],
+    "currentEntities": [
+      "阳台盆栽"
+    ]
+  },
+  {
+    "run": "after-mimo-default-rest\\",
+    "id": "holdout-time",
+    "model": "mimo",
+    "settledMode": false,
+    "answer": "按你最近的调整，这周四的线上读书会是 **20:15** 开始（原定的 19:30 已取消，以后都按 20:15）。",
+    "automaticPass": false,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户每周的线上读书会固定在周四晚上19点30分开始。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n较早（已被随后原话纠正，不作为当前值）：我每周的线上读书会固定在周四晚上19点30分开始。\n随后纠正（优先于较早原话与正式记忆）：刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。",
+        "worldRevision": 1,
+        "recentEvidence": [
+          {
+            "id": "cead440b-293b-42a1-acf4-ecffdbdf3c57",
+            "text": "刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。",
+            "session_id": "session-b5a8178f-7123-4d71-884e-366c048e0c5f",
+            "created_at": "2026-10-09T15:13:21.362Z",
+            "preceding_text": "我每周的线上读书会固定在周四晚上19点30分开始。",
+            "preceding_evidence_id": "d4160a18-ea32-48d6-a3dd-e59e2f48bbe0",
+            "correction_status": "certain"
+          }
+        ],
+        "formalItems": [
+          {
+            "id": "cognition-aa0816060d2ae97ec5eca172b1eb090ba4246f7afb013c8222a644f4fa1a78ef",
+            "kind": "cognition",
+            "summary": "用户每周的线上读书会固定在周四晚上19点30分开始。"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:66382329d1129df555d52f32c75c342f:54b31a6e6bc82e4027d2fbf2767a6dc33ce9d2c15f4ce9dfc96e2f43b32cf622",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-aa0816060d2ae97ec5eca172b1eb090ba4246f7afb013c8222a644f4fa1a78ef",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:880fd92fbe0aac8dde49f64b1cd94134:cdec20ae2b1e5a0d2c62ad2ac18cb7b9727620bb83b33e371f27abb54fb49792",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-aa0816060d2ae97ec5eca172b1eb090ba4246f7afb013c8222a644f4fa1a78ef",
+              "replacement_cognition_id": "cognition-f032c54871e139b88f14c3f3b93719d3413531766f2705d29324daddd4b3f0ea",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。"
+    ],
+    "currentEntities": [
+      "线上读书会"
+    ]
+  },
+  {
+    "run": "after-mimo-default-rest\\",
+    "id": "holdout-name",
+    "model": "mimo",
+    "settledMode": false,
+    "answer": "报名陶艺兴趣组找**林洲**。",
+    "automaticPass": true,
+    "actualInjection": [
+      {
+        "contextText": "【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n较早（已被随后原话纠正，不作为当前值）：我们陶艺兴趣组的固定联系人叫林舟，每次报名都找他。\n随后纠正（优先于较早原话与正式记忆）：那个人名写错了，应该是林洲，不是林舟，以后按林洲这个名字来。",
+        "worldRevision": 0,
+        "recentEvidence": [
+          {
+            "id": "af3dfa87-5c36-4486-b855-7bafd72971f4",
+            "text": "那个人名写错了，应该是林洲，不是林舟，以后按林洲这个名字来。",
+            "session_id": "session-1606b755-cb6a-431b-a1ab-e35ff5874ee8",
+            "created_at": "2026-10-09T15:14:25.395Z",
+            "preceding_text": "我们陶艺兴趣组的固定联系人叫林舟，每次报名都找他。",
+            "preceding_evidence_id": "c71fe80a-cc76-4545-848d-bd5f6b8da88c",
+            "correction_status": "certain"
+          }
+        ],
+        "formalItems": []
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:0a20aab2d32479fe46d92d8577f22321:305fb7bccb3cd13902e2470919921b6cbcdde8dc1731c6a66ab074d005be7cda",
+          "cognitions": [
+            {
+              "action": "form",
+              "canonical_name": "林舟",
+              "cognition_id": "cognition-062da15e67288005b719bfd0abf1c1aa1edb56bc6da5fd43cb474a0bd8483997",
+              "confidence": 600,
+              "cred_status": "limited",
+              "entity_id": "entity-6395c793794968fafb0d1233e8f783eab2871f3bf4b3f8928b01623fbff5b05f",
+              "entity_kind": "person",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "naming"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "name_correction_not_explicit",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户陶艺兴趣组的固定联系人叫林舟"
+    ],
+    "currentEntities": [
+      "林舟"
+    ]
+  },
+  {
+    "run": "after-mimo-default-rest\\",
+    "id": "holdout-price",
+    "model": "mimo",
+    "settledMode": false,
+    "answer": "两块一共 72 元（每块 36 元）。",
+    "automaticPass": true,
+    "actualInjection": [
+      {
+        "contextText": "【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n较早（已被随后原话纠正，不作为当前值）：我给邻居做的手工香皂固定每块卖48元。\n随后纠正（优先于较早原话与正式记忆）：上一句的价格多报了，应当是36元，48元作废，后面按36元算。",
+        "worldRevision": 0,
+        "recentEvidence": [
+          {
+            "id": "3390c051-2e28-402c-a72a-f477464ad0e6",
+            "text": "上一句的价格多报了，应当是36元，48元作废，后面按36元算。",
+            "session_id": "session-f810f4fd-d9f3-4808-a773-4383bc623d23",
+            "created_at": "2026-10-09T15:15:18.308Z",
+            "preceding_text": "我给邻居做的手工香皂固定每块卖48元。",
+            "preceding_evidence_id": "be379398-d033-4a91-b371-5acf72baccbd",
+            "correction_status": "certain"
+          }
+        ],
+        "formalItems": []
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:dd09bc81cb3532699269426b456ac4e1:c8af5fb7788ee26e348a5e3397562cba64b8960c20064c2565e22a71ca348857",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-115258b2d24bde1ca45c8a43b2ce259d6e64071744f61563d649d51b3c6fc554",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:870f85893921b0ff17f95982a2e2edf5:6e8f278a4501cea046d354a5bc2cc6b8a99022157e6cc37874b651f27daa9eae",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-115258b2d24bde1ca45c8a43b2ce259d6e64071744f61563d649d51b3c6fc554",
+              "replacement_cognition_id": "cognition-e493fadad95f4e02fad8bab934fd843a9c114b4c69a25f2218af3ada1c9bc88c",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户上一句的价格多报了，应当是36元，48元作废，后面按36元算。"
+    ],
+    "currentEntities": [
+      "手工香皂"
+    ]
+  },
+  {
+    "run": "after-mimo-default-rest\\",
+    "id": "holdout-address",
+    "model": "mimo",
+    "settledMode": false,
+    "answer": "这次寄书应写 **白榆路26号**。青禾路18号已作废，今后星桥书社订的书都送白榆路26号这个新地址。",
+    "automaticPass": false,
+    "actualInjection": [
+      {
+        "contextText": "【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n较早（已被随后原话纠正，不作为当前值）：以后我在星桥书社订的书都寄到青禾路18号。\n随后纠正（优先于较早原话与正式记忆）：前面那个地址作废，青禾路18号写错了，改成白榆路26号，今后都送新地址。",
+        "worldRevision": 0,
+        "recentEvidence": [
+          {
+            "id": "67b57b73-169e-4b35-89f8-607e1f02d8aa",
+            "text": "前面那个地址作废，青禾路18号写错了，改成白榆路26号，今后都送新地址。",
+            "session_id": "session-9b3983af-3480-4430-8b32-f74f4f97d504",
+            "created_at": "2026-10-09T15:16:07.304Z",
+            "preceding_text": "以后我在星桥书社订的书都寄到青禾路18号。",
+            "preceding_evidence_id": "0f26f27d-96ae-4bdc-94d2-21e017b767ae",
+            "correction_status": "certain"
+          }
+        ],
+        "formalItems": []
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:7d0bd04e83fa21ddfa8516691828353c:8792fa1a9e16d3d84931eb5d0b9d7a31c39b2084627b64345acced87a6cb2af9",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-2c00a5442a9349586f3a2f7f7d6bd3e6c16155928266b348a3fab21ecbb1ad9a",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:cfd8538c695cfdcaf0e5826b434f9479:313a18c5b64c1cc6f0590371408967cfb8239b42d390b7febcc92cc308a06017",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-2c00a5442a9349586f3a2f7f7d6bd3e6c16155928266b348a3fab21ecbb1ad9a",
+              "replacement_cognition_id": "cognition-e4b1ecaf5d13ce06041dddc0eeae0ce97207fc4df90db0859b0530c4ab33f7b9",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户前面那个地址作废，青禾路18号写错了，改成白榆路26号，今后都送新地址。"
+    ],
+    "currentEntities": [
+      "星桥书社"
+    ]
+  },
+  {
+    "run": "after-mimo-settled\\",
+    "id": "qa2-01-water",
+    "model": "mimo",
+    "settledMode": true,
+    "answer": "按小的那个数来：今天给阳台盆栽浇水按 **150 毫升** 量取（300 毫升那个数已作废，不用再参考）。",
+    "automaticPass": false,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。",
+        "worldRevision": 2,
+        "recentEvidence": [],
+        "formalItems": [
+          {
+            "id": "cognition-b9b6944a50417077cab4428ae82ebd2ecdbefd25636a170c2d25a8b64fb5a507",
+            "kind": "cognition",
+            "summary": "用户前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:de986a4cd2a25c65f85856f04b5b534e:4303abb4ea676714b2ac1d25d0eda6918b258f74214bc03cdee65923032a5f53",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-9ef6563622d34146f75f4b6cb646d967ecdb5097a64b65502ece63bad5d49ace",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:633e52c42ad6c0aad0dac23e4a0cc642:dcefc4adbdd90ddede1e5942183312096e569b693de79dfb13f09da07975a33b",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-9ef6563622d34146f75f4b6cb646d967ecdb5097a64b65502ece63bad5d49ace",
+              "replacement_cognition_id": "cognition-b9b6944a50417077cab4428ae82ebd2ecdbefd25636a170c2d25a8b64fb5a507",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。"
+    ],
+    "currentEntities": [
+      "阳台盆栽"
+    ]
+  },
+  {
+    "run": "after-mimo-settled\\",
+    "id": "holdout-time",
+    "model": "mimo",
+    "settledMode": true,
+    "answer": "<tool_call><function=load_tools><parameter(names>[\"schedule_list\"])</parameter></function></tool_call>\n这周四的线上读书会是晚上 **20:15** 开始（原来 19:30 的时间已取消，以新时间为准）。",
+    "automaticPass": false,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。",
+        "worldRevision": 2,
+        "recentEvidence": [],
+        "formalItems": [
+          {
+            "id": "cognition-6115e2878fb7caa378841c0a0bfa93091e67cf85a5061b0b3912b6de2640f661",
+            "kind": "cognition",
+            "summary": "用户刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。"
+          }
+        ]
+      },
+      {
+        "contextText": "记忆：用户刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。",
+        "worldRevision": 2,
+        "recentEvidence": [],
+        "formalItems": [
+          {
+            "id": "cognition-6115e2878fb7caa378841c0a0bfa93091e67cf85a5061b0b3912b6de2640f661",
+            "kind": "cognition",
+            "summary": "用户刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。"
+          }
+        ]
+      },
+      {
+        "contextText": "记忆：用户刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。",
+        "worldRevision": 2,
+        "recentEvidence": [],
+        "formalItems": [
+          {
+            "id": "cognition-6115e2878fb7caa378841c0a0bfa93091e67cf85a5061b0b3912b6de2640f661",
+            "kind": "cognition",
+            "summary": "用户刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。"
+          }
+        ]
+      },
+      {
+        "contextText": "记忆：用户刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。",
+        "worldRevision": 2,
+        "recentEvidence": [],
+        "formalItems": [
+          {
+            "id": "cognition-6115e2878fb7caa378841c0a0bfa93091e67cf85a5061b0b3912b6de2640f661",
+            "kind": "cognition",
+            "summary": "用户刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:4ddc3c1ae70bb1507cb54a9c86b9b253:2af036b8229bd399f14a87d036676e1b8c72676c3a18b921aaf56fcde2cd05ee",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-548504dd8869a8f26984c80bfc7408e730ce80280b9f3fd726400778bac9d379",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:d1c5a49c0a3e237e5ef9e65aa394acfc:57c63574f057f688084058cbbc5d9cc9b188a16204628d09712be5016d8d5fa8",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-548504dd8869a8f26984c80bfc7408e730ce80280b9f3fd726400778bac9d379",
+              "replacement_cognition_id": "cognition-6115e2878fb7caa378841c0a0bfa93091e67cf85a5061b0b3912b6de2640f661",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。"
+    ],
+    "currentEntities": [
+      "线上读书会"
+    ]
+  },
+  {
+    "run": "after-mimo-settled\\",
+    "id": "holdout-name",
+    "model": "mimo",
+    "settledMode": true,
+    "answer": "报名陶艺兴趣组找**林洲**（注意是\"洲\"，不是\"舟\"），每次报名都联系他即可。",
+    "automaticPass": true,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户陶艺兴趣组的固定联系人叫林舟\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n较早（已被随后原话纠正，不作为当前值）：我们陶艺兴趣组的固定联系人叫林舟，每次报名都找他。\n随后纠正（优先于较早原话与正式记忆）：那个人名写错了，应该是林洲，不是林舟，以后按林洲这个名字来。",
+        "worldRevision": 1,
+        "recentEvidence": [
+          {
+            "id": "fe9dac53-992f-46c5-bcf9-05ea4bc6c721",
+            "text": "那个人名写错了，应该是林洲，不是林舟，以后按林洲这个名字来。",
+            "session_id": "session-0487e692-f83f-469a-813c-86ef444ffbe6",
+            "created_at": "2026-10-09T15:15:41.450Z",
+            "preceding_text": "我们陶艺兴趣组的固定联系人叫林舟，每次报名都找他。",
+            "preceding_evidence_id": "625ab9f3-f3b0-4cb1-89c8-33882f92fef6",
+            "correction_status": "certain"
+          }
+        ],
+        "formalItems": [
+          {
+            "id": "cognition-79e0572c1631211924e1c3c1e7cec5424489070caf3812066af05f439212f280",
+            "kind": "cognition",
+            "summary": "用户陶艺兴趣组的固定联系人叫林舟"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:542a1549f8550c7753dd2b874bf568bf:47812cf5441f0c042261cfbe7dcac2afc97c0cf9994d7ce21d9c3b6e74b5159a",
+          "cognitions": [
+            {
+              "action": "form",
+              "canonical_name": "林舟",
+              "cognition_id": "cognition-79e0572c1631211924e1c3c1e7cec5424489070caf3812066af05f439212f280",
+              "confidence": 600,
+              "cred_status": "limited",
+              "entity_id": "entity-faeda0625a22574f1f05378cb87fbf464ff5a9255ecbb209bc5f0b8cc67026f5",
+              "entity_kind": "person",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "naming"
+            },
+            {
+              "action": "form",
+              "cognition_id": "cognition-6654b75090b4fb1d93b46d9633300d8ce7b9d9155f7f5a8c8d34e9112e0d091b",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "name_correction_not_explicit",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户陶艺兴趣组的固定联系人叫林舟",
+      "用户每次报名都找他"
+    ],
+    "currentEntities": [
+      "林舟"
+    ]
+  },
+  {
+    "run": "after-mimo-settled\\",
+    "id": "holdout-price",
+    "model": "mimo",
+    "settledMode": true,
+    "answer": "按单价 36 元算（之前的 48 元作废）：两块手工香皂共 **72 元**。",
+    "automaticPass": true,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户上一句的价格多报了，应当是36元，48元作废，后面按36元算。",
+        "worldRevision": 2,
+        "recentEvidence": [],
+        "formalItems": [
+          {
+            "id": "cognition-ab12eff6d741ea8556bbbbb527e614e18e6e8130b750eaffdd1397ede31ad15b",
+            "kind": "cognition",
+            "summary": "用户上一句的价格多报了，应当是36元，48元作废，后面按36元算。"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:1d02f4d079dd959b27c5b46053ac2459:35e01610a65b66360ea3aa5ba743be5d475e155f1f7e59c53428868eaf7cac37",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-17212b177ca51ab5236d0e2a324284a8ce0e2a0ba34bd0150677b7c823d594bf",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:6bde32b6a77675a79e69d9925e02f78d:f5273536f321caf155cb8cc1c5f9d4b4e55b20b11e97e3c32aaaf10faf9dd9cb",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-17212b177ca51ab5236d0e2a324284a8ce0e2a0ba34bd0150677b7c823d594bf",
+              "replacement_cognition_id": "cognition-ab12eff6d741ea8556bbbbb527e614e18e6e8130b750eaffdd1397ede31ad15b",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户上一句的价格多报了，应当是36元，48元作废，后面按36元算。"
+    ],
+    "currentEntities": [
+      "手工香皂"
+    ]
+  },
+  {
+    "run": "after-mimo-settled\\",
+    "id": "holdout-address",
+    "model": "mimo",
+    "settledMode": true,
+    "answer": "这次寄书请写：**白榆路26号**。\n\n之前那个地址已作废（青禾路18号写错了），今后一律用这个新地址。",
+    "automaticPass": false,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户前面那个地址作废，青禾路18号写错了，改成白榆路26号，今后都送新地址。",
+        "worldRevision": 2,
+        "recentEvidence": [],
+        "formalItems": [
+          {
+            "id": "cognition-5cf5afff0140ca9d9d0f10406f73fefd8349646a132bc4e4eec7611c3bd62066",
+            "kind": "cognition",
+            "summary": "用户前面那个地址作废，青禾路18号写错了，改成白榆路26号，今后都送新地址。"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:7195823c1c18776799377e52d07f544f:665be46bf04132ed0742f792af7ed6fe09abe67949fca63383e89c3d84bdc5d5",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-ae2a1b4b38e75038ac25e458a71e8ff1e1c9baedb75b5758c05066beed1ed8b4",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:0040921cbaad68e792a9c1d5694a2c8a:066f978ce33d4637c3893ebbf16f8a61ee4256ba01ce6022a51a95452c390365",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-ae2a1b4b38e75038ac25e458a71e8ff1e1c9baedb75b5758c05066beed1ed8b4",
+              "replacement_cognition_id": "cognition-5cf5afff0140ca9d9d0f10406f73fefd8349646a132bc4e4eec7611c3bd62066",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户前面那个地址作废，青禾路18号写错了，改成白榆路26号，今后都送新地址。"
+    ],
+    "currentEntities": [
+      "星桥书社"
+    ]
+  },
+  {
+    "run": "before-lan-default\\",
+    "id": "qa2-01-water",
+    "model": "lan",
+    "settledMode": false,
+    "answer": "根据你之前的习惯，阳台盆栽每次浇水固定用量是 **300 毫升**，今天就按这个量来。",
+    "automaticPass": false,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。",
+        "worldRevision": 1,
+        "recentEvidence": [],
+        "formalItems": [
+          {
+            "id": "cognition-5888bd199bf43d0dcc54882908b25612717a800f42f3acf2f55569cf25b2a5c3",
+            "kind": "cognition",
+            "summary": "用户养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:a4acafd253f0c2eb0206bf7eae0823ed:2027378e7d46187a6a5c5c53d533c0d81adac1aecaf5821638e93bcfc422c568",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-5888bd199bf43d0dcc54882908b25612717a800f42f3acf2f55569cf25b2a5c3",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "attribute"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:21819b1479c6e60029b641f3646db635:be8b679e91f23ae3b3d2bd374af8467f4d73737114fa0e322507c94739a8f6de",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-5888bd199bf43d0dcc54882908b25612717a800f42f3acf2f55569cf25b2a5c3",
+              "replacement_cognition_id": "cognition-963fe56f440a6c7f97416be103432293b20146f0cf1705235d213300c9539407",
+              "statement_kind": "attribute"
+            }
+          ],
+          "normalizations": [
+            {
+              "item_index": 0,
+              "rule": "form_with_current_correction_target"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。"
+    ],
+    "currentEntities": []
+  },
+  {
+    "run": "before-lan-default\\",
+    "id": "holdout-time",
+    "model": "lan",
+    "settledMode": false,
+    "answer": "根据你的历史记忆，你的线上读书会是每周固定在**周四晚上 19:30**开始。\n\n今天是 2026-10-09 周五，亚洲/上海时间 15:14。\n* 这周的周四是 2026-10-08，周四 19:30 已经过去了。\n* 下一次是下周四 2026-10-15 19:30。",
+    "automaticPass": false,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户每周的线上读书会固定在周四晚上19点30分开始。",
+        "worldRevision": 1,
+        "recentEvidence": [],
+        "formalItems": [
+          {
+            "id": "cognition-3b42178962519ba2470c23076d64763c0231886783e8156d7199204c58f3c6c5",
+            "kind": "cognition",
+            "summary": "用户每周的线上读书会固定在周四晚上19点30分开始。"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:ab286ffe693feabdf318e22fc6458ddd:0dc3a246c888269c5f8656b2e66a045ebf5586bc01fe3904a8366c6ea48886de",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-3b42178962519ba2470c23076d64763c0231886783e8156d7199204c58f3c6c5",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "attribute"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:94bd0abf0b01c39c33755681050e7466:faffb783276ec3743629e98235f32aec1c825fca8ff33b252220f1319b9bb16c",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-3b42178962519ba2470c23076d64763c0231886783e8156d7199204c58f3c6c5",
+              "replacement_cognition_id": "cognition-41775845a884a929ffccdacc1cdd96e9c29f6508486ceb9a532585613d932758",
+              "statement_kind": "attribute"
+            }
+          ],
+          "normalizations": [
+            {
+              "item_index": 0,
+              "rule": "form_with_current_correction_target"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。"
+    ],
+    "currentEntities": []
+  },
+  {
+    "run": "before-lan-default\\",
+    "id": "holdout-name",
+    "model": "lan",
+    "settledMode": false,
+    "answer": "陶艺兴趣组报名找 **林洲**。",
+    "automaticPass": true,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户陶艺兴趣组的固定联系人叫林舟，每次报名都找他。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：那个人名写错了，应该是林洲，不是林舟，以后按林洲这个名字来。",
+        "worldRevision": 1,
+        "recentEvidence": [],
+        "formalItems": [
+          {
+            "id": "cognition-080fc3b14de6d6a8c4bce82bb6096242e6336c8132c12201f345c42d3f7a507e",
+            "kind": "cognition",
+            "summary": "用户陶艺兴趣组的固定联系人叫林舟，每次报名都找他。"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:812dd2fe24d66b5fce32f3999fb6fd63:175c37fceac0df56993f0b6c778f3c4a6003a0d84cf42aced8ee2908c032d43c",
+          "cognitions": [
+            {
+              "action": "form",
+              "canonical_name": "林舟",
+              "cognition_id": "cognition-080fc3b14de6d6a8c4bce82bb6096242e6336c8132c12201f345c42d3f7a507e",
+              "confidence": 600,
+              "cred_status": "limited",
+              "entity_id": "entity-7540f7a07219d4830b082e5bc4b8671d68477bb89a07bea89ecda54d12ab2f5c",
+              "entity_kind": "person",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "naming"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "name_correction_not_explicit",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户陶艺兴趣组的固定联系人叫林舟，每次报名都找他。"
+    ],
+    "currentEntities": [
+      "林舟"
+    ]
+  },
+  {
+    "run": "before-lan-default\\",
+    "id": "holdout-price",
+    "model": "lan",
+    "settledMode": false,
+    "answer": "每块 48 元，两块一共 **96 元**。",
+    "automaticPass": false,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户给邻居做的手工香皂固定每块卖48元。",
+        "worldRevision": 1,
+        "recentEvidence": [],
+        "formalItems": [
+          {
+            "id": "cognition-68f4b255f53f9e6bc4d9a9efe0bcf61234fe746fda1abd5850aa644b4aef462e",
+            "kind": "cognition",
+            "summary": "用户给邻居做的手工香皂固定每块卖48元。"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:d45311e4bb064dfdcbd3be9300441b6a:a992ce60a167d6befc630a2f0257b8d262c3f3c2e6f2235ccbda7f220eb4275f",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-68f4b255f53f9e6bc4d9a9efe0bcf61234fe746fda1abd5850aa644b4aef462e",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:1e83ae1ebecc34d35142851ccd9fff12:90d2a4c69ada0f4e71f5b83ca08e8c5af05930307b685c3f6c2ebc95d16f7974",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-68f4b255f53f9e6bc4d9a9efe0bcf61234fe746fda1abd5850aa644b4aef462e",
+              "replacement_cognition_id": "cognition-572d9d5684893f40cbca01bec74c31f703be79b292528c3e66942b31930f972e",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户上一句的价格多报了，应当是36元，48元作废，后面按36元算。"
+    ],
+    "currentEntities": []
+  },
+  {
+    "run": "before-lan-default\\",
+    "id": "holdout-address",
+    "model": "lan",
+    "settledMode": false,
+    "answer": "星桥书社寄书的收件地址用你最新纠正的：**白榆路26号**。\n\n你之前说过青禾路18号，后来明确纠正说青禾路18号写错了、作废，改为白榆路26号，今后都送新地址。",
+    "automaticPass": false,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户以后我在星桥书社订的书都寄到青禾路18号。\n\n【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n较早（已被随后原话纠正，不作为当前值）：以后我在星桥书社订的书都寄到青禾路18号。\n随后纠正（优先于较早原话与正式记忆）：前面那个地址作废，青禾路18号写错了，改成白榆路26号，今后都送新地址。",
+        "worldRevision": 1,
+        "recentEvidence": [
+          {
+            "id": "5cb3733a-5a24-4158-9293-7e5593006850",
+            "text": "前面那个地址作废，青禾路18号写错了，改成白榆路26号，今后都送新地址。",
+            "session_id": "session-9b74cb6c-15d7-4cca-822e-9da4a89bf1b1",
+            "created_at": "2026-10-09T15:18:38.002Z",
+            "preceding_text": "以后我在星桥书社订的书都寄到青禾路18号。",
+            "preceding_evidence_id": "3e5243a7-7584-4476-8eed-011bc430eaf1"
+          }
+        ],
+        "formalItems": [
+          {
+            "id": "cognition-ecd76b67f8bd8c68c8bf592f53064a58005c5269c6602522e8f688edbaac398d",
+            "kind": "cognition",
+            "summary": "用户以后我在星桥书社订的书都寄到青禾路18号。"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:7c2bd35ebf7eff0ca7419deb6e3c0d74:0b5e5d1c77e6a4e3fc5acb6b0e71a8a0b2b75093606ef344449dfce3a7094504",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-ecd76b67f8bd8c68c8bf592f53064a58005c5269c6602522e8f688edbaac398d",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:6df83b9110a6c918eeca98b866470938:dd688a4e7a52a8db86a40aef134e1ad3f9900be3d2bef522614dc2c5f9a688ce",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-ecd76b67f8bd8c68c8bf592f53064a58005c5269c6602522e8f688edbaac398d",
+              "replacement_cognition_id": "cognition-9562c613eed0fbcdcab364d5ad15e4e878ad91f605624b4954f10fccc6b91bbd",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户前面那个地址作废，青禾路18号写错了，改成白榆路26号，今后都送新地址。"
+    ],
+    "currentEntities": [
+      "星桥书社"
+    ]
+  },
+  {
+    "run": "before-mimo-default-valid\\",
+    "id": "qa2-01-water",
+    "model": "mimo",
+    "settledMode": false,
+    "answer": "每次 300 毫升，按你固定的用量给阳台盆栽浇就行。",
+    "automaticPass": false,
+    "actualInjection": [
+      {
+        "contextText": "【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：我养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。",
+        "worldRevision": 0,
+        "recentEvidence": [
+          {
+            "id": "0b3b00da-a905-4df0-90ca-8cd4188c0e27",
+            "text": "我养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。",
+            "session_id": "session-6775294a-277d-4733-a37c-2ad5c5355b60",
+            "created_at": "2026-10-09T15:10:10.440Z"
+          }
+        ],
+        "formalItems": []
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:3aee475cac50be3194343a366172cc74:87c8f293f422086936e8b6e4125ceb7beb1b5c6a569f3b2d0bd18246c174185b",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-0032b5718d83a5429354c35683a2cfc6205a949ba556a64c633321e8b42b310e",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:d26e1256aceb2b75ec946498debc4021:35b92b008692797cdc68e0089597305b4ad1fa4ccb627c61b97aa2a256cf6c72",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-0032b5718d83a5429354c35683a2cfc6205a949ba556a64c633321e8b42b310e",
+              "replacement_cognition_id": "cognition-bde62acc4b774dfad107abe22b6cad0e4529726ec212741b3d41881770d99ba2",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。"
+    ],
+    "currentEntities": [
+      "阳台盆栽"
+    ]
+  },
+  {
+    "run": "before-mimo-default-valid\\",
+    "id": "holdout-time",
+    "model": "mimo",
+    "settledMode": false,
+    "answer": "每周四晚上 **19:30** 开始（账号时区 Asia/Shanghai），也就是本周四（10 月 15 日）19:30。",
+    "automaticPass": false,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户每周的线上读书会固定在周四晚上19点30分开始。",
+        "worldRevision": 1,
+        "recentEvidence": [],
+        "formalItems": [
+          {
+            "id": "cognition-c327e8ce74515d5c7b7b33b27a2df80bdf75bb666d70fce27347db89ef47fd0c",
+            "kind": "cognition",
+            "summary": "用户每周的线上读书会固定在周四晚上19点30分开始。"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:7566241a719e899b06bf7b42b6e6dc74:8b3062bf0b49a5070988f51d39109eb4298cf01913fd342052e00f737479617b",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-c327e8ce74515d5c7b7b33b27a2df80bdf75bb666d70fce27347db89ef47fd0c",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "attribute"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:2c38db2d4cedc6d0f089e23246e28e2c:87f06c6e4820c9150aee49643f2822bc625b8b70333f122658c38c35eacaad86",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-c327e8ce74515d5c7b7b33b27a2df80bdf75bb666d70fce27347db89ef47fd0c",
+              "replacement_cognition_id": "cognition-82274d754cdc49af50538f1eb89c4c20d75348fd6d4998d7cd8064b5f69a09d8",
+              "statement_kind": "attribute"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。"
+    ],
+    "currentEntities": [
+      "线上读书会"
+    ]
+  },
+  {
+    "run": "before-mimo-default-valid\\",
+    "id": "holdout-name",
+    "model": "mimo",
+    "settledMode": false,
+    "answer": "报名陶艺兴趣组找**林洲**即可，他是固定联系人。",
+    "automaticPass": true,
+    "actualInjection": [
+      {
+        "contextText": "【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：我们陶艺兴趣组的固定联系人叫林舟，每次报名都找他。\n\n本人原话：那个人名写错了，应该是林洲，不是林舟，以后按林洲这个名字来。",
+        "worldRevision": 0,
+        "recentEvidence": [
+          {
+            "id": "f6987da0-157a-46a0-86e3-3c546dd1a1a9",
+            "text": "我们陶艺兴趣组的固定联系人叫林舟，每次报名都找他。",
+            "session_id": "session-dc16f001-28d0-485c-bbe9-c81eb0e009f0",
+            "created_at": "2026-10-09T15:12:14.151Z"
+          }
+        ],
+        "formalItems": []
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:d3adbce5919bfa041eecf5c82b34f5c7:14ab4e502e13093c2f6cc081ff149430d6e71d69a9254c63e1c38ccdc2a223be",
+          "cognitions": [
+            {
+              "action": "form",
+              "canonical_name": "林舟",
+              "cognition_id": "cognition-6b83583f2ba517a3ed151f4c73acf5338d3853cd16b886bf2e2bc8bf56c90307",
+              "confidence": 600,
+              "cred_status": "limited",
+              "entity_id": "entity-2425dca468f9711903931160ee0fa263f63b3bec497d53898ae8d7913d104f6a",
+              "entity_kind": "person",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "naming"
+            },
+            {
+              "action": "form",
+              "cognition_id": "cognition-955772c200476d95f7a4813dc7a0639adf78643a6810de446606f84ebee6334c",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "attribute",
+              "target_entity_id": "entity-2425dca468f9711903931160ee0fa263f63b3bec497d53898ae8d7913d104f6a"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "name_correction_not_explicit",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户陶艺兴趣组的固定联系人叫林舟，",
+      "每次报名都找他。"
+    ],
+    "currentEntities": [
+      "林舟"
+    ]
+  },
+  {
+    "run": "before-mimo-default-valid\\",
+    "id": "holdout-price",
+    "model": "mimo",
+    "settledMode": false,
+    "answer": "96元。每块48元，两块共96元。",
+    "automaticPass": false,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户给邻居做的手工香皂固定每块卖48元。",
+        "worldRevision": 1,
+        "recentEvidence": [],
+        "formalItems": [
+          {
+            "id": "cognition-8f0bd22d67eefd28facb2c9a2a29863845dd2591d7cce1d5c11825a464894234",
+            "kind": "cognition",
+            "summary": "用户给邻居做的手工香皂固定每块卖48元。"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:bb8c09868312ba32fef56feacbed7651:a92543767a7645740a2ad6199eb3cbaaa69f3a07dfedf5088655f808efb58c1f",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-8f0bd22d67eefd28facb2c9a2a29863845dd2591d7cce1d5c11825a464894234",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "attribute"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:efa6f9dd58cdf6e81a9e995dd973fc34:984c3948558962b068d2128c7169f0dabb06c941a2997504985fe1c922919ab8",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-8f0bd22d67eefd28facb2c9a2a29863845dd2591d7cce1d5c11825a464894234",
+              "replacement_cognition_id": "cognition-c5baceb132787082357f64e53c540eea8cc483b8bc73f31350daad16d89a98b3",
+              "statement_kind": "attribute"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户上一句的价格多报了，应当是36元，48元作废，后面按36元算。"
+    ],
+    "currentEntities": [
+      "手工香皂"
+    ]
+  },
+  {
+    "run": "before-mimo-default-valid\\",
+    "id": "holdout-address",
+    "model": "mimo",
+    "settledMode": false,
+    "answer": "这次应写 **白榆路26号**。青禾路18号已作废，不要用。",
+    "automaticPass": false,
+    "actualInjection": [
+      {
+        "contextText": "【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n本人原话：以后我在星桥书社订的书都寄到青禾路18号。\n\n较早（已被随后原话纠正，不作为当前值）：以后我在星桥书社订的书都寄到青禾路18号。\n随后纠正（优先于较早原话与正式记忆）：前面那个地址作废，青禾路18号写错了，改成白榆路26号，今后都送新地址。",
+        "worldRevision": 0,
+        "recentEvidence": [
+          {
+            "id": "b96b1bc1-edc0-4f9f-b02a-224440bc9a9a",
+            "text": "以后我在星桥书社订的书都寄到青禾路18号。",
+            "session_id": "session-2ac2bf8a-d40c-4b7c-9edd-fd6d151bc18f",
+            "created_at": "2026-10-09T15:13:51.954Z"
+          },
+          {
+            "id": "20e09a43-2aea-40cc-ab4e-0db0af2bfa9e",
+            "text": "前面那个地址作废，青禾路18号写错了，改成白榆路26号，今后都送新地址。",
+            "session_id": "session-c4852dd2-963e-4196-8f62-034078142fcf",
+            "created_at": "2026-10-09T15:13:58.132Z",
+            "preceding_text": "以后我在星桥书社订的书都寄到青禾路18号。",
+            "preceding_evidence_id": "b96b1bc1-edc0-4f9f-b02a-224440bc9a9a"
+          }
+        ],
+        "formalItems": []
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:26d824abecb9e1f0500e4e608d9815a9:56e3aa223cc8db325ada5108e840880ef9f42220fa642ad2b65af053edf8cd99",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-80d057964bd2553a807121ee976b85def893f290fc13cbb996b98c39615e0495",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:4e69f615456a3040854d3b65a289bbd8:01add92875028cf4fceed45b16f24a6a836f444db15b726deff777b0f15f80b8",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-80d057964bd2553a807121ee976b85def893f290fc13cbb996b98c39615e0495",
+              "replacement_cognition_id": "cognition-5c41eb7bd31b8a3d1217890342b745fa04d37bd2d412a9a30686a7d4f8edb075",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户前面那个地址作废，青禾路18号写错了，改成白榆路26号，今后都送新地址。"
+    ],
+    "currentEntities": [
+      "星桥书社"
+    ]
+  },
+  {
+    "run": "forget-pair\\",
+    "id": "qa2-01-water",
+    "model": "mimo",
+    "settledMode": false,
+    "answer": "今天浇 150 毫升。按你后来的更正，之前的 300 毫升作废，以 150 毫升为准。",
+    "automaticPass": false,
+    "actualInjection": [
+      {
+        "contextText": "【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n较早（已被随后原话纠正，不作为当前值）：我养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。\n随后纠正（优先于较早原话与正式记忆）：前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。",
+        "worldRevision": 0,
+        "recentEvidence": [
+          {
+            "id": "88f0ebbe-3230-4462-ac3a-e548850a4796",
+            "text": "前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。",
+            "session_id": "session-7c56c5b2-8e73-4fdd-b768-86a7eb0996eb",
+            "created_at": "2026-10-09T15:17:50.386Z",
+            "preceding_text": "我养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。",
+            "preceding_evidence_id": "999f7ab0-0b12-4e6c-8d29-20136d687389",
+            "correction_status": "certain"
+          }
+        ],
+        "formalItems": []
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:159a2880fe048332deecbfb29ab2da8d:759df2818782f6d947b007ceee2baa198d6c24ce11ad3e3888409f325f43e718",
+          "cognitions": [
+            {
+              "action": "form",
+              "cognition_id": "cognition-64fd243c0b175a1c1c2e589759bc0d0a4ccdd7f38ee4089fa0982ebadcf427fd",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "attribute"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:994cd1883db93acb01ae6d6e56aa48b9:1bcbbbf1075ec98ebfed5c6a1be0bb93cd067257c38d745e11150487257508da",
+          "cognitions": [
+            {
+              "action": "correct",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "prior_cognition_id": "cognition-64fd243c0b175a1c1c2e589759bc0d0a4ccdd7f38ee4089fa0982ebadcf427fd",
+              "replacement_cognition_id": "cognition-f016620eaadca469234bf2563085c9bb75d79b4f3d971ff8ab37bf6f5044098d",
+              "statement_kind": "attribute"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。"
+    ],
+    "currentEntities": [
+      "阳台盆栽"
+    ],
+    "forget": {
+      "passed": true,
+      "files": 104,
+      "byteHits": [],
+      "tables": 38,
+      "databaseHits": 0,
+      "contextAfterForget": ""
+    }
+  },
+  {
+    "run": "name-formal-mimo-default\\",
+    "id": "holdout-name",
+    "model": "mimo",
+    "settledMode": false,
+    "answer": "报名陶艺兴趣组请找**林洲**（此前记的“林舟”是错名，已更正）。",
+    "automaticPass": false,
+    "actualInjection": [
+      {
+        "contextText": "【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。\n较早（已被随后原话纠正，不作为当前值）：我们陶艺兴趣组的固定联系人叫林舟，每次报名都找他。\n随后纠正（优先于较早原话与正式记忆）：那个人名写错了，应该是林洲，不是林舟，以后按林洲这个名字来。",
+        "worldRevision": 0,
+        "recentEvidence": [
+          {
+            "id": "c873268c-5a70-4be4-bcac-e4d7e7afa958",
+            "text": "那个人名写错了，应该是林洲，不是林舟，以后按林洲这个名字来。",
+            "session_id": "session-905a3d4f-5554-4bea-8a53-7c06c70d6e97",
+            "created_at": "2026-10-09T15:21:02.842Z",
+            "preceding_text": "我们陶艺兴趣组的固定联系人叫林舟，每次报名都找他。",
+            "preceding_evidence_id": "b5472328-eb7d-4997-a9f4-c66e7baffcf0",
+            "correction_status": "certain"
+          }
+        ],
+        "formalItems": []
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:b1c3f6c928355f012b1aad279444bffb:a8c7d35748ae27282f2059312ea35ce77ea2811ad3b0126b32b2065dc37f1c47",
+          "cognitions": [
+            {
+              "action": "form",
+              "canonical_name": "林舟",
+              "cognition_id": "cognition-7ca49c576067d7870568f25a23efee24322c0f91da33f8ca5b7efb7fed0d03ce",
+              "confidence": 600,
+              "cred_status": "limited",
+              "entity_id": "entity-0c4d54b9b83339a3c2bbd04bf2c6bccefaaddf93e5f7aa04811cc4c5582f57e5",
+              "entity_kind": "person",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "naming"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:3f41b96a0e5532f55acd89b016cc00c6:e33b2d14be4b2e0c4f0bbfa0936d6e67da06c09337766260aa7b973c8d8faee7",
+          "cognitions": [
+            {
+              "action": "correct",
+              "prior_entity_id": "entity-0c4d54b9b83339a3c2bbd04bf2c6bccefaaddf93e5f7aa04811cc4c5582f57e5",
+              "reason": "name_corrected",
+              "replacement_entity_id": "entity-9a433c84333d3541b234ebb8aefbdd2eb4b94053229fc8ae6e65e2b226e23166",
+              "statement_kind": "alias"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户陶艺兴趣组的固定联系人叫林洲"
+    ],
+    "currentEntities": [
+      "林洲"
+    ]
+  },
+  {
+    "run": "name-formal-mimo-settled\\",
+    "id": "holdout-name",
+    "model": "mimo",
+    "settledMode": true,
+    "answer": "报名陶艺兴趣组找**林洲**，他是兴趣组的固定联系人，每次报名都联系他即可。",
+    "automaticPass": true,
+    "actualInjection": [
+      {
+        "contextText": "记忆：用户陶艺兴趣组的固定联系人叫林洲，每次报名都找他。",
+        "worldRevision": 2,
+        "recentEvidence": [],
+        "formalItems": [
+          {
+            "id": "cognition-58fd73b48be698bdd9cdd344d621c165",
+            "kind": "cognition",
+            "summary": "用户陶艺兴趣组的固定联系人叫林洲，每次报名都找他。"
+          }
+        ]
+      }
+    ],
+    "formation": [
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:c4cde2871f1f3b4b93d71ba31a6d5d57:9fcba55065bb43c71782ea31fb648db1f34a43504a504cf67f3898442c78fb7e",
+          "cognitions": [
+            {
+              "action": "form",
+              "canonical_name": "林舟",
+              "cognition_id": "cognition-e024f22569a0e7cba511dcba5c2e4bb87deb88b42d02b02b67a6d9832c58716c",
+              "confidence": 600,
+              "cred_status": "limited",
+              "entity_id": "entity-e261ded6339c8c20d591be4357447bfef414f1d09305fcefd5133ff4c717bb7f",
+              "entity_kind": "person",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "naming"
+            },
+            {
+              "action": "form",
+              "cognition_id": "cognition-684a78a6ae9dad9ab769e8cf81e48ee230c2c1ce050c0e4a942db194499fa384",
+              "confidence": 600,
+              "cred_status": "limited",
+              "evidence_count": 1,
+              "formed_by": "stated",
+              "statement_kind": "preference"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 1
+        }
+      },
+      {
+        "state": "applied",
+        "outcome": {
+          "boundary_event_id": "weftmate-turn-boundary-v1:156fe13f2c32b1f495e161ff41d9ec98:ec5f620c5622c9f2acf732511610d8390b05f348291801b3576c3f0aeead83d8",
+          "cognitions": [
+            {
+              "action": "correct",
+              "prior_entity_id": "entity-e261ded6339c8c20d591be4357447bfef414f1d09305fcefd5133ff4c717bb7f",
+              "reason": "name_corrected",
+              "replacement_entity_id": "entity-c96124babc18a4f7dee5afe707ce7bf67bcf0aa8da8de1bc73162efdf1664a4e",
+              "statement_kind": "alias"
+            }
+          ],
+          "schema_version": 8,
+          "state": "applied",
+          "world_revision": 2
+        }
+      },
+      {
+        "state": "no_change",
+        "outcome": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      }
+    ],
+    "currentCognitions": [
+      "用户每次报名都找他。",
+      "用户陶艺兴趣组的固定联系人叫林洲，每次报名都找他。"
+    ],
+    "currentEntities": [
+      "林洲"
+    ]
+  }
+]

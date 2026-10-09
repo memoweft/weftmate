@@ -1,0 +1,387 @@
+[
+  {
+    "id": "qa2-01-water",
+    "model": "mimo",
+    "settledMode": false,
+    "root": "C:/Temp/weftmate-mf2-eAA1es",
+    "startedAt": "2026-10-09T15:08:35.634Z",
+    "turns": [],
+    "settlements": [
+      {
+        "memory_world_job": [],
+        "cognition": [],
+        "cognition_transitions": [],
+        "relationship": [],
+        "entity": []
+      }
+    ],
+    "turnResults": [
+      {
+        "id": "qa2-01-water-1",
+        "title": "qa2-01-water",
+        "category": "memory",
+        "status": "failed",
+        "reason": "Credentials must belong to an eval- account on this host",
+        "durationMs": 0,
+        "checks": [],
+        "turns": [],
+        "replySummary": "",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness."
+      },
+      {
+        "id": "qa2-01-water-2",
+        "title": "qa2-01-water",
+        "category": "memory",
+        "status": "failed",
+        "reason": "Credentials must belong to an eval- account on this host",
+        "durationMs": 0,
+        "checks": [],
+        "turns": [],
+        "replySummary": "",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness."
+      },
+      {
+        "id": "qa2-01-water-3",
+        "title": "qa2-01-water",
+        "category": "memory",
+        "status": "failed",
+        "reason": "Credentials must belong to an eval- account on this host",
+        "durationMs": 0,
+        "checks": [],
+        "turns": [],
+        "replySummary": "",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness."
+      }
+    ],
+    "expectedValuePresent": false,
+    "rejectedValueMentioned": false,
+    "rubric": "采用每次150毫升；不得把300毫升作为当前用量。",
+    "answer": "",
+    "automaticPass": false,
+    "formalItems": {
+      "ownerId": "owner-198f1889-655c-48fa-94c2-81db21bda1c1",
+      "items": [],
+      "worldRevision": 0,
+      "nextCursor": null,
+      "hasMore": false,
+      "searchScope": "account_snapshot"
+    },
+    "finalStorage": {
+      "memory_world_job": [],
+      "cognition": [],
+      "cognition_transitions": [],
+      "relationship": [],
+      "entity": []
+    },
+    "error": "TypeError: Cannot read properties of undefined (reading 'sessionId')",
+    "endedAt": "2026-10-09T15:08:49.122Z"
+  },
+  {
+    "id": "holdout-time",
+    "model": "mimo",
+    "settledMode": false,
+    "root": "C:/Temp/weftmate-mf2-2HR8bc",
+    "startedAt": "2026-10-09T15:08:50.951Z",
+    "turns": [],
+    "settlements": [
+      {
+        "memory_world_job": [],
+        "cognition": [],
+        "cognition_transitions": [],
+        "relationship": [],
+        "entity": []
+      }
+    ],
+    "turnResults": [
+      {
+        "id": "holdout-time-1",
+        "title": "holdout-time",
+        "category": "memory",
+        "status": "failed",
+        "reason": "Credentials must belong to an eval- account on this host",
+        "durationMs": 0,
+        "checks": [],
+        "turns": [],
+        "replySummary": "",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness."
+      },
+      {
+        "id": "holdout-time-2",
+        "title": "holdout-time",
+        "category": "memory",
+        "status": "failed",
+        "reason": "Credentials must belong to an eval- account on this host",
+        "durationMs": 0,
+        "checks": [],
+        "turns": [],
+        "replySummary": "",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness."
+      },
+      {
+        "id": "holdout-time-3",
+        "title": "holdout-time",
+        "category": "memory",
+        "status": "failed",
+        "reason": "Credentials must belong to an eval- account on this host",
+        "durationMs": 0,
+        "checks": [],
+        "turns": [],
+        "replySummary": "",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness."
+      }
+    ],
+    "expectedValuePresent": false,
+    "rejectedValueMentioned": false,
+    "rubric": "明确回答周四20:15（晚上八点十五）开始，不能仍采用19:30。",
+    "answer": "",
+    "automaticPass": false,
+    "formalItems": {
+      "ownerId": "owner-f426c751-4245-43df-8a84-37c7ba66ec09",
+      "items": [],
+      "worldRevision": 0,
+      "nextCursor": null,
+      "hasMore": false,
+      "searchScope": "account_snapshot"
+    },
+    "finalStorage": {
+      "memory_world_job": [],
+      "cognition": [],
+      "cognition_transitions": [],
+      "relationship": [],
+      "entity": []
+    },
+    "error": "TypeError: Cannot read properties of undefined (reading 'sessionId')",
+    "endedAt": "2026-10-09T15:09:02.304Z"
+  },
+  {
+    "id": "holdout-name",
+    "model": "mimo",
+    "settledMode": false,
+    "root": "C:/Temp/weftmate-mf2-8duvq0",
+    "startedAt": "2026-10-09T15:09:03.827Z",
+    "turns": [],
+    "settlements": [
+      {
+        "memory_world_job": [],
+        "cognition": [],
+        "cognition_transitions": [],
+        "relationship": [],
+        "entity": []
+      }
+    ],
+    "turnResults": [
+      {
+        "id": "holdout-name-1",
+        "title": "holdout-name",
+        "category": "memory",
+        "status": "failed",
+        "reason": "Credentials must belong to an eval- account on this host",
+        "durationMs": 0,
+        "checks": [],
+        "turns": [],
+        "replySummary": "",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness."
+      },
+      {
+        "id": "holdout-name-2",
+        "title": "holdout-name",
+        "category": "memory",
+        "status": "failed",
+        "reason": "Credentials must belong to an eval- account on this host",
+        "durationMs": 0,
+        "checks": [],
+        "turns": [],
+        "replySummary": "",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness."
+      },
+      {
+        "id": "holdout-name-3",
+        "title": "holdout-name",
+        "category": "memory",
+        "status": "failed",
+        "reason": "Credentials must belong to an eval- account on this host",
+        "durationMs": 0,
+        "checks": [],
+        "turns": [],
+        "replySummary": "",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness."
+      }
+    ],
+    "expectedValuePresent": false,
+    "rejectedValueMentioned": false,
+    "rubric": "报名应找林洲，不能把林舟作为当前正确姓名。",
+    "answer": "",
+    "automaticPass": false,
+    "formalItems": {
+      "ownerId": "owner-b49b0b1c-e0ea-4cd3-95a9-c626bdf47426",
+      "items": [],
+      "worldRevision": 0,
+      "nextCursor": null,
+      "hasMore": false,
+      "searchScope": "account_snapshot"
+    },
+    "finalStorage": {
+      "memory_world_job": [],
+      "cognition": [],
+      "cognition_transitions": [],
+      "relationship": [],
+      "entity": []
+    },
+    "error": "TypeError: Cannot read properties of undefined (reading 'sessionId')",
+    "endedAt": "2026-10-09T15:09:14.503Z"
+  },
+  {
+    "id": "holdout-price",
+    "model": "mimo",
+    "settledMode": false,
+    "root": "C:/Temp/weftmate-mf2-LgwLSn",
+    "startedAt": "2026-10-09T15:09:16.288Z",
+    "turns": [],
+    "settlements": [
+      {
+        "memory_world_job": [],
+        "cognition": [],
+        "cognition_transitions": [],
+        "relationship": [],
+        "entity": []
+      }
+    ],
+    "turnResults": [
+      {
+        "id": "holdout-price-1",
+        "title": "holdout-price",
+        "category": "memory",
+        "status": "failed",
+        "reason": "Credentials must belong to an eval- account on this host",
+        "durationMs": 0,
+        "checks": [],
+        "turns": [],
+        "replySummary": "",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness."
+      },
+      {
+        "id": "holdout-price-2",
+        "title": "holdout-price",
+        "category": "memory",
+        "status": "failed",
+        "reason": "Credentials must belong to an eval- account on this host",
+        "durationMs": 0,
+        "checks": [],
+        "turns": [],
+        "replySummary": "",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness."
+      },
+      {
+        "id": "holdout-price-3",
+        "title": "holdout-price",
+        "category": "memory",
+        "status": "failed",
+        "reason": "Credentials must belong to an eval- account on this host",
+        "durationMs": 0,
+        "checks": [],
+        "turns": [],
+        "replySummary": "",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness."
+      }
+    ],
+    "expectedValuePresent": false,
+    "rejectedValueMentioned": false,
+    "rubric": "用新单价36元计算两块共72元，不能按旧价48元算96元。",
+    "answer": "",
+    "automaticPass": false,
+    "formalItems": {
+      "ownerId": "owner-272e36ed-eb0a-46c3-8c0f-e12606f9fa6d",
+      "items": [],
+      "worldRevision": 0,
+      "nextCursor": null,
+      "hasMore": false,
+      "searchScope": "account_snapshot"
+    },
+    "finalStorage": {
+      "memory_world_job": [],
+      "cognition": [],
+      "cognition_transitions": [],
+      "relationship": [],
+      "entity": []
+    },
+    "error": "TypeError: Cannot read properties of undefined (reading 'sessionId')",
+    "endedAt": "2026-10-09T15:09:30.008Z"
+  },
+  {
+    "id": "holdout-address",
+    "model": "mimo",
+    "settledMode": false,
+    "root": "C:/Temp/weftmate-mf2-2Ae3nU",
+    "startedAt": "2026-10-09T15:09:31.575Z",
+    "turns": [],
+    "settlements": [
+      {
+        "memory_world_job": [],
+        "cognition": [],
+        "cognition_transitions": [],
+        "relationship": [],
+        "entity": []
+      }
+    ],
+    "turnResults": [
+      {
+        "id": "holdout-address-1",
+        "title": "holdout-address",
+        "category": "memory",
+        "status": "failed",
+        "reason": "Credentials must belong to an eval- account on this host",
+        "durationMs": 0,
+        "checks": [],
+        "turns": [],
+        "replySummary": "",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness."
+      },
+      {
+        "id": "holdout-address-2",
+        "title": "holdout-address",
+        "category": "memory",
+        "status": "failed",
+        "reason": "Credentials must belong to an eval- account on this host",
+        "durationMs": 0,
+        "checks": [],
+        "turns": [],
+        "replySummary": "",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness."
+      },
+      {
+        "id": "holdout-address-3",
+        "title": "holdout-address",
+        "category": "memory",
+        "status": "failed",
+        "reason": "Credentials must belong to an eval- account on this host",
+        "durationMs": 0,
+        "checks": [],
+        "turns": [],
+        "replySummary": "",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness."
+      }
+    ],
+    "expectedValuePresent": false,
+    "rejectedValueMentioned": false,
+    "rubric": "收件地址为白榆路26号，不能继续使用青禾路18号。",
+    "answer": "",
+    "automaticPass": false,
+    "formalItems": {
+      "ownerId": "owner-570f8dd1-fe95-47a3-9214-ab186afca014",
+      "items": [],
+      "worldRevision": 0,
+      "nextCursor": null,
+      "hasMore": false,
+      "searchScope": "account_snapshot"
+    },
+    "finalStorage": {
+      "memory_world_job": [],
+      "cognition": [],
+      "cognition_transitions": [],
+      "relationship": [],
+      "entity": []
+    },
+    "error": "TypeError: Cannot read properties of undefined (reading 'sessionId')",
+    "endedAt": "2026-10-09T15:09:41.783Z"
+  }
+]

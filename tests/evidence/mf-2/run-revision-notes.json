@@ -1,0 +1,12 @@
+{
+  "coreBaseline": "cb10a16a7cfe112f5bee2b0e19ad49586b161b79",
+  "coreFinal": "3fec305b87b9857324b0db7e1db408993321ac93",
+  "protocolSha256": "3eb325b5e2214632e4d83d8d48e0b219c74248d63d56f3534937c3d02fe118f1",
+  "notes": [
+    "Live development runs started from the worktree with uncommitted MF-2 edits, so a header containing the old git HEAD is not a claim that those edits were absent.",
+    "The legacy m2-exit runner captured its revision header before waiting on the LAN lock. Its four-mimo header therefore predates the actual 15:39:49Z host launch; that launch loaded the final Core source, which had been committed as 3fec305 at 15:28Z. The runner now captures revisions when each baseline starts.",
+    "The eight-step run started with the recent-evidence/host-presentation changes and later restarted its host at step 06 after the final Core formation guidance existed. It passed all eight steps; it is not represented as a pristine single-commit eight-step run.",
+    "Final-source regression is additionally covered by the original four scenarios, the complete LAN settled batch, formal-name reruns, and full CI at the pinned Core head.",
+    "Original host-judge HTTP 503 errors in the four-case runs are preserved. direct-semantics.json applies the existing MF-1 judge and unchanged scenario criteria to those original replies; provisional versus formal source checks remain separate."
+  ]
+}

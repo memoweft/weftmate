@@ -1,0 +1,11 @@
+{
+  "checkedAt": "2026-10-09T15:49:44.689Z",
+  "explicitlyTerminatedProcesses": 10,
+  "terminatedPids": [51808, 48732, 35616, 25176, 51080, 45644, 25816, 30836, 13816, 28096],
+  "reason": "The initial old-runner invocation had a wrong selection flag and was stopped as a complete isolated process tree. All later runners closed their own Electron, DSH, Core and bridge processes in finally blocks and their terminal sessions completed.",
+  "remainingMatchedProcesses": 0,
+  "lanLockPresent": false,
+  "simulatorsStarted": 0,
+  "dailyHostOrLocalModelStopped": false,
+  "scope": "Only MF-2 test commands, the w5 test/Electron paths, and recorded synthetic temporary roots. The count is explicit PID termination, not an invented total for normal exits."
+}

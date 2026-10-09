@@ -1,0 +1,317 @@
+{
+  "method": "Codex read each complete response against the frozen rubric. Original result and automaticPass fields are unchanged. Formal formation is tracked separately; name-formal-* are explicit follow-up runs.",
+  "matrices": [
+    {
+      "run": "before-mimo-default",
+      "passed": 2,
+      "total": 5,
+      "rows": [
+        {
+          "id": "qa2-01-water",
+          "source": "before-mimo-default-valid/results.json",
+          "pass": false,
+          "answer": "每次 300 毫升，按你固定的用量给阳台盆栽浇就行。",
+          "reason": "回答把已作废的旧值作为当前事实。",
+          "formalCorrectionApplied": true
+        },
+        {
+          "id": "holdout-time",
+          "source": "before-mimo-default-valid/results.json",
+          "pass": false,
+          "answer": "每周四晚上 **19:30** 开始（账号时区 Asia/Shanghai），也就是本周四（10 月 15 日）19:30。",
+          "reason": "回答把已作废的旧值作为当前事实。",
+          "formalCorrectionApplied": true
+        },
+        {
+          "id": "holdout-name",
+          "source": "before-mimo-default-valid/results.json",
+          "pass": true,
+          "answer": "报名陶艺兴趣组找**林洲**即可，他是固定联系人。",
+          "reason": "当前值符合固定判据；若提及旧值，明确标为已纠正或作废。",
+          "formalCorrectionApplied": false
+        },
+        {
+          "id": "holdout-price",
+          "source": "before-mimo-default-valid/results.json",
+          "pass": false,
+          "answer": "96元。每块48元，两块共96元。",
+          "reason": "回答把已作废的旧值作为当前事实。",
+          "formalCorrectionApplied": true
+        },
+        {
+          "id": "holdout-address",
+          "source": "before-mimo-default-valid/results.json",
+          "pass": true,
+          "answer": "这次应写 **白榆路26号**。青禾路18号已作废，不要用。",
+          "reason": "当前值符合固定判据；若提及旧值，明确标为已纠正或作废。",
+          "formalCorrectionApplied": true
+        }
+      ]
+    },
+    {
+      "run": "before-lan-default",
+      "passed": 2,
+      "total": 5,
+      "rows": [
+        {
+          "id": "qa2-01-water",
+          "source": "before-lan-default/results.json",
+          "pass": false,
+          "answer": "根据你之前的习惯，阳台盆栽每次浇水固定用量是 **300 毫升**，今天就按这个量来。",
+          "reason": "回答把已作废的旧值作为当前事实。",
+          "formalCorrectionApplied": true
+        },
+        {
+          "id": "holdout-time",
+          "source": "before-lan-default/results.json",
+          "pass": false,
+          "answer": "根据你的历史记忆，你的线上读书会是每周固定在**周四晚上 19:30**开始。\n\n今天是 2026-10-09 周五，亚洲/上海时间 15:14。\n* 这周的周四是 2026-10-08，周四 19:30 已经过去了。\n* 下一次是下周四 2026-10-15 19:30。",
+          "reason": "回答把已作废的旧值作为当前事实。",
+          "formalCorrectionApplied": true
+        },
+        {
+          "id": "holdout-name",
+          "source": "before-lan-default/results.json",
+          "pass": true,
+          "answer": "陶艺兴趣组报名找 **林洲**。",
+          "reason": "当前值符合固定判据；若提及旧值，明确标为已纠正或作废。",
+          "formalCorrectionApplied": false
+        },
+        {
+          "id": "holdout-price",
+          "source": "before-lan-default/results.json",
+          "pass": false,
+          "answer": "每块 48 元，两块一共 **96 元**。",
+          "reason": "回答把已作废的旧值作为当前事实。",
+          "formalCorrectionApplied": true
+        },
+        {
+          "id": "holdout-address",
+          "source": "before-lan-default/results.json",
+          "pass": true,
+          "answer": "星桥书社寄书的收件地址用你最新纠正的：**白榆路26号**。\n\n你之前说过青禾路18号，后来明确纠正说青禾路18号写错了、作废，改为白榆路26号，今后都送新地址。",
+          "reason": "当前值符合固定判据；若提及旧值，明确标为已纠正或作废。",
+          "formalCorrectionApplied": true
+        }
+      ]
+    },
+    {
+      "run": "after-mimo-default",
+      "passed": 5,
+      "total": 5,
+      "rows": [
+        {
+          "id": "qa2-01-water",
+          "source": "after-mimo-default/results.json",
+          "pass": true,
+          "answer": "今天浇水按 **150 毫升** 来量（之前说的 300 毫升已作废，以这个小的数值为准）。",
+          "reason": "当前值符合固定判据；若提及旧值，明确标为已纠正或作废。",
+          "formalCorrectionApplied": true
+        },
+        {
+          "id": "holdout-time",
+          "source": "after-mimo-default-rest/results.json",
+          "pass": true,
+          "answer": "按你最近的调整，这周四的线上读书会是 **20:15** 开始（原定的 19:30 已取消，以后都按 20:15）。",
+          "reason": "当前值符合固定判据；若提及旧值，明确标为已纠正或作废。",
+          "formalCorrectionApplied": true
+        },
+        {
+          "id": "holdout-name",
+          "source": "after-mimo-default-rest/results.json",
+          "pass": true,
+          "answer": "报名陶艺兴趣组找**林洲**。",
+          "reason": "当前值符合固定判据；若提及旧值，明确标为已纠正或作废。",
+          "formalCorrectionApplied": false
+        },
+        {
+          "id": "holdout-price",
+          "source": "after-mimo-default-rest/results.json",
+          "pass": true,
+          "answer": "两块一共 72 元（每块 36 元）。",
+          "reason": "当前值符合固定判据；若提及旧值，明确标为已纠正或作废。",
+          "formalCorrectionApplied": true
+        },
+        {
+          "id": "holdout-address",
+          "source": "after-mimo-default-rest/results.json",
+          "pass": true,
+          "answer": "这次寄书应写 **白榆路26号**。青禾路18号已作废，今后星桥书社订的书都送白榆路26号这个新地址。",
+          "reason": "当前值符合固定判据；若提及旧值，明确标为已纠正或作废。",
+          "formalCorrectionApplied": true
+        }
+      ]
+    },
+    {
+      "run": "after-mimo-settled",
+      "passed": 5,
+      "total": 5,
+      "rows": [
+        {
+          "id": "qa2-01-water",
+          "source": "after-mimo-settled/results.json",
+          "pass": true,
+          "answer": "按小的那个数来：今天给阳台盆栽浇水按 **150 毫升** 量取（300 毫升那个数已作废，不用再参考）。",
+          "reason": "当前值符合固定判据；若提及旧值，明确标为已纠正或作废。",
+          "formalCorrectionApplied": true
+        },
+        {
+          "id": "holdout-time",
+          "source": "after-mimo-settled/results.json",
+          "pass": true,
+          "answer": "<tool_call><function=load_tools><parameter(names>[\"schedule_list\"])</parameter></function></tool_call>\n这周四的线上读书会是晚上 **20:15** 开始（原来 19:30 的时间已取消，以新时间为准）。",
+          "reason": "当前值符合固定判据；若提及旧值，明确标为已纠正或作废。",
+          "formalCorrectionApplied": true
+        },
+        {
+          "id": "holdout-name",
+          "source": "after-mimo-settled/results.json",
+          "pass": true,
+          "answer": "报名陶艺兴趣组找**林洲**（注意是\"洲\"，不是\"舟\"），每次报名都联系他即可。",
+          "reason": "当前值符合固定判据；若提及旧值，明确标为已纠正或作废。",
+          "formalCorrectionApplied": false
+        },
+        {
+          "id": "holdout-price",
+          "source": "after-mimo-settled/results.json",
+          "pass": true,
+          "answer": "按单价 36 元算（之前的 48 元作废）：两块手工香皂共 **72 元**。",
+          "reason": "当前值符合固定判据；若提及旧值，明确标为已纠正或作废。",
+          "formalCorrectionApplied": true
+        },
+        {
+          "id": "holdout-address",
+          "source": "after-mimo-settled/results.json",
+          "pass": true,
+          "answer": "这次寄书请写：**白榆路26号**。\n\n之前那个地址已作废（青禾路18号写错了），今后一律用这个新地址。",
+          "reason": "当前值符合固定判据；若提及旧值，明确标为已纠正或作废。",
+          "formalCorrectionApplied": true
+        }
+      ]
+    },
+    {
+      "run": "after-lan-default",
+      "passed": 5,
+      "total": 5,
+      "rows": [
+        {
+          "id": "qa2-01-water",
+          "source": "after-lan-default/results.json",
+          "pass": true,
+          "answer": "按你最近的纠正，阳台盆栽每次浇水的用量是 **150 毫升**。\n\n你之前说过是 300 毫升，但随后纠正说报大了，300 毫升作废，后面都以 150 毫升为准。今天就按 150 毫升浇。",
+          "reason": "当前值符合固定判据；若提及旧值，明确标为已纠正或作废。",
+          "formalCorrectionApplied": true
+        },
+        {
+          "id": "holdout-time",
+          "source": "after-lan-default/results.json",
+          "pass": true,
+          "answer": "根据你最新的纠正，线上读书会的时间已改为 **周四 20:15**，19:30 已取消，以后都用新时间。\n\n现在是 2026-10-09 Asia/Shanghai 周五 23:22，所以本周四 2026-10-08 的场次已经过去，下一次是下周四 2026-10-15 20:15 开始。",
+          "reason": "当前值符合固定判据；若提及旧值，明确标为已纠正或作废。",
+          "formalCorrectionApplied": true
+        },
+        {
+          "id": "holdout-name",
+          "source": "after-lan-default/results.json",
+          "pass": true,
+          "answer": "找林洲报名就行。记忆里你之前说固定联系人是林舟，后来纠正为林洲，以后按林洲这个名字来。",
+          "reason": "当前值符合固定判据；若提及旧值，明确标为已纠正或作废。",
+          "formalCorrectionApplied": false
+        },
+        {
+          "id": "holdout-price",
+          "source": "after-lan-default/results.json",
+          "pass": true,
+          "answer": "邻居买两块手工香皂，按你最新纠正的价格 36 元/块 计算：\n\n2 × 36 元 = **72 元**\n\n你之前说的 48 元/块 已作废，后续按 36 元算。",
+          "reason": "当前值符合固定判据；若提及旧值，明确标为已纠正或作废。",
+          "formalCorrectionApplied": true
+        },
+        {
+          "id": "holdout-address",
+          "source": "after-lan-default/results.json",
+          "pass": true,
+          "answer": "星桥书社这次寄书应该写 **白榆路26号**。\n\n你之前说的“青禾路18号”已作废，你纠正过改成白榆路26号，今后都送新地址。",
+          "reason": "当前值符合固定判据；若提及旧值，明确标为已纠正或作废。",
+          "formalCorrectionApplied": true
+        }
+      ]
+    },
+    {
+      "run": "after-lan-settled",
+      "passed": 5,
+      "total": 5,
+      "rows": [
+        {
+          "id": "qa2-01-water",
+          "source": "after-lan-settled/results.json",
+          "pass": true,
+          "answer": "根据你之前的记录，阳台盆栽浇水量以 **150 毫升** 为准，300 毫升的数作废，后面都按小的这个数来。\n\n今天浇水就按 150 ml/盆控制即可。如果是多盆，统一按这个量别超。\n",
+          "reason": "当前值符合固定判据；旧值仅作为已作废的历史说明。",
+          "formalCorrectionApplied": true
+        },
+        {
+          "id": "holdout-time",
+          "source": "after-lan-settled/results.json",
+          "pass": true,
+          "answer": "根据你刚调整过的记忆，你把线上读书会的开始时间改成了 **20:15**，19:30 的旧时间已取消，以后都用新时间。\n\n当前账号时区 Asia/Shanghai，现在是 2026-10-09 周五 23:31。  \n本周的周四是 2026-10-08，已经过去，若按你最新的 20:15 来算，那场是在昨天 20:15 开始。  \n你说的“这周四”如果是指下个周四 2026-10-15，则仍按新时间 20:15 开始。",
+          "reason": "当前值符合固定判据；旧值仅作为已作废的历史说明。",
+          "formalCorrectionApplied": true
+        },
+        {
+          "id": "holdout-name",
+          "source": "after-lan-settled/results.json",
+          "pass": true,
+          "answer": "陶艺兴趣组的固定联系人是 **林洲**，报名就找他。",
+          "reason": "当前值符合固定判据；旧值仅作为已作废的历史说明。",
+          "formalCorrectionApplied": true
+        },
+        {
+          "id": "holdout-price",
+          "source": "after-lan-settled/results.json",
+          "pass": true,
+          "answer": "两块手工香皂按你修正后的单价算：\n\n单块 36 元 × 2 = 72 元\n\n一共 72 元。",
+          "reason": "当前值符合固定判据；旧值仅作为已作废的历史说明。",
+          "formalCorrectionApplied": true
+        },
+        {
+          "id": "holdout-address",
+          "source": "after-lan-settled/results.json",
+          "pass": true,
+          "answer": "星桥书社这次寄书请用新地址 **白榆路26号**。\n\n你之前说的青禾路18号已作废，后续都送白榆路26号。",
+          "reason": "当前值符合固定判据；旧值仅作为已作废的历史说明。",
+          "formalCorrectionApplied": true
+        }
+      ]
+    },
+    {
+      "run": "name-formal-mimo-default",
+      "passed": 1,
+      "total": 1,
+      "rows": [
+        {
+          "id": "holdout-name",
+          "source": "name-formal-mimo-default/results.json",
+          "pass": true,
+          "answer": "报名陶艺兴趣组请找**林洲**（此前记的“林舟”是错名，已更正）。",
+          "reason": "当前值符合固定判据；旧值仅作为已作废的历史说明。",
+          "formalCorrectionApplied": true
+        }
+      ]
+    },
+    {
+      "run": "name-formal-mimo-settled",
+      "passed": 1,
+      "total": 1,
+      "rows": [
+        {
+          "id": "holdout-name",
+          "source": "name-formal-mimo-settled/results.json",
+          "pass": true,
+          "answer": "报名陶艺兴趣组找**林洲**，他是兴趣组的固定联系人，每次报名都联系他即可。",
+          "reason": "当前值符合固定判据；旧值仅作为已作废的历史说明。",
+          "formalCorrectionApplied": true
+        }
+      ]
+    }
+  ]
+}
