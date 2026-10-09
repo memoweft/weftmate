@@ -39,14 +39,19 @@
             hasArguments: Object.keys(args).length > 0 };
     }
 
+    function executionState(step) {
+        if (step.state === 'failed' || step.jobState === 'failed') return 'failed';
+        if (step.state === 'cancelled' || step.jobState === 'killed') return 'cancelled';
+        return ['running', 'stopping'].includes(step.jobState) ? 'running' : step.state;
+    }
     function progressText(steps, terminal = false) {
-        const failed = steps.find(step => step.state === 'failed');
+        const failed = steps.find(step => executionState(step) === 'failed');
         if (failed) return { text: `第 ${failed.ordinal || steps.indexOf(failed) + 1} 步失败`, failed: true, running: false };
-        if (steps.some(step => step.state === 'cancelled')) return { text: '已停止', running: false };
-        const current = !terminal && steps.filter(step => step.state === 'running' || step.state === 'pending').at(-1);
+        if (steps.some(step => executionState(step) === 'cancelled')) return { text: '已停止', running: false };
+        const current = !terminal && steps.filter(step => ['running', 'pending'].includes(executionState(step))).at(-1);
         if (current) {
             const summary = current.summary || toolSummary(current.toolName, current.arguments);
-            return { text: current.approvalStatus === 'pending' ? `等待批准：${summary}` : `正在${summary.replace(/^运行命令：/, '运行命令 ')}…`, running: current.approvalStatus !== 'pending' };
+            return { text: current.approvalStatus === 'pending' ? `等待批准：${summary}` : current.jobState === 'stopping' ? `正在停止：${summary}…` : `正在${summary.replace(/^运行命令：/, '运行命令 ')}…`, running: current.approvalStatus !== 'pending' };
         }
         const counts = new Map();
         for (const step of steps) {
@@ -150,6 +155,6 @@
         }
         return references;
     }
-    Object.assign(globalThis.WeftUiCore, { projectTimeline, progressText, approvalProgress, executionDetailText, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, sourcePresentation });
-    globalThis.WeftUiCore.factories.timeline = () => ({ projectTimeline, progressText, approvalProgress, executionDetailText, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, sourcePresentation });
+    Object.assign(globalThis.WeftUiCore, { projectTimeline, executionState, progressText, approvalProgress, executionDetailText, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, sourcePresentation });
+    globalThis.WeftUiCore.factories.timeline = () => ({ projectTimeline, executionState, progressText, approvalProgress, executionDetailText, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, sourcePresentation });
 })();

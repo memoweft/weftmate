@@ -137,7 +137,7 @@ globalThis.WeftUiComponents.factories.tasks = (core, ui) => {
                 details.addEventListener('toggle', label); label();
                 summary.dataset.conversationTaskAction = 'more';
                 const records = ui.element('div', 'execution-records');
-                for (const step of steps) records.append(globalThis.WeftTimelineCards.step({ ...step, stepId: step.executionId, summary: `${core.executionName(step)} · ${core.executionProgress(step)}` }, savedSteps.get(step.executionId), view.running, {}));
+                for (const step of steps) records.append(globalThis.WeftTimelineCards.step({ ...step, state: core.executionState(step), stepId: step.executionId, summary: `${core.executionName(step)} · ${core.executionProgress(step)}` }, savedSteps.get(step.executionId), view.running, {}));
                 details.append(summary, records); card.append(details);
             }
             if (!entry.notice && control && control.state !== 'active')

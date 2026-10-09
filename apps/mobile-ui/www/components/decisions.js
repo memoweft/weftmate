@@ -308,7 +308,7 @@ function renderConversationTasks(){const context=conversationTaskContext(),conte
       card.classList.toggle('has-failure',!!view.failed);const details=el('details','execution-block');details.open=expanded||!!view.failed&&card.dataset.failed!=='true';card.dataset.failed=String(!!view.failed);
       const summary=el('summary','inline-progress-summary',view.text);summary.setAttribute('role','button');const arrow=el('span','progress-chevron');arrow.setAttribute('aria-hidden','true');summary.append(arrow);
       const label=()=>summary.setAttribute('aria-label',`${view.text}，${details.open?'已展开':'已收起'}`);details.addEventListener('toggle',label);label();
-      const records=el('div','execution-records');for(const step of steps){const record=el('details','execution-step');const saved=savedSteps.get(step.executionId);record.dataset.step=step.executionId;record.dataset.state=step.state;record.open=saved?.open===true||step.state==='failed'&&saved?.dataset.state!=='failed';
+      const records=el('div','execution-records');for(const step of steps){const record=el('details','execution-step');const saved=savedSteps.get(step.executionId),state=uiCore.executionState(step);record.dataset.step=step.executionId;record.dataset.state=state;record.open=saved?.open===true||state==='failed'&&saved?.dataset.state!=='failed';
         record.append(el('summary','',`${executionName(step)} · ${executionProgress(step)}`),el('p','',step.summary||executionProgress(step)));records.append(record)}
       details.append(summary,records);card.append(details)}
     if(!entry.notice&&control&&control.state!=='active')card.append(el('p','conversation-task-state',taskControlMeaning(control)));
