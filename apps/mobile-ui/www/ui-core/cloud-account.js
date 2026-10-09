@@ -207,6 +207,9 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     return cloudDirectory();
   }
   async function cloudConnect(hostId) { return client.authorized('/hosts/connect', { method: 'POST', body: { hostId } }); }
+  core.cloudOfflineStatus = hostId => client.authorized('/hosts/offline/status', { method: 'POST', body: { hostId } });
+  core.cloudOfflineIdentity = () => core.state.account && client?.config?.hostId ? {
+    origin: client.host, ownerId: core.state.account.ownerId, deviceId: core.state.device?.id, hostId: client.config.hostId } : null;
   async function cloudTrust(requestId) { return core.accessApi(`/cloud/devices/${encodeURIComponent(requestId)}/trust`, { method: 'POST', protectedWrite: true, body: {} }); }
   function cloudTrustMaterial(trust) {
     // This key comes from the already authenticated sender's host connection,

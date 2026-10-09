@@ -23,6 +23,7 @@ internal fun validBusinessPath(path: String): Boolean {
     if (path.length > 512) return false
     val route = path.substringBefore('?')
     val query = path.substringAfter('?', "")
+    if (query.isEmpty() && route.matches(Regex("/personal/v1/offline/(sync|turns)"))) return true
     if (route == "/personal/v1/usage" && (query.isEmpty() ||
         query.matches(Regex("(month=[0-9]{4}-(0[1-9]|1[0-2]))?(&?sessionId=[A-Za-z0-9_-]{1,128})?")))) return true
     if (query.isEmpty() && (route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/(metadata|fork)")) ||
@@ -774,7 +775,7 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
     fun business(host: HostIdentity, path: String, method: String, body: JSONObject?): JSONObject {
         require(method in setOf("GET", "POST", "PATCH", "DELETE"))
         require(validBusinessPath(path))
-        if (body != null) require(body.toString().toByteArray(Charsets.UTF_8).size <= 64 * 1024)
+        if (body != null) require(body.toString().toByteArray(Charsets.UTF_8).size <= if (path.startsWith("/personal/v1/offline/")) 256 * 1024 else 64 * 1024)
         val restarting = method == "POST" && path.matches(Regex("/personal/v1/system/(model|host|memory)/restart"))
         return http.request("${host.origin}$path", method, body,
             if (method == "GET") mapOf("Cookie" to host.cookie) else authWriteHeaders(host),

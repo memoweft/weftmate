@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "paidRequests": 0,
+  "core": "real",
+  "checks": [
+    "offline assistant dependencies persisted",
+    "forget cascaded into imported context",
+    "Core storage byte scan found no derived marker"
+  ]
+}
