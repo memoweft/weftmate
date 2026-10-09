@@ -1792,6 +1792,9 @@ async function bootstrap() {
         writeHostState();
         throw Object.assign(new Error('memory preset mismatch'), { code: 'MEMORY_OWNER_UNAVAILABLE' });
       }
+      const memoryPolicy = await personalAccessService.memoryTurnPolicy(binding.ownerId, request.sessionId, request.turn);
+      if (request.action === 'ingest' && !memoryPolicy.ingest) return { state: 'skipped', reasonCode: 'TEMPORARY_TURN' };
+      if (request.action === 'recall' && !memoryPolicy.recall) return { state: 'withheld', reasonCode: 'RECALL_DISABLED', memoryPolicy };
       if (request.action === 'ingest') {
         const boundary = assertOwnerBoundBoundary(request.sessionId, request.boundary);
         if (!memoryProcessingRouteForSession(binding.ownerId, request.sessionId)) {
@@ -1807,20 +1810,21 @@ async function bootstrap() {
       if (!memoryProcessingRouteForSession(binding.ownerId, request.sessionId)) {
         personalMemoryIpc.recallReplies++;
         writeHostState();
-        return { state: 'withheld', reasonCode: 'MEMORY_DESTINATION_BLOCKED' };
+        return { state: 'withheld', reasonCode: 'MEMORY_DESTINATION_BLOCKED', memoryPolicy };
       }
       personalMemoryIpc.recallRequests++;
       const foregroundProfile = settingsMod.listModelProfiles().profiles.find(profile =>
         profile.id === settingsMod.sessionModelBinding(request.sessionId));
       const finishMemory = modelScheduler.beginMemory(request.sessionId);
       const recalled = await personalMemoryManager.recall(binding.ownerId, { query: request.query,
-        sessionId: request.sessionId, modelTier: memoryRecallModelTier(foregroundProfile) }).finally(finishMemory);
+        sessionId: request.sessionId, modelTier: memoryRecallModelTier(foregroundProfile) })
+        .catch(() => ({ state: 'withheld', reasonCode: 'MEMORY_UNAVAILABLE' })).finally(finishMemory);
       if (recalled?.state === 'ready' && typeof recalled.contextText === 'string' && recalled.contextText.trim()) {
         personalMemoryIpc.recallWithContext++;
       }
       personalMemoryIpc.recallReplies++;
       writeHostState();
-      return recalled;
+      return { ...recalled, memoryPolicy };
     } : undefined,
     personalScheduleHandler: personalHostMode ? async request => {
       if (!personalAccessService || isQuitting) throw new Error('SCHEDULE_UNAVAILABLE');

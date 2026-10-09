@@ -121,6 +121,27 @@ export function nativeSessionLifecycle(ctx) {
       const handle = handles.get(sessionId)
       if (live && !handle) throw Object.assign(new Error('session lifecycle not owned'), { code: 'agent-busy' })
       if (handle) { await ctx.sessions.flush(handle.agent.session); await handle.dispose(); handles.delete(sessionId) }
+      // Native subagents are part of this conversation's execution history.
+      // Completed children retain their own logs after their handles dispose.
+      const descendants = [], owned = new Set([sessionId]);
+      const snapshots = await persistence.listSnapshots?.() ?? [];
+      for (let changed = true; changed;) {
+        changed = false;
+        for (const row of snapshots) {
+          const header = row.header;
+          if (header?.origin !== 'subagent' || !owned.has(header.parentSession) || owned.has(header.id)) continue;
+          owned.add(header.id); descendants.push(header); changed = true;
+        }
+      }
+      for (const header of descendants.reverse()) {
+        if (ctx.get('agents')?.get(header.id)) throw Object.assign(new Error('child still active'), { code: 'agent-busy' });
+        const childLocation = persistence.locate(header);
+        const childTarget = childLocation?.kind === 'jsonl' ? dirname(childLocation.path) : null;
+        const childInside = childTarget && relative(root, childTarget);
+        if (!childInside || childInside.startsWith('..') || isAbsolute(childInside)) throw new Error('child log outside session root');
+        await ctx.get('storageDomain')?.get('session_projcache')?.table('sessions').delete(header.id);
+        await rm(childTarget, { recursive: true, force: true });
+      }
       // Disposal checkpoints the last projection. Queue deletion after that
       // native write so the removed conversation cannot survive in backups.
       await ctx.get('storageDomain')?.get('session_projcache')?.table('sessions').delete(sessionId)

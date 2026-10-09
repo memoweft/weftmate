@@ -1,3 +1,4 @@
+import { validateMemorySettings } from './temporary-chats.mjs';
 import { enterProfileWrite } from '../personal-backup/write-barrier.mjs';
 import { validateChatIdentity } from './chat-identity.mjs';
 import { scheduledCommandSource } from './schedules-authorization.mjs';
@@ -85,6 +86,8 @@ export function validateSingleStore(store) {
   if (store.defaultApprovalMode !== undefined && !APPROVAL_MODES.includes(store.defaultApprovalMode)) throw failure('STORE_CORRUPT', 500);
   for (const session of Object.values(store.sessions ?? {})) {
     if (!plainObject(session)) throw failure('STORE_CORRUPT', 500);
+    try { validateMemorySettings(session); } catch { throw failure('STORE_CORRUPT', 500); }
+    if (session.expiresAt !== undefined && session.expiresAt !== null && !Number.isFinite(Date.parse(session.expiresAt))) throw failure('STORE_CORRUPT', 500);
     if (session.deepThinking !== undefined && typeof session.deepThinking !== 'boolean') throw failure('STORE_CORRUPT', 500);
     if (session.approvalMode !== undefined && !APPROVAL_MODES.includes(session.approvalMode) ||
         session.allowedApprovalCategories !== undefined && (!Array.isArray(session.allowedApprovalCategories) ||

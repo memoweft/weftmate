@@ -165,13 +165,29 @@ export function backgroundBeforeUser(messages, additions = []) {
 
 const BACKGROUND_NOTE = '【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。';
 
+export function ordinaryContextAfterTemporary(messages, events, firstTurn) {
+  const allowed = new Set(); let turn = -1;
+  for (const event of events ?? []) {
+    if (event.type === 'turn/start') turn = event.data?.turn;
+    if (turn >= firstTurn) {
+      if (event.data?.id) allowed.add(event.data.id);
+      if (event.data?.message?.id) allowed.add(event.data.message.id);
+    }
+  }
+  const current = messages.findLastIndex(message => message?.source?.kind === 'user');
+  // Mixed compaction and workspace experience have no separable provenance;
+  // do not reuse them across the private-to-ordinary transition.
+  return messages.filter((message, index) => message?.source?.kind !== 'plugin' &&
+    (allowed.has(message.id) || current >= 0 && index >= current));
+}
+
 export function apply(ctx) {
   if (process.env.WEFTMATE_PERSONAL_MEMORY_ENABLED !== '1') return;
   const bridge = new HostMemoryBridge();
   ctx.on('agent/pre-step', async (payload, next) => {
     const decision = await next();
     if (decision.kind !== 'enter') return decision;
-    const messages = stripPreviousPersonalMemoryMessages(decision.messages);
+    let messages = stripPreviousPersonalMemoryMessages(decision.messages);
     const clearedDecision = { ...decision, messages };
     if (payload?.signal?.aborted) {
       if (payload?.agent?.session) delete payload.agent.session[Symbol.for('weftmate.memoryRecall')];
@@ -190,11 +206,19 @@ export function apply(ctx) {
       payload.agent[Symbol.for('weftmate.memoryRecallPending')] = true;
       const result = await bridge.request('recall', { sessionId: session.id, turn, query,
         userMessageId: user.id }, payload.signal);
+      if (result.memoryPolicy?.resetContext) {
+        // Turning formation back on must not launder earlier private replies,
+        // compaction or experience into new ordinary assistant Evidence.
+        session[Symbol.for('weftmate.privateContextStart')] = result.memoryPolicy.contextStartTurn ?? turn;
+        messages = ordinaryContextAfterTemporary(messages, session.events, session[Symbol.for('weftmate.privateContextStart')]);
+        clearedDecision.messages = messages;
+      }
       diagnostic(result?.state === 'ready' ? 'prestep-reply-ready'
         : result?.state === 'withheld' ? 'prestep-reply-withheld' : 'prestep-reply-other');
       session[Symbol.for('weftmate.memoryRecall')] = { turn, memories: result.state === 'ready' && result.contextText?.trim() ? result.memories ?? [] : [] };
       if (result.state === 'ready' && typeof result.contextText === 'string' && result.contextText.trim() &&
           result.contextText.length <= 16_384) text = result.contextText;
+      if (result.memoryPolicy?.ingest === false) text = '本轮是临时对话：不形成记忆，不承诺以后记住，也不要提议记住本轮内容。仍可使用下方已有记忆回答。\n' + (text ?? '');
     } catch (error) {
       delete session[Symbol.for('weftmate.memoryRecall')];
       diagnostic(['MEMORY_TIMEOUT', 'MEMORY_CANCELLED', 'MEMORY_UNAVAILABLE'].includes(error?.message)
@@ -224,7 +248,11 @@ export function apply(ctx) {
     const deriveMessages = session.deriveMessages?.bind(session);
     if (deriveMessages) session.deriveMessages = () => {
       const current = session[Symbol.for('weftmate.memoryRecall')]?.messageId;
-      return backgroundBeforeUser(deriveMessages().filter(message => message?.source?.plugin !== name || message.id === current));
+      const messages = deriveMessages().filter(message => message?.source?.plugin !== name || message.id === current);
+      const firstTurn = session[Symbol.for('weftmate.privateContextStart')];
+      const ordinary = firstTurn === undefined ? messages : ordinaryContextAfterTemporary(messages, session.events, firstTurn);
+      const memory = firstTurn === undefined ? [] : messages.filter(message => message.id === current);
+      return backgroundBeforeUser(ordinary, memory);
     };
     const append = session.append.bind(session);
     session.append = (type, data, ...rest) => {
