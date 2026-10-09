@@ -19,6 +19,8 @@
 | `npm run test:contract` | 契约测试 |
 | `npm run dist:win` | 打 Windows 安装包 |
 
+模型流的 idle timeout（空闲超时）由既有 DSH（助手运行时）适配器处理，宿主默认 90 秒无增量即取消本次请求，随后沿用原生重试策略。可用进程环境变量 `WEFTMATE_STREAM_IDLE_TIMEOUT_MS` 配置毫秒数；提供方显式配置 `streamIdleTimeoutMs` 优先。持续收到正文、思考或工具参数的长回复不会因总时长超过 90 秒而停止。默认值为模型启动保留约一分钟余量，并避免 QA3-07 首块后的五分钟静默等待；这不是实际模型性能承诺，不改变原生重试次数或用户停止路径。
+
 ## Windows 桌面程序（W-1）
 
 `npm start` 默认在同一个 Electron（桌面程序框架）进程中启动个人宿主与 WeftMate 对话窗口。默认数据目录为 `%APPDATA%\com.memoweft.weftmate`；远程网页和程序共用 `src/personal-access-ui/`，桌面窗口使用独立的 persistent session（持久会话），通过已有的本地账号密码登录后记住登录。首次没有账号时，程序使用现有本机原账户设置链接进入密码设置表单，不绕过登录。
