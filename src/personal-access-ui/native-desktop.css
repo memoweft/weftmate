@@ -15,3 +15,35 @@
 .weftmate-desktop .rail-top { display: flex; align-items: center; gap: var(--wm-space-8); }
 .weftmate-desktop .rail-heading { padding: 0; flex-shrink: 0; }
 .weftmate-desktop .rail-new { order: -1; flex: 1; width: auto; min-width: 0; }
+
+/* Windows top-layer surfaces are centered in the workspace below the caption.
+   Electron supplies the actual overlay height; the fallback matches its 44px setting. */
+.weftmate-desktop[data-native-platform="win32"] {
+  --desktop-caption-height: env(titlebar-area-height, var(--wm-space-44));
+}
+.weftmate-desktop[data-native-platform="win32"] .desktop-titlebar { height: var(--desktop-caption-height); }
+.weftmate-desktop[data-native-platform="win32"] dialog {
+  --desktop-dialog-gap: var(--wm-space-16);
+  inset: var(--desktop-caption-height) 0 0;
+  margin: auto;
+  box-sizing: border-box;
+  max-width: calc(100% - 2 * var(--desktop-dialog-gap));
+  max-height: calc(100dvh - var(--desktop-caption-height) - 2 * var(--desktop-dialog-gap));
+}
+.weftmate-desktop[data-native-platform="win32"] .settings-dialog {
+  --desktop-dialog-gap: var(--wm-space-32);
+  width: min(calc(100% - 2 * var(--desktop-dialog-gap)), var(--wm-size-settings-width));
+  height: min(calc(100dvh - var(--desktop-caption-height) - 2 * var(--desktop-dialog-gap)), var(--wm-size-settings-height));
+}
+.weftmate-desktop[data-native-platform="win32"] .phone-image-preview {
+  width: calc(100% - 2 * var(--desktop-dialog-gap));
+  height: calc(100dvh - var(--desktop-caption-height) - 2 * var(--desktop-dialog-gap));
+}
+.weftmate-desktop[data-native-platform="win32"] .phone-image-preview img {
+  max-width: 100%; max-height: 100%;
+}
+@media (max-width: 720px) {
+  .weftmate-desktop[data-native-platform="win32"] .settings-dialog {
+    --desktop-dialog-gap: var(--wm-space-12);
+  }
+}

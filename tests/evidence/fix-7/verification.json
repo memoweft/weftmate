@@ -1,0 +1,338 @@
+{
+  "realElectron": true,
+  "isolatedData": true,
+  "syntheticData": true,
+  "baseline": "2a6aa9f7ad9fa02d77883940a32eb7083fae8641",
+  "checks": [
+    {
+      "name": "before-light-wide-settings",
+      "x": 40,
+      "y": 36,
+      "width": 1120,
+      "height": 728,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      },
+      "gap": null
+    },
+    {
+      "name": "before-light-wide-delete",
+      "x": 360,
+      "y": 278.75,
+      "width": 480,
+      "height": 242.5,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      },
+      "gap": null
+    },
+    {
+      "name": "before-light-wide-forget",
+      "x": 285,
+      "y": 132.78125,
+      "width": 620,
+      "height": 534.4375,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      },
+      "gap": null
+    },
+    {
+      "name": "before-dark-wide-settings",
+      "x": 40,
+      "y": 36,
+      "width": 1120,
+      "height": 728,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      },
+      "gap": null
+    },
+    {
+      "name": "before-dark-wide-delete",
+      "x": 360,
+      "y": 278.75,
+      "width": 480,
+      "height": 242.5,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      },
+      "gap": null
+    },
+    {
+      "name": "before-dark-wide-forget",
+      "x": 285,
+      "y": 132.78125,
+      "width": 620,
+      "height": 534.4375,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      },
+      "gap": null
+    },
+    {
+      "name": "before-light-narrow-settings",
+      "x": 12,
+      "y": 24,
+      "width": 456,
+      "height": 472,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 480,
+        "height": 520
+      },
+      "gap": null
+    },
+    {
+      "name": "before-light-narrow-delete",
+      "x": 8,
+      "y": 8,
+      "width": 464,
+      "height": 504,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 480,
+        "height": 520
+      },
+      "gap": null
+    },
+    {
+      "name": "before-light-narrow-forget",
+      "x": 0,
+      "y": 0,
+      "width": 470,
+      "height": 520,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 480,
+        "height": 520
+      },
+      "gap": null
+    },
+    {
+      "name": "before-dark-narrow-settings",
+      "x": 12,
+      "y": 24,
+      "width": 456,
+      "height": 472,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 480,
+        "height": 520
+      },
+      "gap": null
+    },
+    {
+      "name": "before-dark-narrow-delete",
+      "x": 8,
+      "y": 8,
+      "width": 464,
+      "height": 504,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 480,
+        "height": 520
+      },
+      "gap": null
+    },
+    {
+      "name": "before-dark-narrow-forget",
+      "x": 0,
+      "y": 0,
+      "width": 470,
+      "height": 520,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 480,
+        "height": 520
+      },
+      "gap": null
+    },
+    {
+      "name": "after-light-wide-settings",
+      "x": 40,
+      "y": 76,
+      "width": 1120,
+      "height": 692,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      },
+      "gap": 32
+    },
+    {
+      "name": "after-light-wide-delete",
+      "x": 360,
+      "y": 300.75,
+      "width": 480,
+      "height": 242.5,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      },
+      "gap": 16
+    },
+    {
+      "name": "after-light-wide-forget",
+      "x": 285,
+      "y": 154.78125,
+      "width": 620,
+      "height": 534.4375,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      },
+      "gap": 16
+    },
+    {
+      "name": "after-dark-wide-settings",
+      "x": 40,
+      "y": 76,
+      "width": 1120,
+      "height": 692,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      },
+      "gap": 32
+    },
+    {
+      "name": "after-dark-wide-delete",
+      "x": 360,
+      "y": 300.75,
+      "width": 480,
+      "height": 242.5,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      },
+      "gap": 16
+    },
+    {
+      "name": "after-dark-wide-forget",
+      "x": 285,
+      "y": 154.78125,
+      "width": 620,
+      "height": 534.4375,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      },
+      "gap": 16
+    },
+    {
+      "name": "after-light-narrow-settings",
+      "x": 12,
+      "y": 56,
+      "width": 456,
+      "height": 452,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 480,
+        "height": 520
+      },
+      "gap": 12
+    },
+    {
+      "name": "after-light-narrow-delete",
+      "x": 16,
+      "y": 60,
+      "width": 448,
+      "height": 444,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 480,
+        "height": 520
+      },
+      "gap": 16
+    },
+    {
+      "name": "after-light-narrow-forget",
+      "x": 16,
+      "y": 60,
+      "width": 438,
+      "height": 444,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 480,
+        "height": 520
+      },
+      "gap": 16
+    },
+    {
+      "name": "after-dark-narrow-settings",
+      "x": 12,
+      "y": 56,
+      "width": 456,
+      "height": 452,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 480,
+        "height": 520
+      },
+      "gap": 12
+    },
+    {
+      "name": "after-dark-narrow-delete",
+      "x": 16,
+      "y": 60,
+      "width": 448,
+      "height": 444,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 480,
+        "height": 520
+      },
+      "gap": 16
+    },
+    {
+      "name": "after-dark-narrow-forget",
+      "x": 16,
+      "y": 60,
+      "width": 438,
+      "height": 444,
+      "captionBottom": 44,
+      "viewport": {
+        "width": 480,
+        "height": 520
+      },
+      "gap": 16
+    },
+    {
+      "platform": "darwin",
+      "unchangedBounds": {
+        "x": 40,
+        "y": 36,
+        "width": 1120,
+        "height": 728
+      }
+    },
+    {
+      "platform": "web",
+      "unchangedBounds": {
+        "x": 35,
+        "y": 36,
+        "width": 1120,
+        "height": 728
+      }
+    }
+  ]
+}

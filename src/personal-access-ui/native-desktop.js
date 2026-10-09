@@ -10,6 +10,7 @@ function blendDesktopColor(base, scrim) {
   const native = window.weftmateDesktop;
   if (!native) return;
   document.documentElement.classList.add('weftmate-desktop');
+  document.documentElement.dataset.nativePlatform = native.platform;
   const bar = document.createElement('div');
   bar.className = 'desktop-titlebar'; bar.textContent = 'WeftMate'; bar.setAttribute('aria-hidden', 'true');
   const mark = document.createElement('span'); mark.className = 'wm-brand'; bar.prepend(mark);
