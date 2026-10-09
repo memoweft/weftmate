@@ -201,7 +201,7 @@ struct MemoryWorkspaceView: View {
                         if source.localContentWithheld { Text("这个来源未允许在本机显示正文。") .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
                         else if !source.contentAvailable { Text("来源正文当前不可用。") .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
                         if source.rawContentTruncated { Text("来源文字有截断。") .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
-                        Text("记录时间：\(source.recordedAt)").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+                        Text("记录时间：\(DeviceDateText.timestamp(source.recordedAt))").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                         Button("删除这个来源", role: .destructive) { pendingAction = model.actionContext(.deleteEvidence, evidenceID: source.evidenceId) }
                             .disabled(!model.canMutate || model.status?.status.capabilities.deleteEvidence != true)
                             .accessibilityIdentifier("deleteMemorySource.\(source.evidenceId)")

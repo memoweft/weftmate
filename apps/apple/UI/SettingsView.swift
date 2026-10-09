@@ -206,7 +206,6 @@ private struct SettingsCategoryView: View {
             ForEach(RunningMessageMode.allCases) { mode in
                 VStack(alignment: .leading, spacing: AppleTokens.Space.p4) { Text(mode.title); Text(mode.explanation) }.font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
             }
-            SettingsRow("语言", "当前界面使用简体中文。") { Text("简体中文").foregroundStyle(Weave.muted) }
             #if os(macOS)
             SettingsRow("开机自启", loginItem.state.explanation) {
                 Toggle("开机自启", isOn: Binding(get: { loginItem.state.isOn }, set: { value in Task { await loginItem.setEnabled(value) } }))
@@ -230,7 +229,6 @@ private struct SettingsCategoryView: View {
             }
             SettingsRow("主题色", "按钮、选中状态与交互提示使用统一主题色。") { Text("石墨").foregroundStyle(Weave.muted) }
             SettingsRow("字号", "随系统文字大小与辅助功能设置调整。") { Text("系统默认").foregroundStyle(Weave.muted) }
-            SettingsRow("界面密度", "当前布局使用标准间距。") { Text("标准").foregroundStyle(Weave.muted) }
             NavigationLink("小纬形象") { SpiritProfileView() }
         case "approvals":
             SettingsRow("默认审批模式", "按账户保存，只影响新建对话；已有对话在输入区切换。") {
@@ -267,7 +265,7 @@ private struct SettingsCategoryView: View {
             ForEach(settings.schedules, id: \.identity) { item in
                 Section {
                     SettingsRow(item.text, (item.kind == "reminder" ? "提醒" : "任务") + " · " + item.timeZone) { Text(item.state == "paused" ? "已暂停" : item.state == "completed" ? "已完成" : "已安排") }
-                    if let next = item.nextRunAt { LabeledContent("下次运行", value: next) }
+                    if let next = item.nextRunAt { LabeledContent("下次运行", value: DeviceDateText.timestamp(next)) }
                     HStack {
                         Button(item.state == "paused" ? "恢复" : "暂停") { Task { await settings.schedule(item, action: item.state == "paused" ? .resume : .pause) } }.disabled(item.state == "completed")
                         Button("立即运行") { Task { await settings.schedule(item, action: .run) } }
@@ -302,7 +300,7 @@ private struct SettingsCategoryView: View {
             SettingsRow("立即备份", "本地备份不含凭据；目前未加密，请妥善保存。") { Button("立即备份") { Task { await settings.backup() } }.disabled(settings.busy || settings.backups == nil) }
             Section("恢复备份") {
                 ForEach(settings.backups?.backups ?? []) { item in
-                    SettingsRow(item.createdAt, "\(item.size) 字节 · " + (item.verification == "valid" ? "校验通过" : "校验失败")) {
+                    SettingsRow(DeviceDateText.timestamp(item.createdAt), "\(item.size) 字节 · " + (item.verification == "valid" ? "校验通过" : "校验失败")) {
                         Button("恢复") { restoringBackup = item }.disabled(settings.busy || item.verification != "valid")
                     }
                 }

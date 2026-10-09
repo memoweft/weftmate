@@ -108,7 +108,7 @@ public struct TimelineStep: Equatable, Sendable, Identifiable {
     public var ordinal = 0
     public var decision: String?
     public var endAt: String?
-    public var summary: String { data["summary"]?.string ?? "工具执行" }
+    public var summary: String { OperationNames.text(data["summary"]?.string ?? OperationNames.tool(data["toolName"]?.string ?? "")) }
     public var effectiveState: String? {
         if data["state"]?.string == "failed" || data["jobState"]?.string == "failed" { return "failed" }
         if data["state"]?.string == "cancelled" || data["jobState"]?.string == "killed" { return "cancelled" }

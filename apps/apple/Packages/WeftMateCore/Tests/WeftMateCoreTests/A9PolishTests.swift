@@ -6,7 +6,7 @@ import Testing
     @Test func parametersNestedOutputAndRaw() {
         let raw = #"{"arguments":"{\"path\":\"notes.md\",\"command\":\"cat notes.md\",\"query\":\"合成计划\"}","output":[{"type":"tool-result","toolCallId":"synthetic","isError":false,"content":[{"type":"text","text":"第一行\n第二行"}]}]}"#
         let value = ToolStepDetail(raw: raw)
-        #expect(value.parameters.map(\.name) == ["命令", "路径", "查询"])
+        #expect(value.parameters.map(\.name) == ["命令", "路径", "查询内容"])
         #expect(value.parameters.map(\.value) == ["cat notes.md", "notes.md", "合成计划"])
         #expect(value.output == "第一行\n第二行" && value.error == nil)
         #expect(value.raw == raw)
