@@ -167,6 +167,19 @@ export function projectHistoryEvent(raw, call = null, contextTurn = null, closin
       ...(kind === 'max-tokens' ? { endReasonKind: 'max-tokens' } : {}),
       ...(Number.isSafeInteger(event.data?.turn) && event.data.turn > 0 ? { turn: event.data.turn } : {}) } }
   }
+  if (type === 'user/message' && event.data?.source?.form === 'notice') {
+    const source = event.data.source;
+    const text = event.data.content?.filter(part => part.type === 'text').map(part => part.text).join('\n') ?? '';
+    if (source.kind === 'subagent-settled' && typeof source.senderSessionId === 'string') {
+      const summary = source.summary ?? text;
+      const state = /finished and will do no further work/.test(summary) ? 'completed' : /failed|stopped|ran out|declined/.test(summary) ? 'failed' : null;
+      if (state) projected = {seq, type:'subtask.updated', data:{id:source.senderSessionId,state}};
+    } else if (source.plugin === 'tool-jobs') {
+      const id = /background job ([A-Za-z0-9._:-]+)/.exec(text)?.[1];
+      const state = /finished \[status: completed/.test(text) ? 'completed' : /finished \[status: (?:failed|killed)/.test(text) ? 'failed' : null;
+      if (id && state) projected = {seq, type:'subtask.updated', data:{id,state}};
+    }
+  }
   const data = event.data ?? {}
   const taskId = typeof data.taskId === 'string' ? data.taskId : `turn-${data.turn ?? call?.data?.turn ?? contextTurn ?? 'unknown'}`
   if (type === 'tool/call' || type === 'tool/result') {
@@ -175,11 +188,22 @@ export function projectHistoryEvent(raw, call = null, contextTurn = null, closin
     const toolName = data.name ?? call?.data?.name ?? 'tool'
     if (typeof stepId === 'string') {
       const asked = toolName === 'ask_user_question'
+      const args = toolArguments(data.arguments ?? call?.data?.arguments)
+      const output = part?.content?.filter(p => p.type === 'text').map(p => p.text).join('\n') ?? ''
+      const taskTool = ['subagent','pwsh','bash','shell','run_code'].includes(toolName)
+      const value = toolArguments(output), nativeValue = value?.value ?? value
+      const backgroundText = taskTool && /started background (?:subagent task|job) ([A-Za-z0-9._:-]+)/.exec(output)
+      const childText = taskTool && /started subagent ([A-Za-z0-9._:-]+)/.exec(output)
+      const background = backgroundText || (taskTool && nativeValue?.kind === 'background' && typeof nativeValue.jobId === 'string' ? [null,nativeValue.jobId] : null)
+      const child = childText || (taskTool && nativeValue?.kind === 'continuable' && typeof nativeValue.subagentId === 'string' ? [null,nativeValue.subagentId] : null)
+      const subtask = toolName === 'subagent' || background || child || ['pwsh','bash','shell'].includes(toolName) && args.run_in_background === true
       projected = { seq, type: asked ? type === 'tool/call' ? 'question.asked' : 'question.answered'
         : type === 'tool/call' ? 'step.started' : 'step.completed', data: {
         taskId, stepId, callId: stepId, toolName,
         summary: safeHistoryText(describeTool(toolName, data.arguments ?? call?.data?.arguments)).text,
         groupHint: toolName, detailRef: { seq },
+        ...(subtask ? { subtask: { name: safeHistoryText(String(args.description ?? args.command ?? '子任务').slice(0, 180)).text,
+          ...(background ? { id: background[1], background: true } : child ? { id: child[1], background: true } : {}) } } : {}),
         ...(Number.isSafeInteger(data.turn) ? { turn: data.turn } : {}),
         ...(type === 'tool/result' ? { state: data.error || part?.isError ? 'failed' : 'completed' } : { state: 'running' }),
         ...(asked && type === 'tool/call' ? { questions: boundedTimelineValue(toolArguments(data.arguments).questions ?? []) } : {}),
@@ -188,7 +212,7 @@ export function projectHistoryEvent(raw, call = null, contextTurn = null, closin
 
     if (type === 'tool/result' && projected?.type === 'step.completed') {
       const artifacts = (part?.content?.filter(p => p.type === 'text').map(p => toolArguments(p.text)) ?? [])
-        .map(value => value.artifact ?? value).filter(value => typeof value?.artifactId === 'string')
+        .map(value => value?.artifact ?? value).filter(value => typeof value?.artifactId === 'string')
         .map(value => ({ taskId: value.taskId ?? taskId, artifactId: value.artifactId,
           fileName: safeHistoryText(value.fileName ?? '成果文件').text,
           contentType: value.contentType ?? 'text/plain', size: value.size ?? 0 }))

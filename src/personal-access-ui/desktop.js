@@ -217,7 +217,6 @@
     const add = files => { if (!byId('message-attachments').disabled && files.length) actions.addFiles(files) }
     byId('attachment-add').tabIndex = 0
     byId('attachment-add').setAttribute('role', 'button')
-    byId('attachment-add').addEventListener('keydown', e => { if (['Enter', ' '].includes(e.key)) { e.preventDefault(); if (!byId('message-attachments').disabled) byId('message-attachments').click() } })
     input.addEventListener('paste', e => { const files = [...(e.clipboardData?.files || [])]; if (files.length) { e.preventDefault(); add(files) } })
     const form = byId('message-form')
     form.addEventListener('dragover', e => { e.preventDefault(); form.classList.add('is-dragging') })

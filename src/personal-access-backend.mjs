@@ -3,6 +3,7 @@ import { checkModelConnection, canonicalProviderModelId } from './model-connecti
 import { discoverOpenAICompatibleModels, openAICompatibleEndpoint } from './openai-compatible-client.ts'
 import { modelTierFor } from './model-tier.ts'
 import { modelRouteFingerprint } from './model-route-fingerprint.mjs'
+import { reasoningCapability } from './model-reasoning.mjs'
 import path from 'node:path'
 import { mkdir, rm, cp, access } from 'node:fs/promises'
 import { sessionWorkspace } from './personal-access/session-workspace.mjs'
@@ -12,6 +13,8 @@ const fail = (code) => { const error = new Error(code); error.code = code; throw
 export function createPersonalAccessBackend({ currentOrigin, referenceScan, profiles, hasCredential,
   routeForProfile, listSessions, resolveSession, ensureKnownSession, gateway, queue, bindSession,
   credentialForProfile = null, modelFetch = fetch, processingStatus = async () => null,
+  prepareModelReasoning = null,
+  reasoningSettings = null,
   hostOwnerId = () => null, getRuntimeId = () => null,
   ownerForSession = () => null,
   modelAllowed = () => true,
@@ -47,9 +50,11 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
     const route = routeForProfile(profile.id)
     let catalog
     try { catalog = await gateway('/models') } catch { fail('MODEL_UNAVAILABLE') }
-    if (!Array.isArray(catalog?.groups) || !catalog.groups.some((group) =>
+    const found = Array.isArray(catalog?.groups) && catalog.groups.find((group) =>
       group?.id === route.provider && Array.isArray(group.models) &&
-      group.models.some((model) => model?.id === profile.model))) fail('MODEL_UNAVAILABLE')
+      group.models.some((model) => model?.id === profile.model))?.models.find(model => model.id === profile.model)
+    if (!found) fail('MODEL_UNAVAILABLE')
+    return found
   }
   const requireSession = async (id, ownerId) => {
     if (typeof id !== 'string' || !idPattern.test(id)) fail('SESSION_UNAVAILABLE')
@@ -101,13 +106,22 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
             ...(!(chat && desktop && naturalLanguageDesktopReady()) ? { reasonCode: 'CAPABILITY_UNAVAILABLE' } : {}) },
         } }
     },
-    listModels() { return profiles().map((profile) => ({ id: profile.id, name: profile.name, model: profile.model,
-      configured: hasCredential(profile), source: 'host',
+    listModels() {
+      const project = (settings = {}) => {
+      const capability = profile => {
+        const model = settings[routeForProfile?.(profile.id)?.provider]?.models?.find(row => row.id === profile.model);
+        return model?.reasoningEfforts !== undefined ? {supported:!!model.reasoningEfforts?.high,
+          ...(model.reasoningEfforts?.high ? {effort:'high'} : {})} : reasoningCapability(profile);
+      };
+      return profiles().map((profile) => ({ id: profile.id, name: profile.name, model: profile.model,
+      configured: hasCredential(profile), source: 'host', deepThinking: capability(profile),
       routeFingerprint: (() => { try { return modelRouteFingerprint(
         openAICompatibleEndpoint(profile.baseUrl, 'chat/completions').href, profile.model) }
       catch { return null } })(),
       modelTier: profile.modelTier ?? 'auto', sourceKind: modelTierFor(profile),
-      location: modelTierFor(profile) === 'cloud' ? 'cloud' : ['127.0.0.1', 'localhost', '[::1]'].includes(new URL(profile.baseUrl).hostname) ? 'computer' : 'lan' })) },
+      location: modelTierFor(profile) === 'cloud' ? 'cloud' : ['127.0.0.1', 'localhost', '[::1]'].includes(new URL(profile.baseUrl).hostname) ? 'computer' : 'lan' })) };
+      return reasoningSettings && currentOrigin() ? Promise.resolve().then(reasoningSettings).then(project, () => project()) : project();
+    },
     async verifyModelProfile(profileId, ownerId) {
       requireModelAllowed(ownerId, profileId, 'new')
       const profile = modelProfile(profileId)
@@ -265,7 +279,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionIds }) })
       if (!response.ok) fail('BACKEND_UNAVAILABLE')
     },
-    async sendMessage({ sessionId, text, mode = 'queue', ownerId, attachments = [] }) {
+    async sendMessage({ sessionId, text, mode = 'queue', ownerId, attachments = [], deepThinking }) {
       requireRuntime()
       if (typeof text !== 'string' || (!text.trim() && attachments.length === 0) || text.length > 32_000 ||
           !['queue', 'steer'].includes(mode) || !Array.isArray(attachments) || attachments.length > 4 ||
@@ -274,11 +288,14 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       return queue(async () => {
         const session = await requireSession(sessionId, ownerId)
         requireModelAllowed(ownerId, session.profile?.id)
-        await requireCatalogRoute(session.profile)
+        const nativeModel = await requireCatalogRoute(session.profile)
         try { await ensureKnownSession(sessionId) }
         catch (error) { fail(error?.code === 'session-model-ownership-unknown' ? 'MODEL_ROUTE_BLOCKED' : 'SESSION_UNAVAILABLE') }
         requireModelAllowed(ownerId, session.profile?.id)
         await gateway(`/sessions/${encodeURIComponent(sessionId)}/resume`, { method: 'POST', body: '{}' })
+        if (deepThinking === true && (reasoningCapability(session.profile).supported || nativeModel?.reasoning?.efforts?.some(row => row.id === 'high'))) {
+          if (prepareModelReasoning && !await prepareModelReasoning(session.profile)) fail('MODEL_UNAVAILABLE');
+        }
         const content = attachments.length ? [
           ...(text ? [{ type: 'text', text }] : []),
           ...attachments.map((item) => ({ type: 'image', mediaType: item.contentType,

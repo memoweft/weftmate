@@ -1,0 +1,60 @@
+{
+  "syntheticOnly": true,
+  "checks": [
+    {
+      "surface": "desktop",
+      "theme": "light",
+      "menu": true,
+      "thinkingSaved": true,
+      "subtaskStates": true,
+      "stepNavigation": true,
+      "noOverflow": true
+    },
+    {
+      "surface": "mobile-web",
+      "theme": "light",
+      "menu": true,
+      "thinkingSaved": true,
+      "subtaskStates": true,
+      "stepNavigation": true,
+      "noOverflow": true
+    },
+    {
+      "surface": "android-ui",
+      "theme": "light",
+      "menu": true,
+      "thinkingSaved": true,
+      "subtaskStates": true,
+      "stepNavigation": true,
+      "noOverflow": true
+    },
+    {
+      "surface": "desktop",
+      "theme": "dark",
+      "menu": true,
+      "thinkingSaved": true,
+      "subtaskStates": true,
+      "stepNavigation": true,
+      "noOverflow": true
+    },
+    {
+      "surface": "mobile-web",
+      "theme": "dark",
+      "menu": true,
+      "thinkingSaved": true,
+      "subtaskStates": true,
+      "stepNavigation": true,
+      "noOverflow": true
+    },
+    {
+      "surface": "android-ui",
+      "theme": "dark",
+      "menu": true,
+      "thinkingSaved": true,
+      "subtaskStates": true,
+      "stepNavigation": true,
+      "noOverflow": true
+    }
+  ],
+  "errors": []
+}

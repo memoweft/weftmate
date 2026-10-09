@@ -1,3 +1,4 @@
+import { reasoningCapability } from '../model-reasoning.mjs'
 import { createHash } from 'node:crypto'
 import { modelTierFor } from '../model-tier.ts'
 
@@ -21,6 +22,7 @@ export function publicAccountModel(record, configured = false) {
     baseUrl: selected.baseUrl, modelId: selected.modelId,
     modelTier: selected.modelTier ?? 'auto', sourceKind: modelTierFor(selected),
     routeFingerprint: selected.routeFingerprint, configured: configured === true,
+    deepThinking: reasoningCapability({baseUrl:selected.baseUrl,model:selected.modelId}),
     status: record.status, createdAt: record.createdAt, updatedAt: record.updatedAt }
 }
 

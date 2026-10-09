@@ -17,6 +17,9 @@ import android.os.Handler
 import android.os.Looper
 import android.database.ContentObserver
 import android.provider.Settings
+import android.provider.MediaStore
+import androidx.core.content.FileProvider
+import java.io.File
 import android.speech.RecognizerIntent
 import android.view.View
 import android.view.WindowInsets
@@ -55,7 +58,7 @@ import kotlin.math.abs
 
 internal data class AttachmentPickAttempt(val requestId: String, val owner: String, val conversationId: String,
     val epoch: Long, val page: Int, val activeAtStart: String?, val kind: String,
-    val viewGeneration: Int?, val resultReceived: AtomicBoolean = AtomicBoolean(false))
+    val viewGeneration: Int?, val cameraFile: File? = null, val resultReceived: AtomicBoolean = AtomicBoolean(false))
 
 internal data class ArtifactSaveAttempt(val requestId: String, val owner: String, val epoch: Long,
     val artifactId: String, val fileName: String, val size: Int, val sha256: String)
@@ -99,7 +102,7 @@ internal fun activityCommandProjection(row: JSONObject): JSONObject {
 
 /** The updateable UI is presentation; account secrets, local history, model calls and tools stay native. */
 class HybridActivity : Activity() {
-    private companion object { const val SPEECH_REQUEST = 2041; const val AVATAR_REQUEST = 2042; const val NOTIFY_REQUEST = 2043; const val ATTACHMENT_REQUEST = 2044; const val ARTIFACT_SAVE_REQUEST = 2045; const val ORIGINAL_SAVE_REQUEST = 2046; const val CAMERA_REQUEST = 2047 }
+    private companion object { const val SPEECH_REQUEST = 2041; const val AVATAR_REQUEST = 2042; const val NOTIFY_REQUEST = 2043; const val ATTACHMENT_REQUEST = 2044; const val ARTIFACT_SAVE_REQUEST = 2045; const val ORIGINAL_SAVE_REQUEST = 2046; const val CAMERA_REQUEST = 2047; const val ATTACHMENT_CAMERA_PERMISSION = 2048 }
     private var pendingCameraPermission: android.webkit.PermissionRequest? = null
     private val origin = "https://appassets.androidplatform.net"
     private val entry = "$origin/ui/index.html"
@@ -1307,6 +1310,7 @@ class HybridActivity : Activity() {
                 rows.put(JSONObject().put("source", "host").put("profileId", id)
                     .put("displayName", item.optString("name", id).take(100))
                     .put("sourceKind", item.optString("sourceKind"))
+                    .put("deepThinking", item.optJSONObject("deepThinking") ?: JSONObject().put("supported", false))
                     .put("configured", item.optBoolean("configured"))
                     .put("modelId", item.optString("model"))
                     .put("routeFingerprint", item.optString("routeFingerprint")
@@ -1640,13 +1644,14 @@ class HybridActivity : Activity() {
         if (accountTransition.get()) throw ApiFailure(409, "ACCOUNT_SWITCHING")
         val scope = owner(requireHost()) ?: throw ApiFailure(401, "LOGIN_REQUIRED")
         val kind = params.getString("kind")
-        if (kind !in setOf("image", "file")) throw ApiFailure(400, "ATTACHMENT_INVALID")
+        if (kind !in setOf("image", "file", "camera")) throw ApiFailure(400, "ATTACHMENT_INVALID")
         val conversationId = params.optString("conversationId")
         if (conversationId.isNotEmpty() && !attachmentScopeAllowed(requireHost(), conversationId))
             throw ApiFailure(404, "SESSION_UNAVAILABLE")
         val attempt = AttachmentPickAttempt("pick-${UUID.randomUUID()}", scope, conversationId,
-            accountEpoch.get(), pageGeneration, activeConversation, kind,
-            if (params.has("viewGeneration")) params.optInt("viewGeneration") else null)
+            accountEpoch.get(), pageGeneration, activeConversation, if (kind == "camera") "image" else kind,
+            if (params.has("viewGeneration")) params.optInt("viewGeneration") else null,
+            if (kind == "camera") File(File(cacheDir, "composer-camera").apply { mkdirs() }, "camera-${UUID.randomUUID()}.jpg") else null)
         synchronized(this) {
             if (pendingAttachment != null) throw ApiFailure(409, "ATTACHMENT_PICK_IN_PROGRESS")
             pendingAttachment = attempt
@@ -1655,6 +1660,11 @@ class HybridActivity : Activity() {
             if (!attachmentPickCurrent(attempt, accountEpoch.get(), pageGeneration, activeConversation,
                     currentAttachmentOwner())) {
                 clearAttachmentPick(attempt)
+                return@runOnUiThread
+            }
+            if (kind == "camera") {
+                if (checkSelfPermission(android.Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) launchAttachmentCamera(attempt)
+                else requestPermissions(arrayOf(android.Manifest.permission.CAMERA), ATTACHMENT_CAMERA_PERMISSION)
                 return@runOnUiThread
             }
             try {
@@ -1675,6 +1685,20 @@ class HybridActivity : Activity() {
         return JSONObject().put("pending", true).put("requestId", attempt.requestId)
     }
 
+    private fun launchAttachmentCamera(attempt: AttachmentPickAttempt) {
+        if (!attachmentPickCurrent(attempt, accountEpoch.get(), pageGeneration, activeConversation, currentAttachmentOwner())) { clearAttachmentPick(attempt); return }
+        try {
+            val uri = FileProvider.getUriForFile(this, "$packageName.composer-camera", attempt.cameraFile!!)
+            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                putExtra(MediaStore.EXTRA_OUTPUT, uri)
+                clipData = ClipData.newRawUri("photo", uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            }
+            @Suppress("DEPRECATION")
+            startActivityForResult(intent, ATTACHMENT_REQUEST)
+        } catch (_: Exception) { clearAttachmentPick(attempt); emitAttachmentResult(attempt, "failed", errorCode = "ATTACHMENT_PICK_UNAVAILABLE") }
+    }
+
     private fun attachmentScopeAllowed(host: HostIdentity, conversationId: String): Boolean {
         val scope = owner(host) ?: return false
         if (store.listConversations(scope).any { it.id == conversationId }) return true
@@ -1690,6 +1714,7 @@ class HybridActivity : Activity() {
 
     private fun clearAttachmentPick(attempt: AttachmentPickAttempt) {
         synchronized(this) { if (pendingAttachment === attempt) pendingAttachment = null }
+        attempt.cameraFile?.delete()
     }
 
     private fun currentAttachmentOwner(): String? = try { owner(secrets.host()) } catch (_: Exception) { null }
@@ -2004,6 +2029,12 @@ class HybridActivity : Activity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (closed.get()) return
+        if (requestCode == ATTACHMENT_CAMERA_PERMISSION) {
+            val attempt = pendingAttachment ?: return
+            if (grantResults.firstOrNull() == android.content.pm.PackageManager.PERMISSION_GRANTED) launchAttachmentCamera(attempt)
+            else { clearAttachmentPick(attempt); emitAttachmentResult(attempt, "cancelled") }
+            return
+        }
         if (requestCode == NOTIFY_REQUEST) emit("notifications.permission", notices().state())
         if (requestCode == CAMERA_REQUEST) {
             val pending = pendingCameraPermission
@@ -2201,7 +2232,7 @@ class HybridActivity : Activity() {
         if (requestCode == ATTACHMENT_REQUEST) {
             val attempt = pendingAttachment ?: return
             if (!attempt.resultReceived.compareAndSet(false, true)) return
-            try { attachmentWorker.execute { settleAttachmentPick(attempt, resultCode, data?.data) } }
+            try { attachmentWorker.execute { settleAttachmentPick(attempt, resultCode, attempt.cameraFile?.let { FileProvider.getUriForFile(this, "$packageName.composer-camera", it) } ?: data?.data) } }
             catch (_: RejectedExecutionException) { clearAttachmentPick(attempt) }
             return
         }

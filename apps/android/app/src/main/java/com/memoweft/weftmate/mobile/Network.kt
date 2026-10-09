@@ -33,7 +33,7 @@ internal fun validBusinessPath(path: String): Boolean {
         (query.isEmpty() || query.matches(Regex("afterSeq=(-1|[0-9]+)")))) return true
     if (query.isEmpty() && (route == "/personal/v1/system" || route == "/personal/v1/settings/models" ||
         route == "/personal/v1/settings/approvals" ||
-        route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/approval-mode")) ||
+        route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/(approval-mode|thinking)")) ||
         route.matches(Regex("/personal/v1/system/(model|host|memory)/restart")))) return true
     if (!query.matches(Regex("[A-Za-z0-9._~=&%+-]*")) ||
         !route.matches(Regex("/personal/v1/(memory|mods|tasks|notifications|workspaces|capabilities)(/[A-Za-z0-9._~:/%-]*)?"))) return false

@@ -139,6 +139,7 @@ export function modelProjection(value) {
     name: bounded(model.name, 256),
     model: bounded(model.model, 128),
     configured: model.configured === true,
+    deepThinking: {supported:model.deepThinking?.supported === true,...(model.deepThinking?.supported === true ? {effort:"high"} : {})},
     routeFingerprint: model.routeFingerprint === null ||
       typeof model.routeFingerprint === 'string' && /^[a-f0-9]{64}$/.test(model.routeFingerprint)
       ? model.routeFingerprint : null,

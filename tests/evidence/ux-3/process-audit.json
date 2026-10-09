@@ -1,0 +1,30 @@
+{
+  "at": "2026-10-09T20:06:06.9324771Z",
+  "scope": "w3 workspace and UX-3 synthetic temporary profiles",
+  "terminated": 4,
+  "remaining": 0,
+  "processes": [
+    {
+      "pid": 32612,
+      "name": "electron.exe"
+    },
+    {
+      "pid": 7916,
+      "name": "electron.exe"
+    },
+    {
+      "pid": 48748,
+      "name": "electron.exe"
+    },
+    {
+      "pid": 42080,
+      "name": "electron.exe"
+    }
+  ],
+  "emulatorStarted": false,
+  "dailyHostDataTouched": false,
+  "earlySystemClipboardProbe": true,
+  "originalImageRestored": true,
+  "otherClipboardFormatsPreservationVerified": false,
+  "clipboardContentStored": false
+}

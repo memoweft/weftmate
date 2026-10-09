@@ -9,7 +9,7 @@ import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { repository, outDirectory, runScene, catalog } from '../../scripts/review-gallery/common.mjs';
 const out = outDirectory();
 for (const theme of ['light', 'dark']) {
-  const fixture = await startTimelineCandidate({ historyCount: 0, interactive: true, riskApproval: true, composer:true, baseTime: Date.parse('2026-10-08T08:00:00Z') });
+  const fixture = await startTimelineCandidate({ historyCount: 0, interactive: true, riskApproval: true, composer:true, composerMenu:true, baseTime: Date.parse('2026-10-08T08:00:00Z') });
   const profile = await mkdtemp(join(tmpdir(), 'weftmate-review-desktop-'));
   const env = { ...process.env };
   for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key.startsWith('MEMOWEFT_') || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
@@ -59,6 +59,7 @@ for (const theme of ['light', 'dark']) {
     const settings = async () => { await home(); await button('账户菜单').click(); await button('设置').click(); };
     const preparations = {
       sessions: async () => { await home(); await button('搜索会话').click(); await page.getByRole('searchbox', { name: '搜索会话', exact: true }).waitFor(); },
+      'composer-menu': async()=>{await home();await button('添加图片或文件').click();await page.getByRole('menu',{name:'添加附件与深入思考'}).waitFor();await page.getByRole('menuitemcheckbox',{name:'深入思考'}).waitFor();},
       'composer-context': async()=>{await home();await button('背景信息窗口：86% 已用').focus();await page.getByRole('tooltip').waitFor();},
       conversation: async () => { await home(); await page.getByRole('button', {name:'读取了 3 个文件、已运行 1 个命令，已收起',exact:true}).click(); await page.getByText(/^读取 3 个文件/).evaluate(node => node.scrollIntoView({ block: 'center' })); },
       approval: async () => { await home(); await button('批准').evaluate(node => node.scrollIntoView({ block: 'center' })); },

@@ -189,6 +189,8 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         if (value.modelDisabled)
             ui.closeModelMenu();
         ui.byId('message-text').disabled = value.messageDisabled;
+        ui.byId('message-text').placeholder = value.placeholder;
+        ui.paintComposerExtras?.(value);
         ui.byId('voice-input').disabled = value.voiceDisabled;
         ui.byId('message-attachments').disabled = value.attachmentsDisabled;
         ui.byId('attachment-add').hidden = value.phoneChat;

@@ -1,7 +1,8 @@
+import { captureScreenRegion } from './personal-desktop-capture.mjs';
 import packageInfo from '../package.json' with { type: 'json' };
 import { quoteWindowsLoginArgs, loginItemEnabled } from './desktop-autostart.mjs';
 /** Native shell for the same authenticated /personal/v1 client used remotely. */
-import { app, BrowserWindow, ipcMain, Notification, screen, shell, session, nativeTheme, safeStorage, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, Notification, screen, shell, session, nativeTheme, safeStorage, dialog, clipboard } from 'electron';
 import { hostname } from 'node:os';
 import { createHash, X509Certificate } from 'node:crypto';
 import { desktopAuthStorage } from './personal-desktop-auth.mjs';
@@ -92,6 +93,11 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
   const settings = () => ({ version: packageInfo.version, autoStart: loginItemEnabled(app.getLoginItemSettings(loginOptions), loginOptions.name, loginOptions.path),
     autoStartSupported: process.platform === 'win32' || process.platform === 'darwin' });
   handle('wm:desktop:settings', settings);
+  handle('wm:desktop:clipboard-image', async () => {
+    await jsonLocal('/auth/me'); const image = clipboard.readImage();
+    return image.isEmpty() ? null : {name:'剪贴板图片.png',contentType:'image/png',dataUrl:image.toDataURL()};
+  });
+  handle('wm:desktop:capture-region', async () => { await jsonLocal('/auth/me'); return captureScreenRegion(win); });
   handle('wm:desktop:project-folder', async () => {
     await jsonLocal('/auth/me');
     if (contentOrigin !== origin) throw new Error('Desktop project registration unavailable');
@@ -289,7 +295,7 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
     for (const notification of notifications) notification.close();
     nativeTheme.removeListener('updated', updatePalette);
     for (const request of networkRequests.values()) request.abort();
-    for (const channel of ['wm:desktop:project-folder', 'wm:desktop:settings', 'wm:desktop:identity', 'wm:desktop:credentials', 'wm:desktop:key', 'wm:desktop:key-reset', 'wm:desktop:proof', 'wm:desktop:connect-host', 'wm:desktop:activate-host', 'wm:desktop:fetch', 'wm:desktop:fetch-abort', 'wm:desktop:clear-sessions', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);
+    for (const channel of ['wm:desktop:capture-region', 'wm:desktop:clipboard-image', 'wm:desktop:project-folder', 'wm:desktop:settings', 'wm:desktop:identity', 'wm:desktop:credentials', 'wm:desktop:key', 'wm:desktop:key-reset', 'wm:desktop:proof', 'wm:desktop:connect-host', 'wm:desktop:activate-host', 'wm:desktop:fetch', 'wm:desktop:fetch-abort', 'wm:desktop:clear-sessions', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);
     await save(); await desktopSession.cookies.flushStore(); desktopSession.flushStorageData();
   } };
 }
