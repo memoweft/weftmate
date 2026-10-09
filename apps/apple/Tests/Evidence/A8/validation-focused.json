@@ -1,0 +1,28 @@
+{
+  "synthetic": true,
+  "swiftFocusedPassed": 13,
+  "forgetMutationSDKPassed": 15,
+  "sendStateChecksPassed": 11,
+  "approvalStateChecksPassed": 11,
+  "timelineStateChecksPassed": true,
+  "designTokenTestsPassed": 4,
+  "reviewProvenanceTestsPassed": 4,
+  "iphoneUITests": {
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "actualHostStopAsserted": true
+  },
+  "macDebugBuild": true,
+  "nativeScreenshots": 40,
+  "iphoneScreenshots": 24,
+  "macScreenshots": 16,
+  "reviewMatrixPictures": 16,
+  "simulatorsAtOnce": 1,
+  "xcodeJobs": 2,
+  "watchSimulatorStarted": false,
+  "shutdownAfterUITests": true,
+  "compiledDshEngine": false,
+  "realPaidModelRequests": 0,
+  "productionTouched": false
+}

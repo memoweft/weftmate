@@ -18,9 +18,9 @@ export function syntheticBackend(root) {
     append(s,'turn/start',{turn:s.turn});
     append(s,'agent/inbox/spliced',{target:'next-turn',start:0,removedCount:1,inserted:[]});
     append(s,'user/message',m);append(s,'step/start',{turn:s.turn,step:1});
-    append(s,'assistant/message',{content:[{type:'text',text:'正在处理合成目标。'}]});
+    if(!m.content[0].text.includes('A8_WAIT'))append(s,'assistant/message',{content:[{type:'text',text:'正在处理合成目标。'}]});
     operations.push({kind:'started',sessionId:s.id,text:m.content[0].text,receiptId:m.source.rpcId});
-    if(!m.content[0].text.includes('保持运行') && !m.content[0].text.includes('A5_HOLD')) setTimeout(()=>finish(s,'completed'),1200).unref();
+    if(!m.content[0].text.includes('保持运行') && !m.content[0].text.includes('A5_HOLD') && !m.content[0].text.includes('A8_WAIT')) setTimeout(()=>finish(s,'completed'),1200).unref();
   }
   function finish(s,reason='completed') {
     if(!s.current)return;
@@ -58,7 +58,7 @@ export function syntheticBackend(root) {
       return {status:queuedOnly?'queue_removed':'cancel_requested',outcomes:receiptIds.map(receiptId=>({receiptId,status:removed.includes(receiptId)?'queue_removed':activeReceipts.includes(receiptId)?'cancel_requested':'unconfirmed',...(activeReceipts.includes(receiptId)?{turn:activeTurn}:{}),backgroundJobs:[]}))};
     },
     cancelSession:async({sessionId})=>{const s=sessions.get(sessionId);s.queue=[];finish(s,'aborted');return {accepted:true};},
-    describeSession:async id=>{const s=sessions.get(id);return s?{sessionId:id,title:s.title,agentPreset:'personal-remote',modelProfileId:model.id,running:s.running}:null;},
+    describeSession:async id=>{const s=sessions.get(id);return s?{sessionId:id,title:s.title,agentPreset:'personal-remote',modelProfileId:model.id,running:s.running,contextUsage:s.contextUsage,processing:s.processing}:null;},
     renameSession:async({sessionId,title})=>{sessions.get(sessionId).title=title;return {title};},
     forkSession:async({sessionId,childId})=>{
       const source=sessions.get(sessionId),folder=join(root,'workspaces',childId);
@@ -129,5 +129,45 @@ export function syntheticBackend(root) {
       append(sessions.get(metadata.sessionId),'approval/decided',{id:metadata.approvalId,outcome:row.decisionOutcome});metadata.resolved=true;operations.push({kind:'approval',outcome:row.decisionOutcome});
     }}
   }
-  return {backend,memoryManager,attach(value){service=value;},seed,sessions,operations,memoryDeletes,approvals,finish,consumeApprovals,addApproval};
+  async function a8(action, s) {
+    const call = (id, name, args) => append(s,'tool/call',{turn:s.turn,callId:id,name,arguments:JSON.stringify(args)});
+    const result = (id, failed=false) => append(s,'tool/result',{turn:s.turn,message:{source:{kind:'tool',callId:id},content:[{type:'tool-result',toolCallId:id,isError:failed,content:[{type:'text',text:failed?'合成检查失败，请检查输入文件。':'合成步骤完成。'}]}]}});
+    if(action==='waiting') {s.contextUsage={usedTokens:713111,contextWindow:828000};s.processing={phase:'loading',modelName:'Synthetic Muse'};}
+    if(action==='queued')s.processing={phase:'queued',ahead:2};
+    if(action==='reasoning')s.processing={phase:'reasoning'};
+    if(action==='tools') {
+      s.processing={phase:'answering'};
+      call('a8-read','read',{path:'notes.md'});result('a8-read');
+      call('a8-command','shell',{command:'npm test'});result('a8-command');
+      append(s,'assistant/message',{content:[{type:'text',text:'资料已经核对，接下来搜索并运行检查。'}]});
+      call('a8-search','search',{query:'合成计划'});
+    }
+    if(action==='approvals') {
+      result('a8-search');
+      for(const [id,command] of [['a8-approve','npm run verify'],['a8-reject','npm run release']]) {
+        const args={command},reason='[weftmate:execute] 只影响合成测试目录。\n'+JSON.stringify(args),approvalId=randomUUID();
+        const metadata={runtimeId,approvalId,sessionId:s.id,turn:s.turn,callId:id,rootCallId:id,receiptId:s.current.source.rpcId,messageHash:hash(s.current.content[0].text),toolName:'shell',argumentsHash:hash(JSON.stringify(args))};
+        call(id,'shell',args);await service.trackToolApproval({...metadata,action:'register_approval',reason});
+        append(s,'approval/asked',{id:approvalId,toolName:'shell',callId:id,reason});approvals.push(metadata);
+      }
+    }
+    if(action==='artifact') {
+      const artifact=await service.submitToolArtifact({sessionId:s.id,turn:s.turn,callId:'a8-output',messageHash:hash(s.current.content[0].text),fileName:'合成报告.md',content:'# 合成报告\n检查已完成。'});
+      call('a8-output','write',{fileName:'合成报告.md'});
+      append(s,'tool/result',{turn:s.turn,message:{source:{kind:'tool',callId:'a8-output'},content:[{type:'tool-result',toolCallId:'a8-output',isError:false,content:[{type:'text',text:JSON.stringify(artifact)}]}]}});
+    }
+    if(action==='failure') {call('a8-failure','shell',{command:'npm run synthetic-failure'});result('a8-failure',true);}
+    if(action==='history')for(let i=0;i<30;i++)append(s,'assistant/message',{content:[{type:'text',text:'合成历史 '+i+'：这一段仅用于验证阅读历史时不会被拉回底部。'}]});
+    if(action==='append')append(s,'assistant/message',{content:[{type:'text',text:'新的合成流式文字已经到达。'}]});
+    if(action==='unknown')s.contextUsage={usedTokens:1234,contextWindow:null};
+    if(action==='stop')finish(s,'aborted');
+    return {ok:true,seq:s.events.length-1};
+  }
+  async function prepareA8(api, hostId) {
+    const created=await accepted(api,{requestId:'a8-create',kind:'session.create',targetDeviceId:hostId,modelProfileId:model.id});
+    const sent=await accepted(api,{requestId:'a8-wait',kind:'session.message',targetDeviceId:hostId,sessionId:created.sessionId,text:'A8_WAIT：读取项目资料，运行检查，并生成合成报告。'});
+    const s=sessions.get(created.sessionId);s.title='整理项目资料';await a8('waiting',s);
+    return {sessionId:created.sessionId,receiptId:sent.receiptId};
+  }
+  return {backend,memoryManager,attach(value){service=value;},seed,sessions,operations,memoryDeletes,approvals,finish,consumeApprovals,addApproval,a8,prepareA8};
 }

@@ -18,6 +18,7 @@ import Security
         let app = Process(); app.executableURL = executable
         app.arguments = ["--ui-testing", "--lg2-capture", "-ApplePersistenceIgnoreState", "YES", "--ui-testing-namespace", name,
                          "--ui-testing-data-dir", root.path, "--server-url", host, "--s1c-cloud-url", cloud, "--a5-review-scene", scene, "--a5-theme", theme, scene == "login" ? "--lg2-cloud" : "--a5-local-server"]
+        if CommandLine.arguments.count > 7, CommandLine.arguments[7] == "a8" { app.arguments?.append("--a8-flow") }
         let output = Pipe(); app.standardOutput = output; app.standardError = FileHandle.nullDevice
         try app.run()
         defer {
