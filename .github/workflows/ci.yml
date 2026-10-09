@@ -126,7 +126,7 @@ jobs:
         with:
           repository: memoweft/memoweft
           # FG-2 candidate with merged FG-1, M2g and UP-3; replace after Claude squash.
-          ref: 163539980678dea3438729001a99c137feb1341a
+          ref: 5d91823a36d8154531e62db1eb76165a1f479cbb
           path: memoweft-core
           persist-credentials: false
       - name: Setup Node
