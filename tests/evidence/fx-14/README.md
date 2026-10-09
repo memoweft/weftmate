@@ -8,7 +8,7 @@
 | 02 迁移 Verify 401 | 匿名配置请求受保护。改用公开 `/personal/v1/auth/state`，检查实际响应结构；配置仍受保护 | [真实安装包 Prepare → 启动 → Verify 演练](migration/verification.json)、[安装版截图](migration/installed-rehearsal.png) |
 | 05 项目双滚动 | 弹窗与滚动表单相邻；动作在表单内。外层限制高度，内容区滚动，动作分离为固定底部 | [四种尺寸／主题验证](project-dialog/verification.json)、[窄深](project-dialog/480-dark.png)、[宽浅](project-dialog/1200-light.png) |
 | 06 Mac 滚动断言 | 原断言把 ResizeObserver（尺寸观察器）下一帧贴底当成跳动；同步折叠再展开也不是实际点击。改用真实点击，分别检查贴底与长记录阅读锚点 | [首轮 Mac 原断言失败](mac/before.log)、[最终 Mac 通过](mac/after-final.log)、[Windows 通过](windows-motion.log) |
-| 04 停止按钮 p95（第95百分位） | 按 FX-13 逐条追加请求记录方法独立测量 30 轮；结果待当前批次完成 | [逐轮结果](stop-desktop/results.json) |
+| 04 停止按钮 p95（第95百分位） | 按 FX-13 逐条追加请求记录方法独立测量 30 轮，30/30；中位数 868.5 毫秒、p95 1,379、最大 1,974，超过两秒 0 轮。停止调用逻辑未改；合入 IA-3 后补回旁聊列表遗漏的原生快照时间戳 | [逐轮结果](stop-desktop/results.json)、[统计](stop-summary.json) |
 | 07 模型五分钟静默 | 原生 DSH（助手运行时）流空闲超时默认为 300 秒。宿主默认改为 90 秒，环境变量 `WEFTMATE_STREAM_IDLE_TIMEOUT_MS` 可改，提供方 `streamIdleTimeoutMs` 优先；仍用原生取消／重试，未新增次数限制 | [合成慢流测试](../../integration/model-stream-timeout.ts)、[45 项定向测试](targeted-tests.log)、[类型检查](typecheck.log) |
 
 首块只有角色／空包不算内容进展。合成慢流分别验证静默流一次原生重试成功、持续增量的总时长超过空闲预算仍成功、用户取消后不重试，并检查重试进展提示发布与显式提供方超时覆盖环境默认值。90 秒为模型启动留出约一分钟的余量，避免原问题的五分钟静默等待，不保证真实模型速度。
@@ -22,3 +22,13 @@
 [MiMo 用量](mimo-usage.json)：21 笔实际推理、21 笔完整用量，输入 66,683 token（词元），缓存输入 32,832，输出 1,329。包括失败尝试和后台标题请求，不是账户账单。停止、HTTP 探针和慢流均无付费模型请求。[公开扫描](privacy-scan.json) 不含实际密钥、私有 LAN（局域网）服务目的地、凭据、证书或运行数据；截图使用合成内容。[Mac 清理](mac/cleanup.json) 含独立工作树与本轮临时目录。
 
 慢流夹具挂在既有 `model-budget-runtime.test.ts` 原生发布测试内；干净 CI（持续集成）没有预构建 DSH，继续沿用 main 对该既有发布门的缺依赖策略。本包未新增 CI 豁免，完整原生夹具在本机固定 DSH 上执行并通过。
+
+30 轮主批 789.656 秒，主进程事件循环 p99 33.784 毫秒／最大 72.810；计时包含点击、创建与检测开销。批次代码基于本包产品提交 `34f731a6`，期间没有其他本包界面／安装器／模拟器测试。后台仍有既有编排进程与其他包的云模型等待，不宣称机器完全无负载。合入 IA-3 最新 main 后另复核实际主对话入口；首次短复核仍使用旧“新对话”名称而定位失败，保留 `stop-merged-main/`，未计作停止慢。
+
+合入 IA-3 后，实际旁聊入口先因旧名称／未等待创建回执导致额外短复核失败（`stop-merged-main/`、`stop-merged-verified/`）；修正运行器准备顺序后，`stop-merged-ready/` 5/5 功能通过，但停止按钮为 3.352–5.402 秒。根因是逻辑列表投影漏掉 `/sessions.snapshotAt`，原生开始事件不能优先于旧列表，需等下一轮侧栏轮询。最小补回该既有时间戳，并测试“更新的开始事件立即启用停止／更晚的空闲快照仍覆盖旧事件”，未改 IA-3 布局和停止调用。新入口独立 30 轮 **30/30**，中位数 **835.5 毫秒**、p95（第95百分位）**859 毫秒**、最大 **872 毫秒**，超过两秒 **0**；[完整记录](stop-main-fixed/results.json)、[汇总](stop-main-summary.json)。批次 880.158 秒，不用五轮短测代替 30 轮。
+
+合入最新 MEM-2 后，最终 110/110 相关测试通过；类型检查通过。Windows 合并后动效再复核通过；macOS（苹果桌面操作系统）证据使用 QA 原共享 Electron（桌面程序框架）夹具，不是 SwiftUI 原生 Mac 窗口。Mac 两次独立工作树与全部 19 个本轮夹具目录已清理，未操作 A15 的窗口或进程。
+
+副本请求的 `NETWORK`（传输错误）也可能来自单个同步请求超时，因此再读取既有 `/status` 独立核对：宿主仍响应时只显示同步提示，只有确认不可达才提供离线模式；测试覆盖这一路径。
+
+[最终合并后测试](targeted-tests-merged.log) 与 [最终类型检查](typecheck-merged.log)、[合并后 Windows 动效](windows-motion-merged.log) 全部通过。两次 Mac 临时目录清理分别见 [第二次](mac/cleanup.json) 与 [第一次](mac/cleanup-first.json)。额外短复核起初与一次动效运行重叠，已取消该动效运行；独立主批与修复后的 30 轮批次均无本包其它 Electron 大测试重叠。显式结束 11 个本包进程（9 个取消动效测试树进程、2 个本包创建且空闲的 Gradle／Kotlin 守护进程），其余由运行器正常退出，不编造全部正常退出子进程数。

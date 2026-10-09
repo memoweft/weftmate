@@ -23,7 +23,8 @@ function fixture() {
     setInterval() {}, clearInterval() {}, localStorage: { getItem: (k: string) => values.get(k), setItem: (k: string,v: string) => values.set(k,v) },
     WeftOffline: { browserVault: async () => ({}), create: async () => ({ view: () => view, sync: async () => { if (failure) throw failure; return true; }, check: async () => ({}), clear: async () => {}, close() {} }) } };
   runInNewContext(component, environment);
-  return { environment, body, fail(error: any) { failure = error; } };
+  const core: any = { accessApi: async () => { throw {code:'NETWORK'}; } };
+  return { environment, body, core, fail(error: any) { failure = error; } };
 }
 test('sync errors distinguish connectivity from permission, request and replica errors', () => {
   const { environment } = fixture(), classify = environment.WeftOfflineView.syncFailure;
@@ -36,7 +37,7 @@ test('sync errors distinguish connectivity from permission, request and replica 
 });
 test('polling never navigates over approvals; return stays closed on repeated offline ticks', async () => {
   const f = fixture();
-  const mounted = f.environment.WeftOfflineView.mount({ core: {}, identity: async () => ({ origin:'synthetic',ownerId:'owner',deviceId:'phone',hostId:'host' }) });
+  const mounted = f.environment.WeftOfflineView.mount({ core: f.core, identity: async () => ({ origin:'synthetic',ownerId:'owner',deviceId:'phone',hostId:'host' }) });
   await new Promise(resolve => setImmediate(resolve));
   const [section, launcher, notice] = f.body.children;
   f.fail({code:'NETWORK'}); await mounted.tick(); assert.equal(section.hidden,true); assert.equal(launcher.hidden,false);
@@ -51,12 +52,19 @@ test('manually opened offline content belongs to the chat scroller, outside appr
   const f = fixture(), scroller = new Node();
   f.environment.document.getElementById = (id: string) => id === 'chat-scroll' ? scroller : null;
   let opened = 0;
-  const mounted = f.environment.WeftOfflineView.mount({ core: {}, openConversation: () => opened++,
+  const mounted = f.environment.WeftOfflineView.mount({ core: f.core, openConversation: () => opened++,
     identity: async () => ({origin:'synthetic',ownerId:'owner',deviceId:'phone',hostId:'host'}) });
   await new Promise(resolve => setImmediate(resolve));f.fail({code:'NETWORK'});await mounted.tick();
   const [launcher] = f.body.children;launcher.listeners.click();
   assert.equal(opened,1);assert.equal(scroller.children[0].hidden,false);
   assert.ok(!f.body.children.includes(scroller.children[0]));mounted.close();
+});
+test('a replica transport timeout does not declare a responsive host offline',async()=>{
+  const f=fixture();f.core.accessApi=async()=>({hostId:'host'} as any);
+  const mounted=f.environment.WeftOfflineView.mount({core:f.core,identity:async()=>({origin:'synthetic',ownerId:'owner',deviceId:'phone',hostId:'host'})});
+  await new Promise(resolve=>setImmediate(resolve));f.fail({code:'NETWORK'});await mounted.tick();
+  const [section,launcher,notice]=f.body.children;assert.equal(section.hidden,true);assert.equal(launcher.hidden,true);assert.equal(notice.hidden,false);
+  mounted.close();
 });
 test('both production mount transports pass objects and protected writes through requestJson', async () => {
   const context: any = { AbortSignal, URL, URLSearchParams };
