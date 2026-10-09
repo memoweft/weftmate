@@ -1,0 +1,100 @@
+[
+  {
+    "run": "eight-verified",
+    "state": "no_change",
+    "result": {
+      "reason": "confirmed_decision_requires_assistant_claim_from_context",
+      "schema_version": 1,
+      "state": "no_change"
+    },
+    "interpretation": {
+      "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"form\",\"target\":\"owner_self\",\"statement_kind\":\"preference\",\"formed_by\":\"stated\",\"proposition\":\"好，以后我想组队时，就提醒我找王小明。\",\"supports\":[{\"evidence_id\":\"aa11dd7b-c1ff-4884-ba85-28948348a66b\",\"sentence_id\":\"t0\"}],\"entity\":{\"canonical_name\":\"组队\",\"kind\":\"topic\",\"aliases\":[\"开黑\"]}}]}",
+      "finish_reason": "stop",
+      "formation_rewrite": {
+        "error": {
+          "code": "proposition_mismatch",
+          "instruction": "Rewrite the complete interpretation JSON once. Fix the reported compiler error; every cognition must include a nonempty proposition and valid supports. Copy names, forms of address, numbers and dates exactly from user evidence. Never invent facts."
+        },
+        "final_error": "confirmed_decision_requires_assistant_claim_from_context",
+        "first_result": {
+          "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"form\",\"target\":\"owner_self\",\"statement_kind\":\"preference\",\"formed_by\":\"confirmed\",\"proposition\":\"用户以后在相关的场景下主动想到王小明\",\"supports\":[{\"evidence_id\":\"aa11dd7b-c1ff-4884-ba85-28948348a66b\",\"sentence_id\":\"t0\"}],\"assistant_claim\":\"要我以后在相关的场景下主动想到他吗？\"}]}",
+          "finish_reason": "stop",
+          "model": "mimo-v2.6-flash",
+          "usage": {
+            "completion_tokens": 289,
+            "completion_tokens_details": {
+              "reasoning_tokens": 174
+            },
+            "prompt_tokens": 5486,
+            "prompt_tokens_details": {
+              "cached_tokens": 4416
+            },
+            "total_tokens": 5775
+          }
+        },
+        "state": "completed"
+      },
+      "model": "mimo-v2.6-flash",
+      "usage": {
+        "completion_tokens": 694,
+        "completion_tokens_details": {
+          "reasoning_tokens": 570
+        },
+        "prompt_tokens": 5889,
+        "prompt_tokens_details": {
+          "cached_tokens": 5440
+        },
+        "total_tokens": 6583
+      }
+    }
+  },
+  {
+    "run": "original-final",
+    "state": "no_change",
+    "result": {
+      "reason": "invalid_topic_claim",
+      "schema_version": 1,
+      "state": "no_change"
+    },
+    "interpretation": {
+      "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"form\",\"target\":\"owner_self\",\"statement_kind\":\"preference\",\"formed_by\":\"confirmed\",\"proposition\":\"以后遇到需要组队、找陪玩或者游戏相关的事，我可以提醒用户找他。\",\"assistant_claim\":\"以后遇到需要组队、找陪玩或者游戏相关的事，我可以提醒你找他。\",\"supports\":[{\"evidence_id\":\"10e96ea3-7600-45d1-b72d-432e0cbebc51\",\"sentence_id\":\"t0\"}],\"entity\":{\"canonical_name\":\"组队\",\"kind\":\"topic\",\"aliases\":[]}}]}",
+      "finish_reason": "stop",
+      "formation_rewrite": {
+        "error": {
+          "code": "topic_name_not_in_span",
+          "instruction": "Rewrite the complete interpretation JSON once. Fix the reported compiler error; every cognition must include a nonempty proposition and valid supports. Copy names, forms of address, numbers and dates exactly from user evidence. Never invent facts."
+        },
+        "final_error": "invalid_topic_claim",
+        "first_result": {
+          "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"form\",\"target\":\"owner_self\",\"statement_kind\":\"preference\",\"formed_by\":\"confirmed\",\"proposition\":\"以后遇到需要组队、找陪玩或者游戏相关的事，我可以提醒用户找他。\",\"assistant_claim\":\"以后遇到需要组队、找陪玩或者游戏相关的事，我可以提醒你找他。\",\"supports\":[{\"evidence_id\":\"10e96ea3-7600-45d1-b72d-432e0cbebc51\",\"sentence_id\":\"t0\"}],\"entity\":{\"canonical_name\":\"游戏\",\"kind\":\"topic\",\"aliases\":[\"电子游戏\"]}}]}",
+          "finish_reason": "stop",
+          "model": "mimo-v2.6-flash",
+          "usage": {
+            "completion_tokens": 738,
+            "completion_tokens_details": {
+              "reasoning_tokens": 587
+            },
+            "prompt_tokens": 5483,
+            "prompt_tokens_details": {
+              "cached_tokens": 4416
+            },
+            "total_tokens": 6221
+          }
+        },
+        "state": "completed"
+      },
+      "model": "mimo-v2.6-flash",
+      "usage": {
+        "completion_tokens": 306,
+        "completion_tokens_details": {
+          "reasoning_tokens": 157
+        },
+        "prompt_tokens": 5915,
+        "prompt_tokens_details": {
+          "cached_tokens": 5440
+        },
+        "total_tokens": 6221
+      }
+    }
+  }
+]

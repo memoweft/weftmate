@@ -77,6 +77,8 @@ test('account memory routes keep health, list, source, search cursor and Trust r
         permissions: { allow_local_read: true, allow_cloud_read: false, allow_inference: true },
         evidence: { summary: '合成来源', raw_content: '合成原文', content_available: true,
           recorded_at: '2026-09-27T00:00:00.000Z' },
+        assistant_sources: [{ message_id: 'assistant-proposal', conversation_id: 'source-session',
+          content: '以后组队时提醒你找这位朋友？', recorded_at: '2026-09-27T00:00:00.000Z' }],
       }] }
       throw new Error('unexpected memory method')
     },
@@ -192,6 +194,10 @@ test('account memory routes keep health, list, source, search cursor and Trust r
     assert.equal(source.body.sources[0].rawContent, '合成原文')
     assert.equal(source.body.sources[0].contentAvailable, true)
     assert.equal(source.body.sources[0].rawContentTruncated, false)
+    assert.equal(source.body.sources[1].role, 'assistant')
+    assert.equal(source.body.sources[1].messageId, 'assistant-proposal')
+    assert.equal(source.body.sources[1].rawContent, '以后组队时提醒你找这位朋友？')
+    assert.equal(source.body.sources[1].permissions.allowCloudRead, false)
     const command = await api(origin, 'POST', `/personal/v1/memory/items/cognition/c-${aOwner}-one/correct`,
       { requestId: 'fix-one', expectedWorldRevision: 3, text: '改正后的合成记忆' }, a)
     assert.equal(command.status, 200)

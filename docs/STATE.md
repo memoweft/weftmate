@@ -9,7 +9,7 @@
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
 | Codex · Windows-3 | UX-3 · 输入区 | [PR #153](https://github.com/memoweft/weftmate/pull/153) · `wp/ux-3-composer-menu`：共用「+」菜单，Windows（视窗系统）区域截图 / 剪贴板图片，手机相机 / 照片 / 文件与安卓code25原生桥；按对话深入思考、提供方原生映射 / 默认值恢复、D36运行中占位；真实时间线子任务胶囊 / 三态 / 耗时 / 步骤跳转。真实Electron（桌面程序框架）浅深色与480×600、390×844网页 / 安卓界面包通过；MiMo（小米模型服务）深入思考实际thinking.type=enabled与回复终态、偏好重新打开通过，成功验收2请求、2234输入 / 42输出标记、0.002318元；安卓隔离APK（安装包）构建 / JVM（Java虚拟机）及定向回归、类型检查通过。[证据与Apple（苹果端）清单](../tests/evidence/ux-3/README.md)。未安装本人应用 / 测原生相机实机 / 做Apple接线，已按4c清理4个残留进程，复查0；完整测试与审稿页交本包PR（拉取请求）的CI（持续集成），待Claude审查。 |
-| Codex · Windows-5 | PF-2 上网查资料写文档速度 | [证据](../tests/evidence/pf-2/README.md)：原题MiMo 118.523/233.329/120.316秒，中位120.316秒、无单次>300秒；LAN 135.846秒，原检查全部通过。原文预览/落盘/定位段落、提前原生压缩与超时后压缩恢复，未改界面/模型/900秒预算；整理及研究脚本回归通过，相关38/38。事实核对仍有ABI（应用二进制接口）数字和过宽表述，原件/失败保留；[PR（拉取请求）#141](https://github.com/memoweft/weftmate/pull/141)，代码CI（持续集成）6/6，最终检查见PR；清理10个、本包残留0。 |
+| Codex · Windows-5 | FX-15 确认决定与迁移记忆核对 | [PR #156](https://github.com/memoweft/weftmate/pull/156)／Core（记忆核心）[PR #98](https://github.com/memoweft/memoweft/pull/98)：跨回合确认共用持久上下文、双方原话与消息标识、权限／遗忘依赖；真实Electron＋固定DSH＋MiMo→LAN原八步8/8，短确认与隔两轮确认各4/4，正式决定采用与来源页均通过。指定备份7库正式四类全0行，规范库映射一致；其它账号503为模型路由不可用，副本修正后台选择后200空表。未改迁移脚本，清单已补，Verify归FX-14。Core CI（持续集成）1902项及218模块类型检查全过；宿主相关7＋13项与类型检查通过，最终CI见PR。[证据](../tests/evidence/fx-15/README.md)；显式清理4进程、产品残留0、备份副本0；10个合成目录删除被自动审查拒绝并保留。 |
 | Codex · Windows-4 | FX-14 非记忆问题修复 | [PR #157](https://github.com/memoweft/weftmate/pull/157)：在线同步／授权错误不再触发离线遮挡，传对象与保护写入，返回不重弹；真实安卓＋390×844网页全链零遮挡。安装包隔离 Prepare→启动→Verify 通过，配置保护不变；项目弹窗宽窄浅深单滚动／固定底部。Windows／Mac 原动效行为断言通过。合入 IA-3／MEM-2 保留双方，补回旁聊原生快照时间戳：新入口独立30/30，停止p95（第95百分位）0.859秒；原基线30/30、1.379秒亦保留。原生90秒无增量超时／既有重试／进展提示，合成慢流与停止通过；110项相关测试、类型检查通过，最终CI（持续集成）见PR。MiMo21笔完整用量；本包进程与模拟器已清理，首轮合成迁移临时目录删除被自动审查拒绝并保留。记忆与本人备份不在本包范围；[证据](../tests/evidence/fx-14/README.md)。 |
 | Codex · Windows | M0-6 现有模型入口、后台路由与系统状态 | [PR（合并请求）#33](https://github.com/memoweft/weftmate/pull/33) 方向调整完成：接入 D:\AI 的 8081 ModelSwitcher（模型切换代理），删除自起模型与参数；98,304 / 单槽 / 12 步与后台排队冒烟通过，M1-1b 完成后真实按钮重启通过；最终 CI（持续集成）见 PR 当前提交 |
 | Codex · Windows-3 | UI-5 对话菜单与设置已归档（D34） | [PR #103](https://github.com/memoweft/weftmate/pull/103) · `wp/ui-5-session-menu`：桌面悬停 / 键盘 / 右键菜单、字母快捷键、行内重命名、分组子菜单与折叠、置顶 / 分组 / 未分组顺序；手机长按底部动作表单（Android〔安卓〕code23）；账号隔离的置顶、未读、用户标题、分组 CRUD（增删改查）及 DSH（助手运行时）原生事件种子分叉，独立工作目录与经验、不复制记忆来源；设置已归档搜索 / 恢复 / 既有删除确认。定向21项（含合入FG-1的遗忘 / 生命周期回归）、按名称与角色的界面回归59项及动效关闭回归1项、类型检查、真实 Electron（桌面程序框架）+ MiMo 分叉续聊与归档删除、390×844 手机网页和 MuMu（安卓模拟器）原生桥接通过；证据见 `tests/evidence/ui-5/`。删除确认遗忘勾选未动；长时浸泡及 Apple（苹果）原生接线未做；完整 CI（持续集成）见本包 PR（拉取请求），待 Claude 审查 |
@@ -92,6 +92,7 @@ MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌）�
 
 ## 契约变更
 
+- **FX-15 / Windows-5**：记忆 sources（来源）可追加 `role:"assistant"`、`messageId`、`conversationId`，展示已确认提议原话；既有原文字段与权限保留，详见 CLIENT_API 3.9。
 - **MEM-2 / Windows-2**：CLIENT_API第10节：`temporaryChats=1`、`session.create.temporary`与手机`POST /sessions/temporary`；会话/逻辑旁聊元数据增加记忆、独立召回、期限，列表增加`temporary,memoryMode,recallEnabled,autoDeleteDays,expiresAt,hasTemporaryContent`；历史`cacheAllowed:false`禁写离线缓存，Android（安卓）最低code26；主对话保护、旧回合策略与新备份过滤，Apple（苹果端）接线见第10节。
 - **IA-3**：CLIENT_API 9.6 补齐原件 `PUT /sync/attachments/{id}` 以主对话 `chatId` 使用同一逻辑暂存身份；不创建执行段，原账户 / 命令 / 原件授权保持。
 
