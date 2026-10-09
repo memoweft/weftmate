@@ -92,6 +92,10 @@ globalThis.WeftUsageView = function (core, target, { sessionId = '', current = (
 };
 if (globalThis.WeftUiComponents) globalThis.WeftUiComponents.factories.usage = (core, ui) => {
     let activeScope = null;
+    let conversationButton;
+    function renderConversationUsage() {
+        if (conversationButton) conversationButton.hidden = core.state.newConversation || !core.state.selectedSessionId || core.state.activeChatSource === 'phone';
+    }
     function showSettingsUsage({ sessionId = '' } = {}) {
         const target = document.querySelector('[data-category="usage"].settings-category');
         const token = core.accountToken(); activeScope = {};
@@ -100,11 +104,12 @@ if (globalThis.WeftUiComponents) globalThis.WeftUiComponents.factories.usage = (
     }
     function mountUsage() {
         const conversation = ui.element('button', 'button quiet small usage-title-button', '本对话用量'); conversation.type = 'button';
+        conversationButton = conversation; renderConversationUsage();
         conversation.addEventListener('click', () => {
             if (!core.state.selectedSessionId || core.state.activeChatSource === 'phone') return ui.toast('请先选择一段电脑对话。');
             ui.openSettings('usage', { sessionId: core.state.selectedSessionId });
         });
         globalThis.WeftUiLayout.mountUsage(conversation);
     }
-    return { mountUsage, showSettingsUsage };
+    return { mountUsage, showSettingsUsage, renderConversationUsage };
 };

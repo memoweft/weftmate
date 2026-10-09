@@ -15,6 +15,7 @@
 .weftmate-desktop .rail-top { display: flex; align-items: center; gap: var(--wm-space-8); }
 .weftmate-desktop .rail-heading { padding: 0; flex-shrink: 0; }
 .weftmate-desktop .rail-new { order: -1; flex: 1; width: auto; min-width: 0; }
+.weftmate-desktop .toast { top: calc(var(--desktop-caption-height, var(--wm-space-44)) + var(--wm-space-16)); }
 
 /* Windows top-layer surfaces are centered in the workspace below the caption.
    Electron supplies the actual overlay height; the fallback matches its 44px setting. */

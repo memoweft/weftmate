@@ -16,8 +16,11 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
             if (chosen?.sessionId)
                 await core.selectSession(chosen.sessionId);
         }
-        else
+        else {
             effects.renderSessions();
+            if (core.state.activeChatSource === 'desktop' && core.state.selectedSessionId)
+                effects.paintSelectedSession(core.state.selectedSessionId);
+        }
         if (core.state.turnStatus === 'running')
             effects.renderTurnStatus();
         effects.updateAvailability();

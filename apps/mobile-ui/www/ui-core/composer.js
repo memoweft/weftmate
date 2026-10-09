@@ -30,17 +30,28 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
     }
     function startNewConversation() {
         if (core.state.submitting || core.state.unresolvedSubmission) return;
+        const fromPhone = core.state.activeChatSource === 'phone';
+        if (fromPhone && core.state.selectedPhoneConversationId && !core.readPhoneOutbox())
+            core.state.phoneDrafts.set(core.state.selectedPhoneConversationId, effects.readMessageDraft());
+        core.cancelAttachmentUpload();
+        core.state.activeChatSource = 'desktop';
+        core.state.selectedPhoneConversationId = null;
+        effects.paintDesktopComposer(fromPhone);
         core.state.newConversation = true;
         core.state.newConversationId = environment.crypto.randomUUID();
         core.state.newConversationApprovalMode = null;
         core.state.selectedSessionId = null;
         core.state.historyGeneration++;
         core.state.historyEvents.clear(); core.state.seenSeq.clear(); core.state.afterSeq = -1;
+        core.state.nextBeforeSeq = null; core.state.hasOlder = false; core.state.olderLoading = false;
+        core.state.historyHasMore = false; core.state.turnEndReasonKind = null;
         core.state.turnStatus = null;
         core.resetConversationApprovals(); core.resetConversationQuestions();
         effects.renderConversationApprovals();effects.renderConversationQuestions();effects.renderConversationTasks();
         effects.paintSelectedSession(null);
+        effects.renderOlderControl(); effects.closePhoneImagePreview(); effects.removeResourcePreview();
         effects.clearHistoryView(); effects.renderSessions(); effects.updateAvailability();
+        effects.showConversation(); effects.closeRail();
         effects.scrollToLatest();
         void core.refreshNewConversationApprovalMode();
     }
@@ -51,8 +62,9 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         if (!row.sessionId) {
             row.creating = true;
             core.creatingOptimisticSession = true;
-            const submitted = await core.submitCommand('session.create', {modelProfileId: row.modelProfileId}, null, row.createRequestId);
-            const created = core.state.tasks.find(command=>command.requestId===row.createRequestId) || submitted;
+            const submitted = row.creationCommand?.state === 'accepted_by_dsh' ? row.creationCommand
+                : await core.submitCommand('session.create', {modelProfileId: row.modelProfileId}, null, row.createRequestId);
+            const created = row.creationCommand || core.state.tasks.find(command=>command.requestId===row.createRequestId) || submitted;
             core.creatingOptimisticSession = false;
             row.creating = false;
             if (!current()) return;
@@ -65,7 +77,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             }
             await core.refreshSessions();
             if (!current()) return;
-            if (core.state.newConversation && core.state.selectedSessionId === null) await core.selectSession(row.sessionId);
+            if (core.state.newConversation && core.state.selectedSessionId === null && core.state.newConversationId === row.draftId) await core.selectSession(row.sessionId);
         }
         if(row.approvalMode){
             await core.accessApi(`/sessions/${encodeURIComponent(row.sessionId)}/approval-mode`,{method:'PATCH',protectedWrite:true,body:{mode:row.approvalMode}});
@@ -95,6 +107,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
     function handleOptimisticCreation(command) {
         const row = [...messages.values()].find(row=>row.createRequestId===command?.requestId && row.ownerId===core.state.ownerId && row.identity===core.state.identityGeneration);
         if (!row) return false;
+        if (row.creationCommand?.state !== 'accepted_by_dsh' || !['pending','dispatching'].includes(command.state)) row.creationCommand = command;
         if (!row.creating && !row.sessionId && command.state==='accepted_by_dsh') {
             row.creating=true;
             void deliverSafely(row);
@@ -198,8 +211,16 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         const context = core.conversationTaskContext();
         const current = core.taskQueue().filter(row => row.state === 'running').at(-1);
         if (session && core.state.sessions.find(item => item.sessionId === session)?.running && !core.state.cancelSubmitting) {
-            if (!current?.taskId || current.taskId.startsWith('turn-'))
-                return core.submitCommand('session.cancel', { sessionId: session }, session);
+            const stoppedNotice = () => {
+                if (!core.conversationTaskCurrent(context)) return;
+                const queued = core.taskQueue().filter(row => row.state === 'queued').length;
+                effects.toast(queued ? `已停止当前回复，还有 ${queued} 条排队消息会继续` : '已停止');
+            };
+            if (!current?.taskId || current.taskId.startsWith('turn-')) {
+                const result = await core.submitCommand('session.cancel', { sessionId: session }, session);
+                if (result?.state === 'accepted_by_dsh') stoppedNotice();
+                return result;
+            }
             core.state.cancelSubmitting = true;
             effects.updateAvailability();
             try {
@@ -208,8 +229,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
                     core.stopAttempt = { key, requestId: environment.crypto.randomUUID() };
                 await core.accessApi(`/tasks/${encodeURIComponent(current.taskId)}/stop`, {
                     method: 'POST', protectedWrite: true, body: { requestId: core.stopAttempt.requestId } });
-                if (core.conversationTaskCurrent(context))
-                    effects.toast('停止请求已提交，排队任务会继续执行。');
+                stoppedNotice();
             } catch (error) {
                 if (core.conversationTaskCurrent(context)) effects.toast(core.taskControlError(error));
             } finally {

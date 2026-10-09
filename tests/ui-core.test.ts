@@ -501,6 +501,70 @@ test('UI-P4 starting another new conversation does not display an earlier uncrea
   f.core.startNewConversation();f.core.beginOptimistic({sessionId:null,draftId:f.core.state.newConversationId,requestId:'failed-first',text:'旧草稿',status:'failed'});
   assert.equal(f.core.optimisticMessages().length,1);f.core.startNewConversation();assert.equal(f.core.optimisticMessages().length,0);
 });
+
+test('FIX-8 new desktop drafts clear phone selection, pagination and late handoff callbacks', async () => {
+  const waiting = deferred(), f = fixture(path => path.includes('/shared') ? waiting.promise : response({mode:'auto'}));
+  const conversationId = 'conversation-00000000-0000-4000-8000-000000000099';
+  Object.assign(f.core.state,{syncAvailable:true,activeChatSource:'phone',selectedPhoneConversationId:conversationId,
+    hasOlder:true,nextBeforeSeq:12,olderLoading:true,historyHasMore:true,turnEndReasonKind:'aborted'});
+  f.core.state.phoneEvents=[{seq:1,conversationId,sourceDeviceId:'device-phone',kind:'conversation.created',payload:{title:'Phone'}}];
+  const binding=f.core.refreshPhoneBinding(conversationId);
+  f.core.startNewConversation();
+  const draftId=f.core.state.newConversationId;
+  waiting.resolve(response({source:'host',hostId:'host-test',conversationId,status:'active',binding:{sessionId:'session-test'}}));
+  await binding;
+  assert.equal(f.core.state.activeChatSource,'desktop');assert.equal(f.core.state.selectedPhoneConversationId,null);
+  assert.equal(f.core.state.selectedSessionId,null);assert.equal(f.core.state.newConversation,true);
+  assert.equal(f.core.state.hasOlder,false);assert.equal(f.core.state.nextBeforeSeq,null);assert.equal(f.core.state.olderLoading,false);
+  assert.equal(f.core.state.historyHasMore,false);assert.equal(f.core.state.turnEndReasonKind,null);
+  assert.equal(f.core.composerState('').phoneChat,false);assert.ok(f.paints.some(p=>p.name==='paintDesktopComposer'));
+  f.core.startNewConversation();assert.notEqual(f.core.state.newConversationId,draftId);
+});
+
+test('FIX-8 stop notices count only the current conversation queued messages and confirm fallback receipts', async () => {
+  for(const count of [0,2]){
+    const f=fixture();f.core.state.sessions[0].running=true;
+    f.core.state.historyEvents.set(1,{seq:1,type:'task.started',data:{taskId:'current-root'}});
+    for(let n=0;n<count;n++)f.core.state.historyEvents.set(n+2,{seq:n+2,type:'task.queued',data:{taskId:`queue-${n}`}});
+    f.core.state.historyEvents.set(9,{seq:9,type:'task.queued',data:{taskId:'cancelled-root'}});
+    f.core.state.historyEvents.set(10,{seq:10,type:'task.ended',data:{taskId:'cancelled-root',reason:'cancelled'}});
+    await f.core.stopCurrentTurn();
+    assert.equal(f.paints.filter(p=>p.name==='toast').at(-1)?.args[0],count?'已停止当前回复，还有 2 条排队消息会继续':'已停止');
+  }
+  for(const state of ['pending','accepted_by_dsh']){
+    const f=fixture();f.core.state.sessions[0].running=true;f.core.submitCommand=async()=>({state});
+    await f.core.stopCurrentTurn();
+    assert.equal(f.paints.filter(p=>p.name==='toast').length,state==='accepted_by_dsh'?1:0);
+  }
+});
+
+test('FIX-8 refreshed session titles repaint the selected header after a local account is bound', async () => {
+  const f=fixture(path=>response(path.includes('/sessions')?{sessions:[{sessionId:'session-test',title:'你好',sendAvailable:true}]}:{devices:[]}));
+  f.core.acceptSession({account:{ownerId:'owner-test',username:'Synthetic'},device:{id:'device-test'},csrfToken:'renewed-after-binding'});
+  await f.core.refreshSessions();
+  assert.equal(f.core.state.selectedSessionId,'session-test');assert.equal(f.core.state.activeChatSource,'desktop');
+  assert.equal(f.core.state.sessions[0].title,'你好');
+  assert.deepEqual(plain(f.paints.filter(p=>p.name==='paintSelectedSession').at(-1)?.args),['session-test']);
+});
+
+test('FIX-8 an accepted creation observed before the pending POST snapshot still sends the first draft once', async () => {
+  const f=fixture();f.core.startNewConversation();f.core.state.newConversationApprovalMode=null;
+  const sends:string[]=[];
+  f.core.refreshSessions=async()=>{};f.core.refreshHistory=async()=>{};
+  f.core.selectSession=async id=>{f.core.state.selectedSessionId=id;f.core.state.newConversation=false;};
+  f.core.submitCommand=async(kind,_fields,_session,requestId)=>{
+    sends.push(kind);
+    if(kind==='session.create'){
+      f.core.updateFromCommand({kind,requestId,sessionId:'created-session',state:'accepted_by_dsh'});
+      return {kind,requestId,sessionId:'created-session',state:'pending'};
+    }
+    return {kind,requestId,state:'accepted_by_dsh',receiptId:'first-rpc'};
+  };
+  await f.core.sendDraft('首条目标');
+  assert.deepEqual(sends,['session.create','session.message']);
+  assert.equal(f.core.state.selectedSessionId,'created-session');
+  assert.equal(f.core.optimisticMessages()[0].status,'accepted');
+});
 test('a delayed lifecycle response cannot replace another account session list',async()=>{
   const pending=deferred(),f=fixture(()=>pending.promise);
   const work=f.core.archiveSession('session-test');f.core.state.identityGeneration++;f.core.state.sessions=[{sessionId:'other-account'}];pending.resolve({ok:true,json:async()=>({archived:true})});
