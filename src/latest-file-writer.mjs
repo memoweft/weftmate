@@ -15,7 +15,11 @@ export function createLatestFileWriter(file) {
   }
   return text => {
     pending = text;
-    if (!running) running = drain().finally(() => { running = undefined; });
+    if (!running) running = Promise.resolve().then(async () => {
+      try {
+        do { await drain(); } while (pending !== undefined);
+      } finally { running = undefined; }
+    });
     return running;
   };
 }
