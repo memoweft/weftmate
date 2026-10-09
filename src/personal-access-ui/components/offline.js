@@ -67,7 +67,7 @@
           if (!current && !nativeCall) { try { current = JSON.parse(localStorage.getItem('weftmate-offline-identity')); } catch {} }
           if (!current?.ownerId || !current.hostId || !current.deviceId) return;
           await start(current);
-          try { await engine.sync(); offline = false; error = ''; }
+          try { if (await engine.sync()) { offline = false; error = ''; } }
           catch (cause) {
             if (['UNAUTHORIZED', 'DEVICE_NOT_TRUSTED'].includes(cause.code || cause.message)) { await engine.clear(); return; }
             if (engine.view().ready) {
