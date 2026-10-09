@@ -29,3 +29,9 @@ test('days follow account timezone and old days collapse without discarding thei
   assert.equal(days[0].date,'2026-10-09');assert.equal(days[0].label,'10 月 9 日');assert.equal(days[0].collapsed,true);
   window.state.expanded.add(days[0].date);assert.equal(window.days(Date.parse('2026-10-11T04:00:00Z'))[0].collapsed,false);
 });
+test('new live messages cannot evict the visible older anchor from a full bounded window',()=>{
+  const window=model.create(1000);window.merge({items:Array.from({length:1000},(_,n)=>event(n)),contentRevision:1,syncCursor:'live-1'});
+  window.state.anchorId='event-0';window.merge({upserts:[event(1000),event(1001)],contentRevision:1,nextCursor:'live-2'},'changes');
+  assert.equal(window.state.events.size,1000);assert.equal(window.state.events.has('event-0'),true);assert.equal(window.state.hasNewer,true);
+  assert.equal(window.state.syncCursor,'live-2');
+});

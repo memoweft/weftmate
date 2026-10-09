@@ -24,7 +24,7 @@
 .main-chat-row mark { color:var(--ink); background:var(--accent-soft); text-decoration:underline; text-underline-offset:3px; }
 .main-chat-row:focus-visible, .chat-day-toggle:focus-visible, .rail-main-chat:focus-visible, .side-result-link:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 #open-side-chat { margin:var(--wm-space-4); }
-@media (max-width:720px) { .main-chat-tools .button { min-height:44px; } .main-chat-search .button { min-height:44px; } .main-chat-tools { flex-wrap:wrap; } .main-chat-row { padding-inline:var(--wm-space-4); } .assistant-topbar.is-main-chat #conversation-resources { font-size:0; padding:var(--wm-space-8); min-width:36px; } }
+@media (max-width:720px) { .main-chat-tools .button { min-height:44px; } .main-chat-search .button { min-height:44px; } .main-chat-tools { flex-wrap:wrap; } .main-chat-row { padding-inline:var(--wm-space-4); } .assistant-topbar.is-main-chat #conversation-resources { font-size:0; padding:var(--wm-space-8); min-width:var(--wm-space-44); min-height:var(--wm-space-44); } }
 
 .transcript.is-main-chat { gap:0; }
 .rail-side-heading { color:var(--muted); font-size:var(--wm-font-size-12); padding:var(--wm-space-12) var(--wm-space-8) var(--wm-space-4); }
