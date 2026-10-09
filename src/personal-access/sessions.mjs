@@ -225,6 +225,7 @@ export function createSessionOperations(context) {
         }
         let forgottenEvidenceCount = 0;
         if (forgetMemories) {
+          await context.memoryManager?.discardPendingSources?.(ownerId, { sessionId });
           const manager = context.memoryManager;
           const status = await manager?.status(ownerId);
           if (!status?.capabilities?.deleteEvidence) throw failure('MEMORY_DELETE_UNAVAILABLE', 503);

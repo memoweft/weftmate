@@ -88,7 +88,7 @@ export async function runPreemptibleFormation(queue, signal, work,
 /** Private loopback bridge shared by native DSH streams and MemoWeft workers. */
 export async function createModelScheduler({ isIdle, profileFor, backgroundRoute, credentialFor, fetchImpl = fetch,
   beginUsage = null, finishUsage = null, backgroundReady = null, onEvent = () => {},
-  heartbeatMs = 15_000 }) {
+  heartbeatMs = 15_000, memoryProfileFor = null }) {
   const queues = new Map();
   const progress = new Map();
   async function queueFor(destination) {
@@ -106,7 +106,7 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
         headers: key ? { authorization: `Bearer ${key}` } : {} });
       if (response.ok) slots = (await response.json()).total_slots;
     } catch { /* Unknown capacity does not establish a single-slot service. */ }
-    if (slots !== 1) return null;
+    if (slots !== 1) return slots === undefined ? queues.get(endpoint.href) ?? null : null;
     const identity = endpoint.href;
     if (!queues.has(identity)) queues.set(identity, createInferenceQueue({ isIdle }));
     return queues.get(identity);
@@ -118,13 +118,15 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
       backgroundPending: rows.reduce((sum, row) => sum + row.backgroundPending, 0) + switchPending };
   }, close: () => { for (const value of queues.values()) value.close(); } };
   let switchPending = 0;
-  async function acquireBackground(profile, selectedQueue, signal, onPreempt = null) {
+  async function acquireBackground(profile, selectedQueue, signal, onPreempt = null, refresh = null) {
     let waiting = false;
     try {
       while (true) {
         signal.throwIfAborted();
+        if (refresh) profile = refresh();
         if (!backgroundReady || await backgroundReady(profile)) {
           const release = await selectedQueue?.acquire('background', signal, null, onPreempt);
+          if (refresh) { try { profile = refresh(); } catch (error) { release?.(); throw error; } }
           // Foreground may have switched models while this request waited for idle.
           if (!backgroundReady || await backgroundReady(profile)) return release;
           release?.();
@@ -135,6 +137,11 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
     } finally { if (waiting) switchPending--; }
   }
   const token = randomBytes(24).toString('hex');
+  const memoryTokens = new Map();
+  const memoryCredential = ownerId => {
+    if (!memoryTokens.has(ownerId)) memoryTokens.set(ownerId, randomBytes(24).toString('hex'));
+    return memoryTokens.get(ownerId);
+  };
   const controllers = new Set();
   const server = createServer(async (request, response) => {
     const controller = new AbortController(); controllers.add(controller);
@@ -193,9 +200,11 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
       }
       const match = /^\/inference\/([A-Za-z0-9._-]+)(?:\/scope\/([A-Za-z0-9._:-]+)\/([A-Za-z0-9._:-]+))?\/(?:v1\/)?(chat\/completions|models|props)$/.exec(route);
       if (!match) { response.writeHead(404).end(); return; }
-      const profile = profileFor(match[1]);
-      const key = profile && credentialFor(profile);
-      if (!profile || !key || request.headers.authorization !== `Bearer ${key}`) { response.writeHead(403).end(); return; }
+      const dynamicLocal = match[1] === 'current-local' && !!match[2] && memoryProfileFor;
+      let profile = dynamicLocal ? memoryProfileFor(match[2]) : profileFor(match[1]);
+      let key = profile && credentialFor(profile);
+      const expectedKey = dynamicLocal ? memoryTokens.get(match[2]) : key;
+      if (!profile || !key || !expectedKey || request.headers.authorization !== `Bearer ${expectedKey}`) { response.writeHead(403).end(); return; }
       const operation = match[4];
       let selectedQueue;
       if (operation === 'chat/completions') {
@@ -203,22 +212,35 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
         onEvent('model.queued', metadata);
         // MemoWeft's HTTP timeout measures transport inactivity. Informational
         // responses keep queued work alive without changing the final status/body.
-        selectedQueue = await queueFor({ profileId: match[1] });
-        if (!selectedQueue) {
-          const heartbeat = setInterval(() => { if (!response.headersSent) response.writeProcessing(); }, heartbeatMs);
-          try { release = await acquireBackground(profile, null, controller.signal); }
-          finally { clearInterval(heartbeat); }
-        }
+        selectedQueue = await queueFor({ profileId: profile.id });
       }
-      let body;
+      let body, originalInput;
       if (request.method === 'POST') {
         const parts = []; for await (const part of request) parts.push(part);
-        const value = JSON.parse(Buffer.concat(parts).toString('utf8'));
-        body = JSON.stringify({ ...value, model: canonicalProviderModelId(profile.baseUrl, profile.model) });
+        originalInput = JSON.parse(Buffer.concat(parts).toString('utf8'));
+        body = JSON.stringify({ ...originalInput, model: canonicalProviderModelId(profile.baseUrl, profile.model) });
       }
-      const endpoint = operation === 'props'
+      let endpoint = operation === 'props'
         ? new URL(profile.baseUrl.replace(/\/?v1\/?$/, '/props'))
         : openAICompatibleEndpoint(profile.baseUrl, operation);
+      const refreshLocal = dynamicLocal ? () => {
+        const next = memoryProfileFor(match[2]);
+        // A different endpoint needs its own capacity lease. Core's local retry
+        // re-enters this handler; never send local-only evidence to a cloud route.
+        if (!next || next.baseUrl !== profile.baseUrl) throw new Error('MODEL_BACKGROUND_CHANGED');
+        profile = next; key = credentialFor(profile);
+        if (!key) throw new Error('MODEL_UNAVAILABLE');
+        endpoint = openAICompatibleEndpoint(profile.baseUrl, operation);
+        if (originalInput) body = JSON.stringify({ ...originalInput, model: canonicalProviderModelId(profile.baseUrl, profile.model) });
+        return profile;
+      } : null;
+      if (operation === 'chat/completions' && !selectedQueue) {
+        const heartbeat = setInterval(() => { if (!response.headersSent) response.writeProcessing(); }, heartbeatMs);
+        try { release = await acquireBackground(profile, null, controller.signal, null, refreshLocal); }
+        finally { clearInterval(heartbeat); }
+        // Loading can temporarily hide /props. Recheck capacity after readiness.
+        selectedQueue = await queueFor({ profileId: profile.id });
+      }
       if (selectedQueue) {
         const heartbeat = setInterval(() => { if (!response.headersSent) response.writeProcessing(); }, heartbeatMs);
         try {
@@ -239,7 +261,7 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
               if (ticket && !settled) await finishUsage({ ...ticket, usage: null });
               throw error;
             }
-          }, onPreempt => acquireBackground(profile, selectedQueue, controller.signal, onPreempt));
+          }, onPreempt => acquireBackground(profile, selectedQueue, controller.signal, onPreempt, refreshLocal));
           response.writeHead(completed.status, { 'content-type': completed.contentType ?? 'application/json',
             'x-modelswitcher-model': profile.model });
           response.end(Buffer.from(completed.bytes));
@@ -270,7 +292,7 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const url = `http://127.0.0.1:${server.address().port}/${token}`;
-  return { url, queue,
+  return { url, queue, memoryCredential,
     beginMemory(sessionId) {
       const state = { phase: 'memory' };
       progress.set(sessionId, state);
