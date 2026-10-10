@@ -50,4 +50,4 @@ if (audit.error) {
 
 if (audit.status !== 0) process.exit(audit.status ?? 1);
 
-console.log('Release preflight passed: no local dependencies or high-severity production advisories.');
+console.log('Release dependency preflight passed: no local dependencies or high-severity production advisories. Packaging, package contents, signing and application startup are NOT verified; use the Windows packaged smoke gate.');
