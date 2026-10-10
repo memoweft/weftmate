@@ -1,4 +1,35 @@
-
+// D50: drawer status uses one slot: running > unread > empty.
+// Pin and temporary mode remain available through the accessible title and long-press menu.
+function mobileSessionStatus(button, session, running = session.running) {
+  const slot = el('span', 'mobile-session-status'); slot.setAttribute('aria-hidden', 'true');
+  if (running) { slot.classList.add('is-running'); button.setAttribute('aria-description', '正在运行'); }
+  else if (session.unread) { slot.classList.add('is-unread'); button.setAttribute('aria-description', '未读'); }
+  button.append(slot);
+  const details = [session.pinned ? '已置顶' : '', session.memoryMode === 'off' ? '临时对话' : ''].filter(Boolean).join(' · ');
+  if (details) { button.title = details; button.setAttribute('aria-description', [button.getAttribute('aria-description'), details].filter(Boolean).join(' · ')); }
+}
+function mobileLongPress(button, open, select) {
+  let timer = null, pressed = false, origin;
+  const cancel = () => { clearTimeout(timer); timer = null; };
+  button.addEventListener('pointerdown', event => {
+    if (event.button && event.button !== 0) return;
+    pressed = false; origin = { x: event.clientX, y: event.clientY };
+    timer = setTimeout(() => { timer = null; pressed = true; open(); }, 500);
+  });
+  button.addEventListener('pointermove', event => { if (origin && Math.hypot(event.clientX-origin.x, event.clientY-origin.y) > 10) cancel(); });
+  for (const event of ['pointerup', 'pointercancel', 'pointerleave']) button.addEventListener(event, cancel);
+  button.addEventListener('contextmenu', event => { event.preventDefault(); cancel(); if (!pressed) { pressed = true; open(); } });
+  button.addEventListener('keydown', event => { if (event.key === 'ContextMenu' || event.key === 'F10' && event.shiftKey) { event.preventDefault(); open(); } });
+  button.addEventListener('click', () => { if (pressed) { pressed = false; return; } select(); });
+}
+function mobileProjectMenu(project) {
+  const dialog = el('dialog', 'session-action-dialog session-action-sheet'); dialog.setAttribute('aria-label', `项目操作 ${project.name}`);
+  dialog.append(el('h2', '', project.name));
+  const create = el('button', 'session-menu-item', '新建对话'); create.type = 'button'; create.prepend(WeftIcons.create('plus', 20));
+  create.onclick = () => { dialog.close(); void mobileNewProjectConversation(project); };
+  const cancel = el('button', 'secondary', '取消'); cancel.type = 'button'; cancel.onclick = () => dialog.close();
+  dialog.append(create, cancel); dialog.onclose = () => dialog.remove(); document.body.append(dialog); dialog.showModal(); cancel.focus();
+}
 const collapsedMobileProjects = new Set();
 function renderMobileProjects(target, filter = '') {
   if (!state.loggedIn) return;
@@ -9,19 +40,21 @@ function renderMobileProjects(target, filter = '') {
   for (const project of projects) {
     const conversations = uiCore.projectConversations(project.projectId, state.sharedSessions);
     if (filter && !project.name.toLocaleLowerCase().includes(filter) && !conversations.some(session => (session.title || '新对话').toLocaleLowerCase().includes(filter))) continue;
+    const expanded = !collapsedMobileProjects.has(project.projectId) || !!filter;
     const row = el('div', 'mobile-project-heading');
-    const toggle = el('button', 'mobile-project-toggle'); toggle.type = 'button'; toggle.setAttribute('aria-expanded', String(!collapsedMobileProjects.has(project.projectId)));
-    const icon = el('img'); icon.src = 'icons/folder.svg'; icon.alt = ''; toggle.append(icon, el('span', '', project.name));
-    toggle.onclick = () => { collapsedMobileProjects.has(project.projectId) ? collapsedMobileProjects.delete(project.projectId) : collapsedMobileProjects.add(project.projectId); renderConversationList(); };
-    const create = el('button', 'session-more'); create.type = 'button'; create.setAttribute('aria-label', `在项目 ${project.name} 新建对话`); const plus = el('img'); plus.src = 'icons/plus.svg'; plus.alt = ''; create.append(plus); create.onclick = () => mobileNewProjectConversation(project); row.append(toggle, create); section.append(row);
-    if (!collapsedMobileProjects.has(project.projectId) || filter) {
+    const toggle = el('button', 'mobile-project-toggle'); toggle.type = 'button'; toggle.setAttribute('aria-expanded', String(expanded));
+    toggle.setAttribute('aria-label', `${expanded ? '收起' : '展开'}项目 ${project.name}`);
+    const icon = el('img'); icon.src = expanded ? 'icons/folder-open.svg' : 'icons/folder.svg'; icon.alt = ''; toggle.append(icon, el('span', '', project.name));
+    mobileLongPress(toggle, () => mobileProjectMenu(project), () => { collapsedMobileProjects.has(project.projectId) ? collapsedMobileProjects.delete(project.projectId) : collapsedMobileProjects.add(project.projectId); renderConversationList(); });
+    row.append(toggle); section.append(row);
+    if (expanded) {
       for (const session of filter || uiCore.projectExpanded(project.projectId) ? conversations : conversations.slice(0, 5)) {
         if (filter && !project.name.toLocaleLowerCase().includes(filter) && !(session.title || '新对话').toLocaleLowerCase().includes(filter)) continue;
         const row = el('div', 'session-row mobile-project-conversation');
-        const button = el('button', state.sharedSessionId === session.sessionId ? 'active' : '', session.title || '新对话'); button.type = 'button'; let longPressed = false; button.onclick = () => { if (longPressed) { longPressed = false; return; } selectSharedSession(session.sessionId); };
-        const more = el('button', 'session-more'); more.type = 'button'; more.setAttribute('aria-label', `更多操作 ${session.title || '新对话'}`); const icon = el('img'); icon.src = 'icons/more.svg'; icon.alt = ''; more.append(icon); more.onclick = () => mobileSessionMenu(session);
-        let timer; button.onpointerdown = () => { longPressed = false; timer = setTimeout(() => { timer = null; longPressed = true; mobileSessionMenu(session); }, 500); }; button.onpointerup = button.onpointercancel = () => clearTimeout(timer);
-        row.append(button, more); section.append(row);
+        const button = el('button', 'mobile-session-button' + (state.sharedSessionId === session.sessionId ? ' active' : '')); button.type = 'button';
+        button.setAttribute('aria-label', session.title || '新对话'); button.append(el('strong', '', session.title || '新对话')); mobileSessionStatus(button, session);
+        mobileLongPress(button, () => mobileSessionQuickMenu(session), () => selectSharedSession(session.sessionId));
+        row.append(button); section.append(row);
       }
       if (!filter && conversations.length > 5) {
         const expanded = uiCore.projectExpanded(project.projectId), more = el('button', 'project-expand', expanded ? '收起对话' : `展开显示（${conversations.length - 5}）`);
@@ -30,7 +63,7 @@ function renderMobileProjects(target, filter = '') {
         more.onclick = () => { uiCore.setProjectExpanded(project.projectId, !expanded); renderConversationList();
           [...target.querySelectorAll('.project-expand')].find(button=>button.dataset.projectExpand===project.projectId)?.focus(); }; section.append(more);
       }
-      if (!conversations.length) section.append(el('p', 'muted mobile-project-empty', '还没有项目对话，点加号开始。'));
+      if (!conversations.length) section.append(el('p', 'muted mobile-project-empty', '还没有项目对话，长按项目开始。'));
     }
   }
   target.append(section);
@@ -388,6 +421,21 @@ function listSharedSessions(){uiCore.syncMobileIdentity();return uiCore.listMobi
 
 const collapsedMobileGroups=new Set();
 let archivedMobileRedraw;
+function mobileSessionQuickMenu(session) {
+  if (session.kind === 'main') return mobileSessionMenu(session);
+  const dialog = el('dialog', 'session-action-dialog session-action-sheet'); dialog.setAttribute('aria-label', '对话操作');
+  dialog.append(el('h2', '', session.title || '新对话'));
+  const notice = el('p', 'message-state'); notice.setAttribute('role', 'alert');
+  const add = (name, icon, run) => { const button = el('button', 'session-menu-item', name); button.type = 'button'; button.prepend(WeftIcons.create(icon, 20));
+    button.onclick = async () => { button.disabled = true; try { uiCore.syncMobileIdentity(); await run(); await listSharedSessions(); dialog.close(); } catch (error) { notice.textContent = uiCore.sessionLifecycleMessage(error); button.disabled = false; } }; dialog.append(button); return button; };
+  const pin = add(session.pinned ? '取消置顶' : '置顶聊天', 'pin', () => uiCore.updateSession(session.sessionId, { pinned: !session.pinned }));
+  pin.setAttribute('aria-pressed', String(!!session.pinned));
+  add(session.archived ? '恢复对话' : '归档', 'archive', async () => { const token = uiCore.accountToken(); const archived = !session.archived;
+    if (await uiCore.archiveSession(session.sessionId, archived) && archived) toast('对话已归档。', false, async () => { if (uiCore.accountIdentityCurrent(token)) { await uiCore.archiveSession(session.sessionId, false); await listSharedSessions(); } }); });
+  add('更多', 'more', () => { dialog.close(); mobileSessionMenu(session); });
+  const cancel = el('button', 'secondary', '取消'); cancel.type = 'button'; cancel.onclick = () => dialog.close();
+  dialog.append(notice, cancel); dialog.onclose = () => dialog.remove(); document.body.append(dialog); dialog.showModal(); cancel.focus();
+}
 function mobileSessionMenu(session,confirming=false){
   const dialog=el('dialog','session-action-dialog');dialog.setAttribute('aria-label',confirming?'删除对话':'对话操作');
   dialog.append(el('h2','',confirming?'删除对话？':session.title||'新对话'));
@@ -455,22 +503,14 @@ function renderConversationList(){const target=$('conversation-list'),previousSc
     if(groupId!==previousGroup){const toggle=el('button','session-group-toggle',groupName);toggle.setAttribute('aria-expanded',String(!collapsedMobileGroups.has(groupId)));toggle.onclick=()=>{collapsedMobileGroups.has(groupId)?collapsedMobileGroups.delete(groupId):collapsedMobileGroups.add(groupId);renderConversationList()};target.append(toggle);previousGroup=groupId;}
     if(collapsedMobileGroups.has(groupId)&&!filter)continue;const selected=item.source==='phone'?state.chatSource==='phone'&&state.conversationId===item.id:
       state.chatSource==='host'&&state.sharedSessionId===item.id;
-    const b=el('button',selected?'active':'');
+    const b=el('button','mobile-session-button'+(selected?' active':'')); b.type='button';
     if(item.source==='phone')b.dataset.conversationId=item.id;else b.dataset.sessionId=item.id;
-    b.append(el('strong','',item.title),
-      el('small','',item.source==='phone'&&
-        (state.handoffViews.get(item.id)?.status==='active'||item.record?.binding)
-        ? '手机起步 · 电脑续聊' : `${item.model?`${item.model} · `:''}${item.source==='phone'?'手机执行':'电脑执行'}`));
-    if(item.record.running||item.source==='phone'&&state.conversationId===item.id&&state.busy){const dot=el('span','session-running-dot');dot.setAttribute('aria-label','正在运行');b.children[0].append(dot)}
-    let pressTimer=null,longPressed=false;
-    if(item.source==='host'){
-      b.addEventListener('pointerdown',()=>{longPressed=false;pressTimer=setTimeout(()=>{longPressed=true;mobileSessionMenu(item.record)},500)});
-      for(const event of ['pointerup','pointercancel','pointerleave'])b.addEventListener(event,()=>clearTimeout(pressTimer));
-      b.addEventListener('contextmenu',event=>{event.preventDefault();clearTimeout(pressTimer);longPressed=true;mobileSessionMenu(item.record)});
-    }
-    b.addEventListener('click',()=>{if(longPressed){longPressed=false;return}item.source==='phone'?selectConversation(item.id):selectSharedSession(item.id)});
-    const row=el('div','session-row'+(item.record?.unread?' is-unread':''));row.append(b);
-    if(item.source==='host'){const more=el('button','session-more');const icon=el('img');icon.src='icons/more.svg';icon.alt='';more.append(icon);more.type='button';more.setAttribute('aria-label',`更多操作 ${item.title}`);more.addEventListener('click',()=>mobileSessionMenu(item.record));row.append(more)}target.append(row)}
+    b.setAttribute('aria-label',item.title);b.append(el('strong','',item.title));
+    mobileSessionStatus(b,item.record,item.record.running||item.source==='phone'&&state.conversationId===item.id&&state.busy);
+    b.setAttribute('aria-description',[item.model,item.source==='phone'?'手机执行':'电脑执行',b.getAttribute('aria-description')].filter(Boolean).join(' · '));
+    if(item.source==='host')mobileLongPress(b,()=>mobileSessionQuickMenu(item.record),()=>selectSharedSession(item.id));
+    else b.addEventListener('click',()=>selectConversation(item.id));
+    const row=el('div','session-row'+(item.record?.unread?' is-unread':''));row.append(b);target.append(row)}
   renderMobileProjects(target,filter);
   if(!entries.length)target.append(el('p','muted',filter?'没有匹配的对话':state.loggedIn?'还没有对话':'登录后查看对话'));
   target.scrollTop=previousScroll;
@@ -481,8 +521,9 @@ function updatePageHeader(){const home=state.page==='home',chat=state.page==='ch
   $('menu-button').hidden=!home;$('page-back').hidden=home;$('home-new-chat').hidden=!home;
   $('outputs-button').hidden=!chat;
   const title=chat?(state.chatSource==='host'?selectedSharedSession()?.title:state.conversations.find(item=>item.id===state.conversationId)?.title):null;
-  $('header-subtitle').hidden=home||chat;
-  document.querySelector('.brand strong').textContent=home?'WeftMate':chat?title||'新对话':'WeftMate';
+  $('header-subtitle').hidden=true;
+  const pageTitle=mobileSettingsRegistry.get(state.page)?.name||({goals:'目标',library:'成果库',activity:'动态',memory:'记忆',settings:'设置',sync:'离线与同步',updates:'更新',connect:'连接电脑',password:'修改密码',capabilities:'能力与扩展',workspaces:'项目与成果'}[state.page])||'WeftMate';
+  document.querySelector('.brand strong').textContent=home?'WeftMate':chat?title||'新对话':pageTitle;
 }
 
 function pendingApprovalFor(sessionId){if(toolApprovals.owner!==state.owner||toolApprovals.epoch!==state.authEpoch)return false;

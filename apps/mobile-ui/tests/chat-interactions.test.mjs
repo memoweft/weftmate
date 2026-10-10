@@ -590,9 +590,9 @@ test('one searchable recent list mixes exact phone and computer IDs with honest 
   const conversations=()=>buttons(h.node('conversation-list')).filter(node=>node.dataset.sessionId||node.dataset.conversationId);
   const named=name=>conversations().find(node=>allText(node).includes(name));
   assert.equal(conversations().length,3);
-  assert.match(allText(named('项目分析')),/项目分析.*电脑执行/);
-  assert.match(allText(named('手机照片')),/手机照片.*MiMo.*手机执行/);
-  assert.match(allText(named('外出记录')),/外出记录.*手机执行/);
+  assert.equal(named('项目分析').getAttribute('aria-label'),'项目分析');assert.match(named('项目分析').getAttribute('aria-description'),/电脑执行/);
+  assert.equal(named('手机照片').getAttribute('aria-label'),'手机照片');assert.match(named('手机照片').getAttribute('aria-description'),/MiMo.*手机执行/);
+  assert.equal(named('外出记录').getAttribute('aria-label'),'外出记录');assert.match(named('外出记录').getAttribute('aria-description'),/手机执行/);
   named('项目分析').fire('click');assert.equal(h.run('state.chatSource'),'host');assert.equal(h.run('state.sharedSessionId'),'session-1');
   named('手机照片').fire('click');assert.equal(h.run('state.chatSource'),'phone');assert.equal(h.run('state.conversationId'),'conversation-1');
   h.node('conversation-list').scrollTop=73;

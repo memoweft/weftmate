@@ -66,7 +66,8 @@ try {
         await page.getByRole('button',{name:'关闭设置',exact:true}).click();
       }
 
-      await page.getByRole('button', { name: /^更多操作 / }).first().click();
+      // D50: a conversation row has no always-visible “more” button; its menu opens from the row itself.
+      await page.locator('.session-row').first().getByRole('button').first().click({ button: 'right' });
       await check(page, page.getByRole('menu', { name: '对话操作', exact: true }), 'session', size, enforce); await page.keyboard.press('Escape');
       await page.getByRole('button', { name: '输出与来源', exact: true }).click();
       await check(page, page.getByRole('dialog', { name: '输出与来源' }), 'resources', size, enforce);

@@ -9,7 +9,7 @@ globalThis.WeftNotificationsView = (core,target,device={}) => {
   const busy=value=>{for(const el of form.querySelectorAll('input,select,button'))el.disabled=value||el.dataset.reserved==='true';};
   const fill=settings=>{for(const [key,el] of fields){if(el.type==='checkbox')el.checked=settings[key];else el.value=String(settings[key]);el.dispatchEvent(new Event('weft:sync'));}};
   async function write(patch){if(!ready||!current())return;busy(true);notice.textContent='正在同步…';
-    try{const value=await core.saveNotificationSettings(patch);if(current()){saved=value.settings;fill(saved);notice.textContent='已同步 · 通知规则立即生效';}}
+    try{const value=await core.saveNotificationSettings(patch);if(current()){saved=value.settings;fill(saved);notice.textContent='';device.toast?.('通知规则已保存。');}}
     catch{if(current()){notice.textContent='未能同步，请重试。';fill(saved);}}
     finally{if(current())busy(false);}
   }
@@ -62,10 +62,10 @@ globalThis.WeftNotificationsView = (core,target,device={}) => {
     }catch{if(current())permission.textContent='无法读取系统通知状态，请在系统设置 → 应用 → WeftMate → 通知中检查。';}};
     const allow=node('button','开启通知权限','button secondary');allow.type='button';allow.onclick=()=>device.requestPermission().catch(()=>{if(current())permission.textContent='请在系统设置 → 应用 → WeftMate → 通知中开启。';});actions.append(check,allow);
     if(device.openSettings){const open=node('button','打开系统通知设置','button secondary');open.type='button';open.onclick=()=>device.openSettings().catch(()=>{permission.textContent='请在系统设置 → 应用 → WeftMate → 通知中开启。';});actions.append(open);}
-    if(device.openBatterySettings){const battery=node('button','查看后台运行设置','button secondary');battery.type='button';battery.onclick=()=>device.openBatterySettings().catch(()=>{background.textContent='请在系统设置 → 应用 → WeftMate 中查看后台运行限制。';});form.append(battery);}
+    if(device.openBatterySettings){const battery=node('button','查看后台运行设置','button secondary notification-settings-link');battery.type='button';battery.append(WeftIcons.create('right',16));battery.onclick=()=>device.openBatterySettings().catch(()=>{background.textContent='请在系统设置 → 应用 → WeftMate 中查看后台运行限制。';});form.append(battery);}
     void check.onclick();
   } else if(globalThis.weftNative){permission.textContent='安卓：在系统设置 → 应用 → WeftMate → 通知中开启。后台通知可能延迟约 15 分钟以上。';}
   else{permission.textContent='网页中的规则会同步到同一账户。系统通知由连接的 WeftMate 程序或手机应用发送，请在相应设备的系统设置中开启通知。';}
   form.onsubmit=event=>event.preventDefault();busy(true);
-  void core.loadNotificationSettings().then(value=>{if(current()){saved=value.settings;fill(saved);zone.textContent=`账户时区：${value.timeZone}`;ready=true;busy(false);notice.textContent='已同步 · 通知规则立即生效';}}).catch(()=>{if(!current())return;notice.textContent='无法读取通知设置，请连接电脑后重试。';const retry=node('button','重试读取','button secondary');retry.type='button';retry.onclick=()=>globalThis.WeftNotificationsView(core,target,device);form.append(retry);});
+  void core.loadNotificationSettings().then(value=>{if(current()){saved=value.settings;fill(saved);zone.textContent='按账户时区安排勿扰时段。';ready=true;busy(false);notice.textContent='';}}).catch(()=>{if(!current())return;notice.textContent='无法读取通知设置，请连接电脑后重试。';const retry=node('button','重试读取','button secondary');retry.type='button';retry.onclick=()=>globalThis.WeftNotificationsView(core,target,device);form.append(retry);});
 };

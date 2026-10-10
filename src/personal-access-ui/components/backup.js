@@ -22,6 +22,7 @@ globalThis.WeftUiComponents.factories.backup = (core, ui) => {
         inputs.weeklyCopies = field(form, 'weeklyCopies', '每周保留份数', 'number');
         const save = ui.element('button', 'button secondary', '保存备份设置'); save.type = 'submit'; form.append(save);
         const actions = ui.element('div', 'actions'), create = ui.element('button', 'button primary', '立即备份'), reload = ui.element('button', 'button secondary', '刷新备份列表');
+        reload.className = 'icon-button'; reload.replaceChildren(WeftIcons.create('sync',18)); reload.setAttribute('aria-label','刷新备份列表'); reload.title='刷新备份列表';
         create.type = reload.type = 'button'; actions.append(create, reload);
         const importForm = ui.element('form'); importForm.dataset.import = '';
         const importPath = field(importForm, 'path', '另一台电脑的备份路径'); importPath.placeholder = '填写这台宿主电脑上 .wmb 文件的完整路径';

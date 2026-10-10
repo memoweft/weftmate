@@ -1,0 +1,12 @@
+{
+  "cleanedProcesses": 4,
+  "remaining": 0,
+  "names": [
+    "electron.exe",
+    "electron.exe",
+    "electron.exe",
+    "electron.exe"
+  ],
+  "scope": "Creation time after package start, executable path and command line all matched this worktree; literal PIDs rechecked before stopping",
+  "nativeCleanup": "notification-checks.json"
+}
