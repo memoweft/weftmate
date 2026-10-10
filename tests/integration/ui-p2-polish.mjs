@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Production desktop shell, temporary profile and synthetic host. No daily data. */
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -16,6 +18,7 @@ const mobileImageUrl = 'data:image/png;base64,' + readFileSync(join(root, 'build
 const imageUrl = 'data:image/png;base64,' + readFileSync(join(root, 'build/icon.png')).toString('base64');
 const env = { ...process.env, REVIEW_PROFILE: mkdtempSync(join(tmpdir(), 'weftmate-ui-p2-')), REVIEW_THEME: 'light' };
 for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_)/.test(key) || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const checks = [], errors = [];
 let app, fixture, browser, phase = 'before';
 const item = { id: 'synthetic-memory', kind: 'cognition', text: '合成记忆：喜欢简洁的说明。', currentState: 'current', sourceCount: 0 };

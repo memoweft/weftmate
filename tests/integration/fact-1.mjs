@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 // Real Electron + DSH evaluation. All files/accounts/ports are isolated.
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
@@ -31,6 +33,7 @@ const prep=await createPersonalAccessService({root:join(profile,'personal-access
 const prepared=await prep.start(),setup=await prep.issueSetupGrant();
 assert.equal((await fetch(prepared.origin+'/personal/v1/auth/setup',{method:'POST',headers:{origin:prepared.origin,'content-type':'application/json'},body:JSON.stringify({grant:setup.grant,username,password,deviceName:'FACT-1 synthetic'})})).status,201);await prep.close();
 const env={...process.env};for(const name of Object.keys(env))if(name.startsWith('WEFTMATE_')||name.startsWith('MEMOWEFT_')||['ELECTRON_RUN_AS_NODE','MIMO_API_KEY','MODEL_SWITCH_UNIFIED_KEY'].includes(name))delete env[name];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 env.FACT1_PHASE=phase;env.WEFTMATE_BASELINE_TRACE=join(root,'requests.jsonl');
 const lock='D:/AIProjects/WeftMate/Runtime/Orchestrator/lan.lock';let ownsLock=false,bridge,app,page;
 const results=[],startedAt=new Date().toISOString();

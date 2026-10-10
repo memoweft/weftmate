@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, readFile, rm, access } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, rm, access, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { deflateSync } from 'node:zlib';
@@ -113,6 +113,7 @@ test('fresh gallery never fills occupied native cells with repository history', 
 test('synthetic artifact write is observed before exposing its task approval', async () => {
   const fixture = await startTimelineCandidate({ historyCount: 0, interactive: true, riskApproval: true });
   try {
+    assert.equal(await realpath(fixture.root), fixture.root, 'fixture uses the same native canonical path as private storage');
     const writes = (await fixture.request('/commands')).commands.filter(row => row.kind === 'desktop.write_artifact');
     assert.equal(writes.length, 1); assert.equal(writes[0].state, 'observed');
     for (let read = 0; read < 5; read++) {
@@ -125,8 +126,10 @@ test('synthetic artifact write is observed before exposing its task approval', a
 });
 
 test('temp pruning removes only stale unused weftmate-* directories and never follows a junction', { skip: process.platform !== 'win32' }, async () => {
+  // Keep the caller's spelling of TEMP: the script must protect active roots
+  // even when Windows enumerates a different (expanded 8.3) spelling.
   const root = await mkdtemp(join(tmpdir(), 'nightly-prune-root-'));
-  const outside = await mkdtemp(join(tmpdir(), 'nightly-prune-outside-'));
+  const outside = await realpath(await mkdtemp(join(tmpdir(), 'nightly-prune-outside-')));
   const script = join(process.cwd(), 'scripts/nightly/prune-temp.ps1');
   const ps = (command, options = {}) => execFileSync('pwsh', ['-NoProfile', '-Command', command], { encoding: 'utf8', ...options });
   let holder;
@@ -141,11 +144,24 @@ test('temp pruning removes only stale unused weftmate-* directories and never fo
     for (const name of ['weftmate-old', 'weftmate-in-use', 'other-old'])
       ps(`$d = Get-Item -LiteralPath '${join(root, name)}'; $d.CreationTime = ${old}; $d.LastWriteTime = ${old}`);
     const { spawn } = await import('node:child_process');
-    holder = spawn('pwsh', ['-NoProfile', '-Command', `Start-Sleep 60 # ${join(root, 'weftmate-in-use')}`], { stdio: 'ignore' });
-    await new Promise(done => setTimeout(done, 1500));
+    holder = spawn('pwsh', ['-NoProfile', '-Command', `Write-Output 'ready'; Start-Sleep 60 # ${join(root, 'weftmate-in-use')}`], { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+    await new Promise((done, reject) => {
+      holder.stdout.once('data', bytes => bytes.toString().trim() === 'ready' ? done() : reject(Error('unexpected holder output')));
+      holder.once('error', reject);
+      holder.once('exit', code => reject(Error(`holder exited before pruning: ${code}`)));
+    });
     const run = extra => JSON.parse(execFileSync('pwsh', ['-NoProfile', '-File', script, '-Hours', '48', '-Roots', root, ...extra], { encoding: 'utf8' }).trim().split(/\r?\n/).pop());
     const preview = run([]);
     assert.deepEqual([preview.applied, preview.found, preview.selected, preview.deleted, preview.keptRecent, preview.keptInUse], [false, 3, 1, 0, 1, 1]);
+    // Reproduce the cloud's exact mismatch: the enumerator exposes a native
+    // path while CIM retains the supplied root alias. Keep the real holder
+    // above as the end-to-end in-use check; this harness isolates alias handling.
+    const alias = join(root, 'alias'), harness = join(root, 'alias-preview.ps1');
+    ps(`New-Item -ItemType Junction -Path '${alias}' -Target '${root}' | Out-Null`);
+    await writeFile(harness, `param($Script,$AliasRoot,$NativeRoot)\n$ErrorActionPreference='Stop'\nfunction Get-CimInstance { [pscustomobject]@{CommandLine="pwsh # $(Join-Path $AliasRoot 'weftmate-in-use')"} }\nfunction Get-ChildItem { param($LiteralPath,[switch]$Directory,$Filter,[switch]$Force,$ErrorAction) Microsoft.PowerShell.Management\\Get-ChildItem -LiteralPath $NativeRoot -Directory -Filter 'weftmate-*' -Force }\n& $Script -Roots $AliasRoot -Hours 48\n`);
+    const aliased = JSON.parse(execFileSync('pwsh', ['-NoProfile', '-File', harness, script, alias, root], {encoding:'utf8', windowsHide:true}).trim().split(/\r?\n/).pop());
+    assert.deepEqual([aliased.applied, aliased.found, aliased.selected, aliased.deleted, aliased.keptRecent, aliased.keptInUse], [false, 3, 1, 0, 1, 1]);
+    await rm(alias);
     await access(join(root, 'weftmate-old'));
     const applied = run(['-Apply']);
     assert.deepEqual([applied.applied, applied.selected, applied.deleted, applied.failed], [true, 1, 1, 0]);
@@ -153,7 +169,10 @@ test('temp pruning removes only stale unused weftmate-* directories and never fo
     for (const kept of ['weftmate-recent', 'weftmate-in-use', 'other-old']) await access(join(root, kept, 'nested', 'file.txt'));
     assert.equal(await readFile(join(outside, 'keep.txt'), 'utf8'), 'outside data');
   } finally {
-    holder?.kill();
+    if (holder && holder.exitCode === null) {
+      const exited = new Promise(done => holder.once('exit', done));
+      holder.kill(); await exited;
+    }
     await rm(root, { recursive: true, force: true }); await rm(outside, { recursive: true, force: true });
   }
 });

@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
@@ -20,6 +22,7 @@ const wireFile=join(root,'wire.jsonl'),hook=join(root,'wire-hook.mjs');
 writeFileSync(hook,`process.env.UX3_WIRE_FILE=${JSON.stringify(wireFile)};const fetchOriginal=globalThis.fetch;globalThis.fetch=(url,options)=>{if(new URL(typeof url==='string'||url instanceof URL?url:url.url).port==='8081')throw new Error('Daily endpoint prohibited');return fetchOriginal(url,options)};await import(${JSON.stringify(new URL('./ux-3-wire-hook.mjs',import.meta.url).href)});`);
 const env={...process.env,UX3_WIRE_FILE:wireFile,UX3_HOOK_MODULE:new URL('file:///'+hook.replaceAll('\\','/')).href};
 for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 let app,page,api;const failures=[];
 async function until(read,timeout=240000){const deadline=Date.now()+timeout;while(Date.now()<deadline){const value=await read();if(value)return value;await new Promise(resolve=>setTimeout(resolve,200));}throw new Error('Isolated UX-8 runtime timed out');}
 try {

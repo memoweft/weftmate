@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import {_electron} from 'playwright';
 import {createRequire} from 'node:module';
@@ -10,6 +12,7 @@ import {renderingSample} from '../helpers/rendering-sample.mjs';
 const out=resolve('tests/evidence/ux-5'),fixture=await startMainChatCandidate(1000),profile=await mkdtemp(join(tmpdir(),'weftmate-ux5-height-'));
 fixture.progress.text(renderingSample);fixture.progress.finish();
 const env={...process.env,REVIEW_PROFILE:profile,REVIEW_ORIGIN:fixture.origin,REVIEW_THEME:'light'};delete env.ELECTRON_RUN_AS_NODE;
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 let app;const errors=[];
 try{
   app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:resolve('.'),args:['scripts/review-gallery/electron.mjs'],env});

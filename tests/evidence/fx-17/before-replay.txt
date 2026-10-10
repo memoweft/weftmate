@@ -2,7 +2,7 @@ FF..                                                                     [100%]
 ================================== FAILURES ===================================
 _______ test_qa4_one_correction_replaces_preference_and_decision[first] _______
 
-tmp_path = WindowsPath('C:/Users/yun/AppData/Local/Temp/pytest-of-yun/pytest-5986/test_qa4_one_correction_replac0')
+tmp_path = WindowsPath('C:\Users\<user>/AppData/Local/Temp/pytest-of-yun/pytest-5986/test_qa4_one_correction_replac0')
 variant = 'first'
 
     @pytest.mark.parametrize('variant', ['first', 'rewrite', 'unrelated_topic', 'duplicate_target'])
@@ -51,7 +51,7 @@ E         + no_change
 tests\test_fx17_correction.py:48: AssertionError
 ______ test_qa4_one_correction_replaces_preference_and_decision[rewrite] ______
 
-tmp_path = WindowsPath('C:/Users/yun/AppData/Local/Temp/pytest-of-yun/pytest-5986/test_qa4_one_correction_replac1')
+tmp_path = WindowsPath('C:\Users\<user>/AppData/Local/Temp/pytest-of-yun/pytest-5986/test_qa4_one_correction_replac1')
 variant = 'rewrite'
 
     @pytest.mark.parametrize('variant', ['first', 'rewrite', 'unrelated_topic', 'duplicate_target'])

@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Real account ledger plus isolated MemoWeft Core recall for a bound private cloud revision. */
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';

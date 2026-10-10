@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Isolated same-owner Android sync fixture. No DSH, model, or desktop execution. */
 import { existsSync } from 'node:fs';
 import { open, readFile } from 'node:fs/promises';

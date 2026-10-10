@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Production Electron/DSH and responsive remote UI; synthetic data/provider only. */
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
@@ -42,6 +44,7 @@ await new Promise(resolve => provider.listen(0, '127.0.0.1', resolve));
 const modelUrl = `http://127.0.0.1:${provider.address().port}/v1`;
 const env = { ...process.env };
 for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_)/.test(key) || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 let app, browser;
 async function until(fn, ms = 90000) { const deadline = Date.now() + ms; while (Date.now() < deadline) { const value = await fn(); if (value) return value; await pause(100); } throw new Error('UP3 synthetic deadline'); }
 async function api(page, path, body, method = body ? 'POST' : 'GET') {

@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Explicit isolated Android acceptance for persisted host file cards and verified native download. */
 import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';

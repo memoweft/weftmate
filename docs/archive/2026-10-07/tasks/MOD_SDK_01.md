@@ -7,12 +7,12 @@
 ### 后端最终结果
 
 - 改动五文件：`src/plugins/weftmate-mod-projects.mjs`、`src/plugins/weftmate-mod-development.mjs`、`src/runtime/mod-projects/index.mjs`、`tests/mods-integration-host.test.ts`、`tests/mod-project-runtime.test.ts`。失败仍为isError，但提供有界断言/业务错误；失败的显式complete也作废旧check回执；安全数字路径支持具体字段核验；detail追加controls/validation，completed明确为candidate-published，不改变执行权限。
-- 主助手最终合跑66/66、类型检查通过，Sol窄审通过。日志`C:/Users/yun/AppData/Local/Temp/weftmate-r1-backend-final-20260914-202513.log`。新真实试验1次，外部修复重试0次；不是复用上轮三个界面未完成样例的结论。
+- 主助手最终合跑66/66、类型检查通过，Sol窄审通过。日志`C:\Users\<user>/AppData/Local/Temp/weftmate-r1-backend-final-20260914-202513.log`。新真实试验1次，外部修复重试0次；不是复用上轮三个界面未完成样例的结论。
 - 实际请求`2026-09-14T12:26:08.113Z`只要求后台新增/列出和缺字段报错。内部Muse自行写源码，首次check漏payload失败，收到4项结构化失败事实后自行补入样例，第二次check通过并显式complete发布。模型检查新增返回的title/link/notes和独立list返回的`entries.0.title`；未在独立list逐项核对全部三字段，开发者另做完整字段核验，不夸大模型覆盖。
 - 项目`mod-b7f43873-0521-46c9-b8c7-2dd0f9775c0e`，版本`version-bee94489-b4f2-4ff1-b0de-58bf538e6f3e`，维护会话`mod-maintenance-f3a180b4-7e86-4d19-aa5a-02c8666a0ff6`；发布完成`12:27:45.101Z`。owner与维护回合均已结束，宿主重启后owner仍只有1轮，没有重复开发。
 - 开发者真实补测：保存“后台核验甲/乙”两条不同资料，独立list完整读回标题/链接/备注；缺标题和缺链接返回明确业务error，条数仍2。无版本时controls禁止启动且执行层返回400；停止后canInvoke=false且业务调用返回400。完整关闭并重启测试宿主后仍stopped/stopLatch=true；显式start后healthy，两条资料完整保留。这不是任意崩溃/断电恢复承诺。
 - 实测validation为passed/4项/scenarioValidated=false/userAcceptance=not-tracked-by-mod-runtime；update为completed+candidate-published。保留独立宿主判定和用户验收边界，不抹掉模型真实检查与开发者独立补测，不让前端显示成用户已验收。
-- 测试根`C:/Users/yun/AppData/Local/Temp/weftmate-backend-r1-20260914-202539`保留；本轮63882/63668服务已关闭，Mod最后stopped且停止锁保留。50191旧查看实例和8080模型保持；主仓库前端/桥/模板、FrontendDev client和FRONTEND核对哈希未变。无依赖升级、正式数据迁移、设备动作、提交或推送。
+- 测试根`C:\Users\<user>/AppData/Local/Temp/weftmate-backend-r1-20260914-202539`保留；本轮63882/63668服务已关闭，Mod最后stopped且停止锁保留。50191旧查看实例和8080模型保持；主仓库前端/桥/模板、FrontendDev client和FRONTEND核对哈希未变。无依赖升级、正式数据迁移、设备动作、提交或推送。
 
 准确摘要见[backend-r1-validation.json](../evidence/MOD_SDK_01/backend-r1-validation.json)。下一前端阶段从既有collab/BACKEND.md的B-MOD-11取得接口、状态语义和集成基线；不要拿旧FrontendDev后端覆盖主仓库。公共页面、整体交互、自动回报原会话、通用独立语义判定、更强崩溃/沙箱能力均不在本轮完成声明中。
 
@@ -50,8 +50,8 @@
 - 末轮实际请求时间 `2026-09-14T11:21:43.510Z`；owner 回合在 `11:22:03.146Z` 结束，只调用 create_goal 与 create，目标 paused。维护会话自行编写/检查/启用版本，完成回执 `11:23:06.430Z`，维护回合 `11:23:10.574Z` 结束；没有外部代写业务补丁或代填模型检查参数。
 - 末轮项目 `mod-b50ea97f-4a66-45ea-8d83-79cd395c2cda`，版本 `version-3ccb0169-de89-4c80-8ad1-8794b2c03be4`，维护会话 `mod-maintenance-e62ea936-a62f-4e37-90e5-0b4beba729af`。实际生成后端已保存并读回“R1末轮真实保存”合成记录；停止时 desiredState=stopped、stopLatch=true，显式再启动 healthy，资料仍在。这是开发者真实后端补测，不是模型自主业务验收。
 - 模型最终计划只断言空列表，回执 `host_oracle.scenarioValidated=false`。页面提交函数仍为 `/* UI placeholder */`，未接保存/列表桥；公共 UI 与维护完成回投 owner 均未完成。不将候选启用、内部 requirement resolved 或“已完成”状态当成用户体验通过。无参验证回执复用只报告自动测试，本轮模型实际用了显式计划。
-- 最终主助手相关合跑63/63、类型检查通过，Sol窄审通过。日志 `C:/Users/yun/AppData/Local/Temp/weftmate-r1-final-tests-20260914-192049.log`；此前一次合跑异步 EPERM rename 未复现且未定因。范围外452文件核对中450未变，前端client.js及FRONTEND有并行变化，原样保留；没有覆盖或回退它们。
-- 末轮 Mod 已停止，本轮试验服务57730/64907/58744关闭，原8080模型服务保留。三轮各自数据和源码保留，不清理日常库；末轮根 `C:/Users/yun/AppData/Local/Temp/weftmate-sdk-r1c-20260914-192117`。无依赖升级、提交、推送或真实设备动作。准确摘要见 [creation-r1-validation.json](../evidence/MOD_SDK_01/creation-r1-validation.json)。
+- 最终主助手相关合跑63/63、类型检查通过，Sol窄审通过。日志 `C:\Users\<user>/AppData/Local/Temp/weftmate-r1-final-tests-20260914-192049.log`；此前一次合跑异步 EPERM rename 未复现且未定因。范围外452文件核对中450未变，前端client.js及FRONTEND有并行变化，原样保留；没有覆盖或回退它们。
+- 末轮 Mod 已停止，本轮试验服务57730/64907/58744关闭，原8080模型服务保留。三轮各自数据和源码保留，不清理日常库；末轮根 `C:\Users\<user>/AppData/Local/Temp/weftmate-sdk-r1c-20260914-192117`。无依赖升级、提交、推送或真实设备动作。准确摘要见 [creation-r1-validation.json](../evidence/MOD_SDK_01/creation-r1-validation.json)。
 
 阶段性结果供云核对：① 当前状态没有把完整收藏体验标通过；② 源码/测试和真实调用证据分别记录；③ Kimi公共UI和真实业务验收缺口已在原B-MOD-09/10通道；④ 两轮修复预算用完后停止、测试数据保留。当前没有要求云操作尚未接通的收藏表单。
 
@@ -67,9 +67,9 @@
 
 ### 本轮实际进展（进行中）
 
-已补模型可见的结构化检查数组、数值/JSON结果分支，以及绑定项目/会话/需求/源码/清单/行为计划的检查回执复用；新检查会作废旧回执，发布前复核，用户停止不被自动清除。首轮真实试验在 `C:/Users/yun/AppData/Local/Temp/weftmate-sdk-r1-20260914-185547`：内部 Muse 已经由 SDK 写出收藏业务源码，但把 `expect.value` 写成对象而非预期数字，未启用；owner 发起方还因 active goal（活动目标）重复尝试接管。两测试会话于 2026-09-14T11:01:27Z 取消，预览已关闭，原记录保留，不算通过。
+已补模型可见的结构化检查数组、数值/JSON结果分支，以及绑定项目/会话/需求/源码/清单/行为计划的检查回执复用；新检查会作废旧回执，发布前复核，用户停止不被自动清除。首轮真实试验在 `C:\Users\<user>/AppData/Local/Temp/weftmate-sdk-r1-20260914-185547`：内部 Muse 已经由 SDK 写出收藏业务源码，但把 `expect.value` 写成对象而非预期数字，未启用；owner 发起方还因 active goal（活动目标）重复尝试接管。两测试会话于 2026-09-14T11:01:27Z 取消，预览已关闭，原记录保留，不算通过。
 
-第1轮定向修复：把空 JSON 模式改为明确类型联合；成功委派后，宿主通过 DSH 既有服务暂停发起方当前活动目标，防止自动续跑，维护会话继续。独立相关复跑63/63与类型检查通过；一次合跑曾在异步子进程收尾发生 EPERM 文件替换错误，同组复跑未复现，未宣称定因或修复。日志 `C:/Users/yun/AppData/Local/Temp/weftmate-r1-repair1-tests-20260914-190736.log`。等待第二次真实试验，不能将测试通过记为收藏体验完成。
+第1轮定向修复：把空 JSON 模式改为明确类型联合；成功委派后，宿主通过 DSH 既有服务暂停发起方当前活动目标，防止自动续跑，维护会话继续。独立相关复跑63/63与类型检查通过；一次合跑曾在异步子进程收尾发生 EPERM 文件替换错误，同组复跑未复现，未宣称定因或修复。日志 `C:\Users\<user>/AppData/Local/Temp/weftmate-r1-repair1-tests-20260914-190736.log`。等待第二次真实试验，不能将测试通过记为收藏体验完成。
 
 ## 前轮候选与验证记录（保留）
 
@@ -103,8 +103,8 @@
 2. 第二次：真实CLI打印LIVE_PRESET并实际列举/创建mod-maintainer会话，模型只用mod_sdk；但反复遗漏expected_sha256，写入被拒。修复为服务端绑定读取回执，保留CAS（比较并交换）保护。
 3. 最后一轮：模型通过mod_sdk edit真实写出src/main.mjs的save/list实现，未改宿主；但把behavior_checks反复传为{checks:[...]}而非数组，并把数组items当数字delta，校验拒绝，complete未通过。此项目无已启用版本，标签与搜索尚未进入真实模型验证。两次外部SDK定向修复后按预算停止，不把夹具通过或源码生成当完整创建通过。
 
-最后试验根：`C:/Users/yun/AppData/Local/Temp/weftmate-mod-sdk-final-c8c06dea1e304636a89fe3103b9f4943`，项目`mod-811f9407-aec6-47b4-87aa-bcf028f0bf59`，维护会话`mod-maintenance-6d833217-3a35-44c4-af48-b1aabe45bd80`。测试owner/维护Agent已取消，56211预览已关闭；源码、日志和失败记录保留。开始前与停止后核对106个宿主源码/依赖文件，0项变化。该数字只证明本次记录范围，并非任意代码安全保证。
+最后试验根：`C:\Users\<user>/AppData/Local/Temp/weftmate-mod-sdk-final-c8c06dea1e304636a89fe3103b9f4943`，项目`mod-811f9407-aec6-47b4-87aa-bcf028f0bf59`，维护会话`mod-maintenance-6d833217-3a35-44c4-af48-b1aabe45bd80`。测试owner/维护Agent已取消，56211预览已关闭；源码、日志和失败记录保留。开始前与停止后核对106个宿主源码/依赖文件，0项变化。该数字只证明本次记录范围，并非任意代码安全保证。
 
-曾因D盘ENOSPC改用C盘测试。用户随后明确“清理出空间了”，现场空间已恢复；本助手没有清理用户模型或资料。只将自己第一次失败试验的两个无重解析点会话日志（152256字节）移到`C:/Users/yun/AppData/Local/Temp/weftmate-mod-sdk-5214e187faee4151ad8e7bd2ad076b99/evidence/failed-first-run-sessions`，迁移后hash相同。其余D盘失败目录原样保留，不归因本次小迁移为大空间释放原因。
+曾因D盘ENOSPC改用C盘测试。用户随后明确“清理出空间了”，现场空间已恢复；本助手没有清理用户模型或资料。只将自己第一次失败试验的两个无重解析点会话日志（152256字节）移到`C:\Users\<user>/AppData/Local/Temp/weftmate-mod-sdk-5214e187faee4151ad8e7bd2ad076b99/evidence/failed-first-run-sessions`，迁移后hash相同。其余D盘失败目录原样保留，不归因本次小迁移为大空间释放原因。
 
 下一个精确断点仍在本任务：把验证参数变为模型能直接看到的结构化数组/元素schema，并给出明确纠错反馈；考虑让complete复用绑定源码/清单版本的服务端验证回执，避免重复搬运同一测试计划。不能取消校验、接受空测试或给特定示例放行。随后重新验证内部模型自行创建并启用，再验证标签/搜索与旧资料保留。settings/contributes、共享UI、MemoWeft服务、允许依赖安装、网络/操作系统资源隔离目前都未完成，不并行扩展为多个平台。

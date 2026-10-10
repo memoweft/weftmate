@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Authenticated A/B HTTP true-delete through real isolated MemoWeft Core processes. */
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';

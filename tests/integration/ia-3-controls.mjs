@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
@@ -8,6 +10,7 @@ import { startMainChatCandidate } from './main-chat-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 const root=resolve(import.meta.dirname,'../..'),evidence=join(root,'tests/evidence/ia-3'),fixture=await startMainChatCandidate(80),profile=await mkdtemp(join(tmpdir(),'weftmate-ia3-controls-'));
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 let app;const errors=[];
 const button=(page,name)=>page.getByRole('button',{name,exact:true});
 try {

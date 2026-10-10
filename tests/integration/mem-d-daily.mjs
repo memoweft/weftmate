@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** MEM-D: isolated real Electron / pinned DSH / real Core; no daily endpoints. */
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
@@ -61,6 +63,7 @@ try{
   assert.equal((await fetch(`${origin}/personal/v1/auth/setup`,{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify({grant:grant.grant,username,password,deviceName:'MEM-D synthetic'})})).status,201);await prep.close();
   const config=join(root,'memory.json');writeFileSync(config,JSON.stringify({python,pythonPath:core,baseUrl:base,model:'@current',authRef:'unselected-startup-model'}));
   const env={...process.env};for(const k of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(k)||['ELECTRON_RUN_AS_NODE','MIMO_API_KEY','MODEL_SWITCH_UNIFIED_KEY'].includes(k))delete env[k];
+  env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
   env.WEFTMATE_BASELINE_TRACE=join(root,'trace.jsonl');env.MEM_D_REPOSITORY=repository;
   async function launch(){
   app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),args:[join(import.meta.dirname,'mem-d-bootstrap.mjs'),`--user-data-dir=${profile}`,'--personal-host','--access-port=0',`--personal-memory-config=${config}`],cwd:repository,env,timeout:90000});

@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Production desktop window; isolated real personal API and synthetic native history. */
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
@@ -11,6 +13,7 @@ import { localUiSession } from '../helpers/local-ui-session.mjs';
 const root=resolve(import.meta.dirname,'../..'), evidence=join(root,'tests/evidence/ia-3');
 await mkdir(evidence,{recursive:true});
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 let fixture,memoryFixture,application,browser,profile;const errors=[],report={synthetic:true,realElectron:true,historyMessages:10000,segments:3,checks:[],performance:{},modelRequests:0};
 const button=(page,name)=>page.getByRole('button',{name,exact:true});
 const pause=ms=>new Promise(done=>setTimeout(done,ms));
