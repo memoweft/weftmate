@@ -6,7 +6,7 @@
 
 - [x] A1：搜索入口在主对话 WeftMate 上方，与侧栏内宽一致；放大镜、占位和 Ctrl K；原中间搜索行与就地输入监听移除。
 - [x] A2：标题栏应用名旁只有一个开合按钮，展开／收起坐标相同；Ctrl B、提示和 no-drag（不可拖动）区域，480px抽屉同样可操作。
-- [x] A3：搜索 → 主对话 → 动态／目标／成果库 → 新旁聊及临时下拉 → 旁聊／分组 → 项目 → 头像。保留D50状态位和分组间距。
+- [x] A3：桌面搜索 → 主对话 → 动态／目标／成果库 → 新旁聊及临时下拉 → 旁聊／分组 → 项目 → 头像；手机抽屉搜索 → 主对话 → 新对话及临时下拉 → 旁聊／分组 → 项目 → 功能 → 账户。保留D50状态位和分组间距。
 - [x] B1：桌面680px、最大70vh、统一弹层；手机全屏、标签横滑；桌面固定键帽提示。浅深、160ms进入／120ms退出、减少动态效果。
 - [x] B2：需要关注、最近使用、操作；最近记录按账号只保存类型、标识和打开时间，实体重新鉴权；临时与已删除实体不从缓存补回。
 - [x] B3：标题＋主／旁聊正文、项目、成果文件名、定时任务、记忆；分组、默认每组3项、展开及分页、高亮和日期、正文定位；防抖与旧响应丢弃、骨架、空结果新建并发送首句、读取失败重试。
@@ -39,6 +39,7 @@
 - [x] 7. 对照参照层级与密度；私人图未提交。
 - [x] 8. 每个新增弹层与菜单有浅深打开截图；沿统一dialog和WeftPopover（弹层组件）。
 - [x] 9. 最终截图复核；窄窗最大高度、深色选中底色、手机关闭按钮与弱信息已修正。
+- [x] 10. 本包采用本人明确指定的例外：MuMu 被 M3-1／AND-1 占用，手机证据使用真实界面包和手机网页的内容区截图。**没有系统状态栏／手势条，未验收原生沉浸式系统栏，也不冒称原生整屏截图。**后续原生包须按第10项另验。
 - [x] 8a. 整行打开、行尾一个更多；进入原固定页使用该页标题，隐藏对话专属操作；无额外刷新大按钮，时间人话、标签统一、三态齐备。
 
 ## 性能与测试
@@ -69,3 +70,26 @@
 最终代码验证提交 `cf57d94d` 的7项CI均通过；[PR #186](https://github.com/memoweft/weftmate/pull/186)。公开扫描77个改动文本文件，私人参照文件名／真实密钥／私有模型地址命中均0，见 `public-scan.json`。本包进程已自然关闭，按创建时间＋命令行／程序路径复核0残留。
 
 收尾按要求并入 `origin/main` 的FX-18：指定 `merge-state.py` 保留双方契约行，搜索记忆兼容 `recovering`（继续整理中）且仍核对原能力／归属。该合并后定向43项、类型检查通过，见 `final-merge-regressions.log`；上面的完整单测与7项CI成绩属于代码验证提交cf57d94d，最终合并提交CI另行触发。
+
+## UX-6b 返工（2026-10-10）
+
+受影响截图已同名覆盖；修复前原图保留在 `rework-before/`。下表每项均提供浅／深对照，手机也覆盖360px。
+
+| 必修项 | 修复前（浅／深） | 修复后（浅／深）与断言 |
+|---|---|---|
+| 1. 手机抽屉顶部 | [浅](rework-before/android-bundle-390-light-sidebar.png)／[深](rework-before/android-bundle-390-dark-sidebar.png) | [浅](android-bundle-390-light-sidebar.png)／[深](android-bundle-390-dark-sidebar.png)：搜索和主对话左右20px；搜索上下12px；选中主对话圆角、内宽与列表行一致；移除固定入口上方的“最近对话”；旁聊／未分组／项目／功能标题左边线统一24px。顺序为搜索 → 主对话 → 新对话及下拉 → 旁聊／分组 → 项目 → 功能 → 账户。 |
+| 1. 新对话与临时入口 | 同上旧抽屉中的两个描边按钮 | [浅色下拉打开](android-bundle-390-light-new-chat-menu-open.png)／[深色下拉打开](android-bundle-390-dark-new-chat-menu-open.png)：一行新对话＋统一菜单内的临时对话；360px浅深同样取证。 |
+| 2. 桌面少结果提示行 | [浅](rework-before/electron-1200-light-row-menu-open.png)／[深](rework-before/electron-1200-dark-row-menu-open.png) | [浅](electron-1200-light-row-menu-open.png)／[深](electron-1200-dark-row-menu-open.png)：提示行用自动上外边距贴面板底边；多结果 `grouped-results`、少结果 `row-menu-open`、无结果 `no-results`、加载 `loading-skeleton` 浅深均重拍。每张截图断言提示行到底边不超过2px。 |
+| 3. 主对话下划线 | [浅](rework-before/electron-1200-light-sidebar-expanded.png)／[深](rework-before/electron-1200-dark-sidebar-expanded.png) | [浅色选中](electron-1200-light-sidebar-expanded.png)／[深色选中](electron-1200-dark-sidebar-expanded.png)；[浅色键盘聚焦](electron-1200-light-main-chat-focused.png)／[深色键盘聚焦](electron-1200-dark-main-chat-focused.png)：根因是最后加载的 `main-chat.css` 选中态规则，并非焦点回落；选中态用底色，聚焦沿统一聚焦环，实际计算样式无下划线。 |
+| 4. 人话时间与完整日期 | [手机浅](rework-before/android-bundle-390-light-type-定时任务.png)／[手机深](rework-before/android-bundle-390-dark-type-定时任务.png)；[桌面浅](rework-before/electron-1200-light-grouped-results.png)／[桌面深](rework-before/electron-1200-dark-grouped-results.png) | [手机浅](android-bundle-390-light-type-定时任务.png)／[手机深](android-bundle-390-dark-type-定时任务.png)；[桌面浅](electron-1200-light-grouped-results.png)／[桌面深](electron-1200-dark-grouped-results.png)：按账户时区显示“今天 14:05”“昨天”“10月8日”，跨年才带年份；时间列不收缩、不截断，长标题可截断。390／360px均断言日期实际宽度未溢出。日期单测另覆盖跨时区与跨年昨天。 |
+| 5. 更新原证据 | `rework-before/` | Electron（桌面程序框架）1200／480px、手机网页与安卓实际界面包390×844／360×780浅深原文件均重拍；搜索审稿页与项目对话框截图同步更新。 |
+
+第8条清单重新逐项核对：1 控件／滚动条／焦点沿共用样式；2 搜索、选中行、新对话、菜单和下拉有可见交互态；3 入口沿原侧栏和统一菜单；4 上表间距、标题和完整日期有计算样式与截图证据；5 标签、菜单状态及加载／空／错误沿原设计；6 四种尺寸浅深已复核；7 沿原参照层级与密度，没有加入新视觉体系；8 新手机下拉与原面板／结果菜单／项目对话框浅深打开截图齐备；9 最终图像复核通过；10 使用本包明确授权的界面包例外，系统栏验收未完成。8a 时间已按上表修正。
+
+`verification.json` 记录最终15类交互检查、全部截图及0页面错误；`ux-6b-interactions.log` 是最终完整取证日志。`ux-6b-related-tests.log`：45项通过、0失败，补齐假DOM（文档对象模型）的新抽屉容器，保留原账户／延迟响应／记忆保护断言。类型检查、母版资产生成通过。`ux-6b-design-detector.json` 的两项提示属于原有隐藏图片预览（打开时填入真实图片）与正文引用边线，本包新增样式无提示，未扩大返工范围。
+
+并入 `origin/main` 的UX-7下一步建议及安卓36／0.8.23；资产清单与安卓路由测试保留双方新增项，STATE冲突用指定 `merge-state.py` 解决。本包未修改主线安卓版本号或最低壳版本，未新增接口／权限／原生能力。
+
+UX-6b 最终完整必过单测：`node .github/scripts/ci-unit-tests.mjs required`，1343项，**1329通过、0失败、0取消、14仓库既有跳过**，1104.71秒，退出码0；没有新增例外、删除用例或放宽保护断言。完整日志：[ux-6b-required-unit-tests-final.log](ux-6b-required-unit-tests-final.log)。最初一轮发现假DOM容器缺失和合并资产清单顺序不一致，修正后重新完整运行并通过。最终类型检查、母版生成、45项定向、17项动作以及最终安卓界面包回归均通过。
+
+已清理进程：2（停止最初已发现失败的本包单测父进程与调度进程）；界面取证进程经原有清理逻辑自然退出。按创建时间、可执行路径和本工作树／隔离目录命令行复核，0残留；未操作M3-1／AND-1模拟器、日用程序或8081。

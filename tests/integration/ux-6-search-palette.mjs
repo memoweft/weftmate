@@ -12,7 +12,9 @@ const root=resolve(import.meta.dirname,'../..'),out=join(root,'tests/evidence/ux
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms)),report={checks:[],screenshots:[],errors:[],modelRequests:0};let f,app,browser,profile;
 const b=(page,name)=>page.getByRole('button',{name,exact:true}).filter({visible:true});
-async function shot(page,surface,theme,scene){await wait(180);const file=`${surface}-${theme}-${scene}.png`;await page.screenshot({path:join(out,file)});report.screenshots.push(file);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false,file);console.log(file);}
+async function shot(page,surface,theme,scene){await wait(180);const file=`${surface}-${theme}-${scene}.png`;await page.screenshot({path:join(out,file)});report.screenshots.push(file);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false,file);
+  const layout=await page.evaluate(()=>{const panel=document.querySelector('.search-palette[open]'),footer=panel?.querySelector('.search-palette-footer');return {footerGap:footer&&getComputedStyle(footer).display!=='none'?panel.getBoundingClientRect().bottom-footer.getBoundingClientRect().bottom:0,truncatedDates:[...document.querySelectorAll('.search-result-meta')].filter(node=>/今天|昨天|\d+月/.test(node.textContent)&&node.scrollWidth>node.clientWidth).length};});
+  assert.ok(layout.footerGap<=2,`${file}: footer stays at panel bottom (${layout.footerGap})`);assert.equal(layout.truncatedDates,0,`${file}: dates must remain complete`);console.log(file);}
 async function ready(page){await page.waitForFunction(()=>document.querySelector('#search-results')?.getAttribute('aria-busy')==='false');}
 try{
   f=await startTimelineCandidate({daily:true,logicalMobile:true,sidebar:true,interactive:true,inlineProgress:true,goals:true,historyCount:0,baseTime:Date.now()-1000});
@@ -36,6 +38,7 @@ try{
     for(const theme of ['light','dark']){
       await p.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);
       await p.evaluate(()=>WeftDesktop.toggleRail(false));await shot(p,`electron-${width}`,theme,'sidebar-expanded');
+      await b(p,'WeftMate 主对话').focus();assert.equal(await b(p,'WeftMate 主对话').evaluate(node=>getComputedStyle(node).textDecorationLine),'none');await shot(p,`electron-${width}`,theme,'main-chat-focused');
       const expanded=await p.locator('#rail-open').boundingBox();await p.keyboard.press('Control+b');const collapsed=await p.locator('#rail-open').boundingBox();assert.deepEqual(expanded,collapsed);assert.equal(await p.locator('button:has(use[href$="#sidebar"])').count(),1);await shot(p,`electron-${width}`,theme,'sidebar-collapsed');
       await p.keyboard.press('Control+k');await p.getByRole('dialog',{name:'搜索',exact:true}).waitFor();await ready(p);await shot(p,`electron-${width}`,theme,'empty');
       assert.ok(await p.getByRole('heading',{name:'最近使用',exact:true}).count());assert.ok(await p.getByRole('heading',{name:'操作',exact:true}).count());
@@ -60,7 +63,7 @@ try{
   }
   }
   browser=await chromium.launch({headless:true});
-  for(const surface of ['phone-web','android-bundle'])for(const [width,height] of [[390,844],[360,780]]){
+  for(const surface of process.argv.includes('--android')?['android-bundle']:['phone-web','android-bundle'])for(const [width,height] of [[390,844],[360,780]]){
     const context=await browser.newContext({viewport:{width,height},isMobile:true,hasTouch:true});const page=await context.newPage();page.setDefaultTimeout(15000);page.on('pageerror',error=>{report.errors.push(error.message);console.log(error.stack);});
     // Execute the shipped native bridge contract on Android's real UI bundle.
     // Web uses the same isolated bridge fixture with the native browser flag absent.
@@ -74,7 +77,13 @@ try{
     }else{await page.goto(f.mobileUrl);await page.waitForFunction(()=>state.booted&&state.loggedIn);await page.waitForFunction(()=>state.logicalChats);}
     for(const theme of ['light','dark']){
       if(surface==='android-bundle')await page.evaluate(()=>uiCore.selectMainChat());
-      await page.evaluate(({theme,surface})=>{if(surface==='android-bundle')applyTheme(theme);else document.documentElement.dataset.theme=theme;},{theme,surface});await b(page,surface==='android-bundle'?'打开导航':'切换会话侧栏').click();await shot(page,`${surface}-${width}`,theme,'sidebar');await b(page,'搜索').click();await ready(page);await shot(page,`${surface}-${width}`,theme,'empty');
+      await page.evaluate(({theme,surface})=>{if(surface==='android-bundle')applyTheme(theme);else document.documentElement.dataset.theme=theme;},{theme,surface});await b(page,surface==='android-bundle'?'打开导航':'切换会话侧栏').click();await shot(page,`${surface}-${width}`,theme,'sidebar');
+      if(surface==='android-bundle'){
+        const layout=await page.evaluate(()=>{const drawer=document.querySelector('#drawer'),search=drawer.querySelector('.search-entry'),main=drawer.querySelector('.rail-main-chat'),create=drawer.querySelector('.drawer-new-group'),headings=[drawer.querySelector('.rail-side-heading'),drawer.querySelector('.session-group-toggle'),drawer.querySelector('.mobile-projects .home-group')].filter(Boolean);return {order:[search,main,create].map(node=>node.getBoundingClientRect().top),insets:[search,main,create].map(node=>node.getBoundingClientRect().left),headingInsets:headings.map(node=>node.getBoundingClientRect().left+parseFloat(getComputedStyle(node).paddingLeft)),recent:drawer.textContent.includes('最近对话')};});
+        assert.ok(layout.order[0]<layout.order[1]&&layout.order[1]<layout.order[2]);assert.ok(Math.max(...layout.insets)-Math.min(...layout.insets)<1,JSON.stringify(layout));assert.ok(Math.max(...layout.headingInsets)-Math.min(...layout.headingInsets)<1,JSON.stringify(layout));assert.equal(layout.recent,false);
+        await b(page,'选择新对话类型').click();await page.getByRole('menu').waitFor();await shot(page,`${surface}-${width}`,theme,'new-chat-menu-open');await page.keyboard.press('Escape');
+      }
+      await b(page,'搜索').click();await ready(page);await shot(page,`${surface}-${width}`,theme,'empty');
       const input=page.getByRole('combobox',{name:'搜索内容'});await input.fill('周末');await ready(page);await shot(page,`${surface}-${width}`,theme,'grouped-results');
       for(const [type,expected] of [['对话','周末旅行计划'],['项目','周末研究'],['成果','周末计划.md'],['定时任务','周末核对报告'],['记忆','周末喜欢安静的地方']]){await page.getByRole('tab',{name:type,exact:true}).click();await ready(page);assert.ok(await page.getByRole('option').filter({hasText:expected}).count(),`${surface} ${type} returns its real fixture result`);await shot(page,`${surface}-${width}`,theme,'type-'+type);}
       await page.getByRole('tab',{name:'对话',exact:true}).click();await ready(page);await page.getByRole('option').filter({hasText:'周末旅行计划'}).first().getByRole('button',{name:'操作 周末旅行计划',exact:true}).click();await page.getByRole('menu').waitFor();await shot(page,`${surface}-${width}`,theme,'row-menu-open');await page.keyboard.press('Escape');
@@ -83,6 +92,6 @@ try{
     }
     await context.close();
   }
-  assert.deepEqual(report.errors,[]);report.checks.push('fixed-single-toggle','sidebar-order','six-types','title-and-body-highlight','temporary-filter','row-menu','no-results','main-and-side-body-location','keyboard-navigation-and-alt-enter','loading-skeleton','phone-and-shipped-android-assets');
+  assert.deepEqual(report.errors,[]);report.checks.push('fixed-single-toggle','sidebar-order','six-types','title-and-body-highlight','temporary-filter','row-menu','no-results','main-and-side-body-location','keyboard-navigation-and-alt-enter','loading-skeleton','phone-and-shipped-android-assets','footer-at-bottom-all-states','complete-dates','drawer-order-insets-heading-alignment','mobile-new-chat-menu');
   await writeFile(join(out,'verification.json'),JSON.stringify(report,null,2));
 }finally{await app?.evaluate(({app})=>app.exit(0)).catch(()=>{});await app?.close().catch(()=>{});await browser?.close();await f?.close();if(profile)await rm(profile,{recursive:true,force:true});if(f?.root)await rm(f.root,{recursive:true,force:true});}

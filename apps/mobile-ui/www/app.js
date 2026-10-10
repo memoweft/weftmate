@@ -84,6 +84,7 @@ const mobileEffects = {
 const uiCore = WeftUiCore.create({ fetch: mobileWebBridge?.fetch || androidBridge.fetch, storage: localStorage,
   crypto: globalThis.crypto, effects: mobileEffects, mobileState: state, attachmentDrafts, logicalChats:true });
 uiCore.android = androidBridge;
+let mobileNextSuggestions = null;
 const mobileMessageActions = globalThis.WeftMessageActions?.create({core:uiCore, draft:()=>$('draft'),
   selectSession:async id=>{await listSharedSessions();await selectSharedSession(id)},
   copy: text=>call('clipboard.copy',{text}), save:async(blob,name)=>{
@@ -124,6 +125,10 @@ function mountMobileSearch(){
   Object.assign(mobileEffects,{showSearch:()=>searchView.show(),hideSearch:()=>searchView.hide(),renderSearch:()=>searchView.render(),selectSearchRow:()=>searchView.select()});
   const entry=el('button','search-entry');entry.type='button';entry.id='mobile-search-entry';entry.setAttribute('aria-label','搜索');entry.setAttribute('aria-haspopup','dialog');entry.append(WeftIcons.create('search',20),el('span','','搜索'));
   entry.onclick=()=>{closeDrawer();uiCore.syncMobileIdentity();void uiCore.openSearch();};$('drawer').querySelector('.drawer-brand').after(entry);
+  $('drawer-new-menu').onclick=()=>WeftPopover.menu($('drawer-new-menu'),[
+    {name:'新对话',icon:'compose',action:()=>selectConversation(null)},
+    {name:'临时对话',icon:'chat',action:()=>mobileNewTemporaryConversation()}
+  ],error=>toast(uiCore.failureMessage(error),true));
   $('conversation-search').hidden=true;$('conversation-search').value='';$('home-search').hidden=true;$('home-search').value='';
   const home=entry.cloneNode(true);home.id='home-search-entry';home.onclick=entry.onclick;$('home-search').after(home);
   const select=uiCore.selectLogicalSession;uiCore.selectLogicalSession=async(...args)=>{const result=await select(...args),row=uiCore.state.sessions.find(row=>row.sessionId===uiCore.state.selectedSessionId);if(row)uiCore.rememberSearch({...row,type:'chats',id:row.chatId??row.sessionId});return result;};
@@ -724,6 +729,8 @@ function handleBack(){if(uiCore.search?.open){uiCore.closeSearch();return;}if(gl
   if(state.logicalChats&&!uiCore.inMainChat()){void selectMobileTab('chat');return}
   if(window.weftNative)void call('app.exit').catch(error=>toast(safeError(error)));}
 document.addEventListener('DOMContentLoaded',()=>{
+  mobileNextSuggestions = globalThis.WeftNextSuggestionsView?.mount(uiCore, { field:$('draft'), area:$('composer-dock'),
+    card:$('draft').parentElement, mobile:true, repaint:() => updateComposer() });
   $('menu-button').addEventListener('click',openDrawer);$('drawer-close').addEventListener('click',closeDrawer);$('drawer-scrim').addEventListener('click',closeDrawer);
   $('page-back').addEventListener('click',()=>{if(state.page==='chat'&&!state.logicalChats&&!state.tabSource)page('home');else handleBack()});
   $('header-profile').addEventListener('click',()=>page('settings'));

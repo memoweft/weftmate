@@ -183,14 +183,15 @@ describe('DshWebRuntime lifecycle fences（阶段 0）', () => {
       WEFTMATE_TEST_ROOT_PID: rootPidFile,
     })
     const start = web.start()
+    // Observe the expected rejection before close can settle it while killing
+    // the child. Waiting for process teardown first creates an unhandled race.
+    const startRejected = assert.rejects(start, /DshWebRuntime is closed/)
     const rootPid = Number(await waitForFile(rootPidFile))
-    // Observe the expected rejection before close can settle startup; keep every lifecycle assertion.
-    const rejectedStart = assert.rejects(start, /DshWebRuntime is closed/)
     const closeA = web.close()
     const closeB = web.close()
     assert.strictEqual(closeA, closeB)
     await closeA
-    await rejectedStart
+    await startRejected
     assert.equal(web.isRunning(), false)
     assert.equal(isAlive(rootPid), false)
   })

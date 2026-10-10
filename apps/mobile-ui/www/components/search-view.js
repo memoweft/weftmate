@@ -1,5 +1,15 @@
 /* Shared desktop/phone palette. Navigation remains with the host composition. */
-globalThis.WeftSearchView = {mount({core,open,menu,notice,mobile=false}) {
+globalThis.WeftSearchView = {
+  formatDate(text,timeZone='Asia/Shanghai',now=new Date()) {
+    const at=Date.parse(text);if(!Number.isFinite(at)||!String(text).includes('-'))return text;
+    const date=new Date(at),parts=value=>Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(value).map(part=>[part.type,part.value]));
+    const day=parts(date),today=parts(now),key=value=>`${value.year}-${value.month}-${value.day}`;
+    if(key(day)===key(today))return `今天 ${new Intl.DateTimeFormat('zh-CN',{timeZone,hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(date)}`;
+    const previous=new Date(Date.UTC(Number(today.year),Number(today.month)-1,Number(today.day)-1));
+    const yesterday={year:String(previous.getUTCFullYear()),month:String(previous.getUTCMonth()+1).padStart(2,'0'),day:String(previous.getUTCDate()).padStart(2,'0')};
+    if(key(day)===key(yesterday))return '昨天';
+    return `${day.year!==today.year?day.year+'年':''}${Number(day.month)}月${Number(day.day)}日`;
+  },mount({core,open,menu,notice,mobile=false}) {
   const el=(tag,cls='',text='')=>{const node=document.createElement(tag);node.className=cls;node.textContent=text;return node;};
   const icon=name=>globalThis.WeftIcons.create(name,20);
   const dialog=el('dialog','dialog search-palette');dialog.setAttribute('aria-label','搜索');if(mobile)dialog.classList.add('search-fullscreen');
@@ -20,7 +30,7 @@ globalThis.WeftSearchView = {mount({core,open,menu,notice,mobile=false}) {
       if(matchMedia('(prefers-reduced-motion: reduce)').matches)queueMicrotask(finish);else closeTimer=setTimeout(finish,120);});return closing;}
   const highlight=(text,q)=>{const span=el('span');text=String(text??'');if(!q)return Object.assign(span,{textContent:text});const lower=text.toLowerCase(),needle=q.toLowerCase();let position=0,hit;
     while((hit=lower.indexOf(needle,position))>=0){span.append(document.createTextNode(text.slice(position,hit)),el('mark','search-highlight',text.slice(hit,hit+q.length)));position=hit+q.length;}span.append(document.createTextNode(text.slice(position)));return span;};
-  const meta=text=>{const at=Date.parse(text);if(!Number.isFinite(at)||!String(text).includes('-'))return text;return new Intl.DateTimeFormat('zh-CN',{timeZone:core.state.mainChat?.timeZone||core.state.account?.timeZone||'Asia/Shanghai',month:'short',day:'numeric',...(new Date(at).getFullYear()!==new Date().getFullYear()?{year:'numeric'}:{})}).format(new Date(at));};
+  const meta=text=>WeftSearchView.formatDate(text,core.state.mainChat?.timeZone||core.state.account?.timeZone||'Asia/Shanghai');
   async function activate(row){const token=`${core.state.identityGeneration}:${core.state.ownerId}`;try{core.rememberSearch(row);await core.closeSearch();if(core.search.open||token!==`${core.state.identityGeneration}:${core.state.ownerId}`)return;await open(row);}
     catch(error){if(token===`${core.state.identityGeneration}:${core.state.ownerId}`)notice(core.failureMessage?.(error)||'暂时无法打开，请重试。');}}
   function rowMenu(row,trigger){menu?.(row,trigger);}

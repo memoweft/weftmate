@@ -1,0 +1,17 @@
+light:settings
+light:new-project
+light:动态
+light:目标
+light:成果库
+light:open-project
+light:new-side
+light:temporary
+dark:settings
+dark:new-project
+dark:动态
+dark:目标
+dark:成果库
+dark:open-project
+dark:new-side
+dark:temporary
+empty-result-creates-and-sends-first-message
