@@ -36,6 +36,8 @@ Mac 子进程显式补 PATH（命令搜索路径） `/opt/homebrew/bin`、`/usr/
 
 报告根目录为 `D:\AIProjects\WeftMate\Runtime\Nightly\<本地日期>\`，不进入仓库。当天 `nightly-report.md` 指向最新审稿页；`latest.json` 指向最新批次。每次运行保存在独立批次目录，含 `gallery/index.html`、`gallery/manifest.json`、`nightly-report.md`、`nightly-status.json`、设备清理与通知回执。审稿页格式与 CI（持续集成）一致，每格标明拍摄时间、代码提交和来源。只保留今天及之前13天的日期目录，非日期目录不清理。
 
+安装版阶段保留原打包校验；已生成的隔离 win-unpacked（未封装安装目录）若只在最终包校验失败，仍收集该合成测试程序的独立原生冒烟计数，记录 `buildPassed=false` 并保持整阶段红灯。`--install` 不允许安装校验失败的包；未生成程序或更早构建失败不启动冒烟。
+
 阶段表固定列准备、vendor（固定运行时测试）、安装版冒烟、Windows、手机网页、Apple（苹果端）批次、Mac、iPhone、Watch（苹果手表）、Android（安卓端）、清理；未执行阶段写原因，总结果分别计数未运行与执行后失败，安装版冒烟列实际检查项数。
 
 任一适用格缺图、拍摄时间超过24小时／明显在未来、提交不一致、场景或构建失败、设备被占用、像素比较失败，均报警。Windows 桌面发一条汇总通知；退出码 `0` 表示本轮无报警，`1` 表示报警／失败，`2` 表示另一个夜间批次持有锁。通知的 `supported` 只证明系统接口可用，不证明本人已经看到通知。

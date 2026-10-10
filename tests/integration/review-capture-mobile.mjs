@@ -34,7 +34,13 @@ if (android) {
     try { return { id: payload.id, ok: true, result: await currentBridge(payload) }; }
     catch (error) { return { id: payload.id, ok: false, error: { code: error.message } }; }
   });
-  await android.page.addInitScript(() => { window.weftNative = { postMessage(value) { window.__reviewNative(JSON.parse(value)).then(result => window.weftNative.onmessage({ data: JSON.stringify(result) })); } }; });
+  await android.page.addInitScript(() => {
+    const install = () => { window.weftNative = { postMessage(value) { window.__reviewNative(JSON.parse(value)).then(result => window.weftNative.onmessage({ data: JSON.stringify(result) })); } }; };
+    install();
+    // Android injects its native object after new-document CDP scripts. Replace
+    // transport once the document is ready, before the app's boot listener.
+    document.addEventListener('DOMContentLoaded', install, {once:true});
+  });
 }
 try {
   for (const theme of ['light', 'dark']) {
@@ -53,7 +59,8 @@ try {
           if (source === suggestionFixture && payload.method === 'host.business' && payload.params?.path?.includes('/suggestions')) return {requestId:payload.params.body?.requestId,suggestions:ux7Replies,completion:payload.params.body?.kind === 'completion' ? '保存成文件' : '',available:true};
           return source.mobileBridge(payload);
         } : bridge;
-        return current.goto(android.entryUrl);
+        await current.goto(android.entryUrl);
+        await current.waitForFunction(() => state.booted && String(window.weftNative?.postMessage).includes('__reviewNative'));
       };
       if (android) await android.theme(theme);
       page.setDefaultTimeout(30000); page.on('pageerror', error => errors.push(error.message));

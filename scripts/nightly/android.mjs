@@ -34,7 +34,7 @@ export async function startAndroid(out) {
     for (const [file, name] of [['debug/app-debug.apk', pkg], ['androidTest/debug/app-debug-androidTest.apk', pkg + '.test']]) {
       state.installed.push(name); await persist(); command('install', join(repository, 'apps/android/app/build/outputs/apk', file));
     }
-    probe = spawn(adb, ['-s', serial, 'shell', 'am', 'instrument', '-w', '-e', 'class', 'com.memoweft.weftmate.mobile.NightlyWebViewProbeTest', '-e', 'nightlyProbe', '1', `${pkg}.test/androidx.test.runner.AndroidJUnitRunner`], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+    probe = spawn(adb, ['-s', serial, 'shell', 'am', 'instrument', '-w', '-e', 'class', 'com.memoweft.weftmate.mobile.NightlyWebViewProbeTest', '-e', 'nightlyProbe', '1', '-e', 'nightlyRunRoot', out, `${pkg}.test/androidx.test.runner.AndroidJUnitRunner`], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
     probe.stdout.on('data', bytes => { probeLog += bytes; }); probe.stderr.on('data', bytes => { probeLog += bytes; });
     await until(() => command('shell', 'pidof', pkg).toString().trim());
     const reserve = createServer(); await new Promise(done => reserve.listen(0, '127.0.0.1', done)); const port = reserve.address().port; await new Promise(done => reserve.close(done));

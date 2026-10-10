@@ -6,6 +6,7 @@ import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {spawn} from 'node:child_process';
 import {buildWindowsRelease} from '../release/windows.mjs';
+import {buildForSmoke} from './installed-build.mjs';
 import {keyId} from '../../src/personal-update/manifest.mjs';
 import {migrationHost,until} from '../../tests/helpers/migration-host.mjs';
 const option=(name,fallback)=>{const i=process.argv.indexOf(name);return i<0?fallback:process.argv[i+1];};
@@ -24,7 +25,8 @@ try {
     writeFileSync(privateFile,pair.privateKey.export({type:'pkcs8',format:'pem'}));writeFileSync(keys,JSON.stringify({[keyId(pub)]:pub}));
     const previous=process.env.WEFTMATE_UPDATE_PRIVATE_KEY_PATH;process.env.WEFTMATE_UPDATE_PRIVATE_KEY_PATH=privateFile;
     const releaseRoot=resolve(option('--build-root',join(temp,'release')));
-    try{await buildWindowsRelease({version:'0.1.1-preview.21',channel:'preview',output:releaseRoot,'trusted-keys':keys,'test-identity':'fx21qa',...(option('--prebuilt-stage')?{'prebuilt-stage':resolve(option('--prebuilt-stage'))}:{})});}
+    build=join(releaseRoot,'0.1.1-preview.21','build');
+    try{Object.assign(report,await buildForSmoke(buildWindowsRelease,{version:'0.1.1-preview.21',channel:'preview',output:releaseRoot,'trusted-keys':keys,'test-identity':'fx21qa',...(option('--prebuilt-stage')?{'prebuilt-stage':resolve(option('--prebuilt-stage'))}:{})},join(build,'win-unpacked','WeftMate.exe'),!report.realInstall));}
     finally{if(previous===undefined)delete process.env.WEFTMATE_UPDATE_PRIVATE_KEY_PATH;else process.env.WEFTMATE_UPDATE_PRIVATE_KEY_PATH=previous;rmSync(signing,{recursive:true,force:true});}
     build=join(releaseRoot,'0.1.1-preview.21','build');
     const installer=join(build,'WeftMate-Setup-0.1.1-preview.21.exe');
@@ -106,7 +108,8 @@ try {
   const desktopGeometry=await h.page.locator('#send-message').evaluate(n=>({bottom:n.getBoundingClientRect().bottom,height:innerHeight,pageHeight:document.documentElement.scrollHeight}));
   assert.ok(desktopGeometry.bottom<=desktopGeometry.height,JSON.stringify(desktopGeometry));report.desktop480=desktopGeometry;
   for(const theme of ['light','dark']){await h.page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await h.page.screenshot({path:join(out,`desktop-480-${theme}.png`)});}
-  report.passed=true;
+  report.smokePassed=true;report.passed=report.buildPassed!==false;
+  if(!report.passed)process.exitCode=1;
 }catch(error){report.error=error.stack;report.passed=false;process.exitCode=1;}
 finally{
   if(h)report.modelCalls=h.requests.map(r=>({stream:r.stream,toolResponses:r.messages?.filter(m=>m.role==='tool').map(m=>({name:m.name,content:String(m.content).slice(0,1000)}))}));
