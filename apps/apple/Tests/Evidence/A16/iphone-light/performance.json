@@ -1,0 +1,88 @@
+[
+  {
+    "testIdentifier" : "A16ChatUITests/testLightMainChat()",
+    "testIdentifierURL" : "test://com.apple.xcode/WeftMate/WeftMatePhoneUITests/A16ChatUITests/testLightMainChat",
+    "testRuns" : [
+      {
+        "device" : {
+          "deviceId" : "5B327157-8CC5-42DC-A5AC-623D883C6F33",
+          "deviceName" : "WeftMate A2 isolated UI"
+        },
+        "metrics" : [
+          {
+            "baselineAverage" : 0,
+            "baselineName" : "",
+            "displayName" : "Absolute Memory Physical (weftmatephone)",
+            "identifier" : "com.apple.dt.XCTMetric_Memory-com.weftmate.apple.weftmatephone.physical_absolute",
+            "maxPercentRegression" : 10,
+            "maxPercentRelativeStandardDeviation" : 10,
+            "maxRegression" : 0,
+            "maxStandardDeviation" : 10,
+            "measurements" : [
+              99430.4,
+              99475.456,
+              99512.32
+            ],
+            "polarity" : "prefers smaller",
+            "unitOfMeasurement" : "kB"
+          },
+          {
+            "baselineAverage" : 0,
+            "baselineName" : "",
+            "displayName" : "Duration (Scroll_Deceleration)",
+            "identifier" : "com.apple.dt.XCTMetric_OSSignpost-Scroll_Deceleration.duration",
+            "maxPercentRegression" : 10,
+            "maxPercentRelativeStandardDeviation" : 10,
+            "maxRegression" : 0,
+            "maxStandardDeviation" : 10,
+            "measurements" : [
+              1.5170842340000001,
+              1.402087872,
+              1.534255082
+            ],
+            "polarity" : "prefers smaller",
+            "unitOfMeasurement" : "s"
+          },
+          {
+            "baselineAverage" : 0,
+            "baselineName" : "",
+            "displayName" : "Memory Physical (weftmatephone)",
+            "identifier" : "com.apple.dt.XCTMetric_Memory-com.weftmate.apple.weftmatephone.physical",
+            "maxPercentRegression" : 10,
+            "maxPercentRelativeStandardDeviation" : 10,
+            "maxRegression" : 0,
+            "maxStandardDeviation" : 10,
+            "measurements" : [
+              -102.4,
+              45.056,
+              36.864
+            ],
+            "polarity" : "prefers smaller",
+            "unitOfMeasurement" : "kB"
+          },
+          {
+            "baselineAverage" : 0,
+            "baselineName" : "",
+            "displayName" : "Memory Peak Physical (weftmatephone)",
+            "identifier" : "com.apple.dt.XCTMetric_Memory-com.weftmate.apple.weftmatephone.physical_peak",
+            "maxPercentRegression" : 10,
+            "maxPercentRelativeStandardDeviation" : 10,
+            "maxRegression" : 0,
+            "maxStandardDeviation" : 10,
+            "measurements" : [
+              99827.712,
+              99774.464,
+              99856.384
+            ],
+            "polarity" : "prefers smaller",
+            "unitOfMeasurement" : "kB"
+          }
+        ],
+        "testPlanConfiguration" : {
+          "configurationId" : "1",
+          "configurationName" : "Test Scheme Action"
+        }
+      }
+    ]
+  }
+]

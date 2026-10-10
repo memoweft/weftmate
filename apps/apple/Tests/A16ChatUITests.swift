@@ -57,13 +57,12 @@ final class A16ChatUITests: XCTestCase {
         try tap(element(app,"sideChat.source"));XCTAssertTrue(element(app,"mainChat.event."+source).waitForExistence(timeout:30));keep(app,"returned-source",theme)
         try tap(element(app,"mainChat.latest"))
         // Returning to the root and refreshing reads the host's tail, including real result cards.
-        if app.navigationBars.buttons.firstMatch.exists { app.navigationBars.buttons.firstMatch.tap() }
         try tap(element(app,"mainChat.latest"))
         if let result=(ready["resultIDs"] as? [String])?.first {
             let card=element(app,"mainChat.result."+result)
             for _ in 0..<12 {if card.isHittable{break};app.scrollViews.firstMatch.swipeUp()}
             try tap(card);XCTAssertTrue(element(app,"conversationDetail").waitForExistence(timeout:20));keep(app,"result-opened",theme)
-            app.navigationBars.buttons.firstMatch.tap()
+            try tap(app.navigationBars.buttons["WeftMate"].firstMatch)
         }
         try tap(element(app,"mainChat.plus"));try tap(app.buttons["添加合成附件"])
         let draft=element(app,"mainChat.draft");try tap(draft);draft.typeText("A16 合成主对话发送")
@@ -83,10 +82,12 @@ final class A16ChatUITests: XCTestCase {
         let temporary=try await get("/temporary") as! [[String:Any]];XCTAssertEqual(temporary.last?["autoDeleteDays"] as? Int,7)
         try tap(recall);try await Task.sleep(for:.seconds(1));XCTAssertEqual(recall.value as? String,"0");keep(app,"temporary-recall-off",theme)
         try tap(element(app,"closeSessionActions"))
-        _=try await get("/expire");try tap(app.buttons["刷新会话"])
+        _=try await get("/expire")
+        XCTAssertTrue(app.staticTexts["会话已变更"].waitForExistence(timeout:30))
         keep(app,"temporary-expired",theme)
+        try tap(app.navigationBars.buttons.firstMatch)
         // Native application scroll measurement uses the same ten-thousand-row HTTP history.
-        if app.navigationBars.buttons.firstMatch.exists {app.navigationBars.buttons.firstMatch.tap()}
+        if app.navigationBars.buttons["WeftMate"].firstMatch.exists {try tap(app.navigationBars.buttons["WeftMate"].firstMatch)}
         _=try await get("/perf-start"); try await Task.sleep(for:.seconds(3))
         let began=ProcessInfo.processInfo.systemUptime
         let options = XCTMeasureOptions(); options.iterationCount = 3
