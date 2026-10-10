@@ -1,0 +1,102 @@
+[
+  {
+    "scene": "native-fallback",
+    "theme": "light",
+    "file": "native-fallback/android-native-fallback-light.png",
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        255,
+        255,
+        255
+      ],
+      "header": [
+        255,
+        255,
+        255
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "native-fallback",
+    "theme": "dark",
+    "file": "native-fallback/android-native-fallback-dark.png",
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        38,
+        39,
+        35
+      ],
+      "header": [
+        38,
+        39,
+        35
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "native-pairing",
+    "theme": "light",
+    "file": "native-fallback/android-native-pairing-light.png",
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        184,
+        184,
+        184
+      ],
+      "header": [
+        184,
+        184,
+        184
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "native-pairing",
+    "theme": "dark",
+    "file": "native-fallback/android-native-pairing-dark.png",
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        27,
+        28,
+        25
+      ],
+      "header": [
+        27,
+        28,
+        25
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  }
+]

@@ -19,6 +19,7 @@
     };
     const core = globalThis.WeftUiCore.create({ effects: ui, fetch: request, storage: localStorage, crypto: globalThis.crypto,
         hostOrigin: globalThis.location?.origin, desktop: !!native, cloudVendor: globalThis.WeftCloudVendor,
+        networkAvailable: () => globalThis.navigator?.onLine,
         initialPairing,
         messageModeStorage: native ? (...args) => native.credentials(...args) : undefined,
         feedbackStorage: native ? (...args) => native.credentials(...args) : undefined,
@@ -34,6 +35,13 @@
     for (const mount of ["mountAuth", "mountAccount", "mountSettings", "mountMemory", "mountApprovals", "mountComposer", "mountPhone", "mountSessions", "mountCloudSettings", "mountShell", "mountSettingsNavigation", "mountMainChat", "mountActivity", "mountGoals", "mountLibrary", "mountSearch"])
         ui[mount]();
     ui.mountOnboarding();
+    globalThis.WeftPresenceView.mount({core, badgeTarget:ui.byId('assistant-connection'),
+        composerTarget:ui.byId('message-form').parentElement, toast:ui.toast,
+        openLogin:()=>core.startCloudJourney(), openDevices:()=>{core.openAccount();ui.openSettings('devices');}});
+    document.addEventListener('visibilitychange',()=>core.connectionVisibility(document.visibilityState==='hidden'));
+    window.addEventListener('offline',()=>core.connectionNetwork(false));
+    window.addEventListener('online',()=>core.connectionNetwork(true));
+    window.addEventListener('focus',()=>core.connectionVisibility(false));
     globalThis.__WeftUiStarted = true;
     if (!native && globalThis.navigator?.serviceWorker) void globalThis.navigator.serviceWorker.register('/personal/v1/ui/offline-worker.js').catch(() => {});
     if (globalThis.indexedDB && globalThis.matchMedia?.('(max-width: 720px)')?.matches) globalThis.WeftOfflineView?.mount({ core, desktop: !!native,

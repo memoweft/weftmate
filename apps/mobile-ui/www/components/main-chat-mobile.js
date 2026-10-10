@@ -8,16 +8,16 @@
   for(const name of ['wheel','touchmove'])$('chat-scroll').addEventListener(name,()=>{scrollGestureAt=performance.now();},{passive:true});
   const oldAttachments = uiCore.currentAttachmentDrafts,oldPick=pickAttachment,oldModels=openModels,oldRemove=removeAttachment,oldSelectConversation=selectConversation;
   const ids = {'assistant-title':'header-title','message-text':'draft','session-list':'conversation-list','new-session':'home-new-chat','transcript':'main-chat-transcript'};
-  const intro = el('div','main-chat-intro'); intro.id = 'main-chat-intro'; intro.append(el('h1','','今天想聊些什么？'));
+  const intro = el('div','main-chat-intro'); intro.id = 'main-chat-intro'; intro.append(el('h1','','今天想做什么？'));
   const older = el('button','quiet','加载更早内容'); older.id='main-chat-load-older'; older.type='button'; older.onclick=()=>uiCore.loadOlderLogicalHistory();
   const transcript = el('ol','main-chat-transcript'); transcript.id='main-chat-transcript';
-  const notice = el('p','main-chat-notice'); notice.setAttribute('role','status');
+  const notice = el('p','main-chat-notice chat-read-notice'); notice.setAttribute('role','status');
   function ensureList() { if(!transcript.isConnected)$('chat-content').replaceChildren(intro,older,notice,transcript); }
   const view = {
     mobile:true,userScrolling:()=>performance.now()-scrollGestureAt<400, byId:id=>id==='chat-intro'?intro:id==='load-older'?older:id==='transcript'?transcript:$(ids[id]||id), element:el,
     toast, readMessageDraft:()=>$('draft').value, closeAttachmentMenu,
     bindMainMessage:(row,event)=>{row.querySelector('.message-tools')?.remove();mobileMessageActions?.bind(row,event,event.sourceRef?.sessionId);},
-    historyNotice:text=>{notice.textContent=text;notice.hidden=!text;},
+    historyNotice:(text,kind='ordinary')=>{notice.dataset.noticeKind=kind;notice.textContent=text;notice.hidden=!text||kind==='read-failure'&&uiCore.connectionView().kind!=='online';},
     get conversationScroll(){return ensureConversationScroll();},
     paintHistoryMessages(events,target){for(const event of events){
       const node=messageNode(event.type==='user.message'?'user':'assistant',event.data?.text||'');

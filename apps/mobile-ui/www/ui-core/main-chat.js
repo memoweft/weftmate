@@ -155,7 +155,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         } catch (error) {
             if (token !== scope() || generation !== historyWindow.state.generation) return;
             if (error.code === 'CURSOR_RESET_REQUIRED') { clearLogical(true); notify(); return readPage({}, 'tail'); }
-            effects.historyNotice('历史暂时无法读取，请重试。');
+            effects.historyNotice('历史暂时无法读取，请重试。', 'read-failure');
         }
     }
     async function refreshChatDates() {
@@ -187,7 +187,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             historyWindow.state.anchorId=effects.mainChatAnchor?.() || null;
             historyWindow.merge(page, 'changes'); core.observeOptimistic(page.upserts || []); notify();
             if(environment.mobileState) await Promise.all([core.refreshConversationTasks(),core.refreshConversationApprovals(),core.refreshConversationQuestions()]);
-        for (const row of pending.values()) if (row.ownerId === core.state.ownerId && row.status === 'sending') await checkMainRequest(row);
+        await reconcileMainRequests();
             const main = await core.readMainChat(); if (token === scope()) { installMain(main.chat); notify(); }
         } catch (error) {
             if (token === scope() && generation === historyWindow.state.generation && error.code === 'CURSOR_RESET_REQUIRED') { clearLogical(true); notify(); await readPage({}, 'tail'); }
@@ -294,7 +294,13 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
     }
     async function checkMainRequest(row) {
         const token = core.state.identityGeneration;
-        const result = await core.accessApi(`/commands/by-request/${encodeURIComponent(row.requestId)}`);
+        let result;
+        try { result = await core.accessApi(`/commands/by-request/${encodeURIComponent(row.requestId)}`); }
+        catch (error) {
+            if (token !== core.state.identityGeneration || row.ownerId !== core.state.ownerId) return;
+            row.status = error.code === 'NOT_FOUND' ? 'undelivered' : 'confirming';
+            notify();return;
+        }
         if (token !== core.state.identityGeneration || row.ownerId !== core.state.ownerId) return;
         row.command = result.command; row.receiptId = row.command?.receiptId;
         row.status = ['accepted_by_dsh', 'observed'].includes(row.command?.state) ? 'accepted' : ['rejected', 'failed', 'uncertain'].includes(row.command?.state) ? 'failed' : 'sending';
@@ -310,13 +316,38 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         if (row.status === 'accepted' && inMain() && effects.readMessageDraft() === row.text) effects.clearMessageDraft();
         notify();
     }
+    async function reconcileMainRequests() {
+        for (const row of pending.values()) if (row.ownerId === core.state.ownerId && ['sending','confirming','failed'].includes(row.status)) await checkMainRequest(row);
+    }
+    async function retryMainRequest(requestId) {
+        const row = pending.get(requestId);
+        if (!row || row.retrying || row.ownerId !== core.state.ownerId || core.state.submitting) return;
+        row.retrying = true;
+        const token = core.state.identityGeneration;
+        try {
+            await checkMainRequest(row); // Always query before replay; never generate a new request ID.
+            if (token !== core.state.identityGeneration || row.status !== 'undelivered') return;
+            row.status = 'sending';notify();
+            core.operation('正在重试原消息。',true,requestId,false);
+            const command = core.originalMessageBody(requestId) ? await core.replayOriginalMessage(requestId)
+                : environment.mobileState && row.nativeFields ? await effects.sendMainNativeMessage(row.nativeFields)
+                : row.attachmentSnapshot && inMain() && row.chatId === core.state.selectedChatId
+                    ? (core.operation('正在重试原附件。',false,requestId), await core.sendDesktopMessageWithAttachments(row.text,requestId,row.nativeFields.intent,row.attachmentSnapshot)) : null;
+            if (!command) row.status = 'undelivered';
+            else await checkMainRequest(row);
+            await refreshHistory();
+        } catch { if (token === core.state.identityGeneration) row.status = 'confirming'; }
+        finally { row.retrying = false;notify(); }
+    }
     async function sendDraft(text = effects.readMessageDraft(), intent) {
         if (core.state.sessionSelecting || core.state.sideCreating) return;
         if (!inMain()) return legacy.sendDraft(text, intent, true);
-        if (!supports('chatSend') || core.folderMutationPending?.() || core.state.submitting || core.state.unresolvedSubmission || !core.state.modelProfileId || (!text.trim() && !core.currentAttachmentDrafts().length)) return;
+        if (!core.state.online || !supports('chatSend') || core.folderMutationPending?.() || core.state.submitting || core.state.unresolvedSubmission || !core.state.modelProfileId || (!text.trim() && !core.currentAttachmentDrafts().length)) return;
         const attachments = core.currentAttachmentDrafts();
         const row = { ownerId: core.state.ownerId, chatId: core.state.selectedChatId, requestId: attachments.length ? core.attachmentAttempt(core.attachmentDraftKey(), text, attachments).requestId : environment.crypto.randomUUID(), text, status: 'sending', files: attachments.map(item => item.file.name) };
         pending.set(row.requestId, row); notify(); effects.scrollToLatest();
+        row.nativeFields = {chatId:row.chatId,text,requestId:row.requestId,modelProfileId:core.state.modelProfileId,intent:intent || core.composerInputMode(core.state.selectedSessionId),attachmentIds:attachments.map(item=>item.attachmentId)};
+        if(attachments.length && !environment.mobileState)row.attachmentSnapshot={drafts:[...attachments],modelProfileId:row.nativeFields.modelProfileId};
         if(environment.mobileState && environment.logicalChats) {
             core.rememberMarker({requestId:row.requestId,kind:'chat.message'});
         }
@@ -325,11 +356,11 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
                 historyWindow.state.events.clear(); historyWindow.state.hasNewer = false;
                 await readPage({}, 'tail'); notify(); effects.scrollToLatest();
             }
-            const command = environment.mobileState ? await effects.sendMainNativeMessage({chatId:row.chatId,text,requestId:row.requestId,modelProfileId:core.state.modelProfileId,intent:intent || core.composerInputMode(core.state.selectedSessionId),attachmentIds:attachments.map(item=>item.attachmentId)}) : attachments.length ? await core.sendDesktopMessageWithAttachments(text, row.requestId, intent)
+            const command = environment.mobileState ? await effects.sendMainNativeMessage(row.nativeFields) : attachments.length ? await core.sendDesktopMessageWithAttachments(text, row.requestId, row.nativeFields.intent,row.attachmentSnapshot)
                 : await core.submitCommand('chat.message', { chatId: row.chatId, text, modelProfileId: core.state.modelProfileId, mode: intent || core.composerInputMode(core.state.selectedSessionId) }, null, row.requestId);
-            if (command) await checkMainRequest(row); else row.status = 'failed';
+            await checkMainRequest(row);
             await refreshHistory();
-        } catch { row.status = 'failed'; } finally { notify(); }
+        } catch { row.status = 'confirming'; } finally { notify(); }
     }
     function observeOptimistic(events) {
         legacy.observeOptimistic(events, true);
@@ -344,7 +375,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         const available = supports('chatSend') && core.state.mainChat.sendAvailable && core.state.models.some(model => model.id === core.state.modelProfileId);
         return { ...view, messageDisabled: !available || !!core.state.attachmentUpload, attachmentsDisabled: !available || !!core.state.attachmentUpload || core.state.submitting,
             modelDisabled: view.modelDisabled || !!core.state.mainChat.activeSessionId,
-            sendDisabled: !available || core.folderMutationPending?.() || core.state.submitting || core.state.unresolvedSubmission || (!text.trim() && !core.currentAttachmentDrafts().length),
+            sendDisabled: !core.state.online || ['restarting','unavailable'].includes(core.state.connection?.host?.runtime) || core.state.capabilities?.chat?.available === false || !available || core.folderMutationPending?.() || core.state.submitting || core.state.unresolvedSubmission || (!text.trim() && !core.currentAttachmentDrafts().length),
             hint: core.executionAccountHint?.() || (core.state.mainChat.contextOrganizing ? '正在整理上下文，消息将继续排队。' : !supports('chatSend') ? '请更新电脑程序以发送主对话消息。' : !core.state.modelProfileId ? '选择模型后开始聊天。' : '') };
     }
     async function loadConversationResources() {
@@ -371,7 +402,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         startChatConversation: () => supports('sideChats') && core.state.mainChat ? openSideChat({ entry: 'composer', ...((core.currentFolderProject?.() || core.defaultFolderProject?.()) ? {parent:{kind:'project',id:(core.currentFolderProject?.() || core.defaultFolderProject()).projectId}} : {}) }).catch(error => effects.toast(core.failureMessage(error))) : (core.state.selectedChatId = null, legacy.startNewConversation(true)),
         sendMainDraft: sendDraft, observeMainOptimistic: observeOptimistic, mainComposerState: composerState, loadMainResources: loadConversationResources,
         mainOptimisticMessages: () => inMain() ? [...pending.values()].filter(row => row.ownerId === core.state.ownerId && row.chatId === core.state.selectedChatId) : legacy.optimisticMessages(true),
-        retryMainRequest: async requestId => { const row = pending.get(requestId); if (row) await checkMainRequest(row); },
+        retryMainRequest, reconcileMainRequests,
         restoreMainRequests: rows => { for (const row of rows) {
             if(row.kind!=='chat.message'||!row.chatId||!row.requestId||pending.has(row.requestId)||row.state==='rejected')continue;
             pending.set(row.requestId,{...row,ownerId:core.state.ownerId,text:row.text||'',status:row.state==='accepted'?'accepted':'failed',receiptId:row.command?.receiptId});

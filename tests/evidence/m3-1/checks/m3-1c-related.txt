@@ -1,0 +1,19 @@
+✔ account UI serves only its fixed public GET assets with restrictive headers (7.473ms)
+✔ public account shell keeps secrets out of markup and code-generated HTML (13.9116ms)
+✔ device envelope authenticates contents and identity; storage is encrypted and key replacement removes old values (137.9752ms)
+✔ replica filters private, muted, invalid and mixed-currentness sources, and computes removals (9.2959ms)
+✔ temporary history never enters the encrypted replica, including a switch during the native read (445.782ms)
+✔ online sync → cloud-only relevant recall → offline preference → idempotent import → forget cannot resurrect (367.5527ms)
+✔ encrypted offline replica carries only account personalization and uses the shared prompt without making settings Evidence (322.9737ms)
+✔ revocation erases pending conversations, and unavailable control plane sends no model request (306.9904ms)
+✔ offline import uses the original Core boundary hash and stable event id (0.8004ms)
+✔ renewing a host cookie preserves the physical device import identity and deduplication (334.893ms)
+✔ another cloud account on the same host cannot authorize use of this replica (400.2377ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2591.6469

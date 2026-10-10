@@ -123,6 +123,7 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
   void core.loadPersonalization().catch(() => {});
   try {
     const status = await core.accessApi('/status');
+    core.connectionSucceeded?.(status.presence || {runtime:status.backend?.runtime === 'unavailable' ? 'unavailable' : 'ready'});
     if (owner !== state.owner || epoch !== state.authEpoch) return;
     const exact = ['chats','chatTimeline','chatSearch','chatSend','sideChats','chatResources'].every(key => status.personalCapabilities?.[key] === 1);
     core.state.personalCapabilities = status.personalCapabilities || {};
@@ -140,7 +141,7 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
       effects.renderConversationList(); return;
     }
     if (state.logicalChats) { core.resetLogicalSession(); state.logicalChats = false; }
-  } catch (error) { if(state.logicalChats) { effects.status('主对话暂时无法读取，请重试');return; } /* Older native shells keep their existing list. */ }
+  } catch (error) { core.connectionFailed?.(error); if(state.logicalChats) { effects.status('主对话暂时无法读取，请重试',false,'read-failure');return; } /* Older native shells keep their existing list. */ }
   void refreshMobileMemoryAvailability();
   if (!core.state.models.length) void core.refreshThinkingModels().then(() => {
     if(owner===state.owner&&epoch===state.authEpoch)effects.updateComposer();
