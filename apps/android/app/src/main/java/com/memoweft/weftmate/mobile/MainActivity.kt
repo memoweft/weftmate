@@ -130,6 +130,7 @@ class MainActivity : Activity() {
                 val savedHost = secrets.host()
                 val savedModel = savedHost?.let { secrets.model(Endpoints.ownerKey(it.origin, it.ownerId)) }
                 runOnUiThread {
+                    if (isFinishing || isDestroyed) return@runOnUiThread
                     host = savedHost; model = savedModel
                     currentOwner = savedHost?.let { Endpoints.ownerKey(it.origin, it.ownerId) }
                     val backgroundSync = savedHost == null || SyncJobService.schedule(this)

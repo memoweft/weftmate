@@ -42,9 +42,17 @@ class SystemBarsProbeTest {
                     File(context.getExternalFilesDir(null), "android-native-pairing-$selected.png").outputStream()
                         .use { pairing.compress(Bitmap.CompressFormat.PNG, 100, it) }
                     pairing.recycle()
-                } finally { instrumentation.runOnMainSync { activity.finish() } }
+                } finally { instrumentation.runOnMainSync {
+                    ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
+                        .filterIsInstance<MainActivity>().forEach { it.finish() }
+                    activity.finish()
+                } }
             }
-        } finally { check(prefs.edit().putString("appearance:$scope", previous).commit()) }
+        } finally {
+            check(prefs.edit().putString("appearance:$scope", previous).commit())
+            if (android.os.Build.VERSION.SDK_INT >= 31) context.getSystemService(android.app.UiModeManager::class.java)
+                .setApplicationNightMode(applicationAppearanceMode(previous ?: "system"))
+        }
     }
     @Test fun inspectBars() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()

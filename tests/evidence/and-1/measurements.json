@@ -1,0 +1,3239 @@
+[
+  {
+    "scene": "theme-mismatch-fixed",
+    "theme": "dark",
+    "file": "android-theme-mismatch-fixed-dark.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": false,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "dark",
+      "appearance": "dark",
+      "browserThemeColor": "#262723",
+      "topbar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        38,
+        39,
+        35
+      ],
+      "header": [
+        38,
+        39,
+        35
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "login",
+    "theme": "light",
+    "file": "android-login-light.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": true,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "light",
+      "appearance": "light",
+      "browserThemeColor": "#ffffff",
+      "topbar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        255,
+        255,
+        255
+      ],
+      "header": [
+        255,
+        255,
+        255
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "login",
+    "theme": "dark",
+    "file": "android-login-dark.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": false,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "dark",
+      "appearance": "dark",
+      "browserThemeColor": "#262723",
+      "topbar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        38,
+        39,
+        35
+      ],
+      "header": [
+        38,
+        39,
+        35
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-main",
+    "theme": "light",
+    "file": "android-mumu-hidden-navigation-main-light.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": true,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "light",
+      "appearance": "light",
+      "browserThemeColor": "#ffffff",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 744.1299438476562,
+        "width": 565.490234375,
+        "height": 190.51470947265625,
+        "top": 744.1299438476562,
+        "right": 565.490234375,
+        "bottom": 934.6446533203125,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        254.10344827586206,
+        254.10344827586206,
+        254.10344827586206
+      ],
+      "header": [
+        249.5,
+        249.5,
+        249.5
+      ],
+      "delta": 4.603448275862064,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-side-chat",
+    "theme": "light",
+    "file": "android-mumu-hidden-navigation-side-chat-light.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": true,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "light",
+      "appearance": "light",
+      "browserThemeColor": "#ffffff",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 781.188720703125,
+        "width": 565.490234375,
+        "height": 223.5171661376953,
+        "top": 781.188720703125,
+        "right": 565.490234375,
+        "bottom": 1004.7058868408203,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        254.10344827586206,
+        254.10344827586206,
+        254.10344827586206
+      ],
+      "header": [
+        249.5,
+        249.5,
+        249.5
+      ],
+      "delta": 4.603448275862064,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-activity",
+    "theme": "light",
+    "file": "android-mumu-hidden-navigation-activity-light.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": true,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "light",
+      "appearance": "light",
+      "browserThemeColor": "#ffffff",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        254.10344827586206,
+        254.10344827586206,
+        254.10344827586206
+      ],
+      "header": [
+        249.5,
+        249.5,
+        249.5
+      ],
+      "delta": 4.603448275862064,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-goals",
+    "theme": "light",
+    "file": "android-mumu-hidden-navigation-goals-light.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": true,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "light",
+      "appearance": "light",
+      "browserThemeColor": "#ffffff",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        254.10344827586206,
+        254.10344827586206,
+        254.10344827586206
+      ],
+      "header": [
+        249.5,
+        249.5,
+        249.5
+      ],
+      "delta": 4.603448275862064,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-library",
+    "theme": "light",
+    "file": "android-mumu-hidden-navigation-library-light.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": true,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "light",
+      "appearance": "light",
+      "browserThemeColor": "#ffffff",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        254.10344827586206,
+        254.10344827586206,
+        254.10344827586206
+      ],
+      "header": [
+        249.5,
+        249.5,
+        249.5
+      ],
+      "delta": 4.603448275862064,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-drawer",
+    "theme": "light",
+    "file": "android-mumu-hidden-navigation-drawer-light.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": true,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "light",
+      "appearance": "light",
+      "browserThemeColor": "#ffffff",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 744.1299438476562,
+        "width": 565.490234375,
+        "height": 190.51470947265625,
+        "top": 744.1299438476562,
+        "right": 565.490234375,
+        "bottom": 934.6446533203125,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        220.3530651340996,
+        220.67806513409963,
+        221.30862068965519
+      ],
+      "header": [
+        216.32222222222222,
+        216.6472222222222,
+        217.27777777777777
+      ],
+      "delta": 4.0308429118774045,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-settings",
+    "theme": "light",
+    "file": "android-mumu-hidden-navigation-settings-light.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": true,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "light",
+      "appearance": "light",
+      "browserThemeColor": "#ffffff",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        254.10344827586206,
+        254.10344827586206,
+        254.10344827586206
+      ],
+      "header": [
+        249.5,
+        249.5,
+        249.5
+      ],
+      "delta": 4.603448275862064,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-appearance",
+    "theme": "light",
+    "file": "android-mumu-hidden-navigation-appearance-light.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": true,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "light",
+      "appearance": "light",
+      "browserThemeColor": "#ffffff",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        255,
+        255,
+        255
+      ],
+      "header": [
+        255,
+        255,
+        255
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-search",
+    "theme": "light",
+    "file": "android-mumu-hidden-navigation-search-light.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": true,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "light",
+      "appearance": "light",
+      "browserThemeColor": "#ffffff",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 818.186279296875,
+        "width": 565.490234375,
+        "height": 186.5196075439453,
+        "top": 818.186279296875,
+        "right": 565.490234375,
+        "bottom": 1004.7058868408203,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        255,
+        255,
+        255
+      ],
+      "header": [
+        255,
+        255,
+        255
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-bottom-menu",
+    "theme": "light",
+    "file": "android-mumu-hidden-navigation-bottom-menu-light.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": true,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "light",
+      "appearance": "light",
+      "browserThemeColor": "#ffffff",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 744.1299438476562,
+        "width": 565.490234375,
+        "height": 190.51470947265625,
+        "top": 744.1299438476562,
+        "right": 565.490234375,
+        "bottom": 934.6446533203125,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        255,
+        255,
+        255
+      ],
+      "header": [
+        255,
+        255,
+        255
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-gallery",
+    "theme": "light",
+    "file": "android-mumu-hidden-navigation-gallery-light.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": true,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "light",
+      "appearance": "light",
+      "browserThemeColor": "#ffffff",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 744.1299438476562,
+        "width": 565.490234375,
+        "height": 190.51470947265625,
+        "top": 744.1299438476562,
+        "right": 565.490234375,
+        "bottom": 934.6446533203125,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        255,
+        255,
+        255
+      ],
+      "header": [
+        255,
+        255,
+        255
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-gallery-return",
+    "theme": "light",
+    "file": "android-mumu-hidden-navigation-gallery-return-light.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": true,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "light",
+      "appearance": "light",
+      "browserThemeColor": "#ffffff",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 744.1299438476562,
+        "width": 565.490234375,
+        "height": 190.51470947265625,
+        "top": 744.1299438476562,
+        "right": 565.490234375,
+        "bottom": 934.6446533203125,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        255,
+        255,
+        255
+      ],
+      "header": [
+        255,
+        255,
+        255
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-file-preview",
+    "theme": "light",
+    "file": "android-mumu-hidden-navigation-file-preview-light.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": true,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "light",
+      "appearance": "light",
+      "browserThemeColor": "#ffffff",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 744.1299438476562,
+        "width": 565.490234375,
+        "height": 190.51470947265625,
+        "top": 744.1299438476562,
+        "right": 565.490234375,
+        "bottom": 934.6446533203125,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        255,
+        255,
+        255
+      ],
+      "header": [
+        255,
+        255,
+        255
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-keyboard",
+    "theme": "light",
+    "file": "android-mumu-hidden-navigation-keyboard-light.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 324,
+      "darkStatusIcons": true,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "light",
+      "appearance": "light",
+      "browserThemeColor": "#ffffff",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 564.0686645507812,
+        "width": 565.490234375,
+        "height": 186.5196075439453,
+        "top": 564.0686645507812,
+        "right": 565.490234375,
+        "bottom": 750.5882720947266,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 750,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        255,
+        255,
+        255
+      ],
+      "header": [
+        255,
+        255,
+        255
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-pairing",
+    "theme": "light",
+    "file": "android-mumu-hidden-navigation-pairing-light.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": true,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "light",
+      "appearance": "light",
+      "browserThemeColor": "#ffffff",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        255,
+        255,
+        255
+      ],
+      "header": [
+        255,
+        255,
+        255
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    },
+    "navigationAvailable": false
+  },
+  {
+    "scene": "mumu-hidden-navigation-main",
+    "theme": "dark",
+    "file": "android-mumu-hidden-navigation-main-dark.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": false,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "dark",
+      "appearance": "dark",
+      "browserThemeColor": "#262723",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 744.1299438476562,
+        "width": 565.490234375,
+        "height": 190.51470947265625,
+        "top": 744.1299438476562,
+        "right": 565.490234375,
+        "bottom": 934.6446533203125,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        38,
+        39,
+        35
+      ],
+      "header": [
+        38,
+        39,
+        35
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-side-chat",
+    "theme": "dark",
+    "file": "android-mumu-hidden-navigation-side-chat-dark.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": false,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "dark",
+      "appearance": "dark",
+      "browserThemeColor": "#262723",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 781.188720703125,
+        "width": 565.490234375,
+        "height": 223.5171661376953,
+        "top": 781.188720703125,
+        "right": 565.490234375,
+        "bottom": 1004.7058868408203,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        38,
+        39,
+        35
+      ],
+      "header": [
+        38,
+        39,
+        35
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-activity",
+    "theme": "dark",
+    "file": "android-mumu-hidden-navigation-activity-dark.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": false,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "dark",
+      "appearance": "dark",
+      "browserThemeColor": "#262723",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        38,
+        39,
+        35
+      ],
+      "header": [
+        38,
+        39,
+        35
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-goals",
+    "theme": "dark",
+    "file": "android-mumu-hidden-navigation-goals-dark.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": false,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "dark",
+      "appearance": "dark",
+      "browserThemeColor": "#262723",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        38,
+        39,
+        35
+      ],
+      "header": [
+        38,
+        39,
+        35
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-library",
+    "theme": "dark",
+    "file": "android-mumu-hidden-navigation-library-dark.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": false,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "dark",
+      "appearance": "dark",
+      "browserThemeColor": "#262723",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        38,
+        39,
+        35
+      ],
+      "header": [
+        38,
+        39,
+        35
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-drawer",
+    "theme": "dark",
+    "file": "android-mumu-hidden-navigation-drawer-dark.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": false,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "dark",
+      "appearance": "dark",
+      "browserThemeColor": "#262723",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 744.1299438476562,
+        "width": 565.490234375,
+        "height": 190.51470947265625,
+        "top": 744.1299438476562,
+        "right": 565.490234375,
+        "bottom": 934.6446533203125,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        31.761111111111113,
+        34.09722222222222,
+        33.388888888888886
+      ],
+      "header": [
+        31.761111111111113,
+        34.09722222222222,
+        33.388888888888886
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-settings",
+    "theme": "dark",
+    "file": "android-mumu-hidden-navigation-settings-dark.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": false,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "dark",
+      "appearance": "dark",
+      "browserThemeColor": "#262723",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        38,
+        39,
+        35
+      ],
+      "header": [
+        38,
+        39,
+        35
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-appearance",
+    "theme": "dark",
+    "file": "android-mumu-hidden-navigation-appearance-dark.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": false,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "dark",
+      "appearance": "dark",
+      "browserThemeColor": "#262723",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        38,
+        39,
+        35
+      ],
+      "header": [
+        38,
+        39,
+        35
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-search",
+    "theme": "dark",
+    "file": "android-mumu-hidden-navigation-search-dark.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 324,
+      "darkStatusIcons": false,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "dark",
+      "appearance": "dark",
+      "browserThemeColor": "#262723",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 564.0686645507812,
+        "width": 565.490234375,
+        "height": 186.5196075439453,
+        "top": 564.0686645507812,
+        "right": 565.490234375,
+        "bottom": 750.5882720947266,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 750,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        38,
+        39,
+        35
+      ],
+      "header": [
+        38,
+        39,
+        35
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-bottom-menu",
+    "theme": "dark",
+    "file": "android-mumu-hidden-navigation-bottom-menu-dark.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": false,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "dark",
+      "appearance": "dark",
+      "browserThemeColor": "#262723",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 744.1299438476562,
+        "width": 565.490234375,
+        "height": 190.51470947265625,
+        "top": 744.1299438476562,
+        "right": 565.490234375,
+        "bottom": 934.6446533203125,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        38,
+        39,
+        35
+      ],
+      "header": [
+        38,
+        39,
+        35
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-gallery",
+    "theme": "dark",
+    "file": "android-mumu-hidden-navigation-gallery-dark.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": false,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "dark",
+      "appearance": "dark",
+      "browserThemeColor": "#262723",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 744.1299438476562,
+        "width": 565.490234375,
+        "height": 190.51470947265625,
+        "top": 744.1299438476562,
+        "right": 565.490234375,
+        "bottom": 934.6446533203125,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        38,
+        39,
+        35
+      ],
+      "header": [
+        38,
+        39,
+        35
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-gallery-return",
+    "theme": "dark",
+    "file": "android-mumu-hidden-navigation-gallery-return-dark.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": false,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "dark",
+      "appearance": "dark",
+      "browserThemeColor": "#262723",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 744.1299438476562,
+        "width": 565.490234375,
+        "height": 190.51470947265625,
+        "top": 744.1299438476562,
+        "right": 565.490234375,
+        "bottom": 934.6446533203125,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        38,
+        39,
+        35
+      ],
+      "header": [
+        38,
+        39,
+        35
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-file-preview",
+    "theme": "dark",
+    "file": "android-mumu-hidden-navigation-file-preview-dark.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": false,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "dark",
+      "appearance": "dark",
+      "browserThemeColor": "#262723",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 744.1299438476562,
+        "width": 565.490234375,
+        "height": 190.51470947265625,
+        "top": 744.1299438476562,
+        "right": 565.490234375,
+        "bottom": 934.6446533203125,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        38,
+        39,
+        35
+      ],
+      "header": [
+        38,
+        39,
+        35
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-keyboard",
+    "theme": "dark",
+    "file": "android-mumu-hidden-navigation-keyboard-dark.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 324,
+      "darkStatusIcons": false,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "dark",
+      "appearance": "dark",
+      "browserThemeColor": "#262723",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 564.0686645507812,
+        "width": 565.490234375,
+        "height": 186.5196075439453,
+        "top": 564.0686645507812,
+        "right": 565.490234375,
+        "bottom": 750.5882720947266,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 750,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        38,
+        39,
+        35
+      ],
+      "header": [
+        38,
+        39,
+        35
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "mumu-hidden-navigation-pairing",
+    "theme": "dark",
+    "file": "android-mumu-hidden-navigation-pairing-dark.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": false,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "dark",
+      "appearance": "dark",
+      "browserThemeColor": "#262723",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        38,
+        39,
+        35
+      ],
+      "header": [
+        38,
+        39,
+        35
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    },
+    "navigationAvailable": false
+  },
+  {
+    "scene": "appearance-light-system-no",
+    "theme": "light",
+    "file": "android-appearance-light-system-no-light.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": true,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "light",
+      "appearance": "light",
+      "browserThemeColor": "#ffffff",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        255,
+        255,
+        255
+      ],
+      "header": [
+        255,
+        255,
+        255
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "appearance-dark-system-no",
+    "theme": "dark",
+    "file": "android-appearance-dark-system-no-dark.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": false,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "dark",
+      "appearance": "dark",
+      "browserThemeColor": "#262723",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        38,
+        39,
+        35
+      ],
+      "header": [
+        38,
+        39,
+        35
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "appearance-system-system-no",
+    "theme": "light",
+    "file": "android-appearance-system-system-no-light.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": true,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "light",
+      "appearance": "system",
+      "browserThemeColor": "#ffffff",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        255,
+        255,
+        255
+      ],
+      "header": [
+        255,
+        255,
+        255
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "appearance-light-system-yes",
+    "theme": "light",
+    "file": "android-appearance-light-system-yes-light.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": true,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "light",
+      "appearance": "light",
+      "browserThemeColor": "#ffffff",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        255,
+        255,
+        255
+      ],
+      "header": [
+        255,
+        255,
+        255
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "appearance-dark-system-yes",
+    "theme": "dark",
+    "file": "android-appearance-dark-system-yes-dark.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": false,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "dark",
+      "appearance": "dark",
+      "browserThemeColor": "#262723",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        38,
+        39,
+        35
+      ],
+      "header": [
+        38,
+        39,
+        35
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "appearance-system-system-yes",
+    "theme": "dark",
+    "file": "android-appearance-system-system-yes-dark.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": false,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "dark",
+      "appearance": "system",
+      "browserThemeColor": "#262723",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        38,
+        39,
+        35
+      ],
+      "header": [
+        38,
+        39,
+        35
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "account-a-saved",
+    "theme": "dark",
+    "file": "android-account-a-saved-dark.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": false,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "dark",
+      "appearance": "dark",
+      "browserThemeColor": "#262723",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        38,
+        39,
+        35
+      ],
+      "header": [
+        38,
+        39,
+        35
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "account-b-default",
+    "theme": "light",
+    "file": "android-account-b-default-light.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": true,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "light",
+      "appearance": "system",
+      "browserThemeColor": "#ffffff",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 744.1299438476562,
+        "width": 565.490234375,
+        "height": 190.51470947265625,
+        "top": 744.1299438476562,
+        "right": 565.490234375,
+        "bottom": 934.6446533203125,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        254.10344827586206,
+        254.10344827586206,
+        254.10344827586206
+      ],
+      "header": [
+        249.5,
+        249.5,
+        249.5
+      ],
+      "delta": 4.603448275862064,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "account-a-restored",
+    "theme": "dark",
+    "file": "android-account-a-restored-dark.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": false,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "dark",
+      "appearance": "dark",
+      "browserThemeColor": "#262723",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 744.1299438476562,
+        "width": 565.490234375,
+        "height": 190.51470947265625,
+        "top": 744.1299438476562,
+        "right": 565.490234375,
+        "bottom": 934.6446533203125,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        38,
+        39,
+        35
+      ],
+      "header": [
+        38,
+        39,
+        35
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "background-system-change",
+    "theme": "light",
+    "file": "android-background-system-change-light.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": true,
+      "width": 720,
+      "height": 1280
+    },
+    "dom": {
+      "theme": "light",
+      "appearance": "system",
+      "browserThemeColor": "#ffffff",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 565.490234375,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 565.490234375,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 0,
+        "y": 744.1299438476562,
+        "width": 565.490234375,
+        "height": 190.51470947265625,
+        "top": 744.1299438476562,
+        "right": 565.490234375,
+        "bottom": 934.6446533203125,
+        "left": 0
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 565,
+        "height": 1005,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        255,
+        255,
+        255
+      ],
+      "header": [
+        255,
+        255,
+        255
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "landscape",
+    "theme": "light",
+    "file": "android-landscape-light.png",
+    "native": {
+      "statusHeight": 31,
+      "navigationHeight": 0,
+      "imeHeight": 0,
+      "darkStatusIcons": true,
+      "width": 1280,
+      "height": 720
+    },
+    "dom": {
+      "theme": "light",
+      "appearance": "system",
+      "browserThemeColor": "#ffffff",
+      "topbar": {
+        "x": 0,
+        "y": 24.3137264251709,
+        "width": 1004.7058715820312,
+        "height": 60,
+        "top": 24.3137264251709,
+        "right": 1004.7058715820312,
+        "bottom": 84.3137264251709,
+        "left": 0
+      },
+      "composer": {
+        "x": 106.34803771972656,
+        "y": 304.9142150878906,
+        "width": 791.99755859375,
+        "height": 190.51470947265625,
+        "top": 304.9142150878906,
+        "right": 898.3455963134766,
+        "bottom": 495.4289245605469,
+        "left": 106.34803771972656
+      },
+      "appPadding": {
+        "top": "24.3137px",
+        "bottom": "0px"
+      },
+      "viewport": {
+        "width": 1005,
+        "height": 565,
+        "dpr": 1.274999976158142
+      },
+      "safe": {
+        "top": "max(0px,24.3137px)",
+        "right": "max(0px,0px)",
+        "bottom": "0px",
+        "left": "max(0px,0px)"
+      }
+    },
+    "difference": {
+      "width": 1280,
+      "height": 720,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        255,
+        255,
+        255
+      ],
+      "header": [
+        255,
+        255,
+        255
+      ],
+      "delta": 0,
+      "threshold": 18,
+      "passed": true
+    }
+  },
+  {
+    "scene": "before",
+    "difference": {
+      "width": 720,
+      "height": 1280,
+      "statusHeight": 31,
+      "xStart": 0.25,
+      "xEnd": 0.75,
+      "bar": [
+        255,
+        255,
+        255
+      ],
+      "header": [
+        38,
+        39,
+        35
+      ],
+      "delta": 217.67330260430805,
+      "threshold": 18,
+      "passed": false
+    }
+  }
+]
