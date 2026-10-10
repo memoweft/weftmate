@@ -106,7 +106,8 @@ test('Relay phone first input and file task', {
       await phone.getByRole('heading', { name: '登录 WeftMate', exact: true }).waitFor();
       await phone.evaluate(async () => {
         const response = await fetch('/personal/v1/auth/me'); if (!response.ok) throw new Error('approved host session missing');
-        globalThis.__ciR1Core.acceptSession(await response.json()); await globalThis.__ciR1Core.enterAssistant();
+        globalThis.__ciR1Core.acceptSession(await response.json());
+        await Promise.race([globalThis.__ciR1Core.enterAssistant(), new Promise((_, reject) => setTimeout(() => reject(new Error('approved UI hydration timeout')), 20_000))]);
       });
       await phone.locator('#assistant-view').waitFor();
     };
@@ -131,7 +132,7 @@ test('Relay phone first input and file task', {
       const toggle = phone.getByRole('button', { name: '切换会话侧栏', exact: true });
       if (await toggle.getAttribute('aria-expanded') !== 'true') await toggle.click();
       const row = phone.locator(`[data-session-id="${session.sessionId}"]`);
-      const visibleTitle = (await phoneApi(`/sessions/${session.sessionId}`)).data.session?.title ?? session.title;
+      const visibleTitle = await phone.evaluate(id => globalThis.__ciR1Core.state.sessions.find(s => s.sessionId === id)?.title, session.sessionId) ?? session.title;
       const button = row.getByRole('button', { name: visibleTitle, exact: true });
       await button.click();
     };
@@ -198,6 +199,8 @@ test('Relay phone first input and file task', {
     await phone.screenshot({ path: join(evidence, 'file-task-completed.png') }); report.passed = true;
   } catch (error) {
     report.passed = false; report.error = error.stack;
+    report.ui = await phone?.evaluate(() => { const s = globalThis.__ciR1Core?.state; return s && { currentView: s.currentView, refreshing: s.refreshing,
+      online: s.online, modelCount: s.models.length, sessions: s.sessions.map(row => ({ sessionId: row.sessionId, title: row.title })) }; }).catch(() => null);
     await phone?.screenshot({ path: join(evidence, 'failure.png') }).catch(() => {});
     if (phone) await writeFile(join(evidence, 'failure-ui.txt'), await phone.locator('body').innerText().catch(() => 'page closed'));
     throw error;
