@@ -1,0 +1,171 @@
+{
+  "nativeElectronEvents": true,
+  "preserveOriginalShow": true,
+  "events": [],
+  "review": {
+    "native": [
+      {
+        "event": "show",
+        "title": "需要审批",
+        "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/a.txt\"}",
+        "at": "2026-10-10T06:57:56.221Z"
+      },
+      {
+        "event": "show",
+        "title": "需要审批",
+        "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/b.txt\"}",
+        "at": "2026-10-10T06:57:58.435Z"
+      },
+      {
+        "event": "show",
+        "title": "需要审批",
+        "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/index.md\"}",
+        "at": "2026-10-10T06:58:09.617Z"
+      },
+      {
+        "event": "show",
+        "title": "请整理这个合成文件夹 C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-f",
+        "body": "已完成 · 点开查看结果",
+        "at": "2026-10-10T06:58:12.963Z"
+      },
+      {
+        "event": "show",
+        "title": "请在2分钟后提醒我站起来活动，提醒内容为QA5日用冒烟活动。",
+        "body": "已完成 · 点开查看结果",
+        "at": "2026-10-10T06:58:21.268Z"
+      },
+      {
+        "event": "show",
+        "title": "需要审批",
+        "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：write {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/phone.txt\",\"content\":\"Q",
+        "at": "2026-10-10T06:59:30.713Z"
+      },
+      {
+        "event": "show",
+        "title": "需要审批",
+        "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/phone.txt\"}",
+        "at": "2026-10-10T06:59:37.599Z"
+      },
+      {
+        "event": "show",
+        "title": "请在C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/pho",
+        "body": "已完成 · 点开查看结果",
+        "at": "2026-10-10T06:59:43.356Z"
+      },
+      {
+        "event": "show",
+        "title": "提醒",
+        "body": "提醒：QA5日用冒烟活动：站起来活动",
+        "at": "2026-10-10T07:00:20.245Z"
+      }
+    ],
+    "requested": [
+      {
+        "title": "需要审批",
+        "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/a.txt\"}",
+        "at": 1791615476213
+      },
+      {
+        "title": "需要审批",
+        "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/b.txt\"}",
+        "at": 1791615478430
+      },
+      {
+        "title": "需要审批",
+        "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/index.md\"}",
+        "at": 1791615489606
+      },
+      {
+        "title": "请整理这个合成文件夹 C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-f",
+        "body": "已完成 · 点开查看结果",
+        "at": 1791615492958
+      },
+      {
+        "title": "请在2分钟后提醒我站起来活动，提醒内容为QA5日用冒烟活动。",
+        "body": "已完成 · 点开查看结果",
+        "at": 1791615501261
+      },
+      {
+        "title": "需要审批",
+        "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：write {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/phone.txt\",\"content\":\"Q",
+        "at": 1791615570707
+      },
+      {
+        "title": "需要审批",
+        "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/phone.txt\"}",
+        "at": 1791615577589
+      },
+      {
+        "title": "请在C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/pho",
+        "body": "已完成 · 点开查看结果",
+        "at": 1791615583343
+      },
+      {
+        "title": "提醒",
+        "body": "提醒：QA5日用冒烟活动：站起来活动",
+        "at": 1791615620226
+      }
+    ],
+    "activity": {
+      "items": [
+        {
+          "id": "activity-ba159549a6363aadf148534f8f3bbd828b1f34ce68867685e3fc2cc60ad59fb9",
+          "at": "2026-10-10T07:00:18.151Z",
+          "type": "reminder.triggered",
+          "title": "提醒",
+          "summary": "提醒：QA5日用冒烟活动：站起来活动",
+          "source": {
+            "chatId": "chat-3f4d66b1-55df-43b5-8238-f436a0d41a17",
+            "chatKind": "side",
+            "sessionId": "session-6456ec08-038e-44cc-8e1d-0c4050dc65f8",
+            "eventId": "event-f6e1a3635b00203a93e3618199380bf44d1f4a3f62b17c7a4fae2d9075a7cd91",
+            "messageId": "8a47f785-03ee-4001-b7dd-72810f8ec5b0",
+            "scheduleId": "session-6456ec08-038e-44cc-8e1d-0c4050dc65f8:schedule-1-188",
+            "seq": 191
+          },
+          "actions": [
+            {
+              "kind": "open_chat",
+              "label": "打开对话",
+              "target": {
+                "chatId": "chat-3f4d66b1-55df-43b5-8238-f436a0d41a17",
+                "chatKind": "side",
+                "sessionId": "session-6456ec08-038e-44cc-8e1d-0c4050dc65f8",
+                "eventId": "event-f6e1a3635b00203a93e3618199380bf44d1f4a3f62b17c7a4fae2d9075a7cd91",
+                "messageId": "8a47f785-03ee-4001-b7dd-72810f8ec5b0",
+                "seq": 191
+              }
+            }
+          ],
+          "state": "completed",
+          "notification": {
+            "level": "important",
+            "type": "reminder.triggered",
+            "initiatedBy": "user",
+            "title": "提醒",
+            "body": "提醒：QA5日用冒烟活动：站起来活动",
+            "notify": true,
+            "sound": true,
+            "decision": "notify",
+            "reason": "allowed",
+            "decidedAt": "2026-10-10T07:00:18.276Z"
+          },
+          "revision": 1,
+          "attentionRevision": 20,
+          "createdSequence": 20,
+          "read": false
+        }
+      ],
+      "timeZone": "Asia/Shanghai",
+      "nextCursor": null,
+      "hasMore": false,
+      "snapshotCursor": "eyJvd25lcklkIjoib3duZXItOTViNWI2NWMtNzc1Yy00NDZmLWE4ZjMtZTNhYTNiMmRkYjU2IiwiZ2VuZXJhdGlvbiI6MCwia2luZCI6InNuYXBzaG90IiwidGhyb3VnaCI6MjAsImZpbHRlciI6ImFsbCIsInR5cGUiOiJyZW1pbmRlciJ9.Em_TWUpSPtnbvRtjg35yxWUnewJ8TsKG5Tp-bW1pvCQ",
+      "syncCursor": "eyJvd25lcklkIjoib3duZXItOTViNWI2NWMtNzc1Yy00NDZmLWE4ZjMtZTNhYTNiMmRkYjU2IiwiZ2VuZXJhdGlvbiI6MCwia2luZCI6ImNoYW5nZXMiLCJwb3NpdGlvbiI6MjB9.SfQKdAhJar_oaFwWb4HRKPX5hVO-F6D5LhAdMhynl6c",
+      "unreadCount": 12,
+      "actionableCount": 0
+    }
+  },
+  "passed": true,
+  "note": "Original smoke assertion checked before asynchronous native dispatch. Raw failure preserved; this read-only review requires both persisted reminder activity and native Electron show event.",
+  "finishedAt": "2026-10-10T07:02:00.016Z"
+}

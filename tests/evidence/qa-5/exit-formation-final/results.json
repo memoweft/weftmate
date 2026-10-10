@@ -1,0 +1,14 @@
+{
+  "startedAt": "2026-10-10T06:31:47.130Z",
+  "realElectron": true,
+  "realCore": true,
+  "syntheticModel": true,
+  "rows": [
+    {
+      "state": "formation",
+      "method": "tray",
+      "attempt": 1,
+      "startedAt": "2026-10-10T06:31:47.130Z"
+    }
+  ]
+}

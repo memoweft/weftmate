@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import {renderingSample} from '../helpers/rendering-sample.mjs';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { startMainChatCandidate } from './main-chat-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
@@ -15,7 +16,7 @@ for (const theme of ['light', 'dark']) {
   const env = { ...process.env };
   for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key.startsWith('MEMOWEFT_') || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
   Object.assign(env, { REVIEW_PROFILE: profile, REVIEW_THEME: theme, REVIEW_ORIGIN: fixture.origin });
-  let application, page, mainFixture, closing = false, ownerId;
+  let application, page, mainFixture, renderingSeeded=false, closing = false, ownerId;
   const errors = [];
   try {
     application = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), cwd: repository,
@@ -58,6 +59,7 @@ for (const theme of ['light', 'dark']) {
     };
     const settings = async () => { await home(); await button('账户菜单').click(); await button('设置').click(); };
     const preparations = {
+      rendering:async()=>{if(!renderingSeeded){fixture.progress.text(renderingSample);renderingSeeded=true;}await home();await page.getByRole('heading',{name:'公式与图表',exact:true}).scrollIntoViewIfNeeded();await page.locator('.render-diagram img').waitFor();},
       goals: async () => { await home(); await button('目标').click(); await page.getByRole('heading',{name:'目标',exact:true}).waitFor(); await page.getByRole('article',{name:'提交合成报告',exact:true}).waitFor(); },
       onboarding: async () => { await settings(); await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '常规', exact: true }).click(); await button('重新查看引导').click(); await page.getByRole('heading', { name: '你好，我是 WeftMate', exact: true }).waitFor(); },
       'search-palette': async () => { await home(); await button('搜索').click();await page.getByRole('dialog',{name:'搜索',exact:true}).waitFor();await page.waitForFunction(()=>document.querySelector('#search-results')?.getAttribute('aria-busy')==='false'); },

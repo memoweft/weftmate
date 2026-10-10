@@ -1,0 +1,32 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+electron.launch: Timeout 90000ms exceeded.
+Call log:
+  - <launching> "C:\Users\yun\AppData\Local\Temp\weftmate-qa5-smoke-installed-ipHnkF\Programs\WeftMate.exe" "--inspect=0" "--remote-debugging-port=0" "--desktop-config=C:\Users\yun\AppData\Local\Temp\weftmate-qa5-smoke-5wVyvF\desktop-config.json"
+  - <launched> pid=51120
+  - [pid=51120][out]
+  - [pid=51120][err] Debugger listening on ws://127.0.0.1:54704/c5ec85c9-5f78-444f-85db-cff070cab6bf
+  - [pid=51120][err] For help, see: https://nodejs.org/learn/getting-started/debugging
+  - <ws connecting> ws://127.0.0.1:54704/c5ec85c9-5f78-444f-85db-cff070cab6bf
+  - <ws connected> ws://127.0.0.1:54704/c5ec85c9-5f78-444f-85db-cff070cab6bf
+  - [pid=51120][err] Debugger attached.
+
+    at async h.launch (D:\AIProjects\WeftMate\Worktrees\w5\tests\evidence\qa-5\runners\harness.mjs:47:9)
+    at async harness (D:\AIProjects\WeftMate\Worktrees\w5\tests\evidence\qa-5\runners\harness.mjs:54:2)
+    at async file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/evidence/qa-5/runners/smoke.mjs:18:9 {
+  log: [
+    '  - <launching> "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa5-smoke-installed-ipHnkF\\Programs\\WeftMate.exe" "--inspect=0" "--remote-debugging-port=0" "--desktop-config=C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa5-smoke-5wVyvF\\desktop-config.json"',
+    '  - <launched> pid=51120',
+    '  - [pid=51120][out]',
+    '  - [pid=51120][err] Debugger listening on ws://127.0.0.1:54704/c5ec85c9-5f78-444f-85db-cff070cab6bf',
+    '  - [pid=51120][err] For help, see: https://nodejs.org/learn/getting-started/debugging',
+    '  - <ws connecting> ws://127.0.0.1:54704/c5ec85c9-5f78-444f-85db-cff070cab6bf',
+    '  - <ws connected> ws://127.0.0.1:54704/c5ec85c9-5f78-444f-85db-cff070cab6bf',
+    '  - [pid=51120][err] Debugger attached.'
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v24.15.0
