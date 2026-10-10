@@ -2,7 +2,7 @@
 globalThis.WeftUiComponents.factories.onboarding = (core, ui) => {
   const copy = globalThis.WeftOnboardingCopy;
   const steps = ['welcome', 'account', 'model', 'memory', 'import', 'phone', 'first'];
-  let journey, panel, content, title, description, progress, next, back, skip, status;
+  let journey, panel, content, title, description, progress, next, back, skip, status, proceedModel;
   let renderIdentity = 0, generation = 0, mounted = false, active = false, tested = null, authPositions = [], pendingTimer;
   const node = (tag, cls, text) => ui.element(tag, cls, text);
   const button = (label, action, cls = 'secondary') => { const b = node('button', 'button ' + cls, label); b.type = 'button'; b.addEventListener('click', action); return b; };
@@ -46,7 +46,7 @@ globalThis.WeftUiComponents.factories.onboarding = (core, ui) => {
   }
   function render() {
     restoreAuth(); clearTimeout(pendingTimer); const token = ++generation; renderIdentity = core.state.identityGeneration;
-    tested = null; const index = steps.indexOf(journey.step); reveal(); content.replaceChildren(); say('');
+    tested = null; proceedModel = null; const index = steps.indexOf(journey.step); reveal(); content.replaceChildren(); say('');
     title.textContent = copy.titles[index]; description.textContent = copy.descriptions[index];
     progress.setAttribute('aria-label', copy.progress(index, steps.length)); progress.replaceChildren();
     copy.steps.forEach((label, i) => { const dot = node('li', i === index ? 'is-current' : i < index ? 'is-done' : '', label); if (i === index) dot.setAttribute('aria-current', 'step'); progress.append(dot); });
@@ -61,7 +61,7 @@ globalThis.WeftUiComponents.factories.onboarding = (core, ui) => {
     else if (index === 6) {
       next.disabled = !core.state.models.some(model => model.configured);
       if (next.disabled) content.append(node('p', '', copy.noModel), button(copy.configure, () => void move(2)));
-      else for (const sample of copy.samples) content.append(button(sample, () => void finish(true, sample), 'quiet onboarding-example'));
+      else for (const [i, sample] of copy.samples.entries()) { const card = button(sample, () => void finish(true, sample), 'quiet onboarding-example'); card.prepend(WeftIcons.create(['compose','memory','clock'][i], 20)); content.append(card); }
     }
     title.focus();
   }
@@ -96,14 +96,14 @@ globalThis.WeftUiComponents.factories.onboarding = (core, ui) => {
         receipt = await core.accessApi('/account/models/by-request/' + requestId); if (!current(token)) return;
         if (['pending', 'applying'].includes(receipt.operation?.status)) await new Promise(resolve => setTimeout(resolve, 250));
       } while (['pending', 'applying'].includes(receipt.operation?.status));
-      if (receipt.operation?.status === 'uncertain') { say(copy.modelUncertain); return; }
+      if (receipt.operation?.status === 'uncertain') { say(copy.modelUncertain); return false; }
       localStorage.removeItem(markerKey);
       if (receipt.operation?.status !== 'succeeded' || !receipt.model?.profileId) throw new Error('save failed');
-      await core.saveDefaultModel(receipt.model.profileId); await core.refreshModels(); if (current(token)) say(copy.modelSaved);
+      await core.saveDefaultModel(receipt.model.profileId); await core.refreshModels(); if (current(token)) say(copy.modelSaved); return true;
     }
     const draft = () => ({ baseUrl: baseUrl.value.trim(), modelId: modelId.value.trim(), apiKey: apiKey.value || (select.value === 'local' ? 'local-no-auth' : '') });
     const fingerprint = () => JSON.stringify(draft());
-    const reset = () => { tested = null; save.disabled = true; diagnostic.replaceChildren(); };
+    const reset = () => { tested = null; next.disabled = true; diagnostic.replaceChildren(); };
     const choosePreset = () => { const p = copy.presets.find(p => p.id === select.value); name.value = p.name; baseUrl.value = p.baseUrl; modelId.value = p.modelId; apiKey.value = ''; help.textContent = p.help; link.href = p.url; advanced.open = ['local', 'openai', 'anthropic', 'doubao'].includes(p.id); reset(); };
     select.addEventListener('change', choosePreset);
     for (const input of [baseUrl, modelId, apiKey]) input.addEventListener('input', reset);
@@ -114,28 +114,28 @@ globalThis.WeftUiComponents.factories.onboarding = (core, ui) => {
         if (!current(token) || snapshot !== fingerprint()) return;
         diagnostic.replaceChildren();
         for (const [label, detail] of core.modelConnectionSteps(result)) diagnostic.append(node('p', '', label + '：' + detail));
-        if (result.modelListed || result.inferenceVerified) { tested = snapshot; save.disabled = false; say(''); }
+        if (result.modelListed || result.inferenceVerified) { tested = snapshot; next.disabled = false; say(''); }
         else if (result.requiresTestMessage) {
           diagnostic.append(button(copy.testMessage, async () => {
-            try { const verified = await core.checkModelConnection({ ...draft(), sendTestMessage: true }); if (current(token) && snapshot === fingerprint()) { diagnostic.replaceChildren(...core.modelConnectionSteps(verified).map(([a,b]) => node('p','',a+'：'+b))); if (verified.inferenceVerified) { tested = snapshot; save.disabled = false; } } } catch { if (current(token)) say(copy.error); }
+            try { const verified = await core.checkModelConnection({ ...draft(), sendTestMessage: true }); if (current(token) && snapshot === fingerprint()) { diagnostic.replaceChildren(...core.modelConnectionSteps(verified).map(([a,b]) => node('p','',a+'：'+b))); if (verified.inferenceVerified) { tested = snapshot; next.disabled = false; } } } catch { if (current(token)) say(copy.error); }
           })); say('');
         } else say(copy.checkFirst);
       } catch { if (current(token)) say(copy.error); } finally { if (current(token)) check.disabled = false; }
     });
-    const save = button(copy.saveModel, async () => {
+    proceedModel = async () => {
       if (tested !== fingerprint()) { say(copy.checkFirst); return; }
-      save.disabled = true; check.disabled = true; say(copy.saving);
+      next.disabled = back.disabled = skip.disabled = true; check.disabled = true; say(copy.saving);
       const requestId = crypto.randomUUID(), body = { requestId, name: name.value.trim() || modelId.value.trim(), ...draft(), modelTier: select.value === 'local' ? 'local' : 'cloud' };
       try {
         localStorage.setItem(markerKey, requestId);
         await core.saveAccountModel(null, body); apiKey.value = '';
-        await reconcileSavedModel(requestId);
-      } catch (error) { if (error.status && [400, 403, 422].includes(error.status)) localStorage.removeItem(markerKey); if (current(token)) say(copy.error); } finally { if (current(token) && !localStorage.getItem(markerKey)) check.disabled = false; }
-    }, 'primary');
-    content.append(node('p', 'muted', copy.localKeyHint), check, save, diagnostic);
+        if (await reconcileSavedModel(requestId) && current(token)) await move(3);
+      } catch (error) { if (error.status && [400, 403, 422].includes(error.status)) localStorage.removeItem(markerKey); if (current(token)) say(copy.error); } finally { if (current(token)) { back.disabled = skip.disabled = false; if (!localStorage.getItem(markerKey)) check.disabled = false; } }
+    };
+    content.append(node('p', 'muted', copy.localKeyHint), check, diagnostic);
     choosePreset();
     const savedRequest = localStorage.getItem(markerKey);
-    if (savedRequest) { check.disabled = save.disabled = true; say(copy.modelPending); void reconcileSavedModel(savedRequest).catch(() => { if (current(token)) say(copy.modelUncertain); }).finally(() => { if (current(token) && !localStorage.getItem(markerKey)) check.disabled = false; }); }
+    if (savedRequest) { check.disabled = next.disabled = true; say(copy.modelPending); void reconcileSavedModel(savedRequest).then(saved => { if (saved && current(token)) { proceedModel = () => move(3); next.disabled = false; } }).catch(() => { if (current(token)) say(copy.modelUncertain); }).finally(() => { if (current(token) && !localStorage.getItem(markerKey)) check.disabled = false; }); }
     content.append(node('hr'), node('p', 'muted', copy.discoveryHint)); const additional = field(copy.additional, 'url');
     const discovered = node('div');
     const discover = button(copy.discover, async () => {
@@ -204,7 +204,7 @@ globalThis.WeftUiComponents.factories.onboarding = (core, ui) => {
     status = node('p', 'onboarding-status'); status.setAttribute('role', 'status');
     const footer = node('footer', 'onboarding-footer'); back = button(copy.back, () => void move(steps.indexOf(journey.step) - 1), 'quiet');
     skip = button(copy.skip, () => steps.indexOf(journey.step) === 6 ? void finish() : void move(steps.indexOf(journey.step) + 1), 'quiet');
-    next = button(copy.next, () => steps.indexOf(journey.step) === 6 ? void finish(true) : void move(steps.indexOf(journey.step) + 1), 'primary');
+    next = button(copy.next, () => journey.step === 'model' && proceedModel ? void proceedModel() : steps.indexOf(journey.step) === 6 ? void finish(true) : void move(steps.indexOf(journey.step) + 1), 'primary');
     footer.append(back, skip, next); inner.append(progress, title, description, content, status, footer); panel.append(inner); document.body.append(panel);
     const replay = button(copy.replay, async () => { ui.hideSettingsDialog(); try { await persist('welcome'); render(); } catch { ui.toast(copy.error); } });
     document.querySelector('section.settings-category[data-category="general"]').append(replay);

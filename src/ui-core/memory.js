@@ -306,7 +306,7 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         core.memory.cursor = null;
         core.memory.hasMore = false;
         core.memory.query = '';
-        core.memory.kind = 'cognition';
+        core.memory.kind = 'all'; core.memory.totalCount = null;
         core.memory.selected = null;
         core.memory.sources = [];
         core.memory.mode = 'detail';
@@ -346,7 +346,7 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         effects.memoryStatus(more ? '正在读取更多记忆…' : '正在读取记忆…');
         effects.setMemoryMoreBusy(true);
         try {
-            const params = new URLSearchParams({ kind, limit: '20' });
+            const params = new URLSearchParams({ kind, limit: '20', includeSources:'true' });
             if (query)
                 params.set('query', query);
             if (after)
@@ -358,14 +358,15 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
                 || page.searchScope !== 'account_snapshot' || typeof page.hasMore !== 'boolean'
                 || (page.hasMore && (typeof page.nextCursor !== 'string' || !page.nextCursor))
                 || (more && core.memory.revision !== page.worldRevision)
-                || page.items.some((item) => item?.kind !== kind || typeof item.id !== 'string'))
+                || page.items.some((item) => !core.memoryKinds[item?.kind] || kind !== 'all' && item.kind !== kind || typeof item.id !== 'string'))
                 throw { code: 'MEMORY_REVISION_CHANGED' };
             core.memory.items = more ? [...core.memory.items, ...page.items] : page.items;
             core.memory.revision = page.worldRevision;
             core.memory.cursor = page.nextCursor ?? null;
             core.memory.hasMore = page.hasMore;
+            if (kind === 'all') core.memory.totalCount = Number.isSafeInteger(page.totalCount) ? page.totalCount : null;
             effects.renderMemoryItems();
-            effects.memoryStatus(core.memory.items.length ? `已读取${core.memoryKinds[kind]}。${core.memory.hasMore ? '可继续读取更多。' : ''}`
+            effects.memoryStatus(core.memory.items.length ? `已读取${kind === 'all' ? '全部类型记忆' : core.memoryKinds[kind]}。${core.memory.hasMore ? '可继续读取更多。' : ''}`
                 : query ? '当前类型没有匹配的已形成记忆。'
                     : core.memory.status?.pendingBoundaryCount > 0
                         ? '尚无已形成记忆；有待处理来源。'
