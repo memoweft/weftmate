@@ -255,6 +255,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         finally { if (intent && core.conversationTaskCurrent(context)) core.state.messageMode = previous; }
     }
     async function sendDraft(text = effects.readMessageDraft(), intent, legacy = false) {
+        if(core.folderMutationPending?.())return;
         if (!legacy && core.sendMainDraft) return core.sendMainDraft(text, intent);
         if (core.state.activeChatSource === 'phone')
             return sendIntentAction(() => core.sendPhoneMessage(), intent);
@@ -349,7 +350,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             messageDisabled, voiceDisabled: messageDisabled || core.state.submitting || core.state.phoneSending,
             sendDisabled: phoneChat
                 ? !phoneReady || (!!pendingPhone && !pendingHere) || (!!recovery && !recoveryHere) || (!pendingPhone && !recovery && !text.trim())
-                : !chat || !model || !canSendHere || core.state.submitting || attachmentBusy || (!text.trim() && attachmentCount === 0) || core.state.unresolvedSubmission || thinkingView().busy,
+                : !chat || !model || !canSendHere || core.state.submitting || core.folderMutationPending?.() || attachmentBusy || (!text.trim() && attachmentCount === 0) || core.state.unresolvedSubmission || thinkingView().busy,
             sendText: phoneChat ? bound ? '发送到电脑' : recoveryHere && !pendingPhone ? '核对旧请求' : pendingHere ? '核对并重试' : '同步文字' : '发送',
             attachmentsDisabled: phoneChat || !chat || !model || !canSendHere || core.state.submitting || attachmentBusy || core.state.unresolvedSubmission || attachmentCount >= 4,
             desktopText: blockedDesktop ? '查看原事情' : '打开记事本',

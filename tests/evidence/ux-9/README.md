@@ -10,7 +10,7 @@
 | 执行位置菜单 | [浅](electron-light-execution-menu.png) | [深](electron-dark-execution-menu.png) | 仅当前电脑，更多电脑以后支持 |
 | 最近文件夹菜单 | [浅](electron-light-folder-menu.png) | [深](electron-dark-folder-menu.png) | 最多5个、路径末两级、明确不使用 |
 | 「+」菜单 | [浅](electron-light-plus-menu.png) | [深](electron-dark-plus-menu.png) | 添加文件下面选择文件夹 |
-| 新目录小确认卡 | [浅](electron-light-confirm.png) | [深](electron-dark-confirm.png) | 名称、路径、默认只读、审批说明 |
+| 新目录小确认卡 | [浅](electron-light-confirm.png) | [深](electron-dark-confirm.png) | 名称、路径、默认只读、审批说明；确认中保留编辑、阻止提前发送 |
 | 确认卡权限下拉打开 | [浅](electron-light-confirm-permissions.png) | [深](electron-dark-confirm-permissions.png) | 统一控件、可读写单选 |
 | 已有对话的当前文件夹 | [浅](electron-light-current-folder.png) | [深](electron-dark-current-folder.png) | 胶囊在「+」右侧、审批模式前 |
 | 当前文件夹菜单 | [浅](electron-light-current-menu.png) | [深](electron-dark-current-menu.png) | 显示目录、权限、换目录、移出 |
@@ -49,12 +49,12 @@
 
 ## 验证与边界
 
-- `node --test tests/folder-choice.test.ts`：8/8；包括三分支、账户隔离、发送锁、真实路径分类、高风险警告、浏览器任意路径拒绝、现有权限修订。
-- 现有界面交互保护点全部保留。夹具补充标签 / id / 逗号选择器、父节点和插入能力；启动关闭竞态测试提前附着原有拒绝断言，避免未处理拒绝。
+- `node --test tests/folder-choice.test.ts`：10/10；包括三分支、账户隔离、发送锁、真实路径分类、高风险警告、浏览器任意路径拒绝、现有权限修订。
+- 现有界面交互保护点全部保留。夹具补充标签 / id / 逗号选择器、父节点和插入能力；启动关闭竞态测试提前附着原有拒绝断言，避免未处理拒绝；凭据回复使用独立的不可变快照，防止 Windows 读取初始快照时迫使替身进程替换打开的目标并重启，仍断言只处理一次请求。手机菜单夹具补齐真实按钮父节点，避免新增动态菜单项落在树外。
 - `npm run typecheck`通过；安卓界面包生成 / 一致性校验与独立APK（安卓安装包）、JVM（Java虚拟机）测试通过，版本号未改。
 - 真实Electron选择框大多数场景用测试替身返回合成目录。真实Windows对话框已打开，并通过电脑操作工具填入合成临时路径；确认选择时工具收到物理Escape停止信号，停止了电脑操作，因此**真实原生选择完成的冒烟未通过**。没有把打开或填入路径记作成功。
 - 完整必过单测最终通过数及PR检查结果见交付结果；只有0失败才写done。
-- 无新增业务路由。Android不用新壳；Windows增加原生文件夹检查 / 拖放 / 显示 / 可信登记桥，需要程序本体更新。完整路径留在本机，远程仅路径末两级。项目偏好按账户 / 宿主保存在本设备。
+- 无新增业务路由。Android不用新壳；Windows增加原生文件夹检查 / 拖放 / 显示 / 可信登记桥，需要程序本体更新。完整路径留在本机，远程仅路径末两级。项目偏好按账户 / 宿主保存在本设备。登记 / 迁移 / 权限保存中的发送锁按账户和草稿作用域隔离，迟到回应不会锁住其他账户或释放其新操作。
 
 ## MiMo用量
 

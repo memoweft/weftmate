@@ -62,8 +62,8 @@
       const actions=node('div','dialog-footer');const cancel=button('取消','deny',()=>{card?.remove();card=null;choose.focus();});cancel.className='button secondary';
       const save=button('在这个文件夹里工作','folder',()=>{});save.className='button primary';save.type='submit';actions.append(cancel,save);formCard.append(status,actions);card.append(formCard);form.before(card);WeftPopover.bindSettingsSelect(access);
       formCard.onsubmit=async event=>{event.preventDefault();if(token!==scope()||blocked())return;busy=true;save.disabled=cancel.disabled=true;paint();
-        try{const result=await native.createFolderProject({requestId:card.dataset.requestId||=crypto.randomUUID(),name:name.value.trim(),rootPath:choice.rootPath,permission:access.value});
-          if(token!==scope())return;await core.refreshSessionProjects();busy=false;if(await select(result.project)){card?.remove();card=null;}else{status.textContent='项目已创建，对话尚未移入，请重试';save.disabled=cancel.disabled=false;}}
+        try{const result=await core.registerFolderChoice(fields=>native.createFolderProject(fields),{requestId:card.dataset.requestId||=crypto.randomUUID(),name:name.value.trim(),rootPath:choice.rootPath,permission:access.value});
+          if(token!==scope())return;busy=false;if(await select(result.project)){card?.remove();card=null;}else{status.textContent='项目已创建，对话尚未移入，请重试';save.disabled=cancel.disabled=false;}}
         catch(err){if(token===scope()){status.textContent='未完成，请核对文件夹和名称后重试';save.disabled=cancel.disabled=false;}}finally{busy=false;paint();}};
       name.focus();
     }
@@ -71,7 +71,7 @@
       const project=projectNow();if(!project||blocked())return;
       const entries=[];
       if(native?.showProjectFolder)entries.push({name:'在文件夹中显示',icon:'folder-open',action:async()=>{try{await native.showProjectFolder(project.projectId);}catch{toast('文件夹无法打开，请重试');}}});
-      if(core.state.projectCanManage)entries.push({name:'更改权限',icon:'approval',children:async()=>['read-only','write'].map(value=>({name:value==='write'?'可读写':'只读',icon:value==='write'?'edit':'approval',checked:project.permission===value,action:async()=>{try{await core.saveProject(project,{permission:value});paint();}catch(err){toast(error(err));}}}))});
+      if(core.state.projectCanManage)entries.push({name:'更改权限',icon:'approval',children:async()=>['read-only','write'].map(value=>({name:value==='write'?'可读写':'只读',icon:value==='write'?'edit':'approval',checked:project.permission===value,action:async()=>{try{await core.registerFolderChoice(fields=>core.saveProject(project,fields),{permission:value});paint();}catch(err){toast(error(err));}}}))});
       entries.push({name:'换一个文件夹',icon:'folder',action:()=>open(current)},{name:'移出项目',icon:'deny',action:()=>select(null)});menu(current,entries);
     }
     function paint() {

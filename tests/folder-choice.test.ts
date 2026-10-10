@@ -36,11 +36,23 @@ test('UX-9 new-folder API uses existing permission revisions and never returns a
  const grant=await service.issueSetupGrant(),response=await fetch(origin+'/personal/v1/auth/setup',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify({grant:grant.grant,username:'FolderContract',password:'Synthetic-'+randomUUID(),deviceName:'合成电脑'})});assert.equal(response.status,201);
  const auth:any=await response.json(),cookie=response.headers.get('set-cookie')!.split(';')[0];
  const headers:any={cookie,origin,'content-type':'application/json','x-weftmate-csrf':auth.csrfToken,'sec-fetch-site':'same-origin'};
- const body={requestId:randomUUID(),name:'Synthetic',rootPath:folder};
+ const body={requestId:randomUUID(),name:'Synthetic',rootPath:process.platform==='win32'?folder:'C:\\Synthetic\\NativeOnly'};
  const rejected=await fetch(origin+'/personal/v1/projects',{method:'POST',headers,body:JSON.stringify(body)});assert.equal(rejected.status,403);assert.equal((await rejected.json()).error.code,'PROJECT_NATIVE_SELECTION_REQUIRED');
  const trusted={...headers,'x-weftmate-desktop':service.libraryDesktopToken};
  const created=await fetch(origin+'/personal/v1/projects',{method:'POST',headers:trusted,body:JSON.stringify(body)});if(process.platform!=='win32'){assert.equal(created.status,503);assert.equal((await created.json()).error.code,'PROJECT_WINDOWS_REQUIRED');return;}assert.equal(created.status,201);const project=(await created.json()).project;assert.equal(project.permission,'read-only');assert.equal(project.rootPath,undefined);assert.ok(project.pathHint.endsWith('Synthetic'));
  const patched=await fetch(origin+'/personal/v1/projects/'+project.projectId,{method:'PATCH',headers,body:JSON.stringify({expectedRevision:project.revision,permission:'write'})});assert.equal(patched.status,200);const next=(await patched.json()).project;assert.equal(next.permission,'write');assert.equal(next.revision,project.revision+1);
  const list=await(await fetch(origin+'/personal/v1/projects',{headers})).json();assert.equal(list.projects[0].rootPath,undefined);
  const local=await(await fetch(origin+'/personal/v1/projects',{headers:trusted})).json();assert.equal(local.projects[0].rootPath.toLowerCase(),folder.toLowerCase());
+});
+
+test('UX-9 a late folder mutation cannot keep a different account busy or release its new mutation',async()=>{
+ const f=fixture();let first:any,second:any;let count=0;f.core.updateSession=()=>new Promise(resolve=>{if(++count===1)first=resolve;else second=resolve;});
+ const a=f.core.chooseFolderProject(f.state.projects[0]);assert.equal(f.core.folderMutationPending(),true);
+ f.state.ownerId='b';f.state.identityGeneration++;assert.equal(f.core.folderMutationPending(),false);
+ const b=f.core.chooseFolderProject(f.state.projects[0]);first({});await a;assert.equal(f.core.folderMutationPending(),true);second({});await b;assert.equal(f.core.folderMutationPending(),false);
+});
+test('UX-9 folder registration is scoped to the original draft and leaves attachment drafts intact',async()=>{
+ const f=fixture();let finish:any;f.core.refreshSessionProjects=async()=>{};const files=f.state.attachmentDrafts.get('a|s');
+ const pending=f.core.registerFolderChoice(()=>new Promise(resolve=>finish=resolve),{});assert.equal(f.core.folderMutationPending(),true);
+ f.state.selectedSessionId='another';assert.equal(f.core.folderMutationPending(),false);finish({project:f.state.projects[0]});assert.equal(await pending,null);assert.equal(f.state.attachmentDrafts.get('a|s'),files);
 });
