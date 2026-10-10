@@ -11,5 +11,8 @@
   "restartEmpty": true,
   "localClosure": true,
   "otherAccountUnchanged": true,
-  "exportFileCount": 6
+  "exportFileCount": 9,
+  "artifactAndAttachmentOriginals": true,
+  "completeLongMessage": true,
+  "portableImportValidated": true
 }
