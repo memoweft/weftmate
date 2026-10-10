@@ -33,5 +33,21 @@
     "hits": 0
   },
   "cleanedProcesses": 11,
-  "remainingOwnProcesses": 0
+  "remainingOwnProcesses": 0,
+  "postMain": {
+    "base": "4bae7d4992e49c8f9b760ee40ee04b14fb52034f",
+    "related": {
+      "passed": 32,
+      "failed": 0
+    },
+    "releaseAssets": {
+      "passed": 12,
+      "failed": 0
+    },
+    "typecheck": "passed",
+    "publicHygiene": {
+      "hits": 0
+    },
+    "ci": "pending; see PR #207 checks"
+  }
 }
