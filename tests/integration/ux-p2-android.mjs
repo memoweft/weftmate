@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {execFileSync,spawn} from 'node:child_process';
 import {createServer} from 'node:net';
-import {mkdir,writeFile,rm} from 'node:fs/promises';
+import {mkdir,writeFile,readFile,rm} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {chromium} from 'playwright';
@@ -34,7 +34,7 @@ try{
  const b=name=>page.getByRole('button',{name,exact:true});
  const shot=async(ids,suffix)=>{for(const id of ids)await writeFile(join(out,`after-${id}-android-native-${suffix}.png`),execFileSync(adb,['-s',serial,'exec-out','screencap','-p'],{windowsHide:true,maxBuffer:12*1024*1024}))};
  for(const theme of ['light','dark']){await page.evaluate(t=>applyTheme(t),theme);await b('回到底部').click().catch(()=>{});await delay(250);await shot([1,2,3,4,7],theme);assert.doesNotMatch(await page.locator('#chat-status').innerText(),/正在切换账户|等待原回合/);assert.equal(await page.evaluate(()=>document.body.textContent.includes('内置界面未能启动')),false);await page.evaluate(()=>page('settings'));await shot([5],theme+'-settings');await page.evaluate(()=>page('appearance'));await shot([5],theme+'-appearance');await page.evaluate(async()=>{page('chat');await uiCore.selectMainChat()});await b('搜索主对话').click();await page.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('合成');await page.getByRole('searchbox',{name:'主对话搜索关键词'}).press('Enter');await page.waitForFunction(()=>document.querySelector('mark'));await b('下一条搜索结果').click();await b('上一条搜索结果').click();await delay(250);await shot([14,15],theme);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await b('关闭主对话搜索').click()}
- assert.deepEqual(errors,[]);await writeFile(join(out,'android-native-checks.json'),JSON.stringify({realAndroid:true,synthetic:true,modelRequests:0,packageName:pkg,versionCode:29,errors},null,2));console.log('UX-P2 real Android passed');
+ assert.deepEqual(errors,[]);await writeFile(join(out,'android-native-checks.json'),JSON.stringify({realAndroid:true,synthetic:true,modelRequests:0,packageName:pkg,versionCode:Number(/versionCode = (\d+)/.exec(await readFile(join(root,'apps/android/app/build.gradle.kts'),'utf8'))[1]),errors},null,2));console.log('UX-P2 real Android passed');
 }finally{
  if(instrumentation){try{run('shell','run-as',pkg,'touch','files/ux-p2-probe.done');await until(()=>instrumentation.exitCode!==null)}catch{instrumentation.kill()}}
  await browser?.close();if(debugPort)run('forward','--remove',`tcp:${debugPort}`);if(reversed)run('reverse','--remove',`tcp:${new URL(f.origin).port}`);

@@ -1,3 +1,4 @@
+import { handlePush } from './push.mjs';
 import { handleNotificationSettings } from './notification-settings.mjs';
 import { handlePersonalization } from './personalization.mjs';
 import { handleOnboarding } from './onboarding.mjs';
@@ -636,6 +637,7 @@ export function createHttpHandler(context) {
       if (await context.goalOperations.handleHttp(request, response, url, ownerId)) return;
       if (['/personal/v1/settings/personalization', '/personal/v1/settings/personalization/style'].includes(pathname)) return await handlePersonalization(context, request, response, url, ownerId);
       if (['/personal/v1/settings/notifications', '/personal/v1/settings/notifications/test'].includes(pathname)) return await handleNotificationSettings(context, request, response, url, ownerId);
+      if (await handlePush(context, request, response, url, ownerId, deviceId)) return;
       if (await context.activity.handleHttp(request, response, url, ownerId, deviceId)) return;
       const thinkingMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/thinking$/.exec(pathname);
       if (thinkingMatch && ['GET', 'PATCH'].includes(request.method)) {
@@ -758,7 +760,7 @@ export function createHttpHandler(context) {
         }
         return context.json(response, 200, {
           ...context.service.status(ownerId),
-          personalCapabilities: { taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
+          personalCapabilities: { taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, pushRegistration: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
           executionAccount: context.hostOwner(ownerId),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
           backend: backendStatus, memory: { state: memoryStatus.state, inject: memoryStatus.capabilities?.inject === true,
