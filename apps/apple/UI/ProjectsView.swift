@@ -171,6 +171,13 @@ struct ProjectEditorSheet: View {
 struct ProjectConversationSheet: View {
     @ObservedObject var app: AppleAppModel
     var body: some View {
+        #if os(iOS)
+        ScrollView { content }.presentationDetents([.medium, .large])
+        #else
+        content
+        #endif
+    }
+    private var content: some View {
         VStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
             Text("在「\(app.projectConversation?.name ?? "项目")」新建对话").font(AppleTokens.Fonts.title2)
             Text("任务将在电脑上的项目文件夹执行。手机只显示项目与对话。")
@@ -185,10 +192,10 @@ struct ProjectConversationSheet: View {
             }
             if let error = app.projectError { InlineNotice(message: error, isError: true) }
             HStack {
-                Button("取消") { app.projectConversation = nil }.disabled(app.projectBusy)
+                Button("取消") { app.projectConversation = nil }.buttonStyle(OutlineActionStyle()).disabled(app.projectBusy)
                 Spacer()
                 Button(app.projectBusy ? "正在保存…" : app.projectCreatedSessionID == nil ? "新建对话" : "重试保存") { Task { await app.createProjectConversation() } }
-                    .disabled(app.projectBusy || app.projectModelID.isEmpty).accessibilityIdentifier("projectStartConversation")
+                    .buttonStyle(PrimaryActionStyle(fillsWidth: false)).disabled(app.projectBusy || app.projectModelID.isEmpty).accessibilityIdentifier("projectStartConversation")
             }
         }.padding(AppleTokens.Space.p24).background(Weave.surface).foregroundStyle(Weave.ink)
             .accessibilityElement(children: .contain).accessibilityIdentifier("projectConversationSheet")

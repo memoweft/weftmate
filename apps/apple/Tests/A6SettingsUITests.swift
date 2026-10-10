@@ -127,7 +127,8 @@ final class A6SettingsUITests: XCTestCase {
             }
             try back(app)
             if id == "about" { XCTAssertEqual(app.buttons["settingsCategory.about"].frame.minY, listFrame.minY, accuracy: 2, "Returning must retain the list position") }
-            app.swipeDown()
+            // category() scrolls to the next row. A global pull-down at the top
+            // dismisses the native settings sheet instead of scrolling its list.
         }
         try await searchAndDeepLink(app, ids: ids)
     }

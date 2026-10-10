@@ -169,6 +169,15 @@ struct WeftMateRootView: View {
                     windows.first(where: { $0.sheetParent == nil })?.makeKeyAndOrderFront(nil)
                     try? await Task.sleep(for: .milliseconds(300))
                 }
+                let reviewArguments = ProcessInfo.processInfo.arguments
+                if let i = reviewArguments.firstIndex(of: "--a17-open"), reviewArguments.indices.contains(i + 1) {
+                    do {
+                        for control in reviewArguments[i + 1].split(separator: ",") {
+                            try await A16MacReview.press(String(control)); try await Task.sleep(for: .milliseconds(500))
+                        }
+                        A16MacReview.captureVisible("opened-controls", single: true); Darwin.exit(0)
+                    } catch { FileHandle.standardOutput.write(Data(("A5_CAPTURE_FAILED:" + String(describing: error) + "\n").utf8)); Darwin.exit(1) }
+                }
                 // Sheets have their own window-server IDs. Include only this app's
                 // visible windows so usage and session menus appear over their parent.
                 var ids: [UnsafeRawPointer?] = windows.map { UnsafeRawPointer(bitPattern: $0.windowNumber) }
@@ -181,6 +190,11 @@ struct WeftMateRootView: View {
                             FileHandle.standardOutput.write(Data(("LG2_CAPTURE:" + data.base64EncodedString() + "\n").utf8))
                         }
                     }
+                }
+                let captureArguments = ProcessInfo.processInfo.arguments
+                let captureScene = captureArguments.firstIndex(of: "--a5-review-scene").flatMap { captureArguments.indices.contains($0 + 1) ? captureArguments[$0 + 1] : nil } ?? "gallery"
+                if let bytes = try? JSONSerialization.data(withJSONObject: ["scene": captureScene, "text": A13MacReview.texts().joined(separator: "\n")]) {
+                    FileHandle.standardOutput.write(Data(("A17_TEXT:" + String(decoding: bytes, as: UTF8.self) + "\n").utf8))
                 }
                 // AppKit defers termination while a review sheet is open. This isolated
                 // capture process has already flushed its PNG; the parent removes test state.
@@ -245,9 +259,11 @@ struct MacWorkspace: View {
                         }
                     }
                     ToolbarItem(placement: .navigation) {
-                        Button { Task { await model.refresh() } } label: {
-                            WeftLabel("刷新", icon: "sync")
-                        }.disabled(model.refreshing)
+                        if selected != .memory {
+                            Button { Task { await model.refresh() } } label: {
+                                WeftLabel("刷新", icon: "sync")
+                            }.disabled(model.refreshing)
+                        }
                     }
                 }
             }

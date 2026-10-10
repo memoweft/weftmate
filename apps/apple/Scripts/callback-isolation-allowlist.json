@@ -232,7 +232,7 @@
   },
   {
     "file": "apps/apple/UI/MainChatView.swift",
-    "line": 92,
+    "line": 94,
     "api": "fileImporter",
     "sha256": "8cabbbf93c54d82e7b4a19ff94f1ffb54cfab1153f25dc89a48c4809c7cc5858",
     "reason": "Explicit @Sendable completion transports its Result to Task @MainActor before reading or writing any view/model state. No UI actor access on the file-service callback executor."

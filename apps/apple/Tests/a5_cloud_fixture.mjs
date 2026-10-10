@@ -45,6 +45,7 @@ const scheduleCalls = [], reminderRows = new Map();
 synthetic.backend.schedules = async ({sessionId, action, id}) => {
     scheduleCalls.push({sessionId, action, id});
     if (action === 'notifications') return {items:[]};
+    if (action === 'erase') { reminderRows.delete(sessionId); return {ok:true}; }
     const rows = reminderRows.get(sessionId) ?? [];
     if (action === 'list') return {items:rows};
     const row = rows.find(row => row.id === id);

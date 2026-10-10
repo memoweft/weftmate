@@ -13,6 +13,8 @@ import WeftMateCore
     @Published var dayCounts: [String: Int] = [:]
     @Published var loading = false
     @Published var configuring = false
+    @Published private(set) var hasLoadedModels = false
+    @Published private(set) var hasLoadedHistory = false
     @Published var configurationError: String?
     @Published var error: String?
     @Published var query = ""
@@ -53,15 +55,15 @@ import WeftMateCore
     func clear() {
         window.reset(); visibleAnchor = nil; dayCounts = [:]; chat = nil; hits = []; query = ""; resources = []; resourceVisible = false; target = nil
         sideSource = nil; searchGeneration = UUID(); resourceGeneration = UUID(); command = nil; pending = nil
-        configurationError = nil; thinking = nil; thinkingBusy = false; models = []; modelID = ""; timeZone = "UTC"; indexState = "ready"; assets = []; transferSource = nil; transferDraft = nil; transferFiles = []
+        configuring = false; hasLoadedModels = false; hasLoadedHistory = false; configurationError = nil; thinking = nil; thinkingBusy = false; models = []; modelID = ""; timeZone = "UTC"; indexState = "ready"; assets = []; transferSource = nil; transferDraft = nil; transferFiles = []
         draft = ""; attachments.forEach { $0.removeTemporaryFiles() }; attachments = []; error = nil; loading = false; sending = false
     }
     func configure() async {
         guard let app else { return }
         let token = app.accountEpoch
+        if epoch != token { clear(); epoch = token }
         configurationError = nil
         configuring = true; defer { if app.accountEpoch == token { configuring = false } }
-        if epoch != token { clear(); epoch = token }
         do {
             let caps = try await app.assistantClient.chatCapabilities()
             guard app.accountEpoch == token else { return }; capabilities = caps
@@ -73,7 +75,7 @@ import WeftMateCore
             if window.events.isEmpty { timeZone = value.timeZone }
             if draft.isEmpty, pending == nil { draft = app.draftText(for: value.summary, accountEpoch: token) }
             let readModels = try await app.assistantClient.hostModels()
-            guard app.accountEpoch == token else { return }; models = readModels
+            guard app.accountEpoch == token else { return }; models = readModels; hasLoadedModels = true
             if let bound = value.modelProfileId, value.activeSessionId != nil { modelID = bound }
             else if modelID.isEmpty { modelID = models.first(where: \.configured)?.id ?? "" }
         } catch { if app.accountEpoch == token, !(await app.handleLogicalChatFailure(error)) { configurationError = "模型列表暂时无法读取，请检查电脑连接后重试。" } }
@@ -91,6 +93,7 @@ import WeftMateCore
     }
     /// Invalidate every content-bearing projection and old callback before requesting a fresh page.
     func invalidate() {
+        hasLoadedHistory = false
         window.reset(); visibleAnchor = nil; dayCounts = [:]; hits = []; searchCursor = nil; hitIndex = 0; query = ""; resources = []; resourceVisible = false
         sideSource = nil; target = nil; searchGeneration = UUID(); resourceGeneration = UUID()
     }
@@ -113,7 +116,7 @@ import WeftMateCore
             let page = try await app.assistantClient.chatPage(id: chat.id, before: before, after: after, around: around)
             guard current(token, generation) else { return }
             window.anchor = visibleAnchor
-            try window.apply(page, older: before != nil, replace: replace); indexState = page.indexState; timeZone = page.timeZone
+            try window.apply(page, older: before != nil, replace: replace); hasLoadedHistory = true; indexState = page.indexState; timeZone = page.timeZone
             if let around, let row = window.events.first(where: { $0.id == around }) {
                 window.expandedDays.insert(ChatDay.key(row, timeZone: timeZone)); target = .init(eventID: around, pixelOffset: 0)
             }

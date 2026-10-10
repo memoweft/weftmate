@@ -1567,6 +1567,7 @@ final class AppleAppModel: ObservableObject {
             taskControlSessions = try await client.taskControlSessionIDs(includeArchived: true)
             guard actionEpoch == epoch else { return }
             conversations = result
+            if let candidate = sessionMenuCandidate { sessionMenuCandidate = result.first { $0.id == candidate.id } }
             for row in result where !row.temporaryState.cacheAllowed { await clearLocalHistory(row) }
             if let selectedConversation {
                 if let updated = result.first(where: { $0.id == selectedConversation.id }) {
