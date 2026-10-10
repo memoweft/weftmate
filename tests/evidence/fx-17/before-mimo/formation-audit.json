@@ -1,0 +1,39 @@
+{
+  "jobs": [
+    {
+      "job_id": "memory-world-job-4d0cfa95ec9241d32c21ccb1cbb07f31834530103516af647b9b5cc6ce9f90ac",
+      "state": "applied",
+      "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:7dcf437f72659bd9f57c834a2a518265:6c848b54d5b76282506d1ee49b5a6d8b34852163e1ee7c2cafcff8cc1a99153c\",\"cognitions\":[{\"action\":\"form\",\"cognition_id\":\"cognition-6c481cbeacd9fe4b34aafb31049c85c4194f5889c02f8a4476488fe5437b5443\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"preference\"},{\"action\":\"form\",\"cognition_id\":\"cognition-8fb6fde76d6097ecf307d080af193e064bc5f864cf6beef829a236f48c3e87f2\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":1}",
+      "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u6211\\u559d\\u7b2c903\\u79cd\\u82b1\\u8336\\u65f6\\u504f\\u597d\\u52a0\\u4e00\\u5c0f\\u64ae\\u8089\\u6842\\u7c89\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"7ceb0b97-1613-42c5-a177-e68d97cf3103\\\",\\\"sentence_id\\\":\\\"t0\\\"}]},{\\\"action\\\":\\\"form\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u8bf7\\u63d0\\u8bae\\u4ee5\\u540e\\u559d\\u8fd9\\u79cd\\u8336\\u65f6\\u63d0\\u9192\\u6211\\u52a0\\u8089\\u6842\\u7c89\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"7ceb0b97-1613-42c5-a177-e68d97cf3103\\\",\\\"sentence_id\\\":\\\"t1\\\"}]}]}\",\"finish_reason\":\"stop\",\"model\":\"daily-local\",\"usage\":{\"completion_tokens\":181,\"completion_tokens_details\":{\"reasoning_tokens\":0},\"prompt_tokens\":4696,\"prompt_tokens_details\":{\"cached_tokens\":4672},\"total_tokens\":4877}}"
+    },
+    {
+      "job_id": "memory-world-job-63d04858d57c0348a99553ac6312fd24c38d13a3deeb5f917c5bf19cbeaa98a1",
+      "state": "no_change",
+      "world_result_json": "{\"reason\":\"proposition_mismatch\",\"schema_version\":1,\"state\":\"no_change\"}",
+      "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"confirmed\\\",\\\"proposition\\\":\\\"\\u4ee5\\u540e\\u6211\\u559d\\u7b2c903\\u79cd\\u82b1\\u8336\\u65f6\\uff0c\\u5c31\\u63d0\\u9192\\u6211\\u52a0\\u4e00\\u5c0f\\u64ae\\u8089\\u6842\\u7c89\\u3002\\\",\\\"assistant_claim\\\":\\\"\\u4ee5\\u540e\\u9047\\u5230\\u4f60\\u559d\\u7b2c903\\u79cd\\u82b1\\u8336\\u7684\\u60c5\\u51b5\\uff0c\\u6211\\u4e3b\\u52a8\\u63d0\\u9192\\u4f60\\u52a0\\u4e00\\u5c0f\\u64ae\\u8089\\u6842\\u7c89\\uff0c\\u53ef\\u4ee5\\u5417\\uff1f\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"50d1009d-60a2-4967-94e8-e90fc1a5254b\\\",\\\"sentence_id\\\":\\\"t0\\\"}]}]}\",\"finish_reason\":\"stop\",\"formation_rewrite\":{\"error\":{\"code\":\"proposition_mismatch\",\"instruction\":\"Rewrite the complete interpretation JSON once. Fix the reported compiler error; every cognition must include a nonempty proposition and valid supports. Copy names, forms of address, numbers and dates exactly from user evidence. Never invent facts.\"},\"final_error\":\"proposition_mismatch\",\"first_result\":{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"confirmed\\\",\\\"proposition\\\":\\\"\\u4ee5\\u540e\\u7528\\u6237\\u559d\\u7b2c903\\u79cd\\u82b1\\u8336\\u65f6\\uff0c\\u5c31\\u63d0\\u9192\\u7528\\u6237\\u52a0\\u4e00\\u5c0f\\u64ae\\u8089\\u6842\\u7c89\\u3002\\\",\\\"assistant_claim\\\":\\\"\\u4ee5\\u540e\\u9047\\u5230\\u4f60\\u559d\\u7b2c903\\u79cd\\u82b1\\u8336\\u7684\\u60c5\\u51b5\\uff0c\\u6211\\u4e3b\\u52a8\\u63d0\\u9192\\u4f60\\u52a0\\u4e00\\u5c0f\\u64ae\\u8089\\u6842\\u7c89\\uff0c\\u53ef\\u4ee5\\u5417\\uff1f\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"50d1009d-60a2-4967-94e8-e90fc1a5254b\\\",\\\"sentence_id\\\":\\\"t0\\\"}]}]}\",\"finish_reason\":\"stop\",\"model\":\"daily-local\",\"usage\":{\"completion_tokens\":139,\"completion_tokens_details\":{\"reasoning_tokens\":0},\"prompt_tokens\":5201,\"prompt_tokens_details\":{\"cached_tokens\":4416},\"total_tokens\":5340}},\"state\":\"completed\"},\"model\":\"daily-local\",\"usage\":{\"completion_tokens\":138,\"completion_tokens_details\":{\"reasoning_tokens\":0},\"prompt_tokens\":5639,\"prompt_tokens_details\":{\"cached_tokens\":5184},\"total_tokens\":5777}}"
+    },
+    {
+      "job_id": "memory-world-job-27460cc2ee1da945eff5dc73d5015f56d8bfacf934eaf7428318d12728a6d111",
+      "state": "applied",
+      "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:bba26fbc3ae79175d44a628f518623f0:a7ca89ed8c3f601fee6440888222191ff10ca04f719d90a5aab9761eaf6f1c07\",\"cognitions\":[{\"action\":\"correct\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"prior_cognition_id\":\"cognition-6c481cbeacd9fe4b34aafb31049c85c4194f5889c02f8a4476488fe5437b5443\",\"replacement_cognition_id\":\"cognition-8b309bf42bdb781d927f115365502fa0b32894e02b50689685d70a5efb823534\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":2}",
+      "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"correct\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u7ea0\\u6b63\\u4e00\\u4e0b\\uff0c\\u7b2c903\\u79cd\\u82b1\\u8336\\u4e0d\\u52a0\\u8089\\u6842\\u7c89\\uff0c\\u6539\\u4e3a\\u52a0\\u4e00\\u7247\\u67e0\\u6aac\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"a28b9fe4-cf0a-4328-84f3-84019145f27e\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"corrects_cognition_id\\\":\\\"cognition-6c481cbeacd9fe4b34aafb31049c85c4194f5889c02f8a4476488fe5437b5443\\\",\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u7b2c903\\u79cd\\u82b1\\u8336\\\",\\\"kind\\\":\\\"topic\\\",\\\"aliases\\\":[\\\"\\u82b1\\u8336903\\\",\\\"\\u7b2c903\\u79cd\\u8336\\\"]}}]}\",\"finish_reason\":\"stop\",\"model\":\"daily-local\",\"usage\":{\"completion_tokens\":212,\"completion_tokens_details\":{\"reasoning_tokens\":0},\"prompt_tokens\":5512,\"prompt_tokens_details\":{\"cached_tokens\":4416},\"total_tokens\":5724}}"
+    }
+  ],
+  "cognitions": [
+    {
+      "id": "cognition-6c481cbeacd9fe4b34aafb31049c85c4194f5889c02f8a4476488fe5437b5443",
+      "content": "用户喝第903种花茶时偏好加一小撮肉桂粉。",
+      "invalid_at": "2026-10-10T01:22:05.931Z"
+    },
+    {
+      "id": "cognition-8fb6fde76d6097ecf307d080af193e064bc5f864cf6beef829a236f48c3e87f2",
+      "content": "用户请提议以后喝这种茶时提醒我加肉桂粉。",
+      "invalid_at": null
+    },
+    {
+      "id": "cognition-8b309bf42bdb781d927f115365502fa0b32894e02b50689685d70a5efb823534",
+      "content": "用户纠正一下，第903种花茶不加肉桂粉，改为加一片柠檬。",
+      "invalid_at": null
+    }
+  ]
+}

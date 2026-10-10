@@ -8,6 +8,19 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             node.setAttribute('role', 'status'); node.setAttribute('aria-live', 'polite');
             ui.byId('connection-banner').after(node);
         }
+        for (const old of document.querySelectorAll('[data-formation-notice]')) old.remove();
+        for (const issue of status?.formationIssues ?? []) {
+            const row = [...document.querySelectorAll('.message.user')].find(row => row.dataset.memorySession === issue.sessionId && row.textContent.includes(issue.text));
+            if (!row) continue;
+            let target = row;
+            for (let next = row.nextElementSibling; next && !next.classList.contains('user'); next = next.nextElementSibling) {
+                if (next.classList.contains('assistant')) { target = next; break; }
+            }
+            const hint = ui.element('p', 'muted', issue.intent === 'correction' ? '这条纠正没有生效。' : '这条记忆尚未形成。');
+            hint.dataset.formationNotice = issue.jobId; hint.setAttribute('role', 'status');
+            const action = ui.element('button', 'button secondary small', '查看原话与重试'); action.type = 'button';
+            action.addEventListener('click', () => ui.byId('rail-memory').click()); hint.append(action); target.append(hint);
+        }
         node.hidden = status?.state !== 'unavailable';
         node.textContent = node.hidden ? '' : '记忆暂时不可用，普通对话已保存，恢复后会自动补交。';
     }
@@ -100,7 +113,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         ]);
         for (const source of sources) {
             const row = ui.element('li', 'memory-source');
-            const currentness = currentnessLabels.get(source.currentnessState) ?? '来源状态待确认';
+            const currentness = source.relation === 'superseded_by' ? '取代这条理解的纠正原话' : currentnessLabels.get(source.currentnessState) ?? '来源状态待确认';
             const meta = ui.element('p', 'memory-source-meta', `${currentness}${source.recordedAt ? ` · 记录于 ${core.formatDate(source.recordedAt)}` : ''}`);
             const summary = ui.element('p', 'memory-source-summary', typeof source.summary === 'string' && source.summary.trim()
                 ? source.summary : source.contentAvailable === false ? '此来源当前不可读。' : '摘要当前不可用。');
@@ -239,6 +252,9 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         section.setAttribute('aria-label', '记忆健康与过去的对话');
         const health = ui.element('p', 'muted', '正在检查记忆健康…'); health.id = 'memory-health'; health.setAttribute('role', 'status');
         const progress = ui.element('p', 'muted'); progress.setAttribute('role', 'status');
+        const issues = ui.element('div', 'memory-formation-issues');
+        const retryIds = new Map();
+        let issueSignature = null;
         const explanation = ui.element('p', 'muted');
         const actions = ui.element('div', 'form-actions');
         const preview = ui.element('button', 'button secondary small', '整理过去的对话'); preview.type = 'button';
@@ -246,9 +262,27 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         const pause = ui.element('button', 'button secondary small', '暂停整理'); pause.type = 'button'; pause.hidden = true;
         const cancel = ui.element('button', 'button secondary small', '取消整理'); cancel.type = 'button'; cancel.hidden = true;
         let prepared = null, identity = null, job = null, busy = false;
-        resetIngestion = () => { prepared = null; identity = null; job = null; explanation.textContent = ''; progress.textContent = ''; confirm.hidden = pause.hidden = cancel.hidden = true; health.textContent = '正在检查记忆健康…'; };
+        resetIngestion = () => { prepared = null; identity = null; job = null; issues.replaceChildren(); issueSignature = null; retryIds.clear(); explanation.textContent = ''; progress.textContent = ''; confirm.hidden = pause.hidden = cancel.hidden = true; health.textContent = '正在检查记忆健康…'; };
         function paint(status) {
             health.textContent = core.memoryHealthText(status);
+            const signature = JSON.stringify(status?.formationIssues ?? []);
+            if (signature !== issueSignature) {
+            issueSignature = signature; issues.replaceChildren();
+            for (const issue of status?.formationIssues ?? []) {
+                const detail = ui.element('details');
+                detail.append(ui.element('summary', '', issue.intent === 'correction' ? '有 1 条纠正没有生效' : '有 1 条记忆没有形成'));
+                detail.append(ui.element('p', '', issue.text));
+                const retry = ui.element('button', 'button secondary small', '重试形成'); retry.type = 'button';
+                retry.addEventListener('click', async () => {
+                    const token = core.memoryIdentity(); retry.disabled = true;
+                    if (!retryIds.has(issue.jobId)) retryIds.set(issue.jobId, crypto.randomUUID());
+                    try { await core.memoryRequest(`/formation/${encodeURIComponent(issue.jobId)}/retry`, {method:'POST', body:{requestId:retryIds.get(issue.jobId)}});
+                        if (core.memoryIdentityCurrent(token)) { progress.textContent = '已提交重试，正在整理。'; await refresh(); }
+                    } catch { if (core.memoryIdentityCurrent(token)) { progress.textContent = '重试未确认，请再次重试。'; retry.disabled = false; } }
+                });
+                detail.append(retry); issues.append(detail);
+            }
+            }
             job = status?.backfill;
             const active = job && ['running', 'paused'].includes(job.state);
             preview.disabled = busy || !!active;
@@ -283,7 +317,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         confirm.addEventListener('click', () => { if (prepared && core.memoryIdentityCurrent(identity)) void change({action:'start',previewId:prepared.previewId,confirm:true}); });
         pause.addEventListener('click', () => { if(job) void change({action:job.state==='paused'?'resume':'pause',jobId:job.id}); });
         cancel.addEventListener('click', () => { if(job) void change({action:'cancel',jobId:job.id}); });
-        actions.append(preview, confirm, pause, cancel); section.append(health, actions, explanation, progress);
+        actions.append(preview, confirm, pause, cancel); section.append(health, issues, actions, explanation, progress);
         ui.byId('memory-search-form').before(section);
         setInterval(() => { void refresh(); }, 3000);
         ui.byId('memory-refresh').addEventListener('click', () => { void refresh(); });

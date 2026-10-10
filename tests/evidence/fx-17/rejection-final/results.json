@@ -1,0 +1,976 @@
+{
+  "revision": "a086c3964d84906cfb0228f332b1f16ef3fac009",
+  "model": "mimo",
+  "startedAt": "2026-10-10T01:35:52.642Z",
+  "turns": [
+    {
+      "id": "fx17-flower-tea",
+      "category": "memory",
+      "title": "Confirmed preference correction",
+      "status": "passed",
+      "durationMs": 44576,
+      "checks": [
+        {
+          "type": "turn_status",
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-f9dd0432-928e-4b51-a694-1c42b6fed43b",
+          "modelProfileId": "private-model-4f6eab4ba66a58c2b9ec197bb6cc38baf449ad9f",
+          "commandId": "cmd-94b6fa89-237d-4544-b9cf-320ecb563917",
+          "startedAt": "2026-10-10T01:36:14.466Z",
+          "reply": "我记下了：喝第 903 种花茶时偏好加一小撮肉桂粉。稍后我会把这条情境记忆整理进记忆里，以后提到喝这种茶时提醒你加肉桂粉。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-10T01:36:14.533Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-10T01:36:14.534Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-10T01:36:16.595Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-10T01:36:16.595Z"
+            },
+            {
+              "seq": 25,
+              "type": "assistant.message",
+              "at": "2026-10-10T01:36:31.752Z"
+            },
+            {
+              "seq": 26,
+              "type": "task.ended",
+              "at": "2026-10-10T01:36:31.753Z"
+            },
+            {
+              "seq": 27,
+              "type": "turn.ended",
+              "at": "2026-10-10T01:36:31.754Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 17447,
+          "endedAt": "2026-10-10T01:36:31.913Z"
+        },
+        {
+          "sessionId": "session-f9dd0432-928e-4b51-a694-1c42b6fed43b",
+          "modelProfileId": "private-model-4f6eab4ba66a58c2b9ec197bb6cc38baf449ad9f",
+          "commandId": "cmd-917fddf0-950f-4ba3-a216-934e897033a5",
+          "startedAt": "2026-10-10T01:36:31.953Z",
+          "reply": "好的，已确认这条共同决定：以后你喝第 903 种花茶时，我会提醒你加一小撮肉桂粉。稍后会由 MemoWeft 整理进记忆。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 28,
+              "type": "task.queued",
+              "at": "2026-10-10T01:36:32.037Z"
+            },
+            {
+              "seq": 29,
+              "type": "turn.started",
+              "at": "2026-10-10T01:36:32.037Z"
+            },
+            {
+              "seq": 31,
+              "type": "task.started",
+              "at": "2026-10-10T01:36:32.784Z"
+            },
+            {
+              "seq": 32,
+              "type": "user.message",
+              "at": "2026-10-10T01:36:32.784Z"
+            },
+            {
+              "seq": 44,
+              "type": "assistant.message",
+              "at": "2026-10-10T01:36:45.365Z"
+            },
+            {
+              "seq": 45,
+              "type": "task.ended",
+              "at": "2026-10-10T01:36:45.365Z"
+            },
+            {
+              "seq": 46,
+              "type": "turn.ended",
+              "at": "2026-10-10T01:36:45.367Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 13435,
+          "endedAt": "2026-10-10T01:36:45.388Z"
+        },
+        {
+          "sessionId": "session-f9dd0432-928e-4b51-a694-1c42b6fed43b",
+          "modelProfileId": "private-model-4f6eab4ba66a58c2b9ec197bb6cc38baf449ad9f",
+          "commandId": "cmd-29eacd4b-b0e3-4265-8ee6-136bb2d33516",
+          "startedAt": "2026-10-10T01:36:45.425Z",
+          "reply": "收到，纠正已记下：第 903 种花茶不加肉桂粉，改为加一片柠檬。稍后会由 MemoWeft 整理进记忆，之前的肉桂粉偏好以这次为准。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 47,
+              "type": "task.queued",
+              "at": "2026-10-10T01:36:45.479Z"
+            },
+            {
+              "seq": 48,
+              "type": "turn.started",
+              "at": "2026-10-10T01:36:45.480Z"
+            },
+            {
+              "seq": 50,
+              "type": "task.started",
+              "at": "2026-10-10T01:36:46.330Z"
+            },
+            {
+              "seq": 51,
+              "type": "user.message",
+              "at": "2026-10-10T01:36:46.330Z"
+            },
+            {
+              "seq": 62,
+              "type": "assistant.message",
+              "at": "2026-10-10T01:36:58.489Z"
+            },
+            {
+              "seq": 63,
+              "type": "task.ended",
+              "at": "2026-10-10T01:36:58.490Z"
+            },
+            {
+              "seq": 64,
+              "type": "turn.ended",
+              "at": "2026-10-10T01:36:58.490Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 13209,
+          "endedAt": "2026-10-10T01:36:58.634Z"
+        }
+      ],
+      "replySummary": "收到，纠正已记下：第 903 种花茶不加肉桂粉，改为加一片柠檬。稍后会由 MemoWeft 整理进记忆，之前的肉桂粉偏好以这次为准。",
+      "notes": "QA4-01 actual user wording",
+      "scratchDir": "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-eval-fx17-flower-tea-ahOys3"
+    }
+  ],
+  "requests": [
+    {
+      "id": 1,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-10T01:36:16.755Z",
+      "formation": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 459,
+        "prompt_tokens": 2349,
+        "total_tokens": 2808,
+        "completion_tokens_details": {
+          "reasoning_tokens": 409
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 1280
+        }
+      }
+    },
+    {
+      "id": 2,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-10T01:36:31.883Z",
+      "formation": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 58,
+        "prompt_tokens": 147,
+        "total_tokens": 205,
+        "completion_tokens_details": {
+          "reasoning_tokens": 47
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      }
+    },
+    {
+      "id": 3,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-10T01:36:34.262Z",
+      "formation": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 58,
+        "prompt_tokens": 3223,
+        "total_tokens": 3281,
+        "completion_tokens_details": {
+          "reasoning_tokens": 11
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      }
+    },
+    {
+      "id": 4,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-10T01:36:45.590Z",
+      "formation": true,
+      "input": {
+        "conversation_context": [],
+        "current_cognitions": [],
+        "current_entities": [],
+        "current_events": [],
+        "current_relationships": [],
+        "evidence": [
+          {
+            "id": "f8dd8802-3921-4c8d-afad-07a6ff6addf3",
+            "segments": [
+              {
+                "end": 20,
+                "id": "s0",
+                "start": 0,
+                "text": "我喝第903种花茶时偏好加一小撮肉桂粉。"
+              },
+              {
+                "end": 38,
+                "id": "s1",
+                "start": 20,
+                "text": "请提议以后喝这种茶时提醒我加肉桂粉。"
+              }
+            ],
+            "sentences": [
+              {
+                "end": 20,
+                "id": "t0",
+                "start": 0,
+                "text": "我喝第903种花茶时偏好加一小撮肉桂粉。"
+              },
+              {
+                "end": 38,
+                "id": "t1",
+                "start": 20,
+                "text": "请提议以后喝这种茶时提醒我加肉桂粉。"
+              }
+            ],
+            "text": "我喝第903种花茶时偏好加一小撮肉桂粉。请提议以后喝这种茶时提醒我加肉桂粉。"
+          }
+        ],
+        "subject": "owner"
+      },
+      "status": 200,
+      "usage": {
+        "completion_tokens": 101,
+        "prompt_tokens": 4768,
+        "total_tokens": 4869,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 4480
+        }
+      },
+      "output": {
+        "id": "52f4da12-8a76-4722-83bc-14b0fa536feb_661e86acbc35496d8aec8dfc16debed5",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"form\",\"statement_kind\":\"preference\",\"formed_by\":\"stated\",\"proposition\":\"我喝第903种花茶时偏好加一小撮肉桂粉。\",\"supports\":[{\"evidence_id\":\"f8dd8802-3921-4c8d-afad-07a6ff6addf3\",\"sentence_id\":\"t0\"}]}]}",
+              "role": "assistant",
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 1791596208,
+        "model": "mimo-v2.6-flash",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 101,
+          "prompt_tokens": 4768,
+          "total_tokens": 4869,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 4480
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-10T01:36:46.381Z",
+      "formation": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 58,
+        "prompt_tokens": 3693,
+        "total_tokens": 3751,
+        "completion_tokens_details": {
+          "reasoning_tokens": 7
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 2048
+        }
+      }
+    },
+    {
+      "id": 6,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-10T01:36:58.622Z",
+      "formation": true,
+      "input": {
+        "conversation_context": [],
+        "current_cognitions": [],
+        "current_entities": [],
+        "current_events": [],
+        "current_relationships": [],
+        "evidence": [
+          {
+            "id": "f8dd8802-3921-4c8d-afad-07a6ff6addf3",
+            "segments": [
+              {
+                "end": 20,
+                "id": "s0",
+                "start": 0,
+                "text": "我喝第903种花茶时偏好加一小撮肉桂粉。"
+              },
+              {
+                "end": 38,
+                "id": "s1",
+                "start": 20,
+                "text": "请提议以后喝这种茶时提醒我加肉桂粉。"
+              }
+            ],
+            "sentences": [
+              {
+                "end": 20,
+                "id": "t0",
+                "start": 0,
+                "text": "我喝第903种花茶时偏好加一小撮肉桂粉。"
+              },
+              {
+                "end": 38,
+                "id": "t1",
+                "start": 20,
+                "text": "请提议以后喝这种茶时提醒我加肉桂粉。"
+              }
+            ],
+            "text": "我喝第903种花茶时偏好加一小撮肉桂粉。请提议以后喝这种茶时提醒我加肉桂粉。"
+          }
+        ],
+        "subject": "owner"
+      },
+      "status": 200,
+      "usage": {
+        "completion_tokens": 101,
+        "prompt_tokens": 4768,
+        "total_tokens": 4869,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 4736
+        }
+      },
+      "output": {
+        "id": "4f34eaca-2704-4c34-a6cd-2b8d0b3c3022_e9e8fafb390a4d178e030b01a8983f40",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"form\",\"statement_kind\":\"preference\",\"formed_by\":\"stated\",\"proposition\":\"我喝第903种花茶时偏好加一小撮肉桂粉。\",\"supports\":[{\"evidence_id\":\"f8dd8802-3921-4c8d-afad-07a6ff6addf3\",\"sentence_id\":\"t0\"}]}]}",
+              "role": "assistant",
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 1791596221,
+        "model": "mimo-v2.6-flash",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 101,
+          "prompt_tokens": 4768,
+          "total_tokens": 4869,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 4736
+          }
+        }
+      }
+    },
+    {
+      "id": 7,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-10T01:37:04.071Z",
+      "formation": true,
+      "input": {
+        "conversation_context": [
+          {
+            "content": "我喝第903种花茶时偏好加一小撮肉桂粉。请提议以后喝这种茶时提醒我加肉桂粉。",
+            "evidence_ids_json": "[\"f8dd8802-3921-4c8d-afad-07a6ff6addf3\"]",
+            "interaction_id": "067d44d0-14cb-48bf-a52f-1e640841cd29",
+            "message_id": "2715006d-3cb8-4ac2-a19d-2fdd2e4bb63f",
+            "role": "user"
+          },
+          {
+            "content": "我记下了：喝第 903 种花茶时偏好加一小撮肉桂粉。稍后我会把这条情境记忆整理进记忆里，以后提到喝这种茶时提醒你加肉桂粉。",
+            "evidence_ids_json": "[\"f8dd8802-3921-4c8d-afad-07a6ff6addf3\"]",
+            "interaction_id": "067d44d0-14cb-48bf-a52f-1e640841cd29",
+            "message_id": "8e7349c4-0f43-4552-bda2-eafe34225e98",
+            "role": "assistant"
+          }
+        ],
+        "current_cognitions": [
+          {
+            "content": "用户喝第903种花茶时偏好加一小撮肉桂粉。",
+            "id": "cognition-61676d0e219563048f964109e44d00d7c51c20262ebe6709eef971da585ce3dc",
+            "statement_kind": "preference"
+          }
+        ],
+        "current_entities": [],
+        "current_events": [],
+        "current_relationships": [],
+        "evidence": [
+          {
+            "context": "我记下了：喝第 903 种花茶时偏好加一小撮肉桂粉。稍后我会把这条情境记忆整理进记忆里，以后提到喝这种茶时提醒你加肉桂粉。",
+            "id": "917e41a2-3d3c-4c11-ac36-2a4a29f4062f",
+            "segments": [
+              {
+                "end": 2,
+                "id": "s0",
+                "start": 0,
+                "text": "好，"
+              },
+              {
+                "end": 15,
+                "id": "s1",
+                "start": 2,
+                "text": "以后我喝第903种花茶时，"
+              },
+              {
+                "end": 27,
+                "id": "s2",
+                "start": 15,
+                "text": "就提醒我加一小撮肉桂粉。"
+              }
+            ],
+            "sentences": [
+              {
+                "end": 27,
+                "id": "t0",
+                "start": 0,
+                "text": "好，以后我喝第903种花茶时，就提醒我加一小撮肉桂粉。"
+              }
+            ],
+            "text": "好，以后我喝第903种花茶时，就提醒我加一小撮肉桂粉。"
+          }
+        ],
+        "subject": "owner"
+      },
+      "status": 200,
+      "usage": {
+        "completion_tokens": 123,
+        "prompt_tokens": 5203,
+        "total_tokens": 5326,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 4480
+        }
+      },
+      "output": {
+        "id": "ff9b1db4-16d7-4619-9305-6d64cb437524_96136450507a44f6b250ce822d4068bd",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"form\",\"statement_kind\":\"preference\",\"formed_by\":\"confirmed\",\"proposition\":\"用户以后喝第903种花茶时就提醒用户加一小撮肉桂粉。\",\"assistant_claim\":\"以后提到喝这种茶时提醒你加肉桂粉。\",\"supports\":[{\"evidence_id\":\"917e41a2-3d3c-4c11-ac36-2a4a29f4062f\",\"sentence_id\":\"t0\"}]}]}",
+              "role": "assistant",
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 1791596243,
+        "model": "mimo-v2.6-flash",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 123,
+          "prompt_tokens": 5203,
+          "total_tokens": 5326,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 4480
+          }
+        }
+      }
+    },
+    {
+      "id": 8,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-10T01:37:26.428Z",
+      "formation": true,
+      "input": {
+        "conversation_context": [
+          {
+            "content": "我喝第903种花茶时偏好加一小撮肉桂粉。请提议以后喝这种茶时提醒我加肉桂粉。",
+            "evidence_ids_json": "[\"f8dd8802-3921-4c8d-afad-07a6ff6addf3\"]",
+            "interaction_id": "067d44d0-14cb-48bf-a52f-1e640841cd29",
+            "message_id": "2715006d-3cb8-4ac2-a19d-2fdd2e4bb63f",
+            "role": "user"
+          },
+          {
+            "content": "我记下了：喝第 903 种花茶时偏好加一小撮肉桂粉。稍后我会把这条情境记忆整理进记忆里，以后提到喝这种茶时提醒你加肉桂粉。",
+            "evidence_ids_json": "[\"f8dd8802-3921-4c8d-afad-07a6ff6addf3\"]",
+            "interaction_id": "067d44d0-14cb-48bf-a52f-1e640841cd29",
+            "message_id": "8e7349c4-0f43-4552-bda2-eafe34225e98",
+            "role": "assistant"
+          },
+          {
+            "content": "好，以后我喝第903种花茶时，就提醒我加一小撮肉桂粉。",
+            "evidence_ids_json": "[\"917e41a2-3d3c-4c11-ac36-2a4a29f4062f\"]",
+            "interaction_id": "ff5864da-674e-47e1-b8f9-a7e1448475a5",
+            "message_id": "c419599a-f907-47ee-89ee-cf8077aba79c",
+            "role": "user"
+          },
+          {
+            "content": "好的，已确认这条共同决定：以后你喝第 903 种花茶时，我会提醒你加一小撮肉桂粉。稍后会由 MemoWeft 整理进记忆。",
+            "evidence_ids_json": "[\"917e41a2-3d3c-4c11-ac36-2a4a29f4062f\"]",
+            "interaction_id": "ff5864da-674e-47e1-b8f9-a7e1448475a5",
+            "message_id": "381c6324-c39f-471a-b08c-8ca491c02246",
+            "role": "assistant"
+          }
+        ],
+        "current_cognitions": [
+          {
+            "content": "用户喝第903种花茶时偏好加一小撮肉桂粉。",
+            "id": "cognition-61676d0e219563048f964109e44d00d7c51c20262ebe6709eef971da585ce3dc",
+            "statement_kind": "preference"
+          },
+          {
+            "content": "用户好，以后我喝第903种花茶时，就提醒我加一小撮肉桂粉。",
+            "id": "cognition-64eea998912dcab9d9c4d4e24719ff0002e71dc75a1bb468e1d903846ea7f98c",
+            "statement_kind": "preference"
+          }
+        ],
+        "current_entities": [
+          {
+            "aliases": [],
+            "canonical_name": "喝第903种花茶",
+            "id": "entity-c50a0daf2f3ed458db4363eeb89b201c0a649d2ed0f8e06e082de2747f805e92",
+            "kind": "topic"
+          }
+        ],
+        "current_events": [],
+        "current_relationships": [],
+        "evidence": [
+          {
+            "context": "我记下了：喝第 903 种花茶时偏好加一小撮肉桂粉。稍后我会把这条情境记忆整理进记忆里，以后提到喝这种茶时提醒你加肉桂粉。\n好的，已确认这条共同决定：以后你喝第 903 种花茶时，我会提醒你加一小撮肉桂粉。稍后会由 MemoWeft 整理进记忆。",
+            "id": "c8b53d3a-4f7c-458f-84ec-1bf6fab8e8a7",
+            "segments": [
+              {
+                "end": 5,
+                "id": "s0",
+                "start": 0,
+                "text": "纠正一下，"
+              },
+              {
+                "end": 18,
+                "id": "s1",
+                "start": 5,
+                "text": "第903种花茶不加肉桂粉，"
+              },
+              {
+                "end": 26,
+                "id": "s2",
+                "start": 18,
+                "text": "改为加一片柠檬。"
+              }
+            ],
+            "sentences": [
+              {
+                "end": 26,
+                "id": "t0",
+                "start": 0,
+                "text": "纠正一下，第903种花茶不加肉桂粉，改为加一片柠檬。"
+              }
+            ],
+            "text": "纠正一下，第903种花茶不加肉桂粉，改为加一片柠檬。"
+          }
+        ],
+        "subject": "owner"
+      },
+      "status": 200,
+      "usage": {
+        "completion_tokens": 408,
+        "prompt_tokens": 5726,
+        "total_tokens": 6134,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 4800
+        }
+      },
+      "output": {
+        "id": "4f55f9df-e304-4a55-8d82-88f1d8ba59a4_5283228023e546a6bec618e766067dc2",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"correct\",\"target\":\"owner_self\",\"statement_kind\":\"preference\",\"formed_by\":\"stated\",\"proposition\":\"纠正一下，第903种花茶不加肉桂粉，改为加一片柠檬。\",\"supports\":[{\"evidence_id\":\"c8b53d3a-4f7c-458f-84ec-1bf6fab8e8a7\",\"sentence_id\":\"t0\"}],\"corrects_cognition_id\":\"cognition-61676d0e219563048f964109e44d00d7c51c20262ebe6709eef971da585ce3dc\",\"entity\":{\"canonical_name\":\"第903种花茶\",\"kind\":\"topic\",\"aliases\":[\"喝第903种花茶\",\"903花茶\"]}},{\"action\":\"correct\",\"target\":\"owner_self\",\"statement_kind\":\"preference\",\"formed_by\":\"stated\",\"proposition\":\"纠正一下，第903种花茶不加肉桂粉，改为加一片柠檬。\",\"supports\":[{\"evidence_id\":\"c8b53d3a-4f7c-458f-84ec-1bf6fab8e8a7\",\"sentence_id\":\"t0\"}],\"corrects_cognition_id\":\"cognition-64eea998912dcab9d9c4d4e24719ff0002e71dc75a1bb468e1d903846ea7f98c\",\"entity\":{\"canonical_name\":\"第903种花茶\",\"kind\":\"topic\",\"aliases\":[\"喝第903种花茶\",\"903花茶\"]}}]}",
+              "role": "assistant",
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 1791596258,
+        "model": "mimo-v2.6-flash",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 408,
+          "prompt_tokens": 5726,
+          "total_tokens": 6134,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 4800
+          }
+        }
+      },
+      "injectedRejection": true
+    },
+    {
+      "id": 9,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-10T01:37:41.071Z",
+      "formation": true,
+      "input": {
+        "conversation_context": [
+          {
+            "content": "我喝第903种花茶时偏好加一小撮肉桂粉。请提议以后喝这种茶时提醒我加肉桂粉。",
+            "evidence_ids_json": "[\"f8dd8802-3921-4c8d-afad-07a6ff6addf3\"]",
+            "interaction_id": "067d44d0-14cb-48bf-a52f-1e640841cd29",
+            "message_id": "2715006d-3cb8-4ac2-a19d-2fdd2e4bb63f",
+            "role": "user"
+          },
+          {
+            "content": "我记下了：喝第 903 种花茶时偏好加一小撮肉桂粉。稍后我会把这条情境记忆整理进记忆里，以后提到喝这种茶时提醒你加肉桂粉。",
+            "evidence_ids_json": "[\"f8dd8802-3921-4c8d-afad-07a6ff6addf3\"]",
+            "interaction_id": "067d44d0-14cb-48bf-a52f-1e640841cd29",
+            "message_id": "8e7349c4-0f43-4552-bda2-eafe34225e98",
+            "role": "assistant"
+          },
+          {
+            "content": "好，以后我喝第903种花茶时，就提醒我加一小撮肉桂粉。",
+            "evidence_ids_json": "[\"917e41a2-3d3c-4c11-ac36-2a4a29f4062f\"]",
+            "interaction_id": "ff5864da-674e-47e1-b8f9-a7e1448475a5",
+            "message_id": "c419599a-f907-47ee-89ee-cf8077aba79c",
+            "role": "user"
+          },
+          {
+            "content": "好的，已确认这条共同决定：以后你喝第 903 种花茶时，我会提醒你加一小撮肉桂粉。稍后会由 MemoWeft 整理进记忆。",
+            "evidence_ids_json": "[\"917e41a2-3d3c-4c11-ac36-2a4a29f4062f\"]",
+            "interaction_id": "ff5864da-674e-47e1-b8f9-a7e1448475a5",
+            "message_id": "381c6324-c39f-471a-b08c-8ca491c02246",
+            "role": "assistant"
+          }
+        ],
+        "current_cognitions": [
+          {
+            "content": "用户喝第903种花茶时偏好加一小撮肉桂粉。",
+            "id": "cognition-61676d0e219563048f964109e44d00d7c51c20262ebe6709eef971da585ce3dc",
+            "statement_kind": "preference"
+          },
+          {
+            "content": "用户好，以后我喝第903种花茶时，就提醒我加一小撮肉桂粉。",
+            "id": "cognition-64eea998912dcab9d9c4d4e24719ff0002e71dc75a1bb468e1d903846ea7f98c",
+            "statement_kind": "preference"
+          }
+        ],
+        "current_entities": [
+          {
+            "aliases": [],
+            "canonical_name": "喝第903种花茶",
+            "id": "entity-c50a0daf2f3ed458db4363eeb89b201c0a649d2ed0f8e06e082de2747f805e92",
+            "kind": "topic"
+          }
+        ],
+        "current_events": [],
+        "current_relationships": [],
+        "evidence": [
+          {
+            "context": "我记下了：喝第 903 种花茶时偏好加一小撮肉桂粉。稍后我会把这条情境记忆整理进记忆里，以后提到喝这种茶时提醒你加肉桂粉。\n好的，已确认这条共同决定：以后你喝第 903 种花茶时，我会提醒你加一小撮肉桂粉。稍后会由 MemoWeft 整理进记忆。",
+            "id": "c8b53d3a-4f7c-458f-84ec-1bf6fab8e8a7",
+            "segments": [
+              {
+                "end": 5,
+                "id": "s0",
+                "start": 0,
+                "text": "纠正一下，"
+              },
+              {
+                "end": 18,
+                "id": "s1",
+                "start": 5,
+                "text": "第903种花茶不加肉桂粉，"
+              },
+              {
+                "end": 26,
+                "id": "s2",
+                "start": 18,
+                "text": "改为加一片柠檬。"
+              }
+            ],
+            "sentences": [
+              {
+                "end": 26,
+                "id": "t0",
+                "start": 0,
+                "text": "纠正一下，第903种花茶不加肉桂粉，改为加一片柠檬。"
+              }
+            ],
+            "text": "纠正一下，第903种花茶不加肉桂粉，改为加一片柠檬。"
+          }
+        ],
+        "subject": "owner"
+      },
+      "status": 200,
+      "usage": {
+        "completion_tokens": 395,
+        "prompt_tokens": 6169,
+        "total_tokens": 6564,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 5696
+        }
+      },
+      "output": {
+        "id": "4d1c9569-cdae-4c28-88b2-a1e5ac95024f_17b93bcd956b4f18be307df7a9d2a5bc",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"correct\",\"target\":\"owner_self\",\"statement_kind\":\"preference\",\"formed_by\":\"stated\",\"proposition\":\"纠正一下，第903种花茶不加肉桂粉，改为加一片柠檬。\",\"supports\":[{\"evidence_id\":\"c8b53d3a-4f7c-458f-84ec-1bf6fab8e8a7\",\"sentence_id\":\"t0\"}],\"corrects_cognition_id\":\"cognition-61676d0e219563048f964109e44d00d7c51c20262ebe6709eef971da585ce3dc\",\"entity\":{\"canonical_name\":\"第903种花茶\",\"kind\":\"topic\",\"aliases\":[\"喝第903种花茶\"]}},{\"action\":\"correct\",\"target\":\"owner_self\",\"statement_kind\":\"preference\",\"formed_by\":\"stated\",\"proposition\":\"纠正一下，第903种花茶不加肉桂粉，改为加一片柠檬。\",\"supports\":[{\"evidence_id\":\"c8b53d3a-4f7c-458f-84ec-1bf6fab8e8a7\",\"sentence_id\":\"t0\"}],\"corrects_cognition_id\":\"cognition-64eea998912dcab9d9c4d4e24719ff0002e71dc75a1bb468e1d903846ea7f98c\",\"entity\":{\"canonical_name\":\"第903种花茶\",\"kind\":\"topic\",\"aliases\":[\"喝第903种花茶\"]}}]}",
+              "role": "assistant",
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 1791596280,
+        "model": "mimo-v2.6-flash",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 395,
+          "prompt_tokens": 6169,
+          "total_tokens": 6564,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 5696
+          }
+        }
+      },
+      "injectedRejection": true
+    }
+  ],
+  "snapshots": [
+    {
+      "label": "before",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-fcfba723-c3fb-42d1-95a4-d94058fe6f42",
+          "state": "unavailable",
+          "worldRevision": null,
+          "capabilities": {
+            "list": false,
+            "source": false,
+            "inject": false,
+            "correct": false,
+            "mute": false,
+            "deleteEvidence": false,
+            "deleteWorldItem": false
+          },
+          "pendingBoundaryCount": 0,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": "MEMORY_MODEL_UNAVAILABLE",
+          "reasonCode": "MEMORY_MODEL_UNAVAILABLE",
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": null,
+      "ipc": {
+        "recallAttempts": 0,
+        "recallRequests": 0,
+        "recallWithContext": 0,
+        "recallReplies": 0,
+        "ingestRequests": 0,
+        "rejectedBindings": 0
+      }
+    }
+  ],
+  "rejectedStatus": {
+    "ownerId": "owner-fcfba723-c3fb-42d1-95a4-d94058fe6f42",
+    "state": "degraded",
+    "version": "2.0.0",
+    "worldRevision": 2,
+    "capabilities": {
+      "list": true,
+      "source": true,
+      "inject": true,
+      "correct": true,
+      "mute": true,
+      "deleteEvidence": true,
+      "deleteWorldItem": true
+    },
+    "pendingBoundaryCount": 0,
+    "blockedBoundaryCount": 0,
+    "discardedBoundaryCount": 0,
+    "lastFailureCode": null,
+    "pendingFormationCount": 0,
+    "failedFormationCount": 0,
+    "failedCorrectionCount": 1,
+    "formationIssues": [
+      {
+        "jobId": "memory-world-job-1605f192b0db6dcbcf8dbca7ee12186b29fc66995b09307f33ab31015b42bb84",
+        "evidenceId": "c8b53d3a-4f7c-458f-84ec-1bf6fab8e8a7",
+        "sessionId": "session-f9dd0432-928e-4b51-a694-1c42b6fed43b",
+        "text": "纠正一下，第903种花茶不加肉桂粉，改为加一片柠檬。",
+        "intent": "correction",
+        "createdAt": "2026-10-10T01:36:59.574Z"
+      }
+    ],
+    "reasonCode": "MEMORY_FORMATION_FAILED",
+    "backfill": null,
+    "captureError": null
+  },
+  "activity": {
+    "items": [
+      {
+        "id": "activity-703a501978c44106794f13fe43fcbf25d50fee7a7aba6dbdd551de0141b622df",
+        "at": "2026-10-10T01:36:59.574Z",
+        "type": "memory.report",
+        "title": "有 1 条纠正没有生效",
+        "summary": "原话已保存，可在记忆中查看原话并重试形成。",
+        "source": {
+          "chatId": "chat-f51acf13-5d67-4dd1-9949-6c50fd7a2102",
+          "chatKind": "side",
+          "sessionId": "session-f9dd0432-928e-4b51-a694-1c42b6fed43b",
+          "memoryJobId": "memory-world-job-1605f192b0db6dcbcf8dbca7ee12186b29fc66995b09307f33ab31015b42bb84"
+        },
+        "actions": [
+          {
+            "kind": "view_memory",
+            "label": "查看原话与重试",
+            "target": {}
+          }
+        ],
+        "state": "pending",
+        "notification": {
+          "level": "important",
+          "type": "memory.report"
+        },
+        "revision": 1,
+        "attentionRevision": 3,
+        "createdSequence": 3,
+        "read": false
+      },
+      {
+        "id": "activity-f5b62db00d8b3ff3d46827030861a109f3395c9cdf79bb3e2449ec5d797d0c18",
+        "at": "2026-10-10T01:36:14.411Z",
+        "type": "system.reconnected",
+        "title": "电脑已恢复连接",
+        "summary": "可以继续查看结果和处理电脑上的任务。",
+        "source": {
+          "hostId": "host-0c42b6e1-7f20-48f7-aecf-c94348fde19d"
+        },
+        "actions": [],
+        "state": "completed",
+        "notification": {
+          "level": "silent",
+          "type": "system.reconnected"
+        },
+        "revision": 1,
+        "attentionRevision": 2,
+        "createdSequence": 2,
+        "read": false
+      },
+      {
+        "id": "activity-a8277164faf918c5b68251251bfcea484a2fea455926b0bf013ddffd24542ba8",
+        "at": "2026-10-10T01:36:02.333Z",
+        "type": "memory.paused",
+        "title": "记忆已暂停",
+        "summary": "记忆暂时无法更新，可在记忆页查看状态。",
+        "source": {},
+        "actions": [
+          {
+            "kind": "view_memory",
+            "label": "查看记忆",
+            "target": {}
+          }
+        ],
+        "state": "completed",
+        "notification": {
+          "level": "normal",
+          "type": "memory.paused"
+        },
+        "revision": 1,
+        "attentionRevision": 1,
+        "createdSequence": 1,
+        "read": false
+      }
+    ],
+    "timeZone": "Asia/Shanghai",
+    "nextCursor": null,
+    "hasMore": false,
+    "snapshotCursor": "eyJvd25lcklkIjoib3duZXItZmNmYmE3MjMtYzNmYi00MmQxLTk1YTQtZDk0MDU4ZmU2ZjQyIiwiZ2VuZXJhdGlvbiI6MCwia2luZCI6InNuYXBzaG90IiwidGhyb3VnaCI6MywiZmlsdGVyIjoiYWxsIiwidHlwZSI6IiJ9.Sub22_K0zN7jeI4BzKdMpkL42WxvXg200WXsqCPd4Q0",
+    "syncCursor": "eyJvd25lcklkIjoib3duZXItZmNmYmE3MjMtYzNmYi00MmQxLTk1YTQtZDk0MDU4ZmU2ZjQyIiwiZ2VuZXJhdGlvbiI6MCwia2luZCI6ImNoYW5nZXMiLCJwb3NpdGlvbiI6M30.8bwDcKuUm7VoH5oLPnSPOpih7I3RPoJSPFyWg-z-kaU",
+    "unreadCount": 3,
+    "actionableCount": 1
+  },
+  "error": "locator.click: Timeout 90000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '重试形成', exact: true })\u001b[22m\n\n    at D:\\AIProjects\\WeftMate\\Worktrees\\w7\\tests\\integration\\fx17-correction-desktop.mjs:100:61"
+}
