@@ -161,12 +161,13 @@
     if(options.downloadImage){download.type='button';download.textContent='保存 PNG';download.addEventListener('click',async event=>{event.preventDefault();download.disabled=true;download.setAttribute('aria-busy','true');try{await options.downloadImage(items[index].url,items[index].name);}catch{info.textContent='图片保存未完成，请重试。';}finally{download.disabled=false;download.removeAttribute('aria-busy');}});}
     const show=action('在文件夹中显示',()=>{const item=items[index];if(item.artifactId)void weftmateDesktop.artifact(item.artifactId,item.library?'library-show':'show');},'folder');
     function scale(){image.style.transform=`scale(${zoom})`;reset.textContent=`${Math.round(zoom*100)}% · 适应窗口`;out.disabled=zoom<=.5;into.disabled=zoom>=4;}
-    function paint(){const item=items[index];zoom=1;scale();info.textContent='正在加载图片…';image.src=item.url;image.alt=item.name;title.textContent=`${item.name} · ${index+1} / ${items.length}`;download.href=item.url;download.download=item.name;previous.disabled=index===0;next.disabled=index===items.length-1;show.hidden=!globalThis.weftmateDesktop||!item.artifactId;}
+    function paint(){const item=items[index];zoom=1;scale();info.textContent='正在加载图片…';image.src=item.url;image.alt=item.alt||item.name;title.textContent=`${item.name} · ${index+1} / ${items.length}`;download.href=item.url;download.download=item.name;previous.disabled=index===0;next.disabled=index===items.length-1;show.hidden=!globalThis.weftmateDesktop||!item.artifactId;}
     image.addEventListener('load',()=>{info.textContent='';});
     image.addEventListener('error',()=>{info.textContent='图片加载失败，可关闭后重试。';});
     dialog.addEventListener('keydown',e=>{if(e.key==='Escape')e.stopPropagation();if(e.key==='ArrowLeft'&&index>0){e.preventDefault();index--;paint();}if(e.key==='ArrowRight'&&index<items.length-1){e.preventDefault();index++;paint();}});
-    head.append(title,close);stage.append(image);controls.append(previous,next,out,into,reset,download,show);dialog.append(head,stage,info,controls);document.body.append(dialog);
-    dialog.addEventListener('close',()=>{image.removeAttribute('src');dialog.remove();if(gallery===dialog)gallery=null;if(dialog._restoreFocus!==false&&trigger?.isConnected)trigger.focus({preventScroll:true});},{once:true});
+    const caption=node('p','render-status render-gallery-note',options.note||'');caption.hidden=!options.note;
+    head.append(title,close);stage.append(image);controls.append(previous,next,out,into,reset,download,show);dialog.append(head,stage,caption,info,controls);document.body.append(dialog);
+    dialog.addEventListener('close',()=>{image.removeAttribute('src');dialog.remove();if(gallery===dialog)gallery=null;options.onClose?.();if(dialog._restoreFocus!==false&&trigger?.isConnected)trigger.focus({preventScroll:true});},{once:true});
     gallery=dialog;dialog._trigger=trigger;paint();dialog.showModal();close.focus();return dialog;
   }
   function fileCard(file, open) {
@@ -195,7 +196,7 @@
       return await WeftFormat.toCanvas(host,{pixelRatio:1,cacheBust:false,style:{position:'static',left:'auto',top:'auto'}});
     } finally {host.remove();}
   }
-  globalThis.WeftContent={create,update,enhance,lineCount,collapsed,tableCopy,openGallery,fileCard,preview,exportCanvas,closeGallery:(restoreFocus=true)=>{if(gallery){gallery._restoreFocus=restoreFocus;gallery.close();}}};
+  globalThis.WeftContent={create,update,enhance,lineCount,collapsed,tableCopy,openGallery,fileCard,preview,exportCanvas,isGalleryOpen:()=>!!gallery?.open,closeGallery:(restoreFocus=true)=>{if(gallery){gallery._restoreFocus=restoreFocus;gallery.close();return true;}return false;}};
   if(globalThis.document&&typeof MutationObserver==='function')new MutationObserver(()=>{for(const view of diagramViews)if(!view.isConnected){URL.revokeObjectURL(view._url);diagramViews.delete(view);}for(const [block,observer]of pendingDiagrams)if(!block.isConnected){observer.disconnect();pendingDiagrams.delete(block);}if(gallery?._trigger&&!gallery._trigger.isConnected){gallery._restoreFocus=false;gallery.close();}}).observe(document.body||document.documentElement,{childList:true,subtree:true});
   if(globalThis.document&&typeof MutationObserver==='function')new MutationObserver(()=>{for(const block of document.querySelectorAll('.render-mermaid'))block._theme?.();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','data-accent']});
 })();

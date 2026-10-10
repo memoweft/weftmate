@@ -210,7 +210,7 @@ function toast(text,issue=false,undo){const box=$('toast');clearTimeout(toast.ti
 function status(text,issue=false){const line=$('chat-status');line.textContent=issue?'':text;
   line.classList.remove('error');if(issue&&text)toast(text,true)}
 
-function closeImagePreview({restoreFocus=true}={}){globalThis.WeftContent?.closeGallery(restoreFocus);const box=$('image-preview');if(box.hidden)return;
+function closeImagePreview({restoreFocus=true}={}){globalThis.WeftContent?.closeGallery(restoreFocus);const box=$('image-preview');if(box.hidden){state.previewScope=null;state.previewReturnFocus=null;return;}
   if(restoreFocus&&box.classList.contains('closing'))return;
   clearTimeout(closeImagePreview.timer);
   const scope=state.previewScope,button=state.previewReturnFocus;
@@ -233,7 +233,7 @@ function openImagePreview(url,name,button,scope,{original=false,display=false,no
   if(!safe||!scope||state.page!=='chat'||source!==state.chatSource||state.transitionPending||
     scope.owner!==state.owner||scope.epoch!==state.authEpoch||scope.conversationId!==attachmentConversationId())return;
   closeImagePreview({restoreFocus:false});state.previewScope=scope;state.previewReturnFocus=button;
-  if(globalThis.WeftContent){const images=[...(button?.closest('.message-thumbnails,.synced-image-gallery,.message')?.querySelectorAll('img')||[])];const items=images.map(image=>({url:image.src,name:image.alt||name}));const index=images.findIndex(image=>image.parentElement===button);WeftContent.openGallery(items.length?items:[{url:safe,name}],Math.max(0,index),button,{downloadImage:globalThis.weftNative?saveRenderedImage:undefined});return;}
+  if(globalThis.WeftContent){const images=[...(button?.closest('.message-thumbnails,.synced-image-gallery,.message')?.querySelectorAll('img')||[])];const items=images.map(image=>({url:image.src,name:image.alt||name}));const index=Math.max(0,images.findIndex(image=>image.parentElement===button));items[index]={url:safe,name,alt:`${name} 的${original?'原图':display?'预览图':'缩略图'}`};WeftContent.openGallery(items,index,button,{note:note||(original?'原图':'旧图片仅保留缩略图'),onClose:()=>{state.previewScope=null;state.previewReturnFocus=null;},downloadImage:globalThis.weftNative?saveRenderedImage:undefined});return;}
   $('image-preview-name').textContent=name;$('image-preview-image').src=safe;
   $('image-preview-image').alt=`${name} 的${original?'原图':display?'预览图':'缩略图'}`;
   $('image-preview-note').textContent=note|| (original?'原图':'旧图片仅保留缩略图');

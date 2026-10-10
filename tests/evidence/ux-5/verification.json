@@ -2,6 +2,11 @@
   "checks": [
     {
       "surface": "desktop",
+      "nativeSystemBrowserDispatch": true,
+      "actualBrowserLaunchIntercepted": true
+    },
+    {
+      "surface": "desktop",
       "theme": "light",
       "markdown": true,
       "userMarkdown": true,
@@ -62,6 +67,10 @@
     },
     {
       "surface": "android-ui",
+      "nativePngSave": true
+    },
+    {
+      "surface": "android-ui",
       "theme": "light",
       "markdown": true,
       "userMarkdown": true,
@@ -72,6 +81,10 @@
       "gallery": true,
       "files": true,
       "officeFallback": true
+    },
+    {
+      "surface": "android-ui",
+      "nativePngSave": true
     },
     {
       "surface": "android-ui",
@@ -98,11 +111,11 @@
       "characters": 15480,
       "codeBlocks": 20,
       "tables": 5,
-      "initialMs": 17.799999982118607,
-      "updateMeanMs": 7.330000001192093,
-      "updateMaxMs": 9.199999988079071,
-      "heapBefore": 30372670,
-      "heapAfter": 32508610,
+      "initialMs": 19.099999994039536,
+      "updateMeanMs": 7.574999998509884,
+      "updateMaxMs": 10.099999994039536,
+      "heapBefore": 36092280,
+      "heapAfter": 32303124,
       "stableCodeNode": true
     },
     {
@@ -110,11 +123,11 @@
       "characters": 15480,
       "codeBlocks": 20,
       "tables": 5,
-      "initialMs": 14.799999982118607,
-      "updateMeanMs": 6.945000000298023,
-      "updateMaxMs": 8.299999982118607,
-      "heapBefore": 25405726,
-      "heapAfter": 28641966,
+      "initialMs": 14.400000005960464,
+      "updateMeanMs": 6.25,
+      "updateMaxMs": 7.200000017881393,
+      "heapBefore": 25947765,
+      "heapAfter": 29586693,
       "stableCodeNode": true
     },
     {
@@ -122,11 +135,11 @@
       "characters": 15480,
       "codeBlocks": 20,
       "tables": 5,
-      "initialMs": 12,
-      "updateMeanMs": 5.445000003278255,
-      "updateMaxMs": 7.199999988079071,
-      "heapBefore": 24162142,
-      "heapAfter": 26712830,
+      "initialMs": 16.400000005960464,
+      "updateMeanMs": 7.344999998807907,
+      "updateMaxMs": 11.400000005960464,
+      "heapBefore": 25576203,
+      "heapAfter": 24775321,
       "stableCodeNode": true
     }
   ]
