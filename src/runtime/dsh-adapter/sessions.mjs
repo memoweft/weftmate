@@ -531,6 +531,7 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
       await readLog?.invalidate?.(sessionId)
       const value = await lifecycle.cleanupMemory(sessionId, options)
       await readLog?.invalidate?.(sessionId)
+      await readLog?.refreshSession?.(sessionId, () => Promise.resolve(client.sessions.list({})).then(result => unwrap(result, 'list')))
       logs.delete(sessionId); callIndexes.delete(sessionId); owned.delete(sessionId)
       return value
     },

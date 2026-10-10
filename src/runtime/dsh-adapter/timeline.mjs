@@ -39,6 +39,13 @@ export function nativeTimelineLog(ctx, { cache = true } = {}) {
   }
   read.listSessions=listSessions;
   read.sessionSummary=async(id,load)=>{await ensureIndex(load);return one(id);};
+  read.refreshSession=async(id,load)=>{
+    await ensureIndex(load);
+    // Erasure disposes the live session and rewrites its persisted title and
+    // projections. Reload that row instead of retaining the pre-erasure index.
+    const row=(await load()).items?.find(item=>item.sessionId===id);
+    row ? index.set(id,row) : index.delete(id); changed.set(id,row ?? null);
+  };
   read.removeSession=id=>{index.delete(id);changed.set(id,null);};
   const persistence = ctx.get('sessionPersistence');
   if (!cache || !persistence?.config?.root || !persistence.listSnapshots) return read;

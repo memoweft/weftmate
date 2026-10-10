@@ -21,7 +21,7 @@ function fixture() {
 test('pin, manual unread/read, arrival unread and native user title persist independently',async()=>{
   const f=fixture();await f.operations.metadata('a','session-a',{pinned:true,unread:true,title:'  合成标题  '});
   assert.equal(f.accounts.a.sessions['session-a'].title,'合成标题');assert.equal((await f.operations.summary('a','session-a')).unread,true);
-  f.events.push({seq:9,type:'assistant.message'});f.operations.observe('a','session-a',f.events);await f.operations.metadata('a','session-a',{unread:false});assert.equal((await f.operations.summary('a','session-a')).unread,false);
+  f.events.push({seq:9,type:'assistant.message'});await f.operations.metadata('a','session-a',{unread:false});assert.equal((await f.operations.summary('a','session-a')).unread,false);
   f.events.push({seq:15,type:'assistant.message'});f.operations.observe('a','session-a',f.events);assert.equal((await f.operations.summary('a','session-a')).unread,true);
   assert.equal((await f.operations.summary('a','session-a')).pinned,true);assert.equal(f.calls[0].ownerId,'a');
   await assert.rejects(f.operations.metadata('a','session-a',{pinned:'yes'}),{code:'INVALID_REQUEST'});

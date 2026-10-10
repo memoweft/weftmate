@@ -1,0 +1,11 @@
+✔ D33 cached forget: lists, search, pages, native index and restart cannot revive erased content (1637.6761ms)
+✔ D33 cached forget-title: lists, search, pages, native index and restart cannot revive erased content (1440.8254ms)
+✔ D33 cached delete: lists, search, pages, native index and restart cannot revive erased content (1477.0636ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4779.3295
