@@ -64,7 +64,7 @@ export async function runNativeStreamTimeout() {
   const runtime=new DshWebRuntime({homeDir:home,workspaceDir:workspace,runtimePath:join(process.cwd(),'vendor/dsh-runtime'),patchFiles:[patch],
     credentialRequestHandler:async({operation})=>operation==='resolve'?{value:'synthetic-key'}:{configured:true,writable:true},log() {}});
   const events=async()=> (await readFile(eventsFile,'utf8').catch(()=> '')).trim().split('\n').filter(Boolean).map(row=>JSON.parse(row));
-  async function until(check:()=>Promise<any>){const deadline=Date.now()+12000;while(Date.now()<deadline){const value=await check();if(value)return value;await pause(30);}assert.fail('slow stream condition timed out: '+JSON.stringify(await events()));}
+  async function until(check:()=>Promise<any>){const deadline=Date.now()+12000;while(Date.now()<deadline){const value=await check();if(value)return value;await pause(30);}assert.fail('slow stream condition timed out: '+JSON.stringify({mode,attempts,cancellations,rows,phases,eventTypes:(await events()).map(event=>event.type)}));}
   try {
     const origin=await runtime.start();
     const call=async(path:string,body?:object,method=body?'POST':'GET')=>{const response=await fetch(origin+'/weftmate/api/v1'+path,{method,headers:{'content-type':'application/json'},body:body?JSON.stringify(body):undefined});const result:any=await response.json();assert.equal(response.ok,true,JSON.stringify(result));return result;};

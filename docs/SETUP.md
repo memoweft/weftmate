@@ -112,7 +112,7 @@ npm run vendor:dsh
 npm run vendor:verify
 ```
 
-例外理由与追踪项见 [CI 例外清单](../.github/ci-test-exceptions.json)。`vendorTests` 已清空，原110项转为独立必过测试组；还保留一个读取仓库外 `Design/design-language/skeleton-v2.css` 的文件。完整 `test:contract` 仍为发布门，本包的 vendor 模式没有声称覆盖全部契约测试。
+例外理由与追踪项见 [CI 例外清单](../.github/ci-test-exceptions.json)。`vendorTests` 已清空，原110项转为独立必过测试组；还保留一个读取仓库外 `Design/design-language/skeleton-v2.css` 的文件。完整 `test:contract` 仍为发布门，本包的 vendor 模式没有声称覆盖全部契约测试。 干净云端已实际运行这组测试，发现固定源码缺少本机预构建包里的首屏布局接缝，保持红灯交接，见 [可复现问题](../tests/evidence/test-1/cloud-hero-seam.md)。整文件覆盖还包含一条不在原110项内的真实MemoWeft Core（记忆核心）RPC（远程过程调用）兄弟用例；云端缺Python环境时沿用其既有条件跳过，结果会明确显示，本机该用例已通过。
 
 Linux/macOS 测试目录使用规范化的 `RUNNER_TEMP`；Windows 在系统盘 C: 创建隔离目录，运行后移除。普通 Linux / macOS 门仍保留 POSIX（类 Unix 系统）子进程树清理用例的真实产品缺口例外；外部平台 optional package（可选依赖包）缺失夹具在 Linux 仍不适用，macOS / Windows 验证。vendor 测试组不继承这些跳过项。
 

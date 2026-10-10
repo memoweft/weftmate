@@ -1,0 +1,11 @@
+{
+  "mode": "vendor",
+  "files": 27,
+  "exitCode": 1,
+  "passed": 199,
+  "failed": 1,
+  "skipped": 1,
+  "failures": [
+    "groups the official hero controls and official input in one vendor-owned layout seam"
+  ]
+}
