@@ -1,0 +1,58 @@
+{
+  "realAndroid": true,
+  "synthetic": true,
+  "packageName": "com.memoweft.weftmate.mobile.tb4qa",
+  "checks": [
+    "real-native-four-tabs-light-dark",
+    "original-goal-source-full-height",
+    "system-back-source-tab-main",
+    "real-system-keyboard-tabs-hidden",
+    "130-percent-system-font",
+    "landscape",
+    "real-MiMo-one-minute-reminder",
+    "same-host-unread-increment",
+    "actual-system-notification-content-intent-focus",
+    "mark-read-badge-decrement",
+    "main-chat-system-back-backgrounds-app"
+  ],
+  "keyboard": {
+    "shown": true,
+    "visual": 726.2745361328125,
+    "draft": {
+      "x": 20.772058486938477,
+      "y": 595.3554077148438,
+      "width": 523.9461059570312,
+      "height": 66.15196228027344,
+      "top": 595.3554077148438,
+      "right": 544.7181644439697,
+      "bottom": 661.5073699951172,
+      "left": 20.772058486938477
+    },
+    "dock": {
+      "x": 0,
+      "y": 579.5833129882812,
+      "width": 565.490234375,
+      "height": 146.69117736816406,
+      "top": 579.5833129882812,
+      "right": 565.490234375,
+      "bottom": 726.2744903564453,
+      "left": 0
+    }
+  },
+  "realMimo": {
+    "model": "mimo-v2.6-flash",
+    "beforeUnread": 1,
+    "reminder": {
+      "id": "activity-6b7145f26e9ac0190b9990c0ad19802bd7c6fc384306281f40af18715db84568",
+      "title": "提醒",
+      "type": "reminder.triggered"
+    },
+    "command": {
+      "chatId": "chat-cb0e10b7-efdc-4b48-b5cf-645815ca8ec3",
+      "sessionId": "session-68b81035-f49b-40b1-9949-d5a2afeb150e",
+      "requestId": "37bdf92d-c1e9-42cf-8a08-d282f01e6a22",
+      "receiptId": "ae7b8775-28ea-4e4d-a3cb-08412f373cfd"
+    }
+  },
+  "errors": []
+}
