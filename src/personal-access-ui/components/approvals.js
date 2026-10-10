@@ -128,10 +128,7 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
             const menu = ui.byId('approval-mode-menu');
             if (!menu || menu.hidden)
                 return;
-            if (/^[1-5]$/.test(event.key)) {
-                event.preventDefault();
-                void core.saveApprovalMode(core.approvalModes[Number(event.key) - 1][0]);
-            }
+            WeftShortcuts.dispatch(event,Object.fromEntries(core.approvalModes.map(([mode])=>[`approval-${mode}`,()=>void core.saveApprovalMode(mode)])));
             if (event.key === 'Escape') {
                 event.preventDefault();
                 ui.closeApprovalMenu();

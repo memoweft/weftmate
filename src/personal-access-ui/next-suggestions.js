@@ -85,7 +85,7 @@
         }
         function sync() { core.syncNextSuggestions(); paint(); }
         function move(event, fromField = false) {
-            if (bar.hidden || !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(event.key) || event.key === 'Tab' && event.shiftKey) return false;
+            if (bar.hidden || !globalThis.WeftShortcuts?.find(event,['suggestionUp','suggestionDown','suggestionLeft','suggestionRight','suggestionTab'])) return false;
             const chips = [...scroller.querySelectorAll('button')]; if (!chips.length) return false;
             event.preventDefault(); event.stopImmediatePropagation();
             const current = chips.indexOf(document.activeElement), direction = ['ArrowUp', 'ArrowLeft'].includes(event.key) ? -1 : 1;
