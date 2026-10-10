@@ -1,0 +1,83 @@
+[
+  {
+    "seq": 251,
+    "type": "task.queued",
+    "at": "2026-10-10T16:29:34.444Z",
+    "data": {
+      "taskId": "cmd-030bfb5e-4a55-4234-a97f-dc147a5826ff",
+      "receiptId": "3c7bf9ea-8f5a-4b9a-a8fd-d610beec74ee",
+      "text": "现在花茶应该加什么？请简短回答。",
+      "commandId": "cmd-030bfb5e-4a55-4234-a97f-dc147a5826ff",
+      "requestId": "6949b450-0077-463c-bb41-15763f452ba5"
+    }
+  },
+  {
+    "seq": 252,
+    "type": "turn.started",
+    "at": "2026-10-10T16:29:34.445Z",
+    "data": {
+      "turn": 6
+    }
+  },
+  {
+    "seq": 254,
+    "type": "task.started",
+    "at": "2026-10-10T16:29:34.494Z",
+    "data": {
+      "taskId": "cmd-030bfb5e-4a55-4234-a97f-dc147a5826ff",
+      "turn": 6,
+      "receiptId": "3c7bf9ea-8f5a-4b9a-a8fd-d610beec74ee",
+      "commandId": "cmd-030bfb5e-4a55-4234-a97f-dc147a5826ff",
+      "requestId": "6949b450-0077-463c-bb41-15763f452ba5",
+      "turnTaskId": "turn-6"
+    }
+  },
+  {
+    "seq": 256,
+    "type": "user.message",
+    "at": "2026-10-10T16:29:34.494Z",
+    "data": {
+      "text": "现在花茶应该加什么？请简短回答。",
+      "receiptId": "3c7bf9ea-8f5a-4b9a-a8fd-d610beec74ee"
+    }
+  },
+  {
+    "seq": 265,
+    "type": "assistant.message",
+    "at": "2026-10-10T16:29:36.113Z",
+    "data": {
+      "text": "加一片苹果。",
+      "memoryUsed": [
+        {
+          "id": "cognition-345cc805eba9829b9d9d11fc4021773ce408221a46e7684fc216fb13debea628",
+          "kind": "cognition",
+          "summary": "用户纠正刚才的偏好：第973种花茶不加柠檬，改成加一片苹果，请记住。"
+        }
+      ]
+    }
+  },
+  {
+    "seq": 266,
+    "type": "task.ended",
+    "at": "2026-10-10T16:29:36.113Z",
+    "data": {
+      "taskId": "cmd-030bfb5e-4a55-4234-a97f-dc147a5826ff",
+      "turn": 6,
+      "reason": "completed",
+      "nativeTurnEndSeq": 267,
+      "receiptId": "3c7bf9ea-8f5a-4b9a-a8fd-d610beec74ee",
+      "commandId": "cmd-030bfb5e-4a55-4234-a97f-dc147a5826ff",
+      "requestId": "6949b450-0077-463c-bb41-15763f452ba5",
+      "turnTaskId": "turn-6"
+    }
+  },
+  {
+    "seq": 267,
+    "type": "turn.ended",
+    "at": "2026-10-10T16:29:36.113Z",
+    "data": {
+      "reason": "completed",
+      "turn": 6
+    }
+  }
+]

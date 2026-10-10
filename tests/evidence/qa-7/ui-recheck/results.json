@@ -1,0 +1,94 @@
+{
+  "synthetic": true,
+  "installed": true,
+  "checks": [],
+  "main": {
+    "chatId": "chat-1ad97867-d83e-430a-a841-49df35bbe917",
+    "sessionId": "session-93129550-f5f6-4bbc-b51b-f5a657470708",
+    "reply": "主对话首条消息成功，合成回复。"
+  },
+  "dragEvents": [
+    {
+      "type": "dragenter",
+      "target": "message-text",
+      "files": [],
+      "items": [
+        {
+          "kind": "file",
+          "type": ""
+        }
+      ]
+    },
+    {
+      "type": "dragover",
+      "target": "message-text",
+      "files": [],
+      "items": [
+        {
+          "kind": "file",
+          "type": ""
+        }
+      ]
+    },
+    {
+      "type": "dragover",
+      "target": "message-text",
+      "files": [],
+      "items": [
+        {
+          "kind": "file",
+          "type": ""
+        }
+      ]
+    },
+    {
+      "type": "drop",
+      "target": "message-text",
+      "files": [
+        {
+          "name": "QA7-real-drag",
+          "type": ""
+        }
+      ],
+      "items": [
+        {
+          "kind": "file",
+          "type": "",
+          "directory": true
+        }
+      ]
+    }
+  ],
+  "dragConfirmed": true,
+  "project": [
+    {
+      "projectId": "project-039c2b4c-0784-44e6-96bb-68dc39813397",
+      "name": "QA7-real-drag",
+      "revision": 1,
+      "instructions": "",
+      "permission": "read-only",
+      "revoked": false,
+      "createdAt": "2026-10-10T16:37:24.611Z",
+      "pathHint": "weftmate-fx21-MGFdvu / QA7-real-drag"
+    }
+  ],
+  "dragRegistered": true,
+  "phoneError": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.rail-main-chat')\u001b[22m\n\u001b[2m    - locator resolved to <button hidden=\"\" type=\"button\" class=\"rail-main-chat\" aria-label=\"WeftMate 主对话\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    59 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
+  "android": {
+    "passed": false,
+    "rows": 4,
+    "errors": [
+      {
+        "scene": "search",
+        "theme": "light",
+        "error": "locator.click: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#mobile-search-entry')\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-label=\"搜索\" class=\"search-entry\" aria-haspopup=\"dialog\" id=\"mobile-search-entry\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    23 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - element is outside of the viewport\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n"
+      },
+      {
+        "fatal": "locator.click: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#draft')\u001b[22m\n\u001b[2m    - locator resolved to <textarea rows=\"1\" disabled id=\"draft\" aria-label=\"输入消息\" placeholder=\"这段会话仅可查看\"></textarea>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not stable\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is not stable\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m  22 × retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\u001b[2m       - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n"
+      }
+    ],
+    "navigationAllVisible": false,
+    "systemBarColorAllPass": true
+  },
+  "cleaned": true
+}

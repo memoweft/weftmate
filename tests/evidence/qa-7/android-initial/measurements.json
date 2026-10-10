@@ -1,0 +1,88 @@
+{
+  "rows": [
+    {
+      "file": "main-light.png",
+      "scene": "main",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "light",
+        "viewport": {
+          "width": 565,
+          "height": 1005,
+          "dpr": 1.274999976158142
+        },
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 810.183837890625,
+          "width": 565.490234375,
+          "height": 194.52206420898438,
+          "top": 810.183837890625,
+          "right": 565.490234375,
+          "bottom": 1004.7059020996094,
+          "left": 0
+        },
+        "search": [],
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "text": "WeftMate",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "class": "mobile-session-status",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "bodyHeight": 1005
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          254.72413793103448,
+          254.72413793103448,
+          254.72413793103448
+        ],
+        "header": [
+          253,
+          253,
+          253
+        ],
+        "delta": 1.7241379310344769,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    }
+  ],
+  "errors": [
+    {
+      "fatal": "locator.click: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#menu-button')\u001b[22m\n\u001b[2m    - locator resolved to <button hidden=\"\" id=\"menu-button\" aria-label=\"打开导航\" class=\"icon-button\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    23 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n"
+    }
+  ]
+}

@@ -1,0 +1,119 @@
+[
+  {
+    "seq": 4,
+    "type": "task.queued",
+    "at": "2026-10-10T16:29:36.607Z",
+    "data": {
+      "taskId": "cmd-129923d8-b0b6-40b2-b06e-0018084c104d",
+      "receiptId": "5ea9842e-010e-4906-b328-23dccfb8bc9b",
+      "text": "我喝第973种花茶应该加什么？",
+      "commandId": "cmd-129923d8-b0b6-40b2-b06e-0018084c104d",
+      "requestId": "4511dda2-4a1d-4395-ba22-01d17f72e875"
+    }
+  },
+  {
+    "seq": 5,
+    "type": "turn.started",
+    "at": "2026-10-10T16:29:36.607Z",
+    "data": {
+      "turn": 1
+    }
+  },
+  {
+    "seq": 7,
+    "type": "task.started",
+    "at": "2026-10-10T16:29:36.640Z",
+    "data": {
+      "taskId": "cmd-129923d8-b0b6-40b2-b06e-0018084c104d",
+      "turn": 1,
+      "receiptId": "5ea9842e-010e-4906-b328-23dccfb8bc9b",
+      "commandId": "cmd-129923d8-b0b6-40b2-b06e-0018084c104d",
+      "requestId": "4511dda2-4a1d-4395-ba22-01d17f72e875",
+      "turnTaskId": "turn-1"
+    }
+  },
+  {
+    "seq": 8,
+    "type": "user.message",
+    "at": "2026-10-10T16:29:36.640Z",
+    "data": {
+      "text": "我喝第973种花茶应该加什么？",
+      "receiptId": "5ea9842e-010e-4906-b328-23dccfb8bc9b"
+    }
+  },
+  {
+    "seq": 27,
+    "type": "step.started",
+    "at": "2026-10-10T16:29:39.107Z",
+    "data": {
+      "taskId": "turn-1",
+      "stepId": "call_e25c41717875438daef665e8",
+      "callId": "call_e25c41717875438daef665e8",
+      "toolName": "load_tools",
+      "summary": "准备可用工具",
+      "groupHint": "load_tools",
+      "detailRef": {
+        "seq": 27
+      },
+      "turn": 1,
+      "state": "running"
+    }
+  },
+  {
+    "seq": 28,
+    "type": "step.completed",
+    "at": "2026-10-10T16:29:39.114Z",
+    "data": {
+      "taskId": "turn-1",
+      "stepId": "call_e25c41717875438daef665e8",
+      "callId": "call_e25c41717875438daef665e8",
+      "toolName": "load_tools",
+      "summary": "准备可用工具",
+      "groupHint": "load_tools",
+      "detailRef": {
+        "seq": 28
+      },
+      "turn": 1,
+      "state": "completed"
+    }
+  },
+  {
+    "seq": 41,
+    "type": "assistant.message",
+    "at": "2026-10-10T16:29:40.656Z",
+    "data": {
+      "text": "加一片苹果（不加柠檬）。",
+      "memoryUsed": [
+        {
+          "id": "cognition-345cc805eba9829b9d9d11fc4021773ce408221a46e7684fc216fb13debea628",
+          "kind": "cognition",
+          "summary": "用户纠正刚才的偏好：第973种花茶不加柠檬，改成加一片苹果，请记住。"
+        }
+      ]
+    }
+  },
+  {
+    "seq": 42,
+    "type": "task.ended",
+    "at": "2026-10-10T16:29:40.657Z",
+    "data": {
+      "taskId": "cmd-129923d8-b0b6-40b2-b06e-0018084c104d",
+      "turn": 1,
+      "reason": "completed",
+      "nativeTurnEndSeq": 43,
+      "receiptId": "5ea9842e-010e-4906-b328-23dccfb8bc9b",
+      "commandId": "cmd-129923d8-b0b6-40b2-b06e-0018084c104d",
+      "requestId": "4511dda2-4a1d-4395-ba22-01d17f72e875",
+      "turnTaskId": "turn-1"
+    }
+  },
+  {
+    "seq": 43,
+    "type": "turn.ended",
+    "at": "2026-10-10T16:29:40.658Z",
+    "data": {
+      "reason": "completed",
+      "turn": 1
+    }
+  }
+]
