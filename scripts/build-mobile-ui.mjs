@@ -25,8 +25,8 @@ if (!options.has('--activate-release')) await checkMobileUi();
 const manifest = options.has('--activate-release')
   ? await activateMobileUiRelease({ outputDir, releaseId: options.get('--activate-release') })
   : await publishMobileUi({ sourceDir, outputDir,
-    uiVersion: options.get('--ui-version') ?? '0.8.18',
-    minNativeVersionCode: Number(options.get('--min-native-version-code') ?? '31'),
+    uiVersion: options.get('--ui-version') ?? '0.8.20',
+    minNativeVersionCode: Number(options.get('--min-native-version-code') ?? '33'),
     channel: options.get('--channel') ?? 'stable', minHostVersion: options.get('--min-host-version') ?? '0.1.0',
     minNativeVersion: options.get('--min-native-version') ?? '0.0.0',
     releaseNotes: options.get('--release-notes') ?? '' });

@@ -73,8 +73,8 @@ class ActivityNotifications(private val context: Context) {
         if (!allowed()) return true
         val sound = decision.optBoolean("sound", false)
         val builder = Notification.Builder(context, ActivityNotificationPolicy.channel(type, sound))
-            .setSmallIcon(R.drawable.ic_stat_weftmate).setContentTitle(row.optString("title").take(80))
-            .setContentText(row.optString("summary").take(160)).setContentIntent(pending(host, id))
+            .setSmallIcon(R.drawable.ic_stat_weftmate).setContentTitle(ActivityNotificationPolicy.title(row).take(80))
+            .setContentText(ActivityNotificationPolicy.body(row).take(160)).setContentIntent(pending(host, id))
             .setAutoCancel(true).setOnlyAlertOnce(true).setVisibility(Notification.VISIBILITY_PRIVATE)
         if (type == "approval.pending" && row.optJSONArray("actions")?.let { actions -> (0 until actions.length()).any { actions.getJSONObject(it).optString("kind") == "respond_approval" } } == true) {
             for ((title, outcome) in listOf("批准" to "allowed-once", "拒绝" to "rejected")) {

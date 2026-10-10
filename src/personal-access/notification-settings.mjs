@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { failure } from './common.mjs';
 import { putActivity, activityState } from './activity-store.mjs';
 import { notificationSettings, validateNotificationSettings, decideNotification, inQuietHours, localNotificationTime } from './notification-policy.mjs';
+import { activityNotificationContent } from './notification-content.mjs';
 export function finalizeNotifications(account, now, timeZone) {
   const state=activityState(account), settings=notificationSettings(account), quiet=inQuietHours(settings,now,timeZone);
   const day=localNotificationTime(now,timeZone).day;
@@ -15,6 +16,7 @@ export function finalizeNotifications(account, now, timeZone) {
     ledger.suppressed=[];
   }
   for(const row of Object.values(state.items)){
+    if(typeof row.notification.title!=='string'||typeof row.notification.body!=='string')Object.assign(row.notification,activityNotificationContent(account,row));
     if(Object.hasOwn(row.notification,'notify'))continue;
     const result=decideNotification({type:row.type,level:row.notification.level,settings,now,timeZone,dailyCount:ledger.count,initiatedBy:row.notification.initiatedBy,test:row.notification.test});
     Object.assign(row.notification,result,{decidedAt:new Date(now).toISOString()});

@@ -414,6 +414,9 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
         ui.byId('profile-reload').addEventListener('click', () => { void core.refreshProfile({ preserveDraft: true }); });
         ui.byId('profile-form').addEventListener('submit', event => { event.preventDefault(); void core.saveProfileDraft({ displayName: ui.byId('profile-display-name').value }); });
         ui.byId('devices-refresh').addEventListener('click', core.refreshDevices);
+        for (const [id, name] of [['devices-refresh', '刷新设备'], ['profile-reload', '重新读取资料']]) {
+            const button = ui.byId(id); button.className = 'icon-button'; button.replaceChildren(WeftIcons.create('sync', 18)); button.setAttribute('aria-label', name); button.title = name;
+        }
         ui.byId('logout-button').addEventListener('click', async () => {
             const button = ui.byId('logout-button');
             const token = core.accountToken();
