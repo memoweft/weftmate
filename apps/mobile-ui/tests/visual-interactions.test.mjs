@@ -112,6 +112,11 @@ test('UI-2 mobile home, themes, progressive detail, full-screen sources, drafts 
     await page.evaluate(()=>fixture.failResources=true);await page.locator('#outputs-button').click();await page.getByText('离线 · 上次读取的内容',{exact:true}).waitFor();
     await page.locator('#resource-back').click();
     await page.getByRole('button',{name:'加载更早内容',exact:true}).click();await page.getByText('更早的项目记录',{exact:true}).waitFor();
+    assert.equal(await page.evaluate(()=>fixture.requests.some(request=>request.method==='shared.sessions.events'&&request.params.beforeSeq===1)),true);
+    // A subsequent composer/history refresh must retain the page that just arrived.
+    await page.evaluate(()=>{updateComposer();renderSharedConversation()});
+    assert.equal(await page.locator('#chat-content .message[data-seq="0"]').count(),1);
+    await page.getByText('更早的项目记录',{exact:true}).waitFor();
     assert.equal(await page.evaluate(()=>state.sharedNextSeq),6);
     // A smaller visual viewport models the layout response; it does not claim an Android IME test.
     await page.setViewportSize({width:390,height:500});await page.locator('#draft').focus();

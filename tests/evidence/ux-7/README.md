@@ -78,6 +78,8 @@ OpenAI推理请求沿原生精确effort（推理等级）声明使用最轻模�
 
 **外部并发边界**：WeftMate内部原子预留、即时取消、不排队与不重试已验证；独立程序仍可能在状态读取之后抢先向模型代理提交请求。现有ModelSwitcher没有原子的机会式入口，本包遵守隔离要求没有修改本人代理，因此这类跨独立客户端的竞争不能承诺绝不进入上游队列。要消除该窗口，需要模型代理提供原子try-acquire（尝试取得租约）接口；该服务端能力不在本包实际部署。[llama.cpp槽状态官方接口](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md#rest-api)。
 
+CI补充发现手机旧页投影竞态：旧页已到达核心、手机适配器尚未发布快照时，新输入区刷新会把旧手机快照覆写回核心。已等待手机当前页 / 旧页读取完成后再接受投影，保留新到达旧页；母版与生成资源同步。原`apps/mobile-ui/tests/visual-interactions.test.mjs`复验1/1通过（119.3秒），增加真实beforeSeq=1及刷新后seq0唯一保留断言，原等待与超时不变；相关离线与共享核心56/56通过。
+
 ## Apple改动清单与壳版本
 
 1. macOS / iOS读取`personalCapabilities.nextSuggestions === 1`，在助手设置接`nextSuggestionsEnabled`并沿ST-1逐字段账户同步；关闭立即中止在途请求。Watch不新增建议输入区，设置跟随账户。
