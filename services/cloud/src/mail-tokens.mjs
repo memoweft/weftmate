@@ -17,6 +17,7 @@ export const mailTokens = {
     "line": "#40423b"
   },
   "space": {
+    "4": "4px",
     "8": "8px",
     "12": "12px",
     "16": "16px",
@@ -38,8 +39,7 @@ export const mailTokens = {
     "36": "36px"
   },
   "fontFamily": {
-    "body": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei UI\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", sans-serif",
-    "mono-desktop": "Consolas, 'SFMono-Regular', monospace"
+    "body": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei UI\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", sans-serif"
   },
   "lineHeight": {
     "1_25": "1.25",

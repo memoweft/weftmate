@@ -59,7 +59,7 @@ function card({ subject, title, preview, paragraphs, code, footnotes }) {
 <img src="${MAIL_MARK_URL}" width="56" height="56" alt="WeftMate" style="display:block;width:56px;height:56px;border:0;border-radius:${t.radius[12]};color:${t.light.ink};font-size:${t.fontSize[10]};"></td></tr></table>
 <h1 class="mail-ink" style="margin:0 0 ${t.space[16]};color:${t.light.ink};font-size:${t.fontSize[27]};font-weight:600;line-height:${t.lineHeight['1_25']};">${escapeHtml(title)}</h1>
 ${paragraphs.map(value => p(value)).join('\n')}
-${code === undefined ? '' : `<p class="mail-ink mail-code" dir="ltr" aria-label="验证码" style="margin:${t.space[28]} 0 ${t.space[32]};color:${t.light.ink};font-family:${t.fontFamily['mono-desktop']};font-size:${t.fontSize[36]};font-weight:600;line-height:${t.lineHeight['1_25']};letter-spacing:${t.space[8]};white-space:nowrap;">${escapeHtml(code)}</p>`}
+${code === undefined ? '' : `<p class="mail-ink mail-code" dir="ltr" aria-label="验证码" style="margin:${t.space[28]} 0 ${t.space[32]};color:${t.light.ink};font-size:${t.fontSize[36]};font-weight:400;font-variant-numeric:tabular-nums;line-height:${t.lineHeight['1_25']};letter-spacing:${t.space[4]};white-space:nowrap;">${escapeHtml(code)}</p>`}
 <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="width:100%;border-collapse:collapse;margin:${code === undefined ? t.space[28] : '0'} 0 ${t.space[20]};"><tr><td class="mail-rule" style="border-top:1px solid ${t.light.line};font-size:0;line-height:0;height:1px;">&nbsp;</td></tr></table>
 ${footnotes.map(value => p(value, true)).join('\n')}
 </td></tr></table>
