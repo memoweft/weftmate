@@ -1,7 +1,8 @@
+import { stagePersonalPlugins } from './support/personal-plugins.ts'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { EventEmitter } from 'node:events'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -27,21 +28,10 @@ async function nativeFixture({ toolName = 'fixture_action', askedName = toolName
   failUncertainObservation = false, failFinish = false, cancelledStatus = 'resolved', policy = 'ask', allowAll = false,
   toolArguments = {} } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'personal-native-approval-'))
-  const staged = join(root, 'desktop.mjs')
-  writeFileSync(staged, readFileSync(join(process.cwd(), 'src/plugins/weftmate-personal-desktop.mjs'), 'utf8')
-    .replace("from '@deepseek-ai/dsh-tools'", `from '${vendor('dsh-tools')}'`)
-    .replace("from './personal-reasoning.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-reasoning.mjs")).href}'`)
-    .replace("from '@deepseek-ai/dsh-agent'", `from '${pathToFileURL(join(process.cwd(), "vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-agent/lib/index.js")).href}'`)
-    .replace("from '@deepseek-ai/dsh-plan-mode'", `from '${pathToFileURL(join(process.cwd(), 'vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-plan-mode/lib/index.js')).href}'`)
-    .replace("from './personal-approval-policy.mjs'", `from '${pathToFileURL(join(process.cwd(), 'src/plugins/personal-approval-policy.mjs')).href}'`)
-    .replace("from '@deepseek-ai/dsh-sandbox-policy'", `from '${pathToFileURL(join(process.cwd(), "vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-sandbox-policy/lib/index.js")).href}'`)
-    .replace("from './personal-web-fetch.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-web-fetch.mjs")).href}'`)
-    .replace("from './personal-project-context.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-project-context.mjs")).href}'`)
-    .replace("from './personal-native-files.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-native-files.mjs")).href}'`)
-    .replace("from '../runtime/dsh-adapter/source-range.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/runtime/dsh-adapter/source-range.mjs")).href}'`))
+  const staged = stagePersonalPlugins(root).plugin
   const [plugin, { Context, Service }, { default: SystemPrompt }, { default: Sessions }, tools,
     { default: ApprovalService }, { createScope }] = await Promise.all([
-    import(pathToFileURL(staged).href), import(vendor('cordis')), import(vendor('dsh-system-prompt')),
+    import(staged), import(vendor('cordis')), import(vendor('dsh-system-prompt')),
     import(vendor('dsh-session')), import(vendor('dsh-tools')), import(vendor('dsh-user-approval')), import(vendor('dsh-scope')),
   ])
   const ctx = new Context(), frames: any[] = [], states = new Map<string, any>(), agents = new Map<string, any>()

@@ -45,3 +45,11 @@ Windows 安装、更新、卸载、数据保留、诊断和恢复的当前边界
 - MemoWeft 当前只保留开发期试验接缝，不进入正式打包承诺；
 - AI-Game 当前不进入 WeftMate 安装包；
 - MemoWeft 和 AI-Game 的正式分发方式等待各自提供稳定接口后再确定。
+
+## 随仓库携带的 DSH 补丁（patches/dsh）
+
+发货用的固定 DSH = `tests/contract/dsh-pin.json` 的提交 **加上** `patches/dsh/*.patch`（文件名以固定提交前缀开头）。只按固定提交构建、不打这些补丁，得到的不是产品实际使用的运行时——例如首屏输入区依赖的 `data-weftmate-hero-composer` 布局接缝就来自 `…-stage3-hero-composer-carry.patch`。
+
+- 构建 vendor 前，在 DSH 检出目录按文件名顺序执行 `git apply patches/dsh/*.patch`，再编译、再 `npm run vendor:dsh`。云端的「Pinned DSH vendor unit tests」就是这样做的，并把补丁内容的哈希计入编译缓存键。
+- 升级固定提交时，每个补丁要么已被上游吸收后删除，要么改名为新提交前缀并重新生成；不允许留下打不上的补丁。
+- 新增补丁必须同时有一条依赖它的测试（如 `tests/weftmate-conversation-surface.test.ts`），这样漏打补丁会在 vendor 测试里变红。
