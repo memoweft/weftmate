@@ -22,9 +22,10 @@ data class HttpReply(val status: Int, val body: JSONObject, val cookie: String? 
 internal fun validBusinessPath(path: String): Boolean {
     val route = path.substringBefore('?')
     // Opaque chat cursors plus an encoded 256-character search exceed the old memory-route budget.
-    if (path.length > if (route.startsWith("/personal/v1/chats")) 4096 else 512) return false
+    if (path.length > if (route.startsWith("/personal/v1/chats") || route == "/personal/v1/sessions") 4096 else 512) return false
     if (path == "/personal/v1/sessions/temporary") return true
     val query = path.substringAfter('?', "")
+    if (route == "/personal/v1/sessions" && query.matches(Regex("[A-Za-z0-9._~=&%+-]*"))) return true
     if (query.matches(Regex("[A-Za-z0-9._~=&%+-]*")) && route.matches(Regex("/personal/v1/chats(/main|/[A-Za-z0-9_-]{1,128}(/(events|changes|dates|locate|search|resources|metadata|archive|unarchive|results))?)?"))) return true
     if (query.isEmpty() && route == "/personal/v1/commands") return true
     if (query.isEmpty() && route.matches(Regex("/personal/v1/offline/(sync|turns)"))) return true

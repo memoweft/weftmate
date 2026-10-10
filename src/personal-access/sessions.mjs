@@ -29,6 +29,7 @@ export function createSessionOperations(context) {
   }
 
   function publicHistoryEvent(ownerId, sessionId, event) {
+    context.sessionOperations.observe(ownerId, sessionId, [event]);
     if (!plainObject(event.data)) return event;
     const { messageHash, ...publicData } = event.data;
     // DSH's native Inbox excludes all constructor seed events. An anchor fork
@@ -286,6 +287,7 @@ export function createSessionOperations(context) {
           }
         }
         await context.callBackend(() => context.backend.deleteSession({ sessionId, ownerId }));
+        context.sessionOperations.invalidate(ownerId,sessionId);
         await context.offline?.invalidate(ownerId);
         await context.sharedAttachmentStores?.get(ownerId)?.removeSession(sessionId);
         await context.attachmentStores?.get(ownerId)?.removeConversation(sessionId);

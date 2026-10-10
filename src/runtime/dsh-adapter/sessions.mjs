@@ -373,6 +373,9 @@ function stableHistoryEnd(entries, cache) {
 export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
   if (!client?.sessions || !client?.events) throw new TypeError('supported DSH client is required')
   const owned = new Map()
+  const listNative = () => readLog?.listSessions
+    ? readLog.listSessions(() => Promise.resolve(client.sessions.list({})).then(value => unwrap(value, 'list')))
+    : Promise.resolve(client.sessions.list({})).then(value => unwrap(value, 'list'));
   // Lazy call metadata index. Each visited source range is indexed once, including
   // parallel calls whose completion is far away from its start. No full-log fold.
   const callIndexes = new Map()
@@ -473,7 +476,7 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
     },
     /** Product-safe ordinary-session summaries for the WeftMate sidebar. */
     async list() {
-      const value = await unwrap(await client.sessions.list({}), 'list')
+      const value = await listNative()
       const items = Array.isArray(value?.items) ? value.items : []
       return items
         .filter((item) => item?.origin !== 'subagent' && sessionIdOf(item) !== null)
@@ -496,7 +499,7 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
 
     /** Identity recovery plus replay reconciliation input; no native resume RPC exists. */
     async resume(sessionId) {
-      const listed = await unwrap(await client.sessions.list({}), 'list')
+      const listed = await listNative()
       const item = (Array.isArray(listed?.items) ? listed.items : []).find((candidate) => sessionIdOf(candidate) === sessionId)
       requireOrdinarySummary(item, sessionId)
       if (lifecycle && item.agentPreset?.startsWith('personal-')) await lifecycle.resume(sessionId)
@@ -512,7 +515,7 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
 
     async withLifecycle(sessionId, task) {
       if (lifecycle?.use) return lifecycle.use(sessionId, task)
-      const listed = await unwrap(await client.sessions.list({}), 'list')
+      const listed = await listNative()
       const item = (listed?.items ?? []).find(item => sessionIdOf(item) === sessionId)
       requireOrdinarySummary(item, sessionId)
       if (lifecycle && item.agentPreset?.startsWith('personal-')) {
@@ -536,6 +539,7 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
       const value = await lifecycle.remove(sessionId)
       await readLog?.invalidate?.(sessionId)
       owned.delete(sessionId); logs.delete(sessionId); callIndexes.delete(sessionId)
+      readLog?.removeSession?.(sessionId)
       return value
     },
     async rename(sessionId, title) {
@@ -550,7 +554,7 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
     },
     async memoryBoundaries(sessionId, afterSeq = -1) {
       if (!Number.isSafeInteger(afterSeq) || afterSeq < -1) throw new TypeError('invalid memory cursor')
-      const listed = await unwrap(await client.sessions.list({}), 'list')
+      const listed = await listNative()
       const item = (listed?.items ?? []).find(item => sessionIdOf(item) === sessionId)
       requireOrdinarySummary(item, sessionId)
       const events = (await logFor(sessionId)).map(row => row.event ?? row)
@@ -575,7 +579,7 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
           afterSeq !== undefined && (!Number.isSafeInteger(afterSeq) || afterSeq < -1) ||
           beforeSeq !== undefined && (!Number.isSafeInteger(beforeSeq) || beforeSeq < 0)) throw new TypeError('invalid history cursor')
       pageHistoryEvents([], afterSeq ?? -1, limit)
-      const listed = await unwrap(await client.sessions.list({}), 'list')
+      const listed = await listNative()
       requireOrdinarySummary((listed?.items ?? []).find(item => sessionIdOf(item) === sessionId), sessionId)
       if (readLog?.historyPage) {
         const page = await readLog.historyPage(sessionId, options, (entries, range) => projectedPage(sessionId, entries, range));
@@ -586,7 +590,7 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
 
     async historyDetail(sessionId, seq) {
       if (!Number.isSafeInteger(seq) || seq < 0) throw new TypeError('invalid detail seq')
-      const listed = await unwrap(await client.sessions.list({}), 'list')
+      const listed = await listNative()
       requireOrdinarySummary((listed?.items ?? []).find(item => sessionIdOf(item) === sessionId), sessionId)
       const entries = await logFor(sessionId), index = lowerBound(entries, seq)
       const event = entries[index]?.event ?? entries[index]
@@ -619,7 +623,7 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
 
     /** Internal binding evidence, excluding all tool/step/output payloads. */
     async sourceEvents(sessionId, { turn, receiptId } = {}) {
-      const listed = await unwrap(await client.sessions.list({}), 'list')
+      const listed = await listNative()
       requireOrdinarySummary((listed?.items ?? []).find(item => sessionIdOf(item) === sessionId), sessionId)
       const entries = await sourceLogFor(sessionId, { turn, receiptId })
       const range = sourceRange(entries, { turn, receiptId })

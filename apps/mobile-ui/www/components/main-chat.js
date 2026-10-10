@@ -170,12 +170,14 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         if (transfer?.state === 'references_only') origin.append(ui.element('span', 'muted', '相关上下文尚未带入'));
     }
     function showSidePanel(event) {
+        const identity = core.state.identityGeneration;
         const dialog = ui.element('dialog', 'dialog side-chat-dialog'); dialog.setAttribute('aria-label', '开旁聊');
         const title = ui.element('input'); title.setAttribute('aria-label', '旁聊名称'); title.value = Array.from(event.data.text || '新旁聊').slice(0, 30).join('');
         const first = ui.element('textarea'); first.setAttribute('aria-label', '旁聊第一句话'); first.value = ui.readMessageDraft();
         dialog.append(ui.element('h2', '', '从这里开旁聊'), title, ui.element('p', 'side-source', Array.from(event.data.text || '').slice(0, 160).join('')), ui.element('p', 'muted', '相关上下文尚未带入'), first,
             button('取消', '取消', () => { dialog.close(); dialog.remove(); }), button('开旁聊', '确认开旁聊', async () => {
                 const draft = first.value; await core.openSideChat({ entry: 'message', title: title.value, originChatId: core.state.mainChat.chatId, originEventId: event.eventId });
+                if(identity!==core.state.identityGeneration){dialog.close();dialog.remove();return;}
                 ui.restoreMainChatDraft(draft); dialog.close(); dialog.remove(); ui.byId('message-text').focus();
             }, 'button primary'));
         document.body.append(dialog); dialog.addEventListener('close', () => dialog.remove()); dialog.showModal(); title.focus();
