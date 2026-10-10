@@ -1,7 +1,7 @@
 /** CI-R1: synthetic phone over the actual 443 content relay. No daily data or model keys. */
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mkdir, writeFile, readFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { chromium } from 'playwright';
@@ -22,19 +22,7 @@ test('Relay phone first input and file task', {
     infra = await relayFixture(t); const { f, root, frpDir, frontPort } = infra;
     assert.equal(frontPort, 443, 'this scenario must exercise the public 443 frontend');
     runtime = await phoneRuntime(root, runtimeLogs);
-    // TEMPORARY NEGATIVE CONTROL: serve the actual composer with its loading
-    // disable assignment broken. This commit must fail, then be restored.
-    const brokenComposer = async (request, response, cloud) => {
-      if (request.url === '/personal/v1/ui/components/shell.js') {
-        const source = await readFile(new URL('../../../src/personal-access-ui/components/shell.js', import.meta.url), 'utf8');
-        const before = "ui.byId('message-text').disabled = value.messageDisabled;";
-        assert.ok(source.includes(before), 'negative control must patch the real disable assignment');
-        response.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-store' });
-        response.end(source.replace(before, "ui.byId('message-text').disabled = false;")); return true;
-      }
-      return servePersonalAccessUi(request, response, cloud);
-    };
-    host = await createPersonalAccessService({ root: join(root, 'host'), port: 0, backend: runtime.backend, uiHandler: brokenComposer,
+    host = await createPersonalAccessService({ root: join(root, 'host'), port: 0, backend: runtime.backend, uiHandler: servePersonalAccessUi,
       cloudIdentity: { issuer: f.config.issuer, allowInsecureLoopback: true },
       relay: { binary: join(frpDir, 'frpc'), transportCaFile: join(infra.infra, 'cert.pem'), developmentTls: true,
         connectAddress: '127.0.0.1', connectPort: frontPort, diagnostic: e => runtimeLogs.push(e.message) } });
