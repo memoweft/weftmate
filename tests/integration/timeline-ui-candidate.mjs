@@ -59,7 +59,7 @@ export async function startTimelineCandidate(options = {}) {
       sessionId = input.sessionId; return { sessionId } },
     sendMessage: async input => {
       operations.push({ kind: 'message', mode: input.mode, text: input.text })
-      if(options.daily){
+      if(options.daily && input.text!==goal){
         const row=dailySessions.get(input.sessionId);assert.ok(row);sessionId=input.sessionId;events=row.events;
         const rpc='synthetic-'+randomUUID();row.title=input.text===goal?'项目进度报告':input.text;
         if(row.running&&input.mode==='queue')append('agent/inbox/spliced',{target:'next-turn',start:0,inserted:[{id:rpc,source:{kind:'user',rpcId:rpc},content:[{type:'text',text:input.text}]}]});
@@ -73,6 +73,7 @@ export async function startTimelineCandidate(options = {}) {
         else append('user/message', { source: { kind: 'user', rpcId: rpc }, content: [{ type: 'text', text: input.text }] })
         return { accepted: true, receiptId: rpc }
       }
+      running = true; if(dailySessions.has(sessionId))dailySessions.get(sessionId).running=true;
       for (let i = 0; i < (options.historyCount ?? 2100); i++) append('assistant/message', { content: [{ type: 'text', text: `历史记录 ${i + 1}：已核对项目资料。` }] })
       append('turn/start', { turn: 1 }); const user = append('user/message', { source: { kind: 'user', rpcId: receiptId }, content: [{ type: 'text', text: goal }] })
       if (options.inlineProgress) return { accepted: true, receiptId };
@@ -110,14 +111,14 @@ export async function startTimelineCandidate(options = {}) {
     importBackup: async () => {backupOperations.push('import');return {backup:{id:'ui4-import'}}},
     restore: async id => {backupOperations.push('restore:'+id);return {accepted:true}},
   } : null;
-  service = await createPersonalAccessService({ root, port: 0, ...(options.clock?{clock:options.clock}:{}), backend, backupManager, memoryManager:options.memoryManager??null, uiHandler: servePersonalAccessUi })
+  service = await createPersonalAccessService({ root, port: 0, ...(options.clock?{clock:options.clock}:{}), backend, backupManager, libraryNativeActions:options.libraryNativeActions??null, memoryManager:options.memoryManager??null, uiHandler: servePersonalAccessUi })
   const started = await service.start(); let origin = started.origin;
   const { hostId } = started, grant = await service.issueSetupGrant()
   const credentials = { username: 'TimelineFixture', password: `isolated-${randomUUID()}`, deviceName: '隔离测试浏览器' }
   const setup = await fetch(origin + '/personal/v1/auth/setup', { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify({ grant: grant.grant, ...credentials }) })
   assert.equal(setup.status, 201); const auth = await setup.json(), cookie = setup.headers.get('set-cookie').split(';')[0]
   const request = async (path, body, method = body ? 'POST' : 'GET') => { const response = await fetch(origin + '/personal/v1' + path, { method, headers: { origin, cookie, 'content-type': 'application/json', 'x-weftmate-csrf': auth.csrfToken }, ...(body ? { body: JSON.stringify(body) } : {}) }); const data = await response.json(); assert.ok(response.ok, JSON.stringify(data)); return data }
-  const command = async body => { const value = await request('/commands', body); for (let i = 0; i < 100; i++) { const row = (await request(`/commands/${value.command.commandId}`)).command; if (row.state === 'accepted_by_dsh') return row; await new Promise(done => setTimeout(done, 20)) } throw Error('command not accepted') }
+  const command = async (body, route = '/commands') => { const value = await request(route, body); for (let i = 0; i < 100; i++) { const row = (await request(`/commands/${value.command.commandId}`)).command; if (row.state === 'accepted_by_dsh') return row; await new Promise(done => setTimeout(done, 20)) } throw Error('command not accepted') }
   const created = await command({ requestId: 'timeline-create', kind: 'session.create', modelProfileId: 'local', targetDeviceId: hostId })
   sessionId = created.sessionId
   const source = await command({ requestId: 'timeline-message', kind: 'session.message', sessionId, targetDeviceId: hostId, text: goal }); taskId = source.commandId
@@ -163,8 +164,8 @@ export async function startTimelineCandidate(options = {}) {
     if (method === 'shared.sessions.list') return { source: 'host', hostAvailable: true, sessions: (await request('/sessions')).sessions.map(row=>({...row,source:'host'})) }
     if (options.sidebar && method === 'shared.projects.list') return request('/projects');
     if (options.sidebar && method === 'shared.sessions.lifecycle') return request(`/sessions/${params.sessionId}/${params.action}`, {});
-    if (method === 'shared.sessions.events') return { source: 'host', sessionId, hostAvailable: true, ...await request(`/sessions/${sessionId}/events?limit=100${params.afterSeq === undefined ? '' : `&afterSeq=${params.afterSeq}`}${params.beforeSeq === undefined ? '' : `&beforeSeq=${params.beforeSeq}`}`) }
-    if (method === 'shared.sessions.eventDetail') return request(`/sessions/${sessionId}/events/${params.seq}/detail`)
+    if (method === 'shared.sessions.events') return { source: 'host', sessionId:params.sessionId, hostAvailable: true, ...await request(`/sessions/${params.sessionId}/events?limit=100${params.afterSeq === undefined ? '' : `&afterSeq=${params.afterSeq}`}${params.beforeSeq === undefined ? '' : `&beforeSeq=${params.beforeSeq}`}`) }
+    if (method === 'shared.sessions.eventDetail') return request(`/sessions/${params.sessionId}/events/${params.seq}/detail`)
     if (method === 'activity.list') return { hostAvailable: true, activities: [{ ...source, source: 'host', taskId }] }
     if (method === 'shared.tasks.detail') return request(`/tasks/${params.taskId}`)
     if (method === 'shared.artifacts.preview') return request(`/artifacts/${params.artifactId}/preview`)
@@ -232,6 +233,20 @@ export async function startTimelineCandidate(options = {}) {
         const registration=await service.trackToolApproval({...tuple,action:'register_approval',reason:`运行命令：${command}`});return {approvalId,tuple,registration}},
       resolve: async ({tuple},outcome) => {await service.trackToolApproval({...tuple,action:'resolve_approval',outcome});append('approval/decided',{id:tuple.approvalId,outcome})},
       artifact: async () => {const artifact=await service.submitToolArtifact({sessionId,turn:1,callId:'artifact-progress',messageHash:hash(goal),fileName:'合成验收报告.md',content:'# 合成验收报告\n\n这份文件仅用于界面验收。\n'});call('write','artifact-progress',{fileName:artifact.fileName});result('artifact-progress',JSON.stringify(artifact));return artifact},
+    },
+    newOutputSource: async (text, projectId = null) => {
+      const created = projectId
+        ? await command({requestId:'library-create-'+randomUUID(),modelProfileId:'local'}, `/projects/${projectId}/sessions`)
+        : await command({requestId:'library-create-'+randomUUID(),kind:'session.create',modelProfileId:'local',targetDeviceId:hostId});
+      const sent = await command({requestId:'library-message-'+randomUUID(),kind:'session.message',sessionId:created.sessionId,targetDeviceId:hostId,text});
+      return {sessionId:created.sessionId,text,receiptId:sent.receiptId};
+    },
+    finishOutputSource: source => {const row=dailySessions.get(source.sessionId);row.events.push({seq:row.events.length,time:baseTime+row.events.length*500,type:'turn/end',data:{turn:1,reason:{kind:'completed'}}});row.running=false;if(sessionId===source.sessionId)running=false;},
+    libraryDesktopToken:service.libraryDesktopToken,
+    registerOutput: async (filePath, provenance = {sessionId:source.sessionId, text:goal, receiptId:source.receiptId}) => {
+      const callId=`library-${randomUUID()}`;
+      const artifact=await service.registerNativeFile({sessionId:provenance.sessionId,turn:1,callId,messageHash:hash(provenance.text),receiptId:provenance.receiptId,filePath,sha256:hash(readFileSync(filePath))});
+      const previous=events;events=dailySessions.get(provenance.sessionId)?.events??events;call('write',callId,{file_path:filePath});result(callId,JSON.stringify({artifact}));events=previous;return artifact;
     }, credentials, sessionId, operations, request, backupOperations, mobileUrl: `http://127.0.0.1:${server.address().port}/`,
     complete: async (handled = false) => { if (!handled) await request(`/sessions/${sessionId}/approvals/${approvalId}`, { requestId:'fixture-allow-once',outcome:'allowed-once' });await service.trackToolApproval({ action: 'resolve_approval', runtimeId, approvalId, sessionId, turn: 1, callId: 'write-1', rootCallId: 'write-1', receiptId, messageHash: hash(goal), toolName: 'pwsh', argumentsHash: hash('write report'), outcome:'allowed-once' });append('approval/decided',{id:approvalId,outcome:'allowed-once'});questionFrame.nativeState='answered';if (!handled) result('question-1','{"answers":[{"id":"format","selected":["简要报告"]}]}');result('write-1','Report saved.'); append('step/end',{turn:1,step:1});append('assistant/message',{content:[{type:'text',text:'报告已保存，测试全部通过。'}]});append('turn/end',{turn:1,reason:{kind:'completed'}});running=false },
     close: async () => { await service.close();await new Promise(done=>server.close(done)) } }
