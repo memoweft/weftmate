@@ -1,3 +1,4 @@
+import { personalization } from './personalization.mjs';
 import { validateMemorySettings } from './temporary-chats.mjs';
 import { enterProfileWrite } from '../personal-backup/write-barrier.mjs';
 import { validateChatIdentity } from './chat-identity.mjs';
@@ -83,6 +84,8 @@ export async function durableWrite(file, state, shouldCommit = () => true) {
 export function validateSingleStore(store) {
   if (!plainObject(store)) throw failure('STORE_CORRUPT', 500);
   validateChatIdentity(store);
+  if (store.personalization !== undefined) { try { personalization.validate(store.personalization); } catch { throw failure('STORE_CORRUPT', 500); } }
+  if (store.personalizationUpdatedAt !== undefined && !validTime(store.personalizationUpdatedAt)) throw failure('STORE_CORRUPT', 500);
   if (store.messageBranches !== undefined && !plainObject(store.messageBranches)) throw failure('STORE_CORRUPT', 500);
   for (const [requestId, operation] of Object.entries(store.messageBranches ?? {})) {
     const branch = operation?.response;
@@ -615,6 +618,10 @@ export function validateSingleStore(store) {
 }
 
 export function validateStore(store) {
+  if (store?.onboarding !== undefined && (!plainObject(store.onboarding) ||
+      !['welcome', 'account', 'model', 'memory', 'import', 'phone', 'first'].includes(store.onboarding.step) ||
+      typeof store.onboarding.completed !== 'boolean' || typeof store.onboarding.started !== 'boolean' ||
+      store.onboarding.ownerId !== undefined && !validId(store.onboarding.ownerId))) throw failure('STORE_CORRUPT', 500);
   if (!plainObject(store) || store.version !== VERSION || !validId(store.hostId) ||
       !validId(store.legacyOwnerId) || !plainObject(store.accounts) ||
       !Object.hasOwn(store.accounts, store.legacyOwnerId) ||

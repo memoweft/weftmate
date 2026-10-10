@@ -116,6 +116,7 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
   async function listMobileSessions(){if(!state.loggedIn||state.transitionPending)return;
   const owner=state.owner,epoch=state.authEpoch,generation=state.sharedGeneration;
   syncMobileIdentity();
+  void core.loadPersonalization().catch(() => {});
   try {
     const status = await core.accessApi('/status');
     if (owner !== state.owner || epoch !== state.authEpoch) return;

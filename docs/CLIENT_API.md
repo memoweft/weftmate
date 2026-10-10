@@ -454,6 +454,28 @@ UPD-1：资源服务从当前已验证 `ui` 版本读取既有白名单中的路
 
 MS-1：`defaultModelProfileId` 按账户保存，用于新对话；已有对话继续使用原绑定。后台配置默认跟随账户当前 / 最近聊天的模型，有会话和无会话的积压任务使用同一规则；没有最近聊天时才使用账户默认或已授权会话绑定，绝不回退到启动配置 `authRef`。标题、记忆整理以及后续关心/健康归纳按后台路由。仅本机回环且 `/props.total_slots=1` 的入口排队，云 API、多槽和未知槽数直接并行。本机 ModelSwitcher（模型切换代理）的后台请求仅在所选模型已经加载且未切换时进入推理；模型不一致则等待并释放槽位给聊天，后台不主动触发装卸。状态未知的已确认单槽服务也等待。单槽主对话整轮运行（含工具间隙）时后台推理等待，主请求在等待队列中优先；已开始的后台推理会完成后释放单槽。原生 compaction（上下文压缩）属于当前主请求，继续按主模型执行。记忆形成使用后台路由；World/interactions（记忆与经历）召回的来源权限按接收内容的主模型 modelTier 判定。
 
+### ST-1 个性化与助手设置
+
+| 方法与路径 | 请求 | 响应 / 权限 |
+|---|---|---|
+| GET `/settings/personalization` | 无查询 | 200 `{settings,updatedAt,synced:true}`；`sessions:read`，同一账户各设备读同一份 |
+| PATCH `/settings/personalization` | 下列字段的非空子集 | 200 同 GET；`account:manage`，沿用 Cookie（会话凭据）和 CSRF（跨站请求伪造防护）；非法类型、未知字段、超限返回 400 `INVALID_REQUEST` |
+| POST `/settings/personalization/style` | `{}`，无查询 | 200 同 GET；同 PATCH 权限；仅宿主本机从账户的本人消息提炼表达习惯，不调用模型、不保存原文；临时内容、已删除片段不参与 |
+
+`settings`：
+
+- `preferredName:""`（80 字）、`bio:""`（500 字）、`tone:"natural"`（`natural|concise|detailed|formal|casual`）、`toneInstructions:""`（500 字）。
+- `fixedInstructions:""`（4,000 字）；`useWritingStyle:false`、`writingStyle:""`（1,000 字）。长度按 Unicode（统一字符编码）码点计算，空文本合法；提炼结果可通过 PATCH 编辑／清空，清除不删除任何聊天记录。
+- `webSearch:true`、`verbosity:"medium"`（`short|medium|thorough`）、`thinkingDisplay:"collapsed"`（`collapsed|expanded|hidden`）、`defaultDeepThinking:false`、`messageMode:"queue"`（`queue|steer`）。
+
+服务端串行合并字段，冲突按最后一次成功写入为准；`updatedAt` 为宿主保存时间，旧账户无已保存设置时为 `null` 并返回默认值。旧本设备的 D36 引导偏好在首次读取时迁入未配置账户；以后账户值优先。客户端仅成功回执后显示「已同步」，读取／保存失败保留可重试状态，切账户丢弃迟到回执。
+
+称呼、简介、语气、自定义语气、详细程度、写作风格和固定说明在每个新回合通过 DSH（助手运行时）原生系统提示段组装，回合内保持快照，不改写历史；主对话、普通／项目旁聊和临时对话共用此机制。固定说明从不写入本人消息或 MemoWeft（记忆服务）摄取边界，也不成为 Evidence（记忆证据）。关闭网页搜索会从原生模型工具目录移除并拒绝 `web_search|web_fetch|browser`；不撤销普通文件／电脑能力。
+
+新建对话读取 `defaultDeepThinking`，仍沿 UX-3 的模型目录能力和 `/sessions/{id}/thinking`，不支持的模型以普通方式回答；既有对话保持自己的偏好。`assistant.message.data.modelThinking` 是可选的模型返回思考内容（最多 4,000 字，沿历史正文的安全投影），只用于展示三档，不作为回复正文、上下文交接或记忆输入；模型不提供时没有空思考块。原生来源接口与工具详情仍不返回此内容。
+
+`POST /offline/sync` 的加密副本追加 `personalization`，只携带上述账户设置，沿用既有记忆、副本权限和删除代次；离线直连共用系统提示组装函数，没有新增记忆／文件导出。离线模型没有会话级原生推理能力时不承诺默认深入思考。Android（安卓）原生 code27 开放上述两个设置路径；发布此界面包须声明最低原生 code27，旧壳保留兼容界面。Apple（苹果端）接线清单见 ST-1 证据。
+
 ### 3.16 对话输出与来源（UI-1b，1）
 
 | 方法与路径 | 请求参数 | 响应 / 状态 | 主要领域错误 | 使用端 |
@@ -1206,3 +1228,20 @@ Apple（苹果端）接线：新建入口发送 `/sessions/temporary`；侧栏/�
 补整理按原回合时间顺序进行，每步重核对会话及来源；临时对话、当前关闭记忆的对话、回合冻结策略禁止摄取的内容和已遗忘来源均排除。排除已确认投递的回合及Core已接受的边界；事件标识沿实时摄取算法保持一致，重复确认、重启与未知回执不会重复形成。历史回合默认不自动运行；升级后新完成的普通回合由持久日志恢复漏掉的IPC（进程间通信），先写outbox再尝试投递，忙／路由不可用／子进程离线均退避重试。宿主重启恢复outbox和已确认的补整理进度，暂停状态也持久保留。
 
 Windows（视窗系统）程序与远程手机网页、Android（安卓）界面包已接入。安卓现有 `host.business` 记忆路由支持这些接口，无需新增权限；Apple（苹果端）需接记忆页健康、预览／确认、暂停／继续／取消及进度，旧客户端可忽略新增字段。确认与溯源语义未改变，不把助手提议当作用户事实。
+
+
+## 12. 首次使用引导与模型发现（ONB-1）
+
+仅全新宿主安装建立未开始的引导；升级已有数据目录不补建。旧账户、预先配置的账户，以及已完成引导的安装不自动显示。引导开始后绑定当前账户；其他账户不读取该账户的中断进度。设置可主动重新查看。步骤与完成状态在宿主中原子保存，客户端不另存账户、模型或称呼。
+
+| 路径 | 请求 | 返回与授权 |
+|---|---|---|
+| `GET /onboarding` | 无查询 | 200 `{onboarding:null\|{step,completed,started,ownerId?}}`；账户创建前可读安装进度，绑定账户后只有该账户可读，其他身份返回 `null`。旧安装返回 `null`。 |
+| `PATCH /onboarding` | `{step,completed}` | 200 同上；`step=welcome\|account\|model\|memory\|import\|phone\|first`，`completed` 为布尔。无账户时仅宿主直接同源地址；有账户后沿 Cookie（会话凭据）/CSRF（跨站请求伪造防护）与 `account:manage`。用于每次前进 / 返回 / 完成，以及主动重新查看。 |
+| `POST /models/discover` | `{addresses?:string[]}` | 200 `{results:[{baseUrl,models:string[]}]}`；`account:manage` 与原 Cookie/CSRF。只向本机及已发现的局域网邻居的常见模型端口读取 `/v1/models`；可补充明确的本机 / 私网地址。不发送密钥，不重定向，不发对话，不保存模型，必须由用户选中结果并保存。 |
+
+当前默认探测端口为 11434、1234、8000、5000，避免自动探测日用模型代理 8081；邻居来源为操作系统已有邻居表，不枚举整个网段。其他端口可填补充地址，仍只读模型目录。`addresses` 不接受公网地址、带凭据 / 参数 / 片段的地址。目录不公开或需要密钥的服务仍走已有的模型表单与逐项诊断。未配置模型可跳过，但「开始聊天」要求当前账户至少有一个已配置模型，首页保留设置提示。
+
+账户沿第7节注册 / 登录 / 本地设置流程；称呼写 ST-1 的 `PATCH /settings/personalization {preferredName}`；模型沿 `/account/models/check`、保存回执与 `/settings/models`，中断后只保存非秘密请求编号并核对原回执；记忆沿第11节状态和只读补整理预览，不自动运行；导入入口置灰。连接手机沿第7节一次性二维码 / 配对码及设备允许 / 拒绝，不新建信任协议。一次性码持有与同账户验证是原扫码批准路径；无配对码的新设备仍须在已登录电脑上明确允许。
+
+Apple（苹果端）：Mac 执行宿主按本节读取安装进度并保存步骤，远程 iPhone / Mac 只接「连电脑」说明与现有扫码 / 批准流程；Watch（手表）不显示七步引导。文案与提供方获取密钥说明的中文来源为 `src/ui-core/onboarding-copy.js`，英文随 L10N-1 补齐。

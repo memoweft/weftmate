@@ -1,3 +1,4 @@
+import { accountPersonalization } from './personalization.mjs';
 import { createMemoryIngestion } from './memory-ingestion.mjs';
 import { modelTierFor } from '../model-tier.ts';
 import { currentChatProfile } from '../background-model-selection.mjs';
@@ -118,6 +119,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const storeFile = path.join(root, 'store.json');
   const restoredCloudOwners = await readFile(path.join(root, 'backup-cloud-owners.json'), 'utf8').then(JSON.parse).catch(error => { if (error.code === 'ENOENT') return []; throw error; });
   let rootState;
+  let freshInstallation = false;
   const usage = await createUsageStore({ root, clock });
   // Accessors preserve the original service's live state across module boundaries.
   const context = {
@@ -340,6 +342,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     else { migrateProjects(rootState); validateSingleStore(rootState); }
   } catch (error) {
     if (error?.code !== 'ENOENT') throw failure('STORE_CORRUPT', 500);
+    freshInstallation = true;
     rootState = {
       version: SINGLE_ACCOUNT_VERSION,
       ownerId: `owner-${randomUUID()}`,
@@ -368,6 +371,10 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     validateStore(migrated);
     await durableWrite(storeFile, migrated);
     rootState = migrated;
+  }
+  if (freshInstallation) {
+    rootState.onboarding = { step: 'welcome', completed: false, started: false };
+    await durableWrite(storeFile, rootState);
   }
   if (Object.values(rootState.accounts).some(account => !account.chatIdentity)) {
     // No listeners/writers are active yet. The BK-1 profile upgrade snapshot
@@ -725,6 +732,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       const project = account.projects?.[session.projectId];
       return { conversationWorkspace: sessionWorkspace(path.join(path.dirname(root), 'conversations'), match.ownerId, session.workspaceChatId ?? sessionId),
         deepThinking: (chatForSession(account,sessionId)?.deepThinking ?? session.deepThinking) === true,
+        personalization: accountPersonalization(account),
 
         mode: session.approvalMode ?? account.defaultApprovalMode ?? 'auto',
         allowedCategories: session.allowedApprovalCategories ?? [],

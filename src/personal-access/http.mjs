@@ -1,3 +1,5 @@
+import { handlePersonalization } from './personalization.mjs';
+import { handleOnboarding } from './onboarding.mjs';
 import { hasPrivateContent } from './temporary-chats.mjs';
 import { canonicalProviderModelId } from '../model-connection-check.mjs';
 import { currentChatProfile } from '../background-model-selection.mjs';
@@ -113,6 +115,7 @@ export function createHttpHandler(context) {
           context.cloudIdentity?.browserConfiguration()) === true) return;
         throw failure('NOT_FOUND', 404);
       }
+      if (['/personal/v1/onboarding', '/personal/v1/models/discover'].includes(pathname)) return await handleOnboarding(context, request, response, url);
       if (request.method === 'GET' && pathname === '/personal/v1/auth/state') {
         if (url.search) throw failure('INVALID_REQUEST');
         return context.json(response, 200, { configured: context.registeredAccountCount() > 0,
@@ -629,6 +632,7 @@ export function createHttpHandler(context) {
         }
       }
       if (await context.scheduleOperations.handleHttp(request, response, url, ownerId)) return;
+      if (['/personal/v1/settings/personalization', '/personal/v1/settings/personalization/style'].includes(pathname)) return await handlePersonalization(context, request, response, url, ownerId);
       if (await context.activity.handleHttp(request, response, url, ownerId, deviceId)) return;
       const thinkingMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/thinking$/.exec(pathname);
       if (thinkingMatch && ['GET', 'PATCH'].includes(request.method)) {
