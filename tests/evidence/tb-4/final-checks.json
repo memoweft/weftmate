@@ -5,7 +5,8 @@
     "core": 78,
     "authMessagesBridge": 38,
     "failed": 0,
-    "skipped": 0
+    "skipped": 0,
+    "webCloudInteraction": 100
   },
   "regressionsBeforeMerge": {
     "activity": 16,
@@ -20,5 +21,10 @@
   "androidRouteTests": "BusinessRouteUnitTest passed",
   "finishReview": "ship",
   "designDocumentation": "incumbent tokens/icons preserved, read-only ship",
-  "fullTests": "CI final result delegated to Claude"
+  "fullTests": "CI final result delegated to Claude",
+  "relatedBrowserRegressions": 2,
+  "initialCiFixes": [
+    "fake DOM body/clone/viewport/interval support; all 100 original tests retained",
+    "reuse existing main-chat gallery scene; modern question navigation uses activity original action"
+  ]
 }
