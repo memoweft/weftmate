@@ -102,7 +102,7 @@ class Element {
   closest(selector: string): Element | null { return selector.split(',').some(part => matchesTestSelector(this, part.trim())) ? this : this.parentNode?.closest(selector) ?? null }
   contains(node: Element | null): boolean { return !!node && (node === this || this.children.some((child) => child.contains(node))) }
   get isConnected(): boolean { return this.root || this.parentNode?.isConnected === true }
-  close() { this.open = false; if (this.ownerDocument && this.contains(this.ownerDocument.activeElement)) this.ownerDocument.activeElement = this.ownerDocument.body }
+  close() { this.open = false; if (this.ownerDocument && this.contains(this.ownerDocument.activeElement)) this.ownerDocument.activeElement = this.ownerDocument.body; this.fire('close') }
   showModal() { this.open = true; this.focus() }
   reset() { this.value = '' }
   open = false
@@ -127,7 +127,7 @@ class Element {
 
 function matchesTestSelector(node: Element, selector: string) {
   if (selector === 'dialog[open]') return node.tagName === 'DIALOG' && node.open
-  if (/^(button|form|pre|a|textarea)$/.test(selector)) return node.tagName === selector.toUpperCase()
+  if (/^(button|form|pre|a|textarea|img)$/.test(selector)) return node.tagName === selector.toUpperCase()
   if (selector.startsWith('.')) return node.className.split(' ').includes(selector.slice(1))
   if (selector === '[data-conversation-task], [data-conversation-approval], [data-conversation-question]') return !!(node.dataset.conversationTask || node.dataset.conversationApproval || node.dataset.conversationQuestion)
   if (selector === 'details') return node.tagName === 'DETAILS'
@@ -1493,13 +1493,13 @@ test('DSH history renders image-only and mixed user turns from owner-scoped GET,
   assert.match(visibleText(rows[2]), /2 张历史图片暂无法查看/)
   assert.doesNotMatch(visibleText(page.get('transcript')), /data:image|base64/)
   firstGallery.children[0].fire('click')
-  const viewer = page.get('body').children.find((child) => child.id === 'phone-image-preview')!
-  assert.equal(viewer.hidden, false)
-  assert.equal(viewer.children[0].src, url)
+  const viewer = page.get('body').children.find((child) => child.className.includes('render-gallery'))!
+  assert.equal(viewer.open, true)
+  assert.equal(viewer.querySelector('img')!.src, url)
   page.getByRole('button',{name:'B'}).fire('click')
   await flush()
-  assert.equal(viewer.hidden, true)
-  assert.equal(viewer.children[0].src, '')
+  assert.equal(viewer.open, false)
+  assert.equal(viewer.querySelector('img')!.src, '')
   assert.equal(firstGallery.children[0].focused, false, 'session switch does not restore focus to a stale card')
 })
 
@@ -1547,15 +1547,15 @@ test('account logout clears an open DSH image viewer and its conversation cards'
   for (let attempt = 0; attempt < 20 && !page.get('transcript').children.length; attempt++) await flush()
   const gallery = page.get('transcript').children[0].children.find((child) => child.className === 'synced-image-gallery')!
   gallery.children[0].fire('click')
-  const viewer = page.get('body').children.find((child) => child.id === 'phone-image-preview')!
-  assert.equal(viewer.hidden, false)
+  const viewer = page.get('body').children.find((child) => child.className.includes('render-gallery'))!
+  assert.equal(viewer.open, true)
   page.get('logout-button').fire('click')
-  for (let attempt = 0; attempt < 20 && !viewer.hidden; attempt++) await flush()
-  assert.equal(viewer.hidden, true)
-  assert.equal(viewer.children[0].src, '')
+  for (let attempt = 0; attempt < 20 && viewer.open; attempt++) await flush()
+  assert.equal(viewer.open, false)
+  assert.equal(viewer.querySelector('img')!.src, '')
   assert.equal(page.get('transcript').children.length, 0)
   gallery.children[0].fire('click')
-  assert.equal(viewer.hidden, true, 'stale image control cannot reopen after account logout')
+  assert.equal(viewer.open, false, 'stale image control cannot reopen after account logout')
 })
 
 test('desktop appends one user text event to the original phone conversation without invoking a model', async () => {

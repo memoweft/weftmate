@@ -1,6 +1,7 @@
 /* Shared message actions. Native DSH remains the only conversation executor. */
 (() => {
   const plain = text => {
+    if (globalThis.WeftFormat?.plainText) return WeftFormat.plainText(text);
     const code = [], keep = value => `\u0000weft-code-${code.push(value) - 1}\u0000`;
     return String(text ?? '').replace(/(`{3,}|~{3,})[^\n]*\n([\s\S]*?)\1/g, (_match, _fence, content) => keep(content))
       .replace(/`([^`\n]+)`/g, (_match, content) => keep(content))

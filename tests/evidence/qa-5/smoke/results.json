@@ -1,0 +1,322 @@
+{
+  "startedAt": "2026-10-10T06:56:31.381Z",
+  "installed": true,
+  "checks": [
+    {
+      "name": "01-main-chat",
+      "passed": true,
+      "durationMs": 6280,
+      "sessionId": "session-c6e49ec4-c645-4ee9-bdb9-854687682743",
+      "approvals": 0,
+      "reply": "好的，两条简单建议：\n\n1. **先分类再归位**：把桌面上的文件快速分成三堆——\"要用的\"、\"归档的\"、\"没用的\"。没用的直接删，归档的按类型建几个文件夹（如\"文档\"、\"图片\"、\"项目\"）移进去。\n\n2. **只留进行中的**：桌面上只保留本周正在处理的东西，其他的都收进\"下载\"或按日期命名的文件夹里。桌面越空，找东西和开工都越快。\n\n收拾完如果想要，我可以帮你写个自动归档脚本，以后一键整理。"
+    },
+    {
+      "name": "02-preference",
+      "passed": true,
+      "durationMs": 2411,
+      "sessionId": "session-c6e49ec4-c645-4ee9-bdb9-854687682743",
+      "approvals": 0,
+      "reply": "记下了，稍后整理进记忆：你喝第 951 种花茶时喜欢加一片柠檬。"
+    },
+    {
+      "name": "03-side-recall",
+      "passed": true,
+      "durationMs": 1151,
+      "sessionId": "session-6456ec08-038e-44cc-8e1d-0c4050dc65f8",
+      "approvals": 0,
+      "reply": "喝第951种花茶时，你喜欢加一片柠檬。"
+    },
+    {
+      "name": "04-correction",
+      "passed": true,
+      "durationMs": 2489,
+      "sessionId": "session-6456ec08-038e-44cc-8e1d-0c4050dc65f8",
+      "approvals": 0,
+      "reply": "记下了，稍后整理进记忆：第951种花茶改为加一片苹果，不再加柠檬。"
+    },
+    {
+      "name": "05-file-approval",
+      "passed": true,
+      "durationMs": 19528,
+      "sessionId": "session-6456ec08-038e-44cc-8e1d-0c4050dc65f8",
+      "approvals": 4,
+      "reply": "\n\n\n\n已完成：读取了 `a.txt`（合成会议笔记）和 `b.txt`（合成阅读清单），并生成 `index.md` 汇总两份内容，回读核验无误，仅操作了该目录。"
+    },
+    {
+      "name": "06-reminder-set",
+      "passed": true,
+      "durationMs": 8063,
+      "sessionId": "session-6456ec08-038e-44cc-8e1d-0c4050dc65f8",
+      "approvals": 0,
+      "reply": "\n\n已建立提醒：2分钟后（2026-10-10 15:00 左右）提醒你「QA5日用冒烟活动：站起来活动」。"
+    },
+    {
+      "name": "07-personalization",
+      "passed": true,
+      "durationMs": 813
+    },
+    {
+      "name": "08-dark",
+      "passed": true,
+      "durationMs": 387
+    },
+    {
+      "name": "09-temporary",
+      "passed": true,
+      "durationMs": 2061,
+      "sessionId": "session-5ea5e8ed-56fb-4eae-82f0-dee68a5fb0d8",
+      "approvals": 0,
+      "reply": "收到"
+    },
+    {
+      "name": "10-phone-continue-approve",
+      "passed": true,
+      "durationMs": 14764,
+      "sessionId": "session-c6e49ec4-c645-4ee9-bdb9-854687682743",
+      "approvals": 2,
+      "reply": "\n\n\n已写入 `phone.txt` 并读回核验，内容为：`QA5_PHONE_OK`。"
+    },
+    {
+      "name": "11-reminder-delivery",
+      "passed": false,
+      "durationMs": 38103,
+      "error": "The expression evaluated to a falsy value:\n\n  assert.ok(notifications.some(n=>n.body?.includes('QA5日用冒烟活动')))\n"
+    },
+    {
+      "name": "daily-1",
+      "passed": true,
+      "durationMs": 2856,
+      "sessionId": "session-ef159555-fa05-4a75-a8c3-afca76042301",
+      "approvals": 0,
+      "reply": "小织，你好～\n\n第951种花茶现在不加柠檬了，改加**一片苹果**。"
+    },
+    {
+      "name": "daily-2",
+      "passed": true,
+      "durationMs": 7573,
+      "sessionId": "session-ef159555-fa05-4a75-a8c3-afca76042301",
+      "approvals": 0,
+      "reply": "小织，下一步建议：打开 index.md 快速核对一遍两份文件内容有没有遗漏或抄错，确认无误就收工。"
+    },
+    {
+      "name": "daily-3",
+      "passed": true,
+      "durationMs": 4593,
+      "sessionId": "session-57598978-03f8-4694-8e18-f36f9a5c2c19",
+      "approvals": 0,
+      "reply": "小织你好！\n\n第951种花茶现在不加柠檬了，改加**一片苹果**。"
+    },
+    {
+      "name": "daily-4",
+      "passed": true,
+      "durationMs": 2623,
+      "sessionId": "session-57598978-03f8-4694-8e18-f36f9a5c2c19",
+      "approvals": 0,
+      "reply": "下一步建议：打开 index.md 核对一遍两份文件内容是否都正确列全，然后关掉 a.txt、b.txt 这些临时文件，保持桌面清爽。"
+    },
+    {
+      "name": "daily-5",
+      "passed": true,
+      "durationMs": 3866,
+      "sessionId": "session-d2ac1cd7-c471-4b5a-ba83-1243a59483f9",
+      "approvals": 0,
+      "reply": "小织，你好！\n\n第951种花茶现在不加柠檬了，改加**一片苹果**。"
+    },
+    {
+      "name": "daily-6",
+      "passed": true,
+      "durationMs": 2890,
+      "sessionId": "session-d2ac1cd7-c471-4b5a-ba83-1243a59483f9",
+      "approvals": 0,
+      "reply": "下一步建议：花两分钟核对一下 index.md 里的内容是否和 a.txt、b.txt 一致，确认无误后就可以把原文件归档或删掉了。"
+    },
+    {
+      "name": "daily-7",
+      "passed": true,
+      "durationMs": 4710,
+      "sessionId": "session-1cadd2ac-e80e-4a96-90a8-62705400c219",
+      "approvals": 0,
+      "reply": "小织你好！第951种花茶现在不加柠檬了，改加一片苹果——所以这次加一片苹果就好。"
+    },
+    {
+      "name": "daily-8",
+      "passed": true,
+      "durationMs": 2780,
+      "sessionId": "session-1cadd2ac-e80e-4a96-90a8-62705400c219",
+      "approvals": 0,
+      "reply": "建议：打开 index.md 核对一遍两份文件的内容是否都列全了，没问题就可以收工。"
+    },
+    {
+      "name": "daily-9",
+      "passed": true,
+      "durationMs": 3555,
+      "sessionId": "session-a4180a68-aab4-4e9d-92b7-6d42a55d4006",
+      "approvals": 0,
+      "reply": "小织，您好～\n\n您现在喝的第951种花茶，按您的最新习惯是**加一片苹果**（不加柠檬）。"
+    },
+    {
+      "name": "daily-10",
+      "passed": true,
+      "durationMs": 1961,
+      "sessionId": "session-a4180a68-aab4-4e9d-92b7-6d42a55d4006",
+      "approvals": 0,
+      "reply": "小织，建议：**快速浏览一遍整理好的文件，确认归类正确就收工，别再折腾。**"
+    },
+    {
+      "name": "daily-11",
+      "passed": true,
+      "durationMs": 3179,
+      "sessionId": "session-9f46893c-eeed-4082-8c1c-8b383768a8d2",
+      "approvals": 0,
+      "reply": "小织，你好！\n\n第951种花茶现在应该加**一片苹果**（不加柠檬了）。"
+    },
+    {
+      "name": "daily-12",
+      "passed": true,
+      "durationMs": 2750,
+      "sessionId": "session-9f46893c-eeed-4082-8c1c-8b383768a8d2",
+      "approvals": 0,
+      "reply": "小织，建议：花几分钟把整理好的文件做个简单备份，然后休息一下。"
+    },
+    {
+      "name": "daily-13",
+      "passed": true,
+      "durationMs": 5863,
+      "sessionId": "session-95483356-3fcc-487d-8561-3b6cf1ef0639",
+      "approvals": 0,
+      "reply": "小织，你好！\n\n第951种花茶现在不加柠檬了，改加**一片苹果**就好。"
+    },
+    {
+      "name": "daily-14",
+      "passed": true,
+      "durationMs": 2411,
+      "sessionId": "session-95483356-3fcc-487d-8561-3b6cf1ef0639",
+      "approvals": 0,
+      "reply": "小织，整理完文件后，下一步建议：**快速浏览一遍，确认每个文件都在该在的位置**，有问题的顺手调整就好。"
+    },
+    {
+      "name": "daily-15",
+      "passed": true,
+      "durationMs": 5470,
+      "sessionId": "session-cf3126f4-acb3-4fed-b03d-eb50925f1317",
+      "approvals": 0,
+      "reply": "小织，你好～\n\n第951种花茶现在不加柠檬了，改为加**一片苹果**。"
+    },
+    {
+      "name": "daily-16",
+      "passed": true,
+      "durationMs": 15738,
+      "sessionId": "session-cf3126f4-acb3-4fed-b03d-eb50925f1317",
+      "approvals": 0,
+      "reply": "小织，建议：歇5分钟，起身走动一下再继续。"
+    },
+    {
+      "name": "daily-17",
+      "passed": true,
+      "durationMs": 4182,
+      "sessionId": "session-c0728e4a-79a5-4a2f-a6de-efa061d2c516",
+      "approvals": 0,
+      "reply": "小织，你好！\n\n第951种花茶现在不加柠檬了，改为加**一片苹果**。"
+    },
+    {
+      "name": "daily-18",
+      "passed": true,
+      "durationMs": 3692,
+      "sessionId": "session-c0728e4a-79a5-4a2f-a6de-efa061d2c516",
+      "approvals": 0,
+      "reply": "小织，建议：整理完就花几分钟把没用的旧文件删掉或归档，别让它们再堆回去。"
+    },
+    {
+      "name": "daily-19",
+      "passed": true,
+      "durationMs": 3421,
+      "sessionId": "session-1ae43e28-a08a-4111-b3d3-be1bf63b935d",
+      "approvals": 0,
+      "reply": "小织，你好！\n\n第951种花茶现在应该加**一片苹果**——之前的柠檬已经不加了，改成苹果片即可。"
+    },
+    {
+      "name": "daily-20",
+      "passed": true,
+      "durationMs": 2701,
+      "sessionId": "session-1ae43e28-a08a-4111-b3d3-be1bf63b935d",
+      "approvals": 0,
+      "reply": "小织，整理完文件后，建议先花两分钟把散在桌面/下载里的残留文件归位，然后休息一下再开始下一项任务。"
+    }
+  ],
+  "errors": [],
+  "notifications": [
+    {
+      "title": "需要审批",
+      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/a.txt\"}",
+      "at": 1791615476213
+    },
+    {
+      "title": "需要审批",
+      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/b.txt\"}",
+      "at": 1791615478430
+    },
+    {
+      "title": "需要审批",
+      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/index.md\"}",
+      "at": 1791615489606
+    },
+    {
+      "title": "请整理这个合成文件夹 C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-f",
+      "body": "已完成 · 点开查看结果",
+      "at": 1791615492958
+    },
+    {
+      "title": "请在2分钟后提醒我站起来活动，提醒内容为QA5日用冒烟活动。",
+      "body": "已完成 · 点开查看结果",
+      "at": 1791615501261
+    },
+    {
+      "title": "需要审批",
+      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：write {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/phone.txt\",\"content\":\"Q",
+      "at": 1791615570707
+    },
+    {
+      "title": "需要审批",
+      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/phone.txt\"}",
+      "at": 1791615577589
+    },
+    {
+      "title": "请在C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/pho",
+      "body": "已完成 · 点开查看结果",
+      "at": 1791615583343
+    },
+    {
+      "title": "提醒",
+      "body": "提醒：QA5日用冒烟活动：站起来活动",
+      "at": 1791615620226
+    }
+  ],
+  "elapsedMs": 1200887,
+  "health": {
+    "ownerId": "owner-95b5b65c-775c-446f-a8f3-e3aa3b2ddb56",
+    "state": "ready",
+    "version": "2.0.0",
+    "worldRevision": 2,
+    "capabilities": {
+      "list": true,
+      "source": true,
+      "inject": true,
+      "correct": true,
+      "mute": true,
+      "deleteEvidence": true,
+      "deleteWorldItem": true
+    },
+    "pendingBoundaryCount": 0,
+    "blockedBoundaryCount": 0,
+    "discardedBoundaryCount": 0,
+    "lastFailureCode": null,
+    "pendingFormationCount": 0,
+    "failedFormationCount": 0,
+    "failedCorrectionCount": 0,
+    "formationIssues": [],
+    "backfill": null,
+    "captureError": null
+  },
+  "finishedAt": "2026-10-10T07:16:32.268Z",
+  "uninstalled": true
+}
