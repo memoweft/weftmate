@@ -11,7 +11,7 @@ globalThis.WeftUiCore.factories.mobile = (core, effects, environment) => {
     const linked=!!selectedBinding(), host=state.chatSource==='host'||linked, session=selectedSharedSession();
     const attachments=currentAttachments().length;
     const busy=host?!!state.sharedPending||!!state.linkedPending||state.sharedOutboxLoading||state.busy:state.busy;
-    const ready=(!!text.trim()||attachments>0)&&state.loggedIn&&!busy&&!state.modelSwitching&&!state.transitionPending&&
+    const ready=(!!text.trim()||attachments>0)&&state.loggedIn&&(!host || core.state.online&&!['restarting','unavailable'].includes(core.state.connection?.host?.runtime)&&core.state.capabilities?.chat?.available!==false)&&!busy&&!state.modelSwitching&&!state.transitionPending&&
       !state.restorePending&&!core.state.sessionSelecting&&!core.state.sideCreating&&(host?!!session?.sendAvailable:!state.sendUncertain)&&(!linked||attachments===0);
     return {ready, host, busy,
       processingHint:core.executionAccountHint() || (core.state.sessionSelecting?'正在打开对话…':host&&state.sharedRunning?core.processingLabel(session?.processing):''),
@@ -139,7 +139,7 @@ async function checkSharedPending(){const pending=state.sharedPending;
     requestId=pending.requestId;
   state.sharedChecking=requestId;effects.renderSharedConversation();
   try{const result=await effects.nativeCall('shared.outbox.reconcile');
-    if(!sharedViewCurrent(owner,epoch,generation,sessionId)||optimistic.status==='accepted')return;
+    if(!sharedViewCurrent(owner,epoch,generation,sessionId)||state.sharedPending?.requestId!==requestId)return;
     if(result?.source!=='host'||!Array.isArray(result.commands))throw new Error('COMMAND_RECEIPT_INVALID');
     const outcome=result.commands.find(item=>item.sessionId===sessionId&&item.requestId===requestId);
     if(outcome?.state==='uncertain')effects.status('电脑仍未确认这条请求；原请求会保留，暂不重复发送');
@@ -266,11 +266,11 @@ async function sendShared(options={}){if(core.state.sessionSelecting||core.state
       effects.clearAcceptedHostAttachments(attachmentIds);
       effects.status('电脑已受理消息，等待会话记录更新');waitForSharedTurn(sessionId,text,afterSeq,attachmentIds);void effects.loadSharedHistory();
     }else if(result.state==='uncertain'){optimistic.status='failed';state.sharedPending={requestId,state:'uncertain',text,attachmentIds,afterSeq};
-      effects.status('发送结果待核对 · 请求已保留，不会自动重发')}
+      effects.status('发送结果待核对 · 请求已保留，不会自动重发',false,'message-pending')}
     else{optimistic.status='failed';state.sharedPending=null;effects.status(effects.safeError(new Error(result.errorCode||'OPERATION_FAILED')),true)}
   }catch(e){if(!sharedViewCurrent(owner,epoch,generation,sessionId)||optimistic.status==='accepted')return;
     optimistic.status='failed';state.sharedPending=e?.message==='TIMEOUT'?{requestId,state:'uncertain',text,attachmentIds,afterSeq}:null;
-    if(state.sharedPending)effects.status('发送结果待核对 · 请查看电脑会话或待处理记录');
+    if(state.sharedPending)effects.status('发送结果待核对 · 请查看电脑会话或待处理记录',false,'message-pending');
     else effects.status(effects.safeError(e),true)}
   finally{if(sharedViewCurrent(owner,epoch,generation,sessionId)){effects.updateComposer();effects.renderSharedConversation();effects.scheduleSharedPoll()}}}
 

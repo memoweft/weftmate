@@ -1,0 +1,62 @@
+{
+  "totals": {
+    "requests": 3,
+    "promptTokens": 7073,
+    "completionTokens": 10337,
+    "totalTokens": 17410,
+    "cachedPromptTokens": 0
+  },
+  "responses": [
+    {
+      "id": "64184-2",
+      "at": "2026-10-10T06:42:26.251Z",
+      "usage": {
+        "completion_tokens": 3306,
+        "prompt_tokens": 2357,
+        "total_tokens": 5663,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "contentChars": 4797,
+      "evidence": "tests/evidence/m3-1/relay-all/requests.jsonl"
+    },
+    {
+      "id": "5172-2",
+      "at": "2026-10-10T06:33:38.290Z",
+      "usage": {
+        "completion_tokens": 3685,
+        "prompt_tokens": 2360,
+        "total_tokens": 6045,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "contentChars": 5402,
+      "evidence": "tests/evidence/m3-1/relay-race-fixed/requests.jsonl"
+    },
+    {
+      "id": "64092-2",
+      "at": "2026-10-10T07:04:31.482Z",
+      "usage": {
+        "completion_tokens": 3346,
+        "prompt_tokens": 2356,
+        "total_tokens": 5702,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "contentChars": 4798,
+      "evidence": "tests/evidence/m3-1/relay-reviewed/requests.jsonl"
+    }
+  ]
+}

@@ -108,7 +108,7 @@ async function mobileSessionProjects(session) {
 /* Mobile sessions presentation and named ui-core actions. */
 function stopSharedPoll(){clearTimeout(state.sharedPollTimer);state.sharedPollTimer=null}
 
-function scheduleSharedPoll(){stopSharedPoll();if(state.chatSource!=='host'||state.page!=='chat'||document.visibilityState==='hidden')return;
+function scheduleSharedPoll(){stopSharedPoll();if(state.chatSource!=='host'||state.page!=='chat'||document.visibilityState==='hidden'||!uiCore.state.online)return;
   state.sharedPollTimer=setTimeout(async()=>{if(state.chatSource!=='host'||state.page!=='chat')return;
     await Promise.all([loadSharedHistory(),listSharedSessions()]);if(state.chatSource==='host')scheduleSharedPoll()},state.sharedRunning?3000:12000)}
 
@@ -141,8 +141,7 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
   if(session?.taskAvailable===false)content.append(el('div','shared-notice',
     '这台电脑已有执行账号。当前账号仅可聊天，不能操作电脑或读取原账号资料；请在电脑退出后登录原账号。'));
   if (session?.projectNotice || session?.projectName) content.append(el('p','shared-notice',session.projectNotice || `项目：${session.projectName}`));
-  if(state.sharedError)content.append(el('div','shared-notice',state.sharedError));
-  else if(!state.sharedHostAvailable)content.append(el('div','shared-notice','电脑暂不可达。已读取的内容仅供查看，新消息可能进入待核对状态。'));
+  if(state.sharedError && uiCore.connectionView().kind==='online')content.append(el('div','shared-notice',state.sharedError));
   let lastTurn='',lastEndReasonKind='';for(const event of state.sharedEvents){
     if(event.type==='user.message'||event.type==='assistant.message'){
       const body=event.data?.text,images=Array.isArray(event.data?.images)?event.data.images:[],
@@ -176,21 +175,19 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
       lastEndReasonKind=lastTurn==='error'&&event.data?.endReasonKind==='max-tokens'?'max-tokens':''}
   }
   state.sharedRunning=lastTurn==='running'||!!session?.running;
-  const live=[...content.querySelectorAll('.message.assistant')].at(-1),lastUser=[...content.querySelectorAll('.message.user')].at(-1);if(live&&(!lastUser||Number(live.dataset.seq)>Number(lastUser.dataset.seq)))globalThis.WeftReplyMotion?.indicator(live.querySelector('.markdown'),state.sharedRunning);
-  if(lastTurn==='running'||state.sharedRunning)content.append(el('p','shared-turn-state reply-status','正在处理…'));
-  else if(lastTurn&&lastTurn!=='completed')content.append(el('p','shared-turn-state',lastTurn==='error'&&lastEndReasonKind==='max-tokens'
+  const live=[...content.querySelectorAll('.message.assistant')].at(-1),lastUser=[...content.querySelectorAll('.message.user')].at(-1);if(live&&(!lastUser||Number(live.dataset.seq)>Number(lastUser.dataset.seq)))globalThis.WeftReplyMotion?.indicator(live.querySelector('.markdown'),state.sharedRunning&&uiCore.state.online);
+  if(uiCore.state.online&&(lastTurn==='running'||state.sharedRunning))content.append(el('p','shared-turn-state reply-status',uiCore.state.online?'正在处理…':`${uiCore.connectionView().label} · 等待接续`));
+  // Disconnected turns wait in the single connection row; retain their terminal
+  // explanation in conversation content only after the computer is reachable.
+  else if(uiCore.state.online&&lastTurn&&lastTurn!=='completed')content.append(el('p','shared-turn-state',lastTurn==='error'&&lastEndReasonKind==='max-tokens'
     ?'本轮因输出限制结束，可继续对话。':{
-      aborted:'电脑回合已停止',error:'电脑回合未完成',blocked:'电脑回合等待处理',unknown:'电脑回合状态待确认'}[lastTurn]||'电脑回合状态待确认'));
-  if(state.sharedPending){const box=el('div','shared-notice',state.sharedPending.state==='uncertain'?
-    '发送结果待核对。请求已在手机保留，不会自动生成另一条消息。':'正在提交到电脑会话…');
-    if(state.sharedPending.state==='uncertain'){const check=el('button','shared-check',state.sharedChecking?'正在核对…':'检查状态');
-      check.disabled=!!state.sharedChecking;check.addEventListener('click',()=>{void checkSharedPending()});box.append(check)}content.append(box)}
+      aborted:'电脑回合已停止',error:'电脑回合未完成',blocked:'电脑回合等待处理',unknown:'电脑那边的进度还没确认'}[lastTurn]||'电脑那边的进度还没确认'));
   if(!state.sharedError&&!content.querySelector('.message')){
     if(state.sharedLoading)content.append(el('p','muted','正在读取电脑会话…'));
     else if(!state.sharedEvents.length&&!state.sharedHasOlder&&!state.sharedPending&&!uiCore.optimisticMessages().length)content.append(welcomeState());
     else if(state.sharedEvents.length||state.sharedHasOlder)content.append(el('p','muted','这段会话还没有可显示的文字记录'));
   }
-  content.append(...saved);renderTimeline();renderConversationTasks();renderOptimisticMessages();updateComposer();if(state.scrollPinned)scrollBottom();else scroll.scrollTop=previousScroll;}
+  content.append(...saved);renderTimeline();if(!uiCore.state.online)for(const progress of content.querySelectorAll('.inline-progress-text')){progress.textContent=`${uiCore.connectionView().label} · 等待接续`;progress.classList.remove('is-running')}renderConversationTasks();renderOptimisticMessages();updateComposer();if(state.scrollPinned)scrollBottom();else scroll.scrollTop=previousScroll;}
 
 function renderOptimisticMessages(){if(state.chatSource!=='host'||state.page!=='chat')return;
   uiCore.syncMobileIdentity();uiCore.observeOptimistic(state.sharedEvents);
@@ -202,9 +199,9 @@ function renderOptimisticMessages(){if(state.chatSource!=='host'||state.page!=='
     if(!node){node=messageNode('user',row.text||'附件');node.dataset.optimistic=row.requestId;}
     const signature=JSON.stringify([row.text,row.status]);if(node.dataset.motionSignature===signature)continue;node.dataset.motionSignature=signature;node.querySelectorAll('.message-state,.quiet').forEach(note=>note.remove());
     node.classList.toggle('is-sending',row.status==='sending');node.classList.toggle('send-failed',row.status==='failed');
-    if(row.status!=='accepted'){const note=el('small','message-state',row.status==='failed'?'发送未确认，草稿已保留':'发送中');note.setAttribute('role','status');node.append(note)}
-    if(row.status==='failed'){const retry=el('button','quiet','重试发送');retry.addEventListener('click',()=>{
-      state.sharedPending=null;void uiCore.retryOptimistic(row.requestId)});node.append(retry)}content.append(node);if(arriving)globalThis.WeftReplyMotion?.reveal(node,'send');
+    if(row.status!=='accepted'){const note=el('small','message-state',row.status==='undelivered'?'未送达，草稿已保留':['failed','confirming'].includes(row.status)?'发送结果待核对，草稿已保留':'发送中');note.setAttribute('role','status');node.append(note)}
+    if(['failed','confirming','undelivered'].includes(row.status)){const retry=el('button','shared-check',state.sharedPending?.requestId===row.requestId?'检查状态':'重试发送');retry.disabled=!uiCore.state.online;retry.addEventListener('click',()=>{
+      if(state.sharedPending?.requestId===row.requestId)void checkSharedPending();else void uiCore.retryOptimistic(row.requestId)});node.append(retry)}content.append(node);if(arriving)globalThis.WeftReplyMotion?.reveal(node,'send');
   }
 }
 

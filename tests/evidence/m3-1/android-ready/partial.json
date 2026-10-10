@@ -1,0 +1,159 @@
+{
+  "startedAt": "2026-10-10T08:07:14.449Z",
+  "realCloudEntrypoint": "services/cloud/src/main.mjs",
+  "realElectronEntrypoint": ".",
+  "sourceCommit": "886fe68f31e3060a2f66df38c1147d0af719cd8c",
+  "phase": "android-ready",
+  "baselineHost": false,
+  "steps": [
+    "Real cloud entrypoint health",
+    "Mobile registration, real file mail, sixty-second resend deadline and bundled legal reading",
+    "Real desktop approves the waiting phone and recipient imports trusted host delivery",
+    "Approved phone adopts the real host session before relay login"
+  ],
+  "cloudTransport": "WSL docker-desktop; temporary standalone Alpine tools",
+  "visualChecks": [
+    {
+      "name": "login",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "login",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "waiting",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "waiting",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    }
+  ],
+  "nativePresence": {
+    "realNative": true,
+    "realFixedDsh": true,
+    "transport": "trusted direct loopback + ADB reverse",
+    "checks": []
+  },
+  "httpErrors": [
+    {
+      "path": "/personal/v1/chats",
+      "status": 503,
+      "code": "RUNTIME_UNAVAILABLE"
+    }
+  ],
+  "nativeErrors": [
+    {
+      "method": "cloud.pending",
+      "errorCode": "OPERATION_FAILED",
+      "status": 0
+    },
+    {
+      "method": "cloud.pending",
+      "errorCode": "OPERATION_FAILED",
+      "status": 0
+    },
+    {
+      "method": "cloud.pending",
+      "errorCode": "OPERATION_FAILED",
+      "status": 0
+    },
+    {
+      "method": "cloud.pending",
+      "errorCode": "TIMEOUT",
+      "status": 0
+    },
+    {
+      "method": "cloud.pending",
+      "errorCode": "OPERATION_FAILED",
+      "status": 0
+    },
+    {
+      "method": "cloud.pending",
+      "errorCode": "TIMEOUT",
+      "status": 0
+    },
+    {
+      "method": "cloud.pending",
+      "errorCode": "TIMEOUT",
+      "status": 0
+    },
+    {
+      "method": "offline.identity",
+      "errorCode": "TIMEOUT",
+      "status": 0
+    },
+    {
+      "method": "cloud.pending",
+      "errorCode": "OPERATION_FAILED",
+      "status": 0
+    },
+    {
+      "method": "cloud.pending",
+      "errorCode": "TIMEOUT",
+      "status": 0
+    }
+  ],
+  "passed": false,
+  "error": "Native host disconnect was not confirmed",
+  "pageErrors": [],
+  "failedRequests": [
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/chats",
+      "status": 503
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "checks": [
+    {
+      "name": "Actual HAProxy termination during fixed DSH stream",
+      "passed": true,
+      "modelGenerations": 1,
+      "segments": 90,
+      "exactReply": true,
+      "uniqueSeq": 7
+    },
+    {
+      "name": "Host content listener close/start preserves original native stream",
+      "passed": true,
+      "scope": "HTTP host restart; runtime process stays alive",
+      "segments": 90
+    },
+    {
+      "name": "Lost committed acceptance",
+      "passed": true,
+      "requestId": "396e12d9-0c13-4a0a-bf93-10f755313fff",
+      "sameNumberRetry": true
+    },
+    {
+      "name": "Dropped before host acceptance",
+      "passed": true,
+      "requestId": "9bd548ce-bb1a-4afd-9024-7e7b8cd36a78",
+      "sameNumberRetry": true
+    },
+    {
+      "name": "Real MiMo long reply interrupted at phone transport",
+      "passed": true,
+      "characters": 4797,
+      "matchedUpstreamCharacters": 4797,
+      "originalRequestId": "f1098984-5abb-43d7-84f0-893a01f5af1b"
+    }
+  ],
+  "fixedDsh": true,
+  "realElectron": true,
+  "fullRelay": true,
+  "randomPorts": true,
+  "syntheticAccount": true
+}

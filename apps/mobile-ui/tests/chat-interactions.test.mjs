@@ -181,6 +181,59 @@ test('transient chat errors use only the toast while ordinary progress stays inl
   assert.equal(h.node('toast').classList.contains('leaving'),true);
 });
 
+test('M3-1c ordinary computer submission and acceptance remain progress, without content nodes',()=>{
+  const h=harness();
+  for(const text of ['正在提交到电脑会话…','电脑已受理消息，等待会话记录更新','回复已保存']){
+    h.run(`status(${JSON.stringify(text)})`);
+    assert.equal(h.node('chat-status').textContent,text);
+    assert.equal(h.node('chat-content').children.length,0);
+    assert.equal(h.node('toast').hidden,true);
+  }
+  // Text alone must never classify or swallow an ordinary status.
+  h.run('status("离线副本同步未完成",true)');
+  assert.equal(h.node('toast').textContent,'离线副本同步未完成');
+  assert.equal(h.node('toast').classList.contains('error'),true);
+});
+
+test('M3-1c explicit read failures stay inline online and join connection state offline',()=>{
+  for(const text of ['主对话暂时无法读取，请重试','离线副本同步未完成，请稍后重试。']){
+    const h=harness();h.run('uiCore.presence.success();status("回复已保存")');
+    h.run(`status(${JSON.stringify(text)},false,'read-failure')`);
+    const notice=h.node('chat-content').querySelector('.chat-read-notice');
+    assert.equal(notice.textContent,text);assert.equal(notice.hidden,false);
+    assert.equal(h.node('chat-status').textContent,'回复已保存');
+    assert.equal(h.node('toast').hidden,true);
+    for(const kind of ['connecting','host_offline','network_unavailable','login_required','approval_required']){
+      h.run(`uiCore.presence.authorization('${kind}');status(${JSON.stringify(text)},false,'read-failure')`);
+      assert.equal(h.node('chat-content').querySelector('.chat-read-notice'),null);
+      assert.equal(h.node('toast').hidden,true);
+    }
+  }
+});
+
+test('M3-1c timed out shared send shows one original-message explanation and keeps its request',async()=>{
+  const h=harness();h.run('state.loggedIn=true;state.owner="A";state.chatSource="host";state.sharedSessionId="pc1";state.sharedSessions=[{sessionId:"pc1",sendAvailable:true,source:"host"}]');
+  h.node('draft').value='超时的原消息';const sending=h.run('send()');
+  assert.equal(h.node('chat-status').textContent,'正在提交到电脑会话…');
+  const request=h.bridge.find(item=>item.method==='shared.send');h.advance(45000);await sending;
+  const message=h.node('chat-content').children.find(node=>node.dataset.optimistic===request.params.requestId);
+  assert.match(message.textContent,/发送结果待核对/);
+  assert.equal(message.querySelector('.shared-check').textContent,'检查状态');
+  assert.equal((h.node('chat-content').textContent.match(/发送结果待核对/g)||[]).length,1);
+  assert.equal(h.node('chat-status').textContent,'');
+  assert.equal(h.node('toast').textContent.includes('发送结果待核对'),false);
+  await h.run('send()');assert.equal(h.bridge.filter(item=>item.method==='shared.send').length,1);
+});
+
+test('M3-1c an unconfirmed turn uses plain language online and only the connection row offline',()=>{
+  const h=harness();prepareSyntheticTaskChat(h);
+  h.run('state.sharedEvents=[{seq:1,type:"turn.ended",data:{reason:"unknown"}}];uiCore.presence.success();renderSharedConversation()');
+  assert.equal(h.node('chat-content').querySelector('.shared-turn-state').textContent,'电脑那边的进度还没确认');
+  h.run('uiCore.presence.failure({code:"HOST_OFFLINE"},{independent:true,cloudOffline:true});renderSharedConversation()');
+  assert.equal(h.node('chat-content').querySelector('.shared-turn-state'),null);
+  assert.equal(h.node('chat-status').textContent,'');
+});
+
 test('attachment draft belongs to account and conversation, and only receipt IDs cross the bridge',async()=>{
   const h=harness();h.run('state.loggedIn=true;state.owner="A";state.conversationId="c1"');
   const pending=h.run('pickAttachment("image")');
@@ -409,7 +462,12 @@ test('shared send keeps phone drafts separate and blocks uncertain duplicate',as
   assert.equal(h.bridge.filter(item=>item.method==='shared.send').length,1);
   assert.equal(h.node('draft').value,'发送到电脑');
   assert.equal(h.run('attachmentDrafts.get("A:phone1").length'),1);
-  assert.match(h.node('chat-status').textContent,/待核对/);
+  const message=h.node('chat-content').children.find(node=>node.dataset.optimistic===request.params.requestId);
+  assert.match(message.textContent,/发送结果待核对/);
+  assert.equal((h.node('chat-content').textContent.match(/发送结果待核对/g)||[]).length,1);
+  assert.equal(h.node('chat-status').textContent,'');
+  assert.equal(h.node('toast').textContent.includes('发送结果待核对'),false);
+  assert.equal(message.querySelector('.shared-check').textContent,'检查状态');
 });
 
 test('host image picker scopes drafts to the exact DSH session and offers file selection',async()=>{
@@ -1342,9 +1400,9 @@ test('terminal-output-limit mobile history requires the normalized pair and pres
   const cases=[
     {data:{reason:'error',endReasonKind:'max-tokens'},text:'本轮因输出限制结束，可继续对话。'},
     {data:{reason:'error'},text:'电脑回合未完成'},
-    {data:{reason:'unknown',endReasonKind:'max-tokens'},text:'电脑回合状态待确认'},
-    {data:{},text:'电脑回合状态待确认'},
-    {data:{reason:{kind:'max-tokens'}},text:'电脑回合状态待确认'},
+    {data:{reason:'unknown',endReasonKind:'max-tokens'},text:'电脑那边的进度还没确认'},
+    {data:{},text:'电脑那边的进度还没确认'},
+    {data:{reason:{kind:'max-tokens'}},text:'电脑那边的进度还没确认'},
     {data:{reason:'completed',endReasonKind:'max-tokens'},text:''},
     {data:{reason:'aborted',endReasonKind:'max-tokens'},text:'电脑回合已停止'},
     {data:{reason:'blocked',endReasonKind:'max-tokens'},text:'电脑回合等待处理'},

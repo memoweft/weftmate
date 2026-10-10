@@ -322,13 +322,13 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         const boundSession = bound && core.state.sessions.find(item => item.sessionId === bound.sessionId);
         const phoneReady = core.state.online && !!core.state.ownerId && !!core.state.selectedPhoneConversationId && !core.state.phoneSending &&
             (bound ? boundSession?.sendAvailable === true : core.state.syncAvailable && !!core.state.device?.id);
-        const chat = core.state.online && core.state.capabilities?.chat?.available === true;
+        const chat = core.state.online && !['restarting','unavailable'].includes(core.state.connection?.host?.runtime) && core.state.capabilities?.chat?.available === true;
         const model = core.state.models.some(item => item.id === core.state.modelProfileId);
         const selected = core.state.sessions.find(item => item.sessionId === core.state.selectedSessionId);
         const canSendHere = selected?.sendAvailable === true || core.state.newConversation === true;
         const attachmentCount = phoneChat ? 0 : core.currentAttachmentDrafts().length;
         const attachmentBusy = !!core.state.attachmentUpload;
-        const messageDisabled = phoneChat ? !phoneReady || !!pendingPhone || !!recovery : !chat || !model || !canSendHere || attachmentBusy;
+        const messageDisabled = phoneChat ? !core.state.ownerId || !!pendingPhone || !!recovery : !core.state.account || !model || !canSendHere || attachmentBusy;
         const running = phoneChat ? boundSession?.running === true : conversationRunning(core.state.selectedSessionId);
         const blockedDesktop = core.desktopBlocker();
         const hint = phoneChat && bound ? core.state.phoneSendNotice || '' : phoneChat
@@ -387,11 +387,13 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         return core.state.messageMode;
     }
     function processingStageLabel(value, events = [...core.state.historyEvents.values()], now = Date.now()) {
+        if (core.state.connection && core.state.connection.kind !== 'online') return `${core.state.connection.label} · 等待接续`;
         const started = [...events].filter(event => event.type === 'turn.started').sort((a, b) => a.seq - b.seq).at(-1);
         const elapsed = now - Date.parse(started?.at);
         return processingLabel(value) + (Number.isFinite(elapsed) && elapsed >= 0 ? ` ${Math.floor(elapsed / 1000)} 秒` : '');
     }
     function processingLabel(value) {
+        if (core.state.connection && core.state.connection.kind !== 'online') return `${core.state.connection.label} · 等待接续`;
         if (value?.phase === 'loading') return `正在加载模型${value.modelName ? ` ${value.modelName}` : ''}…`;
         if (value?.phase === 'queued' && Number.isSafeInteger(value.ahead) && value.ahead > 0) return `模型排队中，前面还有 ${value.ahead} 个请求`;
         return { memory: '正在读取记忆…', retrying: '模型响应慢，正在重试…', reasoning: '正在思考…', answering: '正在回复…' }[value?.phase] || '等待模型回复…';
