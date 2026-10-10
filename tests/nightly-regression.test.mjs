@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { deflateSync } from 'node:zlib';
 import { execFileSync } from 'node:child_process';
 import { inspect, difference, pixels, retention, previousRun } from '../scripts/nightly/report.mjs';
+import { startTimelineCandidate } from './integration/timeline-ui-candidate.mjs';
 
 // Minimal non-interlaced 8-bit PNG, enough to verify decoded pixel comparisons.
 function png(color, filter = 0) {
@@ -76,4 +77,15 @@ test('fresh gallery never fills occupied native cells with repository history', 
     assert.equal(manifest.failures.length, 1); assert.equal(manifest.failures[0].reason, '被占用，未拍');
     assert.ok((await readFile(join(root, 'index.html'), 'utf8')).includes('被占用，未拍'));
   } finally { await rm(root, { recursive: true, force: true }); }
+});
+test('synthetic artifact write is observed before exposing its task approval', async () => {
+  const fixture = await startTimelineCandidate({ historyCount: 0, interactive: true, riskApproval: true });
+  try {
+    const writes = (await fixture.request('/commands')).commands.filter(row => row.kind === 'desktop.write_artifact');
+    assert.equal(writes.length, 1); assert.equal(writes[0].state, 'observed');
+    for (let read = 0; read < 5; read++) {
+      const approvals = (await fixture.request(`/sessions/${fixture.sessionId}/approvals`)).approvals;
+      assert.equal(approvals.length, 1); assert.equal(approvals[0].status, 'pending');
+    }
+  } finally { await fixture.close(); await rm(fixture.root, { recursive: true, force: true }); }
 });

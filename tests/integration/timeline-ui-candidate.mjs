@@ -79,10 +79,9 @@ export async function startTimelineCandidate(options = {}) {
     describeSession: async id => options.daily && dailySessions.has(id) ? {sessionId:id,running:id===sessionId?running:dailySessions.get(id).running,processing,agentPreset:'personal-remote',modelProfileId:'local',title:dailySessions.get(id).title} : id === sessionId ? { sessionId, running, processing, agentPreset: 'personal-remote', modelProfileId: 'local', title: '项目进度报告', ...(contextUsage ? {contextUsage} : {}) } : null,
     readEvents: async ({ sessionId: id, ...options }) => {if(dailySessions.has(id))return createDshSessionAdapter({sessions:{list:async()=>ok({items:[...dailySessions.keys()].map(sessionId=>({sessionId,origin:'user'}))})},events:{}},{readLog:async()=>dailySessions.get(id).events}).historyPage(id,options);return adapter.historyPage(id, options)},
     readEventDetail: async ({ sessionId: id, seq }) => dailySessions.has(id) ? createDshSessionAdapter({sessions:{list:async()=>ok({items:[{sessionId:id,origin:'user'}]})},events:{}},{readLog:async()=>dailySessions.get(id).events}).historyDetail(id,seq) : adapter.historyDetail(id, seq),
-    // Read on the async callback boundary, like DSH, after initialization updates.
-    getTaskReplyEvidence: async ({sessionId:id}) => { await Promise.resolve(); return { status: options.daily && dailySessions.get(id)?.events.at(-1)?.type==='turn/end'
+    getTaskReplyEvidence: async ({sessionId:id}) => ({ status: options.daily && dailySessions.get(id)?.events.at(-1)?.type==='turn/end'
       ? ({completed:'completed',error:'failed',aborted:'aborted'}[dailySessions.get(id).events.at(-1).data.reason.kind]||'completed') : running ? 'waiting' : 'completed', turn: 1,
-      assistantChunks: 0, textChunks: 0, reasoningChunks: 0, assistantMessages: running ? 1 : 2, toolSaveObserved: !!artifact }; },
+      assistantChunks: 0, textChunks: 0, reasoningChunks: 0, assistantMessages: running ? 1 : 2, toolSaveObserved: !!artifact }),
     listUserQuestions: async () => ({ runtimeId, questions: [...(questionFrame ? [questionFrame] : []), ...questionFrames.map(({callId, ...frame}) => frame)] }),
     respondUserQuestion: async input => { const frame = questionFrames.find(frame => frame.questionRpcId === input.questionRpcId) || questionFrame; frame.nativeState = 'answered'; result(frame.callId || 'question-1', '{"answers":[{"id":"format","selected":["简要报告"]}]}'); return { accepted: true } },
   }
@@ -106,9 +105,21 @@ export async function startTimelineCandidate(options = {}) {
   const created = await command({ requestId: 'timeline-create', kind: 'session.create', modelProfileId: 'local', targetDeviceId: hostId })
   sessionId = created.sessionId
   const source = await command({ requestId: 'timeline-message', kind: 'session.message', sessionId, targetDeviceId: hostId, text: goal }); taskId = source.commandId
-  if (!options.inlineProgress) await service.trackToolApproval({ action: 'register_approval', runtimeId, approvalId, sessionId, turn: 1, callId: 'write-1', rootCallId: 'write-1', receiptId, messageHash: hash(goal), toolName: 'pwsh', argumentsHash: hash('write report'), reason: approvalReason })
   if (!options.inlineProgress) artifact = await service.submitToolArtifact({ sessionId, turn: 1, callId: 'artifact-1', messageHash: hash(goal), fileName: '项目进度报告.md', content: '# 项目进度报告\n\n已读取 3 个文件。42 项测试通过。\n' })
+  // Artifact submission queues a real host write. Do not expose a pending
+  // approval to the UI while that same task still has unconfirmed effects.
+  if (artifact) {
+    for (let attempt = 0; attempt < 100; attempt++) {
+      const rows = (await request('/commands')).commands;
+      if (rows.filter(row => row.kind === 'desktop.write_artifact').every(row => row.state === 'observed')) break;
+      if (attempt === 99) throw Error('Synthetic artifact write was not observed');
+      await new Promise(done => setTimeout(done, 20));
+    }
+  }
   if (artifact) {call('write', 'artifact-1', {fileName:artifact.fileName});result('artifact-1',JSON.stringify(artifact))}
+  // Register the pending overwrite only after the demo artifact write finishes.
+  // The production source guard correctly rejects approvals during unknown effects.
+  if (!options.inlineProgress) await service.trackToolApproval({ action: 'register_approval', runtimeId, approvalId, sessionId, turn: 1, callId: 'write-1', rootCallId: 'write-1', receiptId, messageHash: hash(goal), toolName: 'pwsh', argumentsHash: hash('write report'), reason: approvalReason })
   const bridge = async (method, params) => {
     if (method === 'host.status') { const status=await request('/status'); return options.logicalMobile?status:{...status,personalCapabilities:{...status.personalCapabilities,chats:0}}; }
     if (options.logicalMobile && method === 'shared.send' && params.chatId) {
