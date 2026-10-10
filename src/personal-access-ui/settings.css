@@ -60,10 +60,6 @@
 .settings-segmented button { font: inherit; color: var(--ink-secondary); background: transparent; border: 0; padding: var(--wm-space-6) var(--wm-space-12); border-radius: var(--wm-radius-6); }
 .settings-segmented button:hover { color: var(--ink); }
 .settings-segmented button[aria-pressed="true"] { background: var(--surface); color: var(--ink); }
-.settings-switch { appearance: none; width: var(--wm-space-44); height: var(--wm-space-26); border-radius: var(--wm-radius-999); background: var(--surface-soft); border: var(--wm-space-1) solid var(--line); padding: var(--wm-space-3); margin: 0; cursor: pointer; flex-shrink: 0; }
-.settings-switch::before { content: ''; display: block; background: var(--ink-secondary); width: var(--wm-space-18); height: var(--wm-space-18); border-radius: var(--wm-radius-circle); transition: transform var(--wm-duration-160ms) var(--wm-easing-desktop); }
-.settings-switch:checked { background: var(--accent); border-color: var(--accent); }
-.settings-switch:checked::before { transform: translateX(var(--wm-space-18)); background: var(--wm-color-on-action); }
 .settings-category-picker { display: none; }
 .settings-empty { padding: var(--wm-space-12); font-size: var(--wm-font-size-13); }
 .settings-category .usage-body { padding: 0; }
@@ -94,7 +90,6 @@
 .settings-category .project-register { max-width: none; }
 .settings-category .project-register > label, .settings-category .project-register > input, .settings-category .project-register > select { margin-bottom: var(--wm-space-8); }
 
-.weftmate-desktop #desktop-auto-start.settings-switch { width: var(--wm-space-44); min-height: var(--wm-space-26); height: var(--wm-space-26); margin: 0; }
 
 .settings-schedules-list { list-style: none; padding: 0; margin: var(--wm-space-20) 0; }
 .settings-schedule-row { display: flex; flex-wrap: wrap; gap: var(--wm-space-12); }
@@ -105,7 +100,6 @@
 .settings-category .backup-settings form label { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, var(--wm-size-settings-control)); align-items: center; gap: var(--wm-space-24); margin: 0; padding: var(--wm-space-20) 0; border-bottom: var(--wm-space-1) solid var(--line); }
 .settings-category .backup-settings form label:has([type=checkbox]) { display: flex; justify-content: space-between; }
 .settings-category .backup-settings form button { margin-top: var(--wm-space-16); }
-.settings-dialog .backup-settings .settings-switch { width: var(--wm-space-44); height: var(--wm-space-26); min-height: var(--wm-space-26); padding: var(--wm-space-3); }
 @media (max-width: 719px) { .settings-category .backup-settings form label { grid-template-columns: 1fr; gap: var(--wm-space-8); } }
 
 .settings-cloud-status { padding: 0 var(--wm-space-36); margin: 0 0 var(--wm-space-12); }

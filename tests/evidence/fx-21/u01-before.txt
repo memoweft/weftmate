@@ -1,0 +1,25 @@
+✖ remote phone composer remains inside the visual viewport with folders, suggestions, connection bar and keyboard (2582.9241ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2992.9751
+
+✖ failing tests:
+
+test at apps\mobile-ui\tests\composer-viewport.test.mjs:9:1
+✖ remote phone composer remains inside the visual viewport with folders, suggestions, connection bar and keyboard (2582.9241ms)
+  AssertionError [ERR_ASSERTION]: {"size":{"width":390,"height":844},"theme":"light","keyboard":false,"extras":false,"height":844,"layoutHeight":844,"pageHeight":912,"send":{"x":329,"y":847,"width":36,"height":44,"top":847,"right":365,"bottom":891,"left":329},"composer":{"x":0,"y":742,"width":390,"height":170,"top":742,"right":390,"bottom":912,"left":0},"shell":{"x":0,"y":68,"width":390,"height":844,"top":68,"right":390,"bottom":912,"left":0}}
+      at TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w3/apps/mobile-ui/tests/composer-viewport.test.mjs:38:16)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

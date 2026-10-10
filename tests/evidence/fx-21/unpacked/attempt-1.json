@@ -1,0 +1,25 @@
+{
+  "synthetic": true,
+  "realMain": true,
+  "pinnedDsh": true,
+  "realInstall": false,
+  "checks": [
+    "fresh-main-created-and-replied",
+    "native-folder-picker-substitute-registered-project"
+  ],
+  "packaged": {
+    "isPackaged": true,
+    "appPath": "C:\\Temp\\weftmate-fx21-release\\0.1.1-preview.21\\build\\win-unpacked\\resources\\app.asar"
+  },
+  "main": {
+    "chatId": "chat-e6c64911-f7a2-45ce-a083-011fa34e7c16",
+    "sessionId": "session-6f4d23f5-bc87-45cb-8e27-65dd395a4a89",
+    "reply": "主对话首条消息成功，合成回复。"
+  },
+  "project": {
+    "name": "synthetic-project",
+    "permission": "read-only"
+  },
+  "error": "Error: MIGRATION_SMOKE_TIMEOUT\n    at until (file:///D:/AIProjects/WeftMate/Worktrees/w3/tests/helpers/migration-host.mjs:18:9)\n    at async file:///D:/AIProjects/WeftMate/Worktrees/w3/scripts/nightly/installed-smoke.mjs:65:3",
+  "passed": false
+}

@@ -1,0 +1,36 @@
+✔ side creation references only the chosen message, requires suggestion confirmation and checks project destinations (31.3739ms)
+✔ automatic results preserve failed/stopped facts, skip ordinary chat and wait for live background work (5.3965ms)
+✔ real HTTP side command is idempotent, sends nothing; results persist once, share activity identity, update and clear on deletion (3139.5827ms)
+✔ wrapped native missing session allows creation and all single lookups retain missing semantics (3.827ms)
+✔ native server errors and transport failures cannot create a missing-looking main session (0.6808ms)
+✔ mobile generated assets match every canonical ui-core file byte for byte (273.9317ms)
+✔ check refuses changed, missing and unlisted copies; rebuild follows the source and removes stale files (595.9254ms)
+✔ mobile check validates nested component syntax as well as generated source parity (4030.2831ms)
+✔ published mobile bundle includes the verified shared assets at their ui-core paths (3753.6128ms)
+✔ publish command refuses stale generated assets before creating a release (3933.2371ms)
+✔ bundled project reader runs from a real ASAR without extracting an executable script (2541.8575ms)
+✔ Windows project reader holds exact root and reads bounded UTF-8 source (3586.5493ms)
+✔ Windows project reader rejects changed roots, changed files, links, ADS and bad UTF-8 (4484.1179ms)
+✔ account defaults migrate without changing history; prompt handles empty values and every combination (3.4305ms)
+✔ native system prompt snapshots settings per turn, filters and denies disabled web tools, and inherits to children (0.7525ms)
+✔ thinking content is opt-in presentation data and never part of source projection (1.5661ms)
+✔ settings API is account isolated, last-write wins per field, persists and validates; fixed instructions never read or ingest memory (6999.1587ms)
+✔ old queue preference migrates once, account changes ignore late reads and writes (2.0429ms)
+✔ unchanged settings polling preserves a temporary send intent and avoids repainting the composer (0.9368ms)
+✔ default deep thinking is applied only to newly created capable models (1980.2863ms)
+✔ release records have valid dates, semantic versions and user-facing categories; generated records match source (35.3743ms)
+✔ update notice establishes a baseline, shows once per account/version and survives reload; rollback never repeats (4.5477ms)
+✔ update notice ignores host-published phone bundle and obtains installed desktop version (4.8495ms)
+✔ help search filters all words locally across title, group and body; blank restores all topics (2.5007ms)
+✔ every shortcut in the panel registry dispatches its own action with identical modifier matching; composition is ignored (2.3147ms)
+✔ mobile release notice reads account identity without refreshing the live conversation snapshot (2.023ms)
+✔ approval shortcut names and number bindings derive from the same mode table without duplicate registration (2.4481ms)
+✔ side result copy shows one truthful state and readable tool descriptions for stored and new cards (2.4509ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12728.6737

@@ -1,8 +1,13 @@
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { readFileSync } from 'node:fs';
 
-const SCRIPT = fileURLToPath(new URL('./reader.ps1', import.meta.url));
+// Electron can read ASAR bytes; system PowerShell cannot open an ASAR path.
+// Capture the bundled program once and send it over the private stdin pipe.
+// No executable script is extracted to a writable application-data directory.
+const SCRIPT = readFileSync(fileURLToPath(new URL('./reader.ps1', import.meta.url))).toString('base64');
+const BOOTSTRAP = Buffer.from("[Console]::InputEncoding = [Text.Encoding]::UTF8; $payload = [Console]::In.ReadToEnd() | ConvertFrom-Json; & ([ScriptBlock]::Create([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($payload.script)))) -RequestJson $payload.request", 'utf16le').toString('base64');
 const POWERSHELL = path.win32.join(process.env.SystemRoot ?? 'C:\\Windows',
   'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
 const QUERY_BYTES = 200;
@@ -25,7 +30,7 @@ function validQuery(value) {
 async function invoke(input) {
   if (process.platform !== 'win32') throw issue('PROJECT_WINDOWS_REQUIRED');
   return new Promise((resolve, reject) => {
-    const child = spawn(POWERSHELL, ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', SCRIPT], {
+    const child = spawn(POWERSHELL, ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', BOOTSTRAP], {
       windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'],
     });
     let stdout = '', stderr = '';
@@ -61,7 +66,7 @@ async function invoke(input) {
       }
       finish(null, value.value);
     });
-    child.stdin.end(JSON.stringify(input));
+    child.stdin.end(JSON.stringify({script:SCRIPT,request:JSON.stringify(input)}));
   });
 }
 

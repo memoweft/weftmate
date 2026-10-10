@@ -9,7 +9,6 @@
 .weftmate-desktop .page { min-height: calc(100dvh - 44px); }
 .weftmate-desktop .assistant-shell { height: min(820px, calc(100dvh - 176px)); }
 .weftmate-desktop[data-native-workspace="full"] .assistant-shell { height: calc(100dvh - 44px); }
-.weftmate-desktop #desktop-auto-start { width: auto; margin-right: var(--wm-space-8); }
 @media (max-width: 640px) {
   .weftmate-desktop .timeline-preview {
     top: var(--desktop-caption-height, var(--wm-space-44));

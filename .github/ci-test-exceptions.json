@@ -26,6 +26,26 @@
       ],
       "reason": "Fixture deliberately omits the Linux x64 tarball and asserts it is foreign-platform optional. It is native on ubuntu-latest, where omission correctly fails; macOS/Windows still verify this assertion.",
       "tracking": "https://github.com/memoweft/weftmate/pull/23"
+    },
+    {
+      "file": "tests/migration-first-message.test.ts",
+      "name": "real main gateway and pinned DSH create a fresh main session and answer its first message",
+      "platforms": [
+        "darwin",
+        "linux"
+      ],
+      "reason": "Adds a model through the real desktop host, which stores the key with Electron safeStorage. Headless Linux/macOS runners have no OS secret service (the host answers STORAGE_UNAVAILABLE), so this integration path is verified on Windows: the local vendor gate and the nightly regression run it. Follow-up: give the Linux vendor job a keyring so it runs there as well.",
+      "tracking": "https://github.com/memoweft/weftmate/pull/200"
+    },
+    {
+      "file": "tests/migration-first-message.test.ts",
+      "name": "f787c3c native data upgrades with preserved side history and a successful first main message",
+      "platforms": [
+        "darwin",
+        "linux"
+      ],
+      "reason": "Adds a model through the real desktop host, which stores the key with Electron safeStorage. Headless Linux/macOS runners have no OS secret service (the host answers STORAGE_UNAVAILABLE), so this integration path is verified on Windows: the local vendor gate and the nightly regression run it. Follow-up: give the Linux vendor job a keyring so it runs there as well.",
+      "tracking": "https://github.com/memoweft/weftmate/pull/200"
     }
   ]
 }

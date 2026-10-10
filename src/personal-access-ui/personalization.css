@@ -10,10 +10,6 @@
 .personalization-form .settings-select-trigger { max-width: 45%; }
 .personalization-form .actions { display: flex; flex-wrap: wrap; gap: var(--wm-space-8); margin: var(--wm-space-16) 0; }
 .personalization-form > .button { margin-top: var(--wm-space-20); }
-.personalization-form .settings-switch { appearance: none; width: var(--wm-space-44); height: var(--wm-space-26); padding: var(--wm-space-3); margin: 0; border: var(--wm-space-1) solid var(--line); border-radius: var(--wm-radius-999); background: var(--surface-soft, var(--soft)); flex-shrink: 0; cursor: pointer; }
-.personalization-form .settings-switch::before { content: ''; display: block; width: var(--wm-space-18); height: var(--wm-space-18); border-radius: var(--wm-radius-circle); background: var(--ink-secondary, var(--muted)); }
-.personalization-form .settings-switch:checked { background: var(--accent); border-color: var(--accent); }
-.personalization-form .settings-switch:checked::before { transform: translateX(var(--wm-space-18)); background: var(--wm-color-on-action, var(--wm-color-white)); }
 .model-thinking { margin: var(--wm-space-12) 0; color: var(--ink-secondary, var(--muted)); font-size: var(--wm-font-size-13); }
 .model-thinking summary { cursor: pointer; }
 .model-thinking p { white-space: pre-wrap; overflow-wrap: anywhere; padding: var(--wm-space-12) 0; }

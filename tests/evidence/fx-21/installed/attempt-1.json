@@ -1,0 +1,23 @@
+{
+  "synthetic": true,
+  "realMain": true,
+  "pinnedDsh": true,
+  "realInstall": true,
+  "checks": [
+    "fresh-main-created-and-replied",
+    "native-folder-picker-substitute-registered-project"
+  ],
+  "installerSha256": "943cbe030cfade23234facbd898c4528e020f067538905115728eaa787f4ae73",
+  "main": {
+    "chatId": "chat-1986e3be-6bb3-47dc-b08e-ac98cc324758",
+    "sessionId": "session-00973403-e34e-4e3d-82fa-ce40e849fe9f",
+    "reply": "主对话首条消息成功，合成回复。"
+  },
+  "project": {
+    "name": "synthetic-project",
+    "permission": "read-only"
+  },
+  "error": "Error: MIGRATION_SMOKE_TIMEOUT\n    at until (file:///D:/AIProjects/WeftMate/Worktrees/w3/tests/helpers/migration-host.mjs:18:9)\n    at async file:///D:/AIProjects/WeftMate/Worktrees/w3/scripts/nightly/installed-smoke.mjs:62:3",
+  "passed": false,
+  "uninstalled": true
+}

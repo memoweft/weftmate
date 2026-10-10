@@ -122,11 +122,11 @@ export function createSideChats(context) {
       : events.filter(row => row.type === 'assistant.message').at(-1) ?? events.findLast(row => row.type === 'turn.ended');
     if (!selected || eventId && !['assistant.message','turn.ended'].includes(selected.type)) throw failure('SOURCE_UNAVAILABLE', 404);
     if (events.some(event => account.sessions[command.sessionId]?.forgottenSeqs?.includes(event.seq))) throw failure('SOURCE_UNAVAILABLE', 404);
-    const state = states[evidence.status];
-    const label = state === 'stopped' ? '已停止' : state === 'failed' ? '执行失败' : '已完成';
+    const state = task.control?.state === 'stop_requested' && task.control?.stopStatus === 'stopped'
+      ? 'stopped' : states[evidence.status];
     return { sourceChatId: chatId, sourceEventId: nativeId(segment.hostId, command.sessionId, selected.seq),
       contentRevision: chat.contentRevision, taskId, state,
-      summary: short(selected.type === 'assistant.message' && selected.data?.text ? `${label}：${selected.data.text}` : label),
+      summary: short(selected.type === 'assistant.message' && selected.data?.text ? selected.data.text : ''),
       requiresResponse: false, nativeSource: { kind: 'native', hostId: segment.hostId, sessionId: command.sessionId, seq: selected.seq },
       artifactRefs: (task.artifacts ?? []).map(row => ({ taskId, artifactId: row.artifactId })), observedCommandId: accepted.commandId };
   }

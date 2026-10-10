@@ -1,0 +1,23 @@
+✖ bundled project reader runs from a real ASAR without extracting an executable script (467.0961ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 763.0443
+
+✖ failing tests:
+
+test at tests\packaged-project-reader.test.ts:11:1
+✖ bundled project reader runs from a real ASAR without extracting an executable script (467.0961ms)
+  electronApplication.evaluate: Error: PROJECT_FILE_UNAVAILABLE
+      at issue (file:///C:/Users/yun/AppData/Local/Temp/weftmate-fx21-asar-zbrlCT/app.asar/index.mjs:11:24)
+      at ChildProcess.<anonymous> (file:///C:/Users/yun/AppData/Local/Temp/weftmate-fx21-asar-zbrlCT/app.asar/index.mjs:54:37)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1141:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:306:5)
+      at TestContext.<anonymous> (D:\AIProjects\WeftMate\Worktrees\w3\tests\packaged-project-reader.test.ts:22:28) {
+    log: []
+  }

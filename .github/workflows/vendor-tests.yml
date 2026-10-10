@@ -14,6 +14,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch the fixed legacy migration fixture
+        run: git fetch --no-tags --depth=1 origin f787c3c1b1215b969a4db8e143b18da0b2421d5a
       - uses: actions/setup-node@v4
         with:
           node-version: 24
