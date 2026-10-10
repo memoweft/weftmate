@@ -32,13 +32,10 @@
     resetMemoryForAuthBoundary('请重新读取当前账户的记忆。'); showProfile(account);
     document.body.classList.remove('cloud-auth-active'); byId('cloud-auth-page').classList.remove('active');
     if (native) { await listConversations(); loadDraft(); await call('app.ready', { owner: state.owner, hasDraft: hasAnyDraft() }); }
-    else {
-      const result = await core.accessApi('/sessions').catch(() => ({ sessions: [] }));
-      state.sharedSessions = result.sessions || []; state.sharedHostAvailable = true;
-    }
+
     await listSharedSessions();
     startMobileConnection();
-    if(state.logicalChats)await uiCore.selectMainChat();else page('home');
+    if(state.logicalChats){if(!uiCore.inMainChat())await uiCore.selectMainChat();}else page('home',{dataLoaded:true});
   }
   async function scanPairing() {
     const dialog = element('dialog', 'cloud-camera'); dialog.setAttribute('aria-label', '扫描电脑二维码');

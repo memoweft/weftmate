@@ -115,7 +115,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             if (event) { historyWindow.state.expanded.add(globalThis.WeftUiCore.ChatWindow.day(event.at,historyWindow.state.timeZone)); notify(); }
             effects.focusMainEvent?.(anchor);
         } else effects.scrollToLatest();
-        void Promise.all([core.refreshConversationTasks(), core.refreshConversationApprovals(), core.refreshConversationQuestions()]).catch(() => {});
+        await core.refreshConversationTasks();
         if (core.state.selectedSessionId) void core.refreshApprovalMode(core.state.selectedSessionId);
     }
     async function selectSession(id, {empty = false, creating = false} = {}) {
