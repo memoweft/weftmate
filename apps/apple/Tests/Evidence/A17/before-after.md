@@ -14,3 +14,7 @@
 | A6 本地通知 | 当前 Apple 无 UNUserNotificationCenter 发送实现 | 不宣称已实现或发出本地任务通知 |
 
 失败和被后续修正替代的截图保留在 `attempts/`；通过状态以最终 validation / walkthrough 为准。
+
+## A17b 最后复验修正
+
+iPhone 本对话用量原来位于长菜单末尾、落在裁剪区外（[原始失败截图](attempts/a17b-settings-activation-point/clipped-native-menu.png)）。现在放在原生菜单首组；[菜单打开状态](settings-final/iphone-light/review-iphone-conversation-menu-light-20261010T101252Z.png) 与 [本对话用量页](settings-final/iphone-light/review-iphone-conversation-usage-opened-light-20261010T101252Z.png) 证明真实导航已发生，原宿主账本金额断言保留。深色同一流程在 settings-final/iphone-dark。

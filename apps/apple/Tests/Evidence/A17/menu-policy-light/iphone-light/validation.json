@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "platform": "iphone",
+  "theme": "light",
+  "realPersonalHTTPHost": true,
+  "syntheticOnly": true,
+  "mediaInjected": true,
+  "macOwnAXAlternative": false,
+  "compiledDSH": false,
+  "xcodeJobs": 2,
+  "simulatorsAtOnce": 1,
+  "generatedAt": "2026-10-10T12:01:44.265980+00:00"
+}

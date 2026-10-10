@@ -47,6 +47,26 @@ struct WeftMateRootView: View {
         .overlay { CloudAccessPresenter(cloud: model.cloudLogin) }
         .sheet(item: Binding(get: { model.deletionInSettings ? nil : model.deletionCandidate }, set: { model.deletionCandidate = $0 })) { _ in SessionDeleteSheet(app: model) }
         #if os(iOS)
+        .sheet(item: $model.temporaryExpiryCandidate) { row in
+            NavigationStack {
+                List {
+                    ForEach([1, 7, 30, 0], id: \.self) { days in
+                        Button {
+                            model.temporaryExpiryCandidate = nil
+                            Task { await model.mainChat.temporarySetting(row, fields: ["autoDeleteDays": days == 0 ? .null : .number(Double(days))]) }
+                        } label: {
+                            HStack {
+                                Text(days == 0 ? "不自动删除" : "\(days) 天")
+                                Spacer()
+                                if (row.temporaryState.autoDeleteDays ?? 0) == days { WeftIcon("allow") }
+                            }
+                        }.accessibilityLabel(days == 0 ? "不自动删除" : "\(days) 天")
+                            .accessibilityValue((row.temporaryState.autoDeleteDays ?? 0) == days ? "已选择" : "")
+                    }
+                }.navigationTitle("自动删除").navigationBarTitleDisplayMode(.inline)
+                    .toolbar { ToolbarItem(placement: .cancellationAction) { Button("取消") { model.temporaryExpiryCandidate = nil } } }
+            }.presentationDetents([.medium])
+        }
         .sheet(item: $model.sessionMenuCandidate) { row in
             NavigationStack {
                 List { SessionActions(app: model, conversation: row, onSelect: { model.sessionMenuCandidate = nil }) }

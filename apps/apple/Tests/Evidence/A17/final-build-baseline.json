@@ -1,13 +1,5 @@
 {
-  "at": "2026-10-10T08:39:27.891905+00:00",
-  "binarySHA256": "00b537b0f1ee27ca8bd4834c67b794dbdcc6ee83108c2b777256bf97881b1502",
-  "reports": [
-    "WeftMateMac-2026-10-09-053026.ips",
-    "WeftMateMac-2026-10-09-054057.ips",
-    "WeftMateMac-2026-10-09-100830.ips",
-    "WeftMateMac-2026-10-09-163024.ips",
-    "WeftMateMac-2026-10-09-163419.ips",
-    "WeftMateWatch-2026-10-09-081902.000.ips",
-    "WeftMateWatch-2026-10-09-081922.ips"
-  ]
+  "at": "2026-10-10T12:16:20.955792+00:00",
+  "binarySHA256": "365284b8322a12092e6ebf4741679f77abe574ff4e98b95c8a645bbada605975",
+  "reports": []
 }

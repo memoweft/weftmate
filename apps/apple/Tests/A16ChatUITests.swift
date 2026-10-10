@@ -13,6 +13,42 @@ final class A16ChatUITests: XCTestCase {
         return names[id].map { app.buttons[$0] } ?? byID
     }
     @MainActor private func tap(_ item:XCUIElement) throws {if !item.waitForExistence(timeout:30){XCTFail("Missing control "+item.identifier);throw NSError(domain:"A16",code:1)};item.tap()}
+    @MainActor private func openExpiry(_ app: XCUIApplication) throws {
+        let expiry = element(app, "temporaryChat.expiryMenu")
+        XCTAssertTrue(expiry.waitForExistence(timeout: 10))
+        // The initial session refresh can replace the menu's presenting view.
+        // Reopen its native menu when UIKit reports a stale, non-hittable row.
+        if !expiry.isHittable {
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.5)).tap()
+            try tap(element(app, "conversationMenu"))
+        }
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true AND hittable == true"), object: expiry)
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 30), .completed)
+        let frame = expiry.frame
+        app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: frame.midX, dy: frame.midY)).tap()
+    }
+    @MainActor private func tapNativeMenuName(_ app: XCUIApplication, _ name: String) throws {
+        let native = app.buttons[name].firstMatch
+        if native.waitForExistence(timeout: 5) {
+            native.tap()
+            return
+        }
+        // iOS 26 menu choices appear in the native AX snapshot but can be absent
+        // from XCTest's typed descendants query. Locate the visible name and
+        // frame in that same native snapshot, then deliver a real touch.
+        let tree = app.debugDescription
+        let saved = XCTAttachment(string: tree); saved.name = "a16-text-expanded-native-menu-dark"; saved.lifetime = .keepAlways; add(saved)
+        let number = "(-?[0-9]+(?:\\.[0-9]+)?)"
+        let pattern = "\\{\\{" + number + ", " + number + "\\}, \\{" + number + ", " + number + "\\}\\}[^\\n]*(?:label|value): '" + NSRegularExpression.escapedPattern(for: name) + "'"
+        let regex = try NSRegularExpression(pattern: pattern)
+        guard let match = regex.firstMatch(in: tree, range: NSRange(tree.startIndex..., in: tree)) else {
+            XCTFail("Native menu choice is missing: " + name); throw NSError(domain: "A17.NativeMenu", code: 1)
+        }
+        let values = (1...4).map { Double(tree[Range(match.range(at: $0), in: tree)!])! }
+        let frame = CGRect(x: values[0], y: values[1], width: values[2], height: values[3])
+        XCTAssertGreaterThan(frame.width, 0); XCTAssertGreaterThan(frame.height, 0)
+        app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: frame.midX, dy: frame.midY)).tap()
+    }
     @MainActor private func keep(_ app:XCUIApplication,_ scene:String,_ theme:String){
         let image=XCTAttachment(screenshot:app.screenshot());image.name="a16-"+scene+"-"+theme;image.lifetime = .keepAlways;add(image)
         let snapshot=app.debugDescription,regex=try! NSRegularExpression(pattern:"(?:label|value): '([^']*)'")
@@ -37,6 +73,37 @@ final class A16ChatUITests: XCTestCase {
     }
     @MainActor func testLightMainChat() async throws {try await run("light")}
     @MainActor func testDarkMainChat() async throws {try await run("dark")}
+    @MainActor func testDarkTemporaryMenuProbe() async throws { try await temporaryMenuProbe("dark") }
+    @MainActor func testLightTemporaryMenuProbe() async throws { try await temporaryMenuProbe("light") }
+    @MainActor private func temporaryMenuProbe(_ theme: String) async throws {
+        continueAfterFailure = false
+        let ready = try await get("/ready") as! [String: Any]
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing", "--ui-testing-namespace", "a17-menu-probe-" + UUID().uuidString,
+            "--a5-local-server", "--a5-theme", theme, "--server-url", ready["host"] as! String,
+            "--a16-driver", ProcessInfo.processInfo.environment["WEFTMATE_A16_DRIVER"]!]
+        app.launch(); defer { app.terminate() }
+        let oldPolicies = try await get("/temporary") as! [[String: Any]]
+        let oldIDs = Set(oldPolicies.compactMap { $0["chatId"] as? String })
+        try tap(element(app, "mainChat.plus"))
+        let temporary = app.buttons["mainChat.temporary"].firstMatch
+        XCTAssertTrue(temporary.waitForExistence(timeout: 10))
+        temporary.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        XCTAssertTrue(element(app, "temporaryChat.title").waitForExistence(timeout: 30))
+        let createdPolicies = (try await get("/temporary") as! [[String: Any]]).filter { !oldIDs.contains($0["chatId"] as! String) }
+        XCTAssertEqual(createdPolicies.count, 1)
+        let createdID = try XCTUnwrap(createdPolicies.first?["chatId"] as? String)
+        try tap(element(app, "conversationMenu"))
+        let tree = XCTAttachment(string: app.debugDescription)
+        tree.name = "a16-text-native-menu-tree-" + theme; tree.lifetime = .keepAlways; add(tree)
+        keep(app, "temporary-menu", theme)
+        try openExpiry(app)
+        keep(app, "temporary-expiry", theme)
+        try tapNativeMenuName(app, "7 天")
+        try await Task.sleep(for: .seconds(1))
+        let policies = try await get("/temporary") as! [[String: Any]]
+        XCTAssertEqual(policies.first { $0["chatId"] as? String == createdID }?["autoDeleteDays"] as? Int, 7)
+    }
     @MainActor func testScrollSmoke() async throws {
         continueAfterFailure = false
         let ready = try await get("/ready") as! [String: Any]
@@ -130,6 +197,8 @@ final class A16ChatUITests: XCTestCase {
         if let approval=(report["approvals"] as? [[String:Any]])?.first(where:{$0["resolved"] as? Bool==false})?["id"] as? String{
             try tap(element(app,"approveOnce."+approval));_=try await get("/consume")
         }
+        let previousPolicies = try await get("/temporary") as! [[String: Any]]
+        let previousTemporaryIDs = Set(previousPolicies.compactMap { $0["chatId"] as? String })
         try tap(element(app,"mainChat.plus"))
         let temporaryAction = app.buttons["mainChat.temporary"].firstMatch
         XCTAssertTrue(temporaryAction.waitForExistence(timeout:10))
@@ -140,17 +209,21 @@ final class A16ChatUITests: XCTestCase {
         XCTAssertTrue(element(app,"temporaryChat.title").waitForExistence(timeout:30));XCTAssertTrue(element(app,"temporaryChat.composer").exists);keep(app,"temporary",theme)
         try tap(element(app,"conversationMenu"));let memory=element(app,"temporaryChat.memory"),recall=element(app,"temporaryChat.recall")
         let policyBefore = try await get("/temporary") as! [[String:Any]]
-        XCTAssertEqual(policyBefore.last?["memoryMode"] as? String,"off"); XCTAssertEqual(policyBefore.last?["recallEnabled"] as? Bool,true)
+        let createdPolicies = policyBefore.filter { !previousTemporaryIDs.contains($0["chatId"] as! String) }
+        XCTAssertEqual(createdPolicies.count,1)
+        let temporaryID = try XCTUnwrap(createdPolicies.first?["chatId"] as? String)
+        XCTAssertEqual(createdPolicies.first?["memoryMode"] as? String,"off"); XCTAssertEqual(createdPolicies.first?["recallEnabled"] as? Bool,true)
         XCTAssertTrue(memory.waitForExistence(timeout:10));XCTAssertTrue(memory.isSelected || memory.value as? String == "1");XCTAssertTrue(recall.isSelected || recall.value as? String == "1");keep(app,"temporary-menu",theme)
-        let expiry = element(app,"temporaryChat.expiryMenu"); XCTAssertTrue(expiry.exists); expiry.coordinate(withNormalizedOffset: CGVector(dx:0.5,dy:0.5)).tap();keep(app,"temporary-expiry",theme)
-        try tap(app.buttons["7 天"])
+        try openExpiry(app)
+        keep(app,"temporary-expiry",theme)
+        try tapNativeMenuName(app,"7 天")
         try await Task.sleep(for:.seconds(1))
-        let temporary=try await get("/temporary") as! [[String:Any]];XCTAssertEqual(temporary.last?["autoDeleteDays"] as? Int,7)
+        let temporary=try await get("/temporary") as! [[String:Any]];XCTAssertEqual(temporary.first { $0["chatId"] as? String == temporaryID }?["autoDeleteDays"] as? Int,7)
         try tap(element(app,"conversationMenu"))
         try tap(element(app,"temporaryChat.recall"));try await Task.sleep(for:.seconds(1))
         try tap(element(app,"conversationMenu"))
         XCTAssertFalse(element(app,"temporaryChat.recall").isSelected)
-        let policyAfter = try await get("/temporary") as! [[String:Any]]; XCTAssertEqual(policyAfter.last?["recallEnabled"] as? Bool,false)
+        let policyAfter = try await get("/temporary") as! [[String:Any]]; XCTAssertEqual(policyAfter.first { $0["chatId"] as? String == temporaryID }?["recallEnabled"] as? Bool,false)
         keep(app,"temporary-recall-off",theme)
         app.coordinate(withNormalizedOffset: CGVector(dx:0.1,dy:0.5)).tap()
         _=try await get("/expire")
