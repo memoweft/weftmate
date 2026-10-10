@@ -3,6 +3,7 @@
 .reply-status.reply-working>.reply-sheen{position:absolute;inset:0;pointer-events:none;color:var(--ink);opacity:.36}
 [data-theme=dark] .reply-status.reply-working>.reply-sheen{opacity:.22}
 .reply-sheen-part{position:absolute;inset:0;opacity:0;mask-image:linear-gradient(90deg,transparent calc(var(--reply-phase) - 25%),#000 var(--reply-phase),transparent calc(var(--reply-phase) + 25%));animation:reply-sheen var(--wm-duration-working) var(--wm-easing-replySweep) infinite;animation-delay:calc(var(--wm-duration-working) * var(--reply-offset));will-change:opacity}
+.reply-sheen-part::before{content:attr(data-text)}
 @keyframes reply-sheen{0%,27%,100%{opacity:0}13.5%{opacity:1}}
 .reply-status-out{position:absolute;inset:0;pointer-events:none;white-space:inherit;background:var(--surface);color:inherit}
 .reply-streaming{position:relative}
