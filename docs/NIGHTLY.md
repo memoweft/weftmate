@@ -28,7 +28,7 @@ Mac 子进程显式补 PATH（命令搜索路径） `/opt/homebrew/bin`、`/usr/
 
 ## 固定 DSH 测试
 
-准备完成后先执行 `node .github/scripts/ci-unit-tests.mjs vendor --report <批次目录>/vendor-test-results.json`，再拍各端界面。专用工作树首次没有 vendor（固定运行时依赖）时，运行 `scripts/vendor-dsh.mjs` 从本机既有、已编译且匹配产品 pin（固定版本）的 DSH 工作区装配；缺少构建或 pin 不一致直接生成失败批次，继续收集其他证据。不会把未执行测试记为通过，不使用真实模型或日用数据。
+准备完成后先执行 `node .github/scripts/ci-unit-tests.mjs vendor --report <批次目录>/vendor-test-results.json`，再拍各端界面。专用工作树首次没有 vendor（固定运行时依赖）时，运行 `scripts/vendor-dsh.mjs` 只读枚举本机既有 DSH 工作区登记的 Git worktree，选择已编译且匹配产品 pin（固定版本）的工作树装配（共享主工作区可以在其它提交，不重置它）；缺少构建或 pin 不一致直接生成失败批次，继续收集其他证据。不会把未执行测试记为通过，不使用真实模型或日用数据。
 
 `nightly-status.json` 的 `phases[name=vendor-tests].tests` 含通过、失败、跳过数和失败名单；`nightly-report.md` 有独立测试段落，失败标红并触发既有汇总报警。完整输出在 `logs/vendor-tests.log`。新步骤沿用整晚截止时间和进程清理，不改计划任务；可以用 `tests/nightly-vendor-tests.test.ts` 的合成成功／失败结果验证报告。
 
@@ -36,7 +36,7 @@ Mac 子进程显式补 PATH（命令搜索路径） `/opt/homebrew/bin`、`/usr/
 
 报告根目录为 `D:\AIProjects\WeftMate\Runtime\Nightly\<本地日期>\`，不进入仓库。当天 `nightly-report.md` 指向最新审稿页；`latest.json` 指向最新批次。每次运行保存在独立批次目录，含 `gallery/index.html`、`gallery/manifest.json`、`nightly-report.md`、`nightly-status.json`、设备清理与通知回执。审稿页格式与 CI（持续集成）一致，每格标明拍摄时间、代码提交和来源。只保留今天及之前13天的日期目录，非日期目录不清理。
 
-阶段表固定列准备、vendor（固定运行时测试）、安装版冒烟、Windows、手机网页、Apple（苹果端）、Android（安卓端）、清理；未执行阶段写原因，总结果分别计数未运行与执行后失败，安装版冒烟列实际检查项数。
+阶段表固定列准备、vendor（固定运行时测试）、安装版冒烟、Windows、手机网页、Apple（苹果端）批次、Mac、iPhone、Watch（苹果手表）、Android（安卓端）、清理；未执行阶段写原因，总结果分别计数未运行与执行后失败，安装版冒烟列实际检查项数。
 
 任一适用格缺图、拍摄时间超过24小时／明显在未来、提交不一致、场景或构建失败、设备被占用、像素比较失败，均报警。Windows 桌面发一条汇总通知；退出码 `0` 表示本轮无报警，`1` 表示报警／失败，`2` 表示另一个夜间批次持有锁。通知的 `supported` 只证明系统接口可用，不证明本人已经看到通知。
 

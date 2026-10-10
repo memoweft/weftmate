@@ -116,7 +116,7 @@ test('report lists every required phase after preparation failure and groups env
     await mkdir(join(root,'gallery'));
     const result = await report(root,{commit,bootstrapCommit:'b'.repeat(40),startedAt:new Date().toISOString(),phases:[{name:'prepare',status:'failed',reason:'fixture preparation failed'}],cleanup:{}});
     assert.deepEqual(result.phases.map(p=>p.name),expectedPhases.map(p=>p.name));
-    assert.equal(result.summary.notRunStages,7); assert.equal(result.summary.failedStages,1);
+    assert.equal(result.summary.notRunStages,10); assert.equal(result.summary.failedStages,1);
     const markdown = await readFile(join(root,'nightly-report.md'),'utf8');
     for (const phase of expectedPhases.slice(1)) assert.ok(markdown.includes(`| ${phase.name} | 未运行 |`));
     assert.ok(markdown.includes('引导层提交')); assert.ok(markdown.includes('## 安装版冒烟'));
@@ -131,7 +131,8 @@ test('bootstrap delegates exactly once to tested entry, keeps lock until engine 
   let cleanupCount=0, launches=0;
   try {
     await mkdir(join(tree,'scripts/nightly'),{recursive:true}); await writeFile(join(tree,'.git'),'fixture');
-    const entry = join(tree,'scripts/nightly/run.mjs'); await writeFile(entry,'// NIGHTLY_HANDOFF_V1');
+    const entry = join(tree,'scripts/nightly/run.mjs');
+    await writeFile(entry, `// NIGHTLY_HANDOFF_V1\nimport {readFileSync,writeFileSync,accessSync} from 'node:fs';\nimport {join} from 'node:path';\nconst i=process.argv.indexOf('--nightly-engine');\nif(i<0)throw Error('engine was bootstrapped again');\nconst context=JSON.parse(readFileSync(process.argv[i+1],'utf8'));\naccessSync(join(context.reports,'nightly.lock'));\nconst cleanup=join(context.out,'engine-cleanup.json');\nwriteFileSync(cleanup,JSON.stringify({count:1}));\nwriteFileSync(join(context.out,'nightly-status.json'),'{}');\nprocess.exitCode=1;\n`);
     const args=['--repository',root,'--worktree',tree,'--reports',reports,'--candidate'];
     const execute = async (command, commandArgs, options) => {
       if (options.engine) {
@@ -139,7 +140,9 @@ test('bootstrap delegates exactly once to tested entry, keeps lock until engine 
         const context=JSON.parse(await readFile(commandArgs.at(-1),'utf8'));
         await access(join(reports,'nightly.lock')); assert.equal(context.sourceCommit,commit);
         assert.ok(context.deadline>Date.parse(context.startedAt));
-        cleanupCount++; await writeFile(join(context.out,'nightly-status.json'),'{}'); return {code:1};
+        assert.throws(()=>execFileSync(command,commandArgs,{cwd:options.cwd,stdio:'pipe'}),error=>error.status===1);
+        cleanupCount += JSON.parse(await readFile(join(context.out,'engine-cleanup.json'),'utf8')).count;
+        return {code:1};
       }
       return {code:0,output:commandArgs[0]==='rev-parse'?commit:''};
     };

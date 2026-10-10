@@ -28,8 +28,8 @@ export async function bootstrap(args, { execute: injectedExecute } = {}) {
   await mkdir(reports, { recursive: true });
   try { const h = await open(lock, 'wx'); await h.writeFile(JSON.stringify({ runId, startedAt, pid: process.pid })); await h.close(); }
   catch (error) { if (error.code !== 'EEXIST') throw error; console.error('Nightly is already running (nightly.lock); no resources taken.'); return 2; }
-  let child;
-  const stop = () => child?.kill('SIGTERM');
+  let child, delegated = false;
+  const stop = () => { if (delegated) void writeFile(join(out,'cancel.request'),'stop'); else child?.kill('SIGTERM'); };
   process.on('SIGINT', stop); process.on('SIGTERM', stop);
   const execute = injectedExecute || (async (command, commandArgs, { cwd = worktree, name, engine = false } = {}) => {
     const log = await open(join(out, 'logs', name + '.log'), 'a'); let output = '';
@@ -54,11 +54,11 @@ export async function bootstrap(args, { execute: injectedExecute } = {}) {
     catch { await execute('git',['worktree','add','--detach',worktree,context.sourceCommit],{cwd:repository,name:'worktree-create'}); }
     if ((await execute('git',['status','--porcelain'],{name:'worktree-status'})).output.trim()) throw Error('专用回归工作树存在未提交修改，保留并退出');
     await execute('git',['checkout','--detach',context.sourceCommit],{name:'checkout'});
-    const result = await launchEngine(context,args,execute);
+    const result = await launchEngine(context,args,(command,commandArgs,options)=>{ delegated=true; return execute(command,commandArgs,options); });
     await readFile(join(out,'nightly-status.json')).catch(() => { throw Error(`被测编排未生成报告（退出 ${result.code}；见 logs/engine.log）`); });
     return result.code ?? 1;
   } catch (error) {
-    await report(out,{ phases:[{name:'prepare',status:'failed',reason:error.message}], commit:context.sourceCommit||'unknown', bootstrapCommit:context.bootstrapCommit||'unknown', startedAt, cleanup:{ bootstrap:'未转交成功，没有设备或临时数据资源' } });
+    await report(out,{ phases:[{name:'prepare',status:'failed',reason:error.message}], commit:context.sourceCommit||'unknown', bootstrapCommit:context.bootstrapCommit||'unknown', startedAt, cleanup:{ bootstrap:delegated ? '被测编排未交回报告；只释放总锁，设备与临时数据清理状态未知，请查看编排日志' : '未转交成功，没有设备或临时数据资源' } });
     console.error(error.message); return 1;
   } finally {
     // Bootstrap alone owns the global lock; it never cleans engine resources.
