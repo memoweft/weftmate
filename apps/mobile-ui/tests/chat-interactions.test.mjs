@@ -69,7 +69,7 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
       if(id==='live-progress')return nodes.get('chat-content')?.children.find(child=>child.id==='live-progress')||null;
       if(!htmlIds.has(id)){const find=node=>node.id===id?node:node.children.map(child=>child instanceof Node?find(child):null).find(Boolean);return [...nodes.values()].map(find).find(Boolean)||null;}
       if(!nodes.has(id)){const node=new Node(id);
-        if(['approval-bar','question-bar','toast','attachment-drafts','attachment-popover','model-popover','image-preview','resource-page'].includes(id))node.hidden=true;nodes.set(id,node)}return nodes.get(id)},
+        if(['approval-bar','question-bar','toast','attachment-drafts','attachment-popover','model-popover','image-preview','resource-page'].includes(id))node.hidden=true;nodes.set(id,node);if(['pick-camera','pick-image','pick-file','pick-thinking'].includes(id))document.getElementById('attachment-popover').append(node)}return nodes.get(id)},
     createElement:tagName=>{const node=new Node();node.tagName=tagName;if(tagName==='dialog')dialogs.push(node);return node},createTextNode:value=>new TextNode(value),
     addEventListener:(event,handler)=>{if(event==='DOMContentLoaded')domReady=handler},
     querySelectorAll:()=>[],querySelector:selector=>selector==='.session-menu[role=menu]'?document.body.children.find(node=>node.className==='session-menu'&&node.attrs?.role==='menu')||null:new Node()};
