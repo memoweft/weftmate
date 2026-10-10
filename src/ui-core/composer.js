@@ -5,7 +5,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
     async function refreshThinkingModels() {
         const identity = core.state.identityGeneration;
         const value = await core.accessApi('/models');
-        if (identity === core.state.identityGeneration) core.state.models = (value.models || []).filter(row => row.configured);
+        if (identity === core.state.identityGeneration) {core.state.modelsKnown=Array.isArray(value.models);core.state.models = (value.models || []).filter(row => row.configured);}
     }
     function thinkingView() {
         const session = core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId);

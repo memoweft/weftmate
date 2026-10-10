@@ -76,7 +76,6 @@ const mobileMarkup = String.raw`
             <span id="attachment-pick-label"></span>
             <button id="attachment-pick-cancel" type="button">取消等待</button>
           </div>
-          <div id="chat-status" class="chat-status" role="status"></div>
         </div>
         <div id="model-popover" class="popover" hidden><h3>选择模型</h3><div id="model-options"></div><button data-page="models">配置自定义模型</button></div>
         <div id="attachment-popover" class="popover attachment-popover" role="menu" aria-label="添加附件" hidden>
@@ -84,7 +83,7 @@ const mobileMarkup = String.raw`
           <button id="pick-camera" type="button" role="menuitem"><span class="icon icon-camera" aria-hidden="true"></span>相机</button>
           <button id="pick-image" type="button" role="menuitem" aria-label="照片"><span class="icon icon-image" aria-hidden="true"></span>照片<span>从系统相册选择</span></button>
           <button id="pick-file" type="button" role="menuitem"><span class="icon icon-attach" aria-hidden="true"></span>文件<span>从系统文件中选择</span></button>
-          <button id="pick-thinking" type="button" role="menuitemcheckbox" aria-checked="false" hidden><span class="icon icon-model" aria-hidden="true"></span>深入思考</button><p id="attachment-note" class="attachment-note" hidden>附件会保存到这段电脑会话；普通文件将以文件卡显示。</p>
+          <hr id="thinking-separator" class="wm-menu-separator" hidden><button id="pick-thinking" type="button" role="menuitemcheckbox" aria-checked="false" hidden><span class="icon icon-model" aria-hidden="true"></span>深入思考</button><p id="attachment-note" class="attachment-note" hidden>附件会保存到这段电脑会话；普通文件将以文件卡显示。</p>
         </div>
       </section>
       <section id="generic-page" class="page" aria-live="polite"><div id="page-content"></div></section>

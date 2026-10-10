@@ -26,9 +26,10 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
         const item = (name, icon, action, checked) => {
             const button = ui.element('button', 'model-option'); button.type = 'button';
             button.setAttribute('role', checked === undefined ? 'menuitem' : 'menuitemcheckbox');
-            button.append(window.WeftIcons.create(icon, 20), ui.element('span', '', name));
+            button.append(window.WeftIcons.create(icon, 20), ui.element('span', 'wm-menu-label', name));
             if (checked !== undefined) { button.setAttribute('aria-checked', String(checked));
-                if (checked) button.append(window.WeftIcons.create('allow', 16)); }
+                const indicator=ui.element('span','menu-toggle-state');indicator.setAttribute('aria-hidden','true');
+                if (checked) indicator.append(window.WeftIcons.create('allow', 16));button.append(indicator); }
             button.addEventListener('click', action); menu.append(button); return button;
         };
         const pick = id => { closeComposerMenu(true); ui.byId(id).click(); };
@@ -52,6 +53,7 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
         });
         const thinking = core.thinkingView();
         if (thinking.supported) {
+            const divider=ui.element('hr','wm-menu-separator');menu.append(divider);
             const toggle = item('深入思考', 'model', async () => { closeComposerMenu(true); await core.setDeepThinking(!thinking.enabled); }, thinking.enabled);
             toggle.disabled = thinking.busy;
         }

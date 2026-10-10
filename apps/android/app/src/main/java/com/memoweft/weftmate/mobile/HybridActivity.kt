@@ -161,6 +161,7 @@ class HybridActivity : Activity() {
     @Volatile private var pageGeneration = 0
     private var events: JavaScriptReplyProxy? = null
     @Volatile private var activeConversation: String? = null
+    private var compatibilityMessage: TextView? = null
     private var lastUiError: String? = null
     private var pendingSpeech: Pair<SpeechAttempt, Int>? = null
     private var pendingAvatarScope: String? = null
@@ -219,7 +220,7 @@ class HybridActivity : Activity() {
                 insets
             }
         }
-        web = WebView(this)
+        web = WebView(this).apply { setBackgroundColor(Weave.surface) }
         motionSettings.forEach { contentResolver.registerContentObserver(Settings.Global.getUriFor(it), false, motionObserver) }
         container.addView(web, FrameLayout.LayoutParams(-1, -1))
         setContentView(container)
@@ -550,13 +551,16 @@ class HybridActivity : Activity() {
         if (!compatShown.compareAndSet(false, true)) return
         runOnUiThread {
             if (closed.get()) return@runOnUiThread
+            compatibilityMessage?.let { (web.parent as? FrameLayout)?.removeView(it) }
             val message = TextView(this).apply {
+                setBackgroundColor(Weave.surface)
                 text = "$reason\n打开原生界面继续使用"
                 textSize = DesignTokens.font16
                 setPadding(DesignTokens.fallbackPadding, DesignTokens.fallbackTop, DesignTokens.fallbackPadding, DesignTokens.fallbackPadding)
                 setOnClickListener { startActivity(Intent(this@HybridActivity, MainActivity::class.java)) }
             }
-            (web.parent as? FrameLayout)?.addView(message, FrameLayout.LayoutParams(-1, -2))
+            compatibilityMessage = message
+            if (!currentPageReady) (web.parent as? FrameLayout)?.addView(message, FrameLayout.LayoutParams(-1, -2))
         }
     }
 
@@ -839,7 +843,11 @@ class HybridActivity : Activity() {
             uiHasDraft = draft
             draftKnowledgeReady = true
             currentPageReady = true
-            runOnUiThread { handleNotificationIntent() }
+            runOnUiThread {
+                compatibilityMessage?.visibility = View.GONE
+                compatShown.set(false)
+                handleNotificationIntent()
+            }
             if (bundles.state().active != "builtin") lastUiError = null
             JSONObject().put("bridgeVersion", 1)
         }
