@@ -219,8 +219,8 @@ def main():
                 for scene in native_scenes:
                     image = root / ('mac-' + scene + '-' + theme + '.png')
                     native_scene = {'general': 'settings-general', 'onboarding': 'settings-devices'}.get(scene, scene)
-                    captured_at = iso()
                     run([capture, executable, image, native_scene, theme, ready['host'], ready['cloud'], 'ephemeral'], 'mac-' + scene + '-' + theme)
+                    captured_at = datetime.fromtimestamp(image.stat().st_mtime, timezone.utc).isoformat().replace('+00:00', 'Z')
                     save(image, 'mac', scene, theme, captured_at, 'native own-window AX (A10/A15 runner) + synthetic host')
                 run(['xcrun', 'simctl', 'boot', phone], 'phone-boot')
                 run(['xcrun', 'simctl', 'bootstatus', phone, '-b'], 'phone-ready')
@@ -234,8 +234,8 @@ def main():
             try:
                 ready = get(info['driver'], '/ready')
                 folder = root / ('a15-' + theme)
-                captured_at = iso()
                 run([capture, executable, folder, 'a15-all', theme, ready['host'], ready['host'], 'ephemeral', 'a15-driver=' + info['driver']], 'mac-a15-' + theme)
+                captured_at = datetime.fromtimestamp((folder / 'plus-menu.png').stat().st_mtime, timezone.utc).isoformat().replace('+00:00', 'Z')
                 save(folder / 'plus-menu.png', 'mac', 'composer-menu', theme, captured_at, 'A15 native own-window AX + synthetic host')
             finally:
                 stop(child)
@@ -260,7 +260,9 @@ def main():
                 stop(child)
         run(['xcrun', 'simctl', 'unpair', pair], 'unpair', check=False)
     except Exception as exc:
-        status.update(status='failed', reason=str(exc))
+        # Public gallery metadata must never include a machine path from OSError.
+        reason = re.sub(r'/(?:Users|private|var|tmp)/[^\s\x27\x22]+', '[local artifact]', str(exc))
+        status.update(status='failed', reason=reason)
     finally:
         signal.alarm(0)
         for child in reversed(processes):
