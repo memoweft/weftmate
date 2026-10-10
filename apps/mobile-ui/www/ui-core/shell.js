@@ -205,13 +205,13 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
                 .map(marker => core.lookupRequest(marker))]);
         } finally { core.state.liveRefreshing = false; }
     }
-    async function refreshAssistant() {
+    async function refreshAssistant(personalizationLoaded = false) {
         if (core.state.refreshing || !core.state.csrfToken || core.state.connection && core.state.connection.kind !== 'online' && (core.state.connection.failures > 0 || core.state.connection.kind !== 'connecting'))
             return;
         core.state.refreshing = true;
         try {
             await core.refreshStatus();
-            await core.loadPersonalization().catch(() => {});
+            if (!personalizationLoaded) await core.loadPersonalization().catch(() => {});
             await core.refreshActivity?.();
             await core.refreshModels();
             // The session selector owns its initial history and decisions.
@@ -245,7 +245,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         core.show('assistant');
         effects.closeRail();
         await core.loadMessageModePreference();
-        await core.refreshAssistant();
+        await core.refreshAssistant(true);
         effects.startAssistantRefresh();
         await effects.resumeOnboarding?.();
     }
