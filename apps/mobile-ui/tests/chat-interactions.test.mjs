@@ -9,7 +9,7 @@ const styles=readFileSync(new URL('../www/styles.css',import.meta.url),'utf8');
 const htmlIds=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(match=>match[1]));
 
 function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFrames=false,frameMs=1000/60}={}){
-  const timers=new Map();let nextTimer=0,now=0;
+  const intervals=new Map();const timers=new Map();let nextTimer=0,nextInterval=0,now=0;
   const nodes=new Map();
   let domReady;
   class TextNode{
@@ -43,6 +43,8 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
     remove(){if(this.parent)this.parent.children=this.parent.children.filter(child=>child!==this)}
     setAttribute(key,value){this.attrs[key]=value}
     getAttribute(key){return this.attrs[key]??null}
+    removeAttribute(key){delete this.attrs[key];if(key==='id')this.id='';}
+    cloneNode(deep=false){const copy=new Node(this.id);copy.tagName=this.tagName;copy.className=this.className;copy.attrs={...this.attrs};copy.textContent=this.textContent;copy.hidden=this.hidden;if(deep)copy.append(...this.children.map(child=>child instanceof Node?child.cloneNode(true):child instanceof TextNode?new TextNode(child.data):child));return copy;}
     getBoundingClientRect(){return {top:500,height:132}}
     focus(){document.activeElement=this}
     addEventListener(event,handler){this.listeners.set(event,[...(this.listeners.get(event)||[]),handler])}
@@ -52,14 +54,14 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
     querySelectorAll(selector){const all=this.children.flatMap(child=>[child,...(child.querySelectorAll?.(selector)||[])]);return all.filter(node=>selector==='[data-question-control]'?node.dataset?.questionControl:selector===node.tagName||selector.startsWith('.')&&node.className?.split(' ').includes(selector.slice(1)))}
   }
   const frames=[];
-  const document={activeElement:null,documentElement:new Node('html'),getElementById:id=>{
+  const document={body:new Node('body'),activeElement:null,documentElement:new Node('html'),getElementById:id=>{
       if(id==='live-progress')return nodes.get('chat-content')?.children.find(child=>child.id==='live-progress')||null;
       if(!htmlIds.has(id)){const find=node=>node.id===id?node:node.children.map(child=>child instanceof Node?find(child):null).find(Boolean);return [...nodes.values()].map(find).find(Boolean)||null;}
       if(!nodes.has(id)){const node=new Node(id);
         if(['approval-bar','question-bar','toast','attachment-drafts','attachment-popover','model-popover','image-preview','resource-page'].includes(id))node.hidden=true;nodes.set(id,node)}return nodes.get(id)},
     createElement:tagName=>{const node=new Node();node.tagName=tagName;return node},createTextNode:value=>new TextNode(value),
     addEventListener:(event,handler)=>{if(event==='DOMContentLoaded')domReady=handler},
-    querySelectorAll:()=>[],querySelector:()=>new Node()};
+    querySelectorAll:()=>[],querySelector:selector=>selector==='.session-menu[role=menu]'?document.body.children.find(node=>node.className==='session-menu'&&node.attrs?.role==='menu')||null:new Node()};
   const bridge=[];
   let observed=null;
   class ResizeObserver{observe(node){assert.ok(node instanceof Node);assert.ok(htmlIds.has(node.id));observed=node}unobserve(){}disconnect(){}}
@@ -75,7 +77,9 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
   const saved=new Map(Object.entries(storage));
   const localStorage={setItem(key,value){saved.set(key,String(value))},removeItem(key){saved.delete(key)},
     getItem(key){return saved.get(key)??null},key(index){return [...saved.keys()][index]??null},get length(){return saved.size}};
-  const context=vm.createContext({document,window,localStorage,URL,AbortSignal,crypto:globalThis.crypto,
+  const context=vm.createContext({document,window,innerHeight:window.innerHeight,localStorage,URL,AbortSignal,crypto:globalThis.crypto,
+    // Page refresh intervals are tracked separately from the controlled send/retry clock.
+    setInterval:(fn,delay)=>{const id=`interval-${++nextInterval}`;intervals.set(id,{fn,delay});return id},clearInterval:id=>intervals.delete(id),
     setTimeout:(fn,delay)=>{const id=++nextTimer;timers.set(id,{fn,delay,due:now+delay});return id},clearTimeout:id=>timers.delete(id),
     requestAnimationFrame:fn=>{if(queueFrames){frames.push(fn);return frames.length}fn(now);return 0},ResizeObserver,console});
   vm.runInContext(source,context);

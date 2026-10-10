@@ -36,7 +36,7 @@ if (android) {
 try {
   for (const theme of ['light', 'dark']) {
     const fixture = await startFe1bFixture();
-    const candidate = await startTimelineCandidate({goals:true, historyCount: 0, interactive: true });
+    const candidate = await startTimelineCandidate({daily:true,logicalMobile:true,goals:true, historyCount: 0, interactive: true });
     const context = android ? android.page.context() : await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, colorScheme: theme });
     const page = android?.page || await context.newPage(), errors = [];let mainFixture;
     try {
@@ -92,21 +92,23 @@ try {
         if (body.method === 'settings.appearance') return route.fulfill({ json: { result: { value: theme } } });
         await route.continue();
       });
-      await shot('library', async () => { await questionPage.goto(candidate.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);await questionPage.getByRole('button',{name:'打开导航',exact:true}).click();await questionPage.getByRole('button',{name:'成果库',exact:true}).click();await questionPage.getByRole('button',{name:'预览 项目进度报告.md',exact:true}).click();await questionPage.getByRole('heading',{name:'项目进度报告',exact:true}).waitFor(); },questionPage);
+      await shot('library', async () => { await questionPage.goto(candidate.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);await questionPage.getByRole('tab',{name:/^成果库(?:，|$)/}).click();await questionPage.getByRole('button',{name:'预览 项目进度报告.md',exact:true}).waitFor(); },questionPage);
       await shot('goals', async () => {
-        await questionPage.goto(candidate.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);await questionPage.getByRole('button',{name:'打开导航',exact:true}).click();await questionPage.getByRole('button',{name:'目标',exact:true}).click();await questionPage.getByRole('heading',{name:'目标',exact:true}).waitFor();await questionPage.getByRole('article',{name:'提交合成报告',exact:true}).waitFor();
+        await questionPage.goto(candidate.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);await questionPage.getByRole('tab',{name:/^目标(?:，|$)/}).click();await questionPage.getByRole('heading',{name:'目标',exact:true}).waitFor();await questionPage.getByRole('article',{name:'提交合成报告',exact:true}).waitFor();
       },questionPage);
       await shot('activity', async () => {
         await candidate.recordActivity({key:'gallery-paused',type:'memory.paused',title:'记忆已暂停',summary:'记忆暂时无法更新，可在记忆页查看状态。',level:'normal'});
         await questionPage.goto(candidate.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);
-        await questionPage.getByRole('button',{name:'打开导航',exact:true}).click();await questionPage.getByRole('button',{name:'动态',exact:true}).click();
+        await questionPage.getByRole('tab',{name:/^动态(?:，|$)/}).click();
         await questionPage.getByRole('heading',{name:'动态',exact:true}).waitFor();await questionPage.getByText('记忆已暂停',{exact:true}).waitFor();
       },questionPage);
       await shot('question', async () => {
         await questionPage.goto(candidate.mobileUrl);
-        await questionPage.waitForFunction(() => state.booted && state.page === 'home');
-        await questionPage.getByRole('main').getByRole('button', { name: /^项目进度报告(?:\s|$)/ }).click();
-        await questionPage.getByRole('button',{name:'拒绝',exact:true}).click();
+        await questionPage.waitForFunction(() => state.booted && state.loggedIn);
+        await questionPage.getByRole('tab',{name:/^动态(?:，|$)/}).click();
+        await questionPage.getByRole('button',{name:'更多操作 需要审批',exact:true}).click();
+        await questionPage.getByRole('menuitem',{name:'拒绝',exact:true}).click();
+        await questionPage.getByRole('button',{name:'打开动态 需要回答',exact:true}).click();
         await questionPage.getByRole('region',{name:'待回答问题'}).waitFor();
         await questionPage.getByRole('radio',{name:'简要报告',exact:true}).waitFor();
       }, questionPage);

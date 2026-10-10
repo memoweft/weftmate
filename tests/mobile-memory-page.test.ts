@@ -270,7 +270,8 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
       getItem: (key: string) => storage.get(key) ?? null, setItem: (key: string, value: string) => storage.set(key, value),
       removeItem: (key: string) => storage.delete(key),
     } }
-  runInNewContext(source, { document, window, localStorage: timers.localStorage, setTimeout: timers.setTimeout,
+  // Browser scripts read viewport metrics as bare globals as well as window properties.
+  runInNewContext(source, { document, window, innerHeight: window.innerHeight, innerWidth: 390, localStorage: timers.localStorage, setTimeout: timers.setTimeout,
     clearTimeout: timers.clearTimeout, requestAnimationFrame: timers.requestAnimationFrame, URLSearchParams,
     console, Intl, Date, Error, Map, Set, Promise, URL, crypto: webcrypto, AbortSignal, TextEncoder,
     ResizeObserver:class { observe(){} unobserve(){} disconnect(){} } })
