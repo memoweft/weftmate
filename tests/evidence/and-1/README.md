@@ -44,6 +44,9 @@
 
 **验证与复跑**
 
-`node tests/integration/and-1-system-bars.mjs` 使用独立测试包及真实主题桥；`node tests/integration/and-1-web.mjs` 使用隔离宿主与真实桌面程序／网页。构建使用 `-PweftmateApplicationId=com.memoweft.weftmate.mobile.and1`，不改版本号。完整必过单测与最终合并后结果见交付记录；安卓 `assembleDebug`／`testDebugUnitTest` 55 项通过、0 失败。需要新壳版本，并同时发布对应界面包，由 Claude 统一递增版本。
+`node tests/integration/and-1-system-bars.mjs` 使用独立测试包及真实主题桥；`node tests/integration/and-1-web.mjs` 使用隔离宿主与真实桌面程序／网页。构建使用 `-PweftmateApplicationId=com.memoweft.weftmate.mobile.and1`，不改版本号。合入最新 `main` 后完整必过 **1,359 通过／0 失败／14 项既有条件跳过**，见 [完整输出](required-tests.txt)；[类型检查](typecheck.txt)与[21 项直接检查](related-tests.txt)通过；安卓 `assembleDebug`／`testDebugUnitTest` 55 项通过、0 失败。需要新壳版本，并同时发布对应界面包，由 Claude 统一递增版本。
 
 夜间原生截图新增取样断言，白栏／深色截图必失败；测试 APK 把合成页面的实际主题送入与真实桥同一原生控制器，截屏前等待回执。实际消息桥另由本包独立矩阵验证。手机页面按实际主题重新校正拍摄标签，避免“文件叫深色、页面仍浅色”。
+
+
+交付：[PR #193](https://github.com/memoweft/weftmate/pull/193)。本包两个测试 APK 已卸载，输入法恢复，ADB（安卓调试桥）转发／反向映射清空本包项目，未停止他人创建的 MuMu。4 个本包残留测试进程通过应用正常退出完成清理，工作树匹配进程残留 0。自动审批还拒绝了临时浏览器 APK 的清理命令（仅 `blocked by policy`）；该静态下载文件留在系统临时目录，私有交付记录注明位置，不是运行进程或用户凭据。
