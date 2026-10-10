@@ -130,6 +130,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
                 list.insertBefore(row, next);
             else
                 list.append(row);
+            row.dataset.memorySession=event.sourceRef?.sessionId||sessionId;
             ui.messageActions?.bind(row, event, event.sourceRef?.sessionId || sessionId);
             if (incremental && events.length <= 20 && event.type === 'assistant.message') {
                 globalThis.WeftMotion?.reveal(row.querySelector('.message-text'), '160ms');

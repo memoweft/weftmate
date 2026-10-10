@@ -133,11 +133,12 @@
   mobileEffects.renderMainChat=()=>{oldRenderMain();$('open-side-chat').hidden=!state.logicalChats;if(sideHeading)sideHeading.hidden=!state.logicalChats;};
   // Touch selection exposes a single row's existing actions. Scrolling cancels a long press.
   let timer,pointerStart,longPressedRow;
-  transcript.addEventListener('pointerdown',event=>{const row=event.target.closest('.logical-message,.main-chat-row.message');if(!row||event.target.closest('button,a,summary'))return;
+  transcript.addEventListener('pointerdown',event=>{const row=event.target.closest('.logical-message,.main-chat-row.message');if(!row||row.classList.contains('user')||event.target.closest('button,a,summary'))return;
     pointerStart={x:event.clientX,y:event.clientY};longPressedRow=null;timer=setTimeout(()=>{longPressedRow=row;row.classList.add('actions-visible');const menu=row.querySelector('.chat-message-menu');if(menu)menu.open=true;row.querySelector('summary')?.focus({preventScroll:true});},500);});
   transcript.addEventListener('pointermove',event=>{if(pointerStart&&Math.hypot(event.clientX-pointerStart.x,event.clientY-pointerStart.y)>10)clearTimeout(timer);});
   for(const name of ['pointerup','pointercancel'])transcript.addEventListener(name,()=>clearTimeout(timer));
   transcript.addEventListener('click',event=>{if(event.target.closest('button,a,summary,details'))return;const row=event.target.closest('.main-chat-row.message');
+    if(row?.classList.contains('user'))return;
     if(longPressedRow===row){longPressedRow=null;return;}
     for(const active of transcript.querySelectorAll('.actions-visible'))if(active!==row)active.classList.remove('actions-visible');row?.classList.toggle('actions-visible');});
   transcript.addEventListener('contextmenu',event=>{const row=event.target.closest('.main-chat-row.message'),menu=row?.querySelector('.chat-message-menu');if(!menu)return;
