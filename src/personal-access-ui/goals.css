@@ -1,4 +1,4 @@
-.goals-surface { flex:1; min-width:0; height:100%; overflow:auto; background:var(--surface); scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
+.goals-surface { flex:1; min-width:0; height:100%; overflow:auto; background:var(--surface);   }
 .goals-page { padding:var(--wm-space-32); color:var(--ink); }
 .goals-heading { display:flex; align-items:center; justify-content:space-between; gap:var(--wm-space-12); max-width:var(--wm-size-740); }
 .goals-heading h1 { font-size:var(--wm-font-size-27); margin:0; }
@@ -81,7 +81,6 @@ body:has(#page-content) .session-menu-item.danger { color:var(--danger); }
 .goals-field .settings-select>span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .goals-field .settings-select:hover { background:var(--accent-soft); }
 .goals-open .rail-main-chat.is-current { background:transparent; text-decoration:none; }
-#generic-page:has(.goals-page),.goals-page .settings-select-menu { scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
 
 .goals-page .button.secondary { border:1px solid var(--line); background:var(--surface); color:var(--ink); }
 .goals-page .button.secondary:hover { background:var(--accent-soft); }
@@ -89,7 +88,7 @@ body:has(#page-content) .session-menu-item.danger { color:var(--danger); }
 .goals-confirm h2 { padding:0; margin:0; }
 
 .goals-select-menu { overflow:hidden !important; }
-.goals-select-menu [role=listbox] { max-height:calc(var(--wm-space-44) * 6); overflow:auto; scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
+.goals-select-menu [role=listbox] { max-height:calc(var(--wm-space-44) * 6); overflow:auto;   }
 .goals-select-menu [role=option] { display:flex; align-items:center; justify-content:space-between; gap:var(--wm-space-8); height:var(--wm-space-44); min-height:var(--wm-space-44); }
 .goals-select-menu input { box-sizing:border-box; width:100%; padding:var(--wm-space-12); border:1px solid var(--line); border-radius:var(--wm-radius-8); background:var(--surface); color:var(--ink); font:inherit; }
 .goals-select-menu input:focus-visible { outline:var(--wm-space-2) solid var(--accent); outline-offset:calc(-1 * var(--wm-space-2)); }

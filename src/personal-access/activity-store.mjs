@@ -3,6 +3,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { digest, failure } from './common.mjs';
 import { chatForSession } from './chat-identity.mjs';
 import { hasPrivateContent } from './temporary-chats.mjs';
+import { activityNotificationContent } from './notification-content.mjs';
 
 export const ACTIVITY_TYPES = ['reminder.triggered','task.completed','task.failed','task.stopped','approval.pending','question.pending','memory.paused','memory.submission.completed','memory.report','system.update.available','system.reconnected','system.dnd.summary','system.notification.test','companion.greeting'];
 const short = value => Array.from(String(value ?? '').replace(/\s+/g, ' ').trim()).slice(0,160).join('');
@@ -29,7 +30,7 @@ export function nativeTaskActivity(account,sessionId,terminal){
   const source=activitySource(account,sessionId,{seq:terminal.seq,...(terminal.taskId?{taskId:terminal.taskId}:{})});
   const id=terminal.taskId&&chat?.kind==='side'?`activity-result-${digest(`${chat.chatId}/${terminal.taskId}`).slice(0,40)}`:undefined;
   return putActivity(account,terminal.taskId?`task:${terminal.taskId}`:`turn:${sessionId}:${terminal.turn??terminal.seq}`,{id,at:terminal.at,type:`task.${terminal.state}`,
-    title:{completed:'任务完成',failed:'任务失败',stopped:'任务已停止'}[terminal.state],summary:terminal.summary??'打开对话查看结果。',
+    title:{completed:'任务完成',failed:'任务失败',stopped:'任务已停止'}[terminal.state],summary:terminal.summary??'打开对话查看结果。',failureReason:terminal.failureReason,
     source,actions:[{kind:'open_chat',label:'打开对话',target:source}],level:terminal.state==='failed'?'important':'normal'});
 }
 export function putActivity(account, key, input) {
@@ -44,7 +45,8 @@ export function putActivity(account, key, input) {
     ...(privateSource ? {temporary:true}: {}) };
   if (privateSource) { row.title=input.type.startsWith('task.') ? '临时对话中的任务' : input.type==='approval.pending' ? '临时对话需要审批' : input.type==='question.pending' ? '临时对话需要回答' : '临时对话动态';
     row.summary=input.type==='task.completed' ? '临时对话中的任务已完成' : input.type==='task.failed' ? '临时对话中的任务失败' : input.type==='task.stopped' ? '临时对话中的任务已停止' : '打开临时对话查看。'; }
-  if (previous && isDeepStrictEqual({...row,notification:undefined},Object.fromEntries(Object.keys(row).map(k=>[k,k==='notification'?undefined:previous[k]]))) && row.notification.level===previous.notification.level && row.notification.initiatedBy===previous.notification.initiatedBy) return previous;
+  Object.assign(row.notification, activityNotificationContent(account, {...row,...(!privateSource?{failureReason:input.failureReason,approvalOperation:input.approvalOperation}:{})}));
+  if (previous && isDeepStrictEqual({...row,notification:undefined},Object.fromEntries(Object.keys(row).map(k=>[k,k==='notification'?undefined:previous[k]]))) && row.notification.level===previous.notification.level && row.notification.initiatedBy===previous.notification.initiatedBy && row.notification.title===previous.notification.title && row.notification.body===previous.notification.body) return previous;
   // Keep the original decision for content edits; resolving a pending item is silent.
   if(previous && Object.hasOwn(previous.notification,'notify')) row.notification={...previous.notification,...row.notification,
     ...(row.notification.level==='silent'?{notify:false,sound:false,decision:'activity',reason:'silent'}:{})};
@@ -71,7 +73,7 @@ export function reconcileActivity(account) {
       const pending=row.status==='pending', type=`${kind}.pending`, target={sessionId:command.sessionId,taskId:source.taskId,
         ...(kind==='approval'?{approvalId:row.approvalId}:{questionRpcId:row.questionRpcId})};
       putActivity(account,`${kind}:${command.sessionId}:${row.approvalId??row.questionRpcId}`,{at:row.createdAt,type,source,
-        title:kind==='approval'?'需要审批':'需要回答',summary:pending ? (kind==='approval'?row.reason??`允许 ${row.toolName??'这项操作'}？`:row.questions?.[0]?.question??'补充信息后继续。') :
+        title:kind==='approval'?'需要审批':'需要回答',approvalOperation:kind==='approval'?(row.reason||row.toolName||'这项操作'):undefined,summary:pending ? (kind==='approval'?row.reason??`允许 ${row.toolName??'这项操作'}？`:row.questions?.[0]?.question??'补充信息后继续。') :
           row.status==='unavailable'?'已失效':kind==='approval'?(row.decisionOutcome==='deny'?'已拒绝':'已处理'):'已回答',state:pending?'pending':row.status==='unavailable'?'unavailable':'completed',level:pending?'important':'silent',
         actions:[...(pending?[{kind:kind==='approval'?'respond_approval':'answer_question',label:kind==='approval'?'审批':'回答',target}]:[]),{kind:'open_chat',label:'打开对话',target:source}]});
     }
@@ -82,7 +84,7 @@ export function reconcileActivity(account) {
     const source=activitySource(account,result.sourceRef?.native?.sessionId??result.sourceRef?.sessionId,{chatId:result.sourceChatId,taskId:result.taskId,eventId:result.sourceEventId});
     if(!source.sessionId)delete source.sessionId;
     putActivity(account,`task:${result.taskId??result.resultId}`,{id:result.activityId,at:result.at,type:`task.${result.state}`,source,
-      title:{completed:'任务完成',failed:'任务失败',stopped:'任务已停止'}[result.state],summary:result.summary,actions:[{kind:'open_chat',label:'打开旁聊',target:source}]});
+      title:{completed:'任务完成',failed:'任务失败',stopped:'任务已停止'}[result.state],summary:result.summary,failureReason:state.sources[source.sessionId]?.terminals?.[result.taskId]?.failureReason,actions:[{kind:'open_chat',label:'打开旁聊',target:source}]});
   }
   for(const [sessionId,scan]of Object.entries(account.activity?.sources??{}))if(account.sessions[sessionId]&&!account.sessions[sessionId].deleting){
     for(const terminal of Object.values(scan.terminals??{}))if(!Object.values(account.chatResults??{}).some(result=>result.taskId===terminal.taskId))nativeTaskActivity(account,sessionId,terminal);

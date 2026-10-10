@@ -4,7 +4,7 @@
 .offline-chat h1{font-size:var(--wm-font-size-18);margin:0;flex:1}
 .offline-chat header p{flex-basis:100%;margin:0;font-size:var(--wm-font-size-14)}
 .offline-chat select{max-width:100%;width:100%;padding:var(--wm-space-8);background:inherit;color:inherit;border:1px solid var(--line,var(--wm-color-control-border));border-radius:var(--wm-radius-8)}
-.offline-messages{flex:1;overflow:auto;min-height:0;scrollbar-color:var(--wm-color-control-border) transparent}
+.offline-messages{flex:1;overflow:auto;min-height:0;}
 .offline-message{max-width:72ch;margin:var(--wm-space-20) auto;overflow-wrap:anywhere}
 .offline-message span{font-size:var(--wm-font-size-14);font-weight:600}
 .offline-message p{white-space:pre-wrap;line-height:1.6;margin:var(--wm-space-8) 0}

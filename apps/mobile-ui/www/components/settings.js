@@ -46,7 +46,7 @@ function connectionLabel(){return {connected:'电脑连接正常',checking:'已�
 
 const mobileSettingsRegistry = WeftUiCore.settingsRegistry({
   archived: target => archivedSettingsPage(target),
-  notifications: target => {target.append(heading('通知'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftNotificationsView(uiCore,body,{permissionState:()=>call('notifications.state'),requestPermission:()=>call('notifications.requestPermission'),openSettings:()=>call('notifications.openSettings'),openBatterySettings:()=>call('notifications.openBatterySettings'),poll:()=>call('notifications.poll')})},
+  notifications: target => {target.append(heading('通知'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftNotificationsView(uiCore,body,{toast,permissionState:()=>call('notifications.state'),requestPermission:()=>call('notifications.requestPermission'),openSettings:()=>call('notifications.openSettings'),openBatterySettings:()=>call('notifications.openBatterySettings'),poll:()=>call('notifications.poll')})},
   personalization: target => {target.append(heading('个性化'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftPersonalizationView(uiCore,body,'personalization')},
   assistant: target => {target.append(heading('助手'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftPersonalizationView(uiCore,body,'assistant')},
   general: target => generalSettingsPage(target), appearance: target => appearancePage(target),
@@ -116,7 +116,7 @@ async function systemStatusSection(target){const owner=state.owner,epoch=state.a
     if(!current())return;
     const labels={ready:'运行中',connected:'运行中',stopped:'已停止',starting:'启动中',disabled:'未启用',
       unavailable:'不可用',unconfigured:'尚未配置',degraded:'需要处理'};
-    status.textContent=system.queue?.backgroundPending?`${system.queue.backgroundPending} 项后台请求排队中`:'已更新';
+    status.textContent=system.queue?.backgroundPending?`${system.queue.backgroundPending} 项后台请求排队中`:'';
     for(const [key,name] of [['model','模型服务'],['host','宿主'],['memory','记忆']]){const value=system[key];
       const detail=[key==='memory'?uiCore.memoryHealthText(value):labels[value.state]||'状态未知',value.currentModelId?`当前模型 ${value.currentModelId}`:'',
         value.version?`版本 ${value.version}`:['disabled','unconfigured','stopped'].includes(value.state)?'':'版本未知',
@@ -133,7 +133,7 @@ async function systemStatusSection(target){const owner=state.owner,epoch=state.a
       section.append(button)
     }
     const background=el('p','hint',settings.backgroundModelProfileId?'后台模型已单独配置 · 在电脑设置中修改':'后台模型跟随主模型 · 在电脑设置中修改');section.append(background);
-    const refresh=el('button','secondary','刷新状态');refresh.addEventListener('click',()=>page('general'));section.append(refresh);
+    const refresh=el('button','icon-button');refresh.type='button';refresh.setAttribute('aria-label','刷新系统状态');refresh.append(WeftIcons.create('sync',20));refresh.addEventListener('click',()=>page('general'));section.append(refresh);
   }catch(e){if(current())status.textContent=state.loggedIn?'系统状态暂时无法读取，请重新连接电脑后刷新。':'登录并连接电脑后查看系统状态。'}
 }
 

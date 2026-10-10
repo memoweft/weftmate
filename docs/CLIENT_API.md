@@ -1208,7 +1208,7 @@ Apple（苹果端）接线：新建入口发送 `/sessions/temporary`；侧栏/�
 | `system.update.available` | `normal` | 现有更新状态确实提供新版本；不暴露更新源或增加安装授权 |
 | `system.reconnected` | `silent` | 已观察就绪的宿主重启后再次就绪，或运行时不可用后恢复；首次安装启动不伪造恢复事件，不凭单个会话读取失败断言电脑离线 |
 
-`notification` 保留 `level,type`，ST-6 追加宿主决定，详见下方 9.8.1。客户端收到 `notify:false` 不派发系统通知。等级不是权限，重要不跳过未来勿扰或主动打扰限制。桌面用现有原生通知，每条动态ID最多一份系统通知，内容修订不重复弹出；点击带对应 `activityId` 打开动态并聚焦条目。通知去重仅持久保存账户与条目ID，无标题 / 正文。删除增量关闭对应已显示通知。S3a后续消费同一ID、等级与类型接安卓后台通知，约15分钟以上延迟的边界仍按D41说明；不得创建第二个提醒调度器。
+`notification` 保留 `level,type`，UX-P3 追加可选 `title,body`（宿主生成的系统通知文案）：完成标题为任务 / 对话名称，正文「已完成 · 点开查看结果」；失败正文为原生失败原因，审批正文「需要你批准：<操作>」，提醒正文为提醒内容。临时对话沿原隐私规则脱敏后生成。桌面 / 安卓 / Apple 优先显示这两项；旧宿主缺失时回退动态 `title,summary`，客户端不重新拼类别文案。ST-6 追加宿主决定，详见下方 9.8.1。客户端收到 `notify:false` 不派发系统通知。等级不是权限，重要不跳过未来勿扰或主动打扰限制。桌面用现有原生通知，每条动态ID最多一份系统通知，内容修订不重复弹出；点击带对应 `activityId` 打开动态并聚焦条目。通知去重仅持久保存账户与条目ID，无标题 / 正文。删除增量关闭对应已显示通知。S3a后续消费同一ID、等级与类型接安卓后台通知，约15分钟以上延迟的边界仍按D41说明；不得创建第二个提醒调度器。
 
 宿主可信接缝 `service.recordActivity(ownerId,{key,type,at?,title,summary,source?,actions?,level?})` 只允许已登记的记忆与系统类型，`key` 使用上游稳定事件 / 回执ID；相同事实与正文不会重复插入。它不暴露为公共HTTP（网络请求）写入接口。MEM-D / MEM-3 / S3a使用该接缝提供真实状态，不能提交临时正文或未发生的成功。
 
@@ -1228,7 +1228,7 @@ Apple（苹果端）接线：新建入口发送 `/sessions/temporary`；侧栏/�
 
 其他字段：`dndEnabled:false,dndStart:"22:00",dndEnd:"08:00",approvalException:true,dailyLimit:5,soundEnabled:true`。时间为严格 `HH:mm`；含开始、不含结束，可跨午夜，相同时全天勿扰。`approvalException` 只放行 `approval.pending`，不放行待回答；仍遵守该类开关。`dailyLimit` 可为 0 / 3 / 5 / 10 / null（不限）。声音使用各平台系统通知声音和系统音量，无自带音频。
 
-宿主在首次提交事实时持久写 `notification={level,type,initiatedBy,notify,sound,decision,reason,decidedAt,test?}`：
+宿主在首次提交事实时持久写 `notification={level,type,title?,body?,initiatedBy,notify,sound,decision,reason,decidedAt,test?}`：
 
 - `initiatedBy:user|assistant`：任务结果、审批、本人设定的提醒默认 user；记忆 / 系统状态 / 精灵默认 assistant。可信 `recordActivity` 和提醒提供方可明确传入 `initiatedBy`；S3a / Apple（苹果端）不得按文字猜测。
 - `decision:notify|silent|activity` 分别表示通知并响铃、通知不响铃、仅动态；`notify` / `sound` 是平台直接使用的布尔决定。
