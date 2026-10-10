@@ -21,4 +21,20 @@ final class A13WatchUITests: XCTestCase {
         let text = regex.matches(in: snapshot, range: NSRange(snapshot.startIndex..., in: snapshot)).map { String(snapshot[Range($0.range(at: 1), in: snapshot)!]) }
         let copy = XCTAttachment(string: Array(Set(text)).sorted().joined(separator: "\n")); copy.name = "a13-watch-text"; copy.lifetime = .keepAlways; add(copy)
     }
+    @MainActor func testNightlyLightApproval() async throws { try await nightlyApproval("light") }
+    @MainActor func testNightlyDarkApproval() async throws { try await nightlyApproval("dark") }
+    @MainActor private func nightlyApproval(_ theme: String) async throws {
+        continueAfterFailure = false
+        let app = XCUIApplication(); app.launchArguments = ["--a12-live-evidence", "-AppleInterfaceStyle", theme == "light" ? "Light" : "Dark"]
+        app.launch(); defer { app.terminate() }
+        let row = try await get("/approve/start")
+        let headline = app.staticTexts["要运行命令：rm " + (row["filename"] as! String)]
+        let wait = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true"), object: headline)
+        let result = await XCTWaiter.fulfillment(of: [wait], timeout: 90)
+        XCTAssertEqual(result, .completed)
+        guard result == .completed else { throw NSError(domain: "NightlyWatch", code: 1) }
+        XCTAssertTrue(app.buttons["批准"].exists)
+        let image = XCTAttachment(screenshot: app.screenshot()); image.name = "review-watch-approval-" + theme; image.lifetime = .keepAlways; add(image)
+        let meta = XCTAttachment(string: ISO8601DateFormatter().string(from: Date())); meta.name = "nightly-time-watch-approval-" + theme; meta.lifetime = .keepAlways; add(meta)
+    }
 }
