@@ -385,6 +385,40 @@ import WeftMateCore
             error = "原消息不可用，请重新读取。"
         } catch { self.error = error.localizedDescription }
     }
+    /// Re-read the authoritative logical source, including the preceding page/segment.
+    /// The original message is never edited; the accepted side chat receives a new turn.
+    func regenerate(_ event: ChatEvent) async {
+        guard let app else { return }; let token = epoch, generation = window.generation
+        do {
+            var page = try await app.assistantClient.chatPage(id: event.chatId, around: event.id)
+            var input: ChatEvent?
+            while current(token, generation) {
+                input = page.items.last { $0.type == "user.message" && $0.orderKey < event.orderKey }
+                if input != nil || !page.hasOlder { break }
+                page = try await app.assistantClient.chatPage(id: event.chatId, before: page.olderCursor)
+            }
+            guard current(token, generation), let input else { error = "原输入不可用，请重新读取。"; return }
+            let directory = FileManager.default.temporaryDirectory.appendingPathComponent("a16-regenerate-" + UUID().uuidString)
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            defer { try? FileManager.default.removeItem(at: directory) }
+            var files: [URL] = []
+            if let value = input.data["originalAttachments"] {
+                let originals = try JSONDecoder().decode([OriginalAttachment].self, from: JSONEncoder().encode(value))
+                for attachment in originals {
+                    let file = directory.appendingPathComponent(attachment.name)
+                    try await app.assistantClient.downloadOriginalAttachment(attachment, to: file); files.append(file)
+                }
+            }
+            guard current(token, generation) else { return }
+            // Preserve source references; do not replace old provenance with the new chat ID.
+            await createSide(event: input)
+            guard current(token, generation), pending == nil, let row = app.selectedConversation,
+                  row.chatId != input.chatId, !row.isMainChat, row.sessionId == command?.sessionId else { return }
+            if !files.isEmpty { await app.addAttachments(files, to: row, accountEpoch: token) }
+            app.setDraft(input.text, for: row, accountEpoch: token)
+            await app.send(row, accountEpoch: token)
+        } catch { await failed(error, token: token, generation: generation) }
+    }
     func readSideSource(_ row: ConversationSummary) async {
         guard let id = row.chatId, let app else { sideSource = nil; return }; let token = epoch, generation = window.generation
         let value = try? await app.assistantClient.logicalChat(id: id)

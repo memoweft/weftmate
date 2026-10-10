@@ -401,6 +401,16 @@ public actor PersonalClient {
         return try decode(response.body)
     }
 
+    public func regenerateMessageBranch(sessionID: String, sequence: Int, requestID: String) async throws -> JSONValue {
+        try SharedValidation.require(sequence >= 0)
+        let value: JSONValue = try await parityRequest(path: "/sessions/\(try checkedID(sessionID))/message-branches", method: "POST",
+            body: JSONEncoder().encode(JSONValue.object(["requestId": .string(requestID), "seq": .number(Double(sequence)), "action": .string("regenerate")])))
+        guard value["sourceSessionId"]?.string == sessionID, value["sourceSeq"]?.int == sequence,
+              value["action"]?.string == "regenerate", let target = value["sessionId"]?.string,
+              let send = value["sendRequestId"]?.string, value["text"]?.string != nil else { throw APIFailure.identityMismatch }
+        _ = try checkedID(target); _ = try checkedID(send)
+        return value
+    }
     public func chatIDForNativeSession(_ sessionID: String) async throws -> String {
         struct Reply: Decodable { let chatId: String }
         let reply: Reply = try await parityRequest(path: "/sessions/\(try checkedID(sessionID))/chat")

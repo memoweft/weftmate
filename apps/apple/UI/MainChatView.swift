@@ -19,9 +19,9 @@ struct MainChatView: View {
     @State private var importGeneration: UUID?
     @State private var restore: ChatAnchor?
     @State private var pixelScroll: ((Double) -> Void)?
+    @FocusState private var draftFocused: Bool
     @State private var stopping = false
-    @State private var following = true
-    @State private var viewportHeight: CGFloat = 0
+    @StateObject private var positions = MainChatPositionTracker()
     init(app: AppleAppModel) {
         self.app = app; model = app.mainChat
         _interactions = StateObject(wrappedValue: TaskInteractionModel(client: app.assistantClient, account: app.session,
@@ -115,7 +115,7 @@ struct MainChatView: View {
                 try? await Task.sleep(for: .seconds(2))
             }
         }
-        .onChange(of: model.window.generation) { _, _ in interactions.cancel(); restore = nil; searching = false; importing = false; importEpoch = nil; importGeneration = nil }
+        .onChange(of: model.window.generation) { _, _ in interactions.cancel(); positions.frames.removeAll(); restore = nil; searching = false; importing = false; importEpoch = nil; importGeneration = nil }
         .onChange(of: app.accountEpoch) { _, _ in importing = false; importEpoch = nil; importGeneration = nil }
         .onDisappear {
             interactions.suspend(); showingPhotos = false; showingCamera = false; importEpoch = nil; importGeneration = nil
@@ -127,9 +127,9 @@ struct MainChatView: View {
     }
     private var searchBar: some View {
         HStack {
-            TextField("搜索主对话", text: $model.query).onSubmit { Task { await model.search() } }
+            TextField("搜索主对话", text: $model.query).textFieldStyle(.plain).onSubmit { Task { await model.search() } }
                 .accessibilityIdentifier("mainChat.query")
-            Button("查找") { Task { await model.search() } }.buttonStyle(.plain).accessibilityIdentifier("mainChat.find")
+            Button { Task { await model.search() } } label: { WeftIcon("search") }.buttonStyle(OutlineActionStyle()).accessibilityLabel("查找").accessibilityIdentifier("mainChat.find")
             Button { Task { await model.moveHit(-1) } } label: { WeftIcon("back") }.buttonStyle(.plain).accessibilityLabel("上一条").accessibilityIdentifier("mainChat.previous")
             Text(model.hits.isEmpty ? "0" : "\(model.hitIndex + 1)/\(model.hits.count)").font(AppleTokens.Fonts.caption)
             Button { Task { await model.moveHit(1) } } label: { WeftIcon("right") }.buttonStyle(.plain).accessibilityLabel("下一条").accessibilityIdentifier("mainChat.next")
@@ -138,17 +138,18 @@ struct MainChatView: View {
     private var timeline: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
+                VStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
                     if model.window.hasOlder {
                         Button("查看更早记录") {
-                            restore = model.visibleAnchor
-                            Task { await model.read(before: model.window.olderCursor) }
-                        }.accessibilityIdentifier("mainChat.older")
+                            let anchor = model.visibleAnchor
+                            Task { await model.read(before: model.window.olderCursor); restore = anchor }
+                        }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("mainChat.older")
                     }
                     ForEach(days) { section in
                         let day = section.date
-                        let rows = section.events
+                        let rows = section.events.filter { ["user.message", "assistant.message", "side.result", "step.started", "artifact.created"].contains($0.type) }
                         let expanded = day == today || model.window.expandedDays.contains(day)
+                        VStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
                         Button {
                             if expanded { model.window.expandedDays.remove(day) } else { model.window.expandedDays.insert(day) }
                         } label: {
@@ -158,41 +159,49 @@ struct MainChatView: View {
                         if expanded {
                             ForEach(rows) { event in
                                 MainChatEventRow(app: app, model: model, event: event)
+                                    .fixedSize(horizontal: false, vertical: true)
                                     .id(event.id)
-                                    .background(MainChatEventPosition(eventID: event.id))
+                                    .background(MainChatEventPosition(eventID: event.id, onPosition: trackPosition))
                             }
+                        }
                         }
                     }
                     if model.loading { ProgressView() }
                     if model.window.hasNewer {
-                        Button("查看后续记录") { Task { await model.read(after: model.window.newerCursor) } }.accessibilityIdentifier("mainChat.newer")
+                        Button("查看后续记录") { Task { await model.read(after: model.window.newerCursor) } }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("mainChat.newer")
                     }
                     AppleTokens.Colors.clear.frame(height: 1).id("latest")
                 }.padding(AppleTokens.Space.p20).frame(maxWidth: 760).frame(maxWidth: .infinity)
                 .background(MainChatPixelScroll(onReady: { pixelScroll = $0 }).frame(width: 0, height: 0))
             }.coordinateSpace(name: "mainChatScroll")
-            .background(MainChatViewportSize())
-            .onPreferenceChange(MainChatViewportHeight.self) { viewportHeight = $0 }
-            .onPreferenceChange(MainChatPositions.self) { values in
-                if let anchor = restore, let frame = values[anchor.eventID] {
-                    restore = nil; pixelScroll?(Double(frame.minY) - anchor.pixelOffset)
-                }
-                if let id = values.filter({ $0.value.maxY > 0 && $0.value.minY < viewportHeight }).min(by: { $0.value.minY < $1.value.minY })?.key, let frame = values[id] {
-                    model.visibleAnchor = .init(eventID: id, pixelOffset: Double(frame.minY))
-                }
+            .task(id: model.target) {
+                guard let anchor = model.target else { return }
+                positions.following = false
+                // A new search/date target is already aligned by ScrollViewReader. Never
+                // apply an old preference frame as a second correction to the new page.
+                restore = anchor.pixelOffset == 0 ? nil : anchor
+                await Task.yield()
+                guard !Task.isCancelled else { return }
+                proxy.scrollTo(anchor.eventID, anchor: .top)
             }
-            .onChange(of: model.target) { _, anchor in
-                guard let anchor else { return }; following = false; proxy.scrollTo(anchor.eventID, anchor: .top); restore = anchor
-            }
-            .onChange(of: model.window.events.last?.id) { _, _ in if following { proxy.scrollTo("latest", anchor: .bottom) } }
+            .onChange(of: model.window.events.last?.id) { _, _ in if positions.following { proxy.scrollTo("latest", anchor: .bottom) } }
             .overlay(alignment: .bottomTrailing) {
                 Button("回到底部") {
-                    following = true
+                    positions.following = true
                     Task { await model.returnToLatest(); proxy.scrollTo("latest", anchor: .bottom) }
                 }
                     .font(AppleTokens.Fonts.caption).buttonStyle(OutlineActionStyle()).padding(AppleTokens.Space.p12).accessibilityIdentifier("mainChat.latest")
             }
-            .modifier(MainChatUserScroll(onScroll: { following = false }))
+        }
+    }
+    private func trackPosition(_ id: String, _ frame: CGRect?, _ height: CGFloat, _ userScrolling: Bool) {
+        if userScrolling { positions.following = false }
+        positions.frames[id] = frame
+        if let anchor = restore, anchor.eventID == id, let frame {
+            restore = nil; pixelScroll?(Double(frame.minY) - anchor.pixelOffset)
+        }
+        if let first = positions.frames.filter({ $0.value.maxY > 0 && $0.value.minY < height }).min(by: { $0.value.minY < $1.value.minY }) {
+            model.visibleAnchor = .init(eventID: first.key, pixelOffset: Double(first.value.minY))
         }
     }
     private var composer: some View {
@@ -201,10 +210,10 @@ struct MainChatView: View {
             if model.chat?.contextOrganizing == true { Text("正在整理上下文，消息将排队发送。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
             if model.chat?.relayError != nil { Text("上下文整理未完成，草稿已保留。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
             ForEach(model.attachments) { file in
-                HStack { Text(file.original.name); Button("移除") { file.removeTemporaryFiles(); model.attachments.removeAll { $0.id == file.id } } }.font(AppleTokens.Fonts.caption)
+                HStack { Text(file.original.name); Button("移除") { file.removeTemporaryFiles(); model.attachments.removeAll { $0.id == file.id } } }.buttonStyle(OutlineActionStyle()).font(AppleTokens.Fonts.caption)
             }
             TextField("和 WeftMate 聊聊", text: Binding(get: { model.draft }, set: { model.setDraft($0) }), axis: .vertical).lineLimit(1...6)
-                .textFieldStyle(.plain).accessibilityIdentifier("mainChat.draft")
+                .textFieldStyle(.plain).focused($draftFocused).accessibilityIdentifier("mainChat.draft")
             HStack {
                 Menu {
                     Button("文件") { captureImportScope(); importing = true }
@@ -216,27 +225,28 @@ struct MainChatView: View {
                     Button("粘贴剪贴板图片") { addNativeMedia(screenshot: false) }
                     #endif
                     Button("开旁聊") { Task { await model.createSide() } }.disabled(!model.capabilities.supports("sideChats"))
-                    Button("这次别记") { Task { await model.createSide(temporary: true) } }.disabled(!model.capabilities.supports("temporaryChats"))
+                    Button("这次别记") { Task { await model.createSide(temporary: true) } }.disabled(!model.capabilities.supports("temporaryChats")).accessibilityIdentifier("mainChat.temporary")
                     #if DEBUG
                     if ProcessInfo.processInfo.arguments.contains("--a16-driver") {
-                        Button("添加合成附件") { A16TestSupport.addAttachment(model) }
+                        Button("添加合成附件") { A16TestSupport.addAttachment(model) }.accessibilityIdentifier("mainChat.syntheticAttachment")
                     }
                     #endif
-                } label: { WeftIcon("plus") }.accessibilityLabel("添加").accessibilityIdentifier("mainChat.plus")
+                } label: { WeftIcon("plus").frame(width: AppleTokens.Space.p32, height: AppleTokens.Space.p32) }.menuStyle(.borderlessButton).menuOrder(.fixed).fixedSize().accessibilityLabel("添加").accessibilityIdentifier("mainChat.plus")
                 Spacer()
                 if model.chat?.activeSessionId == nil {
                     Picker("模型", selection: $model.modelID) { ForEach(model.models.filter(\.configured)) { Text($0.name).tag($0.id) } }.frame(maxWidth: 180)
                 } else { Text(model.models.first(where: { $0.id == model.chat?.modelProfileId })?.name ?? "当前模型").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
                 if model.pending != nil {
                     if model.command?.state == "rejected" {
-                        Button("编辑后重试") { model.editRejectedRequest() }.accessibilityIdentifier("mainChat.editRejected")
+                        Button("编辑后重试") { model.editRejectedRequest() }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("mainChat.editRejected")
                     }
-                    Button("核对原请求") { Task { await model.reconcile() } }.accessibilityIdentifier("mainChat.reconcile")
-                    Button("继续原请求") { Task { await model.reconcile(submit: true) } }.accessibilityIdentifier("mainChat.continue")
+                    Button("核对原请求") { Task { await model.reconcile() } }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("mainChat.reconcile")
+                    Button("继续原请求") { Task { await model.reconcile(submit: true) } }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("mainChat.continue")
                     Text(model.command?.state == "pending" ? "排队中" : "待核对").font(AppleTokens.Fonts.caption)
                 }
                 let stop = model.draft.isEmpty && model.attachments.isEmpty && model.chat?.running == true
                 Button {
+                    draftFocused = false
                     if stop { Task { await stopTask() } } else { Task { await model.send() } }
                 } label: { WeftIcon(stop ? "stop" : "send") }.buttonStyle(PrimaryActionStyle(fillsWidth: false))
                     .disabled(model.sending || stopping || (!stop && ((model.draft.isEmpty && model.attachments.isEmpty) || model.pending != nil || model.chat?.sendAvailable != true || (model.chat?.activeSessionId == nil && model.modelID.isEmpty) || !model.capabilities.supports("chatSend"))))
@@ -330,16 +340,13 @@ struct MainChatEventRow: View {
                 if expanded, let detail { Text(detail.text).font(AppleTokens.Fonts.caption).textSelection(.enabled) }
             }
         }
-        #if os(macOS)
-        .background(SessionHoverRegion { hovering = $0 })
-        .overlay(alignment: .topTrailing) {
-            if message && hovering {
-                Menu { messageActions } label: { WeftIcon("more", size: AppleTokens.Space.p16) }
-                    .accessibilityLabel("消息操作").accessibilityIdentifier("mainChat.messageMenu." + event.id)
-            }
-        }
-        #endif
-        .contextMenu { if message { messageActions } }
+        .modifier(MessageActionsPresentation(app: app, id: event.id, text: event.text, at: event.at,
+            user: event.type == "user.message", enabled: message,
+            latest: event.id == model.window.events.last(where: { $0.type == "assistant.message" })?.id,
+            menuID: "mainChat.messageMenu." + event.id,
+            quote: { model.setDraft(model.draft + (model.draft.isEmpty ? "" : "\n\n") + "> " + event.text.replacingOccurrences(of: "\n", with: "\n> ") + "\n") },
+            regenerate: { Task { await model.regenerate(event) } },
+            extra: { AnyView(messageActions) }))
             .accessibilityElement(children: .contain).accessibilityIdentifier("mainChat.event." + event.id)
             .sheet(isPresented: Binding(get: { attachmentPreview != nil }, set: { if !$0 { attachmentPreview = nil } })) {
                 if let reference = attachmentPreview { MainChatAttachmentPreview(app: app, model: model, reference: reference) { attachmentPreview = nil } }
@@ -373,38 +380,6 @@ struct MainChatEventRow: View {
         let generation = model.window.generation, epoch = app.accountEpoch
         let value = try? await app.assistantClient.timelineDetail(sessionID: session, seq: seq)
         guard model.window.generation == generation, app.accountEpoch == epoch else { return }; detail = value
-    }
-}
-/// The measurement captures only a stable value. Keeping it outside the nested LazyVStack builder
-/// also avoids Swift 6.2's dynamic-executor thunk for an escaped nested GeometryReader closure.
-private struct MainChatEventPosition: View {
-    let eventID: String
-    nonisolated var body: some View {
-        GeometryReader { @Sendable geometry in
-            AppleTokens.Colors.clear.preference(key: MainChatPositions.self, value: [eventID: geometry.frame(in: .named("mainChatScroll"))])
-        }
-    }
-}
-private struct MainChatViewportHeight: PreferenceKey {
-    static let defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
-}
-private struct MainChatViewportSize: View {
-    nonisolated var body: some View {
-        GeometryReader { @Sendable geometry in
-            AppleTokens.Colors.clear.preference(key: MainChatViewportHeight.self, value: geometry.size.height)
-        }
-    }
-}
-private struct MainChatPositions: PreferenceKey {
-    static let defaultValue: [String: CGRect] = [:]
-    static func reduce(value: inout [String: CGRect], nextValue: () -> [String: CGRect]) { value.merge(nextValue(), uniquingKeysWith: { _, n in n }) }
-}
-private struct MainChatUserScroll: ViewModifier {
-    let onScroll: () -> Void
-    func body(content: Content) -> some View {
-        if #available(iOS 18, macOS 15, *) { content.onScrollPhaseChange { _, phase in if phase == .interacting { onScroll() } } }
-        else { content.simultaneousGesture(DragGesture().onChanged { _ in onScroll() }) }
     }
 }
 #if os(macOS)

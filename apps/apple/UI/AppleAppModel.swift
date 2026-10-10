@@ -1187,6 +1187,47 @@ final class AppleAppModel: ObservableObject {
             RunningMessagePreferences(defaults: defaults).write(newValue, account: account)
         }
     }
+    func regenerateReply(_ message: ChatMessage) async {
+        guard let conversation = selectedConversation, !conversation.isMainChat, let native = conversation.sessionId,
+              let sequence = Int(message.id.split(separator: "|").last ?? ""), message.role == .assistant,
+              let accountSession = session, let local = commandStore,
+              let scope = try? LocalAccountScope(server: accountSession.server, ownerId: accountSession.account.ownerId) else { return }
+        let token = epoch, key = "messageBranch." + scope.cacheKey + "." + message.id
+        let request = defaults?.string(forKey: key) ?? "apple-branch-" + UUID().uuidString.lowercased()
+        defaults?.set(request, forKey: key)
+        do {
+            let result = try await client.regenerateMessageBranch(sessionID: native, sequence: sequence, requestID: request)
+            guard token == epoch, let target = result["sessionId"]?.string, let send = result["sendRequestId"]?.string, let text = result["text"]?.string else { return }
+            await refresh()
+            guard token == epoch, let row = conversations.first(where: { $0.sessionId == target }) else { return }
+            func attachments(_ key: String) throws -> [OriginalAttachment]? {
+                guard let value = result[key], value != .null else { return nil }
+                return try JSONDecoder().decode([OriginalAttachment].self, from: JSONEncoder().encode(value))
+            }
+            let payload = try SharedCommandPayload(requestId: send, kind: .message, targetDeviceId: accountSession.hostId,
+                sessionId: target, text: text, attachments: attachments("attachments"),
+                originalAttachments: attachments("originalAttachments"), attachmentMessageId: result["attachmentMessageId"]?.string, intent: .queue)
+            let record = try await local.persist(SharedCommandIntent(session: accountSession, command: payload))
+            guard token == epoch else { return }
+            defaults?.removeObject(forKey: key)
+            openedSessionID = row.id; await open(row)
+            publish(record, note: "已保存原请求，正在核对服务端。", accountEpoch: token)
+            await runCommand(record, allowSubmission: true, conversation: row, accountEpoch: token)
+        } catch {
+            if token == epoch { continuationNotices[Self.draftKey(for: conversation)] = "重新生成尚未完成，原请求已保留，请重试。" }
+        }
+    }
+    func messageRating(_ id: String) -> String {
+        guard let session, let scope = try? LocalAccountScope(server: session.server, ownerId: session.account.ownerId) else { return "" }
+        return (defaults?.dictionary(forKey: "messageRatings." + scope.cacheKey)?[id] as? [String: String])?["rating"] ?? ""
+    }
+    func rateMessage(_ id: String, rating: String) {
+        guard let defaults, let session, let scope = try? LocalAccountScope(server: session.server, ownerId: session.account.ownerId) else { return }
+        let key = "messageRatings." + scope.cacheKey
+        var records = defaults.dictionary(forKey: key) ?? [:]
+        records[id] = rating.isEmpty ? nil : ["rating": rating, "at": ISO8601DateFormatter().string(from: Date())]
+        defaults.set(records, forKey: key)
+    }
     private let defaults: UserDefaults?
     private let launchConfigurationError: String?
     private let draftPersistence: (any AppleDraftPersisting)?

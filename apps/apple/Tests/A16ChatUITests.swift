@@ -21,12 +21,30 @@ final class A16ChatUITests: XCTestCase {
     }
     @MainActor func testLightMainChat() async throws {try await run("light")}
     @MainActor func testDarkMainChat() async throws {try await run("dark")}
+    @MainActor func testScrollSmoke() async throws {
+        continueAfterFailure = false
+        let ready = try await get("/ready") as! [String: Any]
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing", "--ui-testing-namespace", "a16-scroll-" + UUID().uuidString, "--a5-local-server", "--a5-theme", "light", "--server-url", ready["host"] as! String, "--a16-driver", ProcessInfo.processInfo.environment["WEFTMATE_A16_DRIVER"]!]
+        app.launch(); defer { app.terminate() }
+        try tap(element(app, "mainChat.latest")); try tap(element(app, "mainChat.search"))
+        try tap(element(app, "mainChat.query")); element(app, "mainChat.query").typeText("A16查找纸船")
+        try tap(element(app, "mainChat.find")); try tap(element(app, "mainChat.latest"))
+        _ = try await get("/perf-start"); try await Task.sleep(for: .seconds(3))
+        for _ in 0..<3 { app.scrollViews.firstMatch.swipeDown(); app.scrollViews.firstMatch.swipeUp() }
+        _ = try await get("/perf-stop"); try await Task.sleep(for: .seconds(3))
+        try tap(element(app, "mainChat.date"))
+        XCTAssertTrue(element(app, "mainChat.datePicker").waitForExistence(timeout:10))
+        keep(app, "scroll-smoke", "light")
+    }
     @MainActor private func run(_ theme:String) async throws {
         continueAfterFailure=false;let ready=try await get("/ready") as! [String:Any]
         let app=XCUIApplication();app.launchArguments=["--ui-testing","--ui-testing-namespace","a16-"+UUID().uuidString.prefix(8),"--a5-local-server","--a5-theme",theme,"--server-url",ready["host"] as! String,"--a16-driver",ProcessInfo.processInfo.environment["WEFTMATE_A16_DRIVER"]!]
         app.launch();defer{app.terminate()}
         try tap(element(app,"mainChat.latest"));keep(app,"first-screen",theme)
         XCTAssertTrue(element(app,"mainChat").exists)
+        try tap(element(app,"mainChat.resources"));XCTAssertTrue(app.staticTexts["输出内容"].waitForExistence(timeout:15));keep(app,"resources",theme)
+        try tap(app.buttons["完成"].firstMatch)
         // Native menu and calendar, without substituting model callbacks for UI actions.
         try tap(element(app,"mainChat.date"));XCTAssertTrue(element(app,"mainChat.datePicker").waitForExistence(timeout:10));keep(app,"native-date-picker",theme)
         try tap(app.buttons["跳到这一天"])
@@ -51,11 +69,28 @@ final class A16ChatUITests: XCTestCase {
         try tap(element(app,"mainChat.find"))
         let source=ready["searchEventID"] as! String
         XCTAssertTrue(element(app,"mainChat.event."+source).waitForExistence(timeout:30));keep(app,"search-first",theme)
-        try tap(element(app,"mainChat.next"));keep(app,"search-next",theme);try tap(element(app,"mainChat.previous"))
-        let message=element(app,"mainChat.event."+source);message.press(forDuration:1)
+        try tap(element(app,"mainChat.next"))
+        if let second = ready["secondSearchEventID"] as? String {
+            let visible = XCTNSPredicateExpectation(predicate:NSPredicate(format:"hittable == true"),object:element(app,"mainChat.event."+second))
+            let located = await XCTWaiter.fulfillment(of:[visible],timeout:15);XCTAssertEqual(located,.completed)
+        }
+        keep(app,"search-next",theme);try tap(element(app,"mainChat.previous"))
+        let message=element(app,"mainChat.event."+source);message.press(forDuration:1);keep(app,"user-message-menu",theme)
+        XCTAssertFalse(app.buttons["编辑并重发"].exists)
         try tap(app.buttons["开旁聊"]);XCTAssertTrue(element(app,"sideChat.referencesOnly").waitForExistence(timeout:30));keep(app,"side-source",theme)
-        try tap(element(app,"sideChat.source"));XCTAssertTrue(element(app,"mainChat.event."+source).waitForExistence(timeout:30));keep(app,"returned-source",theme)
-        try tap(element(app,"mainChat.latest"))
+        try tap(element(app,"sideChat.source"));XCTAssertTrue(element(app,"mainChat.event."+source).waitForExistence(timeout:30))
+        let returned = XCTNSPredicateExpectation(predicate:NSPredicate(format:"hittable == true"),object:element(app,"mainChat.event."+source))
+        let locatedSource = await XCTWaiter.fulfillment(of:[returned],timeout:15);XCTAssertEqual(locatedSource,.completed)
+        keep(app,"returned-source",theme)
+        if let assistantID = ready["assistantEventID"] as? String {
+            let reply = element(app,"mainChat.event." + assistantID)
+            for _ in 0..<4 { if reply.isHittable { break }; app.scrollViews.firstMatch.swipeUp() }
+            reply.press(forDuration:1);keep(app,"assistant-message-menu",theme)
+            for label in ["复制", "有用", "没用", "重新生成", "导出", "引用"] { XCTAssertTrue(app.buttons[label].firstMatch.exists) }
+            try tap(app.buttons["导出"].firstMatch)
+            XCTAssertTrue(element(app,"message.exportPreview").waitForExistence(timeout:10));keep(app,"export-preview",theme)
+            try tap(app.buttons["取消"].firstMatch)
+        }
         // Returning to the root and refreshing reads the host's tail, including real result cards.
         try tap(element(app,"mainChat.latest"))
         if let result=(ready["resultIDs"] as? [String])?.first {
@@ -64,7 +99,9 @@ final class A16ChatUITests: XCTestCase {
             try tap(card);XCTAssertTrue(element(app,"conversationDetail").waitForExistence(timeout:20));keep(app,"result-opened",theme)
             try tap(app.navigationBars.buttons["WeftMate"].firstMatch)
         }
-        try tap(element(app,"mainChat.plus"));try tap(app.buttons["添加合成附件"])
+        try tap(element(app,"mainChat.plus"));keep(app,"composer-menu",theme)
+        try tap(app.buttons["mainChat.syntheticAttachment"].firstMatch)
+        XCTAssertTrue(app.staticTexts["A16-synthetic.txt"].waitForExistence(timeout:10))
         let draft=element(app,"mainChat.draft");try tap(draft);draft.typeText("A16 合成主对话发送")
         try tap(element(app,"mainChat.send"));keep(app,"sent",theme)
         XCTAssertTrue(element(app,"approvalBar").waitForExistence(timeout:30));keep(app,"approval",theme)
@@ -72,7 +109,7 @@ final class A16ChatUITests: XCTestCase {
         if let approval=(report["approvals"] as? [[String:Any]])?.first(where:{$0["resolved"] as? Bool==false})?["id"] as? String{
             try tap(element(app,"approveOnce."+approval));_=try await get("/consume")
         }
-        try tap(element(app,"mainChat.plus"));try tap(app.buttons["这次别记"])
+        try tap(element(app,"mainChat.plus"));try tap(app.buttons["mainChat.temporary"].firstMatch)
         XCTAssertTrue(element(app,"temporaryChat.title").waitForExistence(timeout:30));XCTAssertTrue(element(app,"temporaryChat.composer").exists);keep(app,"temporary",theme)
         try tap(element(app,"conversationMenu"));let memory=element(app,"temporaryChat.memory"),recall=element(app,"temporaryChat.recall")
         XCTAssertTrue(memory.waitForExistence(timeout:10));XCTAssertEqual(memory.value as? String,"1");XCTAssertEqual(recall.value as? String,"1");keep(app,"temporary-menu",theme)
@@ -90,8 +127,10 @@ final class A16ChatUITests: XCTestCase {
         if app.navigationBars.buttons["WeftMate"].firstMatch.exists {try tap(app.navigationBars.buttons["WeftMate"].firstMatch)}
         _=try await get("/perf-start"); try await Task.sleep(for:.seconds(3))
         let began=ProcessInfo.processInfo.systemUptime
-        let options = XCTMeasureOptions(); options.iterationCount = 3
-        measure(metrics: [XCTMemoryMetric(application: app), XCTOSSignpostMetric.scrollDecelerationMetric], options: options) {
+        // Use one sampler: the app reports display-link intervals and resident memory.
+        // Keep the same 24 native gestures without layering XCTest's scroll profiler
+        // onto the app's active display link (the simulator can stop reaching idle).
+        for _ in 0..<3 {
             for _ in 0..<4 { app.scrollViews.firstMatch.swipeDown(); app.scrollViews.firstMatch.swipeUp() }
         }
         _=try await get("/perf-stop"); try await Task.sleep(for:.seconds(3))

@@ -431,7 +431,7 @@ struct ConversationView: View {
                                 #endif
                             }.accessibilityIdentifier("conversationUsage")
                             Button("完成") { showingSessionActions = false }.accessibilityIdentifier("closeSessionActions")
-                        }.font(AppleTokens.Fonts.body).padding(AppleTokens.Space.p18)
+                        }.font(AppleTokens.Fonts.body).buttonStyle(SessionMenuRowStyle()).padding(AppleTokens.Space.p18)
     }
 
     private func readOlder(proxy: ScrollViewProxy) async {
@@ -835,11 +835,19 @@ struct MessageView: View {
         .padding(.vertical, AppleTokens.Space.p2)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("message.\(message.id)")
-        .contextMenu {
-            if let conversation = model.selectedConversation, model.mainChat.capabilities.supports("sideChats"), !conversation.temporaryState.hasTemporaryContent {
-                Button("开旁聊") { Task { await model.mainChat.createSideFromMessage(message, conversation: conversation) } }
-            }
-        }
+        .modifier(MessageActionsPresentation(app: model, id: message.id, text: message.text, at: message.occurredAt,
+            user: message.role == .user, enabled: true, latest: false, menuID: "message.actions." + message.id,
+            quote: {
+                if let conversation = model.selectedConversation {
+                    model.setDraft(model.draftText(for: conversation, accountEpoch: model.accountEpoch) + "\n> " + message.text.replacingOccurrences(of: "\n", with: "\n> ") + "\n", for: conversation, accountEpoch: model.accountEpoch)
+                }
+            }, regenerate: { Task { await model.regenerateReply(message) } }, extra: {
+                AnyView(Group {
+                    if let conversation = model.selectedConversation, model.mainChat.capabilities.supports("sideChats"), !conversation.temporaryState.hasTemporaryContent {
+                        Button("开旁聊") { Task { await model.mainChat.createSideFromMessage(message, conversation: conversation) } }
+                    }
+                })
+            }))
     }
 }
 

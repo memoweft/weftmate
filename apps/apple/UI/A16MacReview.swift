@@ -6,8 +6,20 @@ import QuartzCore
 import WeftMateCore
 @MainActor private final class A16MenuObserver: NSObject {
     var menu: NSMenu?
+    var selectContextSide = false
+    var contextSelected = false
     override init() { super.init(); NotificationCenter.default.addObserver(self,selector:#selector(track(_:)),name:NSMenu.didBeginTrackingNotification,object:nil) }
-    @objc private func track(_ note: Notification) { menu = note.object as? NSMenu }
+    @objc private func track(_ note: Notification) {
+        menu = note.object as? NSMenu
+        FileHandle.standardOutput.write(Data(("A16_STEP:tracked-menu:" + (menu?.items.map(\.title).joined(separator: "|") ?? "") + "\n").utf8))
+        if selectContextSide { perform(#selector(selectSide), with: nil, afterDelay: 0.6, inModes: [.eventTracking, .default]) }
+    }
+    @objc private func selectSide() {
+        guard selectContextSide, let menu, let index = menu.items.firstIndex(where: { $0.title == "开旁聊" }), !menu.items.contains(where: { $0.title.contains("编辑") }) else { return }
+        A16MacReview.captureVisible("user-message-menu")
+        selectContextSide = false; contextSelected = true
+        menu.performActionForItem(at: index); menu.cancelTrackingWithoutAnimation()
+    }
     func stop() { NotificationCenter.default.removeObserver(self) }
 }
 @MainActor enum A16MacReview {
@@ -18,6 +30,7 @@ import WeftMateCore
         let task = Task<Void, Error> { @MainActor in
             do { try await run(app); Darwin.exit(0) }
             catch {
+                captureVisible("failure")
                 FileHandle.standardOutput.write(Data(("A5_CAPTURE_FAILED:" + String(describing: error) + "\n").utf8))
                 Darwin.exit(1)
             }
@@ -35,15 +48,30 @@ import WeftMateCore
         return try JSONSerialization.jsonObject(with:data) as! [String:Any]
     }
     private static func capture(_ name: String, root: String = "mainChat") async throws {
-        _ = try await A10MacReview.wait(root); try await A10MacReview.capture(name,identifier:root)
-        let data = try JSONSerialization.data(withJSONObject:["scene":name,"text":A13MacReview.texts().joined(separator:"\n")])
-        FileHandle.standardOutput.write(Data(("A13_TEXT:"+String(decoding:data,as:UTF8.self)+"\n").utf8))
+        _ = try await A10MacReview.wait(root)
+        try await Task.sleep(for: .milliseconds(500))
+        captureVisible(name)
+    }
+    static func captureVisible(_ name: String) {
+        typealias Images = @convention(c) (CGRect, CFArray, UInt32) -> Unmanaged<CGImage>?
+        guard let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "CGWindowListCreateImageFromArray") else { return }
+        // AppKit menu windows are not included in NSApplication.windows. Capture only
+        // window-server IDs owned by this process, including its native menus.
+        let info = CGWindowListCopyWindowInfo(.optionOnScreenOnly, kCGNullWindowID) as? [[String: Any]] ?? []
+        var ids: [UnsafeRawPointer?] = info.filter { ($0[kCGWindowOwnerPID as String] as? Int) == Int(getpid()) }
+            .map { ($0[kCGWindowNumber as String] as? Int).flatMap(UnsafeRawPointer.init(bitPattern:)) }
+        let array = CFArrayCreate(kCFAllocatorDefault, &ids, ids.count, nil)!
+        guard let image = unsafeBitCast(symbol, to: Images.self)(.null, array, 1)?.takeRetainedValue(), let png = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) else { return }
+        FileHandle.standardOutput.write(Data(("A10_CAPTURE:" + name + ":" + png.base64EncodedString() + "\n").utf8))
+        if let data = try? JSONSerialization.data(withJSONObject:["scene":name,"text":A13MacReview.texts().joined(separator:"\n")]) {
+            FileHandle.standardOutput.write(Data(("A13_TEXT:"+String(decoding:data,as:UTF8.self)+"\n").utf8))
+        }
     }
     private static func press(_ id: String) async throws {
         FileHandle.standardOutput.write(Data(("A16_STEP:" + id + "\n").utf8))
         let titles = ["mainChat.date": "跳日期", "mainChat.search": "搜索", "mainChat.find": "查找", "mainChat.latest": "回到底部", "mainChat.next": "下一条", "mainChat.previous": "上一条", "mainChat.plus": "添加", "mainChat.send": "发送", "conversationMenu": "对话菜单", "closeSessionActions": "完成"]
         var named: NSObject?
-        if let title = titles[id] {
+        if let title = titles[id] ?? (id.hasPrefix("mainChat.messageMenu.") ? "消息操作" : nil) {
             for window in NSApplication.shared.windows where window.isVisible { if let node = A10MacReview.findButton(title, in: window) { named = node; break } }
         }
         if let node = named { try A10MacReview.pressNode(node, id: id) }
@@ -65,16 +93,50 @@ import WeftMateCore
         observer.menu=nil; try await press(id)
         try await until("Native menu missing " + title) { observer.menu?.items.contains { $0.title == title } == true }
         let menu=observer.menu!,index=menu.items.firstIndex(where:{$0.title==title})!
-        menu.performActionForItem(at:index);menu.cancelTrackingWithoutAnimation();try await Task.sleep(for:.milliseconds(500))
+        try await capture(id == "mainChat.plus" ? "composer-menu" : "assistant-message-menu")
+        menu.cancelTrackingWithoutAnimation(); try await Task.sleep(for: .milliseconds(200))
+        menu.performActionForItem(at:index); try await Task.sleep(for:.milliseconds(500))
     }
     private static func hover(_ id: String) async throws {
         let node=try await A10MacReview.wait(id),selector=NSSelectorFromString("accessibilityFrame")
         typealias Frame = @convention(c) (AnyObject, Selector) -> CGRect
         guard node.responds(to:selector),let window=NSApplication.shared.windows.first(where:{$0.isVisible && A10MacReview.find(id,in:$0) != nil}),let content=window.contentView else{throw Failure(step:"Native message hover")}
         let frame=unsafeBitCast(node.method(for:selector),to:Frame.self)(node,selector),point=window.convertPoint(fromScreen:CGPoint(x:frame.midX,y:frame.midY))
-        func visit(_ view:NSView){let local=view.convert(point,from:nil);for area in view.trackingAreas where (area.options.contains(.inVisibleRect) ? view.bounds:area.rect).contains(local){
-            if let owner=area.owner as? NSResponder,let e=NSEvent.enterExitEvent(with:.mouseEntered,location:point,modifierFlags:[],timestamp:ProcessInfo.processInfo.systemUptime,windowNumber:window.windowNumber,context:nil,eventNumber:0,trackingNumber:0,userData:nil){owner.mouseEntered(with:e)}};for child in view.subviews{visit(child)}}
-        visit(content);try await Task.sleep(for:.milliseconds(500))
+        let target = "messageHover." + id.replacingOccurrences(of: "mainChat.event.", with: "")
+        var matched = false
+        func visit(_ view: NSView) {
+            if let region = view as? SessionHoverRegion.Region, let identifier = region.identifier {
+                let selected = identifier.rawValue == target && !region.visibleRect.isEmpty
+                matched = matched || selected
+                if let event = NSEvent.enterExitEvent(with: selected ? .mouseEntered : .mouseExited, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber, context: nil, eventNumber: 0, trackingNumber: 0, userData: nil) {
+                    if selected { region.mouseEntered(with: event) } else { region.mouseExited(with: event) }
+                }
+            }
+            for child in view.subviews { visit(child) }
+        }
+        visit(content); guard matched else { throw Failure(step: "Native hover region missing") }; try await Task.sleep(for:.milliseconds(500))
+    }
+    private static func contextMenu(_ id: String) async throws {
+        let node = try await A10MacReview.wait(id), selector = NSSelectorFromString("accessibilityFrame")
+        typealias Frame = @convention(c) (AnyObject, Selector) -> CGRect
+        guard node.responds(to: selector), let window = NSApplication.shared.windows.first(where: { $0.isVisible && A10MacReview.find(id, in: $0) != nil }) else { throw Failure(step: "Message context frame") }
+        let frame = unsafeBitCast(node.method(for: selector), to: Frame.self)(node, selector)
+        var point = window.convertPoint(fromScreen: CGPoint(x: frame.midX, y: frame.midY))
+        let target = "messageHover." + id.replacingOccurrences(of: "mainChat.event.", with: "")
+        func locate(_ view: NSView) {
+            if let region = view as? SessionHoverRegion.Region, region.identifier?.rawValue == target, !region.visibleRect.isEmpty {
+                let rect = region.bounds.intersection(region.visibleRect)
+                point = region.convert(NSPoint(x: rect.midX, y: rect.midY), to: nil)
+            }
+            for child in view.subviews { locate(child) }
+        }
+        if let content = window.contentView { locate(content) }
+        DispatchQueue.main.async {
+            for type in [NSEvent.EventType.rightMouseDown, .rightMouseUp] {
+                if let event = NSEvent.mouseEvent(with: type, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1) { window.sendEvent(event) }
+            }
+        }
+        try await Task.sleep(for: .milliseconds(500))
     }
     static func run(_ app: AppleAppModel) async throws {
         let observer=A16MenuObserver();defer{observer.stop()}
@@ -84,6 +146,17 @@ import WeftMateCore
         try await until("Main body tail") { !model.window.events.isEmpty }
         guard model.window.events.count <= 1000,app.conversations.first?.isMainChat==true else{throw Failure(step:"Main identity or bounded window")}
         try await capture("first-screen")
+        if let window = NSApplication.shared.windows.first(where: { $0.isVisible && A10MacReview.find("mainChat", in: $0) != nil }) {
+            let original = window.frame
+            window.setContentSize(NSSize(width: 640, height: 720))
+            try await capture("narrow-window")
+            window.setFrame(original, display: true)
+        }
+        try await press("mainChat.resources")
+        try await until("Resources panel") { NSApplication.shared.windows.contains { $0.isVisible && A10MacReview.findButton("完成", in: $0) != nil } }
+        captureVisible("resources")
+        if let window = NSApplication.shared.windows.first(where: { $0.isVisible && A10MacReview.findButton("完成", in: $0) != nil }), let close = A10MacReview.findButton("完成", in: window) { try A10MacReview.pressNode(close, id: "resources.done") }
+        try await Task.sleep(for: .milliseconds(500))
         scrollMainToTop()
         try await Task.sleep(for: .milliseconds(500))
         if let day=ready["oldDay"] as? String {
@@ -102,12 +175,24 @@ import WeftMateCore
         try await capture("search-next");try await press("mainChat.previous");guard model.hitIndex==0 else{throw Failure(step:"Search previous")}
         let source=model.hits[0].id
         try await hover("mainChat.event."+source)
-        try await choose(observer,id:"mainChat.messageMenu."+source,title:"开旁聊")
+        try await capture("user-hover")
+        observer.menu = nil; observer.selectContextSide = true
+        try await contextMenu("mainChat.event." + source)
+        try await until("D49 source context action") { observer.contextSelected }
         _=try await A10MacReview.wait("sideChat.source");_=try await A10MacReview.wait("sideChat.referencesOnly")
         try await capture("side-source",root:"conversationDetail")
         try await press("sideChat.source");_=try await A10MacReview.wait("mainChat")
         try await until("Return original event") {model.window.events.contains{$0.id==source}}
         try await capture("returned-source")
+        if let assistant = ready["assistantEventID"] as? String {
+            try await hover("mainChat.event." + assistant)
+            try await capture("assistant-hover")
+            try await choose(observer, id: "mainChat.messageMenu." + assistant, title: "导出")
+            try await until("Export preview save control") { NSApplication.shared.windows.contains { $0.isVisible && A10MacReview.findButton("保存 Markdown", in: $0) != nil } }
+            captureVisible("export-preview")
+            if let window = NSApplication.shared.windows.first(where: { $0.isVisible && A10MacReview.findButton("取消", in: $0) != nil }), let cancel = A10MacReview.findButton("取消", in: window) { try A10MacReview.pressNode(cancel, id: "export.cancel") }
+            try await Task.sleep(for: .milliseconds(500))
+        }
         app.openedSessionID=main;await model.read(replace:true);try await press("mainChat.latest")
         if let result=(ready["resultIDs"] as? [String])?.first {
             try await press("mainChat.result."+result);_=try await A10MacReview.wait("conversationDetail");try await capture("result-opened",root:"conversationDetail")

@@ -11,13 +11,14 @@ struct TemporaryChatMenu: View {
         Toggle("使用已有记忆", isOn: Binding(get: { conversation.temporaryState.recallEnabled }, set: { value in
             Task { await app.mainChat.temporarySetting(conversation, fields: ["recallEnabled": .bool(value)]) }
         })).accessibilityIdentifier("temporaryChat.recall")
-        Menu("自动删除") {
+        Menu {
             Picker("自动删除", selection: Binding<Int>(get: { conversation.temporaryState.autoDeleteDays ?? 0 }, set: { value in
                 Task { await app.mainChat.temporarySetting(conversation, fields: ["autoDeleteDays": value == 0 ? .null : .number(Double(value))]) }
             })) {
                 Text("1 天").tag(1); Text("7 天").tag(7); Text("30 天").tag(30); Text("不自动删除").tag(0)
             }.pickerStyle(.inline).accessibilityIdentifier("temporaryChat.expiry")
         }
+        label: { WeftLabel("自动删除 · " + (conversation.temporaryState.autoDeleteDays.map { "\($0) 天" } ?? "不自动删除"), icon: "clock") }
         #if os(macOS)
         .menuStyle(.borderlessButton).foregroundStyle(Weave.ink).fixedSize()
         #endif
@@ -37,7 +38,7 @@ struct SideChatSourceView: View {
                 else {
                     ForEach(Array((source.originRefs ?? []).enumerated()), id: \.offset) { _, ref in
                         Button { Task { await app.mainChat.returnToSource(ref) } } label: { WeftLabel("返回来源消息", icon: "back") }
-                            .accessibilityIdentifier("sideChat.source")
+                            .buttonStyle(OutlineActionStyle()).accessibilityIdentifier("sideChat.source")
                     }
                 }
                 if source.contextTransfer?["state"]?.string == "references_only" { Text("相关上下文尚未带入").accessibilityIdentifier("sideChat.referencesOnly") }
