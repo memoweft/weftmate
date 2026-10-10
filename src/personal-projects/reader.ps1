@@ -1,3 +1,4 @@
+param([string]$RequestJson)
 $ErrorActionPreference = 'Stop'
 [Console]::InputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -245,7 +246,7 @@ public static class SafeProjectReader {
 '@
 
 try {
-  $request = [Console]::In.ReadToEnd() | ConvertFrom-Json
+  $request = $(if ($RequestJson) { $RequestJson } else { [Console]::In.ReadToEnd() }) | ConvertFrom-Json
   switch ($request.action) {
     'inspect' { $result = [SafeProjectReader]::InspectRoot([string]$request.rootPath) }
     'list' { $result = [SafeProjectReader]::List([string]$request.rootPath, [string]$request.expectedFinal,

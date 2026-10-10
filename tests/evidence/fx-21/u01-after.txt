@@ -1,0 +1,10 @@
+✔ remote phone composer remains inside the visual viewport with folders, suggestions, connection bar and keyboard (7100.4226ms)
+✔ mobile bundle keeps the composer and bottom tabs inside safe areas and above the keyboard (6148.6371ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13750.3368

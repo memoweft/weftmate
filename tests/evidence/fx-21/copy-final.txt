@@ -1,0 +1,17 @@
+✔ side creation references only the chosen message, requires suggestion confirmation and checks project destinations (24.1996ms)
+✔ automatic results preserve failed/stopped facts, skip ordinary chat and wait for live background work (3.5273ms)
+✔ real HTTP side command is idempotent, sends nothing; results persist once, share activity identity, update and clear on deletion (1796.8253ms)
+✔ mobile generated assets match every canonical ui-core file byte for byte (138.1213ms)
+✔ check refuses changed, missing and unlisted copies; rebuild follows the source and removes stale files (237.091ms)
+✔ mobile check validates nested component syntax as well as generated source parity (2306.1228ms)
+✔ published mobile bundle includes the verified shared assets at their ui-core paths (2111.8052ms)
+✔ publish command refuses stale generated assets before creating a release (3580.2634ms)
+✔ side result copy shows one truthful state and readable tool descriptions for stored and new cards (2.0484ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8498.5152

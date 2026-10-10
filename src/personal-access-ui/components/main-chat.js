@@ -97,11 +97,11 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             if(complete)globalThis.WeftReplyMotion?.reveal(row.querySelector('.message-actions'),'arrival');
             highlight(row);
         } else if (spec.kind === 'result') {
-            const result = spec.event.data, state = { completed: '成功', failed: '失败', stopped: '停止' }[result.state] || '待核对';
+            const result = spec.event.data, summary = globalThis.WeftUiCore.sideResultText(result);
             row.classList.add('side-result'); row.replaceChildren();
             if (result.deleted) row.append(ui.element('span', 'muted', '旁聊已删除'));
             else {
-                const open = button(`${state} · ${Array.from(result.summary || '').slice(0, 160).join('')}`, `打开旁聊结果：${state} · ${result.summary || ''}`, async () => {
+                const open = button(summary, `打开旁聊结果：${summary}`, async () => {
                 const chat = (await core.readChat(result.sourceChatId || spec.event.sourceRef.sourceChatId)).chat; await core.selectSession(chat.activeSessionId);
                 }, 'side-result-link');
                 const arrow = WeftIcons.create('chevron',16); arrow.classList.add('side-result-arrow'); open.append(arrow); row.append(open);

@@ -1,0 +1,32 @@
+✖ real main gateway and pinned DSH create a fresh main session and answer its first message (10748.388ms)
+✖ f787c3c native data upgrades with preserved side history and a successful first main message (25512.5769ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 36785.0545
+
+✖ failing tests:
+
+test at tests\migration-first-message.test.ts:9:1
+✖ real main gateway and pinned DSH create a fresh main session and answer its first message (10748.388ms)
+  Error: {"commandId":"cmd-00bdb635-e698-4cf1-ae11-cd8aadf43309","requestId":"21292ae9-af8e-4b89-9f03-2a3b9af005bf","kind":"chat.message","targetDeviceId":"host-9599a737-cea9-463b-8441-4fb2685f4b01","state":"rejected","createdAt":"2026-10-10T14:49:34.903Z","updatedAt":"2026-10-10T14:49:34.903Z","chatId":"chat-bf9f0bdd-c5b7-4d98-9a19-c0af5c48e428","errorCode":"BACKEND_UNAVAILABLE"}
+      at file:///D:/AIProjects/WeftMate/Worktrees/w3/tests/helpers/migration-host.mjs:63:70
+      at async until (file:///D:/AIProjects/WeftMate/Worktrees/w3/tests/helpers/migration-host.mjs:17:44)
+      at async h.mainFirst (file:///D:/AIProjects/WeftMate/Worktrees/w3/tests/helpers/migration-host.mjs:71:21)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w3/tests/migration-first-message.test.ts:11:22)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at tests\migration-first-message.test.ts:15:1
+✖ f787c3c native data upgrades with preserved side history and a successful first main message (25512.5769ms)
+  Error: {"commandId":"cmd-43431e59-cb18-4feb-9f3c-16e646086a28","requestId":"f4c00fa9-0e49-40ae-95c8-90d419eaf275","kind":"chat.message","targetDeviceId":"host-760b4189-09ac-4c72-9ba9-1d9e78e7733d","state":"rejected","createdAt":"2026-10-10T14:50:00.004Z","updatedAt":"2026-10-10T14:50:00.004Z","chatId":"chat-954f9814-4145-45a8-8dd7-85789fd01c88","errorCode":"BACKEND_UNAVAILABLE"}
+      at file:///D:/AIProjects/WeftMate/Worktrees/w3/tests/helpers/migration-host.mjs:63:70
+      at async until (file:///D:/AIProjects/WeftMate/Worktrees/w3/tests/helpers/migration-host.mjs:17:44)
+      at async h.mainFirst (file:///D:/AIProjects/WeftMate/Worktrees/w3/tests/helpers/migration-host.mjs:71:21)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w3/tests/migration-first-message.test.ts:32:16)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7)

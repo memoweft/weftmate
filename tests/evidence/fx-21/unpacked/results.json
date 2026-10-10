@@ -1,0 +1,188 @@
+{
+  "synthetic": true,
+  "realMain": true,
+  "pinnedDsh": true,
+  "realInstall": false,
+  "checks": [
+    "fresh-main-created-and-replied",
+    "native-folder-picker-substitute-registered-project",
+    "native-project-read-and-approved-write",
+    "native-conversation-export-written",
+    "assistant-switch-size-and-save-toast"
+  ],
+  "packaged": {
+    "isPackaged": true,
+    "appPath": "C:\\Temp\\weftmate-fx21-current\\build\\win-unpacked\\resources\\app.asar"
+  },
+  "folderCommands": [
+    {
+      "kind": "chat.message",
+      "state": "pending"
+    },
+    {
+      "kind": "chat.message",
+      "state": "pending"
+    },
+    {
+      "kind": "chat.message",
+      "state": "pending"
+    },
+    {
+      "kind": "chat.message",
+      "state": "dispatching"
+    },
+    {
+      "kind": "chat.message",
+      "state": "accepted_by_dsh"
+    },
+    {
+      "kind": "session.side.create",
+      "state": "pending"
+    },
+    {
+      "kind": "session.side.create",
+      "state": "pending"
+    },
+    {
+      "kind": "session.side.create",
+      "state": "accepted_by_dsh"
+    },
+    {
+      "kind": "session.create",
+      "state": "pending"
+    },
+    {
+      "kind": "session.create",
+      "state": "pending"
+    },
+    {
+      "kind": "session.create",
+      "state": "pending"
+    },
+    {
+      "kind": "session.create",
+      "state": "pending"
+    },
+    {
+      "kind": "session.create",
+      "state": "dispatching"
+    },
+    {
+      "kind": "session.create",
+      "state": "accepted_by_dsh"
+    },
+    {
+      "kind": "session.message",
+      "state": "pending"
+    },
+    {
+      "kind": "session.message",
+      "state": "pending"
+    },
+    {
+      "kind": "session.message",
+      "state": "pending"
+    },
+    {
+      "kind": "session.message",
+      "state": "pending"
+    },
+    {
+      "kind": "session.message",
+      "state": "pending"
+    },
+    {
+      "kind": "session.message",
+      "state": "pending"
+    },
+    {
+      "kind": "session.message",
+      "state": "accepted_by_dsh"
+    }
+  ],
+  "main": {
+    "chatId": "chat-27c3a3d6-7fc0-4d5c-aee8-37dae8751a65",
+    "sessionId": "session-4838f0cf-7601-47bb-b455-0f67814d0b61",
+    "reply": "主对话首条消息成功，合成回复。"
+  },
+  "project": {
+    "name": "synthetic-project",
+    "permission": "read-only"
+  },
+  "approvals": [
+    "1520542f-f794-4967-b2a0-2af56e1d5576",
+    "981d2477-cab0-4ddb-b6e1-f1522bec4986"
+  ],
+  "readProof": true,
+  "switches": [
+    {
+      "width": 44,
+      "height": 26
+    },
+    {
+      "width": 44,
+      "height": 26
+    },
+    {
+      "width": 44,
+      "height": 26
+    },
+    {
+      "width": 44,
+      "height": 26
+    }
+  ],
+  "desktop480": {
+    "bottom": 759.3333740234375,
+    "height": 780,
+    "pageHeight": 780
+  },
+  "passed": true,
+  "modelCalls": [
+    {
+      "stream": true,
+      "toolResponses": []
+    },
+    {
+      "stream": true,
+      "toolResponses": []
+    },
+    {
+      "stream": true,
+      "toolResponses": [
+        {
+          "content": "{\"loaded\":[\"read\",\"write\"]}"
+        }
+      ]
+    },
+    {
+      "stream": true,
+      "toolResponses": [
+        {
+          "content": "{\"loaded\":[\"read\",\"write\"]}"
+        },
+        {
+          "content": "<path>C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-fx21-CfRKQo\\synthetic-project\\brief.md</path>\n<type>file</type>\n<content>\n1: FX21 synthetic project file\n\n(End of file - total 1 lines)\n</content>"
+        }
+      ]
+    },
+    {
+      "stream": true,
+      "toolResponses": [
+        {
+          "content": "{\"loaded\":[\"read\",\"write\"]}"
+        },
+        {
+          "content": "<path>C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-fx21-CfRKQo\\synthetic-project\\brief.md</path>\n<type>file</type>\n<content>\n1: FX21 synthetic project file\n\n(End of file - total 1 lines)\n</content>"
+        },
+        {
+          "content": "<path>C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-fx21-CfRKQo\\synthetic-project\\approved.md</path>\n<type>file</type>\n<content>\nCreated file\n</content>{\"artifact\":{\"taskId\":\"cmd-707711cc-06c6-45e8-a0da-aab269c024b4\",\"artifactId\":\"artifact-9743ee8b-0e47-4634-b2e0-771022d91e0b\",\"fileName\":\"approved.md\",\"contentType\":\"text/plain; charset=utf-8\",\"size\":28,\"sha256\":\"ca1e3c188b81dba2447c0d51777b8ba76a6387668ed78fac6ab2b2cfdb18de43\",\"state\":\"observed\"},\"createdFilePath\":\"C:\\\\Users\\\\yun\\\\AppData\\\\Local\\\\Temp\\\\weftmate-fx21-CfRKQo\\\\synthetic-project\\\\approved.md\"}"
+        }
+      ]
+    },
+    {
+      "stream": true,
+      "toolResponses": []
+    }
+  ]
+}

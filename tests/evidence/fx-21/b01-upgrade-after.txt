@@ -1,0 +1,10 @@
+✔ real main gateway and pinned DSH create a fresh main session and answer its first message (9283.386ms)
+✔ f787c3c native data upgrades with preserved side history and a successful first main message (25889.8064ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 35568.2756

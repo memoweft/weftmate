@@ -1,5 +1,5 @@
 /* Shared settings view for the desktop, remote browser and Android UI package. */
-globalThis.WeftPersonalizationView = (core, target, category) => {
+globalThis.WeftPersonalizationView = (core, target, category, {toast = () => {}} = {}) => {
     const controls = globalThis.WeftSettingsControls, fields = new Map(), texts = new Map();
     const identity = core.state.identityGeneration;
     const current = () => target.isConnected && identity === core.state.identityGeneration;
@@ -8,11 +8,11 @@ globalThis.WeftPersonalizationView = (core, target, category) => {
     target.replaceChildren(form); form.append(notice);
     let saved, ready = false;
     const busy = value => { for (const element of form.querySelectorAll('input,textarea,select,button')) element.disabled = value; };
-    const report = value => { if (!current()) return; saved = value.settings; notice.textContent = '已同步 · 从下一次回复开始生效'; };
+    const report = (value, justSaved = false) => { if (!current()) return; saved = value.settings; notice.textContent = ''; notice.hidden = true; if (justSaved) toast('已同步 · 从下一次回复开始生效'); };
     async function write(patch, extract = false) {
         if (!ready || !current()) return;
-        busy(true); notice.textContent = extract ? '正在本机提炼…' : '正在同步…';
-        try { const value = await core.savePersonalization(patch, extract); if (current()) { report(value); if (extract) { const field = texts.get('writingStyle'); field.value = value.settings.writingStyle; field.updateCount(); fields.get('useWritingStyle').checked = true; } } }
+        busy(true); notice.hidden = false; notice.textContent = extract ? '正在本机提炼…' : '正在同步…';
+        try { const value = await core.savePersonalization(patch, extract); if (current()) { report(value, true); if (extract) { const field = texts.get('writingStyle'); field.value = value.settings.writingStyle; field.updateCount(); fields.get('useWritingStyle').checked = true; } } }
         catch { if (current()) { notice.textContent = '未能同步，修改仍在这里。请重试。'; for (const [key, control] of fields) { if (control.type === 'checkbox') control.checked = saved[key]; else control.value = saved[key]; control.dispatchEvent(new Event('weft:sync')); } } }
         finally { if (current()) busy(false); }
     }
@@ -70,7 +70,7 @@ globalThis.WeftPersonalizationView = (core, target, category) => {
     busy(true);
     void core.loadPersonalization().then(value => { if (current()) { report(value); fill(value.settings); ready = true; busy(false); } }).catch(() => {
         if (!current()) return; notice.textContent = '暂时无法读取，请连接电脑后重试。';
-        const retry = node('button', 'button secondary', '重试读取'); retry.type = 'button'; retry.onclick = () => globalThis.WeftPersonalizationView(core, target, category); form.append(retry);
+        const retry = node('button', 'button secondary', '重试读取'); retry.type = 'button'; retry.onclick = () => globalThis.WeftPersonalizationView(core, target, category, {toast}); form.append(retry);
     });
 };
 globalThis.WeftModelThinking = (core, row, event) => {

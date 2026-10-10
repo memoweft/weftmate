@@ -1,0 +1,30 @@
+{
+  "synthetic": true,
+  "realMain": true,
+  "pinnedDsh": true,
+  "realInstall": false,
+  "checks": [
+    "fresh-main-created-and-replied",
+    "native-folder-picker-substitute-registered-project"
+  ],
+  "packaged": {
+    "isPackaged": true,
+    "appPath": "C:\\Temp\\weftmate-fx21-release\\0.1.1-preview.21\\build\\win-unpacked\\resources\\app.asar"
+  },
+  "main": {
+    "chatId": "chat-dfaa4b9e-66c5-4471-b663-44ac62b77680",
+    "sessionId": "session-20b3e997-8f7e-444a-b361-5fac791b668b",
+    "reply": "主对话首条消息成功，合成回复。"
+  },
+  "project": {
+    "name": "synthetic-project",
+    "permission": "read-only"
+  },
+  "approvals": [
+    "48dfbb6e-4352-4d9f-a038-933e14b2fd6b",
+    "c05d3467-f5b5-4afc-a7cb-9dc1e1bae9d8"
+  ],
+  "toolSteps": [],
+  "error": "AssertionError [ERR_ASSERTION]: []\n    at file:///D:/AIProjects/WeftMate/Worktrees/w3/scripts/nightly/installed-smoke.mjs:75:38",
+  "passed": false
+}

@@ -1,0 +1,14 @@
+✔ side creation references only the chosen message, requires suggestion confirmation and checks project destinations (22.6427ms)
+✔ automatic results preserve failed/stopped facts, skip ordinary chat and wait for live background work (2.8068ms)
+✔ real HTTP side command is idempotent, sends nothing; results persist once, share activity identity, update and clear on deletion (1664.982ms)
+✔ wrapped native missing session allows creation and all single lookups retain missing semantics (2.1362ms)
+✔ native server errors and transport failures cannot create a missing-looking main session (0.6074ms)
+✔ side result copy shows one truthful state and readable tool descriptions for stored and new cards (1.8383ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1914.4944
