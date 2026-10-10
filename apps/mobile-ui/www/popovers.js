@@ -136,6 +136,13 @@
     let search;
     const options = () => [...list.querySelectorAll('[role=option]')];
     function render(query = '') {
+      // Keep arbitrary ISO calendar years available without a native date picker.
+      if (goalsControl && select.dataset.customYear === 'true' && /^\d{4}年?$/.test(query.trim())) {
+        const value = query.trim().replace('年','');
+        if (![...select.options].some(option => option.value === value)) {
+          const option = document.createElement('option');option.value=value;option.textContent=`${Number(value)}年`;select.append(option);
+        }
+      }
       list.replaceChildren();
       for (const option of select.options) {
         if (option.hidden || !option.textContent.toLocaleLowerCase().includes(query.toLocaleLowerCase())) continue;
@@ -153,7 +160,7 @@
       if (trigger.disabled) return;
       menu.replaceChildren(); search = null;
       if (select.options.length > 8) {
-        search = document.createElement('input'); search.type = 'search'; search.placeholder = '搜索选项'; search.setAttribute('aria-label', `搜索${label}`);
+        search = document.createElement('input'); search.type = 'search'; search.placeholder = select.dataset.customYear === 'true' ? '输入或搜索年份' : '搜索选项'; search.setAttribute('aria-label', `搜索${label}`);
         search.oninput = () => render(search.value); menu.append(search);
       }
       menu.append(list); menu.hidden = false; trigger.setAttribute('aria-expanded', 'true'); render();
