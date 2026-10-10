@@ -27,7 +27,7 @@ globalThis.WeftGoalsView={mount({target,core,openSource,toast}){
         const parts=value.split(type==='date'?'-':':'),controls=[];
         const specs=type==='date'?[['年',Math.min(new Date().getFullYear(),Number(parts[0])),Math.max(new Date().getFullYear()+10,Number(parts[0]))],['月',1,12],['日',1,31]]:[['小时',0,23],['分钟',0,59]];
         for(const [i,[name,min,max]]of specs.entries()){
-            const select=el('select');select.setAttribute('aria-label',`${label} · ${name}`);
+            const select=el('select');select.setAttribute('aria-label',`${label} · ${name}`);if(type==='date'&&i===0)select.dataset.customYear='true';
             for(let n=min;n<=max;n++){const opt=el('option','',type==='date'?`${n}${name}`:String(n).padStart(2,'0'));opt.value=String(n).padStart(i===0&&type==='date'?4:2,'0');select.append(opt);}select.value=parts[i];group.append(select);controls.push(select);
         }
         const sync=()=>{if(type==='date'){const days=new Date(Number(controls[0].value),Number(controls[1].value),0).getDate();for(const opt of controls[2].options)opt.disabled=Number(opt.value)>days;if(Number(controls[2].value)>days)controls[2].value=String(days).padStart(2,'0');controls[2].dispatchEvent(new Event('weft:sync'));}source.value=controls.map(n=>n.value).join(type==='date'?'-':':');};controls.forEach(n=>n.addEventListener('change',sync));sync();return source;

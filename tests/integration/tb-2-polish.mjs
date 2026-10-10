@@ -45,6 +45,7 @@ for(const theme of ['light','dark']){
    for(const [name,value]of [['所属对话',null],['到点做什么','让助手执行'],['重复','一次性'],['日期 · 年',null],['日期 · 月',null],['日期 · 日',null],['时间 · 小时','09'],['时间 · 分钟','00']]){
     await form.getByRole('combobox',{name,exact:true}).click();await shot(page,`${prefix}-select-${name.replaceAll(' · ','-')}`);if(value)await page.getByRole('option',{name:value,exact:true}).click();else await page.keyboard.press('Escape');
    }
+   await form.getByRole('combobox',{name:'日期 · 年',exact:true}).click();await page.getByRole('searchbox',{name:'搜索日期 · 年',exact:true}).fill('2045');await page.getByRole('option',{name:'2045年',exact:true}).click();
    await shot(page,`${prefix}-once-form`);await choose(page,form,'重复','每周');await form.getByRole('combobox',{name:'星期',exact:true}).click();await shot(page,`${prefix}-select-weekday`);await page.getByRole('option',{name:'星期一',exact:true}).click();
    await shot(page,`${prefix}-weekly-form`);await choose(page,form,'重复','每月');await shot(page,`${prefix}-monthly-form`);await choose(page,form,'重复','固定间隔');await shot(page,`${prefix}-interval-form`);
    await choose(page,form,'重复','每天');await form.getByLabel('要做什么',{exact:true}).fill(`${prefix} 合成提醒`);await choose(page,form,'到点做什么','提醒我');await form.getByRole('button',{name:'保存',exact:true}).click();await form.waitFor({state:'hidden'});await shot(page,`${prefix}-saved-toast`);
