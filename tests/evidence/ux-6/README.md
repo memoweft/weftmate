@@ -65,3 +65,5 @@
 - 完整必过单测使用 `node .github/scripts/ci-unit-tests.mjs required`；完整日志见 `required-unit-tests.log`，1308项中1296通过、0失败、12按仓库既有配置跳过，1266.35秒；没有新增跳过或放宽断言。
 
 没有运行系统读屏软件、安卓模拟器或Apple原生界面；不将语义与资产验证写成这些实屏验收。未发布安装包或更改日用程序。
+
+最终代码验证提交 `cf57d94d` 的7项CI均通过；[PR #186](https://github.com/memoweft/weftmate/pull/186)。公开扫描77个改动文本文件，私人参照文件名／真实密钥／私有模型地址命中均0，见 `public-scan.json`。本包进程已自然关闭，按创建时间＋命令行／程序路径复核0残留。
