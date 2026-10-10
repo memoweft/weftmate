@@ -67,8 +67,8 @@ globalThis.WeftSearchView = {
   dialog.addEventListener('cancel',event=>{event.preventDefault();core.closeSearch();});
   dialog.addEventListener('click',event=>{if(event.target===dialog){const bounds=dialog.getBoundingClientRect();if(event.clientX<bounds.left||event.clientX>bounds.right||event.clientY<bounds.top||event.clientY>bounds.bottom)core.closeSearch();}});
   dialog.addEventListener('keydown',event=>{if(event.isComposing||event.target.closest('[role=menu]'))return;
-    if(['Escape','ArrowUp','ArrowDown','Home','End','ArrowLeft','ArrowRight'].includes(event.key)&&(!['Home','End'].includes(event.key)||event.target!==input)){event.preventDefault();event.stopPropagation();core.navigateSearch(event.key);}
-    if(event.key==='Enter'&&event.target===input){event.preventDefault();const row=core.search.rows[core.search.selected];if(row){if(event.altKey){const target=results.querySelectorAll('[role=option]')[core.search.selected]?.querySelector('.search-result-more');if(target)rowMenu(row,target);}else void activate(row);}}
+    const navigation=Object.fromEntries(['searchClose','searchUp','searchDown','searchFirst','searchLast','searchLeft','searchRight'].map(id=>[id,(e,row)=>{if(['Home','End'].includes(row.key)&&e.target===input)return false;e.stopPropagation();core.navigateSearch(row.key);} ]));
+    WeftShortcuts.dispatch(event,{...navigation,searchOpen:()=>{if(event.target!==input)return false;const row=core.search.rows[core.search.selected];if(row)void activate(row);},searchMenu:()=>{if(event.target!==input)return false;const row=core.search.rows[core.search.selected],target=results.querySelectorAll('[role=option]')[core.search.selected]?.querySelector('.search-result-more');if(row&&target)rowMenu(row,target);}});
   });
   return {show,hide,render,select,activate,dialog};
 }};

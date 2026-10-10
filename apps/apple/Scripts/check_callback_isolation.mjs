@@ -13,6 +13,7 @@ function files(dir) { return fs.readdirSync(dir,{withFileTypes:true}).flatMap(e 
 // terminate a callback. Inventory hashes use the original source, not masked text.
 export function mask(text) { return text.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*|"(?:\\.|[^"\\])*"/g, m => m.replace(/[^\n]/g,' ')); }
 export function scan(text, file='fixture.swift') {
+ text=text.replace(/\r\n/g,'\n');
  const source = mask(text), rows=[];
  for (const match of source.matchAll(pattern)) {
   const api=match[1]||match[2]||match[3]||match[4]||match[5], start=match.index;

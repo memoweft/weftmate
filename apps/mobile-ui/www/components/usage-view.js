@@ -126,7 +126,7 @@ if (globalThis.WeftUiComponents) globalThis.WeftUiComponents.factories.usage = (
             ...(!conversation.hidden?[{name:'本对话用量',icon:'chart',action:()=>conversation.click()}]:[])
         ]));
         conversation.before(more);
-        phoneProfile=ui.element('button','icon-button phone-header-profile');phoneProfile.type='button';phoneProfile.setAttribute('aria-label','个人资料与设置');phoneProfile.addEventListener('click',()=>ui.openSettings('account'));conversation.after(phoneProfile);renderConversationUsage();
+        phoneProfile=ui.element('button','icon-button phone-header-profile');phoneProfile.type='button';phoneProfile.setAttribute('aria-label','个人资料与设置');phoneProfile.addEventListener('click',()=>WeftPopover.menu(phoneProfile,[{name:'设置',icon:'settings',action:()=>ui.openSettings('account')},{name:'帮助',icon:'info',action:()=>ui.openHelp()},{name:'更新内容',icon:'sync',action:()=>ui.openReleases()}]));conversation.after(phoneProfile);renderConversationUsage();
     }
     return { mountUsage, showSettingsUsage, renderConversationUsage };
 };

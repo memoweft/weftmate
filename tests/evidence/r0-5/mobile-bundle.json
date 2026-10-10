@@ -1,0 +1,14 @@
+{
+  "sharedAssets": 50,
+  "totalAssets": 363,
+  "signatureVerified": true,
+  "uiVersion": "0.8.25",
+  "minNativeVersionCode": 38,
+  "helpAssets": [
+    "components/help-view.js",
+    "help.css",
+    "ui-core/help.js",
+    "ui-core/release-notes.js",
+    "ui-core/shortcuts.js"
+  ]
+}

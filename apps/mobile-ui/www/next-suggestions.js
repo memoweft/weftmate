@@ -85,7 +85,7 @@
         }
         function sync() { core.syncNextSuggestions(); paint(); }
         function move(event, fromField = false) {
-            if (bar.hidden || !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(event.key) || event.key === 'Tab' && event.shiftKey) return false;
+            if (bar.hidden || !globalThis.WeftShortcuts?.find(event,['suggestionUp','suggestionDown','suggestionLeft','suggestionRight','suggestionTab'])) return false;
             const chips = [...scroller.querySelectorAll('button')]; if (!chips.length) return false;
             event.preventDefault(); event.stopImmediatePropagation();
             const current = chips.indexOf(document.activeElement), direction = ['ArrowUp', 'ArrowLeft'].includes(event.key) ? -1 : 1;
@@ -97,8 +97,7 @@
         field.addEventListener('compositionend', () => core.setSuggestionsComposing(false));
         field.addEventListener('keydown', event => {
             if (event.isComposing) return;
-            if (event.key === 'Tab' && !event.shiftKey && acceptCompletion()) { event.preventDefault(); event.stopImmediatePropagation(); return; }
-            if (event.key === 'Escape' && (!bar.hidden || !ghost.hidden)) { event.preventDefault(); event.stopImmediatePropagation(); core.dismissNextSuggestions(); paint(); return; }
+            if (globalThis.WeftShortcuts?.dispatch(event,{complete:()=>{if(!acceptCompletion())return false;event.stopImmediatePropagation();},dismiss:()=>{if(bar.hidden&&ghost.hidden)return false;event.stopImmediatePropagation();core.dismissNextSuggestions();paint();}})) return;
             if (!field.value && move(event, true)) return;
             if (event.key === 'Enter' && !event.shiftKey) core.cancelNextSuggestions();
         }, true);
