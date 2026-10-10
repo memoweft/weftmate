@@ -1,0 +1,625 @@
+{
+  "startedAt": "2026-10-10T00:06:44.496Z",
+  "realCloudEntrypoint": "services/cloud/src/main.mjs",
+  "realElectronEntrypoint": ".",
+  "sourceCommit": "b64378a9d46b85d24c4f8ae8c9853006ae7784c9",
+  "phase": "mobile-web-shipping",
+  "baselineHost": false,
+  "steps": [
+    "Real cloud entrypoint health",
+    "Mobile registration, real file mail, sixty-second resend deadline and bundled legal reading",
+    "Real desktop approves the waiting phone and recipient imports trusted host delivery",
+    "Settings device directory sees real desktop, connects through hosts/connect and adopts real host session"
+  ],
+  "cloudTransport": "WSL Ubuntu",
+  "visualChecks": [
+    {
+      "name": "login",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "login",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "waiting",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "waiting",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "devices",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "devices",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "task-approval",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 9.87
+    },
+    {
+      "name": "task-result",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "web-settings-appearance",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "web-settings-常规",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "web-settings-账户",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "web-settings-设备",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "web-settings-用量",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 9.87
+    },
+    {
+      "name": "web-settings-模型",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 9.87
+    },
+    {
+      "name": "web-settings-审批",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "web-settings-已归档",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "web-settings-关于",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "web-settings-appearance",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "web-settings-常规",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "web-settings-账户",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "web-settings-设备",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "web-settings-用量",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 8.47
+    },
+    {
+      "name": "web-settings-模型",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 8.47
+    },
+    {
+      "name": "web-settings-审批",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "web-settings-已归档",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "web-settings-关于",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "web-project-conversation",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    }
+  ],
+  "executionOwner": {
+    "executionAccount": true,
+    "session": "session-6bd3885f-f3fe-4d13-b580-4f12012219f9",
+    "approvalMode": {
+      "status": 200,
+      "body": {
+        "mode": "ask",
+        "allowedCategories": []
+      }
+    }
+  },
+  "phoneNavigation": {
+    "httpStatus": 200,
+    "sessionCount": 1,
+    "createdSessionVisible": true,
+    "nativeTitle": "FX-9 手机办事",
+    "logicalTitle": "FX-9 手机办事",
+    "railVisible": false
+  },
+  "draftEntry": {
+    "retained": true,
+    "enteredLength": 116,
+    "retainedLength": 116
+  },
+  "phoneTask": {
+    "passed": true,
+    "durationMs": 44664,
+    "approvals": 1,
+    "completed": true,
+    "fileContent": "FX9_PHONE_EXECUTED",
+    "noUnconfirmed": true,
+    "commandState": "accepted_by_dsh",
+    "taskStatus": 200,
+    "replyEvidence": {
+      "status": "completed",
+      "turn": 1,
+      "assistantChunks": 90,
+      "textChunks": 16,
+      "reasoningChunks": 0,
+      "assistantMessages": 4,
+      "toolSaveObserved": false,
+      "step": 4,
+      "observedAt": "2026-10-10T00:07:57.673Z",
+      "terminalAt": "2026-10-10T00:07:57.673Z",
+      "firstChunkAt": "2026-10-10T00:07:28.691Z",
+      "lastChunkAt": "2026-10-10T00:07:57.662Z"
+    },
+    "draft": "",
+    "pending": null,
+    "optimistic": [],
+    "text": "FX-9 手机办事\n输出与来源\n本对话用量\n请在电脑上创建 C:/Temp/fx9-phone-160344e8-be43-4989-a477-d6a3757b5ac4.txt，内容只写 FX9_PHONE_EXECUTED。只操作这个测试文件，并读回核验内容。完成后告诉我。\n已运行 1 个命令\n\n完成。已在 [local path] 创建文件，读回核验内容为 FX9_PHONE_EXECUTED`，完全匹配。只操作了这一个测试文件。\n\n输入消息\n每次询问\nFX-9 MiMo\n开旁聊"
+  },
+  "extraChecks": [
+    {
+      "theme": "浅色",
+      "name": "常规",
+      "status": "passed"
+    },
+    {
+      "theme": "浅色",
+      "name": "账户",
+      "status": "passed"
+    },
+    {
+      "theme": "浅色",
+      "name": "设备",
+      "status": "passed"
+    },
+    {
+      "theme": "浅色",
+      "name": "用量",
+      "status": "passed"
+    },
+    {
+      "theme": "浅色",
+      "name": "模型",
+      "status": "passed"
+    },
+    {
+      "theme": "浅色",
+      "name": "审批",
+      "status": "passed"
+    },
+    {
+      "theme": "浅色",
+      "name": "已归档",
+      "status": "passed"
+    },
+    {
+      "theme": "浅色",
+      "name": "关于",
+      "status": "passed"
+    },
+    {
+      "theme": "深色",
+      "name": "常规",
+      "status": "passed"
+    },
+    {
+      "theme": "深色",
+      "name": "账户",
+      "status": "passed"
+    },
+    {
+      "theme": "深色",
+      "name": "设备",
+      "status": "passed"
+    },
+    {
+      "theme": "深色",
+      "name": "用量",
+      "status": "passed"
+    },
+    {
+      "theme": "深色",
+      "name": "模型",
+      "status": "passed"
+    },
+    {
+      "theme": "深色",
+      "name": "审批",
+      "status": "passed"
+    },
+    {
+      "theme": "深色",
+      "name": "已归档",
+      "status": "passed"
+    },
+    {
+      "theme": "深色",
+      "name": "关于",
+      "status": "passed"
+    },
+    {
+      "name": "project conversation",
+      "status": "passed"
+    }
+  ],
+  "secondAccount": {
+    "isolated": true,
+    "executionAccount": false,
+    "actionStatus": 403,
+    "visibleExplanation": false,
+    "privateSessions": 0,
+    "originalDesktopApprovedFromPhone": true,
+    "originalExecutionRetained": true
+  },
+  "issues": [
+    {
+      "id": "restricted-account-explanation-missing",
+      "visible": false
+    }
+  ],
+  "visualOnly": true,
+  "flowCompleted": true,
+  "passed": false,
+  "finishedAt": "2026-10-10T00:08:48.826Z",
+  "surface": "mobile-web",
+  "realNativeBridge": false,
+  "locators": "visible accessible names and roles",
+  "requests": [
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/config",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/authorization",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/auth/registration/request",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/registration/verify",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/registration/complete",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/authorization/resume",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/oidc/token",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/oidc/jwks",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/cloud/devices",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/auth/cloud-nonce",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/cloud-desktop",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/pending",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/models",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/models",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/main",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-befd981b-a683-4611-863a-6aed0e79ea95/events",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/projects",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/commands",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-befd981b-a683-4611-863a-6aed0e79ea95/changes",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/usage",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sync/events",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/cloud-session",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/cloud/auth/device/confirm",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/f520a393-12c1-4145-8c81-a96eaf8c1971/decision",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/f520a393-12c1-4145-8c81-a96eaf8c1971/trust",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/cloud-session",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/account/models",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/account/models/by-request/ee2c8e7a-47da-4b58-bc09-2ef6aa7742d5",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/commands",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/commands/cmd-368c759f-6337-4cb6-826f-59ada561385f",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-6bd3885f-f3fe-4d13-b580-4f12012219f9/approval-mode",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-6bd3885f-f3fe-4d13-b580-4f12012219f9/metadata",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-6bd3885f-f3fe-4d13-b580-4f12012219f9/events",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-6bd3885f-f3fe-4d13-b580-4f12012219f9/approvals",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-6bd3885f-f3fe-4d13-b580-4f12012219f9/questions",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/tasks/cmd-e3353e13-a645-4760-b876-bc2a37fe6564",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/commands/by-request/876eb6b8-f918-4826-8b9a-6c1d5b5d6d52",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-6bd3885f-f3fe-4d13-b580-4f12012219f9/events/102/detail",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-6bd3885f-f3fe-4d13-b580-4f12012219f9/approvals/d3f73b5b-5765-4c73-8523-2fc135c4aba0",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/usage",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/binding",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/devices",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/account/models",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/system",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/approvals",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/workspaces/browser",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/app/manifest",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/projects",
+      "status": 201
+    },
+    {
+      "path": "/personal/v1/chats/chat-befd981b-a683-4611-863a-6aed0e79ea95/dates",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/projects/project-b73d9ae5-54c2-4e18-bb48-92e683268636/sessions",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/commands/by-request/bd42fedc-b052-45c2-953e-677de9421621",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/logout",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-d6705300-43ce-4fd7-984e-29dff5c10b85/events",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/logout",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-91053427-d1d6-4fb8-be24-e5a2662f8351/events",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-91053427-d1d6-4fb8-be24-e5a2662f8351/changes",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/commands",
+      "status": 403
+    },
+    {
+      "path": "/personal/v1/auth/cloud-desktop",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/cloud/devices/80bc22cb-6860-4621-a3b8-1b2e79ed95b8/decision",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/80bc22cb-6860-4621-a3b8-1b2e79ed95b8/trust",
+      "status": 200
+    }
+  ]
+}
