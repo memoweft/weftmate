@@ -1,0 +1,81 @@
+{
+  "startedAt": "2026-10-10T06:53:49.834Z",
+  "installed": true,
+  "checks": [
+    {
+      "name": "01-main-chat",
+      "passed": true,
+      "durationMs": 6340,
+      "sessionId": "session-49ea78bc-72f8-4379-a02a-73b8a698a9d6",
+      "approvals": 0,
+      "reply": "好的，两条简单建议：\n\n1. **先分三堆**：把桌面上的文件快速分成\"要保留的\"\"要归档的\"\"可以删的\"三类，删掉临时文件、重复下载和过期截图——这一步不求完美，先减量。\n\n2. **建一个固定收件夹**：在桌面只留一个\"待处理\"文件夹，剩下的文件按类型或项目移到文档目录对应位置，以后新文件先落进\"待处理\"，定期清空即可，桌面就再也不会堆积了。\n\n收拾完如果想让我帮你批量整理某个目录，随时说一声。"
+    },
+    {
+      "name": "02-preference",
+      "passed": true,
+      "durationMs": 619,
+      "sessionId": "session-49ea78bc-72f8-4379-a02a-73b8a698a9d6",
+      "approvals": 0,
+      "reply": "好的，两条简单建议：\n\n1. **先分三堆**：把桌面上的文件快速分成\"要保留的\"\"要归档的\"\"可以删的\"三类，删掉临时文件、重复下载和过期截图——这一步不求完美，先减量。\n\n2. **建一个固定收件夹**：在桌面只留一个\"待处理\"文件夹，剩下的文件按类型或项目移到文档目录对应位置，以后新文件先落进\"待处理\"，定期清空即可，桌面就再也不会堆积了。\n\n收拾完如果想让我帮你批量整理某个目录，随时说一声。"
+    },
+    {
+      "name": "03-side-recall",
+      "passed": true,
+      "durationMs": 2528,
+      "sessionId": "session-440e70ac-376d-42b7-9ee6-3b9290a70446",
+      "approvals": 0,
+      "reply": "喝第951种花茶时，你会加一片柠檬。"
+    },
+    {
+      "name": "04-correction",
+      "passed": true,
+      "durationMs": 405,
+      "sessionId": "session-440e70ac-376d-42b7-9ee6-3b9290a70446",
+      "approvals": 0,
+      "reply": "喝第951种花茶时，你会加一片柠檬。"
+    },
+    {
+      "name": "05-file-approval",
+      "passed": false,
+      "durationMs": 794,
+      "error": "The expression evaluated to a falsy value:\n\n  assert.ok(r.approvals>0)\n"
+    },
+    {
+      "name": "06-reminder-set",
+      "passed": true,
+      "durationMs": 15171,
+      "sessionId": "session-440e70ac-376d-42b7-9ee6-3b9290a70446",
+      "approvals": 3,
+      "reply": "\n\n\n已读取 a.txt（合成会议笔记）和 b.txt（合成阅读清单），并生成同目录下的 `index.md` 索引列出两份内容。"
+    },
+    {
+      "name": "07-personalization",
+      "passed": false,
+      "durationMs": 255,
+      "error": "locator.click: Error: strict mode violation: locator('[data-category=\"personalization\"]') resolved to 2 elements:\n    1) <button type=\"button\" class=\"settings-nav-item\" data-category=\"personalization\">…</button> aka getByRole('button', { name: '个性化' })\n    2) <section hidden=\"\" class=\"settings-category\" data-category=\"personalization\"></section> aka locator('.settings-content > section:nth-child(2)')\n\nCall log:\n\u001b[2m  - waiting for locator('[data-category=\"personalization\"]')\u001b[22m\n"
+    },
+    {
+      "name": "08-dark",
+      "passed": false,
+      "durationMs": 38,
+      "error": "locator.click: Error: strict mode violation: locator('[data-category=\"appearance\"]') resolved to 2 elements:\n    1) <button type=\"button\" class=\"settings-nav-item\" data-category=\"appearance\">…</button> aka getByRole('button', { name: '外观' })\n    2) <section hidden=\"\" class=\"settings-category\" data-category=\"appearance\">…</section> aka getByText('外观保存到这台设备。颜色模式选择适合当前环境的颜色模式。跟随系统浅色深色浅色深色跟随系统主题色用于按钮、选中状态和交互提示。石墨蓝色松绿紫色石墨字号调整阅读与输')\n\nCall log:\n\u001b[2m  - waiting for locator('[data-category=\"appearance\"]')\u001b[22m\n"
+    },
+    {
+      "name": "09-temporary",
+      "passed": true,
+      "durationMs": 3955,
+      "sessionId": "session-f7853f3d-f210-40dd-b316-d00fee623bd1",
+      "approvals": 0,
+      "reply": "收到"
+    },
+    {
+      "name": "10-phone-continue-approve",
+      "passed": true,
+      "durationMs": 22496,
+      "sessionId": "session-49ea78bc-72f8-4379-a02a-73b8a698a9d6",
+      "approvals": 3,
+      "reply": "\n\n\n\n已完成：`phone.txt` 写入成功，读回内容为 **QA5_PHONE_OK**（文件路径 `C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-EBoPjM/synthetic-folder/phone.txt`，已读回核验）。"
+    }
+  ],
+  "errors": []
+}

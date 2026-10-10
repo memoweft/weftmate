@@ -1,0 +1,203 @@
+{
+  "mimo": false,
+  "requests": [
+    {
+      "at": "2026-10-10T06:34:47.440Z",
+      "formation": false,
+      "stream": true,
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 20,
+        "completion_tokens": 10,
+        "total_tokens": 30
+      }
+    },
+    {
+      "at": "2026-10-10T06:34:47.592Z",
+      "formation": false,
+      "stream": true,
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 20,
+        "completion_tokens": 10,
+        "total_tokens": 30
+      }
+    },
+    {
+      "at": "2026-10-10T06:34:49.079Z",
+      "formation": true,
+      "stream": true,
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 20,
+        "completion_tokens": 10,
+        "total_tokens": 30
+      }
+    },
+    {
+      "at": "2026-10-10T06:34:50.761Z",
+      "formation": false,
+      "stream": true,
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 20,
+        "completion_tokens": 10,
+        "total_tokens": 30
+      }
+    },
+    {
+      "at": "2026-10-10T06:34:52.296Z",
+      "formation": true,
+      "stream": true,
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 20,
+        "completion_tokens": 10,
+        "total_tokens": 30
+      }
+    },
+    {
+      "at": "2026-10-10T06:39:52.391Z",
+      "formation": true,
+      "stream": true,
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 20,
+        "completion_tokens": 10,
+        "total_tokens": 30
+      }
+    },
+    {
+      "at": "2026-10-10T06:39:53.700Z",
+      "formation": false,
+      "stream": true,
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 20,
+        "completion_tokens": 10,
+        "total_tokens": 30
+      }
+    },
+    {
+      "at": "2026-10-10T06:39:53.888Z",
+      "formation": false,
+      "stream": true,
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 20,
+        "completion_tokens": 10,
+        "total_tokens": 30
+      }
+    },
+    {
+      "at": "2026-10-10T06:39:54.705Z",
+      "formation": true,
+      "stream": true,
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 20,
+        "completion_tokens": 10,
+        "total_tokens": 30
+      }
+    },
+    {
+      "at": "2026-10-10T06:39:55.767Z",
+      "formation": false,
+      "stream": true,
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 20,
+        "completion_tokens": 10,
+        "total_tokens": 30
+      }
+    },
+    {
+      "at": "2026-10-10T06:39:57.007Z",
+      "formation": true,
+      "stream": true,
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 20,
+        "completion_tokens": 10,
+        "total_tokens": 30
+      }
+    },
+    {
+      "at": "2026-10-10T06:44:57.128Z",
+      "formation": true,
+      "stream": true,
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 20,
+        "completion_tokens": 10,
+        "total_tokens": 30
+      }
+    },
+    {
+      "at": "2026-10-10T06:45:01.899Z",
+      "formation": false,
+      "stream": true,
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 20,
+        "completion_tokens": 10,
+        "total_tokens": 30
+      }
+    },
+    {
+      "at": "2026-10-10T06:45:02.109Z",
+      "formation": false,
+      "stream": true,
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 20,
+        "completion_tokens": 10,
+        "total_tokens": 30
+      }
+    },
+    {
+      "at": "2026-10-10T06:45:03.007Z",
+      "formation": true,
+      "stream": true,
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 20,
+        "completion_tokens": 10,
+        "total_tokens": 30
+      }
+    },
+    {
+      "at": "2026-10-10T06:45:04.020Z",
+      "formation": false,
+      "stream": true,
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 20,
+        "completion_tokens": 10,
+        "total_tokens": 30
+      }
+    },
+    {
+      "at": "2026-10-10T06:45:05.324Z",
+      "formation": true,
+      "stream": true,
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 20,
+        "completion_tokens": 10,
+        "total_tokens": 30
+      }
+    },
+    {
+      "at": "2026-10-10T06:50:05.530Z",
+      "formation": true,
+      "stream": true,
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 20,
+        "completion_tokens": 10,
+        "total_tokens": 30
+      }
+    }
+  ]
+}
