@@ -1,0 +1,36 @@
+{
+  "stopped": [
+    {
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+      "createdAt": "2026-10-10T10:44:42.248537+08:00",
+      "pid": 38356,
+      "root": "C:\\Temp\\weftmate-fact1-da977b43-ab99-4ffa-a7f4-9b820032657e"
+    },
+    {
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+      "createdAt": "2026-10-10T10:44:42.508581+08:00",
+      "pid": 41156,
+      "root": "C:\\Temp\\weftmate-fact1-da977b43-ab99-4ffa-a7f4-9b820032657e"
+    },
+    {
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+      "createdAt": "2026-10-10T10:44:42.511311+08:00",
+      "pid": 33912,
+      "root": "C:\\Temp\\weftmate-fact1-da977b43-ab99-4ffa-a7f4-9b820032657e"
+    },
+    {
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+      "createdAt": "2026-10-10T10:44:47.362349+08:00",
+      "pid": 3272,
+      "root": "C:\\Temp\\weftmate-fact1-da977b43-ab99-4ffa-a7f4-9b820032657e"
+    },
+    {
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+      "createdAt": "2026-10-10T10:44:49.822684+08:00",
+      "pid": 60852,
+      "root": "C:\\Temp\\weftmate-fact1-da977b43-ab99-4ffa-a7f4-9b820032657e"
+    }
+  ],
+  "at": "2026-10-10T10:56:49.8783374+08:00",
+  "reason": "Superseded self-review prompt; rerun LAN with native independent review"
+}

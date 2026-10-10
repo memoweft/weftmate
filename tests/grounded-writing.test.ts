@@ -7,6 +7,25 @@ import { conversationResources } from '../src/personal-access/resources.mjs';
 import '../src/ui-core/personalization.js';
 import { DshWebRuntime } from '../src/dsh-web-runtime.ts';
 import { browserExtractScript } from '../src/personal-browser/index.mjs';
+import { factSourceEvidence, nativeFactAudit } from './integration/fact-1-scoring.mjs';
+
+test('fact evaluation cannot use a generated document or model query as official evidence', () => {
+  const step=(toolName:string,args:any,text:string)=>({toolName,text:JSON.stringify({arguments:args,output:[{type:'text',text}]})});
+  const source=factSourceEvidence({toolDetails:[
+    step('read',{path:'C:/synthetic/说明.md'},'A fabricated claim in the saved answer'),
+    step('browser',{action:'read',query:'a fabricated query'},JSON.stringify({url:'https://example.org',query:'a fabricated query',text:'Actual original paragraph'})),
+    step('grep',{path:'C:/synthetic/.weftmate-web-sources/capture.txt'},'Line 12: Actual captured source'),
+    step('pwsh',{command:"(Invoke-WebRequest 'https://www.rfc-editor.org/rfc/rfc9110.txt').Content"},'Original RFC text'),
+  ]});
+  assert.equal(source.length,3);assert.ok(source.some(s=>s.output==='Original RFC text'));
+  assert.doesNotMatch(JSON.stringify(source),/fabricated/);
+  const content='草稿断言: scoped | 原文主体: runtime | 出处: exact';
+  const audit=nativeFactAudit({turns:[{timeline:[{type:'artifact.created',seq:2}]}],toolDetails:[
+    {...step('todo_write',{todos:[{content,status:'pending'}]},'Updated'),seq:1},
+    {...step('todo_write',{todos:[{content,status:'completed'}]},'Updated'),seq:3},
+  ]});
+  assert.equal(audit.rows.length,1);assert.equal(audit.beforeFinalSave,false);
+});
 
 test('an explicit section anchor captures late original text without raising page bounds or executing the fragment', () => {
   const element=(tagName:string,innerText:string):any=>({tagName,innerText,textContent:innerText,getClientRects:()=>[{}],querySelectorAll:()=>[],nextElementSibling:null});
@@ -15,7 +34,7 @@ test('an explicit section anchor captures late original text without raising pag
   const document:any={body,title:'Official specification',querySelector:(q:string)=>q.startsWith('main')?body:null,querySelectorAll:()=>[],getElementById:(id:string)=>id==='section-15.4'?section:null,getElementsByName:()=>[]};
   const env={document,getComputedStyle:()=>({display:'block',visibility:'visible'})};
   const full=runInNewContext(browserExtractScript(),env);assert.equal(full.rawTruncated,true);assert.ok(!full.text.includes('MUST NOT'));
-  const focused=runInNewContext(browserExtractScript('section-15.4'),env);assert.equal(focused.text,section.innerText);assert.equal(focused.capturedFragment,'section-15.4');assert.equal(focused.rawTruncated,true);
+  const focused=runInNewContext(browserExtractScript('section-15.4'),env);assert.equal(focused.text,section.innerText);assert.equal(focused.capturedFragment,'section-15.4');assert.equal(focused.rawTruncated,false);
   assert.equal(runInNewContext(browserExtractScript('";throw new Error("executed");//'),env).capturedFragment,null);
   assert.equal(runInNewContext(browserExtractScript("$' $& $`"),env).capturedFragment,null);
   const heading=element('H3','ABI stability'),paragraph=element('P','Only this API has the guarantee. External dependencies may not.'),next=element('H3','Unrelated section');
@@ -81,9 +100,15 @@ test('browser query evidence appears under its actual source URL without exposin
   const api=env.WeftUiCore.factories.resources(core,{},{});
   assert.ok(api.capturedSourceText(raw).includes(original));assert.match(api.capturedSourceText(raw),/2026-10-10/);
   assert.equal((await api.capturedSourceForUrl(source.url+'#section')).name,source.title);
+  core.loadConversationResources=async()=>({sources:[item,{...item,url:source.url+'#section',name:'Requested section',uses:[{...item.uses[0],path:'/section-detail'}]}]});
+  assert.equal((await api.capturedSourceForUrl(source.url+'#section')).name,'Requested section');
   assert.equal(await api.capturedSourceForUrl('https://other.example/release'),null);
   assert.ok(!api.capturedSourceText(raw).includes('toolCallId'));
   const fetched=JSON.stringify({output:[{type:'text',text:'Fetched https://example.org (HTTP 200)\n\nTitle: Official\nURL: https://example.org\nAccessed: 2026-10-10T00:00:00Z\nExact original paragraph.\n\nCaptured source: C:/synthetic/cache.txt. Use grep/read.'}]});
   assert.match(api.capturedSourceText(fetched),/Exact original paragraph/);
   assert.doesNotMatch(api.capturedSourceText(fetched),/cache.txt|Use grep/);
+  context.backend.readEvents=async()=>({events:[{seq:2,type:'step.completed',data:{taskId:'turn-1',stepId:'c2',toolName:'web_fetch',detailRef:{seq:2}}}],nextSeq:2,hasMore:false});
+  context.backend.readEventDetail=async()=>({text:JSON.stringify({arguments:{url:'https://example.org/old'},output:[{type:'text',text:'Fetched https://example.org/final (HTTP 200)\n\nTitle: Final official title\nURL: https://example.org/final\nAccessed: now\nOriginal.'}]})});
+  const redirected=await conversationResources(context,{commands:{}},'session-one','owner-one',1);
+  assert.equal(redirected.sources.find(s=>s.url==='https://example.org/final')?.name,'Final official title');
 });

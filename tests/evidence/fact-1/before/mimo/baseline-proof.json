@@ -1,0 +1,17 @@
+[
+  {
+    "file": "personal-prompt.mjs",
+    "matchesBaseline": true,
+    "sha256": "27af74fefcfd17b31817d6800cb7cad540b883483b55fc9e4a53a9cdf611f162"
+  },
+  {
+    "file": "personal-personalization.mjs",
+    "matchesBaseline": true,
+    "sha256": "5af2969b981842c4b1b97dcdd13ac97f3f710ffbcf2f11490dd79938e5b51162"
+  },
+  {
+    "file": "personal-web-fetch.mjs",
+    "matchesBaseline": true,
+    "sha256": "4e8c85bdd90d795b81f1279ed822f37c13b2797b1c7ede01071f013277d9cd6b"
+  }
+]

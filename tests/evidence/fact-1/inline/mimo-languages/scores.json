@@ -1,0 +1,283 @@
+{
+  "method": "MiMo rubric judge; overlapping dimensions counted independently, repeated same claim deduplicated; omissions separate",
+  "input": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\tests\\evidence\\fact-1\\inline\\mimo-languages\\results.json",
+  "judgements": [
+    {
+      "id": "python312-1",
+      "documentSha256": "9491f49fd21e259526dc803c71e981db2530bfbb017d3ac86d1218e8f3274f49",
+      "durationMs": 6573,
+      "usage": {
+        "completion_tokens": 56,
+        "prompt_tokens": 12569,
+        "total_tokens": 12625,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [],
+        "scope": [],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": true,
+          "verbatimExcerpts": true,
+          "claimMapping": true,
+          "issues": []
+        }
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 550,
+            "text": "草稿断言: Python 3.12 于 2023-10-02 发布 | 出处[1]原文: \"Python 3.12 was released on October 2, 2023.\" | 原文主体: Python 3.12 | 草稿主体: Python 3.12 | 条件/例外: 无 | 数字: 2023-10-02 | 结论: 一致"
+          },
+          {
+            "seq": 127,
+            "text": "草稿断言: 3.12 按 PEP 632 移除标准库 distutils，setuptools 第三方仍提供 distutils | 出处[1]原文: \"PEP 632: Remove the distutils package. ... The third-party Setuptools package continues to provide distutils\" | 原文主体: 标准库中的 distutils | 草稿主体: 标准库中的 distutils | 条件/例外: setuptools 仍提供 | 数字: PEP 632 | 结论: 一致"
+          },
+          {
+            "seq": 127,
+            "text": "草稿断言: venv 创建的环境默认不再预装 setuptools，distutils/setuptools/pkg_resources/easy_install 默认不可用，需 pip install setuptools | 出处[1]原文: \"Do not pre-install setuptools in virtual environments created with venv. This means that distutils, setuptools, pkg_resources, and easy_install will no longer available by default; to access these run pip install setuptools\" | 原文主体: venv 创建的虚拟环境 | 草稿主体: venv 创建的虚拟环境 | 条件/例外: 需在已激活环境运行 pip install setuptools | 数字: gh-95299 | 结论: 一致"
+          },
+          {
+            "seq": 127,
+            "text": "草稿断言: PEP 684 引入每个解释器独立 GIL | 出处[1]原文: \"PEP 684, a unique per-interpreter GIL\" | 原文主体: 解释器改进 PEP 684 | 草稿主体: 多解释器场景 | 条件/例外: 主解释器 GIL 仍在，自由线程另属 PEP 703 | 数字: PEP 684 | 结论: 一致（待读段落确认细节）"
+          },
+          {
+            "seq": 550,
+            "text": "草稿断言: 3.12 按 PEP 632 移除标准库 distutils，setuptools 第三方仍提供 distutils | 出处[1]原文: \"PEP 632: Remove the distutils package. ... The third-party Setuptools package continues to provide distutils, if you still require it in Python 3.12 and beyond.\" | 原文主体: 标准库中的 distutils | 草稿主体: 标准库中的 distutils | 条件/例外: setuptools 仍提供 | 数字: PEP 632 | 结论: 一致"
+          },
+          {
+            "seq": 550,
+            "text": "草稿断言: venv 创建的环境默认不再预装 setuptools，distutils/setuptools/pkg_resources/easy_install 默认不可用，需 pip install setuptools | 出处[1]原文: \"Do not pre-install setuptools in virtual environments created with venv. This means that distutils, setuptools, pkg_resources, and easy_install will no longer available by default; to access these run pip install setuptools in the activated virtual environment.\" | 原文主体: venv 创建的虚拟环境 | 草稿主体: venv 创建的虚拟环境 | 条件/例外: 需在已激活环境运行 pip install setuptools | 数字: gh-95299 | 结论: 一致"
+          },
+          {
+            "seq": 550,
+            "text": "草稿断言: PEP 684 为子解释器提供各自独立 GIL，3.12 中仅能通过 C-API 使用，Python API 预计 3.13 | 出处[1]原文: \"PEP 684 introduces a per-interpreter GIL, so that sub-interpreters may now be created with a unique GIL per interpreter. ... This is currently only available through the C-API, though a Python API is anticipated for 3.13.\" | 原文主体: sub-interpreters（子解释器） | 草稿主体: 子解释器；不宣称取消全局 GIL | 条件/例外: 仅 C-API 可用，Python API 预计 3.13 | 数字: PEP 684、3.13 | 结论: 一致"
+          }
+        ],
+        "lastSaveSeq": 1026,
+        "beforeFinalSave": true
+      }
+    },
+    {
+      "id": "typescript50-1",
+      "documentSha256": "16629b9bc83ae27b827df18ab6a666615cce8dc9556ffa04cc73bb9a972f57c1",
+      "durationMs": 48821,
+      "usage": {
+        "completion_tokens": 427,
+        "prompt_tokens": 17560,
+        "total_tokens": 17987,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [
+          {
+            "claim": "TypeScript 5.0 的默认装饰器已对应标准 ECMAScript 装饰器提案",
+            "reason": "原文仅说明“without the flag, decorators will now be valid syntax for all new code”及“upcoming ECMAScript feature”，未断言默认装饰器已“对应标准 ECMAScript 装饰器提案”（提案仍为 upcoming，非已定标准）。"
+          },
+          {
+            "claim": "依赖 NestJS、TypeORM 或类似反射方案的项目若需要这些元数据，应继续评估旧实现；若要采用新装饰器，就需要改用显式类型信息、独立反射机制或等效方案",
+            "reason": "官方原文未提及 NestJS、TypeORM，也未给出“改用显式类型信息、独立反射机制或等效方案”的迁移建议；此为文档自行推断的肯定性建议，无官方判据支持。"
+          },
+          {
+            "claim": "TypeScript 5.0 另外改进了旧模式下构造函数参数装饰器的类型检查，这也说明参数装饰仍属于旧实现的讨论范围",
+            "reason": "原文确有“More Accurate Type-Checking for Parameter Decorators in Constructors Under --experimentalDecorators”，但“这说明参数装饰仍属于旧实现的讨论范围”是文档自行附加的推论，非原文断言。"
+          },
+          {
+            "claim": "新提案既允许装饰器写在 `export` 之前，也允许写在 `export`/`export default` 之后，但**不能混用两种位置**；旧代码若迁移，需要一并调整位置",
+            "reason": "原文仅说明新提案允许两种位置且不允许混用；“旧代码若迁移，需要一并调整位置”是文档自行添加的迁移要求，原文未作此断言。"
+          }
+        ],
+        "scope": [],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": true,
+          "verbatimExcerpts": true,
+          "claimMapping": true,
+          "issues": []
+        }
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 996,
+            "text": "证据[1] TS 5.0: 草稿断言: 未开 experimentalDecorators 时，5.0 起装饰器成为新代码的有效语法 | 出处[1]原文: “without the flag, decorators will now be valid syntax for all new code” | 原文主体: 未开启该标志时的装饰器语法有效性 | 草稿主体: 同一 | 条件/例外: 指“without the flag”；旧实现仍由该标志保留 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 996,
+            "text": "证据[1] TS 5.0: 草稿断言: experimentalDecorators 将继续存在 | 出处[1]原文: “--experimentalDecorators will continue to exist for the foreseeable future” | 原文主体: experimentalDecorators 标志未来仍存在 | 草稿主体: 同一 | 条件/例外: “for the foreseeable future” | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 996,
+            "text": "证据[1] TS 5.0: 草稿断言: 两种模式的类型检查与代码 emit 不同 | 出处[1]原文: “Outside of --experimentalDecorators, they will be type-checked and emitted differently.” / “The type-checking rules and emit are sufficiently different” | 原文主体: 新装饰器在标志之外的类型检查与 emit | 草稿主体: 新旧两套模式整体 | 条件/例外: 不等于“所有生成代码均不同”，仅官方称规则与 emit 差异足够大 | 数字: 无 | 结论: 已修正（保留官方限定）"
+          },
+          {
+            "seq": 996,
+            "text": "证据[1] TS 5.0: 草稿断言: 旧装饰器函数可原样复用于新提案 | 出处[1]原文: “any existing decorator functions are not likely to do so” | 原文主体: 现有装饰器函数不太可能同时支持两种行为 | 草稿主体: 反向断言与原文冲突 | 条件/例外: 官方仅说“可编写同时兼容两者的装饰器”，且现有函数“not likely” | 数字: 无 | 结论: 已修正（改为不可默认原样迁移）"
+          },
+          {
+            "seq": 996,
+            "text": "证据[1] TS 5.0: 草稿断言: 新提案不兼容 emitDecoratorMetadata，且不允许参数装饰器 | 出处[1]原文: “This new decorators proposal is not compatible with --emitDecoratorMetadata, and it does not allow decorating parameters.” | 原文主体: 新装饰器提案 | 草稿主体: 同一 | 条件/例外: 仅描述新提案；不反推旧实现的功能范围 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 996,
+            "text": "证据[2] TSConfig: 草稿断言: emitDecoratorMetadata 是 Language and Environment 选项，可生成 design:* 元数据 | 出处[2]原文: “Language and Environment” 含 “emitDecoratorMetadata”；示例为 “__metadata(\\\"design:type\\\", Function)” 等 | 原文主体: emitDecoratorMetadata 选项及输出示例 | 草稿主体: 同一 | 条件/例外: 示例发生在该页展示的编译输出语境，未据此扩展到新提案可用性 | 数字: design:type/paramtypes/returntype | 结论: 一致"
+          },
+          {
+            "seq": 996,
+            "text": "证据[1] TS 5.0: 草稿断言: 参数装饰器在 --experimentalDecorators 下仍受官方讨论 | 出处[1]原文: “More Accurate Type-Checking for Parameter Decorators in Constructors Under --experimentalDecorators” | 原文主体: 构造函数参数装饰器类型检查 | 草稿主体: 旧实现仍可使用参数装饰器 | 条件/例外: 属类型检查准确性改进，不反推新提案支持参数装饰 | 数字: 无 | 结论: 一致"
+          }
+        ],
+        "lastSaveSeq": 713,
+        "beforeFinalSave": true
+      }
+    },
+    {
+      "id": "python312-2",
+      "documentSha256": "a61740b8c41f4cf5441e4712aebc2c86b70fde7af5027a86b352d331a5edc502",
+      "durationMs": 1191,
+      "usage": {
+        "completion_tokens": 55,
+        "prompt_tokens": 11778,
+        "total_tokens": 11833,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [],
+        "scope": [],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": true,
+          "verbatimExcerpts": true,
+          "claimMapping": true,
+          "issues": []
+        }
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 208,
+            "text": "草稿断言: Python 3.12 发布于 2023-10-02 | 出处[1]原文: \"Python 3.12 was released on October 2, 2023.\" | 原文主体: Python 3.12 | 草稿主体: Python 3.12 | 条件/例外: 无 | 数字: 2023-10-02 | 结论: 一致"
+          },
+          {
+            "seq": 208,
+            "text": "草稿断言: 3.12 标准库移除 distutils，setuptools 仍提供 distutils | 出处[1]原文: \"Remove the distutils package. The third-party Setuptools package continues to provide distutils\" | 原文主体: 标准库 distutils / 第三方 Setuptools | 草稿主体: 同 | 条件/例外: 需要时用 Setuptools，非 stdlib | 数字: PEP 632 | 结论: 一致"
+          },
+          {
+            "seq": 208,
+            "text": "草稿断言: 3.12 venv 不再预装 setuptools，默认无 distutils/setuptools/pkg_resources/easy_install | 出处[1]原文: \"Do not pre-install setuptools in virtual environments created with venv\" | 原文主体: venv 创建的虚拟环境 | 草稿主体: 同 | 条件/例外: 激活后 pip install setuptools 可装回 | 数字: gh-95299 | 结论: 一致"
+          },
+          {
+            "seq": 208,
+            "text": "草稿断言: GIL 变化是每解释器唯一 GIL，3.12 仅 C-API 可用，Python API 预期 3.13 | 出处[1]原文: \"This is currently only available through the C-API, though a Python API is anticipated for 3.13.\" | 原文主体: sub-interpreters | 草稿主体: 同 | 条件/例外: 不改变常规线程程序语义 | 数字: PEP 684 | 结论: 一致"
+          }
+        ],
+        "lastSaveSeq": 592,
+        "beforeFinalSave": true
+      }
+    },
+    {
+      "id": "typescript50-2",
+      "documentSha256": "aada2ab8d9ce44a3f9a3926177df193aaf0c6e3cc6cd07c8020199e1b31faf49",
+      "durationMs": 12352,
+      "usage": {
+        "completion_tokens": 56,
+        "prompt_tokens": 24934,
+        "total_tokens": 24990,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 640
+        }
+      },
+      "judgement": {
+        "unsupported": [],
+        "scope": [],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": true,
+          "verbatimExcerpts": true,
+          "claimMapping": true,
+          "issues": []
+        }
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 348,
+            "text": "草稿断言: TypeScript 5.0 新装饰器是标准 Stage 3 提案，默认成为新代码有效语法 | 出处[1]原文: “decorators will now be valid syntax for all new code” | 原文主体: 不使用 --experimentalDecorators 时的新装饰器 | 草稿主体: TS 5.0 新装饰器 | 条件/例外: 启用 --experimentalDecorators 时仍走旧实现 | 数字: 5.0 | 结论: 一致"
+          },
+          {
+            "seq": 348,
+            "text": "草稿断言: 旧实验性装饰器实现长期存在且始终需显式编译器选项，TS 5.0 后仍会保留 | 出处[1]原文: “always required an opt-in compiler flag called --experimentalDecorators” / “will continue to exist for the foreseeable future” | 原文主体: 旧提案与 --experimentalDecorators | 草稿主体: 旧实现及迁移边界 | 条件/例外: 可预见未来保留，不等于推荐新增代码继续使用 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 348,
+            "text": "草稿断言: 新旧实现的类型检查与 emit 差异足以令既有装饰器函数通常不能直接兼容 | 出处[1]原文: “The type-checking rules and emit are sufficiently different that ... any existing decorator functions are not likely to do so.” | 原文主体: 既有装饰器函数 | 草稿主体: 迁移边界 | 条件/例外: 装饰器本身可以写成同时支持新旧行为，但既有实现通常不会这样做 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 348,
+            "text": "草稿断言: 新提案不支持 emitDecoratorMetadata，也不允许装饰参数 | 出处[1]原文: “does not support emitDecoratorMetadata, and it does not allow decorating parameters” | 原文主体: 当时的 stage-3 新装饰器提案 | 草稿主体: 非 --experimentalDecorators 的新实现 | 条件/例外: 原文补注未来 ECMAScript 提案可能弥合差距；不把限制扩大到全部元数据或装饰器库 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 348,
+            "text": "草稿断言: emitDecoratorMetadata 属于传统实验性功能，会注入设计时类型信息 | 出处[2]原文: “inject design-time type information using the @Reflect.metadata decorator” / “Decorator metadata is an experimental feature” | 原文主体: TypeScript 旧装饰器文档中的装饰器元数据 | 草稿主体: emitDecoratorMetadata 的用途 | 条件/例外: 明示 experimental 且可能有破坏性变更；依赖 reflect-metadata 运行时导入 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 348,
+            "text": "草稿断言: 参数装饰器是旧实验性实现接受的装饰目标，新实现不允许装饰参数 | 出处[2]原文: “class declaration, method, accessor, property, or parameter” | 原文主体: 旧实验性 stage 2 装饰器可附着位置 | 草稿主体: 参数装饰器及新旧差异 | 条件/例外: 旧文档注明 Stage 3 支持自 TS 5.0 起可用；新实现限制以出处[1]为准 | 数字: 5.0 | 结论: 一致"
+          },
+          {
+            "seq": 348,
+            "text": "草稿断言: 只要不开启 --experimentalDecorators，装饰器按新规则检查和 emit | 出处[1]原文: “Outside of --experimentalDecorators, they will be type-checked and emitted differently.” | 原文主体: 不启用旧选项的装饰器 | 草稿主体: 新实现判定 | 条件/例外: 开启选项则仍为旧规则 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 348,
+            "text": "草稿断言: 同一声明不能混用 export 前后两种装饰器书写位置 | 出处[1]原文: “mixing the two styles is not allowed.” | 原文主体: 新装饰器与 export/export default 的位置组合 | 草稿主体: 新语法书写约束 | 条件/例外: 单独使用任一风格均可 | 数字: 无 | 结论: 一致"
+          }
+        ],
+        "lastSaveSeq": 764,
+        "beforeFinalSave": true
+      }
+    }
+  ]
+}

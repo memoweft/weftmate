@@ -24,7 +24,7 @@ writeFileSync(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MA
 const envValue=(name,scope='User')=>execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',`[Console]::Out.Write([Environment]::GetEnvironmentVariable('${name}','${scope}'))`],{encoding:'utf8',windowsHide:true}).trim();
 const key=envValue(model==='mimo'?'MIMO_API_KEY':'WEFTMATE_LAN_MODEL_KEY',model==='mimo'?'Machine':'User');assert.ok(key,'Model credential missing');
 const privateUrl=model==='lan'?envValue('WEFTMATE_LAN_MODEL_BASE_URL'):null;
-const redact=value=>{let text=String(value);for(const secret of [key,privateUrl,privateUrl&&new URL(privateUrl).host].filter(Boolean))text=text.replaceAll(secret,'[redacted]');return text;};
+const redact=value=>{let text=String(value);for(const secret of [key,privateUrl,privateUrl&&new URL(privateUrl).host,privateUrl&&new URL(privateUrl).hostname].filter(Boolean))text=text.replaceAll(secret,'[redacted]');return text;};
 const username='eval-'+randomUUID(),password='test-'+randomUUID();
 const backend=Object.fromEntries(['getStatus','listModels','preflight','createSession','sendMessage','cancelSession','readEvents','describeSession'].map(k=>[k,async()=>({})]));
 const prep=await createPersonalAccessService({root:join(profile,'personal-access'),port:0,backend});

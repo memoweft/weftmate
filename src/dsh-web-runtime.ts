@@ -1960,7 +1960,7 @@ export class DshWebRuntime {
           // Host-owned captures are in this conversation's workspace. Preserve
           // their recovery path and original metadata for native evidence reads.
           const fields = nativeFile ? ['taskId', 'artifactId', 'fileName', 'contentType', 'size', 'sha256', 'state', 'reasonCode']
-            : ['snapshotId', 'url', 'title', 'capturedAt', 'capturedFragment', 'text', 'links', 'outline', 'segmentIndex', 'segmentCount', 'truncated', 'captureTruncated', 'httpStatus', 'query', 'excerpts', 'sourcePath', 'previewTruncated']
+            : ['snapshotId', 'url', 'title', 'capturedAt', 'capturedFragment', 'requestedSectionComplete', 'text', 'links', 'outline', 'segmentIndex', 'segmentCount', 'truncated', 'captureTruncated', 'httpStatus', 'query', 'excerpts', 'sourcePath', 'previewTruncated']
           settle({ ok: true, command: Object.fromEntries(fields.filter(key => value[key] !== undefined).map(key => [key, value[key]])) })
           return
         }

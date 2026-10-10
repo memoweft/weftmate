@@ -4,7 +4,7 @@ import { resolve, join } from 'node:path';
 const root=resolve('tests/evidence/fact-1');
 const env=(name,scope)=>execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',`[Console]::Out.Write([Environment]::GetEnvironmentVariable('${name}','${scope}'))`],{encoding:'utf8',windowsHide:true}).trim();
 const privateUrl=env('WEFTMATE_LAN_MODEL_BASE_URL','User');
-const secrets=[env('MIMO_API_KEY','Machine'),env('WEFTMATE_LAN_MODEL_KEY','User'),privateUrl,privateUrl&&new URL(privateUrl).host].filter(Boolean);
+const secrets=[env('MIMO_API_KEY','Machine'),env('WEFTMATE_LAN_MODEL_KEY','User'),privateUrl,privateUrl&&new URL(privateUrl).host,privateUrl&&new URL(privateUrl).hostname].filter(Boolean);
 const files=dir=>readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?files(join(dir,e.name)):[join(dir,e.name)]);
 const paths=files(root),findings=[];
 for(const path of paths){if(path.endsWith('public-scan.json'))continue;

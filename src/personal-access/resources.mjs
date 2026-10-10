@@ -65,10 +65,20 @@ export async function conversationResources(context, account, sessionId, ownerId
     try { const detail = await context.callBackend(() => context.backend.readEventDetail({ sessionId, ownerId, seq: step.detailRef.seq }));
       const data = parsed(detail.text);
       args = parsed(data.arguments);
+      const texts = value => typeof value === 'string' ? [value] : Array.isArray(value) ? value.flatMap(texts)
+        : value?.type === 'text' ? [value.text] : value?.content ? texts(value.content) : [];
       if (tool === 'browser') {
-        const texts = value => typeof value === 'string' ? [value] : Array.isArray(value) ? value.flatMap(texts)
-          : value?.type === 'text' ? [value.text] : value?.content ? texts(value.content) : [];
         browserResult = texts(data.output).map(parsed).find(value => typeof value?.url === 'string');
+        if (browserResult?.capturedFragment) {
+          const capturedUrl = new URL(browserResult.url);
+          capturedUrl.hash = browserResult.capturedFragment;
+          browserResult = { ...browserResult, url: capturedUrl.href };
+        }
+      } else if (tool === 'web_fetch') {
+        // DSH's controlled fetch header identifies the final URL after redirects.
+        const rendered = texts(data.output).find(text => /^Fetched https?:\/\//.test(text));
+        const address = rendered?.match(/^Fetched (https?:\/\/\S+) \(HTTP \d+\)/)?.[1];
+        if (address) browserResult = { url: address, title: rendered.match(/\nTitle: ([^\n]+)/)?.[1] };
       }
     } catch { continue; }
     use.summary = describeUse(tool, args, step.summary);

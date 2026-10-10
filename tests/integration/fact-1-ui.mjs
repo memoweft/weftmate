@@ -50,13 +50,15 @@ export async function verifyFactUi({app,page,api,results,evidence,credentials,ob
     await p.getByRole('button',{name:'账户菜单',exact:true}).click();await p.getByRole('button',{name:'设置',exact:true}).click();
     if(await p.getByRole('navigation',{name:'设置分类'}).isVisible())await p.getByRole('navigation',{name:'设置分类'}).getByRole('button',{name:'助手',exact:true}).click();
     else {await p.getByRole('combobox',{name:'设置分类',exact:true}).click();await p.getByRole('option',{name:'设置 · 助手',exact:true}).click();}
+    await p.getByText('已同步 · 从下一次回复开始生效',{exact:true}).filter({visible:true}).waitFor();
     const toggle=p.getByRole('switch',{name:'成文前核对事实',exact:true});await toggle.waitFor();
     assert.equal(await toggle.isChecked(),true);
     if(!observeOnly) {
+      const saved=async value=>{const until=Date.now()+15000;while(Date.now()<until){if((await api('/settings/personalization')).body.settings.researchSelfCheck===value)return;await p.waitForTimeout(100);}throw Error('FACT1_SETTING_SAVE_TIMEOUT');};
       await toggle.uncheck();await p.getByText('已同步 · 从下一次回复开始生效',{exact:true}).filter({visible:true}).waitFor();
-      assert.equal((await api('/settings/personalization')).body.settings.researchSelfCheck,false);
+      await saved(false);
       await toggle.check();await p.getByText('已同步 · 从下一次回复开始生效',{exact:true}).filter({visible:true}).waitFor();
-      assert.equal((await api('/settings/personalization')).body.settings.researchSelfCheck,true);
+      await saved(true);
     }
     await toggle.focus();
     for(const theme of ['light','dark']){await p.evaluate(t=>document.documentElement.dataset.theme=t,theme);await screenshot(p,`${surface}-${theme}-assistant-settings`);}

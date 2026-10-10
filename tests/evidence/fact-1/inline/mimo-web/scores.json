@@ -1,0 +1,131 @@
+{
+  "method": "MiMo rubric judge; overlapping dimensions counted independently, repeated same claim deduplicated; omissions separate",
+  "input": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\tests\\evidence\\fact-1\\inline\\mimo-web\\results.json",
+  "judgements": [
+    {
+      "id": "react19-1",
+      "documentSha256": "56650156ca3b858129e562dd9e4c141bc786658628a862854745f1d4c4f4a154",
+      "durationMs": 2040,
+      "usage": {
+        "completion_tokens": 55,
+        "prompt_tokens": 9277,
+        "total_tokens": 9332,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 448
+        }
+      },
+      "judgement": {
+        "unsupported": [],
+        "scope": [],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": true,
+          "verbatimExcerpts": true,
+          "claimMapping": true,
+          "issues": []
+        }
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 412,
+            "text": "草稿断言: React 19 中函数组件可把 ref 当普通 prop 接收 | 出处[1]原文: Starting in React 19, you can now access ref as a prop for function components | 原文主体: 函数组件 | 草稿主体: 函数组件 | 条件/例外: 类组件例外另列 | 数字: React 19 | 结论: 一致"
+          },
+          {
+            "seq": 412,
+            "text": "草稿断言: 新函数组件不再需要 forwardRef，但 19 年并非已删除 | 出处[1]原文: New function components will no longer need forwardRef ... In future versions we will deprecate and remove forwardRef | 原文主体: 新函数组件未来计划弃用并移除 | 草稿主体: React 19 的现状 | 条件/例外: 是未来版本的计划，不是 19 已删除 | 数字: 无 | 结论: 已修正为“不再必需、未来才弃用移除”"
+          },
+          {
+            "seq": 412,
+            "text": "草稿断言: 传给类组件的 ref 不会作为 prop 传入，因为 ref 指向组件实例 | 出处[1]原文: refs passed to classes are not passed as props since they reference the component instance | 原文主体: 传给 classes 的 refs | 草稿主体: 类组件 | 条件/例外: 仅说明不作为 prop | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 412,
+            "text": "草稿断言: ref 回调可返回清理函数，卸载时 React 调用它，适用于 DOM、类组件 ref 和 useImperativeHandle | 出处[1]原文: When the component unmounts, React will call the cleanup function returned from the ref callback. This works for DOM refs, refs to class components, and useImperativeHandle | 原文主体: 返回清理函数的 ref 回调 | 草稿主体: 同 | 条件/例外: 返回清理函数时跳过以 null 调用；未来才弃用 null 方式 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 412,
+            "text": "草稿断言: forwardRef 不在 React 19 移除的弃用 API 列表中 | 出处[2]原文: Removed deprecated React APIs 下仅列 propTypes/DefaultProps、Legacy Context、string refs、Module pattern factories、React.createFactory 等 | 原文主体: 19 移除项 | 草稿主体: 同 | 条件/例外: 列表不含 forwardRef | 数字: 无 | 结论: 一致"
+          }
+        ],
+        "lastSaveSeq": 658,
+        "beforeFinalSave": true
+      }
+    },
+    {
+      "id": "http-redirects-1",
+      "documentSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "notScorable": true,
+      "reason": "No final document; factual error counts are unknown, not zero",
+      "taskStatus": "failed"
+    },
+    {
+      "id": "react19-2",
+      "documentSha256": "62a973abb9e0af9dd08fb7f3dc68affc889aaeb2a7127d9e5aed9ba15d5d6d72",
+      "durationMs": 1228,
+      "usage": {
+        "completion_tokens": 56,
+        "prompt_tokens": 17346,
+        "total_tokens": 17402,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [],
+        "scope": [],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": true,
+          "verbatimExcerpts": true,
+          "claimMapping": true,
+          "issues": []
+        }
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 725,
+            "text": "草稿断言: React 19 中函数组件可直接把 ref 当 prop 访问 | 出处[1]原文: \"Starting in React 19, you can now access ref as a prop for function components\" | 原文主体: 函数组件(function components)在 React 19 | 草稿主体: React 19 函数组件可直接收 ref prop | 条件/例外: 仅针对函数组件 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 725,
+            "text": "草稿断言: 新函数组件不再需要 forwardRef，但 19 尚未删除 forwardRef，只是未来版本将弃用并移除 | 出处[1]原文: \"New function components will no longer need forwardRef... In future versions we will deprecate and remove forwardRef.\" | 原文主体: new function components 不再需要 forwardRef；deprecate and remove 发生在 future versions | 草稿主体: forwardRef 在 19 未被删除，仅不再被需要，未来版本才弃用移除 | 条件/例外: codemod 会自动更新组件；删除是将来时 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 725,
+            "text": "草稿断言: ref 回调可返回清理函数，卸载时 React 会调用它，适用于 DOM refs、类组件实例 refs 和 useImperativeHandle | 出处[1]原文: \"We now support returning a cleanup function from ref callbacks\" + \"This works for DOM refs, refs to class components, and useImperativeHandle.\" | 原文主体: ref callbacks 的清理函数；三类 ref 均适用 | 草稿主体: 同原文 | 条件/例外: 若返回清理函数，React 不再以 null 调用该 ref（旧行为是传 null） | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 725,
+            "text": "草稿断言: 传给类的 ref 不作为 prop 传入，因为它们引用组件实例 | 出处[1]原文: \"refs passed to classes are not passed as props since they reference the component instance.\" | 原文主体: 传给 classes 的 refs | 草稿主体: 类组件不会收到 ref prop | 条件/例外: 原因是 ref 指向组件实例 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 725,
+            "text": "草稿断言: ref 回调返回其他值会被 TypeScript 拒绝，需避免隐式返回 | 出处[1]原文: \"returning anything else from a ref callback will now be rejected by TypeScript\" | 原文主体: ref callback 返回其他值 → TypeScript 报错 | 草稿主体: 同原文 | 条件/例外: 修复方式是去掉隐式返回，可用 no-implicit-ref-callback-return codemod | 数字: 无 | 结论: 一致"
+          }
+        ],
+        "lastSaveSeq": 683,
+        "beforeFinalSave": true
+      }
+    }
+  ]
+}

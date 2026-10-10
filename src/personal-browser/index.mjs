@@ -49,7 +49,7 @@ const EXTRACT = `(() => {
     .map((item) => String(item.innerText || item.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 160))
     .filter(Boolean);
   return { title: String(document.title || '').slice(0, 500), text: raw.slice(0, 262144),
-    rawTruncated: raw.length > 262144 || fragmentUsed, capturedFragment: fragmentUsed ? fragment : null,
+    rawTruncated: raw.length > 262144, capturedFragment: fragmentUsed ? fragment : null,
     needsLogin: !!document.querySelector('input[type=password]'),
     headings, links };
 })()`;
@@ -286,11 +286,12 @@ export function createPersonalBrowserReader({ BrowserWindow, session, resolver, 
         readsCompleted++;
         return { title: Array.from(String(extracted.title ?? '')).slice(0, 256).join(''),
           requestedUrl, url: finalUrl, text: segments[0].text, capturedText,
-          ...(typeof extracted.capturedFragment === 'string' ? { capturedFragment: extracted.capturedFragment } : {}),
+          ...(typeof extracted.capturedFragment === 'string' ? { capturedFragment: extracted.capturedFragment,
+            requestedSectionComplete: !capture.truncated && extracted.rawTruncated !== true } : {}),
           outline: boundedOutline(extracted.headings), segmentCount: segments.length,
           totalCapturedBytes: capture.bytes.length,
           versionHash: browserCaptureVersion(finalUrl, capture.bytes),
-          captureTruncated: capture.truncated || extracted.rawTruncated === true,
+          captureTruncated: capture.truncated || extracted.rawTruncated === true || !!extracted.capturedFragment,
           truncated: capture.truncated || extracted.rawTruncated === true || segments.length > 1,
           links: boundedLinks(extracted.links, syntheticFixture), httpStatus: httpStatus ?? 200 };
       } finally {

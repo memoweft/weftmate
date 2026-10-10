@@ -57,3 +57,14 @@ test('native web fetch supplies delegated personal sessions, excludes other pres
   controller.abort()
   await assert.rejects(provider.fetch({ url: 'https://example.org' }, controller.signal), { name: 'AbortError' })
 })
+
+test('a completely captured requested section is not falsely reported as an incomplete fetch', async () => {
+  const page:any={text:'All requested section text.',title:'Reference',url:'https://example.org/reference',
+    capturedAt:'2026-10-10T00:00:00Z',capturedFragment:'rule',requestedSectionComplete:true,
+    segmentCount:1,httpStatus:200,captureTruncated:true};
+  const provider=personalWebFetchProvider({request:async()=>page},()=>({}),()=>({}));
+  const complete=await provider.fetch({url:page.url+'#rule'});
+  assert.equal(complete.truncated,false);assert.match(complete.body.content,/Captured requested section #rule/);
+  page.previewTruncated=true;
+  assert.equal((await provider.fetch({url:page.url+'#rule'})).truncated,true);
+});

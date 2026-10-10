@@ -1,5 +1,7 @@
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { createHash } from 'node:crypto';
+import { nativeFactAudit } from './fact-1-scoring.mjs';
 const root=resolve('tests/evidence/fact-1');
 const read=path=>JSON.parse(readFileSync(path,'utf8'));
 const median=values=>{const sorted=[...values].sort((a,b)=>a-b),n=sorted.length;return n?(sorted[Math.floor(n/2)]+sorted[Math.floor((n-1)/2)])/2:null;};
@@ -9,19 +11,21 @@ const overrides=existsSync(join(root,'adjudication.json'))?read(join(root,'adjud
 for(const [phase,directories] of [['before',['before/mimo']],['after',['anchored/mimo-node','inline/mimo-languages','inline/mimo-web','anchored/mimo-http']]]) {
   for(const directory of directories) {
     const path=join(root,directory,'results.json');if(!existsSync(path))continue;
-    const scores=existsSync(join(root,directory,'scores.json'))?read(join(root,directory,'scores.json')).judgements:[];
+    const scorePath=join(root,directory,existsSync(join(root,directory,'scores-final.json'))?'scores-final.json':'scores.json');
+    const scores=existsSync(scorePath)?read(scorePath).judgements:[];
     for(const result of read(path).results) {
       // React/Python/TypeScript URLs have no fragment, so their final inline
       // runs exercise the unchanged branch. Anchor-affected topics are rerun.
       if(directory==='inline/mimo-web'&&result.topicId!=='react19')continue;
-      const score=scores.findLast(s=>s.id===`${result.topicId}-${result.repeat}`&&!s.judgement?.parseError);
+      const hash=createHash('sha256').update(result.document||'').digest('hex');
+      const score=scores.findLast(s=>s.id===`${result.topicId}-${result.repeat}`&&s.documentSha256===hash&&!s.judgement?.parseError);
       const j=score?.judgement,scorable=Boolean(result.document&&j);
       const correction=overrides.find(o=>o.phase===phase&&o.id===`${result.topicId}-${result.repeat}`&&o.documentSha256===score?.documentSha256);
       rows.push({phase,topic:result.topicId,repeat:result.repeat,taskStatus:result.status,documentPresent:!!result.document,
         completed:result.turns?.at(-1)?.status==='completed',seconds:result.durationMs/1000,
         unsupported:scorable?j.unsupported.length:null,scope:scorable?j.scope.length:null,number:scorable?j.number.length:null,
         inappropriateUncertainty:scorable?j.uncertainty.issues.length:null,missing:scorable?j.missing.length:null,
-        citations:scorable?j.citations:null,evidence:directory,...(scorable&&correction?{...correction.counts,adjudication:correction.reason}:{})});
+        citations:scorable?j.citations:null,nativeAudit:nativeFactAudit(result),evidence:directory,...(scorable&&correction?{...correction.counts,adjudication:correction.reason}:{})});
     }
   }
 }
@@ -47,7 +51,7 @@ for(const path of all.filter(p=>p.endsWith('requests.jsonl'))) {
     usage.knownUsage++;usage.input+=r.usage.prompt_tokens||0;usage.output+=r.usage.completion_tokens||0;
     usage.cachedInput+=r.usage.prompt_tokens_details?.cached_tokens||r.usage.prompt_cache_hit_tokens||0;}
 }
-for(const path of all.filter(p=>p.endsWith('scores.json')))for(const r of read(path).judgements||[]) {
+for(const path of all.filter(p=>/scores(?:-final)?\.json$/.test(p)))for(const r of read(path).judgements||[]) {
   if(!r.usage)continue;usage.judgeRequests++;usage.judgeInput+=r.usage.prompt_tokens||0;usage.judgeOutput+=r.usage.completion_tokens||0;
 }
 usage.totalKnownInput=usage.input+usage.judgeInput;usage.totalKnownOutput=usage.output+usage.judgeOutput;
