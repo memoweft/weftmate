@@ -1,5 +1,6 @@
 import { createLibrary } from './library.mjs';
 import { finalizeNotifications } from './notification-settings.mjs';
+import { sendHostPush } from './push.mjs';
 import { accountPersonalization } from './personalization.mjs';
 import { createMemoryIngestion } from './memory-ingestion.mjs';
 import { modelTierFor } from '../model-tier.ts';
@@ -551,6 +552,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     assertCurrent();
     for (const [accountOwnerId, account] of Object.entries(next.accounts)) {
       reconcileChatIdentity(account, next.hostId, new Date(timestamp()).toISOString());
+      for (const device of Object.values(account.devices)) if (device.revoked) delete device.push;
       reconcileActivity(account);
       finalizeNotifications(account, timestamp(), usage.settings(accountOwnerId).timeZone);
       for (const [conversationId, binding] of Object.entries(account.conversationBindings ?? {})) {
@@ -599,6 +601,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const temporaryChats = createTemporaryChats(context);
   const memoryIngestion = createMemoryIngestion(context);
   const service = {
+    pushActivity: (ownerId, eventId) => sendHostPush(context, ownerId, eventId),
     recordActivity: activity.record,
     captureMemoryTurn: memoryIngestion.capture,
     memoryTurnPolicy: temporaryChats.policy,

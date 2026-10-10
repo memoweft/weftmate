@@ -94,6 +94,7 @@ MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌）�
 ## 契约变更
 
 - **TB-3 / Windows-4**：CLIENT_API 9.9新增GET `/library`、`/library/{id}`、`/library/{id}/preview` 与桌面专用POST `open / show`；精确能力 `library:1,libraryPreview:1,libraryDesktopActions:1|0`。文件原生回执、来源时间线与项目身份复用，临时排除、D33索引失效，不删用户文件。安卓桥加入三条只读精确路由，需要新壳版本，由编排递增；Apple按9.9接线。
+- **S3a / Windows-3**：CLIENT_API 9.8.2 增加宿主 `/push/registration`、云 `/cloud/auth/push/registration`（GET/PUT/DELETE），`pushRegistration:1`；当前设备绑定、token（令牌）不回显、撤权 / 注销清理，提供方明确未配置，载荷仅事件 ID / 类型。Android（安卓）读取动态宿主决定、原审批回执与解锁、WorkManager（安卓后台任务库）补发、本机通知状态 / 系统跳转，桥返回 `activityDeliveryVersion:1`，需要新壳版本；Apple（苹果端）9.8.2 清单待后续包，未改 `apps/apple`。
 
 - TB-2（2026-10-10）：CLIENT_API 9.9增加精确版本1的taskOverview / scheduleEditing / goals、跨对话任务读接口、定时新建 / 修订编辑 / 幂等运行、原生目标新建 / 完成 / 归档；3.18兼容月历规则与结果字段。账户隔离、D33原生派生说明清理及临时来源脱敏，Apple与TB-4按同一母版接线。
 - **FX-17**：CLIENT_API新增 `failedCorrectionCount/formationIssues`、`POST /memory/formation/{jobId}/retry`；动态复用 `memory.report/view_memory`，旧来源可返回 `superseded_by` 纠正原话。Apple需接状态与重试；安卓界面包沿用既有记忆路由，无新增原生权限。
