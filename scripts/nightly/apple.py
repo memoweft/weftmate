@@ -60,6 +60,7 @@ def main():
     def run(command, name='command', cwd=None, check=True, extra_env=None):
         if time.time() >= deadline:
             raise TimeoutError('整晚总时长超时')
+        print('Start ' + name, flush=True)
         with (root / (name + '.log')).open('a') as log:
             child = subprocess.Popen([str(c) for c in command], cwd=cwd or tree,
                                      env={**env, **(extra_env or {})}, stdout=subprocess.PIPE,

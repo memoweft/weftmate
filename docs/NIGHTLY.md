@@ -28,7 +28,7 @@ Mac 子进程显式补 PATH（命令搜索路径） `/opt/homebrew/bin`、`/usr/
 
 ## 固定 DSH 测试
 
-准备完成后先执行 `node .github/scripts/ci-unit-tests.mjs vendor --report <批次目录>/vendor-test-results.json`，再拍各端界面。专用工作树首次没有 vendor（固定运行时依赖）时，运行 `scripts/vendor-dsh.mjs` 只读枚举本机既有 DSH 工作区登记的 Git worktree，选择已编译且匹配产品 pin（固定版本）的工作树装配（共享主工作区可以在其它提交，不重置它）；缺少构建或 pin 不一致直接生成失败批次，继续收集其他证据。不会把未执行测试记为通过，不使用真实模型或日用数据。
+准备完成后先执行 `node .github/scripts/ci-unit-tests.mjs vendor --report <批次目录>/vendor-test-results.json`，再拍各端界面。专用工作树首次没有 vendor（固定运行时依赖）时，运行器只读枚举本机既有 DSH 工作区登记的 Git worktree，选择已编译且匹配产品 pin（固定版本）的工作树，再调用 `scripts/vendor-dsh.mjs` 装配（共享主工作区可以在其它提交，不重置它）；缺少构建或 pin 不一致直接生成失败批次，继续收集其他证据。不会把未执行测试记为通过，不使用真实模型或日用数据。
 
 `nightly-status.json` 的 `phases[name=vendor-tests].tests` 含通过、失败、跳过数和失败名单；`nightly-report.md` 有独立测试段落，失败标红并触发既有汇总报警。完整输出在 `logs/vendor-tests.log`。新步骤沿用整晚截止时间和进程清理，不改计划任务；可以用 `tests/nightly-vendor-tests.test.ts` 的合成成功／失败结果验证报告。
 
