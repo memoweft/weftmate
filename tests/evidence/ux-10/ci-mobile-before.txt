@@ -1,0 +1,26 @@
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	﻿2026-10-10T11:25:10.9418314Z ##[group]Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:10.9419309Z ^[[36;1mnode --test apps/mobile-ui/tests/visual-interactions.test.mjs^[[0m
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:10.9482686Z shell: /usr/bin/bash -e {0}
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:10.9482976Z ##[endgroup]
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:42.0030898Z ✖ UI-2 mobile home, themes, progressive detail, full-screen sources, drafts and history (30615.755318ms)
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:42.0220948Z ℹ tests 1
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:42.0221982Z ℹ suites 0
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:42.0222555Z ℹ pass 0
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:42.0223213Z ℹ fail 1
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:42.0223603Z ℹ cancelled 0
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:42.0224056Z ℹ skipped 0
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:42.0224452Z ℹ todo 0
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:42.0230505Z ℹ duration_ms 31032.875324
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:42.0230965Z 
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:42.0231314Z ✖ failing tests:
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:42.0231505Z 
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:42.0231899Z test at apps/mobile-ui/tests/visual-interactions.test.mjs:12:1
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:42.0287457Z ✖ UI-2 mobile home, themes, progressive detail, full-screen sources, drafts and history (30615.755318ms)
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:42.0288886Z   locator.waitFor: Timeout 30000ms exceeded.
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:42.0289396Z   Call log:
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:42.0290293Z     - waiting for getByRole('img', { name: '待审批', exact: true }) to be visible
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:42.0290939Z   
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:42.0291882Z       at TestContext.<anonymous> (/home/runner/work/weftmate/weftmate/apps/mobile-ui/tests/visual-interactions.test.mjs:80:57) {
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:42.0292807Z     name: 'TimeoutError'
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:42.0293168Z   }
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/visual-interactions.test.mjs	2026-10-10T11:25:42.0305950Z ##[error]Process completed with exit code 1.
