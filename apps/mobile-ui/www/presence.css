@@ -1,0 +1,20 @@
+.presence-badge { display:inline-flex; align-items:center; gap:var(--wm-space-6); min-width:0; color:var(--ink-secondary,var(--muted)); font-size:var(--wm-font-size-12); }
+.presence-dot { width:var(--wm-space-6); height:var(--wm-space-6); flex:none; border-radius:var(--wm-radius-circle); background:var(--warning,var(--accent)); }
+.presence-badge[data-state=online] .presence-dot { background:var(--success,var(--accent)); }
+.presence-badge[data-state=network_unavailable] .presence-dot, .presence-badge[data-state=login_required] .presence-dot { background:var(--danger); }
+.presence-label { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* UX-7 owns the sole reserved strip; status never grows the composer. */
+.presence-bar { display:flex; align-items:center; gap:var(--wm-space-8); box-sizing:border-box; height:var(--wm-space-40); padding:0; margin:0; color:var(--ink-secondary,var(--muted)); font-size:var(--wm-font-size-12); line-height:var(--wm-line-height-1_4); border-radius:var(--wm-radius-8); }
+.presence-bar[hidden], .presence-action[hidden] { display:none; }
+.presence-copy { flex:1; min-width:0; }
+.presence-actions { display:flex; flex:none; gap:var(--wm-space-6); }
+.presence-action { appearance:none; height:var(--wm-space-32); min-height:var(--wm-space-32); padding:0 var(--wm-space-8); border:var(--wm-space-1) solid var(--line); border-radius:var(--wm-radius-8); background:var(--surface-soft,var(--soft)); color:var(--ink); font:inherit; white-space:nowrap; cursor:pointer; }
+.presence-action:hover { background:var(--surface-soft,var(--soft)); }
+.presence-action:active { background:var(--accent-soft); }
+.presence-action:focus-visible { outline:var(--wm-space-2) solid var(--accent); outline-offset:var(--wm-space-2); }
+.presence-action:disabled { color:var(--ink-muted,var(--muted)); cursor:default; }
+@media (pointer:coarse),(max-width:720px) { .presence-action { height:var(--wm-space-40); min-height:var(--wm-space-40); } .presence-bar { height:var(--wm-space-44); } .presence-copy { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; } }
+/* Receipt actions remain visibly actionable in both timeline renderers. */
+.message.send-failed > .button, .main-chat-row.message > .button { border-color:var(--line); background:var(--surface-soft,var(--soft)); border-radius:var(--wm-radius-8); }
+.message.send-failed > .button:active:not(:disabled), .main-chat-row.message > .button:active:not(:disabled) { background:var(--accent-soft); }
+@media (pointer:coarse),(max-width:720px) { .message.send-failed > .button, .main-chat-row.message > .button { min-height:var(--wm-space-40); } }
