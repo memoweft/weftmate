@@ -322,7 +322,14 @@ function toolLabel(name){return uiCore.toolLabel(name)}
 
 function applyTheme(value){state.appearance=value;const systemDark=window.weftNative&&typeof state.nativeSystemDark==='boolean'?state.nativeSystemDark:systemThemeMedia.matches;const dark=value==='dark'||value==='system'&&systemDark;
   document.documentElement.dataset.theme=dark?'dark':'light';document.documentElement.style.colorScheme=dark?'dark':'light';
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content',dark?'#262723':'#ffffff')}
+  if(globalThis.WeftSystemBars)WeftSystemBars.sync();else syncNativeSystemBars(dark)}
+function syncNativeSystemBars(dark){if(window.weftNative&&typeof window.weftNative.onmessage==='function')void call('settings.appearance',{effectiveDark:dark,renderedAppearance:state.appearance||'system'}).catch(()=>{});}
+globalThis.weftSyncSystemBars=syncNativeSystemBars;
+async function syncAccountAppearance(){const epoch=state.authEpoch;
+  try{const appearance=await uiCore.mobileAppearance();if(epoch!==state.authEpoch)return;
+    applyAppearancePreference(appearance);
+  }catch{if(epoch===state.authEpoch)applyTheme('system')}}
+function applyAppearancePreference(appearance){if(typeof appearance.systemDark==='boolean')state.nativeSystemDark=appearance.systemDark;applyTheme(appearance.value||'system')}
 
 function receiptStatus(name){return {dispatched:'已请求，待核对',observed:'已观察到结果',failed:'未完成',uncertain:'结果待确认'}[name]||'状态待确认'}
 

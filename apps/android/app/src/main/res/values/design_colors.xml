@@ -13,9 +13,19 @@
     <color name="wm_line_strong">#ffcdd7e7</color>
     <color name="wm_danger">#ffbf374d</color>
     <color name="wm_overlay">#4718263e</color>
-    <color name="wm_web_surface_light">#ffffffff</color>
-    <color name="wm_web_surface_dark">#ff262723</color>
     <color name="wm_success">#ff137854</color>
     <color name="wm_danger_soft">#fffff0f2</color>
+    <color name="wm_web_surface_light">#ffffffff</color>
+    <color name="wm_web_surface_dark">#ff262723</color>
+    <color name="wm_dark_accent">#ffe0e3da</color>
+    <color name="wm_dark_ink">#ffe3e5de</color>
+    <color name="wm_dark_secondary">#ffbbc0b3</color>
+    <color name="wm_dark_muted">#ffa6ad9e</color>
+    <color name="wm_dark_canvas">#ff20221f</color>
+    <color name="wm_dark_surface">#ff262723</color>
+    <color name="wm_dark_soft">#ff2f312b</color>
+    <color name="wm_dark_accent_soft">#ff30322d</color>
+    <color name="wm_dark_line">#ff41453a</color>
+    <color name="wm_dark_danger">#fff3a4a4</color>
     <color name="wm_brand">#0A7AFF</color>
 </resources>

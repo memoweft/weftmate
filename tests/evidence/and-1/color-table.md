@@ -1,0 +1,52 @@
+状态栏和顶栏各取中部 25%–75% 宽，避开左右的时间、信号与电量。状态栏真实高度来自 WindowInsets（窗口安全区），平均 RGB（红绿蓝）按原始整屏 PNG（图片文件）计算，Δ 为三通道均方根。阈值 18。修复前：217.67，判定失败。
+
+| 场景与原始整屏 | 状态栏均值 RGB | 顶栏均值 RGB | ΔRGB | 图标 |
+|---|---|---|---:|---|
+| [theme-mismatch-fixed · dark](android-theme-mismatch-fixed-dark.png) | 38.00 / 39.00 / 35.00 | 38.00 / 39.00 / 35.00 | 0.00 | 浅色 |
+| [login · light](android-login-light.png) | 255.00 / 255.00 / 255.00 | 255.00 / 255.00 / 255.00 | 0.00 | 深色 |
+| [login · dark](android-login-dark.png) | 38.00 / 39.00 / 35.00 | 38.00 / 39.00 / 35.00 | 0.00 | 浅色 |
+| [mumu-hidden-navigation-main · light](android-mumu-hidden-navigation-main-light.png) | 254.10 / 254.10 / 254.10 | 249.50 / 249.50 / 249.50 | 4.60 | 深色 |
+| [mumu-hidden-navigation-side-chat · light](android-mumu-hidden-navigation-side-chat-light.png) | 254.10 / 254.10 / 254.10 | 249.50 / 249.50 / 249.50 | 4.60 | 深色 |
+| [mumu-hidden-navigation-activity · light](android-mumu-hidden-navigation-activity-light.png) | 254.10 / 254.10 / 254.10 | 249.50 / 249.50 / 249.50 | 4.60 | 深色 |
+| [mumu-hidden-navigation-goals · light](android-mumu-hidden-navigation-goals-light.png) | 254.10 / 254.10 / 254.10 | 249.50 / 249.50 / 249.50 | 4.60 | 深色 |
+| [mumu-hidden-navigation-library · light](android-mumu-hidden-navigation-library-light.png) | 254.10 / 254.10 / 254.10 | 249.50 / 249.50 / 249.50 | 4.60 | 深色 |
+| [mumu-hidden-navigation-drawer · light](android-mumu-hidden-navigation-drawer-light.png) | 220.35 / 220.68 / 221.31 | 216.32 / 216.65 / 217.28 | 4.03 | 深色 |
+| [mumu-hidden-navigation-settings · light](android-mumu-hidden-navigation-settings-light.png) | 254.10 / 254.10 / 254.10 | 249.50 / 249.50 / 249.50 | 4.60 | 深色 |
+| [mumu-hidden-navigation-appearance · light](android-mumu-hidden-navigation-appearance-light.png) | 255.00 / 255.00 / 255.00 | 255.00 / 255.00 / 255.00 | 0.00 | 深色 |
+| [mumu-hidden-navigation-search · light](android-mumu-hidden-navigation-search-light.png) | 255.00 / 255.00 / 255.00 | 255.00 / 255.00 / 255.00 | 0.00 | 深色 |
+| [mumu-hidden-navigation-bottom-menu · light](android-mumu-hidden-navigation-bottom-menu-light.png) | 255.00 / 255.00 / 255.00 | 255.00 / 255.00 / 255.00 | 0.00 | 深色 |
+| [mumu-hidden-navigation-gallery · light](android-mumu-hidden-navigation-gallery-light.png) | 255.00 / 255.00 / 255.00 | 255.00 / 255.00 / 255.00 | 0.00 | 深色 |
+| [mumu-hidden-navigation-gallery-return · light](android-mumu-hidden-navigation-gallery-return-light.png) | 255.00 / 255.00 / 255.00 | 255.00 / 255.00 / 255.00 | 0.00 | 深色 |
+| [mumu-hidden-navigation-file-preview · light](android-mumu-hidden-navigation-file-preview-light.png) | 255.00 / 255.00 / 255.00 | 255.00 / 255.00 / 255.00 | 0.00 | 深色 |
+| [mumu-hidden-navigation-keyboard · light](android-mumu-hidden-navigation-keyboard-light.png) | 255.00 / 255.00 / 255.00 | 255.00 / 255.00 / 255.00 | 0.00 | 深色 |
+| [mumu-hidden-navigation-pairing · light](android-mumu-hidden-navigation-pairing-light.png) | 255.00 / 255.00 / 255.00 | 255.00 / 255.00 / 255.00 | 0.00 | 深色 |
+| [mumu-hidden-navigation-main · dark](android-mumu-hidden-navigation-main-dark.png) | 38.00 / 39.00 / 35.00 | 38.00 / 39.00 / 35.00 | 0.00 | 浅色 |
+| [mumu-hidden-navigation-side-chat · dark](android-mumu-hidden-navigation-side-chat-dark.png) | 38.00 / 39.00 / 35.00 | 38.00 / 39.00 / 35.00 | 0.00 | 浅色 |
+| [mumu-hidden-navigation-activity · dark](android-mumu-hidden-navigation-activity-dark.png) | 38.00 / 39.00 / 35.00 | 38.00 / 39.00 / 35.00 | 0.00 | 浅色 |
+| [mumu-hidden-navigation-goals · dark](android-mumu-hidden-navigation-goals-dark.png) | 38.00 / 39.00 / 35.00 | 38.00 / 39.00 / 35.00 | 0.00 | 浅色 |
+| [mumu-hidden-navigation-library · dark](android-mumu-hidden-navigation-library-dark.png) | 38.00 / 39.00 / 35.00 | 38.00 / 39.00 / 35.00 | 0.00 | 浅色 |
+| [mumu-hidden-navigation-drawer · dark](android-mumu-hidden-navigation-drawer-dark.png) | 31.76 / 34.10 / 33.39 | 31.76 / 34.10 / 33.39 | 0.00 | 浅色 |
+| [mumu-hidden-navigation-settings · dark](android-mumu-hidden-navigation-settings-dark.png) | 38.00 / 39.00 / 35.00 | 38.00 / 39.00 / 35.00 | 0.00 | 浅色 |
+| [mumu-hidden-navigation-appearance · dark](android-mumu-hidden-navigation-appearance-dark.png) | 38.00 / 39.00 / 35.00 | 38.00 / 39.00 / 35.00 | 0.00 | 浅色 |
+| [mumu-hidden-navigation-search · dark](android-mumu-hidden-navigation-search-dark.png) | 38.00 / 39.00 / 35.00 | 38.00 / 39.00 / 35.00 | 0.00 | 浅色 |
+| [mumu-hidden-navigation-bottom-menu · dark](android-mumu-hidden-navigation-bottom-menu-dark.png) | 38.00 / 39.00 / 35.00 | 38.00 / 39.00 / 35.00 | 0.00 | 浅色 |
+| [mumu-hidden-navigation-gallery · dark](android-mumu-hidden-navigation-gallery-dark.png) | 38.00 / 39.00 / 35.00 | 38.00 / 39.00 / 35.00 | 0.00 | 浅色 |
+| [mumu-hidden-navigation-gallery-return · dark](android-mumu-hidden-navigation-gallery-return-dark.png) | 38.00 / 39.00 / 35.00 | 38.00 / 39.00 / 35.00 | 0.00 | 浅色 |
+| [mumu-hidden-navigation-file-preview · dark](android-mumu-hidden-navigation-file-preview-dark.png) | 38.00 / 39.00 / 35.00 | 38.00 / 39.00 / 35.00 | 0.00 | 浅色 |
+| [mumu-hidden-navigation-keyboard · dark](android-mumu-hidden-navigation-keyboard-dark.png) | 38.00 / 39.00 / 35.00 | 38.00 / 39.00 / 35.00 | 0.00 | 浅色 |
+| [mumu-hidden-navigation-pairing · dark](android-mumu-hidden-navigation-pairing-dark.png) | 38.00 / 39.00 / 35.00 | 38.00 / 39.00 / 35.00 | 0.00 | 浅色 |
+| [appearance-light-system-no · light](android-appearance-light-system-no-light.png) | 255.00 / 255.00 / 255.00 | 255.00 / 255.00 / 255.00 | 0.00 | 深色 |
+| [appearance-dark-system-no · dark](android-appearance-dark-system-no-dark.png) | 38.00 / 39.00 / 35.00 | 38.00 / 39.00 / 35.00 | 0.00 | 浅色 |
+| [appearance-system-system-no · light](android-appearance-system-system-no-light.png) | 255.00 / 255.00 / 255.00 | 255.00 / 255.00 / 255.00 | 0.00 | 深色 |
+| [appearance-light-system-yes · light](android-appearance-light-system-yes-light.png) | 255.00 / 255.00 / 255.00 | 255.00 / 255.00 / 255.00 | 0.00 | 深色 |
+| [appearance-dark-system-yes · dark](android-appearance-dark-system-yes-dark.png) | 38.00 / 39.00 / 35.00 | 38.00 / 39.00 / 35.00 | 0.00 | 浅色 |
+| [appearance-system-system-yes · dark](android-appearance-system-system-yes-dark.png) | 38.00 / 39.00 / 35.00 | 38.00 / 39.00 / 35.00 | 0.00 | 浅色 |
+| [account-a-saved · dark](android-account-a-saved-dark.png) | 38.00 / 39.00 / 35.00 | 38.00 / 39.00 / 35.00 | 0.00 | 浅色 |
+| [account-b-default · light](android-account-b-default-light.png) | 254.10 / 254.10 / 254.10 | 249.50 / 249.50 / 249.50 | 4.60 | 深色 |
+| [account-a-restored · dark](android-account-a-restored-dark.png) | 38.00 / 39.00 / 35.00 | 38.00 / 39.00 / 35.00 | 0.00 | 浅色 |
+| [background-system-change · light](android-background-system-change-light.png) | 255.00 / 255.00 / 255.00 | 255.00 / 255.00 / 255.00 | 0.00 | 深色 |
+| [landscape · light](android-landscape-light.png) | 255.00 / 255.00 / 255.00 | 255.00 / 255.00 / 255.00 | 0.00 | 深色 |
+| [native-fallback · light](native-fallback/android-native-fallback-light.png) | 255.00 / 255.00 / 255.00 | 255.00 / 255.00 / 255.00 | 0.00 | 原生备用界面：人工核对 |
+| [native-fallback · dark](native-fallback/android-native-fallback-dark.png) | 38.00 / 39.00 / 35.00 | 38.00 / 39.00 / 35.00 | 0.00 | 原生备用界面：人工核对 |
+| [native-pairing · light](native-fallback/android-native-pairing-light.png) | 184.00 / 184.00 / 184.00 | 184.00 / 184.00 / 184.00 | 0.00 | 原生备用界面：人工核对 |
+| [native-pairing · dark](native-fallback/android-native-pairing-dark.png) | 27.00 / 28.00 / 25.00 | 27.00 / 28.00 / 25.00 | 0.00 | 原生备用界面：人工核对 |
