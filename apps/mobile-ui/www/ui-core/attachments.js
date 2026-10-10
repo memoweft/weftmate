@@ -217,7 +217,7 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
             core.state.attachmentUpload = null;
             core.setAttachmentStatus('原件已保存，正在发送消息…');
             effects.updateAvailability();
-            return await core.submitCommand(core.inMainChat?.() ? 'chat.message' : 'session.message', { ...(core.inMainChat?.() ? { chatId: core.state.mainChat.chatId, modelProfileId: core.state.modelProfileId } : { sessionId }), text, mode: mode || core.composerInputMode(sessionId),
+            return await core.submitCommand(core.inMainChat?.() ? 'chat.message' : 'session.message', { ...(core.inMainChat?.() ? { chatId: core.state.mainChat.chatId, modelProfileId: snapshot?.modelProfileId || core.state.modelProfileId } : { sessionId }), text, mode: mode || core.composerInputMode(sessionId),
                 ...(staged.length ? { attachments: staged } : {}), attachmentMessageId: messageId,
                 originalAttachments: originals }, sessionId, attempt.requestId);
         }

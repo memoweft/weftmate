@@ -72,8 +72,8 @@
                     // The relay TLS endpoint may still answer while its host
                     // content listener is down. Only the independent status
                     // probe interprets this transport-level 503 as unreachable.
-                    const probeFailure = error.status === 503 && ['SERVICE_UNAVAILABLE','SERVICE_CLOSING','HOST_UNAVAILABLE'].includes(error.code)
-                        ? {code:'HOST_UNAVAILABLE',status:503} : error;
+                    const probeFailure = [502,503,504].includes(error.status) && ['SERVICE_UNAVAILABLE','SERVICE_CLOSING','HOST_UNAVAILABLE','REQUEST_FAILED','HTTP_502','HTTP_503','HTTP_504'].includes(error.code)
+                        ? {code:'HOST_UNAVAILABLE',status:error.status} : error;
                     if (!transportFailure(probeFailure)) return;
                     let cloudOffline = false;
                     try {
