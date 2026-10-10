@@ -4,6 +4,8 @@
 
 ## 依赖
 
+测试与验收启动合成宿主时统一设置 `WEFTMATE_TEST_HOST_NAME=synthetic-host`，HTTP（网页传输协议）状态与 Electron（桌面程序框架）电脑身份均使用该名字；未设置时产品仍读取操作系统电脑名。CI（持续集成）单测、nightly（每夜回归）与共享合成夹具已注入，独立运行器也应传入这个环境变量，证据落盘前仍需清理本机用户路径。
+
 - Node 24；`npm ci` 安装依赖。
 - `vendor/dsh-runtime` 是受忽略的生成依赖：独立克隆后运行 `npm run vendor:dsh`（需要 pnpm），再用 `npm run vendor:verify` 核对。DSH 版本固定，不自动升级，见 [DSH_UPGRADE_POLICY](DSH_UPGRADE_POLICY.md)。
 - 共享 DSH 源码在工作区 `Shared/Dependencies/DeepSeekHarness`（带本地修改）。

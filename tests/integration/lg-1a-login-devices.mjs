@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** LG-1a acceptance: real cloud entrypoint, real Electron entrypoint, isolated browser. */
 import assert from 'node:assert/strict';
 import { spawn, execFileSync } from 'node:child_process';
@@ -58,6 +60,7 @@ async function freePort() {
 function cleanEnvironment() {
   const env = { ...process.env };
   for (const name of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_|CLOUD_)/.test(name) || name === 'ELECTRON_RUN_AS_NODE') delete env[name];
+  env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
   return env;
 }
 async function startCloud(hostOrigin) {

@@ -26,6 +26,7 @@ test('two local devices use the same attached empty session across a real Electr
   const launch = async () => {
     const env = { ...process.env }
     for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_|ELECTRON_RUN_AS_NODE)/.test(key)) delete env[key]
+    env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host'
     const child = spawn(process.execPath, [launcher, '--user-data-dir', profile, '--access-port', '0'], {
       cwd: repository, env, stdio: ['pipe', 'pipe', 'pipe'],
     })
@@ -148,6 +149,7 @@ test('window close stays in tray and tray exit drains the final Electron snapsho
   writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT))
   const env = { ...process.env }
   for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_|ELECTRON_RUN_AS_NODE)/.test(key)) delete env[key]
+  env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host'
   let application: Awaited<ReturnType<typeof _electron.launch>> | undefined
   try {
     application = await _electron.launch({ args: ['.', `--user-data-dir=${profile}`, '--personal-host', '--access-port=0'], cwd: repository, env })

@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Real production Electron/DSH/Core; deterministic seeded World for confirmation UX.
  * No inference/formation claim. Synthetic model only; isolated account and profile.
  */
@@ -38,6 +40,7 @@ const config = join(root,'memory-config.json');
 writeFileSync(config,JSON.stringify({python,pythonPath:core,baseUrl:modelUrl,model:'@current',authRef:'fg1-rework'}));
 const env = {...process.env};
 for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 env.WEFTMATE_BASELINE_TRACE=join(root,'trace.jsonl');
 let application, page, browser;
 const report={realElectron:true,realDsh:true,realCore:true,seededWorld:true,formationClaim:false,paidRequests:0,checks:[]};

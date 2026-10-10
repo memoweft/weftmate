@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Hidden Electron browser capture; independent temp profile and synthetic host. */
 const { app, BrowserWindow } = require('electron')
 const { mkdirSync, writeFileSync } = require('node:fs')

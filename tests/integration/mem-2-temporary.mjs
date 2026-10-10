@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
 import { createRequire } from 'node:module';
@@ -29,6 +31,7 @@ await prep.close();
 const config=join(root,'memory.json');
 writeFileSync(config,JSON.stringify({python:'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe',pythonPath:'D:/AIProjects/MemoWeft/Worktrees/mem-2-validation/py/src',baseUrl:'http://127.0.0.1:1/v1',model:'@current',authRef:'mem2-pending'}));
 const env={...process.env};for(const name of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(name)||['ELECTRON_RUN_AS_NODE','MIMO_API_KEY','MODEL_SWITCH_UNIFIED_KEY'].includes(name))delete env[name];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 env.WEFTMATE_BASELINE_TRACE=join(root,'requests.jsonl');env.WEFTMATE_BASELINE_MEMORY_TRACE=join(root,'memory-requests.jsonl');env.WEFTMATE_BASELINE_RECALL_TRACE=join(root,'recall.jsonl');
 let app,page,browser,hostId,modelId,ownerId;const report={checks:[],turns:[],synthetic:true,coreCommit:'a9b115f'};
 const pause=ms=>new Promise(r=>setTimeout(r,ms));

@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Real desktop regression with isolated account/ledger; no model calls or daily data. */
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
@@ -32,6 +34,7 @@ try {
     await usage.close();
     const env = { ...process.env };
     for (const name of Object.keys(env)) if (name.startsWith('WEFTMATE_') || name.startsWith('MEMOWEFT_') || name === 'ELECTRON_RUN_AS_NODE') delete env[name];
+    env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
     app = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), args: ['.', `--user-data-dir=${profile}`, '--personal-host', '--access-port=0'], cwd: resolve(import.meta.dirname, '../..'), env, timeout: 90000 });
     const page = await app.firstWindow(); page.setDefaultTimeout(60000);
     await page.waitForURL('**/personal/v1/ui');

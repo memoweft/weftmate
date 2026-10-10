@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Production main.mjs + pinned DSH + loopback streaming model. Synthetic account only. */
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
@@ -31,6 +33,7 @@ const model=createServer(async(request,response)=>{
 });
 await new Promise(done=>model.listen(0,'127.0.0.1',done));
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 let app,browser;const errors=[];const report={syntheticOnly:true,realMain:true,realDsh:true,paidModelRequests:0,themes:[]};
 try{
   app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:resolve('.'),args:['.',`--user-data-dir=${profile}`,'--personal-host','--access-port=0'],env,timeout:90000});

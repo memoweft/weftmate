@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Real product entry + real DSH; synthetic held SSE model, local signed update source. */
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
@@ -51,6 +53,7 @@ await Promise.all([new Promise(done => model.listen(0, '127.0.0.1', done)), new 
 const feedUrl = `http://127.0.0.1:${feed.address().port}/manifest-ui.json`;
 const env = { ...process.env };
 for (const name of Object.keys(env)) if (name.startsWith('WEFTMATE_') || name.startsWith('MEMOWEFT_') || name === 'ELECTRON_RUN_AS_NODE' || /MIMO_API_KEY|MODEL_SWITCH_UNIFIED_KEY/.test(name)) delete env[name];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 Object.assign(env, { WEFTMATE_UI_UPDATE_FEED: feedUrl, WEFTMATE_UPDATE_TEST_PUBLIC_KEYS_PATH: keysFile });
 const password = `synthetic-${randomUUID()}-password`;
 const backend = Object.fromEntries(['getStatus', 'listModels', 'preflight', 'createSession', 'sendMessage', 'cancelSession', 'readEvents', 'describeSession'].map(method => [method, async () => method === 'listModels' ? [] : {}]));

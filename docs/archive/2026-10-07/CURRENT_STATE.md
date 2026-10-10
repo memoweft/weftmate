@@ -71,7 +71,7 @@ Android 保存标准载体仍待选择，不阻塞真实模型工作。WHPX（Wi
 
 Android 保存的独立复核支持 MuMu DocumentsUI（系统文档界面）的 UID1000 引发 URI（资源标识符）授权拒绝机制；未据此改生产行为。前端临时 7 行诊断已撤回，193 输入一致、源码净差异 0，原 QA APK（隔离验收安装包）SHA `1085ce4178a7d495322d655114ec3c3d6676aea1d914e8ad4e52250c56dda87a` 已恢复。标准环境只读预检显示 WHPX（Windows 虚拟机监控平台加速）/`HypervisorPlatform` 为 `Disabled`（禁用），需管理员宿主改动及可能重启；仅下载官方 metadata（元数据），组件/镜像/AVD（安卓虚拟设备）/系统变更均 0。官方最小计划为一个 emulator（模拟器）37.2.12 + API35 AOSP/default x86_64 r2，压缩 1,237,746,891B；这是待选择方案，不是已执行安装。
 
-当前继续位置：总代理已向本人提出 Android 载体选择，等待明确回复，沉默不是授权。保留已过结果，不再复验上述组，不启用系统功能或启动下一产品阶段；本阶段真实模型测试仍需另行明确授权。读取服务须保留：API（应用程序接口）/UI（界面）`65031`、host（宿主）`12508`，HTTPS（加密连接）入口 `home.weftmate.com:58450`、Caddy（入口转发）`34136`。同 `pUPeTz` profile 为 `C:\Users\yun\AppData\Local\Temp\weftmate-synthetic-stop-approval-pUPeTz\profile`，源 `private-login.json`、原成果、候选和失败证据保持，当前服务不得停止。`f690…` 两派生文件及精确路由已撤回。可选旧 live5f 正常退出本轮 skip（跳过），未追加进程检查或停止。
+当前继续位置：总代理已向本人提出 Android 载体选择，等待明确回复，沉默不是授权。保留已过结果，不再复验上述组，不启用系统功能或启动下一产品阶段；本阶段真实模型测试仍需另行明确授权。读取服务须保留：API（应用程序接口）/UI（界面）`65031`、host（宿主）`12508`，HTTPS（加密连接）入口 `home.weftmate.com:58450`、Caddy（入口转发）`34136`。同 `pUPeTz` profile 为 `C:\Users\<user>\AppData\Local\Temp\weftmate-synthetic-stop-approval-pUPeTz\profile`，源 `private-login.json`、原成果、候选和失败证据保持，当前服务不得停止。`f690…` 两派生文件及精确路由已撤回。可选旧 live5f 正常退出本轮 skip（跳过），未追加进程检查或停止。
 
 读取恢复脚本为 [scripts/run-personal-host.mjs](../scripts/run-personal-host.mjs)；精确成果预览/下载端点为 `/personal/v1/artifacts/artifact-475b99e8-1033-4ca9-9b79-8f919ad946c5/{preview,download}`。
 
@@ -442,7 +442,7 @@ Codex桌面应用于22:04左右重启，原因未由Windows应用事件证实；
 
 ## 2026-09-27：多账户、安卓0.2.1与网页资料已发布，待用户真机试用
 
-当前任务`UNIFIED_ASSISTANT_05`开发检查完成，候选冻结待用户真机和视觉试用。Android（安卓）0.2.1、账户存储v3及服务器界面0.2.1已发布；APK（安卓安装包）SHA-256为`B301FD7A75D68FC837463F92DE0997D445666010C7CE7D77C64A1DF86B0EC210`，1912392字节。原[账户网页](https://home.weftmate.com:8443/personal/v1/ui)的“下载安卓应用”仍是入口，主助手用原浏览器登录实际下载至`C:/Users/yun/Downloads/WeftMate-Android (2).apk`，哈希一致。网页昵称、头像及设备改名已集成并在正式服务运行；主仓相关24项测试通过，无失败或跳过。
+当前任务`UNIFIED_ASSISTANT_05`开发检查完成，候选冻结待用户真机和视觉试用。Android（安卓）0.2.1、账户存储v3及服务器界面0.2.1已发布；APK（安卓安装包）SHA-256为`B301FD7A75D68FC837463F92DE0997D445666010C7CE7D77C64A1DF86B0EC210`，1912392字节。原[账户网页](https://home.weftmate.com:8443/personal/v1/ui)的“下载安卓应用”仍是入口，主助手用原浏览器登录实际下载至`C:\Users\<user>/Downloads/WeftMate-Android (2).apk`，哈希一致。网页昵称、头像及设备改名已集成并在正式服务运行；主仓相关24项测试通过，无失败或跳过。
 
 0.2.1/versionCode3已补齐启动/登录后台同步调度、切号重排、退出取消和实际调度状态。每次Job（系统后台任务）使用独立代次与完整账户/设备/凭据守卫，旧请求不能取消新账户任务，迟到回执不越过身份检查落库。最终B301的同步与隔离仪器测试7/7通过；实际启动后系统任务上传21条合成记录，强制再执行不增记录，模型请求保持6次/中断2次，退出后Job消失。旧电脑只读会话仍可从“设置→原生兼容界面→侧栏电脑会话”访问；Hybrid（混合式应用）会话列表尚未合并该入口，不把它写成同一共享会话已接通。
 
@@ -674,7 +674,7 @@ F-REQ-11只证明最小整页载体，尚未验证载体内新输入/流式/停�
 
 本轮五个后端/测试文件完成具体失败反馈、失败的显式complete作废旧回执、安全数组索引，以及detail的controls/validation/update.completionScope。主助手相关合跑66/66、类型检查通过，Sol窄审通过。一次全新隔离真实后台试验通过，无外部定向修复重试；内部Muse遇到检查失败后自行补样例输入，完成三项写入返回字段及一项列表读回字段检查，并发布候选。
 
-新项目`mod-b7f43873-0521-46c9-b8c7-2dd0f9775c0e`，版本`version-bee94489-b4f2-4ff1-b0de-58bf538e6f3e`。开发者用两条不同合成资料独立核对标题/链接/备注，缺标题/链接明确报错且不增加记录；无版本启动与停止后的业务调用均被拒绝。完整重启测试宿主后仍保持停止锁，显式启动后两条资料全部保留。新测试服务已关闭，数据和日志保留于`C:/Users/yun/AppData/Local/Temp/weftmate-backend-r1-20260914-202539`。
+新项目`mod-b7f43873-0521-46c9-b8c7-2dd0f9775c0e`，版本`version-bee94489-b4f2-4ff1-b0de-58bf538e6f3e`。开发者用两条不同合成资料独立核对标题/链接/备注，缺标题/链接明确报错且不增加记录；无版本启动与停止后的业务调用均被拒绝。完整重启测试宿主后仍保持停止锁，显式启动后两条资料全部保留。新测试服务已关闭，数据和日志保留于`C:\Users\<user>/AppData/Local/Temp/weftmate-backend-r1-20260914-202539`。
 
 准确范围见[当前任务卡](tasks/MOD_SDK_01.md)和[后端核验摘要](evidence/MOD_SDK_01/backend-r1-validation.json)。前端接线入口为既有collab/BACKEND.md的B-MOD-11：主仓库为新后端集成基线，FrontendDev旧后端未自动同步。`scenarioValidated=false`仍表示没有登记独立宿主业务判定，不否定已记录的模型检查和开发者补测；用户验收与界面完成均未冒称通过。当前停止，下一阶段专门处理前端，不自动开工。
 
@@ -692,7 +692,7 @@ F-REQ-11只证明最小整页载体，尚未验证载体内新输入/流式/停�
 
 **用户查看实例已启动（2026-09-14）。** 用户随后明确要求“你启动实例我看看”，已用保留的末轮隔离数据启动 `http://127.0.0.1:50191/`，并在页面选中“资料收藏 Mod”显式启动，状态为运行中/正常，版本仍为 `version-3ccb0169-de89-4c80-8ad1-8794b2c03be4`。原会话、源码和合成资料保留，模型沿用本机 Muse。此为查看已交付候选，不是新开发或用户验收通过；表单保存仍未接通。以下关闭记录描述上次交付时状态，此查看实例目前保留运行。
 
-首次试验加两轮修复复试均已结束。末轮 Mod 已显式停止且 stopLatch=true；本轮三个测试服务均已关闭，原本8080模型服务保留。本轮没有可交付的完整收藏页面，不要求用户试用占位表单。末轮源码、会话和合成资料保留于 `C:/Users/yun/AppData/Local/Temp/weftmate-sdk-r1c-20260914-192117`；[核验摘要](evidence/MOD_SDK_01/creation-r1-validation.json)区分自动检查、真实后端与未通过层级。当前停止等云验证阶段性结果；下一小范围应留在 R1 公共界面与真实业务验收，另确认后实施。
+首次试验加两轮修复复试均已结束。末轮 Mod 已显式停止且 stopLatch=true；本轮三个测试服务均已关闭，原本8080模型服务保留。本轮没有可交付的完整收藏页面，不要求用户试用占位表单。末轮源码、会话和合成资料保留于 `C:\Users\<user>/AppData/Local/Temp/weftmate-sdk-r1c-20260914-192117`；[核验摘要](evidence/MOD_SDK_01/creation-r1-validation.json)区分自动检查、真实后端与未通过层级。当前停止等云验证阶段性结果；下一小范围应留在 R1 公共界面与真实业务验收，另确认后实施。
 
 ## 历史功能记录开始（非当前指令）
 

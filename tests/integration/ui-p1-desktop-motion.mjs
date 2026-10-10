@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Real application evidence; --fixture uses the portable CI Electron window only. */
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -18,6 +20,7 @@ writeFileSync(join(root, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MAR
 if (capture) mkdirSync(evidence, { recursive: true });
 const env = { ...process.env };
 for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key.startsWith('MEMOWEFT_') || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 let application, page, candidate;
 const retiredCandidates = [];
 const errors = [], results = [], performanceResults = [];

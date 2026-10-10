@@ -33,7 +33,7 @@ process.on('SIGTERM', () => { cancelled = true; for (const child of children) ch
 async function run(command, args, { cwd = worktree, env = {}, name = 'command', limit = deadline - Date.now(), allowFailure = false } = {}) {
   if ((cancelled || Date.now() >= deadline) && !allowFailure) throw Error('整晚总时长超时或已停止');
   const logPath = join(out, 'logs', name + '.log'), log = await open(logPath, 'a'); let output = '', timedOut = false;
-  const child = spawn(command, args, { cwd, windowsHide: true, env: { ...process.env, ...env }, stdio: ['ignore', 'pipe', 'pipe'] });
+  const child = spawn(command, args, { cwd, windowsHide: true, env: { ...process.env, ...env, WEFTMATE_TEST_HOST_NAME: 'synthetic-host' }, stdio: ['ignore', 'pipe', 'pipe'] });
   children.add(child);
   const completion = new Promise((done, reject) => { child.once('error', reject); child.once('exit', done); });
   const consume = bytes => { output += bytes.toString(); void log.write(bytes); };

@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Real Electron/DSH, synthetic account, random ports and metadata-only model fixtures. */
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
@@ -38,6 +40,7 @@ const registered = await fetch(`${prepared.origin}/personal/v1/auth/setup`, { me
 assert.equal(registered.status, 201); await preparation.close();
 const env = { ...process.env };
 for (const name of Object.keys(env)) if (name.startsWith('WEFTMATE_') || name.startsWith('MEMOWEFT_') || name === 'ELECTRON_RUN_AS_NODE') delete env[name];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 let application, browser, output = '', page;
 const errors = [], report = { synthetic: true, realElectron: true, realDsh: true, paidInference: 0 };
 async function until(check, timeoutMs = 60000) {

@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import {_electron,chromium} from 'playwright';
 import {createRequire} from 'node:module';
@@ -12,6 +14,7 @@ for(const surface of ['desktop','mobile-web','android-ui']){
   const fixture=await startRenderingCandidate(),profile=await mkdtemp(join(tmpdir(),'weftmate-ux5-ui-'));
   const env={...process.env,REVIEW_PROFILE:profile,REVIEW_ORIGIN:fixture.origin,REVIEW_THEME:'light',REVIEW_LIBRARY_TOKEN:fixture.libraryDesktopToken};
   for(const key of Object.keys(env))if(key.startsWith('WEFTMATE_')||key.startsWith('MEMOWEFT_')||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+  env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
   let app,browser,page;
   try{
     if(surface==='desktop'){app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:resolve('.'),args:['scripts/review-gallery/electron.mjs'],env,timeout:90000});page=await app.firstWindow();await localUiSession(page,fixture.credentials,'UX-5 synthetic',{interceptLegacyStatus:false});}

@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** D35: production desktop window and mobile bundle, synthetic host events only. */
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
@@ -12,6 +14,7 @@ const root = resolve(import.meta.dirname, '../..'), evidence = join(root, 'tests
 mkdirSync(evidence, { recursive: true });
 const errors = [], checks = [], env = { ...process.env };
 for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_)/.test(key) || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 let app, browser, fixture, profile;
 const pause = ms => new Promise(done => setTimeout(done, ms));
 async function until(fn) { const end = Date.now() + 25000; while (Date.now() < end) { if (await fn()) return; await pause(100); } throw Error('UI-P3 condition timed out'); }

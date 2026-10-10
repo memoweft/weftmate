@@ -195,7 +195,7 @@
           "updatedAt": "2026-10-10T13:33:59.913Z",
           "sessionId": "session-ba53e8aa-eb09-4c3a-9628-14e3ef92480f",
           "intent": "queue",
-          "taskLabel": "请写入 C:/Users/yun/AppData/Local/Temp/weftmate-qa6-supplement-7ONfLp/QA6-p…",
+          "taskLabel": "请写入 C:\\Users\\<user>/AppData/Local/Temp/weftmate-qa6-supplement-7ONfLp/QA6-p…",
           "receiptId": "08ea2f78-88a2-43f1-b49c-35432ca7ab11"
         },
         {
@@ -208,7 +208,7 @@
           "updatedAt": "2026-10-10T13:33:54.151Z",
           "sessionId": "session-ba53e8aa-eb09-4c3a-9628-14e3ef92480f",
           "intent": "queue",
-          "taskLabel": "请写入 C:/Users/yun/AppData/Local/Temp/weftmate-qa6-supplement-7ONfLp/QA6-p…",
+          "taskLabel": "请写入 C:\\Users\\<user>/AppData/Local/Temp/weftmate-qa6-supplement-7ONfLp/QA6-p…",
           "receiptId": "cf4143b9-9719-4aff-a572-eaa9c296c119"
         },
         {

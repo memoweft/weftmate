@@ -1,0 +1,14 @@
+{
+  "sourceRun": "https://github.com/memoweft/weftmate/actions/runs/38071975521",
+  "defaultTemp": {
+    "hasShortComponent": true,
+    "jsEqualsNative": false,
+    "nativeEqualsAsync": true
+  },
+  "runnerTemp": {
+    "hasShortComponent": false,
+    "jsEqualsNative": true,
+    "nativeEqualsAsync": true
+  },
+  "identityValuesRecorded": false
+}
