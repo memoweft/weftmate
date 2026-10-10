@@ -476,6 +476,12 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
   readLog?.setProjector?.(projectedPage);
 
   return {
+    async describe(sessionId) {
+      const item = await ordinaryNative(sessionId)
+      return { sessionId: sessionIdOf(item), title: typeof item.title === 'string' ? item.title : '新对话',
+        running: item.running === true, agentPreset: item.agentPreset,
+        ...(contextUsage(item.projections?.values?.contextPressure) ? { contextUsage: contextUsage(item.projections.values.contextPressure) } : {}) }
+    },
     async taskStopState(input) {
       if (typeof lifecycle?.taskStopState !== 'function') return { status: 'unconfirmed' }
       return lifecycle.taskStopState(input)
