@@ -21,7 +21,8 @@
       (event.type.startsWith('step.') || event.type === 'assistant.message' && event.data?.text))
     if (waiting) put('waiting', Math.max(started.seq, ...ordered.filter(event => event.type === 'user.message' && event.seq > started.seq).map(event => event.seq)) + 0.1, row => {
       row.classList.add('inline-waiting'); row.setAttribute('role', 'status')
-      if (row.textContent !== options.waiting) row.replaceChildren(node('span', 'inline-progress-text is-running', options.waiting))
+      let text=row.querySelector('.inline-progress-text');if(!text){text=node('span','inline-progress-text is-running');row.replaceChildren(text)}
+      if(globalThis.WeftReplyMotion)WeftReplyMotion.status(text,options.waiting,true);else text.textContent=options.waiting
     })
     for (const block of groups) put(`steps-${block.seq}`, block.seq, row => {
       const expandedForObjects = row.querySelector('details')?.open === true

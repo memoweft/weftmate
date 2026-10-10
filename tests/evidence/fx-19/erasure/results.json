@@ -1,0 +1,126 @@
+{
+  "startedAt": "2026-10-10T09:30:05.276Z",
+  "realElectron": true,
+  "realDsh": true,
+  "realCore": true,
+  "syntheticModel": true,
+  "checks": [
+    {
+      "action": "forget",
+      "checks": [
+        {
+          "phase": "after-erasure",
+          "lists": true,
+          "titleSearch": true,
+          "paging": true,
+          "fullText": true,
+          "unrelatedUnread": true
+        },
+        {
+          "phase": "after-restart",
+          "lists": true,
+          "titleSearch": true,
+          "paging": true,
+          "fullText": true,
+          "unrelatedUnread": true
+        }
+      ],
+      "erasure": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-b89b62a1-6b63-4941-a2e1-7c35c1542533",
+          "receipt": {
+            "commandId": "memory-869f4a98792517985c1d23c9966d41e918e150cd742477a8",
+            "requestId": "464e3edb-13c6-49d0-8a84-9b3aa232b13d",
+            "state": "applied",
+            "worldRevision": 3,
+            "storageCleanup": {
+              "state": "complete",
+              "detailCode": "current_journal_committed"
+            }
+          }
+        }
+      },
+      "passed": true
+    },
+    {
+      "action": "forget-title",
+      "checks": [
+        {
+          "phase": "after-erasure",
+          "lists": true,
+          "titleSearch": true,
+          "paging": true,
+          "fullText": true,
+          "unrelatedUnread": true
+        },
+        {
+          "phase": "after-restart",
+          "lists": true,
+          "titleSearch": true,
+          "paging": true,
+          "fullText": true,
+          "unrelatedUnread": true
+        }
+      ],
+      "erasure": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-b89b62a1-6b63-4941-a2e1-7c35c1542533",
+          "receipt": {
+            "commandId": "memory-c40e0d66090d7126b81028f54532917cc5251f91f4d9c13d",
+            "requestId": "00b174d8-343c-47d0-8488-fa79089f7789",
+            "state": "applied",
+            "worldRevision": 5,
+            "storageCleanup": {
+              "state": "complete",
+              "detailCode": "current_journal_committed"
+            }
+          }
+        }
+      },
+      "passed": true
+    },
+    {
+      "action": "delete",
+      "checks": [
+        {
+          "phase": "after-erasure",
+          "lists": true,
+          "titleSearch": true,
+          "paging": true,
+          "fullText": true,
+          "unrelatedUnread": true
+        },
+        {
+          "phase": "after-restart",
+          "lists": true,
+          "titleSearch": true,
+          "paging": true,
+          "fullText": true,
+          "unrelatedUnread": true
+        }
+      ],
+      "erasure": {
+        "status": 200,
+        "body": {
+          "sessionId": "session-be9af917-dc5d-4fc5-874e-2ad648ed013b",
+          "deleted": true,
+          "forgetMemories": false,
+          "forgottenEvidenceCount": 0
+        }
+      },
+      "passed": true
+    }
+  ],
+  "startup": {
+    "latestEventAt": "2026-10-10T09:32:24.879Z",
+    "beforeUpdatedAt": "2026-10-10T09:32:24.880Z",
+    "afterUpdatedAt": "2026-10-10T09:32:24.880Z",
+    "beforeUnread": true,
+    "afterUnread": true,
+    "eventCountTail": 198
+  },
+  "passed": true,
+  "finishedAt": "2026-10-10T09:33:04.944Z"
+}

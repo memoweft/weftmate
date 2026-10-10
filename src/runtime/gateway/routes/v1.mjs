@@ -203,8 +203,8 @@ export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagn
       }
       if (questionMatch && req.method === 'GET' && !questionMatch[2]) {
         const sessionId = questionMatch[1]
-        const listed = await sessions.list()
-        if (!listed.some(item => item.sessionId === sessionId && item.agentPreset === 'personal-remote')) {
+        const item = await sessions.describe(sessionId)
+        if (item.sessionId !== sessionId || item.agentPreset !== 'personal-remote') {
           throw Object.assign(new Error('question source unavailable'), { code: 'session-not-found' })
         }
         await ensureQuestionPump()
@@ -214,8 +214,8 @@ export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagn
         const sessionId = questionMatch[1], questionRpcId = questionMatch[2], payload = await readJson(req)
         if (!payload || typeof payload !== 'object' || Array.isArray(payload) ||
             Object.keys(payload).join(',') !== 'answer') throw new TypeError('invalid question response body')
-        const listed = await sessions.list()
-        if (!listed.some(item => item.sessionId === sessionId && item.agentPreset === 'personal-remote')) {
+        const item = await sessions.describe(sessionId)
+        if (item.sessionId !== sessionId || item.agentPreset !== 'personal-remote') {
           throw Object.assign(new Error('question source unavailable'), { code: 'session-not-found' })
         }
         await ensureQuestionPump()
@@ -225,6 +225,7 @@ export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagn
       }
       if (!match) return writeJson(res, 404, { error: { code: 'not-found', message: 'Gateway request failed' } })
       const [, sessionId, action] = match
+      if (!action && req.method === 'GET') return writeJson(res, 200, await sessions.describe(sessionId))
       if (action === 'chat-handoff' && req.method === 'POST') {
         const body = await readJson(req, 1024 * 1024);
         if (!['state','prepare','install'].includes(body.action)) throw new TypeError('invalid handoff action');

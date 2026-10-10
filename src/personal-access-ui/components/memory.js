@@ -314,7 +314,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
     }
     function mountMemory() {
         mountIngestion();
-        const refreshButton = ui.byId('memory-refresh'); refreshButton.className = 'icon-button';
+        const refreshButton = ui.byId('memory-refresh'); refreshButton.className = 'icon-button'; refreshButton.hidden = true;
         refreshButton.replaceChildren(WeftIcons.create('sync', 18)); refreshButton.setAttribute('aria-label', '刷新记忆'); refreshButton.title = '刷新记忆';
         const searchButton = ui.byId('memory-search-form').querySelector('button[type=submit]');
         if (searchButton) { searchButton.className = 'icon-button memory-search-submit'; searchButton.replaceChildren(WeftIcons.create('search', 18)); searchButton.setAttribute('aria-label', '搜索记忆'); ui.byId('memory-query').parentElement.append(searchButton); }
@@ -342,7 +342,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
                 void core.loadMemoryPage();
         });
         const exportTrigger=ui.element('button','button secondary small');exportTrigger.type='button';exportTrigger.setAttribute('aria-label','更多记忆操作');exportTrigger.append(WeftIcons.create('more',20));
-        exportTrigger.addEventListener('click',()=>WeftPopover.openMenu(exportTrigger,['json','markdown'].map(format=>({name:`导出我的记忆 · ${format==='json'?'JSON':'Markdown'}`,icon:'download',action:()=>exportMemories(format)}))));
+        exportTrigger.addEventListener('click',()=>WeftPopover.menu(exportTrigger,[{name:'刷新',icon:'sync',action:()=>core.openMemory()},...['json','markdown'].map(format=>({name:`导出我的记忆 · ${format==='json'?'JSON':'Markdown'}`,icon:'download',action:()=>exportMemories(format)}))]));
         ui.byId('memory-refresh').after(exportTrigger);
         ui.byId('memory-refresh').addEventListener('click', () => { void core.openMemory(); });
         ui.byId('memory-more').addEventListener('click', () => { void core.loadMemoryPage({ more: true }); });

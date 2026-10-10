@@ -96,6 +96,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         head.append(title, close);
         picker = node('select', 'settings-category-picker'); picker.setAttribute('aria-label', '设置分类');
         content = node('div', 'settings-content');
+        WeftPopover.pullRefresh(content,()=>core.openMemory(),()=>selected==='memory'&&dialog.open);
         const originals = [...account.children]; account.append(content);
         for (const id of ['general', 'personalization', 'assistant', 'appearance', 'account', 'devices', 'usage', 'models', 'approvals', 'memory', 'schedules', 'resources', 'system', 'backups', 'about']) {
             const panel = node('section', 'settings-category'); panel.dataset.category = id; panel.hidden = true; panels.set(id, panel); content.append(panel);
@@ -103,6 +104,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         const move = (id, element) => { if (element) panels.get(id).append(element); };
         move('approvals', ui.byId('approval-settings-heading').closest('section'));
         move('appearance', ui.byId('appearance-heading').closest('section'));
+        if (globalThis.WeftReplyMotion) { const control=WeftReplyMotion.preferenceControl(); panels.get('appearance').append(WeftSettingsControls.row('减少动态效果', '跟随系统偏好；开启后所有状态与回复动效停止。', control)); WeftSettingsControls.select(control); }
         move('account', ui.byId('account-heading').closest('section'));
         move('account', ui.byId('cloud-account'));
         move('devices', ui.byId('devices-heading').closest('section'));

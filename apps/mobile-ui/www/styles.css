@@ -630,3 +630,19 @@ body.mobile-keyboard-visible #app{height:var(--viewport-height,100dvh)}
 
 .drawer .session-group-toggle,.home-conversations .session-group-toggle { display:flex; align-items:center; }
 .mobile-project-toggle .mobile-session-status { flex:0 0 var(--wm-space-20); }
+/* MOB-P1: conversation actions belong in one menu; drawer features are rows. */
+.topbar :is(#outputs-button,#conversation-usage) {display:none!important;}
+.topbar .brand strong {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.topbar .icon-button {width:var(--wm-space-44);min-width:var(--wm-space-44);min-height:var(--wm-space-44);}
+.drawer-function-label {border-top:var(--wm-space-1) solid var(--line);margin-top:var(--wm-space-12);padding-top:var(--wm-space-12);flex-shrink:0;}
+.drawer-links {padding:var(--wm-space-4) var(--wm-space-20) var(--wm-space-12);gap:var(--wm-space-4) var(--wm-space-8);flex-shrink:0;}
+.drawer-links button {display:flex;align-items:center;gap:var(--wm-space-8);min-height:var(--wm-space-44);height:auto;padding:var(--wm-space-8);font-size:var(--wm-font-size-13);white-space:nowrap;}
+.drawer-links button:hover {background:var(--soft);}
+.drawer-links button:active {background:var(--accent-soft);}
+.icon-memory {mask-image:url(icons/memory.svg);-webkit-mask-image:url(icons/memory.svg);}
+.icon-capabilities {mask-image:url(icons/tool.svg);-webkit-mask-image:url(icons/tool.svg);}
+.icon-folder {mask-image:url(icons/folder.svg);-webkit-mask-image:url(icons/folder.svg);}
+.icon-device {mask-image:url(icons/device.svg);-webkit-mask-image:url(icons/device.svg);}
+.icon-bell {mask-image:url(icons/bell.svg);-webkit-mask-image:url(icons/bell.svg);}
+.memory-title-row {display:flex;align-items:center;justify-content:space-between;gap:var(--wm-space-12);}
+.memory-title-row .page-title {margin:0;}

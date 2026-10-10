@@ -1,0 +1,57 @@
+{
+  "baselineCommit": "e85b71228ff4646e41e4f9740fc55fb0b4878c52",
+  "sampleOrder": [
+    "before",
+    "after",
+    "after",
+    "before"
+  ],
+  "samplesPerPhasePerSurface": 240,
+  "surfaces": [
+    {
+      "surface": "desktop",
+      "updateP95BeforeMs": 8.5,
+      "updateP95AfterMs": 3.600000023841858,
+      "frameGapP95BeforeMs": 10.100000000002183,
+      "frameGapP95AfterMs": 10,
+      "individualUpdateP95BeforeMs": [
+        8.800000011920929,
+        8.400000005960464
+      ],
+      "individualUpdateP95AfterMs": [
+        3.699999988079071,
+        3.399999976158142
+      ]
+    },
+    {
+      "surface": "mobile-web",
+      "updateP95BeforeMs": 8.599999994039536,
+      "updateP95AfterMs": 1.399999976158142,
+      "frameGapP95BeforeMs": 10.100000000002183,
+      "frameGapP95AfterMs": 5.100000000000364,
+      "individualUpdateP95BeforeMs": [
+        9.699999988079071,
+        7
+      ],
+      "individualUpdateP95AfterMs": [
+        1.399999976158142,
+        1.4000000059604645
+      ]
+    },
+    {
+      "surface": "android-ui",
+      "updateP95BeforeMs": 7.799999982118607,
+      "updateP95AfterMs": 1.199999988079071,
+      "frameGapP95BeforeMs": 10.100000000000364,
+      "frameGapP95AfterMs": 5.100000000000364,
+      "individualUpdateP95BeforeMs": [
+        8,
+        7.5999999940395355
+      ],
+      "individualUpdateP95AfterMs": [
+        1.2000000178813934,
+        1.0999999940395355
+      ]
+    }
+  ]
+}

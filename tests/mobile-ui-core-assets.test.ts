@@ -31,8 +31,9 @@ async function fixture(t: { after: (fn: () => Promise<void>) => void }) {
 
 test('mobile generated assets match every canonical ui-core file byte for byte', async (t) => {
   const html = await readFile(path.join(repository, 'apps/mobile-ui/www/index.html'), 'utf8')
-  assert.deepEqual([...html.matchAll(/<script defer src="ui-core\/([^"]+)"/g)].map(match => match[1]), [...uiCoreAssets],
+  assert.deepEqual([...html.matchAll(/<script defer src="ui-core\/([^"]+)"/g)].map(match => match[1]), uiCoreAssets.filter(name=>name.endsWith('.js')),
     'phone must load the complete shared manifest in canonical order')
+  for (const name of uiCoreAssets.filter(name=>name.endsWith('.css'))) assert.ok(html.includes(`<link rel="stylesheet" href="ui-core/${name}">`), `phone loads shared style ${name}`)
   const { targetDir } = await fixture(t)
   assert.equal(await buildUiCoreAssets({ targetDir }), uiCoreAssets.length)
   assert.equal(await checkUiCoreAssets({ targetDir }), uiCoreAssets.length)
@@ -67,7 +68,7 @@ test('mobile check validates nested component syntax as well as generated source
   await writeFile(component, 'function {\n')
   await assert.rejects(checkMobileUi({ sourceDir, wwwDir }), /mobile UI syntax check failed: .*composer\.js/)
   await writeFile(component, 'globalThis.syntheticComposer = () => {};\n')
-  assert.equal(await checkMobileUi({ sourceDir, wwwDir }), uiCoreAssets.length + 1)
+  assert.equal(await checkMobileUi({ sourceDir, wwwDir }), uiCoreAssets.filter(name=>name.endsWith('.js')).length + 1)
 })
 
 test('published mobile bundle includes the verified shared assets at their ui-core paths', async (t) => {
