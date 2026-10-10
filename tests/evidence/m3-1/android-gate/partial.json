@@ -1,0 +1,16 @@
+{
+  "startedAt": "2026-10-10T08:26:16.032Z",
+  "realCloudEntrypoint": "services/cloud/src/main.mjs",
+  "realElectronEntrypoint": ".",
+  "sourceCommit": "886fe68f31e3060a2f66df38c1147d0af719cd8c",
+  "phase": "android-gate",
+  "baselineHost": false,
+  "steps": [
+    "Real cloud entrypoint health"
+  ],
+  "cloudTransport": "WSL docker-desktop; temporary standalone Alpine tools",
+  "passed": false,
+  "error": "electronApplication.evaluate: Resulting promise was garbage collected.",
+  "pageErrors": [],
+  "failedRequests": []
+}

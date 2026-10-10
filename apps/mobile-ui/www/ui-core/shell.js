@@ -47,13 +47,14 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         const identityAtStart = core.state.csrfToken;
         try {
             const value = await core.requestJson(`${core.accessBase}${path}`, options);
-            if (core.state.csrfToken === identityAtStart && identityAtStart)
+            const reachable = !environment.nativeMobile || path === '/status' || value.hostAvailable === true || value.connectionVerified === true;
+            if (reachable && core.state.csrfToken === identityAtStart && identityAtStart && value.hostAvailable !== false && value.cached !== true && value.connectionVerified !== false)
                 core.setOnline(true);
             return value;
         }
         catch (error) {
-            if (error.code === 'NETWORK' && core.state.csrfToken === identityAtStart)
-                core.setOnline(false);
+            if (core.state.csrfToken === identityAtStart)
+                core.connectionFailed?.(error);
             if (error.code === 'UNAUTHORIZED' && core.state.csrfToken === identityAtStart)
                 core.sessionExpired();
             throw error;
@@ -99,6 +100,11 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
             && token.deviceId === core.state.device?.id && token.csrf === core.state.csrfToken;
     }
     function setOnline(online) {
+        if (core.presence) {
+            if (online) core.connectionSucceeded();
+            else core.connectionFailed({ code: 'NETWORK' });
+            return;
+        }
         core.state.online = online;
         effects.paintConnection(online);
         effects.updateAvailability();
@@ -135,8 +141,6 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
             payload = await core.accessApi('/status');
         }
         catch (error) {
-            if (error.code !== 'UNAUTHORIZED')
-                core.setOnline(false);
             throw error;
         }
         if (typeof payload.ownerId !== 'string' || typeof payload.hostId !== 'string')
@@ -158,6 +162,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         core.state.executionAccount = payload.executionAccount;
         core.state.executionAccountName = payload.executionAccountName;
         core.state.syncAvailable = payload.sync?.available === true;
+        core.connectionSucceeded?.(payload.presence || { runtime: payload.backend?.runtime === 'unavailable' ? 'unavailable' : 'ready' });
         effects.paintMemoryAvailability?.(payload.memory ?? { state: payload.backend?.modules?.memory });
         if (!core.state.syncAvailable && core.state.phonePane)
             effects.showConversation();
@@ -182,6 +187,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
             effects.renderBrowserModels();
     }
     function stopAssistantRefresh() {
+        core.stopConnection?.();
         if (core.state.refreshTimer)
             clearInterval(core.state.refreshTimer);
         core.state.refreshTimer = null;
@@ -189,7 +195,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         core.state.liveRefreshTimer = null;
     }
     async function refreshLiveConversation() {
-        if (core.state.liveRefreshing || !core.state.csrfToken) return;
+        if (core.state.liveRefreshing || !core.state.csrfToken || !core.state.online) return;
         core.state.liveRefreshing = true;
         try {
             // Receipts and native history control the composer. Model settings,
@@ -200,7 +206,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         } finally { core.state.liveRefreshing = false; }
     }
     async function refreshAssistant() {
-        if (core.state.refreshing || !core.state.csrfToken)
+        if (core.state.refreshing || !core.state.csrfToken || core.state.connection && core.state.connection.kind !== 'online' && (core.state.connection.failures > 0 || core.state.connection.kind !== 'connecting'))
             return;
         core.state.refreshing = true;
         try {
@@ -271,6 +277,8 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         }
     }
     function clearSession() {
+        core.presence?.reset();
+        core.resetMessageBodies?.();
         core.resetActivity?.();
         core.resetLogicalSession?.();
         effects.cancelCloudLogin();
