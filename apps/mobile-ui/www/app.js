@@ -232,7 +232,7 @@ function syncMobileTabs(){
   const profile=$('header-profile');if(profile){profile.hidden=!identity;const avatar=$('drawer-avatar');if(avatar){const copy=avatar.cloneNode(true);copy.removeAttribute('id');profile.replaceChildren(copy);}}
   if(visible&&state.page!=='chat'){
     $('header-title').textContent=mobileTabNames[state.page];$('header-subtitle').hidden=true;$('page-back').hidden=true;$('menu-button').hidden=true;
-    $('outputs-button').hidden=true;$('conversation-usage').hidden=true;document.querySelector('.main-chat-tools')?.setAttribute('hidden','');
+    $('outputs-button').hidden=true;$('conversation-usage').hidden=true;$('conversation-more').hidden=true;document.querySelector('.main-chat-tools')?.setAttribute('hidden','');
   }
 }
 async function selectMobileTab(name){
@@ -762,6 +762,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('home-settings').addEventListener('click',()=>page('settings'));
 
   $('outputs-button').addEventListener('click',()=>{void openConversationResources()});
+  $('conversation-more').append(WeftIcons.create('more',20));
+  $('conversation-more').addEventListener('click',()=>WeftPopover.menu($('conversation-more'),[
+    {name:'输出与来源',icon:'folder',action:()=>openConversationResources()},
+    ...(!$('conversation-usage').hidden?[{name:'本对话用量',icon:'chart',action:()=>$('conversation-usage').click()}]:[])
+  ]));
   $('resource-back').addEventListener('click',()=>closeResourcePage());
   $('profile-link').addEventListener('click',()=>page('settings'));
   document.querySelectorAll('[data-page]').forEach(button=>button.addEventListener('click',()=>page(button.dataset.page)));

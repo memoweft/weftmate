@@ -1,7 +1,8 @@
 /** Presentation helper shared by the desktop and mobile scroll surfaces. */
 globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) => {
-    let pinned = true, pending = false, lastTop = box.scrollTop, followingTop = null, newContent = false;
+    let pinned = true, pending = false, followingTop = null, newContent = false;
     let togglePinned = false;
+    let scrollbarDrag=false,lastTop=box.scrollTop;
     let moving = null, frame = null;
     const stop = () => { if (frame !== null) cancelAnimationFrame(frame); frame = null; moving = null; };
     const reduced = () => globalThis.WeftReplyMotion?.reduced ?? globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? true;
@@ -24,13 +25,13 @@ globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) 
                         const fraction = Math.min(1, (time-moving.started)/moving.duration);
                         const bezier=(t,a,b)=>3*(1-t)*(1-t)*t*a+3*(1-t)*t*t*b+t*t*t;
                         let eased=fraction; if(moving.curve?.length===4){let low=0,high=1;for(let index=0;index<12;index++){const mid=(low+high)/2;if(bezier(mid,moving.curve[0],moving.curve[2])<fraction)low=mid;else high=mid;}eased=bezier((low+high)/2,moving.curve[1],moving.curve[3]);}
-                        box.scrollTop = moving.from + (followingTop-moving.from)*eased; lastTop=box.scrollTop;
+                        box.scrollTop = moving.from + (followingTop-moving.from)*eased;
                         if (fraction < 1) frame=requestAnimationFrame(tick); else stop();
                     };
                     frame=requestAnimationFrame(tick);
                 }
             }
-            lastTop = box.scrollTop; newContent = false;
+            newContent = false;
         }
         paint();
     };
@@ -41,11 +42,17 @@ globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) 
     };
     const scrolled = () => {
         const top = box.scrollTop;
+        if(scrollbarDrag&&top<lastTop-1&&gap()>48){stop();pinned=false;followingTop=null;}
         if (followingTop !== null && Math.abs(top - followingTop) <= 1) { if (!moving) followingTop = null; }
-        else if (top < lastTop - 1 && gap() > 48) { stop(); pinned = false; followingTop = null; }
         else if (gap() <= 48) { pinned = true; newContent = false; }
-        lastTop = top; paint();
+        // Layout clamping (keyboard, composer/approval resize, virtual rows) can
+        // reduce scrollTop without user intent. Only input handlers unpin.
+        lastTop=top;paint();
     };
+    box.addEventListener('pointerdown',event=>{const gutter=box.offsetWidth-box.clientWidth;scrollbarDrag=event.pointerType!=='touch'&&gutter>0&&event.clientX>=box.getBoundingClientRect().right-gutter;lastTop=box.scrollTop;});
+    const endScrollbarDrag=()=>{scrollbarDrag=false;};
+    globalThis.addEventListener?.('pointerup',endScrollbarDrag);
+    globalThis.addEventListener?.('pointercancel',endScrollbarDrag);
     box.addEventListener('scroll', scrolled, {passive:true});
     box.addEventListener('wheel', event => {
         if (event.deltaY < 0 && gap() - event.deltaY > 48) { stop(); pinned = false; followingTop = null; paint(); }
@@ -61,6 +68,8 @@ globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) 
     if (globalThis.ResizeObserver) {
         const resize = new ResizeObserver(changed); resize.observe(content); resize.observe(box);
     }
+    globalThis.visualViewport?.addEventListener('resize', changed);
+    globalThis.addEventListener?.('resize', changed);
     content.addEventListener('load', changed, true);
     const beforeToggle = event => { if (event.target.closest?.('summary')) togglePinned=pinned; };
     content.addEventListener('pointerdown', beforeToggle, true);

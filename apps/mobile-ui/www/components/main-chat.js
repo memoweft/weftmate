@@ -137,7 +137,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         tools.querySelectorAll('button')[0].disabled = !core.supportsChat('chatSearch');
         tools.querySelectorAll('button')[1].disabled = !core.supportsChat('chatTimeline');
         list().classList.add('is-main-chat');
-        ui.byId('assistant-title').textContent = fixedTitle(); ui.byId('chat-intro').querySelector('h1').textContent = '今天想聊些什么？'; origin.hidden = true;
+        ui.byId('assistant-title').textContent = fixedTitle(); ui.byId('chat-intro').querySelector('h1').textContent = '今天想做什么？'; origin.hidden = true;
         const saved = ui.conversationScroll?.pinned ? null : rememberAnchor();
         rows = [];
         for (const group of core.mainChatDays()) {

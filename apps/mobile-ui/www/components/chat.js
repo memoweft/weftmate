@@ -483,15 +483,8 @@ async function saveRenderedImage(url,name){const owner=state.owner,epoch=state.a
 
 async function copyText(text){try{await call('clipboard.copy',{text});toast('已复制')}catch{toast('复制未完成，请长按选择文字',true)}}
 
-function showWelcome(){const content=$('chat-content');clear(content);const welcome=el('div','welcome');const signature=el('div','welcome-signature');signature.append(logo(),el('span','','你的个人空间'));
-  welcome.append(signature,el('h1','','今天想做些什么？'),el('p','',state.loggedIn?
-    '说说你的目标，或者记录一个想法。':
-    '登录后，聊聊你想做的事。'));
-  const connection={local:'连接或创建账户',checking:'已保存登录 · 正在核对连接',connected:'电脑账户已连接',
-    offline:'电脑暂不可达 · 本机记录仍可使用',expired:'登录已失效 · 请重新登录'};
-  const link=el('button','welcome-bottom',connection[state.connection]||connection.offline);
-  link.addEventListener('click',()=>page('connect'));welcome.append(link);content.append(welcome);
-}
+function welcomeState(){const welcome=el('div','chat-intro');welcome.append(el('h1','','今天想做什么？'));return welcome;}
+function showWelcome(){const content=$('chat-content');clear(content);content.append(welcomeState());}
 
 function timeLabel(value){return uiCore.dateText(value)}
 
