@@ -1517,7 +1517,7 @@ class HybridActivity : Activity() {
         }
         "cloud.app.identity" -> JSONObject().put("deviceName", android.os.Build.MODEL)
             .put("clientId", "weftmate-android").put("redirectUri", CLOUD_CALLBACK)
-            .put("hostOrigin", if (BuildConfig.DEBUG && packageName in setOf("com.memoweft.weftmate.mobile.lg1bqa", "com.memoweft.weftmate.mobile.fx9qa"))
+            .put("hostOrigin", if (BuildConfig.DEBUG && packageName in setOf("com.memoweft.weftmate.mobile.lg1bqa", "com.memoweft.weftmate.mobile.fx9qa", "com.memoweft.weftmate.mobile.st4qa"))
                 intent?.getStringExtra("lg1bHostOrigin") ?: CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com"
                 else CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com")
         "cloud.app.configure" -> CloudAppLogin(secrets, api).configure(params.getString("origin"))
@@ -1526,7 +1526,7 @@ class HybridActivity : Activity() {
         "cloud.app.credentials" -> CloudAppLogin(secrets, api).credentials(params)
         "cloud.app.request" -> CloudAppLogin(secrets, api).request(params)
         "cloud.app.status" -> {
-            require(BuildConfig.DEBUG && packageName in setOf("com.memoweft.weftmate.mobile.lg1bqa", "com.memoweft.weftmate.mobile.fx9qa"))
+            require(BuildConfig.DEBUG && packageName in setOf("com.memoweft.weftmate.mobile.lg1bqa", "com.memoweft.weftmate.mobile.fx9qa", "com.memoweft.weftmate.mobile.st4qa"))
             CloudAppLogin(secrets, api).status()
         }
         "cloud.configure" -> CloudLogin(secrets, api).configure(params.getString("origin"), params.getString("pin"))

@@ -1,4 +1,5 @@
 import { createLibrary } from './library.mjs';
+import { createDataControls } from '../personal-data/index.mjs';
 import { finalizeNotifications } from './notification-settings.mjs';
 import { sendHostPush } from './push.mjs';
 import { accountPersonalization } from './personalization.mjs';
@@ -124,10 +125,16 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const storeFile = path.join(root, 'store.json');
   const restoredCloudOwners = await readFile(path.join(root, 'backup-cloud-owners.json'), 'utf8').then(JSON.parse).catch(error => { if (error.code === 'ENOENT') return []; throw error; });
   let rootState;
+  let dataControls = null;
   let freshInstallation = false;
   const usage = await createUsageStore({ root, clock });
   // Accessors preserve the original service's live state across module boundaries.
   const context = {
+    get dataControls() { return dataControls; },
+    async clearRestoredCloudOwner(ownerId) {
+      if (!Array.isArray(restoredCloudOwners) || !restoredCloudOwners.some(row=>row.ownerId===ownerId)) return;
+      const next=restoredCloudOwners.filter(row=>row.ownerId!==ownerId);await durableWrite(path.join(root,'backup-cloud-owners.json'),next);restoredCloudOwners.splice(0,restoredCloudOwners.length,...next);
+    },
     get activity() { return activity; },
     get library() { return library; },
     get libraryDesktopToken() { return libraryDesktopToken; },
@@ -563,6 +570,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     requireOpen();
     assertCurrent();
     if (storageFault) throw failure('STORAGE_UNAVAILABLE', 503);
+    const beforeDataAccounts = rootState.accounts;
     const next = structuredClone(rootState);
     const value = await change(next);
     requireOpen();
@@ -594,6 +602,10 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       throw error;
     }
     rootState = next;
+    for (const ownerId of Object.keys(rootState.accounts)) {
+      const previous = beforeDataAccounts?.[ownerId];
+      if (['sessions','commands','projects','personalization','defaultApprovalMode','notificationSettings','account'].some(key=>!isDeepStrictEqual(previous?.[key],rootState.accounts[ownerId][key]))) dataControls?.invalidate(ownerId);
+    }
     for (const ownerId of Object.keys(rootState.accounts)) nextSuggestions.reconcile(ownerId);
     hostCloudIdentity?.closeInvalidResponses();
     return value;
@@ -618,9 +630,11 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const offline = await createOfflineService(context);
   const temporaryChats = createTemporaryChats(context);
   const memoryIngestion = createMemoryIngestion(context);
+  dataControls = createDataControls(context);
   const service = {
     pushActivity: (ownerId, eventId) => sendHostPush(context, ownerId, eventId),
     recordActivity: activity.record,
+    dataControls,
     captureMemoryTurn: memoryIngestion.capture,
     memoryTurnPolicy: temporaryChats.policy,
     expireTemporaryChats: temporaryChats.sweep,
@@ -832,6 +846,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         }
       }
       closePromise = (async () => {
+        await dataControls.close();
         nextSuggestions.close();
         await memoryIngestion.close();
         await temporaryChats.close();

@@ -297,10 +297,16 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     if (sessionId !== null || !existing?.ready || !existing.rpc.child) {
       try { selected = await resolveProcessingRoute(ownerId, sessionId); }
       catch (cause) {
+        // A freshly erased account has no model settings or credentials. Core
+        // still opens the genuinely empty store for read-only list/search/export.
+        const marker = sessionId === null && await readFile(path.join(root,'accounts',ownerId,'data-erased.json'),'utf8').then(JSON.parse).catch(()=>null);
+        if (marker?.ownerId === ownerId) selected = {baseUrl,model:'@current',credential:null,modelTier:'local',sessionScoped:false,key:'erased-read-only',readOnly:true};
+        else {
         if (sessionId !== null && existing && existing.active === 0 && !(retainLocalWorker && existing.modelTier === 'local')) {
           entries.delete(ownerId); await existing.rpc.close().catch(() => {});
         }
         throw cause;
+        }
       }
     }
     if (existing?.ready && existing.rpc.child &&
@@ -332,7 +338,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       }
       const initialized = await rpc.request('initialize', {
         session_id: 'weftmate-personal-host', dsh_home: home, subject_id: ownerId,
-        platform: 'dsh', model_tier: selected.modelTier, lang: 'zh', auto_route: true,
+        platform: 'dsh', model_tier: selected.modelTier, lang: 'zh', auto_route: !selected.readOnly,
         model_api_key: selected.credential,
       });
       if (initialized?.runtime?.subject_id !== ownerId ||
@@ -444,6 +450,53 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
 
   return {
     enabled,
+    async markAccountErased(ownerId) {
+      owner(ownerId); await ensurePrivateDirectory(path.join(root,'accounts',ownerId));
+      const { durableWrite } = await import('../personal-access/store.mjs');
+      await durableWrite(path.join(root,'accounts',ownerId,'data-erased.json'),{version:1,ownerId});
+    },
+    accountDataRoot: ownerId => path.join(root, 'accounts', owner(ownerId)),
+    portableExport(ownerId) { return withOwner(ownerId, entry => entry.rpc.request('portable_export', {})); },
+    async eraseAccount(ownerId, progress = () => {}) {
+      owner(ownerId); await startup;
+      clearTimeout(retryTimers.get(ownerId)); retryTimers.delete(ownerId);
+      await flushFlights.get(ownerId)?.catch(() => {});
+      await queueOutbox(ownerId, async () => { const state = await readOutbox(ownerId); state.items = []; await writeOutbox(ownerId, state); });
+      if (!enabled) return { erased: true, disabled: true };
+      for (const requestId of await journal.deletionRequestIds(ownerId)) {
+        let previous;try {previous=await this.receiptByRequest(ownerId,requestId);}catch(cause){if(cause.code!=='command_receipt_not_found')throw cause;}
+        if ((previous?.receipt ?? previous)?.storage_cleanup?.state === 'pending') {
+          const retried=await this.retryCleanupByRequest(ownerId,requestId);
+          if((retried.receipt ?? retried).storage_cleanup?.state==='pending')throw error('MEMORY_DELETE_CONFLICT');
+        }
+      }
+      const evidence = await withOwner(ownerId, entry => entry.rpc.request('query_evidence', { operation: 'list' }));
+      for (const item of evidence.evidence ?? []) {
+        const revision = await withOwner(ownerId, entry => entry.rpc.request('query_world', { operation: 'revision' }));
+        const requestId = `account-erase-${item.evidence_id}`;
+        let result;try {result=await this.receiptByRequest(ownerId,requestId);}catch(cause){if(cause.code!=='command_receipt_not_found')throw cause;}
+        result ??= await this.submitCommand(ownerId, { requestId, operation: 'delete_evidence', targetKind: 'evidence', targetId: item.evidence_id, expectedWorldRevision: revision.world_revision, payload: {} });
+        if ((result.receipt ?? result).storage_cleanup?.state === 'pending') result = await this.retryCleanupByRequest(ownerId, requestId);
+        const receipt = result.receipt ?? result;
+        if (!['applied', 'no_change'].includes(receipt.result_state) || receipt.storage_cleanup?.state === 'pending') throw error('MEMORY_DELETE_CONFLICT');
+        progress({ category: 'memory', completed: 1 });
+      }
+      for (const kind of ['cognition','entity','relationship','event']) {
+        const world = await withOwner(ownerId, entry => entry.rpc.request('query_world', { operation: 'list', object_kind: kind, include_history: true }));
+        for (const item of world.items ?? []) {
+          const revision = await withOwner(ownerId, entry => entry.rpc.request('query_world', { operation: 'revision' }));
+          const requestId=`account-item-${item.item_id}`;
+          let result;try {result=await this.receiptByRequest(ownerId,requestId);}catch(cause){if(cause.code!=='command_receipt_not_found')throw cause;}
+          result ??= await this.submitCommand(ownerId, { requestId, operation: 'delete_world_item', targetKind: kind, targetId: item.item_id, expectedWorldRevision: revision.world_revision, payload: {} });
+          if((result.receipt ?? result).storage_cleanup?.state==='pending')result=await this.retryCleanupByRequest(ownerId,requestId);
+          const receipt = result.receipt ?? result;
+          if (!['applied','no_change'].includes(receipt.result_state) || receipt.storage_cleanup?.state === 'pending') throw error('MEMORY_DELETE_CONFLICT');
+        }
+      }
+      await this.invalidateOwnerRoute(ownerId);
+      boundaryFailures.delete(ownerId); homePromises.delete(ownerId); startupWorlds.delete(ownerId);
+      return { erased: true };
+    },
     flushPending,
     async acceptedBoundaryIds(ownerId) {
       return withOwner(ownerId, async entry => entry.capabilities?.methods?.includes('query_jobs')
@@ -670,6 +723,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     },
     async ingest(ownerId, boundary, { offline = false, defer = false } = {}) {
       owner(ownerId);
+      await rm(path.join(root,'accounts',ownerId,'data-erased.json'),{force:true});
       if (!enabled) throw error('MEMORY_DISABLED');
       if (!boundary || typeof boundary !== 'object' || Array.isArray(boundary) ||
           typeof boundary.event_id !== 'string' || !/^[A-Za-z0-9._:-]{1,180}$/.test(boundary.event_id) ||

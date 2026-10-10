@@ -1376,3 +1376,31 @@ Windows（视窗系统）与远程网页已有健康、动态、对应回合提�
 建议正文与请求草稿仅在请求和界面内存中，不写command（命令）、历史、MemoWeft evidence（记忆证据）、导出或离线副本。临时对话正常可用；真正接受后仍只是草稿，用户发送后才成为用户消息。用量沿数值账本计入总额并新增 `/usage.categories:[{category,...total}]`；`category="next-suggestions"`单列两类建议，旧账本默认`conversation`。仅成功取得空闲租约、即将发真实请求才开始计数；取消且提供方不返回用量时沿既有unknownRequests（未知用量请求）报告，不编造词元。
 
 Android（安卓）精确业务路由已登记，**需要新壳版本**，由编排统一递增；本包不更改版本号。Apple（苹果端）新增以上POST / DELETE、能力版本、账户开关与用量类别，保持同样优先级、键盘 / 触屏接受、真实取消和暂态边界；Watch（手表）不增加建议输入界面。
+
+## 13. 数据与存储（ST-4）
+
+路径均为 `/personal/v1`。读取沿 `sessions:read`，写入沿 Cookie（会话凭据）／CSRF（跨站请求伪造防护）和 `account:manage`，且必须是本机执行者。普通配对成员／受限设备只能查看，写入403 `FORBIDDEN`。所有路径无查询参数、写入字段精确匹配。
+
+| 方法与路径 | 请求 | 响应 |
+|---|---|---|
+| GET `/data` | 无 | 200 `{statistics,operation,canManage,desktop,accountName,remoteConfirmation}`；首次／五分钟过期自动后台统计 |
+| GET `/data/operations` | 无 | 200 `{operation,statistics}` |
+| POST `/data/scan` | `{}` | 202 `{operation}` |
+| POST `/data/clean` | `{category,confirm?}` | 202；`cache`无需确认，`offline/logs/temporary`须`confirm:true` |
+| POST `/data/export` | 电脑`{destination}`，远程`{}` | 202；远程进入`pending_confirmation`，路径只在电脑原生保存框选择 |
+| POST `/data/delete` | `{accountName,confirm:true}` | 202；远程等待电脑确认 |
+| POST `/data/close-account` | 同上 | 202；删除内容后移除本机账户／设备绑定 |
+| POST `/data/confirm` | `{id,confirm:true,accountName?,destination?}` | 202；仅电脑私有桥凭证可确认，删除必须核对当前账户名 |
+| POST `/data/cancel` | `{id}` | 200；可取消统计／导出／清理及未确认请求，已提交的删除返回409 |
+
+`operation={id,kind,state,category,bytes,completed,createdAt,error?,result?,canCancel}`。`state=running/pending_confirmation/completed/cancelled/failed`。失败保留类别及安全错误码；重新发起会重试剩余内容。电脑私有桥凭证由主进程加入，远程不能提交宿主保存路径或绕过二次确认。
+
+`statistics={measuredAt,durationMs,categories,totalBytes,accounting}`，类别为对话、记忆、成果与附件原件、缩略图缓存、离线副本、日志、备份、临时文件。每类含`id,name,icon,description,bytes,files,cleanable?,pureCache?`。文件按逻辑长度统计；共享账户／用量JSON（结构化数据）按本账户序列化字节归属；不包含数据库空页、整机日志、外部项目原件和整机备份，界面显示该边界。统计在 Worker（后台工作线程）执行，取消终止遍历。
+
+导出文件夹含 `README.md`、`conversations/*.md/*.json`、`memory/portable-v4.json`（Core正式Portable v4）、`files/results/`、`files/uploads/`、`files/attachments/`、`settings/settings.json`、`usage/ledger.json`、`manifest.json` 与 `manifest.sha256`。清单沿BK-1逐文件大小／SHA-256（安全哈希）和版本／排除项；临时目录原子发布，取消移除未完成包。模型凭据／密码／云令牌／设备私钥／浏览器登录／其他账户／旧备份排除；临时对话和已遗忘正式记忆排除。包未加密。
+
+删除先检查本账户各持久化分区的实际路径与子路径（包括原有账号专属工作目录／原生日志），拒绝越界和目录链接；停止任务，走DSH（助手运行时）正式会话删除及Core（记忆核心）正式删除命令和存储擦除，再清账号副本／索引／设置／用量。失败保留删除标记，阻止继续写入并可重试；程序、其他账户和项目原始文件不删除。新会话与首次引导重新开始。被撤销设备下次连接时清离线副本，不能远程擦除关机设备／用户已导出文件／整机旧备份。清理只删缩略图、明确到期的副本JSON、七天前日志／一天前临时文件，不删除原件。
+
+注销在本机删除之上清本机账户与本账户云绑定。已登录云账户的电脑确认页收当次密码，用既有7.9云接口删除云身份；密码只留当次页面内存，失败明确保留邮箱／云身份并提供重试。本机应急登录没有云授权时须在账户页重新登录云身份完成7.9，不能把本机解绑称为云端注销。桌面原生桥保留该操作的内容无关回执供注销后的进度读取；其他账号不能读取。动态新增`system.data.operation`，只记类别、结果与操作入口。
+
+Android（安卓）白名单与JVM（Java虚拟机）测试同步上述精确路径；需要新壳版本，由编排统一版本号。Apple（苹果端）接线清单：设置注册表增加同序分类；接全部路径与后台轮询／取消；Mac系统保存框与完成定位；iPhone远程发起并等待Mac／电脑确认；输入账户名与最后确认、云密码仅当次内存；删除／注销清当前账户本机缓存及加密离线副本，Watch随iPhone撤销；跨账号迟到响应丢弃；浅深／窄窗／系统栏及读屏确认。Apple源码本包未改。

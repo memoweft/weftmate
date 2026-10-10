@@ -6,6 +6,7 @@ import { rm, readFile, cp } from 'node:fs/promises'
 import { eraseSessionMemoryArtifact, shadowForgottenSurface } from './memory-erasure.mjs'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { readNativeTaskStopState } from './task-stop-state.mjs'
+import { accountFiles, assertAccountPath } from './account-paths.mjs';
 import { nativeRelayState, prepareNativeHandoff, installNativeHandoff } from './chat-handoff.mjs'
 
 /** Own native AgentHandles so deletion drains precisely one DSH lifecycle. */
@@ -47,6 +48,14 @@ export function nativeSessionLifecycle(ctx) {
     handles.set(sessionId, handle)
   }
   return {
+    storage: sessionId => serial(sessionId, async () => {
+      const persistence = ctx.get('sessionPersistence');
+      const meta = ctx.get('sessions')?.get(sessionId)?.header ?? (await persistence.inspect(sessionId)).meta;
+      const location = persistence.locate(meta);
+      const root = resolve(persistence.config.root), target = dirname(location.path);
+      await assertAccountPath(root, target);
+      return { root: target };
+    }),
     chatHandoff: (sessionId, action, handoff) => serial(sessionId, async () => {
       await ensure({ sessionId }, true);
       const agent = handles.get(sessionId).agent;
@@ -123,6 +132,7 @@ export function nativeSessionLifecycle(ctx) {
       const target = location?.kind === 'jsonl' ? dirname(location.path) : null
       const inside = target && relative(root, target)
       if (!inside || inside.startsWith('..') || isAbsolute(inside)) throw Object.assign(new Error('session deletion unavailable'), { code: 'internal' })
+      await assertAccountPath(root,target); await accountFiles(target);
       const handle = handles.get(sessionId)
       if (live && !handle) throw Object.assign(new Error('session lifecycle not owned'), { code: 'agent-busy' })
       if (handle) { await ctx.sessions.flush(handle.agent.session); await handle.dispose(); handles.delete(sessionId) }
@@ -144,6 +154,7 @@ export function nativeSessionLifecycle(ctx) {
         const childTarget = childLocation?.kind === 'jsonl' ? dirname(childLocation.path) : null;
         const childInside = childTarget && relative(root, childTarget);
         if (!childInside || childInside.startsWith('..') || isAbsolute(childInside)) throw new Error('child log outside session root');
+        await assertAccountPath(root,childTarget); await accountFiles(childTarget);
         await ctx.get('storageDomain')?.get('session_projcache')?.table('sessions').delete(header.id);
         await rm(childTarget, { recursive: true, force: true });
       }

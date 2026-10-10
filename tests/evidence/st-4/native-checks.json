@@ -1,0 +1,15 @@
+{
+  "realElectron": true,
+  "realDsh": true,
+  "realCore": true,
+  "syntheticModel": true,
+  "syntheticAccounts": 2,
+  "randomPorts": true,
+  "nativeSaveDialogStub": true,
+  "manifestHashes": true,
+  "emptyInterfaces": true,
+  "restartEmpty": true,
+  "localClosure": true,
+  "otherAccountUnchanged": true,
+  "exportFileCount": 6
+}

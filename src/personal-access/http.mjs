@@ -152,6 +152,9 @@ export function createHttpHandler(context) {
         return context.json(response, 200, context.publicAuth(current.ownerId, current.deviceId,
           current.device, current.csrfToken));
       }
+      if (ownerId && context.dataControls.isLocked(ownerId) && !pathname.startsWith('/personal/v1/data') &&
+          !['/personal/v1/auth/me','/personal/v1/auth/state','/personal/v1/auth/logout'].includes(pathname) &&
+          !(request.method==='GET'&&pathname.startsWith('/personal/v1/activity'))) throw failure('SESSION_BUSY',409);
       if (pathname === '/personal/v1/backups' || pathname.startsWith('/personal/v1/backups/')) {
         const current = context.authenticate(request, 'account:manage');
         // Backups contain the whole host, so only its local owner may manage them.
@@ -183,6 +186,7 @@ export function createHttpHandler(context) {
         }
         throw failure('NOT_FOUND', 404);
       }
+      if (pathname === '/personal/v1/data' || pathname.startsWith('/personal/v1/data/')) return await context.dataControls.handle(request, response, url, ownerId);
       if (request.method === 'PATCH' && pathname === '/personal/v1/auth/profile') {
         if (url.search) throw failure('INVALID_REQUEST');
         context.authenticate(request, 'account:manage');
