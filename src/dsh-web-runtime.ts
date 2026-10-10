@@ -400,6 +400,8 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(PLUGINS_DIR, 'personal-web-fetch.mjs'), join(dir, 'plugins', 'personal-web-fetch.mjs')],
     [join(PLUGINS_DIR, 'personal-native-files.mjs'), join(dir, 'plugins', 'personal-native-files.mjs')],
     [join(PLUGINS_DIR, 'personal-reasoning.mjs'), join(dir, 'plugins', 'personal-reasoning.mjs')],
+    [join(PLUGINS_DIR, 'personal-personalization.mjs'), join(dir, 'plugins', 'personal-personalization.mjs')],
+    [join(here, 'ui-core', 'personalization.js'), join(dir, 'ui-core', 'personalization.js')],
     [join(PLUGINS_DIR, 'personal-project-context.mjs'), join(dir, 'plugins', 'personal-project-context.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-desktop-preset.mjs'), join(dir, 'plugins', 'weftmate-personal-desktop-preset.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-memory.mjs'), join(dir, 'plugins', 'weftmate-personal-memory.mjs')],
@@ -1944,6 +1946,7 @@ export class DshWebRuntime {
           }
           settle({ ok: true, command: { mode: value.mode, allowedCategories: value.allowedCategories,
             ...(value.deepThinking === true ? {deepThinking:true} : {}),
+            ...(value.personalization ? {personalization:value.personalization} : {}),
             ...(value.project ? { project: value.project } : {}),
             ...(value.projectNotice ? { projectNotice: value.projectNotice, conversationWorkspace: value.conversationWorkspace } : {}) } }); return
         }

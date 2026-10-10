@@ -201,6 +201,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         core.state.refreshing = true;
         try {
             await core.refreshStatus();
+            await core.loadPersonalization().catch(() => {});
             await core.refreshActivity?.();
             await core.refreshModels();
             await core.refreshSessions();
