@@ -36,7 +36,7 @@
     states.set(element, {text}); element.classList.add('reply-status'); element.classList.toggle('reply-working', running);
     let sheen = element.querySelector('.reply-sheen');
     if (running && !sheen) { sheen = document.createElement('span'); sheen.className = 'reply-sheen'; sheen.setAttribute('aria-hidden','true'); element.append(sheen); }
-    if (sheen) { if (sheen._replyText !== text) { sheen._replyText=text;sheen.replaceChildren(...Array.from({length:9},(_,index)=>{const part=document.createElement('span');part.className='reply-sheen-part';part.textContent=text;part.style.setProperty('--reply-phase',`${index*12.5}%`);part.style.setProperty('--reply-offset',String(index/9));return part;})); } if (!running) sheen.remove(); }
+    if (sheen) { if (sheen._replyText !== text) { sheen._replyText=text;sheen.replaceChildren(...Array.from({length:5},(_,index)=>{const part=document.createElement('span');part.className='reply-sheen-part';part.textContent=text;part.style.setProperty('--reply-phase',`${index*25}%`);part.style.setProperty('--reply-offset',String(index/5));return part;})); } if (!running) sheen.remove(); }
     visible?.observe(element);
     if (changed && transition && !reduced() && !paused()) {
       const copy = document.createElement('span'); copy.className = 'reply-status-out'; copy.textContent = saved.text; copy.setAttribute('aria-hidden','true');
@@ -87,7 +87,7 @@
     sync();
   }
   function preferenceControl() {
-    const select=document.createElement('select'); select.setAttribute('aria-label','减少动态效果');
+    const select=document.createElement('select'); select.className='reply-motion-select'; select.setAttribute('aria-label','减少动态效果');
     for(const [value,label] of [['system','跟随系统'],['reduce','开启']]) {const option=document.createElement('option');option.value=value;option.textContent=label;select.append(option);}
     select.value=preference;select.addEventListener('change',()=>setPreference(select.value));return select;
   }

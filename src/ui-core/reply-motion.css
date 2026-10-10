@@ -2,11 +2,11 @@
 .reply-status{position:relative;animation:none!important}
 .reply-status.reply-working>.reply-sheen{position:absolute;inset:0;pointer-events:none;color:var(--ink);opacity:.36}
 [data-theme=dark] .reply-status.reply-working>.reply-sheen{opacity:.22}
-.reply-sheen-part{position:absolute;inset:0;opacity:0;mask-image:linear-gradient(90deg,transparent calc(var(--reply-phase) - 14%),#000 var(--reply-phase),transparent calc(var(--reply-phase) + 14%));animation:reply-sheen var(--wm-duration-working) var(--wm-easing-smooth) infinite;animation-delay:calc(var(--wm-duration-working) * var(--reply-offset));will-change:opacity}
-@keyframes reply-sheen{0%,16%,100%{opacity:0}8%{opacity:1}}
+.reply-sheen-part{position:absolute;inset:0;opacity:0;mask-image:linear-gradient(90deg,transparent calc(var(--reply-phase) - 25%),#000 var(--reply-phase),transparent calc(var(--reply-phase) + 25%));animation:reply-sheen var(--wm-duration-working) var(--wm-easing-replySweep) infinite;animation-delay:calc(var(--wm-duration-working) * var(--reply-offset));will-change:opacity}
+@keyframes reply-sheen{0%,27%,100%{opacity:0}13.5%{opacity:1}}
 .reply-status-out{position:absolute;inset:0;pointer-events:none;white-space:inherit;background:var(--surface);color:inherit}
 .reply-streaming{position:relative}
-.reply-indicator{position:absolute;inline-size:var(--wm-space-4);block-size:var(--wm-space-4);border-radius:var(--wm-radius-circle);background:var(--ink-secondary);pointer-events:none;animation:reply-breathe var(--wm-duration-working) var(--wm-easing-smooth) infinite}
+.reply-indicator{position:absolute;inline-size:var(--wm-space-4);block-size:var(--wm-space-4);border-radius:var(--wm-radius-circle);background:var(--ink-secondary,var(--muted));pointer-events:none;animation:reply-breathe var(--wm-duration-working) var(--wm-easing-smooth) infinite}
 @keyframes reply-breathe{0%,100%{opacity:.6;transform:scale(.85)}50%{opacity:.9;transform:scale(1)}}
 html[data-motion-paused] *,html[data-motion-paused] *::before,html[data-motion-paused] *::after,.reply-offscreen,.reply-offscreen .reply-sheen-part{animation-play-state:paused!important}
 html[data-reduced-motion] *,html[data-reduced-motion] *::before,html[data-reduced-motion] *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
@@ -15,3 +15,9 @@ html[data-reduced-motion] .reply-working>.reply-sheen,html[data-reduced-motion] 
 
 :is(.markdown-body,.markdown)>:nth-last-child(1 of :not(.reply-indicator)){margin-bottom:0}
 :is(.markdown-body,.markdown):has(>.reply-indicator){position:relative}
+
+.settings-row:has(.reply-motion-select) .settings-select{min-height:var(--wm-space-44);padding:var(--wm-space-8) var(--wm-space-12);border:1px solid var(--line);border-radius:var(--wm-radius-8);background:var(--surface-soft,var(--soft));color:var(--ink);display:inline-flex;align-items:center;justify-content:space-between;gap:var(--wm-space-12)}
+.settings-row:has(.reply-motion-select) .settings-select:hover{border-color:var(--accent);background:var(--surface)}
+.settings-row:has(.reply-motion-select) .settings-select:active{background:var(--accent-soft)}
+.settings-row:has(.reply-motion-select) .settings-select:focus-visible{outline:2px solid var(--accent);outline-offset:var(--wm-space-2)}
+.settings-row:has(.reply-motion-select) .settings-select:disabled{opacity:.4;cursor:default}
