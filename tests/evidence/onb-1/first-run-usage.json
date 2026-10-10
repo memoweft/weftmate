@@ -1,0 +1,21 @@
+{
+  "reason": "Final harness assertion ran before asynchronous completion; paid first-chat and QR/approval phases passed.",
+  "usage": {
+    "requests": 1,
+    "unknownRequests": 0,
+    "unpricedRequests": 0,
+    "inputTokens": 2099,
+    "cachedInputTokens": 1536,
+    "outputTokens": 3,
+    "cost": 0.00059972
+  },
+  "checks": [
+    "Real cloud entrypoint health",
+    "actual process exit/relaunch restores interrupted model step",
+    "read-only discovery; no automatic registration or inference",
+    "authenticated reload resumes memory step",
+    "390x844 QR URL: same cloud account, code verification, desktop approval, trusted recipient and connection",
+    "first main chat message sent once to real MiMo and replied",
+    "completed installation does not reopen onboarding"
+  ]
+}

@@ -9,6 +9,7 @@ import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { mobileBridge } from '../../scripts/review-gallery/mobile-bridge.mjs';
 import { repository, outDirectory, runScene, catalog } from '../../scripts/review-gallery/common.mjs';
 const assets = join(repository, 'apps/mobile-ui/www'), out = outDirectory();
+const sceneIndex = process.argv.indexOf('--scene'), onlyScene = sceneIndex < 0 ? null : process.argv[sceneIndex + 1];
 const server = createServer(async (req, res) => {
   try {
     const path = new URL(req.url, 'http://localhost').pathname;
@@ -54,6 +55,7 @@ try {
       const report = async () => { await home(); await conversation('整理项目进展').click(); };
       const settings = async () => { await home(); await button('设置与账户').click(); };
       const preparations = {
+        onboarding: async () => { await settings(); await button(/^设备 /).click(); await page.getByRole('heading', { name: '连接你的电脑', exact: true }).waitFor(); },
         sessions: home,
         'composer-menu': async()=>{await report();await button('添加图片或文件').click();await page.getByRole('menu',{name:'添加附件'}).waitFor();await page.getByRole('menuitem',{name:'相机'}).waitFor();},
         'composer-context': async()=>{await report();await button('背景信息窗口：86% 已用').click();await page.getByRole('tooltip').waitFor();},
@@ -66,7 +68,7 @@ try {
         usage: async () => { await settings(); await button(/^用量 /).click(); await page.getByRole('heading', { name: '用量与费用', exact: true }).waitFor(); await button('刷新用量').waitFor(); },
         'session-menu': async () => { await home(); await page.getByRole('main').getByRole('button', { name: '更多操作 整理项目进展', exact: true }).click(); await page.getByRole('dialog', { name: '对话操作', exact: true }).waitFor(); await button('归档').waitFor(); await button('删除').waitFor(); },
       };
-      for (const scene of catalog.scenes.filter(row => !['login', 'question','main-chat','activity','goals'].includes(row.id))) await shot(scene.id, preparations[scene.id]);
+      for (const scene of catalog.scenes.filter(row => !['login', 'question','main-chat','activity','goals'].includes(row.id) && (!onlyScene || row.id === onlyScene))) await shot(scene.id, preparations[scene.id]);
       // FE-1a's real question projection supplies the missing FE-1b question fixture.
       const questionPage = await context.newPage(); questionPage.setDefaultTimeout(30000);
       await questionPage.route('**/bridge', async route => {

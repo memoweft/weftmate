@@ -94,6 +94,7 @@ MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌）�
 ## 契约变更
 
 - TB-2（2026-10-10）：CLIENT_API 9.9增加精确版本1的taskOverview / scheduleEditing / goals、跨对话任务读接口、定时新建 / 修订编辑 / 幂等运行、原生目标新建 / 完成 / 归档；3.18兼容月历规则与结果字段。账户隔离、D33原生派生说明清理及临时来源脱敏，Apple与TB-4按同一母版接线。
+- **ONB-1**：新增安装 `GET/PATCH /onboarding` 与账户只读 `POST /models/discover`；沿既有认证 / CSRF（跨站请求伪造防护）、模型保存 / 诊断、记忆和配对流程；Apple（苹果端）按 CLIENT_API 第12节接线。
 
 - **TB-1**：CLIENT_API 9.8正式增加 ctivity:1/activityChanges:1/activityRead:1/activityNotification:1、动态列表 / 增量 / 未读 / 单项与快照已读；原同步事件通道增加无正文动态水位，动作直达原审批 / 问题路径。账户签名游标、原任务结果身份、D33删除增量、临时脱敏与重要 / 普通 / 静默通知字段见9.8。
 - **UX-4**：CLIENT_API 3.3 新增消息锚点 `POST/GET /sessions/{id}/message-branches` 与完整消息详情，创建后用返回的 `sendRequestId` 走既有 `session.message`；原版与新版可切换，模型只改新分支，原有 `/fork` 不变。主对话走 `session.side.create` 来源引用；`task.queued.inherited` 对齐原生种子队列。反馈只存设备；导出先脱敏预览。安卓保存桥最低code27，Apple改动清单见UX-4证据。

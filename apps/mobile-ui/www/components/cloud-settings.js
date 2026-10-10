@@ -12,6 +12,8 @@ globalThis.WeftMobileCloudSettings = (core, ui) => {
         ui.byId('cloud-account-tab').addEventListener('click', () => select('account'));
         ui.byId('cloud-devices-tab').addEventListener('click', () => { select('devices'); void refreshDirectory(); });
         ui.byId('cloud-directory-refresh').addEventListener('click', () => void refreshDirectory());
+        const connectIntro = ui.element('p', 'muted', globalThis.WeftOnboardingCopy.mobileHelp);
+        ui.byId('cloud-pairing-input').before(connectIntro);
         ui.byId('cloud-pairing-close').addEventListener('click', stopPairing);
         ui.byId('cloud-pairing-connect').addEventListener('click', () => void act(async () => { await core.cloudRedeemPairing(ui.byId('cloud-pairing-input').value); await core.enterAssistant(); }));
         const scan = button('扫描电脑二维码', () => ui.scanPairing());
