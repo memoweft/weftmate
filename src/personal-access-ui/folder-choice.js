@@ -68,11 +68,11 @@
       name.focus();
     }
     function currentMenu() {
-      const project=projectNow();if(!project||blocked())return;
+      const project=projectNow();if(!project||core.state.online===false)return;
       const entries=[];
       if(native?.showProjectFolder)entries.push({name:'在文件夹中显示',icon:'folder-open',action:async()=>{try{await native.showProjectFolder(project.projectId);}catch{toast('文件夹无法打开，请重试');}}});
-      if(core.state.projectCanManage)entries.push({name:'更改权限',icon:'approval',children:async()=>['read-only','write'].map(value=>({name:value==='write'?'可读写':'只读',icon:value==='write'?'edit':'approval',checked:project.permission===value,action:async()=>{try{await core.registerFolderChoice(fields=>core.saveProject(project,fields),{permission:value});paint();}catch(err){toast(error(err));}}}))});
-      entries.push({name:'换一个文件夹',icon:'folder',action:()=>open(current)},{name:'移出项目',icon:'deny',action:()=>select(null)});menu(current,entries);
+      if(core.state.projectCanManage)entries.push({name:'更改权限',icon:'approval',disabled:blocked(),children:async()=>['read-only','write'].map(value=>({name:value==='write'?'可读写':'只读',icon:value==='write'?'edit':'approval',checked:project.permission===value,action:async()=>{try{await core.registerFolderChoice(fields=>core.saveProject(project,fields),{permission:value});paint();}catch(err){toast(error(err));}}}))});
+      entries.push({name:'换一个文件夹',icon:'folder',disabled:blocked(),action:()=>open(current)},{name:'移出项目',icon:'deny',disabled:blocked(),action:()=>select(null)});menu(current,entries);
     }
     function paint() {
       if(lastScope!==scope()){popup?.close(false);lastScope=scope();}
@@ -83,7 +83,7 @@
       row.hidden=!empty;current.hidden=onboarding||!project||empty||isMain;hint.hidden=!empty||!!project||(core.state.projects||[]).length>0||core.folderPreference().hintSeen===true;
       choose.querySelector('span').textContent=project?.name||'选择文件夹';current.querySelector('span').textContent=project?.name||'文件夹';
       current.setAttribute('aria-label',project?`文件夹 ${project.name}`:'文件夹');choose.setAttribute('aria-label',project?`选择文件夹，当前 ${project.name}`:'选择文件夹');
-      for(const control of [choose,add,current])control.disabled=blocked();
+      for(const control of [choose,add])control.disabled=blocked();current.disabled=core.state.online===false;
       add.hidden=!native?.pickProjectFolder;add.disabled=blocked()||!native?.pickProjectFolder;if(!native)add.title='新文件夹请在电脑上添加';
       if(!native){const host=core.state.cachedDevices?.find(row=>row.id===core.state.hostId);location.querySelector('span').textContent=`${core.state.hostName||host?.name||'电脑'} · ${core.state.online===false?'离线':'在线'}`;location.setAttribute('aria-label',location.querySelector('span').textContent);location.title=location.querySelector('span').textContent;}
       if(project){current.title=`${folderDetails.get(project.projectId)||project.pathHint||project.name} · ${permission(project)}`;

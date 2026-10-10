@@ -34,13 +34,15 @@
     "appId": "com.memoweft.weftmate",
     "productName": "WeftMate",
     "asar": true,
+    "npmRebuild": false,
     "asarUnpack": [
       "node_modules/get-windows/**/*"
     ],
     "files": [
       "src/**/*",
       "runtime/**/*",
-      "package.json"
+      "package.json",
+      "!node_modules/get-windows/build/**/*"
     ],
     "extraResources": [
       { "from": "src/personal-update/trusted-keys.json", "to": "update-trusted-keys.json" },

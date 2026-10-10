@@ -453,7 +453,7 @@ function displayedPhoneMessage(text,images){const value=String(text||''),match=/
   if(images.length&&names===images.map(image=>image.name).join('、'))return {body,note:''};
   return {body,note:`旧附件：${names}；部分仅保留名称`}}
 
-function messageNode(role,text,thumbnails=[],scope=null,messageId=null){const item=el('article',`message ${role}`);if(role==='user'){
+function messageNode(role,text,thumbnails=[],scope=null,messageId=null,renderOptions={}){const item=el('article',`message ${role}`);if(role==='user'){
     const images=(Array.isArray(thumbnails)?thumbnails.slice(0,8):[]).map(image=>
       normalizedMessageThumbnail(image,scope,messageId)).filter(Boolean);
     const display=displayedPhoneMessage(text,images);item.append(globalThis.WeftContent ? WeftContent.create(display.body,'markdown') : el('span','',display.body));
@@ -469,7 +469,7 @@ function messageNode(role,text,thumbnails=[],scope=null,messageId=null){const it
             attachmentId:image.attachmentId,messageId,note:image.syncStatus==='shared'?'原图已与同账户设备共享':
             image.syncStatus==='pending'?'原图正在同步':image.previewUrl?'这台手机保存的原图':'旧图片仅保留缩略图'}));gallery.append(preview)}
       item.append(gallery)}return item}
-  const frame=el('div','message-body');const content=globalThis.WeftContent?WeftContent.create(text,'markdown',{copy:copyText,openExternal:url=>{location.href=url},downloadImage:globalThis.weftNative?saveRenderedImage:undefined}):el('div','markdown',text);
+  const frame=el('div','message-body');const content=globalThis.WeftContent?WeftContent.create(text,'markdown',{...renderOptions,copy:copyText,openExternal:url=>{location.href=url},downloadImage:globalThis.weftNative?saveRenderedImage:undefined}):el('div','markdown',text);
   frame.append(content);const tools=el('div','message-tools');const copy=el('button','copy-button');copy.append(el('span','icon icon-copy'),el('span','','复制回复'));
   copy.addEventListener('click',()=>copyText(text));tools.append(copy);frame.append(tools);item.append(frame);return item}
 

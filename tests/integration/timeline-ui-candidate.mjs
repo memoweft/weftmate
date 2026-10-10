@@ -229,6 +229,8 @@ export async function startTimelineCandidate(options = {}) {
       context: value=>{contextUsage=value},
       call, result,
       text: text => append('assistant/message', {content:[{type:'text',text}]}),
+      chunk: text => append('assistant/chunk',{turn:1,step:1,chunk:{type:'text-delta',text}}),
+      completeStream: text => {const sourceEventSeqs=events.filter(event=>event.type==='assistant/chunk'&&event.data.turn===1&&event.data.step===1).map(event=>event.seq);const event=append('assistant/message',{turn:1,step:1,message:{content:[{type:'text',text}]}});event.sourceEventSeqs=sourceEventSeqs;return event;},
       phase: value => {processing=value},
       finish: reason => {append('turn/end',{turn:1,reason:{kind:reason||'completed'}});running=false;if(dailySessions.has(sessionId))dailySessions.get(sessionId).running=false;},
       approve: async (id, command) => {const user=events.findLast(event=>event.type==='user/message');const approvalId=randomUUID(), tuple={runtimeId,approvalId,sessionId,turn:1,callId:id,rootCallId:id,receiptId:user.data.source.rpcId,messageHash:hash(user.data.content.filter(part=>part.type==='text').map(part=>part.text).join('')),toolName:'pwsh',argumentsHash:hash(command)};

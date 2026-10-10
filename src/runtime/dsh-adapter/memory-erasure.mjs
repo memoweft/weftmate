@@ -55,7 +55,7 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
   const clean = (value, redact = false, key = '') => {
     if (typeof value === 'string') {
       if (!options.deleteConversationSnippets) return value
-      if (redact && ['text','content','delta','arguments','output','summary','rawOutput'].includes(key)) { changed = true; return ''; }
+      if (redact && ['text','texts','content','delta','arguments','argumentsDelta','args','output','summary','rawOutput'].includes(key)) { changed = true; return ''; }
       for (const text of options.sourceTexts) if (value.includes(text)) { value = value.replaceAll(text, '[已遗忘的原话]'); changed = true }
       return value
     }

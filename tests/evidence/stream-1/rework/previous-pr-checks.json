@@ -1,0 +1,56 @@
+[
+  {
+    "bucket": "pending",
+    "link": "https://github.com/memoweft/weftmate/actions/runs/38075216697/job/114280659990",
+    "name": "Synthetic multi-device review gallery",
+    "state": "IN_PROGRESS"
+  },
+  {
+    "bucket": "pass",
+    "link": "https://github.com/memoweft/weftmate/actions/runs/38075216712/job/114280659476",
+    "name": "Relay full chain (443)",
+    "state": "SUCCESS"
+  },
+  {
+    "bucket": "pending",
+    "link": "https://github.com/memoweft/weftmate/actions/runs/38075216701/job/114280659045",
+    "name": "test (ubuntu-latest)",
+    "state": "IN_PROGRESS"
+  },
+  {
+    "bucket": "pending",
+    "link": "https://github.com/memoweft/weftmate/actions/runs/38075216704/job/114280659103",
+    "name": "Pinned DSH vendor unit tests",
+    "state": "IN_PROGRESS"
+  },
+  {
+    "bucket": "pass",
+    "link": "https://github.com/memoweft/weftmate/actions/runs/38075216713/job/114280659057",
+    "name": "Android debug and JVM tests",
+    "state": "SUCCESS"
+  },
+  {
+    "bucket": "pass",
+    "link": "https://github.com/memoweft/weftmate/actions/runs/38075216712/job/114280659597",
+    "name": "Relay phone first input and file task",
+    "state": "SUCCESS"
+  },
+  {
+    "bucket": "pass",
+    "link": "https://github.com/memoweft/weftmate/actions/runs/38075216695/job/114280659052",
+    "name": "Host certificates (Pebble DNS-01)",
+    "state": "SUCCESS"
+  },
+  {
+    "bucket": "fail",
+    "link": "https://github.com/memoweft/weftmate/actions/runs/38075216713/job/114280658866",
+    "name": "Web cloud login interactions",
+    "state": "FAILURE"
+  },
+  {
+    "bucket": "pass",
+    "link": "https://github.com/memoweft/weftmate/actions/runs/38075216701/job/114280659185",
+    "name": "Observed bridge (real MemoWeft Core)",
+    "state": "SUCCESS"
+  }
+]
