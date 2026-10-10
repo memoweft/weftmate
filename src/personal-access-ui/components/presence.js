@@ -30,8 +30,9 @@ globalThis.WeftPresenceView = {
             copy.title = value.description || copy.textContent;
             retry.textContent = value.kind === 'login_required' ? '重新登录' : value.kind === 'approval_required' ? '查看设备' : '重试';
             offline.hidden = value.kind !== 'host_offline' || typeof core.openOfflineMode !== 'function';
-            if (value.kind !== 'online' && (value.failures > 0 || value.kind !== 'connecting')) disconnected = true;
-            else if (disconnected && lastKind && lastKind !== 'online') { disconnected = false; toast('连接已恢复，正在接续。'); }
+            if (['login_required','approval_required'].includes(value.kind)) disconnected = false;
+            else if (['host_offline','network_unavailable'].includes(value.kind) || value.kind === 'connecting' && value.failures > 0) disconnected = true;
+            else if (value.kind === 'online' && disconnected && lastKind && lastKind !== 'online') { disconnected = false; toast('连接已恢复，正在接续。'); }
             // Only explicitly classified read/sync notices join connection state.
             for(const notice of document.querySelectorAll('.offline-notice,[data-notice-kind="read-failure"]'))notice.hidden=!notice.textContent||value.kind!=='online';
             lastKind = value.kind;

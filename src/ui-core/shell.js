@@ -214,13 +214,18 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
             await core.loadPersonalization().catch(() => {});
             await core.refreshActivity?.();
             await core.refreshModels();
+            // The session selector owns its initial history and decisions.
+            // On later refreshes this routine owns those reads instead.
+            await core.refreshTasks(false, false);
+            const history = core.state.historyGeneration;
             await core.refreshSessions();
-            await core.refreshTasks();
-            await core.refreshHistory();
+            const selected = history !== core.state.historyGeneration;
+            if (!selected) await core.refreshHistory();
             void core.refreshUsageBudget?.();
             if (core.state.syncAvailable)
                 await core.refreshPhoneRecords();
-            await core.refreshConversationTasks();
+            if (!selected) await core.refreshConversationTasks();
+            else await core.conversationTasks.inFlight?.promise;
             await core.restoreRequests();
         }
         catch (error) {
