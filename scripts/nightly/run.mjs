@@ -173,6 +173,11 @@ finally {
     if (!cleanup.android.ownedEmulatorShutdown) phases.push({ name: 'android-cleanup', status: 'failed', reason: 'MuMu 关闭未得到确认' });
   }
   if (temp) await rm(temp, { recursive: true, force: true }).catch(() => {});
+  // Owner-approved housekeeping: prune synthetic test temp directories older than 48 hours.
+  try {
+    const pruned = await run('pwsh', ['-NoProfile', '-File', join(engineScripts, 'prune-temp.ps1'), '-Hours', '48', '-Repository', repository, '-Apply'], { cwd: repository, name: 'prune-temp', allowFailure: true, limit: 600000 });
+    cleanup.staleTemp = JSON.parse(pruned.output.trim().split(/\r?\n/).pop());
+  } catch (error) { cleanup.staleTemp = { error: error.message }; }
   const baseline = await reporting.previousRun(reports, gallery);
   try {
     const result = await reporting.report(out, { ...baseline, threshold, phases, commit: sourceCommit || 'unknown', startedAt, cleanup });
