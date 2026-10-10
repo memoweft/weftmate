@@ -22,7 +22,7 @@ data class HttpReply(val status: Int, val body: JSONObject, val cookie: String? 
 internal fun validBusinessPath(path: String): Boolean {
     val route = path.substringBefore('?')
     // Opaque chat cursors plus an encoded 256-character search exceed the old memory-route budget.
-    if (path.length > if (route.startsWith("/personal/v1/chats") || route == "/personal/v1/sessions" || route.startsWith("/personal/v1/library") || route.startsWith("/personal/v1/activity")) 4096 else 512) return false
+    if (path.length > if (route.startsWith("/personal/v1/chats") || route == "/personal/v1/sessions" || route.startsWith("/personal/v1/library") || route.startsWith("/personal/v1/activity") || route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/suggestions"))) 4096 else 512) return false
     if (path == "/personal/v1/sessions/temporary") return true
     val query = path.substringAfter('?', "")
     if (query.matches(Regex("[A-Za-z0-9._~=&%+-]*")) && route.matches(Regex("/personal/v1/activity(/changes|/unread|/read|/[A-Za-z0-9_-]{1,160}/read)?"))) return true
@@ -44,6 +44,9 @@ internal fun validBusinessPath(path: String): Boolean {
     if (route == "/personal/v1/settings/usage" && query.isEmpty()) return true
     if (route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/resources")) &&
         (query.isEmpty() || query.matches(Regex("afterSeq=(-1|[0-9]+)")))) return true
+    // UX-7 uses one ephemeral session endpoint; cancellation accepts only its request ID.
+    if (route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/suggestions")) &&
+        (query.isEmpty() || query.replace(Regex("(?i)%3a"), ":").matches(Regex("requestId=[A-Za-z0-9_.:-]{1,128}")))) return true
     if (query.isEmpty() && (route == "/personal/v1/system" || route == "/personal/v1/settings/models" ||
         route == "/personal/v1/settings/approvals" ||
         route == "/personal/v1/settings/notifications" || route == "/personal/v1/settings/notifications/test" ||
