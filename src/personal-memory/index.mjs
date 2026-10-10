@@ -50,6 +50,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   const flushFlights = new Map();
   const retryTimers = new Map();
   const retryCounts = new Map();
+  const startupWorlds = new Set();
   const outboxQueues = new Map();
   const homePromises = new Map();
   const journal = createMemoryCommandJournal({ root });
@@ -244,6 +245,17 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     let pending;
     try { pending = await queueOutbox(ownerId, () => readOutbox(ownerId)); }
     catch { failures.set(ownerId, 'MEMORY_OUTBOX_CORRUPT'); return results; }
+    // An empty host outbox does not mean Core has finished formation. Open
+    // existing worlds on startup even without a UI/status request, and use
+    // the existing retry schedule if the model route is not yet available.
+    if (!pending.items.length && startupWorlds.has(ownerId)) {
+      try { await withOwner(ownerId, () => {}); }
+      catch (cause) {
+        failures.set(ownerId, cause?.code ?? 'MEMORY_UNAVAILABLE');
+        scheduleRetry(ownerId);
+        retryCounts.set(ownerId, (retryCounts.get(ownerId) ?? 0) + 1);
+      }
+    }
     for (const row of pending.items) {
       if (closing || row.blocked) break;
       const boundary = row.boundary;
@@ -342,6 +354,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         backlog.lastFailureCode === 'MEMORY_SOURCE_DELETED' ? 'MEMORY_BOUNDARY_PENDING'
           : backlog.lastFailureCode ?? 'MEMORY_BOUNDARY_PENDING');
       entry.ready = true;
+      startupWorlds.delete(ownerId);
       entry.initializing = null;
       failures.delete(ownerId);
       scheduleRetry(ownerId, true);
@@ -420,8 +433,13 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     }
   }
 
-  const startup = enabled ? readdir(path.join(root, 'accounts')).then(ids => {
-    for (const id of ids) if (OWNER.test(id)) scheduleRetry(id, true);
+  const startup = enabled ? readdir(path.join(root, 'accounts')).then(async ids => {
+    for (const id of ids) if (OWNER.test(id)) {
+      const file = path.join(root, 'accounts', id, 'memory-home', 'memoweft', 'memoweft.sqlite3');
+      // Metadata only: Core remains the sole reader/writer of its database.
+      if (await lstat(file).catch(() => null)) startupWorlds.add(id);
+      scheduleRetry(id, true);
+    }
   }).catch(() => {}) : Promise.resolve();
 
   return {
@@ -490,20 +508,25 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           const formationIssues = (jobResult.formation_requests ?? []).filter(item => ['no_change', 'dead'].includes(item.state)).map(item => ({ jobId: item.job_id, evidenceId: item.evidence_id, sessionId: item.session_id, text: item.text, intent: item.intent, createdAt: item.created_at }));
           const failedCorrectionCount = formationIssues.filter(item => item.intent === 'correction').length;
           const pendingFormationCount = jobs.filter(job => ['pending', 'processing', 'retry'].includes(job.worker?.state)).length;
+          const recoveringFormationCount = jobs.filter(job => ['pending', 'processing', 'retry'].includes(job.worker?.state)
+            && ['restart_recovered', 'shutdown_recovered'].includes(job.worker?.last_error_type)).length;
           const failedFormationCount = jobs.filter(job => ['failed', 'blocked', 'uncertain', 'dead'].includes(job.worker?.state)).length;
           const routeState = processingHealth ? await processingHealth(ownerId).catch(() => 'unavailable') : 'ready';
           const ready = entry.routeReady && routeState === 'ready' && backlog.pendingBoundaryCount === 0 && !pendingFormationCount && !failedFormationCount && !formationIssues.length;
           if (backlog.pendingBoundaryCount === 0) boundaryFailures.delete(ownerId);
           else boundaryFailures.set(ownerId, backlog.lastFailureCode === 'MEMORY_SOURCE_DELETED'
             ? 'MEMORY_BOUNDARY_PENDING' : backlog.lastFailureCode ?? 'MEMORY_BOUNDARY_PENDING');
-          return { state: ready ? 'ready' : 'degraded',
+          const recovering = recoveringFormationCount > 0 && entry.routeReady && routeState === 'ready'
+            && !backlog.pendingBoundaryCount && !failedFormationCount && !formationIssues.length;
+          return { state: ready ? 'ready' : recovering ? 'recovering' : 'degraded',
             version: health?.version ?? health?.runtime?.version ?? await readSourceVersion(),
             worldRevision: Number.isSafeInteger(revision) ? revision : null,
             capabilities: { ...capabilities(entry), inject: entry.routeReady && backlog.pendingBoundaryCount === 0 }, ...backlog,
-            pendingFormationCount, failedFormationCount, failedCorrectionCount, formationIssues,
+            pendingFormationCount, recoveringFormationCount, failedFormationCount, failedCorrectionCount, formationIssues,
             ...(!entry.routeReady || routeState === 'unavailable' ? { reasonCode: 'MEMORY_MODEL_UNAVAILABLE' }
               : routeState === 'waiting' ? { reasonCode: 'MEMORY_MODEL_WAITING' }
               : formationIssues.length || failedFormationCount ? { reasonCode: 'MEMORY_FORMATION_FAILED' }
+              : recovering ? { reasonCode: 'MEMORY_FORMATION_RECOVERING' }
               : pendingFormationCount ? { reasonCode: 'MEMORY_FORMATION_PENDING' }
               : backlog.pendingBoundaryCount ? { reasonCode: backlog.lastFailureCode === 'MEMORY_SOURCE_DELETED'
                 ? 'MEMORY_BOUNDARY_PENDING' : backlog.lastFailureCode ?? 'MEMORY_BOUNDARY_PENDING' } : {}) };

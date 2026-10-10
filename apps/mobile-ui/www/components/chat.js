@@ -81,7 +81,7 @@ async function refreshAttachmentDrafts(generation=attachmentViewGeneration){if(!
   }catch(e){if(owner!==state.owner||epoch!==state.authEpoch||source!==state.chatSource||generation!==attachmentViewGeneration)return false;
     status(`附件草稿未能恢复 · ${safeError(e)}`,true);return false}}
 
-function selectConversation(id){closeImagePreview({restoreFocus:false});invalidateLiveProgress();stopSharedPoll();clearTimeout(state.linkedPollTimer);state.linkedPollTimer=null;state.sharedGeneration++;state.chatSource='phone';state.restorePending=false;state.sharedAwaiting=null;state.scrollPinned=true;
+function selectConversation(id){uiCore.cancelNextSuggestions?.();closeImagePreview({restoreFocus:false});invalidateLiveProgress();stopSharedPoll();clearTimeout(state.linkedPollTimer);state.linkedPollTimer=null;state.sharedGeneration++;state.chatSource='phone';state.restorePending=false;state.sharedAwaiting=null;state.scrollPinned=true;
   try{localStorage.removeItem(chatSourceKey())}catch{}status('');closeToast();
   state.activeSend=null;state.sendUncertain=false;state.conversationId=id;try{if(id)localStorage.setItem(selectionKey(),id);else localStorage.removeItem(selectionKey())}catch{}
   closeAttachmentMenu();loadDraft();page('chat');scrollBottom(true);if(id)void refreshHandoff(id)}
@@ -374,7 +374,7 @@ function updateComposer(){uiCore.syncMobileIdentity();
   $('model-button').disabled=view.modelDisabled;$('voice-button').disabled=view.voiceDisabled;
   WeftPopover.modelGate({missing:state.loggedIn && (view.host?uiCore.state.modelsKnown===true&&!uiCore.state.models.some(model=>model.configured!==false&&model.available!==false):!state.model),
     field:$('draft'),send:button,empty:!$('chat-content').querySelector('.message'),content:$('chat-content'),composer:$('composer-dock'),openSettings:()=>page('models')});
-  syncChatInsets();updateApprovalModeButton();updatePageHeader();
+  mobileNextSuggestions?.sync();syncChatInsets();updateApprovalModeButton();updatePageHeader();
 }
 
 function renderQueuedTasks(){uiCore.syncMobileIdentity();const context=conversationTaskContext(),box=$('queued-tasks'),cards=$('queued-cards');

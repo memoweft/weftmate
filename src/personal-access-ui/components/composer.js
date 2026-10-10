@@ -73,6 +73,7 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
         globalThis.WeftComposerSubtasks?.paint(ui.byId('composer-subtasks'),
             globalThis.WeftUiCore.composerSubtasks(core.timelineEventsForContext()),
             {scope:`${core.state.ownerId}/${core.state.identityGeneration}/${core.state.selectedSessionId}`, root:ui.byId('transcript')});
+        ui.nextSuggestions?.sync();
     }
     function paintModels() {
         const select = ui.byId('model-select');
@@ -104,6 +105,9 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
     function mountComposer() {
         folderChoice=globalThis.WeftFolderChoice.create(core,{form:ui.byId('message-form'),tools:ui.byId('attachment-add').parentElement,toast:ui.toast,readDraft:ui.readMessageDraft});
         ui.paintFolderChoice=folderChoice.paint;
+        ui.nextSuggestions = globalThis.WeftNextSuggestionsView?.mount(core, {
+            field:ui.byId('message-text'), area:ui.byId('message-form').parentElement,
+            card:ui.byId('message-form'), repaint:() => ui.updateAvailability() });
         ui.byId('attachment-add').addEventListener('click', openComposerMenu);
         const menu = ui.byId('composer-menu');
         menu.addEventListener('keydown', event => {

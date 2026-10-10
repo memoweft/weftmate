@@ -3,7 +3,7 @@ import { checkModelConnection, canonicalProviderModelId } from './model-connecti
 import { discoverOpenAICompatibleModels, openAICompatibleEndpoint } from './openai-compatible-client.ts'
 import { modelTierFor } from './model-tier.ts'
 import { modelRouteFingerprint } from './model-route-fingerprint.mjs'
-import { reasoningCapability } from './model-reasoning.mjs'
+import { reasoningCapability, modelReasoning } from './model-reasoning.mjs'
 import path from 'node:path'
 import { mkdir, rm, cp, access } from 'node:fs/promises'
 import { sessionWorkspace } from './personal-access/session-workspace.mjs'
@@ -12,7 +12,7 @@ const fail = (code) => { const error = new Error(code); error.code = code; throw
 
 export function createPersonalAccessBackend({ currentOrigin, referenceScan, profiles, hasCredential,
   routeForProfile, listSessions, resolveSession, ensureKnownSession, gateway, queue, bindSession,
-  credentialForProfile = null, modelFetch = fetch, processingStatus = async () => null,
+  credentialForProfile = null, modelFetch = async (url, { onStart, priority, ...options }) => { await onStart?.(); return fetch(url, options); }, processingStatus = async () => null,
   prepareModelReasoning = null,
   reasoningSettings = null,
   sessionProfileId = null,
@@ -134,18 +134,26 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       if (!apiKey) fail('MODEL_UNAVAILABLE')
       return checkModelConnection({ baseUrl: profile.baseUrl, modelId: profile.model, apiKey, fetchImpl: modelFetch })
     },
-    async modelCompletion({ profileId, body, signal, ownerId }) {
+    async modelCompletion({ profileId, body, signal, ownerId, priority, onStart }) {
       requireModelAllowed(ownerId, profileId, 'new')
       const profile = modelProfile(profileId)
       if (body.model !== profile.model || typeof credentialForProfile !== 'function') fail('MODEL_UNAVAILABLE')
       const apiKey = credentialForProfile(profile)
       if (!apiKey) fail('MODEL_UNAVAILABLE')
       requireModelAllowed(ownerId, profileId, 'new')
+      let declaredEfforts;
+      if (priority === 'suggestion' && modelReasoning(profile)?.compat?.thinkingFormat === 'openai' && reasoningSettings && currentOrigin()) {
+        signal?.throwIfAborted();
+        const settings = await reasoningSettings(), route = routeForProfile(profile.id);
+        declaredEfforts = settings[route.provider]?.models?.find(row => row.id === profile.model)?.reasoningEfforts;
+        signal?.throwIfAborted();
+      }
       return modelFetch(openAICompatibleEndpoint(profile.baseUrl, 'chat/completions'), {
         method: 'POST', redirect: 'error', signal,
+        ...(priority ? { priority } : {}), ...(onStart ? { onStart } : {}),
         headers: { 'content-type': 'application/json', accept: body.stream ? 'text/event-stream' : 'application/json',
           authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ ...body, model: canonicalProviderModelId(profile.baseUrl, body.model) }),
+        body: JSON.stringify({ ...(priority === 'suggestion' ? suggestionCompletionBody(profile, body, declaredEfforts) : body), model: canonicalProviderModelId(profile.baseUrl, body.model) }),
       })
     },
     async preflight(command) {
@@ -492,4 +500,22 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       return Promise.all(listed.items.filter(item => requested.has(item.sessionId)).map(item => describeItem(item, listed, bindings)))
     },
   }
+}
+
+/** Speculation uses the existing provider declaration at its lightest supported mode. */
+export function suggestionReasoning(profile) {
+  const format = modelReasoning(profile)?.compat?.thinkingFormat;
+  return format === 'deepseek' ? { thinking: { type: 'disabled' } }
+    : format === 'qwen' ? { enable_thinking: false }
+    : format === 'openai' ? { reasoning_effort: 'low' } : {};
+}
+
+export function suggestionCompletionBody(profile, body, declaredEfforts = undefined) {
+  if (modelReasoning(profile)?.compat?.thinkingFormat !== 'openai') return { ...body, ...suggestionReasoning(profile) };
+  // Reasoning chat models reject temperature at low effort and require the
+  // total completion budget to include hidden reasoning as well as the JSON.
+  const { temperature, max_tokens, ...rest } = body;
+  if (declaredEfforts === false) return { ...rest, max_completion_tokens: max_tokens ?? 160 };
+  if (declaredEfforts !== undefined && !declaredEfforts?.low) fail('MODEL_SUGGESTION_UNAVAILABLE');
+  return { ...rest, ...suggestionReasoning(profile), reasoning_effort: declaredEfforts?.low ?? 'low', max_completion_tokens: 1024 };
 }

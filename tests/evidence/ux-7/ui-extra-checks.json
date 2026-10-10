@@ -1,0 +1,69 @@
+{
+  "synthetic": true,
+  "checks": [
+    {
+      "surface": "electron",
+      "theme": "light",
+      "chipColor": "rgb(87, 87, 82)",
+      "chipBackground": "rgb(241, 240, 237)",
+      "ghostColor": "rgb(103, 103, 98)",
+      "fieldBackground": "rgb(255, 255, 255)",
+      "alignmentDeltaPx": 0.33331298828125,
+      "gapPx": 8,
+      "chipContrast": 6.375346089258247,
+      "ghostContrast": 5.686155949297147,
+      "reducedMotion": true,
+      "draftHidesChips": true,
+      "runningHidesChips": true,
+      "settingOffRequests": 0
+    },
+    {
+      "surface": "electron",
+      "theme": "dark",
+      "chipColor": "rgb(187, 189, 180)",
+      "chipBackground": "rgb(48, 49, 46)",
+      "ghostColor": "rgb(160, 163, 151)",
+      "fieldBackground": "rgb(38, 39, 36)",
+      "alignmentDeltaPx": 0.33331298828125,
+      "gapPx": 8,
+      "chipContrast": 6.887743698915735,
+      "ghostContrast": 5.851146559668596,
+      "reducedMotion": true,
+      "draftHidesChips": true,
+      "runningHidesChips": true,
+      "settingOffRequests": 0
+    },
+    {
+      "surface": "android-bundle",
+      "theme": "light",
+      "chipColor": "rgb(95, 98, 91)",
+      "chipBackground": "rgb(245, 244, 241)",
+      "ghostColor": "rgb(107, 110, 102)",
+      "fieldBackground": "rgb(255, 255, 255)",
+      "alignmentDeltaPx": 0,
+      "gapPx": 8,
+      "chipContrast": 5.640925279847457,
+      "ghostContrast": 5.18852386532909,
+      "reducedMotion": true,
+      "draftHidesChips": true,
+      "runningHidesChips": true,
+      "settingOffRequests": 0
+    },
+    {
+      "surface": "android-bundle",
+      "theme": "dark",
+      "chipColor": "rgb(187, 192, 179)",
+      "chipBackground": "rgb(47, 49, 43)",
+      "ghostColor": "rgb(166, 173, 158)",
+      "fieldBackground": "rgb(38, 39, 35)",
+      "alignmentDeltaPx": 0,
+      "gapPx": 8,
+      "chipContrast": 7.086650930731396,
+      "ghostContrast": 6.509132796731688,
+      "reducedMotion": true,
+      "draftHidesChips": true,
+      "runningHidesChips": true,
+      "settingOffRequests": 0
+    }
+  ]
+}
