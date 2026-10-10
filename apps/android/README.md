@@ -1,6 +1,6 @@
 # WeftMate Android 客户端
 
-当前壳 **0.8.24 / code37**：M3-1 网络错误明确分类（无网 / 连接失败 / 超时）、独立的宿主状态探测（连接与读取各 5 秒预算）、登录时先接纳原生宿主会话再由共享层读取设备列表（修复有效登录被判成失效）。上一版 0.8.23 / code36：UX-7 放行「下一步建议」的 `POST` / `DELETE /personal/v1/sessions/{id}/suggestions`。包含这些能力的界面包最低原生 code37。
+当前壳 **0.8.25 / code38**：AND-1 系统栏沉浸——页面延伸到透明的状态栏 / 导航栏之后，安全区由原生传给页面；状态栏图标深浅跟随页面实际主题（页面主动报告），登录 / 切号 / 前台恢复 / 系统深浅变化统一同步；启动窗口按深浅色设对，不闪白。上一版 0.8.24 / code37：M3-1 网络错误分类、独立宿主状态探测、登录接入顺序修复。包含这些能力的界面包最低原生 code38。
 
 TB-4 当前壳 **0.8.20 / code33**：底部四选项卡配合——根聊天页返回键退到后台（`app.exit` → `moveTaskToBack`）、输入法可见状态事件（`weft-keyboard`）；业务路由白名单放行目标页的 `/schedules…` 与 `/goals…`。含底部选项卡的界面包最低原生 code33。
 
@@ -126,3 +126,18 @@ adb -s <confirmed-serial> shell am instrument -w -e class com.memoweft.weftmate.
 GitHub `S1c Web and Android / Android debug and JVM tests` 执行 Gradle 8.9、Java 17 的 `:app:assembleDebug :app:testDebugUnitTest`，包括回调路径/重复或不匹配 state 的 JVM 测试。本机无 SDK 时使用此 runner，不重建开发环境。系统浏览器返回和实际 TLS pin 的 Android 真机测试仍需隔离模拟器/测试设备。手机 UI 发布需 `--min-native-version-code 15`。
 
 MEM-2壳 **0.8.13 / code26** 增加临时对话业务路由 `/sessions/temporary`。界面包含入口、标题提示、记忆 / 召回开关和期限；宿主历史 `cacheAllowed:false` 时不保存为离线历史。发布此界面包最低code26。
+
+
+## AND-1：系统栏与实际页面主题
+
+需要随界面包发布新原生壳；本工作包不改版本号，由合并时统一递增。
+
+- Android（安卓）26–28：`WindowCompat.setDecorFitsSystemWindows(false)` 使用兼容布局标记，透明状态栏 / 导航栏，`WindowInsetsControllerCompat` 控制图标。API（接口版本）28 加刘海 / 挖孔短边布局；安全区从 `WindowInsetsCompat` 获取。
+- 29：关闭系统栏对比度保护和自动 `Force Dark`（强制深色），避免系统把用户选的浅色再次变暗。
+- 30：兼容层委托系统窗口 / 图标 API；系统栏、窗口标题区、屏幕缺口一起进入页面安全区。原生仅为实际 IME（输入法）高度缩小 WebView（网页视图），页面底部安全区在键盘出现时清零。
+- 31–35：`setApplicationNightMode` 记住启动外观；显式浅 / 深分别为 `MODE_NIGHT_NO` / `MODE_NIGHT_YES`，跟随系统为 `MODE_NIGHT_AUTO`。后者在 [AOSP（安卓开源实现）的包配置中映射为 `UI_MODE_NIGHT_UNDEFINED`](https://android.googlesource.com/platform/frameworks/base/+/refs/heads/android15-release/services/core/java/com/android/server/UiModeManagerService.java)，清除旧固定覆盖，继续继承系统。启动资源分别提供浅 / 深窗口背景和闪屏；旧系统关闭错误颜色的窗口预览。
+- 35：状态栏颜色由透明栏后的页面直接绘制，不依赖已无效的 `statusBarColor`。三键导航关闭系统附加保护层；[Android 官方说明](https://developer.android.com/develop/ui/views/layout/edge-to-edge)。
+
+`settings.appearance` 新增可选 `effectiveDark` 布尔报告；原偏好三态和账户存储方式继续使用。报告、偏好读取和保存均在界面线程完成，不排在网络请求之后。登录进入、注销、切号、系统外观变化和前台恢复读取实际页面偏好；栏图标跟随实际已绘制主题。`R.color.wm_web_surface_*` 和原生兼容页面的表面色都由手机表面令牌生成，不再保留手抄的网页表面色。
+
+夜间合成传输由测试 APK（安卓安装包）把页面实际主题送入同一个原生控制器；截屏前等待主题回执，检查整屏顶部色差。真实消息桥另由 AND-1 独立包验证。命令与覆盖限制见 [AND-1 证据](../../tests/evidence/and-1/README.md)。

@@ -17,10 +17,25 @@ class NightlyWebViewProbeTest {
         val done = File(context.filesDir, "nightly-probe.done")
         done.delete()
         instrumentation.runOnMainSync { WebView.setWebContentsDebuggingEnabled(true) }
-        instrumentation.startActivitySync(Intent(context, HybridActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        val activity = instrumentation.startActivitySync(Intent(context, HybridActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as HybridActivity
+        val web = (activity.findViewById<android.widget.FrameLayout>(android.R.id.content).getChildAt(0)
+            as android.widget.FrameLayout).getChildAt(0) as WebView
         try {
             val deadline = System.currentTimeMillis() + 30 * 60 * 1000
-            while (!done.exists() && System.currentTimeMillis() < deadline) Thread.sleep(500)
+            while (!done.exists() && System.currentTimeMillis() < deadline) {
+                // Gallery fixtures replace business transport. Feed the rendered theme
+                // into the same native controller used by the production bridge.
+                instrumentation.runOnMainSync {
+                    web.evaluateJavascript("document.documentElement.dataset.theme") { value ->
+                        if (value == "\"dark\"" || value == "\"light\"") {
+                            val dark = value == "\"dark\""
+                            activity.reportRenderedSystemBars(dark)
+                            File(context.filesDir, "nightly-bars-theme.txt").writeText(if (dark) "dark" else "light")
+                        }
+                    }
+                }
+                Thread.sleep(100)
+            }
             check(done.exists()) { "Nightly probe timed out" }
         } finally {
             instrumentation.runOnMainSync { WebView.setWebContentsDebuggingEnabled(false) }

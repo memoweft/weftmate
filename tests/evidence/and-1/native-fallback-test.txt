@@ -1,0 +1,8 @@
+
+com.memoweft.weftmate.mobile.SystemBarsProbeTest:.
+
+Time: 12.294
+
+OK (1 test)
+
+

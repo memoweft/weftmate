@@ -1,0 +1,53 @@
+
+com.memoweft.weftmate.mobile.SystemBarsProbeTest:theme-mismatch-fixed/dark: delta=0.00 icons=light
+login/light: delta=0.00 icons=dark
+login/dark: delta=0.00 icons=light
+mumu-hidden-navigation-main/light: delta=4.60 icons=dark
+mumu-hidden-navigation-side-chat/light: delta=4.60 icons=dark
+mumu-hidden-navigation-activity/light: delta=4.60 icons=dark
+mumu-hidden-navigation-goals/light: delta=4.60 icons=dark
+mumu-hidden-navigation-library/light: delta=4.60 icons=dark
+mumu-hidden-navigation-drawer/light: delta=4.03 icons=dark
+mumu-hidden-navigation-settings/light: delta=4.60 icons=dark
+mumu-hidden-navigation-appearance/light: delta=0.00 icons=dark
+mumu-hidden-navigation-search/light: delta=0.00 icons=dark
+mumu-hidden-navigation-bottom-menu/light: delta=0.00 icons=dark
+mumu-hidden-navigation-gallery/light: delta=0.00 icons=dark
+mumu-hidden-navigation-gallery-return/light: delta=0.00 icons=dark
+mumu-hidden-navigation-file-preview/light: delta=0.00 icons=dark
+mumu-hidden-navigation-keyboard/light: delta=0.00 icons=dark
+mumu-hidden-navigation-pairing/light: delta=0.00 icons=dark
+mumu-hidden-navigation-main/dark: delta=0.00 icons=light
+mumu-hidden-navigation-side-chat/dark: delta=0.00 icons=light
+mumu-hidden-navigation-activity/dark: delta=0.00 icons=light
+mumu-hidden-navigation-goals/dark: delta=0.00 icons=light
+mumu-hidden-navigation-library/dark: delta=0.00 icons=light
+mumu-hidden-navigation-drawer/dark: delta=0.00 icons=light
+mumu-hidden-navigation-settings/dark: delta=0.00 icons=light
+mumu-hidden-navigation-appearance/dark: delta=0.00 icons=light
+mumu-hidden-navigation-search/dark: delta=0.00 icons=light
+mumu-hidden-navigation-bottom-menu/dark: delta=0.00 icons=light
+mumu-hidden-navigation-gallery/dark: delta=0.00 icons=light
+mumu-hidden-navigation-gallery-return/dark: delta=0.00 icons=light
+mumu-hidden-navigation-file-preview/dark: delta=0.00 icons=light
+mumu-hidden-navigation-keyboard/dark: delta=0.00 icons=light
+mumu-hidden-navigation-pairing/dark: delta=0.00 icons=light
+appearance-light-system-no/light: delta=0.00 icons=dark
+appearance-dark-system-no/dark: delta=0.00 icons=light
+appearance-system-system-no/light: delta=0.00 icons=dark
+appearance-light-system-yes/light: delta=0.00 icons=dark
+appearance-dark-system-yes/dark: delta=0.00 icons=light
+appearance-system-system-yes/dark: delta=0.00 icons=light
+account-a-saved/dark: delta=0.00 icons=light
+account-b-default/light: delta=4.60 icons=dark
+account-a-restored/dark: delta=0.00 icons=light
+Warning: Activity not started, its current task has been brought to the front
+background-system-change/light: delta=0.00 icons=dark
+landscape/light: delta=0.00 icons=dark
+.
+
+Time: 48.377
+
+OK (1 test)
+
+

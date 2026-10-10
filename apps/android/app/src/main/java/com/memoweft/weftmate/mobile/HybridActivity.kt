@@ -19,6 +19,8 @@ import android.database.ContentObserver
 import android.provider.Settings
 import android.provider.MediaStore
 import androidx.core.content.FileProvider
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import java.io.File
 import android.speech.RecognizerIntent
 import android.view.View
@@ -172,7 +174,14 @@ class HybridActivity : Activity() {
     @Volatile private var pendingOriginalSave: OriginalSaveAttempt? = null
     @Volatile private var foreground = true
 
+    private var pageDark: Boolean? = null
+    private var pageAppearance: String? = null
+    private lateinit var container: FrameLayout
+    private var safeInsets = androidx.core.graphics.Insets.NONE
+    private var keyboardVisible = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        SystemBars.prepare(this, savedAppearance(this))
         super.onCreate(savedInstanceState)
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
         activeScope = displayPrefs.getString("lastScope", "local")
@@ -206,24 +215,24 @@ class HybridActivity : Activity() {
                 }
             } catch (_: Exception) { /* Manual sync and persisted local records remain available. */ }
         }
-        val container = FrameLayout(this)
-        if (android.os.Build.VERSION.SDK_INT >= 30) {
-            window.setDecorFitsSystemWindows(false)
-            container.setOnApplyWindowInsetsListener { view, insets ->
-                val bars = insets.getInsets(WindowInsets.Type.systemBars())
-                val ime = insets.getInsets(WindowInsets.Type.ime())
-                if (::web.isInitialized) web.evaluateJavascript("window.dispatchEvent(new CustomEvent('weft-keyboard',{detail:{visible:${insets.isVisible(WindowInsets.Type.ime())}}}))", null)
-                val bottom = maxOf(bars.bottom, ime.bottom)
-                if (view.paddingLeft != bars.left || view.paddingTop != bars.top ||
-                    view.paddingRight != bars.right || view.paddingBottom != bottom)
-                    view.setPadding(bars.left, bars.top, bars.right, bottom)
-                insets
-            }
+        container = FrameLayout(this)
+        container.setBackgroundColor(SystemBars.surface(this, resolvedAppearanceDark(appearance(), systemAppearanceDark())))
+        ViewCompat.setOnApplyWindowInsetsListener(container) { view, insets ->
+            safeInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+            keyboardVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
+            // Only the keyboard resizes the WebView. The page draws behind bars and owns safe areas.
+            val bottom = if (keyboardVisible) ime.bottom else 0
+            if (view.paddingBottom != bottom) view.setPadding(0, 0, 0, bottom)
+            syncSafeInsets()
+            insets
         }
-        web = WebView(this).apply { setBackgroundColor(Weave.surface) }
+        web = WebView(this).apply { setBackgroundColor(SystemBars.surface(this@HybridActivity, resolvedAppearanceDark(appearance(), systemAppearanceDark()))) }
         motionSettings.forEach { contentResolver.registerContentObserver(Settings.Global.getUriFor(it), false, motionObserver) }
         container.addView(web, FrameLayout.LayoutParams(-1, -1))
         setContentView(container)
+        applySystemBars()
+        ViewCompat.requestApplyInsets(container)
         configureWeb()
         loadPage()
         checkForUpdate()
@@ -244,6 +253,10 @@ class HybridActivity : Activity() {
             javaScriptCanOpenWindowsAutomatically = false
             setSupportMultipleWindows(false)
             mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
+            if (android.os.Build.VERSION.SDK_INT >= 29) {
+                @Suppress("DEPRECATION")
+                forceDark = android.webkit.WebSettings.FORCE_DARK_OFF
+            }
         }
         web.webChromeClient = object : android.webkit.WebChromeClient() {
             override fun onPermissionRequest(request: android.webkit.PermissionRequest) {
@@ -267,7 +280,15 @@ class HybridActivity : Activity() {
                 return if (request.url.scheme == "https" && request.url.host == "appassets.androidplatform.net")
                     if (request.url.path?.startsWith("/media/session/") == true) mediaSharedImage(request)
                     else if (request.url.path?.startsWith("/media/image/") == true) mediaImage(request)
-                    else loader.shouldInterceptRequest(request.url) ?: forbidden()
+                    else (loader.shouldInterceptRequest(request.url)?.let { response ->
+                        if (request.url.toString() == entry) {
+                            val dark = resolvedAppearanceDark(appearance(), systemAppearanceDark())
+                            val html = response.data.use { it.readBytes().toString(Charsets.UTF_8) }
+                            response.data = ByteArrayInputStream(html.replace("<html ",
+                                "<html data-theme=\"${if (dark) "dark" else "light"}\" ").toByteArray(Charsets.UTF_8))
+                        }
+                        response
+                    } ?: forbidden())
                 else if (request.url.scheme == "data" && request.isForMainFrame.not()) null
                 else forbidden()
             }
@@ -283,6 +304,7 @@ class HybridActivity : Activity() {
                 if (closed.get()) return
                 if (url != entry) return
                 syncMotionPreference()
+                syncSafeInsets()
                 val expected = pageGeneration
                 web.postDelayed({
                     if (!closed.get() && !currentPageReady && expected == pageGeneration) {
@@ -314,6 +336,27 @@ class HybridActivity : Activity() {
             if (!id.matches(Regex("[A-Za-z0-9_-]{1,80}"))) return@addWebMessageListener
             if (!method.matches(Regex("[A-Za-z.]{1,64}"))) {
                 respond(reply, id, false, JSONObject().put("code", "INVALID_REQUEST"))
+                return@addWebMessageListener
+            }
+            val themeParams = request.optJSONObject("params")
+            if (method == "settings.appearance" && themeParams?.has("effectiveDark") == true && !themeParams.has("value")) {
+                // This callback is on the UI thread. Theme changes must not wait
+                // behind host/network requests in the business worker pool.
+                try {
+                    require(themeParams.get("effectiveDark") is Boolean)
+                    val rendered = themeParams.optString("renderedAppearance", appearance())
+                    require(rendered in setOf("system", "light", "dark"))
+                    pageAppearance = rendered
+                    reportRenderedSystemBars(themeParams.getBoolean("effectiveDark"))
+                    respond(reply, id, true, JSONObject().put("value", appearance()).put("systemDark", systemAppearanceDark()))
+                } catch (_: Exception) { respond(reply, id, false, JSONObject().put("code", "INVALID_REQUEST")) }
+                return@addWebMessageListener
+            }
+            if (method == "settings.appearance") {
+                // Preference reads/writes are local too; login and account changes
+                // cannot queue their theme behind a slow host request.
+                try { respond(reply, id, true, handle(method, themeParams ?: JSONObject(), accountEpoch.get(), secrets.host())) }
+                catch (error: Exception) { respond(reply, id, false, JSONObject().put("code", safeCode(error))) }
                 return@addWebMessageListener
             }
             if (method == "events.subscribe") {
@@ -453,6 +496,9 @@ class HybridActivity : Activity() {
     private fun loadPage() {
         if (closed.get()) return
         pageGeneration++
+        pageDark = null
+        pageAppearance = null
+        applySystemBars()
         currentPageReady = false
         draftKnowledgeReady = false
         events = null
@@ -670,22 +716,26 @@ class HybridActivity : Activity() {
         runOnUiThread { applySystemBars() }
     }
     private fun applySystemBars() {
-        val selected = appearance()
-        val dark = selected == "dark" || selected == "system" &&
-            (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
-        val color = getColor(if (dark) R.color.wm_web_surface_dark else R.color.wm_web_surface_light)
-        window.decorView.setBackgroundColor(color)
-        window.statusBarColor = color
-        window.navigationBarColor = color
-        if (android.os.Build.VERSION.SDK_INT >= 30) {
-            val flags = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or
-                WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
-            window.decorView.windowInsetsController?.setSystemBarsAppearance(if (dark) 0 else flags, flags)
-        } else {
-            @Suppress("DEPRECATION")
-            window.decorView.systemUiVisibility = if (dark) 0 else
-                View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
-        }
+        val dark = resolvedAppearanceDark(appearance(), systemAppearanceDark(), pageDark)
+        SystemBars.apply(this, dark, appearance())
+        if (::container.isInitialized) container.setBackgroundColor(SystemBars.surface(this, dark))
+        if (::web.isInitialized) web.setBackgroundColor(SystemBars.surface(this, dark))
+    }
+    internal fun reportRenderedSystemBars(dark: Boolean) {
+        pageDark = dark
+        applySystemBars()
+    }
+    private fun syncSafeInsets() {
+        if (!::web.isInitialized || closed.get()) return
+        val scale = resources.displayMetrics.density
+        val bottom = if (keyboardVisible) 0 else safeInsets.bottom
+        web.evaluateJavascript("""(()=>{const s=document.documentElement.style;
+            s.setProperty('--native-safe-top','${safeInsets.top / scale}px');
+            s.setProperty('--native-safe-right','${safeInsets.right / scale}px');
+            s.setProperty('--native-safe-bottom','${bottom / scale}px');
+            s.setProperty('--native-safe-left','${safeInsets.left / scale}px');
+            document.documentElement.dataset.nativeInsets='true';
+            window.dispatchEvent(new CustomEvent('weft-keyboard',{detail:{visible:$keyboardVisible}}));})()""", null)
     }
     private data class HostChoice(val profileId: String, val modelId: String, val name: String)
     private fun hostChoice(host: HostIdentity?): HostChoice? = host?.let {
@@ -1447,6 +1497,15 @@ class HybridActivity : Activity() {
         "settings.appearance" -> {
             val host = secrets.host()
             if (host != null) useScope(host)
+            if (params.has("effectiveDark")) {
+                require(params.get("effectiveDark") is Boolean)
+                val dark = params.getBoolean("effectiveDark")
+                val rendered = params.optString("renderedAppearance", appearance())
+                require(rendered in setOf("system", "light", "dark"))
+                runOnUiThread { if (!closed.get() && requestEpoch == accountEpoch.get()) {
+                    pageDark = dark; pageAppearance = rendered; applySystemBars()
+                } }
+            }
             if (params.has("value")) {
                 if (host == null) throw ApiFailure(401, "LOGIN_REQUIRED")
                 ensureOpen()
@@ -1456,7 +1515,7 @@ class HybridActivity : Activity() {
                 runOnUiThread { applySystemBars() }
             }
             JSONObject().put("value", appearance()).put("systemDark",
-                (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES)
+                systemAppearanceDark())
         }
         "auth.state" -> {
             val state = api.accountState(params.getString("origin"))
@@ -2080,7 +2139,8 @@ class HybridActivity : Activity() {
             }) else execute()
         }
     }
-    override fun onResume() { super.onResume(); if (closed.get()) return; foreground = true; checkForUpdate(); restartUpdateSubscription(); scheduleSharedReconcile();
+    override fun onResume() { super.onResume(); if (closed.get()) return; foreground = true; applySystemBars(); syncSafeInsets();
+        emit("theme.system", JSONObject().put("dark", systemAppearanceDark())); checkForUpdate(); restartUpdateSubscription(); scheduleSharedReconcile();
         if (notificationPoll == null) notificationPoll = localTurnRenewWorker.scheduleWithFixedDelay({ pollNotifications() }, 1, 5, TimeUnit.SECONDS)
         emit("notifications.permission", ActivityNotifications(this).state())
         syncMotionPreference()
@@ -2098,6 +2158,10 @@ class HybridActivity : Activity() {
         if (abs(attributes.preferredRefreshRate - preferred) < 0.01f) return
         attributes.preferredRefreshRate = preferred
         window.attributes = attributes
+    }
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus && !closed.get()) applySystemBars()
     }
     override fun onPause() {
         foreground = false
@@ -2130,6 +2194,7 @@ class HybridActivity : Activity() {
         super.onConfigurationChanged(newConfig)
         if (closed.get()) return
         applySystemBars()
+        syncSafeInsets()
         web.settings.textZoom = (newConfig.fontScale * 100).toInt()
         web.requestLayout()
         emit("theme.system", JSONObject().put("dark",
