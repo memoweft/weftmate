@@ -1,0 +1,17 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('#memory-health').getByText('正在继续整理上次没做完的记忆', { exact: true }) to be visible
+
+    at openMemory (D:\AIProjects\WeftMate\Worktrees\w5\tests\evidence\fx-18\runners\recovery-ui.mjs:15:173)
+    at async file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/evidence/fx-18/runners/recovery-ui.mjs:24:118 {
+  log: [
+    "  - waiting for locator('#memory-health').getByText('正在继续整理上次没做完的记忆', { exact: true }) to be visible"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v24.15.0
