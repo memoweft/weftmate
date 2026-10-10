@@ -108,7 +108,7 @@ try {
       }, questionPage);
       const mainPage=android?.page || await context.newPage();
       await shot('main-chat',async()=>{
-        mainFixture=await startMainChatCandidate(300,{logicalMobile:true});await mainPage.goto(mainFixture.mobileUrl);
+        mainFixture=await startMainChatCandidate(300,{logicalMobile:true});if(android)await android.reverse(new URL(mainFixture.mobileUrl).port);await mainPage.goto(mainFixture.mobileUrl);
         await mainPage.getByRole('button',{name:'搜索主对话',exact:true}).waitFor();await mainPage.waitForFunction(()=>document.querySelector('.main-chat-row'));
         await mainPage.evaluate(theme=>applyTheme(theme),theme);
       },mainPage);
