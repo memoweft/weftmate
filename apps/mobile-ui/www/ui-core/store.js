@@ -57,6 +57,7 @@
                 ['plan', '先出计划', '先给计划，你确认后再做'],
                 ['allow-all', '全部允许', '不再询问，删除、发布和付款也会直接执行'],
             ];
+            globalThis.WeftShortcuts?.registerApprovalModes(approvalModes);
             let currentApprovalMode = 'auto';
             const approvalIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
             const approvalRequestPattern = /^[A-Za-z0-9_.:-]{1,128}$/;

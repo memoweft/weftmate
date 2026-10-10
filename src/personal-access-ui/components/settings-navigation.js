@@ -166,6 +166,10 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         move('memory', ui.byId('memory-view'));
 
         const updates = node('section', 'settings-updates'); updates.id = 'settings-updates'; panels.get('about').append(updates);
+        for (const [label,action] of [['更新内容',()=>ui.openReleases()],['帮助与小技巧',()=>ui.openHelp()]]) {
+            const link=node('button','button secondary',label);link.type='button';link.onclick=()=>{ui.byId('account-back').click();action();};
+            panels.get('about').append(globalThis.WeftSettingsControls.row(label,'在应用内阅读。',link));
+        }
         description('about', 'WeftMate', '跨设备、跨对话的个人助手。', globalThis.weftmateDesktop ? '桌面程序' : '远程网页');
         const appVersion = node('span', 'settings-value', '正在读取…');
         if (globalThis.weftmateDesktop) { panels.get('about').append(globalThis.WeftSettingsControls.row('版本', '当前桌面程序。', appVersion)); void globalThis.weftmateDesktop.settings().then(settings => { appVersion.textContent = settings.version; }); }

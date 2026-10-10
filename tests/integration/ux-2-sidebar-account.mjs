@@ -76,7 +76,7 @@ try {
     await button(desktop,'账户菜单').click();
     const menu = desktop.getByRole('region',{name:'账户选项'});
     await menu.getByText(new RegExp(expected)).waitFor(); await shot(desktop,'desktop',theme,'account-menu');
-    await button(desktop,'帮助与反馈').click(); await desktop.getByText('描述问题时请勿包含密码或私人对话。',{exact:true}).waitFor();
+    await button(desktop,'帮助').click();await desktop.getByRole('heading',{name:'帮助与小技巧',exact:true}).waitFor();await button(desktop,'返回对话').click();await desktop.keyboard.press('Control+,');await button(desktop,'关于').click();await desktop.getByText('描述问题时请勿包含密码或私人对话。',{exact:true}).waitFor();
     await button(desktop,'关闭设置').click(); await desktop.keyboard.press('Control+,'); await desktop.getByRole('dialog',{name:'设置',exact:true}).waitFor(); await button(desktop,'关闭设置').click();
     await button(desktop,'账户菜单').click(); await button(desktop,'退出登录').click();
     await desktop.getByRole('dialog',{name:'退出登录',exact:true}).waitFor(); await shot(desktop,'desktop',theme,'logout-confirm'); await button(desktop,'取消').click();

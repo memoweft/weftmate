@@ -1,0 +1,21 @@
+✔ mobile generated assets match every canonical ui-core file byte for byte (364.662ms)
+✔ check refuses changed, missing and unlisted copies; rebuild follows the source and removes stale files (637.4203ms)
+✔ mobile check validates nested component syntax as well as generated source parity (3668.8913ms)
+✔ published mobile bundle includes the verified shared assets at their ui-core paths (4283.9913ms)
+✔ publish command refuses stale generated assets before creating a release (6385.1912ms)
+✔ release records have valid dates, semantic versions and user-facing categories; generated records match source (15.3917ms)
+✔ update notice establishes a baseline, shows once per account/version and survives reload; rollback never repeats (1.7539ms)
+✔ update notice ignores host-published phone bundle and obtains installed desktop version (7.6717ms)
+✔ help search filters all words locally across title, group and body; blank restores all topics (17.6764ms)
+✔ every shortcut in the panel registry dispatches its own action with identical modifier matching; composition is ignored (2.6669ms)
+✔ About actions expose native layer state, checking, failures and explicit restart (2.437ms)
+✔ mobile About reads actual native installed/staged versions and invokes the existing updater (0.8328ms)
+✔ desktop and Android ship the same public trust anchor, with no private material (4.5222ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 15533.6835
