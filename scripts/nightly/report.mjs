@@ -64,9 +64,9 @@ export async function inspect(records, { now = Date.now(), threshold = 0.08, bas
     if (!Number.isFinite(age) || age > 24 * 3600_000 || age < -60_000) alerts.push({ cell: key(row), kind: 'stale', message: '超过 24 小时未更新或拍摄时间无效' });
     if (commit && row.commit !== commit) alerts.push({ cell: key(row), kind: 'commit', message: '拍摄提交与本轮构建不一致' });
     const old = baseline.find(item => key(item) === key(row));
-    if (old?.file && baselineDirectory) {
+    if (old?.file && (old.baselinePath || baselineDirectory)) {
       try {
-        const diff = difference(await readFile(row.path), await readFile(join(baselineDirectory, old.file)));
+        const diff = difference(await readFile(row.path), await readFile(old.baselinePath || join(baselineDirectory, old.file)));
         differences.push({ cell: key(row), ...diff, previousCommit: old.commit });
         if (diff.ratio > threshold) alerts.push({ cell: key(row), kind: 'diff', message: `像素变化 ${(diff.ratio * 100).toFixed(2)}% > ${(threshold * 100).toFixed(2)}%` });
       } catch { alerts.push({ cell: key(row), kind: 'diff-error', message: '像素比较失败（PNG 或基线缺失）' }); }
@@ -77,16 +77,22 @@ export async function inspect(records, { now = Date.now(), threshold = 0.08, bas
   return { generatedAt: new Date(now).toISOString(), counts, threshold, alerts, differences, phases };
 }
 export async function previousRun(root, current) {
+  const baseline = [], seen = new Set(); let baselineDirectory;
   const dates = (await readdir(root, { withFileTypes: true })).filter(e => e.isDirectory() && /^\d{4}-\d{2}-\d{2}$/.test(e.name)).map(e => e.name).sort().reverse();
   for (const date of dates) {
     const runs = (await readdir(join(root, date), { withFileTypes: true })).filter(e => e.isDirectory()).map(e => e.name).sort().reverse();
     for (const run of runs) {
       const dir = join(root, date, run, 'gallery');
       if (resolve(dir) === resolve(current)) continue;
-      try { const manifest = JSON.parse(await readFile(join(dir, 'manifest.json'), 'utf8')); return { baseline: manifest.records, baselineDirectory: dir }; } catch {}
+      try {
+        const manifest = JSON.parse(await readFile(join(dir, 'manifest.json'), 'utf8'));
+        for (const row of manifest.records) if (row.file && !seen.has(key(row))) {
+          baseline.push({ ...row, baselinePath: join(dir, row.file) }); seen.add(key(row)); baselineDirectory ||= dir;
+        }
+      } catch {}
     }
   }
-  return { baseline: [] };
+  return { baseline, baselineDirectory };
 }
 export async function retention(root, now = new Date()) {
   const cutoff = new Date(now); cutoff.setHours(0, 0, 0, 0); cutoff.setDate(cutoff.getDate() - 13);
