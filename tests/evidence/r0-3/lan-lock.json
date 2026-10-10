@@ -1,0 +1,28 @@
+{
+  "generatedAt": "2026-10-10T00:41:55.267Z",
+  "phases": [
+    {
+      "name": "apple",
+      "platforms": [
+        "mac",
+        "iphone",
+        "watch"
+      ],
+      "status": "skipped",
+      "reason": "被占用，未拍（LAN 锁）",
+      "seconds": 0.001
+    },
+    {
+      "name": "android",
+      "platforms": [
+        "android"
+      ],
+      "status": "skipped",
+      "reason": "被占用，未拍（LAN / MuMu 锁）",
+      "seconds": 0
+    }
+  ],
+  "durationSeconds": 6.944,
+  "passed": true,
+  "noEmulatorOperation": true
+}
