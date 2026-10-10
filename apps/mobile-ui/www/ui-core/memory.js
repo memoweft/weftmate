@@ -7,6 +7,8 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         if (status.state === 'disabled') return '记忆暂停：尚未启用';
         if (code === 'MEMORY_MODEL_UNAVAILABLE') return `记忆暂停：记忆模型不可用${waiting ? `，已保存 ${waiting} 条待补交` : ''}`;
         if (code === 'MEMORY_MODEL_WAITING') return `记忆等待：模型切换中${waiting ? `，已保存 ${waiting} 条待补交` : ''}`;
+        if (status.failedCorrectionCount > 0) return `有 ${status.failedCorrectionCount} 条纠正没有生效，请查看原话并重试形成`;
+        if (status.formationIssues?.length > 0) return `有 ${status.formationIssues.length} 条记忆没有形成，请查看原话并重试形成`;
         if (status.blockedBoundaryCount > 0) return `记忆暂停：${status.blockedBoundaryCount} 条来源需要处理`;
         if (status.failedFormationCount > 0) return `记忆暂停：${status.failedFormationCount} 条整理失败，请检查模型服务`;
         if (waiting) return `正在补交 ${waiting} 条${code === 'MEMORY_BUSY' ? '，服务忙，稍后自动重试' : ''}`;
