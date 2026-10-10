@@ -63,7 +63,11 @@ test('UI-2 mobile home, themes, progressive detail, full-screen sources, drafts 
         if(method==='shared.artifacts.preview')result={text:'# 项目进展\n\n两项界面工作已完成。\n\n| 工作 | 状态 |\n| --- | --- |\n| 审批模式 | 完成 |\n| 来源阅读 | 完成 |'};
         if(method==='shared.artifacts.save')result={pending:true,requestId:'save-demo'};
         if(method==='host.business'){
-          if(params.path.includes('/resources')){
+          if(params.path.startsWith('/personal/v1/chats?')){
+            const query=new URL(params.path,'http://synthetic').searchParams.get('q')||'';
+            const items=f.sessions.filter(row=>row.title.includes(query)).map(row=>({...row,chatId:'chat-'+row.sessionId,activeSessionId:row.sessionId,kind:'side',match:'title'}));
+            result={items,total:items.length,hasMore:false,nextCursor:null,indexState:'ready'};
+          }else if(params.path.includes('/resources')){
             if(f.failResources)error='HOST_UNAVAILABLE';else if(params.path.endsWith('afterSeq=-1'))result={outputs:[f.artifact],sources:[f.source],nextSeq:3,hasMore:true};
             else result={outputs:[f.artifact],sources:[{...f.source,uses:[{id:'turn-2/read-2',callId:'read-2',summary:'核对项目记录 · notes.md',path:'/sessions/report/events/3/detail',seq:3}]}],nextSeq:6,hasMore:false};
           }else if(params.path.endsWith('/approval-mode'))result={mode:'auto',allowedCategories:[]};
@@ -75,7 +79,7 @@ test('UI-2 mobile home, themes, progressive detail, full-screen sources, drafts 
     await page.goto(`http://127.0.0.1:${server.address().port}/`);await page.waitForFunction(()=>state.booted&&state.page==='home');
     await page.getByRole('img',{name:'待审批',exact:true}).waitFor();
     assert.equal(await page.locator('#home-conversations [aria-label="正在运行"]').count(),1);
-    await page.locator('#home-search').fill('项目');assert.equal(await page.locator('.home-conversation').count(),1);await page.locator('#home-search').fill('');await page.locator('#home-search').blur();
+    await page.locator('#home-page').getByRole('button',{name:'搜索',exact:true}).click();const search=page.getByRole('combobox',{name:'搜索内容',exact:true});await search.fill('项目');await page.getByRole('tab',{name:'对话',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#search-results').getAttribute('aria-busy')==='false');assert.equal(await page.getByRole('option').count(),1);await search.fill('');await page.getByRole('button',{name:'关闭搜索',exact:true}).click();await page.getByRole('dialog',{name:'搜索',exact:true}).waitFor({state:'hidden'});
     for(const theme of ['light','dark']){
       await page.evaluate(value=>applyTheme(value),theme);await capture(`${theme}-list.png`);
       await page.locator('#home-conversations [data-id="running"]').click();await page.getByText('正在处理…',{exact:true}).waitFor();

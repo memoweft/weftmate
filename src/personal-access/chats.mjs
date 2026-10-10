@@ -1,4 +1,4 @@
-import { memorySettings } from './temporary-chats.mjs';
+import { memorySettings, hasPrivateContent } from './temporary-chats.mjs';
 import { randomUUID } from 'node:crypto';
 import { bounded, digest, exactKeys, failure, validId } from './common.mjs';
 import { chatForSession } from './chat-identity.mjs';
@@ -6,6 +6,43 @@ import { REQUEST_ID } from './constants.mjs';
 
 export function createChatOperations(context) {
   const pages = new Map();
+  const invalidateSearch = ownerId => { for (const [cursor,page] of pages) if (page.ownerId===ownerId && page.generation) pages.delete(cursor); };
+  async function search(ownerId, params) {
+    if ([...params.keys()].some(key => !['scope','q','limit','cursor'].includes(key) || params.getAll(key).length !== 1)) throw failure('INVALID_REQUEST');
+    const q = (params.get('q') ?? '').trim(), size = params.get('limit') ?? '50';
+    if (q.length > 120 || !/^\d+$/.test(size) || Number(size) < 1 || Number(size) > 200) throw failure('INVALID_REQUEST');
+    const account = context.accountState(ownerId);
+    if (account.memoryCleanupPending) throw failure('SESSION_BUSY', 409);
+    const excluded = new Set();
+    for (const segment of Object.values(account.chatIdentity.segments)) { const session = account.sessions[segment.sessionId]; if (!session || session.deleting || hasPrivateContent(session)) excluded.add(segment.chatId); }
+    const candidates = Object.values(account.chatIdentity.chats).filter(chat => !excluded.has(chat.chatId));
+    const generation = digest(JSON.stringify([account.activity?.generation ?? 0, candidates.map(chat => [chat.chatId,chat.revision,chat.contentRevision]) ]));
+    const cursor = params.get('cursor'), filter = JSON.stringify([q,size]);
+    let rows, indexState = 'ready', total;
+    if (cursor) {
+      const saved = pages.get(cursor);
+      if (!saved || saved.ownerId !== ownerId || saved.filter !== filter || saved.generation !== generation) throw failure('CURSOR_RESET_REQUIRED', 409);
+      rows = saved.rows; indexState = saved.indexState; total = saved.total;
+    } else {
+      const snapshot = await context.sessionOperations.describe(ownerId, candidates.map(chat => account.chatIdentity.segments[chat.activeSegmentId]?.sessionId).filter(Boolean));
+      const views = await Promise.all(candidates.map(chat => view(ownerId, chat.chatId, snapshot)));
+      const byChat = new Map(views.map(chat => [chat.chatId,chat]));
+      rows = views.filter(chat => !q || chat.title.toLowerCase().includes(q.toLowerCase())).map(chat => ({...chat, match:'title'}));
+      if (q) {
+        const bodies = await context.chatTimeline.searchAccount(ownerId, candidates.map(chat => chat.chatId), q); indexState = bodies.indexState;
+        rows.push(...bodies.hits.map(hit => ({...byChat.get(hit.chatId),...hit,match:'content'})));
+      }
+      rows.sort((a,b) => Number(b.match === 'title') - Number(a.match === 'title') || Number(b.pinned) - Number(a.pinned) || String(b.at ?? b.updatedAt ?? b.createdAt ?? '').localeCompare(String(a.at ?? a.updatedAt ?? a.createdAt ?? '')) || a.chatId.localeCompare(b.chatId) || String(a.eventId??'').localeCompare(String(b.eventId??'')));
+    }
+    if (account !== context.accountState(ownerId) && generation !== digest(JSON.stringify([context.accountState(ownerId).activity?.generation ?? 0,candidates.map(chat => {const latest=context.accountState(ownerId).chatIdentity.chats[chat.chatId];return [latest?.chatId,latest?.revision,latest?.contentRevision];})]))) throw failure('CURSOR_RESET_REQUIRED', 409);
+    const candidateIds = new Set(candidates.map(chat=>chat.chatId));
+    for (const segment of Object.values(context.accountState(ownerId).chatIdentity.segments)) if (candidateIds.has(segment.chatId) && hasPrivateContent(context.accountState(ownerId).sessions[segment.sessionId])) throw failure('CURSOR_RESET_REQUIRED', 409);
+    total ??= rows.length;
+    const items = rows.slice(0,Number(size)), remaining = rows.slice(Number(size));
+    const nextCursor = remaining.length ? `chat-search-${randomUUID()}` : null;
+    if (nextCursor) pages.set(nextCursor,{ownerId,filter,generation,rows:remaining,indexState,total});
+    return {items,total,hasMore:remaining.length>0,nextCursor,indexState};
+  }
   function requireChat(ownerId, chatId) {
     const account = context.accountState(ownerId);
     if (!account.chatIdentity) throw failure('CHAT_INITIALIZING', 503);
@@ -56,7 +93,7 @@ export function createChatOperations(context) {
       ...(described.running && described.processing ? { processing: described.processing } : {}) };
   }
   return {
-    requireChat, view,
+    requireChat, view, invalidateSearch,
     async metadata(ownerId, chatId, body) {
       exactKeys(body, ['requestId', 'expectedRevision', 'unread', 'title', 'pinned', 'groupId', 'projectId', 'memoryMode', 'recallEnabled', 'autoDeleteDays'], ['requestId', 'expectedRevision']);
       if (typeof body.requestId !== 'string' || !REQUEST_ID.test(body.requestId) || !Number.isSafeInteger(body.expectedRevision) || body.expectedRevision < 1) throw failure('INVALID_REQUEST');
@@ -98,6 +135,7 @@ export function createChatOperations(context) {
         kind: chat.kind, archived: account.sessions[sessionId].archived === true };
     },
     async list(ownerId, params) {
+      if (params.get('scope') === 'search') return search(ownerId, params);
       const allowed = ['kind', 'parentKind', 'parentId', 'archived', 'q', 'cursor', 'limit'];
       if ([...params.keys()].some(key => !allowed.includes(key) || params.getAll(key).length !== 1)) throw failure('INVALID_REQUEST');
       const limit = params.get('limit') ?? '50', kind = params.get('kind') ?? 'side', archived = params.get('archived') ?? 'false';

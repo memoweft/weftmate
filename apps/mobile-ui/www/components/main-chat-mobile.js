@@ -134,8 +134,7 @@
   mountMobileTabs();
   $('open-side-chat').hidden=true;
   const sideHeading=$('drawer').querySelector('.rail-side-heading');if(sideHeading)sideHeading.hidden=true;
-  let searchTimer;
-  $('conversation-search').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{if(state.logicalChats)void uiCore.searchSessions($('conversation-search').value).catch(error=>toast(uiCore.failureMessage(error)));},200);});
+
   const oldRenderMain=mobileEffects.renderMainChat;
   mobileEffects.renderMainChat=()=>{oldRenderMain();$('open-side-chat').hidden=!state.logicalChats;if(sideHeading)sideHeading.hidden=!state.logicalChats;syncMobileTabs();};
   // Touch selection exposes a single row's existing actions. Scrolling cancels a long press.
