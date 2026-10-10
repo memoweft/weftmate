@@ -44,6 +44,7 @@
   "mail": "<path d=\"M5,4 H19 Q22,4 22,7 V17 Q22,20 19,20 H5 Q2,20 2,17 V7 Q2,4 5,4 Z\"/><path d=\"m2 7 10 7L22 7\"/>",
   "memory": "<path d=\"M7 4.5h10M7 19.5h10\"/><path d=\"M8.5 4.5v15M15.5 4.5v15\"/><path d=\"m8.5 9.5 7-2.5M8.5 13.5l7-2.5M8.5 17.5l7-2.5\"/>",
   "mic": "<rect x=\"9\" y=\"3.5\" width=\"6\" height=\"11\" rx=\"3\"/><path d=\"M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5\"/>",
+  "minus": "<path d=\"M5 12h14\"/>",
   "model": "<rect x=\"6.5\" y=\"6.5\" width=\"11\" height=\"11\" rx=\"2\"/><path d=\"M10 10h4v4h-4z\"/><path d=\"M9.5 3.5v3M14.5 3.5v3M9.5 17.5v3M14.5 17.5v3M3.5 9.5h3M3.5 14.5h3M17.5 9.5h3M17.5 14.5h3\"/>",
   "moon": "<path d=\"M19.5 14.5A7.5 7.5 0 1 1 9.5 4.5a6 6 0 0 0 10 10z\"/>",
   "more": "<circle fill=\"currentColor\" stroke=\"none\" cx=\"6\" cy=\"12\" r=\"1.4\"/><circle fill=\"currentColor\" stroke=\"none\" cx=\"12\" cy=\"12\" r=\"1.4\"/><circle fill=\"currentColor\" stroke=\"none\" cx=\"18\" cy=\"12\" r=\"1.4\"/>",

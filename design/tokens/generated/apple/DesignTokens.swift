@@ -122,7 +122,10 @@ public enum WeftDesignTokens {
         "0ms": 0,
         "exit": 120,
         "stagger": 24,
-        "staggerLimit": 60
+        "staggerLimit": 60,
+        "replyFragment": 120,
+        "replyChange": 150,
+        "replyScroll": 160
     ]
     public static let fontFamily: [String: String] = [
         "body": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei UI\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", sans-serif",
@@ -144,7 +147,8 @@ public enum WeftDesignTokens {
         "smooth": "ease-in-out",
         "desktop": "cubic-bezier(.16,1,.3,1)",
         "mobile": "cubic-bezier(.2,.8,.2,1)",
-        "enter": "ease-in"
+        "enter": "ease-in",
+        "replySweep": "steps(7,end)"
     ]
     public static let shadowRecipes: [String: String] = [
         "desktop-model-menu": "0 10px 32px rgba(27,48,90,.18)",
@@ -450,6 +454,9 @@ public enum AppleTokens {
         public static let exit: TimeInterval = 0.12
         public static let stagger: TimeInterval = 0.024
         public static let staggerLimit: TimeInterval = 0.06
+        public static let replyFragment: TimeInterval = 0.12
+        public static let replyChange: TimeInterval = 0.15
+        public static let replyScroll: TimeInterval = 0.16
         public static let disclosure: Animation = Animation.easeInOut(duration: Motion.base)
         public static let connection: Animation = Animation.easeInOut(duration: Motion.fast)
     }

@@ -15,7 +15,7 @@ test('workspaces isolate accounts and sessions using the native cwd creation pay
     const requests:any[]=[],items:any[]=[];
     const backend=createPersonalAccessBackend({currentOrigin:()=> 'http://fixture',referenceScan:()=>({}),profiles:()=>[{id:'model',model:'synthetic'}],hasCredential:()=>true,
       routeForProfile:()=>({provider:'fixture'}),listSessions:async()=>({items}),resolveSession:async()=>({}),ensureKnownSession:async()=>{},queue:(fn:any)=>fn(),bindSession:()=>{},sessionWorkspaceRoot:root,
-      gateway:async(p:string,options:any)=>{if(p==='/models')return {groups:[{id:'fixture',models:[{id:'synthetic'}]}]};if(p==='/sessions'){const body=JSON.parse(options.body);requests.push(body);items.push(body);return {sessionId:body.sessionId}}return {deleted:true}}});
+      gateway:async(p:string,options:any)=>{if(p==='/models')return {groups:[{id:'fixture',models:[{id:'synthetic'}]}]};if(p==='/sessions'){const body=JSON.parse(options.body);requests.push(body);items.push(body);return {sessionId:body.sessionId}}if(!options&&p.startsWith('/sessions/'))return items.find(row=>row.sessionId===p.split('/').at(-1));return {deleted:true}}});
     await backend.createSession({sessionId:'session-a',modelProfileId:'model',ownerId:'owner-a'});
     assert.equal(requests[0].cwd,a);await writeFile(path.join(a,'经验.md'),'method');
     await backend.deleteSession({sessionId:'session-a',ownerId:'owner-a'});await assert.rejects(access(a));

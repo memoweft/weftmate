@@ -12,7 +12,7 @@ test('task stop checks owner and personal-remote preset before exact callback', 
       { sessionId: 'other', agentPreset: 'standard' },
     ] }),
     resolveSession: async () => ({ profile: { id: 'local' } }),
-    ensureKnownSession: async () => {}, gateway: async () => ({}),
+    ensureKnownSession: async () => {}, gateway: async (path: string) => ({sessionId:path.split('/').at(-1),agentPreset:path==='/sessions/owned'?'personal-remote':'standard'}),
     queue: async (work: () => Promise<unknown>) => work(), bindSession: () => {},
     hostOwnerId: () => 'owner-a',
     taskStop: async ({ receiptIds }: { receiptIds: string[] }) => {

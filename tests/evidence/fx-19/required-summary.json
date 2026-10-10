@@ -1,0 +1,9 @@
+{
+  "tests": 1352,
+  "pass": 1338,
+  "fail": 0,
+  "skipped": 14,
+  "cancelled": 0,
+  "command": "node .github/scripts/ci-unit-tests.mjs required",
+  "testedCommit": "6f7abf90"
+}

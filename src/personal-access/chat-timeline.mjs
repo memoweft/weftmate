@@ -16,7 +16,7 @@ const searchable = type => ['user.message', 'assistant.message', 'side.result'].
 /** Rebuildable locator/search index. Bodies remain in native history. No timer,
  * polling worker, model call, or private native payload is stored here. */
 export function createChatTimeline(context) {
-  const secret = randomBytes(32), indexes = new Map(), jobs = new Set();
+  const secret = randomBytes(32), indexes = new Map(), jobs = new Set(), segmentGroups = new WeakMap();
   let closed = false;
   function token(index, kind, position, filter = '') {
     const body = Buffer.from(JSON.stringify([index.ownerId, index.chatId, index.generation, kind, position, filter])).toString('base64url');
@@ -32,8 +32,15 @@ export function createChatTimeline(context) {
     } catch { throw failure('CURSOR_RESET_REQUIRED', 409); }
   }
   function segments(ownerId, chatId) {
-    return Object.values(context.accountState(ownerId).chatIdentity.segments)
-      .filter(s => s.chatId === chatId).sort((a, b) => a.ordinal - b.ordinal || a.segmentId.localeCompare(b.segmentId));
+    const source = context.accountState(ownerId).chatIdentity.segments;
+    let groups = segmentGroups.get(source);
+    if (!groups) {
+      groups = new Map();
+      for (const segment of Object.values(source)) { if (!groups.has(segment.chatId)) groups.set(segment.chatId, []); groups.get(segment.chatId).push(segment); }
+      for (const rows of groups.values()) rows.sort((a,b) => a.ordinal-b.ordinal || a.segmentId.localeCompare(b.segmentId));
+      segmentGroups.set(source,groups);
+    }
+    return groups.get(chatId) ?? [];
   }
   function current(ownerId, chatId) {
     if (context.accountState(ownerId).memoryCleanupPending) throw failure('SESSION_BUSY', 409);
@@ -51,6 +58,7 @@ export function createChatTimeline(context) {
     const pending = index.queue.then(fn); index.queue = pending.catch(() => {}); return pending;
   }
   function put(index, segment, raw) {
+    if (context.accountState(index.ownerId).sessions[segment.sessionId]?.forgottenSeqs?.includes(raw.seq)) return;
     const event = context.publicHistoryEvent(index.ownerId, segment.sessionId, raw);
     const eventId = `event-${digest(`${segment.hostId}/${segment.sessionId}/${event.seq}`)}`;
     if (index.removed.has(eventId)) return;
@@ -186,6 +194,27 @@ export function createChatTimeline(context) {
     }
   }
   return {
+    // Account search uses the same rebuildable index and erasure generation as
+    // in-conversation search. It never copies native history into another store.
+    async searchAccount(ownerId, chatIds, q) {
+      const revision = context.accountState(ownerId).activity?.generation ?? 0;
+      const pages = await Promise.all(chatIds.map(async chatId => {
+        const index = current(ownerId, chatId);
+        const hits = await serial(index, async () => {
+          await seed(index); await refresh(index); products(index);
+          return index.ordered.filter(row => searchable(row.type) && !context.accountState(ownerId).sessions[row.sessionId]?.forgottenSeqs?.includes(row.seq) && row.text.toLowerCase().includes(q.toLowerCase())).map(row => {
+            const offset = row.text.toLowerCase().indexOf(q.toLowerCase()), start = Math.max(0, offset - 60);
+            return { chatId, eventId: row.eventId, sourceRef: row.sourceRef ?? { kind: 'native', hostId: row.hostId, sessionId: row.sessionId, seq: row.seq },
+              at: row.at, snippet: row.text.slice(start, start + Math.max(200, q.length)), highlights: [{ start: offset - start, end: offset - start + q.length }] };
+          });
+        });
+        if (index.retired) throw failure('CURSOR_RESET_REQUIRED', 409);
+        backfill(index); return { hits, building: building(index) };
+      }));
+      if (revision !== (context.accountState(ownerId).activity?.generation ?? 0) || context.accountState(ownerId).memoryCleanupPending)
+        throw failure('CURSOR_RESET_REQUIRED', 409);
+      return { hits: pages.flatMap(page => page.hits), indexState: pages.some(page => page.building) ? 'building' : 'ready' };
+    },
     async lastOrderKey(ownerId, chatId) {
       const index = current(ownerId, chatId);
       return serial(index, async () => { await seed(index); await refresh(index); return index.ordered.findLast(row => !row.product)?.orderKey ?? '!'; });
@@ -260,7 +289,7 @@ export function createChatTimeline(context) {
       }
       index.ordered = index.ordered.filter(row => !index.removed.has(row.eventId));
     },
-    invalidate(ownerId, chatId) { const key = `${ownerId}/${chatId}`; const index = indexes.get(key); if (index) index.retired = true; indexes.delete(key); },
+    invalidate(ownerId, chatId) { context.chats.invalidateSearch?.(ownerId); segmentGroups.delete(context.accountState(ownerId).chatIdentity.segments); const key = `${ownerId}/${chatId}`; const index = indexes.get(key); if (index) index.retired = true; indexes.delete(key); },
     async close() { closed = true; await Promise.all([...jobs, ...[...indexes.values()].map(index => index.queue)]); indexes.clear(); },
   };
 }

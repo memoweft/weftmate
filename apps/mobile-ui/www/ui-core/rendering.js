@@ -36,7 +36,7 @@
     const fold = action(`展开全部（${lineCount(source)} 行）`, () => { const closed = block.classList.toggle('is-collapsed'); fold.textContent = closed ? `展开全部（${lineCount(code.textContent)} 行）` : '收起代码'; fold.setAttribute('aria-label',fold.textContent); fold.setAttribute('aria-expanded', String(!closed)); });
     fold.classList.add('render-code-fold'); fold.setAttribute('aria-expanded', 'false'); fold.hidden = !collapsed(source); block.classList.toggle('is-collapsed', collapsed(source)); block.append(fold);
     block._update = fresh => {
-      const next = fresh.querySelector('code'); if (code.innerHTML !== next.innerHTML) code.innerHTML = next.innerHTML;
+      const next = fresh.querySelector('code'); if (code.innerHTML !== next.innerHTML) { const before=code.textContent; code.innerHTML = next.innerHTML; if(block.closest('.reply-streaming')) globalThis.WeftReplyMotion?.fragment(code,before); }
       fold.hidden = !collapsed(next.textContent); if (!collapsed(next.textContent)) block.classList.remove('is-collapsed');
       if (block.classList.contains('is-collapsed')) fold.textContent = `展开全部（${lineCount(next.textContent)} 行）`;
     };
@@ -48,7 +48,7 @@
     block.classList.add('render-mermaid'); view.append(status); block.append(view); block.querySelector('pre').hidden = true;
     let userSource=false;
     const toggle = action('看源码', () => { const source = !block.classList.contains('is-source');userSource=source; block.classList.toggle('is-source', source); block.querySelector('pre').hidden = !source; view.hidden = source; toggle.textContent = source ? '看图' : '看源码'; toggle.setAttribute('aria-label',toggle.textContent); toggle.setAttribute('aria-pressed', String(source)); });
-    toggle.setAttribute('aria-pressed', 'false'); block.querySelector('.render-code-actions').prepend(toggle);
+    toggle.setAttribute('aria-pressed', 'false'); toggle.classList.add('render-diagram-toggle'); block.querySelector('.render-code-actions').append(toggle);
     const updateCode = block._update;
     let revision = 0, visible = false;
     const paint = () => {
@@ -129,23 +129,45 @@
     const content = node('div', cls); content._renderId = `wm-${++id}`; update(content,text,options); return content;
   }
   function update(content, text, options = {}) {
-    if (content._renderText === text) return content;
+    if (content._renderText === text) { if(options.streaming!==undefined)globalThis.WeftReplyMotion?.indicator(content,options.streaming); return content; }
+    const previousText=content._renderText;
+    // A completed prefix followed by the same plain paragraph needs no reparse of
+    // earlier code/table blocks. Prove both boundaries with the rendered paragraph;
+    // Markdown, references, open fences and new blocks keep the full parser path.
+    const boundary=text.lastIndexOf('\n\n'), previousBoundary=previousText?.lastIndexOf('\n\n');
+    if(globalThis.WeftFormat?.render && boundary>=0 && previousBoundary===boundary && text.slice(0,boundary)===previousText.slice(0,boundary)) {
+      const last=[...content.children].filter(el=>!el.classList.contains('reply-indicator')).at(-1), tail=text.slice(boundary+2), before=previousText.slice(boundary+2);
+      if(last?.tagName==='P' && last.textContent===before) {
+        const template=node('div');template.innerHTML=WeftFormat.render(tail,{prefix:content._renderId,highlightCache:content._highlightCache});
+        const next=template.firstElementChild;
+        if(template.children.length===1 && next.tagName==='P' && next.children.length===0 && next.textContent===tail) {
+          next._sourceHTML=next.outerHTML;last.replaceWith(next);content._renderText=text;
+          const streaming=options.streaming===true || options.streaming!==false && content.classList.contains('reply-streaming');
+          if(streaming)globalThis.WeftReplyMotion?.fragment(next,before);
+          if(options.streaming!==undefined || streaming)globalThis.WeftReplyMotion?.indicator(content,options.streaming ?? streaming);
+          return content;
+        }
+      }
+    }
     content._renderId ||= `wm-${++id}`; content._renderText = text;
     if (!globalThis.WeftFormat?.render) { content.textContent = text; return content; }
     content._highlightCache ||= new Map();
     const template = node('div'); template.innerHTML = WeftFormat.render(text, {prefix:content._renderId,highlightCache:content._highlightCache});
-    const fresh = [...template.children], old = [...content.children].filter(el=>!el.classList.contains('render-table-actions'));
+    const streaming = options.streaming === true || content.classList.contains('reply-streaming');
+    const fresh = [...template.children], old = [...content.children].filter(el=>!el.classList.contains('render-table-actions') && !el.classList.contains('reply-indicator'));
     // Preserve unchanged blocks, live code controls, horizontal offsets and diagram views.
     for (let i=0;i<fresh.length;i++) {
       const next=fresh[i], previous=old[i], html=next.outerHTML;
       if (previous?._sourceHTML===html) continue;
       if (previous?.classList.contains('render-code') && next.tagName==='PRE' && previous.dataset.language===next.dataset.language) { previous._update(next); previous._sourceHTML=html; continue; }
-      next._sourceHTML=html;
+      next._sourceHTML=html; const beforeText=previous?.textContent || '';
       if(previous) { if(previous.previousElementSibling?.classList.contains('render-table-actions'))previous.previousElementSibling.remove(); previous.replaceWith(next); }
       else content.append(next);
+      if(streaming) globalThis.WeftReplyMotion?.fragment(next,beforeText);
     }
     for (const previous of old.slice(fresh.length)) { if(previous.previousElementSibling?.classList.contains('render-table-actions'))previous.previousElementSibling.remove(); previous.remove(); }
     enhance(content,options);
+    if (options.streaming !== undefined || streaming) globalThis.WeftReplyMotion?.indicator(content,options.streaming ?? streaming);
     for(const block of content.querySelectorAll('.render-code')) if(!block._sourceHTML) block._sourceHTML=block.querySelector('pre')._sourceHTML;
     return content;
   }
@@ -160,12 +182,13 @@
     const download=node(options.downloadImage?'button':'a','render-action','下载图片'); download.setAttribute('download','图片');
     if(options.downloadImage){download.type='button';download.textContent='保存 PNG';download.addEventListener('click',async event=>{event.preventDefault();download.disabled=true;download.setAttribute('aria-busy','true');try{await options.downloadImage(items[index].url,items[index].name);}catch{info.textContent='图片保存未完成，请重试。';}finally{download.disabled=false;download.removeAttribute('aria-busy');}});}
     const show=action('在文件夹中显示',()=>{const item=items[index];if(item.artifactId)void weftmateDesktop.artifact(item.artifactId,item.library?'library-show':'show');},'folder');
-    function scale(){image.style.transform=`scale(${zoom})`;reset.textContent=`${Math.round(zoom*100)}% · 适应窗口`;out.disabled=zoom<=.5;into.disabled=zoom>=4;}
+    function scale(){image.style.transform=`scale(${zoom})`;reset.title=`${Math.round(zoom*100)}% · 适应窗口`;out.disabled=zoom<=.5;into.disabled=zoom>=4;}
     function paint(){const item=items[index];zoom=1;scale();info.textContent='正在加载图片…';image.src=item.url;image.alt=item.alt||item.name;title.textContent=`${item.name} · ${index+1} / ${items.length}`;download.href=item.url;download.download=item.name;previous.disabled=index===0;next.disabled=index===items.length-1;show.hidden=!globalThis.weftmateDesktop||!item.artifactId;}
     image.addEventListener('load',()=>{info.textContent='';});
     image.addEventListener('error',()=>{info.textContent='图片加载失败，可关闭后重试。';});
     dialog.addEventListener('keydown',e=>{if(e.key==='Escape')e.stopPropagation();if(e.key==='ArrowLeft'&&index>0){e.preventDefault();index--;paint();}if(e.key==='ArrowRight'&&index<items.length-1){e.preventDefault();index++;paint();}});
     const caption=node('p','render-status render-gallery-note',options.note||'');caption.hidden=!options.note;
+    for(const [button,icon,label] of [[close,'deny','关闭图片画廊'],[previous,'back','上一张'],[next,'right','下一张'],[out,'minus','缩小'],[into,'plus','放大'],[reset,'expand','适应窗口'],[download,'download',options.downloadImage?'保存 PNG':'下载图片'],[show,'folder','在文件夹中显示']]) {button.classList.add('render-icon-action');button.setAttribute('aria-label',label);button.title=label;button.replaceChildren(WeftIcons.create(icon,20));}
     head.append(title,close);stage.append(image);controls.append(previous,next,out,into,reset,download,show);dialog.append(head,stage,caption,info,controls);document.body.append(dialog);
     dialog.addEventListener('close',()=>{image.removeAttribute('src');dialog.remove();if(gallery===dialog)gallery=null;options.onClose?.();if(dialog._restoreFocus!==false&&trigger?.isConnected)trigger.focus({preventScroll:true});},{once:true});
     gallery=dialog;dialog._trigger=trigger;paint();dialog.showModal();close.focus();return dialog;
