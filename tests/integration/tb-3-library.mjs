@@ -44,6 +44,7 @@ try{
   app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:repo,args:[join(repo,'scripts/review-gallery/electron.mjs'),'--force-device-scale-factor=1'],env,timeout:90000});
   const page=await app.firstWindow();page.setDefaultTimeout(30000);page.on('pageerror',e=>report.errors.push(e.message));await localUiSession(page,fixture.credentials,'TB-3 synthetic',{mainChat:true});
   await page.getByRole('button',{name:'WeftMate 主对话',exact:true}).waitFor();await page.waitForTimeout(400);
+  assert.deepEqual((await page.getByRole('navigation',{name:'动态、目标与成果库',exact:true}).getByRole('button').allTextContents()).map(text=>text.replace(/\d+$/,'').trim()),['动态','目标','成果库']);report.checks.push('fixed-navigation-activity-goals-library-order');
   await page.getByRole('button',{name:'成果库',exact:true}).click();await page.getByRole('heading',{name:'成果库',exact:true}).waitFor();await page.getByRole('button',{name:'预览 周末计划.md',exact:true}).waitFor();
   await page.screenshot({animations:'disabled',path:join(out,'desktop-light-list.png')});
   await page.getByRole('searchbox',{name:'搜索文件名',exact:true}).focus();await page.keyboard.press('Tab');assert.equal(await page.getByRole('combobox',{name:'按项目筛选',exact:true}).evaluate(el=>el.matches(':focus-visible')),true);await page.screenshot({animations:'disabled',path:join(out,'desktop-light-keyboard-focus.png')});
