@@ -17,7 +17,8 @@ import { durableWrite } from '../personal-access/store.mjs';
 const TTL = 5 * 60 * 1000;
 export function createDataControls(context) {
   const operations = new Map(), cached = new Map(), erasing = new Set();
-  const accountRoot = owner => path.join(context.root, 'accounts', owner);
+  // An owner id becomes a directory name that erasure removes: it must be one plain path segment.
+  const accountRoot = owner => { if (typeof owner !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(owner)) throw failure('INVALID_REQUEST'); return path.join(context.root, 'accounts', owner); };
   const event = (owner, title, category, result) => context.activity.record(owner, { key: randomUUID(), type: 'system.data.operation', title,
     summary: `${DATA_CATEGORIES.find(row => row.id === category)?.name ?? '账户'} · ${result}`, level: result === '等待电脑确认' || title === '全部数据已导出' ? 'normal' : 'silent', initiatedBy: 'user', actions: [{kind:'view_settings',label:'查看数据与存储',target:{category:'data'}}] });
   const publicOperation = op => op ? { id: op.id, kind: op.kind, state: op.state, category: op.category, bytes: op.bytes ?? 0, completed: op.completed ?? 0,
