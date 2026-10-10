@@ -35,8 +35,11 @@
     returnFocus = null
   }
   function icon(kind) { return window.WeftIcons.create(({ webpage: 'web', collection: 'outputs' })[kind] || kind, 16) }
-  function hidePicker() {
-    picker?.remove(); picker = null; byId('conversation-resources')?.setAttribute('aria-expanded', 'false')
+  let pickerTrigger;
+  function hidePicker(restoreFocus = false) {
+    picker?.remove(); picker = null; pickerTrigger?.setAttribute('aria-expanded','false');
+    if(restoreFocus&&pickerTrigger?.isConnected)pickerTrigger.focus({preventScroll:true});pickerTrigger=null;
+    byId('conversation-resources')?.setAttribute('aria-expanded', 'false')
   }
   async function showPicker(trigger = byId('conversation-resources')) {
     if (document.body.classList.contains('library-open') && preview?.libraryItems) {
@@ -44,8 +47,8 @@
     }
     if (picker) { hidePicker(); return }
     const menu = node('div', 'resource-picker'); menu.setAttribute('role', 'dialog'); menu.setAttribute('aria-label', '输出与来源')
-    const close = node('button', 'button quiet small resource-picker-close', '关闭列表'); close.type = 'button'; close.addEventListener('click', hidePicker)
-    menu.append(close, node('p', 'muted', '正在读取…')); picker = menu
+    const close = node('button', 'button quiet small resource-picker-close', '关闭列表'); close.type = 'button'; close.addEventListener('click',()=>hidePicker(true))
+    menu.append(close, node('p', 'muted', '正在读取…')); picker = menu; pickerTrigger=trigger
     globalThis.WeftUiLayout.mountResourcePicker(menu)
     globalThis.WeftPopover?.position(menu, trigger, { side: 'bottom', align: 'end' })
     trigger.setAttribute('aria-expanded', 'true'); close.focus({ preventScroll: true })
@@ -219,7 +222,7 @@
         if (key === ',') { e.preventDefault(); globalThis.WeftSettingsNavigation?.open('general') }
       } else if (e.key === 'Escape' && !e.defaultPrevented) {
         e.preventDefault()
-        if (picker) { hidePicker(); byId('conversation-resources').focus() }
+        if (picker) { hidePicker(true) }
         else if (preview && !preview.panel.hidden) closePreview()
         else if (!byId('account-menu').hidden) { byId('account-menu').hidden = true; byId('account-menu-trigger').setAttribute('aria-expanded', 'false'); byId('account-menu-trigger').focus() }
         else actions.stop()
@@ -227,5 +230,5 @@
     })
     applyAppearance()
   }
-  window.WeftDesktop = { configureLibraryPreview(items,open) { if(preview) { preview.libraryItems=items;preview.libraryOpen=open;const header=preview.panel.querySelector('.preview-heading');configureLibraryControls(header,preview.tablist,header.querySelector('.preview-add'),header.querySelector('[aria-label="放大右侧面板"]'),header.querySelector('[aria-label="收起右侧面板"]')); } }, init, markdown, fileLabel, sessionGroup, sortSessions, toggleRail, openPreview, closePreview, showImage, openCollection, usageText, icon }
+  window.WeftDesktop = { configureLibraryPreview(items,open) { if(preview) { preview.libraryItems=items;preview.libraryOpen=open;const header=preview.panel.querySelector('.preview-heading');configureLibraryControls(header,preview.tablist,header.querySelector('.preview-add'),header.querySelector('[aria-label="放大右侧面板"]'),header.querySelector('[aria-label="收起右侧面板"]')); } }, init, markdown, fileLabel, sessionGroup, sortSessions, toggleRail, showResources:showPicker, openPreview, closePreview, showImage, openCollection, usageText, icon }
 })()
