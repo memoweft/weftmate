@@ -1,3 +1,4 @@
+import { pushRegistration } from '../push/provider.mjs';
 import { validateNotificationSettings } from './notification-policy.mjs';
 import { personalization } from './personalization.mjs';
 import { validateMemorySettings } from './temporary-chats.mjs';
@@ -146,6 +147,10 @@ export function validateSingleStore(store) {
         device.scopes.some((scope) => !allowedScopes.has(scope)) || typeof device.revoked !== 'boolean' ||
         tokenHashes.has(device.tokenHash)) {
       throw failure('STORE_CORRUPT', 500);
+    }
+    if (device.push !== undefined) {
+      try { const { updatedAt, ...registration } = device.push; pushRegistration(registration); if (!validTime(updatedAt)) throw Error(); }
+      catch { throw failure('STORE_CORRUPT', 500); }
     }
     tokenHashes.add(device.tokenHash);
     if (device.syncCapabilities !== undefined && (!plainObject(device.syncCapabilities) ||
