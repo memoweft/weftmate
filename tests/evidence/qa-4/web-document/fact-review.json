@@ -1,0 +1,14 @@
+{
+  "status": "partial",
+  "durationMs": 62517,
+  "fileSavedAndReadBack": true,
+  "originalDocumentUnmodified": true,
+  "previousUnconditionalAddonRebuildClaimPresent": false,
+  "remainingIssue": "Section 5 item 1 still presents all Windows MSVC native compilation workflows as requiring ClangCL on Node 24, without limiting the requirement to compiling Node itself. Section 1 is more qualified.",
+  "officialSources": [
+    "https://nodejs.org/en/blog/release/v24.0.0",
+    "https://github.com/nodejs/node-gyp#on-windows",
+    "https://nodejs.org/api/n-api.html#implications-of-abi-stability"
+  ],
+  "factCheckingFeatureImplemented": false
+}

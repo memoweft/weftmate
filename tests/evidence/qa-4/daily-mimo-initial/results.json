@@ -1,0 +1,2315 @@
+{
+  "revision": "b64378a9d46b85d24c4f8ae8c9853006ae7784c9",
+  "model": "mimo",
+  "startedAt": "2026-10-09T23:27:45.108Z",
+  "turns": [
+    {
+      "id": "memd-0",
+      "category": "memory",
+      "title": "Daily conversations",
+      "status": "passed",
+      "durationMs": 17705,
+      "checks": [
+        {
+          "type": "turn_status",
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-fabc6e0c-27ae-49c0-b38f-876800c68816",
+          "modelProfileId": "private-model-6e72abca620b88bc05c1dc85f09db48df6089082",
+          "commandId": "cmd-2b9e2985-62c4-4870-8a34-662ce7f8784e",
+          "startedAt": "2026-10-09T23:27:56.730Z",
+          "reply": "收到：喝第 1 种花茶时加一小撮肉桂粉。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T23:27:56.767Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T23:27:56.767Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T23:27:57.888Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T23:27:57.889Z"
+            },
+            {
+              "seq": 25,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:28:00.115Z"
+            },
+            {
+              "seq": 26,
+              "type": "task.ended",
+              "at": "2026-10-09T23:28:00.116Z"
+            },
+            {
+              "seq": 27,
+              "type": "turn.ended",
+              "at": "2026-10-09T23:28:00.116Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 3406,
+          "endedAt": "2026-10-09T23:28:00.136Z"
+        },
+        {
+          "sessionId": "session-fabc6e0c-27ae-49c0-b38f-876800c68816",
+          "modelProfileId": "private-model-6e72abca620b88bc05c1dc85f09db48df6089082",
+          "commandId": "cmd-ea737c08-7ac4-4085-a9cd-2d6133ecc108",
+          "startedAt": "2026-10-09T23:28:00.165Z",
+          "reply": "收到：写周报时先列本周完成的事情。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 28,
+              "type": "task.queued",
+              "at": "2026-10-09T23:28:00.220Z"
+            },
+            {
+              "seq": 29,
+              "type": "turn.started",
+              "at": "2026-10-09T23:28:00.220Z"
+            },
+            {
+              "seq": 31,
+              "type": "task.started",
+              "at": "2026-10-09T23:28:00.589Z"
+            },
+            {
+              "seq": 32,
+              "type": "user.message",
+              "at": "2026-10-09T23:28:00.589Z"
+            },
+            {
+              "seq": 44,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:28:03.536Z"
+            },
+            {
+              "seq": 45,
+              "type": "task.ended",
+              "at": "2026-10-09T23:28:03.536Z"
+            },
+            {
+              "seq": 46,
+              "type": "turn.ended",
+              "at": "2026-10-09T23:28:03.537Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 3408,
+          "endedAt": "2026-10-09T23:28:03.573Z"
+        },
+        {
+          "sessionId": "session-fabc6e0c-27ae-49c0-b38f-876800c68816",
+          "modelProfileId": "private-model-6e72abca620b88bc05c1dc85f09db48df6089082",
+          "commandId": "cmd-e40e0c55-e37d-466f-8880-1611f746fe77",
+          "startedAt": "2026-10-09T23:28:03.607Z",
+          "reply": "收到：技术解释先给能运行的小例子。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 47,
+              "type": "task.queued",
+              "at": "2026-10-09T23:28:03.654Z"
+            },
+            {
+              "seq": 48,
+              "type": "turn.started",
+              "at": "2026-10-09T23:28:03.654Z"
+            },
+            {
+              "seq": 50,
+              "type": "task.started",
+              "at": "2026-10-09T23:28:04.023Z"
+            },
+            {
+              "seq": 51,
+              "type": "user.message",
+              "at": "2026-10-09T23:28:04.023Z"
+            },
+            {
+              "seq": 62,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:28:06.938Z"
+            },
+            {
+              "seq": 63,
+              "type": "task.ended",
+              "at": "2026-10-09T23:28:06.938Z"
+            },
+            {
+              "seq": 64,
+              "type": "turn.ended",
+              "at": "2026-10-09T23:28:06.939Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 3392,
+          "endedAt": "2026-10-09T23:28:06.999Z"
+        },
+        {
+          "sessionId": "session-fabc6e0c-27ae-49c0-b38f-876800c68816",
+          "modelProfileId": "private-model-6e72abca620b88bc05c1dc85f09db48df6089082",
+          "commandId": "cmd-edd7941f-5ec3-4d29-afed-caf5acf3521a",
+          "startedAt": "2026-10-09T23:28:07.034Z",
+          "reply": "收到：开视频会前十分钟检查麦克风。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 65,
+              "type": "task.queued",
+              "at": "2026-10-09T23:28:07.080Z"
+            },
+            {
+              "seq": 66,
+              "type": "turn.started",
+              "at": "2026-10-09T23:28:07.081Z"
+            },
+            {
+              "seq": 68,
+              "type": "task.started",
+              "at": "2026-10-09T23:28:07.516Z"
+            },
+            {
+              "seq": 69,
+              "type": "user.message",
+              "at": "2026-10-09T23:28:07.516Z"
+            },
+            {
+              "seq": 80,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:28:11.225Z"
+            },
+            {
+              "seq": 81,
+              "type": "task.ended",
+              "at": "2026-10-09T23:28:11.226Z"
+            },
+            {
+              "seq": 82,
+              "type": "turn.ended",
+              "at": "2026-10-09T23:28:11.227Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 4428,
+          "endedAt": "2026-10-09T23:28:11.462Z"
+        },
+        {
+          "sessionId": "session-fabc6e0c-27ae-49c0-b38f-876800c68816",
+          "modelProfileId": "private-model-6e72abca620b88bc05c1dc85f09db48df6089082",
+          "commandId": "cmd-47606beb-5c26-4132-8f1a-ec2877f5959a",
+          "startedAt": "2026-10-09T23:28:11.491Z",
+          "reply": "收到：整理下载目录时按项目名称分类。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 83,
+              "type": "task.queued",
+              "at": "2026-10-09T23:28:11.546Z"
+            },
+            {
+              "seq": 84,
+              "type": "turn.started",
+              "at": "2026-10-09T23:28:11.546Z"
+            },
+            {
+              "seq": 86,
+              "type": "task.started",
+              "at": "2026-10-09T23:28:11.768Z"
+            },
+            {
+              "seq": 87,
+              "type": "user.message",
+              "at": "2026-10-09T23:28:11.768Z"
+            },
+            {
+              "seq": 98,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:28:14.024Z"
+            },
+            {
+              "seq": 99,
+              "type": "task.ended",
+              "at": "2026-10-09T23:28:14.025Z"
+            },
+            {
+              "seq": 100,
+              "type": "turn.ended",
+              "at": "2026-10-09T23:28:14.025Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 2620,
+          "endedAt": "2026-10-09T23:28:14.111Z"
+        }
+      ],
+      "replySummary": "收到：整理下载目录时按项目名称分类。",
+      "notes": "Synthetic daily preferences",
+      "scratchDir": "[user-home]\\AppData\\Local\\Temp\\weftmate-eval-memd-0-Bh7k68"
+    },
+    {
+      "id": "memd-1",
+      "category": "memory",
+      "title": "Daily conversations",
+      "status": "passed",
+      "durationMs": 46883,
+      "checks": [
+        {
+          "type": "turn_status",
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+          "modelProfileId": "private-model-502714fde16562912499292020047a4b09627382",
+          "commandId": "cmd-2f1951aa-e2bf-48ec-aecb-d3b386c2602d",
+          "startedAt": "2026-10-09T23:28:20.815Z",
+          "reply": "收到：上午优先安排需要专注的任务。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T23:28:20.857Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T23:28:20.857Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T23:28:20.879Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T23:28:20.879Z"
+            },
+            {
+              "seq": 25,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:28:26.843Z"
+            },
+            {
+              "seq": 26,
+              "type": "task.ended",
+              "at": "2026-10-09T23:28:26.843Z"
+            },
+            {
+              "seq": 27,
+              "type": "turn.ended",
+              "at": "2026-10-09T23:28:26.844Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 6052,
+          "endedAt": "2026-10-09T23:28:26.867Z"
+        },
+        {
+          "sessionId": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+          "modelProfileId": "private-model-502714fde16562912499292020047a4b09627382",
+          "commandId": "cmd-0c1ddc32-5856-4250-9c8b-a5ffc517b6ba",
+          "startedAt": "2026-10-09T23:28:26.896Z",
+          "reply": "收到：长文阅读按不超过五个小节分段。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 28,
+              "type": "task.queued",
+              "at": "2026-10-09T23:28:26.947Z"
+            },
+            {
+              "seq": 29,
+              "type": "turn.started",
+              "at": "2026-10-09T23:28:26.947Z"
+            },
+            {
+              "seq": 31,
+              "type": "task.started",
+              "at": "2026-10-09T23:28:26.974Z"
+            },
+            {
+              "seq": 32,
+              "type": "user.message",
+              "at": "2026-10-09T23:28:26.975Z"
+            },
+            {
+              "seq": 43,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:28:30.775Z"
+            },
+            {
+              "seq": 44,
+              "type": "task.ended",
+              "at": "2026-10-09T23:28:30.775Z"
+            },
+            {
+              "seq": 45,
+              "type": "turn.ended",
+              "at": "2026-10-09T23:28:30.776Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 3963,
+          "endedAt": "2026-10-09T23:28:30.859Z"
+        },
+        {
+          "sessionId": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+          "modelProfileId": "private-model-502714fde16562912499292020047a4b09627382",
+          "commandId": "cmd-dae8d1ac-5d73-4cde-8538-56680c004e4b",
+          "startedAt": "2026-10-09T23:28:30.891Z",
+          "reply": "收到：会议纪要把决定和待办分开写。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 46,
+              "type": "task.queued",
+              "at": "2026-10-09T23:28:30.950Z"
+            },
+            {
+              "seq": 47,
+              "type": "turn.started",
+              "at": "2026-10-09T23:28:30.950Z"
+            },
+            {
+              "seq": 49,
+              "type": "task.started",
+              "at": "2026-10-09T23:28:30.982Z"
+            },
+            {
+              "seq": 50,
+              "type": "user.message",
+              "at": "2026-10-09T23:28:30.982Z"
+            },
+            {
+              "seq": 61,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:28:52.133Z"
+            },
+            {
+              "seq": 62,
+              "type": "task.ended",
+              "at": "2026-10-09T23:28:52.134Z"
+            },
+            {
+              "seq": 63,
+              "type": "turn.ended",
+              "at": "2026-10-09T23:28:52.134Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 21274,
+          "endedAt": "2026-10-09T23:28:52.165Z"
+        },
+        {
+          "sessionId": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+          "modelProfileId": "private-model-502714fde16562912499292020047a4b09627382",
+          "commandId": "cmd-2483f117-a5bd-4890-be44-4947aa2ac68a",
+          "startedAt": "2026-10-09T23:28:52.196Z",
+          "reply": "收到：深色主题用低饱和配色。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 64,
+              "type": "task.queued",
+              "at": "2026-10-09T23:28:52.246Z"
+            },
+            {
+              "seq": 65,
+              "type": "turn.started",
+              "at": "2026-10-09T23:28:52.246Z"
+            },
+            {
+              "seq": 67,
+              "type": "task.started",
+              "at": "2026-10-09T23:28:52.271Z"
+            },
+            {
+              "seq": 68,
+              "type": "user.message",
+              "at": "2026-10-09T23:28:52.271Z"
+            },
+            {
+              "seq": 79,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:28:57.902Z"
+            },
+            {
+              "seq": 80,
+              "type": "task.ended",
+              "at": "2026-10-09T23:28:57.903Z"
+            },
+            {
+              "seq": 81,
+              "type": "turn.ended",
+              "at": "2026-10-09T23:28:57.903Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 5747,
+          "endedAt": "2026-10-09T23:28:57.943Z"
+        },
+        {
+          "sessionId": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+          "modelProfileId": "private-model-502714fde16562912499292020047a4b09627382",
+          "commandId": "cmd-7952d0a0-3fe3-47e0-a348-7fa00c4b3b13",
+          "startedAt": "2026-10-09T23:28:57.975Z",
+          "reply": "收到：演示每页只讲一个重点。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 82,
+              "type": "task.queued",
+              "at": "2026-10-09T23:28:58.029Z"
+            },
+            {
+              "seq": 83,
+              "type": "turn.started",
+              "at": "2026-10-09T23:28:58.030Z"
+            },
+            {
+              "seq": 85,
+              "type": "task.started",
+              "at": "2026-10-09T23:28:58.053Z"
+            },
+            {
+              "seq": 86,
+              "type": "user.message",
+              "at": "2026-10-09T23:28:58.054Z"
+            },
+            {
+              "seq": 97,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:29:07.335Z"
+            },
+            {
+              "seq": 98,
+              "type": "task.ended",
+              "at": "2026-10-09T23:29:07.336Z"
+            },
+            {
+              "seq": 99,
+              "type": "turn.ended",
+              "at": "2026-10-09T23:29:07.336Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 9387,
+          "endedAt": "2026-10-09T23:29:07.362Z"
+        }
+      ],
+      "replySummary": "收到：演示每页只讲一个重点。",
+      "notes": "Synthetic daily preferences",
+      "scratchDir": "[user-home]\\AppData\\Local\\Temp\\weftmate-eval-memd-1-gqqu3x"
+    },
+    {
+      "id": "memd-2",
+      "category": "memory",
+      "title": "Daily conversations",
+      "status": "passed",
+      "durationMs": 33408,
+      "checks": [
+        {
+          "type": "turn_status",
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-e7f1d87d-37f7-44d2-b6ba-6b7090a9232a",
+          "modelProfileId": "private-model-6e72abca620b88bc05c1dc85f09db48df6089082",
+          "commandId": "cmd-99cc2801-b6ad-4d18-bf56-8bafe9083aa5",
+          "startedAt": "2026-10-09T23:29:14.075Z",
+          "reply": "收到，周末散步优先河边路线。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T23:29:14.119Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T23:29:14.119Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T23:29:14.143Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T23:29:14.143Z"
+            },
+            {
+              "seq": 25,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:29:17.280Z"
+            },
+            {
+              "seq": 26,
+              "type": "task.ended",
+              "at": "2026-10-09T23:29:17.281Z"
+            },
+            {
+              "seq": 27,
+              "type": "turn.ended",
+              "at": "2026-10-09T23:29:17.281Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 3417,
+          "endedAt": "2026-10-09T23:29:17.492Z"
+        },
+        {
+          "sessionId": "session-e7f1d87d-37f7-44d2-b6ba-6b7090a9232a",
+          "modelProfileId": "private-model-6e72abca620b88bc05c1dc85f09db48df6089082",
+          "commandId": "cmd-832d3a54-c8b3-466e-bf4a-728d70db09e8",
+          "startedAt": "2026-10-09T23:29:17.523Z",
+          "reply": "收到，喝咖啡不加糖。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 28,
+              "type": "task.queued",
+              "at": "2026-10-09T23:29:17.573Z"
+            },
+            {
+              "seq": 29,
+              "type": "turn.started",
+              "at": "2026-10-09T23:29:17.574Z"
+            },
+            {
+              "seq": 31,
+              "type": "task.started",
+              "at": "2026-10-09T23:29:17.713Z"
+            },
+            {
+              "seq": 32,
+              "type": "user.message",
+              "at": "2026-10-09T23:29:17.714Z"
+            },
+            {
+              "seq": 44,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:29:31.947Z"
+            },
+            {
+              "seq": 45,
+              "type": "task.ended",
+              "at": "2026-10-09T23:29:31.947Z"
+            },
+            {
+              "seq": 46,
+              "type": "turn.ended",
+              "at": "2026-10-09T23:29:31.948Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 14663,
+          "endedAt": "2026-10-09T23:29:32.186Z"
+        },
+        {
+          "sessionId": "session-e7f1d87d-37f7-44d2-b6ba-6b7090a9232a",
+          "modelProfileId": "private-model-6e72abca620b88bc05c1dc85f09db48df6089082",
+          "commandId": "cmd-f0547dc2-b2fe-4850-a6f3-45436c4594a4",
+          "startedAt": "2026-10-09T23:29:32.228Z",
+          "reply": "收到，训练安排在周三晚上。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 47,
+              "type": "task.queued",
+              "at": "2026-10-09T23:29:32.290Z"
+            },
+            {
+              "seq": 48,
+              "type": "turn.started",
+              "at": "2026-10-09T23:29:32.290Z"
+            },
+            {
+              "seq": 50,
+              "type": "task.started",
+              "at": "2026-10-09T23:29:33.214Z"
+            },
+            {
+              "seq": 51,
+              "type": "user.message",
+              "at": "2026-10-09T23:29:33.214Z"
+            },
+            {
+              "seq": 62,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:29:37.393Z"
+            },
+            {
+              "seq": 63,
+              "type": "task.ended",
+              "at": "2026-10-09T23:29:37.393Z"
+            },
+            {
+              "seq": 64,
+              "type": "turn.ended",
+              "at": "2026-10-09T23:29:37.394Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 5281,
+          "endedAt": "2026-10-09T23:29:37.509Z"
+        },
+        {
+          "sessionId": "session-e7f1d87d-37f7-44d2-b6ba-6b7090a9232a",
+          "modelProfileId": "private-model-6e72abca620b88bc05c1dc85f09db48df6089082",
+          "commandId": "cmd-506b8d6a-c363-42b1-a330-221ba9c4d712",
+          "startedAt": "2026-10-09T23:29:37.554Z",
+          "reply": "收到，拍旅行照片偏好自然光。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 65,
+              "type": "task.queued",
+              "at": "2026-10-09T23:29:37.617Z"
+            },
+            {
+              "seq": 66,
+              "type": "turn.started",
+              "at": "2026-10-09T23:29:37.618Z"
+            },
+            {
+              "seq": 68,
+              "type": "task.started",
+              "at": "2026-10-09T23:29:37.952Z"
+            },
+            {
+              "seq": 69,
+              "type": "user.message",
+              "at": "2026-10-09T23:29:37.952Z"
+            },
+            {
+              "seq": 80,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:29:42.101Z"
+            },
+            {
+              "seq": 81,
+              "type": "task.ended",
+              "at": "2026-10-09T23:29:42.101Z"
+            },
+            {
+              "seq": 82,
+              "type": "turn.ended",
+              "at": "2026-10-09T23:29:42.101Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 4759,
+          "endedAt": "2026-10-09T23:29:42.313Z"
+        },
+        {
+          "sessionId": "session-e7f1d87d-37f7-44d2-b6ba-6b7090a9232a",
+          "modelProfileId": "private-model-6e72abca620b88bc05c1dc85f09db48df6089082",
+          "commandId": "cmd-2c36bfe9-c592-4ce8-97f7-89bb690498d0",
+          "startedAt": "2026-10-09T23:29:42.355Z",
+          "reply": "收到，挑背包偏好能放十四寸电脑的尺寸。（另：本轮目录中没有 bag_selection 工具，无法加载；如需我可改用其他可用工具。）",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 83,
+              "type": "task.queued",
+              "at": "2026-10-09T23:29:42.428Z"
+            },
+            {
+              "seq": 84,
+              "type": "turn.started",
+              "at": "2026-10-09T23:29:42.428Z"
+            },
+            {
+              "seq": 86,
+              "type": "task.started",
+              "at": "2026-10-09T23:29:42.688Z"
+            },
+            {
+              "seq": 87,
+              "type": "user.message",
+              "at": "2026-10-09T23:29:42.688Z"
+            },
+            {
+              "seq": 98,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:29:46.971Z"
+            },
+            {
+              "seq": 99,
+              "type": "task.ended",
+              "at": "2026-10-09T23:29:46.972Z"
+            },
+            {
+              "seq": 100,
+              "type": "turn.ended",
+              "at": "2026-10-09T23:29:46.973Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 4792,
+          "endedAt": "2026-10-09T23:29:47.147Z"
+        }
+      ],
+      "replySummary": "收到，挑背包偏好能放十四寸电脑的尺寸。（另：本轮目录中没有 bag_selection 工具，无法加载；如需我可改用其他可用工具。）",
+      "notes": "Synthetic daily preferences",
+      "scratchDir": "[user-home]\\AppData\\Local\\Temp\\weftmate-eval-memd-2-GhCVZn"
+    }
+  ],
+  "requests": [
+    {
+      "id": 1,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:27:57.986Z",
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 32,
+        "prompt_tokens": 2117,
+        "total_tokens": 2149,
+        "completion_tokens_details": {
+          "reasoning_tokens": 12
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      }
+    },
+    {
+      "id": 2,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:28:00.141Z",
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 55,
+        "prompt_tokens": 142,
+        "total_tokens": 197,
+        "completion_tokens_details": {
+          "reasoning_tokens": 46
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      }
+    },
+    {
+      "id": 3,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:28:02.743Z",
+      "formation": false,
+      "recallContainsPriorPreference": true,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 18,
+        "prompt_tokens": 2479,
+        "total_tokens": 2497,
+        "completion_tokens_details": {
+          "reasoning_tokens": 4
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 1536
+        }
+      }
+    },
+    {
+      "id": 4,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:28:03.557Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 105,
+        "prompt_tokens": 4698,
+        "total_tokens": 4803,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 3136
+        }
+      }
+    },
+    {
+      "id": 5,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:28:04.073Z",
+      "formation": false,
+      "recallContainsPriorPreference": true,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 17,
+        "prompt_tokens": 2827,
+        "total_tokens": 2844,
+        "completion_tokens_details": {
+          "reasoning_tokens": 4
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 2112
+        }
+      }
+    },
+    {
+      "id": 6,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:28:07.158Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 104,
+        "prompt_tokens": 4698,
+        "total_tokens": 4802,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 4672
+        }
+      }
+    },
+    {
+      "id": 7,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:28:07.556Z",
+      "formation": false,
+      "recallContainsPriorPreference": true,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 17,
+        "prompt_tokens": 3174,
+        "total_tokens": 3191,
+        "completion_tokens_details": {
+          "reasoning_tokens": 4
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 2496
+        }
+      }
+    },
+    {
+      "id": 8,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:28:11.342Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 99,
+        "prompt_tokens": 4698,
+        "total_tokens": 4797,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 4672
+        }
+      }
+    },
+    {
+      "id": 9,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:28:11.809Z",
+      "formation": false,
+      "recallContainsPriorPreference": true,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 17,
+        "prompt_tokens": 3520,
+        "total_tokens": 3537,
+        "completion_tokens_details": {
+          "reasoning_tokens": 4
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 2816
+        }
+      }
+    },
+    {
+      "id": 10,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:28:14.140Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 104,
+        "prompt_tokens": 4698,
+        "total_tokens": 4802,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 4672
+        }
+      }
+    },
+    {
+      "id": 11,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:28:16.507Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 121,
+        "prompt_tokens": 5075,
+        "total_tokens": 5196,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 4416
+        }
+      }
+    },
+    {
+      "id": 12,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:28:18.934Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 93,
+        "prompt_tokens": 5524,
+        "total_tokens": 5617,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 4416
+        }
+      }
+    },
+    {
+      "id": 13,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:28:20.818Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 124,
+        "prompt_tokens": 5891,
+        "total_tokens": 6015,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 4672
+        }
+      }
+    },
+    {
+      "id": 14,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T23:28:20.918Z",
+      "switch": true,
+      "switchDelayMs": 1200,
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 38,
+        "prompt_tokens": 2111,
+        "total_tokens": 2149,
+        "completion_tokens_details": {
+          "reasoning_tokens": 27
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 1728
+        }
+      }
+    },
+    {
+      "id": 15,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T23:28:27.006Z",
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 19,
+        "prompt_tokens": 2479,
+        "total_tokens": 2498,
+        "completion_tokens_details": {
+          "reasoning_tokens": 4
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      }
+    },
+    {
+      "id": 16,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T23:28:30.899Z",
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 64,
+        "prompt_tokens": 138,
+        "total_tokens": 202,
+        "completion_tokens_details": {
+          "reasoning_tokens": 63
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      }
+    },
+    {
+      "id": 17,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T23:28:33.522Z",
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 18,
+        "prompt_tokens": 2830,
+        "total_tokens": 2848,
+        "completion_tokens_details": {
+          "reasoning_tokens": 4
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 2112
+        }
+      }
+    },
+    {
+      "id": 18,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T23:28:52.300Z",
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 17,
+        "prompt_tokens": 3179,
+        "total_tokens": 3196,
+        "completion_tokens_details": {
+          "reasoning_tokens": 4
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 2496
+        }
+      }
+    },
+    {
+      "id": 19,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T23:28:58.082Z",
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 16,
+        "prompt_tokens": 3526,
+        "total_tokens": 3542,
+        "completion_tokens_details": {
+          "reasoning_tokens": 4
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 2816
+        }
+      }
+    },
+    {
+      "id": 20,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T23:29:07.451Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 124,
+        "prompt_tokens": 5891,
+        "total_tokens": 6015,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 5888
+        }
+      }
+    },
+    {
+      "id": 21,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T23:29:10.351Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 117,
+        "prompt_tokens": 6333,
+        "total_tokens": 6450,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 5248
+        }
+      }
+    },
+    {
+      "id": 22,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:29:14.174Z",
+      "switch": true,
+      "switchDelayMs": 1200,
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 19,
+        "prompt_tokens": 2111,
+        "total_tokens": 2130,
+        "completion_tokens_details": {
+          "reasoning_tokens": 9
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 1728
+        }
+      }
+    },
+    {
+      "id": 23,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:29:17.400Z",
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 48,
+        "prompt_tokens": 134,
+        "total_tokens": 182,
+        "completion_tokens_details": {
+          "reasoning_tokens": 42
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      }
+    },
+    {
+      "id": 24,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:29:30.052Z",
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 14,
+        "prompt_tokens": 2457,
+        "total_tokens": 2471,
+        "completion_tokens_details": {
+          "reasoning_tokens": 4
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 1536
+        }
+      }
+    },
+    {
+      "id": 25,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:29:32.062Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 119,
+        "prompt_tokens": 5343,
+        "total_tokens": 5462,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 4416
+        }
+      }
+    },
+    {
+      "id": 26,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:29:33.267Z",
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 14,
+        "prompt_tokens": 2797,
+        "total_tokens": 2811,
+        "completion_tokens_details": {
+          "reasoning_tokens": 4
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 2112
+        }
+      }
+    },
+    {
+      "id": 27,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:29:37.514Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 125,
+        "prompt_tokens": 5343,
+        "total_tokens": 5468,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 4416
+        }
+      }
+    },
+    {
+      "id": 28,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:29:38.003Z",
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 15,
+        "prompt_tokens": 3138,
+        "total_tokens": 3153,
+        "completion_tokens_details": {
+          "reasoning_tokens": 4
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 2432
+        }
+      }
+    },
+    {
+      "id": 29,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:29:42.126Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 125,
+        "prompt_tokens": 5343,
+        "total_tokens": 5468,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 5312
+        }
+      }
+    },
+    {
+      "id": 30,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:29:42.749Z",
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 109,
+        "prompt_tokens": 3484,
+        "total_tokens": 3593,
+        "completion_tokens_details": {
+          "reasoning_tokens": 68
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 2752
+        }
+      }
+    },
+    {
+      "id": 31,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:29:47.090Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 125,
+        "prompt_tokens": 5343,
+        "total_tokens": 5468,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 5312
+        }
+      }
+    },
+    {
+      "id": 32,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:29:59.123Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 123,
+        "prompt_tokens": 5785,
+        "total_tokens": 5908,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 4416
+        }
+      }
+    },
+    {
+      "id": 33,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:30:02.094Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 134,
+        "prompt_tokens": 6258,
+        "total_tokens": 6392,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 4416
+        }
+      }
+    },
+    {
+      "id": 34,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:30:04.994Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 133,
+        "prompt_tokens": 6717,
+        "total_tokens": 6850,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 4416
+        }
+      }
+    },
+    {
+      "id": 35,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T23:30:06.005Z",
+      "switch": true,
+      "switchDelayMs": 1200,
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 41,
+        "prompt_tokens": 2340,
+        "total_tokens": 2381,
+        "completion_tokens_details": {
+          "reasoning_tokens": 38
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 1728
+        }
+      }
+    },
+    {
+      "id": 36,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T23:30:13.147Z",
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 64,
+        "prompt_tokens": 139,
+        "total_tokens": 203,
+        "completion_tokens_details": {
+          "reasoning_tokens": 61
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      }
+    },
+    {
+      "id": 37,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T23:30:16.796Z",
+      "formation": false,
+      "recallContainsPriorPreference": true,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 30,
+        "prompt_tokens": 2337,
+        "total_tokens": 2367,
+        "completion_tokens_details": {
+          "reasoning_tokens": 26
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 1728
+        }
+      }
+    },
+    {
+      "id": 38,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T23:30:18.974Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 132,
+        "prompt_tokens": 6717,
+        "total_tokens": 6849,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 6656
+        }
+      }
+    },
+    {
+      "id": 39,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T23:30:19.823Z",
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 31,
+        "prompt_tokens": 2116,
+        "total_tokens": 2147,
+        "completion_tokens_details": {
+          "reasoning_tokens": 9
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 1728
+        }
+      }
+    },
+    {
+      "id": 40,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T23:30:23.994Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200,
+      "usage": {
+        "completion_tokens": 134,
+        "prompt_tokens": 6717,
+        "total_tokens": 6851,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 6656
+        }
+      }
+    }
+  ],
+  "snapshots": [
+    {
+      "label": "before",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-ded1ce5b-717c-411a-ad63-e141061a582b",
+          "state": "unavailable",
+          "worldRevision": null,
+          "capabilities": {
+            "list": false,
+            "source": false,
+            "inject": false,
+            "correct": false,
+            "mute": false,
+            "deleteEvidence": false,
+            "deleteWorldItem": false
+          },
+          "pendingBoundaryCount": 0,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": "MEMORY_MODEL_UNAVAILABLE",
+          "reasonCode": "MEMORY_MODEL_UNAVAILABLE",
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": null,
+      "ipc": {
+        "recallAttempts": 0,
+        "recallRequests": 0,
+        "recallWithContext": 0,
+        "recallReplies": 0,
+        "ingestRequests": 0,
+        "rejectedBindings": 0
+      }
+    },
+    {
+      "label": "group-0",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-ded1ce5b-717c-411a-ad63-e141061a582b",
+          "state": "degraded",
+          "version": "2.0.0",
+          "worldRevision": 0,
+          "capabilities": {
+            "list": true,
+            "source": true,
+            "inject": true,
+            "correct": true,
+            "mute": true,
+            "deleteEvidence": true,
+            "deleteWorldItem": true
+          },
+          "pendingBoundaryCount": 0,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": null,
+          "pendingFormationCount": 5,
+          "failedFormationCount": 0,
+          "reasonCode": "MEMORY_FORMATION_PENDING",
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": {
+        "version": 2,
+        "ownerId": "owner-ded1ce5b-717c-411a-ad63-e141061a582b",
+        "items": [],
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null
+      },
+      "ipc": {
+        "recallAttempts": 5,
+        "recallRequests": 5,
+        "recallWithContext": 0,
+        "recallReplies": 5,
+        "ingestRequests": 5,
+        "rejectedBindings": 0
+      }
+    },
+    {
+      "label": "recovered-0",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-ded1ce5b-717c-411a-ad63-e141061a582b",
+          "state": "degraded",
+          "version": "2.0.0",
+          "worldRevision": 2,
+          "capabilities": {
+            "list": true,
+            "source": true,
+            "inject": true,
+            "correct": true,
+            "mute": true,
+            "deleteEvidence": true,
+            "deleteWorldItem": true
+          },
+          "pendingBoundaryCount": 0,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": null,
+          "pendingFormationCount": 3,
+          "failedFormationCount": 0,
+          "reasonCode": "MEMORY_FORMATION_PENDING",
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": {
+        "version": 2,
+        "ownerId": "owner-ded1ce5b-717c-411a-ad63-e141061a582b",
+        "items": [],
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null
+      },
+      "ipc": {
+        "recallAttempts": 5,
+        "recallRequests": 5,
+        "recallWithContext": 0,
+        "recallReplies": 5,
+        "ingestRequests": 5,
+        "rejectedBindings": 0
+      }
+    },
+    {
+      "label": "group-1",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-ded1ce5b-717c-411a-ad63-e141061a582b",
+          "state": "degraded",
+          "version": "2.0.0",
+          "worldRevision": 3,
+          "capabilities": {
+            "list": true,
+            "source": true,
+            "inject": false,
+            "correct": true,
+            "mute": true,
+            "deleteEvidence": true,
+            "deleteWorldItem": true
+          },
+          "pendingBoundaryCount": 5,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": "MEMORY_MODEL_UNAVAILABLE",
+          "pendingFormationCount": 2,
+          "failedFormationCount": 0,
+          "reasonCode": "MEMORY_MODEL_UNAVAILABLE",
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": {
+        "version": 2,
+        "ownerId": "owner-ded1ce5b-717c-411a-ad63-e141061a582b",
+        "items": [
+          {
+            "boundary": {
+              "schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+              "result_session_id": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+              "mode": "turn",
+              "source_messages": [
+                {
+                  "role": "user",
+                  "content": "我安排上午工作时偏好先做需要专注的任务。请简短回复收到，不调用工具。",
+                  "source_ref": "source:0",
+                  "message_id": "4479a928-d1e6-42f8-ad9a-68a35e4812d0",
+                  "timestamp": 1791588500
+                },
+                {
+                  "role": "assistant",
+                  "content": "收到：上午优先安排需要专注的任务。",
+                  "source_ref": "source:1",
+                  "message_id": "8720631b-0e14-4698-bf8d-fe13f342482d",
+                  "timestamp": 1791588506
+                }
+              ],
+              "event_id": "weftmate-turn-boundary-v1:574b0f6401b4cc7ddc3ad59f16aa877f:cda4e6d2154ded94e47f578e172cc7d37c4f7ceafb5999adcf7c557026bda10f",
+              "payload_hash": "cda4e6d2154ded94e47f578e172cc7d37c4f7ceafb5999adcf7c557026bda10f"
+            },
+            "blocked": false,
+            "lastFailureCode": "MEMORY_MODEL_UNAVAILABLE"
+          },
+          {
+            "boundary": {
+              "schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+              "result_session_id": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+              "mode": "turn",
+              "source_messages": [
+                {
+                  "role": "user",
+                  "content": "我阅读长文时偏好分成不超过五个小节。请简短回复收到，不调用工具。",
+                  "source_ref": "source:0",
+                  "message_id": "9c6da902-f551-4a45-869e-7472b561b984",
+                  "timestamp": 1791588506
+                },
+                {
+                  "role": "assistant",
+                  "content": "收到：长文阅读按不超过五个小节分段。",
+                  "source_ref": "source:1",
+                  "message_id": "0c51e221-1584-485e-aeed-571c655a3e67",
+                  "timestamp": 1791588510
+                }
+              ],
+              "event_id": "weftmate-turn-boundary-v1:35b0b40624b8066448a3e15845f96bd5:ef74c2e64ec0a600507bfad22f0e89313f4f10941a93d1409a898619e52137f6",
+              "payload_hash": "ef74c2e64ec0a600507bfad22f0e89313f4f10941a93d1409a898619e52137f6"
+            },
+            "blocked": false,
+            "lastFailureCode": null
+          },
+          {
+            "boundary": {
+              "schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+              "result_session_id": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+              "mode": "turn",
+              "source_messages": [
+                {
+                  "role": "user",
+                  "content": "我写会议纪要时偏好把决定和待办分开。请简短回复收到，不调用工具。",
+                  "source_ref": "source:0",
+                  "message_id": "a696eb7a-3141-40ed-93a3-46b4623b4a3e",
+                  "timestamp": 1791588510
+                },
+                {
+                  "role": "assistant",
+                  "content": "收到：会议纪要把决定和待办分开写。",
+                  "source_ref": "source:1",
+                  "message_id": "8ef85a85-6a08-469c-952c-8c88fbd3ed3c",
+                  "timestamp": 1791588532
+                }
+              ],
+              "event_id": "weftmate-turn-boundary-v1:f6cd3b72b39be9338504ddf62cb2e903:3c68efa0785b76196b7a883a692b5c55ba896f9ee0bb0877226d24e3a7544f2c",
+              "payload_hash": "3c68efa0785b76196b7a883a692b5c55ba896f9ee0bb0877226d24e3a7544f2c"
+            },
+            "blocked": false,
+            "lastFailureCode": null
+          },
+          {
+            "boundary": {
+              "schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+              "result_session_id": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+              "mode": "turn",
+              "source_messages": [
+                {
+                  "role": "user",
+                  "content": "我使用电脑深色主题时偏好低饱和配色。请简短回复收到，不调用工具。",
+                  "source_ref": "source:0",
+                  "message_id": "d80c4472-fa39-49ec-b175-c028e7e21a69",
+                  "timestamp": 1791588532
+                },
+                {
+                  "role": "assistant",
+                  "content": "收到：深色主题用低饱和配色。",
+                  "source_ref": "source:1",
+                  "message_id": "699826e0-ab54-4c00-85ca-bf8b431cf2a7",
+                  "timestamp": 1791588537
+                }
+              ],
+              "event_id": "weftmate-turn-boundary-v1:786ba9d40a7be0aca4c29a01ae4c0100:fa2eb1d4d5fd8f71565ee8be64021df900a17f26f3af3a74a0add7972a5d011c",
+              "payload_hash": "fa2eb1d4d5fd8f71565ee8be64021df900a17f26f3af3a74a0add7972a5d011c"
+            },
+            "blocked": false,
+            "lastFailureCode": null
+          },
+          {
+            "boundary": {
+              "schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+              "result_session_id": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+              "mode": "turn",
+              "source_messages": [
+                {
+                  "role": "user",
+                  "content": "我准备演示时偏好每页只讲一个重点。请简短回复收到，不调用工具。",
+                  "source_ref": "source:0",
+                  "message_id": "02d94b0f-728b-4679-bb45-be9e85552d27",
+                  "timestamp": 1791588538
+                },
+                {
+                  "role": "assistant",
+                  "content": "收到：演示每页只讲一个重点。",
+                  "source_ref": "source:1",
+                  "message_id": "dd765a0c-9c0f-430c-bcd6-103dc4353b54",
+                  "timestamp": 1791588547
+                }
+              ],
+              "event_id": "weftmate-turn-boundary-v1:b8e9391487f60daf811385ddfdfa2d53:7f46aed44a54a0609c0f41e96471d9566e5279df549f1e61dda5699a1b9909c9",
+              "payload_hash": "7f46aed44a54a0609c0f41e96471d9566e5279df549f1e61dda5699a1b9909c9"
+            },
+            "blocked": false,
+            "lastFailureCode": null
+          }
+        ],
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null
+      },
+      "ipc": {
+        "recallAttempts": 10,
+        "recallRequests": 10,
+        "recallWithContext": 0,
+        "recallReplies": 10,
+        "ingestRequests": 10,
+        "rejectedBindings": 0
+      }
+    },
+    {
+      "label": "recovered-1",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-ded1ce5b-717c-411a-ad63-e141061a582b",
+          "state": "degraded",
+          "version": "2.0.0",
+          "worldRevision": 5,
+          "capabilities": {
+            "list": true,
+            "source": true,
+            "inject": false,
+            "correct": true,
+            "mute": true,
+            "deleteEvidence": true,
+            "deleteWorldItem": true
+          },
+          "pendingBoundaryCount": 5,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": "MEMORY_MODEL_UNAVAILABLE",
+          "pendingFormationCount": 0,
+          "failedFormationCount": 0,
+          "reasonCode": "MEMORY_MODEL_UNAVAILABLE",
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": {
+        "version": 2,
+        "ownerId": "owner-ded1ce5b-717c-411a-ad63-e141061a582b",
+        "items": [
+          {
+            "boundary": {
+              "schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+              "result_session_id": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+              "mode": "turn",
+              "source_messages": [
+                {
+                  "role": "user",
+                  "content": "我安排上午工作时偏好先做需要专注的任务。请简短回复收到，不调用工具。",
+                  "source_ref": "source:0",
+                  "message_id": "4479a928-d1e6-42f8-ad9a-68a35e4812d0",
+                  "timestamp": 1791588500
+                },
+                {
+                  "role": "assistant",
+                  "content": "收到：上午优先安排需要专注的任务。",
+                  "source_ref": "source:1",
+                  "message_id": "8720631b-0e14-4698-bf8d-fe13f342482d",
+                  "timestamp": 1791588506
+                }
+              ],
+              "event_id": "weftmate-turn-boundary-v1:574b0f6401b4cc7ddc3ad59f16aa877f:cda4e6d2154ded94e47f578e172cc7d37c4f7ceafb5999adcf7c557026bda10f",
+              "payload_hash": "cda4e6d2154ded94e47f578e172cc7d37c4f7ceafb5999adcf7c557026bda10f"
+            },
+            "blocked": false,
+            "lastFailureCode": "MEMORY_MODEL_UNAVAILABLE"
+          },
+          {
+            "boundary": {
+              "schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+              "result_session_id": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+              "mode": "turn",
+              "source_messages": [
+                {
+                  "role": "user",
+                  "content": "我阅读长文时偏好分成不超过五个小节。请简短回复收到，不调用工具。",
+                  "source_ref": "source:0",
+                  "message_id": "9c6da902-f551-4a45-869e-7472b561b984",
+                  "timestamp": 1791588506
+                },
+                {
+                  "role": "assistant",
+                  "content": "收到：长文阅读按不超过五个小节分段。",
+                  "source_ref": "source:1",
+                  "message_id": "0c51e221-1584-485e-aeed-571c655a3e67",
+                  "timestamp": 1791588510
+                }
+              ],
+              "event_id": "weftmate-turn-boundary-v1:35b0b40624b8066448a3e15845f96bd5:ef74c2e64ec0a600507bfad22f0e89313f4f10941a93d1409a898619e52137f6",
+              "payload_hash": "ef74c2e64ec0a600507bfad22f0e89313f4f10941a93d1409a898619e52137f6"
+            },
+            "blocked": false,
+            "lastFailureCode": null
+          },
+          {
+            "boundary": {
+              "schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+              "result_session_id": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+              "mode": "turn",
+              "source_messages": [
+                {
+                  "role": "user",
+                  "content": "我写会议纪要时偏好把决定和待办分开。请简短回复收到，不调用工具。",
+                  "source_ref": "source:0",
+                  "message_id": "a696eb7a-3141-40ed-93a3-46b4623b4a3e",
+                  "timestamp": 1791588510
+                },
+                {
+                  "role": "assistant",
+                  "content": "收到：会议纪要把决定和待办分开写。",
+                  "source_ref": "source:1",
+                  "message_id": "8ef85a85-6a08-469c-952c-8c88fbd3ed3c",
+                  "timestamp": 1791588532
+                }
+              ],
+              "event_id": "weftmate-turn-boundary-v1:f6cd3b72b39be9338504ddf62cb2e903:3c68efa0785b76196b7a883a692b5c55ba896f9ee0bb0877226d24e3a7544f2c",
+              "payload_hash": "3c68efa0785b76196b7a883a692b5c55ba896f9ee0bb0877226d24e3a7544f2c"
+            },
+            "blocked": false,
+            "lastFailureCode": null
+          },
+          {
+            "boundary": {
+              "schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+              "result_session_id": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+              "mode": "turn",
+              "source_messages": [
+                {
+                  "role": "user",
+                  "content": "我使用电脑深色主题时偏好低饱和配色。请简短回复收到，不调用工具。",
+                  "source_ref": "source:0",
+                  "message_id": "d80c4472-fa39-49ec-b175-c028e7e21a69",
+                  "timestamp": 1791588532
+                },
+                {
+                  "role": "assistant",
+                  "content": "收到：深色主题用低饱和配色。",
+                  "source_ref": "source:1",
+                  "message_id": "699826e0-ab54-4c00-85ca-bf8b431cf2a7",
+                  "timestamp": 1791588537
+                }
+              ],
+              "event_id": "weftmate-turn-boundary-v1:786ba9d40a7be0aca4c29a01ae4c0100:fa2eb1d4d5fd8f71565ee8be64021df900a17f26f3af3a74a0add7972a5d011c",
+              "payload_hash": "fa2eb1d4d5fd8f71565ee8be64021df900a17f26f3af3a74a0add7972a5d011c"
+            },
+            "blocked": false,
+            "lastFailureCode": null
+          },
+          {
+            "boundary": {
+              "schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+              "result_session_id": "session-e55f0d9a-bb18-48a6-ad9b-bbcf797b3dc3",
+              "mode": "turn",
+              "source_messages": [
+                {
+                  "role": "user",
+                  "content": "我准备演示时偏好每页只讲一个重点。请简短回复收到，不调用工具。",
+                  "source_ref": "source:0",
+                  "message_id": "02d94b0f-728b-4679-bb45-be9e85552d27",
+                  "timestamp": 1791588538
+                },
+                {
+                  "role": "assistant",
+                  "content": "收到：演示每页只讲一个重点。",
+                  "source_ref": "source:1",
+                  "message_id": "dd765a0c-9c0f-430c-bcd6-103dc4353b54",
+                  "timestamp": 1791588547
+                }
+              ],
+              "event_id": "weftmate-turn-boundary-v1:b8e9391487f60daf811385ddfdfa2d53:7f46aed44a54a0609c0f41e96471d9566e5279df549f1e61dda5699a1b9909c9",
+              "payload_hash": "7f46aed44a54a0609c0f41e96471d9566e5279df549f1e61dda5699a1b9909c9"
+            },
+            "blocked": false,
+            "lastFailureCode": null
+          }
+        ],
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null
+      },
+      "ipc": {
+        "recallAttempts": 10,
+        "recallRequests": 10,
+        "recallWithContext": 0,
+        "recallReplies": 10,
+        "ingestRequests": 10,
+        "rejectedBindings": 0
+      }
+    },
+    {
+      "label": "group-2",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-ded1ce5b-717c-411a-ad63-e141061a582b",
+          "state": "degraded",
+          "version": "2.0.0",
+          "worldRevision": 5,
+          "capabilities": {
+            "list": true,
+            "source": true,
+            "inject": true,
+            "correct": true,
+            "mute": true,
+            "deleteEvidence": true,
+            "deleteWorldItem": true
+          },
+          "pendingBoundaryCount": 0,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": null,
+          "pendingFormationCount": 10,
+          "failedFormationCount": 0,
+          "reasonCode": "MEMORY_FORMATION_PENDING",
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": {
+        "version": 2,
+        "ownerId": "owner-ded1ce5b-717c-411a-ad63-e141061a582b",
+        "items": [],
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null
+      },
+      "ipc": {
+        "recallAttempts": 15,
+        "recallRequests": 15,
+        "recallWithContext": 0,
+        "recallReplies": 15,
+        "ingestRequests": 15,
+        "rejectedBindings": 0
+      }
+    },
+    {
+      "label": "host-restarted",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-ded1ce5b-717c-411a-ad63-e141061a582b",
+          "state": "degraded",
+          "version": "2.0.0",
+          "worldRevision": 6,
+          "capabilities": {
+            "list": true,
+            "source": true,
+            "inject": true,
+            "correct": true,
+            "mute": true,
+            "deleteEvidence": true,
+            "deleteWorldItem": true
+          },
+          "pendingBoundaryCount": 0,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": null,
+          "pendingFormationCount": 9,
+          "failedFormationCount": 0,
+          "reasonCode": "MEMORY_FORMATION_PENDING",
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": {
+        "version": 2,
+        "ownerId": "owner-ded1ce5b-717c-411a-ad63-e141061a582b",
+        "items": [],
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null
+      },
+      "ipc": {
+        "recallAttempts": 0,
+        "recallRequests": 0,
+        "recallWithContext": 0,
+        "recallReplies": 0,
+        "ingestRequests": 0,
+        "rejectedBindings": 0
+      }
+    },
+    {
+      "label": "recovered-2",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-ded1ce5b-717c-411a-ad63-e141061a582b",
+          "state": "degraded",
+          "version": "2.0.0",
+          "worldRevision": 8,
+          "capabilities": {
+            "list": true,
+            "source": true,
+            "inject": true,
+            "correct": true,
+            "mute": true,
+            "deleteEvidence": true,
+            "deleteWorldItem": true
+          },
+          "pendingBoundaryCount": 0,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": null,
+          "pendingFormationCount": 7,
+          "failedFormationCount": 0,
+          "reasonCode": "MEMORY_FORMATION_PENDING",
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": {
+        "version": 2,
+        "ownerId": "owner-ded1ce5b-717c-411a-ad63-e141061a582b",
+        "items": [],
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null
+      },
+      "ipc": {
+        "recallAttempts": 0,
+        "recallRequests": 0,
+        "recallWithContext": 0,
+        "recallReplies": 0,
+        "ingestRequests": 0,
+        "rejectedBindings": 0
+      }
+    }
+  ],
+  "compressedDays": 1,
+  "scenarioBoundaries": [
+    {
+      "group": 0,
+      "day": 1,
+      "model": "daily-local"
+    },
+    {
+      "group": 1,
+      "day": 1,
+      "model": "daily-second"
+    },
+    {
+      "group": 2,
+      "day": 1,
+      "model": "daily-local"
+    }
+  ],
+  "ordinaryTexts": [
+    "我喝第1种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+    "我写周报时偏好先列本周完成的事情。请简短回复收到，不调用工具。",
+    "我看技术解释时偏好先给能运行的小例子。请简短回复收到，不调用工具。",
+    "我开视频会时偏好提前十分钟检查麦克风。请简短回复收到，不调用工具。",
+    "我整理下载目录时偏好按项目名称分类。请简短回复收到，不调用工具。",
+    "我安排上午工作时偏好先做需要专注的任务。请简短回复收到，不调用工具。",
+    "我阅读长文时偏好分成不超过五个小节。请简短回复收到，不调用工具。",
+    "我写会议纪要时偏好把决定和待办分开。请简短回复收到，不调用工具。",
+    "我使用电脑深色主题时偏好低饱和配色。请简短回复收到，不调用工具。",
+    "我准备演示时偏好每页只讲一个重点。请简短回复收到，不调用工具。",
+    "我周末散步时偏好河边路线。请简短回复收到，不调用工具。",
+    "我喝咖啡时偏好不加糖。请简短回复收到，不调用工具。",
+    "我安排训练时偏好周三晚上。请简短回复收到，不调用工具。",
+    "我拍旅行照片时偏好自然光。请简短回复收到，不调用工具。",
+    "我挑背包时偏好能放十四寸电脑的尺寸。请简短回复收到，不调用工具。",
+    "我喝第901种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+    "我喝第902种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+    "我喝第903种花茶时偏好加一小撮肉桂粉。请提议以后喝这种茶时提醒我加肉桂粉。",
+    "好，以后我喝第903种花茶时，就提醒我加一小撮肉桂粉。",
+    "纠正一下，第903种花茶不加肉桂粉，改为加一片柠檬。请记住。"
+  ],
+  "hostRestart": true,
+  "temporarySession": "session-330d1dec-d942-47df-b6a4-3f55e66431d6",
+  "mainConversation": {
+    "sent": true,
+    "sessionId": "session-0f9ecb3e-de90-4581-91f4-c96aee7c965d"
+  },
+  "sideConversation": {
+    "sent": true,
+    "sessionId": "session-f083e142-a5fd-4593-b067-bad903daf551"
+  },
+  "error": "Error: Invalid scenario: qa4-daily-decision\n    at validateScenario (file:///D:/AIProjects/WeftMate/Worktrees/w2/scripts/eval.mjs:52:97)\n    at Array.forEach (<anonymous>)\n    at runEvaluation (file:///D:/AIProjects/WeftMate/Worktrees/w2/scripts/eval.mjs:436:13)\n    at async file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/evidence/qa-4/runners/daily.mjs:110:65"
+}
