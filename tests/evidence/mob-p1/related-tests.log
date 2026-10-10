@@ -1,0 +1,15 @@
+✔ conversation follows streaming growth, keyboard closure and approval layout clamping (2.6586ms)
+✔ touch, wheel and keyboard upward input stop following until bottom or a fresh send (5.4265ms)
+✔ memory pull refresh requires a downward gesture from the top of the active page (2.1775ms)
+✔ src/personal-access-ui/popovers.js: hidden source selects never get a visible proxy (3.4153ms)
+✔ src/personal-access-ui/popovers.js: closing a proxy menu tolerates WebViews without :popover-open (2.1566ms)
+✔ apps/mobile-ui/www/popovers.js: hidden source selects never get a visible proxy (1.1712ms)
+✔ apps/mobile-ui/www/popovers.js: closing a proxy menu tolerates WebViews without :popover-open (0.7162ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 157.3545

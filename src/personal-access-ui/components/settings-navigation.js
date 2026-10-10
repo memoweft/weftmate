@@ -96,6 +96,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         head.append(title, close);
         picker = node('select', 'settings-category-picker'); picker.setAttribute('aria-label', '设置分类');
         content = node('div', 'settings-content');
+        WeftPopover.pullRefresh(content,()=>core.openMemory(),()=>selected==='memory'&&dialog.open);
         const originals = [...account.children]; account.append(content);
         for (const id of ['general', 'personalization', 'assistant', 'appearance', 'account', 'devices', 'usage', 'models', 'approvals', 'memory', 'schedules', 'resources', 'system', 'backups', 'about']) {
             const panel = node('section', 'settings-category'); panel.dataset.category = id; panel.hidden = true; panels.set(id, panel); content.append(panel);

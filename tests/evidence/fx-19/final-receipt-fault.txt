@@ -1,0 +1,26 @@
+✔ FX-19 receipt wait returns only durable completion, preserves retry identity and survives disconnect/restart (1501.3801ms)
+✔ FX-19 failure writing the final receipt never reports creation success and restart never replays it (1898.4087ms)
+✔ two devices share an owner, concurrent duplicate request runs once, conflict and authentication stay bounded (1403.4029ms)
+✔ session ownership, target, strict fields and event cursor (1329.215ms)
+✔ restart marks dispatching uncertain without replay; pending resumes; corrupt store refuses startup (1337.9882ms)
+✔ occupied port fails and leaves existing listener usable (2593.6139ms)
+✔ store write failure refuses acceptance before backend side effects (1529.1672ms)
+✔ revocation while preflight waits rejects an unissued command (1517.2572ms)
+✔ lost message receipt remains uncertain and is never replayed on restart (1605.1928ms)
+✔ close prevents a blocked dispatch from writing or invoking the old backend after same-root restart (4708.6042ms)
+✔ close during a blocked acceptance preflight cannot persist the request (4615.0465ms)
+✔ valid JSON with tampered payload, missing source device or duplicate request ID fails closed (2052.6433ms)
+✔ event cursor advances across fully filtered and trailing hidden history (1645.5725ms)
+✔ history byte paging preserves the public response boundary without failing a large page (1543.6473ms)
+✔ backend errors and malformed event data never expose arbitrary codes or content (1467.2589ms)
+✔ full command ledger or unreconciled text budget rejects new work before persistence or dispatch (2235.0454ms)
+✔ UPD-2 status exposes authenticated read-only layer versions without source paths or install actions (1398.7242ms)
+✔ UPD-2 standalone host reports unavailable UI and mobile versions without inventing them (1398.5949ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 36013.2484

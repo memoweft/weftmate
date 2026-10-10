@@ -1093,6 +1093,9 @@ UX-6 / D53：既有 `GET /chats` 支持 `scope=search`，用于当前账户统�
 
 返回202 `{command}`，附 `kind:"session.side.create",chatId,sessionId,contextTransfer`；内部复用原持久 `session.create` 的创建/恢复流程。两项身份在首次受理时确定，同请求并发或重试返回同一命令；不同请求体409 `REQUEST_CONFLICT`。客户端等原 `/commands/by-request/{requestId}` 到 `accepted_by_dsh` 后才能使用旁聊。失败/不确定沿原回执处理，不换新请求编号重发。新旁聊使用独立原生会话与工作目录；项目旁聊沿原项目目录。
 
+FX-19：`GET /status.personalCapabilities.creationReceipt=1` 表示 `POST /commands` 的 `session.create` / `session.side.create` 可附 `waitForReceipt:true`。宿主先持久受理、沿原串行调度创建并持久提交最终回执，再返回同一202 `{command}`；响应可能为 `accepted_by_dsh`、失败或 `uncertain`，只有前者允许继续使用新会话。省略或false保留原快速受理响应；其他命令或非布尔值返回400。该选项不计入幂等请求身份，同一requestId切换等待方式不重复创建。等待在状态写入队列之外进行，仍沿既有30秒调度期限；客户端请求超时45秒。断线或超时不取消已持久的命令，须用原 `/commands/by-request/{requestId}` 核对，不能换编号重发；重启后原有pending恢复、dispatching转uncertain规则不变。客户端保持创建及选择期间禁用，读回已接受的单条聊天实体、恢复草稿后解锁，不全量刷新列表。安卓已有 `/commands` 及原请求查询白名单覆盖此选项，无新路由、无新壳要求；Apple（苹果端）可按精确能力版本选择等待，原轮询保持兼容。
+
+
 本步 `contextTransfer={state:"references_only",sourceRefs:[{chatId,eventId,kind:"native",hostId,sessionId,seq,contentRevision}],truncated:false}`，`Chat` 同时返回 `originRefs` 与 `contextTransfer`。**尚未接入原生摘要转移**；采用 IA_MAIN_CHAT 3.1 允许的仅引用回退，界面必须提示“相关上下文尚未带入”，允许用户编辑首句继续。不能把引用就绪显示为完整上下文已转移；不把客户端摘要当事实，也不复制整条历史或注入伪造真人消息。来源删除后原链接返回不可用，引用不能恢复正文。原 D34 分叉继续完整事件种子语义，本接口不等同分叉。临时来源409 `TEMPORARY_CONTEXT_CONFIRMATION_REQUIRED`，共享来源409 `SHARED_CONTEXT_UNAVAILABLE`；未实现绕过提示的确认布尔开关。
 
 | 接口 | 请求 | 响应与规则 |
