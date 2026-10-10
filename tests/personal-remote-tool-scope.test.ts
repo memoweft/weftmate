@@ -48,6 +48,16 @@ async function assertInitialFilePolicy() {
 test('official ToolRuntime gives the original personal-remote scope general tools while denying forged execution identity', async () => {
   await assertInitialFilePolicy()
   const root = mkdtempSync(join(tmpdir(), 'personal-tool-scope-'))
+  const sendDescriptor = Object.getOwnPropertyDescriptor(process, 'send')
+  const connectedDescriptor = Object.getOwnPropertyDescriptor(process, 'connected')
+  Object.defineProperty(process, 'connected', { configurable: true, value: true })
+  Object.defineProperty(process, 'send', { configurable: true, value: (frame: any, done: any) => {
+    // The production global plugin now requires native approval and host policy IPC.
+    assert.equal(frame.action, 'approval_policy', 'forged tool identity must never reach a host execution claim')
+    queueMicrotask(() => process.emit('message', { protocol: frame.protocol, id: frame.id,
+      ok: true, command: { mode: 'allow-all', allowedCategories: [] } }))
+    done?.(null)
+  } })
   try {
     const staged = stagePersonalPlugins(root)
     const [{ Context }, SystemPrompt, Sessions, tools, { createScope }, globalPlugin, preset] = await Promise.all([
@@ -63,6 +73,7 @@ test('official ToolRuntime gives the original personal-remote scope general tool
     await ctx.plugin(SystemPrompt.default, { includeHarnessIdentity: false, includeRuntimeContext: false, persona: '' })
     await ctx.plugin(Sessions.default)
     await ctx.plugin(tools.default, { mode: 'native', maxParallelSubCalls: 1 })
+    await ctx.plugin((await import(vendor('dsh-user-approval'))).default, { policy: 'never' })
     await ctx.plugin((await import(vendor('dsh-web'))).default)
     const fakeTool = (name: string) => tools.defineTool({ name, description: name,
       parameters: {}, output: { schema: { type: 'json' }, render: () => [{ type: 'text', text: '{}' }] },
@@ -81,15 +92,23 @@ test('official ToolRuntime gives the original personal-remote scope general tool
     await scoped.ctx.plugin(preset.default)
     const names = scoped.ctx.get('tools').schemas(agent).map((item: { name: string }) => item.name)
     assert.deepEqual(names, ['pwsh', 'read', 'write', 'edit', 'glob', 'grep', 'job_output', 'job_list', 'job_kill',
-      'weftmod', 'weftmod_script', 'get_goal', 'create_goal', 'update_goal', 'ask_user_question', 'future_native_capability', 'browser'])
+      'weftmod', 'weftmod_script', 'get_goal', 'create_goal', 'update_goal', 'ask_user_question', 'future_native_capability', 'exit_plan_mode', 'browser', 'load_tools'])
     for (const name of ['personal_open_notepad', 'personal_save_document', 'personal_list_project_files',
       'personal_read_project_file', 'personal_browser_open', 'personal_browser_follow', 'personal_browser_read_segment']) {
       assert.equal(names.includes(name), false)
     }
     const rawSchema = ctx.get('tools').schemas(agent).find((item: any) => item.name === 'pwsh')
-    const assembled = await scoped.ctx.waterfall('system-prompt/assemble', { tools: [rawSchema] }, {},
-      async () => ({ tools: [rawSchema] }))
-    assert.equal(assembled.tools[0].description, 'Run a PowerShell command in this conversation or an explicit workdir.')
+    const assemble = () => scoped.ctx.waterfall('system-prompt/assemble', { tools: [rawSchema] }, { scope: agent },
+      async () => ({ sections: [], tools: [rawSchema] }))
+    const deferred = await assemble()
+    assert.equal(deferred.tools.some((tool: any) => tool.name === 'pwsh'), false, 'PF-1 defers unloaded tool schemas')
+    // PF-1 added deferred presentation, not an execution permission bypass.
+    const loaded = await scoped.ctx.get('tools').execute({ name: 'load_tools', arguments: { names: ['pwsh'] },
+      agent, callId: 'load-pwsh', signal: new AbortController().signal })
+    assert.equal(loaded.isError, false)
+    assert.deepEqual(agent[Symbol.for('weftmate.loadedTools')], new Set(['pwsh']))
+    const assembled = await assemble()
+    assert.equal(assembled.tools[0].description, 'Run a PowerShell command in this conversation or an explicit workdir. For file organization, use Move-Item -LiteralPath with explicit destinations and skip existing destinations; do not use -Force to replace user files unless requested. Directory creation is ordinary; deleting or overwriting user files requires native approval.')
     assert.equal(rawSchema.description, 'pwsh', 'the native registry and other presets keep their descriptions')
     for (let i = 0; i < 150; i++) remoteSession.append('tool/call', { turn: 1, callId: `call-${i}`, name: 'read' })
     const decision = await scoped.ctx.waterfall('agent/pre-step', {
@@ -105,7 +124,13 @@ test('official ToolRuntime gives the original personal-remote scope general tool
     assert.ok(ctx.get('tools').schemas(standard).some((item: { name: string }) => item.name === 'pwsh'))
     assert.equal(ctx.get('tools').schemas(standard).some((item: { name: string }) => item.name === 'browser'), false)
     await ctx.fiber.dispose()
-  } finally { rmSync(root, { recursive: true, force: true }) }
+  } finally {
+    if (sendDescriptor) Object.defineProperty(process, 'send', sendDescriptor)
+    else delete process.send
+    if (connectedDescriptor) Object.defineProperty(process, 'connected', connectedDescriptor)
+    else delete process.connected
+    rmSync(root, { recursive: true, force: true })
+  }
 })
 
 test('official ToolRuntime gives a shared-account chat no inherited host tools', async () => {
