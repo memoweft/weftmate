@@ -13,7 +13,8 @@ export async function checkModelConnection({ baseUrl, modelId, apiKey, sendTestM
   if (!apiKey) return result;
   const canonical = canonicalProviderModelId(baseUrl, modelId);
   if (canonical !== modelId) result.suggestedModelId = canonical;
-  const headers = { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' };
+  const headers = { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json',
+    ...(new URL(baseUrl).hostname === 'api.anthropic.com' ? { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' } : {}) };
   let response;
   try { response = await fetchImpl(openAICompatibleEndpoint(baseUrl, 'models'), {
     headers, redirect: 'error', signal: AbortSignal.timeout(15_000) }); }

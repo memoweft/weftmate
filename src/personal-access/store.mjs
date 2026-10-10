@@ -618,6 +618,10 @@ export function validateSingleStore(store) {
 }
 
 export function validateStore(store) {
+  if (store?.onboarding !== undefined && (!plainObject(store.onboarding) ||
+      !['welcome', 'account', 'model', 'memory', 'import', 'phone', 'first'].includes(store.onboarding.step) ||
+      typeof store.onboarding.completed !== 'boolean' || typeof store.onboarding.started !== 'boolean' ||
+      store.onboarding.ownerId !== undefined && !validId(store.onboarding.ownerId))) throw failure('STORE_CORRUPT', 500);
   if (!plainObject(store) || store.version !== VERSION || !validId(store.hostId) ||
       !validId(store.legacyOwnerId) || !plainObject(store.accounts) ||
       !Object.hasOwn(store.accounts, store.legacyOwnerId) ||
