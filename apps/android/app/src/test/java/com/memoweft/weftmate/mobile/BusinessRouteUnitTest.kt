@@ -5,6 +5,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @Test fun accountDataControlsUseOnlyExactRoutesWithoutQueries() {
+        for (suffix in listOf("", "/operations", "/scan", "/clean", "/export", "/delete", "/close-account", "/cancel", "/confirm")) assertTrue(validBusinessPath("/personal/v1/data$suffix"))
+        for (route in listOf("/personal/v1/data/all", "/personal/v1/data/../delete", "/personal/v1/data?ownerId=other", "/personal/v1/data/export?destination=C%3A%2F", "/personal/v1/data%2Fdelete")) assertFalse(route, validBusinessPath(route))
+    }
     @Test fun accountSearchReusesTheExactChatListRoute() {
         assertTrue(validBusinessPath("/personal/v1/chats?scope=search&q=%E7%BA%B8%E8%88%B9&limit=200"))
         assertTrue(validBusinessPath("/personal/v1/chats?scope=search&cursor=chat-search-next&limit=200"))

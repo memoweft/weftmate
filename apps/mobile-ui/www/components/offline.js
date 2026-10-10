@@ -125,6 +125,7 @@
       const timer = setInterval(() => void tick().catch(() => {}), 15000);
       void tick().catch(() => {});
       const originalLogout = core.cloudLogout;
+      core.clearOfflineData = async () => {showHistory=false;offline=false;error='';await engine?.clear();paint();};
       if (originalLogout) core.cloudLogout = async (...args) => { showHistory = false; offline = false; error = ''; await engine?.clear(); paint(); if (!nativeCall) localStorage.removeItem('weftmate-offline-identity'); return originalLogout(...args); };
       return { tick, close: () => { clearInterval(timer); engine?.close(); section.remove(); launcher.remove(); notice.remove(); } };
     },

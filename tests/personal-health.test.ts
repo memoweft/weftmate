@@ -34,9 +34,10 @@ async function temp(t: any) {
   return root
 }
 async function fixture(t: any) {
-  const root = await temp(t)
+  const root = await realpath(await mkdtemp(path.join(tmpdir(), 'weftmate-health-')))
   const service = await createPersonalAccessService({ root, port: 0, backend, clock: () => now })
-  t.after(() => service.close())
+  // Stop and drain the real background writers before removing their directory.
+  t.after(async () => { await service.close(); await rm(root, { recursive: true, force: true }) })
   const { origin } = await service.start()
   const api = async (method: string, pathname: string, body?: any, auth?: any, overrides: any = {}) => {
     const response = await fetch(`${origin}${pathname}`, { method, headers: {

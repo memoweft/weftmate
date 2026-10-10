@@ -3052,6 +3052,7 @@ async function bootstrap() {
     gateway: stageOneGateway,
     queue: enqueueRouteMutation,
     bindSession: (sessionId, profileId) => settingsMod.bindSessionModel(sessionId, profileId),
+    unbindSession: sessionId => settingsMod.unbindSessionModel(sessionId),
     desktopTask: personalDesktopTask,
     sessionWorkspaceRoot: join(userDataDir, 'conversations'),
     taskStop: (input) => webRuntime?.stopPersonalTask(input) ?? Promise.resolve({ status: 'unconfirmed',
@@ -3390,7 +3391,7 @@ async function bootstrap() {
           // Explicit legacy setup links remain valid; the default first page is account login.
           const setupGrant = null;
           await desktopUpdates.prepareWindow();
-          personalDesktop = createPersonalDesktop({ libraryDesktopToken: personalAccessService?.libraryDesktopToken, origin: personalAccessOrigin, setupGrant, isQuitting: () => isQuitting,
+          personalDesktop = createPersonalDesktop({ dataManager: personalAccessService?.dataControls, libraryDesktopToken: personalAccessService?.libraryDesktopToken, origin: personalAccessOrigin, setupGrant, isQuitting: () => isQuitting,
             startInTray: process.argv.includes('--start-in-tray'),
             onStatus: status => { desktopStatus = status; refreshTrayMenu(); } });
           win = personalDesktop.window;

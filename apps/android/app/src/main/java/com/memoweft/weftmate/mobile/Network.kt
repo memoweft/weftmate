@@ -48,6 +48,7 @@ internal fun validBusinessPath(path: String): Boolean {
     // UX-7 uses one ephemeral session endpoint; cancellation accepts only its request ID.
     if (route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/suggestions")) &&
         (query.isEmpty() || query.replace(Regex("(?i)%3a"), ":").matches(Regex("requestId=[A-Za-z0-9_.:-]{1,128}")))) return true
+    if (query.isEmpty() && route in setOf("/personal/v1/data", "/personal/v1/data/operations", "/personal/v1/data/scan", "/personal/v1/data/clean", "/personal/v1/data/export", "/personal/v1/data/delete", "/personal/v1/data/close-account", "/personal/v1/data/cancel", "/personal/v1/data/confirm")) return true
     if (query.isEmpty() && (route == "/personal/v1/system" || route == "/personal/v1/settings/models" ||
         route == "/personal/v1/settings/approvals" ||
         route == "/personal/v1/settings/notifications" || route == "/personal/v1/settings/notifications/test" ||

@@ -45,6 +45,7 @@ function connectionLabel(){return {connected:'电脑连接正常',checking:'已�
   expired:'登录已失效，请重新登录',local:'未登录'}[state.connection]||'连接状态待确认'}
 
 const mobileSettingsRegistry = WeftUiCore.settingsRegistry({
+  data: target => { target.append(heading('数据与存储')); const body=el('section'); target.append(body); uiCore.syncMobileIdentity(); WeftDataView(uiCore,body,{toast,desktop:false}); },
   archived: target => archivedSettingsPage(target),
   notifications: target => {target.append(heading('通知'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftNotificationsView(uiCore,body,{toast,permissionState:()=>call('notifications.state'),requestPermission:()=>call('notifications.requestPermission'),openSettings:()=>call('notifications.openSettings'),openBatterySettings:()=>call('notifications.openBatterySettings'),poll:()=>call('notifications.poll')})},
   personalization: target => {target.append(heading('个性化'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftPersonalizationView(uiCore,body,'personalization')},

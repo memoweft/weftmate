@@ -1,0 +1,9 @@
+{
+  "isolatedPackage": "com.memoweft.weftmate.mobile.st4qa",
+  "realNativeBridge": true,
+  "realHostAuthentication": true,
+  "exactDataRoutes": true,
+  "fullSystemBarScreenshots": true,
+  "randomPort": true,
+  "modelRequests": 0
+}

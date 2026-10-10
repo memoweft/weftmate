@@ -180,6 +180,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         for (const original of originals) if (original.parentNode === account) original.hidden = true;
         account.append(content); main.append(head, strip, picker); if (cloudNotice) main.append(cloudNotice); main.append(account); dialog.append(sidebar, main); document.body.append(dialog);
         registry = globalThis.WeftUiCore.settingsRegistry({
+            data: ({target}) => globalThis.WeftDataView(core,target,{toast:ui.toast}),
             notifications: () => globalThis.WeftNotificationsView(core, panels.get('notifications'), {toast:ui.toast}),
             personalization: () => globalThis.WeftPersonalizationView(core, panels.get('personalization'), 'personalization'),
             assistant: () => globalThis.WeftPersonalizationView(core, panels.get('assistant'), 'assistant'),

@@ -7,6 +7,7 @@ import path from 'node:path';
 import { createSessionMetadata } from './session-metadata.mjs';
 import { protectMainSession } from './chat-identity.mjs';
 import { eraseChatCopies } from './chat-erasure.mjs';
+import { removeAccountPath } from '../personal-data/paths.mjs';
 
 export function createSessionOperations(context) {
   const deletions = new Set();
@@ -185,9 +186,9 @@ export function createSessionOperations(context) {
       const { forgetPreviewView } = await import('../personal-memory/http.mjs');
       return forgetPreviewView(result);
     },
-    async deleteSession(ownerId, sessionId, { forgetMemories = false, deleteConversationSnippets = false, memoryWorldRevision } = {}) {
+    async deleteSession(ownerId, sessionId, { forgetMemories = false, deleteConversationSnippets = false, memoryWorldRevision, accountErasure = false } = {}) {
       id(sessionId);
-      protectMainSession(context.accountState(ownerId), sessionId);
+      if (!(accountErasure && context.dataControls?.isErasing(ownerId))) protectMainSession(context.accountState(ownerId), sessionId);
       const key = `${ownerId}\0${sessionId}`;
       if (deletions.has(key)) throw failure('SESSION_BUSY', 409);
       deletions.add(key);
@@ -296,7 +297,7 @@ export function createSessionOperations(context) {
         const commands = Object.values(account.commands).filter(command => command.sessionId === sessionId);
         for (const command of commands) {
           if (command.taskId || command.rootTaskId || command.kind === 'session.message')
-            await rm(path.join(context.root, 'artifacts', ownerId, command.taskId ?? command.rootTaskId ?? command.commandId), { recursive: true, force: true });
+            await removeAccountPath(path.join(context.root,'artifacts',ownerId),path.join(context.root, 'artifacts', ownerId, command.taskId ?? command.rootTaskId ?? command.commandId));
         }
         await context.serial(() => context.mutate(ownerId, next => {
           for (const chatId of eraseChatCopies(next, { sessionId })) context.chatTimeline?.invalidate(ownerId, chatId);
