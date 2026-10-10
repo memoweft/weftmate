@@ -19,6 +19,7 @@ test('empty no-model session survives personal-host restart with a visible faile
   const launch = () => {
     const env = { ...process.env }
     for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key.startsWith('MEMOWEFT_')) delete env[key]
+    env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host'
     delete env.ELECTRON_RUN_AS_NODE
     Object.assign(env, { WEFTMATE_USER_DATA: profile, WEFTMATE_DOGFOOD_CONTROL: '1', WEFTMATE_MEMOWEFT_ENABLED: '0' })
     const child = spawn(electron, ['.', `--user-data-dir=${profile}`, '--personal-host'], {
