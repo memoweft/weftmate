@@ -16,7 +16,7 @@ const choose=async(page,form,name,value)=>{await form.getByRole('combobox',{name
 const more=async(page,row,name)=>{await row.getByRole('button',{name:/更多操作/}).click();if(name)await page.getByRole('menuitem',{name,exact:true}).click();};
 
 for(const theme of ['light','dark']){
- const fixture=await startTimelineCandidate({interactive:true,historyCount:0,goals:true,baseTime:Date.now()-10000});
+ const fixture=await startTimelineCandidate({logicalMobile:true,interactive:true,historyCount:0,goals:true,baseTime:Date.now()-10000});
  const profile=await mkdtemp(join(tmpdir(),'weftmate-tb-2b-'));let app,browser;
  try{
   await fixture.request('/goals',{requestId:randomUUID(),sessionId:fixture.sessionId,title:'推进每周学习计划',description:'每周核对资料，让进展留在原对话。'});
@@ -26,7 +26,7 @@ for(const theme of ['light','dark']){
   const phone=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,timezoneId:'Asia/Shanghai'});
   phone.setDefaultTimeout(15000);await phone.goto(fixture.mobileUrl);await phone.waitForFunction(()=>state.booted&&state.loggedIn);await phone.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);
   desktop.on('pageerror',error=>report.errors.push(error.message));phone.on('pageerror',error=>report.errors.push(error.message));
-  const open=async(page,mobile)=>{if(mobile)await page.getByRole('button',{name:'打开导航',exact:true}).click();await page.getByRole('button',{name:'目标',exact:true}).click();await page.getByRole('article',{name:'提交合成报告',exact:true}).waitFor();};
+  const open=async(page,mobile)=>{await page.getByRole(mobile?'tab':'button',{name:/^目标(?:，|$)/}).click();await page.getByRole('article',{name:'提交合成报告',exact:true}).waitFor();};
   const shot=async(page,name)=>{const file=`${name}-${theme}.png`;await page.screenshot({path:join(out,file)});report.screenshots.push(file);if(name.endsWith('-form')){const form=page.getByRole('form');if(await form.count()){const formFile=`${name}-full-${theme}.png`;await form.screenshot({path:join(out,formFile)});report.screenshots.push(formFile);}}};
   for(const [page,mobile,prefix]of [[desktop,false,'desktop'],[phone,true,'mobile-390']]){
    await open(page,mobile);await shot(page,prefix);
