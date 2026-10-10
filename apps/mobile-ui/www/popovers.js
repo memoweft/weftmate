@@ -23,7 +23,7 @@
       maxWidth: `${Math.max(0, right - left)}px`, maxHeight: `${Math.max(0, bottom - top)}px`,
       overflow: 'auto', overscrollBehavior: 'contain' });
     const anchor = trigger.getBoundingClientRect();
-    const width = menu.offsetWidth, naturalHeight = menu.offsetHeight;
+    const width = menu.offsetWidth, naturalHeight = Math.max(menu.offsetHeight, menu.scrollHeight);
     const above = Math.max(0, anchor.top - top - 8), below = Math.max(0, bottom - anchor.bottom - 8);
     const preferred = side === 'top' ? above : below, opposite = side === 'top' ? below : above;
     if (naturalHeight > preferred && opposite > preferred) side = side === 'top' ? 'bottom' : 'top';
@@ -170,7 +170,10 @@
       if (goalsControl) selected?.scrollIntoView({block:'nearest'});
     }
     trigger.onclick = () => menu.hidden ? open() : close(true);
-    trigger.onkeydown = event => { if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) { event.preventDefault(); open(event.key === 'ArrowUp'); } };
+    trigger.onkeydown = event => {
+      if (event.key === 'Escape' && !menu.hidden) { event.preventDefault(); event.stopPropagation(); close(true); return; }
+      if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) { event.preventDefault(); open(event.key === 'ArrowUp'); }
+    };
     menu.onkeydown = event => {
       if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(true); }
       if (event.key === 'Tab') { close(); trigger.focus(); }
@@ -196,35 +199,101 @@
     const bind = () => document.querySelectorAll('select').forEach(bindSettingsSelect);
     bind(); new MutationObserver(records => { if (records.some(record => [...record.addedNodes].some(node => node.matches?.('select') || node.querySelector?.('select')))) bind(); }).observe(document.body, { childList: true, subtree: true });
   });
-  // Shared action menu, with the same surface as conversation menus.
+  function openMenu(trigger, entries, { label = trigger.getAttribute('aria-label'), onClose, onSelect } = {}) {
+    const menu = document.createElement('div'); menu.className = 'wm-menu';
+    menu.setAttribute('role', 'menu'); menu.setAttribute('aria-label', label || '操作');
+    let child, closed = false;
+    const close = (focus = true) => {
+      if (closed) return; closed = true; child?.close(false);
+      active.get(menu)?.observer?.disconnect(); active.delete(menu);
+      document.removeEventListener('pointerdown', outside); menu.remove();
+      trigger.setAttribute('aria-expanded', 'false'); onClose?.();
+      if (focus && trigger.isConnected) trigger.focus({preventScroll:true});
+    };
+    const outside = event => { if (!menu.contains(event.target) && !child?.menu.contains(event.target) && !trigger.contains(event.target)) close(false); };
+    for (const entry of entries) {
+      if (entry.separator) { const line = document.createElement('hr'); line.className='wm-menu-separator'; menu.append(line); continue; }
+      const item = document.createElement('button'); item.type='button'; item.className='wm-menu-item'+(entry.danger?' danger':'');
+      item.setAttribute('role', entry.checked === undefined ? 'menuitem' : 'menuitemradio');
+      if (entry.checked !== undefined) item.setAttribute('aria-checked', String(entry.checked));
+      item.disabled=!!entry.disabled; if (entry.mutationId) item.dataset.messageMutation=entry.mutationId;
+      if (globalThis.WeftIcons) item.append(WeftIcons.create(entry.icon || 'right',16));
+      const text=document.createElement('span');text.className='wm-menu-label';text.textContent=entry.name;item.append(text);
+      if (entry.description) { item.title=entry.description; const note=document.createElement('small'); note.className='wm-menu-description'; note.textContent=entry.description; text.append(note); item.setAttribute('aria-label',entry.name); item.setAttribute('aria-description',entry.description); }
+      if (entry.checked && globalThis.WeftIcons) item.append(WeftIcons.create('allow',16));
+      if (entry.children) { item.setAttribute('aria-haspopup','menu'); item.setAttribute('aria-expanded','false'); item.append(WeftIcons.create('right',16)); }
+      const activate = async () => {
+        if (entry.children) {
+          child?.close(false); const values=await entry.children(); if (closed || !item.isConnected) return;
+          child=openMenu(item,values,{label:entry.name,onSelect:()=>{close();onSelect?.();}}); item.setAttribute('aria-expanded','true');
+        } else { close(); onSelect?.(); await entry.action?.(item); }
+      };
+      item.addEventListener('click', () => void activate());
+      item.addEventListener('keydown', event => {if (entry.children && event.key==='ArrowRight') {event.preventDefault();void activate();}});
+      menu.append(item);
+    }
+    menu.addEventListener('keydown', event => {
+      const items=[...menu.querySelectorAll(':scope > button:not(:disabled)')], index=items.indexOf(document.activeElement);
+      if (['Escape','ArrowLeft','Tab'].includes(event.key)) {event.stopPropagation();if(event.key!=='Tab')event.preventDefault();close(event.key!=='Tab');}
+      if (['ArrowUp','ArrowDown','Home','End'].includes(event.key)) {event.preventDefault();event.stopPropagation();items[event.key==='Home'?0:event.key==='End'?items.length-1:(index+(event.key==='ArrowDown'?1:-1)+items.length)%items.length]?.focus();}
+    });
+    (trigger.closest('dialog[open]') || document.body).append(menu);trigger.setAttribute('aria-haspopup','menu');trigger.setAttribute('aria-expanded','true');position(menu,trigger,{side:'bottom',align:'end'});
+    menu.querySelector('button:not(:disabled)')?.focus({preventScroll:true});
+    setTimeout(()=>{if(!closed)document.addEventListener('pointerdown',outside)},0);
+    return {menu,close};
+  }
+  function autosize(field) {
+    if (!field || !field.getClientRects().length) return;
+    const style=getComputedStyle(field), line=parseFloat(style.lineHeight)||parseFloat(style.fontSize)*1.6;
+    const padding=parseFloat(style.paddingTop)+parseFloat(style.paddingBottom);
+    field.rows=1;field.style.height='auto';
+    const maximum=line*8+padding;
+    field.style.height=`${Math.min(maximum,Math.max(line+padding,field.scrollHeight))}px`;
+    field.style.overflowY=field.scrollHeight>maximum?'auto':'hidden';
+  }
+  function modelGate({ missing, field, send, empty, content, composer, openSettings }) {
+    let card=content.querySelector(':scope > .model-empty-card'), bar=composer.querySelector(':scope > .model-required-bar');
+    function create(cls) {
+      const box=document.createElement('section');box.className=cls;box.setAttribute('role','status');
+      box.append(WeftIcons.create('model',cls==='model-empty-card'?32:20));
+      const text=document.createElement('p');text.textContent='先添加一个模型，就能开始聊天';box.append(text);
+      const action=document.createElement('button');action.type='button';action.className='model-setup-button';action.textContent='设置模型';action.onclick=openSettings;box.append(action);return box;
+    }
+    if (missing && !card) {card=create('model-empty-card');content.append(card);}
+    if (missing && !bar) {bar=create('model-required-bar');composer.prepend(bar);}
+    if (card) card.hidden=!missing||!empty;
+    if (bar) bar.hidden=!missing||empty;
+    if (missing) {field.disabled=true;field.placeholder='先添加一个模型';send.disabled=true;}
+    content.classList.toggle('needs-model-empty',!!missing&&!!empty);
+    autosize(field);
+  }
+  function memoryHealth(health, status, { text, count, onRetry, onSource }) {
+    const issues=status?.formationIssues||[], corrections=issues.filter(issue=>issue.intent==='correction').length;
+    const healthy=text==='记忆正常'&&!issues.length;
+    const signature=JSON.stringify([status,text,count]);if(health.dataset.signature===signature)return;health.dataset.signature=signature;
+    health.className='memory-health '+(healthy?'is-healthy':'is-warning');health.replaceChildren();
+    const bar=document.createElement('div');bar.className='memory-issue-bar';
+    bar.append(WeftIcons.create(healthy?'allow':'warn',20));
+    const label=document.createElement('span');label.textContent=issues.length?(corrections?`有 ${corrections} 条纠正没有生效`:`有 ${issues.length} 条记忆没有形成`):healthy?`记忆正常 · ${Number.isSafeInteger(count)?`已形成 ${count} 条`:'正在读取数量'} · 队列 0`:`${text} · 积压 ${(status?.pendingBoundaryCount||0)+(status?.pendingFormationCount||0)} 条`;bar.append(label);health.append(bar);
+    if(healthy||!status)return;
+    const panel=document.createElement('div');panel.className='memory-issue-cards';panel.hidden=true;
+    const view=document.createElement('button');view.type='button';view.className='message-action';view.textContent='查看';view.setAttribute('aria-expanded','false');view.onclick=()=>{panel.hidden=!panel.hidden;view.textContent=panel.hidden?'查看':'收起';view.setAttribute('aria-expanded',String(!panel.hidden));};bar.append(view);
+    if(!issues.length){const p=document.createElement('p');p.textContent='检查设置里的模型，恢复后会自动继续。已提交的回合继续整理。';panel.append(p);}
+    for(const issue of issues){const card=document.createElement('article');card.className='memory-issue-card';
+      const original=document.createElement('p');original.textContent=issue.text;card.append(original);
+      const time=document.createElement('time');time.className='message-time';time.textContent=issue.updatedAt||issue.createdAt?new Date(issue.updatedAt||issue.createdAt).toLocaleString('zh-CN'):'时间未记录';card.append(time);
+      const source=document.createElement('button');source.type='button';source.className='memory-source-link';source.append(WeftIcons.create('chat',16),document.createTextNode('来源对话'));source.disabled=!issue.sessionId;source.onclick=()=>onSource?.(issue.sessionId);card.append(source);
+      const retry=document.createElement('button');retry.type='button';retry.className='model-setup-button';retry.textContent='重试';
+      const requestId=crypto.randomUUID();retry.onclick=async()=>{retry.disabled=true;try{await onRetry(issue,requestId);retry.textContent='已提交';}catch{retry.disabled=false;retry.textContent='重试';const error=document.createElement('p');error.className='message-action-status';error.setAttribute('role','alert');error.textContent='重试未确认，请再次重试。';card.append(error);}};card.append(retry);panel.append(card);
+    }
+    health.append(panel);
+  }
   let dismissMenu;
   function menu(trigger, entries, onError = () => {}) {
     dismissMenu?.(false);
-    const box = document.createElement('div'); box.className = 'session-menu';
-    box.setAttribute('role', 'menu'); box.setAttribute('aria-label', trigger.getAttribute('aria-label'));
-    const close = (focus = true) => {
-      active.get(box)?.observer?.disconnect(); active.delete(box);box.remove(); document.removeEventListener('pointerdown', outside);
-      trigger.setAttribute('aria-expanded', 'false'); dismissMenu = null;
-      if (focus && trigger.isConnected) trigger.focus({preventScroll:true});
-    };
-    const outside = event => { if (!box.contains(event.target) && !trigger.contains(event.target)) close(false); };
-    for (const entry of entries) {
-      const item = document.createElement('button'); item.type = 'button';
-      item.className = `session-menu-item${entry.danger ? ' danger' : ''}`;
-      item.textContent = entry.name; item.setAttribute('role', 'menuitem'); item.disabled = !!entry.disabled;
-      item.onclick = () => { close(); Promise.resolve().then(entry.action).catch(onError); }; box.append(item);
-    }
-    box.onkeydown = event => {
-      const items = [...box.querySelectorAll('button:not(:disabled)')], index = items.indexOf(document.activeElement);
-      if (event.key === 'Escape' || event.key === 'Tab') { event.stopPropagation(); if (event.key === 'Escape') event.preventDefault(); close(); }
-      if (['ArrowDown','ArrowUp','Home','End'].includes(event.key)) {
-        event.preventDefault(); items[event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus();
-      }
-    };
-    document.body.append(box); trigger.setAttribute('aria-haspopup','menu'); trigger.setAttribute('aria-expanded','true');
-    position(box, trigger, {side:'bottom',align:'end'}); box.querySelector('button:not(:disabled)')?.focus();
-    document.addEventListener('pointerdown', outside); dismissMenu = close;
-    return close;
+    const popup=openMenu(trigger,entries.map(entry=>({...entry,action:async()=>{try{await entry.action()}catch(error){onError(error)}}})),{onClose:()=>{dismissMenu=null}});
+    dismissMenu=popup.close;return popup.close;
   }
-  globalThis.WeftPopover = { position, bindSelect, bindSettings, bindSettingsSelect, menu, closeMenu: () => dismissMenu?.() };
+  globalThis.WeftPopover = { position, bindSelect, bindSettings, bindSettingsSelect, openMenu, autosize, modelGate, memoryHealth, menu, closeMenu:()=>dismissMenu?.() };
+
 })();

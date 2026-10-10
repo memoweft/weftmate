@@ -6,6 +6,12 @@ import { catalog, repository, assertPublicText } from './common.mjs';
 // and UI-3's machine-path-bearing shell evidence are deliberately not device evidence.
 const aliases = [];
 for (const theme of ['light', 'dark']) {
+  for (const [scene,suffix] of [['memory','memory-rejected-expanded-final'],['conversation','D49-user-hover'],['session-menu','session-menu'],['appearance','settings-appearance'],['general','settings-assistant'],['usage','settings-usage'],['onboarding','onboarding-0']]) aliases.push({platform:'windows',scene,theme,path:`tests/evidence/ux-p2/after-electron-1200-${theme}-${suffix}.png`});
+  aliases.push({platform:'mobile-web',scene:'main-chat',theme,path:`tests/evidence/ux-p2/after-phone-web-390-${theme}-main-search.png`});
+  aliases.push({platform:'mobile-web',scene:'goals',theme,path:`tests/evidence/ux-p2/after-phone-web-390-${theme}-goals-empty.png`});
+  aliases.push({platform:'windows',scene:'goals',theme,path:`tests/evidence/ux-p2/after-electron-1200-${theme}-goals-empty.png`});
+  aliases.push({platform:'android',scene:'main-chat',theme,path:`tests/evidence/ux-p2/after-14-android-native-${theme}.png`});
+
   aliases.push({platform:'windows',scene:'memory',theme,path:`tests/evidence/ux-p1/after-06-desktop-${theme}.png`});
   aliases.push({platform:'windows',scene:'onboarding',theme,path:`tests/evidence/ux-p1/after-11-desktop-${theme}.png`});
   aliases.push({platform:'mobile-web',scene:'main-chat',theme,path:`tests/evidence/ux-p1/after-14-web-390-${theme}.png`});

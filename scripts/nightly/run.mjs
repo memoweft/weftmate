@@ -4,6 +4,7 @@ import { join, resolve } from 'node:path';
 import { randomUUID, generateKeyPairSync } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { report, retention, previousRun } from './report.mjs';
+import { androidPackageReason } from './android-packages.mjs';
 const scripts = fileURLToPath(new URL('.', import.meta.url));
 const value = (name, fallback) => { const i = process.argv.indexOf(name); return i < 0 ? fallback : process.argv[i + 1]; };
 const repository = resolve(value('--repository', join(scripts, '../..')));
@@ -124,7 +125,7 @@ try {
       if (info.is_process_started || info.is_android_started) {
         await run(adb, ['connect', '127.0.0.1:7555'], { name: 'adb-connect', allowFailure: true });
         const packages = await run(adb, ['-s', '127.0.0.1:7555', 'shell', 'pm', 'list', 'packages', 'weftmate'], { name: 'mumu-packages', allowFailure: true });
-        return skip(`被占用，未拍（已有启动的 MuMu${packages.output.includes('weftmate') ? ' / WeftMate 测试包' : ''}；不关闭他人的模拟器）`);
+        return skip(`被占用，未拍（已有启动的 MuMu；不关闭他人的模拟器）${androidPackageReason(packages.output)}`);
       }
       await run('pwsh', ['-NoProfile', '-File', join(engineScripts, 'build-android.ps1'), '-Worktree', worktree], { name: 'android-build' });
       const beforeLaunch = JSON.parse((await run(cli, ['info', '--vmindex', '0'], { name: 'mumu-recheck' })).output);
@@ -139,7 +140,7 @@ try {
         await new Promise(done => setTimeout(done, 1000));
       }
       const packages = (await run(adb, ['-s', '127.0.0.1:7555', 'shell', 'pm', 'list', 'packages', 'weftmate'], { name: 'android-packages' })).output;
-      if (packages.includes('weftmate')) return skip('被占用，未拍（已有 WeftMate 测试包）');
+      if (packages.includes('weftmate')) return skip(`被占用，未拍（已有 WeftMate 包）${androidPackageReason(packages)}`);
       await run('node', [join(worktree, 'tests/integration/review-capture-mobile.mjs'), '--android', '--out', gallery, '--state', join(out, 'android-state.json'), ...sceneArgs], { name: 'android' });
       cleanup.android = JSON.parse(await readFile(join(out, 'android-cleanup.json'), 'utf8'));
     });
@@ -172,6 +173,11 @@ finally {
     if (!cleanup.android.ownedEmulatorShutdown) phases.push({ name: 'android-cleanup', status: 'failed', reason: 'MuMu 关闭未得到确认' });
   }
   if (temp) await rm(temp, { recursive: true, force: true }).catch(() => {});
+  // Owner-approved housekeeping: prune synthetic test temp directories older than 48 hours.
+  try {
+    const pruned = await run('pwsh', ['-NoProfile', '-File', join(engineScripts, 'prune-temp.ps1'), '-Hours', '48', '-Repository', repository, '-Apply'], { cwd: repository, name: 'prune-temp', allowFailure: true, limit: 600000 });
+    cleanup.staleTemp = JSON.parse(pruned.output.trim().split(/\r?\n/).pop());
+  } catch (error) { cleanup.staleTemp = { error: error.message }; }
   const baseline = await reporting.previousRun(reports, gallery);
   try {
     const result = await reporting.report(out, { ...baseline, threshold, phases, commit: sourceCommit || 'unknown', startedAt, cleanup });

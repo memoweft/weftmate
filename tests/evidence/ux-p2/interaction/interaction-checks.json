@@ -1,0 +1,56 @@
+{
+  "checks": [
+    {
+      "surface": "desktop",
+      "actions": true,
+      "keyboardCopy": true,
+      "feedbackLocal": true,
+      "quote": true,
+      "processedUserCannotEdit": true,
+      "versionSwitch": true,
+      "regenerateOtherModel": true,
+      "sanitizedPreview": true,
+      "pngBothThemes": true,
+      "exportFiles": "Markdown and PNG bytes verified"
+    },
+    {
+      "surface": "mobile-web",
+      "actions": true,
+      "keyboardCopy": true,
+      "feedbackLocal": true,
+      "quote": true,
+      "processedUserCannotEdit": true,
+      "versionSwitch": true,
+      "regenerateOtherModel": true,
+      "sanitizedPreview": true,
+      "pngBothThemes": true,
+      "exportFiles": "Markdown and PNG bytes verified"
+    },
+    {
+      "surface": "android-ui",
+      "actions": true,
+      "keyboardCopy": true,
+      "feedbackLocal": true,
+      "quote": true,
+      "processedUserCannotEdit": true,
+      "versionSwitch": true,
+      "regenerateOtherModel": true,
+      "sanitizedPreview": true,
+      "pngBothThemes": true,
+      "exportFiles": "native save bridge requested"
+    },
+    {
+      "surface": "phone-local",
+      "feedbackLocal": true,
+      "sanitizedPreview": true,
+      "noInventedOfflineBranch": true
+    },
+    {
+      "surface": "long-reply",
+      "completeCopy": true,
+      "completeExport": true,
+      "notLimitedToHistoryPreview": true
+    }
+  ],
+  "errors": []
+}

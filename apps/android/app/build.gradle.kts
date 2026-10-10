@@ -16,8 +16,8 @@ android {
             .orElse("com.memoweft.weftmate.mobile.debug").get()
         minSdk = 26
         targetSdk = 35
-        versionCode = 29
-        versionName = "0.8.16"
+        versionCode = 31
+        versionName = "0.8.18"
         buildConfigField("String", "UPDATE_CHANNEL", "\"$updateChannel\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -37,6 +37,8 @@ val checkMobileUiAssets by tasks.registering(Exec::class) {
 tasks.named("preBuild") { dependsOn(checkMobileUiAssets) }
 
 dependencies {
+    implementation("androidx.work:work-runtime:2.9.1")
+    testImplementation("org.json:json:20240303")
     implementation("org.bouncycastle:bcprov-jdk15to18:1.86")
     implementation("androidx.webkit:webkit:1.16.0")
     testImplementation("junit:junit:4.13.2")

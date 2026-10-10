@@ -58,8 +58,7 @@ class SyncJobService : JobService() {
         val current = currentHost()
         if (!lease.canShowNotification(current)) return
         try { MobileNotifications(this, scope).record("sync", title, summary,
-            showSystem = NotificationScopeGate.mayShow(scope,
-                current?.let { Endpoints.ownerKey(it.origin, it.ownerId) } ?: "local", false, false)) }
+            showSystem = false) }
         catch (_: Exception) { }
     }
 
@@ -129,6 +128,7 @@ class SyncJobService : JobService() {
         }
 
         fun schedule(context: Context): Boolean = synchronized(JOB_LOCK) {
+            NotificationWorker.schedule(context)
             var previous: String? = null
             try {
                 val scheduler = context.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
@@ -166,6 +166,7 @@ class SyncJobService : JobService() {
         } catch (_: Exception) { "unknown" }
 
         fun cancel(context: Context) {
+            NotificationWorker.cancel(context)
             synchronized(JOB_LOCK) {
                 try {
                     val scheduler = context.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler

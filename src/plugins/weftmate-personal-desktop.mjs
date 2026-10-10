@@ -7,7 +7,7 @@ import { installModelSelection } from '@deepseek-ai/dsh-agent';
 import { installConversationReasoning } from './personal-reasoning.mjs';
 import { setSandboxMode } from '@deepseek-ai/dsh-sandbox-policy';
 import { selectProjectContext, inheritProjectContext, routeProjectTool, installProjectSandbox, projectToolDecision, projectContextNotice, executionDirectory } from './personal-project-context.mjs';
-import { trackNativeFiles, appendNativeArtifacts, conversationCreatedFiles } from './personal-native-files.mjs';
+import { trackNativeFiles, appendNativeArtifacts, conversationCreatedFiles, createNativeFileProvenance } from './personal-native-files.mjs';
 import { personalWebFetchProvider } from './personal-web-fetch.mjs';
 import { durableSourceRange } from '../runtime/dsh-adapter/source-range.mjs';
 import PlanModeController, { foldPlanMode } from '@deepseek-ai/dsh-plan-mode';
@@ -653,6 +653,7 @@ export function apply(ctx) {
   const selectedModes = new WeakMap();
   const webExecution = new AsyncLocalStorage();
   const delegatedExecutions = new WeakMap();
+  const fileProvenance = createNativeFileProvenance(personalExecutionIdentity);
   const disposeFetch = ctx.web.registerFetchProvider(personalWebFetchProvider(bridge,
     () => webExecution.getStore(), exec => personalExecutionIdentity(
       delegatedExecutions.get(exec.agent) ?? exec)));
@@ -696,7 +697,10 @@ export function apply(ctx) {
     initializeFilePolicy(agent);
     if (agent?.session?.header?.origin !== 'subagent' || agent.session.header.agentPreset !== 'personal-remote') return;
     const dispatch = webExecution.getStore();
-    if (dispatch) delegatedExecutions.set(agent, delegatedExecutions.get(dispatch.agent) ?? dispatch);
+    if (dispatch) {
+      delegatedExecutions.set(agent, delegatedExecutions.get(dispatch.agent) ?? dispatch);
+      fileProvenance.inherit(agent, dispatch);
+    }
     const parent = ctx.get('agents')?.get(agent.session.header.parentSession);
     inheritProjectContext(agent, parent);
     const config = agent.session.requestHeader?.()?.config ?? parent?.session?.requestHeader?.()?.config;
@@ -736,7 +740,7 @@ export function apply(ctx) {
     return { kind: 'ask', reason };
   });
   ctx.on('tools/execute', (exec, next) => webExecution.run(exec, () => trackNativeFiles(bridge, exec,
-    () => trackPersonalExecution(bridge, exec, next, background, approvals), personalExecutionIdentity)));
+    () => trackPersonalExecution(bridge, exec, next, background, approvals), fileProvenance.identity)));
   ctx.on('tools/post-execute', appendNativeArtifacts);
   ctx.effect(() => () => { disposeProjectSandbox(); disposeFetch(); disposeProof(); approvals.close(); background.close(); bridge.close(); },
     'weftmate-personal-desktop: lifecycle');

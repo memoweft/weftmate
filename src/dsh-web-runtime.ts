@@ -1166,6 +1166,7 @@ export class DshWebRuntime {
   private logTail: string[] = []
   /** 所有 spawn 过的 child 都登记到 close 事件为止，close 不得只杀当前引用。 */
   private readonly children = new Set<ChildProcess>()
+  private readonly secureChildren = new WeakSet<ChildProcess>()
   private readonly closedChildren = new WeakSet<ChildProcess>()
   private readonly personalRuntimeIds = new WeakMap<ChildProcess, string>()
   private readonly invalidatedPersonalChildren = new WeakSet<ChildProcess>()
@@ -2332,6 +2333,23 @@ export class DshWebRuntime {
   private async terminateChild(child: ChildProcess): Promise<void> {
     this.invalidatePersonalRuntime(child)
     if (this.closedChildren.has(child)) return
+    // Drain native Cordis persistence before collecting the process tree.
+    // Keep IPC connected until the acknowledgement: some child tools inherit
+    // stdout, so root exit alone cannot confirm close or collect descendants.
+    if (this.secureChildren.has(child) && child.connected) {
+      await new Promise<void>(resolve => {
+        const finish = () => { clearTimeout(timer); child.off('message', onMessage); child.off('close', finish); resolve() }
+        const onMessage = (frame: unknown) => {
+          const value = frame as { protocol?: string; action?: string } | null
+          if (value?.protocol === 'weftmate.runtime-shutdown.v1' && value.action === 'disposed') finish()
+        }
+        const timer = setTimeout(() => { this.opts.log('[dsh] native shutdown timed out; collecting process tree'); finish() }, 3_000)
+        child.on('message', onMessage); child.once('close', finish)
+        try { child.send({ protocol: 'weftmate.runtime-shutdown.v1', action: 'dispose' }, error => { if (error) finish() }) }
+        catch { finish() }
+      })
+      if (this.closedChildren.has(child)) return
+    }
     const pid = child.pid
     if (process.platform === 'win32' && typeof pid === 'number') {
       try {
@@ -2398,6 +2416,7 @@ export class DshWebRuntime {
         stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
         windowsHide: true,
       })
+      if (secureBootstrap !== undefined) this.secureChildren.add(child)
       this.registerChild(child)
       if (this.child && this.child !== child) this.invalidatePersonalRuntime(this.child)
       this.child = child
@@ -2580,7 +2599,7 @@ export class DshWebRuntime {
     return this.startInFlight
   }
 
-  /** 关运行时子进程（SIGKILL 语义；官方会话 jsonl 逐轮落盘，丢失面小）。幂等、终态。 */
+  /** Native persistence drain, then managed process-tree cleanup. Idempotent and terminal. */
   close(): Promise<void> {
     if (this.closeInFlight !== undefined) return this.closeInFlight
     this.closed = true

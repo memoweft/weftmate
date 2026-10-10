@@ -1,6 +1,14 @@
 function paintChatMemoryAvailability(value) {
   let node=$('chat-memory-notice');
   if(!node){node=el('p','muted');node.id='chat-memory-notice';node.setAttribute('role','status');node.setAttribute('aria-live','polite');$('chat-page').prepend(node)}
+  const issues=value?.formationIssues??[];
+  for(const old of document.querySelectorAll('[data-formation-notice]'))if(!issues.some(issue=>issue.jobId===old.dataset.formationNotice))old.remove();
+  for(const issue of issues){const row=[...document.querySelectorAll('.message.user')].find(row=>row.dataset.memorySession===issue.sessionId&&row.textContent.includes(issue.text));if(!row)continue;
+    let target=row;for(let next=row.nextElementSibling;next&&!next.classList.contains('user');next=next.nextElementSibling)if(next.classList.contains('assistant')){target=next;break;}
+    if(target.querySelector(`[data-formation-notice="${CSS.escape(issue.jobId)}"]`))continue;
+    const bar=el('div','memory-issue-bar');bar.dataset.formationNotice=issue.jobId;bar.setAttribute('role','status');bar.append(WeftIcons.create('warn',16),el('span','',issue.intent==='correction'?'这条纠正没有生效':'这条记忆尚未形成'));
+    const view=action('查看',()=>page('memory'),false);bar.append(view);target.append(bar);
+  }
   node.hidden=!state.loggedIn||value?.state!=='unavailable';
   node.textContent=node.hidden?'':'记忆暂时不可用，普通对话已保存，恢复后会自动补交。';
 }
@@ -84,23 +92,15 @@ function memoryIngestionPanel(target){
   const cancel=action('取消整理',()=>{if(job)void change({action:'cancel',jobId:job.id})},false);
   const card=el('section','memory-backfill-confirm');card.hidden=true;card.setAttribute('aria-label','确认整理过去的对话');
   const cancelPreview=action('取消',()=>{prepared=null;card.hidden=true;preview.hidden=false;preview.focus()},false);card.append(el('h3','','整理过去的对话'),message,confirm,cancelPreview);
-  function paint(value){job=value?.backfill;const text=uiCore.memoryHealthText(value),healthy=text==='记忆正常',count=value?.formedMemoryCount??state.memory.totalCount;
-    health.className='memory-health '+(healthy?'is-healthy':'is-warning');health.textContent=healthy?`记忆正常 · ${Number.isSafeInteger(count)?`已形成 ${count} 条`:'正在读取数量'} · 队列 0`:`${text} · 积压 ${(value?.pendingBoundaryCount??0)+(value?.pendingFormationCount??0)} 条`;
-    if(!healthy){const detail=el('details'),summary=el('summary','','查看');detail.append(summary,el('p','','检查设置里的模型，服务恢复后会继续补交；已提交的回合继续整理。'));health.append(detail)}
+  function paint(value){job=value?.backfill;WeftPopover.memoryHealth(health,value,{text:uiCore.memoryHealthText(value),count:value?.formedMemoryCount??state.memory.totalCount,onSource:id=>selectSharedSession(id),
+      onRetry:async(issue,requestId)=>{await business({path:`/personal/v1/memory/formation/${encodeURIComponent(issue.jobId)}/retry`,method:'POST',body:{requestId}});if(memoryCurrent(token))await refresh();}});
     const active=job&&['running','paused'].includes(job.state);preview.disabled=busy||!!active;preview.hidden=!!active||!card.hidden;pause.hidden=cancel.hidden=!active;
     pause.textContent=job?.state==='paused'?'继续整理':'暂停整理';
     progress.textContent=job?`${({running:'正在补整理',paused:'已暂停',cancelled:'已取消',completed:'补交完成'})[job.state]}：已提交 ${job.submittedTurns-job.skippedTurns} / ${job.totalTurns} 回合。${active?'暂停或取消后不再提交后续回合；已提交的回合继续整理。':''}`:'';
   }
   async function refresh(){if(!memoryCurrent(token)||!section.isConnected||busy)return;
     try{const value=await business({path:'/personal/v1/memory/status',method:'GET'});if(memoryCurrent(token)&&section.isConnected){state.memory.healthStatus=value;paint(value)}}catch{if(memoryCurrent(token))health.textContent='记忆状态暂时无法读取，请刷新重试。';}}
-  const issues=el('div');
-  for(const issue of state.memory.healthStatus?.formationIssues??[]){
-    const detail=el('details');detail.append(el('summary','',issue.intent==='correction'?'有 1 条纠正没有生效':'有 1 条记忆没有形成'),el('p','',issue.text));
-    const requestId=newMemoryRequestId();
-    const retry=action('重试形成',async()=>{retry.disabled=true;try{await uiCore.mobile.retryMemoryFormation(issue.jobId,requestId)}catch{if(memoryCurrent(token)){message.textContent='重试未确认，请再次重试。';retry.disabled=false;}}},false);
-    detail.append(retry);issues.append(detail);
-  }
-  actions.append(preview,pause,cancel);section.append(health,issues,actions,card,progress);target.append(section);paint(state.memory.healthStatus);
+  actions.append(preview,pause,cancel);section.append(health,actions,card,progress);target.append(section);paint(state.memory.healthStatus);
   const poll=async()=>{if(!section.isConnected||!memoryCurrent(token))return;await refresh();setTimeout(poll,3000);};setTimeout(poll,3000);
 }
 
@@ -130,7 +130,7 @@ function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||s
   const actions=el('div','form-actions');const submit=action('搜索',()=>{},true);submit.type='submit';
   const refresh=action(memory.loading?'正在刷新…':'刷新',()=>startMemorySnapshot(target,memory.kind,memory.query),false);refresh.type='button';refresh.disabled=memory.loading;
   actions.append(submit,refresh);form.append(actions);target.append(form);
-  if(memoryListAllowed(memory)){target.append(action('导出我的记忆 · JSON',()=>exportMyMemories('json'),false),action('导出我的记忆 · Markdown',()=>exportMyMemories('markdown'),false))}
+  if(memoryListAllowed(memory)){const more=action('更多记忆操作',()=>WeftPopover.openMenu(more,['json','markdown'].map(format=>({name:`导出我的记忆 · ${format==='json'?'JSON':'Markdown'}`,icon:'download',action:()=>exportMyMemories(format)}))),false);more.replaceChildren(WeftIcons.create('more',20));more.setAttribute('aria-label','更多记忆操作');actions.append(more)}
   if(memory.pendingBoundaryCount>0)target.append(notice(`有 ${memory.pendingBoundaryCount} 条来源尚未处理${memory.blockedBoundaryCount>0?`，其中 ${memory.blockedBoundaryCount} 条已暂停自动处理`:''}。恢复后会按顺序自动补交。`,'来源待处理'));
   if(memory.lastFailureCode==='MEMORY_SOURCE_DELETED'&&memory.discardedBoundaryCount>0)
     target.append(notice(`${memory.discardedBoundaryCount} 条来源已删除；这不表示仍有待处理来源。`,'来源状态'));
@@ -143,7 +143,7 @@ function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||s
         memory.pendingBoundaryCount?'当前还没有已形成的记忆。':'当前账户还没有可显示的记忆。'));
     }}
   else { const entries=memory.items.map(item=>{const wrapper=el('div','memory-item'),entry=row(`${item.truncated===true?'记忆片段 · ':''}${item.text}`,`${MEMORY_KINDS[item.kind]} · ${memoryLifecycle(item).join(' · ')}${item.updatedAt?` · 更新于 ${timeLabel(item.updatedAt)}`:''}`,()=>openMemoryDetail(target,item));wrapper.append(entry);
-    for(const id of item.sourceConversationIds??[]){const source=action('来源对话',()=>selectSharedSession(id),false);source.classList.add('memory-source-link');wrapper.append(source)}return wrapper;});target.append(group('记忆列表',entries)); }
+    for(const id of item.sourceConversationIds??[]){const source=action('来源对话',()=>selectSharedSession(id),false);source.classList.add('memory-source-link');source.prepend(WeftIcons.create('chat',16));wrapper.append(source)}return wrapper;});target.append(group('记忆列表',entries)); }
   if(memory.hasMore){const more=action(memory.loading?'正在读取…':'加载更多',()=>loadMemoryMore(target),false);more.disabled=memory.loading;target.append(more)}
 }
 

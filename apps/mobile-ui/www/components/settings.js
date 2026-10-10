@@ -46,7 +46,7 @@ function connectionLabel(){return {connected:'电脑连接正常',checking:'已�
 
 const mobileSettingsRegistry = WeftUiCore.settingsRegistry({
   archived: target => archivedSettingsPage(target),
-  notifications: target => {target.append(heading('通知'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftNotificationsView(uiCore,body,{permissionState:()=>call('notifications.state'),requestPermission:()=>call('notifications.requestPermission')})},
+  notifications: target => {target.append(heading('通知'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftNotificationsView(uiCore,body,{permissionState:()=>call('notifications.state'),requestPermission:()=>call('notifications.requestPermission'),openSettings:()=>call('notifications.openSettings'),openBatterySettings:()=>call('notifications.openBatterySettings'),poll:()=>call('notifications.poll')})},
   personalization: target => {target.append(heading('个性化'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftPersonalizationView(uiCore,body,'personalization')},
   assistant: target => {target.append(heading('助手'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftPersonalizationView(uiCore,body,'assistant')},
   general: target => generalSettingsPage(target), appearance: target => appearancePage(target),
@@ -530,8 +530,8 @@ function accountPage(target){target.append(heading('我的资料'));
     if(profile.connectionVerified===false)target.append(notice('电脑暂时不可达，以下是此账户保存在手机上的资料。'));
     const avatar=el('div','profile-large');if(profile.avatar?.dataBase64){const img=el('img');img.src=`data:${profile.avatar.mimeType};base64,${profile.avatar.dataBase64}`;
       img.alt='当前头像';avatar.append(img)}else avatar.textContent=(profile.displayName||profile.username||'我').slice(0,1);
-    target.append(avatar);const nickname=field('昵称','text',profile.displayName||profile.username);const groupNode=group('账户资料',[]);
-    const body=groupNode.querySelector('.group-body');body.append(nickname.box,el('p','muted',`账户名：${profile.username}`));
+    target.append(avatar);const nickname=field('昵称','text',profile.displayName||profile.username||state.username||'');const groupNode=group('账户资料',[]);
+    const body=groupNode.querySelector('.group-body');body.append(nickname.box,el('p','muted',`账户名：${profile.username||state.username||'暂时无法读取'}`));
     body.append(action('保存昵称',async()=>{try{const updated=await call('auth.profile',{expectedRevision:profile.profileRevision,displayName:nickname.input.value});
       state.profile=updated;showProfile(updated);toast(updated.localCacheSaved===false?'昵称已在电脑保存，本机离线副本未保存':'昵称已更新');page('account')}
       catch(e){toast(safeError(e),true)}}));
