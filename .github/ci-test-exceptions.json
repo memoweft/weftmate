@@ -2,16 +2,8 @@
   "knownFailures": [],
   "unavailableFiles": [
     {
-      "file": "tests/harness-model-routes.test.ts",
-      "reason": "Top-level import of vendored pi-ai."
-    },
-    {
       "file": "tests/weftmod-service.test.ts",
       "reason": "Top-level imports of vendored Cordis and worker runtime."
-    },
-    {
-      "file": "tests/weftmate-conversation-surface.test.ts",
-      "reason": "Top-level read of vendored conversation client."
     },
     {
       "file": "tests/v2-shell-client.test.ts",
@@ -19,6 +11,16 @@
     }
   ],
   "vendorTests": [
+    {
+      "file": "tests/harness-model-routes.test.ts",
+      "name": "keeps a useful SDK request budget when history exceeds the old account capacity",
+      "reason": "Requires vendored pi-ai; MAINT-1 restores the six independent projection checks to required CI."
+    },
+    {
+      "file": "tests/weftmate-conversation-surface.test.ts",
+      "name": "groups the official hero controls and official input in one vendor-owned layout seam",
+      "reason": "Reads the pinned conversation client; MAINT-1 restores the two independent WeftMate surface checks to required CI."
+    },
     {
       "file": "tests/model-budget-runtime.test.ts",
       "name": "service context reaches native compaction and ten tool steps use changing wire budgets",
@@ -294,6 +296,11 @@
       "file": "tests/personal-access-electron.test.ts",
       "name": "two local devices use the same attached empty session across a real Electron restart",
       "reason": "Requires the prebuilt pinned DSH vendor, absent on clean runners."
+    },
+    {
+      "file": "tests/personal-access-electron.test.ts",
+      "name": "window close stays in tray and tray exit drains the final Electron snapshot",
+      "reason": "Requires the prebuilt pinned DSH vendor, absent on clean runners; MAINT-1 verifies the actual tray callback and final disk snapshot locally."
     },
     {
       "file": "tests/personal-account-electron.test.ts",

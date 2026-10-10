@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import { describe, it } from 'node:test';
 import { credentialEnvironment, DEFAULT_MODEL_CAPACITY, modelCapacityFor, renderModelRoutesPatch, routeForProfile } from '../src/harness-model-routes.ts';
-import { clampMaxTokensToContext } from '../vendor/dsh-runtime/node_modules/@earendil-works/pi-ai/dist/api/simple-options.js';
 
 const profiles = [
   { id: 'alpha/unsafe', name: 'Alpha', provider: 'openai-compatible' as const, baseUrl: 'http://127.0.0.1:8080/v1', model: 'same-model' },
@@ -28,7 +27,8 @@ describe('shared DSH model-route projection', () => {
       { contextWindow: 1_000_000, maxTokens: 8192 });
   });
 
-  it('keeps a useful SDK request budget when history exceeds the old account capacity', () => {
+  it('keeps a useful SDK request budget when history exceeds the old account capacity', async () => {
+    const { clampMaxTokensToContext } = await import('../vendor/dsh-runtime/node_modules/@earendil-works/pi-ai/dist/api/simple-options.js');
     const context = { messages: [{ role: 'user', content: 'x'.repeat(160_000), timestamp: 0 }] };
     assert.equal(clampMaxTokensToContext({ contextWindow: 32768 }, context, 8192), 1);
     const official = modelCapacityFor({ baseUrl: 'https://api.xiaomimimo.com/v1', modelId: 'mimo-v2.6-flash' });
