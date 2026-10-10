@@ -113,6 +113,7 @@ test('fresh gallery never fills occupied native cells with repository history', 
 test('synthetic artifact write is observed before exposing its task approval', async () => {
   const fixture = await startTimelineCandidate({ historyCount: 0, interactive: true, riskApproval: true });
   try {
+    assert.equal(await realpath(fixture.root), fixture.root, 'fixture uses the same native canonical path as private storage');
     const writes = (await fixture.request('/commands')).commands.filter(row => row.kind === 'desktop.write_artifact');
     assert.equal(writes.length, 1); assert.equal(writes[0].state, 'observed');
     for (let read = 0; read < 5; read++) {

@@ -1,0 +1,24 @@
+name: FX-22 Windows temp diagnosis
+on: workflow_dispatch
+jobs:
+  paths:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Compare JavaScript and native path resolvers without exposing identity
+        shell: pwsh
+        run: |
+          @'
+          import {mkdtempSync,realpathSync,rmSync} from 'node:fs';
+          import {realpath} from 'node:fs/promises';
+          import {tmpdir} from 'node:os';
+          import {join} from 'node:path';
+          for (const [kind,base] of [['default',tmpdir()],['runner',process.env.RUNNER_TEMP]]) {
+            const root=mkdtempSync(join(base,'weftmate-path-diagnostic-'));
+            const js=realpathSync(root), native=realpathSync.native(root), asyncNative=await realpath(root);
+            console.log(JSON.stringify({kind,hasShortComponent:/~\d/.test(root),jsEqualsNative:js.toLowerCase()===native.toLowerCase(),nativeEqualsAsync:native.toLowerCase()===asyncNative.toLowerCase()}));
+            rmSync(root,{recursive:true,force:true});
+          }
+          '@ | node --input-type=module
