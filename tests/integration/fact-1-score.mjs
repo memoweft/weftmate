@@ -37,6 +37,13 @@ for(const result of records) {
   if(!response.ok)throw Error(`Judge HTTP ${response.status}`);
   const value=await response.json(),raw=value.choices?.[0]?.message?.content||'';
   let judgement;try{judgement=JSON.parse(raw.replace(/^```(?:json)?\s*|\s*```$/g,''));}catch{judgement={parseError:true,raw};}
-  report.judgements.push({id,documentSha256:hash,durationMs:Date.now()-started,usage:value.usage,judgement});
+  const audits=(result.toolDetails||[]).filter(t=>t.toolName==='todo_write').flatMap(t=>{
+    try {const d=JSON.parse(t.text),a=typeof d.arguments==='string'?JSON.parse(d.arguments):d.arguments;
+      return (a.todos||[]).filter(row=>/草稿断言|断言/.test(row.content||'')&&/原文主体|草稿主体|适用范围/.test(row.content||'')&&/原文|出处/.test(row.content||'')).map(row=>({seq:t.seq,text:row.content}));
+    }catch{return [];}
+  });
+  const lastSave=Math.max(-1,...(result.turns||[]).flatMap(t=>t.timeline||[]).filter(e=>e.type==='artifact.created').map(e=>e.seq));
+  report.judgements.push({id,documentSha256:hash,durationMs:Date.now()-started,usage:value.usage,judgement,
+    nativeAudit:{rows:[...new Map(audits.map(a=>[a.text,a])).values()],lastSaveSeq:lastSave,beforeFinalSave:audits.some(a=>a.seq<lastSave)}});
   mkdirSync(resolve(out,'..'),{recursive:true});writeFileSync(out,JSON.stringify(report,null,2));console.log(id,judgement.parseError?'invalid':JSON.stringify({unsupported:judgement.unsupported?.length,scope:judgement.scope?.length,number:judgement.number?.length,uncertainty:judgement.uncertainty?.issues?.length}));
 }
