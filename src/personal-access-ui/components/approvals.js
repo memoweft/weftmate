@@ -60,7 +60,8 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
         const entry = rows[0], row = entry.row, marker = core.approvalMarker(context, row);
         const operation = core.conversationApprovals.operations.get(row.approvalId);
         const notice = entry.notice || (core.conversationTasks.entries.get(row.taskId)?.notice ? '原任务暂时无法核对，请重新核对答复。' : '');
-        const signature = (globalThis.WeftQuestionBar?.signatureOf || JSON.stringify)([context, row, notice, entry.authoritative, marker, operation, rows.length]);
+        const identity = Object.fromEntries(['ownerId','identity','deviceId','source','sessionId','conversationId'].map(key => [key, context[key]]));
+        const signature = (globalThis.WeftQuestionBar?.signatureOf || JSON.stringify)([identity, row, notice, entry.authoritative, marker, operation, rows.length]);
         if (bar.dataset.signature === signature) return;
         if (operation && bar.dataset.approvalId === row.approvalId) {
             for (const button of bar.querySelectorAll('button')) button.disabled = true;
