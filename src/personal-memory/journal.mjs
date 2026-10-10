@@ -107,6 +107,10 @@ export function createMemoryCommandJournal({ root }) {
       check(ownerId, requestId);
       return queue(ownerId, async () => (await read(ownerId)).records[requestId] ?? null);
     },
+    async deletionRequestIds(ownerId) {
+      check(ownerId,'account-erase');
+      return queue(ownerId,async()=>Object.values((await read(ownerId)).records).filter(row=>['delete_evidence','delete_world_item'].includes(row.command.operation)).map(row=>row.requestId));
+    },
     async clearCleanup(ownerId, requestId) {
       check(ownerId, requestId);
       return queue(ownerId, async () => { const state = await read(ownerId);

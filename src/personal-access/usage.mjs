@@ -121,6 +121,11 @@ export async function createUsageStore({ root, clock = Date.now }) {
     }
   }
   return {
+    exportAccount: ownerId => structuredClone(account(ownerId)),
+    eraseAccount(ownerId) {
+      const operation = queue.then(async () => { const next = structuredClone(data); delete next.accounts[ownerId]; await durableWrite(file, next); data = next; });
+      queue = operation.catch(() => {}); return operation;
+    },
     summary,
     settings,
     async configure(ownerId, input) {

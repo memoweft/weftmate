@@ -1,0 +1,30 @@
+{
+  "checks": [
+    {
+      "surface": "desktop",
+      "statisticsVisible": true,
+      "dialogsCancelable": true,
+      "accountNameRequired": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "surface": "mobile-web",
+      "statisticsVisible": true,
+      "dialogsCancelable": true,
+      "accountNameRequired": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "surface": "android-ui",
+      "statisticsVisible": true,
+      "dialogsCancelable": true,
+      "accountNameRequired": true,
+      "noHorizontalOverflow": true
+    }
+  ],
+  "errors": [],
+  "realElectron": true,
+  "hostSynthetic": true,
+  "androidUiPackage": true,
+  "mobileViewport": "390×844"
+}
