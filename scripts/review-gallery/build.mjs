@@ -13,6 +13,8 @@ if (outcomesFile) {
     if (outcome && !row.path) Object.assign(row, outcome);
   }
 }
+const evidenceCommits = [...new Set(rows.map(row=>row.commit).filter(value=>/^[a-f0-9]{40}$/.test(value || '')))];
+const sourceCommit = process.argv.includes('--fresh-only') && evidenceCommits.length === 1 ? evidenceCommits[0] : commit();
 const failures = rows.filter(row => row.status === 'failed');
 const escape = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 for (const row of rows) if (row.path) row.dataUrl = `data:image/png;base64,${(await readFile(row.path)).toString('base64')}`;
@@ -28,10 +30,10 @@ const html = `<!doctype html><html lang="zh-CN" data-theme="light"><meta charset
 ${failures.length ? `<aside class="capture-failures" aria-labelledby="failures-title"><h2 id="failures-title">截图失败清单（${failures.length} 格）</h2><p>其余场景已继续生成。修正对应页面定位后重新截图。</p><ul>${failures.map(row => `<li><a href="#${escape(row.scene)}">${escape(catalog.scenes.find(scene => scene.id === row.scene).label)}</a> · ${escape(catalog.platforms.find(platform => platform.id === row.platform).label)} · ${row.theme === 'light' ? '浅色' : '深色'}：${escape(row.reason)}</li>`).join('')}</ul></aside>` : ''}
 <nav aria-label="审稿场景">${catalog.scenes.map(scene => `<a href="#${scene.id}">${escape(scene.label)}</a>`).join('')}</nav>
 <main>${catalog.scenes.map(scene => `<section id="${scene.id}"><h2>${escape(scene.label)}</h2>${catalog.themes.map(theme => `<div class="comparison" data-capture-theme="${theme}"${theme === 'dark' ? ' hidden' : ''}>${frames(scene, theme)}</div>`).join('')}</section>`).join('')}</main>
-<footer>生成于 <time>${generatedAt}</time> · 页面提交 <code>${commit()}</code><br>缺少的设备证据显示「待补」；历史图保留各自来源，不代表当前提交。</footer>
+<footer>生成于 <time>${generatedAt}</time> · 被测提交 <code>${sourceCommit}</code><br>缺少的设备证据显示「待补」；历史图保留各自来源，不代表当前提交。</footer>
 <dialog aria-labelledby="viewer-title"><div class="viewer-toolbar"><h2 id="viewer-title"></h2><button id="close-viewer">关闭</button></div><div id="viewer-canvas"></div><p id="viewer-provenance"></p></dialog><script>${script}</script></body></html>`;
 assertPublicText(html.replace(/data:image\/png;base64,[A-Za-z0-9+/=]+/g, ''));
 assertPublicText(JSON.stringify(rows.map(({ path, dataUrl, ...row }) => row)));
 await writeFile(join(out, 'index.html'), html);
-await writeFile(join(out, 'manifest.json'), JSON.stringify({ version: 1, commit: commit(), generatedAt, failures, records: rows.map(({ path, dataUrl, ...row }) => row) }, null, 2) + '\n');
+await writeFile(join(out, 'manifest.json'), JSON.stringify({ version: 1, commit: sourceCommit, generatedAt, failures, records: rows.map(({ path, dataUrl, ...row }) => row) }, null, 2) + '\n');
 console.log(`Gallery: ${rows.filter(row => row.dataUrl).length}/${rows.length} pictures; self-contained index.html generated.`);

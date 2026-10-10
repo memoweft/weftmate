@@ -179,6 +179,17 @@ test('installed diagnostic checks preserve release verification failure and neve
   } finally { await rm(root,{recursive:true,force:true}); }
 });
 
+test('native failure metadata survives evidence collection and is counted separately from unattempted cells', async () => {
+  const root=await mkdtemp(join(tmpdir(),'weftmate-nightly-native-failure-'));
+  try {
+    await mkdir(join(root,'gallery'));
+    await writeFile(join(root,'gallery/review-android-login-light.json'),JSON.stringify({platform:'android',scene:'login',theme:'light',status:'failed',reason:'synthetic native navigation failure',commit,generatedAt:new Date().toISOString(),synthetic:true}));
+    const result=await report(root,{commit,startedAt:new Date().toISOString(),phases:[{name:'android',status:'failed',reason:'native batch failed'}],cleanup:{}});
+    assert.equal(result.summary.failedCells,1);
+    assert.ok(result.alerts.some(a=>a.cell==='android/login/light' && a.kind==='failed' && a.message==='synthetic native navigation failure'));
+  } finally { await rm(root,{recursive:true,force:true}); }
+});
+
 test('Apple report keeps completed Mac captures passed and distinguishes a failed iPhone batch from unstarted Watch', async () => {
   const root=await mkdtemp(join(tmpdir(),'weftmate-nightly-apple-status-'));
   try {
@@ -205,6 +216,7 @@ test('fresh gallery never fills occupied native cells with repository history', 
     await writeFile(outcomes, JSON.stringify([{ platform: 'mac', scene: 'login', theme: 'light', status: 'failed', reason: '被占用，未拍', synthetic: true, commit, generatedAt: new Date(now).toISOString() }]));
     execFileSync(process.execPath, ['scripts/review-gallery/build.mjs', '--out', root, '--fresh-only', '--outcomes', outcomes], { stdio: 'pipe' });
     const manifest = JSON.parse(await readFile(join(root, 'manifest.json'), 'utf8'));
+    assert.equal(manifest.commit,commit,'fresh gallery commit must come from its actual batch evidence');
     assert.ok(manifest.records.every(row => !row.file));
     assert.equal(manifest.failures.length, 1); assert.equal(manifest.failures[0].reason, '被占用，未拍');
     assert.ok((await readFile(join(root, 'index.html'), 'utf8')).includes('被占用，未拍'));
