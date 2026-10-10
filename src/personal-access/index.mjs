@@ -274,12 +274,16 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get verifyToolResult() { return verifyToolResult; },
   };
   const sessions = createSessionOperations(context);
-  const readNativeEvents = backend.readEvents.bind(backend);
-  backend = { ...backend, async readEvents(input) {
-    const page = await readNativeEvents(input);
+  const nativeBackend = backend;
+  const observeNativeEvents = async input => {
+    const page = await nativeBackend.readEvents(input);
     if (input.ownerId && Array.isArray(page?.events)) sessions.observe(input.ownerId,input.sessionId,page.events);
     return page;
-  } };
+  };
+  backend = new Proxy(nativeBackend,{get(target,name) {
+    if(name==='readEvents')return observeNativeEvents;
+    const value=Reflect.get(target,name,target);return typeof value==='function'?value.bind(target):value;
+  }});
   const chats = createChatOperations(context);
   const chatTimeline = createChatTimeline(context);
   const sideChats = createSideChats(context);

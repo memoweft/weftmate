@@ -14,6 +14,7 @@ export function createSessionMetadata(context) {
     if (!metadata) return;
     const row = index.get(key(ownerId, sessionId)) ?? { latestMessageSeq: -1, updatedAt: null };
     for (const event of events) {
+      if (!event || typeof event !== 'object') continue;
       if (metadata.forgottenSeqs?.includes(event.seq)) continue;
       if (event.type === 'assistant.message' && Number.isSafeInteger(event.seq)) row.latestMessageSeq = Math.max(row.latestMessageSeq, event.seq);
       if (Number.isFinite(Date.parse(event.at)) && (!row.updatedAt || event.at > row.updatedAt)) row.updatedAt = event.at;
