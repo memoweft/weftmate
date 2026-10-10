@@ -4,7 +4,7 @@ globalThis.WeftHelpView={mount({target,core,kind,back,run,mobile=false}){
   const button=(text,action,cls='button secondary small')=>{const n=el('button',cls,text);n.type='button';n.onclick=action;return n;};
   const title=kind==='help'?'帮助与小技巧':'更新内容';target.classList.add('help-page');target.replaceChildren();
   const head=el('div','help-heading'),heading=el('h1','',title);heading.tabIndex=-1;
-  if(back){const b=button('',back,'icon-button help-back');b.setAttribute('aria-label','返回对话');b.append(WeftIcons.create('back',20));head.append(b);}head.append(heading);target.append(head);
+  if(back&&!mobile){const b=button('',back,'icon-button help-back');b.setAttribute('aria-label','返回对话');b.append(WeftIcons.create('back',20));head.append(b);}head.append(heading);target.append(head);
   let alive=true;
   const content=el('div','help-content');
   function empty(text,action,label){content.replaceChildren();const box=el('div','help-empty');box.append(WeftIcons.create('info',32),el('p','',text));if(action)box.append(button(label,action));content.append(box);}

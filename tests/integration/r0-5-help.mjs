@@ -9,10 +9,10 @@ import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
 import {localUiSession} from '../helpers/local-ui-session.mjs';
 const root=resolve(import.meta.dirname,'../..'),out=join(root,'tests/evidence/r0-5');await mkdir(out,{recursive:true});
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
-const report={screenshots:[],checks:[],errors:[],modelRequests:0};let f,app,browser,profile;
+const report={screenshots:[],checks:[],errors:[],modelRequests:0,mobileEvidence:[]};let f,app,browser,profile;
 const b=(p,name)=>p.getByRole('button',{name,exact:true}).filter({visible:true});
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
-async function shot(p,surface,theme,scene){await wait(120);const file=`${surface}-${theme}-${scene}.png`;await p.screenshot({path:join(out,file)});report.screenshots.push(file);assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false,file);console.log(file);}
+async function shot(p,surface,theme,scene){await wait(120);const file=`${surface}-${theme}-${scene}.png`;await p.screenshot({path:join(out,file)});report.screenshots.push(file);if(surface.startsWith('phone-web')||surface.startsWith('android-bundle'))report.mobileEvidence.push({file,pageTheme:theme,systemTheme:null,systemVersion:null,systemNavigationBarVisible:false,statusBarHeaderColorDelta:null,capture:'content viewport; native/browser system bars not captured'});assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false,file);console.log(file);}
 async function searchReady(p){await p.waitForFunction(()=>document.querySelector('#search-results')?.getAttribute('aria-busy')==='false');}
 async function desktopScenes(p,surface,theme){
   await p.evaluate(()=>WeftDesktop.toggleRail(false));await b(p,'账户菜单').click();await b(p,'帮助').waitFor();await shot(p,surface,theme,'avatar-menu');await b(p,'帮助').click();
@@ -64,8 +64,8 @@ try{
       await q.getByRole('heading',{name:'帮助与小技巧',exact:true}).waitFor();await shot(q,`${surface}-${width}`,theme,'help');const input=q.getByRole('searchbox',{name:'搜索帮助'});await input.fill('离线');await shot(q,`${surface}-${width}`,theme,'help-filter');await input.fill('');await b(q,'连接设备').click();
       if(surface==='phone-web'){await q.keyboard.press('Escape');await q.keyboard.press('Control+k');}
       else{await q.evaluate(()=>{page('chat');uiCore.openSearch();});}
-      await searchReady(q);assert.equal(await q.getByRole('option').filter({hasText:'快捷键一览'}).count(),0);await shot(q,`${surface}-${width}`,theme,'search-actions');await q.getByRole('option').filter({hasText:'更新内容'}).click();await q.getByRole('heading',{name:'更新内容',exact:true}).waitFor();await q.locator('.release-entry').first().waitFor();await shot(q,`${surface}-${width}`,theme,'releases');await b(q,'返回对话').click();
-      if(surface==='android-bundle'){await q.evaluate(()=>page('about'));await q.getByRole('button',{name:/更新内容/}).waitFor();await shot(q,`${surface}-${width}`,theme,'settings-about');await q.getByRole('button',{name:/更新内容/}).click();await q.getByRole('heading',{name:'更新内容',exact:true}).waitFor();await b(q,'返回对话').click();}
+      await searchReady(q);assert.equal(await q.getByRole('option').filter({hasText:'快捷键一览'}).count(),0);await shot(q,`${surface}-${width}`,theme,'search-actions');await q.getByRole('option').filter({hasText:'更新内容'}).click();await q.getByRole('heading',{name:'更新内容',exact:true}).waitFor();await q.locator('.release-entry').first().waitFor();await shot(q,`${surface}-${width}`,theme,'releases');await b(q,surface==='android-bundle'?'返回':'返回对话').click();
+      if(surface==='android-bundle'){await q.evaluate(()=>page('about'));await q.getByRole('button',{name:/更新内容/}).waitFor();await shot(q,`${surface}-${width}`,theme,'settings-about');await q.getByRole('button',{name:/更新内容/}).click();await q.getByRole('heading',{name:'更新内容',exact:true}).waitFor();await b(q,surface==='android-bundle'?'返回':'返回对话').click();}
     }
     await context.close();
   }
