@@ -34,7 +34,8 @@ export function notificationCategory(type) {
 }
 export function decideNotification({type,level,settings=notificationDefaults,now=Date.now(),timeZone='UTC',dailyCount=0,initiatedBy='user',test=false}) {
   settings={...notificationDefaults,...settings};
-  const mode=settings[notificationCategory(type)]??'activity';
+  // The quiet-period receipt uses global sound, not the unrelated update switch.
+  const mode=type==='system.dnd.summary'?'sound':settings[notificationCategory(type)]??'activity';
   const result=(notify,reason)=>({notify,sound:notify&&(test||mode==='sound')&&settings.soundEnabled,decision:notify?(settings.soundEnabled&&(test||mode==='sound')?'notify':'silent'):'activity',reason});
   if (!test && level==='silent') return result(false,'silent');
   if (!test && mode==='activity') return result(false,'type_disabled');

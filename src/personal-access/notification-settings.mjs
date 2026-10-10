@@ -10,7 +10,8 @@ export function finalizeNotifications(account, now, timeZone) {
   ledger.suppressed=ledger.suppressed.filter(id=>state.items[id]);
   if(!quiet && ledger.suppressed.length){
     const count=ledger.suppressed.length;
-    putActivity(account,`dnd-summary:${randomUUID()}`,{at:new Date(now).toISOString(),type:'system.dnd.summary',title:'勿扰已结束',summary:`勿扰期间有 ${count} 件事`,level:'normal',test:true});
+    const initiatedBy=ledger.suppressed.some(id=>state.items[id].notification.initiatedBy==='user')?'user':'assistant';
+    putActivity(account,`dnd-summary:${randomUUID()}`,{at:new Date(now).toISOString(),type:'system.dnd.summary',title:'勿扰已结束',summary:`勿扰期间有 ${count} 件事`,level:'normal',initiatedBy});
     ledger.suppressed=[];
   }
   for(const row of Object.values(state.items)){

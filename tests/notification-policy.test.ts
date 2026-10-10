@@ -104,3 +104,19 @@ test('queued notification setting writes retain identity and late view responses
   const queued=core.saveNotificationSettings({soundEnabled:false});core.state.identityGeneration++;core.state.ownerId='b';
   resolve({settings:{...defaults,dailyLimit:0}});await first;await assert.rejects(queued,/ACCOUNT_CHANGED/);assert.equal(calls,1);
 });
+
+
+test('quiet summary cannot bypass zero proactive limit; mixed user results remain exempt',()=>{
+  const now=Date.parse('2026-10-10T23:00Z'),end=Date.parse('2026-10-11T08:00Z');
+  for(const limit of [0,3]){
+    const a:any={sessions:{},commands:{},notificationSettings:{...defaults,dndEnabled:true,dailyLimit:limit}};
+    putActivity(a,'proactive',{at:new Date(now).toISOString(),type:'companion.greeting',title:'主动合成',initiatedBy:'assistant'});finalizeNotifications(a,now,'UTC');
+    finalizeNotifications(a,end,'UTC');const summary:any=Object.values(a.activity.items).find((r:any)=>r.type==='system.dnd.summary');
+    assert.equal(summary.notification.initiatedBy,'assistant');assert.equal(summary.notification.notify,limit!==0);assert.equal(a.notificationLedger.count,limit===0?0:1);
+    assert.equal(summary.notification.reason,limit===0?'daily_limit':'allowed');
+  }
+  const mixed:any={sessions:{},commands:{},notificationSettings:{...defaults,dndEnabled:true,dailyLimit:0,system:'activity',soundEnabled:false}};
+  for(const [key,type,initiatedBy]of [['proactive','companion.greeting','assistant'],['result','task.completed','user']])putActivity(mixed,key,{at:new Date(now).toISOString(),type,title:'合成',initiatedBy});
+  finalizeNotifications(mixed,now,'UTC');finalizeNotifications(mixed,end,'UTC');
+  const summary:any=Object.values(mixed.activity.items).find((r:any)=>r.type==='system.dnd.summary');assert.equal(summary.notification.initiatedBy,'user');assert.equal(summary.notification.notify,true);assert.equal(summary.notification.sound,false);assert.equal(mixed.notificationLedger.count,0);
+});
