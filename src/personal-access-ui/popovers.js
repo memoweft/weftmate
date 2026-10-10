@@ -24,6 +24,18 @@
       overflow: 'auto', overscrollBehavior: 'contain' });
     const anchor = trigger.getBoundingClientRect();
     const width = menu.offsetWidth, naturalHeight = Math.max(menu.offsetHeight, menu.scrollHeight);
+    if (side === 'right' || side === 'left') {
+      const after = Math.max(0, right - anchor.right - 8), before = Math.max(0, anchor.left - left - 8);
+      if (side === 'right' && width > after && before > after) side = 'left';
+      if (side === 'left' && width > before && after > before) side = 'right';
+      // On a narrow window, wrap the card in the available side space instead
+      // of clamping a full-width card back over the row / pointer path.
+      menu.style.maxWidth = `${side === 'right' ? after : before}px`;
+      const sideWidth = menu.offsetWidth;
+      menu.style.left = `${clamp(side === 'right' ? anchor.right + 8 : anchor.left - 8 - sideWidth, left, right - sideWidth)}px`;
+      menu.style.top = `${clamp(anchor.top, top, bottom - menu.offsetHeight)}px`;
+      menu.dataset.popoverSide = side;
+    } else {
     const above = Math.max(0, anchor.top - top - 8), below = Math.max(0, bottom - anchor.bottom - 8);
     const preferred = side === 'top' ? above : below, opposite = side === 'top' ? below : above;
     if (naturalHeight > preferred && opposite > preferred) side = side === 'top' ? 'bottom' : 'top';
@@ -35,6 +47,7 @@
     menu.style.left = `${clamp(x, left, right - width)}px`;
     menu.style.top = `${clamp(side === 'top' ? anchor.top - 8 - height : anchor.bottom + 8, top, bottom - height)}px`;
     menu.dataset.popoverSide = side;
+    }
     if (!active.has(menu)) {
       const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(() => refresh()) : null;
       active.set(menu, { trigger, options: { side, align }, observer });

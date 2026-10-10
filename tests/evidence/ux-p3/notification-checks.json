@@ -1,0 +1,171 @@
+{
+  "realAndroid": true,
+  "packageName": "com.memoweft.weftmate.mobile.uxp3qa",
+  "syntheticAccount": true,
+  "randomHostPorts": true,
+  "beforeReference": "tests/evidence/s3a/background-notifications-dark.png",
+  "checks": [
+    "isolated-native-apk-and-instrumentation-built-without-version-change",
+    "completed-host-copy-equals-real-notification-title-body-light-dark",
+    "failed-host-copy-equals-real-notification-title-body-light-dark",
+    "approval-host-copy-equals-real-notification-title-body-light-dark",
+    "reminder-host-copy-equals-real-notification-title-body-light-dark",
+    "all-four-original-host-event-types",
+    "no-real-model",
+    "read-notification-cancels",
+    "private-daily-data-untouched"
+  ],
+  "records": [
+    {
+      "scenario": "completed",
+      "theme": "light",
+      "screenshot": "notification-completed-light.png",
+      "host": {
+        "type": "task.completed",
+        "title": "整理项目资料",
+        "body": "已完成 · 点开查看结果"
+      },
+      "native": {
+        "tag": "activity:7909cbc32f0141647b79342f4a34234a37e3268c4093dab249e22126b0cd0e97:activity-result-5b6d64263b637853a1e7c2854a021984f562d2a5",
+        "title": "整理项目资料",
+        "body": "已完成 · 点开查看结果",
+        "channel": "weftmate-activity-task-sound",
+        "ongoing": false
+      }
+    },
+    {
+      "scenario": "completed",
+      "theme": "dark",
+      "screenshot": "notification-completed-dark.png",
+      "host": {
+        "type": "task.completed",
+        "title": "整理项目资料",
+        "body": "已完成 · 点开查看结果"
+      },
+      "native": {
+        "tag": "activity:7909cbc32f0141647b79342f4a34234a37e3268c4093dab249e22126b0cd0e97:activity-result-5b6d64263b637853a1e7c2854a021984f562d2a5",
+        "title": "整理项目资料",
+        "body": "已完成 · 点开查看结果",
+        "channel": "weftmate-activity-task-sound",
+        "ongoing": false
+      }
+    },
+    {
+      "scenario": "failed",
+      "theme": "light",
+      "screenshot": "notification-failed-light.png",
+      "host": {
+        "type": "task.failed",
+        "title": "整理资料摘要",
+        "body": "文件已被移动，无法读取。"
+      },
+      "native": {
+        "tag": "activity:c3dde9c3e7d7941e2a326cf79c6e2e382baa74117c628693678b5c04ec284c22:activity-result-e638ced078e9c64b7614ac5c1a45580fb349182e",
+        "title": "整理资料摘要",
+        "body": "文件已被移动，无法读取。",
+        "channel": "weftmate-activity-task-sound",
+        "ongoing": false
+      }
+    },
+    {
+      "scenario": "failed",
+      "theme": "dark",
+      "screenshot": "notification-failed-dark.png",
+      "host": {
+        "type": "task.failed",
+        "title": "整理资料摘要",
+        "body": "文件已被移动，无法读取。"
+      },
+      "native": {
+        "tag": "activity:c3dde9c3e7d7941e2a326cf79c6e2e382baa74117c628693678b5c04ec284c22:activity-result-e638ced078e9c64b7614ac5c1a45580fb349182e",
+        "title": "整理资料摘要",
+        "body": "文件已被移动，无法读取。",
+        "channel": "weftmate-activity-task-sound",
+        "ongoing": false
+      }
+    },
+    {
+      "scenario": "approval",
+      "theme": "light",
+      "screenshot": "notification-approval-light.png",
+      "host": {
+        "type": "approval.pending",
+        "title": "需要审批",
+        "body": "需要你批准：运行命令：保存项目摘要"
+      },
+      "native": {
+        "tag": "activity:cdba9e30d56e740cca5f71ddf3a8fc73b61634778c1ae9c28c26eeab90e70d67:activity-ad16f2b42d91d792853c530052be10126e560330358fbf3304473db2d413f71c",
+        "title": "需要审批",
+        "body": "需要你批准：运行命令：保存项目摘要",
+        "channel": "weftmate-activity-approval-sound",
+        "ongoing": false
+      }
+    },
+    {
+      "scenario": "approval",
+      "theme": "dark",
+      "screenshot": "notification-approval-dark.png",
+      "host": {
+        "type": "approval.pending",
+        "title": "需要审批",
+        "body": "需要你批准：运行命令：保存项目摘要"
+      },
+      "native": {
+        "tag": "activity:cdba9e30d56e740cca5f71ddf3a8fc73b61634778c1ae9c28c26eeab90e70d67:activity-ad16f2b42d91d792853c530052be10126e560330358fbf3304473db2d413f71c",
+        "title": "需要审批",
+        "body": "需要你批准：运行命令：保存项目摘要",
+        "channel": "weftmate-activity-approval-sound",
+        "ongoing": false
+      }
+    },
+    {
+      "scenario": "reminder",
+      "theme": "light",
+      "screenshot": "notification-reminder-light.png",
+      "host": {
+        "type": "reminder.triggered",
+        "title": "提醒",
+        "body": "下午三点查看项目资料"
+      },
+      "native": {
+        "tag": "activity:1e6242d5147bdf10b00655a5c3193ce1d11e86538ac5d8c213658e6cc848afdb:activity-9662a8db1db8182ab81be2114975a41883e44ed39dcaad3ca13424b9eda50a2f",
+        "title": "提醒",
+        "body": "下午三点查看项目资料",
+        "channel": "weftmate-activity-reminder-sound",
+        "ongoing": false
+      }
+    },
+    {
+      "scenario": "reminder",
+      "theme": "dark",
+      "screenshot": "notification-reminder-dark.png",
+      "host": {
+        "type": "reminder.triggered",
+        "title": "提醒",
+        "body": "下午三点查看项目资料"
+      },
+      "native": {
+        "tag": "activity:1e6242d5147bdf10b00655a5c3193ce1d11e86538ac5d8c213658e6cc848afdb:activity-9662a8db1db8182ab81be2114975a41883e44ed39dcaad3ca13424b9eda50a2f",
+        "title": "提醒",
+        "body": "下午三点查看项目资料",
+        "channel": "weftmate-activity-reminder-sound",
+        "ongoing": false
+      }
+    }
+  ],
+  "cleanup": {
+    "testUninstalled": true,
+    "appUninstalled": true,
+    "ownedEmulatorShutdown": true,
+    "tempRemoved": true,
+    "forwardCreated": false,
+    "reverseRemoved": true,
+    "instrumentEnded": true
+  },
+  "serial": "127.0.0.1:16385",
+  "existingPackages": [
+    "package:com.memoweft.weftmate.mobile.debug.test\r",
+    "package:com.memoweft.weftmate.mobile.stage15releaseqa.test\r",
+    "package:com.memoweft.weftmate.mobile.stage15memoryqa.test"
+  ]
+}
