@@ -1,0 +1,14 @@
+
+> weftmate@0.1.0 vendor:verify
+> node scripts/verify-dsh-vendor.mjs
+
+[vendor-verify] manifest: 197 包, dsh 0.1.0-rc.5 @ 47f9438
+[vendor-verify] 已装配 tarball sha256 全部一致；非当前平台 optional 包按 manifest 合法跳过
+[vendor-verify] node_modules 闭包版本与内部包集合全部一致（195 个安装包）
+[vendor-verify] 当前平台合法跳过的 optional 包：@deepseek-ai/node-addon-landlock-run-linux-arm64, @deepseek-ai/node-addon-landlock-run-linux-x64
+[vendor-verify] 包 main / exports 默认入口检查通过
+[vendor-verify] @deepseek-ai 单实例检查通过（195 个包，无嵌套重复副本）
+[vendor-verify] 闭包无 dsh-* 源码（编译产物纯净）；上游自带 src 的工具族（审计）：cordis, cordis-plugin-group, cordis-plugin-hmr, cordis-plugin-include, cordis-plugin-loader, cordis-plugin-timer, cosmokit, node-addon-landlock-run, schemastery
+[vendor-verify] carriedButNotMounted：(无)
+[vendor-verify] 官方 web 冒烟通过：http://127.0.0.1:51164（__DSH_BOOT__ 引导图 + profile 写入 + 插件 bundle 200 + @weftmate/client 行/bundle 200 + 宿主插件状态接缝 200）
+[vendor-verify] 全部通过

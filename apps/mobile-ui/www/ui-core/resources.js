@@ -1,5 +1,6 @@
 /* Shared resources state, data and actions. Presentation is supplied through named effects. */
 globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
+    const messageBodies = new Map();
     function capturedSourceText(raw) {
         const parse = value => { try { return JSON.parse(value); } catch { return null; } };
         const collect = value => typeof value === 'string' ? [value] : Array.isArray(value) ? value.flatMap(collect)
@@ -130,10 +131,11 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             if (error.code === 'UNAUTHORIZED')
                 return;
             effects.historyNotice(error.code === 'NETWORK'
-                ? '连接中断，重连后会查询原有事情记录。' : '事情记录暂时无法读取，请点击刷新。');
+                ? '连接中断，重连后会查询原有事情记录。' : '事情记录暂时无法读取，请点击刷新。', 'read-failure');
         }
     }
     function updateFromCommand(command) {
+        if (['accepted_by_dsh','observed'].includes(command?.state)) messageBodies.delete(`${core.state.ownerId}:${command.requestId}`);
         const optimisticCreate = core.handleOptimisticCreation?.(command);
         core.reconcileOptimistic?.(command);
         core.finishAttachmentCommand(command);
@@ -178,7 +180,7 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             if (!core.readMarkers().some((row) => row.requestId === marker.requestId))
                 return;
             if (error.code === 'NOT_FOUND')
-                core.operation('上次请求尚无宿主记录；不会自动再次发送。请核对后重新输入。', true, marker.requestId);
+                core.operation('原请求尚无宿主记录，仍待核对；不会自动重复发送。请核对原消息后重试。', true, marker.requestId);
             else if (error.code === 'NETWORK')
                 core.operation('连接中断，请重连后查询原请求，不会自动重复发送。', true, marker.requestId);
         }
@@ -215,8 +217,9 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             core.rememberMarker(marker); // Durable ID before the network request; body stays in memory.
             core.operation('正在提交请求。');
             try {
-                const payload = await core.accessApi('/commands', { method: 'POST', protectedWrite: true,
-                    body: { requestId, kind, targetDeviceId: core.state.hostId, ...fields } });
+                const body = { requestId, kind, targetDeviceId: core.state.hostId, ...fields };
+                if (['session.message', 'chat.message'].includes(kind)) messageBodies.set(`${core.state.ownerId}:${requestId}`, body);
+                const payload = await core.accessApi('/commands', { method: 'POST', protectedWrite: true, body });
                 if (!payload.command)
                     throw { code: 'REQUEST_FAILED' };
                 core.updateFromCommand(payload.command);
@@ -224,7 +227,7 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
                 return payload.command;
             }
             catch (error) {
-                if (error.code === 'NETWORK' || error.code === 'REQUEST_FAILED') {
+                if (globalThis.WeftUiCore.Presence?.transportFailure(error) || error.code === 'REQUEST_FAILED') {
                     core.operation('送达状态尚未确认，正在查询原请求；不会自动重复发送。', true, requestId);
                     await core.lookupRequest(marker);
                 }
@@ -246,5 +249,13 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             effects.updateAvailability();
         }
     }
-    return { capturedSourceText, capturedSourceForUrl, deduplicateOutputs, timelineEventsForContext, loadConversationResources, refreshTasks, updateFromCommand, lookupRequest, restoreRequests, submitCommand };
+    return { capturedSourceText, capturedSourceForUrl, deduplicateOutputs, timelineEventsForContext, loadConversationResources, refreshTasks, updateFromCommand, lookupRequest, restoreRequests, submitCommand,
+        originalMessageBody: requestId => messageBodies.get(`${core.state.ownerId}:${requestId}`),
+        resetMessageBodies: () => messageBodies.clear(),
+        replayOriginalMessage: async requestId => {
+            const body = messageBodies.get(`${core.state.ownerId}:${requestId}`);
+            if (!body) return null;
+            const result = await core.accessApi('/commands', {method:'POST',protectedWrite:true,body});
+            core.updateFromCommand(result.command);return result.command;
+        } };
 };

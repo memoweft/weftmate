@@ -207,6 +207,10 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     return cloudDirectory();
   }
   async function cloudConnect(hostId) { return client.authorized('/hosts/connect', { method: 'POST', body: { hostId } }); }
+  core.probeCloudPresence = async () => {
+    if (!client?.config?.hostId || !await client.saved()) return null;
+    return cloudConnect(client.config.hostId);
+  };
   core.cloudOfflineStatus = hostId => client.authorized('/hosts/offline/status', { method: 'POST', body: { hostId } });
   core.cloudOfflineIdentity = () => core.state.account && client?.config?.hostId ? {
     origin: client.host, ownerId: core.state.account.ownerId, deviceId: core.state.device?.id, hostId: client.config.hostId } : null;

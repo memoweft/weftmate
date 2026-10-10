@@ -32,15 +32,17 @@
       // The conversation's scroll area owns this content. It is never a fixed
       // overlay above approvals, settings, project dialogs or device actions.
       (document.getElementById?.('chat-scroll') || document.body).append(section);
-      document.body.append(launcher, notice);
+      document.body.append(launcher);
+      (document.getElementById?.('chat-scroll') || document.body).append(notice);
       function paint() {
         const view = engine?.view();
-        launcher.hidden = !offline && !view?.conversations.length;
+        if (core.connectionView) offline = core.connectionView().kind === 'host_offline';
+        launcher.hidden = core.connectionView ? true : !offline && !view?.conversations.length;
         launcher.textContent = offline ? '离线模式' : view?.turns.length ? '离线对话 · 待同步' : '离线对话 · 已同步';
         // Polling updates availability, never navigation. Only the user's launcher
         // action opens this page, so pending approvals and settings stay usable.
         section.hidden = !(view && showHistory);
-        notice.textContent = error; notice.hidden = !error || showHistory;
+        notice.textContent = error; notice.hidden = !error || showHistory || !!core.connectionView && core.connectionView().kind !== 'online';
         title.textContent = offline ? '离线模式' : '离线对话';
         mode.textContent = offline ? explanation : view?.turns.length ? '电脑已上线，正在同步离线对话' : '已同步';
         label.firstChild.textContent = offline ? explanation : '这段对话已同步，可返回电脑对话继续';
@@ -86,7 +88,7 @@
           if (!current && !nativeCall) { try { current = JSON.parse(localStorage.getItem('weftmate-offline-identity')); } catch {} }
           if (!current?.ownerId || !current.hostId || !current.deviceId) return;
           await start(current);
-          try { if (await engine.sync()) { offline = false; error = ''; } }
+          try { if (await engine.sync()) { offline = false; error = ''; if(core.connectionView && !engine.view().running && !engine.view().turns.length)showHistory=false; } }
           catch (cause) {
             const failure = globalThis.WeftOfflineView.syncFailure(cause);
             // A replica request can time out while the host still serves tasks.
@@ -95,7 +97,7 @@
               try { await core.accessApi('/status'); failure.unreachable = false; failure.message = '离线副本同步未完成，请稍后重试。'; }
               catch (probeError) { Object.assign(failure, globalThis.WeftOfflineView.syncFailure(probeError)); }
             }
-            offline = failure.unreachable; error = failure.message;
+            offline = core.connectionView ? core.connectionView().kind === 'host_offline' : failure.unreachable; error = failure.message;
             if (failure.clear) { showHistory = false; await engine.clear(); }
             else if (offline && engine.view().ready) {
               try { await engine.check(); }
@@ -120,14 +122,18 @@
       selector.addEventListener('change', () => { selected = selector.value || null; paint(); });
       fresh.addEventListener('click', () => { selected = null; paint(); input.focus(); });
       close.addEventListener('click', () => { showHistory = false; paint(); });
-      launcher.addEventListener('click', () => { openConversation(); showHistory = true; paint(); section.scrollIntoView?.({ block: 'start' }); input.focus(); });
+      const open = () => { openConversation(); showHistory = true; paint(); section.scrollIntoView?.({ block: 'start' }); input.focus(); };
+      launcher.addEventListener('click', open);
+      core.openOfflineMode = open;
+      core.offlineConnectionRestored = tick;
+      const unsubscribe = core.observeConnection?.(value => { paint(); if(value.kind==='online')void tick().catch(()=>{}); });
       document.addEventListener('visibilitychange', () => void tick());
       const timer = setInterval(() => void tick().catch(() => {}), 15000);
       void tick().catch(() => {});
       const originalLogout = core.cloudLogout;
       core.clearOfflineData = async () => {showHistory=false;offline=false;error='';await engine?.clear();paint();};
       if (originalLogout) core.cloudLogout = async (...args) => { showHistory = false; offline = false; error = ''; await engine?.clear(); paint(); if (!nativeCall) localStorage.removeItem('weftmate-offline-identity'); return originalLogout(...args); };
-      return { tick, close: () => { clearInterval(timer); engine?.close(); section.remove(); launcher.remove(); notice.remove(); } };
+      return { tick, close: () => { unsubscribe?.();clearInterval(timer); engine?.close(); section.remove(); launcher.remove(); notice.remove(); } };
     },
   };
 })();

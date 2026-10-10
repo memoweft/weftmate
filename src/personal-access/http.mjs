@@ -27,6 +27,7 @@ import {
   statusProjection,
   validId,
   validProjectName,
+  withDeadline,
   writeStreamPart
 } from './common.mjs';
 import { canonicalMemoryPathname } from '../personal-memory/http.mjs';
@@ -80,6 +81,11 @@ import { usageResponse } from './usage-response.mjs';
 import { chatForSession, protectMainSession } from './chat-identity.mjs';
 
 export function createHttpHandler(context) {
+  const bootId = randomUUID(), startedAt = new Date().toISOString();
+  let hostRestarting = false;
+  const presence = backend => ({ host: 'online', bootId, startedAt, authorization: 'active',
+    runtime: hostRestarting ? 'restarting' : backend?.runtime === 'ready' ? 'ready' : 'unavailable',
+    model: backend?.capabilities?.chat?.available === true ? 'available' : 'unavailable' });
   function handle(request, response) {
     context.cloudIdentity?.track(request, response);
     const largeUpload = request.method === 'PUT' &&
@@ -567,7 +573,8 @@ export function createHttpHandler(context) {
         const afterText = url.searchParams.get('afterSeq') ?? '0';
         const limitText = url.searchParams.get('limit') ?? '100';
         if (!/^\d+$/.test(afterText) || !/^\d+$/.test(limitText)) throw failure('INVALID_REQUEST');
-        return context.json(response, 200, { ...context.syncStores.get(ownerId).page({ afterSeq: Number(afterText), limit: Number(limitText) }), activity: context.activity.watermark(ownerId) });
+        return context.json(response, 200, { ...context.syncStores.get(ownerId).page({ afterSeq: Number(afterText), limit: Number(limitText) }),
+          presence: { host:'online', bootId, startedAt, authorization:'active', runtime:hostRestarting?'restarting':'unknown' }, activity: context.activity.watermark(ownerId) });
       }
       const sharedConversationMatch = /^\/personal\/v1\/sync\/conversations\/([A-Za-z0-9_-]{1,128})\/shared$/.exec(pathname);
       if (sharedConversationMatch && request.method === 'GET') {
@@ -766,15 +773,20 @@ export function createHttpHandler(context) {
           if (!context.hostOwner(ownerId)) throw failure('FORBIDDEN', 403);
           exactKeys(await context.readJson(request), []);
           context.nextSuggestions.cancel(ownerId);
-          await context.systemManager.restart(restartMatch[1], ownerId);
+          if (restartMatch[1] === 'host') hostRestarting = true;
+          try { await context.systemManager.restart(restartMatch[1], ownerId); }
+          finally { hostRestarting = false; }
         }
         const value = await context.systemManager.status(ownerId);
         return context.json(response, 200, { ...value, canRestart: context.hostOwner(ownerId) });
       }
       if (request.method === 'GET' && pathname === '/personal/v1/status') {
         if (url.search) throw failure('INVALID_REQUEST');
-        const backendStatus = statusProjection(await context.callBackend(() => context.backend.getStatus({ ownerId })));
-        const memoryStatus = context.memoryManager ? await context.memoryManager.status(ownerId) : { state: 'disabled' };
+        // Runtime/model diagnostics failing must not hide a reachable authenticated host.
+        const backendStatus = statusProjection(await withDeadline(() => context.callBackend(() => context.backend.getStatus({ ownerId })), 1500)
+          .catch(() => ({ runtime:'unavailable', capabilities:{chat:{available:false,reasonCode:'RUNTIME_UNAVAILABLE'}} })));
+        const memoryStatus = context.memoryManager ? await withDeadline(() => context.memoryManager.status(ownerId),1500)
+          .catch(()=>({state:context.memoryManager.peek(ownerId)})) : { state: 'disabled' };
         backendStatus.modules.memory = context.memoryManager?.peek(ownerId) ?? 'disabled';
         if (!context.hostOwner(ownerId)) {
           const models = modelProjection(await context.callBackend(() => context.backend.listModels({ ownerId })))
@@ -789,8 +801,10 @@ export function createHttpHandler(context) {
             available: false, reasonCode: 'CAPABILITY_UNAVAILABLE',
           };
         }
+        context.authenticate(request, 'sessions:read');
         return context.json(response, 200, {
           ...context.service.status(ownerId), hostName:hostname(),
+          presence: presence(backendStatus),
           personalCapabilities: { nextSuggestions: typeof context.backend.modelCompletion === 'function' ? 1 : 0, library: 1, libraryPreview: 1, libraryDesktopActions: context.library.desktopAvailable ? 1 : 0, taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, pushRegistration: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, creationReceipt: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
           executionAccount: context.hostOwner(ownerId),
           executionAccountName: context.hostOwner(ownerId) ? null : context.executionAccountName(),

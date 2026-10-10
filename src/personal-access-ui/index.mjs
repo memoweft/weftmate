@@ -7,6 +7,7 @@ import renderAssets from './render-assets.json' with {type: 'json'};
 const files = new Map([
   ['/personal/v1/ui/components/data.js', ['components/data.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/data.css', ['data.css', 'text/css; charset=utf-8']],
+  ...['components/presence.js','presence.css'].map(name => [`/personal/v1/ui/${name}`, [name, name.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8']]),
   ['/personal/v1/ui/search.css', ['search.css', 'text/css; charset=utf-8']],
   ...['components/search-view.js','components/search.js'].map(name => [`/personal/v1/ui/${name}`, [name, 'text/javascript; charset=utf-8']]),
   ['/personal/v1/ui/folder-choice.js', ['folder-choice.js','text/javascript; charset=utf-8']],
@@ -77,6 +78,7 @@ const files = new Map([
   ['/personal/v1/ui/native-desktop.js', ['native-desktop.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/native-desktop.css', ['native-desktop.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/desktop.js', ['desktop.js', 'text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/system-bars.js', ['system-bars.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/format-vendor.js', ['format-vendor.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/cloud-ui.js', ['cloud-ui.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/cloud-login.js', ['cloud-login.js', 'text/javascript; charset=utf-8']],

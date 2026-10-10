@@ -207,8 +207,22 @@ function toast(text,issue=false,undo){const box=$('toast');clearTimeout(toast.ti
   if(undo){const button=el('button','toast-undo','撤销归档');button.type='button';button.onclick=async event=>{event.stopPropagation();button.disabled=true;try{await undo();closeToast()}catch(error){toast(safeError(error),true)}};box.append(button)}
   toast.timer=setTimeout(closeToast,undo?10000:issue?5200:3500)}
 
-function status(text,issue=false){const line=$('chat-status');line.textContent=issue?'':text;
-  line.classList.remove('error');if(issue&&text)toast(text,true)}
+function status(text,issue=false,kind='ordinary'){const line=$('chat-status');
+  // Pending shared sends already explain the outcome on their original message,
+  // beside Check status / Retry. Never repeat that explanation at the composer.
+  if(kind==='message-pending'){line.textContent='';line.classList.remove('error');return}
+  // Read/sync failures belong to the connection bar while disconnected, and to
+  // conversation content while online. They are never transient error toasts.
+  if(kind==='read-failure'){
+    let notice=[...$('chat-content').querySelectorAll('.chat-read-notice')].find(node=>node.dataset.statusNotice);
+    if(uiCore.connectionView?.().kind!=='online'){notice?.remove();return}
+    if(!notice){notice=el('p','chat-read-notice');notice.dataset.statusNotice='true';notice.dataset.noticeKind='read-failure';notice.setAttribute('role','status');$('chat-content').prepend(notice)}
+    notice.textContent=text||'';notice.hidden=!text;return;
+  }
+  // Preserve the application's original progress/status and red error toast.
+  line.textContent=issue?'':text;line.classList.remove('error');if(issue&&text)toast(text,true);
+  if(!text){for(const notice of $('chat-content').querySelectorAll('.chat-read-notice'))if(notice.dataset.statusNotice)notice.remove();}
+}
 
 function closeImagePreview({restoreFocus=true}={}){globalThis.WeftContent?.closeGallery(restoreFocus);const box=$('image-preview');if(box.hidden){state.previewScope=null;state.previewReturnFocus=null;return;}
   if(restoreFocus&&box.classList.contains('closing'))return;
@@ -368,7 +382,7 @@ function updateComposer(){uiCore.syncMobileIdentity();
   renderContextUsage();
   paintMobileThinking();
   globalThis.WeftComposerSubtasks?.paint($('composer-subtasks'),globalThis.WeftUiCore.composerSubtasks([...uiCore.state.historyEvents.values()]),{scope:`${state.owner}/${state.authEpoch}/${state.sharedSessionId}`,root:$('chat-content')});
-  $('device-line').hidden=!view.processingHint;$('device-line').textContent=view.processingHint||'';$('device-line').setAttribute('role','status');$('model-label').textContent=view.modelName;$('model-button').setAttribute('aria-label',view.modelLabel);
+  $('device-line').hidden=!uiCore.state.online||!view.processingHint;$('device-line').textContent=view.processingHint||'';$('device-line').setAttribute('role','status');$('model-label').textContent=view.modelName;$('model-button').setAttribute('aria-label',view.modelLabel);
   $('plus-button').disabled=view.attachmentsDisabled;
   for(const button of $('attachment-drafts').querySelectorAll('button'))button.disabled=view.attachmentItemDisabled;
   $('model-button').disabled=view.modelDisabled;$('voice-button').disabled=view.voiceDisabled;

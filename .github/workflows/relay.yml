@@ -8,6 +8,89 @@ concurrency:
   group: relay-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  relay-phone:
+    name: Relay phone first input and file task
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Install Linux relay and phone browser
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y haproxy
+          sudo setcap cap_net_bind_service=+ep /usr/sbin/haproxy
+          node scripts/download-frp.mjs
+          npx playwright install --with-deps chromium
+      - name: Read production DSH pin
+        run: |
+          node --input-type=module -e "import fs from 'node:fs'; const p=JSON.parse(fs.readFileSync('tests/contract/dsh-pin.json')); fs.appendFileSync(process.env.GITHUB_ENV, 'DSH_PIN='+p.commit+'\n');"
+      - uses: actions/checkout@v4
+        with:
+          repository: deepseek-ai/deepseek-harness
+          ref: ${{ env.DSH_PIN }}
+          path: .local/relay-dsh
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - name: Cache pinned DSH compilation
+        id: dsh-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .local/relay-dsh/node_modules
+            .local/relay-dsh/packages/*/*/lib
+            .local/relay-dsh/vendor/*/lib
+            .local/relay-dsh/apps/*/lib
+            .local/relay-dsh/apps/web/dist
+            .local/relay-dsh/native/landlock-run/lib
+            .local/relay-dsh/native/landlock-run/packages/*/lib
+          key: relay-phone-dsh-linux-node24-${{ env.DSH_PIN }}-v3
+      - name: Link pinned DSH workspace dependencies
+        working-directory: .local/relay-dsh
+        run: pnpm install --frozen-lockfile
+      - name: Build pinned native tools (no model keys)
+        if: steps.dsh-cache.outputs.cache-hit != 'true'
+        working-directory: .local/relay-dsh
+        run: pnpm run build
+      - name: Save compiled fixture before scenario assertions
+        timeout-minutes: 2
+        continue-on-error: true
+        if: steps.dsh-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .local/relay-dsh/node_modules
+            .local/relay-dsh/packages/*/*/lib
+            .local/relay-dsh/vendor/*/lib
+            .local/relay-dsh/apps/*/lib
+            .local/relay-dsh/apps/web/dist
+            .local/relay-dsh/native/landlock-run/lib
+            .local/relay-dsh/native/landlock-run/packages/*/lib
+          key: relay-phone-dsh-linux-node24-${{ env.DSH_PIN }}-v3
+      - name: Relay phone first input and file task
+        timeout-minutes: 6
+        run: node --test services/cloud/test/relay-phone.test.mjs
+        env:
+          WEFTMATE_RELAY_E2E: 'true'
+          WEFTMATE_RELAY_FRONT_PORT: '443'
+          WEFTMATE_FRP_DIR: ${{ github.workspace }}/.local/frp/frp_0.71.0_linux_amd64
+          WEFTMATE_HAPROXY: /usr/sbin/haproxy
+          WEFTMATE_DSH_CHECKOUT: ${{ github.workspace }}/.local/relay-dsh
+          WEFTMATE_RELAY_PHONE_REPORT: ${{ runner.temp }}/relay-phone
+      - name: Publish synthetic phone diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relay-phone-diagnostics
+          path: ${{ runner.temp }}/relay-phone
+          if-no-files-found: warn
+          retention-days: 7
   relay:
     name: Relay full chain (443)
     runs-on: ubuntu-latest
