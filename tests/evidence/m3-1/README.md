@@ -54,7 +54,7 @@
 
 ## 验证记录
 
-本轮相关回归140项／0失败，`rework-targeted.txt`；`rework-typecheck.txt`类型检查通过。`rework-required-unit-tests-first.txt`保留合main后首轮1333通过／2失败：在线进展与计时夹具缺少在线连接状态，补齐后原断言保留。最终完整复跑以 `rework-required-unit-tests.txt` 的汇总为准。
+本轮相关回归154项／0失败，`rework-targeted.txt`；`rework-typecheck.txt`类型检查通过。`rework-required-unit-tests-first.txt`保留合main后首轮1333通过／2失败：在线进展与计时夹具缺少在线连接状态，补齐后原断言保留。第二轮在同步新main时读到临时冲突标记，`rework-required-unit-tests-interrupted-by-merge.txt`保留为无效中间记录；清理冲突、定向及类型检查通过后冻结代码，最终完整必过单测1,356通过／0失败，14项既有跳过；`rework-required-unit-tests.txt`保存最终汇总。原安卓检查状态的未定义变量已修，修前失败见 `rework-native-check-before.txt`，修后用原编号核对且不发送新消息。
 
 `checks/`保存完整必过单测、相关回归、类型检查、固定vendor（运行时依赖）核对与界面检测；本地使用与CI（持续集成）相同的`node .github/scripts/ci-unit-tests.mjs required`命令。首轮失败记录保留，补齐已有夹具与缺失依赖，保留原保护点，没有删除用例／新增skip（跳过）／放宽断言。
 

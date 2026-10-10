@@ -605,3 +605,15 @@ body.mobile-keyboard-visible #app{height:var(--viewport-height,100dvh)}
 .message .shared-check:active:not(:disabled) { background:var(--line); }
 .message .shared-check:focus-visible { outline:var(--wm-space-2) solid var(--accent); outline-offset:var(--wm-space-2); }
 .message .shared-check:disabled { color:var(--muted); cursor:default; }
+/* D53: drawer follows the desktop search / main / creation / groups order. */
+.drawer #mobile-search-entry {width:calc(100% - 2 * var(--wm-space-20));margin:var(--wm-space-12) var(--wm-space-20);flex-shrink:0;}
+.drawer .rail-main-chat {width:calc(100% - 2 * var(--wm-space-20));margin:0 var(--wm-space-20) var(--wm-space-12);padding:var(--wm-space-12) var(--wm-space-8);border-radius:var(--wm-radius-10);flex-shrink:0;cursor:pointer;}
+.drawer .rail-main-chat:hover,.drawer .rail-main-chat:active {background:var(--accent-soft);}
+.drawer .rail-main-chat:focus-visible {outline:var(--wm-space-2) solid var(--accent);outline-offset:var(--wm-space-2);}
+.drawer .rail-side-heading {margin:var(--wm-space-12) 0 var(--wm-space-8);padding-inline:var(--wm-space-24);font-size:var(--wm-font-size-12);}
+.drawer .conversation-list .session-group-toggle,.drawer .mobile-projects .home-group {padding-inline:var(--wm-space-4);}
+.drawer .conversation-list {padding-inline:var(--wm-space-20);}
+.drawer .conversation-list .mobile-session-button,.drawer .mobile-project-toggle {padding-inline:var(--wm-space-8);}
+.drawer-new-group {display:flex;margin:0 var(--wm-space-20) var(--wm-space-12);gap:var(--wm-space-4);flex-shrink:0;}
+.drawer-new-group .nav-primary {flex:1;margin:0;border:0;border-radius:var(--wm-radius-8);min-width:0;min-height:var(--wm-space-44);padding-inline:var(--wm-space-8);}
+.drawer-new-group .icon-button {border-radius:var(--wm-radius-8);background:var(--accent-soft);color:var(--accent);}

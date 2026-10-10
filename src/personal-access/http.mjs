@@ -1,3 +1,4 @@
+import { hostname } from 'node:os';
 import { handlePush } from './push.mjs';
 import { handleNotificationSettings } from './notification-settings.mjs';
 import { handlePersonalization } from './personalization.mjs';
@@ -798,7 +799,7 @@ export function createHttpHandler(context) {
         }
         context.authenticate(request, 'sessions:read');
         return context.json(response, 200, {
-          ...context.service.status(ownerId),
+          ...context.service.status(ownerId), hostName:hostname(),
           presence: presence(backendStatus),
           personalCapabilities: { nextSuggestions: typeof context.backend.modelCompletion === 'function' ? 1 : 0, library: 1, libraryPreview: 1, libraryDesktopActions: context.library.desktopAvailable ? 1 : 0, taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, pushRegistration: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
           executionAccount: context.hostOwner(ownerId),
@@ -1028,7 +1029,8 @@ export function createHttpHandler(context) {
       if (request.method === 'GET' && pathname === '/personal/v1/projects') {
         if (url.search) throw failure('INVALID_REQUEST');
         const current = context.authenticate(request, 'sessions:read');
-        return context.json(response, 200, { projects: Object.values(state.projects ?? {}).filter(project => !project.removed).map(publicProject)
+        return context.json(response, 200, { projects: Object.values(state.projects ?? {}).filter(project => !project.removed).map(project => ({ ...publicProject(project),
+            ...(request.headers['x-weftmate-desktop'] === context.libraryDesktopToken ? {rootPath:project.rootPath} : {}) }))
           .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
           canManage: context.hostOwner(ownerId) && current.via === 'cookie' && current.device.scopes.includes('account:manage') });
       }
@@ -1046,6 +1048,8 @@ export function createHttpHandler(context) {
         if (!context.hostOwner(ownerId)) throw failure('FORBIDDEN', 403);
         const body = await context.readJson(request);
         exactKeys(body, ['requestId', 'name', 'rootPath', 'instructions', 'permission'], ['requestId', 'name', 'rootPath']);
+        if (current.via === 'cookie' && request.headers['sec-fetch-site'] &&
+            request.headers['x-weftmate-desktop'] !== context.libraryDesktopToken) throw failure('PROJECT_NATIVE_SELECTION_REQUIRED', 403);
         const settings = projectSettings(body);
         if (!REQUEST_ID.test(body.requestId ?? '') || !validProjectName(body.name)) throw failure('INVALID_REQUEST');
         const hash = digest(JSON.stringify({ name: body.name, rootPath: body.rootPath,

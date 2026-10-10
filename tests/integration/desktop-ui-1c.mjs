@@ -116,13 +116,12 @@ async function panelFlow(theme) {
   await page.evaluate(theme => localStorage.setItem('weftmate.desktop.appearance.v1', JSON.stringify({ theme })), theme);
   await page.reload(); await page.locator('#assistant-view').waitFor({ state: 'visible' });
   await page.locator('#session-list button').first().click();
-  const newChat = await page.locator('#new-session').boundingBox(), collapse = await page.locator('#rail-close').boundingBox();
-  assert.ok(Math.abs(newChat.y + newChat.height / 2 - collapse.y - collapse.height / 2) < 1, `sidebar controls share one center line: ${JSON.stringify({ newChat, collapse })}`);
-  assert.ok(newChat.x + newChat.width <= collapse.x, 'sidebar controls do not overlap');
-  const rail = await page.locator('#session-rail').boundingBox();
-  assert.ok(newChat.y - rail.y < 24, 'no empty heading row');
-  await page.locator('#rail-close').click();
+  const collapse = await page.locator('#rail-open').boundingBox();
+  assert.equal(await page.locator('button:has(use[href$="#sidebar"])').count(),1,'one sidebar toggle');
+  assert.ok(collapse.y<44,'toggle stays in the window heading');
+  await page.locator('#rail-open').click();
   assert.equal(await page.locator('#session-rail').isVisible(), false);
+  assert.deepEqual(await page.locator('#rail-open').boundingBox(),collapse,'collapse does not move the toggle');
   await page.locator('#rail-open').click();
   await page.locator('#conversation-resources').click();
   const picker = page.getByRole('dialog', { name: '输出与来源' });
