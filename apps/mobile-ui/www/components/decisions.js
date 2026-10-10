@@ -168,7 +168,7 @@ function fillApprovalCard(card,row,context,cache){card.decisionContext=context;c
       button.addEventListener('pointerdown',()=>{button.dataset.restoreFocus=document.activeElement===$('draft')?'1':'0'});
       button.addEventListener('pointercancel',()=>{delete button.dataset.restoreFocus});
       button.addEventListener('click',()=>{const restoreFocus=button.dataset.restoreFocus==='1';delete button.dataset.restoreFocus;
-        const fresh=approvalContext();if(approvalViewCurrent(fresh)&&fresh.owner===context.owner&&fresh.epoch===context.epoch&&fresh.sessionId===context.sessionId&&fresh.generation===context.generation&&fresh.page===context.page)void handler(restoreFocus,fresh)});controls.append(button)};
+        const fresh=approvalContext(),shown=card.decisionContext||context;if(approvalViewCurrent(fresh)&&fresh.owner===shown.owner&&fresh.epoch===shown.epoch&&fresh.sessionId===shown.sessionId&&fresh.generation===shown.generation&&fresh.page===shown.page)void handler(restoreFocus,fresh)});controls.append(button)};
     if(row.status==='pending'&&!cache.error&&(!attempt?.unknown||attempt.checked)){
       if(attempt?.unknown)add(attempt.outcome==='allowed-once'?(attempt.scope==='conversation-category'?'重试总是允许此类':'重试允许一次'):'重试拒绝',attempt.outcome,
         (restoreFocus,fresh)=>decideToolApproval(row,attempt.outcome,fresh,restoreFocus,attempt.scope),attempt.outcome==='allowed-once');
