@@ -176,3 +176,6 @@ node --test services/cloud/test/relay-phone.test.mjs
 
 
 本包验收记录：恢复后 [完整通过运行](https://github.com/memoweft/weftmate/actions/runs/38046202682) 的场景 85.196 秒、独立 job 2 分 45 秒；[故意失败运行](https://github.com/memoweft/weftmate/actions/runs/38045983528) 临时仅在测试宿主给出的真实界面脚本里取消加载禁用，首个切换即命中 `history loading must disable first input`，随后另一个提交恢复。最终运行器没有故障开关或断言放宽。后台离线副本未配置云离线模型 / 完整浏览器云凭据，在此夹具中有 409 和授权提示；不把它或 Windows 文件夹登记当作该场景已覆盖的功能。
+
+
+最终编译缓存恢复验收：[运行38047778825](https://github.com/memoweft/weftmate/actions/runs/38047778825)，缓存命中后重新链接锁定的 workspace（工作区）依赖8秒，跳过编译；手机场景84.401秒、job2分48秒，原中继job亦通过。缓存按已知目录层级收集node_modules与lib/dist；使用restore/save分别操作，缓存保存上限2分钟，缓存优化失败仍执行全部场景断言。
