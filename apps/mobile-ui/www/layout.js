@@ -14,10 +14,12 @@ const mobileMarkup = String.raw`
     <div id="drawer-scrim" class="scrim" hidden></div>
     <nav id="drawer" class="drawer" aria-label="主导航" inert>
       <div class="drawer-brand"><span class="logo" aria-label="WeftMate"></span><strong>WeftMate</strong><button id="drawer-close" class="icon-button" aria-label="关闭导航"><span class="icon icon-close"></span></button></div>
-      <button class="nav-primary" data-action="new-chat"><span class="icon icon-compose"></span>新对话</button>
-      <button class="nav-primary" data-action="temporary-chat">临时对话</button>
+      <div class="drawer-new-group">
+        <button class="nav-primary" data-action="new-chat"><span class="icon icon-compose"></span>新对话</button>
+        <button id="drawer-new-menu" class="icon-button" aria-label="选择新对话类型" aria-haspopup="menu"><span class="icon icon-chevron"></span></button>
+        <button data-action="temporary-chat" hidden>临时对话</button>
+      </div>
       <input id="conversation-search" class="search" type="search" placeholder="搜索会话" aria-label="搜索会话">
-      <div class="drawer-section-label">最近对话</div>
       <div id="conversation-list" class="conversation-list" aria-label="最近对话" aria-live="polite"></div>
       <div class="drawer-section-label drawer-function-label">功能</div>
       <div class="drawer-links">

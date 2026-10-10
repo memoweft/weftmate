@@ -1,0 +1,11 @@
+✔ desktop time groups use real dates, preserve undated sessions, and never mutate server order (6.9297ms)
+✔ desktop appearance restores device preferences and artifact labels hide MIME parameters (2.4669ms)
+✔ desktop UI-1 Chromium verifies navigation, timeline, side panel, appearance and command controls (201594.8784ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 201719.7335
