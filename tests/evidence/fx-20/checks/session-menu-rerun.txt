@@ -1,0 +1,14 @@
+✔ pin, manual unread/read, arrival unread and native user title persist independently (1.4275ms)
+✔ groups create, rename, move and delete restore membership without losing sessions (0.7587ms)
+✔ all metadata, groups and forks deny another account; fork leaves source and memory bindings unchanged (0.9571ms)
+✔ menu names, shortcuts and archived taxonomy are shared across renderers (6.4817ms)
+✔ backend fork copies workspace and experience independently, binds model and pins native title (27.3714ms)
+✔ HTTP metadata and groups enforce cookie CSRF, account isolation and durable restart (3489.4264ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3753.6804
