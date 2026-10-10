@@ -191,7 +191,12 @@ test('memory view preserves chat draft and discards a successful response for an
     textContent = ''
     className = ''
     dataset: Record<string, string> = {}
-    classList = { add() {}, remove() {}, toggle() {} }
+    // Mirrors DOMTokenList closely enough for class-driven visibility checks.
+    classList = (() => { const names = new Set<string>(); return {
+      add: (...values: string[]) => { for (const value of values) names.add(value) },
+      remove: (...values: string[]) => { for (const value of values) names.delete(value) },
+      toggle: (value: string, force?: boolean) => { const on = force ?? !names.has(value); if (on) names.add(value); else names.delete(value); return on },
+      contains: (value: string) => names.has(value) } })()
     constructor(id = '') { this.id = id }
     addEventListener(name: string, fn: (event: any) => void) {
       this.listeners.set(name, [...this.listeners.get(name) ?? [], fn])

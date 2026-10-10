@@ -1,3 +1,4 @@
+import { handlePush } from './push.mjs';
 import { handleNotificationSettings } from './notification-settings.mjs';
 import { handlePersonalization } from './personalization.mjs';
 import { handleOnboarding } from './onboarding.mjs';
@@ -255,6 +256,29 @@ export function createHttpHandler(context) {
       const { deviceId, ownerId: authenticatedOwnerId } = context.authenticate(request,
         write ? 'commands:write' : 'sessions:read');
       if (authenticatedOwnerId !== ownerId) throw failure('UNAUTHORIZED', 401);
+      if (pathname === '/personal/v1/library' && request.method === 'GET') {
+        const result = await context.library.list(ownerId, url.searchParams);
+        context.authenticate(request, 'sessions:read');
+        return context.json(response, 200, result);
+      }
+      const libraryMatch = /^\/personal\/v1\/library\/([A-Za-z0-9_-]+)(?:\/(preview|open|show))?$/.exec(pathname);
+      if (libraryMatch) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const artifactId = libraryMatch[1], action = libraryMatch[2];
+        if (request.method === 'GET' && (!action || action === 'preview')) {
+          const result = await context.library[action === 'preview' ? 'preview' : 'detail'](ownerId, artifactId);
+          const current = context.authenticate(request, 'sessions:read');
+          if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+          return context.json(response, 200, result);
+        }
+        if (request.method === 'POST' && ['open','show'].includes(action)) {
+          // Only the trusted desktop device can ask its host to launch a file.
+          if (request.headers['x-weftmate-desktop'] !== context.libraryDesktopToken) throw failure('FORBIDDEN', 403);
+          exactKeys(await context.readJson(request), [], []);
+          return context.json(response, 200, await context.library.action(ownerId, artifactId, action, () => { const current = context.authenticate(request, 'commands:write'); if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401); }));
+        }
+        throw failure('NOT_FOUND', 404);
+      }
       if (pathname.startsWith('/personal/v1/offline/')) return await context.offline.handle(request, response, url, ownerId);
       if (pathname.startsWith('/personal/v1/health/')) {
         const result = await handlePersonalHealthHttp({ store: context.healthStore, context, request,
@@ -636,6 +660,7 @@ export function createHttpHandler(context) {
       if (await context.goalOperations.handleHttp(request, response, url, ownerId)) return;
       if (['/personal/v1/settings/personalization', '/personal/v1/settings/personalization/style'].includes(pathname)) return await handlePersonalization(context, request, response, url, ownerId);
       if (['/personal/v1/settings/notifications', '/personal/v1/settings/notifications/test'].includes(pathname)) return await handleNotificationSettings(context, request, response, url, ownerId);
+      if (await handlePush(context, request, response, url, ownerId, deviceId)) return;
       if (await context.activity.handleHttp(request, response, url, ownerId, deviceId)) return;
       const thinkingMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/thinking$/.exec(pathname);
       if (thinkingMatch && ['GET', 'PATCH'].includes(request.method)) {
@@ -758,7 +783,7 @@ export function createHttpHandler(context) {
         }
         return context.json(response, 200, {
           ...context.service.status(ownerId),
-          personalCapabilities: { taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
+          personalCapabilities: { library: 1, libraryPreview: 1, libraryDesktopActions: context.library.desktopAvailable ? 1 : 0, taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, pushRegistration: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
           executionAccount: context.hostOwner(ownerId),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
           backend: backendStatus, memory: { state: memoryStatus.state, inject: memoryStatus.capabilities?.inject === true,

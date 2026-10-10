@@ -1,0 +1,3465 @@
+{
+  "realElectron": true,
+  "synthetic": true,
+  "modelRequests": 0,
+  "rows": [
+    {
+      "scene": "main-history",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-light-main-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "composer-long",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "超长文本",
+      "screenshot": "after-phone-web-360-light-composer-long.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "composer-menu",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-light-composer-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "main-search",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-light-main-search.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-home",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-light-settings-home.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-general",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-light-settings-general.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-personalization",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-light-settings-personalization.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-assistant",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-light-settings-assistant.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-notifications",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-light-settings-notifications.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-appearance",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-light-settings-appearance.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-account",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-light-settings-account.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-devices",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-light-settings-devices.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-usage",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-light-settings-usage.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-archived",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-light-settings-archived.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-models",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-light-settings-models.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-approvals",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-light-settings-approvals.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-memory",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-light-settings-memory.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-schedules",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-light-settings-schedules.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-resources",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-light-settings-resources.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-about",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-light-settings-about.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-rejected",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-light-memory-rejected.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-rejected-expanded",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-light-memory-rejected-expanded.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "no-model-history",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "没配模型",
+      "screenshot": "after-phone-web-360-light-no-model-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "no-model-empty",
+      "surface": "phone-web-360",
+      "theme": "light",
+      "state": "没配模型 / 空对话",
+      "screenshot": "after-phone-web-360-light-no-model-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "main-history",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-dark-main-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "composer-long",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "超长文本",
+      "screenshot": "after-phone-web-360-dark-composer-long.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "composer-menu",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-dark-composer-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "main-search",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-dark-main-search.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-home",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-dark-settings-home.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-general",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-dark-settings-general.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-personalization",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-dark-settings-personalization.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-assistant",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-dark-settings-assistant.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-notifications",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-dark-settings-notifications.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-appearance",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-dark-settings-appearance.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-account",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-dark-settings-account.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-devices",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-dark-settings-devices.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-usage",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-dark-settings-usage.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-archived",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-dark-settings-archived.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-models",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-dark-settings-models.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-approvals",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-dark-settings-approvals.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-memory",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-dark-settings-memory.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-schedules",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-dark-settings-schedules.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-resources",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-dark-settings-resources.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-about",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-dark-settings-about.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-rejected",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-dark-memory-rejected.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-rejected-expanded",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-360-dark-memory-rejected-expanded.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "no-model-history",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "没配模型",
+      "screenshot": "after-phone-web-360-dark-no-model-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "no-model-empty",
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "state": "没配模型 / 空对话",
+      "screenshot": "after-phone-web-360-dark-no-model-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "main-history",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-main-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "composer-long",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "超长文本",
+      "screenshot": "after-android-bundle-360-light-composer-long.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "composer-menu",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-composer-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "main-search",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-main-search.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-home",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-settings-home.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-general",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-settings-general.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-personalization",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-settings-personalization.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-assistant",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-settings-assistant.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-notifications",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-settings-notifications.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-appearance",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-settings-appearance.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-account",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-settings-account.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-devices",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-settings-devices.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-usage",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-settings-usage.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-archived",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-settings-archived.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-models",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-settings-models.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-approvals",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-settings-approvals.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-memory",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-settings-memory.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-schedules",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-settings-schedules.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-resources",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-settings-resources.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-about",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-settings-about.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-rejected",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-memory-rejected.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-rejected-expanded",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-memory-rejected-expanded.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "no-model-history",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "没配模型",
+      "screenshot": "after-android-bundle-360-light-no-model-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "no-model-empty",
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "state": "没配模型 / 空对话",
+      "screenshot": "after-android-bundle-360-light-no-model-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "main-history",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-main-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "composer-long",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "超长文本",
+      "screenshot": "after-android-bundle-360-dark-composer-long.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "composer-menu",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-composer-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "main-search",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-main-search.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-home",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-settings-home.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-general",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-settings-general.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-personalization",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-settings-personalization.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-assistant",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-settings-assistant.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-notifications",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-settings-notifications.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-appearance",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-settings-appearance.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-account",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-settings-account.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-devices",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-settings-devices.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-usage",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-settings-usage.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-archived",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-settings-archived.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-models",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-settings-models.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-approvals",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-settings-approvals.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-memory",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-settings-memory.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-schedules",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-settings-schedules.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-resources",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-settings-resources.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-about",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-settings-about.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-rejected",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-memory-rejected.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-rejected-expanded",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-memory-rejected-expanded.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "no-model-history",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "没配模型",
+      "screenshot": "after-android-bundle-360-dark-no-model-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "no-model-empty",
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "state": "没配模型 / 空对话",
+      "screenshot": "after-android-bundle-360-dark-no-model-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "main-history",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-light-main-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "composer-long",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "超长文本",
+      "screenshot": "after-phone-web-390-light-composer-long.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "composer-menu",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-light-composer-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "main-search",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-light-main-search.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-home",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-light-settings-home.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-general",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-light-settings-general.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-personalization",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-light-settings-personalization.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-assistant",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-light-settings-assistant.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-notifications",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-light-settings-notifications.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-appearance",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-light-settings-appearance.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-account",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-light-settings-account.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-devices",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-light-settings-devices.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-usage",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-light-settings-usage.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-archived",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-light-settings-archived.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-models",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-light-settings-models.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-approvals",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-light-settings-approvals.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-memory",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-light-settings-memory.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-schedules",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-light-settings-schedules.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-resources",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-light-settings-resources.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-about",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-light-settings-about.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-rejected",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-light-memory-rejected.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-rejected-expanded",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-light-memory-rejected-expanded.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "no-model-history",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "没配模型",
+      "screenshot": "after-phone-web-390-light-no-model-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "no-model-empty",
+      "surface": "phone-web-390",
+      "theme": "light",
+      "state": "没配模型 / 空对话",
+      "screenshot": "after-phone-web-390-light-no-model-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "main-history",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-dark-main-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "composer-long",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "超长文本",
+      "screenshot": "after-phone-web-390-dark-composer-long.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "composer-menu",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-dark-composer-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "main-search",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-dark-main-search.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-home",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-dark-settings-home.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-general",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-dark-settings-general.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-personalization",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-dark-settings-personalization.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-assistant",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-dark-settings-assistant.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-notifications",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-dark-settings-notifications.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-appearance",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-dark-settings-appearance.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-account",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-dark-settings-account.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-devices",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-dark-settings-devices.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-usage",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-dark-settings-usage.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-archived",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-dark-settings-archived.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-models",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-dark-settings-models.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-approvals",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-dark-settings-approvals.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-memory",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-dark-settings-memory.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-schedules",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-dark-settings-schedules.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-resources",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-dark-settings-resources.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-about",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-dark-settings-about.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-rejected",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-dark-memory-rejected.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-rejected-expanded",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-phone-web-390-dark-memory-rejected-expanded.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "no-model-history",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "没配模型",
+      "screenshot": "after-phone-web-390-dark-no-model-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "no-model-empty",
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "state": "没配模型 / 空对话",
+      "screenshot": "after-phone-web-390-dark-no-model-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "main-history",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-main-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "composer-long",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "超长文本",
+      "screenshot": "after-android-bundle-390-light-composer-long.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "composer-menu",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-composer-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "main-search",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-main-search.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-home",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-settings-home.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-general",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-settings-general.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-personalization",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-settings-personalization.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-assistant",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-settings-assistant.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-notifications",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-settings-notifications.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-appearance",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-settings-appearance.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-account",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-settings-account.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-devices",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-settings-devices.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-usage",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-settings-usage.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-archived",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-settings-archived.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-models",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-settings-models.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-approvals",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-settings-approvals.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-memory",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-settings-memory.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-schedules",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-settings-schedules.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-resources",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-settings-resources.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-about",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-settings-about.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-rejected",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-memory-rejected.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-rejected-expanded",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-memory-rejected-expanded.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "no-model-history",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "没配模型",
+      "screenshot": "after-android-bundle-390-light-no-model-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "no-model-empty",
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "state": "没配模型 / 空对话",
+      "screenshot": "after-android-bundle-390-light-no-model-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "main-history",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-main-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "composer-long",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "超长文本",
+      "screenshot": "after-android-bundle-390-dark-composer-long.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "composer-menu",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-composer-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "main-search",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-main-search.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-home",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-settings-home.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-general",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-settings-general.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-personalization",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-settings-personalization.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-assistant",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-settings-assistant.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-notifications",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-settings-notifications.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-appearance",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-settings-appearance.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-account",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-settings-account.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-devices",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-settings-devices.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-usage",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-settings-usage.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-archived",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-settings-archived.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-models",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-settings-models.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-approvals",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-settings-approvals.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-memory",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-settings-memory.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-schedules",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-settings-schedules.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-resources",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-settings-resources.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-about",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-settings-about.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-rejected",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-memory-rejected.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-rejected-expanded",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-memory-rejected-expanded.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "no-model-history",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "没配模型",
+      "screenshot": "after-android-bundle-390-dark-no-model-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "no-model-empty",
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "state": "没配模型 / 空对话",
+      "screenshot": "after-android-bundle-390-dark-no-model-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    }
+  ],
+  "checks": [],
+  "errors": []
+}

@@ -221,6 +221,9 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         ui.byId('model-hint').setAttribute('role', 'status');
         ui.byId('model-hint').hidden = !value.hint || value.running || !ui.byId('approval-bar').hidden;
         ui.renderTimeline();
+        WeftPopover.modelGate({missing:!!core.state.account && core.state.modelsKnown===true && !core.state.models.some(model=>model.configured!==false&&model.available!==false),
+          field:ui.byId('message-text'),send,empty:!ui.byId('transcript').querySelector('.message'),content:ui.byId('chat-scroll'),composer:ui.byId('message-form').parentElement,openSettings:()=>ui.openSettings('models')});
+        if (ui.byId('chat-scroll').classList.contains('needs-model-empty')) ui.byId('chat-intro').hidden=true;
     }
     function startAssistantRefresh() {
         core.stopAssistantRefresh();

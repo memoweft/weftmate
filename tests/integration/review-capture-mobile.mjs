@@ -83,7 +83,7 @@ try {
         usage: async () => { await settings(); await button(/^用量 /).click(); await page.getByRole('heading', { name: '用量与费用', exact: true }).waitFor(); await button('刷新用量').waitFor(); },
         'session-menu': async () => { await home(); await page.getByRole('main').getByRole('button', { name: '更多操作 整理项目进展', exact: true }).click(); await page.getByRole('dialog', { name: '对话操作', exact: true }).waitFor(); await button('归档').waitFor(); await button('删除').waitFor(); },
       };
-      for (const scene of catalog.scenes.filter(row => !['login', 'question','main-chat','activity','goals'].includes(row.id) && (!onlyScene || row.id === onlyScene))) await shot(scene.id, preparations[scene.id]);
+      for (const scene of catalog.scenes.filter(row => !['login', 'question','main-chat','activity','goals','library'].includes(row.id) && (!onlyScene || row.id === onlyScene))) await shot(scene.id, preparations[scene.id]);
       // FE-1a's real question projection supplies the missing FE-1b question fixture.
       const questionPage = android?.page || await context.newPage(); questionPage.setDefaultTimeout(30000);
       if (android) await questionPage.unrouteAll({ behavior: 'ignoreErrors' });
@@ -92,6 +92,7 @@ try {
         if (body.method === 'settings.appearance') return route.fulfill({ json: { result: { value: theme } } });
         await route.continue();
       });
+      await shot('library', async () => { await questionPage.goto(candidate.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);await questionPage.getByRole('button',{name:'打开导航',exact:true}).click();await questionPage.getByRole('button',{name:'成果库',exact:true}).click();await questionPage.getByRole('button',{name:'预览 项目进度报告.md',exact:true}).click();await questionPage.getByRole('heading',{name:'项目进度报告',exact:true}).waitFor(); },questionPage);
       await shot('goals', async () => {
         await questionPage.goto(candidate.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);await questionPage.getByRole('button',{name:'打开导航',exact:true}).click();await questionPage.getByRole('button',{name:'目标',exact:true}).click();await questionPage.getByRole('heading',{name:'目标',exact:true}).waitFor();await questionPage.getByRole('article',{name:'提交合成报告',exact:true}).waitFor();
       },questionPage);

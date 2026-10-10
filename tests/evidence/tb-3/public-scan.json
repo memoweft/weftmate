@@ -1,0 +1,9 @@
+{
+  "scope": "TB-3 public diff only",
+  "matches": {
+    "privateKey": 0,
+    "literalApiSecret": 0,
+    "privateLanUrl": 0,
+    "personalEmail": 0
+  }
+}

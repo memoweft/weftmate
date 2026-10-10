@@ -71,7 +71,7 @@ class Element {
   focusOptions: { preventScroll?: boolean } | undefined
   scrollTop = 0
   decodeHandler: (() => Promise<void>) | null = null
-  classList = { add() {}, remove() {}, toggle() {} }
+  classList = { add() {}, remove() {}, toggle() {}, contains: (value: string) => this.className.split(/\s+/).includes(value) }
   constructor(id = '', tagName = 'div') { this.id = id; this.tagName = tagName.toUpperCase() }
   addEventListener(name: string, listener: (event: any) => unknown) {
     this.listeners.set(name, [...(this.listeners.get(name) ?? []), listener])
