@@ -181,3 +181,5 @@ node --test services/cloud/test/relay-phone.test.mjs
 最终编译缓存恢复验收：[运行38047778825](https://github.com/memoweft/weftmate/actions/runs/38047778825)，缓存命中后重新链接锁定的 workspace（工作区）依赖8秒，跳过编译；手机场景84.401秒、job2分48秒，原中继job亦通过。缓存按已知目录层级收集node_modules与lib/dist；使用restore/save分别操作，缓存保存上限2分钟，缓存优化失败仍执行全部场景断言。
 
 合入MOB-P1主线后的最后复验：[运行38048427596](https://github.com/memoweft/weftmate/actions/runs/38048427596)，场景83.795秒、job2分42秒；10次首次输入零丢失、3次审批、998请求全部中继443、文件与成果通过，原中继job通过。本机相关补验37/37、类型检查通过。
+
+合入M3-1主线后的最终复验：[运行38048827961](https://github.com/memoweft/weftmate/actions/runs/38048827961)，场景84.182秒、job2分45秒，10次零丢失、3次审批、1322请求全部中继443；原中继job通过，相关单测37/37、类型检查通过。CI-R1没有依赖新增的断线接口。
