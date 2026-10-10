@@ -38,7 +38,7 @@ def main():
     gallery = root / 'gallery'
     gallery.mkdir(exist_ok=True)
     lock = control / 'nightly.lock'
-    status = {'status': 'passed', 'reason': ''}
+    status = {'status': 'passed', 'reason': '', 'platformResults': {name: {'status': 'not-run'} for name in ['mac', 'iphone', 'watch']}}
     cleanup = {'createdDevices': [], 'deletedDevices': [], 'processesStopped': 0, 'bootedOwnedRemaining': []}
     tree = Path.home() / 'Desktop/WeftMate/weftmate-nightly'
     origin = Path.home() / 'Desktop/WeftMate/weftmate'
@@ -50,6 +50,8 @@ def main():
     env = {k: v for k, v in os.environ.items() if not re.match(r'^(WEFTMATE_|MEMOWEFT_|MIMO_|MODEL_SWITCH_|CLOUD_)', k)}
     temp = root / 'temporary'
     temp.mkdir(exist_ok=True)
+    env['PATH'] = os.pathsep.join(['/opt/homebrew/bin', '/usr/local/bin', str(Path.home() / '.local/bin'), env.get('PATH', '/usr/bin:/bin:/usr/sbin:/sbin')])
+    env['WEFTMATE_TEST_HOST_NAME'] = 'synthetic-host'
     env['TMPDIR'] = str(temp) + '/'
 
     def remaining():
@@ -58,6 +60,7 @@ def main():
     def run(command, name='command', cwd=None, check=True, extra_env=None):
         if time.time() >= deadline:
             raise TimeoutError('整晚总时长超时')
+        print('Start ' + name, flush=True)
         with (root / (name + '.log')).open('a') as log:
             child = subprocess.Popen([str(c) for c in command], cwd=cwd or tree,
                                      env={**env, **(extra_env or {})}, stdout=subprocess.PIPE,
@@ -157,6 +160,27 @@ def main():
         if error:
             raise error
 
+    def platform_started(platform):
+        if status['platformResults'][platform]['status'] == 'not-run':
+            status['platformResults'][platform] = {'status': 'passed'}
+
+    def platform_failed(platform, reason):
+        status.update(status='failed')
+        status.setdefault('failures', []).append(reason)
+        status['reason'] = '; '.join(status['failures'])
+        result = status['platformResults'][platform]
+        result.update(status='failed', reason='; '.join(filter(None, [result.get('reason'), reason])))
+
+    def capture_failure(platform, scene, theme, exc):
+        reason = str(exc)
+        platform_failed(platform, platform + '/' + scene + '/' + theme + ': ' + reason)
+        name = 'review-' + platform + '-' + scene + '-' + theme
+        (gallery / (name + '.json')).write_text(json.dumps({
+            'platform': platform, 'scene': scene, 'theme': theme,
+            'status': 'failed', 'reason': reason, 'commit': args.commit,
+            'generatedAt': iso(), 'synthetic': True,
+        }, ensure_ascii=False))
+
     def alarm(signum, frame):
         raise TimeoutError('整晚总时长超时或控制端已停止')
     for signum in [signal.SIGALRM, signal.SIGTERM, signal.SIGHUP, signal.SIGINT]:
@@ -180,6 +204,9 @@ def main():
         if booted():
             status.update(status='skipped', reason='被占用，未拍（Apple 模拟器）')
             return
+        missing = [tool for tool in ['node', 'npm', 'git', 'python3', 'xcrun', 'xcodebuild', 'swiftc'] if not shutil.which(tool, path=env['PATH'])]
+        if missing:
+            raise FileNotFoundError('所需工具找不到：' + ', '.join(missing))
         run(['git', 'fetch', 'origin', 'main'], 'fetch', origin)
         if args.candidate:
             run(['git', 'fetch', root / 'candidate.bundle', 'HEAD'], 'candidate-fetch', origin)
@@ -190,8 +217,6 @@ def main():
         run(['git', 'checkout', '--detach', args.commit], 'checkout')
         run(['npm', 'ci'], 'npm')
         run(['npm', 'ci'], 'cloud-npm', tree / 'services/cloud')
-        # PATH may be minimal when launched through ssh; caller uses the same
-        # configured ssh mac environment as existing A15/A10 native runners.
         run(['python3', 'Scripts/generate_project.py'], 'project', tree / 'apps/apple')
         runtimes = json.loads(run(['xcrun', 'simctl', 'list', 'runtimes', '-j'], 'runtimes'))['runtimes']
         types = json.loads(run(['xcrun', 'simctl', 'list', 'devicetypes', '-j'], 'types'))['devicetypes']
@@ -219,16 +244,23 @@ def main():
                 get(driver, '/a5/setup')
                 get(driver, '/bootstrap')
                 ready = get(driver, '/ready')
+                platform_started('mac')
                 for scene in native_scenes:
                     image = root / ('mac-' + scene + '-' + theme + '.png')
                     native_scene = {'general': 'settings-general', 'onboarding': 'settings-devices'}.get(scene, scene)
-                    run([capture, executable, image, native_scene, theme, ready['host'], ready['cloud'], 'ephemeral'], 'mac-' + scene + '-' + theme)
-                    captured_at = datetime.fromtimestamp(image.stat().st_mtime, timezone.utc).isoformat().replace('+00:00', 'Z')
-                    save(image, 'mac', scene, theme, captured_at, 'native own-window AX (A10/A15 runner) + synthetic host')
+                    try:
+                        run([capture, executable, image, native_scene, theme, ready['host'], ready['cloud'], 'ephemeral'], 'mac-' + scene + '-' + theme)
+                        captured_at = datetime.fromtimestamp(image.stat().st_mtime, timezone.utc).isoformat().replace('+00:00', 'Z')
+                        save(image, 'mac', scene, theme, captured_at, 'native own-window AX (A10/A15 runner) + synthetic host')
+                    except RuntimeError as exc:
+                        capture_failure('mac', scene, theme, exc)
+                platform_started('iphone')
                 run(['xcrun', 'simctl', 'boot', phone], 'phone-boot')
                 run(['xcrun', 'simctl', 'bootstatus', phone, '-b'], 'phone-ready')
                 try:
                     test('WeftMatePhone', phone, 'A5ParityUITests/testNightly' + theme.title() + 'Gallery', {'WEFTMATE_A5_DRIVER': driver}, 'iphone-' + theme)
+                except RuntimeError as exc:
+                    platform_failed('iphone', str(exc))
                 finally:
                     run(['xcrun', 'simctl', 'shutdown', phone], 'phone-shutdown', check=False)
             finally:
@@ -240,6 +272,8 @@ def main():
                 run([capture, executable, folder, 'a15-all', theme, ready['host'], ready['host'], 'ephemeral', 'a15-driver=' + info['driver']], 'mac-a15-' + theme)
                 captured_at = datetime.fromtimestamp((folder / 'plus-menu.png').stat().st_mtime, timezone.utc).isoformat().replace('+00:00', 'Z')
                 save(folder / 'plus-menu.png', 'mac', 'composer-menu', theme, captured_at, 'A15 native own-window AX + synthetic host')
+            except RuntimeError as exc:
+                capture_failure('mac', 'composer-menu', theme, exc)
             finally:
                 stop(child)
         pair = run(['xcrun', 'simctl', 'pair', watch, phone], 'pair').strip()
@@ -247,6 +281,7 @@ def main():
             child, info = fixture('apps/apple/Tests/a12_fixture.mjs', 'a12-' + theme)
             try:
                 ready = get(info['driver'], '/ready')
+                platform_started('watch')
                 run(['xcrun', 'simctl', 'boot', phone], 'paired-phone-boot')
                 run(['xcrun', 'simctl', 'bootstatus', phone, '-b'], 'paired-phone-ready')
                 app = root / 'Derived-WeftMatePhone/Build/Products/Debug-iphonesimulator/WeftMatePhone.app'
@@ -256,6 +291,8 @@ def main():
                 run(['xcrun', 'simctl', 'boot', watch], 'watch-boot')
                 run(['xcrun', 'simctl', 'bootstatus', watch, '-b'], 'watch-ready')
                 test('WeftMateWatch', watch, 'A13WatchUITests/testNightly' + theme.title() + 'Approval', {'WEFTMATE_A12_DRIVER': info['driver']}, 'watch-' + theme)
+            except RuntimeError as exc:
+                platform_failed('watch', str(exc))
             finally:
                 for device in [watch, phone]:
                     if device in booted():
@@ -265,7 +302,7 @@ def main():
     except Exception as exc:
         # Public gallery metadata must never include a machine path from OSError.
         reason = re.sub(r'/(?:Users|private|var|tmp)/[^\s\x27\x22]+', '[local artifact]', str(exc))
-        status.update(status='failed', reason=reason)
+        status.update(status='environment' if isinstance(exc, FileNotFoundError) else 'failed', reason=reason)
     finally:
         signal.alarm(0)
         for signum in [signal.SIGTERM, signal.SIGHUP, signal.SIGINT]:

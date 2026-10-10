@@ -5,9 +5,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { deflateSync } from 'node:zlib';
 import { execFileSync } from 'node:child_process';
-import { inspect, difference, pixels, retention, previousRun } from '../scripts/nightly/report.mjs';
+import { inspect, difference, pixels, retention, previousRun, report, expectedPhases } from '../scripts/nightly/report.mjs';
+import { bootstrap, launchEngine } from '../scripts/nightly/bootstrap.mjs';
+import { approveBaseline } from '../scripts/nightly/approve-baseline.mjs';
+import { buildForSmoke } from '../scripts/nightly/installed-build.mjs';
 import { startTimelineCandidate } from './integration/timeline-ui-candidate.mjs';
-import { androidPackages, androidPackageReason } from '../scripts/nightly/android-packages.mjs';
+import { androidPackages, androidPackageReason, androidBusyReason } from '../scripts/nightly/android-packages.mjs';
 
 test('Android inventory names leftover test packages without classifying the daily or unknown package as disposable', async () => {
   const output = 'package:com.memoweft.weftmate.mobile\npackage:com.memoweft.weftmate.mobile.s3aqa\npackage:com.memoweft.weftmate.mobile.stage15memoryqa.test\npackage:com.memoweft.weftmate.mobile.debug.test\npackage:com.memoweft.weftmate.mobile.unknown\n';
@@ -90,13 +93,121 @@ test('retention removes only expired date directories and retains exactly 14 cal
     for (const name of ['2026-09-27', '2026-10-10', 'private-data']) await access(join(root, name));
   } finally { await rm(root, { recursive: true, force: true }); }
 });
-test('baseline selects previous run, including a second run on the same date', async () => {
+test('baseline only changes after explicit approval, and survives report retention', async () => {
   const root = await mkdtemp(join(tmpdir(), 'nightly-baseline-'));
   try {
     const old = join(root, '2026-10-10', '1000', 'gallery'), current = join(root, '2026-10-10', '1100', 'gallery');
-    for (const dir of [old, current]) { await mkdir(dir, { recursive: true }); await writeFile(join(dir, 'manifest.json'), JSON.stringify({ records: [{ ...row, file: 'old.png' }] })); }
-    assert.equal((await previousRun(root, current)).baselineDirectory, old);
+    for (const dir of [old, current]) { await mkdir(dir, { recursive: true }); await writeFile(join(dir, 'old.png'),png([100,120,140,255])); await writeFile(join(dir, 'manifest.json'), JSON.stringify({ records: [{ ...row, synthetic:true, file: 'old.png' }] })); await writeFile(join(dir,'../nightly-status.json'),JSON.stringify({commit})); }
+    assert.deepEqual((await previousRun(root,current)).baseline,[]);
+    assert.equal((await approveBaseline(root,join(old,'..'))).approved,1);
+    const approved = await previousRun(root,current);
+    await writeFile(join(current,'old.png'),png([0,0,0,255]));
+    const regression = await inspect([{...row,path:join(current,'old.png')}],{now,commit,...approved});
+    assert.equal(regression.alerts[0].kind,'diff');
+    assert.deepEqual(await previousRun(root,current),approved);
+    await retention(root,new Date('2026-11-10'));
+    assert.equal((await previousRun(root,current)).baseline.length,1);
+    await access(approved.baseline[0].baselinePath);
   } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test('report lists every required phase after preparation failure and groups environment errors', async () => {
+  const root = await mkdtemp(join(tmpdir(),'weftmate-nightly-report-'));
+  try {
+    await mkdir(join(root,'gallery'));
+    const result = await report(root,{commit,bootstrapCommit:'b'.repeat(40),startedAt:new Date().toISOString(),phases:[{name:'prepare',status:'failed',reason:'fixture preparation failed'}],cleanup:{}});
+    assert.deepEqual(result.phases.map(p=>p.name),expectedPhases.map(p=>p.name));
+    assert.equal(result.summary.notRunStages,10); assert.equal(result.summary.failedStages,1);
+    const markdown = await readFile(join(root,'nightly-report.md'),'utf8');
+    for (const phase of expectedPhases.slice(1)) assert.ok(markdown.includes(`| ${phase.name} | 未运行 |`));
+    assert.ok(markdown.includes('引导层提交')); assert.ok(markdown.includes('## 安装版冒烟'));
+    const env = await report(root,{commit,startedAt:new Date().toISOString(),phases:expectedPhases.map(p=>({...p,status:p.name==='apple'?'environment':'passed',reason:p.name==='apple'?'所需工具找不到：npm':''})),cleanup:{}});
+    assert.equal(env.alerts.filter(a=>a.message.includes('npm')).length,1);
+    assert.ok((await readFile(join(root,'nightly-report.md'),'utf8')).includes('未运行（环境问题）'));
+  } finally { await rm(root,{recursive:true,force:true}); }
+});
+
+test('bootstrap delegates exactly once to tested entry, keeps lock until engine cleanup, and rejects old entry', async () => {
+  const root = await mkdtemp(join(tmpdir(),'weftmate-nightly-handoff-')), tree = join(root,'nightly'), reports = join(root,'reports');
+  let cleanupCount=0, launches=0;
+  try {
+    await mkdir(join(tree,'scripts/nightly'),{recursive:true}); await writeFile(join(tree,'.git'),'fixture');
+    const entry = join(tree,'scripts/nightly/run.mjs');
+    await writeFile(entry, `// NIGHTLY_HANDOFF_V1\nimport {readFileSync,writeFileSync,accessSync} from 'node:fs';\nimport {join} from 'node:path';\nconst i=process.argv.indexOf('--nightly-engine');\nif(i<0)throw Error('engine was bootstrapped again');\nconst context=JSON.parse(readFileSync(process.argv[i+1],'utf8'));\naccessSync(join(context.reports,'nightly.lock'));\nconst cleanup=join(context.out,'engine-cleanup.json');\nwriteFileSync(cleanup,JSON.stringify({count:1}));\nwriteFileSync(join(context.out,'nightly-status.json'),'{}');\nprocess.exitCode=1;\n`);
+    const args=['--repository',root,'--worktree',tree,'--reports',reports,'--candidate'];
+    const execute = async (command, commandArgs, options) => {
+      if (options.engine) {
+        launches++; assert.equal(commandArgs.filter(a=>a==='--nightly-engine').length,1); assert.equal(commandArgs[0],entry);
+        const context=JSON.parse(await readFile(commandArgs.at(-1),'utf8'));
+        await access(join(reports,'nightly.lock')); assert.equal(context.sourceCommit,commit);
+        assert.ok(context.deadline>Date.parse(context.startedAt));
+        assert.throws(()=>execFileSync(command,commandArgs,{cwd:options.cwd,stdio:'pipe'}),error=>error.status===1);
+        cleanupCount += JSON.parse(await readFile(join(context.out,'engine-cleanup.json'),'utf8')).count;
+        return {code:1};
+      }
+      return {code:0,output:commandArgs[0]==='rev-parse'?commit:''};
+    };
+    assert.equal(await bootstrap(args,{execute}),1);
+    assert.equal(launches,1); assert.equal(cleanupCount,1); await assert.rejects(access(join(reports,'nightly.lock')));
+    await writeFile(entry,'// old controller');
+    await assert.rejects(launchEngine({worktree:tree,out:root},args,execute),/没有 NIGHTLY_HANDOFF_V1/);
+    assert.equal(await bootstrap(args,{execute}),1); assert.equal(launches,1); assert.equal(cleanupCount,1);
+    await assert.rejects(access(join(reports,'nightly.lock')));
+    await writeFile(join(reports,'nightly.lock'),'other run');
+    assert.equal(await bootstrap(args,{execute}),2); assert.equal(await readFile(join(reports,'nightly.lock'),'utf8'),'other run');
+  } finally { await rm(root,{recursive:true,force:true}); }
+});
+
+test('running MuMu is reusable only without active app, instrumentation, host test or preexisting nightly package', () => {
+  const installed='package:com.memoweft.weftmate.mobile\npackage:com.memoweft.weftmate.mobile.debug.test';
+  assert.equal(androidBusyReason(installed,'NAME\nsystem_server','ACTIVITY MANAGER INSTRUMENTATION'), '');
+  assert.match(androidBusyReason(installed,'com.memoweft.weftmate.mobile.s3aqa',''),/运行中的/);
+  assert.match(androidBusyReason(installed,'','Active instrumentation:\n  * InstrumentationRecord{}'),/仪器测试/);
+  assert.match(androidBusyReason(installed,'','',['node review-capture-mobile.mjs --android']),/Windows/);
+  assert.match(androidBusyReason('package:com.memoweft.weftmate.mobile.nightly','',''),/仍已安装/);
+});
+
+test('installed diagnostic checks preserve release verification failure and never install or reuse an incomplete build', async () => {
+  const root=await mkdtemp(join(tmpdir(),'weftmate-nightly-build-'));
+  try {
+    const executable=join(root,'WeftMate.exe'), fail=async()=>{throw Error('Build step failed: scripts/verify-windows-package.mjs');};
+    await assert.rejects(buildForSmoke(fail,{},executable),/verify-windows-package/);
+    await writeFile(executable,'synthetic completed test build');
+    assert.deepEqual(await buildForSmoke(fail,{},executable),{buildPassed:false,buildError:'Build step failed: scripts/verify-windows-package.mjs',diagnosticUnpacked:true});
+    await assert.rejects(buildForSmoke(fail,{},executable,false),/verify-windows-package/);
+    await assert.rejects(buildForSmoke(async()=>{throw Error('compile failed')},{},executable),/compile failed/);
+  } finally { await rm(root,{recursive:true,force:true}); }
+});
+
+test('native failure metadata survives evidence collection and is counted separately from unattempted cells', async () => {
+  const root=await mkdtemp(join(tmpdir(),'weftmate-nightly-native-failure-'));
+  try {
+    await mkdir(join(root,'gallery'));
+    await writeFile(join(root,'gallery/review-android-login-light.json'),JSON.stringify({platform:'android',scene:'login',theme:'light',status:'failed',reason:'synthetic native navigation failure',commit,generatedAt:new Date().toISOString(),synthetic:true}));
+    const result=await report(root,{commit,startedAt:new Date().toISOString(),phases:[{name:'android',status:'failed',reason:'native batch failed'}],cleanup:{}});
+    assert.equal(result.summary.failedCells,1);
+    assert.ok(result.alerts.some(a=>a.cell==='android/login/light' && a.kind==='failed' && a.message==='synthetic native navigation failure'));
+  } finally { await rm(root,{recursive:true,force:true}); }
+});
+
+test('Apple report keeps completed Mac captures passed and distinguishes a failed iPhone batch from unstarted Watch', async () => {
+  const root=await mkdtemp(join(tmpdir(),'weftmate-nightly-apple-status-'));
+  try {
+    const {catalog}=await import('../scripts/review-gallery/common.mjs');
+    await mkdir(join(root,'gallery'));
+    for(const scene of catalog.scenes.filter(s=>!s.unavailable?.includes('mac'))) for(const theme of catalog.themes) {
+      const file=`review-mac-${scene.id}-${theme}.png`;
+      await writeFile(join(root,'gallery',file),png([100,120,140,255]));
+      await writeFile(join(root,'gallery',file.replace('.png','.json')),JSON.stringify({platform:'mac',scene:scene.id,theme,file,commit,generatedAt:new Date().toISOString(),synthetic:true}));
+    }
+    const result=await report(root,{commit,startedAt:new Date().toISOString(),phases:[{name:'apple',status:'failed',reason:'iPhone assertion failed',platformResults:{mac:{status:'passed'},iphone:{status:'failed',reason:'iPhone assertion failed'},watch:{status:'not-run',reason:'batch stopped before Watch'}}}],cleanup:{}});
+    assert.equal(result.phases.find(p=>p.name==='mac').status,'passed');
+    assert.equal(result.phases.find(p=>p.name==='mac').reason,'');
+    assert.equal(result.phases.find(p=>p.name==='iphone').status,'failed');
+    assert.equal(result.phases.find(p=>p.name==='watch').status,'not-run');
+    assert.equal(result.counts.mac.captured,result.counts.mac.expected);
+    assert.equal(result.summary.failedCells,0,'an unattempted cell must not be fabricated as a failed capture');
+  } finally { await rm(root,{recursive:true,force:true}); }
 });
 test('fresh gallery never fills occupied native cells with repository history', async () => {
   const root = await mkdtemp(join(tmpdir(), 'nightly-gallery-'));
@@ -105,6 +216,7 @@ test('fresh gallery never fills occupied native cells with repository history', 
     await writeFile(outcomes, JSON.stringify([{ platform: 'mac', scene: 'login', theme: 'light', status: 'failed', reason: '被占用，未拍', synthetic: true, commit, generatedAt: new Date(now).toISOString() }]));
     execFileSync(process.execPath, ['scripts/review-gallery/build.mjs', '--out', root, '--fresh-only', '--outcomes', outcomes], { stdio: 'pipe' });
     const manifest = JSON.parse(await readFile(join(root, 'manifest.json'), 'utf8'));
+    assert.equal(manifest.commit,commit,'fresh gallery commit must come from its actual batch evidence');
     assert.ok(manifest.records.every(row => !row.file));
     assert.equal(manifest.failures.length, 1); assert.equal(manifest.failures[0].reason, '被占用，未拍');
     assert.ok((await readFile(join(root, 'index.html'), 'utf8')).includes('被占用，未拍'));
