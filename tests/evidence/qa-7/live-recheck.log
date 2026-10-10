@@ -1,0 +1,24 @@
+PASS main-first
+PASS main-round-1
+PASS main-round-2
+PASS main-round-3
+PASS main-round-4
+PASS main-round-5
+PASS side-recall-corrected
+PASS natural-stream
+PASS next-suggestions
+FAIL gray-completion locator.waitFor: Timeout 18000ms exceeded.
+Call log:
+[2m  - waiting for locator('.composer-completion:not([hidden])') to be visible[22m
+
+PASS folder-picker
+PASS project-read-write
+FAIL real-folder-drag locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('.folder-confirm') to be visible[22m
+
+FAIL phone-web locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: 'WeftMate 主对话', exact: true })[22m
+
+PASS android
