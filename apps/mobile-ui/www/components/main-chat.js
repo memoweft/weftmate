@@ -5,6 +5,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
     let rows = [], offsets = [], frame = null, anchor = null, observer, sidebar, tools, searchPanel, origin, top, bottom, generation = 0, fixedNavigation;
     const box = () => ui.byId('chat-scroll'), list = () => ui.byId('transcript');
     const listStart = () => list().getBoundingClientRect().top - box().getBoundingClientRect().top + box().scrollTop;
+    const fixedTitle = () => document.body.classList.contains('goals-open') ? '目标' : document.body.classList.contains('activity-open') ? '动态' : 'WeftMate';
     const main = () => core.inMainChat?.() === true;
     const button = (text, name, action, className = 'button quiet small') => {
         const node = ui.element('button', className, text); node.type = 'button'; node.setAttribute('aria-label', name || text);
@@ -130,7 +131,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         tools.querySelectorAll('button')[0].disabled = !core.supportsChat('chatSearch');
         tools.querySelectorAll('button')[1].disabled = !core.supportsChat('chatTimeline');
         list().classList.add('is-main-chat');
-        ui.byId('assistant-title').textContent = 'WeftMate'; ui.byId('chat-intro').querySelector('h1').textContent = '今天想聊些什么？'; origin.hidden = true;
+        ui.byId('assistant-title').textContent = fixedTitle(); ui.byId('chat-intro').querySelector('h1').textContent = '今天想聊些什么？'; origin.hidden = true;
         const saved = ui.conversationScroll?.pinned ? null : rememberAnchor();
         rows = [];
         for (const group of core.mainChatDays()) {
@@ -234,7 +235,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         mainChatAnchor: () => {const saved=rememberAnchor();const index=rows.findIndex(row=>row.key===saved?.key);const row=rows.slice(Math.max(0,index)).find(row=>row.event?.eventId||row.events?.length);return row?.event?.eventId||row?.events?.[0]?.eventId||null;},
         restoreMainChatDraft: text => { ui.byId('message-text').value = text; ui.updateAvailability(); },
         renderSessions: () => { original.renderSessions(); if (sidebar) { sidebar.hidden = !core.state.mainChat; const label = ui.byId('new-session'); label.childNodes.forEach(node => { if (node.nodeType === Node.TEXT_NODE) node.textContent = core.state.mainChat ? '新旁聊' : '新对话'; }); } renderMainChat(); },
-        paintSelectedSession: id => { original.paintSelectedSession(id); if (main()) ui.byId('assistant-title').textContent = 'WeftMate'; else ui.byId('chat-intro').querySelector('h1').textContent = '今天想做什么？'; },
+        paintSelectedSession: id => { original.paintSelectedSession(id); if (main()) ui.byId('assistant-title').textContent = fixedTitle(); else ui.byId('chat-intro').querySelector('h1').textContent = '今天想做什么？'; },
         renderOlderControl: () => { if (!main()) return original.renderOlderControl(); const button = ui.byId('load-older'); button.hidden = !core.state.chatWindow.hasOlder; button.disabled = core.state.olderLoading; },
         renderOptimisticMessages: () => main() ? renderMainChat() : original.renderOptimisticMessages(),
         renderConversationTasks: () => { if (!main()) return original.renderConversationTasks(); ui.renderTaskQueue?.(); ui.renderConversationApprovals(); ui.renderConversationQuestions(); },

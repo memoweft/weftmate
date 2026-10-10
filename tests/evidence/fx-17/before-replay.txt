@@ -1,0 +1,104 @@
+FF..                                                                     [100%]
+================================== FAILURES ===================================
+_______ test_qa4_one_correction_replaces_preference_and_decision[first] _______
+
+tmp_path = WindowsPath('C:/Users/yun/AppData/Local/Temp/pytest-of-yun/pytest-5986/test_qa4_one_correction_replac0')
+variant = 'first'
+
+    @pytest.mark.parametrize('variant', ['first', 'rewrite', 'unrelated_topic', 'duplicate_target'])
+    def test_qa4_one_correction_replaces_preference_and_decision(tmp_path: Path, variant: str) -> None:
+        db_path = tmp_path / 'memory.sqlite3'
+        clock = MutableClock()
+        originals = ['我喝第903种花茶时偏好加一小撮肉桂粉。',
+                     '好，以后我喝第903种花茶时，就提醒我加一小撮肉桂粉。']
+        ids: list[str] = []
+        for i, raw in enumerate(originals):
+            eid = f'evidence-{i+1}'
+            item = dict(action='form', target='owner_self', statement_kind='preference',
+                        formed_by='stated', proposition=raw,
+                        supports=[dict(evidence_id=eid, sentence_id='t0')],
+                        entity=dict(canonical_name='喝第903种花茶', kind='topic', aliases=['第903种花茶']))
+            _run(db_path, clock, [_model(dict(schema_version=8, result='cognitions', cognitions=[item]))],
+                 (eid,), lambda p: _set_evidence(p, eid, raw), job_id=f'old-{i}')
+            assert _job(db_path, job_id=f'old-{i}')['state'] == 'applied'
+            with sqlite3.connect(db_path) as db:
+                ids.append(db.execute('SELECT id FROM cognition WHERE id NOT IN (' + ','.join('?' for _ in ids) + ')', ids).fetchone()[0])
+        replay = json.loads((Path(__file__).parent / 'fixtures/fx17-correction-replay.json').read_text(encoding='utf-8'))['first' if variant == 'unrelated_topic' else 'rewrite' if variant == 'duplicate_target' else variant]
+        for item, prior in zip(replay['cognitions'], ids):
+            item['corrects_cognition_id'] = prior
+            item['supports'][0]['evidence_id'] = 'evidence-3'
+        if variant == 'unrelated_topic':
+            replay['cognitions'][0]['entity']['canonical_name'] = '从未说过的咖啡主题'
+        if variant == 'duplicate_target':
+            replay['cognitions'][1]['corrects_cognition_id'] = ids[0]
+        raw = replay['cognitions'][0]['proposition']
+        _run(db_path, clock, [_model(replay), _model(replay)], ('evidence-3',),
+             lambda p: _set_evidence(p, 'evidence-3', raw), job_id='correction')
+        outcome = _job(db_path, job_id='correction')
+        if variant in ('unrelated_topic', 'duplicate_target'):
+            assert outcome['state'] == 'no_change'
+            assert json.loads(str(outcome['world_result_json']))['reason'] == ('topic_name_not_in_span' if variant == 'unrelated_topic' else 'duplicate_cognition_in_batch')
+            with sqlite3.connect(db_path) as db:
+                assert db.execute('SELECT count(*) FROM cognition WHERE invalid_at IS NOT NULL').fetchone()[0] == 0
+            return
+>       assert outcome['state'] == 'applied', outcome['world_result_json']
+E       AssertionError: {"reason":"topic_name_not_in_span","schema_version":1,"state":"no_change"}
+E       assert 'no_change' == 'applied'
+E         
+E         - applied
+E         + no_change
+
+tests\test_fx17_correction.py:48: AssertionError
+______ test_qa4_one_correction_replaces_preference_and_decision[rewrite] ______
+
+tmp_path = WindowsPath('C:/Users/yun/AppData/Local/Temp/pytest-of-yun/pytest-5986/test_qa4_one_correction_replac1')
+variant = 'rewrite'
+
+    @pytest.mark.parametrize('variant', ['first', 'rewrite', 'unrelated_topic', 'duplicate_target'])
+    def test_qa4_one_correction_replaces_preference_and_decision(tmp_path: Path, variant: str) -> None:
+        db_path = tmp_path / 'memory.sqlite3'
+        clock = MutableClock()
+        originals = ['我喝第903种花茶时偏好加一小撮肉桂粉。',
+                     '好，以后我喝第903种花茶时，就提醒我加一小撮肉桂粉。']
+        ids: list[str] = []
+        for i, raw in enumerate(originals):
+            eid = f'evidence-{i+1}'
+            item = dict(action='form', target='owner_self', statement_kind='preference',
+                        formed_by='stated', proposition=raw,
+                        supports=[dict(evidence_id=eid, sentence_id='t0')],
+                        entity=dict(canonical_name='喝第903种花茶', kind='topic', aliases=['第903种花茶']))
+            _run(db_path, clock, [_model(dict(schema_version=8, result='cognitions', cognitions=[item]))],
+                 (eid,), lambda p: _set_evidence(p, eid, raw), job_id=f'old-{i}')
+            assert _job(db_path, job_id=f'old-{i}')['state'] == 'applied'
+            with sqlite3.connect(db_path) as db:
+                ids.append(db.execute('SELECT id FROM cognition WHERE id NOT IN (' + ','.join('?' for _ in ids) + ')', ids).fetchone()[0])
+        replay = json.loads((Path(__file__).parent / 'fixtures/fx17-correction-replay.json').read_text(encoding='utf-8'))['first' if variant == 'unrelated_topic' else 'rewrite' if variant == 'duplicate_target' else variant]
+        for item, prior in zip(replay['cognitions'], ids):
+            item['corrects_cognition_id'] = prior
+            item['supports'][0]['evidence_id'] = 'evidence-3'
+        if variant == 'unrelated_topic':
+            replay['cognitions'][0]['entity']['canonical_name'] = '从未说过的咖啡主题'
+        if variant == 'duplicate_target':
+            replay['cognitions'][1]['corrects_cognition_id'] = ids[0]
+        raw = replay['cognitions'][0]['proposition']
+        _run(db_path, clock, [_model(replay), _model(replay)], ('evidence-3',),
+             lambda p: _set_evidence(p, 'evidence-3', raw), job_id='correction')
+        outcome = _job(db_path, job_id='correction')
+        if variant in ('unrelated_topic', 'duplicate_target'):
+            assert outcome['state'] == 'no_change'
+            assert json.loads(str(outcome['world_result_json']))['reason'] == ('topic_name_not_in_span' if variant == 'unrelated_topic' else 'duplicate_cognition_in_batch')
+            with sqlite3.connect(db_path) as db:
+                assert db.execute('SELECT count(*) FROM cognition WHERE invalid_at IS NOT NULL').fetchone()[0] == 0
+            return
+>       assert outcome['state'] == 'applied', outcome['world_result_json']
+E       AssertionError: {"reason":"duplicate_cognition_in_batch","schema_version":1,"state":"no_change"}
+E       assert 'no_change' == 'applied'
+E         
+E         - applied
+E         + no_change
+
+tests\test_fx17_correction.py:48: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_fx17_correction.py::test_qa4_one_correction_replaces_preference_and_decision[first]
+FAILED tests/test_fx17_correction.py::test_qa4_one_correction_replaces_preference_and_decision[rewrite]
+2 failed, 2 passed, 2 deselected in 1.71s

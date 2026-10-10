@@ -101,3 +101,5 @@ summary:focus-visible { outline:var(--wm-space-2) solid var(--accent); outline-o
 .message-action:active { background:var(--surface-soft,var(--soft)); }
 
 .memory-health::before { display:none!important; }
+
+.wm-menu-item.danger { color:var(--danger); }
