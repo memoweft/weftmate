@@ -14,7 +14,7 @@ import { localUiSession } from '../../../helpers/local-ui-session.mjs';
 export const pause=ms=>new Promise(r=>setTimeout(r,ms));
 export async function until(fn,ms=90000){const end=Date.now()+ms;while(Date.now()<end){const v=await fn();if(v)return v;await pause(250);}throw Error('QA5_WAIT_TIMEOUT');}
 export async function harness(name,{mimo=false,installed=null,sourceRepository=null}={}){
- const root=mkdtempSync(join(tmpdir(),'weftmate-fx19-'+name+'-')),profile=join(root,'profile'),out=resolve('tests/evidence/fx-19',name);mkdirSync(profile);mkdirSync(out,{recursive:true});
+ const root=mkdtempSync(join(tmpdir(),'weftmate-fx19-'+name+'-')),profile=join(root,'profile'),out=resolve('tests/evidence/fx-19',process.env.FX19_REGRESSION_OUT||name);mkdirSync(profile);mkdirSync(out,{recursive:true});
  const h={root,profile,out,sourceRepository,requests:[],formationActive:0,chatActive:0,formationDelay:0,chatDelay:0,app:null,page:null};
  writeFileSync(join(out,'run-root.txt'),root);writeFileSync(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
  const key=mimo?execFileSync('powershell.exe',['-NoProfile','-Command',"[Console]::Out.Write([Environment]::GetEnvironmentVariable('MIMO_API_KEY','Machine'))"],{encoding:'utf8',windowsHide:true}).trim():'qa5-synthetic';
@@ -39,7 +39,7 @@ export async function harness(name,{mimo=false,installed=null,sourceRepository=n
  const prepareService=sourceRepository?(await import(pathToFileURL(join(sourceRepository,'src/personal-access/index.mjs')).href)).createPersonalAccessService:createPersonalAccessService;
  const prep=await prepareService({root:join(profile,'personal-access'),port:0,backend:Object.fromEntries(['getStatus','listModels','preflight','createSession','sendMessage','cancelSession','readEvents','describeSession'].map(k=>[k,async()=>({})]))});const prepared=await prep.start(),grant=await prep.issueSetupGrant();
  assert.equal((await fetch(prepared.origin+'/personal/v1/auth/setup',{method:'POST',headers:{origin:prepared.origin,'content-type':'application/json'},body:JSON.stringify({grant:grant.grant,...h.credentials})})).status,201);await prep.close();
- const config=join(root,'memory.json');writeFileSync(config,JSON.stringify({python:'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe',pythonPath:'C:/Temp/weftmate-qa5-core/py/src',baseUrl:base,model:'@current',authRef:'qa5-unselected'}));
+ const config=join(root,'memory.json');writeFileSync(config,JSON.stringify({python:'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe',pythonPath:'D:/AIProjects/MemoWeft/Worktrees/fx-18-formation-recovery/py/src',baseUrl:base,model:'@current',authRef:'qa5-unselected'}));
  const desktopConfig=join(root,'desktop-config.json');writeFileSync(desktopConfig,JSON.stringify({schemaVersion:1,dataDirectory:profile,accessPort:0,personalMemoryConfig:config,updates:{channel:'preview'}}));
  const env={...process.env};for(const k of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_|MIMO_API_KEY|MODEL_SWITCH_UNIFIED_KEY|ELECTRON_RUN_AS_NODE)/.test(k))delete env[k];
  env.WEFTMATE_BASELINE_TRACE=join(root,'trace.jsonl');

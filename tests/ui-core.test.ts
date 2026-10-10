@@ -59,6 +59,15 @@ test('FX-19 a timed out/disconnected creation releases the input lock and retrie
     assert.equal(f.core.sideCreateIntent.requestId,requestId);accepted=true;await f.core.openSideChat();assert.equal(posts,1);assert.equal(f.core.composerState('草稿').sendDisabled,false);
   }
 });
+test('FX-19 definite HTTP or terminal creation rejection clears only its own send lock',async()=>{
+  for(const failure of ['http','rejected','failed']){
+    const f=sideFixture();f.core.accessApi=async(path,options)=>{if(path.startsWith('/commands/by-request/'))throw {code:'NOT_FOUND'};
+      if(failure==='http')throw {code:'MODEL_UNAVAILABLE',status:409};return {command:{requestId:options.body.requestId,state:failure,errorCode:'MODEL_UNAVAILABLE'}}};
+    await assert.rejects(f.core.openSideChat(),e=>e.code==='MODEL_UNAVAILABLE');
+    assert.equal(f.core.state.sideCreating,null);assert.equal(f.core.sideCreateIntent,null);assert.equal(f.core.state.unresolvedSubmission,false);
+    assert.equal(f.core.composerState('保留草稿').messageDisabled,false);assert.equal(f.core.composerState('保留草稿').sendDisabled,false);assert.equal(f.core.state.selectedSessionId,'session-test');
+  }
+});
 
 test('D35 progress uses real kinds/objects and prioritizes failure and stopped states', () => {
   const { api } = fixture();
