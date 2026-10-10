@@ -11,18 +11,31 @@ struct TemporaryChatMenu: View {
         Toggle(isOn: Binding(get: { conversation.temporaryState.recallEnabled }, set: { value in
             Task { await app.mainChat.temporarySetting(conversation, fields: ["recallEnabled": .bool(value)]) }
         })) { Label("使用已有记忆", image: "wm-book") }.accessibilityIdentifier("temporaryChat.recall")
+        #if os(iOS)
+        Button {
+            let epoch = app.accountEpoch
+            app.sessionMenuCandidate = nil
+            Task {
+                try? await Task.sleep(for: .milliseconds(350))
+                guard app.accountEpoch == epoch else { return }
+                app.temporaryExpiryCandidate = conversation
+            }
+        } label: {
+            Label("自动删除 · " + (conversation.temporaryState.autoDeleteDays.map { "\($0) 天" } ?? "不自动删除"), image: "wm-clock")
+        }
+        .accessibilityIdentifier("temporaryChat.expiryMenu")
+        #else
         Menu {
-            Picker("自动删除", selection: Binding<Int>(get: { conversation.temporaryState.autoDeleteDays ?? 0 }, set: { value in
+Picker("自动删除", selection: Binding<Int>(get: { conversation.temporaryState.autoDeleteDays ?? 0 }, set: { value in
                 Task { await app.mainChat.temporarySetting(conversation, fields: ["autoDeleteDays": value == 0 ? .null : .number(Double(value))]) }
             })) {
                 Text("1 天").tag(1); Text("7 天").tag(7); Text("30 天").tag(30); Text("不自动删除").tag(0)
             }.pickerStyle(.inline).accessibilityIdentifier("temporaryChat.expiry")
         }
         label: { Label("自动删除 · " + (conversation.temporaryState.autoDeleteDays.map { "\($0) 天" } ?? "不自动删除"), image: "wm-clock") }
-        #if os(macOS)
         .menuStyle(.borderlessButton).foregroundStyle(Weave.ink).fixedSize()
-        #endif
         .accessibilityIdentifier("temporaryChat.expiryMenu")
+        #endif
         Divider()
     }
 }

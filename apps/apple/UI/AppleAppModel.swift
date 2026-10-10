@@ -1011,6 +1011,9 @@ final class AppleAppModel: ObservableObject {
 
     @Published var deletionInSettings = false
     @Published var sessionMenuCandidate: ConversationSummary?
+    #if os(iOS)
+    @Published var temporaryExpiryCandidate: ConversationSummary?
+    #endif
     @Published var deletionCandidate: ConversationSummary?
     @Published var forgetConversationMemories = false
     @Published var lifecycleBusy = false
@@ -2136,6 +2139,9 @@ final class AppleAppModel: ObservableObject {
         subtaskStepTarget = nil; thinking = .init(); thinkingConversation = nil; thinkingError = nil; archiveUndo = nil; hoveredSession = nil; expandedProjectRows = []; projectThinking = false; projectCreatedSessionID = nil
         projects = []; projectCanManage = false; projectsError = nil; projectEditor = nil; projectConversation = nil; projectModels = []; projectBusy = false; projectError = nil; executionAccount = nil; sessionProjectNotices = [:]; collapsedProjects = []
         sessionGroups = []; collapsedSessionGroups = []; openedSessionID = nil; renamingSessionID = nil; groupCandidate = nil; sessionMenuCandidate = nil; deletionInSettings = false; conversationForget = .init(); conversationPreviewToken = UUID(); conversationPreviewLoading = false; deletionCandidate = nil; forgetConversationMemories = false; lifecycleBusy = false; lifecycleError = nil
+        #if os(iOS)
+        temporaryExpiryCandidate = nil
+        #endif
         queueNotice = nil; queueBusy = []; queueCancelRequests = [:]; canceledQueuedTasks = []
         attachmentDrafts.values.flatMap { $0 }.forEach { $0.removeTemporaryFiles() }
         attachmentDrafts = [:]; attachmentAttempts = [:]; attachmentMessageIDs = [:]; attachmentSessionIDs = [:]

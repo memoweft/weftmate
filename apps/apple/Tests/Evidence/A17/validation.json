@@ -1,12 +1,12 @@
 {
-  "complete": false,
+  "complete": true,
   "syntheticOnly": true,
   "macOwnAX": true,
   "macXCUITest": false,
   "systemPermissionsChanged": false,
-  "swiftTests": 152,
+  "swiftTests": 406,
   "statePrograms": 4,
-  "nodeTests": 13,
+  "nodeTests": 17,
   "requiredReports": [
     "main-final/mac-light/validation.json",
     "main-final/mac-dark/validation.json",
@@ -45,7 +45,13 @@
     "watch/xctest-summary.json",
     "large-text/no-model-light.json",
     "large-text/no-model-dark.json",
-    "release-scan.json"
+    "release-scan.json",
+    "swift-before-merge.json",
+    "swift-after-merge.json",
+    "node-after-merge.json",
+    "consistency/mac-light/validation.json",
+    "consistency/mac-dark/validation.json",
+    "menu-policy-light/iphone-light/validation.json"
   ],
   "requiredScreenshots": [
     "main-final/mac-light/temporary-menu.png",

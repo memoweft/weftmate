@@ -347,16 +347,11 @@ struct ConversationView: View {
                 }.frame(width: AppleTokens.Space.p32, height: AppleTokens.Space.p28)
                 #else
                 Menu {
+                    Section {
+                        Button { showingUsage = true } label: { Label("本对话用量", image: "wm-chart") }
+                            .accessibilityIdentifier("conversationUsage")
+                    }
                     SessionActions(app: model, conversation: conversation)
-                    Divider()
-                    Button {
-                        #if os(macOS)
-                        model.settingsRoute = .usage(sessionID: conversation.sessionId); openWindow(id: "settings")
-                        #else
-                        showingUsage = true
-                        #endif
-                    } label: { Label("本对话用量", image: "wm-chart") }
-                        .accessibilityIdentifier("conversationUsage")
                 } label: { WeftIcon("more") }
                     .accessibilityLabel("对话菜单").accessibilityIdentifier("conversationMenu")
                 #endif
