@@ -1,3 +1,4 @@
+import { stagePersonalPlugins } from './support/personal-plugins.ts'
 import assert from 'node:assert/strict'
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -12,20 +13,8 @@ const vendorTools = pathToFileURL(join(process.cwd(), 'vendor', 'dsh-runtime', '
   '@deepseek-ai', 'dsh-tools', 'lib', 'index.js')).href
 async function loadPlugin() {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-project-proof-'))
-  const source = readFileSync(join(process.cwd(), 'src', 'plugins', 'weftmate-personal-desktop.mjs'), 'utf8')
-    .replace("from '@deepseek-ai/dsh-tools'", `from '${vendorTools}'`)
-    .replace("from './personal-reasoning.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-reasoning.mjs")).href}'`)
-    .replace("from '@deepseek-ai/dsh-agent'", `from '${pathToFileURL(join(process.cwd(), "vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-agent/lib/index.js")).href}'`)
-    .replace("from '@deepseek-ai/dsh-plan-mode'", `from '${pathToFileURL(join(process.cwd(), 'vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-plan-mode/lib/index.js')).href}'`)
-    .replace("from './personal-approval-policy.mjs'", `from '${pathToFileURL(join(process.cwd(), 'src/plugins/personal-approval-policy.mjs')).href}'`)
-    .replace("from '@deepseek-ai/dsh-sandbox-policy'", `from '${pathToFileURL(join(process.cwd(), "vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-sandbox-policy/lib/index.js")).href}'`)
-    .replace("from './personal-web-fetch.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-web-fetch.mjs")).href}'`)
-    .replace("from './personal-native-files.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-native-files.mjs")).href}'`)
-    .replace("from './personal-project-context.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-project-context.mjs")).href}'`)
-    .replace("from '../runtime/dsh-adapter/source-range.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/runtime/dsh-adapter/source-range.mjs")).href}'`)
-  const file = join(root, 'weftmate-personal-desktop.mjs')
-  writeFileSync(file, source)
-  try { return await import(pathToFileURL(file).href) }
+  const file = stagePersonalPlugins(root).plugin
+  try { return await import(file) }
   finally { rmSync(root, { recursive: true, force: true }) }
 }
 const proof = { sessionId: 'session-a', turn: 1, readCallId: 'read-a',

@@ -91,11 +91,30 @@ $adb = 'D:\Software\MuMuPlayer\nx_main\adb.exe'
 
 三平台使用 Node 24 和锁文件安装；生产发布预检、完整依赖高危审计、依赖兼容冒烟、类型检查与必过单测都阻塞合入。普通 `npm test` 仍保留完整单测与 vendor 契约门。
 
-- `.github/scripts/ci-unit-tests.mjs required` 运行必过用例；`known` 单独观察 12 项主干失败（PR #20 的 10 项，以及 CI-1 在未改动 main 上复现的停止回执重试、图片消息原请求重试两项）。该观察步骤非阻塞，同文件里的其他用例仍必须通过。
-- 精确文件/用例、原因与追踪项见 [CI 例外清单](../.github/ci-test-exceptions.json)，每次运行也写入 Actions 摘要；不自动把新失败加入清单。
-- Linux/macOS 测试目录使用规范化的 `RUNNER_TEMP`；Windows 在系统盘 C: 创建新的完整路径，避开 `RUNNER~1` 短路径并保留 C: 夹具与 D: 仓库的跨盘断言。macOS runner 为合成 HTTP 夹具配置 `127.0.0.2` 回环别名；Linux 使用 Xvfb，并在 Electron 延迟下载完成后配置 `chrome-sandbox` 的 root 属主与 4755 权限。
-- `vendor:dsh`、`vendor:verify`、`test:contract` 明确显示为跳过；104 个依赖 vendor 的单测用例及 3 个文件也不验证，另有 1 个文件顶层读取仓库外 `Design`。固定 DSH 来源可以获取，但无所需 `lib/dist`；vendor 脚本只消费外部已编译 checkout，不负责构建。恢复条件：提供与 pin 一致的可重复编译产物，再恢复 workflow 的三个步骤并移除相应例外；发布前仍须在完整环境运行这些门。
-- Windows 继续验证进程树清理及 Windows 绝对路径夹具；Linux/macOS 明确跳过这两项。外部平台 optional 包夹具只在非 Linux 验证。POSIX 进程树清理与可移植夹具路径列为后续项。
+三种模式均用 `node .github/scripts/ci-unit-tests.mjs <模式>`，失败保留原断言并返回非零退出码：
+
+| 模式 | 在哪里运行 | 保证 |
+|---|---|---|
+| `required` | 本机交付前、Linux / macOS / Windows 的普通 CI（持续集成） | 无固定 DSH 的独立单测全部必过；有 vendor（固定运行时依赖）时提醒另跑 `vendor`，不把独立门称为完整集成验证。 |
+| `vendor` | 有预构建固定 DSH 的本机、每晚 Windows 回归、独立 Linux `Pinned DSH vendor unit tests` job（任务） | 运行 [.github/vendor-test-suite.json](../.github/vendor-test-suite.json) 中原110条用例所在26个完整文件，并恢复 `weftmod-service.test.ts` 整文件；所有兄弟用例也运行，不使用名称跳过。缺少 vendor 或提交与 pin（固定版本）不符直接报错。 |
+| `known` | 普通 CI 中非阻塞观察，也可本机定位 | 只运行例外清单中的已知产品失败；当前清单为空，报告零项，不会误触发全仓库自动发现。 |
+
+固定 DSH 云端构建复用 Relay（中继）任务的公开固定提交、pnpm（依赖管理器）锁文件和按 Linux / Node 24 / 提交缓存的编译产物。缓存命中仍执行 `pnpm install --frozen-lockfile` 重新连接工作区，然后 `npm run vendor:dsh`、`npm run vendor:verify`，以 Xvfb（虚拟显示服务）运行真实 Electron（桌面程序框架）集成用例。20分钟总时限；测试失败阻塞，不设非阻塞兜底。首次冷构建耗时与本包 CI 结果见 TEST-1 交付报告。
+
+```powershell
+# 本机已有固定 vendor
+node .github/scripts/ci-unit-tests.mjs required
+node .github/scripts/ci-unit-tests.mjs vendor --report vendor-test-results.json
+node .github/scripts/ci-unit-tests.mjs known
+# 首次装配：指定已按 tests/contract/dsh-pin.json 编译的 checkout（源码工作区）
+$env:WEFTMATE_DSH_CHECKOUT = '<已编译的固定 DSH 工作区>'
+npm run vendor:dsh
+npm run vendor:verify
+```
+
+例外理由与追踪项见 [CI 例外清单](../.github/ci-test-exceptions.json)。`vendorTests` 已清空，原110项转为独立必过测试组；还保留一个读取仓库外 `Design/design-language/skeleton-v2.css` 的文件。完整 `test:contract` 仍为发布门，本包的 vendor 模式没有声称覆盖全部契约测试。
+
+Linux/macOS 测试目录使用规范化的 `RUNNER_TEMP`；Windows 在系统盘 C: 创建隔离目录，运行后移除。普通 Linux / macOS 门仍保留 POSIX（类 Unix 系统）子进程树清理用例的真实产品缺口例外；外部平台 optional package（可选依赖包）缺失夹具在 Linux 仍不适用，macOS / Windows 验证。vendor 测试组不继承这些跳过项。
 
 ## 本机数据
 

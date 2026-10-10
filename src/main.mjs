@@ -3298,8 +3298,9 @@ async function bootstrap() {
         hydrateBindings: async () => {
           await hydrateLegacySessionBindings();
         },
-        log: (message) => {
-          writeHostState();
+        log: async (message) => {
+          // The ready/degraded announcement is also the diagnostic snapshot boundary.
+          await writeHostState();
           if (sessionReferenceScan.state === 'failed') {
             console.warn(`[weftmate] ⚠ personal-host degraded origin=${runtimeOrigin} referenceScan=failed modelRouteChangesBlocked=true`);
           } else console.log(message);

@@ -1,3 +1,4 @@
+import { stagePersonalPlugins } from './support/personal-plugins.ts'
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
@@ -194,20 +195,8 @@ test('native job stop kills and waits only jobs claimed by the requested receipt
 async function withDesktopPlugin(run: (plugin: any) => Promise<void>) {
   const root = mkdtempSync(join(tmpdir(), 'general-native-job-plugin-'))
   try {
-    const vendor = pathToFileURL(join(process.cwd(), 'vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-tools/lib/index.js')).href
-    const source = readFileSync(join(process.cwd(), 'src/plugins/weftmate-personal-desktop.mjs'), 'utf8')
-      .replace("from '@deepseek-ai/dsh-tools'", `from '${vendor}'`)
-    .replace("from './personal-reasoning.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-reasoning.mjs")).href}'`)
-    .replace("from '@deepseek-ai/dsh-agent'", `from '${pathToFileURL(join(process.cwd(), "vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-agent/lib/index.js")).href}'`)
-    .replace("from '@deepseek-ai/dsh-plan-mode'", `from '${pathToFileURL(join(process.cwd(), 'vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-plan-mode/lib/index.js')).href}'`)
-    .replace("from './personal-approval-policy.mjs'", `from '${pathToFileURL(join(process.cwd(), 'src/plugins/personal-approval-policy.mjs')).href}'`)
-    .replace("from '@deepseek-ai/dsh-sandbox-policy'", `from '${pathToFileURL(join(process.cwd(), "vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-sandbox-policy/lib/index.js")).href}'`)
-    .replace("from './personal-web-fetch.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-web-fetch.mjs")).href}'`)
-    .replace("from './personal-native-files.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-native-files.mjs")).href}'`)
-    .replace("from './personal-project-context.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-project-context.mjs")).href}'`)
-    .replace("from '../runtime/dsh-adapter/source-range.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/runtime/dsh-adapter/source-range.mjs")).href}'`)
-    const staged = join(root, 'desktop.mjs'); writeFileSync(staged, source)
-    await run(await import(pathToFileURL(staged).href))
+    const staged = stagePersonalPlugins(root).plugin
+    await run(await import(staged))
   } finally { rmSync(root, { recursive: true, force: true }) }
 }
 
@@ -401,20 +390,8 @@ test('a repeated stop cannot hide an unconfirmed native job behind its earlier t
 test('tool lifecycle derives a nested call from the real root event and records cancellation after the body settles', async () => {
   const root = mkdtempSync(join(tmpdir(), 'general-plugin-'))
   try {
-    const vendor = pathToFileURL(join(process.cwd(), 'vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-tools/lib/index.js')).href
-    const source = readFileSync(join(process.cwd(), 'src/plugins/weftmate-personal-desktop.mjs'), 'utf8')
-      .replace("from '@deepseek-ai/dsh-tools'", `from '${vendor}'`)
-    .replace("from './personal-reasoning.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-reasoning.mjs")).href}'`)
-    .replace("from '@deepseek-ai/dsh-agent'", `from '${pathToFileURL(join(process.cwd(), "vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-agent/lib/index.js")).href}'`)
-    .replace("from '@deepseek-ai/dsh-plan-mode'", `from '${pathToFileURL(join(process.cwd(), 'vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-plan-mode/lib/index.js')).href}'`)
-    .replace("from './personal-approval-policy.mjs'", `from '${pathToFileURL(join(process.cwd(), 'src/plugins/personal-approval-policy.mjs')).href}'`)
-    .replace("from '@deepseek-ai/dsh-sandbox-policy'", `from '${pathToFileURL(join(process.cwd(), "vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-sandbox-policy/lib/index.js")).href}'`)
-    .replace("from './personal-web-fetch.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-web-fetch.mjs")).href}'`)
-    .replace("from './personal-native-files.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-native-files.mjs")).href}'`)
-    .replace("from './personal-project-context.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-project-context.mjs")).href}'`)
-    .replace("from '../runtime/dsh-adapter/source-range.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/runtime/dsh-adapter/source-range.mjs")).href}'`)
-    const staged = join(root, 'desktop.mjs'); writeFileSync(staged, source)
-    const { personalExecutionIdentity, trackPersonalExecution } = await import(pathToFileURL(staged).href)
+    const staged = stagePersonalPlugins(root).plugin
+    const { personalExecutionIdentity, trackPersonalExecution } = await import(staged)
     const controller = new AbortController(), frames: any[] = []
     const exec = { name: 'pwsh', arguments: { command: 'private command' }, callId: 'nested-call', rootCallId: 'root-call',
       signal: controller.signal, agent: { session: { id: 'session-test', header: { agentPreset: 'personal-remote' }, events: [

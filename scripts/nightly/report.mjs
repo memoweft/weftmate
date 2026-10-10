@@ -3,6 +3,7 @@ import { join, resolve, sep } from 'node:path';
 import { inflateSync } from 'node:zlib';
 import { catalog } from '../review-gallery/common.mjs';
 import { collectEvidence } from '../review-gallery/evidence.mjs';
+import { vendorTestMarkdown } from './vendor-tests.mjs';
 
 export const key = row => `${row.platform}/${row.scene}/${row.theme}`;
 // Decode actual PNG pixels (not compressed-byte differences). Native screenshots
@@ -117,6 +118,7 @@ export async function report(out, options) {
   await writeFile(join(out, 'nightly-status.json'), JSON.stringify(result, null, 2) + '\n');
   await writeFile(join(out, 'outcomes.json'), JSON.stringify(records.map(({ path, ...row }) => row), null, 2));
   const lines = ['# WeftMate 夜间回归报告', '', `提交：\`${options.commit}\``, `开始：${options.startedAt}`, `结束：${result.generatedAt}`, `耗时：${result.durationSeconds.toFixed(1)} 秒`, '', `结果：${result.alerts.length ? `报警（${result.alerts.length} 项）` : '通过'}`, '[打开本轮审稿页](gallery/index.html)', '', '| 端 | 本轮新拍 / 应拍 | 此端尚无 |', '|---|---:|---:|', ...Object.entries(result.counts).map(([p, c]) => `| ${p} | ${c.captured} / ${c.expected} | ${c.unavailable} |`), '', '## 批次', '', '| 批次 | 结果 | 秒 | 原因 |', '|---|---|---:|---|', ...options.phases.map(p => `| ${p.name} | ${p.status} | ${(p.seconds || 0).toFixed(1)} | ${p.reason || ''} |`), '', '## 报警', '', ...(result.alerts.length ? result.alerts.map(a => `- ${a.cell}：${a.kind} · ${a.message}`) : ['无。']), '', '## 差异最大的格', '', `阈值：${(result.threshold * 100).toFixed(2)}%；每个像素任一 RGBA 通道变化超过 24 才计入。尺寸变化计 100%。`, '', ...(result.differences.length ? result.differences.slice(0, 10).map(d => `- ${d.cell}：${(d.ratio * 100).toFixed(2)}%`) : [result.baseline]), '', '## 清理', '', '```json', JSON.stringify(options.cleanup, null, 2), '```', '', '仅合成夹具，无真实模型。没有历史截图补位；此端尚无按共同审稿清单排除。', ''];
+  lines.push(...vendorTestMarkdown(options.phases), '');
   await writeFile(join(out, 'nightly-report.md'), lines.join('\n'));
   return result;
 }

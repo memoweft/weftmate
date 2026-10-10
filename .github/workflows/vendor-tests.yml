@@ -1,0 +1,89 @@
+name: Pinned DSH vendor tests
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+concurrency:
+  group: vendor-tests-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  vendor:
+    name: Pinned DSH vendor unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Install Electron display dependencies
+        run: |
+          npx playwright install-deps chromium
+          node node_modules/electron/install.js
+          sudo chown root:root node_modules/electron/dist/chrome-sandbox
+          sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
+      - name: Read production DSH pin
+        run: |
+          node --input-type=module -e "import fs from 'node:fs'; const p=JSON.parse(fs.readFileSync('tests/contract/dsh-pin.json')); fs.appendFileSync(process.env.GITHUB_ENV, 'DSH_PIN='+p.commit+'\n');"
+      - uses: actions/checkout@v4
+        with:
+          repository: deepseek-ai/deepseek-harness
+          ref: ${{ env.DSH_PIN }}
+          path: .local/relay-dsh
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - name: Cache pinned DSH compilation
+        id: dsh-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .local/relay-dsh/node_modules
+            .local/relay-dsh/packages/*/*/lib
+            .local/relay-dsh/vendor/*/lib
+            .local/relay-dsh/apps/*/lib
+            .local/relay-dsh/apps/web/dist
+            .local/relay-dsh/native/landlock-run/lib
+            .local/relay-dsh/native/landlock-run/packages/*/lib
+          key: relay-phone-dsh-linux-node24-${{ env.DSH_PIN }}-v3
+      - name: Link pinned DSH workspace dependencies
+        working-directory: .local/relay-dsh
+        run: pnpm install --frozen-lockfile
+      - name: Build pinned native tools (no model keys)
+        if: steps.dsh-cache.outputs.cache-hit != 'true'
+        working-directory: .local/relay-dsh
+        run: pnpm run build
+      - name: Save compiled fixture before scenario assertions
+        timeout-minutes: 2
+        continue-on-error: true
+        if: steps.dsh-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .local/relay-dsh/node_modules
+            .local/relay-dsh/packages/*/*/lib
+            .local/relay-dsh/vendor/*/lib
+            .local/relay-dsh/apps/*/lib
+            .local/relay-dsh/apps/web/dist
+            .local/relay-dsh/native/landlock-run/lib
+            .local/relay-dsh/native/landlock-run/packages/*/lib
+          key: relay-phone-dsh-linux-node24-${{ env.DSH_PIN }}-v3
+      - name: Assemble and verify pinned vendor
+        run: |
+          npm run vendor:dsh
+          npm run vendor:verify
+        env:
+          WEFTMATE_DSH_CHECKOUT: ${{ github.workspace }}/.local/relay-dsh
+      - name: Required pinned vendor suite
+        run: xvfb-run --auto-servernum node .github/scripts/ci-unit-tests.mjs vendor --report vendor-test-results.json
+      - name: Publish vendor test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vendor-test-results
+          path: vendor-test-results.json
+          if-no-files-found: warn
