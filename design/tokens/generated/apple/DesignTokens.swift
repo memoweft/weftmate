@@ -125,7 +125,7 @@ public enum WeftDesignTokens {
         "staggerLimit": 60
     ]
     public static let fontFamily: [String: String] = [
-        "body": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", sans-serif",
+        "body": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei UI\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", sans-serif",
         "mono-desktop": "Consolas, 'SFMono-Regular', monospace",
         "mono": "ui-monospace, Consolas, monospace",
         "mono-extended": "ui-monospace, SFMono-Regular, Consolas, monospace",
@@ -170,7 +170,9 @@ public enum WeftDesignTokens {
         "--accent-hover": "#282f2c",
         "--accent-soft": "#e9ece8",
         "--danger": "#bf374d",
-        "--danger-soft": "#fff0f2"
+        "--danger-soft": "#fff0f2",
+        "--search-highlight-bg": "#fff1a8",
+        "--search-highlight-ink": "#302507"
     ]
     public static let desktopDark: [String: String] = [
         "--canvas": "#20211f",
@@ -186,37 +188,51 @@ public enum WeftDesignTokens {
         "--danger": "#ffa3ad",
         "--danger-soft": "#442a2e",
         "--success": "#a7e7cf",
-        "--success-soft": "#253c32"
+        "--success-soft": "#253c32",
+        "--search-highlight-bg": "#66521c",
+        "--search-highlight-ink": "#ffffff"
     ]
     public static let desktopLightblue: [String: String] = [
         "--accent": "#365eab",
         "--accent-hover": "#284b91",
-        "--accent-soft": "#e9eff9"
+        "--accent-soft": "#e9eff9",
+        "--search-highlight-bg": "#fff1a8",
+        "--search-highlight-ink": "#302507"
     ]
     public static let desktopLightgreen: [String: String] = [
         "--accent": "#32654f",
         "--accent-hover": "#254d3c",
-        "--accent-soft": "#e8f0e9"
+        "--accent-soft": "#e8f0e9",
+        "--search-highlight-bg": "#fff1a8",
+        "--search-highlight-ink": "#302507"
     ]
     public static let desktopLightpurple: [String: String] = [
         "--accent": "#765299",
         "--accent-hover": "#60417e",
-        "--accent-soft": "#f0eaf5"
+        "--accent-soft": "#f0eaf5",
+        "--search-highlight-bg": "#fff1a8",
+        "--search-highlight-ink": "#302507"
     ]
     public static let desktopDarkblue: [String: String] = [
         "--accent": "#a4bff3",
         "--accent-hover": "#c0d2f7",
-        "--accent-soft": "#2b3b53"
+        "--accent-soft": "#2b3b53",
+        "--search-highlight-bg": "#66521c",
+        "--search-highlight-ink": "#ffffff"
     ]
     public static let desktopDarkgreen: [String: String] = [
         "--accent": "#a0c8ad",
         "--accent-hover": "#bddbc5",
-        "--accent-soft": "#2d3e32"
+        "--accent-soft": "#2d3e32",
+        "--search-highlight-bg": "#66521c",
+        "--search-highlight-ink": "#ffffff"
     ]
     public static let desktopDarkpurple: [String: String] = [
         "--accent": "#cbb3e6",
         "--accent-hover": "#decbf2",
-        "--accent-soft": "#3b314a"
+        "--accent-soft": "#3b314a",
+        "--search-highlight-bg": "#66521c",
+        "--search-highlight-ink": "#ffffff"
     ]
     public static let mobileLight: [String: String] = [
         "--accent": "#30332d",
@@ -228,11 +244,15 @@ public enum WeftDesignTokens {
         "--surface": "#fff",
         "--soft": "#f5f4f1",
         "--line": "#deded7",
-        "--danger": "#ab3d3d"
+        "--danger": "#ab3d3d",
+        "--search-highlight-bg": "#fff1a8",
+        "--search-highlight-ink": "#302507"
     ]
     public static let mobileDark: [String: String] = [
         "--success": "#a7e7cf",
-        "--success-soft": "#253c32"
+        "--success-soft": "#253c32",
+        "--search-highlight-bg": "#66521c",
+        "--search-highlight-ink": "#ffffff"
     ]
 }
 

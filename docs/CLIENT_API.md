@@ -247,6 +247,8 @@ M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在�
 
 `kind` 为 `cognition / entity / relationship / event`；下表均有顶层 `ownerId`。写入体 ≤12 KiB，`expectedWorldRevision` 是非负安全整数。
 
+UX-P1 增补：列表 `GET /memory/items` 可显式传 `kind=all`，合并四类同一账户、同一 `worldRevision` 的记忆，按更新时间倒序、类型与标识稳定排序；任何类型版本变化返回 409 `MEMORY_REVISION_CHANGED`，不返回混合快照。省略 `kind` 仍默认 `cognition`。列表新增 `totalCount`（查询前该类型或全部类型的总记录数）；显式 `includeSources=true` 时每项新增 `sourceConversationIds:string[]`，通过本账户原生记忆任务账本的证据 ID 对应来源 `sessionId`。已删除、缺失或归属不匹配的来源不产生对话链接；旧 Core（记忆核心）缺少任务账本或旧证据没有映射时返回空数组，仍可打开既有来源详情，不猜测来源。分页游标继续绑定账户、类型、搜索词与版本；`kind=all` 只用于列表，不用于单项路径。
+
 | 方法与路径 | 请求参数/体 | 响应示例 / 状态 | 主要领域错误 | 使用端 |
 |---|---|---|---|---|
 | GET `/memory/status` | 无 | 200 `{"state":"disabled","worldRevision":null,"capabilities":{"list":false,"source":false,"correct":false,"mute":false,"inject":false,"deleteEvidence":false,"deleteWorldItem":false}}` | 内存服务错误；未配置仍200 | 桌、手、安、苹 |

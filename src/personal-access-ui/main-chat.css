@@ -3,8 +3,12 @@
 .chat-avatar { flex:0 0 28px; width:28px; height:28px; }
 .main-chat-tools { display:flex; align-items:center; gap:var(--wm-space-4); }
 .main-chat-tools input { width:145px; }
-.main-chat-search { display:flex; align-items:center; flex-wrap:wrap; gap:var(--wm-space-8); padding:var(--wm-space-12); border-bottom:1px solid var(--line); }
-.main-chat-search input { flex:1; min-width:140px; }
+.main-chat-search { display:flex; align-items:center; gap:var(--wm-space-4); padding:var(--wm-space-8) var(--wm-space-12); border-bottom:1px solid var(--line); }
+.main-chat-search input { flex:1; min-width:0; width:0; }
+.main-chat-search [role=status] { flex-shrink:0; white-space:nowrap; font-size:var(--wm-font-size-12); font-variant-numeric:tabular-nums; }
+.chat-icon-button { display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; width:var(--wm-space-32); min-height:var(--wm-space-32); padding:var(--wm-space-6); border:0; border-radius:var(--wm-radius-8); background:transparent; color:var(--muted); cursor:pointer; }
+.chat-icon-button:hover { background:var(--surface); color:var(--ink); }
+.chat-icon-button[aria-label="上一条搜索结果"] svg { transform:rotate(180deg); }
 .chat-origin { display:flex; align-items:center; flex-wrap:wrap; gap:var(--wm-space-12); padding:var(--wm-space-8) var(--wm-space-16); border-bottom:1px solid var(--line); }
 .main-chat-row { margin:0; padding-block:var(--wm-space-12); position:relative; overflow-anchor:none; }
 .main-chat-row.message { margin:0; }
@@ -14,14 +18,19 @@
 .chat-day-toggle:hover, .rail-main-chat:hover { background:var(--surface-raised, var(--surface)); }
 .chat-progress { padding:0; margin:0; list-style:none; }
 .chat-message-menu { margin-top:var(--wm-space-4); display:inline-block; }
+.chat-message-menu { visibility:hidden; position:relative; }
+.message:hover .chat-message-menu, .message:focus-within .chat-message-menu, .message.is-last-assistant .chat-message-menu, .chat-message-menu[open] { visibility:visible; }
+.chat-message-menu[open] > button { position:absolute; z-index:5; bottom:100%; right:0; background:var(--surface); border:1px solid var(--line); box-shadow:var(--shadow); white-space:nowrap; }
+.chat-message-menu summary { min-height:var(--wm-space-32); min-width:var(--wm-space-32); display:flex; justify-content:center; align-items:center; }
 .chat-message-menu > summary { cursor:pointer; list-style:none; color:var(--muted); padding:var(--wm-space-4); }
 .chat-message-menu > summary::marker { content:''; }
 .side-result { padding:var(--wm-space-12) 0; }
 .side-result-link { border:0; background:transparent; color:var(--ink); font:inherit; font-size:var(--wm-font-size-13); text-align:left; max-width:100%; padding:var(--wm-space-8); border-radius:var(--wm-radius-8); cursor:pointer; overflow-wrap:anywhere; }
 .side-result-link:hover { background:var(--surface-raised, var(--surface)); }
-.side-source { max-height:160px; overflow:auto; white-space:pre-wrap; }
+.side-source { white-space:pre-wrap; overflow-wrap:anywhere; }
 .side-chat-dialog input, .side-chat-dialog textarea { width:100%; margin-block:var(--wm-space-8); }
-.main-chat-row mark { color:var(--ink); background:var(--accent-soft); text-decoration:underline; text-underline-offset:3px; }
+.main-chat-row mark { color:var(--search-highlight-ink); background:var(--search-highlight-bg); text-decoration:underline; text-underline-offset:3px; }
+#load-older { display:block; margin:var(--wm-space-8) auto; color:var(--muted); background:var(--surface); border-radius:var(--wm-radius-8); padding:var(--wm-space-8) var(--wm-space-12); font-weight:400; }
 .main-chat-row:focus-visible, .chat-day-toggle:focus-visible, .rail-main-chat:focus-visible, .side-result-link:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 #open-side-chat { margin:var(--wm-space-4); }
 @media (max-width:720px) { .main-chat-tools .button { min-height:44px; } .main-chat-search .button { min-height:44px; } .main-chat-tools { flex-wrap:wrap; } .main-chat-row { padding-inline:var(--wm-space-4); } .assistant-topbar.is-main-chat #conversation-resources { font-size:0; padding:var(--wm-space-8); min-width:var(--wm-space-44); min-height:var(--wm-space-44); } }
