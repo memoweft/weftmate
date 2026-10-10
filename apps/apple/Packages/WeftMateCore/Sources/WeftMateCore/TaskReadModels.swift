@@ -12,11 +12,12 @@ public struct TaskCommandKind: RawRepresentable, Decodable, Equatable, Sendable 
     public let rawValue: String
     public init(rawValue: String) { self.rawValue = rawValue }
     public static let create = Self(rawValue: "session.create")
+    public static let chatMessage = Self(rawValue: "chat.message")
     public static let message = Self(rawValue: "session.message")
     public static let cancel = Self(rawValue: "session.cancel")
     public static let openApp = Self(rawValue: "desktop.open_app")
     public static let writeArtifact = Self(rawValue: "desktop.write_artifact")
-    public var isKnown: Bool { [Self.create, .message, .cancel, .openApp, .writeArtifact].contains(self) }
+    public var isKnown: Bool { [Self.create, .message, .chatMessage, .cancel, .openApp, .writeArtifact].contains(self) }
     public init(from decoder: any Decoder) throws {
         rawValue = try decoder.singleValueContainer().decode(String.self)
         try SharedValidation.require(SharedValidation.matches(rawValue, "^[A-Za-z][A-Za-z0-9._:-]{0,127}$"))
@@ -213,7 +214,7 @@ public struct TaskSnapshot: Equatable, Sendable {
             let supplements: [TaskCommandRecord]; let resumes: [TaskCommandRecord]; let control: TaskControlSnapshot; let replyEvidence: TaskReplyEvidence
         }
         let wire: Wire = try MemoryValidation.decode(data)
-        guard wire.taskId == taskID, wire.source.commandId == taskID, wire.source.kind == .message,
+        guard wire.taskId == taskID, wire.source.commandId == taskID, [.message, .chatMessage].contains(wire.source.kind),
               wire.source.rootTaskId == nil else { throw APIFailure.identityMismatch }
         try SharedValidation.require(SharedValidation.id(wire.sessionId) && wire.sourceText.utf16.count <= 16_384)
         try wire.source.validate(hostID: scope.hostId, sessionID: wire.sessionId)
@@ -224,13 +225,13 @@ public struct TaskSnapshot: Equatable, Sendable {
         for row in wire.artifacts { try row.validateArtifact(taskID: taskID) }
         let childTasks = Set([taskID] + wire.supplements.map(\.commandId) + wire.resumes.map(\.commandId))
         for row in wire.steps {
-            try SharedValidation.require(![TaskCommandKind.create, .message, .cancel, .writeArtifact].contains(row.kind) &&
+            try SharedValidation.require(![TaskCommandKind.create, .message, .chatMessage, .cancel, .writeArtifact].contains(row.kind) &&
                 (row.rootTaskId == nil || row.rootTaskId == taskID))
             // Legacy open_app rows may lack taskId. New types must explicitly belong to this root or its children.
             try SharedValidation.require(row.taskId.map(childTasks.contains) ?? (row.kind == .openApp))
         }
-        for row in wire.supplements { try SharedValidation.require(row.kind == .message && row.rootTaskId == taskID && row.taskAction == "supplement") }
-        for row in wire.resumes { try SharedValidation.require(row.kind == .message && row.rootTaskId == taskID && row.taskAction == "resume") }
+        for row in wire.supplements { try SharedValidation.require([.message, .chatMessage].contains(row.kind) && row.rootTaskId == taskID && row.taskAction == "supplement") }
+        for row in wire.resumes { try SharedValidation.require([.message, .chatMessage].contains(row.kind) && row.rootTaskId == taskID && row.taskAction == "resume") }
         let commands = [wire.source] + wire.artifacts + wire.steps + wire.supplements + wire.resumes
         try SharedValidation.require(Set(commands.map(\.commandId)).count == commands.count)
         try SharedValidation.require(wire.sources.count <= 5_000 && Set(wire.sources.map(\.snapshotId)).count == wire.sources.count)

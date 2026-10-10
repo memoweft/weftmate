@@ -291,6 +291,13 @@ public actor LocalConversationStore {
             return (list, true)
         }
     }
+    public func removeCachedHistory(account: LocalAccountScope, conversationKey: String) throws {
+        try mutate { state in
+            let count = state.histories.count
+            state.histories.removeAll { $0.account == account && $0.conversationKey == conversationKey }
+            return ((), state.histories.count != count)
+        }
+    }
     public func cachedHistory(account: LocalAccountScope, conversationKey: String,
                               hostId: String, sessionId: String?) throws -> LocalCachedHistory? {
         try requireCacheHistory(conversationKey, hostId, sessionId)
