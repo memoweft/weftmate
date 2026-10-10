@@ -1,0 +1,38 @@
+[
+  {
+    "surface": "desktop",
+    "theme": "light",
+    "ratios": {
+      "attention": 4.064,
+      "failure": 4.489,
+      "brand": 3.516
+    }
+  },
+  {
+    "surface": "desktop",
+    "theme": "dark",
+    "ratios": {
+      "attention": 6.68,
+      "failure": 4.946,
+      "brand": 4.985
+    }
+  },
+  {
+    "surface": "mobile",
+    "theme": "light",
+    "ratios": {
+      "attention": 4.211,
+      "failure": 4.651,
+      "brand": 3.643
+    }
+  },
+  {
+    "surface": "mobile",
+    "theme": "dark",
+    "ratios": {
+      "attention": 6.719,
+      "failure": 4.976,
+      "brand": 5.014
+    }
+  }
+]
