@@ -10,7 +10,8 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             if (!source?.url || typeof source.text !== 'string') {
                 const capture = text.match(/^Fetched[^\n]*\n\nTitle: ([^\n]+)\nURL: ([^\n]+)\nAccessed: ([^\n]+)\n([\s\S]*)$/);
                 if (!capture) return text;
-                const body = capture[4].replace(/\n\n(?:\[Partial page: segment |Captured source: |\(Content truncated\.)[\s\S]*$/, '');
+                const body = capture[4].replace(/\n\n(?:\[Partial page: segment |Captured source: |\(Content truncated\.)[\s\S]*$/, '')
+                    .replace(/^\[Captured requested section #([^\n]*); this is not the entire page\.\]\n/, '所读章节：#$1\n\n');
                 return `访问时间：${capture[3]}\n\n${body}${body !== capture[4] ? '\n\n[仅显示已读取的部分原文]' : ''}`;
             }
             return [source.title, source.url, source.capturedAt ? `访问时间：${source.capturedAt}` : '',

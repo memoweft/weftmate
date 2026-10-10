@@ -12,7 +12,26 @@ const EXTRACT = `(() => {
   // API reference pages may use a content container instead of a main/article
   // landmark. Their site-wide module menu is not the requested page content.
   const body = document.querySelector('main, article, [role="main"], #apicontent') || document.body;
-  const raw = String(body?.innerText || document.body?.innerText || '');
+  const fragment = __WEFT_FRAGMENT__;
+  const anchor = fragment ? document.getElementById(fragment) || document.getElementsByName(fragment)[0] : null;
+  let region = body, selected = null, fragmentUsed = false;
+  if (anchor && body?.contains(anchor)) {
+    if (/^(SECTION|ARTICLE)$/.test(anchor.tagName)) {
+      region = anchor; fragmentUsed = true;
+    } else {
+      const heading = anchor.closest('h1,h2,h3,h4,h5,h6');
+      if (heading) {
+        selected = []; const level = Number(heading.tagName.slice(1));
+        for (let element = heading; element; element = element.nextElementSibling) {
+          if (element !== heading && /^H[1-6]$/.test(element.tagName) && Number(element.tagName.slice(1)) <= level) break;
+          if (element.getClientRects().length && getComputedStyle(element).display !== 'none') selected.push(element);
+        }
+        fragmentUsed = selected.length > 0;
+      }
+    }
+  }
+  const raw = selected?.length ? selected.map(element => element.innerText).join('\\n\\n')
+    : String(region?.innerText || document.body?.innerText || '');
   const links = [];
   const primary = body?.querySelectorAll('a[href]') || [];
   for (const anchor of [...primary, ...document.querySelectorAll('a[href]')]) {
@@ -24,14 +43,21 @@ const EXTRACT = `(() => {
     if (href.length > 2048) continue;
     links.push({ url: href, label: String(anchor.innerText || anchor.textContent || '').trim().slice(0, 160) });
   }
-  const headings = [...(body?.querySelectorAll('h1,h2,h3,h4') || [])].slice(0, 80)
+  const headings = (selected ? selected.filter(item => /^H[1-6]$/.test(item.tagName))
+    : [...(region?.querySelectorAll('h1,h2,h3,h4') || [])]).slice(0, 80)
     .filter((item) => item.getClientRects().length && getComputedStyle(item).display !== 'none')
     .map((item) => String(item.innerText || item.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 160))
     .filter(Boolean);
   return { title: String(document.title || '').slice(0, 500), text: raw.slice(0, 262144),
-    rawTruncated: raw.length > 262144, needsLogin: !!document.querySelector('input[type=password]'),
+    rawTruncated: raw.length > 262144 || fragmentUsed, capturedFragment: fragmentUsed ? fragment : null,
+    needsLogin: !!document.querySelector('input[type=password]'),
     headings, links };
 })()`;
+
+/** A fragment chooses a section of the same validated page; it never executes page input. */
+export function browserExtractScript(fragment = '') {
+  return EXTRACT.replace('__WEFT_FRAGMENT__', () => JSON.stringify(fragment));
+}
 
 function fault(code, details = {}) { return Object.assign(new Error(code), { code, ...details }); }
 async function cleanupWithin(work, ms = 6_000) {
@@ -131,6 +157,8 @@ export function createPersonalBrowserReader({ BrowserWindow, session, resolver, 
       if (![ownerId, taskId, sessionId, receiptId, callId].every((value) =>
         typeof value === 'string' && /^[A-Za-z0-9._:-]{1,160}$/.test(value))) throw fault('BROWSER_UNAVAILABLE');
       const requestedUrl = canonicalPublicUrl(url, syntheticFixture);
+      let requestedFragment = '';
+      try { requestedFragment = decodeURIComponent(new URL(url).hash.slice(1)); } catch { /* Invalid/missing anchors fall back to the page. */ }
       const key = keyFor(ownerId, taskId);
       if (signal?.aborted) throw fault('BROWSER_CANCELLED');
       const slot = slots.find((item) => !item.busy);
@@ -237,7 +265,7 @@ export function createPersonalBrowserReader({ BrowserWindow, session, resolver, 
         }
         let extracted;
         try { extracted = await Promise.race([contents.executeJavaScriptInIsolatedWorld(1001,
-          [{ code: EXTRACT }]), rendererGone, abortPromise]); }
+          [{ code: browserExtractScript(requestedFragment) }]), rendererGone, abortPromise]); }
         catch (error) { throw error?.code === 'BROWSER_RENDERER_FAILED' ? error : fault('BROWSER_RENDERER_FAILED'); }
         const finalUrl = canonicalPublicUrl(contents.getURL(), syntheticFixture);
         if (finalUrl !== beforeExtractUrl || navigationGeneration !== beforeExtractGeneration) {
@@ -258,6 +286,7 @@ export function createPersonalBrowserReader({ BrowserWindow, session, resolver, 
         readsCompleted++;
         return { title: Array.from(String(extracted.title ?? '')).slice(0, 256).join(''),
           requestedUrl, url: finalUrl, text: segments[0].text, capturedText,
+          ...(typeof extracted.capturedFragment === 'string' ? { capturedFragment: extracted.capturedFragment } : {}),
           outline: boundedOutline(extracted.headings), segmentCount: segments.length,
           totalCapturedBytes: capture.bytes.length,
           versionHash: browserCaptureVersion(finalUrl, capture.bytes),

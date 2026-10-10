@@ -49,6 +49,7 @@ export function createNativeBrowserOperations(context) {
           if (typeof input.query !== 'string' || !input.query.trim()) throw failure('INVALID_COMMAND');
           const excerpts = pageExcerpts(prior.segments.map(segment => segment.text).join(''), input.query);
           return { snapshotId, url: prior.result.url, title: prior.result.title, capturedAt: prior.result.capturedAt, sourcePath: prior.result.sourcePath,
+            ...(prior.result.capturedFragment ? { capturedFragment: prior.result.capturedFragment } : {}),
             query: input.query, excerpts, truncated: true,
             text: excerpts.length ? excerpts.map(e => `[characters ${e.charStart}-${e.charEnd}]\n${e.text}`).join('\n\n') : 'No matching captured paragraph. Try different terms or read an exact segment.' };
         }
@@ -74,6 +75,7 @@ export function createNativeBrowserOperations(context) {
       const capturedAt = new Date().toISOString();
       await writeFile(sourcePath, `Source: ${read.url}\nTitle: ${read.title}\nCaptured: ${capturedAt}\nCapture truncated: ${read.captureTruncated === true}\n\n${read.capturedText}`, { flag: 'wx' });
       const result = { snapshotId: captureId, url: read.url, title: read.title, capturedAt,
+        ...(read.capturedFragment ? { capturedFragment: read.capturedFragment } : {}),
         text: pagePreview(segments[0].text), sourcePath, previewTruncated: pagePreview(segments[0].text).length < segments[0].text.length,
         links: read.links, outline: read.outline,
         segmentIndex: 0, segmentCount: segments.length, truncated: read.truncated,

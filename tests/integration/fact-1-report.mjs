@@ -6,11 +6,14 @@ const median=values=>{const sorted=[...values].sort((a,b)=>a-b),n=sorted.length;
 const files=directory=>readdirSync(directory,{withFileTypes:true}).flatMap(e=>e.isDirectory()?files(join(directory,e.name)):[join(directory,e.name)]);
 const all=files(root), rows=[];
 const overrides=existsSync(join(root,'adjudication.json'))?read(join(root,'adjudication.json')).overrides:[];
-for(const [phase,directories] of [['before',['before/mimo']],['after',['inline/mimo-node','inline/mimo-languages','inline/mimo-web']]]) {
+for(const [phase,directories] of [['before',['before/mimo']],['after',['anchored/mimo-node','inline/mimo-languages','inline/mimo-web','anchored/mimo-http']]]) {
   for(const directory of directories) {
     const path=join(root,directory,'results.json');if(!existsSync(path))continue;
     const scores=existsSync(join(root,directory,'scores.json'))?read(join(root,directory,'scores.json')).judgements:[];
     for(const result of read(path).results) {
+      // React/Python/TypeScript URLs have no fragment, so their final inline
+      // runs exercise the unchanged branch. Anchor-affected topics are rerun.
+      if(directory==='inline/mimo-web'&&result.topicId!=='react19')continue;
       const score=scores.findLast(s=>s.id===`${result.topicId}-${result.repeat}`&&!s.judgement?.parseError);
       const j=score?.judgement,scorable=Boolean(result.document&&j);
       const correction=overrides.find(o=>o.phase===phase&&o.id===`${result.topicId}-${result.repeat}`&&o.documentSha256===score?.documentSha256);
