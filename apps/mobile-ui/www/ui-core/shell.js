@@ -164,6 +164,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         const identity = core.state.identityGeneration;
         const payload = await core.accessApi('/models');
         if (identity !== core.state.identityGeneration) return;
+        core.state.modelsKnown=Array.isArray(payload.models);
         core.state.allModels = Array.isArray(payload.models) ? payload.models : [];
         const modelSettings = await core.accessApi('/settings/models').catch(() => ({}));
         if (identity !== core.state.identityGeneration) return;
@@ -344,7 +345,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         core.state.executionAccount = undefined;
         core.state.sessions = [];
         core.state.sessionGroups = [];
-        core.state.models = [];
+        core.state.models = []; core.state.modelsKnown=false;
         core.state.tasks = [];
         core.state.projects = [];
         core.state.projectCanManage = false;

@@ -1,0 +1,563 @@
+{
+  "originalUnmodifiedPNGs": true,
+  "screenshots": [
+    {
+      "file": "mac-light/approval.png",
+      "sha256": "52cc25c6e84503e178084e7d07b595623c2d9d9f11e5a0da321140d78c1cb6a2",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-light/assistant-hover.png",
+      "sha256": "f927e20f9639e3dcbd64c6083ceba2d3ed8b9720cfe54053b60cf395a0a3d9f2",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-light/assistant-message-menu.png",
+      "sha256": "2f95bcedc4891c4435e0defdb54d27a0d089a13258247a39c6d2f55d14d973d5",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-light/composer-menu.png",
+      "sha256": "514237386147d89c662f0bc77f524acbad693f2ff3fa7885cfb2f62b8174e149",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-light/date-located.png",
+      "sha256": "10b5d3c6a6e20f4931ad3b7f8b610a463af755c21cfe01f52c20cbd31c8a80aa",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-light/expanded-day.png",
+      "sha256": "02cda23da6b7a579003a4fb12e5b8c92f966b233eeabd30bc0a8e9d5aa3fdfe6",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-light/export-preview.png",
+      "sha256": "ce67805cf39d135964d1ae27853420cff0a9d699653444f99345f59aa2fb4868",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-light/first-screen.png",
+      "sha256": "93fe4ba81e81880453d003ddb8139308da8f54d6c9fbb22eb00544476b3f2e60",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-light/narrow-window.png",
+      "sha256": "9ce6a85878712efbbb33f2db92a2d9ba25d64751a9256e46de9d178da56a0401",
+      "width": 780,
+      "height": 720
+    },
+    {
+      "file": "mac-light/native-date-picker.png",
+      "sha256": "d8ce0554a45cd932ea1a835d54362cac36d915971005859e2e2c6aa91538aebc",
+      "width": 1563,
+      "height": 850
+    },
+    {
+      "file": "mac-light/resources.png",
+      "sha256": "d7d83574d5a148926fe3ccb4c4ac0503056ba43005f9a8e3392fee7e8b20d35c",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-light/result-opened.png",
+      "sha256": "32310a3e4c3e1c3d43012fdc37e36ac42bf448edf543d90970f58632177484b4",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-light/returned-source.png",
+      "sha256": "925421dea47bcb50df2530ac465bd3602b3224784d22fdb585ada1df89d58dbe",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-light/search-first.png",
+      "sha256": "025bbb74259e2d5a46070e08b4b49dcdbc5224282d1ff514997bfddd60482a78",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-light/search-next.png",
+      "sha256": "f02298c3e8cd3a05ab8a4264439a3560d85a010df7670f383bf134520b9dfb99",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-light/sent.png",
+      "sha256": "89b253b0d5c3d8c11160d79fc9e9cfa1890436aa667d243c3fd0c76eb89721d5",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-light/side-source.png",
+      "sha256": "64c74d46f8bedbffb724b8d59e79cc6d65a9c47aabed06e035d28fdc91b3a093",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-light/temporary-expiry.png",
+      "sha256": "523f2bdb9a692afb49d7729f23e78727da9bdf98d625a1728f4ed15142b628d1",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-light/temporary-menu.png",
+      "sha256": "790545b238d877be35187573c32b0bd60d75532b5c81cb285c7bc634fbbf75eb",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-light/temporary-seven-days.png",
+      "sha256": "32d698a7019bcb647370a39c40f1c27538b23b9efee5bcd22a3ce3a0ee4da5a1",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-light/temporary.png",
+      "sha256": "a4e7648ec94d0329b8cc9d64867ea91c0e66a2a43848224aa079a41a8541281c",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-light/user-hover.png",
+      "sha256": "25f5a1c3205c42d63948e55dfeae7c4c78a33f2f9a125276d4ab027a9bb4ef4f",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-light/user-message-menu.png",
+      "sha256": "5d417003751525c53edd430d1c66dfccdf7eda2cc3be25ac919e6ca8ffa0e20c",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-dark/approval.png",
+      "sha256": "0e881316b1d30112dcb4a6c29f90c9d44e1ff6902f34e3100a60235cdc898ee8",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-dark/assistant-hover.png",
+      "sha256": "1bc4d144f6450fcdc6ebdbf1d3d45a91557cd3d219fdfad9cb67d622545e7695",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-dark/assistant-message-menu.png",
+      "sha256": "40682efea40f00efc496b7526e93b1826a8ded37df360a54d45f52d4e26d6b0d",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-dark/composer-menu.png",
+      "sha256": "6b355f866ed7792e1c5170096e9b046b0bb52119cd4fea81777732689302690c",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-dark/date-located.png",
+      "sha256": "da4f67b7c4278e367e94ab5ca03dfc3ff797a0079a0993c3f95e77db85977c83",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-dark/expanded-day.png",
+      "sha256": "cb4a9e55a047c4086c0c679365dc18315c91118efbe71f34c4604d1088cf5661",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-dark/export-preview.png",
+      "sha256": "df1268289b0450c00db208e547d0edb0daf20756a0a7ee4468457b70e58738df",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-dark/first-screen.png",
+      "sha256": "35dd14e91429b7beb0d38f9b5e48809971b69eb0b98d665bfe049751f7a48ee9",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-dark/narrow-window.png",
+      "sha256": "0ec7f73eecbae31380a8509bf8fb7d66f12abfdbf81eabcbb2980def5438338a",
+      "width": 780,
+      "height": 720
+    },
+    {
+      "file": "mac-dark/native-date-picker.png",
+      "sha256": "f9e6b51d2aff700a64644637657ce1ab7be52f3353f05db2e70d6846a6b421a4",
+      "width": 1563,
+      "height": 850
+    },
+    {
+      "file": "mac-dark/resources.png",
+      "sha256": "ca516c1c41070922e45ee493addda9b466416624ea9d6ef8bd2576086e6e417a",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-dark/result-opened.png",
+      "sha256": "bf7f0807329643b616d5e1cbb73010fbe562c7103024f7cc7813e2dddcd93052",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-dark/returned-source.png",
+      "sha256": "686eacd85d5dd97ac4f4b08754d72c3c3af95d9826fe2386b30926538899142f",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-dark/search-first.png",
+      "sha256": "bc07a3addfaf518aeb28e26b77546f3a00fc68e017c2f44640f03724dd023b23",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-dark/search-next.png",
+      "sha256": "103bc32db416cdf656fad1f1f4ab34b0815cba517f2e7b127ec9e0a2cd2e8249",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-dark/sent.png",
+      "sha256": "2ddbf62eafaca5651cfeecf21585da6e6bed14d3d99d8880badd14b067e79428",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-dark/side-source.png",
+      "sha256": "94990bc1a8b76683fe9816f4ed28f8974dd08ab061dafb5204eeabdd3134ae1d",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-dark/temporary-expiry.png",
+      "sha256": "642fb4a1f3af93f8395c3bdda38642e3cb7f1b66e89a9e976877e98ee6e11d7e",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-dark/temporary-menu.png",
+      "sha256": "29398752138c2d4fd05e2aaca550bb308f6c93ee7a286f8ae078f9981132aeae",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-dark/temporary-seven-days.png",
+      "sha256": "6315d292a4018d101bde0cc6db97bc1efead40deda4e34c6c6725ac4c48020c3",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-dark/temporary.png",
+      "sha256": "aa8d09ba4989184440eb12c3fd720714dfc806bc7940114736b2621181e5cc5d",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-dark/user-hover.png",
+      "sha256": "21731c7fd2d8b34d8655d2b545eeef4366aec7a55b5e60220a73be81d138d1b2",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-dark/user-message-menu.png",
+      "sha256": "80c8ae936090ffd31a478abf2758a152efea48aad9c18dcb0e4b08aedc3dc283",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "iphone-light/a16-approval-light.png",
+      "sha256": "df71b36126ddb08e69453b43f32486e6de4266d41ec32e359eb0517f2f80d644",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-light/a16-assistant-message-menu-light.png",
+      "sha256": "d448e5def45b86d816dd154137ceb9efdf2553a383cf635dd6d2497c977a4c7a",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-light/a16-composer-menu-light.png",
+      "sha256": "d09817f3ab6d927599c556aed649ac1d46725128717129de9af43707689893fc",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-light/a16-date-located-light.png",
+      "sha256": "00ace41b41162b838df4182d95a132f75aa8544f33ae4fcf350b2948df05fee3",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-light/a16-expanded-day-light.png",
+      "sha256": "1526008924144e68a09c47ad920f3132fd0edf4e14232b8e0fb807ce9eca1fee",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-light/a16-export-preview-light.png",
+      "sha256": "ca9708ae0fe59cae681ae7f0ee8d6d1101d4acf345679c5bf53c3075c3a0db58",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-light/a16-export-save-panel-light.png",
+      "sha256": "6a56d94efcbbcbe12c295b980120980eec674226fff1e4ee967da9f18cabd4fb",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-light/a16-first-screen-light.png",
+      "sha256": "ca7a006e03d68b1a7246dd659a49d6a34ad86dc8392579d2560fcd92e146c232",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-light/a16-native-date-picker-light.png",
+      "sha256": "9c3e90b5abe09089046baf7daa2ea0f7d74e900624f2b0c1ecce86db9f954d7b",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-light/a16-resources-light.png",
+      "sha256": "51b4a48c5343ea08e89d54d6906bc1db66d2458612b2e621388005a4dbda4c15",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-light/a16-result-opened-light.png",
+      "sha256": "d9a71026d0b77f1c74fd42d87eb498495a2a35ff641e28ecd688114fb6f70d1a",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-light/a16-returned-source-light.png",
+      "sha256": "f1b00f9dad8662e288dc50d4593f4720bb3c8f17cfaf6a508944bd04dc4a1f11",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-light/a16-search-first-light.png",
+      "sha256": "ef2c0b33120ab21797fe9598259bd7d7d8b16dd016c3e2e9c3e2a173954b4665",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-light/a16-search-next-light.png",
+      "sha256": "5e04c315940b47ceaffdb291ed349bfafba14613337638cbcf1e43a02b2db156",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-light/a16-sent-light.png",
+      "sha256": "b982d10c0161ae46018506ecf48c3ee65752036aefafa5996b7e81ed1ce7fd1a",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-light/a16-side-source-light.png",
+      "sha256": "c477c6fe311d94412a8a7c8a3be92f1ba2a4c753311db1465e1218be74e94e92",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-light/a16-temporary-expired-light.png",
+      "sha256": "7905690aab121d98a22fcd3376ee0b86d43bc8c67db91f7dec4432b9d2a9dbdf",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-light/a16-temporary-expiry-light.png",
+      "sha256": "253728edfe982e3db568710d813d448aacb2c1053ebbc4464e3e97e3b1932460",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-light/a16-temporary-light.png",
+      "sha256": "9ba0caa69bb69df6f4d15764d99726724087c430eb46b272446fd0e38658225c",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-light/a16-temporary-menu-light.png",
+      "sha256": "0928899535965d0d4bf0d62c081128b627fcfa407e3aeb317e7b48bbd382d5c2",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-light/a16-temporary-recall-off-light.png",
+      "sha256": "dc637ff713f8ff869c766435b21d19ba1d20d68229d844bb94b061f2778c463a",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-light/a16-user-message-menu-light.png",
+      "sha256": "e77eac712d9f4e0e16d7b86626880097d199e9088d6ed38ee09a23847a289098",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-dark/a16-approval-dark.png",
+      "sha256": "c92441e97f9074bab9e36e03241d0e9011fc64b31cef684106413b3640b77c64",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-dark/a16-assistant-message-menu-dark.png",
+      "sha256": "666a3ce252a02475e0c67185e3755cc21a9ae5bd69864bbcd80b8d8b3abf87ec",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-dark/a16-composer-menu-dark.png",
+      "sha256": "7d7b83ea57248582443f58f9d00ddccd795c279e9d495ccc8a3541524b1aae8f",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-dark/a16-date-located-dark.png",
+      "sha256": "0217fb2a4b2b881e63cc22cb9e572d6c6bc203a17f3b1581eb7f0af7a495ad01",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-dark/a16-expanded-day-dark.png",
+      "sha256": "dcfe0f01619ca032784e8302114bd9eeac0eb8e6a3983f314a116e0fc99f3fbd",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-dark/a16-export-preview-dark.png",
+      "sha256": "63a95a85b07c6334b36b460b7c415e64b589068b44ba715d4ceaf49db53d749a",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-dark/a16-export-save-panel-dark.png",
+      "sha256": "4e0b92cdda7a3ca0a49b702125ba1b98ade3d04313aef434e3f776f7cc73e7ee",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-dark/a16-first-screen-dark.png",
+      "sha256": "5b3db807dc2b3a8a004163c04223185a8ecfe3a766a5e273c11ba40531be1b48",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-dark/a16-native-date-picker-dark.png",
+      "sha256": "213486447c18accee8cf9dc155ae8a8b56b32a54d89b51cdf050d44b6e8192bf",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-dark/a16-resources-dark.png",
+      "sha256": "930efe5353c71e4bc4e5d70d63044e900321596fe27fa4e79fe5440538ab286c",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-dark/a16-result-opened-dark.png",
+      "sha256": "f3334f809cc11ccb0152e77934f59260ef69f1ca802a1c2c89d3bef2100b480b",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-dark/a16-returned-source-dark.png",
+      "sha256": "f68f2b79caa6ba7619206b4ac6230f789d6246c94f3e7a7b1bde5700530561c8",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-dark/a16-search-first-dark.png",
+      "sha256": "0bda7936e171330912853e6ba21741efe466774d1dae5d8c7e5b3e34760e5604",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-dark/a16-search-next-dark.png",
+      "sha256": "4e90525fe55b80a0487c936b42ded68daa224ae595bc259f99b3d44d83b40015",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-dark/a16-sent-dark.png",
+      "sha256": "219fdfe2bf68bd17a136c672f22d2c0051d13e82227124ebc863e6f56551cbcb",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-dark/a16-side-source-dark.png",
+      "sha256": "c900fadd3e336d314f0ffcab627529682a20ca405cb91058a4d080dd1a389c83",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-dark/a16-temporary-dark.png",
+      "sha256": "6d40c6ba7bcb8e7e9af36371099705ebeeaecbe4d966bbdcf923e31b949be2f2",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-dark/a16-temporary-expired-dark.png",
+      "sha256": "a8875c9ccfa96e6bb58744180f0fb24c3ad92c27809c318681feba08a53c494d",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-dark/a16-temporary-expiry-dark.png",
+      "sha256": "9f1d1deda80cd45a5d4c4b39d3f4d516a7e23fe6c123d9c36339af0e0cb70848",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-dark/a16-temporary-menu-dark.png",
+      "sha256": "15a83af3bf6c66c4525bd200fc6e23ac6dc2c48ca750dcef553ffc1de7ed9293",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-dark/a16-temporary-recall-off-dark.png",
+      "sha256": "e1bbb89c667fffc33791f0fc113b50928b687f3120e59a848b51bab7d2cf93a1",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "iphone-dark/a16-user-message-menu-dark.png",
+      "sha256": "564d8b17bb40c55a5b6ef7f94a84c78b138c020cf985811c6e35e9d0a08741f9",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "watch/approval.png",
+      "sha256": "d61faea5493d74170187bc633b9423d22ab9ba1bde342372ade3eb9517b61739",
+      "width": 416,
+      "height": 496
+    },
+    {
+      "file": "mac-launches/launch-1.png",
+      "sha256": "7b39050eedf892f89aeefcc8c18541c324e59ec24efa223f9adf53ea52eada6e",
+      "width": 1237,
+      "height": 850
+    },
+    {
+      "file": "mac-launches/launch-20.png",
+      "sha256": "2418e8a4af780a67dac46b56340e3f4edbf5d904e447299e136f73e5db9e7bab",
+      "width": 1237,
+      "height": 850
+    }
+  ]
+}

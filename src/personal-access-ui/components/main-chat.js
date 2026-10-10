@@ -83,11 +83,12 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             row.tabIndex=0;row.setAttribute('role','group');row.setAttribute('aria-label',`${spec.event.type==='user.message'?'我的消息':'助手消息'}：${Array.from(spec.event.data?.text||'附件').slice(0,80).join('')}`);
             const temporary = ui.element('ol'); ui.paintHistoryMessages([spec.event], temporary); const message = temporary.firstElementChild;
             row.replaceChildren(); if (message) { row.className += ' ' + message.className; row.append(...message.childNodes); }
+            row.dataset.memorySession=spec.event.sourceRef?.sessionId||'';
             ui.bindMainMessage?.(row, spec.event);
             const complete = !core.state.mainChat.running || spec.event.sourceRef?.sessionId !== core.state.mainChat.activeSessionId || spec.event.type === 'user.message' || spec.event.eventId !== rows.filter(item => item.kind === 'message').at(-1)?.key;
             if (complete && core.supportsChat('sideChats')) {
                 row.weftOpenSideChat = () => showSidePanel(spec.event);
-                if (!(spec.event.type === 'assistant.message' && row.querySelector('.message-actions'))) {
+                if (!row.querySelector('.message-actions')) {
                 const menu = ui.element('details', 'chat-message-menu'), summary = ui.element('summary'); summary.setAttribute('aria-label', '消息菜单'); summary.append(WeftIcons.create('more', 16));
                 menu.append(summary, button('从这里开旁聊', '从这里开旁聊', () => showSidePanel(spec.event))); (row.querySelector('.message-actions') || row).append(menu);
                 }
@@ -199,8 +200,10 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         else sidebar.after(future);
         tools = ui.element('div', 'main-chat-tools'); tools.hidden = true;
         tools.append(iconButton('search', '搜索主对话', () => { searchPanel.open = !searchPanel.open; searchPanel.hidden = !searchPanel.open; if (searchPanel.open) searchPanel.querySelector('input').focus(); }),
-            iconButton('clock', '跳到日期', () => { const date = tools.querySelector('input'); date.hidden = !date.hidden; if (!date.hidden) { date.value=''; date.focus(); date.showPicker?.(); } }));
-        const date = ui.element('input'); date.type = 'date'; date.hidden = true; date.setAttribute('aria-label', '跳到日期'); date.addEventListener('change', () => {date.hidden=true;void core.jumpChatDate(date.value).catch(() => ui.toast('日期暂时无法定位，请重试。')).finally(()=>tools.querySelectorAll('button')[1].focus());}); tools.append(date);
+            iconButton('clock', '跳到日期', () => { const date = tools.querySelector('input'); date.hidden = !date.hidden; if (!date.hidden) { date.value=''; date.focus();  } }));
+        const date = ui.element('input'); date.type = 'text'; date.placeholder='YYYY-MM-DD'; date.inputMode='numeric'; date.pattern='[0-9]{4}-[0-9]{2}-[0-9]{2}'; date.hidden = true; date.setAttribute('aria-label', '跳到日期');
+        const jumpDate=()=>{if(!date.value)return;if(!date.checkValidity()){date.setAttribute('aria-invalid','true');ui.toast('请按年-月-日填写日期，例如 2026-10-10。');return;}date.removeAttribute('aria-invalid');date.hidden=true;void core.jumpChatDate(date.value).catch(() => ui.toast('日期暂时无法定位，请重试。')).finally(()=>tools.querySelectorAll('button')[1].focus());};
+        date.addEventListener('change',jumpDate);date.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();jumpDate();}if(event.key==='Escape'){event.preventDefault();event.stopPropagation();date.hidden=true;tools.querySelectorAll('button')[1].focus();}});tools.append(date);
         if (ui.mobile) ui.byId('chat-page').prepend(tools);
         else ui.byId('assistant-title').parentElement.after(tools);
         searchPanel = ui.element('form', 'main-chat-search'); searchPanel.hidden = true; searchPanel.setAttribute('aria-label', '主对话内搜索');
@@ -209,7 +212,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         const submit = ui.element('button', 'sr-only', '查找'); submit.type = 'submit'; submit.tabIndex = -1;
         let searchTimer; input.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => searchPanel.requestSubmit(), 250); });
         const status = ui.element('span', 'muted'); status.setAttribute('role', 'status');
-        const more = iconButton('plus', '更多搜索结果', () => core.searchMainChat(input.value, true)); more.dataset.searchMore = ''; more.hidden = true;
+        const more = button('更多', '更多搜索结果', () => core.searchMainChat(input.value, true), 'chat-more-button'); more.dataset.searchMore = ''; more.hidden = true;
         searchPanel.append(input, submit, iconButton('chevron', '上一条搜索结果', () => core.moveSearchHit(-1)), iconButton('chevron', '下一条搜索结果', () => core.moveSearchHit(1)), status, more,
             iconButton('deny', '关闭主对话搜索', async () => { clearTimeout(searchTimer); searchPanel.open = false; searchPanel.hidden = true; await core.searchMainChat(''); tools.querySelector('button').focus(); }));
         origin = ui.element('div', 'chat-origin'); origin.hidden = true; box().before(searchPanel, origin);

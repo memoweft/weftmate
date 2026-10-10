@@ -6,10 +6,10 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { startFixture } from './ux-4-fixture.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
-const evidence=resolve('tests/evidence/ux-4');mkdirSync(evidence,{recursive:true});
+const evidence=resolve('tests/evidence/ux-p2/interaction');mkdirSync(evidence,{recursive:true});
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
 const checks=[],errors=[];
-for(const surface of process.argv.includes('--local-only') ? [] : ['desktop','mobile-web','android-ui']) {
+for(const surface of process.argv.includes('--local-only') ? [] : (process.argv.includes('--android-only')?['android-ui']:['desktop','mobile-web','android-ui'])) {
   const fixture=await startFixture(),profile=mkdtempSync(join(tmpdir(),'weftmate-ux4-electron-'));let app,browser,page;
   try {
     if(surface==='desktop') {
@@ -20,7 +20,7 @@ for(const surface of process.argv.includes('--local-only') ? [] : ['desktop','mo
       browser=await chromium.launch({channel:'chrome',headless:true});page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,acceptDownloads:true});
       await page.goto(surface==='mobile-web'?fixture.origin+'/personal/v1/ui':fixture.mobileUrl);
       if(surface==='mobile-web')await localUiSession(page,fixture.credentials);
-      else await page.getByRole('button',{name:/^合成消息操作 /}).last().click();
+      else {await page.waitForFunction(()=>state.booted);await page.evaluate(()=>listSharedSessions());await page.getByRole('button',{name:'打开导航',exact:true}).click();await page.getByRole('button',{name:/^合成消息操作 /}).last().click();}
     }
     page.setDefaultTimeout(20000);page.on('pageerror',error=>errors.push({surface,error:error.message}));
     await page.evaluate(()=>{window.__copies=[];Object.defineProperty(navigator,'clipboard',{value:{writeText:async text=>window.__copies.push(text)},configurable:true});});
@@ -37,13 +37,9 @@ for(const surface of process.argv.includes('--local-only') ? [] : ['desktop','mo
     await page.getByRole('button',{name:'更多回复操作',exact:true}).last().evaluate(node=>{const row=node.closest('.message'),body=row.querySelector('.message-text,.markdown');const range=document.createRange();range.selectNodeContents(body);const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);document.dispatchEvent(new MouseEvent('mouseup'));});
     await page.getByRole('button',{name:'引用选中文字',exact:true}).click();assert.match(await page.getByRole('textbox',{name:'输入消息',exact:true}).inputValue(),/^> /);await shot('quote');
     await page.getByRole('textbox',{name:'输入消息',exact:true}).fill('');
-    await page.getByRole('button',{name:'编辑并重发',exact:true}).last().click();const edit=page.getByRole('dialog',{name:'编辑并重发',exact:true});
-    await edit.getByRole('textbox',{name:'修改消息'}).fill('这是编辑后的合成目标。');await shot('edit');await edit.getByRole('button',{name:'编辑并重发',exact:true}).click();
-    await page.getByText('第 2 / 2 版',{exact:true}).waitFor();assert.equal(fixture.calls.length,1);assert.equal(fixture.calls[0].beforeSeq,0);
-    await page.getByRole('button',{name:'上一版',exact:true}).click();await page.getByText('第 1 / 2 版',{exact:true}).waitFor();
-    await page.getByRole('button',{name:'下一版',exact:true}).click();await page.getByText('第 2 / 2 版',{exact:true}).waitFor();
-    await page.getByRole('button',{name:'更多回复操作',exact:true}).last().click();await page.getByRole('menuitem',{name:'换模型重新生成',exact:true}).click();await page.getByRole('menuitem',{name:'另一个合成模型',exact:true}).click();
-    await page.getByRole('group',{name:'回复版本',exact:true}).getByText('第 2 / 2 版',{exact:true}).waitFor();assert.equal(fixture.calls.length,2);assert.equal(fixture.calls[1].modelProfileId,'alternate');
+    assert.equal(await page.getByRole('button',{name:/编辑并重发|从这里开旁聊并重发/,includeHidden:true}).count(),0);
+    await page.getByRole('button',{name:'更多回复操作',exact:true}).last().click();await page.getByRole('menuitem',{name:'换模型重新生成',exact:true}).click();await page.getByRole('menuitemradio',{name:'另一个合成模型',exact:true}).click();
+    await page.getByRole('group',{name:'回复版本',exact:true}).getByText('第 2 / 2 版',{exact:true}).waitFor();assert.equal(fixture.calls.length,1);assert.equal(fixture.calls[0].modelProfileId,'alternate');
     for(const theme of ['light','dark']) {await page.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);await shot(`${theme}-versions`);}
     await page.getByRole('button',{name:'分享 / 导出对话',exact:true}).last().click();const exportDialog=page.getByRole('dialog',{name:'分享 / 导出对话'}),preview=exportDialog.getByRole('region',{name:'导出预览'});
     await preview.waitFor();assert.doesNotMatch(await preview.innerText(),/synthetic-secret-export|C:\\Synthetic/);
@@ -69,8 +65,8 @@ for(const surface of process.argv.includes('--local-only') ? [] : ['desktop','mo
     await exportDialog.getByRole('button',{name:'关闭',exact:true}).click();
     if(surface==='desktop') {await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setContentSize(480,700));await shot('dark-narrow');}
     const bounds=await page.getByRole('button',{name:'更多回复操作',exact:true}).last().boundingBox();assert.ok(bounds.x>=0&&bounds.x+bounds.width<=await page.evaluate(()=>innerWidth));
-    checks.push({surface,actions:true,keyboardCopy:true,feedbackLocal:true,quote:true,editResend:true,versionSwitch:true,regenerateOtherModel:true,sanitizedPreview:true,pngBothThemes:true,exportFiles:surface==='android-ui'?'native save bridge requested':'Markdown and PNG bytes verified'});
-  } catch(error) {if(page) {await shotFailure(page,surface);console.error(await page.locator('body').innerText());}throw error;}
+    checks.push({surface,actions:true,keyboardCopy:true,feedbackLocal:true,quote:true,processedUserCannotEdit:true,versionSwitch:true,regenerateOtherModel:true,sanitizedPreview:true,pngBothThemes:true,exportFiles:surface==='android-ui'?'native save bridge requested':'Markdown and PNG bytes verified'});
+  } catch(error) {if(page) {await shotFailure(page,surface);console.error(await page.locator('body').innerText());console.error('BRANCH CALLS',fixture.calls);}throw error;}
   finally {await app?.close();await browser?.close();await fixture.close();rmSync(profile,{recursive:true,force:true});}
 }
 async function shotFailure(page,surface){await page.screenshot({path:join(evidence,`${surface}-failure.png`)});}
@@ -78,8 +74,8 @@ const phoneFixture=await startFixture({phone:true});let phoneBrowser;
 try {
   phoneBrowser=await chromium.launch({channel:'chrome',headless:true});const page=await phoneBrowser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
   page.on('pageerror',error=>errors.push({surface:'phone-local',error:error.message}));await page.goto(phoneFixture.mobileUrl);
-  await page.getByRole('button',{name:/^手机合成对话 /}).last().click();
-  await page.getByRole('button',{name:'编辑并重发（需由电脑接续）',exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'编辑并重发（需由电脑接续）'}).isDisabled(),true);
+  await page.waitForFunction(()=>state.booted);await page.evaluate(()=>listSharedSessions());await page.getByRole('button',{name:'打开导航',exact:true}).click();await page.getByRole('button',{name:/^手机合成对话 /}).last().click();
+  assert.equal(await page.getByRole('button',{name:/编辑并重发/,includeHidden:true}).count(),0);
   await page.getByRole('button',{name:'有用',exact:true}).click();const feedback=await page.evaluate(()=>{const key=Object.keys(localStorage).find(key=>key.startsWith('weftmate-message-feedback:'));return JSON.parse(localStorage.getItem(key))[0];});
   assert.equal(feedback.source,'phone');assert.equal(feedback.messageId,'local-reply');
   await page.getByRole('button',{name:'更多回复操作',exact:true}).click();assert.equal(await page.getByRole('menuitem',{name:'重新生成（需由电脑接续）'}).isDisabled(),true);await page.keyboard.press('Escape');

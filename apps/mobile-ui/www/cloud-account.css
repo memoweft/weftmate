@@ -1,6 +1,6 @@
 /* All account surfaces consume the generated design tokens. */
 .cloud-auth-active .topbar,.cloud-auth-active #drawer,.cloud-auth-active #cloud-access-banner{display:none!important}
-#cloud-auth-page{overflow:auto;padding:var(--wm-space-32) var(--wm-space-24);justify-content:center;scrollbar-color:var(--line) var(--surface)}
+#cloud-auth-page{overflow:auto;padding:var(--wm-space-32) var(--wm-space-24);justify-content:center;}
 .cloud-auth-card{width:100%;max-width:var(--wm-size-380);margin:auto;line-height:var(--wm-line-height-1_5)}
 .auth-brand{display:block;width:var(--wm-space-64);height:var(--wm-space-64);margin:0 auto var(--wm-space-24);background:url(brand/color-light.svg) center/contain no-repeat}
 :root[data-theme=dark] .auth-brand{background-image:url(brand/color-dark.svg)}
@@ -18,7 +18,7 @@
 .auth-legal{color:var(--muted);font-size:var(--wm-font-size-12);margin-top:var(--wm-space-24)}
 .auth-legal .text-button{padding:var(--wm-space-4);min-height:var(--wm-space-48)}
 .form-error{color:var(--danger);overflow-wrap:anywhere}.field-help{color:var(--muted);font-size:var(--wm-font-size-12)}
-#cloud-settings-page{overflow:auto;padding:var(--wm-space-16) var(--wm-space-24);scrollbar-color:var(--line) var(--surface)}
+#cloud-settings-page{overflow:auto;padding:var(--wm-space-16) var(--wm-space-24);}
 .cloud-settings{width:100%;max-width:var(--wm-size-700);margin:0 auto;line-height:var(--wm-line-height-1_5)}
 .cloud-settings h2{margin:var(--wm-space-24) 0 var(--wm-space-12);font-size:var(--wm-font-size-20)}
 .cloud-settings .actions{display:flex;flex-wrap:wrap;gap:var(--wm-space-8);margin:var(--wm-space-16) 0}
@@ -32,7 +32,7 @@
 .cloud-access-banner{background:var(--accent-soft);padding:var(--wm-space-12) var(--wm-space-24);line-height:var(--wm-line-height-1_5)}
 .cloud-access-banner .actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--wm-space-8)}
 .cloud-access-banner .actions span{flex:1}.cloud-access-banner button{min-height:var(--wm-space-48);color:var(--accent)}
-.legal-reader,.cloud-settings dialog,dialog.cloud-settings,.cloud-camera,.cloud-trust-dialog{color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--wm-radius-16);max-width:calc(100% - var(--wm-space-32));max-height:calc(100dvh - var(--wm-space-48));padding:var(--wm-space-24);overflow:auto;scrollbar-color:var(--line) var(--surface)}
+.legal-reader,.cloud-settings dialog,dialog.cloud-settings,.cloud-camera,.cloud-trust-dialog{color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--wm-radius-16);max-width:calc(100% - var(--wm-space-32));max-height:calc(100dvh - var(--wm-space-48));padding:var(--wm-space-24);overflow:auto;}
 .legal-reader{width:var(--wm-size-700)}.legal-reader .group-heading{display:flex;align-items:center;justify-content:space-between}.legal-reader article{line-height:var(--wm-line-height-1_8)}
 .legal-reader button,.cloud-camera button{min-height:var(--wm-space-48)}
 .cloud-camera video,.cloud-trust-dialog img{display:block;max-width:100%;margin:var(--wm-space-16) auto}

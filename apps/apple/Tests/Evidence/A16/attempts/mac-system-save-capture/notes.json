@@ -1,0 +1,4 @@
+{
+  "passed": false,
+  "note": "Own-process capture returned the remote system save-service outer window only. Its content is not counted as visual acceptance; no system permission setting was changed."
+}

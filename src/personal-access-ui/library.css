@@ -1,9 +1,9 @@
-.library-surface { container-type:inline-size; flex:1; min-width:0; height:100%; overflow:auto; scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
+.library-surface { container-type:inline-size; flex:1; min-width:0; height:100%; overflow:auto;   }
 .library-page { padding:var(--wm-space-32); color:var(--ink); }
 .library-heading { display:flex; align-items:center; justify-content:space-between; gap:var(--wm-space-16); }
 .library-heading h1 { margin:0; font-size:var(--wm-font-size-24); font-weight:600; letter-spacing:-.025em; }
 .library-intro { margin:var(--wm-space-8) 0 var(--wm-space-24); color:var(--ink-secondary,var(--secondary)); }
-.library-types { display:flex; gap:var(--wm-space-4); margin-bottom:var(--wm-space-16); overflow-x:auto; scrollbar-width:none; }
+.library-types { display:flex; gap:var(--wm-space-4); margin-bottom:var(--wm-space-16); overflow-x:auto;  }
 .library-types::-webkit-scrollbar { display:none; }
 .library-page button { font:inherit; cursor:pointer; }
 .library-type { flex:none; min-height:var(--wm-space-36); padding:var(--wm-space-6) var(--wm-space-12); border:0; border-radius:var(--wm-radius-8); color:var(--ink-secondary,var(--secondary)); background:transparent; }
@@ -52,13 +52,13 @@
 .library-entry { display:flex; align-items:center; gap:var(--wm-space-8); width:100%; }
 .library-open :is(.main-chat-tools,#conversation-resources,.usage-title-button,#temporary-chat-notice) { display:none; }
 .library-open .rail-main-chat.is-current { background:transparent; text-decoration:none; }
-.library-open .preview-tabs { scrollbar-width:none; touch-action:pan-x; }
+.library-open .preview-tabs {  touch-action:pan-x; }
 .library-open .preview-tabs::-webkit-scrollbar { display:none; }
 .library-open .preview-heading > button { width:var(--wm-space-36); min-height:var(--wm-space-36); padding:var(--wm-space-8); }
 .library-open .preview-tab { max-width:calc(var(--wm-space-64) * 3); }
 .session-menu-item-with-icon { justify-content:flex-start; gap:var(--wm-space-12); }
 .session-menu-item-with-icon > .wm-icon { flex:none; }
-.session-menu-description { display:block; margin-top:var(--wm-space-4); font-size:var(--wm-font-size-12); line-height:1.5; }
+.session-menu-description, .wm-menu-description { display:block; margin-top:var(--wm-space-4); font-size:var(--wm-font-size-12); line-height:1.5; }
 .library-skeleton-row { display:flex; align-items:center; gap:var(--wm-space-12); padding:var(--wm-space-24) var(--wm-space-8); border-bottom:1px solid var(--line); }
 .library-skeleton-icon,.library-skeleton-line { background:var(--surface-soft,var(--soft)); border-radius:var(--wm-radius-8); }
 .library-skeleton-icon { width:var(--wm-space-48); height:var(--wm-space-48); }
@@ -71,10 +71,7 @@
 #page-content.library-page .library-toolbar { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
 #page-content.library-page .library-views[hidden] { display:none; }
 #resource-content .preview-image { max-width:100%; height:auto; }
-#page-content.library-page,#resource-content { scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
 @media(max-width:640px) { .weftmate-desktop[data-native-platform="win32"] .library-open .timeline-preview { top:var(--desktop-caption-height,var(--wm-space-44)); height:calc(100dvh - var(--desktop-caption-height,var(--wm-space-44))); } }
-
-.library-surface { scrollbar-width:auto; }
 .library-surface::-webkit-scrollbar { width:var(--wm-space-6); }
 .library-surface::-webkit-scrollbar-track { background:transparent; }
 .library-surface::-webkit-scrollbar-thumb { background:var(--line); border-radius:var(--wm-radius-6); }

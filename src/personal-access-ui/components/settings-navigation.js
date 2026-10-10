@@ -80,6 +80,10 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         if (value?.layers.some(layer => ['checking', 'available', 'downloading'].includes(layer.status))) renderSettingsUpdates.timer = setTimeout(() => { if (current()) void renderSettingsUpdates(); }, 1500);
     }
     function mountSettingsNavigation() {
+        for (const [id, name] of [['system-refresh', '刷新系统状态'], ['account-models-refresh', '刷新模型'], ['projects-refresh', '刷新项目'], ['browser-workspace-refresh', '刷新网页资料']]) {
+            const button = ui.byId(id); if (!button) continue;
+            button.className = 'icon-button'; button.replaceChildren(WeftIcons.create('sync', 18)); button.setAttribute('aria-label', name); button.title = name;
+        }
         const account = ui.byId('account-view');
         dialog = node('dialog', 'settings-dialog'); dialog.id = 'settings-dialog'; dialog.setAttribute('aria-label', '设置');
         const strip = node('button', 'settings-usage-strip'); strip.id = 'settings-usage-strip'; strip.type = 'button'; strip.setAttribute('aria-label', '用量详情'); strip.onclick = () => selectSettings('usage');
@@ -175,7 +179,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         for (const original of originals) if (original.parentNode === account) original.hidden = true;
         account.append(content); main.append(head, strip, picker); if (cloudNotice) main.append(cloudNotice); main.append(account); dialog.append(sidebar, main); document.body.append(dialog);
         registry = globalThis.WeftUiCore.settingsRegistry({
-            notifications: () => globalThis.WeftNotificationsView(core, panels.get('notifications')),
+            notifications: () => globalThis.WeftNotificationsView(core, panels.get('notifications'), {toast:ui.toast}),
             personalization: () => globalThis.WeftPersonalizationView(core, panels.get('personalization'), 'personalization'),
             assistant: () => globalThis.WeftPersonalizationView(core, panels.get('assistant'), 'assistant'),
             account: () => { ui.selectCloudSettings?.('account'); ui.paintCloudSettings?.(); },
