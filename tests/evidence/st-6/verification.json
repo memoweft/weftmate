@@ -1,0 +1,18 @@
+{
+  "realElectron": true,
+  "syntheticClock": true,
+  "checks": [
+    "all-six-category-modes-save",
+    "test-notification-native-delivery-sound-off",
+    "windows-notification-settings-deep-link",
+    "cross-midnight-dnd-approval-exception",
+    "task-and-reminder-suppressed",
+    "activity-explains-dnd",
+    "one-end-of-dnd-summary-no-replay",
+    "daily-proactive-cap-three-native-notices",
+    "narrow-keyboard-switch",
+    "mobile-web-390x844-sync-light-dark",
+    "android-ui-390x844-sync-light-dark"
+  ],
+  "errors": []
+}
