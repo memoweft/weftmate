@@ -4,6 +4,7 @@ import { mkdtemp, mkdir, writeFile, readFile, rm, access } from 'node:fs/promise
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { deflateSync } from 'node:zlib';
+import { execFileSync } from 'node:child_process';
 import { inspect, difference, pixels, retention, previousRun } from '../scripts/nightly/report.mjs';
 
 // Minimal non-interlaced 8-bit PNG, enough to verify decoded pixel comparisons.
@@ -62,5 +63,17 @@ test('baseline selects previous run, including a second run on the same date', a
     const old = join(root, '2026-10-10', '1000', 'gallery'), current = join(root, '2026-10-10', '1100', 'gallery');
     for (const dir of [old, current]) { await mkdir(dir, { recursive: true }); await writeFile(join(dir, 'manifest.json'), JSON.stringify({ records: [{ ...row, file: 'old.png' }] })); }
     assert.equal((await previousRun(root, current)).baselineDirectory, old);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+test('fresh gallery never fills occupied native cells with repository history', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'nightly-gallery-'));
+  try {
+    const outcomes = join(root, 'outcomes.json');
+    await writeFile(outcomes, JSON.stringify([{ platform: 'mac', scene: 'login', theme: 'light', status: 'failed', reason: '被占用，未拍', synthetic: true, commit, generatedAt: new Date(now).toISOString() }]));
+    execFileSync(process.execPath, ['scripts/review-gallery/build.mjs', '--out', root, '--fresh-only', '--outcomes', outcomes], { stdio: 'pipe' });
+    const manifest = JSON.parse(await readFile(join(root, 'manifest.json'), 'utf8'));
+    assert.ok(manifest.records.every(row => !row.file));
+    assert.equal(manifest.failures.length, 1); assert.equal(manifest.failures[0].reason, '被占用，未拍');
+    assert.ok((await readFile(join(root, 'index.html'), 'utf8')).includes('被占用，未拍'));
   } finally { await rm(root, { recursive: true, force: true }); }
 });

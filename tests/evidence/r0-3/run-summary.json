@@ -1,0 +1,929 @@
+{
+  "generatedAt": "2026-10-10T00:46:38.512Z",
+  "counts": {
+    "windows": {
+      "expected": 32,
+      "captured": 32,
+      "unavailable": 0
+    },
+    "mobile-web": {
+      "expected": 32,
+      "captured": 32,
+      "unavailable": 0
+    },
+    "android": {
+      "expected": 28,
+      "captured": 0,
+      "unavailable": 4
+    },
+    "iphone": {
+      "expected": 28,
+      "captured": 0,
+      "unavailable": 4
+    },
+    "mac": {
+      "expected": 28,
+      "captured": 0,
+      "unavailable": 4
+    },
+    "watch": {
+      "expected": 2,
+      "captured": 0,
+      "unavailable": 30
+    }
+  },
+  "threshold": 0.08,
+  "alerts": [
+    {
+      "cell": "android/onboarding/light",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "android/onboarding/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "iphone/onboarding/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "iphone/onboarding/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/onboarding/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/onboarding/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "android/login/light",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "android/login/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "iphone/login/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "iphone/login/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/login/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/login/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "android/sessions/light",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "android/sessions/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "iphone/sessions/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "iphone/sessions/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/sessions/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/sessions/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "android/conversation/light",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "android/conversation/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "iphone/conversation/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "iphone/conversation/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/conversation/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/conversation/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "android/composer-menu/light",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "android/composer-menu/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "iphone/composer-menu/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "iphone/composer-menu/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/composer-menu/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/composer-menu/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "android/composer-context/light",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "android/composer-context/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "iphone/composer-context/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "iphone/composer-context/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/composer-context/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/composer-context/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "android/approval/light",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "android/approval/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "iphone/approval/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "iphone/approval/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/approval/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/approval/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "watch/approval/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "watch/approval/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "android/question/light",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "android/question/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "iphone/question/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "iphone/question/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/question/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/question/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "android/outputs-sources/light",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "android/outputs-sources/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "iphone/outputs-sources/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "iphone/outputs-sources/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/outputs-sources/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/outputs-sources/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "android/memory/light",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "android/memory/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "iphone/memory/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "iphone/memory/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/memory/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/memory/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "android/appearance/light",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "android/appearance/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "iphone/appearance/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "iphone/appearance/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/appearance/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/appearance/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "android/general/light",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "android/general/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "iphone/general/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "iphone/general/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/general/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/general/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "android/usage/light",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "android/usage/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "iphone/usage/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "iphone/usage/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/usage/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/usage/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "android/session-menu/light",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "android/session-menu/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "iphone/session-menu/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "iphone/session-menu/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/session-menu/light",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "mac/session-menu/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "apple",
+      "kind": "skipped",
+      "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
+    },
+    {
+      "cell": "android",
+      "kind": "skipped",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    }
+  ],
+  "differences": [
+    {
+      "cell": "mobile-web/activity/dark",
+      "ratio": 0.0007868513792684409,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    },
+    {
+      "cell": "mobile-web/activity/light",
+      "ratio": 0.0007291286912139992,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    },
+    {
+      "cell": "windows/activity/dark",
+      "ratio": 0.00015625,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "windows/activity/light",
+      "ratio": 0.000153125,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "windows/question/light",
+      "ratio": 0.000020833333333333333,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "windows/question/dark",
+      "ratio": 0.000020833333333333333,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "mobile-web/question/light",
+      "ratio": 0.0000030380362133916637,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    },
+    {
+      "cell": "windows/onboarding/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "windows/onboarding/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "mobile-web/onboarding/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "mobile-web/onboarding/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    },
+    {
+      "cell": "windows/login/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "windows/login/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "mobile-web/login/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "mobile-web/login/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    },
+    {
+      "cell": "windows/sessions/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "windows/sessions/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "mobile-web/sessions/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "mobile-web/sessions/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    },
+    {
+      "cell": "windows/conversation/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "windows/conversation/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "mobile-web/conversation/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "mobile-web/conversation/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    },
+    {
+      "cell": "windows/composer-menu/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "windows/composer-menu/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "mobile-web/composer-menu/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "mobile-web/composer-menu/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    },
+    {
+      "cell": "windows/composer-context/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "windows/composer-context/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "mobile-web/composer-context/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "mobile-web/composer-context/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    },
+    {
+      "cell": "windows/approval/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "windows/approval/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "mobile-web/approval/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "mobile-web/approval/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    },
+    {
+      "cell": "mobile-web/question/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    },
+    {
+      "cell": "windows/outputs-sources/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "windows/outputs-sources/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "mobile-web/outputs-sources/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "mobile-web/outputs-sources/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    },
+    {
+      "cell": "windows/memory/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "windows/memory/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "mobile-web/memory/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    },
+    {
+      "cell": "mobile-web/memory/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    },
+    {
+      "cell": "windows/appearance/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "windows/appearance/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "mobile-web/appearance/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    },
+    {
+      "cell": "mobile-web/appearance/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    },
+    {
+      "cell": "windows/general/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "windows/general/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "mobile-web/general/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    },
+    {
+      "cell": "mobile-web/general/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    },
+    {
+      "cell": "windows/usage/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "windows/usage/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "mobile-web/usage/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    },
+    {
+      "cell": "mobile-web/usage/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    },
+    {
+      "cell": "windows/session-menu/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "windows/session-menu/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "mobile-web/session-menu/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    },
+    {
+      "cell": "mobile-web/session-menu/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    },
+    {
+      "cell": "windows/main-chat/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "windows/main-chat/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+    },
+    {
+      "cell": "mobile-web/main-chat/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    },
+    {
+      "cell": "mobile-web/main-chat/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+    }
+  ],
+  "phases": [
+    {
+      "name": "prepare",
+      "platforms": [],
+      "status": "passed",
+      "seconds": 6.184
+    },
+    {
+      "name": "windows",
+      "platforms": [
+        "windows"
+      ],
+      "status": "passed",
+      "seconds": 41.808
+    },
+    {
+      "name": "mobile-web",
+      "platforms": [
+        "mobile-web"
+      ],
+      "status": "passed",
+      "seconds": 60.443
+    },
+    {
+      "name": "apple",
+      "platforms": [
+        "mac",
+        "iphone",
+        "watch"
+      ],
+      "status": "skipped",
+      "reason": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）",
+      "seconds": 0.202
+    },
+    {
+      "name": "android",
+      "platforms": [
+        "android"
+      ],
+      "status": "skipped",
+      "reason": "被占用，未拍（已有 WeftMate 测试包）",
+      "seconds": 33.03
+    }
+  ],
+  "commit": "427fea6c6db12e2ab4cc63a7828b4ffe539858d6",
+  "startedAt": "2026-10-10T00:44:13.625Z",
+  "durationSeconds": 150.524,
+  "cleanup": {
+    "windows": {
+      "killed": [],
+      "count": 0
+    },
+    "android": {
+      "ownedEmulatorShutdown": true
+    },
+    "apple": null
+  },
+  "baseline": "previous local run",
+  "endToEndSeconds": 157.797,
+  "notification": {
+    "requestedAt": "2026-10-10T00:46:51.4221183Z",
+    "alerts": 88,
+    "channel": "Windows NotifyIcon balloon",
+    "supported": true
+  }
+}

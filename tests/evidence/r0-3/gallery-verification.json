@@ -1,0 +1,16 @@
+{
+  "generatedAt": "2026-10-10T00:47:32.399Z",
+  "syntheticCaptures": 64,
+  "failedCaptures": 0,
+  "failedEvidenceCells": 86,
+  "attemptedCaptures": 64,
+  "exceedsHalf": false,
+  "textAndMetadataScan": "passed",
+  "scanScope": "captured DOM text, password inputs, manifest and embedded HTML; historical device images manually reviewed, no OCR claim",
+  "checks": [
+    "1600/light: no overflow, all images decode, themes, keyboard enlargement",
+    "1600/dark: no overflow, all images decode, themes, keyboard enlargement",
+    "390/light: no overflow, all images decode, themes, keyboard enlargement",
+    "390/dark: no overflow, all images decode, themes, keyboard enlargement"
+  ]
+}
