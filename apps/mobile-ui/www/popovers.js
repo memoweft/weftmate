@@ -16,13 +16,17 @@
   function position(menu, trigger, { side = 'top', align = 'start' } = {}) {
     if (!menu || !trigger || menu.hidden) return;
     const viewport = window.visualViewport;
-    const left = (viewport?.offsetLeft || 0) + 8;
+    const shell = document.querySelector?.('#app, .assistant-shell');
+    const padding = shell && globalThis.getComputedStyle?.(shell);
+    const safe = Object.fromEntries(['Top','Right','Bottom','Left'].map(side =>
+      [side.toLowerCase(), parseFloat(padding?.[`padding${side}`]) || 0]));
+    const left = (viewport?.offsetLeft || 0) + safe.left + 8;
     const viewportTop = viewport?.offsetTop || 0;
     const captionBottom = document.documentElement.dataset.nativePlatform === 'win32'
       ? document.querySelector('.desktop-titlebar')?.getBoundingClientRect().bottom || 0 : 0;
-    const top = Math.max(viewportTop, captionBottom) + 8;
-    const right = left + (viewport?.width || window.innerWidth) - 16;
-    const bottom = viewportTop + (viewport?.height || window.innerHeight) - 8;
+    const top = Math.max(viewportTop + safe.top, captionBottom) + 8;
+    const right = (viewport?.offsetLeft || 0) + (viewport?.width || window.innerWidth) - safe.right - 8;
+    const bottom = viewportTop + (viewport?.height || window.innerHeight) - safe.bottom - 8;
     // The top layer escapes overflow and transformed ancestors without reparenting
     // controls (outside-click containment and keyboard handlers keep working).
     if (menu.showPopover) {

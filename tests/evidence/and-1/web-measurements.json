@@ -1,0 +1,62 @@
+[
+  {
+    "file": "web-390-light.png",
+    "width": 390,
+    "height": 844,
+    "theme": "light",
+    "themeColor": "#ffffff",
+    "surface": "#fff",
+    "viewport": "width=device-width,initial-scale=1,viewport-fit=cover",
+    "toolbarEvidence": false
+  },
+  {
+    "file": "web-360-light.png",
+    "width": 360,
+    "height": 780,
+    "theme": "light",
+    "themeColor": "#ffffff",
+    "surface": "#fff",
+    "viewport": "width=device-width,initial-scale=1,viewport-fit=cover",
+    "toolbarEvidence": false
+  },
+  {
+    "file": "web-480-light.png",
+    "width": 480,
+    "height": 800,
+    "theme": "light",
+    "themeColor": "#ffffff",
+    "surface": "#fff",
+    "viewport": "width=device-width,initial-scale=1,viewport-fit=cover",
+    "toolbarEvidence": false
+  },
+  {
+    "file": "web-390-dark.png",
+    "width": 390,
+    "height": 844,
+    "theme": "dark",
+    "themeColor": "#262724",
+    "surface": "#262724",
+    "viewport": "width=device-width,initial-scale=1,viewport-fit=cover",
+    "toolbarEvidence": false
+  },
+  {
+    "file": "web-360-dark.png",
+    "width": 360,
+    "height": 780,
+    "theme": "dark",
+    "themeColor": "#262724",
+    "surface": "#262724",
+    "viewport": "width=device-width,initial-scale=1,viewport-fit=cover",
+    "toolbarEvidence": false
+  },
+  {
+    "file": "web-480-dark.png",
+    "width": 480,
+    "height": 800,
+    "theme": "dark",
+    "themeColor": "#262724",
+    "surface": "#262724",
+    "viewport": "width=device-width,initial-scale=1,viewport-fit=cover",
+    "toolbarEvidence": false
+  }
+]
