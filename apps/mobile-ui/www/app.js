@@ -524,7 +524,7 @@ async function boot(){
     if(info.cloudApp){
       try{const appearance=await uiCore.mobileAppearance();if(typeof appearance.systemDark==='boolean')state.nativeSystemDark=appearance.systemDark;applyTheme(appearance.value)}catch{applyTheme('system')}
       await call('app.ready',{owner:state.owner||'',hasDraft:hasAnyDraft()});
-      await WeftMobileCloud.init();state.booted=true;if(info.launchActivityId){notificationActivityId=info.launchActivityId;page('activity');}return;
+      await WeftMobileCloud.init({restoreNativeSession:info.loggedIn&&info.authSource==='local'});state.booted=true;if(info.launchActivityId){notificationActivityId=info.launchActivityId;page('activity');}return;
     }
     showProfile({displayName:info.username||'本机个人空间'});
     // Restore the selected phone/new or host session before updateComposer can persist the
