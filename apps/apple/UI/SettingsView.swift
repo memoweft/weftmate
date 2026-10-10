@@ -10,6 +10,7 @@ struct SettingsView: View {
     @ObservedObject var model: AppleAppModel
     @StateObject private var settings: AppleSettingsModel
     @State private var search = ""
+    @State private var availableWidth: CGFloat = 1000
     @State private var phonePath: [AppleSettingsRoute]
     #if os(macOS)
     @Environment(\.dismissWindow) private var dismissWindow
@@ -31,10 +32,10 @@ struct SettingsView: View {
     }
     var body: some View {
         #if os(macOS)
-        GeometryReader { geometry in
-            if geometry.size.width < 720 {
+        Group {
+            if availableWidth < 720 {
                 VStack(spacing: AppleTokens.Space.p0) {
-                    TextField("搜索设置", text: $search).textFieldStyle(.roundedBorder).padding(AppleTokens.Space.p12)
+                    TextField("搜索设置", text: $search).weaveField().padding(AppleTokens.Space.p12)
                     Picker("分类", selection: selection) {
                         ForEach(categories) { Text($0.name).tag($0.id) }
                     }.padding(.horizontal, AppleTokens.Space.p20)
@@ -43,7 +44,7 @@ struct SettingsView: View {
             } else {
                 NavigationSplitView {
                     VStack(spacing: AppleTokens.Space.p12) {
-                        TextField("搜索设置", text: $search).textFieldStyle(.roundedBorder)
+                        TextField("搜索设置", text: $search).weaveField()
                             .accessibilityIdentifier("settingsSearch").padding(.horizontal, AppleTokens.Space.p12).padding(.top, AppleTokens.Space.p12)
                         List(selection: Binding<String?>(get: { model.settingsRoute.categoryID }, set: { if let id = $0 { model.settingsRoute = .init(categoryID: id) } })) {
                             ForEach(["设置", "助手", "此电脑", "关于"], id: \.self) { group in
@@ -62,6 +63,7 @@ struct SettingsView: View {
                 } detail: { detail(model.settingsRoute) }
             }
         }
+        .background(MacViewWidthObserver { availableWidth = $0 })
         .onExitCommand { dismissWindow(id: "settings") }
         .toolbar { Button { dismissWindow(id: "settings") } label: { WeftLabel("关闭设置", icon: "deny") }.keyboardShortcut(.cancelAction).accessibilityIdentifier("closeSettings") }
         .background(Weave.canvas).accessibilityIdentifier("settingsRoot")
@@ -265,16 +267,31 @@ private struct SettingsCategoryView: View {
             if settings.schedules.isEmpty && !settings.busy { Text("暂无提醒或定时任务").foregroundStyle(Weave.muted) }
             ForEach(settings.schedules, id: \.identity) { item in
                 Section {
-                    SettingsRow(item.text, (item.kind == "reminder" ? "提醒" : "任务") + " · " + item.timeZone) { Text(item.state == "paused" ? "已暂停" : item.state == "completed" ? "已完成" : "已安排") }
-                    if let next = item.nextRunAt { LabeledContent("下次运行", value: DeviceDateText.timestamp(next)) }
-                    HStack {
-                        Button(item.state == "paused" ? "恢复" : "暂停") { Task { await settings.schedule(item, action: item.state == "paused" ? .resume : .pause) } }.disabled(item.state == "completed")
-                        Button("立即运行") { Task { await settings.schedule(item, action: .run) } }
-                        Button("删除", role: .destructive) { deletingSchedule = item }
-                    }.buttonStyle(.borderless).disabled(settings.busy)
+                    SettingsRow(item.text, (item.kind == "reminder" ? "提醒" : "任务") + " · " + (TimeZone(identifier: item.timeZone)?.localizedName(for: .generic, locale: Locale(identifier: "zh_CN")) ?? "设备时区")) {
+                        HStack {
+                            Text(item.state == "paused" ? "已暂停" : item.state == "completed" ? "已完成" : "已安排")
+                            #if os(macOS)
+                            MacNativeMenuButton(label: "提醒操作", identifier: "scheduleActions." + item.identity) {
+                                let menu = NSMenu(); menu.autoenablesItems = false
+                                menu.addItem(MacSessionMenu.entry(item.state == "paused" ? "恢复" : "暂停", icon: item.state == "paused" ? "play" : "pause", enabled: !settings.busy && item.state != "completed", appearanceMode: app.appearanceMode) { Task { await settings.schedule(item, action: item.state == "paused" ? .resume : .pause) } })
+                                menu.addItem(MacSessionMenu.entry("立即运行", icon: "play", enabled: !settings.busy, appearanceMode: app.appearanceMode) { Task { await settings.schedule(item, action: .run) } })
+                                menu.addItem(MacSessionMenu.entry("删除", icon: "trash", enabled: !settings.busy, destructive: true, appearanceMode: app.appearanceMode) { deletingSchedule = item })
+                                return menu
+                            }.frame(width: AppleTokens.Space.p32, height: AppleTokens.Space.p28)
+                            #else
+                            Menu {
+                                Button { Task { await settings.schedule(item, action: item.state == "paused" ? .resume : .pause) } } label: { Label(item.state == "paused" ? "恢复" : "暂停", image: item.state == "paused" ? "wm-play" : "wm-pause") }.disabled(item.state == "completed")
+                                Button { Task { await settings.schedule(item, action: .run) } } label: { Label("立即运行", image: "wm-play") }
+                                Button(role: .destructive) { deletingSchedule = item } label: { Label("删除", image: "wm-trash") }
+                            } label: { WeftIcon("more").frame(minWidth: AppleTokens.Space.p44, minHeight: AppleTokens.Space.p44) }
+                                .disabled(settings.busy).accessibilityLabel("提醒操作").accessibilityIdentifier("scheduleActions." + item.identity)
+                            #endif
+                        }
+                    }
+                    if let next = item.nextRunAt { LabeledContent("下次运行", value: DeviceDateText.timestamp(next, timeZone: TimeZone(identifier: item.timeZone) ?? .current)) }
                 }
             }
-            Button("刷新提醒") { Task { await settings.refresh("schedules") } }.disabled(settings.busy)
+            Button { Task { await settings.refresh("schedules") } } label: { WeftIcon("sync") }.accessibilityLabel("刷新提醒").buttonStyle(.borderless).disabled(settings.busy)
         case "system":
             ForEach(HostService.allCases) { service in
                 SettingsRow(service.title, "电脑宿主报告的实际状态；重启可能中断当前任务。") {

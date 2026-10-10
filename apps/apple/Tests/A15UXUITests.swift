@@ -36,6 +36,10 @@ final class A15UXUITests: XCTestCase {
         app.launchArguments += ["--a10-ephemeral-credentials"]
         #endif
         app.launch(); defer { app.terminate() }
+        #if os(iOS)
+        let sideList = app.descendants(matching: .any).matching(identifier: "mainChat.sideList").firstMatch
+        XCTAssertTrue(sideList.waitForExistence(timeout: 30)); sideList.tap()
+        #endif
         let more = element(app,"projectMore." + project)
         try expect(more); XCTAssertTrue(more.label.contains("2")); keep(app,"recent-five",theme)
         XCTAssertFalse(element(app,"conversationRow." + ids[0]).exists)

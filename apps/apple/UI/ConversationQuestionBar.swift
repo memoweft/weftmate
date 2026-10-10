@@ -46,7 +46,7 @@ struct ConversationQuestionBar: View {
                         options(question, batch: batch, vertical: true)
                     }
                     TextField((question.options ?? []).isEmpty ? "写下回答" : "其他…", text: Binding(get: { draft(batch).custom[question.id] ?? "" }, set: { text in update(batch) { $0.write(text, question: question) } }), axis: .vertical)
-                        .lineLimit(1...3).textFieldStyle(.roundedBorder).focused($customFocused)
+                        .lineLimit(1...3).weaveField().focused($customFocused)
                         .accessibilityIdentifier("questionCustom." + question.id)
                         #if os(macOS)
                         .onKeyPress(.return) { .handled }

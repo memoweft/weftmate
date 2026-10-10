@@ -358,7 +358,7 @@ extension AppleAppModel {
         loadingAttachments.insert(key)
         defer { if accountEpoch == epoch { loadingAttachments.remove(key) } }
         do {
-            let prepared = try await Task.detached { () throws -> [ConversationAttachmentDraft] in
+            let prepared = try await Task.detached { @Sendable () throws -> [ConversationAttachmentDraft] in
                 var drafts: [ConversationAttachmentDraft] = []
                 do { for file in files { drafts.append(try .prepare(file: file)) }; return drafts }
                 catch { drafts.forEach { $0.removeTemporaryFiles() }; throw error }
@@ -1038,15 +1038,17 @@ final class AppleAppModel: ObservableObject {
                     running: old.running, sendAvailable: !archived && old.sendAvailable, originalModelLabel: old.originalModelLabel, archived: archived, pinned: old.pinned, unread: old.unread, groupId: old.groupId, projectId: old.projectId, projectName: old.projectName, projectNotice: old.projectNotice, taskAvailable: old.taskAvailable, hostId: old.hostId, updatedAt: old.updatedAt, chatId: old.chatId, chatKind: old.chatKind, chatContentRevision: old.chatContentRevision, temporaryState: old.temporaryState)
             }
             if selectedConversation?.id == conversation.id { selectedConversation = conversations.first { $0.id == conversation.id } }
-            if archived {
-                archiveUndo = conversation
+            if archived { archiveUndo = conversation }
+            else if archiveUndo?.id == conversation.id { archiveUndo = nil }
+            await refresh()
+            // Give the user the full undo interval after controls become enabled.
+            if archived, actionEpoch == epoch, archiveUndo?.id == conversation.id {
                 let undoToken = UUID(); archiveUndoToken = undoToken
                 DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
                     guard let self, actionEpoch == self.epoch, self.archiveUndoToken == undoToken else { return }
                     self.archiveUndo = nil
                 }
-            } else if archiveUndo?.id == conversation.id { archiveUndo = nil }
-            await refresh()
+            }
         } catch { if actionEpoch == epoch { lifecycleError = "归档状态未更新，请重试。" } }
     }
     func deleteConversation() async {

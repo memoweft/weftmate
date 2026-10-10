@@ -56,6 +56,9 @@ jobs:
       - name: Dependency compatibility smoke
         run: node .github/scripts/dependency-smoke.mjs
 
+      - name: Apple callback isolation (CRASH-1)
+        run: node --test tests/apple-callback-isolation.test.mjs
+
       - name: Typecheck
         run: npm run typecheck
 

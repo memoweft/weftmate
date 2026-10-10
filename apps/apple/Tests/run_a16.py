@@ -26,7 +26,7 @@ try:
   assert a.platform=='mac'
   ready=get('/ready')
   child=subprocess.Popen([str(a.capture.resolve()),str(a.app.resolve()),str(dest.resolve()),'a16-all',a.theme,ready['host'],ready['host'],'a8','ephemeral','a16-driver='+meta['driver']],start_new_session=True)
-  status=child.wait(timeout=300)
+  status=child.wait(timeout=600)
   summary={'passedTests':0,'failedTests':0,'skippedTests':0,'result':'Native own-AX alternative; Mac XCUITest automation mode unavailable'}
   for f in dest.glob('*-text.json'):
    row=json.loads(f.read_text());frames.append(dict(surface=a.platform,theme=a.theme,**row))

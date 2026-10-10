@@ -15,7 +15,11 @@ import WeftMateCore
 
 @MainActor enum A11MacReview {
     private static func step(_ text: String) { FileHandle.standardOutput.write(Data(("A11_STEP:" + text + "\n").utf8)) }
-    private static func press(_ id: String) async throws { try await A10MacReview.press(id); try await Task.sleep(for: .milliseconds(350)) }
+    private static func press(_ id: String) async throws {
+        for prefix in ["projectNewConversation.", "projectSettings."] where id.hasPrefix(prefix) {
+            try await A15MacReview.hover("projectToggle." + String(id.dropFirst(prefix.count)), card: false)
+        }
+        try await A10MacReview.press(id); try await Task.sleep(for: .milliseconds(350)) }
     private struct Failure: Error { let step: String }
     private static func until(_ message: String, _ condition: () -> Bool) async throws {
         for _ in 0..<150 { if condition() { return }; try await Task.sleep(for: .milliseconds(200)) }
@@ -87,14 +91,16 @@ import WeftMateCore
         try await A10MacReview.capture("project-sent")
         // Open the same native session menu used by the row and toolbar.
         step("move conversation")
-        app.sessionMenuCandidate = ordinary
-        _ = try await A10MacReview.wait("sessionAction.project")
-        try await A10MacReview.capture("move-project", identifier: "conversationDetail")
+        app.openedSessionID = ordinary.id
+        try await until("Ordinary conversation opened") { app.selectedConversation?.id == ordinary.id }
         menuObserver.menu = nil
-        try await press("sessionAction.project")
-        try await until("Native project submenu missing") { menuObserver.menu?.items.contains(where: { $0.title == target.name }) == true }
-        guard let menu = menuObserver.menu, let index = menu.items.firstIndex(where: { $0.title == target.name }) else { throw Failure(step: "Native project submenu item missing") }
-        menu.performActionForItem(at: index); menu.cancelTrackingWithoutAnimation()
+        try await press("conversationMenu")
+        try await until("Native project submenu missing") { menuObserver.menu?.items.contains(where: { $0.title == "移至项目" }) == true }
+        guard let rootMenu = menuObserver.menu, let item = rootMenu.items.first(where: { $0.title == "移至项目" }), let menu = item.submenu,
+              let index = menu.items.firstIndex(where: { $0.title == target.name }) else { throw Failure(step: "Native project submenu item missing") }
+        item.accessibilityPerformPress()
+        try await Task.sleep(for: .milliseconds(400)); A16MacReview.captureVisible("move-project")
+        menu.performActionForItem(at: index); menu.cancelTrackingWithoutAnimation(); rootMenu.cancelTrackingWithoutAnimation()
         try await Task.sleep(for: .milliseconds(350))
         try await until("Move did not change project binding") { app.conversations.first { $0.id == ordinary.id }?.projectId == target.id }
         app.openedSessionID = ordinary.id
