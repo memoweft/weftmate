@@ -1206,11 +1206,36 @@ Apple（苹果端）接线：新建入口发送 `/sessions/temporary`；侧栏/�
 | `system.update.available` | `normal` | 现有更新状态确实提供新版本；不暴露更新源或增加安装授权 |
 | `system.reconnected` | `silent` | 已观察就绪的宿主重启后再次就绪，或运行时不可用后恢复；首次安装启动不伪造恢复事件，不凭单个会话读取失败断言电脑离线 |
 
-`notification={level,type}` 的 `type` 是 ST-6（通知设置）的按类型开关接缝；ST-6未实施前维持现有系统通知行为。等级不是权限，重要不跳过未来勿扰或主动打扰限制。桌面用现有原生通知，每条动态ID最多一份系统通知，内容修订不重复弹出；点击带对应 `activityId` 打开动态并聚焦条目。通知去重仅持久保存账户与条目ID，无标题 / 正文。删除增量关闭对应已显示通知。S3a后续消费同一ID、等级与类型接安卓后台通知，约15分钟以上延迟的边界仍按D41说明；不得创建第二个提醒调度器。
+`notification` 保留 `level,type`，ST-6 追加宿主决定，详见下方 9.8.1。客户端收到 `notify:false` 不派发系统通知。等级不是权限，重要不跳过未来勿扰或主动打扰限制。桌面用现有原生通知，每条动态ID最多一份系统通知，内容修订不重复弹出；点击带对应 `activityId` 打开动态并聚焦条目。通知去重仅持久保存账户与条目ID，无标题 / 正文。删除增量关闭对应已显示通知。S3a后续消费同一ID、等级与类型接安卓后台通知，约15分钟以上延迟的边界仍按D41说明；不得创建第二个提醒调度器。
 
 宿主可信接缝 `service.recordActivity(ownerId,{key,type,at?,title,summary,source?,actions?,level?})` 只允许已登记的记忆与系统类型，`key` 使用上游稳定事件 / 回执ID；相同事实与正文不会重复插入。它不暴露为公共HTTP（网络请求）写入接口。MEM-D / MEM-3 / S3a使用该接缝提供真实状态，不能提交临时正文或未发生的成功。
 
 删除会话 / D33遗忘沿 `eraseChatCopies` 清动态摘要、动作、原生观察摘要与待完成投影；无正文墓碑和抑制水位防止旧通知、旧回执、迟到观察或重启重建正文。账户删除带走整个账户存储。临时 / 混合临时来源在持久化前只保留泛化标题、原来源ID和安全动作：完成摘要固定“临时对话中的任务已完成”，失败 / 停止也只描述状态；临时审批 / 问题不带对象、问题正文或工具参数。此规则同时约束系统通知。
+
+### 9.8.1 通知设置与宿主决定（ST-6，D19 / D41）
+
+`personalCapabilities.notificationSettings:1` 表示认识本节账户设置；`activityNotification:1` 保持兼容。既有账号缺设置时读默认值，首次 PATCH（局部更新）写入；沿 ST-1 的同一账户存储、认证、串行提交与逐字段最后写入，不另建云端设置库。GET（读取）要求 `sessions:read`；写入要求 `account:manage` 与 CSRF（跨站请求伪造防护），不接受 ownerId。不同设备读写同一账户，设备通知权限仍由本机系统管理。
+
+| 方法 / 路径 | 输入 | 返回 |
+|---|---|---|
+| GET `/settings/notifications` | 无查询参数 | `{settings,updatedAt:null|string,synced:true,timeZone}`；账户时区复用 `/settings/usage.timeZone` |
+| PATCH `/settings/notifications` | 只发送变更字段，至少一项 | 同 GET；未知字段、错误类型 / 时间 / 选项 400 `INVALID_REQUEST` |
+| POST `/settings/notifications/test` | `{}` | 同 GET，追加 `activityId`；生成 `system.notification.test` 动态，经原生通知通道发送；明确的测试绕过类型、勿扰与每日额度，仍遵守全局声音开关；不是 OS（操作系统）送达或权限成功回执 |
+
+`settings` 类型字段为 `approval,question,task,reminder,memory,memoryReport,companion,system`，值均为 `sound|notify|activity`，对应「通知 + 声音 / 只通知 / 只进动态不通知」。前四项默认 `sound`，后三类及 memory 默认 `notify`。记忆只对异常 `memory.paused` 通知；`memory.submission.completed` 仍为静默。`memoryReport` 已留字段，MEM-3 前控件置灰；`companion` 已留字段，M4 前不显示。`task` 覆盖 completed / failed / stopped；`reminder` 覆盖提醒与定时任务到点。系统更新默认开启。
+
+其他字段：`dndEnabled:false,dndStart:"22:00",dndEnd:"08:00",approvalException:true,dailyLimit:5,soundEnabled:true`。时间为严格 `HH:mm`；含开始、不含结束，可跨午夜，相同时全天勿扰。`approvalException` 只放行 `approval.pending`，不放行待回答；仍遵守该类开关。`dailyLimit` 可为 0 / 3 / 5 / 10 / null（不限）。声音使用各平台系统通知声音和系统音量，无自带音频。
+
+宿主在首次提交事实时持久写 `notification={level,type,initiatedBy,notify,sound,decision,reason,decidedAt,test?}`：
+
+- `initiatedBy:user|assistant`：任务结果、审批、本人设定的提醒默认 user；记忆 / 系统状态 / 精灵默认 assistant。可信 `recordActivity` 和提醒提供方可明确传入 `initiatedBy`；S3a / Apple（苹果端）不得按文字猜测。
+- `decision:notify|silent|activity` 分别表示通知并响铃、通知不响铃、仅动态；`notify` / `sound` 是平台直接使用的布尔决定。
+- `reason:allowed|silent|type_disabled|dnd|daily_limit|test`。先判断原分级静默，再按类型、勿扰、每日上限决定。重要不绕过开关；审批例外仅绕过勿扰。动态展示「因勿扰未提醒」「已达每日主动提醒上限」「已设为只进动态」。
+- 上限只计通过宿主规则的 assistant 通知，按账户时区自然日重置；本人发起的结果与审批不计。额度是宿主授权的提醒次数，不能保证设备权限关闭时实际显示；多端消费同一决定不重复计数。删除代次与原动态来源清理照旧。
+- 重复观察、读取 / 已读、内容修订与重启保留首次决定与额度；待办处理后改为静默。设置保存影响之后的新事实，不补弹旧条目。
+- 勿扰压下的条目ID进入账户持久汇总队列，无正文副本；离开时段（或关闭勿扰）由既有动态观察轮次生成一条 `system.dnd.summary`，内容「勿扰期间有 N 件事」。删掉的动态不计入，原条目保持 `notify:false`，不会逐条补响。汇总包含本人任务结果 / 提醒时 initiatedBy=user，不计主动额度；纯主动事件汇总 initiatedBy=assistant，仍按全局声音与当日上限决定（0条时仅动态），防止汇总绕过主动上限。汇总是时段结束回执，不受更新通知类型开关影响。宿主重启后仍只汇总一次。
+
+桌面主进程、S3a 安卓后台与 Apple 本地通知消费同一 `Activity.notification`（转发载荷也保留全部决定字段），以账户 + activityId 去重；sound=false 时使用静默系统通知，notify=false 时只保留动态。Windows（微软桌面系统）页提供系统权限检查、`ms-settings:notifications` 深链和手动开启说明；未知权限不得声称已允许。Android（安卓）业务桥新增本节两条精确路径，需要新壳版本，由编排统一递增；本包不改版本号。S3a 的后台约15分钟以上延迟与 D41 边界不变；Apple D38 的 App（应用）连接 + 本地通知仍不代表 APNs（苹果推送服务）已接入。
 
 ## 11. 记忆摄取健康与历史补整理（MEM-D）
 
