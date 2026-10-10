@@ -1,0 +1,72 @@
+{
+  "syntheticOnly": true,
+  "realPersonalHTTPHost": true,
+  "historyCount": 10000,
+  "compiledDSH": false,
+  "operations": [
+    {
+      "kind": "send",
+      "sessionId": "session-ab96eac1-3087-4f95-800e-aa089fe7afcd",
+      "text": "A8_WAIT 合成主对话任务",
+      "mode": "queue",
+      "receiptId": "7963f78e-23c6-464a-b633-80932e2e517c"
+    },
+    {
+      "kind": "started",
+      "sessionId": "session-ab96eac1-3087-4f95-800e-aa089fe7afcd",
+      "text": "A8_WAIT 合成主对话任务",
+      "receiptId": "7963f78e-23c6-464a-b633-80932e2e517c"
+    },
+    {
+      "kind": "send",
+      "sessionId": "session-efb16d79-9405-48fc-b50b-730cd5a22aea",
+      "text": "A8_WAIT 合成旁聊任务 completed",
+      "mode": "steer",
+      "receiptId": "66c72fdb-fddd-4ed4-88cc-b38a100740d5"
+    },
+    {
+      "kind": "started",
+      "sessionId": "session-efb16d79-9405-48fc-b50b-730cd5a22aea",
+      "text": "A8_WAIT 合成旁聊任务 completed",
+      "receiptId": "66c72fdb-fddd-4ed4-88cc-b38a100740d5"
+    },
+    {
+      "kind": "send",
+      "sessionId": "session-da95487a-5998-4975-acee-43bce90d36e3",
+      "text": "A8_WAIT 合成旁聊任务 error",
+      "mode": "steer",
+      "receiptId": "86b01826-f544-4125-b272-92aff1476d73"
+    },
+    {
+      "kind": "started",
+      "sessionId": "session-da95487a-5998-4975-acee-43bce90d36e3",
+      "text": "A8_WAIT 合成旁聊任务 error",
+      "receiptId": "86b01826-f544-4125-b272-92aff1476d73"
+    },
+    {
+      "kind": "send",
+      "sessionId": "session-db25091a-8c78-4d7c-9a80-460ce3193fc1",
+      "text": "A8_WAIT 合成旁聊任务 aborted",
+      "mode": "steer",
+      "receiptId": "f0e78540-96eb-48ff-befb-b98cb1818027"
+    },
+    {
+      "kind": "started",
+      "sessionId": "session-db25091a-8c78-4d7c-9a80-460ce3193fc1",
+      "text": "A8_WAIT 合成旁聊任务 aborted",
+      "receiptId": "f0e78540-96eb-48ff-befb-b98cb1818027"
+    }
+  ],
+  "approvals": [
+    {
+      "id": "5df2bc36-a44d-41b9-a3cc-b855118470c4",
+      "resolved": false
+    },
+    {
+      "id": "df72c0e4-bb72-40c3-8561-fafe93c3daba",
+      "resolved": false
+    }
+  ],
+  "metrics": [],
+  "requests": []
+}

@@ -1,0 +1,5 @@
+{
+  "passed": false,
+  "phase": "Full native flow and scrolling finished; review completion was retired with the SwiftUI view task",
+  "fix": "Keep the own-app review in a retained unstructured MainActor task"
+}

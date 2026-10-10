@@ -1,0 +1,5 @@
+{
+  "passed": false,
+  "phase": "Completion report serialization/exit did not complete",
+  "fix": "Use typed Codable metrics and exit from retained own-app runner after flushed report"
+}

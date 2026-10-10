@@ -342,11 +342,12 @@ public struct SharedHistoryPage: Equatable, Sendable {
     public let events: [SharedHistoryEvent]
     public let nextSeq: Int
     public let hasMore: Bool
+    public var cacheAllowed: Bool? = nil
     public var messages: [ChatMessage] { events.compactMap { $0.chatMessage(sessionID: sessionId) } }
     public static func decode(_ data: Data, sessionID: String, afterSeq: Int, limit: Int = 100) throws -> Self {
         try SharedValidation.require(SharedValidation.id(sessionID) && afterSeq >= -1 && afterSeq <= SharedValidation.maximumSequence && (1...100).contains(limit))
         guard data.count <= 1_048_576 else { throw APIFailure.responseTooLarge }
-        struct Wire: Decodable { let events: [SharedHistoryEvent]; let nextSeq: Int; let hasMore: Bool }
+        struct Wire: Decodable { let events: [SharedHistoryEvent]; let nextSeq: Int; let hasMore: Bool; let cacheAllowed: Bool? }
         let wire: Wire
         do { wire = try JSONDecoder().decode(Wire.self, from: data) } catch { throw APIFailure.invalidResponse }
         try SharedValidation.require(wire.events.count <= limit && wire.nextSeq >= afterSeq &&
@@ -356,7 +357,7 @@ public struct SharedHistoryPage: Equatable, Sendable {
             try event.validate()
             try SharedValidation.require(event.seq > prior && event.seq <= wire.nextSeq); prior = event.seq
         }
-        return .init(sessionId: sessionID, afterSeq: afterSeq, events: wire.events, nextSeq: wire.nextSeq, hasMore: wire.hasMore)
+        return .init(sessionId: sessionID, afterSeq: afterSeq, events: wire.events, nextSeq: wire.nextSeq, hasMore: wire.hasMore, cacheAllowed: wire.cacheAllowed)
     }
 }
 
