@@ -11,6 +11,16 @@ class BusinessRouteUnitTest {
         assertFalse(validBusinessPath("/personal/v1/settings/notifications?ownerId=other"))
         assertFalse(validBusinessPath("/personal/v1/settings/notifications/test/raw"))
     }
+    @Test fun logicalChatHistoryAndCommandsUseTheirNativeAccountRoutes() {
+        assertTrue(validBusinessPath("/personal/v1/chats/main"))
+        assertTrue(validBusinessPath("/personal/v1/chats/chat-one/events?around=event-one&limit=200"))
+        assertTrue(validBusinessPath("/personal/v1/chats/chat-one/search?q=%E7%BA%B8%E8%88%B9"))
+        assertTrue(validBusinessPath("/personal/v1/chats/chat-one/search?q=%E7%BA%B8%E8%88%B9&cursor=" + "a".repeat(800)))
+        assertTrue(validBusinessPath("/personal/v1/chats/chat-one/locate?date=2026-10-03"))
+        assertTrue(validBusinessPath("/personal/v1/commands"))
+        for(path in listOf("/personal/v1/chats/../events", "/personal/v1/chats/chat%2Fone/events", "/personal/v1/chats/chat-one/credentials"))
+            assertFalse(path, validBusinessPath(path))
+    }
     @Test fun personalizationUsesOnlyExactSettingsRoutes() {
         assertTrue(validBusinessPath("/personal/v1/settings/personalization"))
         assertTrue(validBusinessPath("/personal/v1/settings/personalization/style"))
