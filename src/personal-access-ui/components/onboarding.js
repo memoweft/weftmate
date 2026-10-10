@@ -151,7 +151,7 @@ globalThis.WeftUiComponents.factories.onboarding = (core, ui) => {
   function memory(token) {
     const list = node('dl', 'onboarding-memory'); for (const [label, text] of copy.memoryItems) list.append(node('dt', '', label), node('dd', '', text)); content.append(list);
     const health = node('p', 'muted', copy.healthLoading); health.setAttribute('role', 'status'); content.append(health);
-    void core.accessApi('/memory/status').then(value => { if (current(token)) health.textContent = core.memoryHealthText(value); }).catch(() => { if (current(token)) health.textContent = copy.healthError; });
+    void core.accessApi('/memory/status').then(value => { if (current(token)) health.textContent = copy.healthLabel(core.memoryHealthText(value)); }).catch(() => { if (current(token)) health.textContent = copy.healthError; });
     void core.accessApi('/memory/backfill').then(value => { if (current(token) && value.turnCount > 0) content.append(node('p', 'muted', copy.backfillHint), button(copy.backfill, () => { conceal(); ui.openSettings('memory'); })); }).catch(() => {});
   }
   function phone(token) {
