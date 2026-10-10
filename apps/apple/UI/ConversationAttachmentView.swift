@@ -128,8 +128,8 @@ struct ConversationAttachmentPreview: View {
         }
         .padding(AppleTokens.Space.p16).background(Weave.surface)
         .fileExporter(isPresented: $exporting, item: file.map { AttachmentExport(file: $0) },
-            contentTypes: [.data], defaultFilename: name, onCompletion: { result in
-                if case .failure = result { exportError = "文件未保存，请重试。" }
+            contentTypes: [.data], defaultFilename: name, onCompletion: { @Sendable result in
+                Task { @MainActor in if case .failure = result { exportError = "文件未保存，请重试。" } }
             }, onCancellation: {})
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("attachmentPreviewPanel")
@@ -158,13 +158,13 @@ private struct AttachmentContentPreview: View {
         }
         .task(id: file) {
             if contentType.hasPrefix("image/") {
-                image = await Task.detached {
+                image = await Task.detached { @Sendable [file] in
                     guard let source = CGImageSourceCreateWithURL(file as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary) else { return nil as CGImage? }
                     return CGImageSourceCreateThumbnailAtIndex(source, 0, [kCGImageSourceCreateThumbnailFromImageAlways: true,
                         kCGImageSourceCreateThumbnailWithTransform: true, kCGImageSourceThumbnailMaxPixelSize: 2048] as CFDictionary)
                 }.value
             } else if contentType.hasPrefix("text/") || AttachmentLimits.textTypes.contains(contentType) {
-                let preview = await Task.detached { () -> (String?, Bool) in
+                let preview = await Task.detached { @Sendable [file] () -> (String?, Bool) in
                     guard let handle = try? FileHandle(forReadingFrom: file) else { return (nil, false) }
                     defer { try? handle.close() }
                     guard var data = try? handle.read(upToCount: 131_073) else { return (nil, false) }

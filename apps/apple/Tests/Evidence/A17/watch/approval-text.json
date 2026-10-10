@@ -1,0 +1,6 @@
+{
+  "surface": "watch",
+  "theme": "light",
+  "scene": "approval",
+  "text": "WeftMate\nWeftMate\nWeftMate\n要运行命令：npm run release\n批准\nwm-allow-small\n批准\n拒绝\nwm-deny-small\n拒绝\n要运行命令：npm run verify\n批准\nwm-allow-small\n批准\n拒绝\nwm-deny-small\n拒绝\n健康\n刷新\nWeftMate\nWeftMate"
+}

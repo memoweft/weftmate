@@ -35,7 +35,7 @@ struct MainChatEventPosition: NSViewRepresentable {
                 scroll = parent as? NSScrollView
                 if let clip = scroll?.contentView {
                     clip.postsBoundsChangedNotifications = true
-                    observation = NotificationCenter.default.addObserver(forName: NSView.boundsDidChangeNotification, object: clip, queue: .main) { [weak self] _ in
+                    observation = NotificationCenter.default.addObserver(forName: NSView.boundsDidChangeNotification, object: clip, queue: .main) { @Sendable [weak self] _ in
                         Task { @MainActor [weak self] in self?.schedule() }
                     }
                 }
@@ -79,7 +79,7 @@ struct MainChatEventPosition: UIViewRepresentable {
                 var parent = superview
                 while parent != nil, !(parent is UIScrollView) { parent = parent?.superview }
                 scroll = parent as? UIScrollView
-                observation = scroll?.observe(\.contentOffset, options: [.new]) { [weak self] _, _ in
+                observation = scroll?.observe(\.contentOffset, options: [.new]) { @Sendable [weak self] _, _ in
                     Task { @MainActor [weak self] in self?.schedule() }
                 }
             }

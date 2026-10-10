@@ -14,13 +14,22 @@ import WeftMateCore
     private static func until(_ message: String,_ condition: () -> Bool) async throws {
         for _ in 0..<150 { if condition() { return }; try await Task.sleep(for:.milliseconds(100)) }; throw Failure(step:message)
     }
-    private static func press(_ id: String) async throws { try await A10MacReview.press(id); try await Task.sleep(for:.milliseconds(250)) }
+    private static func press(_ id: String) async throws {
+        if id.hasPrefix("projectNewConversation.") { try await hover("projectToggle." + String(id.dropFirst("projectNewConversation.".count)), card: false) }
+        try await A10MacReview.press(id); try await Task.sleep(for:.milliseconds(250)) }
     private static func capture(_ name: String,root: String = "conversationList") async throws {
         _ = try await A10MacReview.wait(root)
         try await Task.sleep(for: .milliseconds(500))
         typealias Images = @convention(c) (CGRect, CFArray, UInt32) -> Unmanaged<CGImage>?
         guard let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "CGWindowListCreateImageFromArray") else { throw Failure(step: "Own window capture unavailable") }
-        var ids = NSApplication.shared.windows.filter(\.isVisible).map { UnsafeRawPointer(bitPattern: $0.windowNumber) }
+        let info = CGWindowListCopyWindowInfo(.optionOnScreenOnly, kCGNullWindowID) as? [[String: Any]] ?? []
+        var ids: [UnsafeRawPointer?] = info.filter { ($0[kCGWindowOwnerPID as String] as? Int) == Int(getpid()) }
+            .map { ($0[kCGWindowNumber as String] as? Int).flatMap(UnsafeRawPointer.init(bitPattern:)) }
+        if name == "hover-details" {
+            for window in NSApplication.shared.windows where window.isVisible {
+                FileHandle.standardOutput.write(Data(("A13_NATIVE:window=" + String(describing: type(of: window)) + " frame=" + NSStringFromRect(window.frame) + "\n").utf8))
+            }
+        }
         let array = CFArrayCreate(kCFAllocatorDefault, &ids, ids.count, nil)!
         guard let image = unsafeBitCast(symbol, to: Images.self)(.null, array, 1)?.takeRetainedValue(), let png = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) else { throw Failure(step: "Own window image unavailable") }
         FileHandle.standardOutput.write(Data(("A10_CAPTURE:" + name + ":" + png.base64EncodedString() + "\n").utf8))
@@ -39,13 +48,20 @@ import WeftMateCore
         guard let menu=observer.menu, let index=menu.items.firstIndex(where:{$0.title==title}) else { throw Failure(step:"Native menu item") }
         menu.performActionForItem(at:index);menu.cancelTrackingWithoutAnimation();try await Task.sleep(for:.milliseconds(400))
     }
-    private static func hover(_ id: String) async throws {
+    static func hover(_ id: String, card: Bool = true) async throws {
         let node = try await A10MacReview.wait(id), selector = NSSelectorFromString("accessibilityFrame")
         guard node.responds(to: selector), let window = NSApplication.shared.windows.first(where: { $0.isVisible && A10MacReview.find(id, in: $0) != nil }), let content = window.contentView else { throw Failure(step: "Native row hover frame") }
         typealias Frame = @convention(c) (AnyObject, Selector) -> CGRect
         let rect = unsafeBitCast(node.method(for: selector), to: Frame.self)(node, selector)
         let point = window.convertPoint(fromScreen: CGPoint(x: rect.midX, y: rect.midY))
         let responder = window.firstResponder
+        func exitRegions(_ view: NSView) {
+            if let region = view as? SessionHoverRegion.Region,
+               let event = NSEvent.enterExitEvent(with: .mouseExited, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber, context: nil, eventNumber: 0, trackingNumber: 0, userData: nil) { region.mouseExited(with: event) }
+            for child in view.subviews { exitRegions(child) }
+        }
+        exitRegions(content)
+        try await Task.sleep(for: .milliseconds(100))
         func visit(_ view: NSView) {
             let local = view.convert(point, from: nil)
             for area in view.trackingAreas where (area.options.contains(.inVisibleRect) ? view.bounds : area.rect).contains(local) {
@@ -55,7 +71,7 @@ import WeftMateCore
         }
         visit(content)
         try await Task.sleep(for: .milliseconds(650))
-        _ = try await A10MacReview.wait("sessionHoverDetails")
+        if card { _ = try await A10MacReview.wait("sessionHoverDetails") }
         guard window.firstResponder === responder else { throw Failure(step: "Hover stole keyboard focus") }
     }
     static func run(_ app: AppleAppModel,openSettings: () -> Void) async throws {
@@ -63,7 +79,7 @@ import WeftMateCore
         NSApplication.shared.setActivationPolicy(.regular);NSApplication.shared.activate(ignoringOtherApps:true)
         _ = try await A10MacReview.wait("weftmateRoot")
         for window in NSApplication.shared.windows where window.isVisible && A10MacReview.find("weftmateRoot", in: window) != nil {
-            window.orderFrontRegardless(); window.makeKeyAndOrderFront(nil)
+            window.setContentSize(NSSize(width: 1080, height: 760)); window.orderFrontRegardless(); window.makeKeyAndOrderFront(nil)
         }
         NSApplication.shared.activate(ignoringOtherApps: true)
         try await Task.sleep(for: .milliseconds(500))
@@ -71,6 +87,7 @@ import WeftMateCore
         let projectIDs=ready["projectIDs"] as! [String]
         guard let p=app.projects.first(where:{$0.id==project}),app.projectRows(p).count==5, !app.projectRows(p).contains(where:{$0.id==projectIDs[0]}) else { throw Failure(step:"Default recent five") }
         _=try await A10MacReview.wait("projectMore."+project);try await capture("recent-five")
+        try await hover("projectToggle." + project, card: false); try await capture("project-hover")
         try await press("projectMore."+project)
         guard app.projectRows(p).count==7 else { throw Failure(step:"Project more rows") }
         try await capture("project-expanded")
@@ -80,7 +97,7 @@ import WeftMateCore
         try await press("sessionPin."+row.id)
         try await until("Pin acknowledgement") { app.conversations.first(where:{$0.id==row.id})?.pinned==true }
         try await hover("conversationRow." + row.id)
-        try await press("sessionArchive."+row.id);_ = try await A10MacReview.wait("undoArchive");try await capture("archive-undo")
+        try await press("sessionArchive."+row.id);_ = try await A10MacReview.wait("undoArchive");try await until("Archive acknowledgement settled") { !app.lifecycleBusy && app.archiveUndo != nil };try await capture("archive-undo")
         try await press("undoArchive");try await until("Archive restored") { app.conversations.first(where:{$0.id==row.id})?.archived==false }
         func leave(_ view: NSView) {
             if let region = view as? SessionHoverRegion.Region, let window = region.window, let event = NSEvent.enterExitEvent(with: .mouseExited, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber, context: nil, eventNumber: 0, trackingNumber: 0, userData: nil) { region.mouseExited(with: event) }

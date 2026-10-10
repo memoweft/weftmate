@@ -29,7 +29,7 @@ struct WeftMateMacApp: App {
         Window("WeftMate", id: "main") {
             WeftMateRootView(model: model)
                 .environmentObject(updates)
-                .frame(minWidth: 780, minHeight: 540)
+                .frame(minWidth: 480, minHeight: 540)
         }
         .defaultSize(width: 1080, height: 760)
         .commands {

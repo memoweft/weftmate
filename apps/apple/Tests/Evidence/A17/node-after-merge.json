@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "tests": 17,
+  "failed": 0,
+  "skipped": 0,
+  "callbackSites": 49,
+  "callbackFailures": 0,
+  "tokensGeneratedCheck": true,
+  "operationNamesGeneratedCheck": true,
+  "files": [
+    "tests/apple-callback-isolation.test.mjs",
+    "tests/apple-ui-copy.test.ts",
+    "tests/design-tokens.test.ts",
+    "tests/ui-copy-consistency.test.ts"
+  ],
+  "mergedMain": "36f44a267ce3d57b6e4006f9305213be48746cc5"
+}

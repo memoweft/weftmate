@@ -242,7 +242,7 @@ protocol PublicManifestFetching: Sendable {
 }
 
 private final class PublicRedirectRefuser: NSObject, URLSessionTaskDelegate, Sendable {
-    func urlSession(_ session: URLSession, task: URLSessionTask,
+    nonisolated func urlSession(_ session: URLSession, task: URLSessionTask,
                     willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest,
                     completionHandler: @escaping @Sendable (URLRequest?) -> Void) {
         completionHandler(nil)

@@ -37,8 +37,8 @@ struct ProjectMoreRows: View {
         let count = app.allProjectRows(project, query: search).count
         if search.isEmpty, count > 5 {
             Button { app.toggleProjectRows(project.id, query: search) } label: {
-                Text(app.projectExpanded(project.id) ? "收起" : "更多（\(count - 5)）")
-            }.buttonStyle(.plain).foregroundStyle(Weave.muted)
+                WeftLabel(app.projectExpanded(project.id) ? "收起" : "更多（\(count - 5)）", icon: app.projectExpanded(project.id) ? "chevron" : "more", size: AppleTokens.Space.p16)
+            }.buttonStyle(SessionMenuRowStyle()).foregroundStyle(Weave.muted)
                 .accessibilityValue(app.projectExpanded(project.id) ? "已展开" : "已收起")
                 .accessibilityIdentifier("projectMore." + project.id)
         }
@@ -69,15 +69,16 @@ struct MacAccountMenu: View {
                     AccountUsageBar(app: app)
                     Divider()
                     Button { settings("general") } label: { WeftLabel("设置", icon: "settings") }.keyboardShortcut(",", modifiers: .command)
+                    Button { settings("memory") } label: { WeftLabel("记忆", icon: "memory") }.accessibilityIdentifier("memoryNavigation")
                     Button { settings("usage") } label: { WeftLabel("用量详情", icon: "chart") }
                     Button { settings("about") } label: { WeftLabel("帮助 / 关于", icon: "info") }
                     Button { showing = false; logout = true } label: { WeftLabel("退出登录", icon: "logout") }
-                }.padding(AppleTokens.Space.p16).frame(maxWidth: .infinity, alignment: .leading).buttonStyle(.plain)
+                }.padding(AppleTokens.Space.p16).frame(maxWidth: .infinity, alignment: .leading).buttonStyle(SessionMenuRowStyle())
                     .fixedSize(horizontal: false, vertical: true)
                     .background(Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r16))
                     .overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r16).strokeBorder(Weave.line))
-                    .padding(.horizontal, AppleTokens.Space.p12).offset(y: -AppleTokens.Space.p64)
-                    .focusable().focused($menuFocused).focusSection()
+                    .padding(.horizontal, AppleTokens.Space.p8).offset(y: -AppleTokens.Space.p48)
+                    .focusable().focusEffectDisabled().focused($menuFocused).focusSection()
                     .onAppear { menuFocused = true }.onExitCommand { showing = false }
                     .accessibilityElement(children: .contain).accessibilityIdentifier("macAccountMenuPanel") }
             }.zIndex(showing ? 1 : 0)

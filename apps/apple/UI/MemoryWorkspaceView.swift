@@ -98,7 +98,7 @@ struct MemoryWorkspaceView: View {
             .onChange(of: model.kind) { _, _ in Task { await model.reload() } }
             HStack {
                 TextField("搜索记忆", text: $model.query)
-                    .textFieldStyle(.roundedBorder).onSubmit { Task { await model.reload() } }
+                    .weaveField().onSubmit { Task { await model.reload() } }
                     .accessibilityIdentifier("memorySearchField")
                 Button("搜索") { Task { await model.reload() } }
                     .buttonStyle(OutlineActionStyle()).disabled(model.loading).accessibilityIdentifier("memorySearchButton")

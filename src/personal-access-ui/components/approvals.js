@@ -45,6 +45,7 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
     function renderConversationApprovals() {
         const context = core.approvalContext(), bar = ui.byId('approval-bar');
         if (!bar) return;
+        if (globalThis.WeftQuestionBar?.retainInteraction(bar, renderConversationApprovals)) return;
         const rows = core.approvalContextCurrent(context) ? [...core.conversationApprovals.entries.values()]
             .filter(entry => entry.row.sessionId === context.sessionId && core.approvalSource(entry.row) && entry.row.status === 'pending')
             .sort((a, b) => a.row.createdAt.localeCompare(b.row.createdAt)) : [];
@@ -59,8 +60,15 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
         const entry = rows[0], row = entry.row, marker = core.approvalMarker(context, row);
         const operation = core.conversationApprovals.operations.get(row.approvalId);
         const notice = entry.notice || (core.conversationTasks.entries.get(row.taskId)?.notice ? '原任务暂时无法核对，请重新核对答复。' : '');
-        const signature = JSON.stringify([context, row, notice, entry.authoritative, marker, operation, rows.length]);
+        const identity = Object.fromEntries(['ownerId','identity','deviceId','source','sessionId','conversationId'].map(key => [key, context[key]]));
+        const signature = (globalThis.WeftQuestionBar?.signatureOf || JSON.stringify)([identity, row, notice, entry.authoritative, marker, operation, rows.length]);
         if (bar.dataset.signature === signature) return;
+        if (operation && bar.dataset.approvalId === row.approvalId) {
+            for (const button of bar.querySelectorAll('button')) button.disabled = true;
+            const status = bar.querySelector('.approval-status'); if (status) { status.textContent = '正在提交本次决定…'; status.hidden = false; }
+            return;
+        }
+        const actionContext = () => { const fresh = core.approvalContext(); return ['ownerId','identity','deviceId','source','sessionId','conversationId'].every(key => fresh[key] === context[key]) && core.approvalContextCurrent(fresh) ? fresh : null; };
         const sameApproval = bar.dataset.approvalId === row.approvalId;
         const expanded = bar.querySelector('details')?.open === true && bar.dataset.approvalId === row.approvalId;
         bar.dataset.signature = signature; bar.dataset.approvalId = row.approvalId;
@@ -81,13 +89,13 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
             const button = ui.element('button', `button ${outcome === 'allowed-once' ? 'primary' : 'secondary'} small`, label); button.type = 'button';
             button.dataset.conversationApprovalAction = outcome;
             button.disabled = !!operation || !entry.authoritative || !!notice || !!marker && (marker.outcome !== outcome || (marker.scope ?? 'once') !== 'once');
-            button.addEventListener('click', () => { if (core.approvalContextCurrent(context)) void core.submitApproval(context, row, outcome); }); actions.append(button);
+            button.addEventListener('click', () => { const fresh = actionContext(); if (fresh) void core.submitApproval(fresh, row, outcome); }); actions.append(button);
         }
         if (row.riskCategories?.length) {
             const always = ui.element('button', 'button quiet small', '总是允许此类'); always.type = 'button';
             always.dataset.conversationApprovalAction = 'allowed-always';
             always.disabled = !!operation || !entry.authoritative || !!notice || !!marker && (marker.outcome !== 'allowed-once' || marker.scope !== 'conversation-category');
-            always.addEventListener('click', () => { if (core.approvalContextCurrent(context)) void core.submitApproval(context, row, 'allowed-once', 'conversation-category'); }); details.append(always);
+            always.addEventListener('click', () => { const fresh = actionContext(); if (fresh) void core.submitApproval(fresh, row, 'allowed-once', 'conversation-category'); }); details.append(always);
         }
         if (notice || marker) {
             const check = ui.element('button', 'button quiet small', '重新核对答复'); check.type = 'button'; check.disabled = !!operation;

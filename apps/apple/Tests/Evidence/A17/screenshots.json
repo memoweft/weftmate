@@ -1,0 +1,2225 @@
+{
+  "originalUnmodifiedPNGs": true,
+  "screenshots": [
+    {
+      "file": "consistency/mac-dark/answered.png",
+      "sha256": "63e4937ee957b6f111f3cf360d9c2e4ec51b1508afb7b49637b86f0b97506227",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "consistency/mac-dark/approval-priority.png",
+      "sha256": "576b32da0324ffd9c2f1ec0c17d381bef512b2c8d06bc1c1c00c553255a78297",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "consistency/mac-dark/chinese-detail.png",
+      "sha256": "cc5fb2a1ed33a65b9e53f79c601e23fde7810d8d3d645ab3598e58877e422dd8",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "consistency/mac-dark/chinese-sources.png",
+      "sha256": "9deda192405c92c538a1522fe14a1a8f97b0d9cb774aaa090660db2d5ef5155b",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "consistency/mac-dark/description.png",
+      "sha256": "4db973abf31c22b92365699436e16bd413aca9050204a8a2b38ae56917c77e88",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "consistency/mac-dark/free-answer.png",
+      "sha256": "27ea5de56f9773894c4ef26de3eae2ae945db338661a4ca194e201858abf4212",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "consistency/mac-dark/multiple-choice.png",
+      "sha256": "b4d13541ee7be0f194f557ab4b07461c913c5548fb675e2ceeb95f1e65def560",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "consistency/mac-dark/other-input-return.png",
+      "sha256": "15490c4261f4b560edcda7a96c8fa94a5d8cabcb5674347ed3c3b6ad96076cf3",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "consistency/mac-dark/retry-reconciled.png",
+      "sha256": "3af912d606135bb9b26c4bfba8501e7e680a92106eed55d1ea6c264477abacd3",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "consistency/mac-dark/single-choice.png",
+      "sha256": "f965ef4ef47fe9397020fcca90139766cc6d99738ef8107ff18fef6264e74f85",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "consistency/mac-dark/usage-month-picker.png",
+      "sha256": "7a62e331f79594359bfd462e3535d509a3d84c8dc1e5d764b27b80b1552ea916",
+      "width": 1126,
+      "height": 950
+    },
+    {
+      "file": "consistency/mac-dark/usage-month-selected.png",
+      "sha256": "fb8f658eb64dd94ea8b5fbc85d06409a5f2d1b0d2d639791352ae85a695a39a0",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "consistency/mac-dark/usage-month.png",
+      "sha256": "4e77c8435adf0763828445416f019b109458c47c4fb02ddd5359e99ade53c301",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "consistency/mac-light/answered.png",
+      "sha256": "795b0c8a43d7e9493ee46c67e9099602e0c3ef87f5b4fe020447aa26091a389c",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "consistency/mac-light/approval-priority.png",
+      "sha256": "efdb4e412a0f976eb1172de9351c3d2a8f36c534aedce2b9fab831b854f0b97a",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "consistency/mac-light/chinese-detail.png",
+      "sha256": "fafbe081da4479fab40aba6f6af853a4aa1a659bead74ba2e7da86fc8c6ebdfc",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "consistency/mac-light/chinese-sources.png",
+      "sha256": "ba5c493e785970fd9925f9d75d9d3be07ee4138f278919ca2837da472dcda921",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "consistency/mac-light/description.png",
+      "sha256": "8eac002645d7135dadc3e9c0387a3a97f22739a73b46cdfd20787549553a1a70",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "consistency/mac-light/free-answer.png",
+      "sha256": "28a653363dbbfae934af183306be76bf7012cd08ef020ac94028a34ef0d14b02",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "consistency/mac-light/multiple-choice.png",
+      "sha256": "11d5eaf06a13f6fbe6f1a7096bd22e0222c43ffc951534c35a4b178e4b4b4478",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "consistency/mac-light/other-input-return.png",
+      "sha256": "5dd9b071af11f4b4427b575bc514050a344074209c38758261e1ead85e8ebfef",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "consistency/mac-light/retry-reconciled.png",
+      "sha256": "329ccff30e8ffc48b263163701adb429f3e4deaaf71b76b17d9e85ee1c523fe1",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "consistency/mac-light/single-choice.png",
+      "sha256": "f97ce1afb99c3000b493fef429405e35e789efbe1e741c43b1c25557791bb544",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "consistency/mac-light/usage-month-picker.png",
+      "sha256": "50f7a8347ccc875b324079a745e22ee082bef34dc9f0f4fffb65d4b8dace155a",
+      "width": 1126,
+      "height": 950
+    },
+    {
+      "file": "consistency/mac-light/usage-month-selected.png",
+      "sha256": "69b8bb9227f1aa4283844c62e03df3e65c64357a0119c49e1130a575ad96ca42",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "consistency/mac-light/usage-month.png",
+      "sha256": "67f0fdeffe27d4f0d73f42b9be9bec0c12b78cc135fab9b2fc0314d938f4592b",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "gallery/mac-dark/a7-mac-conversation-forget-dark-20261010T081514Z.png",
+      "sha256": "41778a17f58c421caa3fd4429f5fdd51e2d22808558925399f6297e13e7316c3",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "gallery/mac-dark/a7-mac-conversation-forget-dark-20261010T084803Z.png",
+      "sha256": "fd539248314c097b675d17375713fa497980e900b72c060aa4ddcc3d48590084",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "gallery/mac-dark/a7-mac-memory-forget-dark-20261010T081500Z.png",
+      "sha256": "282cf82b90257bb1db2f8d5267d00cf8f2a3d2d9e13fb9a97ecdd6ed1efa5d42",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "gallery/mac-dark/a7-mac-memory-forget-dark-20261010T084749Z.png",
+      "sha256": "a9c26155a84bc625e2006f7ff06957e23fc05aaf3d3eb5e9dcf01dd0210f0ed9",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "gallery/mac-dark/review-mac-login-dark-20261010T081431Z.png",
+      "sha256": "19557d27c85458b38edc203812e5fd6651090d6f7179c41ce9f427bfe418f198",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "gallery/mac-dark/review-mac-login-dark-20261010T084724Z.png",
+      "sha256": "19557d27c85458b38edc203812e5fd6651090d6f7179c41ce9f427bfe418f198",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "gallery/mac-dark/review-mac-memory-dark-20261010T081445Z.png",
+      "sha256": "7f5d110c00d039fe63ab8f466c9c0cbc8949e020a04a0a0ae0783fc637b76ddd",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "gallery/mac-dark/review-mac-memory-dark-20261010T084736Z.png",
+      "sha256": "3730ec4754fedd46d46cae93fc18b595680d062940f3e0887250e989c23d900b",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "gallery/mac-light/a7-mac-conversation-forget-light-20261010T081416Z.png",
+      "sha256": "63dcdf0395a0bbcd09128d50bbd546d4812b48350e0cb30363b0e5129d1d4823",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "gallery/mac-light/a7-mac-conversation-forget-light-20261010T084711Z.png",
+      "sha256": "31218af74b534d413ca2a55c7aff4797aec461f7eb6eab9acd89ed3b6a2e03ec",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "gallery/mac-light/a7-mac-memory-forget-light-20261010T081402Z.png",
+      "sha256": "0394882f6f6590198f31e3435a5df29156fb86b5e41315eea3e660ff556c8e23",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "gallery/mac-light/a7-mac-memory-forget-light-20261010T084657Z.png",
+      "sha256": "63a0101d70cd523344814b4a9b35bd6f0167eeba6f2ca9594b88609afc64f2d8",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "gallery/mac-light/review-mac-login-light-20261010T081330Z.png",
+      "sha256": "e60b14040044afe27e1f7a7eaa9ee09e9546e85f7e2f3ce2ad9b52cc9560e5df",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "gallery/mac-light/review-mac-login-light-20261010T084632Z.png",
+      "sha256": "e60b14040044afe27e1f7a7eaa9ee09e9546e85f7e2f3ce2ad9b52cc9560e5df",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "gallery/mac-light/review-mac-memory-light-20261010T081345Z.png",
+      "sha256": "a7c2a8c8847e6d6c9f14284a99bf2bae133aa01a3987a5218a58c571e1d56d36",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "gallery/mac-light/review-mac-memory-light-20261010T084644Z.png",
+      "sha256": "fc90d2a8b2907b30e1a9ac1a79b926051477e7d745746844ac4d7086af2ae588",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "large-text/no-model-dark.png",
+      "sha256": "647cd7ab170f4a74875e45447f1ae12b53fa524feb6f936e1b33da957a69385c",
+      "width": 750,
+      "height": 1334
+    },
+    {
+      "file": "large-text/no-model-light.png",
+      "sha256": "03bb0a12ecd8408c01d99cc22b1c4d8a836c5c963e68de4b23563e701c3fca15",
+      "width": 750,
+      "height": 1334
+    },
+    {
+      "file": "mac-launches/launch-1.png",
+      "sha256": "5ed16c5cd2dc8414474dae048fd056465ec0a83e40a0ee5874e8343c65023116",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "mac-launches/launch-30.png",
+      "sha256": "e9a523c258ce4aaabc59a91672a55d10eb8089cb2a1b09953d9ddb074a244cf3",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "main-final/iphone-dark/a16-approval-dark.png",
+      "sha256": "8829b9f0db096dba77159ebc797dc3f23c8ed6c18f7fd078eefa168188ca2bbe",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-dark/a16-assistant-message-menu-dark.png",
+      "sha256": "51215054017986c4fd0b6158dee8d239dd9363813c02119417f3912155646006",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-dark/a16-composer-menu-dark.png",
+      "sha256": "37f88a10098c2deaf36a26f295ddf4b12ced42950330cbef7b195f0bd3b24d4f",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-dark/a16-date-located-dark.png",
+      "sha256": "708e368102d82c2dab5d3bfcd20823ba2825f313ed511fc3b84c0ef290ccc112",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-dark/a16-expanded-day-dark.png",
+      "sha256": "4f26ce1ec8780119c017047bf66bae59e86b91757db0c4d8ba371ca76ac59e45",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-dark/a16-export-preview-dark.png",
+      "sha256": "c7d18afcbe40dde6aecaee5211de503d8392500d30b6e0ee83e85a9bc2533c13",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-dark/a16-export-save-panel-dark.png",
+      "sha256": "ffa7354e948f8b2d6d01513f4d9cf8d40bc40d25dcdad4093debb0bc16d97086",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-dark/a16-first-screen-dark.png",
+      "sha256": "11e8b0db3e2972f22aa70ae698260fa43852a7d6763b4bfa2cc47f12e6b7204d",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-dark/a16-native-date-picker-dark.png",
+      "sha256": "3af021ae8ece51c5b10b091a2b051f02e91c75208e09ff92808b4ae70fc4fd90",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-dark/a16-resources-dark.png",
+      "sha256": "3050c5fa6bc93cb94d555c3790c14f447375eac2e1009342126267f275e1d371",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-dark/a16-result-opened-dark.png",
+      "sha256": "69159ac0f20d5eede842bea821c6b72a4e01b0579cc62d3d79f6a8c7ee8063a4",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-dark/a16-returned-source-dark.png",
+      "sha256": "a919d5bd2f1e3161e8164dda17406e28f0f9ee0062004e5c95c5b05a9e9223f0",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-dark/a16-search-first-dark.png",
+      "sha256": "c8a1d2601ff1e648575b74244dcbf6435c55b457e39325d7ee04309090119fc7",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-dark/a16-search-next-dark.png",
+      "sha256": "86d979b73e886958d73a49c25896611737b57dd89d2d8c4e2936ed8d42581354",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-dark/a16-sent-dark.png",
+      "sha256": "a9f1b88d8bd6528c9e246eb2825badb9611eef7e0ff8d7cadaa5dc363813fbee",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-dark/a16-side-source-dark.png",
+      "sha256": "b89d6c256aca57b1bb6d9c0bdfef7d4480fb0ab71c0a27e254a7469ef057bd33",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-dark/a16-temporary-dark.png",
+      "sha256": "2a08e7cd84ba2ab35c2fcecfe1374d026e26822fd66e91856c4ce1eede50e075",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-dark/a16-temporary-expired-dark.png",
+      "sha256": "6d108f3bd16cd3ed6ef5a59e8a25d1431feddd1afb1f43498aaa3b7ed7056f3b",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-dark/a16-temporary-expiry-dark.png",
+      "sha256": "f6770ffbd12ff012efb2bb03aab5bb7b07be186a4faf813ff15920077a1d6f54",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-dark/a16-temporary-menu-dark.png",
+      "sha256": "6f685f7e934f899a93667b28ceb92e4d18e2dc835f2d9b4e122feb174cd5994d",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-dark/a16-temporary-recall-off-dark.png",
+      "sha256": "500f80a82fb3cd8fefb04f4a298a6897bf2e712f1ac5cbfb5404449d614885ab",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-dark/a16-user-message-menu-dark.png",
+      "sha256": "435e8130be4745e6e4162eb34ba4e77756e08aa433579bfc6a6b7c29b8d98f0c",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-light/a16-approval-light.png",
+      "sha256": "5e1d418557d9fd90451e4134e506e40fe975c495ae5fa14976235939f25f4719",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-light/a16-assistant-message-menu-light.png",
+      "sha256": "dbf535bd1758842c51b066f387fd9ded2cae19168d204c8242dc2d91e307175a",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-light/a16-composer-menu-light.png",
+      "sha256": "643ab54401fcc5a3f3cc01a87415ce29bf1eec50a3144c49485e195f888058e6",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-light/a16-date-located-light.png",
+      "sha256": "7afe6fc11951d8f14e865af0e8ef8bba8a405faeadb08804446f6d28fc362cfd",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-light/a16-expanded-day-light.png",
+      "sha256": "beecad2e03f3362de02c6d46c2b19f37568dfad88aaa32397e174a47c4e92889",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-light/a16-export-preview-light.png",
+      "sha256": "30210635bd20f9dffa00b90568d5c097d4ca9ff50e2951effe9e99be6c816943",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-light/a16-export-save-panel-light.png",
+      "sha256": "2ee79c1bff65fe011a9f2092e88530e3655819601b34ec03bb77a0e3f0993ced",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-light/a16-first-screen-light.png",
+      "sha256": "6eb216898da985c9242a473b01d772e5b4c7a613a8c38cad01a8b2f4865287a6",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-light/a16-native-date-picker-light.png",
+      "sha256": "22ed3c369fa3d69f94ad4a1b4e86f61f20c390ce9fb774a360fb8b039c501693",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-light/a16-resources-light.png",
+      "sha256": "833760d3fdf095ce5b6057c850dd009061e4a8410aab8b4bd2e0c953a13eab6e",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-light/a16-result-opened-light.png",
+      "sha256": "0b55693ed61492ece3ee990d81a8f2fd191aeb2f69eb5816bd2643f882b70756",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-light/a16-returned-source-light.png",
+      "sha256": "e8f5555f8587fd36abf34b46bd7c8a17be92e841138356c6ef5cc783876954c7",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-light/a16-search-first-light.png",
+      "sha256": "c20b6b96a044ff6024525133667e46f7a4d717409cc2e5ddf67806de3e025e31",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-light/a16-search-next-light.png",
+      "sha256": "c487e7bd021d410345d2f06c0ac3627beeafb0aa751da77de0cfdd23fb4e7074",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-light/a16-sent-light.png",
+      "sha256": "31dc3368f5e304c1f4f18cc25d0a5b6274546aa0184658c8dbb1cae1a80cd4e4",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-light/a16-side-source-light.png",
+      "sha256": "c7853b7dfb1554e875ed8c3dff206a3e288d221728cceab30b216efc4bbcaf4a",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-light/a16-temporary-expired-light.png",
+      "sha256": "2d16412017b12d8c708366d86a7935fd6f39b87bc52c5987f9f55448bde38e61",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-light/a16-temporary-expiry-light.png",
+      "sha256": "d57cb168bfe789fd022e0f9ff5e7e114d2eb4c3316707417336bd2a5aae4242a",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-light/a16-temporary-light.png",
+      "sha256": "dbef66ac75b5f521605f34597f4c53025ab8a43bc725f29fa3b656e64c6e8df4",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-light/a16-temporary-menu-light.png",
+      "sha256": "48f26a99712762a27f7f0fbf754d2fd7cc4520653d1d72e15696594d4180b828",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-light/a16-temporary-recall-off-light.png",
+      "sha256": "d3e7a3d71c4ae134cd8d817f9111465173623515f86f5c30a72e782b8daefa83",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/iphone-light/a16-user-message-menu-light.png",
+      "sha256": "991a5ad4dc0cc0e7df934ca9180e0492d2847cebe21221ce5525ccb3b88d6bbc",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "main-final/mac-dark/approval.png",
+      "sha256": "9c1fa710b4a53b82b2ec5cc503c6b3a1b6f2bc0302c6830cb33da7924ed51872",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/assistant-hover.png",
+      "sha256": "8e9776e25d7988031713798a1b5735e255c0ad4b1559de21cf8300ffc85fc52c",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/assistant-message-menu.png",
+      "sha256": "73d73149cf0ebdd18ab150f457956dfea089ccd6c8afb864e397b69a1d2945ae",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/composer-menu.png",
+      "sha256": "f70e0ce2681d113a3e053b6a3343d9f71cf931fed41a19ed442ca7babdbaf4c3",
+      "width": 480,
+      "height": 884
+    },
+    {
+      "file": "main-final/mac-dark/date-located.png",
+      "sha256": "6de4a58ea3f711624bebbc1f2b4f0490a5e906f475c47a7d6565412a77dce6b6",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/delete-confirmation.png",
+      "sha256": "69ed1d04840545900e453e006c94c01ad204b301bedeb5e33e193f38502c2380",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/expanded-day.png",
+      "sha256": "689dade784a653bde41f3e8d891970ae70b3e883919029d3d98371137dd43457",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/export-preview.png",
+      "sha256": "5f8599b9d59175e8db029ee1f1018e44815f6e1baeed0800289f1b564d641271",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/first-screen.png",
+      "sha256": "ddc8903a3d20d76455c025403fde28fbc34e8f1bb9765527c961ab370d2bb890",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/move-group-menu.png",
+      "sha256": "aa9998024bae8fddcd584f4a506f46540028bf90a572456dc93eadabf07041cd",
+      "width": 675,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/move-project-menu.png",
+      "sha256": "40f9915d33f69e69286d12e53fafadf78feaaebb858d372896732d39c33bad70",
+      "width": 643,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/narrow-sidebar.png",
+      "sha256": "932fc144fbd9c5d3fc89c9d5a54b310b41a67b73e5db4ed74b712931d5b504e0",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/narrow-window.png",
+      "sha256": "33b2b8a0ade0adba130731dc7cc78acf081437569e7f8a9a07b7d7013c336b39",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/native-date-picker.png",
+      "sha256": "b0e9c399288319efa0e135ffac5563350664f03971bbf55fdaf2a5be71c520c1",
+      "width": 806,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/resources.png",
+      "sha256": "55765434d0eea9c3b4f4e1893cd37136e967e21362bae9d23115297268c3ce23",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/result-opened.png",
+      "sha256": "c1366af0a973e3a4f65e5ecf663180988eeacf81008ee369dddc244a41a680e2",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/returned-source.png",
+      "sha256": "ed74519afc72870bbc9f8e0abc0916fadde2358f53323f40bcefe1d5b1128b62",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/search-first.png",
+      "sha256": "7409557d3d8be0c490cc1493b7f2f57102778bb8e26ba1896d3b928c2b0f9087",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/search-next.png",
+      "sha256": "b623d5955b6ab5a210b5e055a97c44f21cedbcd3475139202cb29a5386db1429",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/sent.png",
+      "sha256": "e7fc226aec3cb39140979e969822f0fe79cae37437ed7f18c4a03a8359edd2aa",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/side-source.png",
+      "sha256": "6be99084b64829396a80b2fc81d23126f31618707c530ce8bedcb00d7de2bd80",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/temporary-expiry.png",
+      "sha256": "a6502257c91d8480b9dd52bf776635614b387d2098ea01be5ba710407e1aedf3",
+      "width": 663,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/temporary-menu.png",
+      "sha256": "d027080de645b44449055ac73682d99d1e7b1b363ce48820cd252611022914ba",
+      "width": 564,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/temporary-seven-days.png",
+      "sha256": "ef6235ec0764435e9f613c059263d16957069d64993a0c392940d7571df07cd6",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/temporary.png",
+      "sha256": "f0836d7e2503c843a2b676a3ba1da9da36d126c9153973e6cc7d351f7e37538e",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/user-hover.png",
+      "sha256": "3ea7e0861a1fef68e0a27850621de402ea0ace6348ded0a07256a00a189eecf6",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-dark/user-message-menu.png",
+      "sha256": "1e1680c91602ea9d9c11d28ed74b03ae941abb10d1b866683f36c486c63e0749",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/approval.png",
+      "sha256": "2cf4918a93f2c633e83730a142d6c59d7965fa69dcddc2b9c9f22827de8cd128",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/assistant-hover.png",
+      "sha256": "da2e96412786d4cd96f8b1186079b5cdde1c241f23fad8a67541391cffea22e6",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/assistant-message-menu.png",
+      "sha256": "26b5aa3083a09983f7dc3b88383990ab56cda0dc39d40483973f4dd26fdce5a6",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/composer-menu.png",
+      "sha256": "f6a767737d826811469264363bdabb6cd8587968ad6ada4fe915168d86bde76d",
+      "width": 480,
+      "height": 884
+    },
+    {
+      "file": "main-final/mac-light/date-located.png",
+      "sha256": "a5b55361a0c03a0f9b3ea68ccc6e759a2264be0606bebc363f85952fa59de777",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/delete-confirmation.png",
+      "sha256": "dd2fe9fbc32f28f66a382e13c8f19b8d14873171d165b9e37fc4d0f9814ca723",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/expanded-day.png",
+      "sha256": "ebf43a8f2cbea087d5dfc32ddfbfb4de5f10ca9e3ebd948663b7174284e40238",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/export-preview.png",
+      "sha256": "528fdd1326698d5da6fed06d9a1406f16e422cebf9d152dee0a59ae40cbe8874",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/first-screen.png",
+      "sha256": "271744446dcca62b190eef26feafac179c3bb338452f997257a99f288a27c7a3",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/move-group-menu.png",
+      "sha256": "c8c736d5a27d53c97115e24cc8c48ba9c123af6ed044027454fad3bcddbef17f",
+      "width": 675,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/move-project-menu.png",
+      "sha256": "a578f183f8197cf7f9ed8efd2e3af427624244932a91cc94506d332944df060f",
+      "width": 643,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/narrow-sidebar.png",
+      "sha256": "b0fbde6bd30c3007e7542bf30a64d9d400bccceb36eb6ee076ad7af489952fb9",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/narrow-window.png",
+      "sha256": "778f28861e97714539b8615f665a9d964bc85a50020972b98a465ccea31a2063",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/native-date-picker.png",
+      "sha256": "74f5249b4c36229fbfab78e776af436b0074e2a5456404bee7735f1ef7ed264e",
+      "width": 806,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/resources.png",
+      "sha256": "cb280f4960caf55770d41530b0b72a369daa644a4db8f710f3dfb8a0ae957e96",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/result-opened.png",
+      "sha256": "b4624870040d581bef7e92a6c808773213c92907ff10d1743adc4e5aea570f61",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/returned-source.png",
+      "sha256": "8d34ded7771691ff7d38bea965ab97053b5bb2f5e7cc1ae216e24c8134f24ab8",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/search-first.png",
+      "sha256": "1114d67346ab5df5a921eee639ba4a5838a9f68579d73a42d3f330314672aa5a",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/search-next.png",
+      "sha256": "28a510d5ec431e6d3aeb65038cc7f118bb878609fdbcce3a6f39fb983ba0942f",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/sent.png",
+      "sha256": "74aad3e52558b5367879d4ea0de9897e8f78220e4c12d2e7008232a9d09eabbd",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/side-source.png",
+      "sha256": "b4fb091b9e22fd2e1fa0106ed78ab8fc282109060b7c3d7fe73ec85ad0f811d0",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/temporary-expiry.png",
+      "sha256": "b8cc66ce02af360196b9850d95755fdce27ae343c663ca395cb94d484daa342c",
+      "width": 663,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/temporary-menu.png",
+      "sha256": "7fa98c508f7daab79ee581aeb222edeaf95ba541323380f62f0d0ada800a38c0",
+      "width": 564,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/temporary-seven-days.png",
+      "sha256": "10b6576c18ce5045accc2be5c9db4f4cc664dcaf5224fd05234df84f508f5a49",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/temporary.png",
+      "sha256": "d68c6af705742d168785059217a833086d03d45cfe0b6406adad4a0e133cd0e7",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/user-hover.png",
+      "sha256": "27c642e7a567c4628c67cf8127fcead7103e5c348a6a70e7e481cac4a7006657",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "main-final/mac-light/user-message-menu.png",
+      "sha256": "b1411902818a61199d4196c9d934d43546f2e31d1e9b178faffde35e7da198ca",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "menu-final/review-mac-session-menu-light-20261010T060800Z.png",
+      "sha256": "3332174dd9977b007e41990c4eea31172559f0376f8985398bce9cf22cf9fd2d",
+      "width": 804,
+      "height": 640
+    },
+    {
+      "file": "menu-policy-light/iphone-light/a16-temporary-expiry-light.png",
+      "sha256": "d57cb168bfe789fd022e0f9ff5e7e114d2eb4c3316707417336bd2a5aae4242a",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "menu-policy-light/iphone-light/a16-temporary-menu-light.png",
+      "sha256": "48f26a99712762a27f7f0fbf754d2fd7cc4520653d1d72e15696594d4180b828",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "menus/iphone-dark/a7-iphone-archived-dark-20261010T083615Z.png",
+      "sha256": "d7612b9e4ff1c7162a516406b610d3fef49d9daba2ef5c5e7925d09dc21da92a",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "menus/iphone-dark/a7-iphone-archived-menu-dark-20261010T083615Z.png",
+      "sha256": "474b4d9d385b0baec2c495996007563c7e7ad299ac097a72f784f14dbf28e3eb",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "menus/iphone-dark/a7-iphone-archived-read-only-dark-20261010T083615Z.png",
+      "sha256": "e5defeb14af2a7e914e25d9cee0455215d31b69d23073c82ab07f1c9975211af",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "menus/iphone-dark/a7-iphone-conversation-forget-dark-20261010T083615Z.png",
+      "sha256": "7b0f59cbde8f1406f1c44e8b4ae762c33479a42ee479eceb8d8ea986c466175a",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "menus/iphone-dark/a7-iphone-memory-forget-dark-20261010T083615Z.png",
+      "sha256": "82b1f581ee95aa47f53b913b5398bbfb13083d354f330ce85154918d01b04596",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "menus/iphone-dark/a7-iphone-swipe-actions-expanded-dark-20261010T083615Z.png",
+      "sha256": "6ef8fb215ddf1455f5272f0f51e6a1c428aa54a92148963d3ec7f4af5aa19038",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "menus/iphone-dark/review-iphone-session-menu-dark-20261010T083615Z.png",
+      "sha256": "f8bace3b4e90a528248f42761a22f210dd3a1a293242b452086c48f51c5a9df0",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "menus/iphone-light/a7-iphone-archived-light-20261010T082955Z.png",
+      "sha256": "f52d306d35a0db096f93f3a1f129506823581d1c2161ec6bf56b32c1358a408c",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "menus/iphone-light/a7-iphone-archived-menu-light-20261010T082955Z.png",
+      "sha256": "44719837603b3d6eae855d22fabb525c6dc869090d4e7368799d92a87c7eb0f0",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "menus/iphone-light/a7-iphone-archived-read-only-light-20261010T082955Z.png",
+      "sha256": "fcd6c73713e655e2d66627d31f0178ca2035e747b029cc12009c45e15a99a00a",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "menus/iphone-light/a7-iphone-conversation-forget-light-20261010T082955Z.png",
+      "sha256": "cd19ecef9516f52ed3bd1f93f7112fc16dc3a5cb7356dfce606554ccba71d6c0",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "menus/iphone-light/a7-iphone-memory-forget-light-20261010T082955Z.png",
+      "sha256": "24d664752cf269f0e0680c8d23cc0a06cb57da85278e9c6bfe4c3c7ca06baf03",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "menus/iphone-light/a7-iphone-swipe-actions-expanded-light-20261010T082955Z.png",
+      "sha256": "c5afea3878ab47ad4477e8b61718b39407aedded801486fec458c18633e76d99",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "menus/iphone-light/review-iphone-session-menu-light-20261010T082955Z.png",
+      "sha256": "a1ce0226ce99ec65eb36211caa08e188bc83c35b98600a6ba6ab793865988326",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "offline/iphone-dark/a14-iphone-forgotten.png",
+      "sha256": "42e0ca46a2848d48eaf4b30257f5cbec0cb2c1bf6d820edbd99e06a0608e4dfb",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "offline/iphone-dark/a14-iphone-memory.png",
+      "sha256": "0992c953621d9ab424559481addbe726c9a86fc7180f1b754d3ed8836bd98139",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "offline/iphone-dark/a14-iphone-preference.png",
+      "sha256": "fa73a4c4390ffb4015736dff6ffdafa5bc6388db8195bb84011f41d0caf503b7",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "offline/iphone-dark/a14-iphone-synced.png",
+      "sha256": "7f96720ba388bab970f7f48685415ddad0e1d8e6e46f0fa7229081739139ae62",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "offline/iphone-light/a14-iphone-forgotten.png",
+      "sha256": "4ea3388ddf15b6b01e9023ccdf5c698146addefa755090602c2b752df519be74",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "offline/iphone-light/a14-iphone-memory.png",
+      "sha256": "3c84e4d46a6684e4c474b71206a4d0d4259c3c69ead4d396bf9c1b51ce56d890",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "offline/iphone-light/a14-iphone-preference.png",
+      "sha256": "d1495a0f413bab3d6ccccae54fb453988a69753ec1d3c404fcba32cbbc330c57",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "offline/iphone-light/a14-iphone-synced.png",
+      "sha256": "0e68983407fd7fcdee371474c598036cc5709c101f3f3bcc8587935793282cfb",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "offline/mac-dark/a14-forgotten.png",
+      "sha256": "84c4b55994fccf8d7ec1b3b846498e101450b5a66c3b598e483aed2dc812f3f0",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "offline/mac-dark/a14-memory.png",
+      "sha256": "ac2c0331c52ef049b3e9a3fca724b2048a7478d6d4eb017d36613ee130feaeb0",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "offline/mac-dark/a14-synced.png",
+      "sha256": "9eeaa67a0a24203337af7a9b7dda29b1ea644d29b5f780e2e6dfa0c5e3d90952",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "offline/mac-light/a14-forgotten.png",
+      "sha256": "1868bac49b9a6f16af95b3264078bddfe450e15ed0bf0c60695f0ae0017aa29d",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "offline/mac-light/a14-memory.png",
+      "sha256": "9d545120db08e4a371002f334093fd8142d86102f9a3f359353782d458e985fc",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "offline/mac-light/a14-synced.png",
+      "sha256": "53a4e8be07df0f7ddc76fd631681b1c7b31e1ba5f11e2b552a891d72cf1e37b0",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "panels/iphone-dark/a17-panel-account-dark.png",
+      "sha256": "cbf7ebeabb5a9c21aa4ca14523e4ea1e400f9a188e0e4b674861506916d98992",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "panels/iphone-dark/a17-panel-camera-unavailable-dark.png",
+      "sha256": "aaad548801df48dde08e19d8c31773431a71c15a2533f3d8e404976937bbd5aa",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "panels/iphone-dark/a17-panel-files-dark.png",
+      "sha256": "22c7e1af0a05aafdd9f70edfef9c9da1b24c669e83c56563899220b4d883296f",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "panels/iphone-dark/a17-panel-photos-dark.png",
+      "sha256": "6164f6f10b1156ea97f94efac32d1be366e04a7bb0cacfcde38731d7876e4abf",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "panels/iphone-dark/a17-panel-plus-dark.png",
+      "sha256": "d092b64a5e6efd1e63b90386199f4f66e4a6f0ba05083de5baea2b4a8a101ca5",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "panels/iphone-light/a17-panel-account-light.png",
+      "sha256": "5e3ac1d2c81bea0470046bbf81029f4601b770501e6d14af69f4f746a851ed36",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "panels/iphone-light/a17-panel-camera-unavailable-light.png",
+      "sha256": "1f8a3bea862093c200650d58d08f007fad479af0ae6e952bc749eb3433a0fdb0",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "panels/iphone-light/a17-panel-files-light.png",
+      "sha256": "46c3bd43641dde2cfe2a7bc2f4b5a19c9070774223d50e63e49bf9710a0351c9",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "panels/iphone-light/a17-panel-photos-light.png",
+      "sha256": "62e7dd70943157692d24e6edf6423944dfa875ef4666197c866877772c9bcbd5",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "panels/iphone-light/a17-panel-plus-light.png",
+      "sha256": "772d96d5527cf496cfbe5b82281ea9982b57687c43e32b1de567f7cc70ed515a",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "projects/iphone-dark/a11-iphone-move-project-dark.png",
+      "sha256": "aa26986d15091177dde7b9919d05723eed8cbe4a08bf1b10cc418bb31d14187f",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "projects/iphone-dark/a11-iphone-project-moved-dark.png",
+      "sha256": "fd04527316ac91d161c8098c00b3ca451ed51251b3f9b1bf9b4c0f80ce41aab0",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "projects/iphone-dark/a11-iphone-project-new-conversation-dark.png",
+      "sha256": "c5f8dcb236c23242ad7710e9addde7bdc2b89b992db3a5d793bfa572284fa94c",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "projects/iphone-dark/a11-iphone-project-sent-dark.png",
+      "sha256": "ef7cb31cddfcf5dee1b823b1fdcf334767e78ef738091e957dc3a4325cac7e28",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "projects/iphone-dark/a11-iphone-projects-list-dark.png",
+      "sha256": "7ddb87d72b63f4d254f03c3eeb728f766a8a847e08222e634108b86cdf3ec0c7",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "projects/iphone-dark/a11-iphone-restricted-sent-dark.png",
+      "sha256": "2e355a450f60991a20d3d2686fa1b568475c76454c09e07be76f92567455e912",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "projects/iphone-dark/a11-iphone-restricted-session-dark.png",
+      "sha256": "50d69c741f64f840e28bf2131335ebcb07edeb11aaa19b6e508f0cbb5b458663",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "projects/iphone-light/a11-iphone-move-project-light.png",
+      "sha256": "ac72855e7db7fd4f2d920084ca0bacb7558a18f6f8ee330a9246ae3e168c7621",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "projects/iphone-light/a11-iphone-project-moved-light.png",
+      "sha256": "f5f9763f490c5c079fc9eb11d054d45db3ac23e693a4410252f25b30b76052d4",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "projects/iphone-light/a11-iphone-project-new-conversation-light.png",
+      "sha256": "df2b0634cd28d5a2b6c6c364f835fb96e3907fa002a188365ec26554503e1988",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "projects/iphone-light/a11-iphone-project-sent-light.png",
+      "sha256": "28de93c8329c5443c03c2eb9dce2df32245b2b355759e6b6dcb2809d5efc702d",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "projects/iphone-light/a11-iphone-projects-list-light.png",
+      "sha256": "60622ab3bbdc54517cd3c402cc67c42e076f75081ecbf54afcc0a86341fbe701",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "projects/iphone-light/a11-iphone-restricted-sent-light.png",
+      "sha256": "070f95132f638ed2e39da30e8c1ee5a10d4f6d4758a5a5c31fe5e6fce356c770",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "projects/iphone-light/a11-iphone-restricted-session-light.png",
+      "sha256": "0c70f9dd948d3b5a58364ffc61fde49be7ed5ca66066e50fc43484b4a72e2587",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "projects/mac-dark/move-project.png",
+      "sha256": "b3788f659ed8a24cdc90300c7680000bd30ce7275e5d204ecf04e94e83520d12",
+      "width": 1272,
+      "height": 760
+    },
+    {
+      "file": "projects/mac-dark/project-create.png",
+      "sha256": "3df5a739dd05b7ffcd9b17a2aa7507092e3e78fd01fe401e1be8878e8fd0f994",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "projects/mac-dark/project-moved.png",
+      "sha256": "cea2e55e258a03dc903ef4efc1309036053d9cd4c7011ee98fd05975fd517304",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "projects/mac-dark/project-new-conversation.png",
+      "sha256": "2255ce51a20f240330ba6bc56a9654964d5d55f64365fa5f40e891bd3a31a4bd",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "projects/mac-dark/project-remove.png",
+      "sha256": "d1583ebede97064fe3b22c94dc2bf1bc1eaf730343514315b4dc4a2105bfe9f1",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "projects/mac-dark/project-removed.png",
+      "sha256": "634a87b8ce505abe022284f0e37309333aaf91703d4df84c8e977f9d5273fb72",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "projects/mac-dark/project-send-ready.png",
+      "sha256": "8bc71efddfd035d8fd70d314bf752ef372e73c0be98e446f31396175a71a9d35",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "projects/mac-dark/project-sent.png",
+      "sha256": "b85aa7f745d9c0c2f0064dccddc76218e542e7fed45a41256c46f0195a83cd9d",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "projects/mac-dark/project-settings.png",
+      "sha256": "5988d6da0102fc813703ff6b302325fceec61414359c4aad0727eda5bfdbc984",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "projects/mac-dark/projects-created.png",
+      "sha256": "438192f7523067392e2dade110e3139d625356750e64bc10bb49a9f11510b2f2",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "projects/mac-dark/projects-list.png",
+      "sha256": "affe9c40e057da8af5b9164460abea6bb3fdeb858c019c89d834fa54f303aa73",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "projects/mac-dark/restricted-session.png",
+      "sha256": "c513e5e8cb5599712cef64b9a24588abeaf0a552aef11412f6c23bb0f5b27e89",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "projects/mac-light/move-project.png",
+      "sha256": "f1d0a99475cf45c0cd38b4bfe03a137fdfc9cc4ba8e6211ad6ac3dd40cc0ffeb",
+      "width": 1272,
+      "height": 760
+    },
+    {
+      "file": "projects/mac-light/project-create.png",
+      "sha256": "a3245f20e9b3e2cbcc644ff07bd71ae0cf2929871c416776624a5df5eec021a4",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "projects/mac-light/project-moved.png",
+      "sha256": "57eaf9c693f3f6003b496c8b83cef9e99b1a3820a64afe97ab6142f7c1bf6845",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "projects/mac-light/project-new-conversation.png",
+      "sha256": "700110fbabe75e0fc2f34abf42f8ee3561162ff1a95ee36f05b1e9630b8f5225",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "projects/mac-light/project-remove.png",
+      "sha256": "dcdc1d990790214f543707218c2f5e1eee4b9af26f00e1f80b70495886693de8",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "projects/mac-light/project-removed.png",
+      "sha256": "8c19fa53bfa00654e0080b4630b9f2acb0d4eda14dc6641e355f5bd0712a6f68",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "projects/mac-light/project-send-ready.png",
+      "sha256": "3ec67089c7dab08d1c045708f32f986dcc3f8ee2e3bfab33f56e4b558ce28498",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "projects/mac-light/project-sent.png",
+      "sha256": "d4f09b5099f9b68fbf5eb7f4813dfcffaea4f77f744914d93c8259b5f16dc75f",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "projects/mac-light/project-settings.png",
+      "sha256": "184f971c3d3cac99bd74e1a7641e01f965fec8fe048a23b29e130354bc3603e7",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "projects/mac-light/projects-created.png",
+      "sha256": "76f0d5fd3cf54d4a0e045efa6abda40503823450ea7ff4f403829a9b03933c55",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "projects/mac-light/projects-list.png",
+      "sha256": "bd0467a05a9fe39bbd12a1a5c44a2d92043b2708e84774f4892557403c39524d",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "projects/mac-light/restricted-session.png",
+      "sha256": "6b51f5cd87aa53c9b6e04580fa252c35af232177b5a021fbce48b605a8f6f7a6",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "settings-final/iphone-dark/review-iphone-appearance-dark-20261010T101715Z.png",
+      "sha256": "2568d9b652ecd41282cc73282762dbb70d63214862192c13f1acd024ea7b0247",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-dark/review-iphone-conversation-menu-dark-20261010T101715Z.png",
+      "sha256": "3b592d3ba817440f473d5091bb79ee95c1711e4823f5ec303ea88f299b249f80",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-dark/review-iphone-conversation-usage-opened-dark-20261010T101715Z.png",
+      "sha256": "5d433e77b4eecf47aab922cad6c5dbc494384ae8a8fdadf19b00622601b4b0c8",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-dark/review-iphone-settings-about-dark-20261010T101715Z.png",
+      "sha256": "9f54c261dd930ff0ece08e90f1ab6f54eb36922032585f8530274e441a7ca0b7",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-dark/review-iphone-settings-account-dark-20261010T101715Z.png",
+      "sha256": "2f4363a0d1be6fe0a7d6113d331bb413af21e893536182e960bd9bff8e513806",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-dark/review-iphone-settings-appearance-dark-20261010T101715Z.png",
+      "sha256": "2568d9b652ecd41282cc73282762dbb70d63214862192c13f1acd024ea7b0247",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-dark/review-iphone-settings-approvals-dark-20261010T101715Z.png",
+      "sha256": "dd8ce115b31e93e79c77918cbc95ab9908856b45b77b863262ad1cc011da4225",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-dark/review-iphone-settings-archived-dark-20261010T101715Z.png",
+      "sha256": "67cc7d62cd91770ccdaa036e444d68ad7f8d0b564f3e7b2390c9e164129fc6f2",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-dark/review-iphone-settings-devices-dark-20261010T101715Z.png",
+      "sha256": "0229cb67b25a447728ea61ed0c67993c6331b9c8c3703eeff42c6c9afdaacf59",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-dark/review-iphone-settings-general-dark-20261010T101715Z.png",
+      "sha256": "2fdc4ec35eeee0c8872acd5db2c43e01a7c748a4291a6e5604f44ff7ffa5b764",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-dark/review-iphone-settings-home-dark-20261010T101715Z.png",
+      "sha256": "ba099df7acd40822fd263cb2088d30722d61eb90fb90cccfbea9c33f3a6d1543",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-dark/review-iphone-settings-memory-dark-20261010T101715Z.png",
+      "sha256": "db20ccd612f430e9d629a01a50bcb8916c1ff045071ae04ed4015114d2dd961b",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-dark/review-iphone-settings-models-dark-20261010T101715Z.png",
+      "sha256": "4a67301860df8da3cb9c3f312a3bb7d4f66d7dda613d0f013fbf64f497c76cad",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-dark/review-iphone-settings-schedules-dark-20261010T101715Z.png",
+      "sha256": "739503766e90a1573d8c29923b363f42ebaaff0bdc4b30eaf89aabcff8d1fef3",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-dark/review-iphone-settings-schedules-menu-dark-20261010T101715Z.png",
+      "sha256": "89f5e49cace86c36fc0b003fffa2ad32ef58e65ac105b21b1ca0db98e7e5780d",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-dark/review-iphone-settings-usage-dark-20261010T101715Z.png",
+      "sha256": "8cb216ae5e67b6f3530251671f465a0017ea280760e6337850e1c3308dad4eb8",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-dark/review-iphone-usage-dark-20261010T101715Z.png",
+      "sha256": "6dfc144293ae797898aef0c9bb75dda0d5f3259aaf0765cbf0d616480fd3b1b1",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-light/review-iphone-appearance-light-20261010T101252Z.png",
+      "sha256": "ac69b4194714e8ee2b3896a5191c5c7f292f3dfe7818ef2c16a3d3340690fb3c",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-light/review-iphone-conversation-menu-light-20261010T101252Z.png",
+      "sha256": "5969eac6cf3fe15392d152e3bf2569aa4d7bf1fc060100563003e756d09b0ed7",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-light/review-iphone-conversation-usage-opened-light-20261010T101252Z.png",
+      "sha256": "5f4c379e3f989fe43a7b47a4d20e7ece56fbf5ace041a219affb30a2647af8d9",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-light/review-iphone-settings-about-light-20261010T101252Z.png",
+      "sha256": "f1ae965b0925322a618421a7a59f8ee1a553fc22f6391d61b6ad1dc62d5cd38c",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-light/review-iphone-settings-account-light-20261010T101252Z.png",
+      "sha256": "0d6cf6afd48bbbd74f9b7cf519c86057f43f0dcef57365b055cc844b5d548610",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-light/review-iphone-settings-appearance-light-20261010T101252Z.png",
+      "sha256": "ac69b4194714e8ee2b3896a5191c5c7f292f3dfe7818ef2c16a3d3340690fb3c",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-light/review-iphone-settings-approvals-light-20261010T101252Z.png",
+      "sha256": "56dbeb8fc03fb6e9c887a71ab011f9f4f5cd6be39f54061fbe7f0d4d2785b570",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-light/review-iphone-settings-archived-light-20261010T101252Z.png",
+      "sha256": "18ac74e782a32123040d3b99e704584cd9deacb4f8fc5deba68ade5aacfdc78a",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-light/review-iphone-settings-devices-light-20261010T101252Z.png",
+      "sha256": "25d8b083274f51b92819395633ec7410bebd99c472320839029796032c324605",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-light/review-iphone-settings-general-light-20261010T101252Z.png",
+      "sha256": "d7ce79234961ef3bcfc06a254e2aa443f2d17756d3246a00c1e5d0fcfd0f63b9",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-light/review-iphone-settings-home-light-20261010T101252Z.png",
+      "sha256": "ba63f8f4fb26b44eeaed8990e79af18b6bf380be291df6c21429a10b16a0c11e",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-light/review-iphone-settings-memory-light-20261010T101252Z.png",
+      "sha256": "c071d577c45cfc289a6b6882f4e25114762a6c7b121af3dcb28c4e1018d8f457",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-light/review-iphone-settings-models-light-20261010T101252Z.png",
+      "sha256": "2b98d512c5ee2f3d27532bd8dc08a8f53ec03c780ddec7f2a779aca65479f66b",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-light/review-iphone-settings-schedules-light-20261010T101252Z.png",
+      "sha256": "7b29ec8a67187f7e78885affa3afe71f3e9c048ca9909ec93c0b131c1724b0db",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-light/review-iphone-settings-schedules-menu-light-20261010T101252Z.png",
+      "sha256": "72680aadb843e53a00796dfa5a2a1de0141fe706944f974ce0a5b836b75c7185",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-light/review-iphone-settings-usage-light-20261010T101252Z.png",
+      "sha256": "d2181a597cfb8c0b488a5bdc3d8159e3d15c6141ccf84dad4cb8c7930352a24e",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/iphone-light/review-iphone-usage-light-20261010T101252Z.png",
+      "sha256": "31ca24aaa4bab1fdd9378f871d50aeb965192c694818d9fd995e2c83b5e8b019",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "settings-final/mac-dark/approval.png",
+      "sha256": "c4096a8fc3fb6f05843ec63c892bf0edbf1fae56e1f6c1d19862d0fe3c360b9e",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-dark/main.png",
+      "sha256": "27cd0d9060e0fb9ee7eec5b537a89f5b380b2c0a8518b2fc0f1072c57bbf1e1a",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-dark/send-ready.png",
+      "sha256": "8d7a64709fb9bd4653dd6d8217e580e09f515872d81b1dbfb0a7a78438a7045e",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-dark/settings-about.png",
+      "sha256": "bb4654b5815d5f8a3d072bd2e7ab0873290449957dd0cf8bedf0b5bb38d205a1",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-dark/settings-account.png",
+      "sha256": "7e13e16e5bbfef093e1d080ef8bafff2346cb1d0a95721dbbdbb8e5fef23893a",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-dark/settings-appearance.png",
+      "sha256": "4c085e8afe74aded778b12cc6ec80d22917645c1771cc3059fc9f83fcc556b0f",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-dark/settings-approvals.png",
+      "sha256": "cf05c0449f3058bd97b26a63672393a43fc98bdf3c5a8d5f55c3fcf0f94a2734",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-dark/settings-archived-menu.png",
+      "sha256": "717febecd26ab5a8cd852f99a89a815aeb643fdc7bc6673ff17ea32a0b62c96c",
+      "width": 1162,
+      "height": 857
+    },
+    {
+      "file": "settings-final/mac-dark/settings-archived.png",
+      "sha256": "6336023c0b5856cb6bf9d7b81a137b7169b8ce4d803dcafd8746523a76931578",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-dark/settings-backups.png",
+      "sha256": "f56d57cae88466c63949a6507c7a7a22a814e4d83980744c02bf99a64c7f74d7",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-dark/settings-devices.png",
+      "sha256": "6d3132cecedc7255d275edbc48ff2f69da842332e6ed6da84aba95f55fd57875",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-dark/settings-general.png",
+      "sha256": "08233511cc50293eaaf233fc529445d10caf155b008e1c5e0b29497ae293a7d8",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-dark/settings-memory.png",
+      "sha256": "9e33434cc9a02709b55f7fb0f88b0ad54c6cdd977f1a9644f483c9733ff18ace",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-dark/settings-models.png",
+      "sha256": "b7afae38c3eea95ca7de1d92f423d819c8b758456c0e29e1934a43fb8f0bf78f",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-dark/settings-schedules-menu.png",
+      "sha256": "7bbd7e50530cb9e2dd5b2f8031387845a694ccb581a2aaf1c93e45e67fefce5a",
+      "width": 1162,
+      "height": 857
+    },
+    {
+      "file": "settings-final/mac-dark/settings-schedules.png",
+      "sha256": "2b011b572f120f2faecc72240ce3ae45b327ddde91bb97d13c9e15d59353b7fe",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-dark/settings-system.png",
+      "sha256": "77bb98e9f810f185db464cbe8b07deffc7a6ce5109c41efd174b385e146d1bf7",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-dark/settings-usage.png",
+      "sha256": "c36e114656e80c08674d6be4708945c110e696b07185bbfc1adc30b1a0b970b6",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-light/approval.png",
+      "sha256": "ca55fd3c5f19f94205223d85df55471cd239392245d0540f5f50a241e64eb84d",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-light/main.png",
+      "sha256": "3998cb31b7cbca807826064db17e58137a85c711918a4b5b07eb70a92f8cba9c",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-light/send-ready.png",
+      "sha256": "df2a8dd50fb1c128e78740bb4fc4d28c57c6ec5df2f55b4fc66a6c2740b7633d",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-light/settings-about.png",
+      "sha256": "bc6418c282b01ad07e716ba6736983c5bf0f1a3cdb52de7de68f4fa7b4d2db09",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-light/settings-account.png",
+      "sha256": "6842ac4fa558c06a4c5c95aad6a042935395d16c4f54a3a3fe0cf503906b323c",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-light/settings-appearance.png",
+      "sha256": "6cedae3290ae158090c0016ef687b37e490d7298e811351ecf2bec45a0e8a032",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-light/settings-approvals.png",
+      "sha256": "fe47c155dc52d38cccf72577d98ca64b753c2a0f7062b49a1dfdade9ecd927df",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-light/settings-archived-menu.png",
+      "sha256": "f53971940aa35f86a2fe7646fcca238469ff69789d9f3205afc496aba7fd1251",
+      "width": 1162,
+      "height": 857
+    },
+    {
+      "file": "settings-final/mac-light/settings-archived.png",
+      "sha256": "4415b6b2c15a91f4a2de00e5aa6556b161dd1ea8216acd5dcedb9b23850ae05c",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-light/settings-backups.png",
+      "sha256": "bf1374d6cbb1d1151898a045e7a80b156dfc71a5e77d0a01f8d9f16ffa6ebf3d",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-light/settings-devices.png",
+      "sha256": "ed13702df5bd9914812f677c928428b7f1166f551b9203aacd69d98c108fca46",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-light/settings-general.png",
+      "sha256": "cd9d139ede5e743d504d6b9bd8e54c4fd3333bc5118d7b0c241dd05e782e8e5f",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-light/settings-memory.png",
+      "sha256": "9f37e1c7c97ee8d14b5577ca6030107be8acb73fdb6b776506b02697c8b95840",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-light/settings-models.png",
+      "sha256": "133b7afe450d9b6cf3d82786a137613e667fc077f624e95cbe84011b6569df71",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-light/settings-schedules-menu.png",
+      "sha256": "6dbe8905ceca5549502b971ea46e51f1fb1202e7cfdf12e2d1c6d8245b675380",
+      "width": 1162,
+      "height": 857
+    },
+    {
+      "file": "settings-final/mac-light/settings-schedules.png",
+      "sha256": "7dff7e920585286905a11f72693a60b837eb2bd90f107955b74cce4e7aeb9b82",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-light/settings-system.png",
+      "sha256": "5288cae02b5c4e8d4a5864c075951d23c838af8ca876a6c85a156686e8601147",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "settings-final/mac-light/settings-usage.png",
+      "sha256": "655f3002a18c0c1f1b38a76f3af9651a31a0d2feac8d1b124e2f1f54f461b5fa",
+      "width": 1000,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/iphone-dark/a15-account-menu-dark.png",
+      "sha256": "29659ccfa4d5b0b9d61e07d9aa5c5bf48c95c540ff6f5a143321bf94f2194ac7",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-dark/a15-archive-undo-dark.png",
+      "sha256": "9272107bf11ad6bfa568e32a83dbd6cccf09abcaf58cf6db0a2081edb2d3f8c5",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-dark/a15-plus-menu-dark.png",
+      "sha256": "815a920f228ef6a8d2e4bbca4145179b8bcdb000d93689dc4a4ff42a6029c24e",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-dark/a15-project-expanded-dark.png",
+      "sha256": "5c6b7fe0e8b93eb594224e86e5fda25d987c21688edf8da327ba2ca9adf394ae",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-dark/a15-recent-five-dark.png",
+      "sha256": "5cfd4ba75ffba2e0cb7402c271b9f87e572da4c04a9ce54dc2780a2840a44ed0",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-dark/a15-running-queue-dark.png",
+      "sha256": "200e1785af21dc16716f226866a52404e0ea935a521aa89eeb1ad3258b6dadcc",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-dark/a15-running-steer-dark.png",
+      "sha256": "1654ab26ae32509354a0a505f8cd2c203a9e0435b9e4f101b9d715b839d7dcca",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-dark/a15-settings-usage-dark.png",
+      "sha256": "83d327a61e1ba0e4ade25da260293f17264d2cf54960867c8487133183ef3139",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-dark/a15-subtask-list-dark.png",
+      "sha256": "272f0024563729d37876b894cab01e3b7ad26b178ee6c3703221a8335be44971",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-dark/a15-subtask-step-dark.png",
+      "sha256": "235fb554874ace9eed9283586c3626b1223f58447e85fafa6ba5141957a6347b",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-dark/a15-subtasks-ended-dark.png",
+      "sha256": "4918f69abf5dc32f21e49fbd884170c04a4878e4b014bd3df32d49eb647ce285",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-dark/a15-synthetic-attachments-dark.png",
+      "sha256": "11566959b4c2af1ab20039dc5602e220d535f907d7ad78d7a7652927a234fc02",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-dark/a15-thinking-enabled-dark.png",
+      "sha256": "1af6103756d8738e7477faa5498dd150e5579dc6bf2863ffd9d30ffd2e5dc0ca",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-light/a15-account-menu-light.png",
+      "sha256": "7c8484a30242e27d49f470c5e8fbe7c5a9aef1b21d785c43d4ae06d754490dc5",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-light/a15-archive-undo-light.png",
+      "sha256": "4cb3341129ec9a9805112906b861d39fa27eb1010b27a1b6a5c6fd86c5491a9d",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-light/a15-plus-menu-light.png",
+      "sha256": "b7dc56d4d570aabd3b1ef6e5915b5577d36bd90bedcda769f78ed3b9e1bec4a4",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-light/a15-project-expanded-light.png",
+      "sha256": "0a439b1440a69401942721b47c6100db031b41374962e785d259915a6170727b",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-light/a15-recent-five-light.png",
+      "sha256": "131d8d39b8beeca96584138c6b5248b390046878cafe1fb263e6b2623a2faffc",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-light/a15-running-queue-light.png",
+      "sha256": "29888892aa0260e65be5b35ca040edb9486ac6ebb67288d44de04d135d14f3a6",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-light/a15-running-steer-light.png",
+      "sha256": "161134660cc52176586c02cb415a14273eb68687b55116fd8a883c929987052d",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-light/a15-settings-usage-light.png",
+      "sha256": "e3d25694d6a59b72d5beae92fe1e7c45676ccaa0c6dbebe44f4180cbbb415513",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-light/a15-subtask-list-light.png",
+      "sha256": "81daa26e214ffca4359c45a19ff328434149aa86dd47f2f3354324d3398b699a",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-light/a15-subtask-step-light.png",
+      "sha256": "ae81018120732bcc8afe1ce808848ad17ba9219c7ad717bc0b02e2a630937f34",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-light/a15-subtasks-ended-light.png",
+      "sha256": "767751aaa118caa2ea1c955a34d2ffadf00a7e8b54c716112ad0fc8c3a2fce64",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-light/a15-synthetic-attachments-light.png",
+      "sha256": "29888892aa0260e65be5b35ca040edb9486ac6ebb67288d44de04d135d14f3a6",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/iphone-light/a15-thinking-enabled-light.png",
+      "sha256": "7290bf495ecc98d4443c14b284a4611985aad0358161fffd3fdb4e855b9a4a92",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "sidebar-verified/mac-dark/account-menu.png",
+      "sha256": "8424ebaf13fc8c8da9a2dd5a1e0c7db30df6093f9337c89948a02c71ab572488",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-dark/archive-undo.png",
+      "sha256": "64e61709ba23e806366e433a83d6c4f034341555df44d2c57280a3a271f535d4",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-dark/draft-thinking-retry.png",
+      "sha256": "5937dd1be59f337d5fcbb22c2e9ea7ec5ef0784fc220e370d72fcf3707e33774",
+      "width": 720,
+      "height": 640
+    },
+    {
+      "file": "sidebar-verified/mac-dark/draft-thinking-saved.png",
+      "sha256": "4ac5c6bff52a6f63d09231cab8bef90a28493e6de846e2b98c80702a31cce3db",
+      "width": 720,
+      "height": 640
+    },
+    {
+      "file": "sidebar-verified/mac-dark/hover-details.png",
+      "sha256": "06a3cdd266b1a2cb598d449f2019e04048cc1ec93eb9303bacdd95f2aa379b65",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-dark/narrow.png",
+      "sha256": "7a0e2ef12259decedec9fd4902d6e935661fb1b29f96a5d847e9268b080720f3",
+      "width": 720,
+      "height": 640
+    },
+    {
+      "file": "sidebar-verified/mac-dark/plus-menu.png",
+      "sha256": "4dc382d421d25c3129251c2eded2ec3ec237a85f621e11b856296a8ff1cff220",
+      "width": 1080,
+      "height": 943
+    },
+    {
+      "file": "sidebar-verified/mac-dark/project-expanded.png",
+      "sha256": "7e243c8cf0c3016fafaf91ae204713cecdf4dccd2d22efb83dabf771cd361937",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-dark/project-hover.png",
+      "sha256": "54cae5b3b6cb16bb42decb7dcc99d08b01fa375111b16732839cc3630fe931e2",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-dark/recent-five.png",
+      "sha256": "35f74ccbab47573cf6a53775adfe5762ad43833718a83c153f4ff459a260009f",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-dark/running-queue.png",
+      "sha256": "d6fa774ae52cc2e20600909c3dfb1fdf6f18a73d6bf3f580ca72f4750a3268b8",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-dark/running-steer.png",
+      "sha256": "4ec54e513ce357c6e4b5ba1e990c561b3008cba4cfa750c51f07ec784fc4a124",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-dark/subtask-list.png",
+      "sha256": "c530c33795b251289c9976b71c831c4cdb971116e377512e18a4bb53d62db77a",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-dark/subtask-step.png",
+      "sha256": "742aa7c04fc6056ace6fbd678c3aaa3f7c16dc10d655ce8f8161b802ce0bb71d",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-dark/subtasks-ended.png",
+      "sha256": "89289b6374e5e58feb7a8be059858ecd8b08e6b97e2b24950b26ddc6da4acb89",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-dark/synthetic-attachments.png",
+      "sha256": "165d363545ececde25a95cfce3f4029331e5e2c0858b9829ecbe6422a70ddcea",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-dark/thinking-enabled.png",
+      "sha256": "86a1235a857b324dd4b24ed3343e7c60be3187232e26b308c65a42f9ceed553e",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-light/account-menu.png",
+      "sha256": "c4baef920f926ca14a68da8689260e1b66956a39878bb85a76fa37850db55321",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-light/archive-undo.png",
+      "sha256": "7f9e8928049afb256d5b6a7ad48cc3182ad8e686c5211613ee4d4dd67669f11a",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-light/draft-thinking-retry.png",
+      "sha256": "ab07692dae2aad4ec8353828e0032e3dda6ea51708c3af3354f788e3ff0feb8a",
+      "width": 720,
+      "height": 640
+    },
+    {
+      "file": "sidebar-verified/mac-light/draft-thinking-saved.png",
+      "sha256": "6b04f736184d21e6eebd0a216d0b8d4898b68e8480c058ec1de81868ff9e5760",
+      "width": 720,
+      "height": 640
+    },
+    {
+      "file": "sidebar-verified/mac-light/hover-details.png",
+      "sha256": "8dbfaf96b6caa8537d7d7bba58c00d5119888995548036d0e4b8c78476514359",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-light/narrow.png",
+      "sha256": "f6b3cdaa5e1b355bf5737736bf0398002d0c229ecc3d8b4da4eb7b9dc97709e9",
+      "width": 720,
+      "height": 640
+    },
+    {
+      "file": "sidebar-verified/mac-light/plus-menu.png",
+      "sha256": "b577609b8b9e73c97655ad051b323e048642f8a007444b69d6d212907aefc49e",
+      "width": 1080,
+      "height": 943
+    },
+    {
+      "file": "sidebar-verified/mac-light/project-expanded.png",
+      "sha256": "5ad82a9a31eb760bfcfb92b5eb6945d8a3077e85240cac05f98c6375ead6b457",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-light/project-hover.png",
+      "sha256": "2b4d4cb1e406652adb61ddf64e82a8dd65de786c8b34214051f224aa86368f73",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-light/recent-five.png",
+      "sha256": "74f6a2cc61d4c684ba56011f905f6c6db39a71f2fa7eb94495561c7f339479f7",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-light/running-queue.png",
+      "sha256": "7fb71d6990dbf705e800d655bee75eaaa5d85457c1b82babc939063c08ca0094",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-light/running-steer.png",
+      "sha256": "b02d3758de4b3c9f5c0d8e0a23329184df259e792abd2b49889418c18be618b4",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-light/subtask-list.png",
+      "sha256": "7554a3d28d8b9a533b6c4bfe2f4a954f3ef1f80525ab19bff9cf77f3310cc89f",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-light/subtask-step.png",
+      "sha256": "32b0c5ad4a8ad9914c8409d86b8ad39cef1b1b7b34d5eeee5de412e623e3a31c",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-light/subtasks-ended.png",
+      "sha256": "a22208624a493f4cafe349de615e8656cf98bf29b0f1500e0748272a59151fbf",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-light/synthetic-attachments.png",
+      "sha256": "afd89d444ff600115adf2858dcfdfbd0284884d3c1706950edd185997e518ea8",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "sidebar-verified/mac-light/thinking-enabled.png",
+      "sha256": "d30738390d7eb717ac3e48a4a297e3c0d1b80dfeeeaefb691314c462d12b6edc",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "states/iphone/empty-dark.png",
+      "sha256": "696848596da337191047d2e7193e2c2f6afa77069dbf3cc5d054270ab362a8a9",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "states/iphone/empty-light.png",
+      "sha256": "07ae50edd66797b6ca077e27dd64ebdbbe3344547475c0f563c88fcfba9bc9f7",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "states/iphone/error-dark.png",
+      "sha256": "8da527e557f84d3fc2e98db8ef8acb06bd15c5d970dc4d563e068348ab96c02e",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "states/iphone/error-light.png",
+      "sha256": "7fd36f0b5ae7be39e222cafabe29cb8c039451d6458f9ec74eb95b8ea49ab25b",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "states/iphone/loading-dark.png",
+      "sha256": "8531cfe589c08642e7df17a4bb12c6dc4ac02c932485aac400c15a6ac3639eb7",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "states/iphone/loading-light.png",
+      "sha256": "0fbdbf0ef48c110fca07174d3080ee071e1443b7b3b6b1c5f148bd9b82025894",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "states/iphone/no-model-dark.png",
+      "sha256": "f8c0d83d443f48f6dde753b0359be43946afe5eaec36671a213a0095113a2aa0",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "states/iphone/no-model-light.png",
+      "sha256": "ae55c4b96860c641bb302206393aae560fbdf32eeace0390eaa851b5ea61c47b",
+      "width": 1170,
+      "height": 2532
+    },
+    {
+      "file": "states/mac/empty-dark.png",
+      "sha256": "5b24613a1346bd7bfd181eefec4dd2a244c6e1f9d0bd350d4d5497ba8a24d6e3",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "states/mac/empty-light.png",
+      "sha256": "764098d470b9642e940a183c0cf3078885874f91e368f457ab8ab6d57933fbc2",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "states/mac/error-dark.png",
+      "sha256": "c965177d51415976a00f3ff77dc03f9cb52b66f273194034065ab73880dbddd4",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "states/mac/error-light.png",
+      "sha256": "1375e5260223287a0343c03b086c944a9352114fd7ad4ff125ac79f064c14dee",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "states/mac/loading-dark.png",
+      "sha256": "72466775978c9d791e9b37f151729e0bc813b3511da123b72600556dc9e13029",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "states/mac/loading-light.png",
+      "sha256": "11db8c42c4a8b8fc4c027581824d731e9df173d26a8dba1d36cf10368b43319e",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "states/mac/no-model-dark.png",
+      "sha256": "2b9d9aebe7566c18567b1ad31ed5a460a3e5e6f6dd1f35d500ae766e841d331a",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "states/mac/no-model-light.png",
+      "sha256": "92ca3b7d84afba9971ae27a4944fc1fa0c064fb431a4e1bbec739e12198842c2",
+      "width": 480,
+      "height": 720
+    },
+    {
+      "file": "watch/approval.png",
+      "sha256": "6a776c5366642b4b83e14e403d137266cd62ce09591d55bbd023c3566bf6beb8",
+      "width": 416,
+      "height": 496
+    }
+  ]
+}

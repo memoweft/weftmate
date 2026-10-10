@@ -1,0 +1,19 @@
+Attributes: Application, 0x11071dad0, pid: 56798, label: 'WeftMate'
+Element subtree:
+ →Application, 0x11071dad0, pid: 56798, label: 'WeftMate'
+    Window (Main), 0x11071f160, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x11071e8f0, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x11071ea10, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, 0x11071e650, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, 0x11071e770, {{0.0, 0.0}, {390.0, 844.0}}
+              Image, 0x11071eb30, {{171.0, 372.0}, {48.0, 48.0}}, identifier: 'weftmateRoot', label: 'wm-brand'
+              ActivityIndicator, 0x11071ec50, {{0.0, 0.0}, {390.0, 844.0}}, identifier: 'weftmateRoot', label: '正在打开 WeftMate…', value: 1
+                ActivityIndicator, 0x11071ed70, {{185.0, 440.0}, {20.0, 20.0}}, value: 1
+                StaticText, 0x11071ee90, {{0.0, 0.0}, {0.0, 0.0}}, label: '正在打开 WeftMate…'
+Path to element:
+ →Application, 0x11071dad0, pid: 56798, label: 'WeftMate'
+Query chain:
+ →Find: Target Application 'com.weftmate.apple.weftmatephone'
+  Output: {
+    Application, 0x11061d940, pid: 56798, label: 'WeftMate'
+  }
