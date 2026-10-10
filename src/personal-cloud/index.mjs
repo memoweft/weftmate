@@ -148,8 +148,9 @@ export async function createHostCloudIdentity(context, options) {
   async function syncRevocations() {
     if (syncing) {
       await syncing;
-      if (Object.keys(store.state.outbox).length) return syncRevocations();
-      return;
+      // That response may have been captured before this caller's revocation.
+      // Fetch a fresh authoritative snapshot even when the outbox is empty.
+      return syncRevocations();
     }
     syncing = (async () => {
       // Read authoritative membership before flushing pending status records:

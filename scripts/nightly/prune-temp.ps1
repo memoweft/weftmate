@@ -35,7 +35,7 @@ if ($Apply) {
         $target = [IO.Path]::GetFullPath($entry.directory.FullName)
         # Keep discovery, boundary verification and deletion in PowerShell.
         # PowerShell 7 removes junctions as links rather than traversing them.
-        if ([IO.Path]::GetDirectoryName($target) -ine $entry.root.TrimEnd('\') -or
+        if ([IO.Path]::GetDirectoryName($target).TrimEnd('\') -ine $entry.root.TrimEnd('\') -or
             [IO.Path]::GetFileName($target) -notlike 'weftmate-*') { $failed++; continue }
         Remove-Item -LiteralPath $target -Recurse -Force -ErrorAction SilentlyContinue
         if (Test-Path -LiteralPath $target) { $failed++ } else { $deleted++ }
