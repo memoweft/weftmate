@@ -47,6 +47,7 @@ import Security
         if let driver = CommandLine.arguments.dropFirst(7).first(where: { $0.hasPrefix("a14-driver=") }) { app.arguments?.append(contentsOf: ["--a14-driver", String(driver.dropFirst("a14-driver=".count))]) }
         if let driver = CommandLine.arguments.dropFirst(7).first(where: { $0.hasPrefix("a15-driver=") }) { app.arguments?.append(contentsOf: ["--a15-driver", String(driver.dropFirst("a15-driver=".count)), "--a15-synthetic-media"]) }
         if let driver = CommandLine.arguments.dropFirst(7).first(where: { $0.hasPrefix("a16-driver=") }) { app.arguments?.append(contentsOf: ["--a16-driver", String(driver.dropFirst("a16-driver=".count))]) }
+        if let controls = CommandLine.arguments.dropFirst(7).first(where: { $0.hasPrefix("a17-open=") }) { app.arguments?.append(contentsOf: ["--a17-open", String(controls.dropFirst("a17-open=".count))]) }
         let output = Pipe(); app.standardOutput = output; app.standardError = output
         try app.run()
         defer {
@@ -69,6 +70,9 @@ import Security
                 if scene == "a16-all", line.hasPrefix("A10_REPORT:") {
                     try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
                     try Data(line.dropFirst("A10_REPORT:".count).utf8).write(to: destination.appendingPathComponent("native-report.json"))
+                }
+                if line.hasPrefix("A17_TEXT:") {
+                    try Data(line.dropFirst("A17_TEXT:".count).utf8).write(to: destination.deletingPathExtension().appendingPathExtension("text.json"))
                 }
                 if line.hasPrefix("A14_SCAN:") {
                     try Data(line.dropFirst("A14_SCAN:".count).utf8).write(to: destination.appendingPathComponent("storage-scan.json"))

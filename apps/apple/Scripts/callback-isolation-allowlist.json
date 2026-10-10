@@ -1,0 +1,345 @@
+[
+  {
+    "file": "apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/HealthKitReader.swift",
+    "line": 93,
+    "api": "detached",
+    "sha256": "7c64ed8dafc6d81ef47271cebc608f7c801c0037eb6b6a2782b7e944d871edba",
+    "reason": "Explicit @Sendable detached computation captures immutable files or health snapshots only. Awaiting task assigns results on the originating MainActor."
+  },
+  {
+    "file": "apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/HealthKitReader.swift",
+    "line": 115,
+    "api": "initialResultsHandler",
+    "sha256": "5d391d1da318669ec03929c08af8aa9d062431d7ae65eaf6c8b49a9994084485",
+    "reason": "Explicit @Sendable HealthKit result callback only resumes a Sendable continuation; no HealthKitReader or UI actor member access."
+  },
+  {
+    "file": "apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/HealthKitReader.swift",
+    "line": 129,
+    "api": "HKSampleQuery",
+    "sha256": "2d0858f92a5d1792de44d78974dc8590f463d1acfb2d727a34d564f18d8e92cc",
+    "reason": "Explicit @Sendable HealthKit result callback only resumes a Sendable continuation; no HealthKitReader or UI actor member access."
+  },
+  {
+    "file": "apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/NativeUpdates.swift",
+    "line": 174,
+    "api": "urlSession",
+    "sha256": "c34b7ae9f26cf1c497b6e5e2a0bdcd164a0c616791a478a214a4d10dcf906ef0",
+    "reason": "Explicit nonisolated URLSession delegate reads immutable transport configuration or refuses redirects. No UI state or main-actor model access."
+  },
+  {
+    "file": "apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PublicUpdates.swift",
+    "line": 245,
+    "api": "urlSession",
+    "sha256": "fcfc36bc6dd8376ec58b13f9d93d75ee50b09bf59993aabae5e171b3eee30450",
+    "reason": "Explicit nonisolated URLSession delegate reads immutable transport configuration or refuses redirects. No UI state or main-actor model access."
+  },
+  {
+    "file": "apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/Transport.swift",
+    "line": 43,
+    "api": "urlSession",
+    "sha256": "fa536bf3db6c15e35e716f78545131fd0f1767f22e29943957f32c1de84b2e9f",
+    "reason": "Explicit nonisolated URLSession delegate reads immutable transport configuration or refuses redirects. No UI state or main-actor model access."
+  },
+  {
+    "file": "apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/Transport.swift",
+    "line": 66,
+    "api": "urlSession",
+    "sha256": "afcb11408e0e0be59160b92688d0c4c3ffc5ec59b36378ca7386ddc6cac71174",
+    "reason": "Explicit nonisolated URLSession delegate reads immutable transport configuration or refuses redirects. No UI state or main-actor model access."
+  },
+  {
+    "file": "apps/apple/UI/A11MacReview.swift",
+    "line": 10,
+    "api": "addObserver",
+    "sha256": "76f6479a7d35ae37ff6d4108809b39de652771be897ef1e1f54801ee4a1f3c1a",
+    "reason": "AppKit NSMenu tracking selector runs synchronously on the AppKit main thread. No worker closure. DEBUG review observer or native menu styling only."
+  },
+  {
+    "file": "apps/apple/UI/A11MacReview.swift",
+    "line": 12,
+    "api": "track",
+    "sha256": "688cc04091e2a0f46e756bd9ec8976171b1ff82dd157a5290f08a3038ce169e0",
+    "reason": "AppKit NSMenu tracking selector runs synchronously on the AppKit main thread. No worker closure. DEBUG review observer or native menu styling only."
+  },
+  {
+    "file": "apps/apple/UI/A13MacReview.swift",
+    "line": 150,
+    "api": "addObserver",
+    "sha256": "76f6479a7d35ae37ff6d4108809b39de652771be897ef1e1f54801ee4a1f3c1a",
+    "reason": "AppKit NSMenu tracking selector runs synchronously on the AppKit main thread. No worker closure. DEBUG review observer or native menu styling only."
+  },
+  {
+    "file": "apps/apple/UI/A13MacReview.swift",
+    "line": 151,
+    "api": "track",
+    "sha256": "168b39070ffd4e492864bac2d3e7698363f9c34ffffb87b2c68eff80cf476b41",
+    "reason": "AppKit NSMenu tracking selector runs synchronously on the AppKit main thread. No worker closure. DEBUG review observer or native menu styling only."
+  },
+  {
+    "file": "apps/apple/UI/A15MacReview.swift",
+    "line": 8,
+    "api": "addObserver",
+    "sha256": "cfa586be35af5e21e45d5ba65899421e499d8c275d6d5d53ee88a14523d0094b",
+    "reason": "AppKit NSMenu tracking selector runs synchronously on the AppKit main thread. No worker closure. DEBUG review observer or native menu styling only."
+  },
+  {
+    "file": "apps/apple/UI/A15MacReview.swift",
+    "line": 9,
+    "api": "track",
+    "sha256": "688cc04091e2a0f46e756bd9ec8976171b1ff82dd157a5290f08a3038ce169e0",
+    "reason": "AppKit NSMenu tracking selector runs synchronously on the AppKit main thread. No worker closure. DEBUG review observer or native menu styling only."
+  },
+  {
+    "file": "apps/apple/UI/A16MacReview.swift",
+    "line": 11,
+    "api": "addObserver",
+    "sha256": "cfa586be35af5e21e45d5ba65899421e499d8c275d6d5d53ee88a14523d0094b",
+    "reason": "AppKit NSMenu tracking selector runs synchronously on the AppKit main thread. No worker closure. DEBUG review observer or native menu styling only."
+  },
+  {
+    "file": "apps/apple/UI/A16MacReview.swift",
+    "line": 12,
+    "api": "track",
+    "sha256": "e5633c5b5c45bc38d6e98058b350382d07cfbd258ad256c87037038f5cfba32c",
+    "reason": "AppKit NSMenu tracking selector runs synchronously on the AppKit main thread. No worker closure. DEBUG review observer or native menu styling only."
+  },
+  {
+    "file": "apps/apple/UI/AppleAppModel.swift",
+    "line": 361,
+    "api": "detached",
+    "sha256": "512a67a0c65a47b806d34a15e5c04ac02c4541da52840b8036a3bfa7b35a31eb",
+    "reason": "Explicit @Sendable detached computation captures immutable files or health snapshots only. Awaiting task assigns results on the originating MainActor."
+  },
+  {
+    "file": "apps/apple/UI/CloudBrowser.swift",
+    "line": 30,
+    "api": "ASWebAuthenticationSession",
+    "sha256": "c258b39072380a9754c14325b953c325ac1ec8dd2f025879ae909297fad0036e",
+    "reason": "Explicit @Sendable authentication callback captures weak model; URL/error and continuation processing occur inside Task @MainActor."
+  },
+  {
+    "file": "apps/apple/UI/ComposerMedia.swift",
+    "line": 62,
+    "api": "imagePickerControllerDidCancel",
+    "sha256": "11a615cd20146e1d830e25f97c85b68c671dacf5f6e98d134d985df4d366acdf",
+    "reason": "Platform SDK declares DataScannerViewControllerDelegate @MainActor and UIImagePickerControllerDelegate NS_SWIFT_UI_ACTOR. Native UI delegate delivery is main-actor isolated."
+  },
+  {
+    "file": "apps/apple/UI/ComposerMedia.swift",
+    "line": 63,
+    "api": "imagePickerController",
+    "sha256": "1a3b3d8fb17d55081e2239f02aa9e882368fe3b6c560f38ce639c39b5b516d0b",
+    "reason": "Platform SDK declares DataScannerViewControllerDelegate @MainActor and UIImagePickerControllerDelegate NS_SWIFT_UI_ACTOR. Native UI delegate delivery is main-actor isolated."
+  },
+  {
+    "file": "apps/apple/UI/ConversationAttachmentView.swift",
+    "line": 130,
+    "api": "fileExporter",
+    "sha256": "ed9244507cd0a6b9b13d10315aecaba80930a283b60f660434d6bea6166ecbb8",
+    "reason": "Explicit @Sendable completion transports its Result to Task @MainActor before reading or writing any view/model state. No UI actor access on the file-service callback executor."
+  },
+  {
+    "file": "apps/apple/UI/ConversationAttachmentView.swift",
+    "line": 161,
+    "api": "detached",
+    "sha256": "082c96074e83490184014d110f82ddd28fac6392fc72f134f6207d03a24914cd",
+    "reason": "Explicit @Sendable detached computation captures immutable files or health snapshots only. Awaiting task assigns results on the originating MainActor."
+  },
+  {
+    "file": "apps/apple/UI/ConversationAttachmentView.swift",
+    "line": 167,
+    "api": "detached",
+    "sha256": "e3c4b87d6ea29ff59c4bafe5a4fc989c5ebc0a08b94738e969aa48fc6055a0f2",
+    "reason": "Explicit @Sendable detached computation captures immutable files or health snapshots only. Awaiting task assigns results on the originating MainActor."
+  },
+  {
+    "file": "apps/apple/UI/ConversationView.swift",
+    "line": 131,
+    "api": "fileImporter",
+    "sha256": "7e1bac52b54a245e8f64ce00f2dd88a904b1e3d3d40e60e01b5ba8304bc4a03e",
+    "reason": "Explicit @Sendable completion transports its Result to Task @MainActor before reading or writing any view/model state. No UI actor access on the file-service callback executor."
+  },
+  {
+    "file": "apps/apple/UI/ConversationView.swift",
+    "line": 860,
+    "api": "onScrollTargetVisibilityChange",
+    "sha256": "9a0161e36adc9abd23b4fbc799e9d5762929da05a51dc6a35c69ea5ffa9fa314",
+    "reason": "Explicit @Sendable geometry transform and action. Transform uses immutable geometry only; all visibility/follow state writes occur inside Task @MainActor."
+  },
+  {
+    "file": "apps/apple/UI/ConversationView.swift",
+    "line": 861,
+    "api": "onScrollPhaseChange",
+    "sha256": "adf5667a4894e99212b42359ea74513aba8eb88824302874144dfde1c8165068",
+    "reason": "Explicit @Sendable geometry transform and action. Transform uses immutable geometry only; all visibility/follow state writes occur inside Task @MainActor."
+  },
+  {
+    "file": "apps/apple/UI/ConversationView.swift",
+    "line": 862,
+    "api": "onScrollGeometryChange",
+    "sha256": "b5b80e5f57859874f55154852b850e3d42acbf12feeba2501bbc33f1a24e0d3b",
+    "reason": "Explicit @Sendable geometry transform and action. Transform uses immutable geometry only; all visibility/follow state writes occur inside Task @MainActor."
+  },
+  {
+    "file": "apps/apple/UI/ExplicitReturnButton.swift",
+    "line": 28,
+    "api": "sizeThatFits",
+    "sha256": "30608814fbbe8d12b8ed8329b63c349fe3b68c1649ba682e236fe420450ddbea",
+    "reason": "NSViewRepresentable / UIViewRepresentable sizing protocol is MainActor in the platform SDK; returns geometry from the proposal, with no asynchronous closure or observable-state mutation."
+  },
+  {
+    "file": "apps/apple/UI/MacSessionMenu.swift",
+    "line": 12,
+    "api": "invoke",
+    "sha256": "20535283635f6b9e60d315c877fbb48c4114e6cfbd818a5d839be3a0b6464af7",
+    "reason": "AppKit menu delegate / target-action / NSView context-menu entry runs on the native UI thread. Menu builder and action owner are MainActor; asynchronous model mutations begin in that actor."
+  },
+  {
+    "file": "apps/apple/UI/MacSessionMenu.swift",
+    "line": 110,
+    "api": "menuNeedsUpdate",
+    "sha256": "324861f78592eb42a2b9922c0b25f693e795ed6b4ae722474d8b857417995c0c",
+    "reason": "AppKit menu delegate / target-action / NSView context-menu entry runs on the native UI thread. Menu builder and action owner are MainActor; asynchronous model mutations begin in that actor."
+  },
+  {
+    "file": "apps/apple/UI/MainChatPositionTracking.swift",
+    "line": 13,
+    "api": "sizeThatFits",
+    "sha256": "c58510c9d039b6c66ab927ffaf6aef5fc0465739baf4841e725267e919b6e2cb",
+    "reason": "NSViewRepresentable / UIViewRepresentable sizing protocol is MainActor in the platform SDK; returns geometry from the proposal, with no asynchronous closure or observable-state mutation."
+  },
+  {
+    "file": "apps/apple/UI/MainChatPositionTracking.swift",
+    "line": 38,
+    "api": "addObserver",
+    "sha256": "3b2ae7cd467105d0ddd0fa1678e0c9ef549b52fcfdb5f2f8e8b67e1166d331a6",
+    "reason": "Explicit @Sendable NotificationCenter/KVO callback captures weak marker and invokes schedule only inside Task @MainActor."
+  },
+  {
+    "file": "apps/apple/UI/MainChatPositionTracking.swift",
+    "line": 59,
+    "api": "sizeThatFits",
+    "sha256": "a18ee35a43a40b0af41e42358709eb8f76212ee017f1bd6240d5400d17fa55db",
+    "reason": "NSViewRepresentable / UIViewRepresentable sizing protocol is MainActor in the platform SDK; returns geometry from the proposal, with no asynchronous closure or observable-state mutation."
+  },
+  {
+    "file": "apps/apple/UI/MainChatPositionTracking.swift",
+    "line": 82,
+    "api": "observe",
+    "sha256": "8d59b4777d64c90edd52ed6755fb279cb7968564d0a2439a4972616ec2f24f71",
+    "reason": "Explicit @Sendable NotificationCenter/KVO callback captures weak marker and invokes schedule only inside Task @MainActor."
+  },
+  {
+    "file": "apps/apple/UI/MainChatView.swift",
+    "line": 94,
+    "api": "fileImporter",
+    "sha256": "8cabbbf93c54d82e7b4a19ff94f1ffb54cfab1153f25dc89a48c4809c7cc5858",
+    "reason": "Explicit @Sendable completion transports its Result to Task @MainActor before reading or writing any view/model state. No UI actor access on the file-service callback executor."
+  },
+  {
+    "file": "apps/apple/UI/MessageActionsPresentation.swift",
+    "line": 70,
+    "api": "fileExporter",
+    "sha256": "006efde6b6efb5b97d3147b243a361b704b32584187050ffaad6824116f5d0bd",
+    "reason": "Explicit @Sendable completion transports its Result to Task @MainActor before reading or writing any view/model state. No UI actor access on the file-service callback executor."
+  },
+  {
+    "file": "apps/apple/UI/PhoneWatchTimelineBridge.swift",
+    "line": 14,
+    "api": "session",
+    "sha256": "d438763efaf4dce976d6b0467c38c26707e453c264b684ebe7d1da5ee7d755c7",
+    "reason": "Explicit nonisolated WCSession delegate snapshots typed input before Task @MainActor; empty activation callback needs no UI delivery."
+  },
+  {
+    "file": "apps/apple/UI/PhoneWatchTimelineBridge.swift",
+    "line": 17,
+    "api": "session",
+    "sha256": "365ad4ceb5bc22ffb14c3168d8dd7403c6db49e268f200518708386de38ce282",
+    "reason": "Explicit nonisolated WCSession delegate snapshots typed input before Task @MainActor; empty activation callback needs no UI delivery."
+  },
+  {
+    "file": "apps/apple/UI/PhoneWatchTimelineBridge.swift",
+    "line": 35,
+    "api": "sendMessage",
+    "sha256": "f3036f02318ea46c49fe04e61e67f6cadc4d3812336a3d876e1342085a1226b9",
+    "reason": "WCSession sendMessage has nil reply/error handlers. The nonisolated delegate converts input to Sendable values before Task @MainActor."
+  },
+  {
+    "file": "apps/apple/UI/ProjectsView.swift",
+    "line": 21,
+    "api": "begin",
+    "sha256": "4e867011d2235ac01281028a6c9f0598e9b4657b3d83aae4b97f276592a442f9",
+    "reason": "NSOpenPanel completion is explicitly @Sendable; the response is processed inside Task @MainActor before touching panel, URL selection, or project model."
+  },
+  {
+    "file": "apps/apple/UI/SessionHoverRegion.swift",
+    "line": 101,
+    "api": "menu",
+    "sha256": "a4747e6ba36a382d8fa4b41e3ce0173f416cfca4796049076d5dc97c8987aec8",
+    "reason": "AppKit menu delegate / target-action / NSView context-menu entry runs on the native UI thread. Menu builder and action owner are MainActor; asynchronous model mutations begin in that actor."
+  },
+  {
+    "file": "apps/apple/UI/TaskDirectoryModel.swift",
+    "line": 77,
+    "api": "withTaskCancellationHandler",
+    "sha256": "0deb2762958b31f7f4bb9588aae04b92dc7b465ed1d695fe165293d4eef19291",
+    "reason": "Cancellation handler captures a Sendable Task handle and only cancels that handle. It never accesses the surrounding MainActor model."
+  },
+  {
+    "file": "apps/apple/UI/TaskWorkspaceModel.swift",
+    "line": 390,
+    "api": "withTaskCancellationHandler",
+    "sha256": "2ab1ecec73e381d1b491cdfaa92ed06b8bd91b14b49b734852313c33bffe325e",
+    "reason": "Cancellation handler captures a Sendable Task handle and only cancels that handle. It never accesses the surrounding MainActor model."
+  },
+  {
+    "file": "apps/apple/UI/TimelineArtifactCard.swift",
+    "line": 35,
+    "api": "fileExporter",
+    "sha256": "cdb940ab4365475c6d1bba2fa446e3369d9f778e738236839bc7097c6286b920",
+    "reason": "Explicit @Sendable completion transports its Result to Task @MainActor before reading or writing any view/model state. No UI actor access on the file-service callback executor."
+  },
+  {
+    "file": "apps/apple/iOS/PairingScannerView.swift",
+    "line": 70,
+    "api": "dataScanner",
+    "sha256": "0676f077ab4e0a9f0473717e5ca269765763a97cbd659041aa15823dd22a450a",
+    "reason": "Platform SDK declares DataScannerViewControllerDelegate @MainActor and UIImagePickerControllerDelegate NS_SWIFT_UI_ACTOR. Native UI delegate delivery is main-actor isolated."
+  },
+  {
+    "file": "apps/apple/watchOS/WatchHomeView.swift",
+    "line": 26,
+    "api": "session",
+    "sha256": "f2e3016466a4ae245fb66b642d96a7df7a023d77cf27b173e26609d91d06bc0c",
+    "reason": "Explicit nonisolated WCSession delegate snapshots typed input before Task @MainActor; empty activation callback needs no UI delivery."
+  },
+  {
+    "file": "apps/apple/watchOS/WatchHomeView.swift",
+    "line": 30,
+    "api": "sessionReachabilityDidChange",
+    "sha256": "d93bebc277cf21b2d28789fcd0adf4ab0b2846c73bfef8f880a12eb94f926e80",
+    "reason": "Explicit nonisolated WCSession delegate snapshots typed input before Task @MainActor; empty activation callback needs no UI delivery."
+  },
+  {
+    "file": "apps/apple/watchOS/WatchHomeView.swift",
+    "line": 34,
+    "api": "session",
+    "sha256": "78c5216e62dad81da30a1fae655793e6e9cabf4416a7f1dc21e0d95e4ac37bb8",
+    "reason": "Explicit nonisolated WCSession delegate snapshots typed input before Task @MainActor; empty activation callback needs no UI delivery."
+  },
+  {
+    "file": "apps/apple/watchOS/WatchHomeView.swift",
+    "line": 38,
+    "api": "session",
+    "sha256": "4d20b3576106547be5212883ed78994fb9df35a9f1089202d4634ae723e6e4f3",
+    "reason": "Explicit nonisolated WCSession delegate snapshots typed input before Task @MainActor; empty activation callback needs no UI delivery."
+  },
+  {
+    "file": "apps/apple/watchOS/WatchHomeView.swift",
+    "line": 86,
+    "api": "sendMessage",
+    "sha256": "20a44a3b428bd24b577818912dcce8f6a5978e162ded636a6ec0d7f57a681ea7",
+    "reason": "WatchMessageDelivery factories are nonisolated and return @Sendable reply/error closures, converting typed values before explicit Task @MainActor delivery."
+  }
+]

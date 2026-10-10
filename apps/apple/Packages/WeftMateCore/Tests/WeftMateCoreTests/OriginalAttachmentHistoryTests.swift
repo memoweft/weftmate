@@ -59,7 +59,9 @@ private func attachmentLegacyClient(hostPage: Data? = nil, syncPage: Data? = nil
     var steps: [AttachmentHistoryTransport.Step] = [
         .init(path: "/auth/login", response: auth),
         step("/status", try attachmentJSON(["ownerId": "owner-A", "hostId": "host-test"])),
-        .init(path: "/auth/me", response: auth), step("/sync/events?afterSeq=0&limit=100", sync),
+        .init(path: "/auth/me", response: auth),
+        step("/status", try attachmentJSON(["ownerId": "owner-A", "hostId": "host-test"])),
+        step("/sync/events?afterSeq=0&limit=100", sync),
         step("/sessions", sessions), .init(path: "/auth/me", response: auth)]
     if let hostPage {
         steps.append(step("/sessions/session-test/events?limit=100", hostPage))

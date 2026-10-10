@@ -11,10 +11,10 @@ final class PhoneWatchTimelineBridge: NSObject, WCSessionDelegate, @unchecked Se
         self.model = model; super.init()
         if WCSession.isSupported() { session.delegate = self; session.activate() }
     }
-    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {}
-    func sessionDidBecomeInactive(_ session: WCSession) {}
-    func sessionDidDeactivate(_ session: WCSession) { session.activate() }
-    func session(_ session: WCSession, didReceiveMessage message: [String: Any], replyHandler: @escaping ([String: Any]) -> Void) {
+    nonisolated func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {}
+    nonisolated func sessionDidBecomeInactive(_ session: WCSession) {}
+    nonisolated func sessionDidDeactivate(_ session: WCSession) { session.activate() }
+    nonisolated func session(_ session: WCSession, didReceiveMessage message: [String: Any], replyHandler: @escaping ([String: Any]) -> Void) {
         let action = message["action"] as? String, sessionID = message["sessionID"] as? String,
             approvalID = message["approvalID"] as? String, outcome = message["outcome"] as? String
         let reply = WatchReply(replyHandler)
