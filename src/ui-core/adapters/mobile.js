@@ -298,7 +298,7 @@ async function sendLinked(options={}){if(core.state.sessionSelecting||core.state
   }catch(error){if(current())effects.status(error?.message==='TIMEOUT'?'发送结果待核对；原请求编号已保留':effects.safeError(error),true)}
   finally{if(state.owner===owner&&state.authEpoch===epoch){state.linkedPending=null;effects.updateComposer()}}}
 
-async function send(options={}){if(state.chatSource==='host')return sendShared(options);
+async function send(options={}){if(core.folderMutationPending?.())return;if(state.chatSource==='host')return sendShared(options);
   if(selectedBinding())return sendLinked(options);
   const text=effects.readMessageDraft().trim(),items=[...currentAttachments()];if((!text&&!items.length)||state.busy||state.sendUncertain)return;
   if(text.length>16384){effects.status('消息过长，请缩短后发送',true);return}

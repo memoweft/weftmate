@@ -99,7 +99,7 @@
 | DELETE `/auth/devices/{deviceId}` | 无；客户端可发 `{}`；撤销当前设备会清 Cookie | 200 `{"revoked":true}` | 404 `NOT_FOUND` | 桌、手、安 |
 | GET `/status` | 无 | 200 `{"ownerId":"owner-…","hostId":"host-…","sync":{"available":true},"downloads":{"android":true},"backend":{"runtime":"ready","referenceScan":"ready","capabilities":{"chat":{"available":true}},"modules":{"memory":"connected"}}}` | 后端错误 | 桌、手、安、苹 |
 
-`backend.capabilities` 还含 `desktopOpenApp,naturalLanguageDesktop`；`modules` 含 `memory,mods,tasks,notifications,workspaces,capabilities`。这些是能力/状态字段，不代表存在同名 HTTP 路由。FX-9 增加可选 `executionAccount:boolean`，表示当前账号是否为这台电脑的执行账号；`false` 时仅可聊天，界面须说明不能操作电脑或读取原账号资料。旧宿主缺字段时按既有能力投影处理。FX-16 增加可选 `executionAccountName:string|null`：非执行账号只收到执行账号昵称；昵称为邮箱时返回「原账号」，不返回登录邮箱、身份或凭据。
+`backend.capabilities` 还含 `desktopOpenApp,naturalLanguageDesktop`；`modules` 含 `memory,mods,tasks,notifications,workspaces,capabilities`。这些是能力/状态字段，不代表存在同名 HTTP 路由。UX-9 增加可选 `hostName:string`，用于已授权客户端显示执行电脑名称；旧宿主缺失时显示「电脑」。FX-9 增加可选 `executionAccount:boolean`，表示当前账号是否为这台电脑的执行账号；`false` 时仅可聊天，界面须说明不能操作电脑或读取原账号资料。旧宿主缺字段时按既有能力投影处理。FX-16 增加可选 `executionAccountName:string|null`：非执行账号只收到执行账号昵称；昵称为邮箱时返回「原账号」，不返回登录邮箱、身份或凭据。
 
 ### 3.3 会话列表与管理（12）
 
@@ -327,7 +327,7 @@ MS-1 增加 `POST /account/models/check`：Cookie（浏览器会话凭据）及 
 | GET `/workspaces/browser` | 无 | 200 `{"available":true,"hostId":"host-…","workspaceKind":"browser"}`；可有 `reasonCode` | — | 桌、手、安 |
 | POST `/workspaces/browser/sessions` | `requestId,modelProfileId`；宿主所有者 | 202 `{"command":Command}` | 503 `BROWSER_UNAVAILABLE / BROWSER_CLEANUP_FAILED`；422 `MODEL_UNAVAILABLE` | 桌、手、安 |
 
-D37 项目实体公开字段为 `projectId,name,instructions,permission,revision,revoked,createdAt,revokedAt?`。`rootPath`、目录身份与内部密钥仅保存在电脑；项目、会话与手机列表均不回传目录路径。新界面创建显式传 `permission:"write"`；旧 POST 省略权限保持只读。
+D37 项目实体公开字段为 `projectId,name,instructions,permission,revision,revoked,createdAt,revokedAt?`。`rootPath`、目录身份与内部密钥仅保存在电脑；项目、会话与手机列表不回传完整目录路径。UX-9 项目公开对象增加 `pathHint:string`（路径末两级，以 ` / ` 分隔），用于选择电脑文件夹；它不是可访问路径。Windows 原生选择桥在本机可信上下文中可取得完整路径、匹配已有项目、显示文件夹及创建项目；原生创建仍调用现有 POST，并只接受系统选择框或真实拖放得到且绑定当前账号的路径。网页发送任意 `rootPath` 返回 403 `PROJECT_NATIVE_SELECTION_REQUIRED`。既有受信任 API / Mac 宿主调用保持兼容。输入区确认卡显式默认 `permission:"read-only"`；原项目编辑界面仍可显式选择权限，旧 POST 省略权限保持只读。
 
 | 路由 | 请求 | 响应 / 行为 | 错误 | 客户端 |
 |---|---|---|---|---|
