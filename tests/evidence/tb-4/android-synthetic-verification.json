@@ -9,29 +9,30 @@
     "real-system-keyboard-tabs-hidden",
     "130-percent-system-font",
     "landscape",
-    "real-native-offline-four-pages-light-dark"
+    "real-native-offline-four-pages-light-dark",
+    "native-unavailable-model-view-send-disabled-synthetic-state"
   ],
   "keyboard": {
     "shown": true,
     "visual": 726.2745361328125,
     "draft": {
       "x": 20.772058486938477,
-      "y": 595.3554077148438,
+      "y": 607.5122680664062,
       "width": 523.9461059570312,
-      "height": 66.15196228027344,
-      "top": 595.3554077148438,
+      "height": 53.99509811401367,
+      "top": 607.5122680664062,
       "right": 544.7181644439697,
-      "bottom": 661.5073699951172,
+      "bottom": 661.5073661804199,
       "left": 20.772058486938477
     },
     "dock": {
       "x": 0,
-      "y": 579.5833129882812,
+      "y": 591.740234375,
       "width": 565.490234375,
-      "height": 146.69117736816406,
-      "top": 579.5833129882812,
+      "height": 134.53431701660156,
+      "top": 591.740234375,
       "right": 565.490234375,
-      "bottom": 726.2744903564453,
+      "bottom": 726.2745513916016,
       "left": 0
     }
   },

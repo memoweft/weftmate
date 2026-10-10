@@ -1,0 +1,24 @@
+{
+  "mainMerged": "82c62fce",
+  "typecheck": "passed",
+  "relatedUnitTests": {
+    "core": 78,
+    "authMessagesBridge": 38,
+    "failed": 0,
+    "skipped": 0
+  },
+  "regressionsBeforeMerge": {
+    "activity": 16,
+    "mobileGoals": 6,
+    "libraryElectronAndMobile": 18,
+    "errors": 0
+  },
+  "webGroups": 15,
+  "androidSyntheticGroups": 8,
+  "androidRealReminderGroups": 11,
+  "androidBuild": "assembleDebug + assembleDebugAndroidTest passed",
+  "androidRouteTests": "BusinessRouteUnitTest passed",
+  "finishReview": "ship",
+  "designDocumentation": "incumbent tokens/icons preserved, read-only ship",
+  "fullTests": "CI final result delegated to Claude"
+}

@@ -684,6 +684,7 @@ function handleBack(){if(document.querySelector('.session-menu[role=menu]')){Wef
   if(approvalModeState.confirmation){closeApprovalRisk();return}if(approvalModeState.menu){closeApprovalModeMenu({restoreFocus:true});return}
   if(state.attachmentMenu){closeAttachmentMenu({restoreFocus:true});return}if(state.attachmentPick){cancelAttachmentPick({announce:true});return}if(state.menu){closeModelMenu();$('model-button').focus();return}
   if(state.drawer){closeDrawer();$('menu-button').focus();return}
+  if(!state.loggedIn){if(window.weftNative)void call('app.exit').catch(error=>toast(safeError(error)));return}
   if(state.page==='home')return;
   if(state.settingsChild && state.page!=='settings'){page('settings');state.settingsChild=false;return}
   if(state.page!=='chat'){if(mobileTabNames[state.page])void selectMobileTab('chat');else page(state.returnPage||'chat');return}
