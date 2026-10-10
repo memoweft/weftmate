@@ -18,6 +18,7 @@ export function createMemoryIngestion(context) {
   async function capture(ownerId, sessionId, turn, boundary, row = {}) {
     const previous = captures.get(ownerId) ?? Promise.resolve();
     const work = previous.catch(() => {}).then(async () => {
+      if (context.dataControls?.isLocked(ownerId)) return { state: 'skipped', reasonCode: 'MEMORY_SOURCE_EXCLUDED' };
       const account = context.accountState(ownerId), key = keyFor(sessionId, turn);
       if (account.memoryCleanupPending) throw failure('MEMORY_BUSY', 503);
       if (!permitted(account.sessions[sessionId], { ...row, turn })) return { state: 'skipped', reasonCode: 'MEMORY_SOURCE_EXCLUDED' };

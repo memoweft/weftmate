@@ -7,6 +7,7 @@ import { reasoningCapability, modelReasoning } from './model-reasoning.mjs'
 import path from 'node:path'
 import { mkdir, rm, cp, access } from 'node:fs/promises'
 import { sessionWorkspace } from './personal-access/session-workspace.mjs'
+import { removeAccountPath } from './personal-data/paths.mjs';
 const idPattern = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/
 const fail = (code) => { const error = new Error(code); error.code = code; throw error }
 
@@ -17,6 +18,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
   reasoningSettings = null,
   sessionProfileId = null,
   sessionProfileIds = null,
+  unbindSession = () => {},
   hostOwnerId = () => null, getRuntimeId = () => null,
   ownerForSession = () => null,
   modelAllowed = () => true,
@@ -258,6 +260,11 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       return gateway(`/sessions/${encodeURIComponent(sessionId)}/memory-cleanup`, { method: 'POST',
         body: JSON.stringify({ sourceTexts, deleteConversationSnippets, scheduleIds, goalIds }) })
     },
+    accountWorkspaceRoot(ownerId) { return sessionWorkspaceRoot ? sessionWorkspace(sessionWorkspaceRoot, ownerId, 'account').replace(/[\\/]account$/, '') : null; },
+    async sessionStorage({ sessionId, ownerId }) {
+      await requireSession(sessionId, ownerId);
+      return gateway(`/sessions/${encodeURIComponent(sessionId)}/storage`);
+    },
     async deleteSession({ sessionId, ownerId }) {
       requireRuntime()
       const listed = await listSessions()
@@ -268,11 +275,14 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         const result = await gateway(`/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE', body: '{}' })
         if (result?.deleted !== true) fail('SESSION_UNAVAILABLE')
       }
-      if (sessionWorkspaceRoot) await rm(sessionWorkspace(sessionWorkspaceRoot, ownerId ?? 'fixture', sessionId), { recursive: true, force: true })
+      if (sessionWorkspaceRoot) await removeAccountPath(this.accountWorkspaceRoot(ownerId ?? 'fixture'), sessionWorkspace(sessionWorkspaceRoot, ownerId ?? 'fixture', sessionId));
       // Older releases used a session-only directory. It is owned by this exact
       // UUID session, and is never a project or a user-selected working folder.
-      if (sessionWorkspaceRoot && /^session-[A-Za-z0-9_-]+$/.test(sessionId))
-        await rm(path.join(sessionWorkspaceRoot, sessionId), { recursive: true, force: true })
+      if (sessionWorkspaceRoot && /^session-[A-Za-z0-9_-]+$/.test(sessionId)) {
+        const legacy = path.join(sessionWorkspaceRoot, sessionId);
+        await removeAccountPath(legacy, legacy);
+      }
+      await unbindSession(sessionId);
       return { deleted: true }
     },
     async schedules({ sessionId, ownerId, ...input }) {

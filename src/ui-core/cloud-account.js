@@ -244,7 +244,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     await expireCloudSession();
   }
   async function cloudLogoutOthers() { return client.authorized('/auth/logout/others', { method: 'POST', body: {} }); }
-  async function cloudDeleteAccount(password) { if (auth.localDesktop) await core.prepareAccountDeletionBackup(); const result = await client.authorized('/auth/account/delete', { method: 'POST', body: { password } }); await expireCloudSession(''); return result; }
+  async function cloudDeleteAccount(password, { prepareBackup = true } = {}) { if (auth.localDesktop && prepareBackup) await core.prepareAccountDeletionBackup(); const result = await client.authorized('/auth/account/delete', { method: 'POST', body: { password } }); await expireCloudSession(''); return result; }
   async function cloudEmergencyPassword(password, confirmation) {
     if (Array.from(password).length < 15 || Array.from(password).length > 128) throw { code: 'EMERGENCY_PASSWORD_INVALID' };
     if (password !== confirmation) throw { code: 'PASSWORD_MISMATCH' };
