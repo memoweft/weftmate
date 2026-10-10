@@ -32,6 +32,13 @@ test('shared offline content: parsing, injection set, streaming, controls and fa
     assert.equal(result.md,'| a | b |\n| --- | --- |\n| x\\|y | say "hi",<br>next |');assert.equal(result.csv,'"a","b"\r\n"x|y","say ""hi"",\nnext"');
   });
   await t.test('plain streaming tails retain completed blocks and Markdown transitions still reparse references, lists and fences',async()=>{
+    const prefix=await page.evaluate(()=>{const body=WeftContent.create('#','markdown-body',{streaming:true});const first=body.textContent;WeftContent.update(body,'# 标题',{streaming:true});return {first,heading:body.querySelector('h1')?.textContent};});
+    assert.equal(prefix.first.replace(/\u200b/g,''),'#');assert.equal(prefix.heading,'标题');
+    const equivalence=await page.evaluate(()=>{
+      const samples=['[前文引用][later]\n\n中间段落\n\n[later]: https://example.com/page','第一段[^a]\n\n第二段\n\n[^a]: 脚注说明。','> 引用\n> - **项目**\n\n- [x] 完成\n- [ ] 未完成','| 名称 | 值 |\n| --- | --- |\n| **甲** | $x^2$ |','```js\nconst x = "<script>";\n```\n\n$\\frac{1}{2}$'];
+      return samples.map(text=>{const host=WeftContent.create(text,'markdown-body',{streaming:true});globalThis.WeftReplyMotion?.indicator?.(host,false);const expected=document.createElement('div');expected.innerHTML=WeftFormat.render(text,{prefix:'test'});return {actual:WeftFormat.renderBlocks(text,{prefix:'test'}).join(''),expected:expected.innerHTML};});
+    });
+    for(const value of equivalence)assert.equal(value.actual,value.expected);
     const result=await page.evaluate(()=>{
       const prefix='```python\nprint(1)\n```\n\n',body=WeftContent.create(prefix+'第一段');document.body.append(body);const code=body.querySelector('.render-code');
       WeftContent.update(body,prefix+'第一段正在扩展');const plain=body.lastElementChild.textContent,stable=code===body.querySelector('.render-code');

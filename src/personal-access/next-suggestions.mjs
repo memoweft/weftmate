@@ -4,6 +4,30 @@ import { REQUEST_ID } from './constants.mjs';
 
 const empty = requestId => ({ requestId, suggestions: [], completion: '' });
 const clip = (value, limit) => [...value].slice(0, limit).join('');
+export async function completionStream(response, signal, onUsage) {
+  let pending = '', text = '', bytes = 0;
+  const decoder = new TextDecoder();
+  for await (const part of response.body) {
+    signal.throwIfAborted(); bytes += part.byteLength;
+    if (bytes > 16_384) throw failure('BACKEND_UNAVAILABLE', 503);
+    pending += decoder.decode(part, { stream: true });
+    let boundary;
+    while ((boundary = pending.indexOf('\n')) >= 0) {
+      const line = pending.slice(0,boundary).trimEnd(); pending = pending.slice(boundary+1);
+      if (!line.startsWith('data:')) continue;
+      const raw = line.slice(5).trim(); if (!raw || raw === '[DONE]') continue;
+      const value = JSON.parse(raw); if (value.error) throw failure('BACKEND_UNAVAILABLE',503);
+      if (value.usage) onUsage(value.usage);
+      if (typeof value.choices?.[0]?.delta?.content === 'string') text += value.choices[0].delta.content;
+    }
+  }
+  return text;
+}
+export function parseCompletion(text, draft) {
+  if (/^\s*(?:\{|```)/.test(text)) return parseSuggestions(text,'completion',draft).completion;
+  let suffix = text.trim(); if (suffix.startsWith(draft)) suffix = suffix.slice(draft.length);
+  return suffix && !/[\n\r]/.test(suffix) && [...suffix].length <= 40 && !/还有什么|有什么可以帮|anything else|how can I help/i.test(suffix) ? suffix : '';
+}
 export function suggestionContext(events, forgottenSeqs = []) {
   const forgotten = new Set(forgottenSeqs);
   return events.filter(row => !forgotten.has(row.seq) && ['user.message', 'assistant.message'].includes(row.type) &&
@@ -87,25 +111,31 @@ export function createNextSuggestions(context, { timeoutMs = 5000, watchMs = 150
       const events = page.events ?? [];
       const terminal = events.filter(event => ['turn.started', 'turn.ended', 'user.message'].includes(event.type)).at(-1);
       if (body.kind === 'replies' && !(terminal?.type === 'turn.ended' && terminal.data?.reason === 'completed')) return context.json(response, 200, result);
-      const messages = suggestionContext(events, session.forgottenSeqs);
+      let messages = suggestionContext(events, session.forgottenSeqs);
+      if (body.kind === 'completion') messages = messages.slice(-2).map(row => ({ ...row, content: clip(row.content, row.role === 'assistant' ? 320 : 200) }));
       if (!messages.length || body.kind === 'replies' && messages.at(-1).role !== 'assistant') return context.json(response, 200, result);
       const model = (await context.backend.listModels({ ownerId })).find(model => model.id === session.modelProfileId);
       reconcile(ownerId); controller.signal.throwIfAborted();
       const instruction = body.kind === 'replies'
         ? '预测用户在这段对话之后可能想说或做的下一步。只给与当前回复直接相关且有把握的0–3条短句，每条约20个汉字，绝不超过24字，用用户口吻。不要泛泛询问，不虚构已经执行的动作。只输出JSON {"suggestions":["..."]}，没把握输出空数组。'
-        : '补全用户正在输入的话。只返回自然、确定的后半句，最多40字，只补到本句结束，不换行。不重复用户已经输入的前缀，不新增任务或凭空承诺。只输出JSON {"completion":"后半句"}，没把握输出空字符串。';
+        : '续写用户草稿，只输出接下来的一个短语（2–12字）。不重复草稿，不解释，不新增任务。没把握输出空。';
       controller.signal.throwIfAborted();
       const upstream = await context.backend.modelCompletion({ ownerId, profileId: session.modelProfileId, priority: 'suggestion', signal: controller.signal,
         onStart: async () => { controller.signal.throwIfAborted(); ticket = await context.usage.begin(ownerId, { sessionId, profileId: session.modelProfileId, model, category: 'next-suggestions' }); },
-        body: { model: model.model, stream: false, max_tokens: 160, temperature: 0.3,
+        body: { model: model.model, stream: body.kind === 'completion', ...(body.kind === 'completion' ? {stream_options:{include_usage:true}} : {}), max_tokens: body.kind === 'completion' ? 24 : 160, temperature: 0.3,
           messages: [{ role: 'system', content: instruction }, ...messages,
-            { role: 'user', content: body.kind === 'completion' ? `正在输入：${clip(body.draft, 600)}。仅返回completion的JSON。`
+            { role: 'user', content: body.kind === 'completion' ? `草稿：${[...body.draft].slice(-400).join('')}`
               : '请根据上面已经完成的回复，预测我最可能继续说的下一句话或下一步动作。仅返回suggestions的JSON。' }] } });
       if (!upstream.ok) { await upstream.body?.cancel(); return context.json(response, 200, result); }
-      const value = JSON.parse(await boundedUpstreamBody(upstream, 16_384));
-      usage = value.usage ?? null;
+      let text;
+      if (body.kind === 'completion' && /^text\/event-stream/i.test(upstream.headers?.get?.('content-type') ?? ''))
+        text = await completionStream(upstream,controller.signal,value=>{usage=value;});
+      else {
+        const value = JSON.parse(await boundedUpstreamBody(upstream, 16_384));
+        usage = value.usage ?? null; text = value.choices?.[0]?.message?.content ?? '';
+      }
       reconcile(ownerId); controller.signal.throwIfAborted();
-      Object.assign(result, parseSuggestions(value.choices?.[0]?.message?.content ?? '', body.kind, body.draft));
+      Object.assign(result, body.kind === 'completion' ? {completion:parseCompletion(text,body.draft)} : parseSuggestions(text, body.kind, body.draft));
     } catch { /* Speculation fails silently, never retries or affects the real turn. */ }
     finally {
       clearTimeout(timer); clearInterval(watch); response.off('close', disconnect);

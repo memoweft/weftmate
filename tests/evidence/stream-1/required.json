@@ -1,0 +1,15 @@
+{
+  "mode": "required",
+  "files": 273,
+  "exitCode": 1,
+  "passed": 1416,
+  "failed": 5,
+  "skipped": 14,
+  "failures": [
+    "2400+ event session opens the recent tail without inspecting its beginning and pages older/incremental",
+    "parallel tool completion metadata visits source ranges once across 3000-event pagination",
+    "terminal-output-limit desktop offline session selection and account reset clear the previous reason",
+    "history polling catches up across pages and shows a persisted user abort only after reaching the tail",
+    "desktop UI-1 Chromium verifies navigation, timeline, side panel, appearance and command controls"
+  ]
+}
