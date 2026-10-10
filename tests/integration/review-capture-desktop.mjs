@@ -10,7 +10,7 @@ import { repository, outDirectory, runScene, catalog } from '../../scripts/revie
 const out = outDirectory();
 const sceneIndex = process.argv.indexOf('--scene'), onlyScene = sceneIndex < 0 ? null : process.argv[sceneIndex + 1];
 for (const theme of ['light', 'dark']) {
-  const fixture = await startTimelineCandidate({ historyCount: 0, interactive: true, riskApproval: true, composer:true, composerMenu:true, baseTime: Date.parse('2026-10-08T08:00:00Z') });
+  const fixture = await startTimelineCandidate({goals:true, historyCount: 0, interactive: true, riskApproval: true, composer:true, composerMenu:true, baseTime: Date.parse('2026-10-08T08:00:00Z') });
   const profile = await mkdtemp(join(tmpdir(), 'weftmate-review-desktop-'));
   const env = { ...process.env };
   for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key.startsWith('MEMOWEFT_') || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
@@ -58,6 +58,7 @@ for (const theme of ['light', 'dark']) {
     };
     const settings = async () => { await home(); await button('账户菜单').click(); await button('设置').click(); };
     const preparations = {
+      goals: async () => { await home(); await button('目标').click(); await page.getByRole('heading',{name:'目标',exact:true}).waitFor(); await page.getByRole('article',{name:'提交合成报告',exact:true}).waitFor(); },
       onboarding: async () => { await settings(); await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '常规', exact: true }).click(); await button('重新查看引导').click(); await page.getByRole('heading', { name: '你好，我是 WeftMate', exact: true }).waitFor(); },
       activity: async () => { await home(); await fixture.recordActivity({ key:'gallery-paused', type:'memory.paused', title:'记忆已暂停', summary:'记忆暂时无法更新，可在记忆页查看状态。', level:'normal' }); await button(/^动态(?:，|$)/).click(); await page.getByRole('heading',{name:'动态',exact:true}).waitFor(); await page.getByText('记忆已暂停',{exact:true}).waitFor(); },
       sessions: async () => { await home(); await button('搜索会话').click(); await page.getByRole('searchbox', { name: '搜索会话', exact: true }).waitFor(); },
@@ -81,7 +82,7 @@ for (const theme of ['light', 'dark']) {
     application=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:repository,args:[join(repository,'scripts/review-gallery/electron.mjs'),'--force-device-scale-factor=1'],env:{...env,REVIEW_ORIGIN:mainFixture.origin}});
     page=await application.firstWindow();page.setDefaultTimeout(30000);closing=false;
     await localUiSession(page,mainFixture.credentials,'Synthetic main gallery',{mainChat:true});
-    await shot('main-chat',async()=>{await button('WeftMate 主对话').click();await page.waitForFunction(()=>document.querySelector('#transcript .main-chat-row'));});
+    await shot('main-chat',async()=>{await button('WeftMate 主对话').click();await page.waitForFunction(()=>document.querySelector('#transcript .main-chat-row'));await button('搜索主对话').click();await page.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('合成');await page.getByRole('searchbox',{name:'主对话搜索关键词'}).press('Enter');await page.locator('mark').first().waitFor();});
     if (errors.length) throw Error('Desktop renderer or synthetic projection failed');
     console.log(`Desktop ${theme}: scene outcomes recorded.`);
   } finally {

@@ -13,6 +13,8 @@ on:
       - 'design/**'
       - 'tests/evidence/**'
       - 'scripts/review-gallery/**'
+      - 'scripts/nightly/**'
+      - 'tests/nightly-regression.test.mjs'
       - 'tests/integration/review-capture-*.mjs'
       - '.github/workflows/review-gallery.yml'
   pull_request:
@@ -23,6 +25,8 @@ on:
       - 'design/**'
       - 'tests/evidence/**'
       - 'scripts/review-gallery/**'
+      - 'scripts/nightly/**'
+      - 'tests/nightly-regression.test.mjs'
       - 'tests/integration/review-capture-*.mjs'
       - '.github/workflows/review-gallery.yml'
   workflow_dispatch:
@@ -66,6 +70,8 @@ jobs:
         run: node scripts/review-gallery/capture.mjs --out .local/review-gallery
       - name: Verify evidence selection and text scan
         run: node --test tests/integration/review-capture-evidence.mjs
+      - name: Verify nightly alarms, pixel comparisons and retention
+        run: node --test tests/nightly-regression.test.mjs
       - name: Generate self-contained review page
         if: ${{ !cancelled() }}
         run: node scripts/review-gallery/build.mjs --out .local/review-gallery

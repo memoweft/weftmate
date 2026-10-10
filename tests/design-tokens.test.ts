@@ -5,6 +5,11 @@ import { resolve } from 'node:path';
 import test from 'node:test';
 
 const root = resolve(import.meta.dirname, '..');
+test('search highlights meet 4.5:1 text contrast in every desktop and mobile theme',()=>{
+  const tokens=JSON.parse(readFileSync(resolve(root,'design/tokens/tokens.json'),'utf8'));
+  const luminance=(hex:string)=>{const rgb=hex.slice(1).match(/../g)!.map(v=>parseInt(v,16)/255).map(v=>v<=0.04045?v/12.92:((v+0.055)/1.055)**2.4);return rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722};
+  for(const id of ['desktop','mobile'])for(const theme of tokens.surfaces[id].themes){const a=luminance(theme.variables['--search-highlight-bg']),b=luminance(theme.variables['--search-highlight-ink']);assert.ok((Math.max(a,b)+.05)/(Math.min(a,b)+.05)>=4.5,`${id} ${theme.selector}`)}
+});
 test('design token outputs match the sole source without writing files', () => {
   execFileSync(process.execPath, ['scripts/generate-tokens.mjs', '--check'], { cwd: root });
 });

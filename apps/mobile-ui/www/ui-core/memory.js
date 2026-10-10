@@ -7,6 +7,8 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         if (status.state === 'disabled') return '记忆暂停：尚未启用';
         if (code === 'MEMORY_MODEL_UNAVAILABLE') return `记忆暂停：记忆模型不可用${waiting ? `，已保存 ${waiting} 条待补交` : ''}`;
         if (code === 'MEMORY_MODEL_WAITING') return `记忆等待：模型切换中${waiting ? `，已保存 ${waiting} 条待补交` : ''}`;
+        if (status.failedCorrectionCount > 0) return `有 ${status.failedCorrectionCount} 条纠正没有生效，请查看原话并重试形成`;
+        if (status.formationIssues?.length > 0) return `有 ${status.formationIssues.length} 条记忆没有形成，请查看原话并重试形成`;
         if (status.blockedBoundaryCount > 0) return `记忆暂停：${status.blockedBoundaryCount} 条来源需要处理`;
         if (status.failedFormationCount > 0) return `记忆暂停：${status.failedFormationCount} 条整理失败，请检查模型服务`;
         if (waiting) return `正在补交 ${waiting} 条${code === 'MEMORY_BUSY' ? '，服务忙，稍后自动重试' : ''}`;
@@ -306,7 +308,7 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         core.memory.cursor = null;
         core.memory.hasMore = false;
         core.memory.query = '';
-        core.memory.kind = 'cognition';
+        core.memory.kind = 'all'; core.memory.totalCount = null;
         core.memory.selected = null;
         core.memory.sources = [];
         core.memory.mode = 'detail';
@@ -346,7 +348,7 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         effects.memoryStatus(more ? '正在读取更多记忆…' : '正在读取记忆…');
         effects.setMemoryMoreBusy(true);
         try {
-            const params = new URLSearchParams({ kind, limit: '20' });
+            const params = new URLSearchParams({ kind, limit: '20', includeSources:'true' });
             if (query)
                 params.set('query', query);
             if (after)
@@ -358,14 +360,15 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
                 || page.searchScope !== 'account_snapshot' || typeof page.hasMore !== 'boolean'
                 || (page.hasMore && (typeof page.nextCursor !== 'string' || !page.nextCursor))
                 || (more && core.memory.revision !== page.worldRevision)
-                || page.items.some((item) => item?.kind !== kind || typeof item.id !== 'string'))
+                || page.items.some((item) => !core.memoryKinds[item?.kind] || kind !== 'all' && item.kind !== kind || typeof item.id !== 'string'))
                 throw { code: 'MEMORY_REVISION_CHANGED' };
             core.memory.items = more ? [...core.memory.items, ...page.items] : page.items;
             core.memory.revision = page.worldRevision;
             core.memory.cursor = page.nextCursor ?? null;
             core.memory.hasMore = page.hasMore;
+            if (kind === 'all') core.memory.totalCount = Number.isSafeInteger(page.totalCount) ? page.totalCount : null;
             effects.renderMemoryItems();
-            effects.memoryStatus(core.memory.items.length ? `已读取${core.memoryKinds[kind]}。${core.memory.hasMore ? '可继续读取更多。' : ''}`
+            effects.memoryStatus(core.memory.items.length ? `已读取${kind === 'all' ? '全部类型记忆' : core.memoryKinds[kind]}。${core.memory.hasMore ? '可继续读取更多。' : ''}`
                 : query ? '当前类型没有匹配的已形成记忆。'
                     : core.memory.status?.pendingBoundaryCount > 0
                         ? '尚无已形成记忆；有待处理来源。'

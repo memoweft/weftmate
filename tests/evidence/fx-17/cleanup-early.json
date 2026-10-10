@@ -1,0 +1,9 @@
+{
+  "count": 2,
+  "scope": "known failed exploratory wang-final only",
+  "at": "2026-10-10T09:58:36.0396730+08:00",
+  "terminated": [
+    22120,
+    18164
+  ]
+}

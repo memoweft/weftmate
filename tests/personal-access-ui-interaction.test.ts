@@ -1,4 +1,4 @@
-import { desktopFeatureSource, desktopHtml } from './helpers/desktop-ui-source.mjs'
+import { desktopFeatureSource, desktopHtml, mountDesktopTestTree } from './helpers/desktop-ui-source.mjs'
 import assert from 'node:assert/strict'
 import { Blob, File } from 'node:buffer'
 import { createHash } from 'node:crypto'
@@ -107,6 +107,7 @@ class Element {
   reset() { this.value = '' }
   open = false
   parentNode: Element | null = null
+  get parentElement() { return this.parentNode }
   get nextSibling() { return this.parentNode?.children[this.parentNode.children.indexOf(this) + 1] ?? null }
   insertBefore(child: Element, next: Element | null) {
     child.remove()
@@ -434,6 +435,9 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     }, querySelectorAll: () => [], addEventListener() {} }
   focusDocument = document
   for (const node of nodes.values()) node.ownerDocument = document
+  // Build the static element tree from production markup so component mounting
+  // sees real parents without baking layout positions into behavior assertions.
+  mountDesktopTestTree(document, get)
   const location = { hash: config.setupGrant ? `#setup=${config.setupGrant}` : '',
     pathname: '/personal/v1/ui', search: '', protocol: 'http:' }
   const window = { location, innerWidth: 1280, innerHeight: 820, history: { replaceState() {} }, addEventListener() {}, WeftIcons: null as any }

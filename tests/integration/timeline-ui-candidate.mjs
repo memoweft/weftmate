@@ -13,7 +13,7 @@ const ok = value => ({ result: { ok: true, value } })
 export async function startTimelineCandidate(options = {}) {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-m0-3-')); let events = [];
   const dailySessions = new Map(), questionFrames = []; let relayPending = false;
-  let sessionId, taskId, running = true, artifact, service, questionFrame, processing = {phase: 'loading', modelName: '合成模型'}
+  let sessionId, taskId, running = true, artifact, service, questionFrame, setupComplete = false, processing = {phase: 'loading', modelName: '合成模型'}
   let contextUsage=options.composer?{usedTokens:713000,contextWindow:828000}:null;
   const receiptId = 'timeline-synthetic-receipt', runtimeId = randomUUID(), approvalId = randomUUID()
   const goal = '读取项目资料，运行测试，并保存一份进度报告。'
@@ -24,6 +24,8 @@ export async function startTimelineCandidate(options = {}) {
   const result = (id, text, isError = false) => append('tool/result', { turn: 1, message: { source: { kind: 'tool', callId: id }, content: [{ type: 'tool-result', toolCallId: id, isError, content: [{ type: 'text', text }] }] } })
   const adapter = createDshSessionAdapter({ sessions: { list: async () => ok({ items: [{ sessionId, origin: 'user' }] }) }, events: {} }, { readLog: async () => events })
   const scheduleRows = [{id:'ui4-schedule',text:'提交合成报告',state:'scheduled',timeZone:'Asia/Shanghai',nextRunAt:'2026-10-09T01:00:00Z'}];
+  const goalRows = new Map();
+  if(options.goals){scheduleRows[0]={...scheduleRows[0],createdAt:new Date().toISOString(),revision:1,kind:'reminder',repeat:{kind:'daily',time:'09:00:00'}};}
   const backend = {
     deleteSession: async ({sessionId:id}) => { dailySessions.delete(id); if(id===sessionId){events=[];running=false;} return {deleted:true}; },
     chatRelayState: async () => ({ pending: relayPending, safe: !running }),
@@ -31,12 +33,24 @@ export async function startTimelineCandidate(options = {}) {
     installChatHandoff: async () => {relayPending=false;return {installed:true};},
     readAttachment: async () => ({bytes:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jk9sAAAAASUVORK5CYII=','base64'),contentType:'image/png'}),
     ...(options.sidebar ? { renameSession: async ({sessionId, title}) => { dailySessions.get(sessionId).title = title; return {title}; } } : {}),
-    ...(options.schedules ? { schedules: async ({action,id}) => {
+    ...(options.schedules || options.goals ? { schedules: async ({action,id,...input}) => {
       if (['list','notifications'].includes(action)) return {items:scheduleRows.map(row=>({...row}))};
+      if(action==='erase'){scheduleRows.length=0;return {ok:true};}
+      if(action==='forget'){return {ok:true};}
+      if(action==='create'){const content=JSON.parse(input.prompt);const row={id:randomUUID(),...content,state:'scheduled',timeZone:'Asia/Shanghai',repeat:content.repeat??null,revision:1,createdAt:new Date().toISOString(),nextRunAt:'2027-01-02T01:00:00Z'};scheduleRows.push(row);return {item:row};}
       const row=scheduleRows.find(row=>row.id===id);assert.ok(row);
+      if(action==='edit'){Object.assign(row,JSON.parse(input.prompt),{revision:row.revision+1});return {item:row};}
       if(action==='delete')scheduleRows.splice(scheduleRows.indexOf(row),1);else row.state=action==='pause'?'paused':action==='resume'?'scheduled':'completed';
       return {ok:true};
     }} : {}),
+    ...(options.goals?{goals:async({sessionId:id,action,objective,ref})=>{
+      if(action==='list')return {goal:goalRows.get(id)??null};
+      if(action==='erase'||action==='forget'||action==='archive'){goalRows.delete(id);return {archived:true};}
+      if(action==='create'){const row={id:randomUUID(),revision:1,objective,phase:'active',roundsStarted:0,createdAt:Date.now(),updatedAt:Date.now()};goalRows.set(id,row);return {ref:{id:row.id,revision:row.revision}};}
+      const row=goalRows.get(id);assert.equal(ref.id,row.id);row.phase='complete';row.revision++;return {ref:{id:row.id,revision:row.revision}};
+    }}:{}),
+    ...(options.goals?{getTaskReplyEvidence:async()=>({status:running?'streaming':'completed',turn:1,step:1,assistantChunks:1,textChunks:1,reasoningChunks:0,assistantMessages:1,toolSaveObserved:false,
+      startedAt:new Date(baseTime).toISOString(),...(running?{}:{terminalAt:new Date().toISOString()})})}:{}),
     getStatus: async () => ({ runtime: 'ready', referenceScan: 'ready', capabilities: { chat: { available: true, inferenceVerified: false } } }), listModels: async () => [{ id: 'local', name: '合成会话', model: options.usageSamples ? 'mimo-v2.6-flash' : 'synthetic', sourceKind: options.usageSamples ? 'cloud' : 'local', configured: true, ...(options.composerMenu?{deepThinking:{supported:true,effort:'high'}}:{}) }], preflight: async () => ({ ok: true }),
     createSession: async input => { operations.push({ kind: 'create' });
       if(options.daily){if(sessionId)dailySessions.get(sessionId).running=running;events=[];running=false;dailySessions.set(input.sessionId,{events,running:false,title:'新对话'});}
@@ -82,7 +96,7 @@ export async function startTimelineCandidate(options = {}) {
     getTaskReplyEvidence: async ({sessionId:id}) => ({ status: options.daily && dailySessions.get(id)?.events.at(-1)?.type==='turn/end'
       ? ({completed:'completed',error:'failed',aborted:'aborted'}[dailySessions.get(id).events.at(-1).data.reason.kind]||'completed') : running ? 'waiting' : 'completed', turn: 1,
       assistantChunks: 0, textChunks: 0, reasoningChunks: 0, assistantMessages: running ? 1 : 2, toolSaveObserved: !!artifact }),
-    listUserQuestions: async () => ({ runtimeId, questions: [...(questionFrame ? [questionFrame] : []), ...questionFrames.map(({callId, ...frame}) => frame)] }),
+    listUserQuestions: async () => ({ runtimeId, questions: setupComplete ? [...(questionFrame ? [questionFrame] : []), ...questionFrames.map(({callId, ...frame}) => frame)] : [] }),
     respondUserQuestion: async input => { const frame = questionFrames.find(frame => frame.questionRpcId === input.questionRpcId) || questionFrame; frame.nativeState = 'answered'; result(frame.callId || 'question-1', '{"answers":[{"id":"format","selected":["简要报告"]}]}'); return { accepted: true } },
   }
   const backupSettings = { enabled: true, directory: 'D:/Synthetic/UI-4-Backups', dailyDays: 7, weeklyCopies: 4 }, backupRows = [], backupOperations = [];
@@ -105,9 +119,22 @@ export async function startTimelineCandidate(options = {}) {
   const created = await command({ requestId: 'timeline-create', kind: 'session.create', modelProfileId: 'local', targetDeviceId: hostId })
   sessionId = created.sessionId
   const source = await command({ requestId: 'timeline-message', kind: 'session.message', sessionId, targetDeviceId: hostId, text: goal }); taskId = source.commandId
-  if (!options.inlineProgress) await service.trackToolApproval({ action: 'register_approval', runtimeId, approvalId, sessionId, turn: 1, callId: 'write-1', rootCallId: 'write-1', receiptId, messageHash: hash(goal), toolName: 'pwsh', argumentsHash: hash('write report'), reason: approvalReason })
   if (!options.inlineProgress) artifact = await service.submitToolArtifact({ sessionId, turn: 1, callId: 'artifact-1', messageHash: hash(goal), fileName: '项目进度报告.md', content: '# 项目进度报告\n\n已读取 3 个文件。42 项测试通过。\n' })
+  // Artifact submission queues a real host write. Do not expose a pending
+  // approval to the UI while that same task still has unconfirmed effects.
+  if (artifact) {
+    for (let attempt = 0; attempt < 100; attempt++) {
+      const rows = (await request('/commands')).commands;
+      if (rows.filter(row => row.kind === 'desktop.write_artifact').every(row => row.state === 'observed')) break;
+      if (attempt === 99) throw Error('Synthetic artifact write was not observed');
+      await new Promise(done => setTimeout(done, 20));
+    }
+  }
   if (artifact) {call('write', 'artifact-1', {fileName:artifact.fileName});result('artifact-1',JSON.stringify(artifact))}
+  // Register the pending overwrite only after the demo artifact write finishes.
+  // The production source guard correctly rejects approvals during unknown effects.
+  if (!options.inlineProgress) await service.trackToolApproval({ action: 'register_approval', runtimeId, approvalId, sessionId, turn: 1, callId: 'write-1', rootCallId: 'write-1', receiptId, messageHash: hash(goal), toolName: 'pwsh', argumentsHash: hash('write report'), reason: approvalReason })
+  setupComplete = true;
   const bridge = async (method, params) => {
     if (method === 'host.status') { const status=await request('/status'); return options.logicalMobile?status:{...status,personalCapabilities:{...status.personalCapabilities,chats:0}}; }
     if (options.logicalMobile && method === 'shared.send' && params.chatId) {
