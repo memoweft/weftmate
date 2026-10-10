@@ -14,7 +14,7 @@
       "id": "node-dep0190", "title": "Node.js 子进程弃用条件",
       "question": "Node.js 24.0.0 的 DEP0190 对 child_process.spawn/execFile 的 args 有什么影响？给出准确的触发条件、弃用阶段与建议。",
       "sources": ["https://nodejs.org/docs/latest-v24.x/api/deprecations.html#DEP0190", "https://nodejs.org/en/blog/release/v24.0.0"],
-      "mustInclude": ["传 args 且 shell: true 才是该项弃用的组合条件", "v24.0.0 为运行时弃用", "风险来自 shell 参数没有转义"],
+      "mustInclude": ["传 args 且 shell 已启用（true 或指定 shell 路径）是该项弃用的组合条件", "v24.0.0 为运行时弃用", "风险来自 shell 参数没有转义"],
       "mustNotAssert": ["所有 args 数组都被弃用", "spawn 或 execFile 已被移除", "该弃用要求禁止 shell:false 的参数数组"],
       "numbers": {"deprecationId": "DEP0190", "runtimeDeprecation": "24.0.0"}
     },
