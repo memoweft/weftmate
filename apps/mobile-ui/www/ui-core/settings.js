@@ -5,12 +5,16 @@ globalThis.WeftUiCore.factories.settings = (core, effects, environment) => {
     const owner = () => core.state.account?.ownerId || core.state.ownerId;
     function acceptPersonalization(value, identity) {
         if (identity !== core.state.identityGeneration || !value?.settings) return value;
+        const old = core.state.personalization;
+        const changed = JSON.stringify(old) !== JSON.stringify(value.settings);
         const oldDisplay = core.state.personalization?.thinkingDisplay;
+        if (core.state.personalizationOwner !== owner() || old?.messageMode !== value.settings.messageMode) {
+            core.state.messageModeOwner = owner();
+            core.state.messageMode = value.settings.messageMode;
+        }
         core.state.personalization = value.settings;
         core.state.personalizationOwner = owner();
-        core.state.messageModeOwner = owner();
-        core.state.messageMode = value.settings.messageMode;
-        effects.updateAvailability?.();
+        if (changed) effects.updateAvailability?.();
         if (oldDisplay !== value.settings.thinkingDisplay) globalThis.document?.dispatchEvent(new Event('weft:personalization'));
         return value;
     }
