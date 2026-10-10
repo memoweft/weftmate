@@ -8,7 +8,7 @@
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
-| Codex · Windows-3 | UX-3 · 输入区 | [PR #153](https://github.com/memoweft/weftmate/pull/153) · `wp/ux-3-composer-menu`：共用「+」菜单，Windows（视窗系统）区域截图 / 剪贴板图片，手机相机 / 照片 / 文件与安卓code25原生桥；按对话深入思考、提供方原生映射 / 默认值恢复、D36运行中占位；真实时间线子任务胶囊 / 三态 / 耗时 / 步骤跳转。真实Electron（桌面程序框架）浅深色与480×600、390×844网页 / 安卓界面包通过；MiMo（小米模型服务）深入思考实际thinking.type=enabled与回复终态、偏好重新打开通过，成功验收2请求、2234输入 / 42输出标记、0.002318元；安卓隔离APK（安装包）构建 / JVM（Java虚拟机）及定向回归、类型检查通过。[证据与Apple（苹果端）清单](../tests/evidence/ux-3/README.md)。未安装本人应用 / 测原生相机实机 / 做Apple接线，已按4c清理4个残留进程，复查0；完整测试与审稿页交本包PR（拉取请求）的CI（持续集成），待Claude审查。 |
+| Codex · Windows-3 | ONB-1 · 首次使用引导 | [PR #164](https://github.com/memoweft/weftmate/pull/164) · `wp/onb-1-onboarding`：仅全新安装进入，七步可跳过 / 返回、宿主持久中断进度、设置重看；既有云注册 / 本地账户、模型预设与官方密钥教程、逐项诊断与非秘密回执恢复、只读本机 / 邻居发现、记忆健康 / 旧对话预览、导入置灰、既有扫码 / 新设备批准、主对话三示例已接线。称呼直写 ST-1 字段，不另存。真实 Electron（桌面程序框架）+ 合成云 + MiMo（小米模型服务）、390×844 手机网页、每步恢复 / 跳过 / 返回及窄窗通过；146/146相关、合主干81/81、手机5+1与类型检查通过，完整CI（持续集成）见本包PR（拉取请求）。[证据与Apple（苹果端）清单](../tests/evidence/onb-1/README.md)；未部署 / 未碰日用 / 未启动模拟器，安卓版本未改。 |
 | Codex · Windows-5 | TB-1 · 动态 | [PR #159](https://github.com/memoweft/weftmate/pull/159) · wp/tb-1-activity：账户隔离的原生事件持久投影、签名分页 / 增量 / 未读与版本已读、原审批与问题回执、D33清理 / 临时脱敏；桌面固定入口与手机菜单页面、同ID原生通知和ST-6 / S3a字段完成。真实Electron（桌面程序框架）浅深 / 480px、390×844手机网页16场景通过；真实固定DSH（助手运行时）＋MiMo（小米模型服务）一分钟提醒 / 动态 / 唯一通知闭环通过，4请求、10114输入 / 159输出令牌（缓存8384）。相关回归及类型检查通过，完整CI（持续集成）见本包PR；[证据与Apple（苹果端）清单](../tests/evidence/tb-1/README.md)。MEM-3周报 / ST-6开关 / S3a安卓后台 / Apple原生接线留后续包；收尾进程清理及最终CI见交接。 |
 | Codex · Windows-4 | ST-1 个性化与助手 | [PR #163](https://github.com/memoweft/weftmate/pull/163) · `wp/st-1-personalization`：账户同步称呼／简介／语气／固定说明与本机写作风格，助手五项含 D36；DSH（助手运行时）每回合系统提示、联网工具开关、思考三档、临时／旁聊／项目与离线副本接线。真实 Electron（桌面程序框架）＋MiMo、390×844 手机网页与安卓界面包浅深交互，定向测试和类型检查通过；Android（安卓）code27 原生业务路径，Apple（苹果端）交接清单与用量见 [证据](../tests/evidence/st-1/README.md)。完整 CI（持续集成）见本包 PR（合并请求）。 |
 | Codex · Windows | M0-6 现有模型入口、后台路由与系统状态 | [PR（合并请求）#33](https://github.com/memoweft/weftmate/pull/33) 方向调整完成：接入 D:\AI 的 8081 ModelSwitcher（模型切换代理），删除自起模型与参数；98,304 / 单槽 / 12 步与后台排队冒烟通过，M1-1b 完成后真实按钮重启通过；最终 CI（持续集成）见 PR 当前提交 |
@@ -94,6 +94,8 @@ MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌）�
 ## 契约变更
 
 - **ST-1 / Windows-4**：新增账户 GET/PATCH `/settings/personalization`、POST `/settings/personalization/style`；离线加密副本追加 `personalization`，助手消息可追加展示专用 `modelThinking`。原思考能力／会话接口和记忆输入不变；Android（安卓）code27，Apple（苹果端）接线见证据。
+
+- **ONB-1**：新增安装 `GET/PATCH /onboarding` 与账户只读 `POST /models/discover`；沿既有认证 / CSRF（跨站请求伪造防护）、模型保存 / 诊断、记忆和配对流程；Apple（苹果端）按 CLIENT_API 第12节接线。
 
 - **TB-1**：CLIENT_API 9.8正式增加 ctivity:1/activityChanges:1/activityRead:1/activityNotification:1、动态列表 / 增量 / 未读 / 单项与快照已读；原同步事件通道增加无正文动态水位，动作直达原审批 / 问题路径。账户签名游标、原任务结果身份、D33删除增量、临时脱敏与重要 / 普通 / 静默通知字段见9.8。
 - **UX-4**：CLIENT_API 3.3 新增消息锚点 `POST/GET /sessions/{id}/message-branches` 与完整消息详情，创建后用返回的 `sendRequestId` 走既有 `session.message`；原版与新版可切换，模型只改新分支，原有 `/fork` 不变。主对话走 `session.side.create` 来源引用；`task.queued.inherited` 对齐原生种子队列。反馈只存设备；导出先脱敏预览。安卓保存桥最低code27，Apple改动清单见UX-4证据。
