@@ -41,7 +41,8 @@ export function createSessionMetadata(context) {
       const work = (async () => {
         for (const sessionId of Object.keys(context.accountState(ownerId).sessions)) {
           if (context.closing) break;
-          if (index.has(key(ownerId, sessionId))) continue;
+          // Activity may already have observed an old forward page. It is not
+          // proof that the latest tail (activity time/unread) has been indexed.
           try { const history = await context.callBackend(() => context.backend.readEvents({ownerId, sessionId, limit:200})); observe(ownerId, sessionId, history.events ?? []); }
           catch { /* The selected history read can repair an unavailable startup entry. */ }
         }

@@ -7,6 +7,18 @@ import { nativeTimelineLog } from '../src/runtime/dsh-adapter/timeline.mjs';
 import { createDshSessionAdapter } from '../src/runtime/dsh-adapter/sessions.mjs';
 import { eraseSessionMemoryArtifact } from '../src/runtime/dsh-adapter/memory-erasure.mjs';
 import { createPersonalAccessService } from '../src/personal-access/index.mjs';
+import { createSessionMetadata } from '../src/personal-access/session-metadata.mjs';
+
+test('startup summary loads the latest history even when the activity scan already observed an older page', async () => {
+  let reads = 0;
+  const summaries = createSessionMetadata({ accountState: () => ({ sessions: { s: { attachedAt: '2026-10-01T00:00:00.000Z', readMessageSeq: 1 } } }),
+    callBackend: (fn: any) => fn(), backend: { readEvents: async () => { reads++; return { events: [{ seq: 900, type: 'assistant.message', at: '2026-10-05T00:00:00.000Z' }] }; } } } as any);
+  summaries.observe('owner', 's', [{ seq: 1, type: 'assistant.message', at: '2026-10-02T00:00:00.000Z' }]);
+  await summaries.initialize('owner');
+  assert.equal((await summaries.summary('owner', 's')).updatedAt, '2026-10-05T00:00:00.000Z');
+  assert.equal((await summaries.summary('owner', 's')).unread, true);
+  await summaries.initialize('owner'); assert.equal(reads, 1, 'only one startup read, never a history scan per list');
+});
 
 // Real host, native adapter, persistent history cache and native erasure writer.
 // Only DSH's storage/transport boundary is synthetic; no personal runtime data.
@@ -84,7 +96,10 @@ for (const action of ['forget', 'forget-title', 'delete']) test(`D33 cached ${ac
     assert.match(JSON.stringify(await request(`/sessions/${ids[0]}/events`)), new RegExp(secret));
     await request(`/sessions/${ids[1]}/events`);
     assert.equal((await request('/sessions')).sessions.find((row: any) => row.sessionId === ids[1]).unread, true);
-    await request('/chats?limit=1');
+    const sourceChat = (await request('/chats?limit=100')).items.find((row: any) => row.activeSessionId === ids[0]);
+    assert.ok(sourceChat);
+    assert.match(JSON.stringify(await request(`/chats/${sourceChat.chatId}/search?q=${secret}`)), new RegExp(secret));
+    await request(`/chats/${sourceChat.chatId}/events?limit=1`);
     if (action.startsWith('forget')) await service.cleanupMemoryCopies(ownerId, { sourceTexts: [secret], deleteConversationSnippets: true });
     else await request(`/sessions/${ids[0]}`, 'DELETE', {});
     const verify = async () => {
@@ -102,7 +117,15 @@ for (const action of ['forget', 'forget-title', 'delete']) test(`D33 cached ${ac
       }
       const native = await adapter.list(); assert.doesNotMatch(JSON.stringify(native), new RegExp(secret));
       if (action === 'delete') assert.ok(!native.some((row: any) => row.sessionId === ids[0]));
-      else assert.doesNotMatch(JSON.stringify(await request(`/sessions/${ids[0]}/events`)), new RegExp(secret));
+      else {
+        assert.doesNotMatch(JSON.stringify(await request(`/sessions/${ids[0]}/events`)), new RegExp(secret));
+        assert.equal((await request(`/chats/${sourceChat.chatId}/search?q=${secret}`)).hits.length, 0);
+        assert.doesNotMatch(JSON.stringify(await request(`/chats/${sourceChat.chatId}/events?limit=1`)), new RegExp(secret));
+      }
+      if (action === 'delete') {
+        const removed = await fetch(origin + `/personal/v1/chats/${sourceChat.chatId}/search?q=${secret}`, { headers: { authorization: `Bearer ${device.token}` } });
+        assert.equal(removed.status, 404);
+      }
       assert.match(JSON.stringify(native), new RegExp(clean));
       assert.equal((await request('/sessions')).sessions.find((row: any) => row.sessionId === ids[1]).unread, true, 'erasure preserves the cached unread state of unrelated history');
       assert.ok(!(await readFile(join(root, 'weftmate-history.sqlite'))).includes(Buffer.from(secret)), 'persistent summary/history cache is physically clean');
