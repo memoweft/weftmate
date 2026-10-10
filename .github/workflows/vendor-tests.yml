@@ -34,6 +34,16 @@ jobs:
           ref: ${{ env.DSH_PIN }}
           path: .local/relay-dsh
           persist-credentials: false
+      # The shipped runtime is the pinned source plus WeftMate's carried patches
+      # (patches/dsh). Building without them does not reproduce the product.
+      - name: Apply carried DSH patches
+        working-directory: .local/relay-dsh
+        run: |
+          for patch in "$GITHUB_WORKSPACE"/patches/dsh/*.patch; do
+            echo "applying $(basename "$patch")"
+            git apply --whitespace=nowarn "$patch"
+          done
+          git status --short | head -20
       - uses: pnpm/action-setup@v4
         with:
           version: 11.7.0
@@ -49,7 +59,7 @@ jobs:
             .local/relay-dsh/apps/web/dist
             .local/relay-dsh/native/landlock-run/lib
             .local/relay-dsh/native/landlock-run/packages/*/lib
-          key: relay-phone-dsh-linux-node24-${{ env.DSH_PIN }}-v3
+          key: vendor-dsh-patched-linux-node24-${{ env.DSH_PIN }}-${{ hashFiles('patches/dsh/*.patch') }}-v1
       - name: Link pinned DSH workspace dependencies
         working-directory: .local/relay-dsh
         run: pnpm install --frozen-lockfile
@@ -71,7 +81,7 @@ jobs:
             .local/relay-dsh/apps/web/dist
             .local/relay-dsh/native/landlock-run/lib
             .local/relay-dsh/native/landlock-run/packages/*/lib
-          key: relay-phone-dsh-linux-node24-${{ env.DSH_PIN }}-v3
+          key: vendor-dsh-patched-linux-node24-${{ env.DSH_PIN }}-${{ hashFiles('patches/dsh/*.patch') }}-v1
       # Relay executes directly from the workspace and its cache omits native
       # binaries. Shipping the closure also packs the Linux launcher, whose
       # upstream prepack requires a real native build.
