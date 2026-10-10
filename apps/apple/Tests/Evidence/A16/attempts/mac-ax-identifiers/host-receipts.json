@@ -1,0 +1,86 @@
+{
+  "syntheticOnly": true,
+  "realPersonalHTTPHost": true,
+  "historyCount": 10000,
+  "compiledDSH": false,
+  "operations": [
+    {
+      "kind": "send",
+      "sessionId": "session-73b32813-95a8-40c5-a830-379d942abe76",
+      "text": "A8_WAIT 合成主对话任务",
+      "mode": "queue",
+      "receiptId": "fcd78e08-ad89-4dbd-8338-4a057b514a7a"
+    },
+    {
+      "kind": "started",
+      "sessionId": "session-73b32813-95a8-40c5-a830-379d942abe76",
+      "text": "A8_WAIT 合成主对话任务",
+      "receiptId": "fcd78e08-ad89-4dbd-8338-4a057b514a7a"
+    },
+    {
+      "kind": "send",
+      "sessionId": "session-d8f077e9-7e45-4a85-921b-4e9b11317d9a",
+      "text": "A8_WAIT 合成旁聊任务 completed",
+      "mode": "steer",
+      "receiptId": "fd98736d-0fb5-40c4-a48b-78cc4ab0347b"
+    },
+    {
+      "kind": "started",
+      "sessionId": "session-d8f077e9-7e45-4a85-921b-4e9b11317d9a",
+      "text": "A8_WAIT 合成旁聊任务 completed",
+      "receiptId": "fd98736d-0fb5-40c4-a48b-78cc4ab0347b"
+    },
+    {
+      "kind": "send",
+      "sessionId": "session-65dca15c-2d81-43dd-ac04-29d264c3bf31",
+      "text": "A8_WAIT 合成旁聊任务 error",
+      "mode": "steer",
+      "receiptId": "68eac30d-99c6-4cd6-a4a2-5b5504f9e217"
+    },
+    {
+      "kind": "started",
+      "sessionId": "session-65dca15c-2d81-43dd-ac04-29d264c3bf31",
+      "text": "A8_WAIT 合成旁聊任务 error",
+      "receiptId": "68eac30d-99c6-4cd6-a4a2-5b5504f9e217"
+    },
+    {
+      "kind": "send",
+      "sessionId": "session-bc4f045e-b41c-4442-ac07-4418ab6da6ea",
+      "text": "A8_WAIT 合成旁聊任务 aborted",
+      "mode": "steer",
+      "receiptId": "e571bafd-f7e6-4c51-8ce2-6ce5d76bf16e"
+    },
+    {
+      "kind": "started",
+      "sessionId": "session-bc4f045e-b41c-4442-ac07-4418ab6da6ea",
+      "text": "A8_WAIT 合成旁聊任务 aborted",
+      "receiptId": "e571bafd-f7e6-4c51-8ce2-6ce5d76bf16e"
+    }
+  ],
+  "approvals": [
+    {
+      "id": "8ae00e83-1f94-45b9-ab4c-cebd0a386168",
+      "resolved": false
+    },
+    {
+      "id": "65412c3e-e697-402f-899b-e34d736f4b6c",
+      "resolved": false
+    }
+  ],
+  "metrics": [],
+  "requests": [],
+  "resultStates": [
+    {
+      "eventId": "event-result-f20d2a668fdd7ad28d04eee26db0b225f89d6549",
+      "state": "completed"
+    },
+    {
+      "eventId": "event-result-a4f8a13ae0e76070c63b1c2dba4db0cbd02390f3",
+      "state": "failed"
+    },
+    {
+      "eventId": "event-result-ec410d84f7f841a3576ecda951b90d99625209d6",
+      "state": "stopped"
+    }
+  ]
+}
