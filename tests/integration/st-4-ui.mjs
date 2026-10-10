@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import { _electron,chromium } from 'playwright';
 import { createRequire } from 'node:module';
@@ -11,6 +13,7 @@ const f=await startTimelineCandidate({interactive:true,composer:true,historyCoun
 const owner=Object.keys(JSON.parse(await readFile(join(f.root,'store.json'),'utf8')).accounts)[0];
 for(const category of ['cache','logs','temporary','offline']){const dir=join(f.root,'accounts',owner,category);await mkdir(dir,{recursive:true});const file=join(dir,'synthetic');await writeFile(file,Buffer.alloc(65536,0x53));await utimes(file,new Date('2026-01-01'),new Date('2026-01-01'));}
 const env={...process.env};for(const name of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(name)||name==='ELECTRON_RUN_AS_NODE')delete env[name];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 let app,browser;const errors=[],checks=[];
 async function settings(page,surface){
  if(surface==='android-ui') {await page.getByRole('button',{name:'返回',exact:true}).click();await page.getByRole('button',{name:'设置与账户',exact:true}).click();await page.getByRole('navigation',{name:'设置分类'}).getByRole('button',{name:/^数据与存储/}).click();}

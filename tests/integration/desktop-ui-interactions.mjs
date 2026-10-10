@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Semantic interactions: locators describe names/roles and stay independent of component placement. */
 import assert from 'node:assert/strict'
 import { _electron } from 'playwright'
@@ -7,6 +9,7 @@ import { startTimelineCandidate } from './timeline-ui-candidate.mjs'
 import { localUiSession } from '../helpers/local-ui-session.mjs'
 const root = resolve(import.meta.dirname, '../..')
 const env = { ...process.env }; delete env.ELECTRON_RUN_AS_NODE
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const executablePath = createRequire(import.meta.url)('electron')
 const errors = []
 let application, candidate

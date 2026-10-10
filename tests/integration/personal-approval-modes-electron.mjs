@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Real desktop main, pinned DSH and isolated synthetic account; --qwen runs original scenarios. */
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
@@ -53,6 +55,7 @@ const model = realModel ? null : createServer(async (request, response) => {
 if (model) await new Promise(resolve => model.listen(0, '127.0.0.1', resolve));
 const env = { ...process.env };
 for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key.startsWith('MEMOWEFT_') || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 let application, page, output = '';
 const report = { realElectron: true, realDsh: true, isolatedAccount: true, realModel, scenarios: [] };
 async function until(check, timeout = 90000) {

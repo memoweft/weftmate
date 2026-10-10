@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Isolated real Electron main with a deliberately unacknowledged synthetic backend. */
 import { app, session } from 'electron';
 import fs from 'node:fs';

@@ -141,7 +141,7 @@ test('main edit uses bounded side-chat source references across segments and the
 });
 test('export sanitizes credentials and paths before preview/files; tools are opt-in and Markdown/plain copy differ',async()=>{
   const sandbox:any={WeftUiCore:{factories:{}}};runInNewContext(readFileSync(new URL('../src/ui-core/message-actions.js',import.meta.url),'utf8'),sandbox);
-  const raw='api_key="a secret with spaces"\nBearer abcsecret\nsk-abcdefghijklmnop\nC:\\Users\\Synthetic\\secret.txt\n/home/synthetic/key\n/workspace/local/output.md\n[链接](https://example.com/docs)\n**粗体**';
+  const raw='api_key="a secret with spaces"\nBearer abcsecret\nsk-abcdefghijklmnop\nC:\\Users\\<user>\\secret.txt\n/home/synthetic/key\n/workspace/local/output.md\n[链接](https://example.com/docs)\n**粗体**';
   const redacted=sandbox.WeftUiCore.redactExport(raw);
   assert.doesNotMatch(redacted,/abcsecret|abcdefghijklmnop|a secret|Synthetic|\/home\/synthetic|\/workspace\/local/);
   assert.match(redacted,/https:\/\/example.com\/docs/);

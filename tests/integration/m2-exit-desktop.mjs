@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** EX-2 repeatable M2 exit. Real Electron/DSH/Core, synthetic account per baseline.
  * Default: MiMo 8 steps + LAN 8 steps + original LAN memory-01..04 + speed each.
  * --model mimo|lan runs one baseline; --four runs original four (LAN by default).
@@ -119,6 +121,7 @@ async function baseline(modelName, fourOnly = false) {
   save(config, { python, pythonPath: coreSource, baseUrl: 'http://127.0.0.1:1/v1', model: '@current', authRef: 'ex-2' });
   const env = { ...process.env };
   for (const name of Object.keys(env)) if (/^(?:WEFTMATE_|MEMOWEFT_)/.test(name) || ['ELECTRON_RUN_AS_NODE', 'MIMO_API_KEY', 'MODEL_SWITCH_UNIFIED_KEY'].includes(name)) delete env[name];
+  env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
   env.WEFTMATE_BASELINE_TRACE = join(root, 'requests.jsonl');
   if (process.argv.includes('--recall-trace')) env.WEFTMATE_BASELINE_RECALL_TRACE = join(root, 'recall.jsonl');
   if (process.argv.includes('--memory-trace')) env.WEFTMATE_BASELINE_MEMORY_TRACE = join(root, 'memory-requests.jsonl');

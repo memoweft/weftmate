@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Real desktop entrypoint/DSH/Core + synthetic cloud, loopback TCP relay, real MiMo. */
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
@@ -29,7 +31,7 @@ async function until(fn, label, timeout = 90000) { const end = Date.now() + time
 async function freePort() { const server = createServer(); await new Promise(done => server.listen(0, '127.0.0.1', done)); const port = server.address().port; await new Promise(done => server.close(done)); return port; }
 const hostPort = await freePort(), relayPort = await freePort();
 const hostOrigin = `http://127.0.0.1:${hostPort}`, relayOrigin = `http://127.0.0.1:${relayPort}`;
-function cleanEnv() { return Object.fromEntries(Object.entries(process.env).filter(([name]) => !/^(WEFTMATE_|MEMOWEFT_|CLOUD_)/.test(name) && !['ELECTRON_RUN_AS_NODE', 'MIMO_API_KEY'].includes(name))); }
+function cleanEnv() { return { ...Object.fromEntries(Object.entries(process.env).filter(([name]) => !/^(WEFTMATE_|MEMOWEFT_|CLOUD_)/.test(name) && !['ELECTRON_RUN_AS_NODE', 'MIMO_API_KEY'].includes(name))), WEFTMATE_TEST_HOST_NAME: 'synthetic-host' }; }
 function bridge(port, targetPort, address = '127.0.0.1') {
   const server = createServer(socket => { const upstream = connect(targetPort, address); sockets.add(socket); sockets.add(upstream);
     socket.on('close', () => sockets.delete(socket)); upstream.on('close', () => sockets.delete(upstream));

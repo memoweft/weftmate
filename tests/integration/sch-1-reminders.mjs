@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Real Electron/DSH/MiMo, numeric-only evidence, ephemeral account/ports. */
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
@@ -45,6 +47,7 @@ const proxy = createServer(async (request, response) => {
 await new Promise(resolve => proxy.listen(0, '127.0.0.1', resolve));
 const env = { ...process.env };
 for (const name of Object.keys(env)) if (name.startsWith('WEFTMATE_') || name.startsWith('MEMOWEFT_') || ['ELECTRON_RUN_AS_NODE', 'MIMO_API_KEY'].includes(name)) delete env[name];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 async function until(read, timeout = 180000) {
     const deadline = Date.now() + timeout;
     while (Date.now() < deadline) { const value = await read(); if (value) return value; await new Promise(resolve => setTimeout(resolve, 300)); }

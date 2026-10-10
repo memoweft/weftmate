@@ -5,12 +5,12 @@
     {
       "event": "show",
       "title": "需要审批",
-      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-EBoPjM/synthetic-folder/a.txt\"}",
+      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read {\"file_path\":\"C:\\Users\\<user>/AppData/Local/Temp/weftmate-qa5-smoke-EBoPjM/synthetic-folder/a.txt\"}",
       "at": "2026-10-10T06:54:18.117Z"
     },
     {
       "event": "show",
-      "title": "请整理这个合成文件夹 C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-EBoPjM/synthetic-f",
+      "title": "请整理这个合成文件夹 C:\\Users\\<user>/AppData/Local/Temp/weftmate-qa5-smoke-EBoPjM/synthetic-f",
       "body": "已完成 · 点开查看结果",
       "at": "2026-10-10T06:54:31.321Z"
     },
@@ -23,24 +23,24 @@
     {
       "event": "show",
       "title": "需要审批",
-      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-EBoPjM/synthetic-folder/phone.txt\"}",
+      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read {\"file_path\":\"C:\\Users\\<user>/AppData/Local/Temp/weftmate-qa5-smoke-EBoPjM/synthetic-folder/phone.txt\"}",
       "at": "2026-10-10T06:54:59.635Z"
     },
     {
       "event": "show",
       "title": "需要审批",
-      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：write {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-EBoPjM/synthetic-folder/phone.txt\",\"content\":\"Q",
+      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：write {\"file_path\":\"C:\\Users\\<user>/AppData/Local/Temp/weftmate-qa5-smoke-EBoPjM/synthetic-folder/phone.txt\",\"content\":\"Q",
       "at": "2026-10-10T06:55:04.126Z"
     },
     {
       "event": "show",
       "title": "需要审批",
-      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-EBoPjM/synthetic-folder/phone.txt\"}",
+      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read {\"file_path\":\"C:\\Users\\<user>/AppData/Local/Temp/weftmate-qa5-smoke-EBoPjM/synthetic-folder/phone.txt\"}",
       "at": "2026-10-10T06:55:10.819Z"
     },
     {
       "event": "show",
-      "title": "请在C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-EBoPjM/synthetic-folder/pho",
+      "title": "请在C:\\Users\\<user>/AppData/Local/Temp/weftmate-qa5-smoke-EBoPjM/synthetic-folder/pho",
       "body": "已完成 · 点开查看结果",
       "at": "2026-10-10T06:55:18.351Z"
     }

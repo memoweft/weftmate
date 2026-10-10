@@ -74,7 +74,7 @@
       "durationMs": 22496,
       "sessionId": "session-49ea78bc-72f8-4379-a02a-73b8a698a9d6",
       "approvals": 3,
-      "reply": "\n\n\n\n已完成：`phone.txt` 写入成功，读回内容为 **QA5_PHONE_OK**（文件路径 `C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-EBoPjM/synthetic-folder/phone.txt`，已读回核验）。"
+      "reply": "\n\n\n\n已完成：`phone.txt` 写入成功，读回内容为 **QA5_PHONE_OK**（文件路径 `C:\\Users\\<user>/AppData/Local/Temp/weftmate-qa5-smoke-EBoPjM/synthetic-folder/phone.txt`，已读回核验）。"
     }
   ],
   "errors": []

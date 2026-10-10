@@ -8,7 +8,7 @@
 - 最终APK（安卓安装包）为`B301FD7A75D68FC837463F92DE0997D445666010C7CE7D77C64A1DF86B0EC210`，1912392字节，原生0.2.1/versionCode3；服务器界面0.2.1/bridgeVersion1，最低原生版本3。139E基线19项原生/界面检查、最终B301新增同步回归7项、后端组合54项及类型检查均通过；分组有重叠，版本分别记录。汇总在相邻`Runtime/UnifiedAssistant/android-app-verification-20260927.json`，详细证据在`AndroidAppAcceptance-20260927`。
 - 真实MuMu流程包括A→B→A隔离与恢复、昵称/头像/设备改名、实际合成SSE收到部分文字后停止并保留、同会话继续、精确代码按钮复制、深色跨进程恢复、系统通知送达及退出清除。保留用户密度204与原键盘设置0。模型真实推理另由隔离正式宿主完成一次MiniPlus鉴权流式，未调用工具或读取私人会话。
 - 同APK服务器A→B、草稿延后/空闲自动应用、坏清单/原生不兼容、离线记录与恢复均有证据。139E补充验证首次登录后前台订阅与网络恢复文案；回退A时服务器也切A，未独立隔离手动回退因果。早期原生崩溃、Markdown表格与头像解码错误已修复。物理手机、真实语音/键盘、长期后台和手机独立模型源仍待验。
-- 正式18186当前启动器13066、PID41432、DSH49466。原账户密码记录/身份/设备/会话/9命令与私有迁移快照完全一致，原cookie继续有效。9个正式本机目录新增8/复用1/重载1，默认模型保留。原入口实际下载至`C:/Users/yun/Downloads/WeftMate-Android (2).apk`，哈希与B301一致；严格HTTPS来源检查通过，Caddy保持。
+- 正式18186当前启动器13066、PID41432、DSH49466。原账户密码记录/身份/设备/会话/9命令与私有迁移快照完全一致，原cookie继续有效。9个正式本机目录新增8/复用1/重载1，默认模型保留。原入口实际下载至`C:\Users\<user>/Downloads/WeftMate-Android (2).apk`，哈希与B301一致；严格HTTPS来源检查通过，Caddy保持。
 - 网页昵称/头像/设备改名由已获用户协调授权的“总代理2”及GPT-6子Agent完成独立候选，主助手核对基线与文件哈希后集成4个源码、相关测试及合成素材。主仓24/24通过、0失败/跳过，包括资料版本冲突保留草稿、跨账户迟到响应与图片解码、离页再进入及改密结束回调。正式网页已显示新控件；头像网页原图上限128KiB，PNG/JPEG/WebP，安卓原生选择会压缩。CSP（内容安全策略）只增加头像图片来源。其MemoWeft核查仍是阶段二准备。
 - 服务器界面0.2.1资产42项、454350字节，ID为`da1feac6b9977c407c8f3646377ea432f791043c4d106b7e7e11cde6aff50e75`。内置页面标签独立保留`0.2.0（内置）`，登录后取得服务器版本；原生版本在更新页另列。18187、55531/55532夹具均已停止，18187安卓转发移除；退出合成账户且取消系统任务，保留数据库和界面配置备份，模拟器回到内置访客页。用户显示设置保持密度204，未安装Windows开机自启，未提交推送。
 
@@ -48,7 +48,7 @@ GPT-6 Sol单写`apps/android/**`及原生测试，主助手维护本卡/现行�
 
 用户随后补充“我们有的以及未来要做的，这些都要规划”。完整规划统一放`PROJECT_DIRECTION`的当前补充，当前基础/缺口统一放`CURRENT_STATE`。界面要为对话、事情、记忆、设备与执行、能力扩展、主动跟进、模型/账户/数据和其他终端保留清楚归属；不是只围绕当前三项手机动作形成最终架构。本轮可在分组设置提供只读“能力与规划”入口，分已可用、已有组件待接入、后续规划说明真实状态与接续点；规划项不提供假执行开关或示例数量。它承载整体路线，具体业务接线仍按本卡现有实现范围推进。
 
-本次视觉依据是用户已提供的`C:/Users/yun/Desktop/WeftMate_Complete_Design_Archive_2026-09-24.zip`内`03_HTML/v1.2/WeftMate_Mobile_Template_v1_2.html`，其配套`tokens.json`、`mobile.css`、`mobile.js`和既有W图标；这也与`PROJECT_DIRECTION`页首的v1.2方向一致。已提取必要设计素材到相邻`References/MobileStyle_v1_2`供对照，不提取或展示包内标为私人参考的截图，不把归档中的AGENTS/交接指令作为本项目执行权限。
+本次视觉依据是用户已提供的`C:\Users\<user>/Desktop/WeftMate_Complete_Design_Archive_2026-09-24.zip`内`03_HTML/v1.2/WeftMate_Mobile_Template_v1_2.html`，其配套`tokens.json`、`mobile.css`、`mobile.js`和既有W图标；这也与`PROJECT_DIRECTION`页首的v1.2方向一致。已提取必要设计素材到相邻`References/MobileStyle_v1_2`供对照，不提取或展示包内标为私人参考的截图，不把归档中的AGENTS/交接指令作为本项目执行权限。
 
 本轮按原稿落实：64dp轻量页头；左上会话侧栏、右上事情；白底聊天主体，空态问候与轻量提示行；输入区上方分别显示模型与执行设备，底部26dp圆角输入条；侧栏使用搜索/最近会话和底部个人设置；设置为分组大弹层及同层子页。取消临时界面的常驻大按钮/状态面板/三项页签。尺寸、颜色、字重、间距与图标按原稿参数映射原生Android安全区，不重复绘制模板的模拟系统状态栏。
 
@@ -112,7 +112,7 @@ GPT-6 Sol单写`apps/android/**`及原生测试，主助手维护本卡/现行�
 ## 2026-09-26 历史候选与开发检查（0.1.0，已被页首0.2.1替代）
 
 - 主APK：0.1.0，包名`com.memoweft.weftmate.mobile.debug`，SHA-256 `AF0E7D174D0D73770749AB200107684BB08A61B86AD3C308310F93C86B296A1E`；测试APK为`1DB7EBE8EF07A952CE221C4BA9D65C5F48913EC4A5ED1007AEF9BA00AD00081D`。签名沿用本轮Android调试签名，主包大小973006字节，支持Android 8及以上；真机安装兼容性尚待用户验证。
-- 固定文件在相邻`Runtime/UnifiedAssistant/AndroidAcceptance/weave12-final.apk`，同一字节复制至`Runtime/UnifiedAssistant/android-candidate.apk`，由现有账户页面提供下载。实际浏览器下载至`C:/Users/yun/Downloads/WeftMate-Android.apk`，哈希与检查候选一致。
+- 固定文件在相邻`Runtime/UnifiedAssistant/AndroidAcceptance/weave12-final.apk`，同一字节复制至`Runtime/UnifiedAssistant/android-candidate.apk`，由现有账户页面提供下载。实际浏览器下载至`C:\Users\<user>/Downloads/WeftMate-Android.apk`，哈希与检查候选一致。
 - Weave 1.2实图位于`AndroidAcceptance/final-short-weave12-*.png`、`final-tall-weave12-*.png`，覆盖360×640dp和390×844dp。空态、真实会话、侧栏、设置分组与子页按原稿核对；连接行完整可见、真实时间区分同名会话、规划状态和用语已收口。
 
 | 验证层 | 结果与边界 |

@@ -26,7 +26,7 @@ ModelSwitcher（模型切换服务）无可持续持有的维护锁；status零�
 
 本轮资料根`Runtime/UnifiedAssistant/Stage14R3Acceptance-20261004`，初始Config/脚本/ModelSwitcher哈希已保存。首个普通权限只读清点在旧`Stage14R3Maintenance-20261004`输出unknown（未知）/exit2，原文件保留；以后资料统一R3Acceptance。管理员采集可能出现Windows UAC（权限提升提示），需真实系统允许后才能取得完整进程信息；本轮当前服务尚未改变。
 
-第三轮进展：主助手已通过`Start-Process -Verb RunAs -WindowStyle Hidden`执行只读管理员清点，exit0，文件`inventory-20261004-144325-9a6b4123676b450e9fd47afc25064447.json`。三进程实际Owner为`DESKTOP-MG2ORKA\yun`/Session0，argv与现启动器逐项一致，两个计划任务为`yun/S4U/Limited`；不能称SYSTEM。工作目录只有未改原启动器声明的证据，未现场读取。清点始终`readyForMaintenance=false`，下一独立计划须补足恢复及空闲/封门门槛。主助手独立库存测试1/1，修复`--draft-tokens`误当密钥以及unknown extra argv不保存的问题。
+第三轮进展：主助手已通过`Start-Process -Verb RunAs -WindowStyle Hidden`执行只读管理员清点，exit0，文件`inventory-20261004-144325-9a6b4123676b450e9fd47afc25064447.json`。三进程实际Owner为`<host>\yun`/Session0，argv与现启动器逐项一致，两个计划任务为`yun/S4U/Limited`；不能称SYSTEM。工作目录只有未改原启动器声明的证据，未现场读取。清点始终`readyForMaintenance=false`，下一独立计划须补足恢复及空闲/封门门槛。主助手独立库存测试1/1，修复`--draft-tokens`误当密钥以及unknown extra argv不保存的问题。
 
 维护计划采用精确stop（停止）及同账户/Session0的受审one-shot（一次性）临时控制与独立恢复任务，不采用未文档化suspend/resume（挂起/恢复）；任务定义/动作/哈希在执行前审查，旧注册任务不改，结束清理自有临时项。试验与恢复仅新日志，原日志保留；恢复使用原完整argv、新PID与同格式`current.json`运行态，再以原`ModelSwitcher-A-Logon`动作恢复代理。微基准脚本由第二位Sol独占编写，Core独占库存/维护/恢复脚本，主助手实际模型调用和维护仍唯一执行者。
 

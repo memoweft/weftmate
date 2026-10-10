@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** 60-second Windows regression: actual Electron + synthetic stuck model, no daily services. */
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
@@ -18,6 +20,7 @@ await mkdir(output, { recursive: true });
 const env = { ...process.env, HF2_PROFILE: root };
 for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key === 'ELECTRON_RUN_AS_NODE' ||
     /API_KEY|MODEL_SWITCH_UNIFIED_KEY/.test(key)) delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 if (baseline) {
   const sources = {};
   for (const file of ['src/private-host-storage.mjs', 'src/personal-access/store.mjs', 'src/personal-access/index.mjs',

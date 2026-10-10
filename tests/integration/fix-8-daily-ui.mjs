@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** FIX-8: production Electron window, isolated synthetic host and phone records. */
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
@@ -18,6 +20,7 @@ mkdirSync(evidence, {recursive:true});
 const env = {...process.env}, checks = [], errors = [];
 function contrast(foreground,background){const luminance=color=>color.match(/\d+/g).slice(0,3).map(Number).map(n=>n/255).map(n=>n<=.04045?n/12.92:((n+.055)/1.055)**2.4).reduce((sum,n,index)=>sum+n*[.2126,.7152,.0722][index],0);const a=luminance(foreground),b=luminance(background);return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);}
 for(const key of Object.keys(env)) if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 for(const theme of ['light','dark']) {
   const cloud=await syntheticCloudBinding();
   const fixture = await startTimelineCandidate({historyCount:110,interactive:true,inlineProgress:true,composer:true,windowChrome:true,daily:true,baseTime:Date.now()-60000});

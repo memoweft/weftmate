@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
@@ -21,6 +23,7 @@ const backend = Object.fromEntries(['getStatus','listModels','preflight','create
 const prep = await createPersonalAccessService({ root: join(profile, 'personal-access'), port: 0, backend }), started = await prep.start(), setup = await prep.issueSetupGrant();
 assert.equal((await fetch(`${started.origin}/personal/v1/auth/setup`, { method: 'POST', headers: { origin: started.origin, 'content-type': 'application/json' }, body: JSON.stringify({ grant: setup.grant, username, password, deviceName: 'BK-1 synthetic fixture' }) })).status, 201); await prep.close();
 const env = { ...process.env }; for (const name of Object.keys(env)) if (name.startsWith('WEFTMATE_') || name.startsWith('MEMOWEFT_') || ['ELECTRON_RUN_AS_NODE','MIMO_API_KEY','MODEL_SWITCH_UNIFIED_KEY'].includes(name)) delete env[name];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 env.WEFTMATE_BASELINE_TRACE = join(base, 'requests.jsonl'); env.TEMP = env.TMP = 'C:/Temp';
 let app, page, child;
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));

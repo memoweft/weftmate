@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Final confirmation of D49, composed menus, memory notices and shared scrolling. */
 import assert from 'node:assert/strict';
 import {_electron,chromium} from 'playwright';
@@ -9,6 +11,7 @@ import {startFixture} from './ux-4-fixture.mjs';
 import {localUiSession} from '../helpers/local-ui-session.mjs';
 const root=resolve(import.meta.dirname,'../..'),out=join(root,'tests/evidence/ux-p2');await mkdir(out,{recursive:true});
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const rows=[],checks=[],errors=[];let app,browser,f,profile;let modelMissing=false,historyEmpty=false;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));const b=(p,name)=>p.getByRole('button',{name,exact:true}).filter({visible:true});
 async function shot(p,s,t,scene){await wait(120);const screenshot=`after-${s}-${t}-${scene}.png`;await p.screenshot({path:join(out,screenshot)});const overflow=await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1);assert.equal(overflow,false);rows.push({surface:s,theme:t,scene,state:'最终确认',screenshot,defects:[],checklist:Array(8).fill(true)});}
