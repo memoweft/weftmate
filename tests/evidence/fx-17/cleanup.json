@@ -1,0 +1,9 @@
+{
+  "at": "2026-10-10T10:00:34.0337849+08:00",
+  "releasedOwnLanLock": false,
+  "earlyTerminatedCount": 2,
+  "terminated": [],
+  "totalExplicitTerminations": 2,
+  "cutoff": "2026-10-10T09:18:39.1256485+08:00",
+  "remainingCount": 0
+}
