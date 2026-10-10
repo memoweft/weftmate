@@ -55,7 +55,8 @@ jobs:
             .local/package-dsh/apps/*/lib
             .local/package-dsh/apps/web/dist
             .local/package-dsh/native/landlock-run/lib
-          key: package-dsh-patched-windows-node24-${{ env.DSH_PIN }}-${{ hashFiles('patches/dsh/*.patch') }}-v1
+            .local/package-dsh/native/landlock-run/packages/*/lib
+          key: package-dsh-patched-windows-node24-${{ env.DSH_PIN }}-${{ hashFiles('patches/dsh/*.patch') }}-v2
       - name: Link pinned DSH workspace dependencies
         working-directory: .local/package-dsh
         run: pnpm install --frozen-lockfile
@@ -63,6 +64,11 @@ jobs:
         if: steps.dsh-cache.outputs.cache-hit != 'true'
         working-directory: .local/package-dsh
         run: pnpm run build
+      # Root build skips Linux native tools on Windows, but the shipping closure
+      # still imports their portable JavaScript entry. No Linux binary is built.
+      - name: Compile portable Landlock JavaScript entry
+        working-directory: .local/package-dsh/native/landlock-run/packages/entry
+        run: pnpm run build:js
       - name: Save compiled fixture before package assertions
         if: steps.dsh-cache.outputs.cache-hit != 'true'
         timeout-minutes: 2
@@ -76,7 +82,8 @@ jobs:
             .local/package-dsh/apps/*/lib
             .local/package-dsh/apps/web/dist
             .local/package-dsh/native/landlock-run/lib
-          key: package-dsh-patched-windows-node24-${{ env.DSH_PIN }}-${{ hashFiles('patches/dsh/*.patch') }}-v1
+            .local/package-dsh/native/landlock-run/packages/*/lib
+          key: package-dsh-patched-windows-node24-${{ env.DSH_PIN }}-${{ hashFiles('patches/dsh/*.patch') }}-v2
       - name: Assemble and verify pinned vendor
         run: |
           npm run vendor:dsh
