@@ -106,7 +106,7 @@ async function openGoalSource(source){
   if(Number.isSafeInteger(source.seq)){state.goalStepFocus={seq:source.seq,stepId:source.stepId,chatId:source.chatId,sessionId:source.sessionId,owner:state.owner,epoch:state.authEpoch};focusGoalStep();}
 }
 async function goalsPage(target){
-  uiCore.syncMobileIdentity();uiCore.resetGoals();goalsView=WeftGoalsView.mount({target,core:uiCore,openSource:openGoalSource});goalsView.render();
+  uiCore.syncMobileIdentity();uiCore.resetGoals();goalsView=WeftGoalsView.mount({target,core:uiCore,toast,openSource:openGoalSource});goalsView.render();
   const generation=state.generation,owner=state.owner;
   try{const info=await uiCore.accessApi('/status');if(generation!==state.generation||owner!==state.owner||state.page!=='goals')return;uiCore.state.personalCapabilities=info.personalCapabilities??{};await uiCore.readGoals();clearInterval(goalsTimer);goalsTimer=setInterval(()=>{if(state.page==='goals'&&state.loggedIn&&document.visibilityState==='visible')void uiCore.readGoals();},6000);}
   catch(error){if(generation===state.generation)toast(safeError(error));}
@@ -259,7 +259,7 @@ function page(name){
 
 
 
-function processEvent(message){const {event,data}=message;
+function processEvent(message){const {event,data}=message;if(state.page==='goals')void uiCore.readGoals();
   if(event==='conversation.exported')toast(data.saved?'对话已保存':'导出未完成，请重试',!data.saved);
   if(event==='cloud.callback')void resumeCloudLogin();if(event==='chat.started'){
     invalidateLiveProgress();
