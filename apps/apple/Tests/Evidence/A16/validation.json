@@ -1,0 +1,119 @@
+{
+  "generatedAt": "2026-10-10T04:41:42.014Z",
+  "syntheticOnly": true,
+  "sourcesSHA256": "6167f847f24c943b4b7c71c9624ee95db92f11bc6025eed44b42a64dc0568a37",
+  "binarySHA256": {
+    "mac": "6a1ed2efac1030fc52f5744c34f64ddec28a5618fabdd1ff8debb940c9889090",
+    "iphone": "3b10975a189b888ba440edb0903b50c547e760d5724cbcdaaded134eacb4e02c",
+    "watch": "a2c60d2de0e3c9d5353391fefbeb3a6c1a695224a3d548fb71194b73898201b7"
+  },
+  "swift": {
+    "a16": 17,
+    "taskReadStopAndDirectory": 44,
+    "failed": 0
+  },
+  "statePrograms": {
+    "passed": 2
+  },
+  "frontEndVisualExceptions": [
+    "macOS remote system save-panel content is outside own-window capture; iPhone system Cancel/file write not asserted"
+  ],
+  "surfaces": [
+    {
+      "surface": "mac-light",
+      "passed": true,
+      "performance": {
+        "p95Milliseconds": 6.944278022274375,
+        "hostHistory": 10000,
+        "samples": 1414,
+        "residentEndMiB": 241.109375,
+        "residentStartMiB": 241.1484375,
+        "sampling": "CADisplayLink callback intervals during native scrolling; no GPU presentation-latency claim",
+        "nativeScrollUpdates": 600,
+        "elapsedSeconds": 13.661325355002191,
+        "bodyWindow": 102,
+        "maxMilliseconds": 437.8731259785127
+      }
+    },
+    {
+      "surface": "mac-dark",
+      "passed": true,
+      "performance": {
+        "sampling": "CADisplayLink callback intervals during native scrolling; no GPU presentation-latency claim",
+        "residentEndMiB": 202.71484375,
+        "hostHistory": 10000,
+        "bodyWindow": 102,
+        "residentStartMiB": 203.75,
+        "maxMilliseconds": 163.95661199931055,
+        "p95Milliseconds": 6.944278022274375,
+        "elapsedSeconds": 11.611844534985721,
+        "samples": 1422,
+        "nativeScrollUpdates": 600
+      }
+    },
+    {
+      "surface": "iphone-light",
+      "passed": true,
+      "performance": {
+        "bodyWindow": 102,
+        "samples": 3485,
+        "p95Milliseconds": 16.66666701203212,
+        "elapsedSeconds": 70.66306293199887,
+        "residentStartMiB": 295.39453125,
+        "hostHistory": 10000,
+        "maxMilliseconds": 358.1612259731628,
+        "residentEndMiB": 295.16796875,
+        "sampling": "CADisplayLink callback intervals during native scrolling; no GPU presentation-latency claim"
+      }
+    },
+    {
+      "surface": "iphone-dark",
+      "passed": true,
+      "performance": {
+        "samples": 3569,
+        "residentStartMiB": 296.37109375,
+        "bodyWindow": 102,
+        "sampling": "CADisplayLink callback intervals during native scrolling; no GPU presentation-latency claim",
+        "hostHistory": 10000,
+        "maxMilliseconds": 300.4184330056887,
+        "residentEndMiB": 296.6640625,
+        "elapsedSeconds": 70.53189587200177,
+        "p95Milliseconds": 16.66666701203212
+      }
+    }
+  ],
+  "watch": {
+    "passed": 1,
+    "failed": 0
+  },
+  "uiCopy": {
+    "authoredStrings": 1830,
+    "screenshotFrames": 91
+  },
+  "hiddenBodyAndKeyScan": [
+    {
+      "marker": "A16_SYNTHETIC_PRIVATE_BODY_NEVER_DISPLAY",
+      "hits": 0
+    },
+    {
+      "marker": "A16_SYNTHETIC_SECRET_NEVER_DISPLAY",
+      "hits": 0
+    }
+  ],
+  "boundaries": {
+    "realPersonalHTTPHost": true,
+    "compiledDSH": false,
+    "realModel": false,
+    "realDevice": false,
+    "macXCUITest": false,
+    "macOwnNativeAX": true,
+    "globalPermissionsRequested": false,
+    "productionDeployment": false
+  },
+  "resources": {
+    "xcodeJobs": 2,
+    "xcodebuildSerial": true,
+    "simulatorsAtOnce": 1,
+    "pairedWatchException": true
+  }
+}

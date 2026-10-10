@@ -56,7 +56,7 @@ public struct TaskCommandPage: Equatable, Sendable {
                     (timeOrder == .orderedSame && metadataCompare(priorID, command.commandId) == .orderedDescending))
             }
             priorID = command.commandId; priorTime = command.createdAt
-            guard command.kind == "session.message", command.targetDeviceId == scope.hostId,
+            guard ["session.message", "chat.message"].contains(command.kind), command.targetDeviceId == scope.hostId,
                   command.sessionId == sessionID else { continue }
             if command.rootTaskId != nil {
                 if command.taskAction == "supplement", command.state == "accepted_by_dsh", let receipt = command.receiptId, SharedValidation.receipt(receipt) { supplements.insert(receipt) }
@@ -101,7 +101,7 @@ private struct CommandMetadataWire: Decodable {
         targetDeviceId = try box.decode(String.self, forKey: .targetDeviceId); kind = try box.decode(String.self, forKey: .kind)
         state = try box.decode(String.self, forKey: .state); createdAt = try box.decode(String.self, forKey: .createdAt); updatedAt = try box.decode(String.self, forKey: .updatedAt)
         // Unknown tool metadata is pagination identity only. Its evolving detail/verification schema is not parsed.
-        if kind == "session.message" {
+        if ["session.message", "chat.message"].contains(kind) {
             sessionId = try box.decodeIfPresent(String.self, forKey: .sessionId); rootTaskId = try box.decodeIfPresent(String.self, forKey: .rootTaskId)
             taskAction = try box.decodeIfPresent(String.self, forKey: .taskAction); receiptId = try box.decodeIfPresent(String.self, forKey: .receiptId)
             taskLabel = try box.decodeIfPresent(String.self, forKey: .taskLabel)
@@ -111,7 +111,7 @@ private struct CommandMetadataWire: Decodable {
         try SharedValidation.require(SharedValidation.id(commandId) && SharedValidation.request(requestId) && SharedValidation.id(targetDeviceId) &&
             SharedValidation.matches(kind, "^[A-Za-z][A-Za-z0-9._:-]{0,127}$") && SharedValidation.matches(state, "^[A-Za-z][A-Za-z0-9_]{0,63}$") &&
             validMetadataTime(createdAt) && validMetadataTime(updatedAt))
-        if kind == "session.message" {
+        if ["session.message", "chat.message"].contains(kind) {
             try SharedValidation.require((sessionId.map(SharedValidation.id) ?? true) && (rootTaskId.map(SharedValidation.id) ?? true))
         }
     }

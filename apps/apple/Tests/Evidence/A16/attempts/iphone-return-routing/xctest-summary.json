@@ -1,0 +1,18 @@
+{
+  "title": "Test - WeftMatePhone",
+  "result": "Failed",
+  "passedTests": 0,
+  "failedTests": 1,
+  "skippedTests": 0,
+  "totalTestCount": 1,
+  "testFailures": [
+    {
+      "failureText": "Failed to get matching snapshot: No matches found for Elements matching predicate '\"回到底部\" IN identifiers' from input {(\n    Button, identifier: 'BackButton', label: 'WeftMate',\n    Button, label: '未分组',\n    Button, identifier: 'conversationRow.chat-179345d2-838a-4d79-9c92-511a6884dbae', label: '合成对话',\n    Button, identifier: 'conversationRow.chat-0419b50f-3011-45d0-bc1c-dc27de204ddc', label: '临时对话 · 合成对话、正在处理、正在处理',\n    Button, identifier: 'conversationRow.chat-ab527380-2e5d-4047-bc1e-267ce9facdde', label: '合成旁聊 aborted、未读',\n    Button, identifier: 'conversationRow.chat-83bd3d41-9e42-47ae-ba06-606a35423fe7', label: '合成旁聊 error、未读',\n    Button, identifier: 'conversationRow.chat-ac1674db-15f9-425e-b202-80d49fa7ddab', label: '合成旁聊 completed、未读',\n    Button\n)}",
+      "targetName": "WeftMatePhoneUITests",
+      "testIdentifier": 1,
+      "testIdentifierString": "A16ChatUITests/testLightMainChat()",
+      "testIdentifierURL": "test://com.apple.xcode/WeftMate/WeftMatePhoneUITests/A16ChatUITests/testLightMainChat",
+      "testName": "testLightMainChat()"
+    }
+  ]
+}

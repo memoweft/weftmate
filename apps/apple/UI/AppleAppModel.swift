@@ -646,7 +646,9 @@ extension AppleAppModel {
                         let known = Set(self.messages.map(\.id))
                         self.messages.append(contentsOf: tracker.messages.filter { !known.contains($0.id) })
                         self.historyCachedAt = nil
-                        if !page.events.isEmpty, let local = self.commandStore, let account = self.draftAccount {
+                        if self.historyCacheAllowed, page.cacheAllowed != false, conversation.temporaryState.cacheAllowed,
+                           self.liveConversations[conversation.id]?.temporaryState.cacheAllowed != false,
+                           !page.events.isEmpty, let local = self.commandStore, let account = self.draftAccount {
                             let snapshot = self.messages
                             do {
                                 _ = try await local.cacheHistory(account: account,
@@ -762,6 +764,7 @@ final class AppleAppModel: ObservableObject {
         #endif
     }
     private var cloudNamespace = "com.weftmate.apple.cloud"
+    lazy var mainChat = MainChatModel(app: self)
     lazy var cloudLogin = CloudLoginModel(app: self, namespace: cloudNamespace)
     @Published var timelineRootCommands: [TaskRootCommandMetadata] = []
     @Published var stoppingActiveTask = false
@@ -791,6 +794,7 @@ final class AppleAppModel: ObservableObject {
     private var archiveUndoToken = UUID()
     @Published var projectThinking = false
     @Published private(set) var projectCreatedSessionID: String?
+    @Published var sourceMessageTarget: Int?
     @Published var subtaskStepTarget: Int?
     @Published var thinking = ThinkingState()
     @Published var thinkingError: String?
@@ -930,7 +934,7 @@ final class AppleAppModel: ObservableObject {
     @Published var conversationForget = ForgetConfirmationState()
     @Published var conversationPreviewLoading = false
     private var conversationPreviewToken = UUID()
-    func sections(query: String) -> [SessionSidebarSection] { SessionSidebar.sections(rows: conversations, groups: sessionGroups, query: query) }
+    func sections(query: String) -> [SessionSidebarSection] { SessionSidebar.sections(rows: conversations.filter { !$0.isMainChat }, groups: sessionGroups, query: query) }
     private func finishProjectConversation(id: String, project: Project, token: UUID) async throws {
         guard token == epoch, projectConversation?.id == project.id else { return }
         if projectModels.first(where: { $0.id == projectModelID })?.deepThinking?.supported == true {
@@ -1031,7 +1035,7 @@ final class AppleAppModel: ObservableObject {
             if let index = conversations.firstIndex(where: { $0.id == conversation.id }) {
                 let old = conversations[index]
                 conversations[index] = .init(id: old.id, title: old.title, conversationId: old.conversationId, sessionId: old.sessionId,
-                    running: old.running, sendAvailable: !archived && old.sendAvailable, originalModelLabel: old.originalModelLabel, archived: archived, pinned: old.pinned, unread: old.unread, groupId: old.groupId, projectId: old.projectId, projectName: old.projectName, projectNotice: old.projectNotice, taskAvailable: old.taskAvailable, hostId: old.hostId, updatedAt: old.updatedAt)
+                    running: old.running, sendAvailable: !archived && old.sendAvailable, originalModelLabel: old.originalModelLabel, archived: archived, pinned: old.pinned, unread: old.unread, groupId: old.groupId, projectId: old.projectId, projectName: old.projectName, projectNotice: old.projectNotice, taskAvailable: old.taskAvailable, hostId: old.hostId, updatedAt: old.updatedAt, chatId: old.chatId, chatKind: old.chatKind, chatContentRevision: old.chatContentRevision, temporaryState: old.temporaryState)
             }
             if selectedConversation?.id == conversation.id { selectedConversation = conversations.first { $0.id == conversation.id } }
             if archived {
@@ -1119,6 +1123,7 @@ final class AppleAppModel: ObservableObject {
     private var timelineCache: LocalTimelineCache? {
         timelineStateDirectory.map { LocalTimelineCache(directory: $0.appendingPathComponent("Timeline")) }
     }
+    private var historyCacheAllowed = true
     @Published private(set) var historyBusy = false
     @Published private(set) var historyError: String?
     @Published private(set) var selectedConversation: ConversationSummary?
@@ -1181,6 +1186,47 @@ final class AppleAppModel: ObservableObject {
             objectWillChange.send()
             RunningMessagePreferences(defaults: defaults).write(newValue, account: account)
         }
+    }
+    func regenerateReply(_ message: ChatMessage) async {
+        guard let conversation = selectedConversation, !conversation.isMainChat, let native = conversation.sessionId,
+              let sequence = Int(message.id.split(separator: "|").last ?? ""), message.role == .assistant,
+              let accountSession = session, let local = commandStore,
+              let scope = try? LocalAccountScope(server: accountSession.server, ownerId: accountSession.account.ownerId) else { return }
+        let token = epoch, key = "messageBranch." + scope.cacheKey + "." + message.id
+        let request = defaults?.string(forKey: key) ?? "apple-branch-" + UUID().uuidString.lowercased()
+        defaults?.set(request, forKey: key)
+        do {
+            let result = try await client.regenerateMessageBranch(sessionID: native, sequence: sequence, requestID: request)
+            guard token == epoch, let target = result["sessionId"]?.string, let send = result["sendRequestId"]?.string, let text = result["text"]?.string else { return }
+            await refresh()
+            guard token == epoch, let row = conversations.first(where: { $0.sessionId == target }) else { return }
+            func attachments(_ key: String) throws -> [OriginalAttachment]? {
+                guard let value = result[key], value != .null else { return nil }
+                return try JSONDecoder().decode([OriginalAttachment].self, from: JSONEncoder().encode(value))
+            }
+            let payload = try SharedCommandPayload(requestId: send, kind: .message, targetDeviceId: accountSession.hostId,
+                sessionId: target, text: text, attachments: attachments("attachments"),
+                originalAttachments: attachments("originalAttachments"), attachmentMessageId: result["attachmentMessageId"]?.string, intent: .queue)
+            let record = try await local.persist(SharedCommandIntent(session: accountSession, command: payload))
+            guard token == epoch else { return }
+            defaults?.removeObject(forKey: key)
+            openedSessionID = row.id; await open(row)
+            publish(record, note: "已保存原请求，正在核对服务端。", accountEpoch: token)
+            await runCommand(record, allowSubmission: true, conversation: row, accountEpoch: token)
+        } catch {
+            if token == epoch { continuationNotices[Self.draftKey(for: conversation)] = "重新生成尚未完成，原请求已保留，请重试。" }
+        }
+    }
+    func messageRating(_ id: String) -> String {
+        guard let session, let scope = try? LocalAccountScope(server: session.server, ownerId: session.account.ownerId) else { return "" }
+        return (defaults?.dictionary(forKey: "messageRatings." + scope.cacheKey)?[id] as? [String: String])?["rating"] ?? ""
+    }
+    func rateMessage(_ id: String, rating: String) {
+        guard let defaults, let session, let scope = try? LocalAccountScope(server: session.server, ownerId: session.account.ownerId) else { return }
+        let key = "messageRatings." + scope.cacheKey
+        var records = defaults.dictionary(forKey: key) ?? [:]
+        records[id] = rating.isEmpty ? nil : ["rating": rating, "at": ISO8601DateFormatter().string(from: Date())]
+        defaults.set(records, forKey: key)
     }
     private let defaults: UserDefaults?
     private let launchConfigurationError: String?
@@ -1519,6 +1565,28 @@ final class AppleAppModel: ObservableObject {
             taskControlSessions = try await client.taskControlSessionIDs(includeArchived: true)
             guard actionEpoch == epoch else { return }
             conversations = result
+            for row in result where !row.temporaryState.cacheAllowed { await clearLocalHistory(row) }
+            if let selectedConversation {
+                if let updated = result.first(where: { $0.id == selectedConversation.id }) {
+                    if !updated.isMainChat, let revision = selectedConversation.chatContentRevision, revision != updated.chatContentRevision {
+                        historyRequest = UUID(); retireHistoryObservers()
+                        messages = []; timeline = .init(); timelineMessageIDs = [:]; mainChat.sideSource = nil
+                        await clearLocalHistory(selectedConversation, clearDraft: false)
+                        if let id = selectedConversation.sessionId { await client.discardSessionCache(id, conversationID: selectedConversation.id) }
+                    }
+                    self.selectedConversation = updated
+                }
+                else if !selectedConversation.temporaryState.cacheAllowed {
+                    historyRequest = UUID(); retireHistoryObservers()
+                    await clearLocalHistory(selectedConversation)
+                    if let id = selectedConversation.sessionId { await client.discardSessionCache(id, conversationID: selectedConversation.id) }
+                    messages = []; timeline = .init(); timelineMessageIDs = [:]; mainChat.sideSource = nil
+                    drafts[Self.draftKey(for: selectedConversation)] = nil; self.selectedConversation = nil
+                }
+            }
+            if let main = result.first(where: \.isMainChat), let id = main.sessionId { taskControlSessions.insert(id) }
+            await mainChat.configure()
+            mainChat.restoreRequest()
             sessionGroups = try await client.sessionGroups()
             guard actionEpoch == epoch else { return }
             executionAccount = try await client.nativeUpdateStatus().executionAccount
@@ -1527,7 +1595,7 @@ final class AppleAppModel: ObservableObject {
             conversationsCachedAt = nil
             lastRefresh = Date()
             if let local = commandStore, let account = draftAccount, let session {
-                do { _ = try await local.cacheConversationList(account: account, hostId: session.hostId, conversations: result) }
+                do { _ = try await local.cacheConversationList(account: account, hostId: session.hostId, conversations: result.filter { !$0.isMainChat && $0.temporaryState.cacheAllowed }) }
                 catch { if actionEpoch == epoch { cacheError = "列表已读取，但本机缓存尚未更新。" } }
             }
         } catch {
@@ -1552,6 +1620,10 @@ final class AppleAppModel: ObservableObject {
     }
 
     func open(_ conversation: ConversationSummary) async {
+        if conversation.isMainChat { selectedConversation = conversation; return }
+        historyCacheAllowed = conversation.temporaryState.cacheAllowed
+        if !conversation.temporaryState.cacheAllowed { await clearLocalHistory(conversation) }
+
         timelineRootCommands = []
         retireHistoryObservers()
         if selectedConversation?.id != conversation.id { thinking = .init(); thinkingConversation = nil; thinkingError = nil; subtaskStepTarget = nil }
@@ -1567,8 +1639,9 @@ final class AppleAppModel: ObservableObject {
         let request = UUID()
         historyRequest = request
         let key = Self.draftKey(for: conversation)
+        await mainChat.readSideSource(conversation)
         let cacheHost = cachedConversationHosts[conversation.id] ?? session?.hostId
-        if let local = commandStore, let account = draftAccount, let cacheHost {
+        if conversation.temporaryState.cacheAllowed, let local = commandStore, let account = draftAccount, let cacheHost {
             do {
                 if let cached = try await local.cachedHistory(account: account, conversationKey: key,
                                                               hostId: cacheHost, sessionId: conversation.sessionId) {
@@ -1581,7 +1654,7 @@ final class AppleAppModel: ObservableObject {
                 cacheError = "本机历史缓存未能读取，原文件保留。"
             }
         }
-        if let account = draftAccount, let cacheHost, let sessionID = conversation.sessionId,
+        if conversation.temporaryState.cacheAllowed, let account = draftAccount, let cacheHost, let sessionID = conversation.sessionId,
            let cached = try? await timelineCache?.readPage(account: account, hostID: cacheHost, sessionID: sessionID) {
             guard actionEpoch == epoch, historyRequest == request else { return }
             offlineTimeline = true; timeline.apply(cached.page, replace: true)
@@ -1595,6 +1668,7 @@ final class AppleAppModel: ObservableObject {
             messages = result
             if let sessionID = live.sessionId ?? knownBoundSessions[key], let page = await client.cachedTimelinePage(sessionID: sessionID) {
                 timeline.apply(page, replace: true); offlineTimeline = false
+                if page.cacheAllowed == false { historyCacheAllowed = false; await clearLocalHistory(conversation) }
                 timelineMessageIDs = await client.cachedTimelineMessageIDs(sessionID: sessionID)
             }
             historyCachedAt = nil
@@ -1603,12 +1677,19 @@ final class AppleAppModel: ObservableObject {
             guard actionEpoch == epoch, historyRequest == request else { return }
             historyBusy = false
             if await expireSessionIfNeeded(error) { return }
-            historyError = friendly(error)
+            if case APIFailure.server(404, _) = error, !conversation.temporaryState.cacheAllowed {
+                await clearLocalHistory(conversation)
+                if let id = conversation.sessionId { await client.discardSessionCache(id, conversationID: conversation.id) }
+                messages = []; timeline = .init(); timelineMessageIDs = [:]
+                drafts[Self.draftKey(for: conversation)] = nil; conversations.removeAll { $0.id == conversation.id }
+                liveConversations[conversation.id] = nil; mainChat.sideSource = nil
+                historyError = "临时对话已到期或被删除。"
+            } else { historyError = friendly(error) }
         }
         guard actionEpoch == epoch, historyRequest == request else { return }
         await prepareContinuation(conversation, accountEpoch: actionEpoch)
         guard actionEpoch == epoch, historyRequest == request else { return }
-        if historyCachedAt == nil, historyError == nil, let local = commandStore,
+        if historyCacheAllowed, conversation.temporaryState.cacheAllowed, historyCachedAt == nil, historyError == nil, let local = commandStore,
            let account = draftAccount, let session {
             do {
                 _ = try await local.cacheHistory(account: account, conversationKey: key, hostId: session.hostId,
@@ -1663,6 +1744,7 @@ final class AppleAppModel: ObservableObject {
             do {
                 let page = try await client.timelinePage(sessionID: sessionID, afterSeq: timeline.nextSeq)
                 guard actionEpoch == epoch, request == historyRequest, !Task.isCancelled else { return }
+                if page.cacheAllowed == false { historyCacheAllowed = false; await clearLocalHistory(conversation) }
                 timeline.apply(page)
                 let summaries = try await client.conversations(includeArchived: true)
                 guard actionEpoch == epoch, request == historyRequest, !Task.isCancelled else { return }
@@ -1690,7 +1772,12 @@ final class AppleAppModel: ObservableObject {
                 if error is CancellationError { return }
                 guard actionEpoch == epoch, request == historyRequest else { return }
                 if await expireSessionIfNeeded(error) { return }
-                historyError = friendly(error); return
+                if case APIFailure.server(404, _) = error, !conversation.temporaryState.cacheAllowed {
+                    await clearLocalHistory(conversation); messages = []; timeline = .init(); timelineMessageIDs = [:]
+                    mainChat.sideSource = nil; drafts[Self.draftKey(for: conversation)] = nil
+                    conversations.removeAll { $0.id == conversation.id }; liveConversations[conversation.id] = nil
+                    historyError = "临时对话已到期或被删除。"
+                } else { historyError = friendly(error) }; return
             }
         }
     }
@@ -1700,10 +1787,10 @@ final class AppleAppModel: ObservableObject {
         let old = conversations[index], running = last.type.hasSuffix("started")
         guard old.running != running else { return }
         conversations[index] = .init(id: old.id, title: old.title, conversationId: old.conversationId, sessionId: old.sessionId,
-            running: running, sendAvailable: old.sendAvailable, originalModelLabel: old.originalModelLabel, archived: old.archived, pinned: old.pinned, unread: old.unread, groupId: old.groupId, contextUsage: old.contextUsage, processing: running ? old.processing : nil, projectId: old.projectId, projectName: old.projectName, projectNotice: old.projectNotice, taskAvailable: old.taskAvailable, hostId: old.hostId, updatedAt: old.updatedAt)
+            running: running, sendAvailable: old.sendAvailable, originalModelLabel: old.originalModelLabel, archived: old.archived, pinned: old.pinned, unread: old.unread, groupId: old.groupId, contextUsage: old.contextUsage, processing: running ? old.processing : nil, projectId: old.projectId, projectName: old.projectName, projectNotice: old.projectNotice, taskAvailable: old.taskAvailable, hostId: old.hostId, updatedAt: old.updatedAt, chatId: old.chatId, chatKind: old.chatKind, temporaryState: old.temporaryState)
     }
     private func persistTimeline(_ conversation: ConversationSummary) async {
-        guard historyCachedAt == nil, !timeline.events.isEmpty, let timelineCache, let account = draftAccount, let session,
+        guard historyCacheAllowed, conversation.temporaryState.cacheAllowed, historyCachedAt == nil, !timeline.events.isEmpty, let timelineCache, let account = draftAccount, let session,
               let sessionID = conversation.sessionId ?? knownBoundSessions[Self.draftKey(for: conversation)] else { return }
         let window = timeline, actionEpoch = epoch
         do {
@@ -1720,24 +1807,20 @@ final class AppleAppModel: ObservableObject {
             let snapshot = WatchTimelineProjection.computerOffline(accountKey: session.account.ownerId)
             watchBridge.publish(snapshot); return try? JSONEncoder().encode(snapshot)
         }
-        guard session.verification == .verified, selectedConversation.map({ tasksAvailable($0) }) != false else {
+        guard session.verification == .verified else {
             watchBridge.publish(nil); return nil
         }
         do {
-            let live = try await client.sharedSessions(includeArchived: true).filter { $0.taskAvailable != false }
-            guard actionEpoch == epoch,
-                  let currentSession = live.first(where: { $0.running && $0.sessionId == selectedConversation?.sessionId })
-                    ?? live.first(where: \.running)
-                    ?? live.first(where: { $0.sessionId == selectedConversation?.sessionId })
-                    ?? live.first else { return nil }
-            let sessionID = currentSession.sessionId
+            guard mainChat.capabilities.timeline, let main = try? await client.logicalChat(),
+                  let sessionID = main.activeSessionId else { watchBridge.publish(nil); return nil }
             let page = try await client.timelinePage(sessionID: sessionID)
             let approvals = try await client.approvals(sessionID: sessionID)
             guard actionEpoch == epoch else { return nil }
-            let entries = TimelineProjection.entries(page.events)
-            let current = entries.last(where: { !$0.steps.isEmpty })
-            let completed = WatchTimelineProjection.successfulTaskIDs(in: page.events)
-            let running = TimelineProjection.taskRunning(page.events, fallback: currentSession.running)
+            let logical = try await client.chatPage(id: main.id)
+            let results = logical.items.filter { $0.type == "side.result" && $0.data["state"]?.string == "completed" && $0.data["deleted"]?.bool != true }
+            let completed = WatchTimelineProjection.successfulTaskIDs(in: page.events) + results.compactMap { row in
+                row.data["resultId"]?.string.map { $0 + "@" + String(row.data["resultRevision"]?.int ?? 1) }
+            }
             let ending = page.events.last(where: { $0.type == "task.ended" || $0.type == "turn.ended" })?.data["reason"]?.string
             let endLabel = ending == "completed" ? "已完成" : ending == "aborted" ? "已停止" : ending == "error" || ending == "blocked" ? "需要处理" : "结果待核对"
             let account = try LocalAccountScope(server: session.server, ownerId: session.account.ownerId)
@@ -1753,8 +1836,8 @@ final class AppleAppModel: ObservableObject {
             }
             guard actionEpoch == epoch else { return nil }
             let snapshot = WatchTimelineSnapshot(accountKey: account.cacheKey, sessionID: sessionID,
-                taskID: current?.steps.last?.taskID, progress: running ? current?.steps.last?.summary ?? "正在处理" : ending == nil && current == nil ? "等待新任务" : endLabel,
-                running: running,
+                taskID: nil, progress: !watchApprovals.isEmpty ? "等待批准" : ending != nil ? endLabel : !results.isEmpty ? "已完成" : "等待新任务",
+                running: !watchApprovals.isEmpty,
                 assistantSummary: "",
                 approvals: watchApprovals, completedTaskIDs: completed)
             watchBridge.publish(snapshot); return try JSONEncoder().encode(snapshot)
@@ -1769,6 +1852,7 @@ final class AppleAppModel: ObservableObject {
         let actionEpoch = epoch
         guard !offline.hostOffline, session?.verification == .verified, let value = ApprovalDecisionOutcome(rawValue: outcome),
               !watchDecisionsInFlight.contains(approvalID) else { return false }
+        guard let main = try? await client.logicalChat(), main.activeSessionId == sessionID else { return false }
         watchDecisionsInFlight.insert(approvalID)
         defer { watchDecisionsInFlight.remove(approvalID) }
         let responder = TaskInteractionModel(client: client, account: session, epoch: epoch, stateDirectory: assistantStateDirectory,
@@ -1798,7 +1882,49 @@ final class AppleAppModel: ObservableObject {
         historyCachedAt = nil
     }
 
+    func confirmCreatedChat(_ row: ConversationSummary, profileID: String) { confirmedModels[Self.draftKey(for: row)] = profileID }
+    func transferComposer(from source: ConversationSummary?, to target: ConversationSummary, text: String, files: [ConversationAttachmentDraft], epoch token: UUID) -> Bool {
+        guard token == epoch, selectedConversation?.id == target.id else { return false }
+        let existing = draftText(for: target, accountEpoch: token)
+        guard existing.isEmpty || existing == text else { return false }
+        setDraft(text, for: target, accountEpoch: token)
+        let key = Self.draftKey(for: target)
+        var destination = attachmentDrafts[key] ?? []
+        let known = Set(destination.map(\.id)); destination += files.filter { !known.contains($0.id) }; attachmentDrafts[key] = destination
+        if let source {
+            if draftText(for: source, accountEpoch: token) == text { setDraft("", for: source, accountEpoch: token) }
+            let ids = Set(files.map(\.id)); attachmentDrafts[Self.draftKey(for: source)]?.removeAll { ids.contains($0.id) }
+        }
+        return draftText(for: target, accountEpoch: token) == text
+    }
+    func resolveOpenedConversation(_ id: String) async -> String? {
+        if let row = conversations.first(where: { $0.id == id || $0.sessionId == id || $0.conversationId == id }) { return row.id }
+        if mainChat.chat?.activeSessionId == id { return mainChat.chat?.id }
+        guard mainChat.capabilities.supports("chats") else { return nil }
+        let token = epoch
+        let chat = try? await client.chatIDForNativeSession(id)
+        guard token == epoch, let chat, conversations.contains(where: { $0.chatId == chat }) else { return nil }
+        return chat
+    }
+    func locateNativeSource(_ conversation: ConversationSummary, sequence: Int) async {
+        await open(conversation)
+        while timeline.events.first?.seq ?? sequence > sequence, timeline.hasOlder { await loadOlder(conversation) }
+        sourceMessageTarget = sequence
+    }
+    func clearTransferredAttachments(_ row: ConversationSummary) {
+        let key = Self.draftKey(for: row)
+        attachmentDrafts[key]?.forEach { $0.removeTemporaryFiles() }; attachmentDrafts[key] = []
+    }
+    func clearLocalHistory(_ conversation: ConversationSummary, clearDraft: Bool = true) async {
+        guard let account = draftAccount, let session else { return }
+        try? await commandStore?.removeCachedHistory(account: account, conversationKey: Self.draftKey(for: conversation))
+        if clearDraft { _ = try? await commandStore?.clearDraft(account: account, conversationId: Self.draftKey(for: conversation)) }
+        if let id = conversation.sessionId {
+            try? await timelineCache?.remove(account: account, hostID: session.hostId, sessionID: id)
+        }
+    }
     static func draftKey(for conversation: ConversationSummary) -> String {
+        if conversation.isMainChat, let id = conversation.chatId { return "chat:" + id }
         if let id = conversation.conversationId { return "conversation:\(id)" }
         if let id = conversation.sessionId { return "session:\(id)" }
         return conversation.id
@@ -1814,6 +1940,7 @@ final class AppleAppModel: ObservableObject {
     }
 
     func draftStatus(for conversation: ConversationSummary) -> String {
+        if !conversation.temporaryState.cacheAllowed { return "临时草稿 · 仅当前显示" }
         guard draftsReady else { return draftError == nil ? "正在读取本机草稿…" : "草稿尚未读取" }
         switch draftSaveStates[Self.draftKey(for: conversation)] {
         case .saving: return "正在保存…"
@@ -1824,6 +1951,9 @@ final class AppleAppModel: ObservableObject {
     }
 
     func setDraft(_ text: String, for conversation: ConversationSummary, accountEpoch: UUID) {
+        if accountEpoch == epoch, !conversation.temporaryState.cacheAllowed {
+            drafts[Self.draftKey(for: conversation)] = text; return
+        }
         guard accountEpoch == epoch, canEditDraft(for: conversation), let account = draftAccount,
               let session, let persistence = draftPersistence,
               (try? LocalAccountScope(server: session.server, ownerId: session.account.ownerId)) == account else { return }
@@ -1991,6 +2121,7 @@ final class AppleAppModel: ObservableObject {
     }
 
     private func clearVisibleAccount() {
+        mainChat.clear(); sourceMessageTarget = nil
         offline.erase()
         if let directory = timelineStateDirectory {
             do { try OfflineVault.clearActive(directory: directory.appendingPathComponent("Offline"),
@@ -2067,6 +2198,8 @@ final class AppleAppModel: ObservableObject {
         verificationPending = false
         authError = nil
     }
+
+    func handleLogicalChatFailure(_ error: Error) async -> Bool { await expireSessionIfNeeded(error) }
 
     private func expireSessionIfNeeded(_ error: Error) async -> Bool {
         guard let failure = error as? APIFailure else { return false }
