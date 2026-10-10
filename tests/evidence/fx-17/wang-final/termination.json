@@ -1,0 +1,6 @@
+{
+  "at": "2026-10-10T01:58:34.141027+00:00",
+  "reason": "Stopped an already-failed exploratory batch while it waited for LAN; original failure remains, final post-merge batch continues.",
+  "root": "C:\\Temp\\weftmate-m2-exit-mimo-JXpUKj",
+  "completedSteps": 3
+}

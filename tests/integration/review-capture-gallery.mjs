@@ -11,7 +11,8 @@ assertPublicText(html.replace(/data:image\/png;base64,[A-Za-z0-9+/=]+/g, ''));
 assert.equal(manifest.records.length, catalog.scenes.length * catalog.platforms.length * catalog.themes.length);
 assertPublicText(JSON.stringify(manifest));
 const summary = captureSummary(manifest.records);
-assert.deepEqual(manifest.failures, summary.failures);
+const failedEvidence = manifest.records.filter(row => row.status === 'failed');
+assert.deepEqual(manifest.failures, failedEvidence);
 for (const row of manifest.records.filter(row => ['windows', 'mobile-web'].includes(row.platform) && row.status !== 'failed')) {
   assert.ok(row.file, `${row.platform}/${row.scene}/${row.theme} must be captured`);
   assert.equal(row.synthetic, true); assertPublicText(row.text);
@@ -40,8 +41,8 @@ try {
       }
       await page.evaluate(() => scrollTo(0, 0));
       await page.screenshot({ path: join(out, `gallery-${width}-${theme}.png`) });
-      assert.equal(await page.locator('.capture-failures li').count(), summary.failed);
-      assert.equal(await page.locator('.comparison .missing').filter({ hasText: /^截图失败：/ }).count(), summary.failed);
+      assert.equal(await page.locator('.capture-failures li').count(), failedEvidence.length);
+      assert.equal(await page.locator('.comparison .missing').filter({ hasText: /^截图失败：/ }).count(), failedEvidence.length);
       if (await page.locator('.comparison:visible .capture').count()) {
         await page.locator('.comparison:visible .capture').first().click();
         await page.getByRole('dialog').waitFor(); await page.keyboard.press('Escape');
@@ -53,7 +54,7 @@ try {
   }
 } finally { await browser.close(); }
 await writeFile(join(out, 'verification.json'), JSON.stringify({ generatedAt: new Date().toISOString(),
-  syntheticCaptures: summary.captured, failedCaptures: summary.failed, attemptedCaptures: summary.attempted, exceedsHalf: summary.exceedsHalf, textAndMetadataScan: 'passed', scanScope: 'captured DOM text, password inputs, manifest and embedded HTML; historical device images manually reviewed, no OCR claim', checks }, null, 2) + '\n');
+  syntheticCaptures: summary.captured, failedCaptures: summary.failed, failedEvidenceCells: failedEvidence.length, attemptedCaptures: summary.attempted, exceedsHalf: summary.exceedsHalf, textAndMetadataScan: 'passed', scanScope: 'captured DOM text, password inputs, manifest and embedded HTML; historical device images manually reviewed, no OCR claim', checks }, null, 2) + '\n');
 console.log(`Gallery verification passed (${checks.length} viewport/theme combinations; ${summary.captured} synthetic captures, ${summary.failed} failed).`);
 
 assert.equal(summary.exceedsHalf, false, `More than half of capture scenes failed (${summary.failed}/${summary.attempted})`);

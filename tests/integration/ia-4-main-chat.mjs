@@ -43,11 +43,11 @@ try{
       const assistantName=await page.evaluate(()=>{const viewport=$('chat-scroll').getBoundingClientRect();return [...document.querySelectorAll('[role=group][aria-label]')].find(row=>{const box=row.getBoundingClientRect();return row.getAttribute('aria-label').startsWith('助手消息：')&&box.top>=viewport.top&&box.bottom<=viewport.bottom;})?.getAttribute('aria-label');});assert.ok(assistantName);
       const assistant=page.getByRole('group',{name:assistantName,exact:true});await assistant.click();await assistant.getByRole('button',{name:'复制回复',exact:true}).click();await page.getByRole('menuitem',{name:'复制纯文本',exact:true}).waitFor();await page.keyboard.press('Escape');
       await assistant.getByRole('button',{name:'更多回复操作',exact:true}).click();await page.getByRole('menuitem',{name:'开旁聊重新生成',exact:true}).waitFor();await page.keyboard.press('Escape');
-      await b('搜索主对话').click();await page.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('合成手机结果摘要');await b('查找').click();
+      await b('搜索主对话').click();await page.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('合成手机结果摘要');await page.getByRole('searchbox',{name:'主对话搜索关键词'}).press('Enter');
       for(const label of ['成功','失败','停止'])await page.getByRole('button',{name:new RegExp(`^打开旁聊结果：${label}`)}).waitFor();
       await b('关闭主对话搜索').click();
       await page.getByRole('button',{name:/^打开旁聊结果：停止/}).click();await page.getByRole('button',{name:'打开导航',exact:true}).click();await b('WeftMate 主对话').click();
-      await b('搜索主对话').click();await page.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('纸船');await b('查找').click();
+      await b('搜索主对话').click();await page.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('纸船');await page.getByRole('searchbox',{name:'主对话搜索关键词'}).press('Enter');
       await page.locator('mark').first().waitFor();await b('下一条搜索结果').click();await b('上一条搜索结果').click();
       await page.screenshot({path:join(evidence,`web-${size.width}-${theme}-search.png`)});await b('关闭主对话搜索').click();
       const date=new Date(Date.now()-6*86400000).toLocaleDateString('en-CA',{timeZone:'Asia/Shanghai'}),label=`${Number(date.slice(5,7))} 月 ${Number(date.slice(8))} 日`;

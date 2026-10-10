@@ -247,6 +247,8 @@ M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在�
 
 `kind` 为 `cognition / entity / relationship / event`；下表均有顶层 `ownerId`。写入体 ≤12 KiB，`expectedWorldRevision` 是非负安全整数。
 
+UX-P1 增补：列表 `GET /memory/items` 可显式传 `kind=all`，合并四类同一账户、同一 `worldRevision` 的记忆，按更新时间倒序、类型与标识稳定排序；任何类型版本变化返回 409 `MEMORY_REVISION_CHANGED`，不返回混合快照。省略 `kind` 仍默认 `cognition`。列表新增 `totalCount`（查询前该类型或全部类型的总记录数）；显式 `includeSources=true` 时每项新增 `sourceConversationIds:string[]`，通过本账户原生记忆任务账本的证据 ID 对应来源 `sessionId`。已删除、缺失或归属不匹配的来源不产生对话链接；旧 Core（记忆核心）缺少任务账本或旧证据没有映射时返回空数组，仍可打开既有来源详情，不猜测来源。分页游标继续绑定账户、类型、搜索词与版本；`kind=all` 只用于列表，不用于单项路径。
+
 | 方法与路径 | 请求参数/体 | 响应示例 / 状态 | 主要领域错误 | 使用端 |
 |---|---|---|---|---|
 | GET `/memory/status` | 无 | 200 `{"state":"disabled","worldRevision":null,"capabilities":{"list":false,"source":false,"correct":false,"mute":false,"inject":false,"deleteEvidence":false,"deleteWorldItem":false}}` | 内存服务错误；未配置仍200 | 桌、手、安、苹 |
@@ -525,7 +527,7 @@ MS-1：`defaultModelProfileId` 按账户保存，用于新对话；已有对话�
 | POST `/schedules/{sessionId}/{id}/run` | `{}` | 200 `{ok:true}`；立即提醒或将工作排入原对话，暂停状态与原下次时间保持；每次请求代表一次独立手动运行，客户端不得在响应不确定时自动重发 |
 | GET `/notifications` | 无查询参数 | 200 `{items:Notification[]}`；持久提醒/定时执行通知列表，手机可读取；S3 远程推送另包接入 |
 
-`Schedule`：`{id,nativeId,sessionId,text,kind,timeZone,repeat,state,nextRunAt,lastRunAt,approvalMode}`。`id` 是对话内稳定管理标识；日历续期或恢复时 `nativeId` 可变，客户端只使用 `sessionId/id` 管理。`kind=reminder|task`；`repeat=null|{kind:interval,seconds}|{kind:daily,time}|{kind:weekly,time,weekday}`，`time` 为 `HH:mm:ss`，`weekday` 为0–6（周日0、周一1）。`state=scheduled|paused|completed`；暂停/完成时 `nextRunAt=null`；时间戳为 UTC（协调世界时）ISO 字符串。`approvalMode` 记录建立时模式；实际执行读取原对话当时的模式和分类授权，沿用原用户回执建立的账号意图；建立时登录凭据到期不取消长期任务，设备撤销、账号授权、当前认证版本及原对话审批仍有效。
+`Schedule`：`{id,nativeId,sessionId,text,kind,timeZone,repeat,state,nextRunAt,lastRunAt,approvalMode}`。`id` 是对话内稳定管理标识；日历续期或恢复时 `nativeId` 可变，客户端只使用 `sessionId/id` 管理。`kind=reminder|task`；`repeat=null|{kind:interval,seconds}|{kind:daily,time}|{kind:weekly,time,weekday}|{kind:monthly,time,day}`，`time` 为 `HH:mm:ss`，`weekday` 为0–6（周日0、周一1），`day` 为1–31，不存在的月内日期跳过。`state=scheduled|paused|completed`；暂停/完成时 `nextRunAt=null`；时间戳为 UTC（协调世界时）ISO 字符串。`approvalMode` 记录建立时模式；实际执行读取原对话当时的模式和分类授权，沿用原用户回执建立的账号意图；建立时登录凭据到期不取消长期任务，设备撤销、账号授权、当前认证版本及原对话审批仍有效。
 
 `Notification`：`{id,sessionId,text,kind,scheduledAt,createdAt,missed,messageId}`。原对话历史增加 `assistant.message.data.reminder=true`（可选字段，旧客户端可忽略）；该消息采用原生持久 seq（事件序号），正常历史分页和事件订阅均可见。纯提醒无需模型推理；Windows 程序显示系统通知，点击进入所属对话；桌面按账号/会话/seq 持久去重，开机补发也显示一次。任务先在原对话提示，再按正常审批模式执行，步骤、审批和成果继续使用已有任务契约。
 
@@ -1206,11 +1208,36 @@ Apple（苹果端）接线：新建入口发送 `/sessions/temporary`；侧栏/�
 | `system.update.available` | `normal` | 现有更新状态确实提供新版本；不暴露更新源或增加安装授权 |
 | `system.reconnected` | `silent` | 已观察就绪的宿主重启后再次就绪，或运行时不可用后恢复；首次安装启动不伪造恢复事件，不凭单个会话读取失败断言电脑离线 |
 
-`notification={level,type}` 的 `type` 是 ST-6（通知设置）的按类型开关接缝；ST-6未实施前维持现有系统通知行为。等级不是权限，重要不跳过未来勿扰或主动打扰限制。桌面用现有原生通知，每条动态ID最多一份系统通知，内容修订不重复弹出；点击带对应 `activityId` 打开动态并聚焦条目。通知去重仅持久保存账户与条目ID，无标题 / 正文。删除增量关闭对应已显示通知。S3a后续消费同一ID、等级与类型接安卓后台通知，约15分钟以上延迟的边界仍按D41说明；不得创建第二个提醒调度器。
+`notification` 保留 `level,type`，ST-6 追加宿主决定，详见下方 9.8.1。客户端收到 `notify:false` 不派发系统通知。等级不是权限，重要不跳过未来勿扰或主动打扰限制。桌面用现有原生通知，每条动态ID最多一份系统通知，内容修订不重复弹出；点击带对应 `activityId` 打开动态并聚焦条目。通知去重仅持久保存账户与条目ID，无标题 / 正文。删除增量关闭对应已显示通知。S3a后续消费同一ID、等级与类型接安卓后台通知，约15分钟以上延迟的边界仍按D41说明；不得创建第二个提醒调度器。
 
 宿主可信接缝 `service.recordActivity(ownerId,{key,type,at?,title,summary,source?,actions?,level?})` 只允许已登记的记忆与系统类型，`key` 使用上游稳定事件 / 回执ID；相同事实与正文不会重复插入。它不暴露为公共HTTP（网络请求）写入接口。MEM-D / MEM-3 / S3a使用该接缝提供真实状态，不能提交临时正文或未发生的成功。
 
 删除会话 / D33遗忘沿 `eraseChatCopies` 清动态摘要、动作、原生观察摘要与待完成投影；无正文墓碑和抑制水位防止旧通知、旧回执、迟到观察或重启重建正文。账户删除带走整个账户存储。临时 / 混合临时来源在持久化前只保留泛化标题、原来源ID和安全动作：完成摘要固定“临时对话中的任务已完成”，失败 / 停止也只描述状态；临时审批 / 问题不带对象、问题正文或工具参数。此规则同时约束系统通知。
+
+### 9.8.1 通知设置与宿主决定（ST-6，D19 / D41）
+
+`personalCapabilities.notificationSettings:1` 表示认识本节账户设置；`activityNotification:1` 保持兼容。既有账号缺设置时读默认值，首次 PATCH（局部更新）写入；沿 ST-1 的同一账户存储、认证、串行提交与逐字段最后写入，不另建云端设置库。GET（读取）要求 `sessions:read`；写入要求 `account:manage` 与 CSRF（跨站请求伪造防护），不接受 ownerId。不同设备读写同一账户，设备通知权限仍由本机系统管理。
+
+| 方法 / 路径 | 输入 | 返回 |
+|---|---|---|
+| GET `/settings/notifications` | 无查询参数 | `{settings,updatedAt:null|string,synced:true,timeZone}`；账户时区复用 `/settings/usage.timeZone` |
+| PATCH `/settings/notifications` | 只发送变更字段，至少一项 | 同 GET；未知字段、错误类型 / 时间 / 选项 400 `INVALID_REQUEST` |
+| POST `/settings/notifications/test` | `{}` | 同 GET，追加 `activityId`；生成 `system.notification.test` 动态，经原生通知通道发送；明确的测试绕过类型、勿扰与每日额度，仍遵守全局声音开关；不是 OS（操作系统）送达或权限成功回执 |
+
+`settings` 类型字段为 `approval,question,task,reminder,memory,memoryReport,companion,system`，值均为 `sound|notify|activity`，对应「通知 + 声音 / 只通知 / 只进动态不通知」。前四项默认 `sound`，后三类及 memory 默认 `notify`。记忆只对异常 `memory.paused` 通知；`memory.submission.completed` 仍为静默。`memoryReport` 已留字段，MEM-3 前控件置灰；`companion` 已留字段，M4 前不显示。`task` 覆盖 completed / failed / stopped；`reminder` 覆盖提醒与定时任务到点。系统更新默认开启。
+
+其他字段：`dndEnabled:false,dndStart:"22:00",dndEnd:"08:00",approvalException:true,dailyLimit:5,soundEnabled:true`。时间为严格 `HH:mm`；含开始、不含结束，可跨午夜，相同时全天勿扰。`approvalException` 只放行 `approval.pending`，不放行待回答；仍遵守该类开关。`dailyLimit` 可为 0 / 3 / 5 / 10 / null（不限）。声音使用各平台系统通知声音和系统音量，无自带音频。
+
+宿主在首次提交事实时持久写 `notification={level,type,initiatedBy,notify,sound,decision,reason,decidedAt,test?}`：
+
+- `initiatedBy:user|assistant`：任务结果、审批、本人设定的提醒默认 user；记忆 / 系统状态 / 精灵默认 assistant。可信 `recordActivity` 和提醒提供方可明确传入 `initiatedBy`；S3a / Apple（苹果端）不得按文字猜测。
+- `decision:notify|silent|activity` 分别表示通知并响铃、通知不响铃、仅动态；`notify` / `sound` 是平台直接使用的布尔决定。
+- `reason:allowed|silent|type_disabled|dnd|daily_limit|test`。先判断原分级静默，再按类型、勿扰、每日上限决定。重要不绕过开关；审批例外仅绕过勿扰。动态展示「因勿扰未提醒」「已达每日主动提醒上限」「已设为只进动态」。
+- 上限只计通过宿主规则的 assistant 通知，按账户时区自然日重置；本人发起的结果与审批不计。额度是宿主授权的提醒次数，不能保证设备权限关闭时实际显示；多端消费同一决定不重复计数。删除代次与原动态来源清理照旧。
+- 重复观察、读取 / 已读、内容修订与重启保留首次决定与额度；待办处理后改为静默。设置保存影响之后的新事实，不补弹旧条目。
+- 勿扰压下的条目ID进入账户持久汇总队列，无正文副本；离开时段（或关闭勿扰）由既有动态观察轮次生成一条 `system.dnd.summary`，内容「勿扰期间有 N 件事」。删掉的动态不计入，原条目保持 `notify:false`，不会逐条补响。汇总包含本人任务结果 / 提醒时 initiatedBy=user，不计主动额度；纯主动事件汇总 initiatedBy=assistant，仍按全局声音与当日上限决定（0条时仅动态），防止汇总绕过主动上限。汇总是时段结束回执，不受更新通知类型开关影响。宿主重启后仍只汇总一次。
+
+桌面主进程、S3a 安卓后台与 Apple 本地通知消费同一 `Activity.notification`（转发载荷也保留全部决定字段），以账户 + activityId 去重；sound=false 时使用静默系统通知，notify=false 时只保留动态。Windows（微软桌面系统）页提供系统权限检查、`ms-settings:notifications` 深链和手动开启说明；未知权限不得声称已允许。Android（安卓）业务桥新增本节两条精确路径，需要新壳版本，由编排统一递增；本包不改版本号。S3a 的后台约15分钟以上延迟与 D41 边界不变；Apple D38 的 App（应用）连接 + 本地通知仍不代表 APNs（苹果推送服务）已接入。
 
 ## 11. 记忆摄取健康与历史补整理（MEM-D）
 
@@ -1230,6 +1257,32 @@ Apple（苹果端）接线：新建入口发送 `/sessions/temporary`；侧栏/�
 Windows（视窗系统）程序与远程手机网页、Android（安卓）界面包已接入。安卓现有 `host.business` 记忆路由支持这些接口，无需新增权限；Apple（苹果端）需接记忆页健康、预览／确认、暂停／继续／取消及进度，旧客户端可忽略新增字段。确认与溯源语义未改变，不把助手提议当作用户事实。
 
 
+### 9.9 目标总览、定时编辑与原生长期目标（TB-2）
+
+`GET /status.personalCapabilities` 精确增加 `taskOverview:1`、`scheduleEditing:1`、`goals:1`。客户端只接受自身支持的精确版本；缺失、0 或未知版本均不可调用。后两项在宿主未接对应原生适配时为0。目标是原对话与 DSH（助手运行时）原生任务、schedule（定时调度）、goal（目标）的管理投影，不新建执行器。读取需要 `sessions:read`；写入需要 `commands:write`，仍受 Cookie（会话凭据）、Origin（请求来源）、CSRF（跨站请求防护）、设备撤权与账号隔离约束。创建及管理原生安排 / 目标仅用于宿主原账户自己的可执行对话；其他账户写入403，不向外暴露宿主的条目。
+
+| 方法与路径 | 请求 | 成功响应 / 语义 |
+|---|---|---|
+| GET `/tasks` | 无查询 | 200 `{items:TaskOverview[],recent:TaskOverview[],timeZone}`；跨本账户主对话执行段、旁聊、项目、后台作业；`items`为尚未终结的根任务，`recent`为实际终结后7天内的根任务 |
+| POST `/schedules` | `{requestId,sessionId,text,kind,at?,repeat?}` | 201 `{item:Schedule}`；`kind=reminder|task`；自然语言内容配时间控件，宿主直接调用原生 `schedule_create`。至少有 `at`或`repeat` |
+| PATCH `/schedules/{sessionId}/{id}` | `{requestId,text,kind,expectedRevision,at?,repeat?}` | 200 `{item:Schedule}`；稳定管理ID保持，底层原生发生时间可换ID；暂停条目编辑后仍暂停 |
+| GET `/goals` | 无查询 | 200 `{items:Goal[]}`；原生日志中的当前目标，不从摘要猜测或从用户消息自动创建 |
+| POST `/goals` | `{requestId,sessionId,title,description?}` | 201 `{ref:{id,revision}}`；标题与说明组成原生objective（目标说明）；每个原生对话同时有一个目标，已完成目标可替换，其他已有目标409 `GOAL_ALREADY_EXISTS` |
+| POST `/goals/{sessionId}/complete` | `{requestId,ref:{id,revision}}` | 200 `{ref}`；原生完成、解除继续执行状态 |
+| POST `/goals/{sessionId}/archive` | 同complete | 200 `{archived:true,ref}`；原生clear（清除当前目标），从当前目标列表移出，保留原对话及原生历史；没有另造归档目标执行机制 |
+
+`TaskOverview`：`{taskId,source,title,conversationTitle,status,createdAt,startedAt,finishedAt,elapsedSeconds,step,canStop}`。`source`沿9.8含`sessionId/chatId/chatKind/projectId/taskId`等原身份；进行中的原工具步骤额外含`seq/stepId`，打开后按原事件与步骤标识展开 / 聚焦，不仅返回对话首页。状态为 `running/queued/approval/question/stopping/unconfirmed/completed/failed/stopped`；`startedAt`来自实际原生turn/start（回合开始）时间，原Task.replyEvidence兼容增加该可选字段；不可核实时为null，界面称等待时间。当前步骤来自原执行状态，以可读动作呈现；后台作业仍在运行或效果未确认时不进入最近完成。停止仍为3.7原 `/tasks/{taskId}/stop` 请求与原回执，打开仍为原对话 / 时间线；停止期间原任务实际完成就显示已完成，不冒称已停止。完成 / 失败 / 停止的动态继续使用TB-1原事件与activityId（动态标识符），不重复发通知。
+
+`at={date:"YYYY-MM-DD",time:"HH:mm:ss"}`，时区由账户 `/settings/usage.timeZone`确定，拒绝客户端传其他时区。`repeat`为3.18的daily / weekly / monthly日历规则或 `{kind:"interval",seconds:整数且≥300}`。不传`at`时取账户时区下一次日历发生时间；固定间隔由原生every_seconds（间隔秒数）调度。原生校验真实日期、未来时间与夏令时，非法时间拒绝；不先删除旧安排再校验新时间。主对话界面创建的安排保存逻辑chatId（对话标识符），到点沿原chat.message路径发送到当前主段；项目安排按当前项目ID / 修订和权限进入原命令路径。新字段 `Schedule.createdAt/revision/lastResult/temporary`：`revision`用于编辑比较；`lastResult`为null、`{state:"delivered"}`，或 `{state:"queued|completed|failed|stopped",commandId}`；定时执行受理不等于任务已完成，完成状态取原任务动态事实。提醒及定时触发继续进入9.8动态与原系统通知。
+
+3.18的pause / resume / run仍接受旧`{}`；TB-2支持可选`{requestId}`，新客户端在响应不确定时以原内容原ID重放，原生管理回执返回同一结果，立即运行不会因同ID重放再送一次。旧空体run每次为独立手动运行，仍不得自动重试。DELETE仍用原地址，并由客户端明确确认。新建 / 编辑带`requestId`；同ID同内容重放持久回执，不同内容409 `REQUEST_CONFLICT`；编辑修订不符409 `REVISION_CHANGED`；原生目标CAS（比较后更新）修订不符409 `GOAL_STALE_REVISION`。这些短操作不进入另一个任务队列；原生落盘和管理回执遵循DSH已有崩溃恢复边界，不承诺外部副作用严格恰好一次。
+
+`Goal`含原生 `id/revision/objective/phase/roundsStarted/maxGoalRounds/createdAt/updatedAt`，新增可读 `title/description/progress/conversationTitle/source/scheduleIds/temporary`；目标时间为原生epoch milliseconds（纪元毫秒）。`phase=active|paused|blocked|complete`，`progress`为原生已执行轮次或真实阻塞说明，没有虚构百分比；`scheduleIds`是同一原对话中的安排管理ID，不暗示新建了跨对话调度关系。暂停 / 阻塞 / 继续执行与原生预算、模型工具沿DSH处理，本页只提供用户要求的新建 / 完成 / 归档。
+
+D33：删除对话前取消该对话的原生安排、清除当前目标及管理副本；记忆遗忘按原用户回执和来源文本清理关联安排 / 目标，保留无关安排。派生目标说明和安排prompt（调度内容）从原生日志清理；原用户聊天原话是否删除仍由D33勾选决定。包括已归档目标的原生日志派生说明；保留无正文的原请求删除标记，同ID重放已遗忘的新建请求返回404 `SOURCE_UNAVAILABLE`，不重建条目。没有动态条目时也推进删除代次；换账户清掉目标表单草稿。列表返回期间发生遗忘时409 `CURSOR_RESET_REQUIRED`，客户端清旧结果后重取，迟到响应不复活。MEM-2（临时来源隔离）临时 / 混合临时来源仅显示“临时对话中的任务 / 定时任务 / 目标”和泛化进展，目标说明与阻塞正文为空 / 泛化；列表及新建 / 编辑返回均不含临时标题正文。临时安排编辑回原对话，不用脱敏占位替换真实内容。
+
+桌面固定「目标」在「动态」下，三个分区为进行中 / 定时任务 / 长期目标。手机网页先从菜单进入，功能与呈现母版共享，底部选项卡留TB-4收口。Apple（苹果端）需按同一能力版本接入上述模型、原停止回执、时间与状态、修订重放和D33 / 临时来源边界，不能只按程序版本猜测支持。
+
 ## 12. 首次使用引导与模型发现（ONB-1）
 
 仅全新宿主安装建立未开始的引导；升级已有数据目录不补建。旧账户、预先配置的账户，以及已完成引导的安装不自动显示。引导开始后绑定当前账户；其他账户不读取该账户的中断进度。设置可主动重新查看。步骤与完成状态在宿主中原子保存，客户端不另存账户、模型或称呼。
@@ -1245,3 +1298,14 @@ Windows（视窗系统）程序与远程手机网页、Android（安卓）界面
 账户沿第7节注册 / 登录 / 本地设置流程；称呼写 ST-1 的 `PATCH /settings/personalization {preferredName}`；模型沿 `/account/models/check`、保存回执与 `/settings/models`，中断后只保存非秘密请求编号并核对原回执；记忆沿第11节状态和只读补整理预览，不自动运行；导入入口置灰。连接手机沿第7节一次性二维码 / 配对码及设备允许 / 拒绝，不新建信任协议。一次性码持有与同账户验证是原扫码批准路径；无配对码的新设备仍须在已登录电脑上明确允许。
 
 Apple（苹果端）：Mac 执行宿主按本节读取安装进度并保存步骤，远程 iPhone / Mac 只接「连电脑」说明与现有扫码 / 批准流程；Watch（手表）不显示七步引导。文案与提供方获取密钥说明的中文来源为 `src/ui-core/onboarding-copy.js`，英文随 L10N-1 补齐。
+
+
+### FX-17：纠正形成状态与重试
+
+`GET /memory/status` 增加可选 `failedCorrectionCount` 与 `formationIssues`。后者每项为 `{jobId,evidenceId,sessionId,text,intent,createdAt}`，`intent` 为 `correction` 或 `remember`。仅包含本账户可读、明确纠正／要求记住但形成被拒绝的原话；`no_change` 不再自动等同健康。重试中的作业计入既有 `pendingFormationCount`，成功或原话撤回后不再列入失败项。`GET /status.memory` 与 `/system.memory` 同样可带上述两字段。客户端应在对应回合下提示未生效，并在记忆健康处展开原话。
+
+新增 `POST /memory/formation/{jobId}/retry`，请求 `{requestId}`（非空字符串，最多128字符），返回202与原生形成回执（包含 `job_id,original_job_id`）。复用同一 `requestId` 核对不确定请求；明确发起另一轮重试使用新ID（标识）。权限为 `account:manage`，沿用同源与CSRF（跨站请求伪造防护）校验。宿主只调用Core（记忆核心）原生重处理，不直接改库，也不把202描述为形成成功。仍失败的重试可再次重试。
+
+动态复用 `memory.report` 类型，显示“有 1 条纠正没有生效”，动作 `view_memory` 打开原话与重试入口；重新处理后更新该条状态。来源接口 `sources[].relation` 可为 `superseded_by`，表示取代该旧理解的纠正原话，原来源不覆盖。
+
+Windows（视窗系统）与远程网页已有健康、动态、对应回合提示及重试。安卓界面包新增健康展开与重试，沿用现有记忆业务路由，不需要新增原生权限／版本号；Apple（苹果客户端）需接上述可选字段和重试路径，旧客户端可忽略。后台异步形成时，助手只确认“我记下了，稍后整理进记忆”；只有实际形成结果才能支持完成声明。

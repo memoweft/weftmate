@@ -93,6 +93,7 @@ export function projectReplyEvidence(content, { receiptId, live = false } = {}) 
   else if (!end && !nextStart && live === true) status = assistantChunks > 0 ? 'streaming' : 'waiting'
   return { status, turn, step, assistantChunks, textChunks, reasoningChunks,
     assistantMessages, toolSaveObserved,
+    ...(timeOf(start.time) ? { startedAt: timeOf(start.time) } : {}),
     ...(end && reason === 'max-tokens' ? { endReasonKind: 'max-tokens' } : {}),
     ...(observedAt ? { observedAt } : {}),
     ...(firstChunkAt ? { firstChunkAt } : {}),

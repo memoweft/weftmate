@@ -123,6 +123,7 @@
     if (!globalThis.WeftIcons) icon.className = 'icon icon-chevron';
     trigger.append(text, icon);
     const menu = document.createElement('div'); menu.className = 'settings-select-menu'; menu.hidden = true;
+    const goalsControl = !!select.closest('.goals-page'); if (goalsControl) menu.classList.add('goals-select-menu');
     menu.id = `settings-options-${select.id || crypto.randomUUID()}`;
     const list = document.createElement('div'); list.setAttribute('role', 'listbox'); list.setAttribute('aria-label', label);
     list.id = menu.id + '-list'; trigger.setAttribute('aria-controls', list.id);
@@ -135,11 +136,19 @@
     let search;
     const options = () => [...list.querySelectorAll('[role=option]')];
     function render(query = '') {
+      // Keep arbitrary ISO calendar years available without a native date picker.
+      if (goalsControl && select.dataset.customYear === 'true' && /^\d{4}年?$/.test(query.trim())) {
+        const value = query.trim().replace('年','');
+        if (![...select.options].some(option => option.value === value)) {
+          const option = document.createElement('option');option.value=value;option.textContent=`${Number(value)}年`;select.append(option);
+        }
+      }
       list.replaceChildren();
       for (const option of select.options) {
         if (option.hidden || !option.textContent.toLocaleLowerCase().includes(query.toLocaleLowerCase())) continue;
         const button = document.createElement('button'); button.type = 'button'; button.textContent = option.textContent;
         button.setAttribute('role', 'option'); button.setAttribute('aria-selected', String(option.selected));
+        if (goalsControl && option.selected && globalThis.WeftIcons) button.append(WeftIcons.create('allow',16));
         button.disabled = option.disabled || option.parentElement?.disabled;
         button.onclick = () => { select.value = option.value; select.dispatchEvent(new Event('change', { bubbles: true })); sync(); close(true); };
         list.append(button);
@@ -151,12 +160,14 @@
       if (trigger.disabled) return;
       menu.replaceChildren(); search = null;
       if (select.options.length > 8) {
-        search = document.createElement('input'); search.type = 'search'; search.placeholder = '搜索选项'; search.setAttribute('aria-label', `搜索${label}`);
+        search = document.createElement('input'); search.type = 'search'; search.placeholder = select.dataset.customYear === 'true' ? '输入或搜索年份' : '搜索选项'; search.setAttribute('aria-label', `搜索${label}`);
         search.oninput = () => render(search.value); menu.append(search);
       }
       menu.append(list); menu.hidden = false; trigger.setAttribute('aria-expanded', 'true'); render();
       const buttons = options().filter(button => !button.disabled);
-      (search || buttons.find(button => button.getAttribute('aria-selected') === 'true') || buttons[last ? buttons.length - 1 : 0])?.focus({ preventScroll: true });
+      const selected = buttons.find(button => button.getAttribute('aria-selected') === 'true');
+      (search || selected || buttons[last ? buttons.length - 1 : 0])?.focus({ preventScroll: true });
+      if (goalsControl) selected?.scrollIntoView({block:'nearest'});
     }
     trigger.onclick = () => menu.hidden ? open() : close(true);
     trigger.onkeydown = event => { if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) { event.preventDefault(); open(event.key === 'ArrowUp'); } };
@@ -185,5 +196,35 @@
     const bind = () => document.querySelectorAll('select').forEach(bindSettingsSelect);
     bind(); new MutationObserver(records => { if (records.some(record => [...record.addedNodes].some(node => node.matches?.('select') || node.querySelector?.('select')))) bind(); }).observe(document.body, { childList: true, subtree: true });
   });
-  globalThis.WeftPopover = { position, bindSelect, bindSettings, bindSettingsSelect };
+  // Shared action menu, with the same surface as conversation menus.
+  let dismissMenu;
+  function menu(trigger, entries, onError = () => {}) {
+    dismissMenu?.(false);
+    const box = document.createElement('div'); box.className = 'session-menu';
+    box.setAttribute('role', 'menu'); box.setAttribute('aria-label', trigger.getAttribute('aria-label'));
+    const close = (focus = true) => {
+      active.get(box)?.observer?.disconnect(); active.delete(box);box.remove(); document.removeEventListener('pointerdown', outside);
+      trigger.setAttribute('aria-expanded', 'false'); dismissMenu = null;
+      if (focus && trigger.isConnected) trigger.focus({preventScroll:true});
+    };
+    const outside = event => { if (!box.contains(event.target) && !trigger.contains(event.target)) close(false); };
+    for (const entry of entries) {
+      const item = document.createElement('button'); item.type = 'button';
+      item.className = `session-menu-item${entry.danger ? ' danger' : ''}`;
+      item.textContent = entry.name; item.setAttribute('role', 'menuitem'); item.disabled = !!entry.disabled;
+      item.onclick = () => { close(); Promise.resolve().then(entry.action).catch(onError); }; box.append(item);
+    }
+    box.onkeydown = event => {
+      const items = [...box.querySelectorAll('button:not(:disabled)')], index = items.indexOf(document.activeElement);
+      if (event.key === 'Escape' || event.key === 'Tab') { event.stopPropagation(); if (event.key === 'Escape') event.preventDefault(); close(); }
+      if (['ArrowDown','ArrowUp','Home','End'].includes(event.key)) {
+        event.preventDefault(); items[event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus();
+      }
+    };
+    document.body.append(box); trigger.setAttribute('aria-haspopup','menu'); trigger.setAttribute('aria-expanded','true');
+    position(box, trigger, {side:'bottom',align:'end'}); box.querySelector('button:not(:disabled)')?.focus();
+    document.addEventListener('pointerdown', outside); dismissMenu = close;
+    return close;
+  }
+  globalThis.WeftPopover = { position, bindSelect, bindSettings, bindSettingsSelect, menu, closeMenu: () => dismissMenu?.() };
 })();
