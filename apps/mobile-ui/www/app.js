@@ -84,6 +84,7 @@ const mobileEffects = {
 const uiCore = WeftUiCore.create({ fetch: mobileWebBridge?.fetch || androidBridge.fetch, storage: localStorage,
   crypto: globalThis.crypto, effects: mobileEffects, mobileState: state, attachmentDrafts, logicalChats:true });
 uiCore.android = androidBridge;
+let mobileNextSuggestions = null;
 const mobileMessageActions = globalThis.WeftMessageActions?.create({core:uiCore, draft:()=>$('draft'),
   selectSession:async id=>{await listSharedSessions();await selectSharedSession(id)},
   copy: text=>call('clipboard.copy',{text}), save:async(blob,name)=>{
@@ -693,6 +694,8 @@ function handleBack(){if(globalThis.WeftContent?.isGalleryOpen()){closeImagePrev
   if(state.logicalChats&&!uiCore.inMainChat()){void selectMobileTab('chat');return}
   if(window.weftNative)void call('app.exit').catch(error=>toast(safeError(error)));}
 document.addEventListener('DOMContentLoaded',()=>{
+  mobileNextSuggestions = globalThis.WeftNextSuggestionsView?.mount(uiCore, { field:$('draft'), area:$('composer-dock'),
+    card:$('draft').parentElement, mobile:true, repaint:() => updateComposer() });
   $('menu-button').addEventListener('click',openDrawer);$('drawer-close').addEventListener('click',closeDrawer);$('drawer-scrim').addEventListener('click',closeDrawer);
   $('page-back').addEventListener('click',()=>{if(state.page==='chat'&&!state.logicalChats&&!state.tabSource)page('home');else handleBack()});
   $('header-profile').addEventListener('click',()=>page('settings'));
