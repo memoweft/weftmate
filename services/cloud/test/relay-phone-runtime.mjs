@@ -39,7 +39,7 @@ export async function phoneRuntime(root, logs) {
   await new Promise(r => model.listen(0, '127.0.0.1', r));
   const home = join(root, 'dsh-home'); await mkdir(home);
   const patch = join(home, 'model.yml');
-  await writeFile(patch, `- id: llm-pi-ai\n  config:\n    providers:\n      relay-fixture:\n        api: openai-completions\n        apiKeyEnv: FIXTURE_API_KEY\n        baseURL: http://127.0.0.1:${model.address().port}/v1\n        models:\n          - id: synthetic\n            contextWindow: 32768\n            maxTokens: 4096\n`);
+  await writeFile(patch, `- id: llm-pi-ai\n  config:\n    providers:\n      relay-fixture:\n        api: openai-completions\n        apiKeyEnv: FIXTURE_API_KEY\n        baseURL: http://127.0.0.1:${model.address().port}/v1\n        models:\n          - id: synthetic\n            contextWindow: 32768\n            maxTokens: 4096\n- id: credentials\n  disabled: true\n- insert:\n    - id: weftmate-safe-credentials\n      name: ./plugins/weftmate-credentials.mjs\n    - id: weftmate-personal-model-idle\n      name: ./plugins/weftmate-personal-model-idle.mjs\n- id: api-gateway\n  disabled: true\n- insert:\n    - id: weftmate-personal-api-gateway\n      name: ./plugins/weftmate-personal-api-proxy.mjs\n    - id: weftmate-personal-reply-evidence\n      name: ./plugins/weftmate-personal-reply-evidence.mjs\n`);
   let host, origin;
   const runtime = new DshWebRuntime({ homeDir: home, workspaceDir: project,
     ...(process.env.WEFTMATE_DSH_CHECKOUT ? { checkoutPath: process.env.WEFTMATE_DSH_CHECKOUT } : { runtimePath: join(process.cwd(), 'vendor/dsh-runtime') }),

@@ -134,9 +134,10 @@ test('Relay phone first input and file task', {
       delayed = null;
     }
     await phone.screenshot({ path: join(evidence, 'first-input.png') });
-    const registered = await direct('/projects', { requestId: randomUUID(), name: '合成中继文件项目', rootPath: runtime.project, permission: 'read-write' }, local);
-    assert.equal(registered.status, 201, JSON.stringify(registered.data));
-    const accepted = await phoneApi(`/projects/${registered.data.project.projectId}/sessions`, { requestId: randomUUID(), modelProfileId: 'synthetic' });
+    // The cloud runner's synthetic project is a real temporary Linux directory.
+    // Windows folder registration is deliberately outside this transport test:
+    // its existing contract requires Windows volume/file identities.
+    const accepted = await phoneApi('/commands', { requestId: randomUUID(), kind: 'session.create', targetDeviceId: started.hostId, modelProfileId: 'synthetic' });
     assert.equal(accepted.status, 202, JSON.stringify(accepted.data)); const created = await settle(accepted.data.command);
     const fileSession = { sessionId: created.sessionId, title: '合成中继文件任务' };
     await phoneApi(`/sessions/${created.sessionId}/metadata`, { title: fileSession.title }, 'PATCH');

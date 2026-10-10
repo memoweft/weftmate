@@ -49,6 +49,12 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           pnpm run build
+      - name: Save compiled fixture before scenario assertions
+        if: steps.dsh-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .local/relay-dsh
+          key: relay-phone-dsh-linux-node24-${{ env.DSH_PIN }}-v1
       - name: Relay phone first input and file task
         timeout-minutes: 6
         run: node --test services/cloud/test/relay-phone.test.mjs
