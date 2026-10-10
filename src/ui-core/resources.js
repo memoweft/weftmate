@@ -1,5 +1,27 @@
 /* Shared resources state, data and actions. Presentation is supplied through named effects. */
 globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
+    function capturedSourceText(raw) {
+        const parse = value => { try { return JSON.parse(value); } catch { return null; } };
+        const collect = value => typeof value === 'string' ? [value] : Array.isArray(value) ? value.flatMap(collect)
+            : value?.type === 'text' ? [value.text || ''] : value?.content ? collect(value.content) : [];
+        const data = parse(raw), outputs = collect(data?.output);
+        return outputs.map(text => {
+            const source = parse(text);
+            if (!source?.url || typeof source.text !== 'string') return text;
+            return [source.title, source.url, source.capturedAt ? `访问时间：${source.capturedAt}` : '',
+                source.query ? `原文片段 · ${source.query}` : '', source.text,
+                source.captureTruncated || source.previewTruncated || source.truncated ? '[仅显示已读取的部分原文]' : ''].filter(Boolean).join('\n\n');
+        }).join('\n\n') || raw;
+    }
+    async function capturedSourceForUrl(url) {
+        const normalize = value => { try { const u = new URL(value); u.hash = ''; return u.href; } catch { return ''; } };
+        const key = normalize(url); if (!key) return null;
+        const resources = await core.loadConversationResources();
+        const matches = resources.sources.filter(item => item.kind === 'webpage' && normalize(item.url) === key);
+        if (!matches.length) return null;
+        return { ...matches[0], uses: [...new Map(matches.flatMap(item => item.uses).map(use => [use.path, use])).values()]
+            .sort((a, b) => Number(b.summary.startsWith('原文片段')) - Number(a.summary.startsWith('原文片段'))) };
+    }
     function deduplicateOutputs(artifacts) {
         const groups = new Map(), seen = new Set();
         for (const artifact of artifacts) {
@@ -216,5 +238,5 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             effects.updateAvailability();
         }
     }
-    return { deduplicateOutputs, timelineEventsForContext, loadConversationResources, refreshTasks, updateFromCommand, lookupRequest, restoreRequests, submitCommand };
+    return { capturedSourceText, capturedSourceForUrl, deduplicateOutputs, timelineEventsForContext, loadConversationResources, refreshTasks, updateFromCommand, lookupRequest, restoreRequests, submitCommand };
 };

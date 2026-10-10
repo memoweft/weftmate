@@ -1,5 +1,17 @@
 /* Desktop resources component: paint data, bind controls, invoke shared actions. */
 globalThis.WeftUiComponents.factories.resources = (core, ui) => {
+    globalThis.WeftOpenCapturedSource = async (url, trigger) => {
+        const context = core.conversationTaskContext();
+        try {
+            const source = await core.capturedSourceForUrl(url);
+            if (!core.conversationTaskCurrent(context)) return true;
+            if (!source) return false;
+            ui.openConversationResource(source, trigger, true);
+        } catch {
+            if (core.conversationTaskCurrent(context)) ui.toast('暂时无法读取出处，请重试。');
+        }
+        return true;
+    };
     function closeResourcePreview() {
         window.WeftDesktop?.closePreview(false);
     }
@@ -126,7 +138,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
         globalThis.WeftDesktopUI?.appendArtifactActions(actions, artifact, ui.toast);
         parent.append(actions);
     }
-    function openConversationResource(item, trigger = document.activeElement) {
+    function openConversationResource(item, trigger = document.activeElement, showExcerpt = false) {
         const context = core.conversationTaskContext();
         if (!core.conversationTaskCurrent(context))
             return;
@@ -162,8 +174,8 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
                     if (!core.conversationTaskCurrent(context) || !line.isConnected)
                         return;
                     const text = data.source?.text || data.text || '暂时没有可预览内容';
-                    content.textContent = `${data.source ? text : core.executionDetailText(text)}${data.truncated || data.source?.truncated ? '\n[内容已截断]' : ''}`;
-                    if (!data.source && core.sourcePresentation(item.kind === 'tool' ? item.toolName || item.name : item.kind === 'webpage' ? 'web_fetch' : use.verb === '写入' ? 'write' : 'read', text).hasArguments) {
+                    content.textContent = `${data.source ? text : item.kind === 'webpage' ? core.capturedSourceText(text) : core.executionDetailText(text)}${data.truncated || data.source?.truncated ? '\n[内容已截断]' : ''}`;
+                    if (item.kind !== 'webpage' && !data.source && core.sourcePresentation(item.kind === 'tool' ? item.toolName || item.name : use.verb === '写入' ? 'write' : 'read', text).hasArguments) {
                         const presentation = core.sourcePresentation(item.kind === 'tool' ? item.toolName || item.name : item.kind === 'webpage' ? 'web_fetch' : use.verb === '写入' ? 'write' : 'read', text);
                         const raw = ui.element('details', 'resource-usage');
                         raw.append(ui.element('summary', '', '详情'), content);
@@ -191,6 +203,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
                 }
             });
             target.content.append(line);
+            if (showExcerpt && use === item.uses[0]) line.open = true;
         }
     }
     function renderTimeline(events = core.timelineEventsForContext()) {
