@@ -24,6 +24,8 @@ export async function startTimelineCandidate(options = {}) {
   const result = (id, text, isError = false) => append('tool/result', { turn: 1, message: { source: { kind: 'tool', callId: id }, content: [{ type: 'tool-result', toolCallId: id, isError, content: [{ type: 'text', text }] }] } })
   const adapter = createDshSessionAdapter({ sessions: { list: async () => ok({ items: [{ sessionId, origin: 'user' }] }) }, events: {} }, { readLog: async () => events })
   const scheduleRows = [{id:'ui4-schedule',text:'提交合成报告',state:'scheduled',timeZone:'Asia/Shanghai',nextRunAt:'2026-10-09T01:00:00Z'}];
+  const goalRows = new Map();
+  if(options.goals){scheduleRows[0]={...scheduleRows[0],createdAt:new Date().toISOString(),revision:1,kind:'reminder',repeat:{kind:'daily',time:'09:00:00'}};}
   const backend = {
     deleteSession: async ({sessionId:id}) => { dailySessions.delete(id); if(id===sessionId){events=[];running=false;} return {deleted:true}; },
     chatRelayState: async () => ({ pending: relayPending, safe: !running }),
@@ -31,12 +33,22 @@ export async function startTimelineCandidate(options = {}) {
     installChatHandoff: async () => {relayPending=false;return {installed:true};},
     readAttachment: async () => ({bytes:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jk9sAAAAASUVORK5CYII=','base64'),contentType:'image/png'}),
     ...(options.sidebar ? { renameSession: async ({sessionId, title}) => { dailySessions.get(sessionId).title = title; return {title}; } } : {}),
-    ...(options.schedules ? { schedules: async ({action,id}) => {
+    ...(options.schedules || options.goals ? { schedules: async ({action,id,...input}) => {
       if (['list','notifications'].includes(action)) return {items:scheduleRows.map(row=>({...row}))};
+      if(action==='erase'){scheduleRows.length=0;return {ok:true};}
+      if(action==='forget'){return {ok:true};}
+      if(action==='create'){const content=JSON.parse(input.prompt);const row={id:randomUUID(),...content,state:'scheduled',timeZone:'Asia/Shanghai',repeat:content.repeat??null,revision:1,createdAt:new Date().toISOString(),nextRunAt:'2027-01-02T01:00:00Z'};scheduleRows.push(row);return {item:row};}
       const row=scheduleRows.find(row=>row.id===id);assert.ok(row);
+      if(action==='edit'){Object.assign(row,JSON.parse(input.prompt),{revision:row.revision+1});return {item:row};}
       if(action==='delete')scheduleRows.splice(scheduleRows.indexOf(row),1);else row.state=action==='pause'?'paused':action==='resume'?'scheduled':'completed';
       return {ok:true};
     }} : {}),
+    ...(options.goals?{goals:async({sessionId:id,action,objective,ref})=>{
+      if(action==='list')return {goal:goalRows.get(id)??null};
+      if(action==='erase'||action==='forget'||action==='archive'){goalRows.delete(id);return {archived:true};}
+      if(action==='create'){const row={id:randomUUID(),revision:1,objective,phase:'active',roundsStarted:0,createdAt:Date.now(),updatedAt:Date.now()};goalRows.set(id,row);return {ref:{id:row.id,revision:row.revision}};}
+      const row=goalRows.get(id);assert.equal(ref.id,row.id);row.phase='complete';row.revision++;return {ref:{id:row.id,revision:row.revision}};
+    }}:{}),
     getStatus: async () => ({ runtime: 'ready', referenceScan: 'ready', capabilities: { chat: { available: true, inferenceVerified: false } } }), listModels: async () => [{ id: 'local', name: '合成会话', model: options.usageSamples ? 'mimo-v2.6-flash' : 'synthetic', sourceKind: options.usageSamples ? 'cloud' : 'local', configured: true, ...(options.composerMenu?{deepThinking:{supported:true,effort:'high'}}:{}) }], preflight: async () => ({ ok: true }),
     createSession: async input => { operations.push({ kind: 'create' });
       if(options.daily){if(sessionId)dailySessions.get(sessionId).running=running;events=[];running=false;dailySessions.set(input.sessionId,{events,running:false,title:'新对话'});}

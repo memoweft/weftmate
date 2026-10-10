@@ -1,5 +1,9 @@
 /** A saved schedule is account intent, independent of its creating login's TTL. */
 export function scheduledCommandSource(account, command) {
+  const authorization = account.scheduleAuthorizations?.[command?.scheduleSourceId];
+  if (authorization && command.ownerId === account.ownerId && authorization.sessionId === command.sessionId &&
+      authorization.sourceDeviceId === command.sourceDeviceId && !account.devices?.[command.sourceDeviceId]?.revoked &&
+      /^scheduled-[a-f0-9]{48}$/.test(command.requestId ?? '') && command.kind === 'session.message' && command.payload?.mode === 'queue') return true;
   const source = account.commands[command?.scheduleSourceId];
   const logical = command?.payload?.chatId && source?.payload?.chatId === command.payload.chatId;
   return typeof command?.scheduleSourceId === 'string' && /^scheduled-[a-f0-9]{48}$/.test(command.requestId ?? '') &&

@@ -503,7 +503,7 @@ MS-1：`defaultModelProfileId` 按账户保存，用于新对话；已有对话�
 | POST `/schedules/{sessionId}/{id}/run` | `{}` | 200 `{ok:true}`；立即提醒或将工作排入原对话，暂停状态与原下次时间保持；每次请求代表一次独立手动运行，客户端不得在响应不确定时自动重发 |
 | GET `/notifications` | 无查询参数 | 200 `{items:Notification[]}`；持久提醒/定时执行通知列表，手机可读取；S3 远程推送另包接入 |
 
-`Schedule`：`{id,nativeId,sessionId,text,kind,timeZone,repeat,state,nextRunAt,lastRunAt,approvalMode}`。`id` 是对话内稳定管理标识；日历续期或恢复时 `nativeId` 可变，客户端只使用 `sessionId/id` 管理。`kind=reminder|task`；`repeat=null|{kind:interval,seconds}|{kind:daily,time}|{kind:weekly,time,weekday}`，`time` 为 `HH:mm:ss`，`weekday` 为0–6（周日0、周一1）。`state=scheduled|paused|completed`；暂停/完成时 `nextRunAt=null`；时间戳为 UTC（协调世界时）ISO 字符串。`approvalMode` 记录建立时模式；实际执行读取原对话当时的模式和分类授权，沿用原用户回执建立的账号意图；建立时登录凭据到期不取消长期任务，设备撤销、账号授权、当前认证版本及原对话审批仍有效。
+`Schedule`：`{id,nativeId,sessionId,text,kind,timeZone,repeat,state,nextRunAt,lastRunAt,approvalMode}`。`id` 是对话内稳定管理标识；日历续期或恢复时 `nativeId` 可变，客户端只使用 `sessionId/id` 管理。`kind=reminder|task`；`repeat=null|{kind:interval,seconds}|{kind:daily,time}|{kind:weekly,time,weekday}|{kind:monthly,time,day}`，`time` 为 `HH:mm:ss`，`weekday` 为0–6（周日0、周一1），`day` 为1–31，不存在的月内日期跳过。`state=scheduled|paused|completed`；暂停/完成时 `nextRunAt=null`；时间戳为 UTC（协调世界时）ISO 字符串。`approvalMode` 记录建立时模式；实际执行读取原对话当时的模式和分类授权，沿用原用户回执建立的账号意图；建立时登录凭据到期不取消长期任务，设备撤销、账号授权、当前认证版本及原对话审批仍有效。
 
 `Notification`：`{id,sessionId,text,kind,scheduledAt,createdAt,missed,messageId}`。原对话历史增加 `assistant.message.data.reminder=true`（可选字段，旧客户端可忽略）；该消息采用原生持久 seq（事件序号），正常历史分页和事件订阅均可见。纯提醒无需模型推理；Windows 程序显示系统通知，点击进入所属对话；桌面按账号/会话/seq 持久去重，开机补发也显示一次。任务先在原对话提示，再按正常审批模式执行，步骤、审批和成果继续使用已有任务契约。
 
@@ -1206,3 +1206,30 @@ Apple（苹果端）接线：新建入口发送 `/sessions/temporary`；侧栏/�
 补整理按原回合时间顺序进行，每步重核对会话及来源；临时对话、当前关闭记忆的对话、回合冻结策略禁止摄取的内容和已遗忘来源均排除。排除已确认投递的回合及Core已接受的边界；事件标识沿实时摄取算法保持一致，重复确认、重启与未知回执不会重复形成。历史回合默认不自动运行；升级后新完成的普通回合由持久日志恢复漏掉的IPC（进程间通信），先写outbox再尝试投递，忙／路由不可用／子进程离线均退避重试。宿主重启恢复outbox和已确认的补整理进度，暂停状态也持久保留。
 
 Windows（视窗系统）程序与远程手机网页、Android（安卓）界面包已接入。安卓现有 `host.business` 记忆路由支持这些接口，无需新增权限；Apple（苹果端）需接记忆页健康、预览／确认、暂停／继续／取消及进度，旧客户端可忽略新增字段。确认与溯源语义未改变，不把助手提议当作用户事实。
+
+
+### 9.9 目标总览、定时编辑与原生长期目标（TB-2）
+
+`GET /status.personalCapabilities` 精确增加 `taskOverview:1`、`scheduleEditing:1`、`goals:1`。客户端只接受自身支持的精确版本；缺失、0 或未知版本均不可调用。后两项在宿主未接对应原生适配时为0。目标是原对话与 DSH（助手运行时）原生任务、schedule（定时调度）、goal（目标）的管理投影，不新建执行器。读取需要 `sessions:read`；写入需要 `commands:write`，仍受 Cookie（会话凭据）、Origin（请求来源）、CSRF（跨站请求防护）、设备撤权与账号隔离约束。创建及管理原生安排 / 目标仅用于宿主原账户自己的可执行对话；其他账户写入403，不向外暴露宿主的条目。
+
+| 方法与路径 | 请求 | 成功响应 / 语义 |
+|---|---|---|
+| GET `/tasks` | 无查询 | 200 `{items:TaskOverview[],recent:TaskOverview[],timeZone}`；跨本账户主对话执行段、旁聊、项目、后台作业；`items`为尚未终结的根任务，`recent`为实际终结后7天内的根任务 |
+| POST `/schedules` | `{requestId,sessionId,text,kind,at?,repeat?}` | 201 `{item:Schedule}`；`kind=reminder|task`；自然语言内容配时间控件，宿主直接调用原生 `schedule_create`。至少有 `at`或`repeat` |
+| PATCH `/schedules/{sessionId}/{id}` | `{requestId,text,kind,expectedRevision,at?,repeat?}` | 200 `{item:Schedule}`；稳定管理ID保持，底层原生发生时间可换ID；暂停条目编辑后仍暂停 |
+| GET `/goals` | 无查询 | 200 `{items:Goal[]}`；原生日志中的当前目标，不从摘要猜测或从用户消息自动创建 |
+| POST `/goals` | `{requestId,sessionId,title,description?}` | 201 `{ref:{id,revision}}`；标题与说明组成原生objective（目标说明）；每个原生对话同时有一个目标，已完成目标可替换，其他已有目标409 `GOAL_ALREADY_EXISTS` |
+| POST `/goals/{sessionId}/complete` | `{requestId,ref:{id,revision}}` | 200 `{ref}`；原生完成、解除继续执行状态 |
+| POST `/goals/{sessionId}/archive` | 同complete | 200 `{archived:true,ref}`；原生clear（清除当前目标），从当前目标列表移出，保留原对话及原生历史；没有另造归档目标执行机制 |
+
+`TaskOverview`：`{taskId,source,title,conversationTitle,status,createdAt,startedAt,finishedAt,elapsedSeconds,step,canStop}`。`source`沿9.8含`sessionId/chatId/chatKind/projectId/taskId`等原身份。状态为 `running/queued/approval/question/stopping/unconfirmed/completed/failed/stopped`；`startedAt`不可核实时为null，界面称等待时间。当前步骤来自原执行状态，以可读动作呈现；后台作业仍在运行或效果未确认时不进入最近完成。停止仍为3.7原 `/tasks/{taskId}/stop` 请求与原回执，打开仍为原对话 / 时间线；停止期间原任务实际完成就显示已完成，不冒称已停止。完成 / 失败 / 停止的动态继续使用TB-1原事件与activityId（动态标识符），不重复发通知。
+
+`at={date:"YYYY-MM-DD",time:"HH:mm:ss"}`，时区由账户 `/settings/usage.timeZone`确定，拒绝客户端传其他时区。`repeat`为3.18的daily / weekly / monthly日历规则或 `{kind:"interval",seconds:整数且≥300}`。不传`at`时取账户时区下一次日历发生时间；固定间隔由原生every_seconds（间隔秒数）调度。原生校验真实日期、未来时间与夏令时，非法时间拒绝；不先删除旧安排再校验新时间。新字段 `Schedule.createdAt/revision/lastResult/temporary`：`revision`用于编辑比较；`lastResult`为null、`{state:"delivered"}`，或 `{state:"queued|completed|failed|stopped",commandId}`；定时执行受理不等于任务已完成，完成状态取原任务动态事实。提醒及定时触发继续进入9.8动态与原系统通知。
+
+3.18的pause / resume / run仍接受旧`{}`；TB-2支持可选`{requestId}`，新客户端在响应不确定时以原内容原ID重放，原生管理回执返回同一结果，立即运行不会因同ID重放再送一次。旧空体run每次为独立手动运行，仍不得自动重试。DELETE仍用原地址，并由客户端明确确认。新建 / 编辑带`requestId`；同ID同内容重放持久回执，不同内容409 `REQUEST_CONFLICT`；编辑修订不符409 `REVISION_CHANGED`；原生目标CAS（比较后更新）修订不符409 `GOAL_STALE_REVISION`。这些短操作不进入另一个任务队列；原生落盘和管理回执遵循DSH已有崩溃恢复边界，不承诺外部副作用严格恰好一次。
+
+`Goal`含原生 `id/revision/objective/phase/roundsStarted/maxGoalRounds/createdAt/updatedAt`，新增可读 `title/description/progress/conversationTitle/source/scheduleIds/temporary`；目标时间为原生epoch milliseconds（纪元毫秒）。`phase=active|paused|blocked|complete`，`progress`为原生已执行轮次或真实阻塞说明，没有虚构百分比；`scheduleIds`是同一原对话中的安排管理ID，不暗示新建了跨对话调度关系。暂停 / 阻塞 / 继续执行与原生预算、模型工具沿DSH处理，本页只提供用户要求的新建 / 完成 / 归档。
+
+D33：删除对话前取消该对话的原生安排、清除当前目标及管理副本；记忆遗忘按原用户回执和来源文本清理关联安排 / 目标，保留无关安排。派生目标说明和安排prompt（调度内容）从原生日志清理；原用户聊天原话是否删除仍由D33勾选决定。列表返回期间发生遗忘时409 `CURSOR_RESET_REQUIRED`，客户端清旧结果后重取，迟到响应不复活。MEM-2（临时来源隔离）临时 / 混合临时来源仅显示“临时对话中的任务 / 定时任务 / 目标”和泛化进展，目标说明与阻塞正文为空 / 泛化；列表及新建 / 编辑返回均不含临时标题正文。临时安排编辑回原对话，不用脱敏占位替换真实内容。
+
+桌面固定「目标」在「动态」下，三个分区为进行中 / 定时任务 / 长期目标。手机网页先从菜单进入，功能与呈现母版共享，底部选项卡留TB-4收口。Apple（苹果端）需按同一能力版本接入上述模型、原停止回执、时间与状态、修订重放和D33 / 临时来源边界，不能只按程序版本猜测支持。
