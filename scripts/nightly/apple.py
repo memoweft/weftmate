@@ -283,7 +283,7 @@ def main():
                 continue
             if created < int(started) or Path(executable).name not in ['WeftMateMac', 'node', 'xcodebuild', 'swift-frontend', 'swiftc']:
                 continue
-            if not any(str(path) in command for path in [root, tree]):
+            if not any(re.search(re.escape(str(path)) + r'(?=[/\s\x22\x27]|$)', command) for path in [root, tree]):
                 continue
             # Re-read the complete identity immediately before sending SIGTERM.
             current = subprocess.run(['ps', '-p', pid, '-o', 'pid=,lstart=,comm=,args='], capture_output=True, text=True)
