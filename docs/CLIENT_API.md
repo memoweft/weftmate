@@ -1376,3 +1376,15 @@ Windows（视窗系统）与远程网页已有健康、动态、对应回合提�
 建议正文与请求草稿仅在请求和界面内存中，不写command（命令）、历史、MemoWeft evidence（记忆证据）、导出或离线副本。临时对话正常可用；真正接受后仍只是草稿，用户发送后才成为用户消息。用量沿数值账本计入总额并新增 `/usage.categories:[{category,...total}]`；`category="next-suggestions"`单列两类建议，旧账本默认`conversation`。仅成功取得空闲租约、即将发真实请求才开始计数；取消且提供方不返回用量时沿既有unknownRequests（未知用量请求）报告，不编造词元。
 
 Android（安卓）精确业务路由已登记，**需要新壳版本**，由编排统一递增；本包不更改版本号。Apple（苹果端）新增以上POST / DELETE、能力版本、账户开关与用量类别，保持同样优先级、键盘 / 触屏接受、真实取消和暂态边界；Watch（手表）不增加建议输入界面。
+
+## 9.14 对话行状态（D55 / UX-10）
+
+`GET /status.personalCapabilities.sessionStatus` 精确为 `1` 表示支持本节。既有 `/sessions`、`/chats` 列表与单聊天投影新增 `attention:"approval"|"question"|null`、`lastOutcome:"completed"|"failed"|"stopped"|null`，已读沿 `unread:boolean`。旧客户端可忽略；没有新增路由、写入权限或原生桥接能力。
+
+`attention` 来自已经核对并持久登记的原生待审批／待回答，只有 `pending` 待用户处理才出现；`answered` 已登记答复即清除，原生终态、超时、撤权、停止及旧运行时失效沿现有交互校验。两者同时存在先返回 approval。任务终态从已观察的原生 `turn.ended`／`task.ended` 标准化事实取得：completed→completed；failed/error/blocked→failed；aborted/stopped→stopped；未知原因保持无新终态，不凭断线、消息文本、活动通知或接收回执猜测。最近一次终态按原生 seq（事件序号）选择，包括没有助手正文的失败／停止。停止按已完成的一种显示蓝点，仍保留 stopped 原值。
+
+状态优先级：待批准／回答 > running（正在运行）> 失败未读 > 完成／停止未读 > 空。手动标记未读、旧记录只有 unread 时继续显示蓝点。打开对话并沿现有最新位置已读规则标读时，水位同时覆盖助手消息和终态；新到达终态仍未读，读过不会消除仍待处理的橙点。临时对话只提供这些枚举，不复制工具参数、问题正文或结果内容。
+
+`/sessions` 与普通 `/chats` 分页响应新增 `statusSummary:{main,all,projects,groups}`。各值只含 `{attention,running,unread,lastOutcome}`；projects/groups 为 ID（资源标识）到状态的映射，groups 的置顶／未分组键为 pinned/ungrouped。汇总全账户当前未归档、未删除的对话，跨分页；main 汇总主对话及其无项目旁聊，projects 汇总该项目，groups 汇总普通无项目旁聊。按同一优先级只选择一个状态，不返回转圈数或任何标题／正文。
+
+状态沿 FX-16 摘要索引维护：启动在列表请求外恢复尾页与必要的更早终态页，后续已观察事件增量更新；本账户持久快照一次汇总交互，不逐行读取原生审批／问题或历史。删除／D33 遗忘同步失效、重建保留事件，迟到观察忽略被遗忘序号。重启丢弃旧运行时待办，终态重新从原生保留记录恢复。动态页 9.8 的来源、已读、通知与动作语义保持原有契约。

@@ -222,6 +222,7 @@ globalThis.WeftUiCore.factories.questions = (core, effects, environment) => {
                 JSON.stringify(receipt.question.answer) !== JSON.stringify(operation.answer))
                 throw { code: 'REQUEST_FAILED' };
             core.conversationQuestions.entries.set(id, core.mergeQuestion(core.conversationQuestions.entries.get(id), receipt.question));
+            if (core.approvalContextCurrent(context)) void core.refreshSessions?.();
             effects.renderConversationQuestions();
             await core.refreshConversationQuestions(context, true);
         }

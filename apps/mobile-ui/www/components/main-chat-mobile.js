@@ -90,6 +90,7 @@
   });
   // The shared renderer requires its named draft callback on its own presentation object too.
   view.restoreMainChatDraft=mobileEffects.restoreMainChatDraft;
+  view.appendSessionStatus=mobileSessionStatus;
   uiCore.currentAttachmentDrafts=()=>main()&&window.weftNative?currentAttachments().map(row=>({...row,file:{name:row.name}})):oldAttachments();
   const oldMobileAttachments=uiCore.mobile.currentAttachments;
   uiCore.mobile.currentAttachments=()=>state.logicalChats&&!window.weftNative?oldAttachments().map(row=>({...row,name:row.file.name,kind:row.contentType?.startsWith('image/')?'image':'file'})):oldMobileAttachments();

@@ -48,7 +48,11 @@
       "scrollbar-light": "#b9bfca",
       "scrollbar-light-hover": "#929ba9",
       "scrollbar-dark": "#59616e",
-      "scrollbar-dark-hover": "#7b8697"
+      "scrollbar-dark-hover": "#7b8697",
+      "attention-light": "#B85B00",
+      "attention-dark": "#FFA544",
+      "failure-light": "#C93648",
+      "failure-dark": "#FF7182"
     },
     "space": {
       "1": "1px",
@@ -173,7 +177,8 @@
       "0ms": "0ms",
       "exit": "120ms",
       "stagger": "24ms",
-      "staggerLimit": "60ms"
+      "staggerLimit": "60ms",
+      "status": "150ms"
     },
     "easing": {
       "standard": "ease",

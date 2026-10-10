@@ -126,6 +126,14 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         tools.hidden = !main(); searchPanel.hidden = !main() || !searchPanel.open;
         ui.byId('assistant-title').closest(ui.mobile ? '.topbar' : '.assistant-topbar').classList.toggle('is-main-chat',main());
         sidebar.hidden = !core.state.mainChat;
+        sidebar.querySelector('.session-status,.mobile-session-status')?.remove();
+        if (core.state.mainChat) { sidebar.dataset.statusKey = 'main'; ui.appendSessionStatus(sidebar, core.state.sessionStatusSummary?.main ?? core.state.mainChat); }
+        if (ui.mobile) {
+            const tab = ui.byId('mobile-tab-chat');
+            if (tab) { tab.setAttribute('aria-label','聊天');tab.removeAttribute('aria-description');tab.querySelector('.chat-attention-dot')?.remove(); const attention = core.state.sessionStatusSummary?.all?.attention;
+                if (attention) { tab.setAttribute('aria-description',attention === 'approval' ? '等你批准' : '等你回答'); const dot = ui.element('span','chat-attention-dot'); dot.setAttribute('role','img'); dot.setAttribute('aria-label',attention === 'approval' ? '等你批准' : '等你回答'); tab.append(dot); }
+            }
+        }
         sidebar.classList.toggle('is-current', main()); sidebar.setAttribute('aria-current', main() ? 'page' : 'false');
         if (!main()) return;
         tools.querySelectorAll('button')[0].disabled = !core.supportsChat('chatSearch');
@@ -227,12 +235,13 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         const schedule = () => { if (frame === null) frame = requestAnimationFrame(() => { frame = null; renderVisible(); }); };
         box().addEventListener('scroll', () => {
             schedule();
+            if (main() && !core.state.chatWindow.hasNewer && box().scrollHeight - box().scrollTop - box().clientHeight <= 48) void core.markLatestChatRead?.();
             if (!main() || !rows.length || core.state.olderLoading || ui.mobile && !ui.userScrolling?.()) return;
             const scroll = box().scrollTop - listStart(), total = measureOffsets();
             if (scroll < 80 && core.state.chatWindow.hasOlder && !ui.conversationScroll?.pinned) void core.loadOlderHistory();
             else if (total - scroll - box().clientHeight < 80 && core.state.chatWindow.hasNewer) void core.loadOlderLogicalHistory('newer');
         }, { passive: true }); new ResizeObserver(schedule).observe(box());
-        ui.byId('jump-latest').addEventListener('click', () => { if (main() && core.state.chatWindow.hasNewer) void core.selectMainChat(); });
+        ui.byId('jump-latest').addEventListener('click', () => { if (main() && core.state.chatWindow.hasNewer) void core.selectMainChat(); else if (main()) void core.markLatestChatRead?.(); });
         document.addEventListener('keydown', event => { if (event.key === 'Escape' && searchPanel.open) { searchPanel.open = false; searchPanel.hidden = true; void core.searchMainChat(''); } });
     }
     return { mountMainChat, renderMainChat, focusMainEvent, resetMainChatView, renderChatOrigin, fixedPageNavigation: () => fixedNavigation,
