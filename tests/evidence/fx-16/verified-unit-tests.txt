@@ -1,0 +1,100 @@
+✔ deletion removes disposed native subagent logs recursively while retaining independent forks (82.2737ms)
+✔ concurrent cold resumes share a native handle and model reads finish before forgetting disposes it (3.0732ms)
+✔ FX-16 selection locks text and attachments until draft restoration, then first input survives (4.0389ms)
+✔ FX-16 later selection wins and account boundary discards old restoration (1.4209ms)
+✔ FX-16 list summaries do not read history per request and update from observed events (2.2457ms)
+✔ FX-16 Android session paging preserves the complete query through its business adapter (2.0266ms)
+✔ FX-16 native sidebar index builds once and follows live creation, status and deletion (2.9603ms)
+✔ FX-16 mobile components use defined script globals or exported browser globals (5960.8794ms)
+✔ thinking-aware cache shares bounded ranges, survives reopening and hides thinking on ordinary reads (78.0322ms)
+✔ public range cache survives cold reopening, updates only stable live suffix and physically erases after native rewrite (99.4605ms)
+✔ public cache honors the native delayed step-end watermark and publishes its final classification once closed (58.1945ms)
+✔ activity uses stable native identities, redacts temporary task/approval/question content before persistence and prevents erasure replay (7.5585ms)
+✔ approval status updates keep one activity, native response identity and increment attention without preserving forgotten body (0.9806ms)
+✔ native terminal task waits for background effects and shares the IA-3 result activity identity (0.5986ms)
+✖ activity HTTP snapshots, filtered all-read, version conflicts, restart, native actions and deletion changes (5713.2119ms)
+✔ MEM-D formation pending does not masquerade as pause; model unavailability creates one event per real transition (5503.6846ms)
+✔ native timeline reads the live immutable log or DSH inspected snapshot without activating a session (3.3331ms)
+✔ timeline reads official live session events without adding unsupported durable types or reentering publication (43.6884ms)
+✔ human tool descriptions use tool names/parameters and retain a bounded generic fallback (3.0341ms)
+✔ D35 progress uses real kinds/objects and prioritizes failure and stopped states (38.9047ms)
+✔ FX-10 native turn history makes stop usable before the session list catches up and removes it on terminal evidence (6.8229ms)
+✔ FX-10 live conversation reads remain independent of slow host/model refresh and coalesce overlapping ticks (25.3649ms)
+✔ FX-10 a newer idle snapshot overrides an old unended start without inventing an ending (5.6387ms)
+✔ FX-10 an accepted new session delivers its first message while an older session list is still loading (9.6833ms)
+✔ FX-10 receipt lookup replaces a pending command snapshot before optimistic delivery reads it (3.3385ms)
+✔ D35 chronology splits only at visible conversation boundaries and approvals stay on their own step (3.7215ms)
+✔ FX-11 progress counts actual activities and keeps internal names out of running and historical summaries (3.1935ms)
+✔ running composer reports observed phases and hides them on an idle session without changing stop availability (3.1956ms)
+✔ core registers distinct actions, constructs independent stores and has no DOM dependency (4.7105ms)
+✔ history accepts gaps, sorts by event sequence, rejects duplicates/foreign sessions and keeps the latest terminal (2.2453ms)
+✔ timeline merges a completed step/artifact into its existing step and never mutates event input (1.9659ms)
+✔ history pages use host watermarks/cursors and keep stale reads out after a session switch (10.0739ms)
+✔ shared send/stop actions choose steer or queue and block unresolved submissions (4.9626ms)
+✔ question drafts keep native option order, exact labels and one single-choice answer (2.3804ms)
+✔ approval identity and terminal merges prevent a stale pending row from reopening a decision (1.9132ms)
+✔ resource pagination deduplicates calls, prefers captured snapshots and replaces old output versions (2.5548ms)
+✔ memory reads discard a response for another account and reset authenticated state (2.7823ms)
+✔ appearance persistence and session sorting work without a window or DOM (2.2234ms)
+✔ system settings are read once as data and sent through the existing protected routes (2.7167ms)
+✔ source references parse nested native arguments, deduplicate values and tolerate unavailable details (2.0103ms)
+✔ login input validation and protected transport do not need form elements (6.3025ms)
+✔ model form validation and durable request recovery stay in core and never persist a credential (3.0902ms)
+✔ appearance keeps unknown saved fields while the control defaults stay stable (2.364ms)
+✔ UI-3 intent overrides do not change the composer selection and empty running drafts cannot send (2.0564ms)
+✔ UI-3 queue projection follows sequence, batches, receipt reconciliation and terminal reasons (2.0417ms)
+✔ UI-3 cancel/edit retains request identity, handles 409 and never stops a running task (2.0192ms)
+✔ UI-3 stale cancellation cannot populate another account or conversation (1.7735ms)
+✔ UI-3 stop targets the current root and leaves the later queue untouched (2.428ms)
+✔ UI-3 approvals and sources share summaries for shell/files/web/subtask and unknown tools (3.0876ms)
+✔ UI-3 outputs group by path, keep creation order and expose older versions (3.5854ms)
+✔ UI-3 native approval reasons keep the risk prose and fold embedded raw parameters (1.9469ms)
+✔ UI-3 attachment shortcuts respect unresolved submissions and restore the selected intent (7.686ms)
+✔ D36 switching conversations preserves the account running-input preference (2.2899ms)
+✔ D36 account preferences survive recreation, isolate accounts and preserve temporary send overrides (1.9382ms)
+✔ D36 stage timer uses the latest persisted turn and omits unknown or future timestamps (3.1955ms)
+✔ D36 native account storage survives an origin change and rejects a late previous account read (3.1906ms)
+✔ session lifecycle actions use protected writes and never enable an archived/read-only session by inference (1.8017ms)
+✔ UI-P4 native occupancy uses the projected current surface, never cumulative billing tokens (2.5484ms)
+✔ UI-P4 shows an optimistic message before the host answers and blocks a duplicate click (2.9634ms)
+✔ UI-P4 unconfirmed delivery retries the original request ID after checking the receipt (2.7283ms)
+✔ UI-P4 a later confirmed task supersedes the original pending POST snapshot (3.4571ms)
+✔ UI-P4 first message appears before session creation and survives an account boundary safely (2.0617ms)
+✔ UI-P4 switching accounts during receipt lookup never retries the old account text (3.0196ms)
+✔ UI-P4 a new draft reads the account approval mode and applies its chosen mode before sending (24.9734ms)
+✔ UI-P4 starting another new conversation does not display an earlier uncreated failed message (1.7202ms)
+✔ FIX-8 new desktop drafts clear phone selection, pagination and late handoff callbacks (4.4296ms)
+✔ FIX-8 stop notices count only the current conversation queued messages and confirm fallback receipts (9.1638ms)
+✔ FIX-8 refreshed session titles repaint the selected header after a local account is bound (10.3061ms)
+✔ FIX-8 an accepted creation observed before the pending POST snapshot still sends the first draft once (2.299ms)
+✔ a delayed lifecycle response cannot replace another account session list (2.3155ms)
+✔ reminder reads work in the mobile settings category and discard a late account response (3.4941ms)
+✔ MS-1 saved default selects the next new conversation without rebinding the existing session (2ms)
+ℹ tests 72
+ℹ suites 0
+ℹ pass 71
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11738.6106
+
+✖ failing tests:
+
+test at tests\personal-activity.test.ts:46:1
+✖ activity HTTP snapshots, filtered all-read, version conflicts, restart, native actions and deletion changes (5713.2119ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(approval)
+  
+      at TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/personal-activity.test.ts:63:123)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

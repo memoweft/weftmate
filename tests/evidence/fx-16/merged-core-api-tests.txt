@@ -1,0 +1,24 @@
+✔ two devices share an owner, concurrent duplicate request runs once, conflict and authentication stay bounded (1907.3352ms)
+✔ session ownership, target, strict fields and event cursor (1968.0583ms)
+✔ restart marks dispatching uncertain without replay; pending resumes; corrupt store refuses startup (1965.4465ms)
+✔ occupied port fails and leaves existing listener usable (4313.7676ms)
+✔ store write failure refuses acceptance before backend side effects (2097.2761ms)
+✔ revocation while preflight waits rejects an unissued command (2157.9476ms)
+✔ lost message receipt remains uncertain and is never replayed on restart (2170.8444ms)
+✔ close prevents a blocked dispatch from writing or invoking the old backend after same-root restart (4977.8404ms)
+✔ close during a blocked acceptance preflight cannot persist the request (5069.99ms)
+✔ valid JSON with tampered payload, missing source device or duplicate request ID fails closed (1950.4804ms)
+✔ event cursor advances across fully filtered and trailing hidden history (1964.0482ms)
+✔ history byte paging preserves the public response boundary without failing a large page (1868.229ms)
+✔ backend errors and malformed event data never expose arbitrary codes or content (1946.6969ms)
+✔ full command ledger or unreconciled text budget rejects new work before persistence or dispatch (2678.4899ms)
+✔ UPD-2 status exposes authenticated read-only layer versions without source paths or install actions (1910.8958ms)
+✔ UPD-2 standalone host reports unavailable UI and mobile versions without inventing them (1666.7448ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 40888.2142
