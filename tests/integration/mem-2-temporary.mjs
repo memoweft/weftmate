@@ -49,14 +49,14 @@ try{
  await api('/settings/models',{backgroundModelProfileId:modelId},'PATCH');
  await page.addInitScript(() => { let value; Object.defineProperty(globalThis, 'WeftUiCore', { configurable:true, get:()=>value, set:v=>{value=v;const create=v.create;v.create=(...args)=>{const core=create(...args);globalThis.mem2UiCore=core;return core;};} }); });
  await page.reload();
- await page.waitForFunction(()=>globalThis.mem2UiCore?.state.capabilities?.chat?.available === true);await page.getByRole('button',{name:'临时对话',exact:true}).click();await page.getByText('临时对话 · 不会形成记忆，30 天后自动删除',{exact:true}).waitFor();
+ await page.waitForFunction(()=>globalThis.mem2UiCore?.state.capabilities?.chat?.available === true);await page.getByRole('button',{name:'选择新对话类型',exact:true}).click();await page.getByRole('menuitem',{name:'临时对话',exact:true}).click();await page.getByText('临时对话 · 不会形成记忆，30 天后自动删除',{exact:true}).waitFor();
  await page.screenshot({path:join(evidence,'desktop-temporary-light.png')});
  await page.evaluate(()=>document.documentElement.dataset.theme='dark');await page.screenshot({path:join(evidence,'desktop-temporary-dark.png')});
  const normal=await create(false);await turn(normal,'请记住：我给盆栽浇水的量是每次 137 毫升。只需简短确认，不要调用工具。');
  await until(async()=>((await api('/memory/items?kind=cognition')).body.items??[]).some(i=>i.currentState==='current'&&i.text.includes('137')),'ordinary formation',330000);
  const secret='紫金色珊瑚杯';
  await page.evaluate(async()=>{await globalThis.mem2UiCore.refreshSessions();await globalThis.mem2UiCore.selectMainChat();});
- await page.getByRole('button',{name:'临时对话',exact:true}).click();
+ await page.getByRole('button',{name:'选择新对话类型',exact:true}).click();await page.getByRole('menuitem',{name:'临时对话',exact:true}).click();
  const privateText=`这次只临时说：我喝茶只用${secret}。请告诉我之前说过每次给盆栽浇多少水，不要重复杯子信息，也不要调用工具。`;
  await page.locator('#message-text').fill(privateText);await page.getByRole('button',{name:'发送',exact:true}).click();
  const temporary=await until(async()=>((await api('/sessions')).body.sessions??[]).find(s=>s.memoryMode==='off')?.sessionId,'UI temporary creation');

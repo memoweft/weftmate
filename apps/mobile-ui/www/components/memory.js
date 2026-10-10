@@ -72,24 +72,35 @@ function memoryIngestionPanel(target){
   const preview=action('整理过去的对话',async()=>{
     preview.disabled=true;message.textContent='正在统计可整理的过去对话…';
     try{const value=await uiCore.mobile.business({path:'/personal/v1/memory/backfill',method:'GET'});if(!memoryCurrent(token))return;
-      prepared=value;message.textContent=!value.turnCount?'过去的对话已全部整理，没有需要补的回合。':`可整理 ${value.sessionCount} 个会话、${value.turnCount} 个回合。预计输入约 ${value.estimatedUsage.inputTokens.toLocaleString()}、输出约 ${value.estimatedUsage.outputTokens.toLocaleString()} 个词元；实际用量取决于模型与重试。跳过临时对话、已关闭记忆的对话及已遗忘内容。`;confirm.hidden=!value.turnCount;
+      prepared=value;message.textContent=!value.turnCount?'过去的对话已全部整理，没有需要补的回合。':`可整理 ${value.sessionCount} 个会话、${value.turnCount} 个回合。预计输入约 ${value.estimatedUsage.inputTokens.toLocaleString()}、输出约 ${value.estimatedUsage.outputTokens.toLocaleString()} 个词元；实际用量取决于模型与重试。跳过临时对话、已关闭记忆的对话及已遗忘内容。`;confirm.hidden=!value.turnCount;card.hidden=false;preview.hidden=true;
     }catch{if(memoryCurrent(token))message.textContent='统计失败，请检查连接后重试。'}finally{preview.disabled=false;}
   },false);
   async function change(body){busy=true;for(const b of [preview,confirm,pause,cancel])b.disabled=true;
-    try{await uiCore.mobile.business({path:'/personal/v1/memory/backfill',method:'POST',body});if(!memoryCurrent(token))return;confirm.hidden=true;message.textContent='';}
+    try{await uiCore.mobile.business({path:'/personal/v1/memory/backfill',method:'POST',body});if(!memoryCurrent(token))return;confirm.hidden=true;card.hidden=true;prepared=null;preview.hidden=false;message.textContent='';}
     catch{if(memoryCurrent(token))message.textContent='操作未确认，请刷新核对进度后重试。';}
     finally{busy=false;for(const b of [preview,confirm,pause,cancel])b.disabled=false;await refresh();}}
   const confirm=action('确认开始整理',()=>{if(prepared)void change({action:'start',previewId:prepared.previewId,confirm:true})},true);confirm.hidden=true;
   const pause=action('暂停整理',()=>{if(job)void change({action:job.state==='paused'?'resume':'pause',jobId:job.id})},false);
   const cancel=action('取消整理',()=>{if(job)void change({action:'cancel',jobId:job.id})},false);
-  function paint(value){job=value?.backfill;health.textContent=uiCore.memoryHealthText(value);
-    const active=job&&['running','paused'].includes(job.state);preview.disabled=busy||!!active;pause.hidden=cancel.hidden=!active;
+  const card=el('section','memory-backfill-confirm');card.hidden=true;card.setAttribute('aria-label','确认整理过去的对话');
+  const cancelPreview=action('取消',()=>{prepared=null;card.hidden=true;preview.hidden=false;preview.focus()},false);card.append(el('h3','','整理过去的对话'),message,confirm,cancelPreview);
+  function paint(value){job=value?.backfill;const text=uiCore.memoryHealthText(value),healthy=text==='记忆正常',count=value?.formedMemoryCount??state.memory.totalCount;
+    health.className='memory-health '+(healthy?'is-healthy':'is-warning');health.textContent=healthy?`记忆正常 · ${Number.isSafeInteger(count)?`已形成 ${count} 条`:'正在读取数量'} · 队列 0`:`${text} · 积压 ${(value?.pendingBoundaryCount??0)+(value?.pendingFormationCount??0)} 条`;
+    if(!healthy){const detail=el('details'),summary=el('summary','','查看');detail.append(summary,el('p','','检查设置里的模型，服务恢复后会继续补交；已提交的回合继续整理。'));health.append(detail)}
+    const active=job&&['running','paused'].includes(job.state);preview.disabled=busy||!!active;preview.hidden=!!active||!card.hidden;pause.hidden=cancel.hidden=!active;
     pause.textContent=job?.state==='paused'?'继续整理':'暂停整理';
     progress.textContent=job?`${({running:'正在补整理',paused:'已暂停',cancelled:'已取消',completed:'补交完成'})[job.state]}：已提交 ${job.submittedTurns-job.skippedTurns} / ${job.totalTurns} 回合。${active?'暂停或取消后不再提交后续回合；已提交的回合继续整理。':''}`:'';
   }
   async function refresh(){if(!memoryCurrent(token)||!section.isConnected||busy)return;
     try{const value=await uiCore.mobile.business({path:'/personal/v1/memory/status',method:'GET'});if(memoryCurrent(token)&&section.isConnected){state.memory.healthStatus=value;paint(value)}}catch{if(memoryCurrent(token))health.textContent='记忆状态暂时无法读取，请刷新重试。';}}
-  actions.append(preview,confirm,pause,cancel);section.append(health,actions,message,progress);target.append(section);paint(state.memory.healthStatus);
+  const issues=el('div');
+  for(const issue of state.memory.healthStatus?.formationIssues??[]){
+    const detail=el('details');detail.append(el('summary','',issue.intent==='correction'?'有 1 条纠正没有生效':'有 1 条记忆没有形成'),el('p','',issue.text));
+    const requestId=newMemoryRequestId();
+    const retry=action('重试形成',async()=>{retry.disabled=true;try{await uiCore.mobile.retryMemoryFormation(issue.jobId,requestId)}catch{if(memoryCurrent(token)){message.textContent='重试未确认，请再次重试。';retry.disabled=false;}}},false);
+    detail.append(retry);issues.append(detail);
+  }
+  actions.append(preview,pause,cancel);section.append(health,issues,actions,card,progress);target.append(section);paint(state.memory.healthStatus);
   const poll=async()=>{if(!section.isConnected||!memoryCurrent(token))return;await refresh();setTimeout(poll,3000);};setTimeout(poll,3000);
 }
 
@@ -100,15 +111,17 @@ function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||s
   if(!state.loggedIn||!state.owner){target.append(action('连接个人账户',()=>page('connect')));return}
   if(state.transitionPending){target.append(action('返回账户连接',()=>page('connect'),false));return}
   if(!memoryListAllowed(memory)){target.append(action(memory.error?'重新读取':'刷新记忆状态',()=>startMemorySnapshot(target,memory.kind,memory.query),false));return}
-  const select=el('select');select.setAttribute('aria-label','记忆类别');
+  const select=el('select');select.setAttribute('aria-label','记忆类别');select.hidden=true;
   for(const [kind,label] of Object.entries(MEMORY_KINDS)){const option=el('option','',label);option.value=kind;option.selected=memory.kind===kind;select.append(option)}
   select.value=memory.kind;select.disabled=memory.loading;
   select.addEventListener('change',()=>{const kind=select.value;if(!Object.hasOwn(MEMORY_KINDS,kind))return;
     startMemorySnapshot(target,kind,memory.queryDraft.trim())});
+  const types=el('div','memory-type-filters');types.setAttribute('role','group');types.setAttribute('aria-label','记忆类型');
+  for(const [kind,label] of Object.entries(MEMORY_KINDS)){const button=action(label,()=>startMemorySnapshot(target,kind,memory.queryDraft.trim()),false);button.type='button';button.setAttribute('aria-pressed',String(memory.kind===kind));button.disabled=memory.loading;types.append(button)}target.append(types);
   const search=field('在当前类别的全部账户记忆中搜索','search',memory.queryDraft);search.input.maxLength=120;
   search.input.setAttribute('aria-label','搜索当前类别的全部账户记忆');search.input.disabled=memory.loading;
   search.input.addEventListener('input',()=>{memory.queryDraft=search.input.value});
-  const category=el('label','field');category.append(el('span','','记忆类别'),select);
+  const category=el('label','field');category.hidden=true;category.append(el('span','','记忆类别'),select);
   memoryIngestionPanel(target);
   const form=el('form');form.append(search.box,category);
   form.addEventListener('submit',event=>{event.preventDefault();memory.queryDraft=search.input.value;
@@ -129,8 +142,8 @@ function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||s
       target.append(el('p','muted',memory.query?'没有匹配的记忆。试试缩短关键词或更换类别。':
         memory.pendingBoundaryCount?'当前还没有已形成的记忆。':'当前账户还没有可显示的记忆。'));
     }}
-  else target.append(group('记忆列表',memory.items.map(item=>row(`${item.truncated===true?'记忆片段 · ':''}${item.text}`,`${memoryLifecycle(item).join(' · ')} · 来源 ${item.sourceCount}`,
-    ()=>openMemoryDetail(target,item)))));
+  else { const entries=memory.items.map(item=>{const wrapper=el('div','memory-item'),entry=row(`${item.truncated===true?'记忆片段 · ':''}${item.text}`,`${MEMORY_KINDS[item.kind]} · ${memoryLifecycle(item).join(' · ')}${item.updatedAt?` · 更新于 ${timeLabel(item.updatedAt)}`:''}`,()=>openMemoryDetail(target,item));wrapper.append(entry);
+    for(const id of item.sourceConversationIds??[]){const source=action('来源对话',()=>selectSharedSession(id),false);source.classList.add('memory-source-link');wrapper.append(source)}return wrapper;});target.append(group('记忆列表',entries)); }
   if(memory.hasMore){const more=action(memory.loading?'正在读取…':'加载更多',()=>loadMemoryMore(target),false);more.disabled=memory.loading;target.append(more)}
 }
 

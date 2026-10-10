@@ -17,9 +17,13 @@ export function observeActivityEvents(account,sessionId,events,nextSeq,observeRe
       const commands=Object.values(account.commands).filter(c=>c.kind==='session.message'&&c.sessionId===sessionId&&c.state==='accepted_by_dsh');
       scan.taskId=commands.find(c=>c.receiptId===(data.receiptId??data.rpcId)||c.dshTurn===data.turn)?.commandId;
     }
+    if(event.type==='user.message' && typeof data.receiptId==='string') {
+      const command=Object.values(account.commands).find(c=>c.kind==='session.message'&&c.sessionId===sessionId&&c.receiptId===data.receiptId);
+      if(command)scan.taskId=command.rootTaskId??command.commandId;
+    }
     if(event.type.startsWith('step.')||event.type==='artifact.created')scan.executed=true;
     if(event.type==='assistant.message'&&!hasPrivateContent(session))scan.summary=String(data.text??'').slice(0,160);
-    if(event.type==='turn.ended' && (scan.executed||['failed','aborted'].includes(data.reason))){
+    if(event.type==='turn.ended' && (scan.executed||account.commands[scan.taskId]?.scheduleSourceId||['failed','aborted'].includes(data.reason))){
       const result={completed:'completed',failed:'failed',aborted:'stopped'}[data.reason];
       if(result){const terminal={at,state:result,turn:scan.turn,seq:event.seq,...(scan.taskId?{taskId:scan.taskId}:{}),...(scan.summary?{summary:scan.summary}:{})};
         scan.terminals??={};scan.terminals[scan.taskId??event.seq]=terminal;
@@ -28,7 +32,7 @@ export function observeActivityEvents(account,sessionId,events,nextSeq,observeRe
       scan.executed=false;delete scan.summary;
     }
     if(observeReminders&&(event.type==='assistant.message'&&data.reminder || event.type==='user.message'&&data.reminder)){
-      putActivity(account,`reminder:${sessionId}:${data.messageId??data.id??event.seq}`,{at,type:'reminder.triggered',title:'提醒',summary:data.text,
+      putActivity(account,`reminder:${sessionId}:${data.messageId??data.id??event.seq}`,{at,type:'reminder.triggered',title:'提醒',summary:data.text,initiatedBy:data.initiatedBy==='assistant'?'assistant':'user',
         source:activitySource(account,sessionId,{seq:event.seq,...(data.messageId??data.id?{messageId:data.messageId??data.id}:{})}),actions:[open()],level:'important'});
     }
   }
@@ -65,7 +69,7 @@ export function createActivity(context) {
           }));
           if(context.backend.schedules){const notices=await context.backend.schedules({ownerId,sessionId,action:'notifications'});
             if (notices.items?.length) await context.serial(()=>context.mutate(ownerId,next=>{if(!next.sessions[sessionId]||next.sessions[sessionId].deleting||next.memoryCleanupPending||(next.activity?.generation??0)!==generation)return;
-              for(const notice of notices.items??[]){if(Object.values(next.activity?.items??{}).some(row=>row.type==='reminder.triggered'&&row.source.sessionId===sessionId&&row.source.messageId===notice.messageId))continue;putActivity(next,`reminder:${sessionId}:${notice.messageId??notice.id}`,{at:notice.createdAt,type:'reminder.triggered',title:notice.kind==='task'?'定时任务触发':'提醒',summary:notice.text,
+              for(const notice of notices.items??[]){if(Object.values(next.activity?.items??{}).some(row=>row.type==='reminder.triggered'&&row.source.sessionId===sessionId&&row.source.messageId===notice.messageId))continue;putActivity(next,`reminder:${sessionId}:${notice.messageId??notice.id}`,{at:notice.createdAt,type:'reminder.triggered',title:notice.kind==='task'?'定时任务触发':'提醒',summary:notice.text,initiatedBy:notice.initiatedBy==='assistant'?'assistant':'user',
                 source:activitySource(next,sessionId,{messageId:notice.messageId,scheduleId:notice.id,...(Number.isSafeInteger(notice.seq)?{seq:notice.seq}:{})}),actions:[{kind:'open_chat',label:'打开对话',target:activitySource(next,sessionId,{messageId:notice.messageId,...(Number.isSafeInteger(notice.seq)?{seq:notice.seq}:{})})}],level:'important'});}
             }));}
           await context.refreshToolApprovals(ownerId,sessionId);await context.syncUserQuestions(ownerId,sessionId);
@@ -74,6 +78,16 @@ export function createActivity(context) {
       if(context.memoryManager){const memory=await context.memoryManager.status(ownerId);
         await context.serial(()=>context.mutate(ownerId,next=>{const state=activityState(next);
           const job=next.memoryBackfillJob, backfillPaused=job?.state==='paused';
+          for(const issue of memory.formationIssues??[]) putActivity(next,`memory-formation:${issue.jobId}`,{
+            at:issue.createdAt,type:'memory.report',title:issue.intent==='correction'?'有 1 条纠正没有生效':'有 1 条记忆没有形成',
+            summary:'原话已保存，可在记忆中查看原话并重试形成。',source:activitySource(next,issue.sessionId,{memoryJobId:issue.jobId}),level:'important',state:'pending',
+            actions:[{kind:'view_memory',label:'查看原话与重试',target:{}}]});
+          for(const row of Object.values(state.items)) if(row.type==='memory.report'&&row.state==='pending'&&row.source?.memoryJobId&&
+            !(memory.formationIssues??[]).some(issue=>issue.jobId===row.source.memoryJobId)) {
+              putActivity(next,`memory-formation:${row.source.memoryJobId}`,{...row,title:'记忆纠正状态已更新',
+                summary:'这条记录已重新处理或撤回，请查看记忆中的最新状态。',state:'completed',level:'silent',
+                actions:[{kind:'view_memory',label:'查看记忆',target:{}}]});
+          }
           const paused=['paused','unavailable','failed'].includes(memory.state)||memory.reasonCode==='MEMORY_MODEL_UNAVAILABLE';
           const healthKey=backfillPaused?`backfill:${job.id}:paused`:paused?`paused:${memory.reasonCode??memory.state}`:`available:${memory.state}`;
           if(state.memoryState!==healthKey&&(paused||backfillPaused)){state.memoryTransition=(state.memoryTransition??0)+1;putActivity(next,`memory-paused:${state.memoryTransition}`,{
@@ -91,7 +105,7 @@ export function createActivity(context) {
     })().finally(()=>flights.delete(ownerId));flights.set(ownerId,work);return work;
   }
   async function record(ownerId,input){
-    if(!ACTIVITY_TYPES.includes(input.type)||!input.key||!['memory.','system.'].some(prefix=>input.type.startsWith(prefix)))throw failure('INVALID_REQUEST');
+    if(!ACTIVITY_TYPES.includes(input.type)||!input.key|| ['system.dnd.summary','system.notification.test'].includes(input.type)|| (input.initiatedBy!==undefined&&!['user','assistant'].includes(input.initiatedBy)) ||!['memory.','system.','companion.'].some(prefix=>input.type.startsWith(prefix)))throw failure('INVALID_REQUEST');
     return context.serial(()=>context.mutate(ownerId,next=>putActivity(next,`${input.type}:${input.key}`,{...input,at:input.at??new Date(context.timestamp()).toISOString()})));
   }
   function counts(ownerId){return activityCounts(context.accountState(ownerId));}

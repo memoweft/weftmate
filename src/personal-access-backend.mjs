@@ -243,12 +243,12 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         await rm(cwd, { recursive: true, force: true }); throw error
       }
     },
-    async cleanupMemoryCopies({ sessionId, sourceTexts = [], deleteConversationSnippets = false }) {
+    async cleanupMemoryCopies({ sessionId, sourceTexts = [], deleteConversationSnippets = false, scheduleIds = [], goalIds = [] }) {
       requireRuntime()
       const listed = await listSessions()
       if (!listed?.items?.some(item => item.sessionId === sessionId)) return { cleaned: true }
       return gateway(`/sessions/${encodeURIComponent(sessionId)}/memory-cleanup`, { method: 'POST',
-        body: JSON.stringify({ sourceTexts, deleteConversationSnippets }) })
+        body: JSON.stringify({ sourceTexts, deleteConversationSnippets, scheduleIds, goalIds }) })
     },
     async deleteSession({ sessionId, ownerId }) {
       requireRuntime()
@@ -267,14 +267,22 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         await rm(path.join(sessionWorkspaceRoot, sessionId), { recursive: true, force: true })
       return { deleted: true }
     },
-    async schedules({ sessionId, ownerId, action, id }) {
+    async schedules({ sessionId, ownerId, ...input }) {
       requireRuntime()
       await requireSession(sessionId, ownerId)
       const response = await fetch(new URL(`/weftmate/schedules/${encodeURIComponent(sessionId)}`, currentOrigin()), {
-        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action, id }) })
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(input) })
       const value = await response.json()
       if (!response.ok) throw Object.assign(new Error(value.error ?? 'BACKEND_UNAVAILABLE'), { code: value.error, status: response.status })
       return value
+    },
+    async goals({ sessionId, ownerId, ...input }) {
+      requireRuntime(); await requireSession(sessionId, ownerId);
+      const response = await fetch(new URL(`/weftmate/goals/${encodeURIComponent(sessionId)}`, currentOrigin()), {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(input) });
+      const value = await response.json();
+      if (!response.ok) throw Object.assign(new Error(value.error ?? 'BACKEND_UNAVAILABLE'), { code: value.error, status: response.status });
+      return value;
     },
     async restoreSchedules(sessionIds) {
       if (!sessionIds.length) return

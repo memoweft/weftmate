@@ -286,6 +286,8 @@ export function createSessionOperations(context) {
               throw failure('MEMORY_DELETE_CONFLICT', 409);
           }
         }
+        if (context.backend.schedules) await context.backend.schedules({ sessionId, ownerId, action: 'erase' });
+        if (context.backend.goals) await context.backend.goals({ sessionId, ownerId, action: 'erase' });
         await context.callBackend(() => context.backend.deleteSession({ sessionId, ownerId }));
         context.sessionOperations.invalidate(ownerId,sessionId);
         await context.offline?.invalidate(ownerId);

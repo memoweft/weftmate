@@ -158,7 +158,7 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
         if (after) deferMore = false
       })
       return options.items?.(owner, kind, query, after) ?? { ownerId: rawOwners[owner], worldRevision: 10, searchScope: 'account_snapshot',
-        items: itemsByOwner[owner].filter((item) => item.kind === kind && (!query || item.text.includes(query))), nextCursor: null, hasMore: false }
+        items: itemsByOwner[owner].filter((item) => (kind === 'all' || item.kind === kind) && (!query || item.text.includes(query))), nextCursor: null, hasMore: false }
     }
     const parts = path.split('/').map(decodeURIComponent)
     const kind = parts[5]
@@ -376,13 +376,20 @@ test('first list page establishes its revision, while a changed later page clear
   const app = harness({ items: (owner, kind, query, after) => {
     itemCalls++
     if (!after) return { ownerId: appOwner(owner), worldRevision: 11, searchScope: 'account_snapshot',
-      items: [{ id: 'rev-item', kind, text: `query:${query}`, currentState: 'current', lifecycle: {}, sourceCount: 0 }],
+      items: [{ id: 'rev-item', kind: kind === 'all' ? 'cognition' : kind, text: `query:${query}`, currentState: 'current', lifecycle: {}, sourceCount: 0 }],
       nextCursor: 'opaque:cursor/+?', hasMore: true }
     return Promise.reject(new Error('MEMORY_REVISION_CHANGED'))
-  } })
+  }, details: owner => ({ ownerId: appOwner(owner), worldRevision: 11,
+    item: { id: 'rev-item', kind: 'cognition', text: 'query:', currentState: 'current', lifecycle: {}, sourceCount: 0 },
+    availableActions: [] }), sources: owner => ({ ownerId: appOwner(owner), worldRevision: 11, sources: [] }) })
   await openMemory(app)
   await waitUntil(() => app.get('page-content').textContent.includes('query:'), 'first page was not displayed')
-  assert.match(app.get('page-content').textContent, /来源 0/)
+  assert.ok(app.businessPaths.some(request => /items\?kind=all(?:&|$)/.test(request.path)), 'default list reads all memory types')
+  const all = findButton(app.get('page-content'), '全部')!
+  assert.equal(all.getAttribute('aria-pressed'), 'true')
+  findButton(app.get('page-content'), 'query:')!.fire('click')
+  await waitUntil(() => app.get('page-content').textContent.includes('0 条来源'), 'source count remains visible in memory detail')
+  findButton(app.get('page-content'), '返回记忆列表')!.fire('click')
   const queryInput = findAll(app.get('page-content'), (node) => node.tagName === 'INPUT' && node.type === 'search')[0]
   queryInput.value = '喜欢🌿+台北'; queryInput.fire('input')
   const searchForm = findAll(app.get('page-content'), (node) => node.tagName === 'FORM')[0]
@@ -421,7 +428,7 @@ test('unreadable source content is withheld and labels stay human-readable', asy
 
 test('overlong encoded paths and unsupported point-segment IDs fail visibly without dropping cursor or facts', async () => {
   const app = harness({ items: (owner, kind) => ({ ownerId: appOwner(owner), worldRevision: 10, searchScope: 'account_snapshot',
-    items: [{ id: '..', kind, text: 'memory with unsupported path id', currentState: 'current', lifecycle: {}, sourceCount: 1 }],
+    items: [{ id: '..', kind: kind === 'all' ? 'cognition' : kind, text: 'memory with unsupported path id', currentState: 'current', lifecycle: {}, sourceCount: 1 }],
     nextCursor: null, hasMore: false }) })
   await openMemory(app)
   await waitUntil(() => app.get('page-content').textContent.includes('memory with unsupported path id'), 'list fact was not shown')
@@ -433,7 +440,7 @@ test('overlong encoded paths and unsupported point-segment IDs fail visibly with
 test('memory IDs keep a legal colon literal so the host pathname matches the account route', async () => {
   const id = 'memory:stage15:colon'
   const app = harness({ items: (owner, kind) => ({ ownerId: appOwner(owner), worldRevision: 10, searchScope: 'account_snapshot',
-    items: [{ id, kind, text: 'colon memory', currentState: 'current', lifecycle: {}, sourceCount: 1 }], nextCursor: null, hasMore: false }) })
+    items: [{ id, kind: kind === 'all' ? 'cognition' : kind, text: 'colon memory', currentState: 'current', lifecycle: {}, sourceCount: 1 }], nextCursor: null, hasMore: false }) })
   await openMemory(app)
   await waitUntil(() => !!findButton(app.get('page-content'), 'colon memory'), 'colon item was not shown')
   findButton(app.get('page-content'), 'colon memory')!.fire('click')
