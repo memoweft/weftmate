@@ -82,7 +82,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         core.state.newConversationTemporary = temporary;
         core.state.newConversationId = environment.crypto.randomUUID();
         core.state.newConversationApprovalMode = null;
-        core.state.newConversationThinking = false;
+        core.state.newConversationThinking = core.state.personalization?.defaultDeepThinking === true;
         core.state.selectedSessionId = null;
         core.state.historyGeneration++;
         core.state.historyEvents.clear(); core.state.seenSeq.clear(); core.state.afterSeq = -1;
@@ -365,11 +365,15 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         messageModePreference();
         core.state.messageMode = mode === 'steer' ? 'steer' : 'queue';
         if (core.state.messageModeOwner) try { environment.storage.setItem(`weftmate:message-mode:${core.state.messageModeOwner}`, core.state.messageMode); } catch { /* unavailable device storage */ }
+        if (core.state.personalizationOwner === core.state.messageModeOwner && core.state.personalization) void core.savePersonalization({messageMode: core.state.messageMode}).catch(() => {});
         if (core.state.messageModeOwner && environment.messageModeStorage) void environment.messageModeStorage(`weftmate:message-mode:${core.state.messageModeOwner}`, core.state.messageMode).catch(() => {});
         effects.updateAvailability();
     }
     async function loadMessageModePreference() {
         const value = messageModePreference(), owner = core.state.messageModeOwner, identity = core.state.identityGeneration;
+        await core.loadPersonalization().catch(() => {});
+        if (identity !== core.state.identityGeneration || owner !== core.state.messageModeOwner) return messageModePreference();
+        if (core.state.personalizationOwner === owner && core.state.personalization) return core.state.messageMode;
         if (!owner || !environment.messageModeStorage) return value;
         try {
             const saved = await environment.messageModeStorage(`weftmate:message-mode:${owner}`);

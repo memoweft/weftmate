@@ -1,0 +1,42 @@
+{
+  "model": "mimo-v2.6-flash",
+  "runs": [
+    {
+      "requests": 1,
+      "unknownRequests": 0,
+      "unpricedRequests": 0,
+      "inputTokens": 2099,
+      "cachedInputTokens": 1536,
+      "outputTokens": 3,
+      "cost": 0.00059972
+    },
+    {
+      "requests": 1,
+      "unknownRequests": 0,
+      "unpricedRequests": 0,
+      "inputTokens": 2108,
+      "cachedInputTokens": 1664,
+      "outputTokens": 3,
+      "cost": 0.00048328
+    },
+    {
+      "requests": 1,
+      "unknownRequests": 0,
+      "unpricedRequests": 0,
+      "inputTokens": 2108,
+      "cachedInputTokens": 1664,
+      "outputTokens": 3,
+      "cost": 0.00048328
+    }
+  ],
+  "total": {
+    "requests": 3,
+    "unknownRequests": 0,
+    "unpricedRequests": 0,
+    "inputTokens": 6315,
+    "cachedInputTokens": 4864,
+    "outputTokens": 9,
+    "cost": 0.00156628
+  },
+  "directoryChecksBillableRequests": 0
+}

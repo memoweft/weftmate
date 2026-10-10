@@ -270,3 +270,14 @@ test('packaged legal text matches docs and encrypted desktop key never exposes p
     assert.ok(store.sign('synthetic', 'synthetic.proof'))
   } finally { rmSync(root, { recursive: true, force: true }) }
 })
+
+
+test('mobile cloud bootstrap with no-op effects does not read desktop installation state', async () => {
+  const f = await fixture(); let view = '', reads = 0;
+  const core: any = { state: {}, load() {}, clearSession() {}, sessionExpired() {},
+    show(value: string) { view = value }, api: async () => { reads++; throw Error('No installation API on phone') } };
+  const effects = new Proxy({}, { get: () => () => {} });
+  Object.assign(core, f.context.WeftUiCore.factories.cloudAccount(core, effects, f.environment));
+  f.useClient(core.initializeCloudAccount()); await core.load();
+  assert.equal(reads, 0); assert.equal(view, 'login');
+});

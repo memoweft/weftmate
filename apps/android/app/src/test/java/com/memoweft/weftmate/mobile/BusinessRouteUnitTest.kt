@@ -15,6 +15,12 @@ class BusinessRouteUnitTest {
         for(path in listOf("/personal/v1/chats/../events", "/personal/v1/chats/chat%2Fone/events", "/personal/v1/chats/chat-one/credentials"))
             assertFalse(path, validBusinessPath(path))
     }
+    @Test fun personalizationUsesOnlyExactSettingsRoutes() {
+        assertTrue(validBusinessPath("/personal/v1/settings/personalization"))
+        assertTrue(validBusinessPath("/personal/v1/settings/personalization/style"))
+        assertFalse(validBusinessPath("/personal/v1/settings/personalization?ownerId=other"))
+        assertFalse(validBusinessPath("/personal/v1/settings/personalization/style/raw"))
+    }
     @Test fun messageBranchesUseExactSessionAndCommandRoutes() {
         assertTrue(validBusinessPath("/personal/v1/sessions/session-one/message-branches"))
         assertTrue(validBusinessPath("/personal/v1/sessions/session-one/chat"))

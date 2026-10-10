@@ -74,6 +74,8 @@
     showAuth();
     const identity = native ? await call('cloud.app.identity') : { hostOrigin: location.origin, deviceName: '这个浏览器', deviceType: 'web' };
     const hostOrigin = identity.hostOrigin || location.origin;
+    const initialPairing = location.hash.startsWith('#pair=') ? 'wm1.' + location.hash.slice(6) : null;
+    if (initialPairing) history.replaceState(null, '', location.pathname + location.search);
     const transport = WeftUiCore.createMobileCloudTransport({ bridge: androidBridge, native, hostOrigin });
     const ui = { byId, element, toast, updateAvailability: updateComposer,
       errorAt: (id, message) => { const node = byId(id); node.textContent = message || ''; node.hidden = !message; },
@@ -90,7 +92,7 @@
       openCloudHost: async connection => { if (native) await call('cloud.app.configure', { origin: connection.baseUrl }); return connection; },
       activateCloudHost: noop,
     }, { get: (target, key) => target[key] || noop });
-    core = WeftUiCore.create({ effects, ...transport, hostOrigin, crypto: globalThis.crypto, storage: localStorage,
+    core = WeftUiCore.create({ effects, ...transport, hostOrigin, initialPairing, crypto: globalThis.crypto, storage: localStorage,
       cloudVendor: WeftCloudVendor, desktop: false, bindDesktop: false, deviceType: native ? 'android' : 'web', deviceName: identity.deviceName });
     const accept = core.acceptSession; core.acceptSession = payload => { accept(payload); };
     const clear = core.clearSession; core.clearSession = () => { clear(); clearIdentity(); };

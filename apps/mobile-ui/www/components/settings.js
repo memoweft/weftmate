@@ -46,6 +46,8 @@ function connectionLabel(){return {connected:'电脑连接正常',checking:'已�
 
 const mobileSettingsRegistry = WeftUiCore.settingsRegistry({
   archived: target => archivedSettingsPage(target),
+  personalization: target => {target.append(heading('个性化'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftPersonalizationView(uiCore,body,'personalization')},
+  assistant: target => {target.append(heading('助手'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftPersonalizationView(uiCore,body,'assistant')},
   general: target => generalSettingsPage(target), appearance: target => appearancePage(target),
   account: target => accountPage(target), devices: target => devicesPage(target),
   usage: target => usagePage(target, state.usageSessionId || ''), models: target => modelsPage(target),
@@ -81,11 +83,6 @@ function generalSettingsPage(target){target.append(heading('常规'),group('此�
   row('界面更新',state.ui?.activeVersion||'内置页面',()=>page('updates')),
   row('原生兼容界面','排查系统网页组件',()=>call('compat.openNative').catch(e=>toast(safeError(e),true)))]));
   uiCore.syncMobileIdentity();
-  const setting=WeftUiCore.messageModeSetting, control=el('select');control.id='settings-message-mode';control.setAttribute('aria-label',setting.name);
-  for(const [value,label] of setting.options)control.append(new Option(label,value));
-  control.value=uiCore.messageModePreference();control.addEventListener('change',()=>uiCore.setMessageMode(control.value));
-  target.append(WeftSettingsControls.row(setting.name,setting.options.map(([,label,help])=>`${label}：${help}`).join(' '),control));
-  globalThis.WeftPopover.bindSettingsSelect(control);
   void systemStatusSection(target);
 }
 function approvalSettingsPage(target){target.append(heading('审批'));
@@ -480,6 +477,7 @@ function modelsPage(target){target.append(heading('对话模型','手机直连�
 }
 
 function devicesPage(target){target.append(heading('设备','同一账户下登录过的设备会列在这里。'));
+  target.append(el('h2', '', globalThis.WeftOnboardingCopy.mobileConnect), notice(globalThis.WeftOnboardingCopy.mobileHelp));
   if(!state.loggedIn){target.append(notice('请先登录电脑账户，再查看或移除设备。'));return}
   const summary=notice('正在读取设备…');target.append(summary);const gen=state.generation;
   call('auth.devices').then(result=>{if(state.page!=='devices'||state.generation!==gen)return;summary.remove();

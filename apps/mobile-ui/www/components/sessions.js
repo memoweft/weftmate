@@ -110,6 +110,7 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
           event.data.originalAttachments.map(normalizedSharedFile).filter(Boolean):[];
       if(typeof body==='string'&&body||images.length||originalFiles.length){
         const row=messageNode(event.type==='user.message'?'user':'assistant',typeof body==='string'?body:'');
+        if(event.type==='assistant.message')WeftModelThinking(uiCore,row,event);
         if(images.length){const gallery=el('div','message-thumbnails');let unavailable=0;
           const scope={owner:state.owner,epoch:state.authEpoch,source:'host',conversationId:state.sharedSessionId};
           for(const image of images){const url=['image/png','image/jpeg','image/webp','image/gif'].includes(image?.contentType)
@@ -195,6 +196,7 @@ async function renderConversation({silent=false}={}){if(state.page!=='chat')retu
         if(event.type!=='user.message'&&event.type!=='assistant.message')continue;
         const body=event.data?.text;if(typeof body!=='string'||!body.trim())continue;
         const row=messageNode(event.type==='user.message'?'user':'assistant',body);
+        if(event.type==='assistant.message')WeftModelThinking(uiCore,row,event);
         if(event.type==='user.message'&&receiptIdPattern.test(event.data?.receiptId||''))row.dataset.receiptId=event.data.receiptId;
         if(event.type==='user.message'&&uiCore.messageTaskLabel(event))row.append(el('small','message-state',uiCore.messageTaskLabel(event)));
         row.dataset.seq=String(event.seq);content.append(row);
