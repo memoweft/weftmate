@@ -58,5 +58,5 @@ globalThis.WeftSearchView = {mount({core,open,menu,notice,mobile=false}) {
     if(['Escape','ArrowUp','ArrowDown','Home','End','ArrowLeft','ArrowRight'].includes(event.key)&&(!['Home','End'].includes(event.key)||event.target!==input)){event.preventDefault();event.stopPropagation();core.navigateSearch(event.key);}
     if(event.key==='Enter'&&event.target===input){event.preventDefault();const row=core.search.rows[core.search.selected];if(row){if(event.altKey){const target=results.querySelectorAll('[role=option]')[core.search.selected]?.querySelector('.search-result-more');if(target)rowMenu(row,target);}else void activate(row);}}
   });
-  return {show,hide,render,select,dialog};
+  return {show,hide,render,select,activate,dialog};
 }};

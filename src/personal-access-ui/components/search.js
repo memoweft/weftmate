@@ -15,7 +15,7 @@ globalThis.WeftUiComponents.factories.search = (core,ui) => {
     if(row.type==='memory'){await core.openMemory();return core.openMemoryDetail(row.kind,row.id);}
   }
   function menu(row,trigger){
-    const entries=[{name:'打开',icon:'chat',action:()=>open(row).then(()=>core.closeSearch())}];
+    const entries=[{name:'打开',icon:'chat',action:()=>view.activate(row)}];
     if(row.type==='chats') {
       entries.push({name:'在侧栏中显示',icon:'sidebar',action:async()=>{core.closeSearch();await core.selectSession(row.sessionId);WeftDesktop.toggleRail(false);ui.byId('session-list').querySelector('.is-current')?.scrollIntoView({block:'nearest'});}});
       if(row.kind!=='main')entries.push({name:row.pinned?'取消置顶':'置顶',icon:'pin',checked:row.pinned,action:async()=>{await core.updateSession(row.sessionId,{pinned:!row.pinned});await core.readSearch();}},

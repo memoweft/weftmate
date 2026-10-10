@@ -59,8 +59,9 @@
 - 搜索／对话／既有功能定向69项通过；记忆页与匿名范围绑定组合42项通过。
 - 桌面交互3项、动效1项通过；保留原导航、输入、附件、审批、停止、减少动态效果及历史断言。
 - `actions.json`：设置、项目、固定页、新旁聊、临时对话浅深16项＋空结果首句真实合成发送，共17项。
+- 网页／手机账户与输入回归100项及UI-2真实视觉回归1项通过；兼容原主线渲染、图片页、资料与草稿保护。
 - 安卓 `BusinessRouteUnitTest`（业务路由单测）14项通过，0失败；没有修改版本号或界面包最低版本。
 - `design-detector.json`：机械设计检查0项；`verification.json`：页面错误0、无横向溢出、真实键盘及截图清单。
-- 完整必过单测使用 `node .github/scripts/ci-unit-tests.mjs required`；最终计数见 `required-unit-tests.log`，完成后同步STATE与交付结果。
+- 完整必过单测使用 `node .github/scripts/ci-unit-tests.mjs required`；完整日志见 `required-unit-tests.log`，1308项中1296通过、0失败、12按仓库既有配置跳过，1266.35秒；没有新增跳过或放宽断言。
 
 没有运行系统读屏软件、安卓模拟器或Apple原生界面；不将语义与资产验证写成这些实屏验收。未发布安装包或更改日用程序。

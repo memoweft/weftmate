@@ -114,7 +114,7 @@ function mountMobileSearch(){
     if(row.type==='schedules'){page('goals');await goalsPage($('page-content'));const target=[...$('page-content').querySelectorAll('.goals-row')].find(node=>node.dataset.goalKey===`${row.sessionId}/${row.id}`);target?.scrollIntoView({block:'center'});if(target){target.tabIndex=-1;target.focus();}return;}
     if(row.type==='memory'){const owner=state.owner,epoch=state.authEpoch;page('memory');uiCore.syncMobileIdentity();await startMemorySnapshot($('page-content'),'all','');if(owner===state.owner&&epoch===state.authEpoch&&state.page==='memory')return openMemoryDetail($('page-content'),row);}
   },menu:(row,trigger)=>{
-    const entries=[{name:'打开',icon:row.icon,action:()=>{trigger.closest('[role=option]').click();}}];
+    const entries=[{name:'打开',icon:row.icon,action:()=>searchView.activate(row)}];
     if(row.type==='chats'&&row.kind!=='main')entries.push({name:row.pinned?'取消置顶':'置顶',icon:'pin',checked:row.pinned,action:async()=>{await uiCore.updateSession(row.sessionId,{pinned:!row.pinned});await uiCore.readSearch();}},
       {name:row.archived?'恢复对话':'归档',icon:'archive',action:async()=>{await uiCore.archiveSession(row.sessionId,!row.archived);await uiCore.readSearch();}});
     if(row.type==='library')entries.push({name:'打开来源对话',icon:'chat',action:async()=>{uiCore.closeSearch();await uiCore.openLibrarySource(row);}});
