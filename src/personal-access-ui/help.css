@@ -14,3 +14,5 @@
 :is(.release-toggle,.release-notice-link,.help-back):hover{background:var(--accent-soft);}:is(.release-toggle,.release-notice-link,.help-back):active{background:var(--line);}:is(.release-toggle,.release-notice-link,.help-back,.help-search):focus-visible{outline:var(--wm-space-2) solid var(--accent);outline-offset:var(--wm-space-2);}:is(.release-toggle,.release-notice-link,.help-back):disabled{opacity:.5;cursor:default;}
 .help-open :is(.main-chat-tools,#conversation-resources,#conversation-usage,#assistant-origin,.phone-conversation-more){display:none!important;}
 @media(max-width:720px){html:not(.weftmate-desktop) .help-page{padding:var(--wm-space-16) var(--wm-space-16) calc(var(--wm-space-24) + var(--safe-bottom, env(safe-area-inset-bottom, 0px)));}.help-topic .button{min-height:var(--wm-space-44);}.release-date{width:100%;margin-left:0;}.shortcut-row{gap:var(--wm-space-8);}.shortcut-row>span:first-child{min-width:0;}.release-notice{top:calc(var(--wm-space-56) + var(--safe-top, env(safe-area-inset-top, 0px)));}}
+
+.help-search::-webkit-search-cancel-button,.help-search::-webkit-search-decoration{display:none;-webkit-appearance:none;}
