@@ -36,3 +36,45 @@ export async function backgroundModelReady(profile, { credentialFor, fetchImpl =
   // A single-slot service with no observable model cannot safely load a background model.
   return props?.total_slots !== 1;
 }
+
+/** Read external occupancy for speculation only; memory retains its waiting policy.
+ * A status read observes idleness but cannot reserve an independently owned proxy.
+ */
+export async function suggestionModelReady(profile, { credentialFor, fetchImpl = fetch, signal } = {}) {
+  try {
+    signal?.throwIfAborted();
+    const base = new URL(profile.baseUrl);
+    if (!['127.0.0.1', 'localhost', '[::1]'].includes(base.hostname)) return true;
+    const root = profile.baseUrl.replace(/\/?v1\/?$/, '');
+    const key = credentialFor?.(profile);
+    const headers = key ? { authorization: `Bearer ${key}` } : {};
+    const request = path => {
+      const timeout = AbortSignal.timeout(2000);
+      return fetchImpl(`${root}${path}`, { headers, redirect: 'error',
+        signal: signal ? AbortSignal.any([signal, timeout]) : timeout });
+    };
+    const propsResponse = await request('/props');
+    if (!propsResponse.ok) return false;
+    const props = await propsResponse.json();
+    signal?.throwIfAborted();
+    if (!Number.isInteger(props?.total_slots) || props.total_slots < 1) return false;
+    if (props.total_slots > 1) return true;
+    const statusResponse = await request('/switch/status');
+    if (statusResponse.status === 503) return false;
+    if (statusResponse.ok) {
+      const status = await statusResponse.json();
+      signal?.throwIfAborted();
+      if (status?.switching !== false ||
+          (status.current_model ?? status.currentModelId ?? status.current_model_id) !== profile.model) return false;
+      const counters = [status.activeLeases, status.queuedLeases, status.maintenanceQueued];
+      if (counters.some(value => value !== undefined && (!Number.isInteger(value) || value < 0))) return false;
+      if (counters.some(value => Number.isInteger(value) && value > 0)) return false;
+      if (counters.every(value => Number.isInteger(value) && value >= 0)) return counters.every(value => value === 0);
+    } else if (![404, 405, 501].includes(statusResponse.status)) return false;
+    const slotsResponse = await request('/slots?fail_on_no_slot=1');
+    if (!slotsResponse.ok) return false;
+    const slots = await slotsResponse.json();
+    signal?.throwIfAborted();
+    return Array.isArray(slots) && slots.length === 1 && slots[0]?.is_processing === false;
+  } catch { return false; }
+}

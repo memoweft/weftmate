@@ -52,7 +52,7 @@ export function aggregateUsage(records, month, sessionId = null, timeZone = usag
   const localDate = dateInZone(timeZone);
   const total = () => ({ requests: 0, unknownRequests: 0, unpricedRequests: 0,
     inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, cost: 0 });
-  const sum = total(), days = new Map(), sessions = new Map(), models = new Map();
+  const sum = total(), days = new Map(), sessions = new Map(), models = new Map(), categories = new Map();
   const numberOfDays = new Date(`${month}-01T00:00:00Z`); numberOfDays.setUTCMonth(numberOfDays.getUTCMonth() + 1, 0);
   for (let day = 1; day <= numberOfDays.getUTCDate(); day++) days.set(`${month}-${String(day).padStart(2, '0')}`, total());
   function add(target, row) {
@@ -68,12 +68,15 @@ export function aggregateUsage(records, month, sessionId = null, timeZone = usag
     if (!day.startsWith(`${month}-`)) continue;
     if (!sessions.has(session)) sessions.set(session, total());
     if (!models.has(row.profileId)) models.set(row.profileId, total());
+    const category = row.category ?? 'conversation';
+    if (!categories.has(category)) categories.set(category, total());
+    add(categories.get(category), row);
     add(sum, row); add(days.get(day), row); add(sessions.get(session), row); add(models.get(row.profileId), row);
   }
   const rank = (map, key) => [...map].map(([id, value]) => ({ [key]: id, ...value })).sort((a, b) => b.cost - a.cost || b.requests - a.requests);
   return { month, timeZone, sessionId, total: sum,
     days: [...days].map(([day, value]) => ({ day, ...value })),
-    sessions: rank(sessions, 'sessionId'), models: rank(models, 'profileId') };
+    sessions: rank(sessions, 'sessionId'), models: rank(models, 'profileId'), categories: rank(categories, 'category') };
 }
 export function usageBudget(cost, settings, month) {
   const limit = settings.temporaryMonth === month && settings.temporaryLimit !== null
@@ -139,13 +142,13 @@ export async function createUsageStore({ root, clock = Date.now }) {
       return this.settings(ownerId);
     },
     assertAllowed,
-    async begin(ownerId, { sessionId = null, profileId, model }) {
+    async begin(ownerId, { sessionId = null, profileId, model, category = 'conversation' }) {
       return mutate(ownerId, row => {
         if (!model) throw failure('MODEL_UNAVAILABLE', 409);
         assertAllowed(ownerId, model);
         const requestId = randomUUID();
         const price = row.settings.prices[profileId] ?? defaultUsagePrice(model);
-        row.records.push({ requestId, sessionId, profileId, at: at(), durationMs: null,
+        row.records.push({ requestId, sessionId, profileId, category, at: at(), durationMs: null,
           tokens: null, cost: null, price, source: 'unknown' });
         return requestId;
       });

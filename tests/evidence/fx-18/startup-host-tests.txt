@@ -1,0 +1,31 @@
+✔ failed owner boundary remains visible and a Core conflict is not silently replayed after restart (4814.7284ms)
+✔ only the explicit Core hard-deleted-source code drops the original boundary (3806.7481ms)
+✔ FX-18 startup opens an existing world with an empty outbox, retrying an unavailable route without a UI request (3620.5207ms)
+✖ recall does not wait by default while a stuck job remains durable (2028.5014ms)
+✔ recall honors an explicit formation deadline while a stuck job remains durable (2000.8348ms)
+✔ account memory workers follow only the owner session route and restart without losing the outbox (13187.0057ms)
+✔ memory shutdown waits for the worker write acknowledgement and confirms the worker exits (786.7262ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 6
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17697.2899
+
+✖ failing tests:
+
+test at tests\personal-memory-processing-route.test.ts:14:48
+✖ recall does not wait by default while a stuck job remains durable (2028.5014ms)
+  AssertionError [ERR_ASSERTION]: stalled formation does not hold the foreground indefinitely
+      at TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/personal-memory-processing-route.test.ts:44:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
