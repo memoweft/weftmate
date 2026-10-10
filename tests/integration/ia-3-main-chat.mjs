@@ -58,11 +58,11 @@ try{
   for(let n=0;n<30;n++) {let start=performance.now();await fixture.request(`/chats/${main.chatId}/search?q=${encodeURIComponent('纸船')}`);searches.push(performance.now()-start);
     start=performance.now();await fixture.request(`/chats/${main.chatId}/locate?date=${new Date(Date.now()-6*86400000).toLocaleDateString('en-CA',{timeZone:'Asia/Shanghai'})}`);dates.push(performance.now()-start);}
   report.performance.searchHttp={samples:searches,p95Ms:percentile(searches),budgetMs:500};report.performance.dateHttp={samples:dates,p95Ms:percentile(dates),budgetMs:300};
-  await button(page,'搜索主对话').click();await page.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('纸船');await button(page,'查找').click();
+  await button(page,'搜索主对话').click();await page.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('纸船');await page.getByRole('searchbox',{name:'主对话搜索关键词'}).press('Enter');
   await page.waitForFunction(()=>document.querySelector('#transcript mark'));await shot('desktop-light-search');
   await button(page,'下一条搜索结果').click();await button(page,'上一条搜索结果').click();
   await button(page,'关闭主对话搜索').click();
-  await button(page,'搜索主对话').click();await page.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('合成旁聊');await button(page,'查找').click();
+  await button(page,'搜索主对话').click();await page.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('合成旁聊');await page.getByRole('searchbox',{name:'主对话搜索关键词'}).press('Enter');
   await page.waitForFunction(()=>{const box=document.querySelector('#chat-scroll').getBoundingClientRect();return [...document.querySelectorAll('#transcript .side-result mark')].some(mark=>{const rect=mark.getBoundingClientRect();return rect.top>=box.top&&rect.bottom<=box.bottom;});});await shot('desktop-light-result-search');await button(page,'关闭主对话搜索').click();
   await button(page,'跳到日期').click();const date=new Date(Date.now()-6*86400000).toLocaleDateString('en-CA',{timeZone:'Asia/Shanghai'});
   await page.getByRole('textbox',{name:'跳到日期',exact:true}).fill(date);

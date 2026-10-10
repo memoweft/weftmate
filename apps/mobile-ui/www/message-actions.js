@@ -202,6 +202,7 @@
           const source = local ? null : await resolveSource(id, event);
           if (!more.isConnected) return;
           menu(more, [
+          ...((more.closest('.message') || row).weftOpenSideChat ? [{name:'从这里开旁聊', action:(more.closest('.message') || row).weftOpenSideChat}] : []),
           { name: local ? '重新生成（需由电脑接续）' : source?.kind === 'main' ? '开旁聊重新生成' : '重新生成', disabled: local || core.messageBusy(id) || event.data.reminder, ...(!local && !event.data.reminder ? { mutationId: id } : {}), action: () => regenerate(id, event, null, more) },
           { name: '换模型重新生成', disabled: local || core.messageBusy(id) || event.data.reminder, ...(!local && !event.data.reminder ? { mutationId: id } : {}), action: async () => {
             const models = (await core.accessApi('/models')).models;

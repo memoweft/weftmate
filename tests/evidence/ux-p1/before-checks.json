@@ -1,0 +1,12 @@
+{
+  "realElectron": true,
+  "synthetic": true,
+  "modelRequests": 0,
+  "checks": [
+    "web-390",
+    "android-chromium-390",
+    "web-360",
+    "android-chromium-360"
+  ],
+  "errors": []
+}

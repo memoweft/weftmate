@@ -1,4 +1,6 @@
 .message-actions, .message-versions { display:flex; align-items:center; gap:var(--wm-space-4); margin-top:var(--wm-space-8); color:var(--ink-muted); flex-wrap:wrap; }
+.message-actions { visibility:hidden; }
+.message:hover > .message-actions, .message:focus-within > .message-actions, .message.is-last-assistant > .message-actions, .message.actions-visible > .message-actions { visibility:visible; }
 .message.user .message-actions, .message.user .message-versions { justify-content:flex-end; }
 .message-action { border:0; background:transparent; color:inherit; min-width:var(--wm-space-32); min-height:var(--wm-space-32); padding:var(--wm-space-6); border-radius:var(--wm-radius-8); display:inline-flex; align-items:center; justify-content:center; font:inherit; font-size:var(--wm-font-size-13); }
 .message-action:hover, .message-action[aria-pressed=true] { background:var(--accent-soft); color:var(--accent); }
@@ -19,7 +21,7 @@
 .message-feedback-reasons label, .message-export-options label { display:flex; align-items:center; gap:var(--wm-space-8); font-size:var(--wm-font-size-13); }
 .message-export-options label { flex-shrink:0; white-space:nowrap; }
 .message-export-options input[type=checkbox], .message-feedback-reasons input[type=radio] { width:var(--wm-space-16); height:var(--wm-space-16); margin:0; padding:0; flex:0 0 var(--wm-space-16); accent-color:var(--accent); }
-.message-export-preview { max-height:45dvh; overflow:auto; border:1px solid var(--line); border-radius:var(--wm-radius-8); margin-block:var(--wm-space-16); padding:var(--wm-space-16); background:var(--canvas); }
+.message-export-preview { border:1px solid var(--line); border-radius:var(--wm-radius-8); margin-block:var(--wm-space-16); padding:var(--wm-space-16); background:var(--canvas); }
 .message-export-preview pre { white-space:pre-wrap; overflow-wrap:anywhere; margin:0; font:inherit; font-size:var(--wm-font-size-13); }
 .message-export-preview canvas { width:100%; height:auto; display:block; }
 .composer-message-quote { border-inline-start:2px solid var(--accent); padding-inline-start:var(--wm-space-12); margin:var(--wm-space-8); max-height:var(--wm-space-96); overflow:auto; white-space:pre-wrap; color:var(--ink-muted); font-size:var(--wm-font-size-13); }
