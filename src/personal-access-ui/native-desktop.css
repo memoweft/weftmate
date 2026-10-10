@@ -10,6 +10,12 @@
 .weftmate-desktop .assistant-shell { height: min(820px, calc(100dvh - 176px)); }
 .weftmate-desktop[data-native-workspace="full"] .assistant-shell { height: calc(100dvh - 44px); }
 .weftmate-desktop #desktop-auto-start { width: auto; margin-right: var(--wm-space-8); }
+@media (max-width: 640px) {
+  .weftmate-desktop .timeline-preview {
+    top: var(--desktop-caption-height, var(--wm-space-44));
+    height: calc(100dvh - var(--desktop-caption-height, var(--wm-space-44)));
+  }
+}
 .weftmate-desktop .desktop-startup { display: flex; align-items: center; }
 .weftmate-desktop .rail-heading > strong { display: none; }
 .weftmate-desktop .rail-top { display: flex; align-items: center; gap: var(--wm-space-8); }

@@ -2,13 +2,19 @@
 globalThis.WeftUiComponents.factories.resources = (core, ui) => {
     globalThis.WeftOpenCapturedSource = async (url, trigger) => {
         const context = core.conversationTaskContext();
+        if (trigger?.getAttribute('aria-busy') === 'true') return true;
+        const label = trigger?.textContent;
+        if (trigger) { trigger.setAttribute('aria-busy', 'true'); trigger.textContent = '正在读取出处…'; }
         try {
             const source = await core.capturedSourceForUrl(url);
             if (!core.conversationTaskCurrent(context)) return true;
             if (!source) return false;
+            if (source.name === source.url && label?.trim()) source.name = label.trim();
             ui.openConversationResource(source, trigger, true);
         } catch {
             if (core.conversationTaskCurrent(context)) ui.toast('暂时无法读取出处，请重试。');
+        } finally {
+            if (trigger) { trigger.removeAttribute('aria-busy'); trigger.textContent = label; }
         }
         return true;
     };
@@ -160,7 +166,9 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
         for (const use of item.uses) {
             const line = ui.element('details', 'resource-usage');
             const time = use.at && Number.isFinite(Date.parse(use.at)) ? core.dateText(use.at) : '';
-            line.append(ui.element('summary', '', `${use.summary}${time ? ` · ${time}` : ''}`));
+            const summary = ui.element('summary', '', `${use.summary}${time ? ` · ${time}` : ''}`);
+            const arrow = ui.element('span', 'progress-chevron'); arrow.setAttribute('aria-hidden', 'true');
+            arrow.append(window.WeftIcons.create('chevron', 16)); summary.append(arrow); line.append(summary);
             line.addEventListener('toggle', async () => {
                 if (!line.open || line.dataset.loaded || !core.conversationTaskCurrent(context))
                     return;
