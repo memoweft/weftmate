@@ -39,7 +39,7 @@ export function createNextSuggestions(context, { timeoutMs = 5000, watchMs = 150
     const account = context.accountState(ownerId);
     for (const row of pending.values()) if (row.ownerId === ownerId) {
       const session = account.sessions[row.sessionId];
-      if (!session || session.deleting || session.archived || session.modelProfileId !== row.profileId ||
+      if (!session || session.deleting || session.archived || !context.messageModelUsable(ownerId, session) || session.modelProfileId !== row.profileId ||
           Object.values(account.commands).some(command => ['session.message', 'chat.message'].includes(command.kind) &&
             ['pending', 'dispatching'].includes(command.state))) row.controller.abort();
     }

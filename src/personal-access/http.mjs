@@ -760,6 +760,7 @@ export function createHttpHandler(context) {
         if (restartMatch) {
           if (!context.hostOwner(ownerId)) throw failure('FORBIDDEN', 403);
           exactKeys(await context.readJson(request), []);
+          context.nextSuggestions.cancel(ownerId);
           await context.systemManager.restart(restartMatch[1], ownerId);
         }
         const value = await context.systemManager.status(ownerId);

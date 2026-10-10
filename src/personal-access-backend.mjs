@@ -141,12 +141,19 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       const apiKey = credentialForProfile(profile)
       if (!apiKey) fail('MODEL_UNAVAILABLE')
       requireModelAllowed(ownerId, profileId, 'new')
+      let declaredEfforts;
+      if (priority === 'suggestion' && modelReasoning(profile)?.compat?.thinkingFormat === 'openai' && reasoningSettings && currentOrigin()) {
+        signal?.throwIfAborted();
+        const settings = await reasoningSettings(), route = routeForProfile(profile.id);
+        declaredEfforts = settings[route.provider]?.models?.find(row => row.id === profile.model)?.reasoningEfforts;
+        signal?.throwIfAborted();
+      }
       return modelFetch(openAICompatibleEndpoint(profile.baseUrl, 'chat/completions'), {
         method: 'POST', redirect: 'error', signal,
         ...(priority ? { priority } : {}), ...(onStart ? { onStart } : {}),
         headers: { 'content-type': 'application/json', accept: body.stream ? 'text/event-stream' : 'application/json',
           authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ ...body, ...(priority === 'suggestion' ? suggestionReasoning(profile) : {}), model: canonicalProviderModelId(profile.baseUrl, body.model) }),
+        body: JSON.stringify({ ...(priority === 'suggestion' ? suggestionCompletionBody(profile, body, declaredEfforts) : body), model: canonicalProviderModelId(profile.baseUrl, body.model) }),
       })
     },
     async preflight(command) {
@@ -501,4 +508,14 @@ export function suggestionReasoning(profile) {
   return format === 'deepseek' ? { thinking: { type: 'disabled' } }
     : format === 'qwen' ? { enable_thinking: false }
     : format === 'openai' ? { reasoning_effort: 'low' } : {};
+}
+
+export function suggestionCompletionBody(profile, body, declaredEfforts = undefined) {
+  if (modelReasoning(profile)?.compat?.thinkingFormat !== 'openai') return { ...body, ...suggestionReasoning(profile) };
+  // Reasoning chat models reject temperature at low effort and require the
+  // total completion budget to include hidden reasoning as well as the JSON.
+  const { temperature, max_tokens, ...rest } = body;
+  if (declaredEfforts === false) return { ...rest, max_completion_tokens: max_tokens ?? 160 };
+  if (declaredEfforts !== undefined && !declaredEfforts?.low) fail('MODEL_SUGGESTION_UNAVAILABLE');
+  return { ...rest, ...suggestionReasoning(profile), reasoning_effort: declaredEfforts?.low ?? 'low', max_completion_tokens: 1024 };
 }
