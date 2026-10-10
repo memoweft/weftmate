@@ -233,7 +233,7 @@ function openImagePreview(url,name,button,scope,{original=false,display=false,no
   if(!safe||!scope||state.page!=='chat'||source!==state.chatSource||state.transitionPending||
     scope.owner!==state.owner||scope.epoch!==state.authEpoch||scope.conversationId!==attachmentConversationId())return;
   closeImagePreview({restoreFocus:false});state.previewScope=scope;state.previewReturnFocus=button;
-  if(globalThis.WeftContent){const images=[...(button?.closest('.message-thumbnails,.synced-image-gallery,.message')?.querySelectorAll('img')||[])];const items=images.map(image=>({url:image.src,name:image.alt||name}));const index=images.findIndex(image=>image.parentElement===button);WeftContent.openGallery(items.length?items:[{url:safe,name}],Math.max(0,index),button);return;}
+  if(globalThis.WeftContent){const images=[...(button?.closest('.message-thumbnails,.synced-image-gallery,.message')?.querySelectorAll('img')||[])];const items=images.map(image=>({url:image.src,name:image.alt||name}));const index=images.findIndex(image=>image.parentElement===button);WeftContent.openGallery(items.length?items:[{url:safe,name}],Math.max(0,index),button,{downloadImage:globalThis.weftNative?saveRenderedImage:undefined});return;}
   $('image-preview-name').textContent=name;$('image-preview-image').src=safe;
   $('image-preview-image').alt=`${name} 的${original?'原图':display?'预览图':'缩略图'}`;
   $('image-preview-note').textContent=note|| (original?'原图':'旧图片仅保留缩略图');
@@ -450,11 +450,17 @@ function messageNode(role,text,thumbnails=[],scope=null,messageId=null){const it
             attachmentId:image.attachmentId,messageId,note:image.syncStatus==='shared'?'原图已与同账户设备共享':
             image.syncStatus==='pending'?'原图正在同步':image.previewUrl?'这台手机保存的原图':'旧图片仅保留缩略图'}));gallery.append(preview)}
       item.append(gallery)}return item}
-  const frame=el('div','message-body');const content=globalThis.WeftContent?WeftContent.create(text,'markdown',{copy:copyText,openExternal:url=>{location.href=url}}):el('div','markdown',text);
+  const frame=el('div','message-body');const content=globalThis.WeftContent?WeftContent.create(text,'markdown',{copy:copyText,openExternal:url=>{location.href=url},downloadImage:globalThis.weftNative?saveRenderedImage:undefined}):el('div','markdown',text);
   frame.append(content);const tools=el('div','message-tools');const copy=el('button','copy-button');copy.append(el('span','icon icon-copy'),el('span','','复制回复'));
   copy.addEventListener('click',()=>copyText(text));tools.append(copy);frame.append(tools);item.append(frame);return item}
 
-function enhanceMarkdown(content){if(globalThis.WeftContent)WeftContent.enhance(content,{copy:copyText,openExternal:url=>{location.href=url}});}
+function enhanceMarkdown(content){if(globalThis.WeftContent)WeftContent.enhance(content,{copy:copyText,openExternal:url=>{location.href=url},downloadImage:globalThis.weftNative?saveRenderedImage:undefined});}
+
+async function saveRenderedImage(url,name){const owner=state.owner,epoch=state.authEpoch;const image=new Image();image.src=url;await image.decode();
+  const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;canvas.getContext('2d').drawImage(image,0,0);
+  if(owner!==state.owner||epoch!==state.authEpoch)throw new Error('账户已切换');
+  const safeName=String(name||'WeftMate-图片').replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').replace(/\.[a-z0-9]+$/i,'').slice(0,100)+'.png';
+  await call('conversation.export',{name:safeName,contentType:'image/png',data:canvas.toDataURL('image/png').split(',')[1]},120000);toast('请选择图片保存位置');}
 
 async function copyText(text){try{await call('clipboard.copy',{text});toast('已复制')}catch{toast('复制未完成，请长按选择文字',true)}}
 

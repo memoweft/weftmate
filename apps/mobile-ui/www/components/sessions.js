@@ -163,7 +163,7 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
         if(event.type==='user.message'&&uiCore.messageTaskLabel(event))row.append(el('small','message-state',uiCore.messageTaskLabel(event)));
         row.dataset.seq=String(event.seq);content.append(row);appendRenderedFiles(row,body);
         row.querySelector('.message-tools')?.remove(); mobileMessageActions?.bind(row,event,state.sharedSessionId);
-        if(event.data?.truncated){const note=el('p','message-state','正在读取完整消息…');row.append(note);const owner=state.owner,epoch=state.authEpoch,sessionId=state.sharedSessionId;uiCore.syncMobileIdentity();void uiCore.completeMessageEvent(sessionId,event).then(full=>{if(!row.isConnected||owner!==state.owner||epoch!==state.authEpoch||sessionId!==state.sharedSessionId)return;WeftContent.update(row.querySelector('.markdown'),full.data.text,{copy:copyText,openExternal:url=>{location.href=url}});note.remove();appendRenderedFiles(row,full.data.text);}).catch(()=>{if(note.isConnected)note.textContent='完整消息暂时无法读取，请重新打开对话。';});}}}
+        if(event.data?.truncated){const note=el('p','message-state','正在读取完整消息…');row.append(note);const owner=state.owner,epoch=state.authEpoch,sessionId=state.sharedSessionId;uiCore.syncMobileIdentity();void uiCore.completeMessageEvent(sessionId,event).then(full=>{if(!row.isConnected||owner!==state.owner||epoch!==state.authEpoch||sessionId!==state.sharedSessionId)return;WeftContent.update(row.querySelector('.markdown'),full.data.text,{copy:copyText,openExternal:url=>{location.href=url},downloadImage:globalThis.weftNative?saveRenderedImage:undefined});note.remove();appendRenderedFiles(row,full.data.text);}).catch(()=>{if(note.isConnected)note.textContent='完整消息暂时无法读取，请重新打开对话。';});}}}
     else if(event.type==='turn.started'){lastTurn='running';lastEndReasonKind=''}
     else if(event.type==='turn.ended'){lastTurn=event.data?.reason||'unknown';
       lastEndReasonKind=lastTurn==='error'&&event.data?.endReasonKind==='max-tokens'?'max-tokens':''}
@@ -298,7 +298,7 @@ function renderLiveProgress(){if(state.page!=='chat'||state.chatSource!=='phone'
     const body=el('div','message-body');body.append(el('div','markdown live-progress-text'),el('p','message-state'));
     node.append(body);content.append(node)}
   const text=node.querySelector('.live-progress-text'),phase=node.querySelector('.message-state');
-  if(globalThis.WeftContent){WeftContent.update(text,state.progressText,{copy:copyText,openExternal:url=>{location.href=url}});text.hidden=!state.progressText;phase.textContent=phaseLabel(state.phase);if(state.scrollPinned)scrollBottom();return;}
+  if(globalThis.WeftContent){WeftContent.update(text,state.progressText,{copy:copyText,openExternal:url=>{location.href=url},downloadImage:globalThis.weftNative?saveRenderedImage:undefined});text.hidden=!state.progressText;phase.textContent=phaseLabel(state.phase);if(state.scrollPinned)scrollBottom();return;}
   if(!text._liveTextNode){text._liveTextNode=document.createTextNode('');text.append(text._liveTextNode)}
   const shown=text._liveTextNode.data,target=state.progressText;
   if(!target.startsWith(shown)||(globalThis.WeftMobileMotion?.reduced()??window.matchMedia('(prefers-reduced-motion: reduce)').matches)){

@@ -55,4 +55,9 @@ test('shared offline content: parsing, injection set, streaming, controls and fa
     await page.evaluate(()=>WeftContent.update(streamDiagram,'```mermaid\ngraph LR\n A --> B\n```'));
     await page.locator('.render-diagram img').waitFor();assert.equal(await page.locator('.diagram-failed').count(),0);assert.equal(await page.locator('.render-code pre').isVisible(),false);
   });
+  await t.test('captured source links preserve provenance priority and the host title card',async()=>{
+    await page.evaluate(()=>{globalThis.capturedCalls=[];globalThis.externalCalls=[];globalThis.WeftOpenCapturedSource=async(url,trigger)=>{capturedCalls.push(url);trigger.textContent='正在读取出处…';return true;};globalThis.weftmateDesktop={openExternal:async url=>externalCalls.push(url)};document.body.replaceChildren(WeftContent.create('[出处](https://example.com/)','markdown-body',{pages:[{url:'https://example.com/',title:'宿主标题'}]}));});
+    await page.locator('a').click();assert.equal(await page.evaluate(()=>capturedCalls.length),1);assert.equal(await page.evaluate(()=>externalCalls.length),0);assert.equal(await page.locator('a strong').textContent(),'宿主标题');
+    await page.evaluate(()=>{delete globalThis.WeftOpenCapturedSource;delete globalThis.weftmateDesktop;});
+  });
 });

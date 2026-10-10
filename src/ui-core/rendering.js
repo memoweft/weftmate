@@ -8,6 +8,7 @@
   };
   let id = 0, diagramModule, diagramQueue = Promise.resolve(), gallery;
   const diagramViews = new Set();
+  const pendingDiagrams = new Map();
   const script = globalThis.document?.currentScript?.src || globalThis.location?.href;
   const lazyUrl = script ? new URL(script.startsWith('file:')?'../personal-access-ui/render-vendor/mermaid.js':'../render-vendor/mermaid.js', script).href : null;
   const lineCount = text => String(text).replace(/\n$/, '').split('\n').length;
@@ -74,10 +75,10 @@
       });
     };
     const observer = typeof IntersectionObserver === 'function' ? new IntersectionObserver(entries => {
-      if (entries.some(entry => entry.isIntersecting)) { visible = true; observer.disconnect(); paint(); }
-      else if (!block.isConnected) observer.disconnect();
+      if (entries.some(entry => entry.isIntersecting)) { visible = true; observer.disconnect(); pendingDiagrams.delete(block); paint(); }
+      else if (!block.isConnected) {observer.disconnect();pendingDiagrams.delete(block);}
     }) : null;
-    if (observer) observer.observe(block); else { visible = true; requestAnimationFrame(paint); }
+    if (observer) {pendingDiagrams.set(block,observer);observer.observe(block);} else { visible = true; requestAnimationFrame(paint); }
     block._update = fresh => { updateCode(fresh); if (visible) paint(); };
     block._theme = paint;
     toggle.addEventListener('click', () => { if (block.classList.contains('diagram-failed')) paint(); });
@@ -106,7 +107,7 @@
         const captured=globalThis.WeftOpenCapturedSource;
         if(captured||globalThis.weftmateDesktop?.openExternal||options.openExternal){
           event.preventDefault();
-          if(captured&&await captured(url,link))return;
+          if(captured){const children=[...link.childNodes];let consumed;try{consumed=await captured(url,link);}finally{if(link.isConnected)link.replaceChildren(...children);}if(consumed)return;}
           if(options.openExternal){await options.openExternal(url);return;}
           if(globalThis.weftmateDesktop?.openExternal){await weftmateDesktop.openExternal(url);return;}
           const external=node('a');external.href=url;external.target='_blank';external.rel='noopener noreferrer';external.click();
@@ -156,7 +157,8 @@
     let zoom=1;
     const previous=action('上一张',()=>{index--;paint();},'back'), next=action('下一张',()=>{index++;paint();},'right');
     const out=action('缩小',()=>{zoom=Math.max(.5,zoom-.25);scale();}), into=action('放大',()=>{zoom=Math.min(4,zoom+.25);scale();}), reset=action('适应窗口',()=>{zoom=1;scale();});
-    const download=node('a','render-action','下载图片'); download.setAttribute('download','图片');
+    const download=node(options.downloadImage?'button':'a','render-action','下载图片'); download.setAttribute('download','图片');
+    if(options.downloadImage){download.type='button';download.textContent='保存 PNG';download.addEventListener('click',async event=>{event.preventDefault();download.disabled=true;download.setAttribute('aria-busy','true');try{await options.downloadImage(items[index].url,items[index].name);}catch{info.textContent='图片保存未完成，请重试。';}finally{download.disabled=false;download.removeAttribute('aria-busy');}});}
     const show=action('在文件夹中显示',()=>{const item=items[index];if(item.artifactId)void weftmateDesktop.artifact(item.artifactId,item.library?'library-show':'show');},'folder');
     function scale(){image.style.transform=`scale(${zoom})`;reset.textContent=`${Math.round(zoom*100)}% · 适应窗口`;out.disabled=zoom<=.5;into.disabled=zoom>=4;}
     function paint(){const item=items[index];zoom=1;scale();info.textContent='正在加载图片…';image.src=item.url;image.alt=item.name;title.textContent=`${item.name} · ${index+1} / ${items.length}`;download.href=item.url;download.download=item.name;previous.disabled=index===0;next.disabled=index===items.length-1;show.hidden=!globalThis.weftmateDesktop||!item.artifactId;}
@@ -165,7 +167,7 @@
     dialog.addEventListener('keydown',e=>{if(e.key==='Escape')e.stopPropagation();if(e.key==='ArrowLeft'&&index>0){e.preventDefault();index--;paint();}if(e.key==='ArrowRight'&&index<items.length-1){e.preventDefault();index++;paint();}});
     head.append(title,close);stage.append(image);controls.append(previous,next,out,into,reset,download,show);dialog.append(head,stage,info,controls);document.body.append(dialog);
     dialog.addEventListener('close',()=>{image.removeAttribute('src');dialog.remove();if(gallery===dialog)gallery=null;if(dialog._restoreFocus!==false&&trigger?.isConnected)trigger.focus({preventScroll:true});},{once:true});
-    gallery=dialog;paint();dialog.showModal();close.focus();return dialog;
+    gallery=dialog;dialog._trigger=trigger;paint();dialog.showModal();close.focus();return dialog;
   }
   function fileCard(file, open) {
     const ext=(file.fileName||file.name).split('.').pop().toLowerCase(),icon=/^(png|jpg|jpeg|webp|gif)$/.test(ext)?'image':/^(xlsx|xls|csv)$/.test(ext)?'chart':/^(js|ts|py|rs|go|swift|kt|ps1|json|html|css)$/.test(ext)?'code':ext==='pdf'?'book':'file';
@@ -194,6 +196,6 @@
     } finally {host.remove();}
   }
   globalThis.WeftContent={create,update,enhance,lineCount,collapsed,tableCopy,openGallery,fileCard,preview,exportCanvas,closeGallery:(restoreFocus=true)=>{if(gallery){gallery._restoreFocus=restoreFocus;gallery.close();}}};
-  if(globalThis.document&&typeof MutationObserver==='function')new MutationObserver(()=>{for(const view of diagramViews)if(!view.isConnected){URL.revokeObjectURL(view._url);diagramViews.delete(view);}}).observe(document.body||document.documentElement,{childList:true,subtree:true});
+  if(globalThis.document&&typeof MutationObserver==='function')new MutationObserver(()=>{for(const view of diagramViews)if(!view.isConnected){URL.revokeObjectURL(view._url);diagramViews.delete(view);}for(const [block,observer]of pendingDiagrams)if(!block.isConnected){observer.disconnect();pendingDiagrams.delete(block);}if(gallery?._trigger&&!gallery._trigger.isConnected){gallery._restoreFocus=false;gallery.close();}}).observe(document.body||document.documentElement,{childList:true,subtree:true});
   if(globalThis.document&&typeof MutationObserver==='function')new MutationObserver(()=>{for(const block of document.querySelectorAll('.render-mermaid'))block._theme?.();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','data-accent']});
 })();
