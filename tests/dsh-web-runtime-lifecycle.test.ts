@@ -34,8 +34,9 @@ const observed = {
 // snapshot so a reader cannot observe the truncate-before-write interval.
 const saveObserved = () => {
   if (!envOutput) return
-  writeFileSync(envOutput + '.tmp', JSON.stringify(observed))
-  renameSync(envOutput + '.tmp', envOutput)
+  const target = observed.response === undefined ? envOutput : envOutput + '.response'
+  writeFileSync(target + '.tmp', JSON.stringify(observed))
+  renameSync(target + '.tmp', target)
 }
 saveObserved()
 if (mode === 'descendant' || mode === 'dispose-ack') {
@@ -56,6 +57,7 @@ setTimeout(() => {
 }, delay)
 if (mode === 'credential-ipc') {
   process.on('message', (message) => {
+    if (message.protocol !== 'weftmate.credentials.v1' || message.id !== 'fake-request-1') return
     observed.response = message
     saveObserved()
   })
@@ -85,6 +87,9 @@ async function waitForFile(path: string): Promise<string> {
 }
 
 async function waitForCredentialResponse(path: string): Promise<Record<string, unknown>> {
+  // The credential reply is immutable and separate from the initial env snapshot.
+  // A Windows reader must not force the synthetic child to replace an open target.
+  path += '.response'
   for (let attempt = 0; attempt < 100; attempt += 1) {
     if (existsSync(path)) {
       const parsed = JSON.parse(await readFile(path, 'utf8')) as Record<string, unknown>
@@ -182,16 +187,15 @@ describe('DshWebRuntime lifecycle fences（阶段 0）', () => {
       WEFTMATE_TEST_MODE: 'starting',
       WEFTMATE_TEST_ROOT_PID: rootPidFile,
     })
+    // Attach before either startup or close can settle the expected rejection.
     const start = web.start()
-    // Observe the expected rejection before close can settle it while killing
-    // the child. Waiting for process teardown first creates an unhandled race.
-    const startRejected = assert.rejects(start, /DshWebRuntime is closed/)
+    const rejectedStart = assert.rejects(start, /DshWebRuntime is closed/)
     const rootPid = Number(await waitForFile(rootPidFile))
     const closeA = web.close()
     const closeB = web.close()
     assert.strictEqual(closeA, closeB)
     await closeA
-    await startRejected
+    await rejectedStart
     assert.equal(web.isRunning(), false)
     assert.equal(isAlive(rootPid), false)
   })

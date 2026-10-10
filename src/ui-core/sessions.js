@@ -115,7 +115,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         const deadline = Date.now() + 45000;
         while (identity === core.state.identityGeneration && Date.now() < deadline) {
             if (command?.state === 'accepted_by_dsh') {
-                environment.storage.removeItem(key); return command.sessionId;
+                environment.storage.removeItem(key); rememberFolder(project.projectId); return command.sessionId;
             }
             if (['rejected', 'uncertain'].includes(command?.state)) {
                 if (command.state === 'rejected') environment.storage.removeItem(key);
@@ -126,12 +126,71 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         }
         throw { code: 'NETWORK' };
     }
+    async function partitionFolderDrop(files, inspect) {
+        const result={folders:[],files:[]};
+        for(const file of files){const path=await inspect(file);if(path)result.folders.push({file,path});else result.files.push(file);}
+        return result;
+    }
+    const folderKey = () => `weftmate-folder-choice:${core.state.ownerId}:${core.state.hostId}`;
+    function folderPreference() {
+        try { return JSON.parse(environment.storage.getItem(folderKey())) || {}; } catch { return {}; }
+    }
+    function rememberFolder(projectId) {
+        const prior = folderPreference();
+        const recent = projectId ? [projectId, ...(prior.recent || []).filter(id => id !== projectId)].slice(0, 5) : prior.recent || [];
+        try { environment.storage.setItem(folderKey(), JSON.stringify({...prior, selected:projectId, recent, hintSeen:true})); } catch {}
+    }
+    function dismissFolderHint() {
+        try { environment.storage.setItem(folderKey(), JSON.stringify({...folderPreference(), hintSeen:true})); } catch {}
+        effects.updateAvailability();
+    }
+    function currentFolderProject() {
+        const session = core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId);
+        const id = core.state.newConversation ? core.state.newConversationProjectId : session?.projectId;
+        return core.state.projects?.find(project => project.projectId === id && !project.revoked) || null;
+    }
+    function defaultFolderProject() {
+        const id = folderPreference().selected;
+        return core.state.projects?.find(project => project.projectId === id && !project.revoked) || null;
+    }
+    const folderMutationScope = () => ({ownerId:core.state.ownerId,identity:core.state.identityGeneration,
+        sessionId:core.state.selectedSessionId,draftId:core.state.newConversationId,chatId:core.state.selectedChatId});
+    const folderMutationCurrent = operation => operation && operation.ownerId===core.state.ownerId && operation.identity===core.state.identityGeneration &&
+        operation.sessionId===core.state.selectedSessionId && operation.draftId===core.state.newConversationId && operation.chatId===core.state.selectedChatId;
+    function folderMutationPending() {return !!(folderMutationCurrent(core.state.folderChanging)||folderMutationCurrent(core.state.folderRegistering));}
+    async function registerFolderChoice(create, fields) {
+        const operation=folderMutationScope();core.state.folderRegistering=operation;effects.updateAvailability();
+        try {const result=await create(fields);if(!folderMutationCurrent(operation))return null;
+            await core.refreshSessionProjects();return folderMutationCurrent(operation)?result:null;
+        } finally {if(core.state.folderRegistering===operation)core.state.folderRegistering=null;if(operation.identity===core.state.identityGeneration)effects.updateAvailability();}
+    }
+    function folderChoiceBusy() {
+        return !!(core.state.submitting || core.state.unresolvedSubmission || core.state.sessionSelecting || core.state.attachmentUpload || core.state.sideCreating || folderMutationPending() || core.state.turnStatus === 'running' || core.state.sessions.find(row=>row.sessionId===core.state.selectedSessionId)?.running);
+    }
+    async function chooseFolderProject(project) {
+        if (folderChoiceBusy()) throw {code:'SESSION_BUSY'};
+        const identity = core.state.identityGeneration;
+        const operation=folderMutationScope();core.state.folderChanging=operation;effects.updateAvailability();
+        try {
+            if (core.isMainChat?.() || core.inMainChat?.()) {
+                if (project) await core.openSideChat({entry:'composer',parent:{kind:'project',id:project.projectId}});
+            } else if (core.state.newConversation) {
+                core.state.newConversationProjectId = project?.projectId || null;
+            } else if (core.state.selectedSessionId) {
+                await core.updateSession(core.state.selectedSessionId, {projectId:project?.projectId || null});
+            }
+            if (identity !== core.state.identityGeneration) return;
+            rememberFolder(project?.projectId || null);
+        } finally {if(core.state.folderChanging===operation)core.state.folderChanging=null;if(identity===core.state.identityGeneration)effects.updateAvailability();}
+    }
     async function updateSession(sessionId, patch) {
         const identity = core.state.identityGeneration;
         const result = await core.accessApi(`/sessions/${encodeURIComponent(sessionId)}/metadata`, { method: 'PATCH', body: patch, protectedWrite: true });
         if (identity !== core.state.identityGeneration) return false;
         for (const item of core.state.sessions) if (item.sessionId === sessionId) Object.assign(item, result);
+        for (const chat of core.state.chats || []) if (chat.activeSessionId === sessionId) Object.assign(chat, result);
         effects.renderSessions();
+        effects.updateAvailability();
         if (environment.mobileState) for (const item of environment.mobileState.sharedSessions) if (item.sessionId === sessionId) Object.assign(item, result);
         return result;
     }
@@ -183,7 +242,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         effects.renderSessions(); effects.updateAvailability();
         return result;
     }
-    return { createTemporaryConversation, projectExpanded, setProjectExpanded, projectConversations, sessionHoverDetails, refreshSessionProjects, saveProject, removeProject, createProjectConversation, refreshSessions, sessionList, updateSession, sessionGroupAction, forkSession, archiveSession, previewSessionForget, deleteSession, sessionLifecycleMessage };
+    return { folderMutationPending, registerFolderChoice, partitionFolderDrop, folderPreference, rememberFolder, dismissFolderHint, currentFolderProject, defaultFolderProject, folderChoiceBusy, chooseFolderProject, createTemporaryConversation, projectExpanded, setProjectExpanded, projectConversations, sessionHoverDetails, refreshSessionProjects, saveProject, removeProject, createProjectConversation, refreshSessions, sessionList, updateSession, sessionGroupAction, forkSession, archiveSession, previewSessionForget, deleteSession, sessionLifecycleMessage };
 };
 globalThis.WeftUiCore.sessionMenuItems = session => [
     {id:'pin',label:session.pinned?'取消置顶':'置顶',key:'P'},
