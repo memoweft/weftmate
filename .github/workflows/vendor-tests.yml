@@ -72,6 +72,22 @@ jobs:
             .local/relay-dsh/native/landlock-run/lib
             .local/relay-dsh/native/landlock-run/packages/*/lib
           key: relay-phone-dsh-linux-node24-${{ env.DSH_PIN }}-v3
+      # Relay executes directly from the workspace and its cache omits native
+      # binaries. Shipping the closure also packs the Linux launcher, whose
+      # upstream prepack requires a real native build.
+      - name: Cache pinned Linux launcher
+        id: native-cache
+        uses: actions/cache@v4
+        with:
+          path: .local/relay-dsh/native/landlock-run/packages/*/bin
+          key: vendor-dsh-native-linux-x64-${{ env.DSH_PIN }}-v1
+      - name: Build pinned Linux launcher
+        if: steps.native-cache.outputs.cache-hit != 'true'
+        working-directory: .local/relay-dsh/native/landlock-run
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y musl-tools
+          pnpm run build:native
       - name: Assemble and verify pinned vendor
         run: |
           npm run vendor:dsh

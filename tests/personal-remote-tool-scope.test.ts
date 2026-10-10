@@ -75,9 +75,10 @@ test('official ToolRuntime gives the original personal-remote scope general tool
     await ctx.plugin(tools.default, { mode: 'native', maxParallelSubCalls: 1 })
     await ctx.plugin((await import(vendor('dsh-user-approval'))).default, { policy: 'never' })
     await ctx.plugin((await import(vendor('dsh-web'))).default)
+    let effects = 0
     const fakeTool = (name: string) => tools.defineTool({ name, description: name,
       parameters: {}, output: { schema: { type: 'json' }, render: () => [{ type: 'text', text: '{}' }] },
-      execute: async () => ({ ok: true }) })
+      execute: async () => { effects++; return { ok: true } } })
     for (const name of ['pwsh', 'read', 'write', 'edit', 'glob', 'grep', 'job_output', 'job_list', 'job_kill',
       'weftmod', 'weftmod_script', 'get_goal', 'create_goal', 'update_goal', 'ask_user_question', 'future_native_capability', 'mod_sdk']) ctx.get('tools').register(fakeTool(name))
     await ctx.plugin(globalPlugin.default)
@@ -123,6 +124,7 @@ test('official ToolRuntime gives the original personal-remote scope general tool
     const standard = { ...agent, id: 'standard', session: ctx.sessions.create('standard', { meta: { agentPreset: 'standard' } }) }
     assert.ok(ctx.get('tools').schemas(standard).some((item: { name: string }) => item.name === 'pwsh'))
     assert.equal(ctx.get('tools').schemas(standard).some((item: { name: string }) => item.name === 'browser'), false)
+    assert.equal(effects, 0, 'forged calls must fail before any tool body effect')
     await ctx.fiber.dispose()
   } finally {
     if (sendDescriptor) Object.defineProperty(process, 'send', sendDescriptor)
