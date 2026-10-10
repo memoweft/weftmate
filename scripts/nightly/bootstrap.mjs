@@ -18,8 +18,8 @@ export async function bootstrap(args, { execute: injectedExecute } = {}) {
   const repository = resolve(value('--repository', join(import.meta.dirname, '../..')));
   const worktree = resolve(value('--worktree', 'D:/AIProjects/WeftMate/Worktrees/nightly'));
   const reports = resolve(value('--reports', 'D:/AIProjects/WeftMate/Runtime/Nightly'));
-  const minutes = Number(value('--minutes', 90));
-  if (!(minutes > 0 && minutes <= 240) || repository === worktree || !/[\\/]nightly$/.test(worktree)) throw Error('Use a dedicated worktree named nightly and a valid deadline');
+  const minutes = Number(value('--minutes', 90)), threshold = Number(value('--threshold', 0.08));
+  if (!(minutes > 0 && minutes <= 240 && threshold >= 0 && threshold <= 1) || repository === worktree || !/[\\/]nightly$/.test(worktree)) throw Error('Use a dedicated worktree named nightly and a valid deadline');
   const startedAt = new Date().toISOString(), now = new Date();
   const date = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   const runId = startedAt.replace(/[-:.]/g, '') + '-' + randomUUID().slice(0,8);
