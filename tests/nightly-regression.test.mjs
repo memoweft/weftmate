@@ -86,6 +86,8 @@ test('synthetic artifact write is observed before exposing its task approval', a
     for (let read = 0; read < 5; read++) {
       const approvals = (await fixture.request(`/sessions/${fixture.sessionId}/approvals`)).approvals;
       assert.equal(approvals.length, 1); assert.equal(approvals[0].status, 'pending');
+      const questions = (await fixture.request(`/sessions/${fixture.sessionId}/questions`)).questions;
+      assert.equal(questions.length, 1); assert.equal(questions[0].status, 'pending');
     }
   } finally { await fixture.close(); await rm(fixture.root, { recursive: true, force: true }); }
 });
