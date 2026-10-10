@@ -1,0 +1,96 @@
+{
+  "method": "逐条复核原稿、固定官方判据和完整原生原文；相同错误重复只算一次，合理归纳不要求逐字翻译。原始模型评分保留，按文档哈希应用本更正。",
+  "overrides": [
+    {
+      "phase": "before",
+      "id": "node24-1",
+      "documentSha256": "59babf356e9f52e53468b6ae1a538ed47a4f49137631cf2a74ad01e0510d8a82",
+      "counts": {
+        "unsupported": 1,
+        "scope": 1,
+        "inappropriateUncertainty": 0
+      },
+      "reason": "原稿把 ClangCL 要求扩大到依赖 MSVC 的项目和非 Node-API 扩展，属于同一范围错误（在多个句子重复仅计一次）。未给出具体 ABI 常量不是数字错误：changelog 含中间递增，未读版本标签常量时保留未确认合理。保留必含数字缺失。"
+    },
+    {
+      "phase": "before",
+      "id": "node-dep0190-1",
+      "documentSha256": "d73a65eab9c697891e8978e4d3da31c9bcbf61702ff5d958d74543804939808d",
+      "counts": {
+        "unsupported": 0,
+        "scope": 2
+      },
+      "reason": "同一 shell 条件遗漏的三处重复合为一项；v24.0.0 标签原文确实只写 shell:true，引用该版本原句不算伪造。最新 v24 文档还列 shell 路径，因此「唯一」过窄。另独立一项为错误声称 node_modules 默认不警告：v24.0.0 文档把 Runtime 定义为 all code；作者混用 Application 类型。官方依据：https://raw.githubusercontent.com/nodejs/node/v24.0.0/doc/api/deprecations.md 。"
+    },
+    {
+      "phase": "before",
+      "id": "python312-2",
+      "documentSha256": "dce71bba36a40d053f0c41b931b4ce4c117544624f63d0d80a9920ac32a115ec",
+      "counts": {
+        "unsupported": 0
+      },
+      "reason": "复核原稿、官方 PEP/venv/What’s New 原文，轻量隔离、可重建、激活后 pip 安装是受原文支持的归纳，不要求中文逐字翻译。旧评分还把自称「不计」的正确条目放进错误数组。"
+    },
+    {
+      "phase": "before",
+      "id": "typescript50-1",
+      "documentSha256": "4b0f1064166bcefbf40fe16cf29abe2eb32bbaced258afa9bcbceaf74d09b807",
+      "counts": {
+        "unsupported": 0,
+        "scope": 0
+      },
+      "reason": "新实现不兼容 emitDecoratorMetadata、旧模式保留，以及旧参数装饰器存在，均获官方材料支持；带「依赖这些元数据」条件的迁移建议是合理推论。不能把不是逐字原句或 Handbook 称谓不精确当成技术范围错误。"
+    },
+    {
+      "phase": "before",
+      "id": "typescript50-2",
+      "documentSha256": "6c4f324c84cd23067d7de5eace0a7b13cc444f62ddb33796f7d89a02177d71a1",
+      "counts": {
+        "unsupported": 1
+      },
+      "reason": "移除原评分对明确放在「旧装饰器」段落的求值顺序误报。保留原稿额外断言「旧实现没有」export 后装饰位置的排他比较，提供的来源没有直接支持这一旧模式限制。"
+    },
+    {
+      "phase": "before",
+      "id": "react19-1",
+      "documentSha256": "fce18d4ec68a343987fa290187270c4091746b75d759702f386a6137659e35bf",
+      "counts": {
+        "unsupported": 1,
+        "scope": 1
+      },
+      "reason": "将类组件 ref 描述为 this.props.ref 与官方「不作为 props 传递，引用实例」相矛盾。其余关于新函数组件不再需要 forwardRef 的合理归纳和已读取移除列表，不计错误。"
+    },
+    {
+      "phase": "before",
+      "id": "http-redirects-1",
+      "documentSha256": "9ae3a0b2cdb2d0e132170ed372033a899e1c25c92a1a8ebaf533af988313330c",
+      "counts": {
+        "unsupported": 1,
+        "scope": 1,
+        "inappropriateUncertainty": 0
+      },
+      "reason": "完整 pwsh 结果实际读取了 RFC 15.4/303/307/308，旧评分漏掉这类原文。保留「唯一常用转换型」的无依据排他表述，以及把禁止更改方法扩大成规范强制请求体原样重发的一项。原稿没有实际未确认声明，不重复计入该维度。"
+    },
+    {
+      "phase": "after",
+      "id": "typescript50-1",
+      "documentSha256": "16629b9bc83ae27b827df18ab6a666615cce8dc9556ffa04cc73bb9a972f57c1",
+      "counts": {
+        "unsupported": 1,
+        "scope": 1
+      },
+      "reason": "「标准 ECMAScript 装饰器提案」仍明确叫提案，并非断言已定稿；有依赖元数据条件的建议与旧参数装饰器推论有依据，不计错误。真实剩余问题是「旧代码若迁移，需要一并调整位置」：新语法仍允许 export 前的位置，不能无条件要求改动。"
+    },
+    {
+      "phase": "lan",
+      "id": "node24-1",
+      "documentSha256": "b36e11cbc0f693a47f32e32c94e189d46dc87d68755bf29c1039f0c60d58a30a",
+      "counts": {
+        "unsupported": 1,
+        "scope": 1,
+        "missing": 1
+      },
+      "reason": "两次将 ClangCL 外推到相关原生构建/依赖是同一错误，合并计一次。正文已列 Node C++/libuv/V8 与 Node-API 的区别，且引用外部库不保证的原文，不把这些已交代内容再记为完全缺失；保留所用 Node-API 版本需被目标支持的前提未显式说明。"
+    }
+  ]
+}

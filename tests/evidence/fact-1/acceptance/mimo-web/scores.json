@@ -1,0 +1,40 @@
+{
+  "method": "MiMo rubric judge; overlapping dimensions counted independently, repeated same claim deduplicated; omissions separate",
+  "input": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\tests\\evidence\\fact-1\\acceptance\\mimo-web\\results.json",
+  "judgements": [
+    {
+      "id": "react19-1",
+      "documentSha256": "ac9af26f97703cfa117cc22444dd23a603f9288f6ecddc9f0f56682230f4ec13",
+      "durationMs": 5660,
+      "usage": {
+        "completion_tokens": 62,
+        "prompt_tokens": 77863,
+        "total_tokens": 77925,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [],
+        "scope": [],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": true,
+          "verbatimExcerpts": true,
+          "claimMapping": true,
+          "issues": []
+        },
+        "selfCheckVisible": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+[
+  {
+    "createdAt": "2026-10-10T10:55:39.318626+08:00",
+    "root": "C:\\Temp\\weftmate-fact1-24a8597d-f22b-4dd0-896b-1f8f98ca8fa1",
+    "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+    "pid": 37544
+  },
+  {
+    "createdAt": "2026-10-10T10:55:39.590837+08:00",
+    "root": "C:\\Temp\\weftmate-fact1-24a8597d-f22b-4dd0-896b-1f8f98ca8fa1",
+    "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+    "pid": 12856
+  },
+  {
+    "createdAt": "2026-10-10T10:55:39.593198+08:00",
+    "root": "C:\\Temp\\weftmate-fact1-24a8597d-f22b-4dd0-896b-1f8f98ca8fa1",
+    "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+    "pid": 49412
+  },
+  {
+    "createdAt": "2026-10-10T10:55:44.504238+08:00",
+    "root": "C:\\Temp\\weftmate-fact1-24a8597d-f22b-4dd0-896b-1f8f98ca8fa1",
+    "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+    "pid": 48420
+  },
+  {
+    "createdAt": "2026-10-10T10:57:07.885902+08:00",
+    "root": "C:\\Temp\\weftmate-fact1-ab937eef-d8ae-40e1-9a5c-3a561bc5b809",
+    "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+    "pid": 47316
+  },
+  {
+    "createdAt": "2026-10-10T10:57:08.125725+08:00",
+    "root": "C:\\Temp\\weftmate-fact1-ab937eef-d8ae-40e1-9a5c-3a561bc5b809",
+    "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+    "pid": 60660
+  },
+  {
+    "createdAt": "2026-10-10T10:57:08.131198+08:00",
+    "root": "C:\\Temp\\weftmate-fact1-ab937eef-d8ae-40e1-9a5c-3a561bc5b809",
+    "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+    "pid": 36332
+  },
+  {
+    "createdAt": "2026-10-10T10:57:13.33939+08:00",
+    "root": "C:\\Temp\\weftmate-fact1-ab937eef-d8ae-40e1-9a5c-3a561bc5b809",
+    "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+    "pid": 4480
+  },
+  {
+    "createdAt": "2026-10-10T10:57:15.815535+08:00",
+    "root": "C:\\Temp\\weftmate-fact1-ab937eef-d8ae-40e1-9a5c-3a561bc5b809",
+    "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+    "pid": 50524
+  }
+]
