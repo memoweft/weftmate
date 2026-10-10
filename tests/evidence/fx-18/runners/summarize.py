@@ -1,0 +1,70 @@
+from pathlib import Path
+import json
+from datetime import datetime
+base=Path('tests/evidence/fx-18')
+report=json.loads((base/'exit-serial-final/results.json').read_text())
+assert report.get('passed') and len(report['rows'])==27
+persisted=json.loads((base/'durable-review.json').read_text())
+assert persisted['passed']
+cleanup=json.loads((base/'cleanup.json').read_text(encoding='utf-8-sig'))
+assert not cleanup['remainingOwnedProcesses'] and not cleanup['remainingRecordedCoreProcesses']
+rows=[r for r in report['rows'] if r['state']=='formation']
+root=Path((base/'exit-serial-final/run-root.txt').read_text().strip())
+core_processes=[json.loads(line) for line in (root/'trace.jsonl').read_text().splitlines() if json.loads(line).get('kind')=='core-process']
+(base/'core-processes.json').write_text(json.dumps(core_processes,indent=2),encoding='utf-8')
+labels={'tray':'托盘退出','task-manager-force':'强制结束主进程','logout-taskkill':'注销模拟'}
+old={'tray':'271–282','task-manager-force':'277–285','logout-taskkill':'275–284'}
+summary={'weftmateCodeCommit':'6fdc4d64','coreCommit':'c6d449ddd716b49de7a725b4d1f44a0e01bf4f8b','corePr':'https://github.com/memoweft/memoweft/pull/100','weftmatePr':'https://github.com/memoweft/weftmate/pull/187',
+ 'requiredUnitTests':{'passed':1290,'failed':0,'skipped':14,'note':'12 existing conditional skips and 2 real-Core cases separately passed'},
+ 'matrix':{'passed':27,'idle':9,'chat':9,'formation':9},'formation':[], 'durable':persisted,'cleanup':cleanup}
+table=['| 退出方式 / 次数 | QA-5 健康恢复（秒） | 重启到重新处理（秒） | 重启到健康正常（秒） | Core 启动到处理（秒） |','|---|---:|---:|---:|---:|']
+for row in rows:
+ core_started=next(e['at'] for e in core_processes if e['at']>=row['restartAt'])
+ delta=(datetime.fromisoformat(row['restartAt'])-datetime.fromisoformat(core_started)).total_seconds()+row['restartToProcessingMs']/1000
+ entry={k:row[k] for k in ['method','attempt','restartToProcessingMs','restartToHealthyMs']};entry['coreStartedAt']=core_started;entry['coreToProcessingMs']=round(delta*1000);summary['formation'].append(entry)
+ table.append(f"| {labels[row['method']]} / {row['attempt']} | {old[row['method']]} | {row['restartToProcessingMs']/1000:.3f} | {row['restartToHealthyMs']/1000:.3f} | {delta:.3f} |")
+(base/'summary.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding='utf-8')
+body='''# FX-18 · 记忆形成中退出后的立即恢复
+
+WeftMate PR（拉取请求）：[#187](https://github.com/memoweft/weftmate/pull/187)。Core（记忆核心）PR：[#100](https://github.com/memoweft/memoweft/pull/100)，固定提交 `c6d449ddd716b49de7a725b4d1f44a0e01bf4f8b`；Core 从指定 `68d511f` 独立工作树开发，未切换主目录，待 Claude squash（压缩合并）后更新引用。
+
+## 根因与修复
+
+1. Core 只按 300 秒 lease（租约）过期回收 processing（处理中）作业；领取者已退出也继续等待。正常退出的 Core 等待为 5 秒，宿主 RPC（远程过程调用）3 秒即结束子进程，没有先归还。
+2. 宿主启动只重放 outbox（持久待提交队列）。队列为空时不会主动打开已有记忆库，还要等后续状态查询。`host-startup-before.txt` 在去掉所有状态查询后复现两项失败；修复后同一测试通过，启动与模型暂不可用后恢复都无需界面触发。
+3. 默认 Core 执行器在领取前持有唯一实例的操作系统锁，进程死亡自动释放；只回收锁已失去的领取者。同进程和其他进程的活跃持有者保留原租约与心跳。旧版 PID（进程标识）领取者只在确认进程不存在时回收，未知自定义持有者仍走原租约规则。
+4. 回收在一个 SQLite（本地数据库）事务里退还中断尝试、清除旧令牌并推进隔离代次，复用同一个作业与模型检查点。迟到的心跳、模型结果与应用不再能通过旧令牌。World（正式记忆）、来源、修订与作业终态本来就在同一事务提交：写到一半会回滚，已提交的作业不再回收。
+5. DSH（助手运行时）的纯记忆解析请求允许重做丢失响应的推理；通用执行器保留未知远端结果不重发的规则。真实失败的重试预算、最大次数和退避不变；回收不计失败。云模型若在返回结果前被中断，重做可能产生第二笔模型用量，本轮模型全部合成，用量费用为零。
+6. 正常关闭先归还本执行器作业，再最多等待线程 250 毫秒；回收事务等写锁最多 200 毫秒，竞争时留给强制结束后的启动恢复。宿主沿既有 3 秒 RPC 与 MAINT-1 退出兜底。
+7. 宿主启动主动打开已有记忆库，用已有退避机制等可用路线；只检查数据库文件元数据，不自行查询或改写 Core 数据库。健康新增 `recovering`（继续整理中）及可选 `recoveringFormationCount`，设置和动态使用“正在继续整理上次没做完的记忆”，完成后自动回到正常。
+
+## 最终真实退出矩阵
+
+真实 Electron（桌面程序框架）、真实 DSH、真实 Core，随机端口、合成账号与临时目录。托盘菜单实际回调；强制结束使用本应用实际主进程；注销模拟为普通 taskkill 后必要时强制结束，没有注销本人系统。计时从重新调用 Electron 启动开始，包括应用启动和登录恢复；Core 启动到处理另列。最后串行批次没有与本包全量单测重叠。
+
+'''+ '\n'.join(table)+'''
+
+空闲、聊天进行中、形成中各 9/9，共 27/27。形成中 9/9 在重启后 10 秒内开始处理，30 秒内恢复健康。完成后待提交为 0、无 `.tmp` 残片、每次退出本场景进程残留为 0。冷读磁盘核对：36 条来源、36 个作业、36 个正式认知，均已应用且尝试次数均为 1；来源与边界无重复。形成中的最后原话 9/9、聊天中确认已被接受的最后原话 9/9 保留。
+
+## 测试与证据
+
+- `required-unit-tests.txt`：按 CI（持续集成）相同命令 `node .github/scripts/ci-unit-tests.mjs required`，1,290 通过、0 失败；14 项条件跳过 = 12 项既有项 + 2 项本包真实 Core 专用用例，后两项已在本地专项与 Observed bridge（真实核心集成）独立通过。未新增例外清单或放宽断言。
+- `typecheck.txt`：`npm run typecheck` 通过。
+- `core-worker-tests.txt`：42 项，含失去实例锁、活跃实例不误伤、旧版升级、跨原租约心跳、最后一次尝试、模型检查点重放、原子应用中断回滚、正常归还和写锁竞争。
+- `core-bridge-tests.txt`：78 项通过；`core-mypy.txt`：本地严格类型检查 222 个文件通过。Core 最终提交的 Linux CI 1,918 项通过。
+- `host-integration-tests.txt`：正常退出、杀死实际 Core 解释器，均不查状态就自动恢复；回收期间健康可见，原边界重投不重复，最后一条正式对象与修订均为 1。
+- `exit-serial-final/results.json`：最终 27 场景原始记录；`durable-review.json`：只读 SQLite 与原生压缩会话日志复核；`summary.json`：汇总。
+- `recovery-ui-final/`：真实恢复中与完成后的界面，桌面 1120px / 480px、手机 360×780 / 390×844，浅深色共 8 张及完成截图；动态实际接口也核对同一条记录转为完成。`ui-detector.json` 为本次文案与组件检查零发现。
+
+## 早期失败与边界
+
+`baseline/` 确认旧版重启后仍为降级，待提交 0、待形成 1，没有新形成请求。其汇总 `passed=false` 来自早期运行器仍按 27 行检查单场景，场景内复现断言为 true；原件保留。
+
+`exit-matrix/` 与 `exit-formation-final/` 是并发全量负载时的早期批次；数据均保留，但部分进程启动超过 10 秒，没有当作目标通过。诊断显示 Core 启动后不到 1 秒便重新请求模型，耗时在应用启动之前；另修正了运行器过晚补回合成模型凭据。`startup-host-tests.txt` 的一次原有 2 秒用例在负载下用了 2.03 秒，随后在完整必过单测中以原断言通过（0.89 秒）。
+
+第一批聊天运行器仅看任意模型请求活跃，可能把标题请求当成已接受聊天，冷读有一条原话尚未进入原生日志。最终运行器先核对该条真实用户事件再退出，9/9 保留；不把前批未确认接收说成已经证明的数据丢失或通过。第一次手机截图在登录后的主视图就绪前打开记忆超时，补上视图等待后最终界面批次通过。Core 初次 CI 的新测试类型注解遗漏已补齐，最终检查通过。
+
+无新增业务路由、权限或安卓壳版本；Apple（苹果客户端）需识别新增健康状态与计数，未改动或验收 Apple 原生页面。未使用真实模型、未访问 8081 / 18186、未读取日用密钥库或操作本人程序与数据。未部署、未合并，最终 WeftMate CI 交 Claude。旧版 PID 恰好被复用时保守等待原租约，新实例锁不依赖 PID。
+'''
+(base/'README.md').write_text(body,encoding='utf-8')
+print('Summary and README written for 27 passing scenarios')
