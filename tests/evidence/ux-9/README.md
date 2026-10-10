@@ -30,7 +30,7 @@
 | 安卓界面包项目菜单 | [浅](android-bundle-light-projects.png) | [深](android-bundle-dark-projects.png) | 可选择现有项目 |
 | 安卓选择 / 离线 | [已选](android-bundle-selected.png) | [离线禁用](android-bundle-offline.png) | 离线不浏览电脑磁盘 |
 | MuMu独立原生壳 | [空白](android-native-light-blank.png)、[菜单](android-native-light-plus.png)、[文件夹](android-native-light-folders.png) | [空白](android-native-dark-blank.png)、[菜单](android-native-dark-plus.png)、[文件夹](android-native-dark-folders.png) | 独立包 `com.memoweft.weftmate.mobile.ux9qa`，浅深真实实拍，0界面错误；[已选项目](android-native-selected.png) |
-| MiMo真实读写与审批 | [审批1](mimo-approval-1.png)、[审批2](mimo-approval-2.png)、[审批3](mimo-approval-3.png)、[审批4](mimo-approval-4.png) | [结果](mimo-result.png) | 合成项目中生成README.md，磁盘与成果库均核对 |
+| MiMo（小米模型服务）真实读写与审批 | [审批1](mimo-approval-1.png)、[审批2](mimo-approval-2.png)、[审批3](mimo-approval-3.png)、[审批4](mimo-approval-4.png) | [结果](mimo-result.png) | 合成项目中生成README.md，磁盘与成果库均核对 |
 
 行为断言见 [checks.json](checks.json)；原生壳检查见 [android-native.json](android-native.json)。截图中的密钥式字符串都是既有夹具的明确合成文本，不是实际凭据。
 
@@ -52,9 +52,9 @@
 - `node --test tests/folder-choice.test.ts`：10/10；包括三分支、账户隔离、发送锁、真实路径分类、高风险警告、浏览器任意路径拒绝、现有权限修订。
 - 现有界面交互保护点全部保留。夹具补充标签 / id / 逗号选择器、父节点和插入能力；启动关闭竞态测试提前附着原有拒绝断言，避免未处理拒绝；凭据回复使用独立的不可变快照，防止 Windows 读取初始快照时迫使替身进程替换打开的目标并重启，仍断言只处理一次请求。手机菜单夹具补齐真实按钮父节点，避免新增动态菜单项落在树外。
 - `npm run typecheck`通过；安卓界面包生成 / 一致性校验与独立APK（安卓安装包）、JVM（Java虚拟机）测试通过，版本号未改。
-- 真实Electron选择框大多数场景用测试替身返回合成目录。真实Windows对话框已打开，并通过电脑操作工具填入合成临时路径；确认选择时工具收到物理Escape停止信号，停止了电脑操作，因此**真实原生选择完成的冒烟未通过**。没有把打开或填入路径记作成功。
-- 完整必过单测最终通过数及PR检查结果见交付结果；只有0失败才写done。
-- 无新增业务路由。Android不用新壳；Windows增加原生文件夹检查 / 拖放 / 显示 / 可信登记桥，需要程序本体更新。完整路径留在本机，远程仅路径末两级。项目偏好按账户 / 宿主保存在本设备。登记 / 迁移 / 权限保存中的发送锁按账户和草稿作用域隔离，迟到回应不会锁住其他账户或释放其新操作。
+- 真实Electron（桌面程序框架）选择框大多数场景用测试替身返回合成目录。真实Windows对话框已打开，并通过电脑操作工具填入合成临时路径；确认选择时工具收到物理Escape停止信号，停止了电脑操作，因此**真实原生选择完成的冒烟未通过**。没有把打开或填入路径记作成功。
+- 已完成 CI（持续集成）同命令 `node .github/scripts/ci-unit-tests.mjs required`：1311项，1299通过、0失败、12项沿用主干跳过，耗时1105.6秒。随后追合UX-7 / FX-18：192/192相关测试、真实Electron / 手机网页 / 安卓界面包完整文件夹场景复验通过，建议条与胶囊均保留。完整CI见PR当前提交。
+- 无新增业务路由。Android（安卓）不用本包新增壳能力；Windows增加原生文件夹检查 / 拖放 / 显示 / 可信登记桥，需要程序本体更新。完整路径留在本机，远程仅路径末两级。最新安卓0.8.23 / code36与界面包默认版本均继承main，本包没有自行递增。项目偏好按账户 / 宿主保存在本设备。登记 / 迁移 / 权限保存中的发送锁按账户和草稿作用域隔离，迟到回应不会锁住其他账户或释放其新操作。
 
 ## MiMo用量
 
