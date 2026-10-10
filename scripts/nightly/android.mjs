@@ -11,7 +11,7 @@ async function until(fn) { for (let i = 0; i < 100; i++) { try { if (await fn())
 export async function startAndroid(out) {
   const statePath = option('--state', join(out, '../android-state.json'));
   const state = { installed: [], forward: [], reverse: [] }, persist = () => writeFile(statePath, JSON.stringify(state));
-  let browser, probe, probeLog = '', originalTheme;
+  let browser, probe, probeLog = '';
   const reverse = async port => { port = String(port); if (['8081', '18186'].includes(port)) throw Error('Forbidden personal port'); if (state.reverse.includes(port)) return; command('reverse', `tcp:${port}`, `tcp:${port}`); state.reverse.push(port); await persist(); };
   const close = async () => {
     if (probe) {
@@ -20,17 +20,19 @@ export async function startAndroid(out) {
     await browser?.close().catch(() => {});
     for (const port of state.reverse) try { command('reverse', '--remove', `tcp:${port}`); } catch {}
     for (const port of state.forward) try { command('forward', '--remove', `tcp:${port}`); } catch {}
-    if (originalTheme) try { command('shell', 'cmd', 'uimode', 'night', originalTheme); } catch {}
-    for (const name of state.installed.reverse()) try { command('uninstall', name); } catch {}
+    const uninstalled = [];
+    for (const name of [...state.installed].reverse()) try { command('uninstall', name); uninstalled.push(name); state.installed = state.installed.filter(p=>p!==name); await persist(); } catch {}
+    state.reverse = state.reverse.filter(port=>command('reverse','--list').toString().includes(`tcp:${port}`));
+    state.forward = state.forward.filter(port=>command('forward','--list').toString().includes(`tcp:${port}`));
+    await persist();
     const packages = command('shell', 'pm', 'list', 'packages', 'weftmate').toString();
-    await writeFile(join(statePath, '../android-cleanup.json'), JSON.stringify({ packageRemoved: !packages.includes(pkg), reverseRemoved: !command('reverse', '--list').toString().split('\n').some(line => state.reverse.some(port => line.includes(`tcp:${port}`))), forwardRemoved: !command('forward', '--list').toString().split('\n').some(line => state.forward.some(port => line.includes(`tcp:${port}`))), probePassed: /OK \(1 test\)/.test(probeLog), originalThemeRestored: !!originalTheme }, null, 2));
+    await writeFile(join(statePath, '../android-cleanup.json'), JSON.stringify({ packageRemoved: !packages.includes(pkg), reverseRemoved: !command('reverse', '--list').toString().split('\n').some(line => state.reverse.some(port => line.includes(`tcp:${port}`))), forwardRemoved: !command('forward', '--list').toString().split('\n').some(line => state.forward.some(port => line.includes(`tcp:${port}`))), probePassed: /OK \(1 test\)/.test(probeLog), uninstalled, settingsChanged:false }, null, 2));
   };
   try {
-    if (command('shell', 'pm', 'list', 'packages', 'weftmate').toString().includes('weftmate')) throw Error('被占用，未拍（已有 WeftMate 测试应用）');
-    originalTheme = command('shell', 'cmd', 'uimode', 'night').toString().trim().split(/:\s*/).at(-1);
+    if (command('shell', 'pm', 'list', 'packages', pkg).toString().split(/\r?\n/).some(line=>line.trim() === 'package:'+pkg || line.trim() === 'package:'+pkg+'.test')) throw Error('被占用，未拍（已有 WeftMate 测试应用）');
     await persist();
     for (const [file, name] of [['debug/app-debug.apk', pkg], ['androidTest/debug/app-debug-androidTest.apk', pkg + '.test']]) {
-      command('install', join(repository, 'apps/android/app/build/outputs/apk', file)); state.installed.push(name); await persist();
+      state.installed.push(name); await persist(); command('install', join(repository, 'apps/android/app/build/outputs/apk', file));
     }
     probe = spawn(adb, ['-s', serial, 'shell', 'am', 'instrument', '-w', '-e', 'class', 'com.memoweft.weftmate.mobile.NightlyWebViewProbeTest', '-e', 'nightlyProbe', '1', `${pkg}.test/androidx.test.runner.AndroidJUnitRunner`], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
     probe.stdout.on('data', bytes => { probeLog += bytes; }); probe.stderr.on('data', bytes => { probeLog += bytes; });
@@ -49,7 +51,7 @@ export async function startAndroid(out) {
       for (const [side, value] of Object.entries(safe)) document.documentElement.style.setProperty(`--native-safe-${side}`, value);
       document.documentElement.dataset.nativeInsets = 'true';
     }), safe);
-    return { browser, page, reverse, theme: async theme => { command('shell', 'cmd', 'uimode', 'night', theme === 'dark' ? 'yes' : 'no'); }, screenshot: async () => {
+    return { browser, page, reverse, theme: async () => {}, screenshot: async () => {
       const renderedTheme = await page.evaluate(() => document.documentElement.dataset.theme);
       await until(() => command('shell', 'run-as', pkg, 'cat', 'files/nightly-bars-theme.txt').toString().trim() === renderedTheme);
       await page.evaluate(() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done))));

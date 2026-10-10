@@ -20,6 +20,7 @@ export async function runVendorTests(run, worktree, out) {
 export function vendorTestMarkdown(phases) {
   const phase = phases.find(item => item.name === 'vendor-tests');
   if (!phase) return ['## 固定 DSH vendor（运行时依赖）测试', '', '🔴 未运行。'];
+  if (['not-run','skipped','environment'].includes(phase.status)) return ['## 固定 DSH vendor（运行时依赖）测试', '', `🔴 未运行：${phase.reason}`];
   const tests = phase.tests;
   return ['## 固定 DSH vendor（运行时依赖）测试', '',
     `${phase.status === 'passed' ? '🟢 通过' : '🔴 失败'}${tests ? `：${tests.passed} 通过 / ${tests.failed} 失败 / ${tests.skipped} 跳过` : `：${phase.reason}`}`,

@@ -6,6 +6,18 @@ import { collectEvidence } from '../review-gallery/evidence.mjs';
 import { vendorTestMarkdown } from './vendor-tests.mjs';
 
 export const key = row => `${row.platform}/${row.scene}/${row.theme}`;
+export const expectedPhases = [
+  { name:'prepare', platforms:[] }, { name:'vendor-tests', platforms:[] },
+  { name:'installed-smoke', platforms:[] }, { name:'windows', platforms:['windows'] },
+  { name:'mobile-web', platforms:['mobile-web'] }, { name:'apple', platforms:['mac','iphone','watch'] },
+  { name:'android', platforms:['android'] }, { name:'cleanup', platforms:[] },
+];
+export function completePhases(phases = []) {
+  const failure = phases.find(p => p.status === 'failed' || p.status === 'environment');
+  return [...expectedPhases.map(p => phases.find(item => item.name === p.name) || {
+    ...p, status:'not-run', reason: failure ? `前序 ${failure.name} 未完成：${failure.reason || '运行失败'}` : '编排没有执行此阶段',
+  }), ...phases.filter(p => !expectedPhases.some(e => e.name === p.name))];
+}
 // Decode actual PNG pixels (not compressed-byte differences). Native screenshots
 // and Chromium/Electron emit non-interlaced 8-bit PNG; other formats fail visibly.
 export function pixels(png) {
@@ -59,6 +71,7 @@ export async function inspect(records, { now = Date.now(), threshold = 0.08, bas
     const count = counts[row.platform], unavailable = catalog.scenes.find(s => s.id === row.scene).unavailable?.includes(row.platform);
     if (unavailable) { count.unavailable++; continue; }
     count.expected++;
+    if (row.status === 'not-run') continue;
     if (!row.path || row.status === 'failed') { alerts.push({ cell: key(row), kind: row.status === 'failed' ? 'failed' : 'missing', message: row.reason || row.status || '缺图' }); continue; }
     count.captured++;
     const age = now - Date.parse(row.generatedAt);
@@ -78,22 +91,14 @@ export async function inspect(records, { now = Date.now(), threshold = 0.08, bas
   return { generatedAt: new Date(now).toISOString(), counts, threshold, alerts, differences, phases };
 }
 export async function previousRun(root, current) {
-  const baseline = [], seen = new Set(); let baselineDirectory;
-  const dates = (await readdir(root, { withFileTypes: true })).filter(e => e.isDirectory() && /^\d{4}-\d{2}-\d{2}$/.test(e.name)).map(e => e.name).sort().reverse();
-  for (const date of dates) {
-    const runs = (await readdir(join(root, date), { withFileTypes: true })).filter(e => e.isDirectory()).map(e => e.name).sort().reverse();
-    for (const run of runs) {
-      const dir = join(root, date, run, 'gallery');
-      if (resolve(dir) === resolve(current)) continue;
-      try {
-        const manifest = JSON.parse(await readFile(join(dir, 'manifest.json'), 'utf8'));
-        for (const row of manifest.records) if (row.file && !seen.has(key(row))) {
-          baseline.push({ ...row, baselinePath: join(dir, row.file) }); seen.add(key(row)); baselineDirectory ||= dir;
-        }
-      } catch {}
-    }
+  const baselineDirectory = join(root, 'approved-baseline');
+  try {
+    const manifest = JSON.parse(await readFile(join(baselineDirectory, 'manifest.json'), 'utf8'));
+    return { baseline: manifest.records.map(row => ({ ...row, baselinePath: join(baselineDirectory,row.file) })), baselineDirectory };
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+    return { baseline: [] };
   }
-  return { baseline, baselineDirectory };
 }
 export async function retention(root, now = new Date()) {
   const cutoff = new Date(now); cutoff.setHours(0, 0, 0, 0); cutoff.setDate(cutoff.getDate() - 13);
@@ -108,17 +113,23 @@ export async function retention(root, now = new Date()) {
   return removed;
 }
 export async function report(out, options) {
+  options = { ...options, phases: completePhases(options.phases) };
   const records = await collectEvidence(join(out, 'gallery'), { includeRepositoryEvidence: false });
   for (const row of records) if (!row.path && !catalog.scenes.find(s => s.id === row.scene).unavailable?.includes(row.platform)) {
-    const phase = options.phases.find(p => p.platforms?.includes(row.platform) && p.status !== 'passed');
-    if (phase) Object.assign(row, { status: 'failed', reason: phase.reason, synthetic: true, commit: options.commit, generatedAt: new Date().toISOString() });
+    const phase = options.phases.find(p => p.platforms?.includes(row.platform));
+    if (phase && phase.status !== 'passed') Object.assign(row, { status: phase.status === 'failed' ? 'failed' : 'not-run', reason: phase.reason || '阶段未产生此格截图', synthetic: true, commit: options.commit, generatedAt: new Date().toISOString() });
   }
   const result = await inspect(records, options);
-  Object.assign(result, { commit: options.commit, startedAt: options.startedAt, durationSeconds: (Date.now() - Date.parse(options.startedAt)) / 1000, cleanup: options.cleanup, baseline: options.baselineDirectory ? 'previous local run' : '首次运行：无像素基线' });
+  const summary = { notRunStages: options.phases.filter(p => ['not-run','skipped','environment'].includes(p.status)).length,
+    failedStages: options.phases.filter(p => p.status === 'failed').length,
+    notRunCells: records.filter(r => r.status === 'not-run').length, failedCells: records.filter(r => r.status === 'failed').length };
+  Object.assign(result, { summary, bootstrapCommit: options.bootstrapCommit || 'unknown', commit: options.commit, startedAt: options.startedAt, durationSeconds: (Date.now() - Date.parse(options.startedAt)) / 1000, cleanup: options.cleanup, baseline: options.baselineDirectory ? '人工认可基线（不会随夜间运行自动替换）' : '尚未认可像素基线，请审稿后执行 approve-baseline.mjs' });
   await writeFile(join(out, 'nightly-status.json'), JSON.stringify(result, null, 2) + '\n');
   await writeFile(join(out, 'outcomes.json'), JSON.stringify(records.map(({ path, ...row }) => row), null, 2));
-  const lines = ['# WeftMate 夜间回归报告', '', `提交：\`${options.commit}\``, `开始：${options.startedAt}`, `结束：${result.generatedAt}`, `耗时：${result.durationSeconds.toFixed(1)} 秒`, '', `结果：${result.alerts.length ? `报警（${result.alerts.length} 项）` : '通过'}`, '[打开本轮审稿页](gallery/index.html)', '', '| 端 | 本轮新拍 / 应拍 | 此端尚无 |', '|---|---:|---:|', ...Object.entries(result.counts).map(([p, c]) => `| ${p} | ${c.captured} / ${c.expected} | ${c.unavailable} |`), '', '## 批次', '', '| 批次 | 结果 | 秒 | 原因 |', '|---|---|---:|---|', ...options.phases.map(p => `| ${p.name} | ${p.status} | ${(p.seconds || 0).toFixed(1)} | ${p.reason || ''} |`), '', '## 报警', '', ...(result.alerts.length ? result.alerts.map(a => `- ${a.cell}：${a.kind} · ${a.message}`) : ['无。']), '', '## 差异最大的格', '', `阈值：${(result.threshold * 100).toFixed(2)}%；每个像素任一 RGBA 通道变化超过 24 才计入。尺寸变化计 100%。`, '', ...(result.differences.length ? result.differences.slice(0, 10).map(d => `- ${d.cell}：${(d.ratio * 100).toFixed(2)}%`) : [result.baseline]), '', '## 清理', '', '```json', JSON.stringify(options.cleanup, null, 2), '```', '', '仅合成夹具，无真实模型。没有历史截图补位；此端尚无按共同审稿清单排除。', ''];
-  lines.push(...vendorTestMarkdown(options.phases), '');
+  const lines = ['# WeftMate 夜间回归报告', '', `引导层提交：\`${result.bootstrapCommit}\`` , `被测提交：\`${options.commit}\``, `开始：${options.startedAt}`, `结束：${result.generatedAt}`, `耗时：${result.durationSeconds.toFixed(1)} 秒`, '', `结果：未运行 ${summary.notRunStages} 阶段 / ${summary.notRunCells} 格；执行后失败 ${summary.failedStages} 阶段 / ${summary.failedCells} 格；${result.alerts.length ? `报警（${result.alerts.length} 项）` : '通过'}`, '[打开本轮审稿页](gallery/index.html)', '', '| 端 | 本轮新拍 / 应拍 | 此端尚无 |', '|---|---:|---:|', ...Object.entries(result.counts).map(([p, c]) => `| ${p} | ${c.captured} / ${c.expected} | ${c.unavailable} |`), '', '## 批次', '', '| 批次 | 结果 | 秒 | 原因 |', '|---|---|---:|---|', ...options.phases.map(p => `| ${p.name} | ${['not-run','skipped'].includes(p.status) ? '未运行' : p.status === 'environment' ? '未运行（环境问题）' : p.status} | ${(p.seconds || 0).toFixed(1)} | ${p.reason || ''} |`), '', '## 报警', '', ...(result.alerts.length ? result.alerts.map(a => `- ${a.cell}：${a.kind} · ${a.message}`) : ['无。']), '', '## 差异最大的格', '', `阈值：${(result.threshold * 100).toFixed(2)}%；每个像素任一 RGBA 通道变化超过 24 才计入。尺寸变化计 100%。`, '', ...(result.differences.length ? result.differences.slice(0, 10).map(d => `- ${d.cell}：${(d.ratio * 100).toFixed(2)}%`) : [result.baseline]), '', '## 清理', '', '```json', JSON.stringify(options.cleanup, null, 2), '```', '', '仅合成夹具，无真实模型。没有历史截图补位；此端尚无按共同审稿清单排除。', ''];
+  const installed = options.phases.find(p => p.name === 'installed-smoke');
+  lines.push(...vendorTestMarkdown(options.phases), '', '## 安装版冒烟', '',
+    installed.checks ? `${installed.status}：完成 ${installed.checks.length} 项检查` : `未运行 / 未完成：${installed.reason || installed.status}`, '');
   await writeFile(join(out, 'nightly-report.md'), lines.join('\n'));
   return result;
 }
