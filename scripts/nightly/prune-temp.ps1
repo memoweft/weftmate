@@ -1,3 +1,6 @@
+#Requires -Version 7.0
+# Deletion relies on PowerShell 7 removing junctions as links. Windows PowerShell 5.1 may descend into
+# a junction target with Remove-Item -Recurse, so this script refuses to run there.
 [CmdletBinding()]
 param(
     [ValidateRange(1, 8760)][int]$Hours = 48,
