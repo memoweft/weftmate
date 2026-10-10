@@ -61,12 +61,13 @@ export function canonicalCommand(value, hostId, internal = false) {
     'attachmentMessageId', 'originalAttachments', 'sourceSyncEventId',
     ...(internal ? ['taskId', 'artifactId', 'fileName', 'size', 'sha256', 'rootTaskId', 'taskAction',
       'projectId', 'projectRevision', 'sourceReceiptId', 'sourceSnapshotIds', 'workspaceKind', 'initialUrls',
-      'conversationId', 'cutoverSyncSeq', 'contextHash', 'acknowledgeUncertainLocalTurn', 'modelInputHash', 'sideChat', 'chatId', 'chatRequestHash', 'attachmentSessionId'] : [])],
+      'conversationId', 'cutoverSyncSeq', 'contextHash', 'acknowledgeUncertainLocalTurn', 'modelInputHash', 'sideChat', 'chatId', 'chatRequestHash', 'attachmentSessionId', 'nativeFile'] : [])],
     ['requestId', 'kind', 'targetDeviceId']);
   if (typeof value.requestId !== 'string' || !REQUEST_ID.test(value.requestId) ||
       !(KINDS.has(value.kind) || (internal && value.kind === INTERNAL_ARTIFACT_KIND))) {
     throw failure('INVALID_REQUEST');
   }
+  if (value.nativeFile !== undefined && value.kind !== INTERNAL_ARTIFACT_KIND) throw failure('INVALID_REQUEST');
   if (value.targetDeviceId !== hostId) throw failure('TARGET_UNAVAILABLE', 409);
   if ((value.projectId === undefined) !== (value.projectRevision === undefined) ||
       (value.projectId !== undefined && (!internal || !validId(value.projectId) ||
@@ -170,11 +171,12 @@ export function canonicalCommand(value, hostId, internal = false) {
     id(value.sessionId);
   } else if (value.kind === INTERNAL_ARTIFACT_KIND) {
     exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'sessionId', 'taskId', 'artifactId',
-      'fileName', 'size', 'sha256', 'sourceReceiptId', 'sourceSnapshotIds'], ['requestId', 'kind', 'targetDeviceId', 'sessionId',
+      'fileName', 'size', 'sha256', 'sourceReceiptId', 'sourceSnapshotIds', 'nativeFile'], ['requestId', 'kind', 'targetDeviceId', 'sessionId',
       'taskId', 'artifactId', 'fileName', 'size', 'sha256']);
     id(value.sessionId); id(value.taskId); id(value.artifactId);
-    if (!validArtifactFileName(value.fileName) || !Number.isSafeInteger(value.size) ||
-        value.size < 1 || value.size > 128 * 1024 || !/^[a-f0-9]{64}$/.test(value.sha256)) {
+    if (value.nativeFile !== undefined && value.nativeFile !== true ||
+        !(value.nativeFile ? typeof value.fileName === 'string' && value.fileName.length > 0 && !/[\\/\0]/.test(value.fileName) : validArtifactFileName(value.fileName)) || !Number.isSafeInteger(value.size) ||
+        value.size < (value.nativeFile ? 0 : 1) || !value.nativeFile && value.size > 128 * 1024 || !/^[a-f0-9]{64}$/.test(value.sha256)) {
       throw failure('INVALID_COMMAND');
     }
     if ((value.sourceReceiptId === undefined) !== (value.sourceSnapshotIds === undefined) ||
@@ -195,7 +197,7 @@ export function canonicalCommand(value, hostId, internal = false) {
     'sourceSyncEventId',
     'taskId', 'artifactId', 'fileName', 'size', 'sha256', 'rootTaskId', 'taskAction',
     'projectId', 'projectRevision', 'sourceReceiptId', 'sourceSnapshotIds', 'workspaceKind', 'initialUrls',
-    'conversationId', 'cutoverSyncSeq', 'contextHash', 'acknowledgeUncertainLocalTurn', 'modelInputHash', 'sideChat', 'chatId', 'chatRequestHash', 'attachmentSessionId']
+    'conversationId', 'cutoverSyncSeq', 'contextHash', 'acknowledgeUncertainLocalTurn', 'modelInputHash', 'sideChat', 'chatId', 'chatRequestHash', 'attachmentSessionId', 'nativeFile']
     .filter((key) => Object.hasOwn(value, key) || (key === 'mode' && value.kind === 'session.message'))
     .map((key) => [key, key === 'mode' ? (value.intent ?? value.mode ?? 'steer')
       : key === 'attachments' ? value.attachments.map(canonicalSharedAttachment)

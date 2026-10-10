@@ -121,6 +121,7 @@
     preview.panel.hidden = false; document.body.classList.add('preview-open')
     if (opening) globalThis.WeftMotion?.reveal(preview.panel, '240ms')
     preview.active = key; preview.content = selected.content
+    selected.tab.scrollIntoView({ block: 'nearest', inline: 'nearest' })
     for (const [id, tab] of tabs) {
       tab.content.hidden = id !== key; tab.select.setAttribute('aria-selected', String(id === key)); tab.select.tabIndex = id === key ? 0 : -1
     }

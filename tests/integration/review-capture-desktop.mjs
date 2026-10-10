@@ -59,6 +59,7 @@ for (const theme of ['light', 'dark']) {
     const settings = async () => { await home(); await button('账户菜单').click(); await button('设置').click(); };
     const preparations = {
       onboarding: async () => { await settings(); await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '常规', exact: true }).click(); await button('重新查看引导').click(); await page.getByRole('heading', { name: '你好，我是 WeftMate', exact: true }).waitFor(); },
+      library: async () => { await home(); await button('成果库').click(); await button('预览 项目进度报告.md').click(); await page.getByRole('heading',{name:'项目进度报告',exact:true}).waitFor(); },
       activity: async () => { await home(); await fixture.recordActivity({ key:'gallery-paused', type:'memory.paused', title:'记忆已暂停', summary:'记忆暂时无法更新，可在记忆页查看状态。', level:'normal' }); await button(/^动态(?:，|$)/).click(); await page.getByRole('heading',{name:'动态',exact:true}).waitFor(); await page.getByText('记忆已暂停',{exact:true}).waitFor(); },
       sessions: async () => { await home(); await button('搜索会话').click(); await page.getByRole('searchbox', { name: '搜索会话', exact: true }).waitFor(); },
       'composer-menu': async()=>{await home();await button('添加图片或文件').click();await page.getByRole('menu',{name:'添加附件与深入思考'}).waitFor();await page.getByRole('menuitemcheckbox',{name:'深入思考'}).waitFor();},

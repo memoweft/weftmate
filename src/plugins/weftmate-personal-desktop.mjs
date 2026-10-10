@@ -736,7 +736,7 @@ export function apply(ctx) {
     return { kind: 'ask', reason };
   });
   ctx.on('tools/execute', (exec, next) => webExecution.run(exec, () => trackNativeFiles(bridge, exec,
-    () => trackPersonalExecution(bridge, exec, next, background, approvals), personalExecutionIdentity)));
+    () => trackPersonalExecution(bridge, exec, next, background, approvals), child => personalExecutionIdentity(delegatedExecutions.get(child.agent) ?? child))));
   ctx.on('tools/post-execute', appendNativeArtifacts);
   ctx.effect(() => () => { disposeProjectSandbox(); disposeFetch(); disposeProof(); approvals.close(); background.close(); bridge.close(); },
     'weftmate-personal-desktop: lifecycle');
