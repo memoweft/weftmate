@@ -16,6 +16,7 @@ import WeftMateCore
 @MainActor enum A11MacReview {
     private static func step(_ text: String) { FileHandle.standardOutput.write(Data(("A11_STEP:" + text + "\n").utf8)) }
     private static func press(_ id: String) async throws {
+        if id == "conversationMenu" { try await A16MacReview.press(id); return }
         for prefix in ["projectNewConversation.", "projectSettings."] where id.hasPrefix(prefix) {
             try await A15MacReview.hover("projectToggle." + String(id.dropFirst(prefix.count)), card: false)
         }
@@ -32,6 +33,8 @@ import WeftMateCore
         let menuObserver = A11NativeMenuObserver()
         defer { menuObserver.stop() }
         NSApplication.shared.setActivationPolicy(.regular); NSApplication.shared.activate(ignoringOtherApps: true)
+        for window in NSApplication.shared.windows where window.isVisible && A10MacReview.find("weftmateRoot", in: window) != nil { window.setContentSize(NSSize(width: 1080, height: 760)) }
+        try await Task.sleep(for: .milliseconds(400))
         _ = try await A10MacReview.wait("projectToggle." + project.id)
         try await A10MacReview.capture("projects-list", identifier: "conversationList")
         step("collapse project")

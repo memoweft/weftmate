@@ -84,16 +84,16 @@ struct MacViewWidthObserver: NSViewRepresentable {
 
 /// Native mouse tracking leaves hit testing and keyboard focus with the session's controls.
 struct SessionHoverRegion: NSViewRepresentable {
-    let changed: (Bool) -> Void
+    let changed: @MainActor (Bool) -> Void
     let identifier: String?
-    var contextMenu: (() -> NSMenu)? = nil
-    init(identifier: String? = nil, changed: @escaping (Bool) -> Void) { self.identifier = identifier; self.changed = changed }
-    func withContextMenu(_ menu: @escaping () -> NSMenu) -> Self { var copy = self; copy.contextMenu = menu; return copy }
+    var contextMenu: (@MainActor () -> NSMenu)? = nil
+    init(identifier: String? = nil, changed: @escaping @MainActor (Bool) -> Void) { self.identifier = identifier; self.changed = changed }
+    func withContextMenu(_ menu: @escaping @MainActor () -> NSMenu) -> Self { var copy = self; copy.contextMenu = menu; return copy }
     func makeNSView(context: Context) -> Region { let view = Region(); view.contextMenu = contextMenu; view.changed = changed; view.identifier = identifier.map { NSUserInterfaceItemIdentifier(rawValue: $0) }; return view }
     func updateNSView(_ view: Region, context: Context) { view.contextMenu = contextMenu; view.changed = changed; view.identifier = identifier.map { NSUserInterfaceItemIdentifier(rawValue: $0) } }
     final class Region: NSView {
-        var changed: (Bool) -> Void = { _ in }
-        var contextMenu: (() -> NSMenu)?
+        var changed: @MainActor (Bool) -> Void = { _ in }
+        var contextMenu: (@MainActor () -> NSMenu)?
         override func hitTest(_ point: NSPoint) -> NSView? {
             if contextMenu != nil, NSApplication.shared.currentEvent?.type == .rightMouseDown { return self }
             return nil

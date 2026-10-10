@@ -38,10 +38,10 @@ struct MainChatView: View {
     var body: some View {
         VStack(spacing: AppleTokens.Space.p0) {
             HStack {
-                Button { choosingDate.toggle() } label: { WeftLabel("跳日期", icon: "clock") }
-                    .buttonStyle(.plain).accessibilityIdentifier("mainChat.date")
-                Button { searching.toggle() } label: { WeftLabel("搜索", icon: "search") }
-                    .buttonStyle(.plain).disabled(!model.capabilities.supports("chatSearch")).accessibilityIdentifier("mainChat.search")
+                Button { choosingDate.toggle() } label: { if dynamicTypeSize.isAccessibilitySize { WeftIcon("clock") } else { WeftLabel("跳日期", icon: "clock") } }
+                    .buttonStyle(.plain).accessibilityLabel("跳日期").accessibilityIdentifier("mainChat.date")
+                Button { searching.toggle() } label: { if dynamicTypeSize.isAccessibilitySize { WeftIcon("search") } else { WeftLabel("搜索", icon: "search") } }
+                    .buttonStyle(.plain).disabled(!model.capabilities.supports("chatSearch")).accessibilityLabel("搜索").accessibilityIdentifier("mainChat.search")
                 Spacer()
                 Button { Task { await model.loadResources() } } label: { WeftIcon("outputs") }
                     .buttonStyle(.plain).disabled(!model.capabilities.supports("chatResources")).accessibilityLabel("输出与来源").accessibilityIdentifier("mainChat.resources")
@@ -56,11 +56,12 @@ struct MainChatView: View {
                 HStack { InlineNotice(message: error, isError: true); Button("重试") { Task { await model.configure(); await model.read() } }.buttonStyle(OutlineActionStyle()) }
                     .padding(AppleTokens.Space.p12)
             }
-            if !model.loading && !model.configuring && model.window.events.isEmpty && model.error == nil && model.configurationError == nil && !model.models.contains(where: \.configured) {
+            if model.hasLoadedModels && model.hasLoadedHistory && model.window.events.isEmpty && model.error == nil && model.configurationError == nil && !model.models.contains(where: \.configured) {
+                ScrollView {
                 VStack(spacing: AppleTokens.Space.p16) {
                     WeftIcon("model", size: AppleTokens.Space.p32)
-                    Text("添加模型，开始对话").font(AppleTokens.Fonts.title3)
-                    Text("连接一个本地或云端模型，WeftMate 就能开始帮你。").foregroundStyle(Weave.muted)
+                    Text("添加模型，开始对话").font(AppleTokens.Fonts.title3).fixedSize(horizontal: false, vertical: true)
+                    Text("连接一个本地或云端模型，WeftMate 就能开始帮你。").foregroundStyle(Weave.muted).fixedSize(horizontal: false, vertical: true)
                     Button("设置模型") {
                         #if os(macOS)
                         app.settingsRoute = .init(categoryID: "models"); openWindow(id: "settings")
@@ -68,7 +69,8 @@ struct MainChatView: View {
                         showingModels = true
                         #endif
                     }.buttonStyle(PrimaryActionStyle(fillsWidth: false))
-                }.padding(AppleTokens.Space.p24).frame(maxWidth: .infinity, maxHeight: .infinity).accessibilityIdentifier("mainChat.noModel")
+                }.padding(AppleTokens.Space.p24).frame(maxWidth: .infinity)
+                }.defaultScrollAnchor(dynamicTypeSize.isAccessibilitySize ? .top : .center).accessibilityIdentifier("mainChat.noModel")
             } else { timeline }
             composer
         }
@@ -87,7 +89,7 @@ struct MainChatView: View {
             }.padding(AppleTokens.Space.p16).frame(minWidth: 300)
                 .accessibilityElement(children: .contain).accessibilityIdentifier("mainChat.datePicker").presentationCompactAdaptation(.popover)
         }
-        .sheet(isPresented: $showingModels) { NavigationStack { SettingsView(model: app, route: .init(categoryID: "models")) } }
+        .sheet(isPresented: $showingModels) { SettingsView(model: app, route: .init(categoryID: "models"), onClose: { showingModels = false }) }
         .sheet(isPresented: $model.resourceVisible) { MainChatResourcesView(app: app, model: model) }
         .fileImporter(isPresented: $importing, allowedContentTypes: [.item], allowsMultipleSelection: true) { @Sendable result in
             Task { @MainActor in
@@ -164,7 +166,7 @@ struct MainChatView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
-                    if (model.loading || model.configuring) && model.window.events.isEmpty {
+                    if (!model.hasLoadedModels || !model.hasLoadedHistory) && model.window.events.isEmpty && model.error == nil && model.configurationError == nil {
                         VStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
                             HStack { ProgressView().controlSize(.small); Text("正在读取对话…").foregroundStyle(Weave.muted) }
                             ForEach(0..<3) { _ in
@@ -204,7 +206,7 @@ struct MainChatView: View {
                         }
                         }
                     }
-                    if model.loading { ProgressView() }
+                    if model.loading && !model.window.events.isEmpty { ProgressView() }
                     if model.window.hasNewer {
                         Button("查看后续记录") { Task { await model.read(after: model.window.newerCursor) } }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("mainChat.newer")
                     }
@@ -224,11 +226,13 @@ struct MainChatView: View {
             }
             .onChange(of: model.window.events.last?.id) { _, _ in if positions.following { proxy.scrollTo("latest", anchor: .bottom) } }
             .overlay(alignment: .bottomTrailing) {
+                if !model.window.events.isEmpty {
                 Button("回到底部") {
                     positions.following = true
                     Task { await model.returnToLatest(); proxy.scrollTo("latest", anchor: .bottom) }
                 }
                     .font(AppleTokens.Fonts.caption).buttonStyle(OutlineActionStyle()).padding(AppleTokens.Space.p12).accessibilityIdentifier("mainChat.latest")
+                }
             }
         }
     }
@@ -242,9 +246,14 @@ struct MainChatView: View {
             model.visibleAnchor = .init(eventID: first.key, pixelOffset: Double(first.value.minY))
         }
     }
+    private var composerPlaceholder: String {
+        if model.models.contains(where: \.configured) { return "和 WeftMate 聊聊" }
+        if model.configurationError != nil { return "模型未就绪" }
+        return model.hasLoadedModels ? "先添加模型" : "读取模型中…"
+    }
     private var composer: some View {
         VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
-            if !model.configuring && !model.models.contains(where: \.configured) && !model.window.events.isEmpty {
+            if model.hasLoadedModels && !model.models.contains(where: \.configured) && !model.window.events.isEmpty {
                 HStack {
                     InlineNotice(message: "先添加一个模型，再继续对话。", isError: false)
                     Button("设置模型") {
@@ -262,7 +271,7 @@ struct MainChatView: View {
             ForEach(model.attachments) { file in
                 HStack { Text(file.original.name); Button("移除") { file.removeTemporaryFiles(); model.attachments.removeAll { $0.id == file.id } } }.buttonStyle(OutlineActionStyle()).font(AppleTokens.Fonts.caption)
             }
-            TextField(model.models.contains(where: \.configured) ? "和 WeftMate 聊聊" : "先添加一个模型", text: Binding(get: { model.draft }, set: { model.setDraft($0) }), axis: .vertical).lineLimit(1...6)
+            TextField(composerPlaceholder, text: Binding(get: { model.draft }, set: { model.setDraft($0) }), axis: .vertical).lineLimit(1...6)
                 .textFieldStyle(.plain).focused($draftFocused).disabled(!model.models.contains(where: \.configured)).accessibilityIdentifier("mainChat.draft")
             if dynamicTypeSize.isAccessibilitySize { modelSelection }
             HStack {

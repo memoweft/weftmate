@@ -228,6 +228,7 @@ struct SessionGroupSheet: View {
 }
 struct ArchivedSessionsView: View {
     @ObservedObject var app: AppleAppModel
+    let openConversation: @MainActor (String) -> Void
     @State private var search = ""
     private var rows: [ConversationSummary] { app.conversations.filter { $0.archived && (search.isEmpty || $0.title.localizedCaseInsensitiveContains(search)) } }
     var body: some View {
@@ -239,13 +240,24 @@ struct ArchivedSessionsView: View {
             List {
                 ForEach(rows) { row in
                     HStack {
-                        Text(row.title)
-                        Spacer()
-                        Button("恢复") { Task { await app.archive(row, archived: false) } }.accessibilityIdentifier("restoreArchived." + row.id)
-                        Button("删除", role: .destructive) { app.askToDelete(row, inSettings: true) }.accessibilityIdentifier("deleteArchived." + row.id)
-                            #if os(macOS)
-                            .foregroundStyle(Weave.danger)
-                            #endif
+                        Button { openConversation(row.id) } label: {
+                            HStack { WeftIcon("chat", size: AppleTokens.Space.p16); Text(row.title); Spacer(); WeftIcon("right", size: AppleTokens.Space.p12) }
+                                .frame(maxWidth: .infinity, minHeight: AppleTokens.Space.p44, alignment: .leading).contentShape(Rectangle())
+                        }.buttonStyle(.plain).accessibilityIdentifier("openArchived." + row.id)
+                        Button { Task { await app.archive(row, archived: false) } } label: { WeftLabel("恢复", icon: "undo", size: AppleTokens.Space.p16) }
+                            .accessibilityIdentifier("restoreArchived." + row.id)
+                        #if os(macOS)
+                        MacNativeMenuButton(label: "已归档对话操作", identifier: "archivedActions." + row.id) {
+                            let menu = NSMenu(); menu.autoenablesItems = false
+                            menu.addItem(MacSessionMenu.entry("删除", icon: "trash", enabled: !app.lifecycleBusy, destructive: true, appearanceMode: app.appearanceMode) { app.askToDelete(row, inSettings: true) })
+                            return menu
+                        }.frame(width: AppleTokens.Space.p32, height: AppleTokens.Space.p28)
+                        #else
+                        Menu {
+                            Button(role: .destructive) { app.askToDelete(row, inSettings: true) } label: { Label("删除", image: "wm-trash") }.accessibilityIdentifier("deleteArchived." + row.id)
+                        } label: { WeftIcon("more").frame(minWidth: AppleTokens.Space.p44, minHeight: AppleTokens.Space.p44) }
+                            .accessibilityLabel("已归档对话操作").accessibilityIdentifier("archivedActions." + row.id)
+                        #endif
                     }.buttonStyle(.borderless).disabled(app.lifecycleBusy)
                 }
                 if rows.isEmpty { Text("没有已归档对话。").foregroundStyle(Weave.muted) }

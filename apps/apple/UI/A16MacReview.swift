@@ -76,9 +76,9 @@ import WeftMateCore
             FileHandle.standardOutput.write(Data(("A13_TEXT:"+String(decoding:data,as:UTF8.self)+"\n").utf8))
         }
     }
-    private static func press(_ id: String) async throws {
+    static func press(_ id: String) async throws {
         FileHandle.standardOutput.write(Data(("A16_STEP:" + id + "\n").utf8))
-        let titles = ["mainChat.date": "跳日期", "mainChat.search": "搜索", "mainChat.find": "查找", "mainChat.latest": "回到底部", "mainChat.next": "下一条", "mainChat.previous": "上一条", "mainChat.plus": "添加", "mainChat.send": "发送", "conversationMenu": "对话菜单", "closeSessionActions": "完成"]
+        let titles = ["mainChat.date": "跳日期", "mainChat.search": "搜索", "mainChat.find": "查找", "mainChat.latest": "回到底部", "mainChat.next": "下一条", "mainChat.previous": "上一条", "mainChat.plus": "添加", "mainChat.send": "发送", "conversationMenu": "对话菜单", "closeSessionActions": "完成", "defaultApprovalMode": "默认审批模式", "approvalMode": "审批模式"]
         var named: NSObject?
         if let title = titles[id] ?? (id.hasPrefix("mainChat.messageMenu.") ? "消息操作" : nil) {
             for window in NSApplication.shared.windows where window.isVisible { if let node = A10MacReview.findButton(title, in: window) { named = node; break } }
@@ -153,6 +153,8 @@ import WeftMateCore
         NSApplication.shared.setActivationPolicy(.regular);NSApplication.shared.activate(ignoringOtherApps:true)
         let ready=try await driver("/ready"),model=app.mainChat,main=ready["mainChatID"] as! String
         _=try await A10MacReview.wait("mainChat")
+        for window in NSApplication.shared.windows where window.isVisible && A10MacReview.find("mainChat", in: window) != nil { window.setContentSize(NSSize(width: 1080, height: 760)) }
+        try await Task.sleep(for: .milliseconds(400))
         try await until("Main body tail") { !model.window.events.isEmpty }
         guard model.window.events.count <= 1000,app.conversations.first?.isMainChat==true else{throw Failure(step:"Main identity or bounded window")}
         try await capture("first-screen")
@@ -218,7 +220,7 @@ import WeftMateCore
             try await Task.sleep(for: .milliseconds(500))
             guard panel.directoryURL?.lastPathComponent == "A16-export-review" else { panel.cancel(nil); throw Failure(step: "Export dialog did not stay in synthetic directory") }
             do {
-                try await until("Native save field rendered") { A13MacReview.texts().contains { $0.contains("WeftMate-reply") } }
+                try await until("Native save field rendered") { A13MacReview.texts(in: panel).contains { $0.contains("WeftMate-reply") } }
                 try await Task.sleep(for: .milliseconds(500))
                 captureVisible("export-save-panel"); systemSaveContentCaptured = true
             } catch {

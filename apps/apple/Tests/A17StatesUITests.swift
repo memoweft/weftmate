@@ -26,7 +26,12 @@ final class A17StatesUITests: XCTestCase {
             XCTAssertTrue(app.staticTexts["添加模型，开始对话"].waitForExistence(timeout: 30))
             let draft = app.descendants(matching: .any).matching(identifier: "mainChat.draft").firstMatch
             XCTAssertTrue(draft.exists); XCTAssertFalse(draft.isEnabled)
-            XCTAssertTrue(app.buttons["设置模型"].isEnabled)
+            let configure = app.buttons["设置模型"]
+            XCTAssertTrue(configure.isEnabled)
+            if env["WEFTMATE_A17_LARGE_TEXT"] == "1" {
+                for _ in 0..<5 { if configure.isHittable { break }; app.scrollViews.firstMatch.swipeUp() }
+                XCTAssertTrue(configure.isHittable, "Large text must leave the model action reachable")
+            }
         case "empty": XCTAssertTrue(app.staticTexts["从这里开始"].waitForExistence(timeout: 30))
         case "error": XCTAssertTrue(app.buttons["重试"].waitForExistence(timeout: 30))
         case "loading": XCTAssertTrue(app.activityIndicators.firstMatch.waitForExistence(timeout: 10))

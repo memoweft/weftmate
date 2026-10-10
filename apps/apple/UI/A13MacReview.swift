@@ -11,7 +11,7 @@ import WeftMateCore
     private static func until(_ message: String, _ condition: () -> Bool) async throws {
         for _ in 0..<150 { if condition() { return }; try await Task.sleep(for: .milliseconds(200)) }; throw Failure(step: message)
     }
-    static func texts() -> [String] {
+    static func texts(in root: NSObject? = nil) -> [String] {
         var visited = Set<ObjectIdentifier>(), values: [String] = []
         func visit(_ any: Any) {
             guard let node = any as? NSObject, visited.insert(ObjectIdentifier(node)).inserted else { return }
@@ -27,7 +27,7 @@ import WeftMateCore
             else if let view = node as? NSView { for child in view.subviews { visit(child) } }
             if let window = node as? NSWindow, let content = window.contentView { visit(content) }
         }
-        for window in NSApplication.shared.windows where window.isVisible { visit(window) }
+        if let root { visit(root) } else { for window in NSApplication.shared.windows where window.isVisible { visit(window) } }
         return Array(Set(values)).sorted()
     }
     private static func capture(_ scene: String, settings: Bool = false) async throws {

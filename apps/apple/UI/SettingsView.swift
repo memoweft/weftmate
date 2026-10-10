@@ -14,6 +14,7 @@ struct SettingsView: View {
     @State private var phonePath: [AppleSettingsRoute]
     #if os(macOS)
     @Environment(\.dismissWindow) private var dismissWindow
+    @Environment(\.openWindow) private var openWindow
     #endif
     @Environment(\.dismiss) private var dismiss
     let onClose: (() -> Void)?
@@ -110,7 +111,14 @@ struct SettingsView: View {
     }
     #endif
     private func detail(_ route: AppleSettingsRoute) -> some View {
-        SettingsCategoryView(app: model, settings: settings, route: route)
+        SettingsCategoryView(app: model, settings: settings, route: route) { id in
+            model.openedSessionID = id
+            #if os(macOS)
+            dismissWindow(id: "settings"); openWindow(id: "main")
+            #else
+            if let onClose { onClose() } else { dismiss() }
+            #endif
+        }
             .id(route).id(model.accountEpoch)
     }
 }
@@ -119,6 +127,7 @@ private struct SettingsCategoryView: View {
     @ObservedObject var app: AppleAppModel
     @ObservedObject var settings: AppleSettingsModel
     let route: AppleSettingsRoute
+    let openConversation: @MainActor (String) -> Void
     @State private var legal: LegalDocument?
     @State private var deletingSchedule: ManagedSchedule?
     @State private var restoringBackup: HostBackup?
@@ -173,7 +182,7 @@ private struct SettingsCategoryView: View {
         case "devices":
             if app.cloudLogin.authenticated { CloudDevicesView(app: app, cloud: app.cloudLogin) }
             else { DevicesView(model: app) }
-        case "archived": ArchivedSessionsView(app: app)
+        case "archived": ArchivedSessionsView(app: app, openConversation: openConversation)
         case "usage":
             VStack(spacing: AppleTokens.Space.p0) {
                 if let id = route.sessionID {

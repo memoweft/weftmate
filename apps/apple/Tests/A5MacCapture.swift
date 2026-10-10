@@ -47,6 +47,7 @@ import Security
         if let driver = CommandLine.arguments.dropFirst(7).first(where: { $0.hasPrefix("a14-driver=") }) { app.arguments?.append(contentsOf: ["--a14-driver", String(driver.dropFirst("a14-driver=".count))]) }
         if let driver = CommandLine.arguments.dropFirst(7).first(where: { $0.hasPrefix("a15-driver=") }) { app.arguments?.append(contentsOf: ["--a15-driver", String(driver.dropFirst("a15-driver=".count)), "--a15-synthetic-media"]) }
         if let driver = CommandLine.arguments.dropFirst(7).first(where: { $0.hasPrefix("a16-driver=") }) { app.arguments?.append(contentsOf: ["--a16-driver", String(driver.dropFirst("a16-driver=".count))]) }
+        if let controls = CommandLine.arguments.dropFirst(7).first(where: { $0.hasPrefix("a17-open=") }) { app.arguments?.append(contentsOf: ["--a17-open", String(controls.dropFirst("a17-open=".count))]) }
         let output = Pipe(); app.standardOutput = output; app.standardError = output
         try app.run()
         defer {
