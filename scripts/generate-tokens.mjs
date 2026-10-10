@@ -28,7 +28,12 @@ for (const [surface, path] of entries({ desktop: 'src/personal-access-ui', mobil
 const res = 'apps/android/app/src/main/res';
 const androidName = name => `wm_${kebab(name).replaceAll('-', '_')}`;
 const xml = body => `<?xml version="1.0" encoding="utf-8"?>\n<!-- ${banner} -->\n<resources>\n${body}\n</resources>\n`;
-const colors = { ...tokens.android.colors, brand: tokens.shared.color['brand-light'] };
+const mobileThemes = tokens.surfaces.mobile.themes;
+const mobileColor = (dark, name) => mobileThemes.find(t => t.selector.includes('dark') === dark).variables['--' + name];
+const argb = color => '#ff' + (color.length === 4 ? [...color.slice(1)].map(c => c + c).join('') : color.slice(1));
+const webColors = { webSurfaceLight: argb(mobileColor(false, 'surface')), webSurfaceDark: argb(mobileColor(true, 'surface')) };
+const nativeDark = Object.fromEntries(['accent','ink','secondary','muted','canvas','surface','soft','accent-soft','line','danger'].map(name => ['dark' + name.split('-').map(n => n[0].toUpperCase() + n.slice(1)).join(''), argb(mobileColor(true, name))]));
+const colors = { ...tokens.android.colors, ...webColors, ...nativeDark, brand: tokens.shared.color['brand-light'] };
 await put(`${res}/values/design_colors.xml`, xml(entries(colors).map(([name, value]) =>
   `    <color name="${androidName(name)}">${value}</color>`).join('\n')));
 // Only resources with an existing explicit theme counterpart vary in night mode.
@@ -47,7 +52,7 @@ await put(`${res}/values/design_motion.xml`, xml(entries(tokens.shared.duration)
 // Emit their existing API values too, without duplicating the authoritative data.
 await put('apps/android/app/src/main/java/com/memoweft/weftmate/mobile/DesignTokens.kt',
   `// ${banner}\npackage com.memoweft.weftmate.mobile\n\nobject DesignTokens {\n` +
-  entries(tokens.android.colors).map(([name, value]) =>
+  entries({ ...tokens.android.colors, ...webColors, ...nativeDark }).map(([name, value]) =>
     `    const val native${name[0].toUpperCase() + name.slice(1)} = 0x${value.slice(1)}.toInt()`).join('\n') + '\n' +
   entries(dimensions).map(([name, { value, unit }]) => `    const val ${name} = ${value}${unit === 'sp' ? 'f' : ''}`).join('\n') + '\n' +
   entries(tokens.shared.duration).map(([name, value]) => {

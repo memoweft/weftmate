@@ -1,0 +1,29 @@
+✔ search highlights meet 4.5:1 text contrast in every desktop and mobile theme (1.4558ms)
+✔ design token outputs match the sole source without writing files (67.3144ms)
+✔ every authored desktop/mobile token reference exists in its generated CSS (3.2661ms)
+✔ Apple views consume generated typed tokens compiled by all three native targets (11.9847ms)
+✔ named shared spacing tokens generate valid Swift declarations (0.6613ms)
+✔ Android inventory names leftover test packages without classifying the daily or unknown package as disposable (2.0491ms)
+✔ task registration prefers the stable alias and WhatIf describes the complete action without registering (1620.6582ms)
+✔ deleted cell, stale capture, failed capture and busy platform all alert independently (0.5361ms)
+✔ 24-hour boundary is inclusive, wrong commit and future capture alert (0.2693ms)
+✔ catalog-declared absent surfaces do not create fake expected cells (0.2313ms)
+✔ PNG filters and compression changes compare by decoded pixels, with tolerance (3.2635ms)
+✔ pixel threshold alerts and largest differences are sorted (10.0004ms)
+✔ retention removes only expired date directories and retains exactly 14 calendar days (7.9526ms)
+✔ baseline selects previous run, including a second run on the same date (12.9961ms)
+✔ fresh gallery never fills occupied native cells with repository history (218.8173ms)
+✔ synthetic artifact write is observed before exposing its task approval (3429.6287ms)
+✔ temp pruning removes only stale unused weftmate-* directories and never follows a junction (5356.7314ms)
+✔ theme-color reads the rendered surface for light, dark, account and system changes (1.5061ms)
+✔ Android bar colours are generated from mobile surface tokens, not manually duplicated (0.8038ms)
+✔ anchored menus avoid cutout, status/caption and gesture insets (1.2879ms)
+✔ full-screen light/dark status-bar regression accepts continuous backgrounds and fails white-on-dark (16.4011ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10949.2899

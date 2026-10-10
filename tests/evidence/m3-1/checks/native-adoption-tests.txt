@@ -1,0 +1,22 @@
+✔ M3-1 all six states and independent failures distinguish model, permission and replica errors (15.602ms)
+✔ M3-1 burst requests count once; only three spaced failures plus independent probe confirm offline (1.6157ms)
+✔ M3-1 a reachable relay returning host-listener 503 needs repeated independent status probes; a model 503 stays online (1.9309ms)
+✔ M3-1 synthetic clock drives exponential backoff, background cap and immediate foreground/network retries (1.8731ms)
+✔ M3-1 late probe from an old account cannot replace the new account connection (1.2815ms)
+✔ M3-1 signing into a new account during an old probe starts a fresh probe after discarding the old one (1.2452ms)
+✔ M3-1 lost accepted response reconciles original ID without another generation (3.2356ms)
+✔ M3-1 unaccepted and duplicate concurrent retry preserve exact original message and attachment body (2.6864ms)
+✔ M3-1 cursor replay deduplicates chunks/tools/approvals and 409 resets from the existing tail flow (2.8765ms)
+✔ M3-1 real status and sync distinguish model outage, runtime restart and revoked login across host boots (1846.4109ms)
+✔ M3-1 native adoption finishes before shared acceptance can launch authenticated device reads (3.1497ms)
+✔ mobile app transport keeps platform key operations native and uses only opaque refresh handles (2.4023ms)
+✔ mobile adapter preserves native errors and treats a missing trusted computer as approval, without weakening token errors (1.0888ms)
+✔ known direct computer connects without a relay, but mismatched host identity stays refused (0.7892ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2121.8752

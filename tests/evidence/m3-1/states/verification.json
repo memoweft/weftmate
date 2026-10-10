@@ -1,0 +1,1446 @@
+{
+  "realElectron": true,
+  "syntheticPresentation": true,
+  "checks": [
+    {
+      "name": "electron",
+      "width": 1200,
+      "theme": "light",
+      "kind": "online",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "field": {
+        "x": 344.66668701171875,
+        "y": 697.3333740234375,
+        "width": 754.6666870117188,
+        "height": 32,
+        "top": 697.3333740234375,
+        "right": 1099.3333740234375,
+        "bottom": 729.3333740234375,
+        "left": 344.66668701171875
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "electron",
+      "width": 1200,
+      "theme": "light",
+      "kind": "connecting",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 332,
+        "y": 618.6666870117188,
+        "width": 780,
+        "height": 60,
+        "top": 618.6666870117188,
+        "right": 1112,
+        "bottom": 678.6666870117188,
+        "left": 332
+      },
+      "field": {
+        "x": 344.66668701171875,
+        "y": 697.3333740234375,
+        "width": 754.6666870117188,
+        "height": 32,
+        "top": 697.3333740234375,
+        "right": 1099.3333740234375,
+        "bottom": 729.3333740234375,
+        "left": 344.66668701171875
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "electron",
+      "width": 1200,
+      "theme": "light",
+      "kind": "host_offline",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 332,
+        "y": 618.6666870117188,
+        "width": 780,
+        "height": 60,
+        "top": 618.6666870117188,
+        "right": 1112,
+        "bottom": 678.6666870117188,
+        "left": 332
+      },
+      "field": {
+        "x": 344.66668701171875,
+        "y": 697.3333740234375,
+        "width": 754.6666870117188,
+        "height": 32,
+        "top": 697.3333740234375,
+        "right": 1099.3333740234375,
+        "bottom": 729.3333740234375,
+        "left": 344.66668701171875
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "electron",
+      "width": 1200,
+      "theme": "light",
+      "kind": "network_unavailable",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 332,
+        "y": 618.6666870117188,
+        "width": 780,
+        "height": 60,
+        "top": 618.6666870117188,
+        "right": 1112,
+        "bottom": 678.6666870117188,
+        "left": 332
+      },
+      "field": {
+        "x": 344.66668701171875,
+        "y": 697.3333740234375,
+        "width": 754.6666870117188,
+        "height": 32,
+        "top": 697.3333740234375,
+        "right": 1099.3333740234375,
+        "bottom": 729.3333740234375,
+        "left": 344.66668701171875
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "electron",
+      "width": 1200,
+      "theme": "light",
+      "kind": "login_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 332,
+        "y": 618.6666870117188,
+        "width": 780,
+        "height": 60,
+        "top": 618.6666870117188,
+        "right": 1112,
+        "bottom": 678.6666870117188,
+        "left": 332
+      },
+      "field": {
+        "x": 344.66668701171875,
+        "y": 697.3333740234375,
+        "width": 754.6666870117188,
+        "height": 32,
+        "top": 697.3333740234375,
+        "right": 1099.3333740234375,
+        "bottom": 729.3333740234375,
+        "left": 344.66668701171875
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "electron",
+      "width": 1200,
+      "theme": "light",
+      "kind": "approval_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 332,
+        "y": 618.6666870117188,
+        "width": 780,
+        "height": 60,
+        "top": 618.6666870117188,
+        "right": 1112,
+        "bottom": 678.6666870117188,
+        "left": 332
+      },
+      "field": {
+        "x": 344.66668701171875,
+        "y": 697.3333740234375,
+        "width": 754.6666870117188,
+        "height": 32,
+        "top": 697.3333740234375,
+        "right": 1099.3333740234375,
+        "bottom": 729.3333740234375,
+        "left": 344.66668701171875
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "electron",
+      "width": 1200,
+      "theme": "dark",
+      "kind": "online",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "field": {
+        "x": 344.66668701171875,
+        "y": 697.3333740234375,
+        "width": 754.6666870117188,
+        "height": 32,
+        "top": 697.3333740234375,
+        "right": 1099.3333740234375,
+        "bottom": 729.3333740234375,
+        "left": 344.66668701171875
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "electron",
+      "width": 1200,
+      "theme": "dark",
+      "kind": "connecting",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 332,
+        "y": 618.6666870117188,
+        "width": 780,
+        "height": 60,
+        "top": 618.6666870117188,
+        "right": 1112,
+        "bottom": 678.6666870117188,
+        "left": 332
+      },
+      "field": {
+        "x": 344.66668701171875,
+        "y": 697.3333740234375,
+        "width": 754.6666870117188,
+        "height": 32,
+        "top": 697.3333740234375,
+        "right": 1099.3333740234375,
+        "bottom": 729.3333740234375,
+        "left": 344.66668701171875
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "electron",
+      "width": 1200,
+      "theme": "dark",
+      "kind": "host_offline",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 332,
+        "y": 618.6666870117188,
+        "width": 780,
+        "height": 60,
+        "top": 618.6666870117188,
+        "right": 1112,
+        "bottom": 678.6666870117188,
+        "left": 332
+      },
+      "field": {
+        "x": 344.66668701171875,
+        "y": 697.3333740234375,
+        "width": 754.6666870117188,
+        "height": 32,
+        "top": 697.3333740234375,
+        "right": 1099.3333740234375,
+        "bottom": 729.3333740234375,
+        "left": 344.66668701171875
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "electron",
+      "width": 1200,
+      "theme": "dark",
+      "kind": "network_unavailable",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 332,
+        "y": 618.6666870117188,
+        "width": 780,
+        "height": 60,
+        "top": 618.6666870117188,
+        "right": 1112,
+        "bottom": 678.6666870117188,
+        "left": 332
+      },
+      "field": {
+        "x": 344.66668701171875,
+        "y": 697.3333740234375,
+        "width": 754.6666870117188,
+        "height": 32,
+        "top": 697.3333740234375,
+        "right": 1099.3333740234375,
+        "bottom": 729.3333740234375,
+        "left": 344.66668701171875
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "electron",
+      "width": 1200,
+      "theme": "dark",
+      "kind": "login_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 332,
+        "y": 618.6666870117188,
+        "width": 780,
+        "height": 60,
+        "top": 618.6666870117188,
+        "right": 1112,
+        "bottom": 678.6666870117188,
+        "left": 332
+      },
+      "field": {
+        "x": 344.66668701171875,
+        "y": 697.3333740234375,
+        "width": 754.6666870117188,
+        "height": 32,
+        "top": 697.3333740234375,
+        "right": 1099.3333740234375,
+        "bottom": 729.3333740234375,
+        "left": 344.66668701171875
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "electron",
+      "width": 1200,
+      "theme": "dark",
+      "kind": "approval_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 332,
+        "y": 618.6666870117188,
+        "width": 780,
+        "height": 60,
+        "top": 618.6666870117188,
+        "right": 1112,
+        "bottom": 678.6666870117188,
+        "left": 332
+      },
+      "field": {
+        "x": 344.66668701171875,
+        "y": 697.3333740234375,
+        "width": 754.6666870117188,
+        "height": 32,
+        "top": 697.3333740234375,
+        "right": 1099.3333740234375,
+        "bottom": 729.3333740234375,
+        "left": 344.66668701171875
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "electron",
+      "width": 480,
+      "theme": "light",
+      "kind": "online",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "field": {
+        "x": 24.666667938232422,
+        "y": 703.3333740234375,
+        "width": 430.66668701171875,
+        "height": 32,
+        "top": 703.3333740234375,
+        "right": 455.3333549499512,
+        "bottom": 735.3333740234375,
+        "left": 24.666667938232422
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "electron",
+      "width": 480,
+      "theme": "light",
+      "kind": "connecting",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 619.875,
+        "width": 456,
+        "height": 64.79167175292969,
+        "top": 619.875,
+        "right": 468,
+        "bottom": 684.6666717529297,
+        "left": 12
+      },
+      "field": {
+        "x": 24.666667938232422,
+        "y": 703.3333740234375,
+        "width": 430.66668701171875,
+        "height": 32,
+        "top": 703.3333740234375,
+        "right": 455.3333549499512,
+        "bottom": 735.3333740234375,
+        "left": 24.666667938232422
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "electron",
+      "width": 480,
+      "theme": "light",
+      "kind": "host_offline",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 619.875,
+        "width": 456,
+        "height": 64.79167175292969,
+        "top": 619.875,
+        "right": 468,
+        "bottom": 684.6666717529297,
+        "left": 12
+      },
+      "field": {
+        "x": 24.666667938232422,
+        "y": 703.3333740234375,
+        "width": 430.66668701171875,
+        "height": 32,
+        "top": 703.3333740234375,
+        "right": 455.3333549499512,
+        "bottom": 735.3333740234375,
+        "left": 24.666667938232422
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "electron",
+      "width": 480,
+      "theme": "light",
+      "kind": "network_unavailable",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 619.875,
+        "width": 456,
+        "height": 64.79167175292969,
+        "top": 619.875,
+        "right": 468,
+        "bottom": 684.6666717529297,
+        "left": 12
+      },
+      "field": {
+        "x": 24.666667938232422,
+        "y": 703.3333740234375,
+        "width": 430.66668701171875,
+        "height": 32,
+        "top": 703.3333740234375,
+        "right": 455.3333549499512,
+        "bottom": 735.3333740234375,
+        "left": 24.666667938232422
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "electron",
+      "width": 480,
+      "theme": "light",
+      "kind": "login_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 619.875,
+        "width": 456,
+        "height": 64.79167175292969,
+        "top": 619.875,
+        "right": 468,
+        "bottom": 684.6666717529297,
+        "left": 12
+      },
+      "field": {
+        "x": 24.666667938232422,
+        "y": 703.3333740234375,
+        "width": 430.66668701171875,
+        "height": 32,
+        "top": 703.3333740234375,
+        "right": 455.3333549499512,
+        "bottom": 735.3333740234375,
+        "left": 24.666667938232422
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "electron",
+      "width": 480,
+      "theme": "light",
+      "kind": "approval_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 619.875,
+        "width": 456,
+        "height": 64.79167175292969,
+        "top": 619.875,
+        "right": 468,
+        "bottom": 684.6666717529297,
+        "left": 12
+      },
+      "field": {
+        "x": 24.666667938232422,
+        "y": 703.3333740234375,
+        "width": 430.66668701171875,
+        "height": 32,
+        "top": 703.3333740234375,
+        "right": 455.3333549499512,
+        "bottom": 735.3333740234375,
+        "left": 24.666667938232422
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "electron",
+      "width": 480,
+      "theme": "dark",
+      "kind": "online",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "field": {
+        "x": 24.666667938232422,
+        "y": 703.3333740234375,
+        "width": 430.66668701171875,
+        "height": 32,
+        "top": 703.3333740234375,
+        "right": 455.3333549499512,
+        "bottom": 735.3333740234375,
+        "left": 24.666667938232422
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "electron",
+      "width": 480,
+      "theme": "dark",
+      "kind": "connecting",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 619.875,
+        "width": 456,
+        "height": 64.79167175292969,
+        "top": 619.875,
+        "right": 468,
+        "bottom": 684.6666717529297,
+        "left": 12
+      },
+      "field": {
+        "x": 24.666667938232422,
+        "y": 703.3333740234375,
+        "width": 430.66668701171875,
+        "height": 32,
+        "top": 703.3333740234375,
+        "right": 455.3333549499512,
+        "bottom": 735.3333740234375,
+        "left": 24.666667938232422
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "electron",
+      "width": 480,
+      "theme": "dark",
+      "kind": "host_offline",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 619.875,
+        "width": 456,
+        "height": 64.79167175292969,
+        "top": 619.875,
+        "right": 468,
+        "bottom": 684.6666717529297,
+        "left": 12
+      },
+      "field": {
+        "x": 24.666667938232422,
+        "y": 703.3333740234375,
+        "width": 430.66668701171875,
+        "height": 32,
+        "top": 703.3333740234375,
+        "right": 455.3333549499512,
+        "bottom": 735.3333740234375,
+        "left": 24.666667938232422
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "electron",
+      "width": 480,
+      "theme": "dark",
+      "kind": "network_unavailable",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 619.875,
+        "width": 456,
+        "height": 64.79167175292969,
+        "top": 619.875,
+        "right": 468,
+        "bottom": 684.6666717529297,
+        "left": 12
+      },
+      "field": {
+        "x": 24.666667938232422,
+        "y": 703.3333740234375,
+        "width": 430.66668701171875,
+        "height": 32,
+        "top": 703.3333740234375,
+        "right": 455.3333549499512,
+        "bottom": 735.3333740234375,
+        "left": 24.666667938232422
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "electron",
+      "width": 480,
+      "theme": "dark",
+      "kind": "login_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 619.875,
+        "width": 456,
+        "height": 64.79167175292969,
+        "top": 619.875,
+        "right": 468,
+        "bottom": 684.6666717529297,
+        "left": 12
+      },
+      "field": {
+        "x": 24.666667938232422,
+        "y": 703.3333740234375,
+        "width": 430.66668701171875,
+        "height": 32,
+        "top": 703.3333740234375,
+        "right": 455.3333549499512,
+        "bottom": 735.3333740234375,
+        "left": 24.666667938232422
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "electron",
+      "width": 480,
+      "theme": "dark",
+      "kind": "approval_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 619.875,
+        "width": 456,
+        "height": 64.79167175292969,
+        "top": 619.875,
+        "right": 468,
+        "bottom": 684.6666717529297,
+        "left": 12
+      },
+      "field": {
+        "x": 24.666667938232422,
+        "y": 703.3333740234375,
+        "width": 430.66668701171875,
+        "height": 32,
+        "top": 703.3333740234375,
+        "right": 455.3333549499512,
+        "bottom": 735.3333740234375,
+        "left": 24.666667938232422
+      },
+      "height": 800,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 390,
+      "theme": "light",
+      "kind": "online",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "field": {
+        "x": 25,
+        "y": 747,
+        "width": 340,
+        "height": 32,
+        "top": 747,
+        "right": 365,
+        "bottom": 779,
+        "left": 25
+      },
+      "height": 844,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 390,
+      "theme": "light",
+      "kind": "connecting",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 640.828125,
+        "width": 366,
+        "height": 87.171875,
+        "top": 640.828125,
+        "right": 378,
+        "bottom": 728,
+        "left": 12
+      },
+      "field": {
+        "x": 25,
+        "y": 747,
+        "width": 340,
+        "height": 32,
+        "top": 747,
+        "right": 365,
+        "bottom": 779,
+        "left": 25
+      },
+      "height": 844,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 390,
+      "theme": "light",
+      "kind": "host_offline",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 640.828125,
+        "width": 366,
+        "height": 87.171875,
+        "top": 640.828125,
+        "right": 378,
+        "bottom": 728,
+        "left": 12
+      },
+      "field": {
+        "x": 25,
+        "y": 747,
+        "width": 340,
+        "height": 32,
+        "top": 747,
+        "right": 365,
+        "bottom": 779,
+        "left": 25
+      },
+      "height": 844,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 390,
+      "theme": "light",
+      "kind": "network_unavailable",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 640.828125,
+        "width": 366,
+        "height": 87.171875,
+        "top": 640.828125,
+        "right": 378,
+        "bottom": 728,
+        "left": 12
+      },
+      "field": {
+        "x": 25,
+        "y": 747,
+        "width": 340,
+        "height": 32,
+        "top": 747,
+        "right": 365,
+        "bottom": 779,
+        "left": 25
+      },
+      "height": 844,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 390,
+      "theme": "light",
+      "kind": "login_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 663.21875,
+        "width": 366,
+        "height": 64.78125,
+        "top": 663.21875,
+        "right": 378,
+        "bottom": 728,
+        "left": 12
+      },
+      "field": {
+        "x": 25,
+        "y": 747,
+        "width": 340,
+        "height": 32,
+        "top": 747,
+        "right": 365,
+        "bottom": 779,
+        "left": 25
+      },
+      "height": 844,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 390,
+      "theme": "light",
+      "kind": "approval_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 640.828125,
+        "width": 366,
+        "height": 87.171875,
+        "top": 640.828125,
+        "right": 378,
+        "bottom": 728,
+        "left": 12
+      },
+      "field": {
+        "x": 25,
+        "y": 747,
+        "width": 340,
+        "height": 32,
+        "top": 747,
+        "right": 365,
+        "bottom": 779,
+        "left": 25
+      },
+      "height": 844,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 390,
+      "theme": "dark",
+      "kind": "online",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "field": {
+        "x": 25,
+        "y": 747,
+        "width": 340,
+        "height": 32,
+        "top": 747,
+        "right": 365,
+        "bottom": 779,
+        "left": 25
+      },
+      "height": 844,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 390,
+      "theme": "dark",
+      "kind": "connecting",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 640.828125,
+        "width": 366,
+        "height": 87.171875,
+        "top": 640.828125,
+        "right": 378,
+        "bottom": 728,
+        "left": 12
+      },
+      "field": {
+        "x": 25,
+        "y": 747,
+        "width": 340,
+        "height": 32,
+        "top": 747,
+        "right": 365,
+        "bottom": 779,
+        "left": 25
+      },
+      "height": 844,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 390,
+      "theme": "dark",
+      "kind": "host_offline",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 640.828125,
+        "width": 366,
+        "height": 87.171875,
+        "top": 640.828125,
+        "right": 378,
+        "bottom": 728,
+        "left": 12
+      },
+      "field": {
+        "x": 25,
+        "y": 747,
+        "width": 340,
+        "height": 32,
+        "top": 747,
+        "right": 365,
+        "bottom": 779,
+        "left": 25
+      },
+      "height": 844,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 390,
+      "theme": "dark",
+      "kind": "network_unavailable",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 640.828125,
+        "width": 366,
+        "height": 87.171875,
+        "top": 640.828125,
+        "right": 378,
+        "bottom": 728,
+        "left": 12
+      },
+      "field": {
+        "x": 25,
+        "y": 747,
+        "width": 340,
+        "height": 32,
+        "top": 747,
+        "right": 365,
+        "bottom": 779,
+        "left": 25
+      },
+      "height": 844,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 390,
+      "theme": "dark",
+      "kind": "login_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 663.21875,
+        "width": 366,
+        "height": 64.78125,
+        "top": 663.21875,
+        "right": 378,
+        "bottom": 728,
+        "left": 12
+      },
+      "field": {
+        "x": 25,
+        "y": 747,
+        "width": 340,
+        "height": 32,
+        "top": 747,
+        "right": 365,
+        "bottom": 779,
+        "left": 25
+      },
+      "height": 844,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 390,
+      "theme": "dark",
+      "kind": "approval_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 640.828125,
+        "width": 366,
+        "height": 87.171875,
+        "top": 640.828125,
+        "right": 378,
+        "bottom": 728,
+        "left": 12
+      },
+      "field": {
+        "x": 25,
+        "y": 747,
+        "width": 340,
+        "height": 32,
+        "top": 747,
+        "right": 365,
+        "bottom": 779,
+        "left": 25
+      },
+      "height": 844,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 360,
+      "theme": "light",
+      "kind": "online",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "field": {
+        "x": 25,
+        "y": 683,
+        "width": 310,
+        "height": 32,
+        "top": 683,
+        "right": 335,
+        "bottom": 715,
+        "left": 25
+      },
+      "height": 780,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 360,
+      "theme": "light",
+      "kind": "connecting",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 576.828125,
+        "width": 336,
+        "height": 87.171875,
+        "top": 576.828125,
+        "right": 348,
+        "bottom": 664,
+        "left": 12
+      },
+      "field": {
+        "x": 25,
+        "y": 683,
+        "width": 310,
+        "height": 32,
+        "top": 683,
+        "right": 335,
+        "bottom": 715,
+        "left": 25
+      },
+      "height": 780,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 360,
+      "theme": "light",
+      "kind": "host_offline",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 554.4375,
+        "width": 336,
+        "height": 109.5625,
+        "top": 554.4375,
+        "right": 348,
+        "bottom": 664,
+        "left": 12
+      },
+      "field": {
+        "x": 25,
+        "y": 683,
+        "width": 310,
+        "height": 32,
+        "top": 683,
+        "right": 335,
+        "bottom": 715,
+        "left": 25
+      },
+      "height": 780,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 360,
+      "theme": "light",
+      "kind": "network_unavailable",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 576.828125,
+        "width": 336,
+        "height": 87.171875,
+        "top": 576.828125,
+        "right": 348,
+        "bottom": 664,
+        "left": 12
+      },
+      "field": {
+        "x": 25,
+        "y": 683,
+        "width": 310,
+        "height": 32,
+        "top": 683,
+        "right": 335,
+        "bottom": 715,
+        "left": 25
+      },
+      "height": 780,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 360,
+      "theme": "light",
+      "kind": "login_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 599.21875,
+        "width": 336,
+        "height": 64.78125,
+        "top": 599.21875,
+        "right": 348,
+        "bottom": 664,
+        "left": 12
+      },
+      "field": {
+        "x": 25,
+        "y": 683,
+        "width": 310,
+        "height": 32,
+        "top": 683,
+        "right": 335,
+        "bottom": 715,
+        "left": 25
+      },
+      "height": 780,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 360,
+      "theme": "light",
+      "kind": "approval_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 576.828125,
+        "width": 336,
+        "height": 87.171875,
+        "top": 576.828125,
+        "right": 348,
+        "bottom": 664,
+        "left": 12
+      },
+      "field": {
+        "x": 25,
+        "y": 683,
+        "width": 310,
+        "height": 32,
+        "top": 683,
+        "right": 335,
+        "bottom": 715,
+        "left": 25
+      },
+      "height": 780,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 360,
+      "theme": "dark",
+      "kind": "online",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "field": {
+        "x": 25,
+        "y": 683,
+        "width": 310,
+        "height": 32,
+        "top": 683,
+        "right": 335,
+        "bottom": 715,
+        "left": 25
+      },
+      "height": 780,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 360,
+      "theme": "dark",
+      "kind": "connecting",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 576.828125,
+        "width": 336,
+        "height": 87.171875,
+        "top": 576.828125,
+        "right": 348,
+        "bottom": 664,
+        "left": 12
+      },
+      "field": {
+        "x": 25,
+        "y": 683,
+        "width": 310,
+        "height": 32,
+        "top": 683,
+        "right": 335,
+        "bottom": 715,
+        "left": 25
+      },
+      "height": 780,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 360,
+      "theme": "dark",
+      "kind": "host_offline",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 554.4375,
+        "width": 336,
+        "height": 109.5625,
+        "top": 554.4375,
+        "right": 348,
+        "bottom": 664,
+        "left": 12
+      },
+      "field": {
+        "x": 25,
+        "y": 683,
+        "width": 310,
+        "height": 32,
+        "top": 683,
+        "right": 335,
+        "bottom": 715,
+        "left": 25
+      },
+      "height": 780,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 360,
+      "theme": "dark",
+      "kind": "network_unavailable",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "field": {
+        "x": 25,
+        "y": 683,
+        "width": 310,
+        "height": 32,
+        "top": 683,
+        "right": 335,
+        "bottom": 715,
+        "left": 25
+      },
+      "height": 780,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 360,
+      "theme": "dark",
+      "kind": "login_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 599.21875,
+        "width": 336,
+        "height": 64.78125,
+        "top": 599.21875,
+        "right": 348,
+        "bottom": 664,
+        "left": 12
+      },
+      "field": {
+        "x": 25,
+        "y": 683,
+        "width": 310,
+        "height": 32,
+        "top": 683,
+        "right": 335,
+        "bottom": 715,
+        "left": 25
+      },
+      "height": 780,
+      "badgeVisible": true
+    },
+    {
+      "name": "phone-web",
+      "width": 360,
+      "theme": "dark",
+      "kind": "approval_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 576.828125,
+        "width": 336,
+        "height": 87.171875,
+        "top": 576.828125,
+        "right": 348,
+        "bottom": 664,
+        "left": 12
+      },
+      "field": {
+        "x": 25,
+        "y": 683,
+        "width": 310,
+        "height": 32,
+        "top": 683,
+        "right": 335,
+        "bottom": 715,
+        "left": 25
+      },
+      "height": 780,
+      "badgeVisible": true
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+✔ M3-1 all six states and independent failures distinguish model, permission and replica errors (21.6351ms)
+✔ M3-1 burst requests count once; only three spaced failures plus independent probe confirm offline (2.6411ms)
+✔ M3-1 a reachable relay returning host-listener 503 needs repeated independent status probes; a model 503 stays online (3.6868ms)
+✔ M3-1 synthetic clock drives exponential backoff, background cap and immediate foreground/network retries (4.4143ms)
+✔ M3-1 late probe from an old account cannot replace the new account connection (4.101ms)
+✔ M3-1 signing into a new account during an old probe starts a fresh probe after discarding the old one (3.6325ms)
+✔ M3-1 lost accepted response reconciles original ID without another generation (4.4919ms)
+✔ M3-1 unaccepted and duplicate concurrent retry preserve exact original message and attachment body (5.6599ms)
+✔ M3-1 cursor replay deduplicates chunks/tools/approvals and 409 resets from the existing tail flow (5.9714ms)
+✔ M3-1 real status and sync distinguish model outage, runtime restart and revoked login across host boots (3039.4927ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3556.8038

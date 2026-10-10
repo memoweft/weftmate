@@ -1,0 +1,21 @@
+{
+  "startedAt": "2026-10-10T08:24:27.698Z",
+  "realCloudEntrypoint": "services/cloud/src/main.mjs",
+  "realElectronEntrypoint": ".",
+  "sourceCommit": "886fe68f31e3060a2f66df38c1147d0af719cd8c",
+  "phase": "android-transport",
+  "baselineHost": false,
+  "steps": [
+    "Real cloud entrypoint health"
+  ],
+  "cloudTransport": "WSL docker-desktop; temporary standalone Alpine tools",
+  "passed": false,
+  "error": "Command failed: [local diagnostic path]\nadb.exe: device '127.0.0.1:16385' not found\r\n",
+  "pageErrors": [],
+  "failedRequests": [
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    }
+  ]
+}
