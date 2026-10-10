@@ -35,14 +35,18 @@ final class A7SessionMenuUITests: XCTestCase {
         let ready = try await get("/ready"), ids = try await get("/a5/ids")
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--ui-testing-namespace", "a7-" + UUID().uuidString.prefix(8), "--a5-local-server", "--a5-theme", theme, "--server-url", ready["host"] as! String]
-        app.launch(); try expect(app.descendants(matching: .any)["conversationList"].firstMatch)
+        app.launch()
+        let sideList = app.descendants(matching: .any).matching(identifier: "mainChat.sideList").firstMatch
+        XCTAssertTrue(sideList.waitForExistence(timeout: 30)); sideList.tap()
+        try expect(app.descendants(matching: .any)["conversationList"].firstMatch)
         return (app, ids)
     }
     @MainActor func testLightMenuArchiveAndForget() async throws { try await run("light") }
     @MainActor func testDarkMenuArchiveAndForget() async throws { try await run("dark") }
     @MainActor private func run(_ theme: String) async throws {
         let (app, ids) = try await launch(theme); defer { app.terminate() }
-        let id = ids["deletion"] as! String, forgetID = ids["forget"] as! String
+        let chatIDs = ids["chatIDs"] as! [String:String]
+        let id = chatIDs["deletion"]!, forgetID = chatIDs["forget"]!
         try menu(app, id)
         for name in ["sessionAction.pin", "sessionAction.unread", "sessionAction.rename", "sessionAction.fork", "移至分组", "sessionAction.archive", "sessionAction.delete"] { try expect(app.buttons[name]) }
         keep(app, "session-menu", theme)
@@ -65,14 +69,26 @@ final class A7SessionMenuUITests: XCTestCase {
         try tap(app, "sendButton"); try expect(app.staticTexts["继续合成分叉"])
         try back(app)
         // The same actions are reachable through a left swipe.
-        let swiped = row(app, id); try expect(swiped); swiped.swipeLeft(); try tap(app, "对话操作"); try expect(app.buttons["sessionAction.archive"])
+        let swiped = row(app, id); try expect(swiped); swiped.swipeLeft(); try tap(app, "对话操作")
+        let grabber = app.buttons["表单控制柄"].firstMatch; try expect(grabber)
+        grabber.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)))
+        try expect(app.buttons["sessionAction.archive"]); keep(app, "swipe-actions-expanded", theme)
         try tap(app, "sessionAction.archive")
         try menu(app, forgetID); try tap(app, "sessionAction.archive")
         try tap(app, "phoneAccountMenu"); try tap(app, "phoneMenu.settings"); try tap(app, "settingsCategory.archived")
         let search = app.textFields["archivedSearch"]; try expect(search); search.tap(); search.typeText("蓝色纸鹤")
         try expect(app.buttons["restoreArchived." + id]); XCTAssertFalse(app.buttons["restoreArchived." + forgetID].exists)
-        keep(app, "archived", theme); try tap(app, "restoreArchived." + id)
-        search.tap(); search.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 4))
+        keep(app, "archived", theme)
+        try tap(app, "openArchived." + id)
+        try expect(app.navigationBars["蓝色纸鹤资料"])
+        try expect(app.buttons["sendButton"]); XCTAssertFalse(app.buttons["sendButton"].isEnabled)
+        keep(app, "archived-read-only", theme)
+        try back(app)
+        try tap(app, "phoneAccountMenu"); try tap(app, "phoneMenu.settings"); try tap(app, "settingsCategory.archived")
+        let reopenedSearch = app.textFields["archivedSearch"]; try expect(reopenedSearch); reopenedSearch.tap(); reopenedSearch.typeText("蓝色纸鹤")
+        try tap(app, "restoreArchived." + id)
+        reopenedSearch.tap(); reopenedSearch.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 4))
+        try tap(app, "archivedActions." + forgetID); keep(app, "archived-menu", theme)
         try tap(app, "deleteArchived." + forgetID)
         let choice = app.buttons["forgetConversationMemories"]; try expect(choice); XCTAssertEqual(choice.value as? String, "未勾选")
         choice.tap(); try expect(app.staticTexts["forgetPreviewSummary"])

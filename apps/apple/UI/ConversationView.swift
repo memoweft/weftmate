@@ -45,22 +45,16 @@ struct ConversationRow: View {
     let conversation: ConversationSummary
     var selected = false
     var body: some View {
-        VStack(alignment: .leading, spacing: AppleTokens.Space.p5) {
-            HStack(alignment: .firstTextBaseline, spacing: AppleTokens.Space.p8) {
-                Text((conversation.temporaryState.notice().isEmpty ? "" : "临时对话 · ") + (conversation.title.isEmpty ? "未命名对话" : conversation.title))
-                    .font(AppleTokens.Fonts.body.weight(.medium)).foregroundStyle(selected ? Weave.onAccent : Weave.ink).lineLimit(2)
-                if conversation.pinned { WeftIcon("pin", size: 16).foregroundStyle(selected ? Weave.onAccent : Weave.muted) }
-                if conversation.unread { Text("未读").font(AppleTokens.Fonts.caption).foregroundStyle(selected ? Weave.onAccent : Weave.accent) }
-                if conversation.running {
-                    Circle().fill(selected ? Weave.onAccent : Weave.status).frame(width: 6, height: 6)
-                        .accessibilityLabel("正在处理")
-                }
-            }
+        HStack(spacing: AppleTokens.Space.p8) {
+            Text((conversation.temporaryState.notice().isEmpty ? "" : "临时对话 · ") + (conversation.title.isEmpty ? "未命名对话" : conversation.title))
+                .font(AppleTokens.Fonts.body).foregroundStyle(Weave.ink).lineLimit(1)
+            Spacer(minLength: AppleTokens.Space.p4)
             if conversation.running {
-                Text("正在处理").font(AppleTokens.Fonts.caption).foregroundStyle(selected ? Weave.onAccent : Weave.muted)
+                ProgressView().controlSize(.mini).accessibilityLabel("正在处理")
+            } else if conversation.unread {
+                Circle().fill(Weave.accent).frame(width: AppleTokens.Space.p6, height: AppleTokens.Space.p6).accessibilityLabel("未读")
             }
-        }
-        .padding(.vertical, AppleTokens.Space.p5)
+        }.padding(.vertical, AppleTokens.Space.p5)
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("conversationRow.\(conversation.id)")
     }
@@ -85,6 +79,7 @@ struct ConversationView: View {
     @State private var visibleMessageID: String?
     @State private var follow = ConversationFollowState()
     @State private var viewportHeight: CGFloat = 0
+    @State private var contentHeight: CGFloat = 0
     @State private var waitingSince = Date()
     @State private var contextPopover = false
     @State private var dictationPopover = false
@@ -93,12 +88,9 @@ struct ConversationView: View {
     @State private var resourcePopover = false
     @State private var showingUsage = false
     @State private var showingModels = false
-    @State private var usageAfterActions = false
     #if os(macOS)
     @Environment(\.openWindow) private var openWindow
     #endif
-    @State private var showingSessionActions = false
-    @State private var deleteAfterActions = false
     @State private var importScope: AppleUXScope?
     @State private var showingPhotos = false
     @State private var showingCamera = false
@@ -136,10 +128,12 @@ struct ConversationView: View {
         .sheet(isPresented: $showingUsage) {
             SettingsView(model: model, route: .usage(sessionID: conversation.sessionId), onClose: { showingUsage = false })
         }
-        .fileImporter(isPresented: $importingAttachments, allowedContentTypes: [.item], allowsMultipleSelection: true) { result in
+        .fileImporter(isPresented: $importingAttachments, allowedContentTypes: [.item], allowsMultipleSelection: true) { @Sendable result in
+            Task { @MainActor in
             if case .success(let files) = result {
                 guard let scope = importScope, scope == model.uxScope else { return }
-                Task { await model.addAttachments(files, to: conversation, accountEpoch: scope.epoch) }
+                await model.addAttachments(files, to: conversation, accountEpoch: scope.epoch)
+            }
             }
         }
         .onChange(of: photoSelection) { _, selection in
@@ -182,7 +176,7 @@ struct ConversationView: View {
         .fullScreenCover(isPresented: $showingPreview) { attachmentPreview }
         .fullScreenCover(isPresented: $resources.visible) { ConversationResourcesPanel(app: model, resources: resources) }
         #endif
-        .onChange(of: model.accountEpoch) { _, _ in importingAttachments = false; showingCamera = false; showingPhotos = false; importScope = nil; cancelScreenshot(); showingSessionActions = false; closePreview(); resources.clear(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
+        .onChange(of: model.accountEpoch) { _, _ in importingAttachments = false; showingCamera = false; showingPhotos = false; importScope = nil; cancelScreenshot(); closePreview(); resources.clear(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
         .onChange(of: conversation.id) { _, _ in cancelScreenshot(); closePreview(); resources.clear(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
         .onChange(of: resources.selected) { _, _ in resourcePopover = false }
         .onDisappear { closePreview(); cancelScreenshot() }
@@ -290,20 +284,21 @@ struct ConversationView: View {
                     adoptionStatusCards
                     AppleTokens.Colors.clear.frame(height: 1).id("latest")
                 }
-                .background(GeometryReader { geometry in AppleTokens.Colors.clear.preference(key: ConversationContentHeight.self, value: geometry.size.height) })
+                .background(MainChatEventPosition(eventID: "conversation-content") { _, rect, height, _ in
+                    guard let rect, contentHeight != rect.height || viewportHeight != height else { return }
+                    contentHeight = rect.height; viewportHeight = height
+                    if follow.contentChanged() { proxy.scrollTo("latest", anchor: .bottom) }
+                })
                 .scrollTargetLayout()
                 .padding(.horizontal, AppleTokens.Space.p24).padding(.vertical, AppleTokens.Space.p26)
                 .frame(maxWidth: 760).frame(maxWidth: .infinity)
             }
               .modifier(ConversationScrollTracking(visibleID: $visibleMessageID, follow: $follow))
-            .background(GeometryReader { geometry in AppleTokens.Colors.clear.preference(key: ConversationViewportHeight.self, value: geometry.size.height) })
-            .onPreferenceChange(ConversationViewportHeight.self) { value in viewportHeight = value; if follow.following { proxy.scrollTo("latest", anchor: .bottom) } }
         .onChange(of: model.subtaskStepTarget) { _, seq in
             if let seq, let entry = TimelineProjection.conversationEntries(model.timeline.events).first(where: { $0.steps.contains { $0.seq == seq } }) { proxy.scrollTo(entry.id, anchor: .center) }
         }
             .onChange(of: model.preparingMessages) { _, _ in if follow.contentChanged() { proxy.scrollTo("latest", anchor: .bottom) } }
             .onChange(of: conversation.processing) { _, _ in waitingSince = Date() }
-            .onPreferenceChange(ConversationContentHeight.self) { _ in if follow.contentChanged() { proxy.scrollTo("latest", anchor: .bottom) } }
             .overlay(alignment: .bottomTrailing) {
                 if !follow.following {
                     Button(follow.hasNewContent ? "有新内容 · 回到底部" : "回到底部") { follow.returnToBottom(); proxy.scrollTo("latest", anchor: .bottom) }
@@ -346,17 +341,20 @@ struct ConversationView: View {
         #endif
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button { showingSessionActions.toggle() } label: { WeftIcon("more") }.accessibilityLabel("对话菜单").accessibilityIdentifier("conversationMenu")
-                    .sheet(isPresented: $showingSessionActions, onDismiss: {
-                        if deleteAfterActions { deleteAfterActions = false; model.askToDelete(conversation) }
-                        if usageAfterActions { usageAfterActions = false; showingUsage = true }
-                    }) {
-                        #if os(iOS)
-                        ScrollView { sessionMenuContent }.presentationDetents([.medium, .large])
-                        #else
-                        sessionMenuContent
-                        #endif
+                #if os(macOS)
+                MacSessionMenuButton(app: model, conversation: conversation) {
+                    model.settingsRoute = .usage(sessionID: conversation.sessionId); openWindow(id: "settings")
+                }.frame(width: AppleTokens.Space.p32, height: AppleTokens.Space.p28)
+                #else
+                Menu {
+                    Section {
+                        Button { showingUsage = true } label: { Label("本对话用量", image: "wm-chart") }
+                            .accessibilityIdentifier("conversationUsage")
                     }
+                    SessionActions(app: model, conversation: conversation)
+                } label: { WeftIcon("more") }
+                    .accessibilityLabel("对话菜单").accessibilityIdentifier("conversationMenu")
+                #endif
             }
             ToolbarItem(placement: .primaryAction) {
                 Button {
@@ -398,7 +396,11 @@ struct ConversationView: View {
                 if args[index + 1] == "composer-context" { contextPopover = true }
                 if args[index + 1] == "a9-send" { model.setDraft("合成待发送消息", for: conversation, accountEpoch: model.accountEpoch) }
                 if args[index + 1] == "outputs-sources" { resources.showingList = true; resources.visible = true }
-                if args[index + 1] == "session-menu" { showingSessionActions = true }
+                if args[index + 1] == "session-menu" {
+                    #if os(macOS)
+                    Task { try? await Task.sleep(for: .milliseconds(600)); try? await A10MacReview.press("conversationMenu") }
+                    #endif
+                }
                 if args[index + 1] == "conversation-forget" { model.askToDelete(conversation); await model.setConversationForget(true) }
             }
             #endif
@@ -416,22 +418,6 @@ struct ConversationView: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("conversationDetail")
-    }
-
-    private var sessionMenuContent: some View {
-                        VStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
-                            SessionActions(app: model, conversation: conversation, onSelect: { showingSessionActions = false },
-                                onDelete: { deleteAfterActions = true; showingSessionActions = false })
-                            Button("本对话用量") {
-                                #if os(macOS)
-                                showingSessionActions = false
-                                model.settingsRoute = .usage(sessionID: conversation.sessionId); openWindow(id: "settings")
-                                #else
-                                usageAfterActions = true; showingSessionActions = false
-                                #endif
-                            }.accessibilityIdentifier("conversationUsage")
-                            Button("完成") { showingSessionActions = false }.accessibilityIdentifier("closeSessionActions")
-                        }.font(AppleTokens.Fonts.body).buttonStyle(SessionMenuRowStyle()).padding(AppleTokens.Space.p18)
     }
 
     private func readOlder(proxy: ScrollViewProxy) async {
@@ -591,37 +577,43 @@ struct ConversationView: View {
                 HStack(spacing: AppleTokens.Space.p4) {
                     Menu {
                         if model.mainChat.capabilities.supports("sideChats") {
-                            Button("开旁聊") { Task { await model.mainChat.createSide(sourceConversation: conversation) } }
+                            Button("开旁聊", image: ImageResource(name: "wm-chat", bundle: .main)) { Task { await model.mainChat.createSide(sourceConversation: conversation) } }
                                 .disabled(conversation.temporaryState.hasTemporaryContent)
                         }
                         if model.mainChat.capabilities.supports("temporaryChats") {
-                            Button("这次别记") { Task { await model.mainChat.createSide(temporary: true, sourceConversation: conversation) } }
+                            Toggle(isOn: Binding(get: { conversation.temporaryState.memoryMode == "off" }, set: { enabled in
+                                Task {
+                                    if enabled { await model.mainChat.createSide(temporary: true, sourceConversation: conversation) }
+                                    else { await model.mainChat.temporarySetting(conversation, fields: ["memoryMode": .string("on")]) }
+                                }
+                            })) { Label("这次别记", image: "wm-memory") }
                         }
                         #if os(macOS)
-                        Button("添加文件") { importScope = model.uxScope; importingAttachments = true }.accessibilityIdentifier("composer.file")
-                        Button("区域截图") { addNativeMedia(screenshot: true) }.accessibilityIdentifier("composer.screenshot")
-                        Button("粘贴剪贴板图片") { addNativeMedia(screenshot: false) }.accessibilityIdentifier("composer.clipboard")
+                        Button("添加文件", image: ImageResource(name: "wm-file", bundle: .main)) { importScope = model.uxScope; importingAttachments = true }.accessibilityIdentifier("composer.file")
+                        Button("区域截图", image: ImageResource(name: "wm-desktop", bundle: .main)) { addNativeMedia(screenshot: true) }.accessibilityIdentifier("composer.screenshot")
+                        Button("粘贴剪贴板图片", image: ImageResource(name: "wm-copy", bundle: .main)) { addNativeMedia(screenshot: false) }.accessibilityIdentifier("composer.clipboard")
                         #else
-                        Button("相机") {
+                        Button("相机", image: ImageResource(name: "wm-camera", bundle: .main)) {
                             importScope = model.uxScope
                             if UIImagePickerController.isSourceTypeAvailable(.camera) { showingCamera = true }
                             else { attachmentInputError = "相机暂不可用，可从照片或文件添加。" }
                         }.accessibilityIdentifier("composer.camera")
-                        Button("照片") { importScope = model.uxScope; showingPhotos = true }.accessibilityIdentifier("composer.photos")
-                        Button("文件") { importScope = model.uxScope; importingAttachments = true }.accessibilityIdentifier("composer.file")
+                        Button("照片", image: ImageResource(name: "wm-image", bundle: .main)) { importScope = model.uxScope; showingPhotos = true }.accessibilityIdentifier("composer.photos")
+                        Button("文件", image: ImageResource(name: "wm-file", bundle: .main)) { importScope = model.uxScope; importingAttachments = true }.accessibilityIdentifier("composer.file")
                         #endif
                         #if DEBUG
                         if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--a15-synthetic-media") {
-                            Button("添加合成文件") {
+                            Button("添加合成文件", image: ImageResource(name: "wm-file", bundle: .main)) {
                                 let scope = model.uxScope
                                 if let file = try? AppleContractUIFixture.selectedFile() { Task { await model.addAttachments([file], to: conversation, accountEpoch: scope.epoch) } }
                             }.accessibilityIdentifier("composer.syntheticFile")
                         }
                         #endif
                         if model.thinking.confirmed?.supported == true {
-                            Button { Task { await model.refreshThinking(conversation, enabled: model.thinking.confirmed?.enabled != true) } } label: {
-                                Label("深入思考", image: "wm-model")
-                            }.disabled(model.thinking.pending).accessibilityValue(model.thinking.confirmed?.enabled == true ? "已开启" : "已关闭")
+                            Toggle(isOn: Binding(get: { model.thinking.confirmed?.enabled == true }, set: { value in
+                                Task { await model.refreshThinking(conversation, enabled: value) }
+                            })) { Label("深入思考", image: "wm-model") }
+                                .disabled(model.thinking.pending).accessibilityValue(model.thinking.confirmed?.enabled == true ? "已开启" : "已关闭")
                                 .accessibilityIdentifier("composer.thinking")
                         }
                     } label: { WeftIcon("plus").frame(width: 44, height: 44) }
@@ -836,7 +828,7 @@ struct MessageView: View {
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("message.\(message.id)")
         .modifier(MessageActionsPresentation(app: model, id: message.id, text: message.text, at: message.occurredAt,
-            user: message.role == .user, enabled: true, latest: false, menuID: "message.actions." + message.id,
+            user: message.role == .user, enabled: true, latest: model.messages.last?.id == message.id && model.selectedConversation?.running != true, menuID: "message.actions." + message.id,
             quote: {
                 if let conversation = model.selectedConversation {
                     model.setDraft(model.draftText(for: conversation, accountEpoch: model.accountEpoch) + "\n> " + message.text.replacingOccurrences(of: "\n", with: "\n> ") + "\n", for: conversation, accountEpoch: model.accountEpoch)
@@ -844,7 +836,7 @@ struct MessageView: View {
             }, regenerate: { Task { await model.regenerateReply(message) } }, extra: {
                 AnyView(Group {
                     if let conversation = model.selectedConversation, model.mainChat.capabilities.supports("sideChats"), !conversation.temporaryState.hasTemporaryContent {
-                        Button("开旁聊") { Task { await model.mainChat.createSideFromMessage(message, conversation: conversation) } }
+                        Button("开旁聊", image: ImageResource(name: "wm-chat", bundle: .main)) { Task { await model.mainChat.createSideFromMessage(message, conversation: conversation) } }
                     }
                 })
             }))
@@ -853,14 +845,6 @@ struct MessageView: View {
 
 /// Track visibility without feeding a changing LazyStack target back into its layout on iOS 18+.
 /// Older systems retain their existing position binding.
-private struct ConversationViewportHeight: PreferenceKey {
-    static let defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
-}
-private struct ConversationContentHeight: PreferenceKey {
-    static let defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
-}
 private struct ConversationScrollTracking: ViewModifier {
     @Binding var visibleID: String?
     @Binding var follow: ConversationFollowState
@@ -868,11 +852,11 @@ private struct ConversationScrollTracking: ViewModifier {
     func body(content: Content) -> some View {
         if #available(iOS 18, macOS 15, *) {
             content
-                .onScrollTargetVisibilityChange(idType: String.self) { ids in visibleID = ids.contains("older") ? "older" : ids.contains("latest") ? "latest" : ids.first }
-                .onScrollPhaseChange { _, phase in userScrolling = phase == .interacting || phase == .decelerating }
-                .onScrollGeometryChange(for: Double.self) { geometry in
+                .onScrollTargetVisibilityChange(idType: String.self) { @Sendable ids in Task { @MainActor in visibleID = ids.contains("older") ? "older" : ids.contains("latest") ? "latest" : ids.first } }
+                .onScrollPhaseChange { @Sendable _, phase in Task { @MainActor in userScrolling = phase == .interacting || phase == .decelerating } }
+                .onScrollGeometryChange(for: Double.self) { @Sendable geometry in
                     Double(geometry.contentSize.height + geometry.contentInsets.bottom - geometry.contentOffset.y - geometry.containerSize.height)
-                } action: { _, distance in if userScrolling { follow.userScrolled(distanceFromBottom: distance) } }
+                } action: { @Sendable _, distance in Task { @MainActor in if userScrolling { follow.userScrolled(distanceFromBottom: distance) } } }
         } else {
             content.scrollPosition(id: $visibleID, anchor: .bottom).onChange(of: visibleID) { _, value in follow.userScrolled(distanceFromBottom: value == "latest" ? 0 : 100) }
         }

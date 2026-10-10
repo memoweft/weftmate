@@ -1,0 +1,41 @@
+{
+  "desktop": {
+    "/personal/v1/settings/personalization": 1,
+    "/personal/v1/status": 1,
+    "/personal/v1/models": 1,
+    "/personal/v1/settings/models": 1,
+    "/personal/v1/commands": 1,
+    "/personal/v1/sessions": 1,
+    "/personal/v1/projects": 1,
+    "/personal/v1/sessions/session-923e6788-993a-4e53-9a8b-4b01ff0294ec/metadata": 1,
+    "/personal/v1/sessions/session-923e6788-993a-4e53-9a8b-4b01ff0294ec/approval-mode": 1,
+    "/personal/v1/sessions/session-923e6788-993a-4e53-9a8b-4b01ff0294ec/events": 1,
+    "/personal/v1/settings/usage": 1,
+    "/personal/v1/sessions/session-923e6788-993a-4e53-9a8b-4b01ff0294ec/message-branches": 1,
+    "/personal/v1/sessions/session-923e6788-993a-4e53-9a8b-4b01ff0294ec/events/10/detail": 1,
+    "/personal/v1/sessions/session-923e6788-993a-4e53-9a8b-4b01ff0294ec/approvals": 1,
+    "/personal/v1/sessions/session-923e6788-993a-4e53-9a8b-4b01ff0294ec/questions": 1,
+    "/personal/v1/usage": 1,
+    "/personal/v1/sync/events": 1,
+    "/personal/v1/tasks/cmd-48b33d8f-3c29-4a89-880a-c2ad7ebd08c3": 1
+  },
+  "mobile": {
+    "events.subscribe": 1,
+    "settings.appearance": 4,
+    "app.bootstrap": 1,
+    "conversations.list": 1,
+    "attachments.list": 1,
+    "app.ready": 1,
+    "host.business:/personal/v1/settings/personalization": 1,
+    "host.status": 1,
+    "host.business:/personal/v1/memory/status": 1,
+    "models.host": 1,
+    "shared.sessions.list": 1,
+    "shared.projects.list": 1,
+    "shared.approvals.list": 1,
+    "cloud.callback": 1,
+    "cloud.pending": 1,
+    "auth.me": 1
+  },
+  "mobileToast": ""
+}

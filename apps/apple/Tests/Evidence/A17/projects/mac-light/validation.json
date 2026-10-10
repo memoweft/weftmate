@@ -1,0 +1,78 @@
+{
+  "platform": "mac",
+  "theme": "light",
+  "remote": false,
+  "authenticated": true,
+  "passed": 1,
+  "failed": 0,
+  "skipped": 0,
+  "realPersonalHTTP": true,
+  "realProjectStore": true,
+  "syntheticRootInspector": true,
+  "syntheticDsh": true,
+  "syntheticRestrictedProjection": true,
+  "projectSendCount": 1,
+  "restrictedTaskRequests": 0,
+  "projectCreateRequests": 1,
+  "moved": true,
+  "projectRemoved": true,
+  "generatedAt": "2026-10-10T07:23:10.736252+00:00",
+  "commit": "98a93b9044906c4d781a30e33d4d3ffe56121172",
+  "screenshots": [
+    {
+      "file": "move-project.png",
+      "sha256": "f1d0a99475cf45c0cd38b4bfe03a137fdfc9cc4ba8e6211ad6ac3dd40cc0ffeb"
+    },
+    {
+      "file": "project-create.png",
+      "sha256": "a3245f20e9b3e2cbcc644ff07bd71ae0cf2929871c416776624a5df5eec021a4"
+    },
+    {
+      "file": "project-moved.png",
+      "sha256": "57eaf9c693f3f6003b496c8b83cef9e99b1a3820a64afe97ab6142f7c1bf6845"
+    },
+    {
+      "file": "project-new-conversation.png",
+      "sha256": "700110fbabe75e0fc2f34abf42f8ee3561162ff1a95ee36f05b1e9630b8f5225"
+    },
+    {
+      "file": "project-remove.png",
+      "sha256": "dcdc1d990790214f543707218c2f5e1eee4b9af26f00e1f80b70495886693de8"
+    },
+    {
+      "file": "project-removed.png",
+      "sha256": "8c19fa53bfa00654e0080b4630b9f2acb0d4eda14dc6641e355f5bd0712a6f68"
+    },
+    {
+      "file": "project-send-ready.png",
+      "sha256": "3ec67089c7dab08d1c045708f32f986dcc3f8ee2e3bfab33f56e4b558ce28498"
+    },
+    {
+      "file": "project-sent.png",
+      "sha256": "d4f09b5099f9b68fbf5eb7f4813dfcffaea4f77f744914d93c8259b5f16dc75f"
+    },
+    {
+      "file": "project-settings.png",
+      "sha256": "184f971c3d3cac99bd74e1a7641e01f965fec8fe048a23b29e130354bc3603e7"
+    },
+    {
+      "file": "projects-created.png",
+      "sha256": "76f0d5fd3cf54d4a0e045efa6abda40503823450ea7ff4f403829a9b03933c55"
+    },
+    {
+      "file": "projects-list.png",
+      "sha256": "bd0467a05a9fe39bbd12a1a5c44a2d92043b2708e84774f4892557403c39524d"
+    },
+    {
+      "file": "restricted-session.png",
+      "sha256": "6b51f5cd87aa53c9b6e04580fa252c35af232177b5a021fbce48b605a8f6f7a6"
+    }
+  ],
+  "xcodeJobs": 2,
+  "simulatorsAtOnce": 0,
+  "sourcesSHA256": "23e29835db45c054a9918ddb4d5be5ded1dd75b10638ec6973175c86dae9a844",
+  "binarySHA256": "468566c84012b07f21693811a2dee15e5754c2ddcf66175263bb68b3b974872e",
+  "nativeFolderPanelOpened": true,
+  "nativeFolderSelectionConfirmed": false,
+  "syntheticFolderSelection": true
+}

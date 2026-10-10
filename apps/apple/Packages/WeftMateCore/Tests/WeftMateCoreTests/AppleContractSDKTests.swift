@@ -25,7 +25,7 @@ private actor ContractHTTP: HTTPTransport {
         switch path {
         case "/personal/v1/auth/login": return json(auth, headers: ["set-cookie": "wm_personal_session=" + String(repeating: "a", count: 43)])
         case "/personal/v1/auth/me": return json(auth)
-        case "/personal/v1/status": return json(["ownerId": "owner-test", "hostId": "host-test", "backend": ["capabilities": ["desktopOpenApp": ["available": !shared]]]])
+        case "/personal/v1/status": return json(["ownerId": "owner-test", "hostId": "host-test", "executionAccount": !shared, "backend": ["capabilities": ["desktopOpenApp": ["available": !shared]]]])
         case "/personal/v1/sessions": return json(["sessions": [["sessionId": sessionID, "title": "Test", "running": false, "sendAvailable": true]]])
         default:
             if request.httpMethod == "PUT" {

@@ -70,7 +70,7 @@ import Foundation
                     if category == .activeEnergy {
                         let hourly = try await collection(type: type as! HKQuantityType, start: days[0].day, end: now,
                             calendar: calendar, components: DateComponents(hour: 1))
-                        hourly.enumerateStatistics(from: days[0].day, to: now) { stats, _ in
+                        for stats in hourly.statistics() where stats.startDate >= days[0].day && stats.startDate < now {
                             if let quantity = stats.sumQuantity() {
                                 observations.append(.init(category: .activeEnergy, start: stats.startDate,
                                     end: min(now, stats.endDate), value: quantity.doubleValue(for: .kilocalorie())))
@@ -90,7 +90,7 @@ import Foundation
         let capturedObservations = observations, capturedStages = stages, capturedFailures = failed
         let isAvailable = available
         // Calculating historical intervals must not stall the phone / Watch main actor.
-        return await Task.detached(priority: .utility) {
+        return await Task.detached(priority: .utility) { @Sendable in
             let summaries = HealthSummaryCalculator.summarize(days: capturedDays, sleep: capturedSleep, workouts: capturedWorkouts,
                 preferences: preferences, calendar: calendar, deviceId: deviceId, now: now, available: isAvailable, failed: capturedFailures)
             let calculated = HealthDeviceMetricsCalculator.calculate(summaries: summaries, observations: capturedObservations,
@@ -112,7 +112,7 @@ import Foundation
             let query = HKStatisticsCollectionQuery(quantityType: type,
                 quantitySamplePredicate: HKQuery.predicateForSamples(withStart: start, end: end),
                 options: .cumulativeSum, anchorDate: calendar.startOfDay(for: start), intervalComponents: components)
-            query.initialResultsHandler = { _, result, error in
+            query.initialResultsHandler = { @Sendable _, result, error in
                 if let error { continuation.resume(throwing: error) }
                 else if let result { continuation.resume(returning: result) }
                 else { continuation.resume(throwing: CocoaError(.coderReadCorrupt)) }
@@ -127,7 +127,7 @@ import Foundation
     private func samples(type: HKSampleType, start: Date, end: Date) async throws -> [HKSample] {
         try await withCheckedThrowingContinuation { continuation in
             let query = HKSampleQuery(sampleType: type, predicate: HKQuery.predicateForSamples(withStart: start, end: end),
-                                      limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, error in
+                                      limit: HKObjectQueryNoLimit, sortDescriptors: nil) { @Sendable _, samples, error in
                 if let error { continuation.resume(throwing: error) }
                 else { continuation.resume(returning: samples ?? []) }
             }

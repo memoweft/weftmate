@@ -1,0 +1,63 @@
+Attributes: Application, 0x1043114a0, pid: 58929, label: 'WeftMate'
+Element subtree:
+ →Application, 0x1043114a0, pid: 58929, label: 'WeftMate'
+    Window (Main), 0x104311a30, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x1043138d0, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x1043139f0, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, 0x104313780, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, 0x10430e8f0, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, 0x104313b10, {{0.0, 0.0}, {390.0, 844.0}}, identifier: 'weftmateRoot'
+                Other, 0x104313c30, {{0.0, 0.0}, {390.0, 844.0}}
+                  NavigationBar, 0x104313d50, {{0.0, 47.0}, {390.0, 54.0}}, identifier: 'WeftMate'
+                    Button, 0x104313e70, {{20.0, 51.0}, {36.0, 36.0}}, identifier: 'mainChat.sideList', label: '旁聊与项目'
+                    StaticText, 0x104313f90, {{156.0, 58.7}, {77.7, 20.7}}, label: 'WeftMate'
+                    Other, 0x1043140b0, {{280.0, 51.0}, {36.0, 36.0}}, identifier: 'phoneAccountMenu', label: '账户菜单'
+                      Other, 0x1043141d0, {{280.0, 51.0}, {36.0, 36.0}}
+                        Button, 0x1043142f0, {{281.0, 51.0}, {34.0, 36.0}}, identifier: 'phoneAccountMenu', label: '账户菜单'
+                          Button, 0x104314410, {{281.0, 51.0}, {34.0, 36.0}}
+                            Image, 0x104314530, {{288.0, 59.0}, {20.0, 20.0}}, label: 'wm-account'
+                    Button, 0x104314650, {{332.0, 51.0}, {38.0, 36.0}}, label: '刷新会话'
+                  Other, 0x104314770, {{0.0, 0.0}, {390.0, 844.0}}
+                    Other, 0x104314890, {{0.0, 0.0}, {390.0, 844.0}}
+                      Other, 0x1043149b0, {{0.0, 0.0}, {390.0, 844.0}}
+                        Other, 0x104314ad0, {{0.0, 0.0}, {390.0, 844.0}}
+                          Other, 0x104314bf0, {{0.0, 0.0}, {390.0, 844.0}}, identifier: 'mainChat'
+                            Button, 0x104314d10, {{12.0, 113.0}, {78.7, 20.3}}, identifier: 'mainChat.date', label: '跳日期'
+                              Image, 0x104314e30, {{12.0, 113.3}, {20.0, 20.0}}, label: 'wm-clock'
+                              StaticText, 0x104314f50, {{12.0, 113.0}, {78.7, 20.3}}, label: '跳日期'
+                            Button, 0x104315070, {{98.7, 113.0}, {62.0, 20.3}}, identifier: 'mainChat.search', label: '搜索'
+                              Image, 0x104315190, {{98.7, 113.3}, {20.0, 20.0}}, label: 'wm-search'
+                              StaticText, 0x1043152b0, {{98.7, 113.0}, {62.0, 20.3}}, label: '搜索'
+                            Button, 0x1043153d0, {{358.0, 113.3}, {20.0, 20.0}}, identifier: 'mainChat.resources', label: '输出与来源'
+                              Image, 0x1043154f0, {{358.0, 113.3}, {20.0, 20.0}}, label: 'wm-outputs'
+                            StaticText, 0x104315610, {{12.0, 157.3}, {302.0, 66.7}}, label: '相机暂不可用，可从照片或文件添加。'
+                              Image, 0x104315730, {{25.0, 170.3}, {20.0, 20.0}}, label: 'wm-warn'
+                              StaticText, 0x104315850, {{25.0, 170.3}, {250.7, 40.6}}, label: '相机暂不可用，可从照片或文件添加。'
+                            Button, 0x104315970, {{322.0, 168.7}, {56.0, 44.0}}, label: '重试'
+                            ScrollView, 0x104315a90, {{0.0, 236.0}, {390.0, 467.0}}
+                              Other, 0x104315bb0, {{0.0, 236.0}, {390.0, 41.0}}
+                                Other, 0x104315cd0, {{195.0, 256.7}, {0.0, 0.0}}
+                              Other, 0x104315df0, {{357.0, 236.0}, {30.0, 467.0}}, label: '垂直滚动条, 1页', value: 0%
+                                Other, 0x104315f10, {{384.0, 783.7}, {3.0, 7.0}}
+                              Other, 0x104316030, {{357.0, 236.0}, {30.0, 467.0}}, label: '垂直滚动条, 1页', value: 0%
+                                Other, 0x104316150, {{384.0, 783.7}, {3.0, 7.0}}
+                            Button, 0x104316270, {{290.3, 647.0}, {87.7, 44.0}}, identifier: 'mainChat.latest', label: '回到底部'
+                            TextField, 0x104316390, {{16.0, 719.0}, {358.0, 23.0}}, identifier: 'mainChat.draft', placeholderValue: '和 WeftMate 聊聊'
+                              Other, 0x1043164b0, {{16.0, 727.5}, {358.0, 11.5}}, label: '水平滚动条, 1页', value: 0%
+                                Other, 0x1043165d0, {{19.0, 736.0}, {352.0, 3.0}}
+                            Button, 0x1043166f0, {{16.0, 750.0}, {44.0, 44.0}}, identifier: 'mainChat.plus', label: '添加'
+                              Button, 0x104316810, {{16.0, 750.0}, {44.0, 44.0}}
+                                Image, 0x104316930, {{28.0, 762.0}, {20.0, 20.0}}, label: 'wm-plus'
+                            Button, 0x104316a50, {{168.0, 755.0}, {108.0, 34.3}}, label: '模型、合成模型'
+                              StaticText, 0x104316b70, {{180.0, 762.0}, {67.7, 20.3}}, label: '合成模型'
+                            Button, 0x104316c90, {{326.0, 750.0}, {48.0, 44.0}}, identifier: 'mainChat.send', label: '发送', Disabled
+                              Image, 0x104316db0, {{340.0, 762.0}, {20.0, 20.0}}, label: 'wm-send', Disabled
+                  Other, 0x104316ed0, {{0.0, 0.0}, {390.0, 844.0}}
+                    Other, 0x104316ff0, {{0.0, 0.0}, {390.0, 844.0}}
+Path to element:
+ →Application, 0x1043114a0, pid: 58929, label: 'WeftMate'
+Query chain:
+ →Find: Target Application 'com.weftmate.apple.weftmatephone'
+  Output: {
+    Application, 0x10440d0d0, pid: 58929, label: 'WeftMate'
+  }

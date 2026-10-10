@@ -1,0 +1,19 @@
+✖ UI-2a 390×844 modes, risk confirmation, settings and three approval decisions (3380.3583ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3894.8455
+
+✖ failing tests:
+
+test at tests\evidence\fx-20\runners\race-before.mjs:17:1
+✖ UI-2a 390×844 modes, risk confirmation, settings and three approval decisions (3380.3583ms)
+  page.waitForFunction: Timeout 2000ms exceeded.
+      at TestContext.<anonymous> (D:\AIProjects\WeftMate\Worktrees\w3\tests\evidence\fx-20\runners\race-before.mjs:90:16) {
+    name: 'TimeoutError',
+    log: []
+  }
