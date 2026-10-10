@@ -1,0 +1,11 @@
+{
+  "baseline": "7543282d67aaef9b369fb1551e5bc8d5ed59163a",
+  "testIdentity": "qa5",
+  "testKeyOnly": true,
+  "privateKeyDeleted": true,
+  "authenticode": "NotSigned",
+  "sha256": "5e330cc19e4cff3301ea6ded8559640078a898f141cc3dd9231e3adcbc96389a",
+  "bytes": 174346178,
+  "uploaded": false,
+  "productSourceDiff": false
+}
