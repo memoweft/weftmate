@@ -5,12 +5,23 @@ import { createPersonalAccessBackend } from '../src/personal-access-backend.mjs'
 
 const ok = (value: unknown) => ({ result: { ok: true, value } })
 
+test('FX-19 exact session checks reject wrong ids and presets without enumerating unrelated sessions',async()=>{
+  let row={sessionId:'one',agentPreset:'personal-remote'},reads=0,resolves=0;
+  const backend=createPersonalAccessBackend({currentOrigin:()=> 'http://fixture',hostOwnerId:()=> 'owner',
+    profiles:()=>[{id:'model',model:'synthetic'}],hasCredential:()=>true,routeForProfile:()=>({provider:'fixture'}),
+    listSessions:async()=>{throw Error('single-session checks must not list')},gateway:async(path)=>{if(path==='/models')return {groups:[{id:'fixture',models:[{id:'synthetic'}]}]};assert.equal(path,'/sessions/one');reads++;return row},
+    resolveSession:async(id,snapshot)=>{resolves++;assert.equal(id,'one');assert.deepEqual(snapshot,{items:[row]});return {profile:{id:'model',model:'synthetic'}}}} as any);
+  await backend.preflight({kind:'session.message',sessionId:'one',ownerId:'owner'});assert.equal(reads,1);assert.equal(resolves,1);
+  row={sessionId:'different',agentPreset:'personal-remote'};await assert.rejects(backend.preflight({kind:'session.message',sessionId:'one',ownerId:'owner'}),{code:'SESSION_UNAVAILABLE'});
+  row={sessionId:'one',agentPreset:'standard'};await assert.rejects(backend.preflight({kind:'session.message',sessionId:'one',ownerId:'owner'}),{code:'SESSION_READ_ONLY'});assert.equal(resolves,1);
+});
+
 test('FX-10 describing many requested sessions uses one native list and preserves individual descriptor facts', async () => {
   let scans=0
   const items=Array.from({length:80},(_,i)=>({sessionId:`session-${i}`,title:`Synthetic ${i}`,running:i===3,
     agentPreset:i===79?'standard':'personal-remote',contextUsage:{usedTokens:i,contextWindow:10000}}))
   const backend=createPersonalAccessBackend({currentOrigin:()=> 'http://127.0.0.1:1',
-    listSessions:async()=>{scans++;return {items}},resolveSession:async(id: string,snapshot: any)=>{
+    listSessions:async()=>{scans++;return {items}},gateway:async(path: string)=>items.find(row=>path===`/sessions/${row.sessionId}`),resolveSession:async(id: string,snapshot: any)=>{
       assert.ok(snapshot.items.some((row: any)=>row.sessionId===id),'binding resolution reuses the same native snapshot')
       return {profile:{id:'model-synthetic'}}
     },
@@ -192,6 +203,7 @@ test('host callbacks preflight selected model and ownership before dispatch; cre
     ensureKnownSession: async () => { calls.push('ownership') },
     gateway: async (path: string, init?: { method?: string }) => {
       if (path === '/models') return { groups: catalogRoute ? [{ id: 'weftmate-a', models: [{ id: 'synthetic' }] }] : [] }
+      if (!init?.method && /^\/sessions\/[^/]+$/.test(path)) return { sessionId: path.split('/').at(-1), agentPreset: path === '/sessions/old-session' ? 'standard' : 'personal-remote' }
       calls.push(`${init?.method ?? 'GET'} ${path}`)
       if (path === '/sessions') { createdSession = true; return { sessionId: 'session-new' } }
       if (path.endsWith('/messages')) return { accepted: true }
@@ -257,7 +269,7 @@ test('document artifact preflight permits only the original owner and restricted
       { sessionId: 'legacy-session', agentPreset: 'standard' },
     ] }),
     resolveSession: async () => ({ profile: { id: 'unused' } }),
-    ensureKnownSession: async () => {}, gateway: async () => ({}),
+    ensureKnownSession: async () => {}, gateway: async (path: string) => ({sessionId:path.split('/').at(-1),agentPreset:path==='/sessions/remote-session'?'personal-remote':'standard'}),
     queue: async (work: () => Promise<unknown>) => work(), bindSession: () => {},
   })
   assert.deepEqual(await backend.preflight({ kind: 'desktop.write_artifact',

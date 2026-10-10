@@ -484,7 +484,7 @@ test('backend snapshots and responses capture the parent generation before await
     hostOwnerId: () => 'owner', ownerForSession: () => 'owner', modelAllowed: () => true,
     routeForProfile: () => ({}), listSessions: async () => { await gate; return { items: [{ sessionId: 'session-owned', agentPreset: 'personal-remote' }] } },
     resolveSession: async () => ({ profile: { id: 'local' } }), ensureKnownSession: async () => {},
-    gateway: async (path: string, options: any) => { gatewayCalls.push({ path, options }); return options?.method === 'POST' ? { accepted: true } : { questions: [] } },
+    gateway: async (path: string, options: any) => { if(path==='/sessions/session-owned'){await gate;return {sessionId:'session-owned',agentPreset:'personal-remote'}};gatewayCalls.push({ path, options }); return options?.method === 'POST' ? { accepted: true } : { questions: [] } },
     queue: (work: () => Promise<any>) => work(), bindSession: () => {},
   })
   const first = runtimeId

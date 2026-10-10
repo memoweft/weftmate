@@ -33,14 +33,18 @@ export function nativeSessionLifecycle(ctx) {
     const persistence = ctx.get('sessionPersistence')
     const meta = resume ? (await persistence.inspect(sessionId)).meta : options
     const presets = ctx.get('agentPresets')
-    const prior = compositions.get(meta.agentPreset)
+    const reusable = ['personal-remote', 'personal-shared-chat'].includes(meta.agentPreset)
+    const prior = reusable && compositions.get(meta.agentPreset)
     const source = prior && handles.get(prior.sessionId)
-    const inherited = source && await stamp(prior.path).catch(() => null) === prior.stamp
+    const inherited = source && await stamp(prior.path).catch(() => null) === prior.stamp && handles.get(prior.sessionId) === source
     const resolved = inherited ? prior : await presets.resolve(meta.agentPreset)
     const preset = resolved.id
+    // Record before mounting: an edit during setup must not label the old
+    // composition with the new file's stamp and reuse it for later sessions.
+    const compositionStamp = inherited ? prior.stamp : reusable && resolved.path ? await stamp(resolved.path) : null
     const setup = async agentCtx => {
-      if (inherited) presets.composeFrom(agentCtx, source.agent.ctx)
-      else await presets.mount(agentCtx, preset)
+      if (!inherited || handles.get(prior.sessionId) !== source || presets.composeFrom(agentCtx, source.agent.ctx) !== preset)
+        await presets.mount(agentCtx, preset)
       agentCtx.on('agent/pre-step', async (payload, next) => {
         const decision = await next()
         if (decision.kind !== 'enter' || !executionDirectory(payload.agent.session)) return decision
@@ -57,8 +61,8 @@ export function nativeSessionLifecycle(ctx) {
       : await ctx.agents.create({ sessionId, ...(options.seed ? { seed: options.seed } : {}),
         meta: { cwd: options.cwd, agentPreset: preset, ...(options.parentSession ? { parentSession: options.parentSession, seedLength: options.seed.length } : {}) }, setup })
     handles.set(sessionId, handle)
-    if (!inherited && resolved.path) compositions.set(preset, { id: preset, path: resolved.path,
-      stamp: await stamp(resolved.path), sessionId })
+    if (compositionStamp) compositions.set(preset, { id: preset, path: resolved.path,
+      stamp: compositionStamp, sessionId })
   }
   return {
     chatHandoff: (sessionId, action, handoff) => serial(sessionId, async () => {
