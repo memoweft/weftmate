@@ -1,0 +1,869 @@
+{
+  "scope": "Local synthetic auth session explicitly accepted through real core.acceptSession/enterAssistant; cloud login is outside this layout fixture. Emulated mobile web viewport; keyboard resize is a simulation, native keyboard separate; no OS/browser bars claimed",
+  "rows": [
+    {
+      "scene": "main",
+      "theme": "light",
+      "file": "390-main-light.png",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "visualHeight": 844
+      },
+      "pageHeight": 844,
+      "bodyHeight": 844,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "WeftMate",
+      "send": {
+        "x": 329,
+        "y": 779,
+        "width": 36,
+        "height": 44,
+        "top": 779,
+        "right": 365,
+        "bottom": 823,
+        "left": 329
+      },
+      "input": {
+        "x": 25,
+        "y": 747,
+        "width": 340,
+        "height": 32,
+        "top": 747,
+        "right": 365,
+        "bottom": 779,
+        "left": 25
+      },
+      "passed": true
+    },
+    {
+      "scene": "side",
+      "theme": "light",
+      "file": "390-side-light.png",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "visualHeight": 844
+      },
+      "pageHeight": 844,
+      "bodyHeight": 844,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "新对话",
+      "send": {
+        "x": 329,
+        "y": 739,
+        "width": 36,
+        "height": 44,
+        "top": 739,
+        "right": 365,
+        "bottom": 783,
+        "left": 329
+      },
+      "input": {
+        "x": 25,
+        "y": 707,
+        "width": 340,
+        "height": 32,
+        "top": 707,
+        "right": 365,
+        "bottom": 739,
+        "left": 25
+      },
+      "passed": true
+    },
+    {
+      "scene": "folder-capsule",
+      "theme": "light",
+      "file": "390-folder-capsule-light.png",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "visualHeight": 844
+      },
+      "pageHeight": 844,
+      "bodyHeight": 844,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "新对话",
+      "send": {
+        "x": 329,
+        "y": 739,
+        "width": 36,
+        "height": 44,
+        "top": 739,
+        "right": 365,
+        "bottom": 783,
+        "left": 329
+      },
+      "input": {
+        "x": 25,
+        "y": 707,
+        "width": 340,
+        "height": 32,
+        "top": 707,
+        "right": 365,
+        "bottom": 739,
+        "left": 25
+      },
+      "passed": true
+    },
+    {
+      "scene": "suggestion-layout-fixture",
+      "theme": "light",
+      "file": "390-suggestion-layout-fixture-light.png",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "visualHeight": 844
+      },
+      "pageHeight": 844,
+      "bodyHeight": 844,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "新对话",
+      "send": {
+        "x": 329,
+        "y": 739,
+        "width": 36,
+        "height": 44,
+        "top": 739,
+        "right": 365,
+        "bottom": 783,
+        "left": 329
+      },
+      "input": {
+        "x": 25,
+        "y": 707,
+        "width": 340,
+        "height": 32,
+        "top": 707,
+        "right": 365,
+        "bottom": 739,
+        "left": 25
+      },
+      "passed": true
+    },
+    {
+      "scene": "offline",
+      "theme": "light",
+      "file": "390-offline-light.png",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "visualHeight": 844
+      },
+      "pageHeight": 844,
+      "bodyHeight": 844,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "新对话",
+      "send": {
+        "x": 329,
+        "y": 739,
+        "width": 36,
+        "height": 44,
+        "top": 739,
+        "right": 365,
+        "bottom": 783,
+        "left": 329
+      },
+      "input": {
+        "x": 25,
+        "y": 707,
+        "width": 340,
+        "height": 32,
+        "top": 707,
+        "right": 365,
+        "bottom": 739,
+        "left": 25
+      },
+      "passed": true
+    },
+    {
+      "scene": "keyboard-viewport-simulation",
+      "theme": "light",
+      "file": "390-keyboard-viewport-simulation-light.png",
+      "viewport": {
+        "width": 390,
+        "height": 544,
+        "visualHeight": 544
+      },
+      "pageHeight": 544,
+      "bodyHeight": 544,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "新对话",
+      "send": {
+        "x": 329,
+        "y": 439,
+        "width": 36,
+        "height": 44,
+        "top": 439,
+        "right": 365,
+        "bottom": 483,
+        "left": 329
+      },
+      "input": {
+        "x": 25,
+        "y": 407,
+        "width": 340,
+        "height": 32,
+        "top": 407,
+        "right": 365,
+        "bottom": 439,
+        "left": 25
+      },
+      "passed": true
+    },
+    {
+      "scene": "main",
+      "theme": "dark",
+      "file": "390-main-dark.png",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "visualHeight": 844
+      },
+      "pageHeight": 844,
+      "bodyHeight": 844,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "WeftMate",
+      "send": {
+        "x": 329,
+        "y": 779,
+        "width": 36,
+        "height": 44,
+        "top": 779,
+        "right": 365,
+        "bottom": 823,
+        "left": 329
+      },
+      "input": {
+        "x": 25,
+        "y": 747,
+        "width": 340,
+        "height": 32,
+        "top": 747,
+        "right": 365,
+        "bottom": 779,
+        "left": 25
+      },
+      "passed": true
+    },
+    {
+      "scene": "side",
+      "theme": "dark",
+      "file": "390-side-dark.png",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "visualHeight": 844
+      },
+      "pageHeight": 844,
+      "bodyHeight": 844,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "新对话",
+      "send": {
+        "x": 329,
+        "y": 739,
+        "width": 36,
+        "height": 44,
+        "top": 739,
+        "right": 365,
+        "bottom": 783,
+        "left": 329
+      },
+      "input": {
+        "x": 25,
+        "y": 707,
+        "width": 340,
+        "height": 32,
+        "top": 707,
+        "right": 365,
+        "bottom": 739,
+        "left": 25
+      },
+      "passed": true
+    },
+    {
+      "scene": "folder-capsule",
+      "theme": "dark",
+      "file": "390-folder-capsule-dark.png",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "visualHeight": 844
+      },
+      "pageHeight": 844,
+      "bodyHeight": 844,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "新对话",
+      "send": {
+        "x": 329,
+        "y": 739,
+        "width": 36,
+        "height": 44,
+        "top": 739,
+        "right": 365,
+        "bottom": 783,
+        "left": 329
+      },
+      "input": {
+        "x": 25,
+        "y": 707,
+        "width": 340,
+        "height": 32,
+        "top": 707,
+        "right": 365,
+        "bottom": 739,
+        "left": 25
+      },
+      "passed": true
+    },
+    {
+      "scene": "suggestion-layout-fixture",
+      "theme": "dark",
+      "file": "390-suggestion-layout-fixture-dark.png",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "visualHeight": 844
+      },
+      "pageHeight": 844,
+      "bodyHeight": 844,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "新对话",
+      "send": {
+        "x": 329,
+        "y": 739,
+        "width": 36,
+        "height": 44,
+        "top": 739,
+        "right": 365,
+        "bottom": 783,
+        "left": 329
+      },
+      "input": {
+        "x": 25,
+        "y": 707,
+        "width": 340,
+        "height": 32,
+        "top": 707,
+        "right": 365,
+        "bottom": 739,
+        "left": 25
+      },
+      "passed": true
+    },
+    {
+      "scene": "offline",
+      "theme": "dark",
+      "file": "390-offline-dark.png",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "visualHeight": 844
+      },
+      "pageHeight": 844,
+      "bodyHeight": 844,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "新对话",
+      "send": {
+        "x": 329,
+        "y": 739,
+        "width": 36,
+        "height": 44,
+        "top": 739,
+        "right": 365,
+        "bottom": 783,
+        "left": 329
+      },
+      "input": {
+        "x": 25,
+        "y": 707,
+        "width": 340,
+        "height": 32,
+        "top": 707,
+        "right": 365,
+        "bottom": 739,
+        "left": 25
+      },
+      "passed": true
+    },
+    {
+      "scene": "keyboard-viewport-simulation",
+      "theme": "dark",
+      "file": "390-keyboard-viewport-simulation-dark.png",
+      "viewport": {
+        "width": 390,
+        "height": 544,
+        "visualHeight": 544
+      },
+      "pageHeight": 544,
+      "bodyHeight": 544,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "新对话",
+      "send": {
+        "x": 329,
+        "y": 439,
+        "width": 36,
+        "height": 44,
+        "top": 439,
+        "right": 365,
+        "bottom": 483,
+        "left": 329
+      },
+      "input": {
+        "x": 25,
+        "y": 407,
+        "width": 340,
+        "height": 32,
+        "top": 407,
+        "right": 365,
+        "bottom": 439,
+        "left": 25
+      },
+      "passed": true
+    },
+    {
+      "scene": "main",
+      "theme": "light",
+      "file": "360-main-light.png",
+      "viewport": {
+        "width": 360,
+        "height": 780,
+        "visualHeight": 780
+      },
+      "pageHeight": 780,
+      "bodyHeight": 780,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "WeftMate",
+      "send": {
+        "x": 299,
+        "y": 715,
+        "width": 36,
+        "height": 44,
+        "top": 715,
+        "right": 335,
+        "bottom": 759,
+        "left": 299
+      },
+      "input": {
+        "x": 25,
+        "y": 683,
+        "width": 310,
+        "height": 32,
+        "top": 683,
+        "right": 335,
+        "bottom": 715,
+        "left": 25
+      },
+      "passed": true
+    },
+    {
+      "scene": "side",
+      "theme": "light",
+      "file": "360-side-light.png",
+      "viewport": {
+        "width": 360,
+        "height": 780,
+        "visualHeight": 780
+      },
+      "pageHeight": 780,
+      "bodyHeight": 780,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "新对话",
+      "send": {
+        "x": 299,
+        "y": 675,
+        "width": 36,
+        "height": 44,
+        "top": 675,
+        "right": 335,
+        "bottom": 719,
+        "left": 299
+      },
+      "input": {
+        "x": 25,
+        "y": 643,
+        "width": 310,
+        "height": 32,
+        "top": 643,
+        "right": 335,
+        "bottom": 675,
+        "left": 25
+      },
+      "passed": true
+    },
+    {
+      "scene": "folder-capsule",
+      "theme": "light",
+      "file": "360-folder-capsule-light.png",
+      "viewport": {
+        "width": 360,
+        "height": 780,
+        "visualHeight": 780
+      },
+      "pageHeight": 780,
+      "bodyHeight": 780,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "新对话",
+      "send": {
+        "x": 299,
+        "y": 675,
+        "width": 36,
+        "height": 44,
+        "top": 675,
+        "right": 335,
+        "bottom": 719,
+        "left": 299
+      },
+      "input": {
+        "x": 25,
+        "y": 643,
+        "width": 310,
+        "height": 32,
+        "top": 643,
+        "right": 335,
+        "bottom": 675,
+        "left": 25
+      },
+      "passed": true
+    },
+    {
+      "scene": "suggestion-layout-fixture",
+      "theme": "light",
+      "file": "360-suggestion-layout-fixture-light.png",
+      "viewport": {
+        "width": 360,
+        "height": 780,
+        "visualHeight": 780
+      },
+      "pageHeight": 780,
+      "bodyHeight": 780,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "新对话",
+      "send": {
+        "x": 299,
+        "y": 675,
+        "width": 36,
+        "height": 44,
+        "top": 675,
+        "right": 335,
+        "bottom": 719,
+        "left": 299
+      },
+      "input": {
+        "x": 25,
+        "y": 643,
+        "width": 310,
+        "height": 32,
+        "top": 643,
+        "right": 335,
+        "bottom": 675,
+        "left": 25
+      },
+      "passed": true
+    },
+    {
+      "scene": "offline",
+      "theme": "light",
+      "file": "360-offline-light.png",
+      "viewport": {
+        "width": 360,
+        "height": 780,
+        "visualHeight": 780
+      },
+      "pageHeight": 780,
+      "bodyHeight": 780,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "新对话",
+      "send": {
+        "x": 299,
+        "y": 675,
+        "width": 36,
+        "height": 44,
+        "top": 675,
+        "right": 335,
+        "bottom": 719,
+        "left": 299
+      },
+      "input": {
+        "x": 25,
+        "y": 643,
+        "width": 310,
+        "height": 32,
+        "top": 643,
+        "right": 335,
+        "bottom": 675,
+        "left": 25
+      },
+      "passed": true
+    },
+    {
+      "scene": "keyboard-viewport-simulation",
+      "theme": "light",
+      "file": "360-keyboard-viewport-simulation-light.png",
+      "viewport": {
+        "width": 360,
+        "height": 480,
+        "visualHeight": 480
+      },
+      "pageHeight": 480,
+      "bodyHeight": 480,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "新对话",
+      "send": {
+        "x": 299,
+        "y": 375,
+        "width": 36,
+        "height": 44,
+        "top": 375,
+        "right": 335,
+        "bottom": 419,
+        "left": 299
+      },
+      "input": {
+        "x": 25,
+        "y": 343,
+        "width": 310,
+        "height": 32,
+        "top": 343,
+        "right": 335,
+        "bottom": 375,
+        "left": 25
+      },
+      "passed": true
+    },
+    {
+      "scene": "main",
+      "theme": "dark",
+      "file": "360-main-dark.png",
+      "viewport": {
+        "width": 360,
+        "height": 780,
+        "visualHeight": 780
+      },
+      "pageHeight": 780,
+      "bodyHeight": 780,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "WeftMate",
+      "send": {
+        "x": 299,
+        "y": 715,
+        "width": 36,
+        "height": 44,
+        "top": 715,
+        "right": 335,
+        "bottom": 759,
+        "left": 299
+      },
+      "input": {
+        "x": 25,
+        "y": 683,
+        "width": 310,
+        "height": 32,
+        "top": 683,
+        "right": 335,
+        "bottom": 715,
+        "left": 25
+      },
+      "passed": true
+    },
+    {
+      "scene": "side",
+      "theme": "dark",
+      "file": "360-side-dark.png",
+      "viewport": {
+        "width": 360,
+        "height": 780,
+        "visualHeight": 780
+      },
+      "pageHeight": 780,
+      "bodyHeight": 780,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "新对话",
+      "send": {
+        "x": 299,
+        "y": 675,
+        "width": 36,
+        "height": 44,
+        "top": 675,
+        "right": 335,
+        "bottom": 719,
+        "left": 299
+      },
+      "input": {
+        "x": 25,
+        "y": 643,
+        "width": 310,
+        "height": 32,
+        "top": 643,
+        "right": 335,
+        "bottom": 675,
+        "left": 25
+      },
+      "passed": true
+    },
+    {
+      "scene": "folder-capsule",
+      "theme": "dark",
+      "file": "360-folder-capsule-dark.png",
+      "viewport": {
+        "width": 360,
+        "height": 780,
+        "visualHeight": 780
+      },
+      "pageHeight": 780,
+      "bodyHeight": 780,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "新对话",
+      "send": {
+        "x": 299,
+        "y": 675,
+        "width": 36,
+        "height": 44,
+        "top": 675,
+        "right": 335,
+        "bottom": 719,
+        "left": 299
+      },
+      "input": {
+        "x": 25,
+        "y": 643,
+        "width": 310,
+        "height": 32,
+        "top": 643,
+        "right": 335,
+        "bottom": 675,
+        "left": 25
+      },
+      "passed": true
+    },
+    {
+      "scene": "suggestion-layout-fixture",
+      "theme": "dark",
+      "file": "360-suggestion-layout-fixture-dark.png",
+      "viewport": {
+        "width": 360,
+        "height": 780,
+        "visualHeight": 780
+      },
+      "pageHeight": 780,
+      "bodyHeight": 780,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "新对话",
+      "send": {
+        "x": 299,
+        "y": 675,
+        "width": 36,
+        "height": 44,
+        "top": 675,
+        "right": 335,
+        "bottom": 719,
+        "left": 299
+      },
+      "input": {
+        "x": 25,
+        "y": 643,
+        "width": 310,
+        "height": 32,
+        "top": 643,
+        "right": 335,
+        "bottom": 675,
+        "left": 25
+      },
+      "passed": true
+    },
+    {
+      "scene": "offline",
+      "theme": "dark",
+      "file": "360-offline-dark.png",
+      "viewport": {
+        "width": 360,
+        "height": 780,
+        "visualHeight": 780
+      },
+      "pageHeight": 780,
+      "bodyHeight": 780,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "新对话",
+      "send": {
+        "x": 299,
+        "y": 675,
+        "width": 36,
+        "height": 44,
+        "top": 675,
+        "right": 335,
+        "bottom": 719,
+        "left": 299
+      },
+      "input": {
+        "x": 25,
+        "y": 643,
+        "width": 310,
+        "height": 32,
+        "top": 643,
+        "right": 335,
+        "bottom": 675,
+        "left": 25
+      },
+      "passed": true
+    },
+    {
+      "scene": "keyboard-viewport-simulation",
+      "theme": "dark",
+      "file": "360-keyboard-viewport-simulation-dark.png",
+      "viewport": {
+        "width": 360,
+        "height": 480,
+        "visualHeight": 480
+      },
+      "pageHeight": 480,
+      "bodyHeight": 480,
+      "suggestionHeight": 44,
+      "folderCapsule": false,
+      "title": "新对话",
+      "send": {
+        "x": 299,
+        "y": 375,
+        "width": 36,
+        "height": 44,
+        "top": 375,
+        "right": 335,
+        "bottom": 419,
+        "left": 299
+      },
+      "input": {
+        "x": 25,
+        "y": 343,
+        "width": 310,
+        "height": 32,
+        "top": 343,
+        "right": 335,
+        "bottom": 375,
+        "left": 25
+      },
+      "passed": true
+    }
+  ]
+}

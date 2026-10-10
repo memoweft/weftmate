@@ -1,0 +1,36 @@
+{
+  "failures": [
+    {
+      "code": "PRIVATE_STORAGE_UNAVAILABLE",
+      "test": "synthetic artifact write is observed before exposing its task approval"
+    },
+    {
+      "actual": [
+        false,
+        3,
+        2,
+        0,
+        1,
+        0
+      ],
+      "test": "temp pruning removes only stale unused weftmate-* directories and never follows a junction",
+      "expected": [
+        false,
+        3,
+        1,
+        0,
+        1,
+        1
+      ]
+    }
+  ],
+  "appleCallbackIsolationPassed": true,
+  "vendorLocalPassed": 203,
+  "job": {
+    "name": "test (windows-latest)",
+    "status": "completed",
+    "conclusion": "failure",
+    "html_url": "https://github.com/memoweft/weftmate/actions/runs/38065588864/job/114252442163"
+  },
+  "requiredLocalPassed": 1415
+}

@@ -1,0 +1,16 @@
+{
+  "initialFixtureCleanup": "initial-fixture-process-cleanup.json",
+  "privateCopiesRemaining": 0,
+  "existingMuMuLeftRunning": true,
+  "removedOwnedDirectories": [
+    "weftmate-qa7-live-gQBcO7",
+    "weftmate-qa7-updater"
+  ],
+  "androidPackageAbsent": true,
+  "extraStopped": [],
+  "totalManuallyCleanedProcesses": 1,
+  "finishedAt": "2026-10-11T00:53:26.8229898+08:00",
+  "emulatorStartedByThisTask": false,
+  "signingKeysRemaining": 0,
+  "remainingOwnedProcesses": 0
+}

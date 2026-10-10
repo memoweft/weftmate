@@ -93,7 +93,8 @@ test('D50 touch drawer aligns project and chat rows, single status, long press a
       assert.equal(await page.locator('#header-title').innerText(),'常规');
       await page.screenshot({path:resolve(evidence,`after-mobile-390-${theme}-settings-general.png`)});
       await page.evaluate(()=>page('memory'));await page.waitForFunction(()=>state.memory?.statusState==='ready'&&!state.memory.loading);
-      assert.equal(await page.locator('#header-title').innerText(),'记忆');const refresh=page.getByRole('button',{name:'刷新记忆',exact:true});assert.equal(await refresh.innerText(),'');
+      assert.equal(await page.locator('#header-title').innerText(),'记忆');const more=page.getByRole('button',{name:'更多记忆操作',exact:true});assert.equal(await more.innerText(),'');
+      await more.click();await page.getByRole('menuitem',{name:'刷新',exact:true}).click();await page.waitForFunction(()=>!state.memory.loading);
       const search=page.getByRole('searchbox',{name:'搜索当前类别的全部账户记忆'});await search.fill('测试');await search.press('Enter');await page.waitForFunction(()=>state.memory.query==='测试'&&!state.memory.loading);await search.blur();
       await page.screenshot({path:resolve(evidence,`after-mobile-390-${theme}-memory.png`)});await page.getByRole('button',{name:'更多记忆操作',exact:true}).click();await page.getByRole('menuitem',{name:'导出我的记忆 · JSON'}).waitFor();
       await page.screenshot({path:resolve(evidence,`after-mobile-390-${theme}-memory-more.png`)});await page.keyboard.press('Escape');

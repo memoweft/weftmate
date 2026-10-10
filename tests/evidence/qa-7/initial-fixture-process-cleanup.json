@@ -1,0 +1,7 @@
+{
+  "matchedExecutable": true,
+  "processId": 23420,
+  "matchedCommand": true,
+  "creation": "2026-10-11T00:22:04.635367+08:00",
+  "reason": "failed fixture retained its unused synthetic HTTP listener after completed cleanup"
+}

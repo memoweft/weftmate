@@ -1,0 +1,1305 @@
+{
+  "fixture": "Actual baseline Android shell, system bars, keyboard and UI; real synthetic local login; host business data uses the existing AND-1 timeline projection fixture. This verifies geometry and appearance, not real installed-host Android business connectivity.",
+  "rows": [
+    {
+      "file": "main-light.png",
+      "scene": "main",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "light",
+        "viewport": {
+          "width": 565,
+          "height": 1005,
+          "dpr": 1.274999976158142
+        },
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 734.1421508789062,
+          "width": 565.490234375,
+          "height": 190.51470947265625,
+          "top": 734.1421508789062,
+          "right": 565.490234375,
+          "bottom": 924.6568603515625,
+          "left": 0
+        },
+        "search": [],
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "text": "WeftMate",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "session-group-toggle",
+            "text": "未分组",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "bodyHeight": 1005
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "drawer-status-dots-light.png",
+      "scene": "drawer-status-dots",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "light",
+        "viewport": {
+          "width": 565,
+          "height": 1005,
+          "dpr": 1.274999976158142
+        },
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 734.1421508789062,
+          "width": 565.490234375,
+          "height": 190.51470947265625,
+          "top": 734.1421508789062,
+          "right": 565.490234375,
+          "bottom": 924.6568603515625,
+          "left": 0
+        },
+        "search": [],
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "text": "WeftMate",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "session-group-toggle",
+            "text": "未分组",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "bodyHeight": 1005
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          221.15833333333333,
+          221.48333333333332,
+          222.11388888888888
+        ],
+        "header": [
+          221.15833333333333,
+          221.48333333333332,
+          222.11388888888888
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "fullscreen-search-light.png",
+      "scene": "fullscreen-search",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "light",
+        "viewport": {
+          "width": 565,
+          "height": 1005,
+          "dpr": 1.274999976158142
+        },
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 818.186279296875,
+          "width": 565.490234375,
+          "height": 186.5196075439453,
+          "top": 818.186279296875,
+          "right": 565.490234375,
+          "bottom": 1004.7058868408203,
+          "left": 0
+        },
+        "search": [
+          {
+            "label": "搜索内容",
+            "rect": {
+              "x": 51.99755096435547,
+              "y": 40.306373596191406,
+              "width": 433.5049133300781,
+              "height": 42.64706039428711,
+              "top": 40.306373596191406,
+              "right": 485.5024642944336,
+              "bottom": 82.95343399047852,
+              "left": 51.99755096435547
+            }
+          }
+        ],
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "text": "WeftMate",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "session-group-toggle",
+            "text": "未分组",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "bodyHeight": 1005
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "top-more-menu-light.png",
+      "scene": "top-more-menu",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "light",
+        "viewport": {
+          "width": 565,
+          "height": 1005,
+          "dpr": 1.274999976158142
+        },
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 734.1421508789062,
+          "width": 565.490234375,
+          "height": 190.51470947265625,
+          "top": 734.1421508789062,
+          "right": 565.490234375,
+          "bottom": 924.6568603515625,
+          "left": 0
+        },
+        "search": [],
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "text": "WeftMate",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "session-group-toggle",
+            "text": "未分组",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "bodyHeight": 1005
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "data-storage-light.png",
+      "scene": "data-storage",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "light",
+        "viewport": {
+          "width": 565,
+          "height": 1005,
+          "dpr": 1.274999976158142
+        },
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "search": [],
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "text": "WeftMate",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "session-group-toggle",
+            "text": "未分组",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "bodyHeight": 1005
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          254.72413793103448,
+          254.72413793103448,
+          254.72413793103448
+        ],
+        "header": [
+          253,
+          253,
+          253
+        ],
+        "delta": 1.7241379310344769,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "keyboard-light.png",
+      "scene": "keyboard",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 324,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "light",
+        "viewport": {
+          "width": 565,
+          "height": 750,
+          "dpr": 1.274999976158142
+        },
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 564.0686645507812,
+          "width": 565.490234375,
+          "height": 186.5196075439453,
+          "top": 564.0686645507812,
+          "right": 565.490234375,
+          "bottom": 750.5882720947266,
+          "left": 0
+        },
+        "search": [],
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "text": "WeftMate",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "session-group-toggle",
+            "text": "未分组",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "bodyHeight": 750
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          254.72413793103448,
+          254.72413793103448,
+          254.72413793103448
+        ],
+        "header": [
+          253,
+          253,
+          253
+        ],
+        "delta": 1.7241379310344769,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "offline-light.png",
+      "scene": "offline",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "light",
+        "viewport": {
+          "width": 565,
+          "height": 1005,
+          "dpr": 1.274999976158142
+        },
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 734.1421508789062,
+          "width": 565.490234375,
+          "height": 190.51470947265625,
+          "top": 734.1421508789062,
+          "right": 565.490234375,
+          "bottom": 924.6568603515625,
+          "left": 0
+        },
+        "search": [],
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "text": "WeftMate",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "session-group-toggle",
+            "text": "未分组",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "bodyHeight": 1005
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "main-dark.png",
+      "scene": "main",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": false,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "dark",
+        "viewport": {
+          "width": 565,
+          "height": 1005,
+          "dpr": 1.274999976158142
+        },
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 734.1421508789062,
+          "width": 565.490234375,
+          "height": 190.51470947265625,
+          "top": 734.1421508789062,
+          "right": 565.490234375,
+          "bottom": 924.6568603515625,
+          "left": 0
+        },
+        "search": [],
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "text": "WeftMate",
+            "color": "rgb(38, 39, 35)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "session-group-toggle",
+            "text": "未分组",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "bodyHeight": 1005
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "drawer-status-dots-dark.png",
+      "scene": "drawer-status-dots",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": false,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "dark",
+        "viewport": {
+          "width": 565,
+          "height": 1005,
+          "dpr": 1.274999976158142
+        },
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 734.1421508789062,
+          "width": 565.490234375,
+          "height": 190.51470947265625,
+          "top": 734.1421508789062,
+          "right": 565.490234375,
+          "bottom": 924.6568603515625,
+          "left": 0
+        },
+        "search": [],
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "text": "WeftMate",
+            "color": "rgb(38, 39, 35)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "session-group-toggle",
+            "text": "未分组",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "bodyHeight": 1005
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          31.70411877394636,
+          34.09722222222222,
+          33.388888888888886
+        ],
+        "header": [
+          31.430555555555557,
+          34.09722222222222,
+          33.388888888888886
+        ],
+        "delta": 0.15794179777830972,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "fullscreen-search-dark.png",
+      "scene": "fullscreen-search",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 324,
+        "darkStatusIcons": false,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "dark",
+        "viewport": {
+          "width": 565,
+          "height": 750,
+          "dpr": 1.274999976158142
+        },
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 564.0686645507812,
+          "width": 565.490234375,
+          "height": 186.5196075439453,
+          "top": 564.0686645507812,
+          "right": 565.490234375,
+          "bottom": 750.5882720947266,
+          "left": 0
+        },
+        "search": [
+          {
+            "label": "搜索内容",
+            "rect": {
+              "x": 51.99755096435547,
+              "y": 40.306373596191406,
+              "width": 433.5049133300781,
+              "height": 42.64706039428711,
+              "top": 40.306373596191406,
+              "right": 485.5024642944336,
+              "bottom": 82.95343399047852,
+              "left": 51.99755096435547
+            }
+          }
+        ],
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "text": "WeftMate",
+            "color": "rgb(38, 39, 35)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "session-group-toggle",
+            "text": "未分组",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "session-status",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "session-unread-dot is-approval",
+            "text": "",
+            "color": "rgb(255, 165, 68)"
+          },
+          {
+            "class": "session-status",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "session-status",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "session-unread-dot is-approval",
+            "text": "",
+            "color": "rgb(255, 165, 68)"
+          }
+        ],
+        "bodyHeight": 750
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          47,
+          49,
+          43
+        ],
+        "header": [
+          47,
+          49,
+          43
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "top-more-menu-dark.png",
+      "scene": "top-more-menu",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": false,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "dark",
+        "viewport": {
+          "width": 565,
+          "height": 1005,
+          "dpr": 1.274999976158142
+        },
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 734.1421508789062,
+          "width": 565.490234375,
+          "height": 190.51470947265625,
+          "top": 734.1421508789062,
+          "right": 565.490234375,
+          "bottom": 924.6568603515625,
+          "left": 0
+        },
+        "search": [],
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "text": "WeftMate",
+            "color": "rgb(38, 39, 35)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "session-group-toggle",
+            "text": "未分组",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "bodyHeight": 1005
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "data-storage-dark.png",
+      "scene": "data-storage",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": false,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "dark",
+        "viewport": {
+          "width": 565,
+          "height": 1005,
+          "dpr": 1.274999976158142
+        },
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "search": [],
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "text": "WeftMate",
+            "color": "rgb(38, 39, 35)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "session-group-toggle",
+            "text": "未分组",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "bodyHeight": 1005
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "keyboard-dark.png",
+      "scene": "keyboard",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 324,
+        "darkStatusIcons": false,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "dark",
+        "viewport": {
+          "width": 565,
+          "height": 750,
+          "dpr": 1.274999976158142
+        },
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 564.0686645507812,
+          "width": 565.490234375,
+          "height": 186.5196075439453,
+          "top": 564.0686645507812,
+          "right": 565.490234375,
+          "bottom": 750.5882720947266,
+          "left": 0
+        },
+        "search": [],
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "text": "WeftMate",
+            "color": "rgb(38, 39, 35)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "session-group-toggle",
+            "text": "未分组",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "bodyHeight": 750
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "offline-dark.png",
+      "scene": "offline",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": false,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "dark",
+        "viewport": {
+          "width": 565,
+          "height": 1005,
+          "dpr": 1.274999976158142
+        },
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 734.1421508789062,
+          "width": 565.490234375,
+          "height": 190.51470947265625,
+          "top": 734.1421508789062,
+          "right": 565.490234375,
+          "bottom": 924.6568603515625,
+          "left": 0
+        },
+        "search": [],
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "text": "WeftMate",
+            "color": "rgb(38, 39, 35)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "session-group-toggle",
+            "text": "未分组",
+            "color": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "class": "mobile-session-status is-approval",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "bodyHeight": 1005
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    }
+  ],
+  "errors": []
+}

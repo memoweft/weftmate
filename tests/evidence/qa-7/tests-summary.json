@@ -1,0 +1,19 @@
+{
+  "serialBeforeLiveMeasurements": true,
+  "core": "233cc2f0b27a921a699a9c4c43b1a612375970f8",
+  "vendor": {
+    "tests": 203,
+    "skipped": 0,
+    "passed": 203,
+    "failed": 0,
+    "durationMs": 132456.729
+  },
+  "baseline": "2a075c13c9f9a428c149d5831432a469e2d97b4f",
+  "required": {
+    "tests": 1429,
+    "skipped": 14,
+    "passed": 1415,
+    "failed": 0,
+    "durationMs": 982904.8347
+  }
+}

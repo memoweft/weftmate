@@ -1,0 +1,7 @@
+{
+  "runnerFieldNote": "migration-report.json retains QA6's field name localStubRejectedRequests. In the QA7 runner this variable counts all POST requests to the local synthetic endpoint, not rejected requests. The private-copy main-message result is independently recorded in mainProbe.",
+  "privateCopyDeletedBeforeCloudRun": true,
+  "cloudRunStartsAfterMigrationProcessExit": true,
+  "sourceBackupFiles": 66050,
+  "privateContentIncluded": false
+}

@@ -1,0 +1,12 @@
+{
+  "backupReadOnly": true,
+  "sourceTaskUntouched": true,
+  "randomPort": true,
+  "publicOrigin": null,
+  "rehearsalAccountPassword": "temporary synthetic password on the copy only",
+  "paidModelRequests": 0,
+  "networkBoundary": "loopback only; 8081 and 18186 denied",
+  "originalFileCount": 66051,
+  "generatedModuleFallbackRecreated": true,
+  "backupCopyDeleted": true
+}

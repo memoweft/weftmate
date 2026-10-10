@@ -927,6 +927,7 @@ class HybridActivity : Activity() {
             val launch = if (intent?.getStringExtra("ownerScope") == scope)
                 intent?.getStringExtra("conversationId") ?: "" else ""
             JSONObject().put("loggedIn", host != null).put("username", host?.username ?: "").put("cloudApp", true)
+                .put("authSource", host?.authSource ?: "")
                 .put("owner", scope.takeUnless { it == "local" } ?: "").put("model", modelStatus(host))
                 .put("deviceId", host?.deviceId ?: "")
                 .put("busy", busy.get() && host != null && activeTurnScope == scope)
@@ -1579,7 +1580,7 @@ class HybridActivity : Activity() {
             .put("clientId", "weftmate-android").put("redirectUri", CLOUD_CALLBACK)
             .put("hostOrigin", if (BuildConfig.DEBUG && packageName in setOf("com.memoweft.weftmate.mobile.lg1bqa", "com.memoweft.weftmate.mobile.fx9qa", "com.memoweft.weftmate.mobile.st4qa"))
                 intent?.getStringExtra("lg1bHostOrigin") ?: CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com"
-                else CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com")
+                else secrets.host()?.takeIf { it.authSource == "local" }?.origin ?: CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com")
         "cloud.app.configure" -> CloudAppLogin(secrets, api).configure(params.getString("origin"))
         "cloud.app.key" -> CloudAppKeys(secrets).get(params.getString("id"), params.optBoolean("clear"))
         "cloud.app.sign" -> CloudAppKeys(secrets).sign(params.getString("id"), params.getString("input"))
