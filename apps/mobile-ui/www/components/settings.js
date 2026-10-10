@@ -480,7 +480,7 @@ function modelsPage(target){target.append(heading('对话模型','手机直连�
 }
 
 function devicesPage(target){target.append(heading('设备','同一账户下登录过的设备会列在这里。'));
-  target.append(notice(globalThis.WeftOnboardingCopy.mobileHelp, globalThis.WeftOnboardingCopy.mobileConnect));
+  target.append(el('h2', '', globalThis.WeftOnboardingCopy.mobileConnect), notice(globalThis.WeftOnboardingCopy.mobileHelp));
   if(!state.loggedIn){target.append(notice('请先登录电脑账户，再查看或移除设备。'));return}
   const summary=notice('正在读取设备…');target.append(summary);const gen=state.generation;
   call('auth.devices').then(result=>{if(state.page!=='devices'||state.generation!==gen)return;summary.remove();

@@ -207,7 +207,7 @@ globalThis.WeftUiComponents.factories.onboarding = (core, ui) => {
     next = button(copy.next, () => steps.indexOf(journey.step) === 6 ? void finish(true) : void move(steps.indexOf(journey.step) + 1), 'primary');
     footer.append(back, skip, next); inner.append(progress, title, description, content, status, footer); panel.append(inner); document.body.append(panel);
     const replay = button(copy.replay, async () => { ui.hideSettingsDialog(); try { await persist('welcome'); render(); } catch { ui.toast(copy.error); } });
-    document.querySelector('[data-category="general"]').append(replay);
+    document.querySelector('section.settings-category[data-category="general"]').append(replay);
     const originalPaint = ui.paintScreen;
     ui.paintScreen = view => { originalPaint(view); if (active && journey?.step === 'account') { if (core.state.account) render(); else reveal(); } };
     const hint = node('div', 'onboarding-model-hint'); hint.hidden = true; hint.append(node('span', '', copy.noModel), button(copy.configure, () => ui.openSettings('models'))); ui.byId('assistant-view').prepend(hint);

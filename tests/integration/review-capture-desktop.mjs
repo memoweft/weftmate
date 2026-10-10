@@ -8,6 +8,7 @@ import { startMainChatCandidate } from './main-chat-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { repository, outDirectory, runScene, catalog } from '../../scripts/review-gallery/common.mjs';
 const out = outDirectory();
+const sceneIndex = process.argv.indexOf('--scene'), onlyScene = sceneIndex < 0 ? null : process.argv[sceneIndex + 1];
 for (const theme of ['light', 'dark']) {
   const fixture = await startTimelineCandidate({ historyCount: 0, interactive: true, riskApproval: true, composer:true, composerMenu:true, baseTime: Date.parse('2026-10-08T08:00:00Z') });
   const profile = await mkdtemp(join(tmpdir(), 'weftmate-review-desktop-'));
@@ -73,7 +74,7 @@ for (const theme of ['light', 'dark']) {
       usage: async () => { await settings(); await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '用量', exact: true }).click(); await page.getByRole('heading', { name: '用量与费用', exact: true }).waitFor(); await button('刷新用量').waitFor(); },
       'session-menu': async () => { await home(); await button('更多操作 项目进度报告').click(); await page.getByRole('menu', { name: '对话操作', exact: true }).waitFor(); await page.getByRole('menuitem', { name: '归档 A', exact: true }).waitFor(); await page.getByRole('menuitem', { name: '删除 D', exact: true }).waitFor(); },
     };
-    for (const scene of catalog.scenes.filter(row => !['login','main-chat'].includes(row.id)).sort((a,b)=>Number(a.id==='question')-Number(b.id==='question'))) {
+    for (const scene of catalog.scenes.filter(row => !['login','main-chat'].includes(row.id) && (!onlyScene || row.id === onlyScene)).sort((a,b)=>Number(a.id==='question')-Number(b.id==='question'))) {
       await shot(scene.id, preparations[scene.id]);
       if (scene.id === 'onboarding') await page.evaluate(async () => { const me = await (await fetch('/personal/v1/auth/me')).json(); await fetch('/personal/v1/onboarding', { method: 'PATCH', headers: { 'content-type': 'application/json', 'X-WeftMate-CSRF': me.csrfToken }, body: JSON.stringify({ step: 'first', completed: true }) }); });
     }
