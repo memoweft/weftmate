@@ -1,0 +1,32 @@
+{
+  "controls": [
+    {
+      "case": "QA4-05",
+      "original": "tests/evidence/qa-4/web-document/node24说明.md",
+      "sha256": "4378819c0f08a4df1fb8812efcb7d57b595ce249e4b74806c80bc816de6c1b78",
+      "originalUnmodified": true,
+      "expectedFailureDetected": true,
+      "review": "升级清单把 ClangCL 外推到原生编译；按独立问题合并为一项范围错误。",
+      "rawJudge": "before/mimo/scores-final.json"
+    },
+    {
+      "case": "PF-2 ABI",
+      "original": "tests/evidence/pf-2/final/mimo/documents/run-2.md",
+      "sha256": "01f74cda17773cad1be57db8dd7800c3ff039b3deb20d81b547111b88f8f79cc",
+      "originalUnmodified": true,
+      "expectedFailureDetected": true,
+      "review": "明确把24的模块ABI写成134，正确值137；重复两处按一项数字错误计。",
+      "rawJudge": "before/mimo/scores-final.json"
+    }
+  ],
+  "currentMiMoNodeDocuments": [
+    "anchored/mimo-node/node24-1.md",
+    "anchored/mimo-node/node24-2.md"
+  ],
+  "currentNodeReview": {
+    "runtimeVsAddonScopePreserved": true,
+    "nodeApiExceptionExplained": true,
+    "moduleAbi137": true
+  },
+  "lanRemaining": "ClangCL要求仍被扩到相关原生构建/依赖；见 anchored/lan/node24-1.md 与 adjudication.json。"
+}

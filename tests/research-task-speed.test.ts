@@ -39,6 +39,9 @@ test('native preview retains a full local capture, exact segment recovery and se
   assert.ok(targeted.text.includes('later precise fact'));
   assert.ok(targeted.excerpts.reduce((sum: number,e:any)=>sum+e.text.length,0)<=4096);
   assert.equal(reads,1);
+  const completeMatch = await browser.browse({...identity,browserAction:'read',snapshotId:first.snapshotId,query:'Intro'});
+  assert.equal(completeMatch.truncated,false,'a complete query result must not ask the model to refetch it');
+  assert.equal(targeted.truncated,true,'a matching paragraph actually cut by the excerpt budget stays marked');
   await assert.rejects(browser.browse({...identity,sessionId:'session-two',browserAction:'read',snapshotId:first.snapshotId}),{code:'BROWSER_SOURCE_UNVERIFIED'});
   const provider = personalWebFetchProvider({request:async()=>first},()=>({}),()=>({}));
   const fetched = await provider.fetch({url:'https://example.org'});

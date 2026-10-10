@@ -17,7 +17,7 @@ export function personalWebFetchProvider(bridge, currentExecution, executionIden
       const archive = first.sourcePath ? `\n\nCaptured source: ${first.sourcePath}. Use grep/read for a specific missing fact; this preview is verbatim and may omit later sections.${first.previewTruncated ? ` Read full segment 0 with browser action="read", snapshotId=${JSON.stringify(first.snapshotId)}, segmentIndex=0.` : ''}` : '';
       const citation = `Title: ${first.title || first.url}\nURL: ${first.url}\nAccessed: ${first.capturedAt ?? 'unknown'}\n${first.capturedFragment ? `[Captured requested section #${first.capturedFragment}; this is not the entire page.]\n` : ''}`;
       return { url: first.url, statusCode: first.httpStatus, body: { kind: 'text', content: citation + first.text + continuation + archive },
-        truncated: first.captureTruncated === true || first.segmentCount > 1 || first.previewTruncated === true };
+        truncated: first.captureTruncated === true && first.requestedSectionComplete !== true || first.segmentCount > 1 || first.previewTruncated === true };
     },
   };
 }

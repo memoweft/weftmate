@@ -23,7 +23,9 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
         const normalize = value => { try { const u = new URL(value); u.hash = ''; return u.href; } catch { return ''; } };
         const key = normalize(url); if (!key) return null;
         const resources = await core.loadConversationResources();
-        const matches = resources.sources.filter(item => item.kind === 'webpage' && normalize(item.url) === key);
+        const candidates = resources.sources.filter(item => item.kind === 'webpage' && normalize(item.url) === key);
+        const exact = candidates.filter(item => item.url === url);
+        const matches = exact.length ? exact : candidates;
         if (!matches.length) return null;
         return { ...matches[0], uses: [...new Map(matches.flatMap(item => item.uses).map(use => [use.path, use])).values()]
             .sort((a, b) => Number(b.summary.startsWith('原文片段')) - Number(a.summary.startsWith('原文片段'))) };

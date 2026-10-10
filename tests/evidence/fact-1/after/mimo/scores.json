@@ -1,0 +1,60 @@
+{
+  "method": "MiMo rubric judge; overlapping dimensions counted independently, repeated same claim deduplicated; omissions separate",
+  "input": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\tests\\evidence\\fact-1\\after\\mimo\\results.json",
+  "judgements": [
+    {
+      "id": "node24-1",
+      "documentSha256": "7811c8e43d9fdbb1207b54f346df00b1b7c514b18f4de91f14c5e5ef222a8dbd",
+      "durationMs": 66813,
+      "usage": {
+        "completion_tokens": 5000,
+        "prompt_tokens": 46828,
+        "total_tokens": 51828,
+        "completion_tokens_details": {
+          "reasoning_tokens": 5001
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "parseError": true,
+        "raw": ""
+      }
+    },
+    {
+      "id": "node24-1",
+      "documentSha256": "7811c8e43d9fdbb1207b54f346df00b1b7c514b18f4de91f14c5e5ef222a8dbd",
+      "durationMs": 3109,
+      "usage": {
+        "completion_tokens": 62,
+        "prompt_tokens": 46830,
+        "total_tokens": 46892,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 46784
+        }
+      },
+      "judgement": {
+        "unsupported": [],
+        "scope": [],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": true,
+          "verbatimExcerpts": true,
+          "claimMapping": true,
+          "issues": []
+        },
+        "selfCheckVisible": true
+      }
+    }
+  ]
+}

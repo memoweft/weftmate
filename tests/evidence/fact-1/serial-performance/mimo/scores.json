@@ -1,0 +1,194 @@
+{
+  "method": "MiMo rubric judge; overlapping dimensions counted independently, repeated same claim deduplicated; omissions separate",
+  "input": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\tests\\evidence\\fact-1\\serial-performance\\mimo\\results.json",
+  "judgements": [
+    {
+      "id": "node24-1",
+      "documentSha256": "8b9e83196756d6f305b0be6159689941de85d26cee8a24ff139e876251f0c02e",
+      "durationMs": 1446,
+      "usage": {
+        "completion_tokens": 123,
+        "prompt_tokens": 12973,
+        "total_tokens": 13096,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [],
+        "scope": [],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [
+          "未提及 24.0.0 的 NODE_MODULE_VERSION 为 137",
+          "未区分 Node-API 稳定 ABI 扩展与直接依赖 V8/Node C++ API 的扩展，未说明 Node-API 兼容以所用版本被目标运行时支持及外部依赖兼容为前提"
+        ],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": true,
+          "verbatimExcerpts": true,
+          "claimMapping": true,
+          "issues": []
+        }
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 272,
+            "text": "草稿断言: 24于2025-05-06发布、22于2024-04-24发布 | 出处[1]\"2025-05-06, Version 24.0.0 (Current)\" 出处[3]\"2024-04-24, Version 22.0.0 (Current)\" | 原文主体: 各版本发布说明标题行 | 草稿主体: 同 | 条件/例外: 无 | 数字: 2025-05-06/2024-04-24 | 结论: 一致"
+          },
+          {
+            "seq": 272,
+            "text": "草稿断言: 24升级V8至13.6、npm至11；22初始为V8 12.4 | 出处[1]\"upgrade of the V8 JavaScript engine to version 13.6 and npm to version 11\" 出处[3]\"deps: update V8 to 12.4.254.14\" | 原文主体: Node.js 24发布说明/22.0.0 semver-major提交列表 | 草稿主体: Node 24对比Node 22初始 | 条件/例外: 22的V8为12.4.254.14(初始发布) | 数字: 13.6/11/12.4.254.14 | 结论: 一致"
+          },
+          {
+            "seq": 272,
+            "text": "草稿断言: Windows上编译Node.js本体不再支持MSVC、需ClangCL | 出处[1]\"Starting with Node.js 24, support for MSVC has been removed, and ClangCL is now required to compile Node.js on Windows.\" | 原文主体: compile Node.js on Windows(编译Node本体) | 草稿主体: 编译Node.js本体，不外推至所有原生插件 | 条件/例外: 仅限编译Node.js on Windows | 数字: 无 | 结论: 一致(草稿明确限定编译Node本体)"
+          },
+          {
+            "seq": 272,
+            "text": "草稿断言: AsyncLocalStorage默认改用AsyncContextFrame | 出处[1]\"The AsyncLocalStorage API now uses AsyncContextFrame by default\" | 原文主体: AsyncLocalStorage API | 草稿主体: 同 | 条件/例外: 默认实现变化 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 272,
+            "text": "草稿断言: URLPattern成为全局对象 | 出处[1]\"The URLPattern API is now exposed on the global object\" | 原文主体: URLPattern API | 草稿主体: 同 | 条件/例外: 无需显式import | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 272,
+            "text": "草稿断言: 权限模型标志改为--permission | 出处[1]\"the flag has been changed from --experimental-permission to simply --permission\" | 原文主体: 实验性Permission Model标志 | 草稿主体: 同 | 条件/例外: 权限模型仍表述为experimental引入于Node 20、此次表明稳定性提升 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 272,
+            "text": "草稿断言: 测试运行器自动等待子测试 | 出处[1]\"The test runner module now automatically waits for subtests to finish\" | 原文主体: test runner module | 草稿主体: 同 | 条件/例外: 无需手动await | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 272,
+            "text": "草稿断言: 24内置Undici 7 | 出处[1]\"Node.js 24 includes Undici 7\" | 原文主体: Undici | 草稿主体: 同 | 条件/例外: 无 | 数字: 7 | 结论: 一致"
+          },
+          {
+            "seq": 272,
+            "text": "草稿断言: V8 13.6带来Float16Array等新语言特性 | 出处[1]\"includes several new JavaScript features: Float16Array, Explicit resource management, RegExp.escape, WebAssembly Memory64, Error.isError\" | 原文主体: V8 13.6 | 草稿主体: V8 13.6(随Node 24) | 条件/例外: WebAssembly Memory64属引擎特性 | 数字: 13.6 | 结论: 一致"
+          },
+          {
+            "seq": 272,
+            "text": "草稿断言: 24弃用/移除项(url.parse运行时弃用、移除tls.createSecurePair、SlowBuffer等) | 出处[1]\"Runtime deprecation of url.parse() - use the WHATWG URL API instead (#55017) / Removal of deprecated tls.createSecurePair (#57361) / Runtime deprecation of SlowBuffer (#55175) / Runtime deprecation of instantiating REPL without new (#54869) / Deprecation of using Zlib classes without new (#55718) / Deprecation of passing args to spawn and execFile in child_process (#57199)\" | 原文主体: This release(24.0.0) | 草稿主体: 24.0.0 | 条件/例外: 区分Runtime deprecation/Removal/Deprecation | 数字: PR号不写入正文 | 结论: 一致"
+          },
+          {
+            "seq": 272,
+            "text": "草稿断言: 24预计2025年10月进入LTS，此前六个月为Current | 出处[1]\"Node.js 24 will enter long-term support (LTS) in October, but until then, it will be the 'Current' release for the next six months.\" | 原文主体: Node.js 24 | 草稿主体: 同 | 条件/例外: 发布时点(2025-05)的计划表述 | 数字: October/六个月 | 结论: 一致"
+          },
+          {
+            "seq": 272,
+            "text": "草稿断言: 下载页当前显示v24.21.0 LTS | 出处[2]\"v24.21.0 LTS\" | 原文主体: 下载页当前版本(2026-10-10访问) | 草稿主体: 同(时点性表述) | 条件/例外: 时点快照 | 数字: 24.21.0 | 结论: 一致"
+          },
+          {
+            "seq": 272,
+            "text": "草稿断言: 22的亮点require ESM图、WebSocket默认启用等作为基线 | 出处[3]\"Highlights include require()ing ESM graphs, WebSocket client\" \"lib: enable WebSocket by default\" \"module: support require()ing synchronous ESM graphs\" | 原文主体: Node.js 22.0.0 | 草稿主体: Node 22初始(说明24相对的起点) | 条件/例外: 这些是22已有特性，不重复列为24新增 | 数字: 无 | 结论: 一致(仅作22基线描述)"
+          }
+        ],
+        "lastSaveSeq": 779,
+        "beforeFinalSave": true
+      }
+    },
+    {
+      "id": "node24-2",
+      "documentSha256": "fe41fcaa7fd66ac9437c4e21787b695f6d40d3319f530903e719190a7bcc0c92",
+      "durationMs": 4240,
+      "usage": {
+        "completion_tokens": 123,
+        "prompt_tokens": 26393,
+        "total_tokens": 26516,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [],
+        "scope": [],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [
+          "未提及 24.0.0 的 NODE_MODULE_VERSION 为 137",
+          "未区分 Node-API 稳定 ABI 扩展与直接依赖 V8/Node C++ API 的扩展，未说明 Node-API 兼容以所用版本被目标运行时支持及外部依赖兼容为前提"
+        ],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": true,
+          "verbatimExcerpts": true,
+          "claimMapping": true,
+          "issues": []
+        }
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 990,
+            "text": "草稿断言: 24.0.0 发布于2025-05-06，当时为Current | 出处[1]原文: \"2025-05-06, Version 24.0.0 (Current)\" | 原文主体: Version 24.0.0 (Current) | 草稿主体: Node.js 24.0.0 | 条件/例外: 发布时为 Current | 数字: 2025-05-06, 24.0.0 | 结论: 一致"
+          },
+          {
+            "seq": 990,
+            "text": "草稿断言: 24 于发布时说明将在10月进入LTS | 出处[1]原文: \"Node.js 24 will enter long-term support (LTS) in October, but until then, it will be the \\\"Current\\\" release for the next six months.\" | 原文主体: Node.js 24 | 草稿主体: Node.js 24 | 条件/例外: 10月进入LTS前为Current六个月 | 数字: October, six months | 结论: 一致"
+          },
+          {
+            "seq": 990,
+            "text": "草稿断言: V8 升级到 13.6 | 出处[1]原文: \"The V8 engine is updated to version 13.6\" | 原文主体: V8 engine（Node 24） | 草稿主体: Node 24 的 V8 | 条件/例外: 无 | 数字: 13.6 | 结论: 一致"
+          },
+          {
+            "seq": 990,
+            "text": "草稿断言: Node 24 自带 npm 11 | 出处[1]原文: \"Node.js 24 comes with npm 11\" | 原文主体: Node.js 24 | 草稿主体: Node.js 24 | 条件/例外: 随发行版捆绑 | 数字: 11 | 结论: 一致"
+          },
+          {
+            "seq": 990,
+            "text": "草稿断言: Windows 移除 MSVC 支持、需用 ClangCL 编译 Node.js 本身（不涉及 addon） | 出处[1]原文: \"support for MSVC has been removed, and ClangCL is now required to compile Node.js on Windows\" | 原文主体: compile Node.js on Windows | 草稿主体: 编译 Node.js 本身 | 条件/例外: 仅 Node.js 本体在 Windows 的编译，不扩展为原生扩展/第三方库要求 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 990,
+            "text": "草稿断言: AsyncLocalStorage 默认使用 AsyncContextFrame | 出处[1]原文: \"AsyncLocalStorage now uses AsyncContextFrame by default\" | 原文主体: AsyncLocalStorage | 草稿主体: AsyncLocalStorage | 条件/例外: 默认行为 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 990,
+            "text": "草稿断言: URLPattern 成为全局对象 | 出处[1]原文: \"The URLPattern API is now exposed on the global object\" | 原文主体: URLPattern API | 草稿主体: URLPattern | 条件/例外: 无需显式 import | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 990,
+            "text": "草稿断言: 权限 flag 由 --experimental-permission 改为 --permission | 出处[1]原文: \"the flag has been changed from --experimental-permission to simply --permission\" | 原文主体: the flag（实验性 Permission Model） | 草稿主体: 权限模型命令行 flag | 条件/例外: flag 更名，不等于 Permission Model 已完全稳定无实验成分（原文仅说 indicating its increasing stability） | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 990,
+            "text": "草稿断言: test runner 自动等待子测试结束 | 出处[1]原文: \"The test runner module now automatically waits for subtests to finish\" | 原文主体: The test runner module | 草稿主体: test runner | 条件/例外: 无需手动 await | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 990,
+            "text": "草稿断言: 包含 Undici 7 | 出处[1]原文: \"Node.js 24 includes Undici 7\" | 原文主体: Node.js 24 | 草稿主体: Node.js 24 | 条件/例外: 无 | 数字: 7 | 结论: 一致"
+          },
+          {
+            "seq": 990,
+            "text": "草稿断言: url.parse() 运行时弃用、tls.createSecurePair 移除等 | 出处[1]原文: \"Runtime deprecation of url.parse() - use the WHATWG URL API instead (#55017)\" / \"Removal of deprecated tls.createSecurePair (#57361)\" | 原文主体: url.parse() / tls.createSecurePair | 草稿主体: 同 | 条件/例外: 逐条保留原限定 | 数字: 无 | 结论: 一致（仅举两例，不穷举）"
+          },
+          {
+            "seq": 990,
+            "text": "草稿断言: Node 22 发布于2024-04-24，V8 12.4，默认启用 WebSocket，支持 require() 同步 ESM 图 | 出处[3]原文: \"2024-04-24, Version 22.0.0 (Current)\"、\"deps: update V8 to 12.4.254.14\"、\"lib: enable WebSocket by default\"、\"module: support require()ing synchronous ESM graphs\" | 原文主体: Node.js 22.0.0 | 草稿主体: Node.js 22.0.0 | 条件/例外: 22 侧仅用其 22.0.0 发布说明 | 数字: 2024-04-24, 12.4.254.14 | 结论: 一致"
+          },
+          {
+            "seq": 990,
+            "text": "草稿断言: 24 与 22 均为 LTS 分支（当前状态） | 出处[4]原文: \"v24 Krypton May 06, 2025 Sep 07, 2026 LTS\"、\"v22 Jod Apr 24, 2024 Sep 23, 2026 LTS\" | 原文主体: v24 / v22 的状态表行 | 草稿主体: 同 | 条件/例外: 表格状态会随时间变化，标注抓取时点 | 数字: 代号 Krypton/Jod | 结论: 一致"
+          }
+        ],
+        "lastSaveSeq": 910,
+        "beforeFinalSave": true
+      }
+    }
+  ]
+}

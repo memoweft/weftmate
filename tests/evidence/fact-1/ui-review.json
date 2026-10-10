@@ -1,0 +1,28 @@
+{
+  "canonicalScreenshots": "serial-performance/mimo/",
+  "realElectron": true,
+  "mobileWebSizes": [
+    "360x780",
+    "390x844"
+  ],
+  "desktopSizes": [
+    "1200x800",
+    "480x780"
+  ],
+  "lightAndDark": true,
+  "screenshots": 24,
+  "pageErrors": [],
+  "settingsPersistedOffAndOn": true,
+  "sourceLinksOpenCapturedOriginal": true,
+  "checklist": {
+    "1": "来源默认三角换统一图标、来源滚动只保留面板一层；输入框缩放把手已隐藏。",
+    "2": "开关复用统一控件；出处为链接，原文折叠行有悬停/按下/聚焦；读取时显示状态。",
+    "3": "开关放助手设置，原文沿用输出与来源。",
+    "4": "使用现有令牌；截图无横向溢出，480标题栏遮挡已修。",
+    "5": "开关状态可见；读取有加载、无捕获回退和失败重试。",
+    "6": "浅深色、480、360x780、390x844均打开验证。",
+    "7": "对照本机 ref-products/codex-desktop-3.png 的助手配置层级；参考图未复制入仓库。",
+    "8": "成果预览、原文面板、助手设置均有浅深打开状态截图。",
+    "9": "最终截图集通过目视复核；ui/before 与其他阶段失败记录不冒充最终截图。"
+  }
+}
