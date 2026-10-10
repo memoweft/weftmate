@@ -105,6 +105,13 @@
     accept(payload);
     return account;
   };
+  globalThis.WeftUiCore.restoreMobileHostSession = async (bridge, accept) => {
+    const response = await bridge.fetch('/personal/v1/auth/me');
+    const payload = await response.json();
+    if (!response.ok) throw { code: payload.error?.code || 'UNAUTHORIZED', status: response.status };
+    accept(payload);
+    return payload;
+  };
   // App account transport shares the account core; only the platform owns secrets.
   globalThis.WeftUiCore.createMobileCloudTransport = ({ bridge, native, hostOrigin }) => {
     const request = async (url, options = {}) => {

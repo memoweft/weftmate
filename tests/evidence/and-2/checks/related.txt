@@ -1,0 +1,18 @@
+✔ Android bridge maps core history tail, older and detail requests to native cache routes (3.8582ms)
+✔ Android bridge forwards decisions with the same request ID and keeps credentials native (2.2358ms)
+✔ Android bridge correlates out-of-order replies and separately delivers native events (0.9893ms)
+✔ Android bridge maps account/model shapes and preserves native error codes (1.3751ms)
+✔ expired native login preserves phone scope and draft without invoking desktop login controls (31.5148ms)
+✔ remembered native local session is verified before acceptance without a cloud adoption or refresh (1.789ms)
+✔ revoked native local session is refused before accepting identity (0.7011ms)
+✔ mobile app transport keeps platform key operations native and uses only opaque refresh handles (0.8779ms)
+✔ mobile adapter preserves native errors and treats a missing trusted computer as approval, without weakening token errors (1.0834ms)
+✔ known direct computer connects without a relay, but mismatched host identity stays refused (1.5534ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 163.2451

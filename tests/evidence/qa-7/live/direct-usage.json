@@ -1,0 +1,114 @@
+[
+  {
+    "at": 1791649823098,
+    "status": 200,
+    "stream": false,
+    "model": "mimo-v2.6-flash",
+    "requestKeys": [
+      "model",
+      "stream",
+      "max_tokens",
+      "temperature",
+      "messages",
+      "thinking"
+    ],
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "user",
+      "assistant",
+      "user"
+    ],
+    "maxTokens": 160,
+    "temperature": 0.3,
+    "usage": {
+      "completion_tokens": 27,
+      "prompt_tokens": 869,
+      "total_tokens": 896,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "responseKeys": [
+      "id",
+      "choices",
+      "created",
+      "model",
+      "object",
+      "usage"
+    ],
+    "choices": [
+      {
+        "index": 0,
+        "finishReason": "stop",
+        "messageKeys": [
+          "content",
+          "role",
+          "tool_calls"
+        ],
+        "content": "{\"suggestions\":[\"继续写备份和每周维护部分\",\"每周维护具体要做什么？\",\"给几个完整的命名例子看看\"]}"
+      }
+    ]
+  },
+  {
+    "at": 1791649890010,
+    "status": 200,
+    "stream": false,
+    "model": "mimo-v2.6-flash",
+    "requestKeys": [
+      "model",
+      "stream",
+      "max_tokens",
+      "temperature",
+      "messages",
+      "thinking"
+    ],
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "user",
+      "assistant",
+      "user",
+      "assistant",
+      "user"
+    ],
+    "maxTokens": 160,
+    "temperature": 0.3,
+    "usage": {
+      "completion_tokens": 30,
+      "prompt_tokens": 240,
+      "total_tokens": 270,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 64
+      }
+    },
+    "responseKeys": [
+      "id",
+      "choices",
+      "created",
+      "model",
+      "object",
+      "usage"
+    ],
+    "choices": [
+      {
+        "index": 0,
+        "finishReason": "stop",
+        "messageKeys": [
+          "content",
+          "role",
+          "tool_calls"
+        ],
+        "content": "{\"suggestions\":[\"第974种花茶加什么？\",\"把第973种的苹果片改成两片。\"]}"
+      }
+    ]
+  }
+]

@@ -1,0 +1,380 @@
+﻿2026-10-10T15:55:48.2881974Z Current runner version: '2.337.0'
+2026-10-10T15:55:48.2919543Z ##[group]Runner Image Provisioner
+2026-10-10T15:55:48.2920984Z Hosted Compute Agent
+2026-10-10T15:55:48.2922105Z Version: 20260901.588
+2026-10-10T15:55:48.2923206Z Commit: f88ec8081b781fac6c440065ac7ff9e710ce3d0b
+2026-10-10T15:55:48.2924686Z Build Date: 2026-09-01T19:56:44Z
+2026-10-10T15:55:48.2925837Z Worker ID: {d44a34da-5d7f-48dd-a880-9739ba4f142d}
+2026-10-10T15:55:48.2926971Z Azure Region: eastus
+2026-10-10T15:55:48.2928944Z ##[endgroup]
+2026-10-10T15:55:48.2931344Z ##[group]Operating System
+2026-10-10T15:55:48.2932483Z Microsoft Windows Server 2025
+2026-10-10T15:55:48.2933501Z 10.0.26100
+2026-10-10T15:55:48.2934423Z Datacenter
+2026-10-10T15:55:48.2935234Z ##[endgroup]
+2026-10-10T15:55:48.2936096Z ##[group]Runner Image
+2026-10-10T15:55:48.2937257Z Image: windows-2025-vs2026
+2026-10-10T15:55:48.2938231Z Version: 20260925.250.1
+2026-10-10T15:55:48.2940842Z Included Software: https://github.com/actions/runner-images/blob/win25-vs2026/20260925.250/images/windows/Windows2025-VS2026-Readme.md
+2026-10-10T15:55:48.2943806Z Image Release: https://github.com/actions/runner-images/releases/tag/win25-vs2026%2F20260925.250
+2026-10-10T15:55:48.2945674Z ##[endgroup]
+2026-10-10T15:55:48.2948053Z ##[group]GITHUB_TOKEN Permissions
+2026-10-10T15:55:48.2951365Z Contents: read
+2026-10-10T15:55:48.2952278Z Metadata: read
+2026-10-10T15:55:48.2953218Z Packages: read
+2026-10-10T15:55:48.2954110Z ##[endgroup]
+2026-10-10T15:55:48.2957077Z Secret source: Actions
+2026-10-10T15:55:48.2958511Z Cache mode: write
+2026-10-10T15:55:48.2959565Z Prepare workflow directory
+2026-10-10T15:55:48.3347155Z Prepare all required actions
+2026-10-10T15:55:48.3395399Z Getting action download info
+2026-10-10T15:55:48.4736922Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-10T15:55:48.6095301Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-10-10T15:55:48.9095585Z Complete job name: test (windows-latest)
+2026-10-10T15:55:49.0648184Z ##[group]Run actions/checkout@v4
+2026-10-10T15:55:49.0649365Z with:
+2026-10-10T15:55:49.0649866Z   repository: memoweft/weftmate
+2026-10-10T15:55:49.0654398Z   token: ***
+2026-10-10T15:55:49.0654876Z   ssh-strict: true
+2026-10-10T15:55:49.0655353Z   ssh-user: git
+2026-10-10T15:55:49.0655857Z   persist-credentials: true
+2026-10-10T15:55:49.0656399Z   clean: true
+2026-10-10T15:55:49.0656883Z   sparse-checkout-cone-mode: true
+2026-10-10T15:55:49.0657472Z   fetch-depth: 1
+2026-10-10T15:55:49.0657947Z   fetch-tags: false
+2026-10-10T15:55:49.0658444Z   show-progress: true
+2026-10-10T15:55:49.0658834Z   lfs: false
+2026-10-10T15:55:49.0659199Z   submodules: false
+2026-10-10T15:55:49.0659594Z   set-safe-directory: true
+2026-10-10T15:55:49.0660054Z   allow-unsafe-pr-checkout: false
+2026-10-10T15:55:49.0660732Z ##[endgroup]
+2026-10-10T15:55:49.2170476Z Syncing repository: memoweft/weftmate
+2026-10-10T15:55:49.2172524Z ##[group]Getting Git version info
+2026-10-10T15:55:49.2173736Z Working directory is 'D:\a\weftmate\weftmate'
+2026-10-10T15:55:49.3333828Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-10-10T15:55:49.6962789Z git version 2.55.0.windows.5
+2026-10-10T15:55:49.7012488Z ##[endgroup]
+2026-10-10T15:55:49.7033256Z Temporarily overriding HOME='D:\a\_temp\a3418830-43f2-4e7c-84e6-f63ef0ed87ea' before making global git config changes
+2026-10-10T15:55:49.7035154Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-10T15:55:49.7042776Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\weftmate\weftmate
+2026-10-10T15:55:49.7677073Z Deleting the contents of 'D:\a\weftmate\weftmate'
+2026-10-10T15:55:49.7683795Z ##[group]Initializing the repository
+2026-10-10T15:55:49.7692613Z [command]"C:\Program Files\Git\bin\git.exe" init D:\a\weftmate\weftmate
+2026-10-10T15:55:49.8541492Z Initialized empty Git repository in D:/a/weftmate/weftmate/.git/
+2026-10-10T15:55:49.8587302Z [command]"C:\Program Files\Git\bin\git.exe" remote add origin https://github.com/memoweft/weftmate
+2026-10-10T15:55:49.9274997Z ##[endgroup]
+2026-10-10T15:55:49.9276426Z ##[group]Disabling automatic garbage collection
+2026-10-10T15:55:49.9283194Z [command]"C:\Program Files\Git\bin\git.exe" config --local gc.auto 0
+2026-10-10T15:55:49.9583715Z ##[endgroup]
+2026-10-10T15:55:49.9585486Z ##[group]Setting up auth
+2026-10-10T15:55:49.9596130Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-10T15:55:49.9902635Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-10T15:55:51.4982578Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-10T15:55:51.5278439Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-10T15:55:52.0577158Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-10T15:55:52.0897480Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-10T15:55:52.6382307Z [command]"C:\Program Files\Git\bin\git.exe" config --local http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
+2026-10-10T15:55:52.6709448Z ##[endgroup]
+2026-10-10T15:55:52.6710216Z ##[group]Fetching the repository
+2026-10-10T15:55:52.6724565Z [command]"C:\Program Files\Git\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +2a075c13c9f9a428c149d5831432a469e2d97b4f:refs/remotes/origin/main
+2026-10-10T15:56:16.8882921Z From https://github.com/memoweft/weftmate
+2026-10-10T15:56:16.8883778Z  * [new ref]           2a075c13c9f9a428c149d5831432a469e2d97b4f -> origin/main
+2026-10-10T15:56:16.8924458Z ##[endgroup]
+2026-10-10T15:56:16.8927172Z ##[group]Determining the checkout info
+2026-10-10T15:56:16.8928013Z ##[endgroup]
+2026-10-10T15:56:16.8938987Z [command]"C:\Program Files\Git\bin\git.exe" sparse-checkout disable
+2026-10-10T15:56:16.9383097Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all extensions.worktreeConfig
+2026-10-10T15:56:16.9799860Z ##[group]Checking out the ref
+2026-10-10T15:56:16.9811550Z [command]"C:\Program Files\Git\bin\git.exe" checkout --progress --force -B main refs/remotes/origin/main
+2026-10-10T15:56:18.1456553Z Updating files:  11% (1993/17549)
+2026-10-10T15:56:18.2885988Z Updating files:  12% (2106/17549)
+2026-10-10T15:56:18.3810358Z Updating files:  13% (2282/17549)
+2026-10-10T15:56:18.5160560Z Updating files:  14% (2457/17549)
+2026-10-10T15:56:18.6456252Z Updating files:  15% (2633/17549)
+2026-10-10T15:56:18.8064790Z Updating files:  16% (2808/17549)
+2026-10-10T15:56:18.9477497Z Updating files:  17% (2984/17549)
+2026-10-10T15:56:19.0423269Z Updating files:  18% (3159/17549)
+2026-10-10T15:56:19.0630110Z Updating files:  18% (3301/17549)
+2026-10-10T15:56:19.1982657Z Updating files:  19% (3335/17549)
+2026-10-10T15:56:19.3508409Z Updating files:  20% (3510/17549)
+2026-10-10T15:56:19.5465863Z Updating files:  21% (3686/17549)
+2026-10-10T15:56:19.5782676Z Updating files:  22% (3861/17549)
+2026-10-10T15:56:19.6382854Z Updating files:  23% (4037/17549)
+2026-10-10T15:56:19.6964459Z Updating files:  24% (4212/17549)
+2026-10-10T15:56:19.7419480Z Updating files:  25% (4388/17549)
+2026-10-10T15:56:19.7996674Z Updating files:  26% (4563/17549)
+2026-10-10T15:56:19.8688274Z Updating files:  27% (4739/17549)
+2026-10-10T15:56:19.9217334Z Updating files:  28% (4914/17549)
+2026-10-10T15:56:20.0010225Z Updating files:  29% (5090/17549)
+2026-10-10T15:56:20.0545681Z Updating files:  30% (5265/17549)
+2026-10-10T15:56:20.1171044Z Updating files:  30% (5344/17549)
+2026-10-10T15:56:20.2292635Z Updating files:  31% (5441/17549)
+2026-10-10T15:56:20.3336781Z Updating files:  32% (5616/17549)
+2026-10-10T15:56:20.5234528Z Updating files:  33% (5792/17549)
+2026-10-10T15:56:20.6866065Z Updating files:  34% (5967/17549)
+2026-10-10T15:56:20.9174197Z Updating files:  35% (6143/17549)
+2026-10-10T15:56:21.0057908Z Updating files:  36% (6318/17549)
+2026-10-10T15:56:21.0545849Z Updating files:  37% (6494/17549)
+2026-10-10T15:56:21.1619806Z Updating files:  37% (6547/17549)
+2026-10-10T15:56:21.2330767Z Updating files:  38% (6669/17549)
+2026-10-10T15:56:21.3460197Z Updating files:  39% (6845/17549)
+2026-10-10T15:56:21.4921828Z Updating files:  40% (7020/17549)
+2026-10-10T15:56:21.5596725Z Updating files:  41% (7196/17549)
+2026-10-10T15:56:21.6536729Z Updating files:  42% (7371/17549)
+2026-10-10T15:56:21.7553596Z Updating files:  43% (7547/17549)
+2026-10-10T15:56:21.8510125Z Updating files:  44% (7722/17549)
+2026-10-10T15:56:21.9357725Z Updating files:  45% (7898/17549)
+2026-10-10T15:56:22.0197592Z Updating files:  46% (8073/17549)
+2026-10-10T15:56:22.0661677Z Updating files:  47% (8249/17549)
+2026-10-10T15:56:22.1227232Z Updating files:  47% (8341/17549)
+2026-10-10T15:56:22.3308032Z Updating files:  48% (8424/17549)
+2026-10-10T15:56:22.4001324Z Updating files:  49% (8600/17549)
+2026-10-10T15:56:22.4728952Z Updating files:  50% (8775/17549)
+2026-10-10T15:56:22.5402891Z Updating files:  51% (8950/17549)
+2026-10-10T15:56:22.6290525Z Updating files:  52% (9126/17549)
+2026-10-10T15:56:22.7275218Z Updating files:  53% (9301/17549)
+2026-10-10T15:56:22.8128031Z Updating files:  54% (9477/17549)
+2026-10-10T15:56:22.9336057Z Updating files:  55% (9652/17549)
+2026-10-10T15:56:23.0237013Z Updating files:  56% (9828/17549)
+2026-10-10T15:56:23.0657517Z Updating files:  57% (10003/17549)
+2026-10-10T15:56:23.1616173Z Updating files:  57% (10068/17549)
+2026-10-10T15:56:23.2950673Z Updating files:  58% (10179/17549)
+2026-10-10T15:56:23.3739178Z Updating files:  59% (10354/17549)
+2026-10-10T15:56:23.4843834Z Updating files:  60% (10530/17549)
+2026-10-10T15:56:23.6977479Z Updating files:  61% (10705/17549)
+2026-10-10T15:56:23.8359370Z Updating files:  62% (10881/17549)
+2026-10-10T15:56:23.9551028Z Updating files:  63% (11056/17549)
+2026-10-10T15:56:24.0399077Z Updating files:  64% (11232/17549)
+2026-10-10T15:56:24.0776405Z Updating files:  65% (11407/17549)
+2026-10-10T15:56:24.1596260Z Updating files:  65% (11468/17549)
+2026-10-10T15:56:24.2298659Z Updating files:  66% (11583/17549)
+2026-10-10T15:56:24.3022447Z Updating files:  67% (11758/17549)
+2026-10-10T15:56:24.3827538Z Updating files:  68% (11934/17549)
+2026-10-10T15:56:24.4915710Z Updating files:  69% (12109/17549)
+2026-10-10T15:56:24.6486744Z Updating files:  70% (12285/17549)
+2026-10-10T15:56:24.7338267Z Updating files:  71% (12460/17549)
+2026-10-10T15:56:24.8656992Z Updating files:  72% (12636/17549)
+2026-10-10T15:56:25.0612159Z Updating files:  73% (12811/17549)
+2026-10-10T15:56:25.0904177Z Updating files:  74% (12987/17549)
+2026-10-10T15:56:25.1448021Z Updating files:  74% (13042/17549)
+2026-10-10T15:56:25.2300466Z Updating files:  75% (13162/17549)
+2026-10-10T15:56:25.3207081Z Updating files:  76% (13338/17549)
+2026-10-10T15:56:25.4102441Z Updating files:  77% (13513/17549)
+2026-10-10T15:56:25.5091325Z Updating files:  78% (13689/17549)
+2026-10-10T15:56:25.6028780Z Updating files:  79% (13864/17549)
+2026-10-10T15:56:25.6854654Z Updating files:  80% (14040/17549)
+2026-10-10T15:56:25.7741061Z Updating files:  81% (14215/17549)
+2026-10-10T15:56:25.8541282Z Updating files:  82% (14391/17549)
+2026-10-10T15:56:25.9303681Z Updating files:  83% (14566/17549)
+2026-10-10T15:56:26.0356928Z Updating files:  84% (14742/17549)
+2026-10-10T15:56:26.1042473Z Updating files:  85% (14917/17549)
+2026-10-10T15:56:26.1139115Z Updating files:  85% (15063/17549)
+2026-10-10T15:56:26.2085683Z Updating files:  86% (15093/17549)
+2026-10-10T15:56:26.3033286Z Updating files:  87% (15268/17549)
+2026-10-10T15:56:26.5331485Z Updating files:  88% (15444/17549)
+2026-10-10T15:56:26.6393974Z Updating files:  89% (15619/17549)
+2026-10-10T15:56:26.7356239Z Updating files:  90% (15795/17549)
+2026-10-10T15:56:26.8169724Z Updating files:  91% (15970/17549)
+2026-10-10T15:56:26.9500018Z Updating files:  92% (16146/17549)
+2026-10-10T15:56:27.0443967Z Updating files:  93% (16321/17549)
+2026-10-10T15:56:27.1144315Z Updating files:  94% (16497/17549)
+2026-10-10T15:56:27.1245307Z Updating files:  94% (16656/17549)
+2026-10-10T15:56:27.2200772Z Updating files:  95% (16672/17549)
+2026-10-10T15:56:27.3058804Z Updating files:  96% (16848/17549)
+2026-10-10T15:56:27.3555520Z Updating files:  97% (17023/17549)
+2026-10-10T15:56:27.4203535Z Updating files:  98% (17199/17549)
+2026-10-10T15:56:27.4687815Z Updating files:  99% (17374/17549)
+2026-10-10T15:56:27.4688251Z Updating files: 100% (17549/17549)
+2026-10-10T15:56:27.4688574Z Updating files: 100% (17549/17549), done.
+2026-10-10T15:56:27.5026457Z Switched to a new branch 'main'
+2026-10-10T15:56:27.5044511Z branch 'main' set up to track 'origin/main'.
+2026-10-10T15:56:27.5776918Z ##[endgroup]
+2026-10-10T15:56:27.6109244Z [command]"C:\Program Files\Git\bin\git.exe" log -1 --format=%H
+2026-10-10T15:56:27.6382399Z 2a075c13c9f9a428c149d5831432a469e2d97b4f
+2026-10-10T15:56:27.6881530Z ##[group]Run actions/setup-node@v4
+2026-10-10T15:56:27.6881854Z with:
+2026-10-10T15:56:27.6882038Z   node-version: 24
+2026-10-10T15:56:27.6882235Z   cache: npm
+2026-10-10T15:56:27.6882442Z   always-auth: false
+2026-10-10T15:56:27.6882861Z   check-latest: false
+2026-10-10T15:56:27.6885244Z   token: ***
+2026-10-10T15:56:27.6885431Z ##[endgroup]
+2026-10-10T15:56:27.9260495Z Found in cache @ C:\hostedtoolcache\windows\node\24.21.0\x64
+2026-10-10T15:56:27.9269720Z (node:5876) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-10T15:56:27.9271188Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-10T15:56:27.9273789Z ##[group]Environment details
+2026-10-10T15:56:32.7931444Z node: v24.21.0
+2026-10-10T15:56:32.7931852Z npm: 11.19.0
+2026-10-10T15:56:32.7932178Z yarn: 1.22.22
+2026-10-10T15:56:32.7932867Z ##[endgroup]
+2026-10-10T15:56:32.8876383Z [command]C:\Windows\system32\cmd.exe /D /S /C "C:\hostedtoolcache\windows\node\24.21.0\x64\npm.cmd config get cache"
+2026-10-10T15:56:33.3955300Z C:\npm\cache
+2026-10-10T15:56:33.6550262Z Cache hit for: node-cache-Windows-x64-npm-02467b499c15966cb0fe5d81bfe4b7841980fb1cb0e4bf7659638afe60d79eb9
+2026-10-10T15:56:33.6674759Z (node:5876) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-10T15:56:34.0224289Z Received 46078390 of 46078390 (100.0%), 132.8 MBs/sec
+2026-10-10T15:56:34.0226343Z Cache Size: ~44 MB (46078390 B)
+2026-10-10T15:56:34.0294313Z [command]"C:\Program Files\Git\usr\bin\tar.exe" -xf D:/a/_temp/bfe010c4-b23f-4c6d-81b0-efcfacf968a3/cache.tzst -P -C D:/a/weftmate/weftmate --force-local --use-compress-program "zstd -d"
+2026-10-10T15:56:36.3822805Z Cache restored successfully
+2026-10-10T15:56:36.3862329Z Cache restored from key: node-cache-Windows-x64-npm-02467b499c15966cb0fe5d81bfe4b7841980fb1cb0e4bf7659638afe60d79eb9
+2026-10-10T15:56:36.4318520Z ##[group]Run npm ci
+2026-10-10T15:56:36.4318977Z [36;1mnpm ci[0m
+2026-10-10T15:56:36.8086264Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-10T15:56:36.8086753Z ##[endgroup]
+2026-10-10T15:56:42.8191030Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2026-10-10T15:56:42.8815941Z npm warn deprecated lodash.isequal@4.5.0: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
+2026-10-10T15:56:42.9173789Z npm warn deprecated rimraf@2.6.3: Rimraf versions prior to v4 are no longer supported
+2026-10-10T15:56:43.0085765Z npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-10-10T15:56:43.0132707Z npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-10-10T15:56:44.6573548Z npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-10-10T15:56:47.8271607Z 
+2026-10-10T15:56:47.8272360Z added 423 packages, and audited 424 packages in 10s
+2026-10-10T15:56:47.8272879Z 
+2026-10-10T15:56:47.8276532Z 86 packages are looking for funding
+2026-10-10T15:56:47.8278567Z   run `npm fund` for details
+2026-10-10T15:56:47.8289780Z 
+2026-10-10T15:56:47.8290367Z found 0 vulnerabilities
+2026-10-10T15:56:47.8306805Z npm warn install-scripts 3 packages have install scripts not yet covered by allowScripts:
+2026-10-10T15:56:47.8308072Z npm warn install-scripts   @root/acme@3.1.0 (postinstall: node scripts/postinstall)
+2026-10-10T15:56:47.8309248Z npm warn install-scripts   electron-winstaller@5.4.0 (install: node ./script/select-7z-arch.js)
+2026-10-10T15:56:47.8310410Z npm warn install-scripts   get-windows@9.3.0 (install: node-pre-gyp install --fallback-to-build)
+2026-10-10T15:56:47.8310933Z npm warn install-scripts
+2026-10-10T15:56:47.8311572Z npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+2026-10-10T15:56:51.4301358Z ##[group]Run npm run release:preflight
+2026-10-10T15:56:51.4301975Z [36;1mnpm run release:preflight[0m
+2026-10-10T15:56:51.4373614Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-10T15:56:51.4373978Z ##[endgroup]
+2026-10-10T15:56:52.2251092Z 
+2026-10-10T15:56:52.2251754Z > weftmate@0.1.0 release:preflight
+2026-10-10T15:56:52.2252345Z > node scripts/release-preflight.mjs
+2026-10-10T15:56:52.2252663Z 
+2026-10-10T15:56:53.0229952Z found 0 vulnerabilities
+2026-10-10T15:56:53.0418108Z Release preflight passed: no local dependencies or high-severity production advisories.
+2026-10-10T15:56:53.1450044Z ##[group]Run npm audit --audit-level=high --registry=https://registry.npmjs.org
+2026-10-10T15:56:53.1450741Z [36;1mnpm audit --audit-level=high --registry=https://registry.npmjs.org[0m
+2026-10-10T15:56:53.1522304Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-10T15:56:53.1522682Z ##[endgroup]
+2026-10-10T15:56:54.4825877Z found 0 vulnerabilities
+2026-10-10T15:56:54.5715118Z ##[group]Run node .github/scripts/dependency-smoke.mjs
+2026-10-10T15:56:54.5715596Z [36;1mnode .github/scripts/dependency-smoke.mjs[0m
+2026-10-10T15:56:54.5784726Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-10T15:56:54.5785097Z ##[endgroup]
+2026-10-10T15:56:55.1255540Z Dependency smoke passed: electron-builder @electron/get downloads through global-agent 4 loopback proxy.
+2026-10-10T15:56:55.2544842Z ##[group]Run node --test tests/apple-callback-isolation.test.mjs
+2026-10-10T15:56:55.2545448Z [36;1mnode --test tests/apple-callback-isolation.test.mjs[0m
+2026-10-10T15:56:55.2615497Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-10T15:56:55.2615860Z ##[endgroup]
+2026-10-10T15:56:55.7851388Z ✔ callback review hashes are independent of Git checkout line endings (3.1474ms)
+2026-10-10T15:56:55.7854592Z ✔ Apple reviewed callbacks retain their exact isolation boundary (107.5665ms)
+2026-10-10T15:56:55.7856254Z ✔ new and changed background callback actor access fails review (0.7288ms)
+2026-10-10T15:56:55.7862835Z ✔ comments and string braces cannot hide a callback boundary (0.288ms)
+2026-10-10T15:56:55.7864946Z ✔ labelled actions and completions remain inside the reviewed boundary (0.4404ms)
+2026-10-10T15:56:55.7998146Z ℹ tests 5
+2026-10-10T15:56:55.7998801Z ℹ suites 0
+2026-10-10T15:56:55.7999158Z ℹ pass 5
+2026-10-10T15:56:55.7999508Z ℹ fail 0
+2026-10-10T15:56:55.7999913Z ℹ cancelled 0
+2026-10-10T15:56:55.8000296Z ℹ skipped 0
+2026-10-10T15:56:55.8001596Z ℹ todo 0
+2026-10-10T15:56:55.8002243Z ℹ duration_ms 203.1063
+2026-10-10T15:56:55.9232704Z ##[group]Run npm run typecheck
+2026-10-10T15:56:55.9233069Z [36;1mnpm run typecheck[0m
+2026-10-10T15:56:55.9303481Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-10T15:56:55.9303840Z ##[endgroup]
+2026-10-10T15:56:56.6136639Z 
+2026-10-10T15:56:56.6137087Z > weftmate@0.1.0 typecheck
+2026-10-10T15:56:56.6137569Z > tsc
+2026-10-10T15:56:56.6137751Z 
+2026-10-10T15:56:58.9880226Z ##[group]Run node --test tests/nightly-regression.test.mjs
+2026-10-10T15:56:58.9880747Z [36;1mnode --test tests/nightly-regression.test.mjs[0m
+2026-10-10T15:56:58.9951514Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-10T15:56:58.9951869Z ##[endgroup]
+2026-10-10T15:56:59.6337842Z ✔ Android inventory names leftover test packages without classifying the daily or unknown package as disposable (2.3863ms)
+2026-10-10T15:57:00.9005263Z ✔ task registration prefers the stable alias and WhatIf describes the complete action without registering (1266.013ms)
+2026-10-10T15:57:00.9008840Z ✔ deleted cell, stale capture, failed capture and busy platform all alert independently (0.485ms)
+2026-10-10T15:57:00.9012819Z ✔ 24-hour boundary is inclusive, wrong commit and future capture alert (0.5451ms)
+2026-10-10T15:57:00.9017342Z ✔ catalog-declared absent surfaces do not create fake expected cells (0.4094ms)
+2026-10-10T15:57:00.9021174Z ✔ PNG filters and compression changes compare by decoded pixels, with tolerance (3.0717ms)
+2026-10-10T15:57:00.9073826Z ✔ pixel threshold alerts and largest differences are sorted (6.8779ms)
+2026-10-10T15:57:00.9150593Z ✔ retention removes only expired date directories and retains exactly 14 calendar days (7.3666ms)
+2026-10-10T15:57:00.9229867Z ✔ baseline selects previous run, including a second run on the same date (7.9895ms)
+2026-10-10T15:57:01.0693711Z ✔ fresh gallery never fills occupied native cells with repository history (142.3842ms)
+2026-10-10T15:57:01.0725564Z ✖ synthetic artifact write is observed before exposing its task approval (5.6873ms)
+2026-10-10T15:57:04.7680471Z ✖ temp pruning removes only stale unused weftmate-* directories and never follows a junction (3696.3329ms)
+2026-10-10T15:57:04.7937922Z ℹ tests 12
+2026-10-10T15:57:04.7938440Z ℹ suites 0
+2026-10-10T15:57:04.7938910Z ℹ pass 10
+2026-10-10T15:57:04.7939289Z ℹ fail 2
+2026-10-10T15:57:04.7939660Z ℹ cancelled 0
+2026-10-10T15:57:04.7940035Z ℹ skipped 0
+2026-10-10T15:57:04.7940411Z ℹ todo 0
+2026-10-10T15:57:04.7941136Z ℹ duration_ms 5478.6264
+2026-10-10T15:57:04.7960653Z 
+2026-10-10T15:57:04.7961002Z ✖ failing tests:
+2026-10-10T15:57:04.7961236Z 
+2026-10-10T15:57:04.7961587Z test at tests\nightly-regression.test.mjs:113:1
+2026-10-10T15:57:04.7963016Z ✖ synthetic artifact write is observed before exposing its task approval (5.6873ms)
+2026-10-10T15:57:04.7963976Z   Error: private storage permission verification failed
+2026-10-10T15:57:04.7964953Z       at privateFailure (file:///D:/a/weftmate/weftmate/src/private-host-storage.mjs:51:17)
+2026-10-10T15:57:04.7966232Z       at ensurePrivateDirectory (file:///D:/a/weftmate/weftmate/src/private-host-storage.mjs:122:19)
+2026-10-10T15:57:04.7967780Z       at async createPersonalAccessService (file:///D:/a/weftmate/weftmate/src/personal-access/index.mjs:122:3)
+2026-10-10T15:57:04.7969946Z       at async startTimelineCandidate (file:///D:/a/weftmate/weftmate/tests/integration/timeline-ui-candidate.mjs:114:13)
+2026-10-10T15:57:04.7971605Z       at async TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/nightly-regression.test.mjs:114:19)
+2026-10-10T15:57:04.7972755Z       at async Test.run (node:internal/test_runner/test:1409:7)
+2026-10-10T15:57:04.7973731Z       at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+2026-10-10T15:57:04.7974577Z     code: 'PRIVATE_STORAGE_UNAVAILABLE'
+2026-10-10T15:57:04.7975031Z   }
+2026-10-10T15:57:04.7975193Z 
+2026-10-10T15:57:04.7975510Z test at tests\nightly-regression.test.mjs:127:1
+2026-10-10T15:57:04.7976849Z ✖ temp pruning removes only stale unused weftmate-* directories and never follows a junction (3696.3329ms)
+2026-10-10T15:57:04.7978067Z   AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+2026-10-10T15:57:04.7978813Z   + actual - expected
+2026-10-10T15:57:04.7979155Z   
+2026-10-10T15:57:04.7979405Z     [
+2026-10-10T15:57:04.7979663Z       false,
+2026-10-10T15:57:04.7979948Z       3,
+2026-10-10T15:57:04.7983147Z   +   2,
+2026-10-10T15:57:04.7983523Z   +   0,
+2026-10-10T15:57:04.7983801Z       1,
+2026-10-10T15:57:04.7984124Z       0,
+2026-10-10T15:57:04.7984426Z   -   1,
+2026-10-10T15:57:04.7984706Z   -   1
+2026-10-10T15:57:04.7984956Z     ]
+2026-10-10T15:57:04.7985207Z   
+2026-10-10T15:57:04.7985957Z       at TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/nightly-regression.test.mjs:148:12)
+2026-10-10T15:57:04.7986958Z       at async Test.run (node:internal/test_runner/test:1409:7)
+2026-10-10T15:57:04.7987828Z       at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+2026-10-10T15:57:04.7988531Z     generatedMessage: true,
+2026-10-10T15:57:04.7988914Z     code: 'ERR_ASSERTION',
+2026-10-10T15:57:04.7989325Z     actual: [ false, 3, 2, 0, 1, 0 ],
+2026-10-10T15:57:04.7989778Z     expected: [ false, 3, 1, 0, 1, 1 ],
+2026-10-10T15:57:04.7990257Z     operator: 'deepStrictEqual',
+2026-10-10T15:57:04.7990648Z     diff: 'simple'
+2026-10-10T15:57:04.7990949Z   }
+2026-10-10T15:57:04.9067869Z ##[error]Process completed with exit code 1.
+2026-10-10T15:57:04.9300763Z ##[group]Run if [ "Windows" = "Linux" ]; then
+2026-10-10T15:57:04.9301356Z [36;1mif [ "Windows" = "Linux" ]; then[0m
+2026-10-10T15:57:04.9302058Z [36;1m  xvfb-run --auto-servernum node .github/scripts/ci-unit-tests.mjs known[0m
+2026-10-10T15:57:04.9302720Z [36;1melse[0m
+2026-10-10T15:57:04.9303160Z [36;1m  node .github/scripts/ci-unit-tests.mjs known[0m
+2026-10-10T15:57:04.9303652Z [36;1mfi[0m
+2026-10-10T15:57:04.9326574Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-10T15:57:04.9326989Z ##[endgroup]
+2026-10-10T15:57:05.1546701Z ### Unit tests (known)
+2026-10-10T15:57:05.1547460Z No known failures remain; no baseline tests to run.
+2026-10-10T15:57:05.1548163Z 
+2026-10-10T15:57:05.1941083Z Post job cleanup.
+2026-10-10T15:57:05.4096378Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-10-10T15:57:05.4382618Z git version 2.55.0.windows.5
+2026-10-10T15:57:05.4463043Z Temporarily overriding HOME='D:\a\_temp\4c4585fe-2d7b-48e0-9460-5657823bbf94' before making global git config changes
+2026-10-10T15:57:05.4464916Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-10T15:57:05.4477678Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\weftmate\weftmate
+2026-10-10T15:57:05.4815105Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-10T15:57:05.5147421Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-10T15:57:06.0654465Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-10T15:57:06.0914644Z http.https://github.com/.extraheader
+2026-10-10T15:57:06.0957997Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all http.https://github.com/.extraheader
+2026-10-10T15:57:06.1259348Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-10T15:57:06.6705615Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-10T15:57:06.6999758Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-10T15:57:07.2241088Z Cleaning up orphan processes
+2026-10-10T15:57:07.2467085Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

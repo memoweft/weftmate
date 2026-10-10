@@ -1,0 +1,77 @@
+[
+  {
+    "seq": 209,
+    "type": "task.queued",
+    "at": "2026-10-10T16:29:15.284Z",
+    "data": {
+      "taskId": "cmd-423df06a-e9be-4ff7-a2f3-375365cdf59a",
+      "receiptId": "6b99d473-f417-49d2-8886-7320aea17223",
+      "text": "你记得我喝第973种花茶加什么吗？",
+      "commandId": "cmd-423df06a-e9be-4ff7-a2f3-375365cdf59a",
+      "requestId": "d832c5ee-10d3-4c01-8ae0-900bc2688a8e"
+    }
+  },
+  {
+    "seq": 210,
+    "type": "turn.started",
+    "at": "2026-10-10T16:29:15.284Z",
+    "data": {
+      "turn": 4
+    }
+  },
+  {
+    "seq": 212,
+    "type": "task.started",
+    "at": "2026-10-10T16:29:15.487Z",
+    "data": {
+      "taskId": "cmd-423df06a-e9be-4ff7-a2f3-375365cdf59a",
+      "turn": 4,
+      "receiptId": "6b99d473-f417-49d2-8886-7320aea17223",
+      "commandId": "cmd-423df06a-e9be-4ff7-a2f3-375365cdf59a",
+      "requestId": "d832c5ee-10d3-4c01-8ae0-900bc2688a8e",
+      "turnTaskId": "turn-4"
+    }
+  },
+  {
+    "seq": 213,
+    "type": "user.message",
+    "at": "2026-10-10T16:29:15.487Z",
+    "data": {
+      "text": "你记得我喝第973种花茶加什么吗？",
+      "receiptId": "6b99d473-f417-49d2-8886-7320aea17223"
+    }
+  },
+  {
+    "seq": 224,
+    "type": "assistant.message",
+    "at": "2026-10-10T16:29:16.596Z",
+    "data": {
+      "text": "记得，加一片柠檬。",
+      "memoryUsed": []
+    }
+  },
+  {
+    "seq": 225,
+    "type": "task.ended",
+    "at": "2026-10-10T16:29:16.596Z",
+    "data": {
+      "taskId": "cmd-423df06a-e9be-4ff7-a2f3-375365cdf59a",
+      "turn": 4,
+      "reason": "completed",
+      "nativeTurnEndSeq": 226,
+      "receiptId": "6b99d473-f417-49d2-8886-7320aea17223",
+      "commandId": "cmd-423df06a-e9be-4ff7-a2f3-375365cdf59a",
+      "requestId": "d832c5ee-10d3-4c01-8ae0-900bc2688a8e",
+      "turnTaskId": "turn-4"
+    }
+  },
+  {
+    "seq": 226,
+    "type": "turn.ended",
+    "at": "2026-10-10T16:29:16.596Z",
+    "data": {
+      "reason": "completed",
+      "turn": 4
+    }
+  }
+]

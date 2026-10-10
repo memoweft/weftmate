@@ -597,7 +597,7 @@ body.mobile-keyboard-visible #app{height:var(--viewport-height,100dvh)}
 #page-content .button.secondary{display:flex;align-items:center;justify-content:space-between;gap:var(--wm-space-12);min-height:var(--wm-space-48);padding:var(--wm-space-12) var(--wm-space-16);border:1px solid var(--line);border-radius:var(--wm-radius-10);background:var(--soft);color:var(--ink)}
 
 /* All transient notices use the one application toast above the content. */
-.toast { top:calc(var(--safe-top, env(safe-area-inset-top, 0px)) + var(--wm-space-16)); bottom:auto; }
+.toast { top:calc(var(--safe-top, env(safe-area-inset-top, 0px)) + var(--wm-space-64) + var(--wm-space-8)); bottom:auto; }
 .chat-read-notice { color:var(--muted); margin:var(--wm-space-16); font-size:var(--wm-font-size-13); }
 
 .message .shared-check { border:var(--wm-space-1) solid var(--line); border-radius:var(--wm-radius-8); background:var(--soft); color:var(--ink); min-height:var(--wm-space-40); padding:0 var(--wm-space-10); font:inherit; font-size:var(--wm-font-size-12); cursor:pointer; }

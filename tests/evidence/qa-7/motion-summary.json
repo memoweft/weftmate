@@ -1,0 +1,22 @@
+{
+  "frames": 8004,
+  "dotFrames": 0,
+  "streamingFrames": 0,
+  "assistantCountValues": [
+    1,
+    2
+  ],
+  "assistantTextLengthValues": [
+    12,
+    1508
+  ],
+  "reducedValues": [
+    false
+  ],
+  "hiddenValues": [
+    false
+  ],
+  "assistantEvents": 1,
+  "completedDotPresent": false,
+  "scope": "Client presentation is one complete body arrival, no intermediate body growth; provider versus gateway buffering not independently distinguished."
+}

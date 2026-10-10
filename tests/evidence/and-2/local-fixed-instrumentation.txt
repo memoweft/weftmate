@@ -1,0 +1,8 @@
+
+com.memoweft.weftmate.mobile.AndroidLoginInstrumentedTest:.
+
+Time: 2.54
+
+OK (1 test)
+
+

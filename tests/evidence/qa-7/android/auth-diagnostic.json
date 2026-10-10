@@ -1,0 +1,208 @@
+{
+  "state": {
+    "owner": "",
+    "loggedIn": false,
+    "connection": "local",
+    "authEpoch": 3
+  },
+  "core": {
+    "owner": null,
+    "device": null,
+    "csrf": false,
+    "capabilities": {
+      "sessionStatus": 1,
+      "nextSuggestions": 1,
+      "library": 1,
+      "libraryPreview": 1,
+      "libraryDesktopActions": 1,
+      "taskOverview": 1,
+      "scheduleEditing": 1,
+      "goals": 1,
+      "activity": 1,
+      "activityChanges": 1,
+      "activityRead": 1,
+      "activityNotification": 1,
+      "notificationSettings": 1,
+      "pushRegistration": 1,
+      "temporaryChats": 1,
+      "chats": 1,
+      "chatTimeline": 1,
+      "chatSearch": 1,
+      "sideChats": 1,
+      "creationReceipt": 1,
+      "chatSend": 1,
+      "chatLifecycle": 1,
+      "chatResources": 1
+    }
+  },
+  "auth.me": {
+    "loggedIn": true,
+    "username": "fx21-13f64370-4b9e-4898-9389-2cbf53525818",
+    "displayName": "fx21-13f64370-4b9e-4898-9389-2cbf53525818",
+    "avatar": null,
+    "profileRevision": 0,
+    "device": {
+      "id": "device-f21e1e6e-13e0-4f56-9465-d40623749b9d",
+      "name": "QA7 synthetic Android",
+      "expiresAt": "2026-11-09T16:45:05.190Z"
+    },
+    "localCacheSaved": true,
+    "connectionVerified": true,
+    "owner": "c239cb66ca35bf69cbf92dad38fe406a5f5dd6c4120cdea57e2b645b97c17c1e"
+  },
+  "host.status": {
+    "state": "ready",
+    "origin": "http://127.0.0.1:52510",
+    "hostId": "host-8dd4ce51-f8bc-44bc-ad3f-7f514111e0ab",
+    "relay": {
+      "state": "disabled",
+      "baseUrl": null
+    },
+    "ownerId": "owner-4630ee15-b4f3-459e-a6da-d57bf6e2acb0",
+    "deviceCount": 5,
+    "hostName": "<host>",
+    "presence": {
+      "host": "online",
+      "bootId": "3f1e2e29-e6af-4578-8ad1-91a0e1f94dd3",
+      "startedAt": "2026-10-10T16:44:10.785Z",
+      "authorization": "active",
+      "runtime": "ready",
+      "model": "available"
+    },
+    "personalCapabilities": {
+      "sessionStatus": 1,
+      "nextSuggestions": 1,
+      "library": 1,
+      "libraryPreview": 1,
+      "libraryDesktopActions": 1,
+      "taskOverview": 1,
+      "scheduleEditing": 1,
+      "goals": 1,
+      "activity": 1,
+      "activityChanges": 1,
+      "activityRead": 1,
+      "activityNotification": 1,
+      "notificationSettings": 1,
+      "pushRegistration": 1,
+      "temporaryChats": 1,
+      "chats": 1,
+      "chatTimeline": 1,
+      "chatSearch": 1,
+      "sideChats": 1,
+      "creationReceipt": 1,
+      "chatSend": 1,
+      "chatLifecycle": 1,
+      "chatResources": 1
+    },
+    "executionAccount": true,
+    "executionAccountName": null,
+    "sync": {
+      "available": true
+    },
+    "downloads": {
+      "android": false
+    },
+    "backend": {
+      "runtime": "ready",
+      "referenceScan": "ready",
+      "capabilities": {
+        "chat": {
+          "available": true,
+          "reasonCode": "INFERENCE_UNVERIFIED",
+          "inferenceVerified": false
+        },
+        "desktopOpenApp": {
+          "available": true,
+          "appIds": [
+            "notepad"
+          ]
+        },
+        "naturalLanguageDesktop": {
+          "available": true,
+          "inferenceVerified": false
+        }
+      },
+      "modules": {
+        "memory": "disabled",
+        "mods": "unknown",
+        "tasks": "unknown",
+        "notifications": "unknown",
+        "workspaces": "unknown",
+        "capabilities": "unknown"
+      }
+    },
+    "memory": {
+      "state": "disabled",
+      "inject": false,
+      "failedCorrectionCount": 0,
+      "formationIssues": []
+    },
+    "updates": {
+      "layers": [
+        {
+          "layer": "ui",
+          "currentVersion": "0.1.1-preview.7",
+          "availableVersion": null,
+          "status": "idle",
+          "channel": "preview"
+        },
+        {
+          "layer": "app",
+          "currentVersion": "0.1.1-preview.7",
+          "availableVersion": null,
+          "status": "disabled",
+          "channel": "preview"
+        },
+        {
+          "layer": "mobile-ui",
+          "currentVersion": null,
+          "availableVersion": null,
+          "status": "disabled",
+          "channel": "preview"
+        }
+      ]
+    },
+    "nativeMinimumVersions": {}
+  },
+  "offline.identity": {
+    "ownerId": "owner-4630ee15-b4f3-459e-a6da-d57bf6e2acb0",
+    "hostId": "host-8dd4ce51-f8bc-44bc-ad3f-7f514111e0ab",
+    "deviceId": "device-f21e1e6e-13e0-4f56-9465-d40623749b9d",
+    "origin": "http://127.0.0.1:52510"
+  },
+  "main": {
+    "chat": {
+      "chatId": "chat-715f5f9e-f8ff-459c-b112-748af0d29aed",
+      "kind": "main",
+      "revision": 4,
+      "contentRevision": 1,
+      "activeSegmentId": "segment-e1fa9709-2dcb-4508-85d2-5ca65ec36f98",
+      "activeSessionId": "session-261fa367-2bd1-44e5-9810-ce0f0b91ba4e",
+      "deepThinking": false,
+      "timeZone": "Asia/Shanghai",
+      "temporary": false,
+      "hasTemporaryContent": false,
+      "memoryMode": "on",
+      "recallEnabled": true,
+      "autoDeleteDays": 30,
+      "expiresAt": null,
+      "parent": null,
+      "pinned": true,
+      "unread": false,
+      "attention": null,
+      "lastOutcome": "completed",
+      "updatedAt": "2026-10-10T16:44:14.650Z",
+      "groupId": null,
+      "title": "WeftMate",
+      "archived": false,
+      "projectId": null,
+      "modelProfileId": "private-model-32404cd7f1d326a79fc757d9d16c73dded2f3d5f",
+      "running": false,
+      "sendAvailable": true,
+      "taskAvailable": true,
+      "contextUsage": {
+        "contextWindow": 32768
+      }
+    }
+  }
+}

@@ -26,7 +26,7 @@
     if (native) void syncAccountAppearance();
   }
   async function enterAssistant() {
-    core.state.cloudAuth.mode = 'authenticated';
+    if (core.state.cloudAuth.mode !== 'offline') core.state.cloudAuth.mode = 'authenticated';
     const account = native ? await nativeAdoption : { ...core.state.account, owner: core.state.account.ownerId, deviceId: core.state.device.id, connectionVerified: true };
     state.authEpoch++; state.loggedIn = true; state.username = account.username; state.owner = account.owner || account.ownerId || '';
     state.deviceId = account.deviceId || account.device?.id || ''; state.profile = account; state.connection = account.connectionVerified === false ? 'checking' : 'connected';
@@ -70,7 +70,7 @@
       }; void scan();
     } catch { video.hidden = true; info.textContent = '相机暂不可用，请关闭并输入电脑的配对码。'; stream?.getTracks().forEach(track => track.stop()); }
   }
-  async function init() {
+  async function init({restoreNativeSession=false} = {}) {
     if (initialized) return; initialized = true; native = !!window.weftNative;
     showAuth();
     const identity = native ? await call('cloud.app.identity') : { hostOrigin: location.origin, deviceName: '这个浏览器', deviceType: 'web' };
@@ -126,6 +126,20 @@
       identity: async () => native ? call('offline.identity') : core.cloudOfflineIdentity(),
       host: (path, body) => core.accessApi(path, { method: 'POST', body, protectedWrite: true }) });
     uiCore.openOfflineMode=()=>core.openOfflineMode?.();
+    if (native && restoreNativeSession) {
+      // A local host cookie is already owned by Kotlin. It has no cloud refresh
+      // family or pending cloud.adopt result; verify it without cloud exchange.
+      try {
+        core.state.cloudAuth.mode = 'offline';
+        nativeAdoption = WeftUiCore.restoreMobileHostSession(androidBridge, accept);
+        await nativeAdoption;
+        await enterAssistant();
+        return;
+      } catch (error) {
+        if (error.status !== 401) throw error;
+        core.clearSession();
+      }
+    }
     await core.load();
   }
   function route(name) {

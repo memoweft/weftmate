@@ -1,0 +1,62 @@
+[
+  {
+    "name": "test (windows-latest)",
+    "status": "completed",
+    "conclusion": "failure",
+    "html_url": "https://github.com/memoweft/weftmate/actions/runs/38065588864/job/114252442163"
+  },
+  {
+    "name": "test (ubuntu-latest)",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/memoweft/weftmate/actions/runs/38065588864/job/114252442126"
+  },
+  {
+    "name": "Observed bridge (real MemoWeft Core)",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/memoweft/weftmate/actions/runs/38065588864/job/114252441951"
+  },
+  {
+    "name": "Pinned DSH vendor unit tests",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/memoweft/weftmate/actions/runs/38065588702/job/114252441561"
+  },
+  {
+    "name": "Web cloud login interactions",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/memoweft/weftmate/actions/runs/38065588684/job/114252441495"
+  },
+  {
+    "name": "Relay phone first input and file task",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/memoweft/weftmate/actions/runs/38065588660/job/114252441346"
+  },
+  {
+    "name": "Android debug and JVM tests",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/memoweft/weftmate/actions/runs/38065588684/job/114252441300"
+  },
+  {
+    "name": "Host certificates (Pebble DNS-01)",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/memoweft/weftmate/actions/runs/38065588680/job/114252441268"
+  },
+  {
+    "name": "Relay full chain (443)",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/memoweft/weftmate/actions/runs/38065588660/job/114252441171"
+  },
+  {
+    "name": "Synthetic multi-device review gallery",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/memoweft/weftmate/actions/runs/38065588601/job/114252441081"
+  }
+]
