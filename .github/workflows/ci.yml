@@ -18,6 +18,8 @@ jobs:
   test:
     name: test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    env:
+      WEFTMATE_TEST_HOST_NAME: synthetic-host
     strategy:
       fail-fast: false
       matrix:
@@ -71,6 +73,7 @@ jobs:
         run: |
           @'
           import {lstatSync, realpathSync, mkdtempSync, rmSync} from 'node:fs';
+          import {realpath} from 'node:fs/promises';
           import {tmpdir} from 'node:os';
           import {join, parse, sep} from 'node:path';
           for (const [kind,base] of [['default',tmpdir()],['runner',process.env.RUNNER_TEMP]]) {
@@ -80,7 +83,7 @@ jobs:
               cursor=join(cursor,part); const info=lstatSync(cursor);
               components.push({index:components.length,link:info.isSymbolicLink(),directory:info.isDirectory()});
             }
-            console.log(JSON.stringify({kind,canonical:root.toLowerCase()===real.toLowerCase(),components}));
+            console.log(JSON.stringify({kind,canonical:root.toLowerCase()===real.toLowerCase(),nativeCanonical:root.toLowerCase()===realpathSync.native(root).toLowerCase(),asyncCanonical:root.toLowerCase()===(await realpath(root)).toLowerCase(),components}));
             rmSync(root,{recursive:true,force:true});
           }
           '@ | node --input-type=module
