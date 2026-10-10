@@ -198,10 +198,14 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             if (token !== scope() || generation !== historyWindow.state.generation) return;
             if (historyWindow.state.contentRevision !== page.contentRevision) { clearLogical(true); notify(); return readPage({}, 'tail'); }
             historyWindow.state.anchorId=effects.mainChatAnchor?.() || null;
-            historyWindow.merge(page, 'changes'); core.observeOptimistic(page.upserts || []); notify();
+            const before=JSON.stringify(historyWindow.ordered());
+            historyWindow.merge(page, 'changes'); core.observeOptimistic(page.upserts || []);
+            if(before!==JSON.stringify(historyWindow.ordered())){
+                if(!(page.upserts?.length||page.removals?.length)){if(effects.paintLiveChatMessages?.()!==true)effects.renderMainChat?.();}else notify();
+            }
             if(environment.mobileState) await Promise.all([core.refreshConversationTasks(),core.refreshConversationApprovals(),core.refreshConversationQuestions()]);
         await reconcileMainRequests();
-            const main = await core.readMainChat(); if (token === scope()) { installMain(main.chat); notify(); }
+            const main = await core.readMainChat(); if (token === scope()) { const changed=JSON.stringify(core.state.mainChat)!==JSON.stringify(main.chat);installMain(main.chat);if(changed)notify(); }
         } catch (error) {
             if (token === scope() && generation === historyWindow.state.generation && error.code === 'CURSOR_RESET_REQUIRED') { clearLogical(true); notify(); await readPage({}, 'tail'); }
         } finally { core.mainChatRefreshing = false; }
@@ -411,7 +415,8 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         return { outputs: core.deduplicateOutputs([...outputs.values()]), sources: [...sources.values()] };
     }
     return { markLatestChatRead, cancelSessionSelection, pageSessions, searchSessions, supportsChat: supports, inMainChat: inMain, refreshLogicalSessions: refreshSessions, selectLogicalSession: selectSession, selectMainChat, refreshLogicalHistory: refreshHistory, loadOlderLogicalHistory: loadOlderHistory, jumpChatDate, searchMainChat, moveSearchHit,
-        mainChatDays: () => historyWindow.days(), expandChatDay: date => { historyWindow.state.expanded.add(date); notify(); }, openSideChat,
+        mainChatDays: () => historyWindow.days(),
+        mainReplyActive: () => {const last=historyWindow.ordered().filter(event=>['user.message','assistant.message','turn.started','turn.ended'].includes(event.type)).at(-1);return inMain()&&(core.state.mainChat.running||last?.data?.live===true||['user.message','turn.started'].includes(last?.type));}, expandChatDay: date => { historyWindow.state.expanded.add(date); notify(); }, openSideChat,
         startChatConversation: () => supports('sideChats') && core.state.mainChat ? openSideChat({ entry: 'composer', ...((core.currentFolderProject?.() || core.defaultFolderProject?.()) ? {parent:{kind:'project',id:(core.currentFolderProject?.() || core.defaultFolderProject()).projectId}} : {}) }).catch(error => effects.toast(core.failureMessage(error))) : (core.state.selectedChatId = null, legacy.startNewConversation(true)),
         sendMainDraft: sendDraft, observeMainOptimistic: observeOptimistic, mainComposerState: composerState, loadMainResources: loadConversationResources,
         mainOptimisticMessages: () => inMain() ? [...pending.values()].filter(row => row.ownerId === core.state.ownerId && row.chatId === core.state.selectedChatId) : legacy.optimisticMessages(true),

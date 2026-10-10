@@ -41,6 +41,7 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
     function appendHistory(events, liveEvents, liveSeq) {
         const accepted = [];
         const sessionId = core.state.selectedSessionId;
+        const previousLive = new Map([...core.state.historyEvents].filter(([,event])=>event.data?.live));
         if (liveSeq !== undefined && liveSeq < (core.state.liveMessageSeq ?? -1)) liveEvents = undefined;
         if (liveEvents !== undefined) {
             core.state.liveMessageSeq = liveSeq ?? core.state.liveMessageSeq;
@@ -59,7 +60,8 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
         for (const event of liveEvents || []) {
             if ([...core.state.historyEvents.values()].some(row => row.data?.streamSeq === event.seq && !row.data?.live)) continue;
             const message = { ...event, type: 'assistant.message', data: { ...event.data, streamSeq: event.seq, live: true } };
-            core.state.historyEvents.set(event.seq, message); accepted.push(message);
+            core.state.historyEvents.set(event.seq, message);
+            if (JSON.stringify(previousLive.get(event.seq)) !== JSON.stringify(message)) accepted.push(message);
         }
         const terminal = [...core.state.historyEvents.values()].filter(e => ['turn.started', 'turn.ended'].includes(e.type)).sort((a, b) => a.seq - b.seq).at(-1);
         if (terminal) {
@@ -67,10 +69,12 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
             core.state.turnEndReasonKind = core.state.turnStatus === 'error' && terminal.data?.endReasonKind === 'max-tokens' ? 'max-tokens' : null;
         }
         core.observeOptimistic?.(accepted);
-        effects.paintHistoryMessages(accepted);
-        effects.updateAvailability();
+        const removedLive=[...previousLive.keys()].some(seq=>!core.state.historyEvents.has(seq));
+        if(accepted.length||removedLive)effects.paintHistoryMessages(accepted);
+        if(accepted.some(event=>!event.data?.live)||removedLive||accepted.some(event=>!previousLive.has(event.seq)))effects.updateAvailability();
         if (accepted.some(event => ['approval.requested', 'approval.resolved', 'question.asked', 'question.answered'].includes(event.type)))
             void Promise.all([core.refreshConversationApprovals(), core.refreshConversationQuestions()]).catch(() => {});
+        return accepted.length>0||removedLive;
     }
     async function refreshHistory(reset = false, legacy = false) {
         if (!legacy && core.refreshLogicalHistory) return core.refreshLogicalHistory(reset);

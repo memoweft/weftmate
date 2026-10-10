@@ -1,0 +1,65 @@
+{
+  "checks": {
+    "electron": [
+      "approval-menu",
+      "risk-confirm",
+      "plus-menu",
+      "model-menu",
+      "search",
+      "session-menu",
+      "folder-menu",
+      "message-more",
+      "gallery",
+      "chinese-composition",
+      "settings-dropdown"
+    ],
+    "mobile": [
+      "approval-menu",
+      "risk-confirm",
+      "plus-menu",
+      "model-menu",
+      "search",
+      "session-menu",
+      "folder-menu",
+      "message-more",
+      "gallery",
+      "chinese-composition",
+      "settings-dropdown"
+    ]
+  },
+  "tests": {
+    "approvalConsecutive": 10,
+    "mobileFive": 109,
+    "required": 1423,
+    "requiredSkipped": 14,
+    "vendor": 203,
+    "related": 75,
+    "finalStateAndApproval": 67
+  },
+  "frequencies": {
+    "electron": {
+      "streamingTotalRequestsPerSecond": 9.032258064516128,
+      "streamingHistoryRequestsPerSecond": 4.193548387096774,
+      "idleStableHistoryRequestsPerSecond": 1.0,
+      "idleFullWindowTotalRequestsPerSecond": 5.573770491803279
+    },
+    "mobile": {
+      "streamingTotalRequestsPerSecond": 20.974507905776054,
+      "streamingHistoryRequestsPerSecond": 3.8722168441432716,
+      "idleTotalRequestsPerSecond": 12.622950819672132,
+      "idleHistoryRequestsPerSecond": 0.9836065573770493
+    }
+  },
+  "timeline": {
+    "desktop": {
+      "firstChunkToFirstCharacterMs": 101,
+      "distinctBodyLengths": 11,
+      "remainingDots": 0
+    },
+    "phone": {
+      "firstChunkToFirstCharacterMs": 61,
+      "distinctBodyLengths": 12,
+      "remainingDots": 0
+    }
+  }
+}

@@ -12,7 +12,7 @@ function conversationTaskCurrent(context){return uiCore.mobileDecisions.current(
 function approvalDeviceId(){return uiCore.mobileDecisions.deviceId()}
 function approvalContext(sessionId=conversationTaskContext().sessionId,taskId=null){return {...conversationTaskContext(),sessionId,taskId,page:state.page,deviceId:approvalDeviceId()}}
 function approvalViewCurrent(context){return uiCore.mobileDecisions.current(context,true)}
-function approvalModeContext(defaults=false){return {...conversationTaskContext(),page:state.page,defaults}}
+function approvalModeContext(defaults=false){const {history,...context}=conversationTaskContext();return {...context,page:state.page,defaults}}
 function approvalModeCurrent(context){return uiCore.mobileDecisions.modeCurrent(context)}
 function approvalTerminal(row){return row?.status==='resolved'||row?.status==='unavailable'}
 function approvalScopeCurrent(context){return uiCore.mobileDecisions.scopeCurrent(context)}

@@ -96,3 +96,16 @@ test('D33 snippet erasure removes packed native text/reasoning/tool deltas even 
   assert.deepEqual(packed[0].data.texts,['','','']);assert.deepEqual(packed[2].data.args,['','','']);
  }finally{await rm(root,{recursive:true,force:true});}
 });
+
+
+test('STREAM-1b unchanged snapshots do not repaint; growth only paints the reply body',()=>{
+ const context:any={WeftUiCore:{factories:{}}};runInNewContext(readFileSync('src/ui-core/messages.js','utf8'),context);
+ let paints=0,composer=0;const core:any={state:{selectedSessionId:'s',historyEvents:new Map(),seenSeq:new Set()},observeOptimistic(){}};
+ const actions=context.WeftUiCore.factories.messages(core,{paintHistoryMessages(){paints++},updateAvailability(){composer++}},{});Object.assign(core,actions);
+ const snapshot=(text:string)=>({seq:2,data:{text,streaming:true,cursor:1}});
+ actions.appendHistory([],[snapshot('初字')],1);assert.equal(paints,1);assert.equal(composer,1);
+ for(let n=0;n<12;n++)actions.appendHistory([],[snapshot('初字')],1);
+ assert.equal(paints,1);assert.equal(composer,1);
+ actions.appendHistory([],[{seq:2,data:{text:'初字增字',streaming:true,cursor:2}}],2);
+ assert.equal(paints,2);assert.equal(composer,1);
+});

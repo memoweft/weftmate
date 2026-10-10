@@ -76,7 +76,8 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
         ui.nextSuggestions?.sync();
     }
     function paintModels() {
-        const select = ui.byId('model-select');
+        const select = ui.byId('model-select'),signature=JSON.stringify([core.state.models,core.state.modelProfileId]);
+        if(select.dataset.signature===signature)return;select.dataset.signature=signature;
         select.replaceChildren();
         if (core.state.models.length === 0) {
             select.append(ui.element('option', '', '没有可用模型'));
