@@ -97,8 +97,8 @@ test('UI-2 mobile home, themes, progressive detail, full-screen sources, drafts 
       await page.locator('.execution-step > summary').click();
       await page.getByRole('button',{name:'打开成果',exact:true}).click();await page.locator('#resource-content table').waitFor();await capture(`${theme}-artifact.png`);
       await page.locator('#resource-back').click();assert.equal(await page.locator('#draft').inputValue(),'稍后补充验收结果');
-      await page.locator('#chat-scroll').evaluate(n=>n.scrollTop=150);const top=await page.locator('#chat-scroll').evaluate(n=>n.scrollTop);
-      await page.locator('#outputs-button').click();await page.locator('.resource-row').filter({hasText:'notes.md'}).waitFor();
+      await page.locator('#chat-scroll').dispatchEvent('wheel',{deltaY:-900});await page.locator('#chat-scroll').evaluate(n=>n.scrollTop=150);const top=await page.locator('#chat-scroll').evaluate(n=>n.scrollTop);
+      await page.locator('#conversation-more').click();await page.getByRole('menuitem',{name:'输出与来源',exact:true}).click();await page.locator('.resource-row').filter({hasText:'notes.md'}).waitFor();
       assert.equal(await page.locator('.resource-row').filter({hasText:'项目进展.md'}).count(),1);
       assert.match(await page.locator('.resource-row').filter({hasText:'notes.md'}).innerText(),/2 次使用/);
       await page.locator('.resource-row').filter({hasText:'notes.md'}).click();assert.match(await page.locator('#resource-content').innerText(),/读取 2 次/);
@@ -113,7 +113,7 @@ test('UI-2 mobile home, themes, progressive detail, full-screen sources, drafts 
     // Restart still lands on the list; selecting the previous conversation restores its own draft.
     await page.reload();await page.waitForFunction(()=>state.booted&&state.page==='home');
     await page.locator('#home-conversations [data-id="report"]').click();assert.equal(await page.locator('#draft').inputValue(),'稍后补充验收结果');
-    await page.evaluate(()=>fixture.failResources=true);await page.locator('#outputs-button').click();await page.getByText('离线 · 上次读取的内容',{exact:true}).waitFor();
+    await page.evaluate(()=>fixture.failResources=true);await page.locator('#conversation-more').click();await page.getByRole('menuitem',{name:'输出与来源',exact:true}).click();await page.getByText('离线 · 上次读取的内容',{exact:true}).waitFor();
     await page.locator('#resource-back').click();
     await page.getByRole('button',{name:'加载更早内容',exact:true}).click();await page.getByText('更早的项目记录',{exact:true}).waitFor();
     assert.equal(await page.evaluate(()=>fixture.requests.some(request=>request.method==='shared.sessions.events'&&request.params.beforeSeq===1)),true);

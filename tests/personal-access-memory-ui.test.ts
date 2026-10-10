@@ -212,6 +212,7 @@ test('memory view preserves chat draft and discards a successful response for an
     before(...nodes: Node[]) { if (!this.parentNode) return; const at = this.parentNode.children.indexOf(this); for (const node of nodes) node.parentNode = this.parentNode; this.parentNode.children.splice(at, 0, ...nodes) }
     after(...nodes: Node[]) { if (!this.parentNode) return; const at = this.parentNode.children.indexOf(this) + 1; for (const node of nodes) node.parentNode = this.parentNode; this.parentNode.children.splice(at, 0, ...nodes) }
     replaceChildren(...nodes: Node[]) { this.children = nodes }
+    cloneNode(deep = false) { const copy = new Node(this.id); copy.tagName=this.tagName;copy.className=this.className;copy.textContent=this.textContent;copy.hidden=this.hidden;copy.disabled=this.disabled;copy.attributes=new Map(this.attributes);copy.dataset={...this.dataset};if(deep)copy.append(...this.children.map(child=>child.cloneNode(true)));return copy }
     setAttribute(name: string, value: string) { this.attributes.set(name, value) }
     getAttribute(name: string) { return this.attributes.get(name) ?? null }
     removeAttribute() {}

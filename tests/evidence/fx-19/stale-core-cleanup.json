@@ -1,0 +1,38 @@
+[
+  {
+    "ProcessId": 2928,
+    "Name": "node.exe",
+    "CreationDate": "2026-10-10T17:32:12.910543+08:00",
+    "ExecutablePath": "C:\\Program Files\\nodejs\\node.exe"
+  },
+  {
+    "ProcessId": 46764,
+    "Name": "electron.exe",
+    "CreationDate": "2026-10-10T17:34:16.967449+08:00",
+    "ExecutablePath": "D:\\AIProjects\\WeftMate\\Worktrees\\w5\\node_modules\\electron\\dist\\electron.exe"
+  },
+  {
+    "ProcessId": 35012,
+    "Name": "electron.exe",
+    "CreationDate": "2026-10-10T17:34:17.300557+08:00",
+    "ExecutablePath": "D:\\AIProjects\\WeftMate\\Worktrees\\w5\\node_modules\\electron\\dist\\electron.exe"
+  },
+  {
+    "ProcessId": 61180,
+    "Name": "electron.exe",
+    "CreationDate": "2026-10-10T17:34:17.305664+08:00",
+    "ExecutablePath": "D:\\AIProjects\\WeftMate\\Worktrees\\w5\\node_modules\\electron\\dist\\electron.exe"
+  },
+  {
+    "ProcessId": 25160,
+    "Name": "electron.exe",
+    "CreationDate": "2026-10-10T17:34:18.626239+08:00",
+    "ExecutablePath": "D:\\AIProjects\\WeftMate\\Worktrees\\w5\\node_modules\\electron\\dist\\electron.exe"
+  },
+  {
+    "ProcessId": 43100,
+    "Name": "electron.exe",
+    "CreationDate": "2026-10-10T17:34:21.668315+08:00",
+    "ExecutablePath": "D:\\AIProjects\\WeftMate\\Worktrees\\w5\\node_modules\\electron\\dist\\electron.exe"
+  }
+]

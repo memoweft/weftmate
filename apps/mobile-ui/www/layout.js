@@ -7,6 +7,7 @@ const mobileMarkup = String.raw`
       <div class="brand"><strong id="header-title">WeftMate</strong><small id="header-subtitle">同一个助手，接着聊。</small></div>
       <button id="conversation-usage" class="header-action" hidden>本对话用量</button>
       <button id="outputs-button" class="header-action" hidden>输出与来源</button>
+      <button id="conversation-more" class="icon-button" aria-label="对话操作" aria-haspopup="menu" hidden></button>
       <button id="home-new-chat" class="icon-button" aria-label="新对话" hidden><span class="icon icon-compose"></span></button>
       <button id="header-profile" class="icon-button header-profile" aria-label="个人资料与设置" hidden><span class="avatar">我</span></button>
 
@@ -23,9 +24,9 @@ const mobileMarkup = String.raw`
       <div id="conversation-list" class="conversation-list" aria-label="最近对话" aria-live="polite"></div>
       <div class="drawer-section-label drawer-function-label">功能</div>
       <div class="drawer-links">
-        <button data-page="memory">记忆</button>
-        <button data-page="capabilities">能力与扩展</button><button data-page="workspaces">项目与成果</button><button data-page="devices">设备</button>
-        <button data-page="notifications">通知</button><button data-page="settings">设置</button>
+        <button data-page="memory"><span class="icon icon-memory"></span>记忆</button>
+        <button data-page="capabilities"><span class="icon icon-capabilities"></span>能力与扩展</button><button data-page="workspaces"><span class="icon icon-folder"></span>项目与成果</button><button data-page="devices"><span class="icon icon-device"></span>设备</button>
+        <button data-page="notifications"><span class="icon icon-bell"></span>通知</button><button data-page="settings"><span class="icon icon-settings"></span>设置</button>
       </div>
       <div id="cloud-device-banner" class="cloud-device-banner" role="status" aria-live="polite" hidden></div>
       <button id="profile-link" class="profile-link"><span class="avatar" id="drawer-avatar">我</span><span><strong id="drawer-name">本机个人空间</strong><small>个人资料与设置</small></span><span class="icon icon-settings"></span></button>

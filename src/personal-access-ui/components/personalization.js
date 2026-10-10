@@ -76,6 +76,7 @@ globalThis.WeftPersonalizationView = (core, target, category) => {
 globalThis.WeftModelThinking = (core, row, event) => {
     const text = event.data?.modelThinking, display = core.state.personalization?.thinkingDisplay || 'collapsed';
     if (typeof text !== 'string' || !text) return;
+    row.classList.toggle('thinking-only',!event.data.text&&!event.data.images?.length);
     const details = document.createElement('details'); details.className = 'model-thinking';
     details.open = display === 'expanded';
     details.hidden = display === 'hidden';

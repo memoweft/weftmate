@@ -1,0 +1,2252 @@
+[
+  {
+    "stage": "native.list",
+    "at": 1791622082670,
+    "ms": 34.69200000001001
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622082756,
+    "ms": 32.886599999998
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622082764,
+    "ms": 7.813800000003539
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622082800,
+    "ms": 35.82279999999446
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622082898,
+    "ms": 40.41229999999632
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622082965,
+    "ms": 28.084700000006706
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622082974,
+    "ms": 8.694499999997788
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622083004,
+    "ms": 29.85229999999865
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622083086,
+    "ms": 31.344800000006217
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622083161,
+    "ms": 30.466300000000047
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622083169,
+    "ms": 7.190400000006775
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622083199,
+    "ms": 30.78509999999369
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622083272,
+    "ms": 30.395699999993667
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622083344,
+    "ms": 29.342600000003586
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622083352,
+    "ms": 8.179000000003725
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622083387,
+    "ms": 34.62260000000242
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622083468,
+    "ms": 31.10439999999653
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622083539,
+    "ms": 29.536099999997532
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622083548,
+    "ms": 9.317199999990407
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622083584,
+    "ms": 35.8920000000071
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622083675,
+    "ms": 30.757199999992736
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622083745,
+    "ms": 27.686700000005658
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622083751,
+    "ms": 6.33969999999681
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622083781,
+    "ms": 30.140299999999115
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622083860,
+    "ms": 31.89680000000226
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622083937,
+    "ms": 27.206600000004983
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622083946,
+    "ms": 9.554000000003725
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622083981,
+    "ms": 35.17609999999695
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622084057,
+    "ms": 28.95329999999376
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622084145,
+    "ms": 31.514199999990524
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622084153,
+    "ms": 8.040399999998044
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622084182,
+    "ms": 28.435899999996764
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622084258,
+    "ms": 26.532399999996414
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622084328,
+    "ms": 31.55779999999504
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622084339,
+    "ms": 11.303599999999278
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622084378,
+    "ms": 39.13900000001013
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622084468,
+    "ms": 32.51499999999942
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622084544,
+    "ms": 30.499500000005355
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622084552,
+    "ms": 8.224499999996624
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622084595,
+    "ms": 42.39519999999902
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622084705,
+    "ms": 37.56900000000314
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622084797,
+    "ms": 28.750399999989895
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622084801,
+    "ms": 3.9450999999971827
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622084826,
+    "ms": 24.79910000000382
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622084931,
+    "ms": 32.34279999999853
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622085017,
+    "ms": 33.02169999999751
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622085026,
+    "ms": 8.249400000000605
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622085066,
+    "ms": 40.02730000000156
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622085160,
+    "ms": 38.17239999999583
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622085242,
+    "ms": 33.74409999999625
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622085253,
+    "ms": 10.861300000004121
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622085290,
+    "ms": 37.30920000000333
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622085392,
+    "ms": 49.4597999999969
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622085475,
+    "ms": 31.508600000001024
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622085484,
+    "ms": 9.384900000004563
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622085519,
+    "ms": 35.11049999999523
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622085638,
+    "ms": 47.331200000000536
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622085742,
+    "ms": 40.99770000000717
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622085752,
+    "ms": 9.335699999995995
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622085796,
+    "ms": 44.53200000000652
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622085882,
+    "ms": 32.20380000000296
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622085957,
+    "ms": 29.950400000001537
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622085966,
+    "ms": 8.108300000007148
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622086000,
+    "ms": 34.81339999999909
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622086094,
+    "ms": 38.67740000000049
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622086177,
+    "ms": 33.432199999995646
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622086188,
+    "ms": 11.131200000003446
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622086221,
+    "ms": 33.03269999999611
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622086308,
+    "ms": 33.81549999999697
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622086389,
+    "ms": 35.66349999999511
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622086400,
+    "ms": 11.587099999989732
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622086440,
+    "ms": 39.83900000000722
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622086566,
+    "ms": 36.917700000005425
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622086671,
+    "ms": 46.50370000000112
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622086679,
+    "ms": 7.794999999998254
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622086721,
+    "ms": 41.89220000000205
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622086804,
+    "ms": 33.592499999998836
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622086885,
+    "ms": 34.38529999999446
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622086901,
+    "ms": 16.0963999999949
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622086933,
+    "ms": 31.62729999999283
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622087028,
+    "ms": 35.69689999999537
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622087118,
+    "ms": 42.93860000000859
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622087129,
+    "ms": 10.64450000000943
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622087169,
+    "ms": 39.53879999999481
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622087286,
+    "ms": 41.11130000000412
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622087394,
+    "ms": 41.66580000000249
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622087404,
+    "ms": 10.118700000006356
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622087443,
+    "ms": 39.21349999999802
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622087544,
+    "ms": 36.05359999999928
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622087654,
+    "ms": 46.68660000000091
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622087663,
+    "ms": 9.038999999989755
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622087699,
+    "ms": 35.83669999999984
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622087791,
+    "ms": 35.12709999999788
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622087898,
+    "ms": 41.06680000000051
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622087908,
+    "ms": 9.682600000000093
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622087948,
+    "ms": 40.25610000001325
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622088107,
+    "ms": 63.27159999999276
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622088204,
+    "ms": 42.17479999999341
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622088214,
+    "ms": 10.405100000003586
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622088271,
+    "ms": 56.130199999999604
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622088445,
+    "ms": 58.474300000001676
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622088611,
+    "ms": 47.59130000000005
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622088639,
+    "ms": 27.596799999999348
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622088688,
+    "ms": 48.420000000012806
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622088824,
+    "ms": 66.84629999999015
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622088929,
+    "ms": 43.48949999999604
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622088992,
+    "ms": 62.94440000000759
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622089056,
+    "ms": 63.544900000008056
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622089231,
+    "ms": 50.118799999996554
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622089395,
+    "ms": 55.71190000000934
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622089414,
+    "ms": 18.977499999993597
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622089467,
+    "ms": 53.490300000004936
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622089700,
+    "ms": 67.94449999999779
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622089941,
+    "ms": 66.5051000000094
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622089952,
+    "ms": 10.505699999994249
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622090013,
+    "ms": 61.6643999999942
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622090209,
+    "ms": 62.64350000000559
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622090351,
+    "ms": 50.60960000001069
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622090364,
+    "ms": 12.853799999997136
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622090463,
+    "ms": 98.82090000000608
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622090579,
+    "ms": 45.59759999999369
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622090693,
+    "ms": 58.8637000000017
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622090702,
+    "ms": 8.51610000000801
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622090749,
+    "ms": 47.411800000001676
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622090873,
+    "ms": 43.24330000000191
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622090996,
+    "ms": 46.507400000002235
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622091003,
+    "ms": 7.310199999992619
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622091047,
+    "ms": 43.932300000000396
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622091157,
+    "ms": 43.325599999996484
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622091256,
+    "ms": 46.94750000000931
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622091276,
+    "ms": 19.685599999997066
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622091330,
+    "ms": 54.05989999999292
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622091437,
+    "ms": 44.845100000005914
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622091549,
+    "ms": 46.8070000000007
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622091559,
+    "ms": 9.360100000005332
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622091605,
+    "ms": 46.41229999999632
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622091736,
+    "ms": 54.60299999998824
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622091830,
+    "ms": 46.568299999999
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622091842,
+    "ms": 11.298299999994924
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622091884,
+    "ms": 42.314100000003236
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622091982,
+    "ms": 34.47990000000573
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622092078,
+    "ms": 39.33190000000468
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622092087,
+    "ms": 9.57019999998738
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622092121,
+    "ms": 34.00349999999162
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622092225,
+    "ms": 43.08090000000084
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622092306,
+    "ms": 36.96950000000652
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622092318,
+    "ms": 11.11479999999574
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622092355,
+    "ms": 36.83199999999488
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622092467,
+    "ms": 44.8119999999908
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622092564,
+    "ms": 31.12400000001071
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622092573,
+    "ms": 8.702900000003865
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622092623,
+    "ms": 49.71850000000268
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622092739,
+    "ms": 44.22520000000077
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622092841,
+    "ms": 54.85679999999411
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622092850,
+    "ms": 9.278699999995297
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622092887,
+    "ms": 36.380199999999604
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622092985,
+    "ms": 37.12619999999879
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622093065,
+    "ms": 31.381200000003446
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622093072,
+    "ms": 6.953900000007707
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622093106,
+    "ms": 33.67059999999765
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622093209,
+    "ms": 35.57050000000163
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622093300,
+    "ms": 34.691700000010314
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622093308,
+    "ms": 8.019000000000233
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622093352,
+    "ms": 44.74189999999362
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622093547,
+    "ms": 102.58619999999064
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622093785,
+    "ms": 108.33810000000813
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622093804,
+    "ms": 18.863899999996647
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622093879,
+    "ms": 74.96760000000359
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622094032,
+    "ms": 58.644699999989825
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622094166,
+    "ms": 48.79630000000179
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622094177,
+    "ms": 11.128799999991315
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622094226,
+    "ms": 49.042399999991176
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622094443,
+    "ms": 40.73210000000836
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622094545,
+    "ms": 42.45810000000347
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622094559,
+    "ms": 13.661699999996927
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622094609,
+    "ms": 50.27150000000256
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622094726,
+    "ms": 51.96140000000014
+  },
+  {
+    "stage": "binding.profiles",
+    "at": 1791622094774,
+    "ms": 0.8725000000122236
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622094896,
+    "ms": 111.12030000000959
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622094951,
+    "ms": 131.82009999999718
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622094957,
+    "ms": 61.07820000000356
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622095010,
+    "ms": 53.03760000001057
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622095152,
+    "ms": 59.26579999999376
+  },
+  {
+    "stage": "binding.profiles",
+    "at": 1791622095244,
+    "ms": 0.8568999999988591
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622095280,
+    "ms": 58.7841999999946
+  },
+  {
+    "stage": "native.GET /models",
+    "at": 1791622095287,
+    "ms": 43.381200000003446
+  },
+  {
+    "stage": "state.clone",
+    "at": 1791622095291,
+    "ms": 3.4508999999961816
+  },
+  {
+    "stage": "state.change-reconcile",
+    "at": 1791622095295,
+    "ms": 3.7135999999882188
+  },
+  {
+    "stage": "state.validate",
+    "at": 1791622095298,
+    "ms": 2.817399999999907
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622095300,
+    "ms": 20.05800000000454
+  },
+  {
+    "stage": "store.serialize",
+    "at": 1791622095305,
+    "ms": 2.897400000001653
+  },
+  {
+    "stage": "store.durable",
+    "at": 1791622095314,
+    "ms": 16.40439999999944
+  },
+  {
+    "stage": "binding.profiles",
+    "at": 1791622095316,
+    "ms": 0.8015999999915948
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622095353,
+    "ms": 52.50929999999062
+  },
+  {
+    "stage": "native.GET /models",
+    "at": 1791622095360,
+    "ms": 44.63539999999921
+  },
+  {
+    "stage": "state.clone",
+    "at": 1791622095362,
+    "ms": 1.6555999999982305
+  },
+  {
+    "stage": "state.change-reconcile",
+    "at": 1791622095366,
+    "ms": 4.046399999991991
+  },
+  {
+    "stage": "state.validate",
+    "at": 1791622095369,
+    "ms": 2.676900000005844
+  },
+  {
+    "stage": "store.serialize",
+    "at": 1791622095375,
+    "ms": 3.9192000000039116
+  },
+  {
+    "stage": "store.durable",
+    "at": 1791622095386,
+    "ms": 16.592900000003283
+  },
+  {
+    "stage": "binding.profiles",
+    "at": 1791622095387,
+    "ms": 0.9879999999975553
+  },
+  {
+    "stage": "native.GET /models",
+    "at": 1791622095417,
+    "ms": 29.98969999999099
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622095502,
+    "ms": 58.52400000000489
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622095611,
+    "ms": 42.44049999999697
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622095624,
+    "ms": 13.687799999999697
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622095681,
+    "ms": 56.143700000000536
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622095867,
+    "ms": 64.33690000000934
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622096000,
+    "ms": 43.159800000008545
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622096011,
+    "ms": 10.708800000007614
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622096065,
+    "ms": 53.54170000000158
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622096189,
+    "ms": 62.3750999999902
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622096316,
+    "ms": 49.57730000000447
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622096329,
+    "ms": 13.245200000004843
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622096377,
+    "ms": 47.94999999999709
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622096536,
+    "ms": 90.00930000000517
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622096632,
+    "ms": 39.35460000000603
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622096643,
+    "ms": 10.521599999992759
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622096684,
+    "ms": 41.034700000003795
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622096850,
+    "ms": 76.79339999999502
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622096948,
+    "ms": 34.82399999999325
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622096957,
+    "ms": 9.78059999999823
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622096999,
+    "ms": 41.324600000007194
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622097131,
+    "ms": 40.4033999999956
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622097224,
+    "ms": 39.47250000000349
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622097232,
+    "ms": 7.488600000011502
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622097271,
+    "ms": 39.44999999999709
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622097399,
+    "ms": 50.23559999999998
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622097512,
+    "ms": 51.32700000000477
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622097521,
+    "ms": 8.632500000006985
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622097582,
+    "ms": 61.29959999999846
+  },
+  {
+    "stage": "native.POST /sessions",
+    "at": 1791622097652,
+    "ms": 2234.0610000000015
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622097701,
+    "ms": 49.08039999999164
+  },
+  {
+    "stage": "binding.write",
+    "at": 1791622097704,
+    "ms": 3.305800000001909
+  },
+  {
+    "stage": "native.PUT /sessions/:id/models",
+    "at": 1791622097711,
+    "ms": 6.4385999999940395
+  },
+  {
+    "stage": "state.clone",
+    "at": 1791622097712,
+    "ms": 1.704700000002049
+  },
+  {
+    "stage": "state.change-reconcile",
+    "at": 1791622097715,
+    "ms": 2.9064999999973224
+  },
+  {
+    "stage": "state.validate",
+    "at": 1791622097717,
+    "ms": 2.2762000000075204
+  },
+  {
+    "stage": "store.serialize",
+    "at": 1791622097724,
+    "ms": 4.116299999994226
+  },
+  {
+    "stage": "store.durable",
+    "at": 1791622097733,
+    "ms": 15.029299999994691
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622097747,
+    "ms": 41.12030000000959
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622097858,
+    "ms": 38.82020000000193
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622097873,
+    "ms": 14.332099999999627
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622097917,
+    "ms": 44.067599999994854
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622097965,
+    "ms": 70.94599999999627
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200",
+    "at": 1791622098021,
+    "ms": 41.24629999999888
+  },
+  {
+    "stage": "state.clone",
+    "at": 1791622098024,
+    "ms": 2.9085999999952037
+  },
+  {
+    "stage": "state.change-reconcile",
+    "at": 1791622098027,
+    "ms": 2.875899999999092
+  },
+  {
+    "stage": "state.validate",
+    "at": 1791622098030,
+    "ms": 2.987200000003213
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=100&afterSeq=-1",
+    "at": 1791622098032,
+    "ms": 35.33999999999651
+  },
+  {
+    "stage": "store.serialize",
+    "at": 1791622098043,
+    "ms": 3.179199999998673
+  },
+  {
+    "stage": "store.durable",
+    "at": 1791622098053,
+    "ms": 23.094800000006217
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622098087,
+    "ms": 55.81100000000151
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622098181,
+    "ms": 92.20530000000144
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622098261,
+    "ms": 67.45920000001206
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622098330,
+    "ms": 58.72040000000561
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622098339,
+    "ms": 9.044200000003912
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622098394,
+    "ms": 55.330000000001746
+  },
+  {
+    "stage": "binding.profiles",
+    "at": 1791622098412,
+    "ms": 0.9180999999953201
+  },
+  {
+    "stage": "native.GET /models",
+    "at": 1791622098447,
+    "ms": 35.406199999997625
+  },
+  {
+    "stage": "state.clone",
+    "at": 1791622098450,
+    "ms": 2.503100000001723
+  },
+  {
+    "stage": "state.change-reconcile",
+    "at": 1791622098454,
+    "ms": 4.006999999997788
+  },
+  {
+    "stage": "state.validate",
+    "at": 1791622098457,
+    "ms": 2.5043000000005122
+  },
+  {
+    "stage": "store.serialize",
+    "at": 1791622098467,
+    "ms": 2.4710999999952037
+  },
+  {
+    "stage": "store.durable",
+    "at": 1791622098477,
+    "ms": 20.008400000006077
+  },
+  {
+    "stage": "binding.profiles",
+    "at": 1791622098482,
+    "ms": 4.6159999999945285
+  },
+  {
+    "stage": "native.GET /models",
+    "at": 1791622098495,
+    "ms": 13.35549999999057
+  },
+  {
+    "stage": "state.clone",
+    "at": 1791622098497,
+    "ms": 1.7679000000061933
+  },
+  {
+    "stage": "state.change-reconcile",
+    "at": 1791622098500,
+    "ms": 3.1739999999990687
+  },
+  {
+    "stage": "state.validate",
+    "at": 1791622098503,
+    "ms": 2.4723999999987427
+  },
+  {
+    "stage": "store.serialize",
+    "at": 1791622098508,
+    "ms": 3.117899999997462
+  },
+  {
+    "stage": "store.durable",
+    "at": 1791622098517,
+    "ms": 13.55800000000454
+  },
+  {
+    "stage": "binding.profiles",
+    "at": 1791622098518,
+    "ms": 1.044899999993504
+  },
+  {
+    "stage": "native.GET /models",
+    "at": 1791622098542,
+    "ms": 23.080099999991944
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622098543,
+    "ms": 51.765299999999115
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=100&afterSeq=3",
+    "at": 1791622098547,
+    "ms": 20.832500000004075
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622098670,
+    "ms": 39.198099999994156
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622098680,
+    "ms": 9.598400000002584
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622098717,
+    "ms": 36.47480000001087
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=100&afterSeq=3",
+    "at": 1791622098796,
+    "ms": 18.66009999999369
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622098854,
+    "ms": 58.67169999999169
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622098954,
+    "ms": 42.05599999999686
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622098964,
+    "ms": 9.87159999999858
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622099007,
+    "ms": 43.010800000003655
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=100&afterSeq=3",
+    "at": 1791622099054,
+    "ms": 27.58859999998822
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622099113,
+    "ms": 40.513999999995576
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622099191,
+    "ms": 29.36699999999837
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622099197,
+    "ms": 5.8827000000019325
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622099236,
+    "ms": 38.579999999987194
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=100&afterSeq=3",
+    "at": 1791622099289,
+    "ms": 11.733199999987846
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622099411,
+    "ms": 81.50290000000678
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622099509,
+    "ms": 41.73380000000179
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622099543,
+    "ms": 34.22729999999865
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=100&afterSeq=3",
+    "at": 1791622099552,
+    "ms": 25.41930000000866
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622099586,
+    "ms": 42.39449999999488
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622099712,
+    "ms": 58.73969999999099
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622099821,
+    "ms": 58.87069999999949
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=100&afterSeq=3",
+    "at": 1791622099830,
+    "ms": 50.59789999999339
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622099830,
+    "ms": 8.99210000000312
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622099869,
+    "ms": 38.83980000000156
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622099945,
+    "ms": 27.95229999998992
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622100019,
+    "ms": 31.30429999998887
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622100026,
+    "ms": 6.243300000001909
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622100072,
+    "ms": 46.22030000000086
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=100&afterSeq=3",
+    "at": 1791622100073,
+    "ms": 45.77969999999914
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622100167,
+    "ms": 29.622400000007474
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622100242,
+    "ms": 35.409900000013295
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622100248,
+    "ms": 6.801900000005844
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622100286,
+    "ms": 37.21510000000126
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=100&afterSeq=3",
+    "at": 1791622100290,
+    "ms": 13.657599999991362
+  },
+  {
+    "stage": "native.POST /sessions",
+    "at": 1791622100357,
+    "ms": 1813.3729999999923
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622100397,
+    "ms": 49.959700000006706
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622100432,
+    "ms": 75.18330000000424
+  },
+  {
+    "stage": "binding.write",
+    "at": 1791622100436,
+    "ms": 3.280799999993178
+  },
+  {
+    "stage": "native.PUT /sessions/:id/models",
+    "at": 1791622100465,
+    "ms": 28.937900000004447
+  },
+  {
+    "stage": "state.clone",
+    "at": 1791622100466,
+    "ms": 1.6277999999874737
+  },
+  {
+    "stage": "state.change-reconcile",
+    "at": 1791622100469,
+    "ms": 3.0249000000039814
+  },
+  {
+    "stage": "state.validate",
+    "at": 1791622100472,
+    "ms": 2.401899999997113
+  },
+  {
+    "stage": "store.serialize",
+    "at": 1791622100479,
+    "ms": 1.9038000000000466
+  },
+  {
+    "stage": "store.durable",
+    "at": 1791622100487,
+    "ms": 14.86019999999553
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622100508,
+    "ms": 32.282399999996414
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622100514,
+    "ms": 6.32740000000922
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622100542,
+    "ms": 28.101799999989453
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=100&afterSeq=3",
+    "at": 1791622100545,
+    "ms": 19.14310000000114
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622100608,
+    "ms": 59.61359999999695
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200",
+    "at": 1791622100632,
+    "ms": 11.242700000002515
+  },
+  {
+    "stage": "state.clone",
+    "at": 1791622100634,
+    "ms": 1.9134000000049127
+  },
+  {
+    "stage": "state.change-reconcile",
+    "at": 1791622100637,
+    "ms": 2.8310999999957858
+  },
+  {
+    "stage": "state.validate",
+    "at": 1791622100640,
+    "ms": 2.849400000006426
+  },
+  {
+    "stage": "store.serialize",
+    "at": 1791622100647,
+    "ms": 2.7149999999965075
+  },
+  {
+    "stage": "store.durable",
+    "at": 1791622100660,
+    "ms": 19.92760000000999
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622100679,
+    "ms": 53.541500000006636
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=100&afterSeq=-1",
+    "at": 1791622100685,
+    "ms": 44.31149999999616
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622100724,
+    "ms": 62.90299999999115
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622100818,
+    "ms": 27.85109999999986
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622100848,
+    "ms": 51.69250000000466
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622100855,
+    "ms": 37.152900000000955
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622100899,
+    "ms": 43.699299999992945
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622101002,
+    "ms": 46.03070000000298
+  },
+  {
+    "stage": "binding.profiles",
+    "at": 1791622101029,
+    "ms": 1.5360000000073342
+  },
+  {
+    "stage": "binding.profiles",
+    "at": 1791622101050,
+    "ms": 0.8521999999938998
+  },
+  {
+    "stage": "native.GET /models",
+    "at": 1791622101055,
+    "ms": 26.017299999992247
+  },
+  {
+    "stage": "native.GET /models",
+    "at": 1791622101066,
+    "ms": 15.781399999992573
+  },
+  {
+    "stage": "state.clone",
+    "at": 1791622101068,
+    "ms": 1.9496000000071945
+  },
+  {
+    "stage": "state.change-reconcile",
+    "at": 1791622101071,
+    "ms": 2.851699999999255
+  },
+  {
+    "stage": "state.validate",
+    "at": 1791622101073,
+    "ms": 2.641199999998207
+  },
+  {
+    "stage": "store.serialize",
+    "at": 1791622101090,
+    "ms": 2.691500000000815
+  },
+  {
+    "stage": "store.durable",
+    "at": 1791622101098,
+    "ms": 24.43959999999788
+  },
+  {
+    "stage": "binding.profiles",
+    "at": 1791622101099,
+    "ms": 0.8773999999975786
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622101127,
+    "ms": 45.49890000000596
+  },
+  {
+    "stage": "native.GET /models",
+    "at": 1791622101131,
+    "ms": 31.81909999999334
+  },
+  {
+    "stage": "state.clone",
+    "at": 1791622101133,
+    "ms": 1.61710000000312
+  },
+  {
+    "stage": "state.change-reconcile",
+    "at": 1791622101136,
+    "ms": 2.9769999999989523
+  },
+  {
+    "stage": "state.validate",
+    "at": 1791622101138,
+    "ms": 2.4600999999966007
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622101139,
+    "ms": 12.372900000002119
+  },
+  {
+    "stage": "store.serialize",
+    "at": 1791622101144,
+    "ms": 2.801599999991595
+  },
+  {
+    "stage": "store.durable",
+    "at": 1791622101152,
+    "ms": 13.213699999992969
+  },
+  {
+    "stage": "binding.profiles",
+    "at": 1791622101153,
+    "ms": 0.8461000000097556
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622101172,
+    "ms": 32.67359999999462
+  },
+  {
+    "stage": "native.GET /models",
+    "at": 1791622101177,
+    "ms": 23.492099999988568
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622101264,
+    "ms": 33.88270000000193
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=100&afterSeq=3",
+    "at": 1791622101300,
+    "ms": 23.74010000000999
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622101334,
+    "ms": 26.88499999999476
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622101340,
+    "ms": 6.217600000003586
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622101377,
+    "ms": 36.648300000000745
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622101454,
+    "ms": 32.483199999987846
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622101529,
+    "ms": 31.942799999989802
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=100&afterSeq=3",
+    "at": 1791622101537,
+    "ms": 10.015599999998813
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622101543,
+    "ms": 14.540599999992992
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622101580,
+    "ms": 37.20669999999518
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622101658,
+    "ms": 29.853000000002794
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622101736,
+    "ms": 33.68330000000424
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622101743,
+    "ms": 6.726399999999558
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622101782,
+    "ms": 38.92730000001029
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=100&afterSeq=3",
+    "at": 1791622101788,
+    "ms": 11.783899999994901
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622101869,
+    "ms": 33.4713999999949
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622101945,
+    "ms": 33.15140000000247
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622101949,
+    "ms": 4.27730000000156
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622101978,
+    "ms": 28.194499999997788
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=100&afterSeq=3",
+    "at": 1791622102032,
+    "ms": 5.092700000008335
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622102062,
+    "ms": 33.67839999998978
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622102158,
+    "ms": 39.5222999999969
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622102164,
+    "ms": 6.454400000002352
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622102199,
+    "ms": 34.92609999999695
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622102272,
+    "ms": 30.200800000005984
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=100&afterSeq=3",
+    "at": 1791622102313,
+    "ms": 34.932500000009895
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622102354,
+    "ms": 30.871099999989383
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622102362,
+    "ms": 7.658500000005006
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622102394,
+    "ms": 32.36710000000312
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622102469,
+    "ms": 31.49890000000596
+  },
+  {
+    "stage": "native.POST /sessions",
+    "at": 1791622102517,
+    "ms": 1339.4631999999983
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622102541,
+    "ms": 31.571200000005774
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622102568,
+    "ms": 50.93489999999292
+  },
+  {
+    "stage": "binding.write",
+    "at": 1791622102571,
+    "ms": 3.1116000000038184
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=100&afterSeq=3",
+    "at": 1791622102572,
+    "ms": 45.73040000000037
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622102572,
+    "ms": 30.89549999999872
+  },
+  {
+    "stage": "native.PUT /sessions/:id/models",
+    "at": 1791622102576,
+    "ms": 5.113899999996647
+  },
+  {
+    "stage": "state.clone",
+    "at": 1791622102578,
+    "ms": 2.028600000005099
+  },
+  {
+    "stage": "state.change-reconcile",
+    "at": 1791622102581,
+    "ms": 3.2580999999918276
+  },
+  {
+    "stage": "state.validate",
+    "at": 1791622102583,
+    "ms": 2.243900000001304
+  },
+  {
+    "stage": "store.serialize",
+    "at": 1791622102590,
+    "ms": 2.4899999999906868
+  },
+  {
+    "stage": "store.durable",
+    "at": 1791622102602,
+    "ms": 18.61569999999483
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622102615,
+    "ms": 43.01369999999588
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622102717,
+    "ms": 71.96150000000489
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622102765,
+    "ms": 38.81470000000263
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200",
+    "at": 1791622102772,
+    "ms": 44.46369999999297
+  },
+  {
+    "stage": "state.clone",
+    "at": 1791622102774,
+    "ms": 2.141199999998207
+  },
+  {
+    "stage": "state.change-reconcile",
+    "at": 1791622102777,
+    "ms": 3.2498999999952503
+  },
+  {
+    "stage": "state.validate",
+    "at": 1791622102781,
+    "ms": 3.3073999999905936
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=100&afterSeq=-1",
+    "at": 1791622102782,
+    "ms": 35.150399999998626
+  },
+  {
+    "stage": "store.serialize",
+    "at": 1791622102791,
+    "ms": 5.520400000008522
+  },
+  {
+    "stage": "store.durable",
+    "at": 1791622102803,
+    "ms": 22.374500000005355
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622102848,
+    "ms": 76.9094999999943
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622102923,
+    "ms": 66.89519999999902
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622102935,
+    "ms": 11.986399999994319
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622102983,
+    "ms": 51.332399999999325
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622103015,
+    "ms": 79.86870000000636
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622103127,
+    "ms": 48.30659999999625
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200",
+    "at": 1791622103131,
+    "ms": 18.413400000004913
+  },
+  {
+    "stage": "state.clone",
+    "at": 1791622103133,
+    "ms": 1.8083999999944353
+  },
+  {
+    "stage": "state.change-reconcile",
+    "at": 1791622103136,
+    "ms": 2.5406999999977415
+  },
+  {
+    "stage": "state.validate",
+    "at": 1791622103138,
+    "ms": 2.548000000009779
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=100",
+    "at": 1791622103140,
+    "ms": 24.64089999999851
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622103211,
+    "ms": 42.85109999999986
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622103277,
+    "ms": 60.65789999999106
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622103299,
+    "ms": 21.895199999999022
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622103326,
+    "ms": 33.327699999994365
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622103356,
+    "ms": 56.79640000000654
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622103447,
+    "ms": 31.069900000002235
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200",
+    "at": 1791622103454,
+    "ms": 10.571200000005774
+  },
+  {
+    "stage": "state.clone",
+    "at": 1791622103456,
+    "ms": 1.6566000000020722
+  },
+  {
+    "stage": "state.change-reconcile",
+    "at": 1791622103458,
+    "ms": 2.5711000000010245
+  },
+  {
+    "stage": "state.validate",
+    "at": 1791622103461,
+    "ms": 2.519000000000233
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=100",
+    "at": 1791622103490,
+    "ms": 25.054100000008475
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622103526,
+    "ms": 29.43760000000475
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622103562,
+    "ms": 56.16939999999886
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622103566,
+    "ms": 39.0341999999946
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622103647,
+    "ms": 81.06390000000829
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622103706,
+    "ms": 53.24700000000303
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622103742,
+    "ms": 25.141300000002957
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200",
+    "at": 1791622103786,
+    "ms": 4.802999999999884
+  },
+  {
+    "stage": "state.clone",
+    "at": 1791622103788,
+    "ms": 1.6018000000040047
+  },
+  {
+    "stage": "state.change-reconcile",
+    "at": 1791622103790,
+    "ms": 2.574399999997695
+  },
+  {
+    "stage": "state.validate",
+    "at": 1791622103792,
+    "ms": 2.1842999999935273
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622103815,
+    "ms": 30.220599999986007
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=100",
+    "at": 1791622103818,
+    "ms": 23.332099999999627
+  },
+  {
+    "stage": "native.GET /sessions/:id/history?includeThinking=true&limit=200&afterSeq=3",
+    "at": 1791622103822,
+    "ms": 6.836699999999837
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622103856,
+    "ms": 34.09750000000349
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622103888,
+    "ms": 54.11149999999907
+  },
+  {
+    "stage": "native.GET /sessions/:id/questions",
+    "at": 1791622103994,
+    "ms": 39.01920000000973
+  },
+  {
+    "stage": "native.list",
+    "at": 1791622104024,
+    "ms": 62.88189999999304
+  }
+]
