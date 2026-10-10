@@ -514,6 +514,28 @@
         ]
       },
       "finishedAt": "2026-10-10T01:46:30.672Z"
+    },
+    {
+      "id": "04",
+      "title": "新会话、换模型、改写问题仍召回",
+      "status": "failed",
+      "checks": {
+        "newSession": true,
+        "changedModel": true,
+        "completed": true,
+        "replyName": true,
+        "formalMemoryAdopted": false,
+        "confirmedDecisionAdopted": false
+      },
+      "startedAt": "2026-10-10T01:51:34.011Z",
+      "semantic": {
+        "type": "llm_judge",
+        "prompt": "新会话应根据此前确认的组队决定回答找王小明，不能只询问或编造别人。",
+        "turn": 5,
+        "status": "skipped",
+        "reason": "No judge configured; enable --judge-model same or a configured model name."
+      },
+      "finishedAt": "2026-10-10T01:51:49.774Z"
     }
   ],
   "turns": [
@@ -880,6 +902,107 @@
       ],
       "durationMs": 5150,
       "steps": 0
+    },
+    {
+      "sessionId": "session-33e409c4-c19c-4cd7-8ef2-fce4bdf70304",
+      "model": "lan",
+      "modelProfileId": "private-model-8e81bf6cd8b8c8b32e4cb49c1f46ef2626b076ed",
+      "user": "我们之前说组队可以找谁？",
+      "reply": "我们之前聊到组队打游戏可以考虑找 **王小明**。",
+      "status": "completed",
+      "memoryUsed": [
+        {
+          "id": "cognition-e64fb3e68ccd9f9f4dc33aae58f44bf442998c8e307a01343e8724edc988e6c7",
+          "kind": "cognition",
+          "summary": "以后如果要找人组队打游戏，可以考虑找王小明\n确认依据中的助手原话：记下了，稍后整理进记忆。以后如果要找人组队打游戏，可以考虑找王小明——需要我这样提醒你吗？"
+        }
+      ],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-10T01:51:43.346Z",
+          "data": {
+            "taskId": "cmd-6328b8b3-b502-463b-9d7b-7f331598d200",
+            "receiptId": "9db87bfa-c702-4c8f-91a0-66ed3d007969",
+            "text": "我们之前说组队可以找谁？",
+            "commandId": "cmd-6328b8b3-b502-463b-9d7b-7f331598d200",
+            "requestId": "b21ad106-1a2a-44d0-8755-6b47049a769b"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-10T01:51:43.347Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-10T01:51:43.464Z",
+          "data": {
+            "taskId": "cmd-6328b8b3-b502-463b-9d7b-7f331598d200",
+            "turn": 1,
+            "receiptId": "9db87bfa-c702-4c8f-91a0-66ed3d007969",
+            "commandId": "cmd-6328b8b3-b502-463b-9d7b-7f331598d200",
+            "requestId": "b21ad106-1a2a-44d0-8755-6b47049a769b",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T01:51:43.465Z",
+          "data": {
+            "text": "我们之前说组队可以找谁？",
+            "receiptId": "9db87bfa-c702-4c8f-91a0-66ed3d007969"
+          }
+        },
+        {
+          "seq": 190,
+          "type": "assistant.message",
+          "at": "2026-10-10T01:51:49.185Z",
+          "data": {
+            "text": "我们之前聊到组队打游戏可以考虑找 **王小明**。",
+            "modelThinking": "We need to answer user question: \"我们之前说组队可以找谁？\" They ask: Who did we say to team up with? From background memory: 记忆：以后如果要找人组队打游戏，可以考虑找王小明. Also confirmation依据. So answer: 王小明.\n\nWe should not call tools. No need. Just answer.\n\nPossibly mention memory. Follow policy: when answering question about history, if current dialogue and background memory have reliable basis, directly answer. Don't ask. No need to call tools.\n\nWe should respond in Chinese. User asked in Chinese. Answer: 王小明.\n\nMaybe note it's from memory.\n\nNo tool needed.\n\nWe should respect approval mode auto.\n\nJust answer.\n\n",
+            "memoryUsed": [
+              {
+                "id": "cognition-e64fb3e68ccd9f9f4dc33aae58f44bf442998c8e307a01343e8724edc988e6c7",
+                "kind": "cognition",
+                "summary": "以后如果要找人组队打游戏，可以考虑找王小明\n确认依据中的助手原话：记下了，稍后整理进记忆。以后如果要找人组队打游戏，可以考虑找王小明——需要我这样提醒你吗？"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 191,
+          "type": "task.ended",
+          "at": "2026-10-10T01:51:49.185Z",
+          "data": {
+            "taskId": "cmd-6328b8b3-b502-463b-9d7b-7f331598d200",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 192,
+            "receiptId": "9db87bfa-c702-4c8f-91a0-66ed3d007969",
+            "commandId": "cmd-6328b8b3-b502-463b-9d7b-7f331598d200",
+            "requestId": "b21ad106-1a2a-44d0-8755-6b47049a769b",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 192,
+          "type": "turn.ended",
+          "at": "2026-10-10T01:51:49.186Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 8486,
+      "steps": 0
     }
   ],
   "confirmationFixture": {
@@ -915,5 +1038,24 @@
     "formationIssues": [],
     "backfill": null,
     "captureError": null
+  },
+  "finishedAt": "2026-10-10T01:51:51.020Z",
+  "summary": {
+    "passed": 2,
+    "failed": 2,
+    "eightStepGate": false
+  },
+  "mimoUsage": {
+    "requests": 13,
+    "returnedUsage": 13,
+    "missingUsage": 0,
+    "input": 52724,
+    "cached": 40832,
+    "output": 1442,
+    "knownCnyLowerBound": 0.01559264
+  },
+  "credentialScan": {
+    "scanned": 253,
+    "matches": 0
   }
 }

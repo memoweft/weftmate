@@ -417,6 +417,28 @@
         ]
       },
       "finishedAt": "2026-10-10T01:47:39.442Z"
+    },
+    {
+      "id": "04",
+      "title": "新会话、换模型、改写问题仍召回",
+      "status": "passed",
+      "checks": {
+        "newSession": true,
+        "changedModel": true,
+        "completed": true,
+        "replyName": true,
+        "formalMemoryAdopted": true,
+        "confirmedDecisionAdopted": true
+      },
+      "startedAt": "2026-10-10T01:52:42.220Z",
+      "semantic": {
+        "type": "llm_judge",
+        "prompt": "新会话应根据此前确认的组队决定回答找王小明，不能只询问或编造别人。",
+        "turn": 3,
+        "status": "skipped",
+        "reason": "No judge configured; enable --judge-model same or a configured model name."
+      },
+      "finishedAt": "2026-10-10T01:52:58.983Z"
     }
   ],
   "turns": [
@@ -595,6 +617,107 @@
       ],
       "durationMs": 3980,
       "steps": 0
+    },
+    {
+      "sessionId": "session-451edf15-6b76-4187-a5bd-7b5c853fa037",
+      "model": "lan",
+      "modelProfileId": "private-model-dac741a445cf7e15a4d00b1599df2968578767f9",
+      "user": "我们之前说组队可以找谁？",
+      "reply": "我们之前说组队打游戏可以找 **王小明**。",
+      "status": "completed",
+      "memoryUsed": [
+        {
+          "id": "cognition-13c69c866e585a52864e8b753f2a4804c23486e3edd4891a434475d44202f4e8",
+          "kind": "cognition",
+          "summary": "以后遇到需要组队打游戏的情况，要我提醒用户去找王小明\n确认依据中的助手原话：我记下了，稍后整理进记忆。\n\n顺便问一句：以后遇到需要组队打游戏的情况，要我提醒你去找王小明吗？"
+        }
+      ],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-10T01:52:51.601Z",
+          "data": {
+            "taskId": "cmd-ed8650c8-54e4-461d-9977-ffa82e43f3dd",
+            "receiptId": "50e293e1-a3aa-4c2f-8d60-630fda3de8c7",
+            "text": "我们之前说组队可以找谁？",
+            "commandId": "cmd-ed8650c8-54e4-461d-9977-ffa82e43f3dd",
+            "requestId": "f26146c6-6b22-4927-8ca0-f7760f075f49"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-10T01:52:51.602Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-10T01:52:51.668Z",
+          "data": {
+            "taskId": "cmd-ed8650c8-54e4-461d-9977-ffa82e43f3dd",
+            "turn": 1,
+            "receiptId": "50e293e1-a3aa-4c2f-8d60-630fda3de8c7",
+            "commandId": "cmd-ed8650c8-54e4-461d-9977-ffa82e43f3dd",
+            "requestId": "f26146c6-6b22-4927-8ca0-f7760f075f49",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T01:52:51.669Z",
+          "data": {
+            "text": "我们之前说组队可以找谁？",
+            "receiptId": "50e293e1-a3aa-4c2f-8d60-630fda3de8c7"
+          }
+        },
+        {
+          "seq": 295,
+          "type": "assistant.message",
+          "at": "2026-10-10T01:52:58.894Z",
+          "data": {
+            "text": "我们之前说组队打游戏可以找 **王小明**。",
+            "modelThinking": "We need to answer user's question: \"我们之前说组队可以找谁？\" Based on background memory: \"以后遇到需要组队打游戏的情况，要我提醒用户去找王小明\" and confirmation. The memory snapshot says:以后遇到需要组队打游戏的情况，要我提醒用户去找王小明. So answer: 王小明.\n\nWe should follow guidelines: background memory is not new request, just reference. The user asks about previous discussion. We should answer using memory. No need to call tools. Should we mention memory? Probably just answer.\n\nNo need to load tools. No file operations.\n\nThe instructions: When user asks about history, if current conversation and background memory have no reliable basis, say can't determine. Here we have memory.\n\nSo answer: 王小明.\n\nProbably also note that we should not treat background memory as new request. Just answer.\n\nWe must follow output guidelines: keep short? Probably just answer.\n\nNo tools needed.\n\nPotential nuance: The memory says \"以后遇到需要组队打游戏的情况，要我提醒用户去找王小明\". So answer.\n\nNo approval needed.\n\nThus final response: 我们之前说组队可以找王小明.\n\nPossibly add confirmation.\n\nLet's output in Chinese.\n\n",
+            "memoryUsed": [
+              {
+                "id": "cognition-13c69c866e585a52864e8b753f2a4804c23486e3edd4891a434475d44202f4e8",
+                "kind": "cognition",
+                "summary": "以后遇到需要组队打游戏的情况，要我提醒用户去找王小明\n确认依据中的助手原话：我记下了，稍后整理进记忆。\n\n顺便问一句：以后遇到需要组队打游戏的情况，要我提醒你去找王小明吗？"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 296,
+          "type": "task.ended",
+          "at": "2026-10-10T01:52:58.895Z",
+          "data": {
+            "taskId": "cmd-ed8650c8-54e4-461d-9977-ffa82e43f3dd",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 297,
+            "receiptId": "50e293e1-a3aa-4c2f-8d60-630fda3de8c7",
+            "commandId": "cmd-ed8650c8-54e4-461d-9977-ffa82e43f3dd",
+            "requestId": "f26146c6-6b22-4927-8ca0-f7760f075f49",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 297,
+          "type": "turn.ended",
+          "at": "2026-10-10T01:52:58.896Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 9402,
+      "steps": 0
     }
   ],
   "confirmationFixture": {
@@ -628,5 +751,24 @@
     "backfill": null,
     "captureError": null
   },
-  "confirmedDecisionId": "cognition-13c69c866e585a52864e8b753f2a4804c23486e3edd4891a434475d44202f4e8"
+  "confirmedDecisionId": "cognition-13c69c866e585a52864e8b753f2a4804c23486e3edd4891a434475d44202f4e8",
+  "finishedAt": "2026-10-10T01:52:59.980Z",
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "eightStepGate": false
+  },
+  "mimoUsage": {
+    "requests": 6,
+    "returnedUsage": 6,
+    "missingUsage": 0,
+    "input": 15354,
+    "cached": 11968,
+    "output": 1194,
+    "knownCnyLowerBound": 0.006013360000000001
+  },
+  "credentialScan": {
+    "scanned": 253,
+    "matches": 0
+  }
 }
