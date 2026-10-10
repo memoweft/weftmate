@@ -70,6 +70,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             if (typeof event.data?.text !== 'string' && images.length === 0 && files.length === 0 && originalImages.length === 0)
                 continue;
             const row = ui.element('li', `message ${event.type === 'user.message' ? 'user' : 'assistant'}`);
+            row.tabIndex=0;row.setAttribute('role','group');row.setAttribute('aria-label',`${event.type==='user.message'?'我的消息':'助手消息'}：${Array.from(event.data?.text||'附件').slice(0,80).join('')}`);
             if (event.type === 'user.message' && core.receiptIdPattern.test(event.data?.receiptId || ''))
                 row.dataset.receiptId = event.data.receiptId;
             row.dataset.seq = String(event.seq);
@@ -136,6 +137,8 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
                 globalThis.WeftMotion?.reveal(row.querySelector('.reply-memory'), '160ms');
             }
         }
+        const lastAssistant=[...list.querySelectorAll('.message.assistant')].at(-1);
+        for (const row of list.querySelectorAll('.message.assistant')) row.classList.toggle('is-last-assistant', row === lastAssistant);
         if (targetList) return;
         ui.renderTimeline();
         ui.renderTurnStatus();

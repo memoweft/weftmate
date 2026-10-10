@@ -1,0 +1,25 @@
+{
+  "realElectron": true,
+  "synthetic": true,
+  "modelRequests": 0,
+  "checks": [
+    "message-hover-focus-last-reply",
+    "checked-memory-and-retention-submenu",
+    "default-all-four-types",
+    "backfill-preview-cancel-start-pause-cancel",
+    "tested-continue-saves-once-and-advances",
+    "single-row-web-390-light",
+    "single-row-web-390-dark",
+    "web-390",
+    "single-row-android-chromium-390-light",
+    "single-row-android-chromium-390-dark",
+    "android-chromium-390",
+    "single-row-web-360-light",
+    "single-row-web-360-dark",
+    "web-360",
+    "single-row-android-chromium-360-light",
+    "single-row-android-chromium-360-dark",
+    "android-chromium-360"
+  ],
+  "errors": []
+}

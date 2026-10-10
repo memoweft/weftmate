@@ -1,0 +1,14 @@
+{
+  "test": "ui-5-session-menu.mjs",
+  "status": "cancelled",
+  "includedInPassingChecks": false,
+  "provider": "MiMo",
+  "requests": 5,
+  "inputTokens": 13241,
+  "cachedInputTokens": 4096,
+  "outputTokens": 189,
+  "traceRows": 39,
+  "traceRequestsTo8081": 0,
+  "terminatedOwnedProcesses": 5,
+  "temporaryDirectoryRemoval": "rejected: blocked by policy"
+}
