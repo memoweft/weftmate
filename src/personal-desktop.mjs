@@ -40,7 +40,7 @@ export function restoreDesktopBounds(saved, displays) {
     y: Math.max(area.y, Math.min(bounds.y, area.y + area.height - height)) };
 }
 
-export function createPersonalDesktop({ libraryDesktopToken = null, origin, setupGrant = null, isQuitting, startInTray = false, onStatus = () => {} }) {
+export function createPersonalDesktop({ dataManager = null, libraryDesktopToken = null, origin, setupGrant = null, isQuitting, startInTray = false, onStatus = () => {} }) {
   const stateFile = join(app.getPath('userData'), 'desktop-window.json');
   let saved = {};
   try { saved = JSON.parse(readFileSync(stateFile, 'utf8')); } catch { /* first launch */ }
@@ -85,6 +85,27 @@ export function createPersonalDesktop({ libraryDesktopToken = null, origin, setu
     if (!response.ok) throw new Error('Session unavailable');
     return response.json();
   };
+  const dataExports = new Map();
+  const dataRequests = new Map();
+  handle('wm:desktop:data-status', async id => {
+    const owner = dataRequests.get(id); if (!owner || !dataManager) return null;
+    const auth = await jsonLocal('/auth/me').catch(()=>null); if (auth?.account?.ownerId && auth.account.ownerId !== owner) return null;
+    return dataManager.nativeOperation(owner,id);
+  });
+  handle('wm:desktop:data-export', async ({id} = {}) => {
+    const initial = await jsonLocal('/auth/me'), ownerId = initial.account.ownerId;
+    const selected = await dialog.showSaveDialog(win, { title: '导出全部数据', defaultPath: `WeftMate-数据-${new Date().toISOString().slice(0,10)}` });
+    if (selected.canceled || !selected.filePath) return { cancelled: true };
+    const auth = await jsonLocal('/auth/me'); if (auth.account.ownerId !== ownerId) throw new Error('ACCOUNT_CHANGED');
+    const response = await fetchLocal(`/data/${id ? 'confirm' : 'export'}`, { method: 'POST', headers: { origin: contentOrigin, 'content-type':'application/json', 'x-weftmate-csrf':auth.csrfToken, 'x-weftmate-desktop':libraryDesktopToken }, body: JSON.stringify({ ...(id ? {id,confirm:true} : {}), destination:selected.filePath }) });
+    const result = await response.json(); if (!response.ok) throw new Error(result.error?.code || 'EXPORT_FAILED');
+    dataExports.set(result.operation.id,{ownerId,path:selected.filePath}); return result;
+  });
+  handle('wm:desktop:data-show-export', async ({id}) => {
+    const auth = await jsonLocal('/auth/me'), saved = dataExports.get(id), operation = (await jsonLocal('/data/operations')).operation;
+    if (!saved || saved.ownerId !== auth.account.ownerId || operation.id !== id || operation.kind !== 'export' || operation.state !== 'completed') throw new Error('EXPORT_UNAVAILABLE');
+    shell.showItemInFolder(saved.path); return { shown:true };
+  });
   const loginArgs = [
     ...(!app.isPackaged ? [app.getAppPath()] : []), '--personal-host', '--start-in-tray',
     `--user-data-dir=${app.getPath('userData')}`,
@@ -196,10 +217,12 @@ export function createPersonalDesktop({ libraryDesktopToken = null, origin, setu
       !target.pathname.startsWith('/personal/v1/')) throw new Error('Native request unavailable');
     const controller = new AbortController(); networkRequests.set(requestId, controller);
     const timeout = setTimeout(() => controller.abort(), 360000);
+    const dataOwner = target.origin === origin && target.pathname.startsWith('/personal/v1/data') && options.method === 'POST' ? (await jsonLocal('/auth/me')).account.ownerId : null;
     try {
       const response = await desktopSession.fetch(target.href, { method: options.method || 'GET', body: options.body,
-        headers: { ...options.headers, Origin: target.origin }, credentials: 'include', cache: 'no-store', redirect: 'error', signal: controller.signal });
-      return { status: response.status, body: await response.json().catch(() => ({})), headers: {
+        headers: { ...options.headers, Origin: target.origin, ...(target.origin === origin && target.pathname.startsWith('/personal/v1/data') ? {'x-weftmate-desktop':libraryDesktopToken} : {}) }, credentials: 'include', cache: 'no-store', redirect: 'error', signal: controller.signal });
+      const body = await response.json().catch(() => ({})); if (dataOwner && body.operation?.id) dataRequests.set(body.operation.id,dataOwner);
+      return { status: response.status, body, headers: {
         'retry-after': response.headers.get('Retry-After'), 'dpop-nonce': response.headers.get('DPoP-Nonce') } };
     } finally { clearTimeout(timeout); networkRequests.delete(requestId); }
   });
@@ -413,6 +436,7 @@ export function createPersonalDesktop({ libraryDesktopToken = null, origin, setu
     for (const notification of notifications) notification.close();
     nativeTheme.removeListener('updated', updatePalette);
     ipcMain.removeHandler('wm:desktop:conversation-export');
+    for(const channel of ['wm:desktop:data-export','wm:desktop:data-status','wm:desktop:data-show-export'])ipcMain.removeHandler(channel);
     for (const request of networkRequests.values()) request.abort();
     for (const channel of ['wm:desktop:notification-permission','wm:desktop:notification-settings','wm:desktop:capture-region', 'wm:desktop:clipboard-image', 'wm:desktop:project-choice', 'wm:desktop:project-create', 'wm:desktop:project-info', 'wm:desktop:project-show', 'wm:desktop:project-drop', 'wm:desktop:project-folder', 'wm:desktop:settings', 'wm:desktop:identity', 'wm:desktop:credentials', 'wm:desktop:key', 'wm:desktop:key-reset', 'wm:desktop:proof', 'wm:desktop:connect-host', 'wm:desktop:activate-host', 'wm:desktop:fetch', 'wm:desktop:fetch-abort', 'wm:desktop:clear-sessions', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);
     await save(); await desktopSession.cookies.flushStore(); desktopSession.flushStorageData();

@@ -5,7 +5,7 @@ import { chatForSession } from './chat-identity.mjs';
 import { hasPrivateContent } from './temporary-chats.mjs';
 import { activityNotificationContent } from './notification-content.mjs';
 
-export const ACTIVITY_TYPES = ['reminder.triggered','task.completed','task.failed','task.stopped','approval.pending','question.pending','memory.paused','memory.submission.completed','memory.report','system.update.available','system.reconnected','system.dnd.summary','system.notification.test','companion.greeting'];
+export const ACTIVITY_TYPES = ['reminder.triggered','task.completed','task.failed','task.stopped','approval.pending','question.pending','memory.paused','memory.submission.completed','memory.report','system.update.available','system.reconnected','system.dnd.summary','system.notification.test','system.data.operation','companion.greeting'];
 const short = value => Array.from(String(value ?? '').replace(/\s+/g, ' ').trim()).slice(0,160).join('');
 export function activityState(account) {
   return account.activity ??= { version:1, secret:randomBytes(32).toString('hex'), sequence:0, generation:0, items:{}, changes:[], sources:{}, operations:{},suppressed:{} };

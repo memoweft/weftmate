@@ -6,13 +6,16 @@
     ui.pairingJourney = !!initialPairing;
     if (initialPairing) history.replaceState(null, '', location.pathname + location.search);
     const request = async (url, options = {}) => {
-        if (!native || !/^https?:/.test(String(url)) || new URL(url).origin === globalThis.location?.origin) return fetch(url, options);
+        if (!native) return fetch(url,options);
+        const target = new URL(url, globalThis.location.href || globalThis.location.origin);
+        const desktopData = native && target.origin === globalThis.location.origin && /^\/personal\/v1\/data(?:\/|$)/.test(target.pathname);
+        if (!native || !desktopData && (!/^https?:/.test(String(url)) || target.origin === globalThis.location?.origin)) return fetch(url, options);
         if (options.signal?.aborted) throw new DOMException('Request aborted', 'AbortError');
         const id = crypto.randomUUID(), abort = () => void native.abortPersonalFetch(id).catch(() => {});
         options.signal?.addEventListener('abort', abort, { once: true });
         try {
             const body = options.body instanceof Blob ? await options.body.arrayBuffer() : options.body;
-            const result = await native.fetchPersonal(String(url), { method: options.method, headers: options.headers, body }, id);
+            const result = await native.fetchPersonal(target.href, { method: options.method, headers: options.headers, body }, id);
             return { status: result.status, ok: result.status >= 200 && result.status < 300, json: async () => result.body,
                 headers: { get: name => result.headers[name.toLowerCase()] || null } };
         } finally { options.signal?.removeEventListener('abort', abort); }
