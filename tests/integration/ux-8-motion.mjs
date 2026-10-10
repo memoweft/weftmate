@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
 import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -13,11 +13,29 @@ import { localUiSession } from '../helpers/local-ui-session.mjs';
 const out = resolve('tests/evidence/ux-8');
 const verifyOnly = process.argv.includes('--verify-only');
 const performanceOnly = process.argv.includes('--performance-only');
-const evidenceOnly = process.argv.includes('--evidence-only');
-const surfaces = verifyOnly ? ['desktop'] : ['desktop', 'mobile-web', 'android-ui'];
-const baselineSource = execFileSync('git', ['show', 'HEAD:src/ui-core/rendering.js'], { encoding: 'utf8' });
-const report = { generatedAt: new Date().toISOString(), baselineCommit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), synthetic: true, androidNativeDevice: false, cpuMetric: 'CDP Performance.getMetrics TaskDuration delta / elapsed wall time; renderer main-thread busy fraction, not total system or GPU CPU', checks: [], sequences: [], performance: [], errors: [] };
+const shimmerOnly = process.argv.includes('--shimmer-only');
+const indicatorOnly = process.argv.includes('--indicator-only');
+const controlsOnly = process.argv.includes('--controls-only');
+const evidenceOnly = process.argv.includes('--evidence-only') || shimmerOnly || controlsOnly;
+const surfaceOnly = process.argv.find(value => value.startsWith('--surface='))?.split('=')[1];
+const surfaces = surfaceOnly ? [surfaceOnly] : verifyOnly ? ['desktop'] : ['desktop', 'mobile-web', 'android-ui'];
+const baselineCommit = 'e85b71228ff4646e41e4f9740fc55fb0b4878c52';
+const baselineSource = execFileSync('git', ['show', `${baselineCommit}:src/ui-core/rendering.js`], { encoding: 'utf8' });
+const report = { generatedAt: new Date().toISOString(), baselineCommit, synthetic: true, androidNativeDevice: false, cpuMetric: 'CDP Performance.getMetrics TaskDuration delta / elapsed wall time; renderer main-thread busy fraction, not total system or GPU CPU', checks: [], sequences: [], performance: [], errors: [] };
 await mkdir(out, { recursive: true });
+if (surfaceOnly && performanceOnly) {
+  try { const previous = JSON.parse(await readFile(join(out, 'performance.json'), 'utf8')); report.performance = previous.performance.filter(row => row.surface !== surfaceOnly); } catch (error) { if (error.code !== 'ENOENT') throw error; }
+}
+if ((surfaceOnly || shimmerOnly || controlsOnly || indicatorOnly) && !performanceOnly) {
+  try { const previous = JSON.parse(await readFile(join(out, 'verification.json'), 'utf8')); for (const key of ['checks', 'sequences', 'performance', 'errors']) report[key] = previous[key].filter(row => {
+    if (surfaceOnly && row.surface !== surfaceOnly) return true;
+    if (controlsOnly && (row.diagramToolbar || row.galleryButtons || row.appearancePreference)) return false;
+    if (shimmerOnly && row.name === 'status-shimmer') return false;
+    if (indicatorOnly && (row.name === 'indicator-breathe' || row.indicatorStyle)) return false;
+    if (surfaceOnly && !controlsOnly && !shimmerOnly && !indicatorOnly) return false;
+    return true;
+  }); } catch (error) { if (error.code !== 'ENOENT') throw error; }
+}
 
 async function selectSample(page, surface) {
   if (surface === 'android-ui') { await page.evaluate(() => listSharedSessions()); await page.getByRole('button', { name: '打开导航', exact: true }).click(); }
@@ -201,8 +219,18 @@ for (const surface of surfaces) {
     await selectSample(page, surface);
     for (const theme of performanceOnly ? [] : ['light', 'dark']) {
       await page.evaluate(theme => document.documentElement.dataset.theme = theme, theme);
+      if (indicatorOnly) {
+        await projection(page);
+        await sequence(page, surface, theme, 'indicator-breathe', () => page.evaluate(() => WeftReplyMotion.indicator(ux8.content, true)), [0, 240, 480, 720, 960, 1200, 1440, 1800]);
+        const indicatorStyle = await page.locator('#ux8-content > .reply-indicator').evaluate(el => ({ background: getComputedStyle(el).backgroundColor, width: el.getBoundingClientRect().width, height: el.getBoundingClientRect().height }));
+        assert.ok(indicatorStyle.background !== 'rgba(0, 0, 0, 0)' && indicatorStyle.width > 0 && indicatorStyle.height > 0, JSON.stringify(indicatorStyle));
+        report.checks.push({ surface, theme, indicatorStyle });
+        await page.evaluate(() => document.getElementById('ux8-projection-list').remove());
+      }
+      if (!controlsOnly) {
       await projection(page);
       await sequence(page, surface, theme, 'status-shimmer', () => page.evaluate(() => WeftReplyMotion.status(ux8.status, '正在思考…', true)), [0, 240, 480, 720, 960, 1200, 1440, 1800]);
+      if (shimmerOnly) continue;
       await sequence(page, surface, theme, 'status-switch', () => page.evaluate(() => WeftReplyMotion.status(ux8.status, '正在读取文件…', true)));
       await sequence(page, surface, theme, 'message-arrival', () => page.evaluate(() => { WeftReplyMotion.reveal(ux8.user, 'send'); WeftReplyMotion.reveal(ux8.content, 'arrival'); }));
       await sequence(page, surface, theme, 'stream-fragments', () => page.evaluate(() => { WeftContent.update(ux8.content, '我会先读取资料，再整理结果。新增的短片段立即可读。\n\n- 新到的列表行\n\n```javascript\nconst result = 1;\nconst next = 2;\n```', {streaming:true}); }));
@@ -210,9 +238,12 @@ for (const surface of surfaces) {
       await sequence(page, surface, theme, 'completion', () => page.evaluate(() => { WeftReplyMotion.indicator(ux8.content, false); WeftReplyMotion.reveal(ux8.actions, 'actions'); }));
       await sequence(page, surface, theme, 'stop-error', () => page.evaluate(() => { WeftReplyMotion.status(ux8.status, '已停止', false); ux8.error.hidden = false; WeftReplyMotion.reveal(ux8.error, 'error'); }));
       await page.evaluate(() => document.getElementById('ux8-projection-list').remove());
+      }
       const diagram = page.locator('.render-mermaid').first(); await diagram.scrollIntoViewIfNeeded(); await diagram.locator('.render-diagram img').waitFor();
+      await page.waitForTimeout(250);
       if (!verifyOnly) await page.screenshot({ path: join(out, `${surface}-${theme}-mermaid.png`) });
-      const toolbar = await diagram.evaluate(el => { const header = el.querySelector('.render-block-head') || el.firstElementChild; const button = el.querySelector('button'); return { header: header.getBoundingClientRect().toJSON(), button: button.getBoundingClientRect().toJSON() }; });
+      const toolbar = await diagram.evaluate(el => { const header = el.querySelector('.render-block-head') || el.firstElementChild; const button = el.querySelector('.render-diagram-toggle'); return { header: header.getBoundingClientRect().toJSON(), button: button.getBoundingClientRect().toJSON() }; });
+      assert.ok(toolbar.button.width > 0 && toolbar.header.right - toolbar.button.right <= 17, 'diagram toggle must sit at right token padding');
       report.checks.push({ surface, theme, diagramToolbar: toolbar });
       await page.getByRole('button', { name: '查看图片 合成色板 A', exact: true }).click();
       const gallery = page.getByRole('dialog', { name: '图片画廊', exact: true }); await gallery.waitFor();
@@ -222,7 +253,7 @@ for (const surface of surfaces) {
       report.checks.push({ surface, theme, galleryButtons: buttons });
       await gallery.getByRole('button', { name: '关闭图片画廊', exact: true }).click();
     }
-    if (!verifyOnly && !performanceOnly) for (const size of surface === 'desktop' ? [{ width: 480, height: 800 }] : [{ width: 360, height: 780 }, { width: 390, height: 844 }]) {
+    if (!verifyOnly && !performanceOnly && !shimmerOnly && !controlsOnly) for (const size of surface === 'desktop' ? [{ width: 480, height: 800 }] : [{ width: 360, height: 780 }, { width: 390, height: 844 }]) {
       if (app) await app.evaluate(({ BrowserWindow }, size) => BrowserWindow.getAllWindows()[0].setContentSize(size.width, size.height), size); else await page.setViewportSize(size);
       for (const theme of ['light', 'dark']) {
         await page.evaluate(theme => document.documentElement.dataset.theme = theme, theme); await projection(page);
@@ -230,8 +261,8 @@ for (const surface of surfaces) {
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
       }
     }
-    if (!performanceOnly) { await projection(page); await contracts(page, surface); await geometry(page, surface); }
-    if (app && !performanceOnly) {
+    if (!performanceOnly && !shimmerOnly && !controlsOnly) { await projection(page); await contracts(page, surface); await geometry(page, surface); }
+    if (app && !performanceOnly && !shimmerOnly && !controlsOnly) {
       await app.evaluate(({ BrowserWindow }) => { const win = BrowserWindow.getAllWindows()[0]; win.webContents.setBackgroundThrottling(true); win.minimize(); });
       await page.waitForFunction(() => WeftReplyMotion.paused, null, { polling: 100 });
       assert.equal(await page.evaluate(() => document.documentElement.hasAttribute('data-motion-paused')), true);
@@ -239,19 +270,21 @@ for (const surface of surfaces) {
       await page.waitForFunction(() => !WeftReplyMotion.paused, null, { polling: 100 });
       report.checks.push({ surface, actualWindowMinimizePauses: true });
     }
-    for (const theme of performanceOnly ? [] : ['light', 'dark']) {
+    for (const theme of performanceOnly || shimmerOnly ? [] : ['light', 'dark']) {
       await page.evaluate(theme => { document.documentElement.dataset.theme = theme; WeftReplyMotion.setPreference('reduce'); }, theme);
       if (!verifyOnly) await page.screenshot({ path: join(out, `${surface}-${theme}-reduced-motion.png`) });
       await page.evaluate(surface => surface === 'android-ui' ? page('appearance') : WeftSettingsNavigation.open('appearance'), surface);
       const control = page.getByRole('combobox', { name: '减少动态效果', exact: true }); await control.waitFor();
+      const controlStyle = await control.evaluate(el => ({ height: el.getBoundingClientRect().height, border: getComputedStyle(el).borderTopWidth, dpr: devicePixelRatio, background: getComputedStyle(el).backgroundColor }));
+      assert.ok(controlStyle.height >= 40 && parseFloat(controlStyle.border) * controlStyle.dpr >= .999 && controlStyle.background !== 'rgba(0, 0, 0, 0)', JSON.stringify(controlStyle));
       if (!verifyOnly) await page.screenshot({ path: join(out, `${surface}-${theme}-appearance-open.png`) });
       await control.click();
       if (!verifyOnly) await page.screenshot({ path: join(out, `${surface}-${theme}-motion-menu-open.png`) });
       await page.getByRole('option', { name: '跟随系统', exact: true }).click(); assert.equal(await page.evaluate(() => WeftReplyMotion.preference), 'system');
       await control.click(); await page.getByRole('option', { name: '开启', exact: true }).click(); assert.equal(await page.evaluate(() => WeftReplyMotion.reduced), true);
-      if (surface === 'android-ui') await page.getByRole('button', { name: '返回对话', exact: true }).click();
+      if (surface === 'android-ui') { await page.getByRole('button', { name: '返回', exact: true }).click(); await page.evaluate(() => { if (state.page !== 'chat') page('chat'); }); }
       else await page.getByRole('button', { name: '关闭设置', exact: true }).click();
-      report.checks.push({ surface, theme, appearancePreference: true });
+      report.checks.push({ surface, theme, appearancePreference: true, controlStyle });
     }
     if (!verifyOnly && !evidenceOnly) {
       const session = await page.context().newCDPSession(page);
@@ -271,5 +304,5 @@ for (const surface of surfaces) {
 }
 assert.deepEqual(report.errors, []);
 await writeFile(join(out, performanceOnly ? 'performance.json' : 'verification.json'), JSON.stringify(report, null, 2) + '\n');
-console.log('UX-8 production motion, reduced motion, visibility and geometry passed');
+console.log(performanceOnly ? 'UX-8 paired performance measurements completed' : 'UX-8 production motion, reduced motion, visibility and geometry passed');
 console.log(JSON.stringify(report.performance.map(({ surface, phase, updateP95Ms, frameGapP95Ms, idle, stream }) => ({ surface, phase, updateP95Ms, frameGapP95Ms, idle, stream })), null, 2));

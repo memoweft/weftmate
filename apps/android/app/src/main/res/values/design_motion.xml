@@ -24,4 +24,5 @@
     <string name="wm_easing_desktop" translatable="false">cubic-bezier(.16,1,.3,1)</string>
     <string name="wm_easing_mobile" translatable="false">cubic-bezier(.2,.8,.2,1)</string>
     <string name="wm_easing_enter" translatable="false">ease-in</string>
+    <string name="wm_easing_replySweep" translatable="false">steps(7,end)</string>
 </resources>
