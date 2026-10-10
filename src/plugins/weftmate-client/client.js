@@ -2076,7 +2076,7 @@ window.__ModuleLoader__.load({
       }
       return React.createElement(React.Fragment, null,
         React.createElement('div', { className: 'weftmate-v2-conversation-hero chat-hero' },
-          React.createElement('div', { className: 'greet' }, '晚上好，Yun。'),
+          React.createElement('div', { className: 'greet' }, '晚上好。'),
           React.createElement('div', { className: 'greet-sub' }, '说句话就开始；做重复的事，就把它做成 Mod。'),
           React.createElement('div', { className: 'quick-chips' }, chips.map(function (text) { return React.createElement('button', { key: text, className: 'qchip', type: 'button', onClick: function () { putDraft(text) } }, text) }))
         ),

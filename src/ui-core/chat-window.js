@@ -17,13 +17,23 @@
     function create(limit = 1000) {
         const state = { events: new Map(), syncCursor: null, olderCursor: null, newerCursor: null, hasOlder: false, hasNewer: false,
             contentRevision: null, timeZone: 'UTC', indexState: 'building', anchorId: null, expanded: new Set(), collapsed: new Set(), dayCounts: new Map(), search: { query: '', hits: [], index: -1 }, generation: 0 };
-        const reset = () => { state.events.clear(); state.syncCursor = state.olderCursor = state.newerCursor = null;
+        const reset = () => { state.events.clear(); state.liveEvents = []; state.liveRevision = -1; state.syncCursor = state.olderCursor = state.newerCursor = null;
             state.hasOlder = state.hasNewer = false; state.contentRevision = null; state.search = { query: '', hits: [], index: -1 };
             state.anchorId=null;state.expanded.clear(); state.collapsed.clear(); state.dayCounts.clear(); state.generation++; };
-        const ordered = () => [...state.events.values()].sort((a, b) => a.orderKey.localeCompare(b.orderKey));
+        const ordered = () => {
+            const events = [...state.events.values()];
+            const completed = new Set(events.filter(e => Number.isSafeInteger(e.data?.streamSeq)).map(e => `${e.sourceRef?.sessionId}:${e.data.streamSeq}`));
+            for (const event of state.liveEvents || []) if (!completed.has(`${event.sourceRef?.sessionId}:${event.seq}`))
+                events.push({ ...event, type: 'assistant.message', data: { ...event.data, streamSeq: event.seq, live: true } });
+            return events.map(event => ({ ...event, ...(Number.isSafeInteger(event.data?.streamSeq) ?
+                { presentationKey: `stream:${event.sourceRef?.sessionId}:${event.data.streamSeq}` } : {}) })).sort((a, b) => a.orderKey.localeCompare(b.orderKey));
+        };
         function merge(page, direction = 'tail') {
             if (state.contentRevision !== null && page.contentRevision !== undefined && state.contentRevision !== page.contentRevision) reset();
             state.contentRevision = page.contentRevision ?? state.contentRevision;
+            if (page.liveEvents !== undefined && (page.liveRevision ?? 0) >= (state.liveRevision ?? -1)) {
+                state.liveEvents = page.liveEvents; state.liveRevision = page.liveRevision ?? 0;
+            }
             state.timeZone = page.timeZone || state.timeZone; state.indexState = page.indexState || state.indexState;
             for (const removal of page.removals || []) state.events.delete(removal.eventId);
             for (const event of page.items || page.upserts || []) {

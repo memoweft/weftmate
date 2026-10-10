@@ -240,11 +240,12 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
             if (document.visibilityState === 'visible')
                 void core.refreshAssistant();
         }, 6000);
+        let lastLiveRead=0;
         core.state.liveRefreshTimer = setInterval(() => {
-            if (document.visibilityState === 'visible' && (core.state.unresolvedSubmission ||
+            if (document.visibilityState === 'visible' && (core.state.personalCapabilities?.replyStreaming===1 && (core.mainReplyActive?.() || core.state.turnStatus==='running' || (core.state.selectedChatId||core.state.selectedSessionId)&&Date.now()-lastLiveRead>=1000) || core.state.unresolvedSubmission ||
                 core.state.submitting || core.conversationRunning(core.state.selectedSessionId) ||
                 core.optimisticMessages().some(row => ['sending', 'accepted'].includes(row.status))))
-                void core.refreshLiveConversation().catch(() => {});
+                {lastLiveRead=Date.now();void core.refreshLiveConversation().catch(() => {});}
         }, 250);
     }
     function showRegistration() {

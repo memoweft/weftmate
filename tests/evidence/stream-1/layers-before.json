@@ -1,0 +1,715 @@
+{
+  "started": 1791651884372,
+  "timeline": [
+    {
+      "layer": "gateway",
+      "at": 1791651886326,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651886421,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651886474,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651886527,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651886580,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651886634,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651886686,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "layer": "provider",
+      "at": 1791651886712,
+      "text": "第一段。"
+    },
+    {
+      "layer": "provider",
+      "at": 1791651886723,
+      "text": "第一段。"
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651886745,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651886798,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651886850,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651886903,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651886957,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651887010,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "layer": "provider",
+      "at": 1791651887013,
+      "text": "第二段。"
+    },
+    {
+      "layer": "provider",
+      "at": 1791651887022,
+      "text": "第二段。"
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651887069,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651887121,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651887174,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651887228,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651887281,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "layer": "provider",
+      "at": 1791651887314,
+      "text": "第三段。"
+    },
+    {
+      "layer": "provider",
+      "at": 1791651887324,
+      "text": "第三段。"
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651887341,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651887394,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651887447,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651887502,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651887555,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651887606,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "layer": "provider",
+      "at": 1791651887614,
+      "text": "第四段。"
+    },
+    {
+      "layer": "provider",
+      "at": 1791651887623,
+      "text": "第四段。"
+    },
+    {
+      "layer": "gateway",
+      "at": 1791651887665,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        },
+        {
+          "type": "assistant.message",
+          "seq": 23,
+          "length": 16
+        },
+        {
+          "type": "task.ended",
+          "seq": 24
+        },
+        {
+          "type": "turn.ended",
+          "seq": 25
+        }
+      ]
+    }
+  ],
+  "native": [
+    {
+      "at": 1791651886715,
+      "seq": 15,
+      "type": "assistant/chunk",
+      "chunk": "block-start"
+    },
+    {
+      "at": 1791651886716,
+      "seq": 16,
+      "type": "assistant/chunk",
+      "chunk": "text-delta",
+      "length": 4
+    },
+    {
+      "at": 1791651887014,
+      "seq": 17,
+      "type": "assistant/chunk",
+      "chunk": "text-delta",
+      "length": 4
+    },
+    {
+      "at": 1791651887315,
+      "seq": 18,
+      "type": "assistant/chunk",
+      "chunk": "text-delta",
+      "length": 4
+    },
+    {
+      "at": 1791651887616,
+      "seq": 19,
+      "type": "assistant/chunk",
+      "chunk": "text-delta",
+      "length": 4
+    },
+    {
+      "at": 1791651887616,
+      "seq": 20,
+      "type": "assistant/chunk",
+      "chunk": "block-end"
+    },
+    {
+      "at": 1791651887617,
+      "seq": 21,
+      "type": "assistant/chunk",
+      "chunk": "usage"
+    },
+    {
+      "at": 1791651887618,
+      "seq": 22,
+      "type": "assistant/chunk",
+      "chunk": "finish"
+    },
+    {
+      "at": 1791651887619,
+      "seq": 23,
+      "type": "assistant/message"
+    },
+    {
+      "at": 1791651887621,
+      "seq": 25,
+      "type": "turn/end"
+    }
+  ],
+  "synthetic": true,
+  "chunkIntervalMs": 300
+}

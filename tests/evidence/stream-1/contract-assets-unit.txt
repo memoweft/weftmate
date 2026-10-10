@@ -1,0 +1,28 @@
+✔ cross-segment pages keep stable ids and independent sync while old segments receive late events (47.6014ms)
+✔ dates use account timezone; Chinese search excludes tools, supports filters and resets after content invalidation (7.1351ms)
+✔ mobile generated assets match every canonical ui-core file byte for byte (289.0709ms)
+✔ check refuses changed, missing and unlisted copies; rebuild follows the source and removes stale files (408.3145ms)
+✔ mobile check validates nested component syntax as well as generated source parity (3498.502ms)
+✔ published mobile bundle includes the verified shared assets at their ui-core paths (3124.1022ms)
+✔ publish command refuses stale generated assets before creating a release (5385.7143ms)
+✔ release records have valid dates, semantic versions and user-facing categories; generated records match source (17.2333ms)
+✔ update notice establishes a baseline, shows once per account/version and survives reload; rollback never repeats (4.5331ms)
+✔ update notice ignores host-published phone bundle and obtains installed desktop version (2.442ms)
+✔ help search filters all words locally across title, group and body; blank restores all topics (1.783ms)
+✔ every shortcut in the panel registry dispatches its own action with identical modifier matching; composition is ignored (1.9626ms)
+✔ mobile release notice reads account identity without refreshing the live conversation snapshot (1.4878ms)
+✔ approval shortcut names and number bindings derive from the same mode table without duplicate registration (1.3699ms)
+✔ live snapshots keep native anchors, cumulative text, reasoning private and final text authoritative across tool steps (6.678ms)
+✔ stop/error snapshots settle without a live indicator, reconnect rebuilds exact text, retry replaces failed attempt (2.3924ms)
+✔ live snapshots have no separate erasure cache and D33 rejects forgotten provenance and deleting/cleanup accounts (0.9041ms)
+✔ logical client snapshot updates deduplicate, retain presentation identity, remove on final and reset on erasure (3.4165ms)
+✔ completion SSE decodes split Unicode frames, observes usage, parses short text/old JSON and aborts while reading (5.5503ms)
+✔ D33 snippet erasure removes packed native text/reasoning/tool deltas even when the phrase crosses chunk boundaries (15.1648ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12888.8652

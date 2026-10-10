@@ -37,6 +37,7 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
         if(method==='settings.appearance')result={value:'light'};
         if(method==='auth.me')result={displayName:'合成测试账户'};
         if(method==='attachments.list')result={attachments:[]};
+        if(method==='models.host')result={models:[{profileId:'synthetic',displayName:'合成模型',configured:true}]};
         if(method==='host.business'){
           const defaults=params.path==='/personal/v1/settings/approvals',session=/\/sessions\/([^/]+)\/approval-mode$/.exec(params.path)?.[1];
           if(defaults||session){if(params.method==='PATCH'){
@@ -54,7 +55,7 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
         if(method==='shared.questions.list')result={questions:[],nextBefore:null,hasMore:false};
         if(method==='shared.tasks.detail')result={taskId:'cmd-demo',sessionId:'s1',source:{commandId:'cmd-demo',kind:'session.message',
           sessionId:'s1',receiptId:'rpc:demo.1'},artifacts:[],control:{state:'active',canStop:false,canSupplement:false}};
-        if(method==='shared.sessions.events')result={source:'host',sessionId:params.sessionId,events:f.history,nextSeq:f.history.at(-1)?.seq??-1,hasMore:false};
+        if(method==='shared.sessions.events')result={source:'host',sessionId:params.sessionId,events:f.history,nextSeq:f.history.at(-1)?.seq??-1,hasMore:false,...(f.live?{liveSeq:++f.liveTick,liveEvents:[{seq:2,type:'assistant.live',data:{text:'中文流式正文。'.repeat(f.liveTick),streaming:true,cursor:f.liveTick}}]}:{})};
         if(method==='shared.sessions.list')result={source:'host',hostAvailable:true,sessions:[{sessionId:'s1',title:'整理临时文件',sendAvailable:true,source:'host'},
           {sessionId:'s2',title:'另一个合成对话',sendAvailable:true,source:'host'}]};
         if(method==='shared.outbox.list')result={source:'host',commands:[]};
@@ -109,6 +110,22 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
     await page.getByRole('button',{name:'默认审批模式 · 先出计划'}).click();await page.waitForFunction(()=>!approvalModeState.loading);
     assert.equal(await menu.locator('[aria-checked="true"]').getAttribute('data-mode'),'plan');await page.keyboard.press('Escape');
     await page.evaluate(()=>page('chat'));await seed();
+    // STREAM-1b: twelve real scheduled reads must preserve menu, risk dialog and IME.
+    await page.evaluate(()=>{fixture.live=true;fixture.liveTick=0;fixture.history=[{seq:0,type:'user.message',data:{text:'请持续回复'}},{seq:1,type:'turn.started',data:{}}];state.sharedEvents=fixture.history;state.sharedNextSeq=1;state.sharedRunning=true;uiCore.state.personalCapabilities={replyStreaming:1};renderSharedConversation();scheduleSharedPoll();});
+    await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
+    const unchangedOption=await menu.locator('[data-mode="allow-all"]').elementHandle();
+    await page.waitForTimeout(3100);assert.equal(await menu.isVisible(),true);
+    assert.equal(await unchangedOption.evaluate(node=>node.isConnected&&node===document.querySelector('#approval-mode-popover [data-mode="allow-all"]')),true);
+    assert.ok(await page.evaluate(()=>fixture.liveTick)>=10,'at least ten live reads');
+    await menu.locator('[data-mode="allow-all"]').click();await page.waitForTimeout(3100);
+    assert.equal(await page.locator('#approval-risk-cancel').isVisible(),true);await page.locator('#approval-risk-cancel').click();
+    await page.locator('#draft').fill('整理资料');await page.locator('#draft').focus();
+    const cdp=await page.context().newCDPSession(page);await cdp.send('Input.imeSetComposition',{text:'中文输入',selectionStart:4,selectionEnd:4});
+    const composing=await page.locator('#draft').evaluate(node=>({value:node.value,start:node.selectionStart,end:node.selectionEnd}));
+    await page.waitForTimeout(3100);assert.deepEqual(await page.locator('#draft').evaluate(node=>({value:node.value,start:node.selectionStart,end:node.selectionEnd})),composing);
+    assert.equal(await page.locator('#draft').evaluate(node=>node===document.activeElement),true);
+    await cdp.send('Input.insertText',{text:'中文输入'});await cdp.detach();
+    await page.evaluate(()=>{stopSharedPoll();fixture.live=false;fixture.history=[];state.sharedEvents=[];state.sharedNextSeq=-1;state.sharedRunning=false;$('draft').value='';});
     const showApproval=async()=>{await page.waitForFunction(()=>!state.sharedLoading);await page.evaluate(()=>{
       stopSharedPoll();
       fixture.resetApproval();resetToolApprovals();conversationTasks.entries.clear();

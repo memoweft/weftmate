@@ -11,6 +11,16 @@ import { removeAccountPath } from '../personal-data/paths.mjs';
 
 export function createSessionOperations(context) {
   const deletions = new Set();
+  function publicLiveEvents(ownerId, sessionId, events = []) {
+    const account = context.accountState(ownerId), session = account.sessions[sessionId];
+    if (!session || session.deleting || account.memoryCleanupPending) return [];
+    const forgotten = new Set(session.forgottenSeqs ?? []);
+    return events.filter(event => event.type === 'assistant.delta' && !forgotten.has(event.seq) &&
+      !(event.data?.sourceSeqs ?? []).some(seq => forgotten.has(seq))).map(event => {
+      const { sourceSeqs, ...data } = event.data;
+      return { ...event, data };
+    });
+  }
   async function requireOriginalAttachments(ownerId, sessionId, messageId, originals) {
     if (!Array.isArray(originals)) return;
     for (const reference of originals) {
@@ -316,7 +326,7 @@ export function createSessionOperations(context) {
     },
     requireOriginalAttachments,
     commandReferencesOriginal,
-    publicHistoryEvent,
+    publicHistoryEvent, publicLiveEvents,
     conversationSnapshot,
     conversationProjection,
     verifiedSyncUserEvent,

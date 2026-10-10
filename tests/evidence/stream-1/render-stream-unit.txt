@@ -1,0 +1,25 @@
+▶ shared offline content: parsing, injection set, streaming, controls and failure fallback
+  ✔ headings, nested lists/tasks, quotes, rule, emphasis, links, footnotes and 30 languages (18.1743ms)
+  ✔ script, HTML events, dangerous protocols, SVG scripts, CSS expression, KaTeX extensions never execute (18.5579ms)
+  ✔ unclosed streaming code preserves controls and node identity, exact 30-line threshold (10.5946ms)
+  ✔ table copies escape pipes, CSV quotes, commas and multiline cells (2.9431ms)
+  ✔ plain streaming tails retain completed blocks and Markdown transitions still reparse references, lists and fences (13.9968ms)
+  ✔ math renders offline and failure returns exact delimited source (11.9659ms)
+  ✔ Mermaid graph and failed/injected syntax fallback without links or scripts (3721.4975ms)
+  ✔ known host titles become link cards; ordinary links use external marking without a fetch (2.9084ms)
+  ✔ an incomplete streamed diagram recovers to graph view when the syntax becomes valid (847.6476ms)
+  ✔ captured source links preserve provenance priority and the host title card (1763.374ms)
+✔ shared offline content: parsing, injection set, streaming, controls and failure fallback (7012.5659ms)
+✔ live snapshots keep native anchors, cumulative text, reasoning private and final text authoritative across tool steps (4.5337ms)
+✔ stop/error snapshots settle without a live indicator, reconnect rebuilds exact text, retry replaces failed attempt (0.9851ms)
+✔ live snapshots have no separate erasure cache and D33 rejects forgotten provenance and deleting/cleanup accounts (0.4715ms)
+✔ logical client snapshot updates deduplicate, retain presentation identity, remove on final and reset on erasure (1.614ms)
+✔ completion SSE decodes split Unicode frames, observes usage, parses short text/old JSON and aborts while reading (6.1496ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7429.7993

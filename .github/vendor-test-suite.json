@@ -443,6 +443,7 @@
   ],
   "files": [
     "tests/weftmod-service.test.ts",
-    "tests/migration-first-message.test.ts"
+    "tests/migration-first-message.test.ts",
+    "tests/dsh-packaged-css-paths.test.ts"
   ]
 }
