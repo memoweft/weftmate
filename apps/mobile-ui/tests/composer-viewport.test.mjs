@@ -61,12 +61,14 @@ test('mobile bundle keeps the composer and bottom tabs inside safe areas and abo
         if(keyboard){$('draft').focus();viewportRestHeight=innerHeight;}
         Object.defineProperty(visualViewport,'height',{configurable:true,value:keyboard?innerHeight-300:innerHeight});visualViewport.dispatchEvent(new Event('resize'));
         syncMobileKeyboard(keyboard);
+        toast('连接已恢复，草稿已保留');
       },{theme,keyboard});
       await page.waitForTimeout(100);
-      const g=await page.evaluate(()=>({height:visualViewport.height,pageHeight:document.documentElement.scrollHeight,layoutHeight:innerHeight,send:document.querySelector('#send-button').getBoundingClientRect().toJSON(),tabs:document.querySelector('#mobile-bottom-tabs').getBoundingClientRect().toJSON()}));
+      const g=await page.evaluate(()=>({height:visualViewport.height,pageHeight:document.documentElement.scrollHeight,layoutHeight:innerHeight,send:document.querySelector('#send-button').getBoundingClientRect().toJSON(),tabs:document.querySelector('#mobile-bottom-tabs').getBoundingClientRect().toJSON(),topbar:document.querySelector('.topbar').getBoundingClientRect().toJSON(),toast:document.querySelector('#toast').getBoundingClientRect().toJSON(),composer:document.querySelector('.composer-dock').getBoundingClientRect().toJSON()}));
       geometry.push({size,theme,keyboard,...g});
       if(out){await writeFile(resolve(out,'bundle-geometry.json'),JSON.stringify(geometry,null,2));await page.screenshot({path:resolve(out,`bundle-${size.width}-${theme}-${keyboard?'keyboard':'tabs'}.png`)});}
       assert.ok(g.send.bottom<=g.height+1,JSON.stringify(geometry.at(-1)));assert.ok(g.pageHeight<=g.layoutHeight+1);
+      assert.ok(g.toast.top>=g.topbar.bottom&&g.toast.bottom<=g.composer.top,JSON.stringify(geometry.at(-1)));
       if(!keyboard)assert.ok(g.tabs.bottom<=g.height+1&&g.tabs.height>0,JSON.stringify(geometry.at(-1)));
     }
   }finally{await browser.close();await f.close();}

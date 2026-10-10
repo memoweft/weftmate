@@ -61,14 +61,15 @@ test('UI-3m named controls preserve intent, edit/cancel races and latest output 
     await page.evaluate(()=>fixture.race=true);await racing.getByRole('button',{name:'取消',exact:true}).click();
     await racing.getByRole('status').getByText('已经开始，可以用停止',{exact:true}).waitFor();
     assert.equal(await racing.isVisible(),true);assert.equal(await page.getByRole('button',{name:'停止回复',exact:true}).isVisible(),true);
-    await page.getByRole('button',{name:'输出与来源',exact:true}).click();
+    const openResources=async()=>{await page.locator('#conversation-more').click();await page.getByRole('menuitem',{name:'输出与来源',exact:true}).click();};
+    await openResources();
     await page.getByRole('button',{name:/^报告.md/}).waitFor();assert.equal(await page.getByRole('button',{name:/^报告.md/}).count(),1);await page.getByRole('button',{name:/^报告.md/}).click();
     await page.getByText('最新报告内容',{exact:true}).waitFor();await page.getByText('旧版 · 1 个',{exact:true}).click();await page.getByRole('button',{name:'报告.md',exact:true}).click();await page.getByText('旧版报告内容',{exact:true}).waitFor();
-    await page.getByRole('button',{name:'返回对话',exact:true}).click();await page.getByRole('button',{name:'输出与来源',exact:true}).click();await page.getByRole('button',{name:/读取文件/}).click();await page.getByText('读取报告',{exact:true}).click();
+    await page.getByRole('button',{name:'返回对话',exact:true}).click();await openResources();await page.getByRole('button',{name:/读取文件/}).click();await page.getByText('读取报告',{exact:true}).click();
     await page.getByText('读取 1 个文件：notes.md',{exact:true}).waitFor();assert.equal(await page.getByText(/"路径"/).isVisible(),false);await page.getByText('详情',{exact:true}).click();assert.equal(await page.getByText(/"路径"/).isVisible(),true);
     await page.getByRole('button',{name:'返回对话',exact:true}).click();
     await page.evaluate(()=>{fixture.offlineResources=true;localStorage.setItem('weftmate-resources:qa:s1',JSON.stringify({outputs:[{artifactId:'old',fileName:'报告.md',createdAt:'2026-10-07T00:00:00Z'},{artifactId:'new',fileName:'报告.md',createdAt:'2026-10-08T00:00:00Z'}],sources:[]}));});
-    await page.getByRole('button',{name:'输出与来源',exact:true}).click();await page.getByText('离线 · 上次读取的内容',{exact:true}).waitFor();
+    await openResources();await page.getByText('离线 · 上次读取的内容',{exact:true}).waitFor();
     assert.equal(await page.getByRole('button',{name:/^报告.md/}).count(),1);await page.getByRole('button',{name:/^报告.md/}).click();await page.getByText('最新报告内容',{exact:true}).waitFor();await page.getByText('旧版 · 1 个',{exact:true}).waitFor();
     assert.deepEqual(errors,[]);
   }finally{await browser.close();server.closeAllConnections();await new Promise(done=>server.close(done));}

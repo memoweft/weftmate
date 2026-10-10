@@ -132,7 +132,7 @@ internal class CloudLogin(private val secrets: SecureSettings, private val api: 
     fun result(): HostIdentity {
         val value = JSONObject(secrets.cloudValue("result") ?: throw ApiFailure(401, "LOGIN_REQUIRED"))
         return HostIdentity(value.getString("origin"), value.getString("username"), value.getString("ownerId"),
-            value.getString("hostId"), value.getString("deviceId"), value.getString("cookie"), value.getString("csrf"))
+            value.getString("hostId"), value.getString("deviceId"), value.getString("cookie"), value.getString("csrf"), "cloud")
     }
     fun tokens(params: JSONObject): JSONObject {
         requireLegacyCloudTokensClear(params.has("value"), params.optString("value", ""))

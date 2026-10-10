@@ -30,8 +30,9 @@ async function installScript(){
  await page.addInitScript(initializePage);
 }
 const button=name=>page.getByRole('button',{name,exact:typeof name==='string'});
+async function openResources(){await page.locator('#conversation-more').click();await page.getByRole('menuitem',{name:'输出与来源',exact:true}).click();}
 const conversation=title=>button(new RegExp(`^${title} [0-9]`));
-async function settle(){await page.evaluate(()=>Promise.allSettled(document.getAnimations().map(a=>a.finished)));await page.waitForTimeout(30)}
+async function settle(){await page.evaluate(()=>Promise.allSettled(document.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished)));await page.waitForTimeout(30)}
 async function frames(name,action){
  await settle();await page.evaluate(()=>{window.__motionCapture=true;window.__motionFrames=[]});
  await action(); await page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));await page.evaluate(()=>{for(const a of document.getAnimations())if(!window.__motionFrames.includes(a)){a.pause();window.__motionFrames.push(a)}return document.fonts.ready});const samples=[];
@@ -114,7 +115,7 @@ try{
   await frames('execution-collapse',()=>page.getByText(/(?:执行了 1 步|读取了 1 个文件)/).click());
   await projectSteps(1);
   await frames('steps-enter',()=>projectSteps(3));
-  await frames('outputs-push',()=>button('输出与来源').click());await button(/^notes.md 1 次使用$/).waitFor();
+  await frames('outputs-push',openResources);await button(/^notes.md 1 次使用$/).waitFor();
   await frames('outputs-back',()=>button('返回对话').click());
   await home();
   await frames('drawer-open',()=>button('打开导航').click());
@@ -133,7 +134,7 @@ try{
  }
  phase='after';await preference(false);await report();
  await measure('execution-expand-collapse',async()=>{await page.getByText(/(?:执行了 1 步|读取了 1 个文件)/).click();await page.waitForTimeout(250);await page.getByText(/(?:执行了 1 步|读取了 1 个文件)/).click()});
- await measure('outputs-push-back',async()=>{await button('输出与来源').click();await button(/^notes.md 1 次使用$/).waitFor();await page.waitForTimeout(250);await button('返回对话').click()});
+ await measure('outputs-push-back',async()=>{await openResources();await button(/^notes.md 1 次使用$/).waitFor();await page.waitForTimeout(250);await button('返回对话').click()});
  await home();
  await measure('drawer-open-close',async()=>{await button('打开导航').click();await page.waitForTimeout(250);await button('关闭导航').click()});
  await report();
@@ -141,7 +142,7 @@ try{
  await page.evaluate(()=>{uiCore.state.models=[{id:'motion-model',displayName:'合成动效模型',configured:true,available:true}];uiCore.state.modelsKnown=true;updateComposer()});
  await page.getByRole('textbox',{name:'输入消息',exact:true}).fill('动效期间保留的合成草稿');
  const beforeScroll=await page.evaluate(()=>({top:$('chat-scroll').scrollTop,height:$('chat-scroll').scrollHeight}));
- await button('输出与来源').click();await settle();await button('返回对话').click();await settle();
+ await openResources();await settle();await button('返回对话').click();await settle();
  assert.deepEqual(await page.evaluate(()=>({top:$('chat-scroll').scrollTop,height:$('chat-scroll').scrollHeight})),beforeScroll);assert.equal(await page.getByRole('textbox',{name:'输入消息',exact:true}).inputValue(),'动效期间保留的合成草稿');checks.push('resource return preserves scroll, extent and draft');
  await page.evaluate(()=>{WeftMobileMotion.reveal($('chat-content'));});await preference(true);await page.waitForTimeout(30);assert.equal(await page.evaluate(()=>document.getAnimations().length),0);assert.equal(await page.locator('.motion-copy').count(),0);checks.push('live preference cancels animations and removes copies');await preference(false);
  await settle();await page.evaluate(()=>{$('motion-step-fixture')?.remove()});await projectSteps(21);await settle();
