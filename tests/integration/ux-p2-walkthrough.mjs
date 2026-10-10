@@ -15,6 +15,7 @@ const root=resolve(import.meta.dirname,'../..'),out=join(root,'tests/evidence/ux
 const before=process.argv.includes('--before'),phase=before?'before':'after';
 await mkdir(out,{recursive:true});
 const clean={...process.env};for(const key of Object.keys(clean))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete clean[key];
+clean.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const rows=[],errors=[],checks=[];let app,browser,f,profile;
 const b=(page,name)=>page.getByRole('button',{name,exact:true}).filter({visible:true});
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
