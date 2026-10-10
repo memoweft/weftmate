@@ -1483,7 +1483,7 @@ async function bootstrap() {
           freeActivity: desktopPetFreeActivity(),
         },
       };
-      void writeHostSnapshot(`${JSON.stringify(payload, null, 2)}\n`).catch(error => logCrash('host-state-write', error));
+      return writeHostSnapshot(`${JSON.stringify(payload, null, 2)}\n`).catch(error => logCrash('host-state-write', error));
     } catch (error) { logCrash('host-state-write', error); }
   }
   writeHostStateForLifecycle = writeHostState;
@@ -3636,11 +3636,13 @@ app.on('before-quit', (e) => {
     if (startupFailureReported && await personalBackupManager?.startupFailed()) backupRestartRequested = true;
     else await personalBackupManager?.finishShutdown({ safe: backupSafe });
   })();
-  void shutdownPromise.finally(() => {
-    cleanupDone = true;
+  void shutdownPromise.catch(error => logCrash('shutdown', error)).then(async () => {
     hostLifecycleState = 'stopped';
     runtimeOrigin = null;
-    writeHostStateForLifecycle?.();
+    // app.exit() does not drain asynchronous filesystem work. Wait for the
+    // final snapshot, including any older write already in this writer's lane.
+    await writeHostStateForLifecycle?.();
+    cleanupDone = true;
     if (backupRestartRequested) app.relaunch();
     app.exit(startupExitCode); // cleanup 完成后一次性退出；启动失败必须保留非零码。
   });
