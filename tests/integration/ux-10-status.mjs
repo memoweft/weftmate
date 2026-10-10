@@ -45,7 +45,7 @@ try {
  app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),args:['scripts/review-gallery/electron.mjs','--force-device-scale-factor=1'],cwd:resolve('.'),env:{...env,REVIEW_PROFILE:profile,REVIEW_ORIGIN:f.origin,REVIEW_THEME:'light'}});
  const page=await app.firstWindow();page.setDefaultTimeout(15000);page.on('pageerror',error=>report.errors.push(error.message));
  await page.addInitScript(()=>{let api;Object.defineProperty(globalThis,'WeftUiCore',{configurable:true,get:()=>api,set(value){api=value;const create=value.create;value.create=(...args)=>{const core=create(...args);globalThis.__statusCore=core;return core;};}});});
- await localUiSession(page,f.credentials,undefined,{mainChat:true});await page.waitForFunction(()=>__statusCore.state.mainChat.unread===false);assert.equal((await f.request('/chats/main')).chat.unread,false);report.checks.push({mainLatestReadCleared:true});
+ await localUiSession(page,f.credentials,undefined,{mainChat:true});await page.waitForFunction(()=>globalThis.__statusCore?.state.mainChat?.unread===false);assert.equal((await f.request('/chats/main')).chat.unread,false);report.checks.push({mainLatestReadCleared:true});
  for(const theme of ['light','dark']){
   await page.evaluate(theme=>{document.documentElement.dataset.theme=theme;WeftDesktop.toggleRail(false);document.getElementById('session-list').scrollTop=0;},theme);await page.mouse.move(1100,700);await page.evaluate(()=>document.activeElement?.blur());
   await shot(page,'electron-1200',theme,'all-statuses');
