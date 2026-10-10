@@ -33,12 +33,14 @@ function appendTimelineArtifact(parent,artifact,context=conversationTaskContext(
   wrap.append(open,el('small','',`${artifact.contentType||'文件'} · ${artifact.size||0} 字节`),save);parent.append(wrap)}
 
 function closeResourcePage({restoreFocus=true}={}){const view=state.resourceView;state.resourceView=null;
+  if($('mobile-bottom-tabs'))$('mobile-bottom-tabs').inert=false;
   if(!$('resource-page').hidden) { if(globalThis.WeftMobileMotion) WeftMobileMotion.hide($('resource-page'),true); else $('resource-page').hidden=true; }$('chat-page').removeAttribute?.('inert');
   $('main').removeAttribute?.('inert');document.querySelector('.topbar')?.removeAttribute?.('inert');
   if(view){$('chat-scroll').scrollTop=view.scrollTop;state.scrollPinned=view.scrollPinned;
     if(restoreFocus)view.trigger?.focus({preventScroll:true})}}
 
 function showResourcePage(title,context,trigger=document.activeElement){
+  if($('mobile-bottom-tabs'))$('mobile-bottom-tabs').inert=true;
   const previous=state.resourceView;
   const view={context,trigger:previous?.trigger||trigger,scrollTop:previous?.scrollTop??$('chat-scroll').scrollTop,
     scrollPinned:previous?.scrollPinned??state.scrollPinned};state.resourceView=view;state.scrollPinned=false;
