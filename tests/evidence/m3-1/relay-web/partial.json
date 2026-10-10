@@ -1,0 +1,4289 @@
+{
+  "startedAt": "2026-10-10T05:53:16.408Z",
+  "realCloudEntrypoint": "services/cloud/src/main.mjs",
+  "realElectronEntrypoint": ".",
+  "sourceCommit": "96fe9e4e18e10e24821d7fb9cd34cd0af9a66525",
+  "phase": "relay-web",
+  "baselineHost": false,
+  "steps": [
+    "Real cloud entrypoint health",
+    "Mobile registration, real file mail, sixty-second resend deadline and bundled legal reading",
+    "Real desktop approves the waiting phone and recipient imports trusted host delivery",
+    "Approved phone adopts the real host session before relay login",
+    "Real cloud entrypoint health",
+    "Real desktop approves the waiting phone and recipient imports trusted host delivery"
+  ],
+  "cloudTransport": "WSL docker-desktop; temporary standalone Alpine tools",
+  "visualChecks": [
+    {
+      "name": "login",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "login",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "waiting",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "waiting",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "relay-disconnected",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    }
+  ],
+  "httpErrors": [
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 401,
+      "code": "INVALID_CREDENTIALS"
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 404,
+      "code": "NOT_FOUND"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 503,
+      "code": "SERVICE_UNAVAILABLE"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/chats",
+      "status": 503,
+      "code": "RUNTIME_UNAVAILABLE"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/chats",
+      "status": 503,
+      "code": "RUNTIME_UNAVAILABLE"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/commands/by-request/cf0662fb-1ba9-4f06-856e-ba3f2c034e93",
+      "status": 404,
+      "code": "NOT_FOUND"
+    },
+    {
+      "path": "/personal/v1/commands/by-request/cf0662fb-1ba9-4f06-856e-ba3f2c034e93",
+      "status": 404,
+      "code": "NOT_FOUND"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/commands/by-request/cf0662fb-1ba9-4f06-856e-ba3f2c034e93",
+      "status": 404,
+      "code": "NOT_FOUND"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409,
+      "code": "OFFLINE_MODEL_REQUIRED"
+    }
+  ],
+  "cookieDiagnostics": [
+    {
+      "name": "wm_cloud_interaction",
+      "domain": "127.0.0.1",
+      "path": "/personal/v1/cloud"
+    },
+    {
+      "name": "wm_cloud_interaction.sig",
+      "domain": "127.0.0.1",
+      "path": "/personal/v1/cloud"
+    },
+    {
+      "name": "wm_cloud_session",
+      "domain": "127.0.0.1",
+      "path": "/personal/v1/cloud"
+    },
+    {
+      "name": "wm_cloud_session.sig",
+      "domain": "127.0.0.1",
+      "path": "/personal/v1/cloud"
+    },
+    {
+      "name": "wm_personal_session",
+      "domain": "127.0.0.1",
+      "path": "/personal/v1"
+    }
+  ],
+  "relayProbe": {
+    "status": 200
+  },
+  "relay": {
+    "state": "online",
+    "realFrp": true,
+    "realHAProxy": true,
+    "syntheticCAOnly": true,
+    "cloudHTTPFixtureCookieTransport": "process cookie jar; cloud identity signatures and relay host requests unchanged",
+    "randomFrontPort": true,
+    "identity": "fresh real cloud login at exact registered relay origin; desktop approved relay browser",
+    "requests": [
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/tokens.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/styles.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/native-desktop.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/offline.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/presence.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/message-actions.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/controls.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/goals.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/activity.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/library.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/usage.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/backup.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/personalization.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/settings.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/main-chat.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/onboarding.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/composer-extras.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/popovers.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/conversation-scroll.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/store.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/personalization.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/offline.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/offline.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/auth.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/shell.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/presence.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/presence.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/settings.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/backup.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/account.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/memory.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/attachments.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/sessions.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/messages.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/message-actions.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/message-actions.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/approvals.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/tasks.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/questions.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/resources.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/phone.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/composer.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/timeline-model.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/subtasks.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/appearance.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/settings-registry.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/client.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/cloud-auth.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/cloud-account.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/usage.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/update.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/schedules.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/chat-window.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/main-chat.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/activity.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/goals.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/library.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/markup.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/layout.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/format-vendor.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/icons.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/motion.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/desktop.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/steps.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/artifacts.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/timeline.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/cloud-vendor.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/cloud-login.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/cloud-ui.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/native-desktop.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/context.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/auth.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/shell.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/composer.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/messages.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/resources.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/sessions.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/approvals.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/usage.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/schedules.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/settings.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/backup.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/settings-controls.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/notifications.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/personalization.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/settings-navigation.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/account.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/cloud-settings.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/memory.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/attachments.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/question-bar.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/questions.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/tasks.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/phone.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/main-chat.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/activity-view.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/activity.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/goals-view.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/goals.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/library-view.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/library.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/onboarding-copy.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/onboarding.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/app.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/composer-subtasks.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/icons.svg"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/cloud/config"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/favicon.svg"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/brand/color-light.svg"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/auth/authorization"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/auth/login"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/auth/device/confirm"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/auth/authorization/resume"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/oidc/token"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/oidc/jwks"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/hosts/connect"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/oidc/token"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/oidc/jwks"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/auth/cloud-nonce"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/auth/cloud-session"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/devices"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/hosts/connect"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/auth/cloud-nonce"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/auth/cloud-session"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/devices"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/hosts/connect"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/auth/cloud-nonce"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/auth/cloud-session"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/cloud/devices/pending"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/settings/personalization"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/settings/personalization"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/activity/unread"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/models"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/settings/models"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats/chat-8258c8f7-a7e4-48c2-be2b-cacf92c15cf6/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/cloud/devices/pending"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/settings/personalization"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/activity/unread"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/models"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/settings/models"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats/chat-8258c8f7-a7e4-48c2-be2b-cacf92c15cf6/changes"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/tokens.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/styles.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/native-desktop.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/offline.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/presence.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/message-actions.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/controls.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/goals.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/activity.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/library.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/usage.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/backup.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/personalization.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/settings.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/main-chat.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/onboarding.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/composer-extras.css"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/popovers.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/conversation-scroll.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/store.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/personalization.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/offline.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/offline.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/auth.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/shell.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/presence.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/presence.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/settings.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/backup.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/account.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/memory.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/attachments.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/sessions.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/messages.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/message-actions.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/message-actions.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/approvals.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/tasks.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/questions.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/resources.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/phone.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/composer.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/timeline-model.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/subtasks.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/appearance.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/settings-registry.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/client.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/cloud-auth.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/cloud-account.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/usage.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/update.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/schedules.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/chat-window.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/main-chat.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/activity.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/goals.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/library.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/markup.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/layout.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/format-vendor.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/icons.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/motion.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/desktop.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/steps.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/artifacts.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/timeline.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/cloud-vendor.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/cloud-login.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/cloud-ui.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/native-desktop.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/context.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/auth.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/shell.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/composer.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/messages.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/resources.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/sessions.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/approvals.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/usage.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/schedules.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/settings.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/backup.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/settings-controls.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/notifications.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/personalization.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/settings-navigation.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/account.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/cloud-settings.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/memory.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/attachments.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/question-bar.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/questions.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/tasks.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/phone.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/main-chat.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/activity-view.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/activity.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/goals-view.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/goals.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/library-view.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/library.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/onboarding-copy.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/components/onboarding.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/app.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/composer-subtasks.js"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/icons.svg"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/cloud/config"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/favicon.svg"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/ui/brand/color-light.svg"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/hosts/connect"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/auth/cloud-nonce"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/auth/cloud-session"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/cloud/devices/pending"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/settings/personalization"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/settings/personalization"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/activity/unread"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/models"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/settings/models"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats/chat-8258c8f7-a7e4-48c2-be2b-cacf92c15cf6/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/projects"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/commands"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats/chat-8258c8f7-a7e4-48c2-be2b-cacf92c15cf6/changes"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/usage"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sync/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/cloud/devices/pending"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/projects"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/settings/personalization"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/metadata"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/approval-mode"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/activity/unread"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/approvals"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/questions"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/models"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/settings/models"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/projects"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/commands"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/approvals"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/questions"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/tasks/cmd-c0af86ce-55af-4c9b-820a-10d372a2e3c1"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/settings/usage"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/message-branches"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sync/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/approvals"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/questions"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/tasks/cmd-c0af86ce-55af-4c9b-820a-10d372a2e3c1"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/approvals"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/questions"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/tasks/cmd-c0af86ce-55af-4c9b-820a-10d372a2e3c1"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/hosts/connect"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/hosts/connect"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/cloud/devices/pending"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/hosts/connect"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/hosts/connect"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/settings/personalization"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/activity/unread"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/models"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/settings/models"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/projects"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/commands"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/approvals"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/projects"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23/questions"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/usage"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sync/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/tasks/cmd-c0af86ce-55af-4c9b-820a-10d372a2e3c1"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/metadata"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/approval-mode"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/approvals"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/questions"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/approvals"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/questions"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/message-branches"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/cloud/devices/pending"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/devices"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/settings/personalization"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/activity/unread"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/models"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/settings/models"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/projects"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/commands"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/approvals"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/questions"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/usage"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sync/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/tasks/cmd-60c9c889-bbb9-454e-bc74-127561fd374c"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/approvals"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/questions"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/tasks/cmd-60c9c889-bbb9-454e-bc74-127561fd374c"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/settings/personalization"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/activity/unread"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/models"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/settings/models"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/projects"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/commands"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/approvals"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/questions"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/usage"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sync/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/tasks/cmd-60c9c889-bbb9-454e-bc74-127561fd374c"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/cloud/devices/pending"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/settings/personalization"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/activity/unread"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/models"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/settings/models"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/projects"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/commands"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/approvals"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/questions"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/usage"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sync/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/tasks/cmd-60c9c889-bbb9-454e-bc74-127561fd374c"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/approvals"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/questions"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/tasks/cmd-60c9c889-bbb9-454e-bc74-127561fd374c"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats/chat-8258c8f7-a7e4-48c2-be2b-cacf92c15cf6/events"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/commands"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats/chat-8258c8f7-a7e4-48c2-be2b-cacf92c15cf6/changes"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/commands/by-request/cf0662fb-1ba9-4f06-856e-ba3f2c034e93"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/commands/by-request/cf0662fb-1ba9-4f06-856e-ba3f2c034e93"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats/chat-8258c8f7-a7e4-48c2-be2b-cacf92c15cf6/changes"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/commands/by-request/cf0662fb-1ba9-4f06-856e-ba3f2c034e93"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/chats/chat-8258c8f7-a7e4-48c2-be2b-cacf92c15cf6/changes"
+      },
+      {
+        "host": "h-4bfb4a324ad6aa47340750b6eecd4fe4.hosts.example.com",
+        "path": "/personal/v1/commands/by-request/cf0662fb-1ba9-4f06-856e-ba3f2c034e93"
+      }
+    ]
+  },
+  "presence": {
+    "checks": [
+      {
+        "name": "Actual HAProxy termination during fixed DSH stream",
+        "passed": true,
+        "modelGenerations": 1,
+        "segments": 90,
+        "exactReply": true,
+        "uniqueSeq": 7
+      },
+      {
+        "name": "Host content listener close/start preserves original native stream",
+        "passed": true,
+        "scope": "HTTP host restart; runtime process stays alive",
+        "segments": 90
+      }
+    ],
+    "fixedDsh": true,
+    "realElectron": true,
+    "fullRelay": true,
+    "randomPorts": true,
+    "syntheticAccount": true
+  },
+  "passed": false,
+  "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'undelivered'\n- 'accepted'\n",
+  "pageErrors": [],
+  "failedRequests": [
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 503
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/chats",
+      "status": 503
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/chats",
+      "status": 503
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/status",
+      "status": 502
+    },
+    {
+      "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events",
+      "status": 502
+    },
+    {
+      "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events",
+      "status": 502
+    },
+    {
+      "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events",
+      "status": 502
+    },
+    {
+      "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events",
+      "status": 502
+    },
+    {
+      "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events",
+      "status": 502
+    },
+    {
+      "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events",
+      "status": 502
+    },
+    {
+      "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events",
+      "status": 502
+    },
+    {
+      "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events",
+      "status": 502
+    },
+    {
+      "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events",
+      "status": 502
+    },
+    {
+      "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events",
+      "status": 502
+    },
+    {
+      "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events",
+      "status": 502
+    },
+    {
+      "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events",
+      "status": 502
+    },
+    {
+      "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events",
+      "status": 502
+    },
+    {
+      "path": "/personal/v1/sessions/session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd/events",
+      "status": 502
+    },
+    {
+      "path": "/personal/v1/status",
+      "status": 502
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/commands/by-request/cf0662fb-1ba9-4f06-856e-ba3f2c034e93",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/commands/by-request/cf0662fb-1ba9-4f06-856e-ba3f2c034e93",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/commands/by-request/cf0662fb-1ba9-4f06-856e-ba3f2c034e93",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 409
+    }
+  ]
+}

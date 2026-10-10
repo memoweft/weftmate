@@ -77,7 +77,7 @@
 .settings-dialog ::selection { background: var(--accent-soft); color: var(--ink); }
 @media (max-width: 719px) {
   .settings-dialog { width: calc(100vw - var(--wm-space-24)); height: calc(100dvh - var(--wm-space-48)); }
-  .settings-dialog[open] { grid-template-columns: minmax(0, 1fr); }
+  .settings-dialog[open] { grid-template-columns: minmax(0, 1fr); grid-template-rows:auto minmax(0,1fr); }
   .settings-sidebar { border-right: 0; border-bottom: var(--wm-space-1) solid var(--line); padding: var(--wm-space-12) var(--wm-space-20); }
   .settings-navigation { display: none; }
   .settings-category-picker { display: block; margin: 0 var(--wm-space-20) var(--wm-space-12); width: calc(100% - var(--wm-space-40)); }

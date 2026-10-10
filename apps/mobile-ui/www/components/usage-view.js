@@ -100,8 +100,10 @@ globalThis.WeftUsageView = function (core, target, { sessionId = '', current = (
 if (globalThis.WeftUiComponents) globalThis.WeftUiComponents.factories.usage = (core, ui) => {
     let activeScope = null;
     let conversationButton;
+    let phoneProfile;
     function renderConversationUsage() {
         if (conversationButton) conversationButton.hidden = core.state.newConversation || !core.state.selectedSessionId || core.state.activeChatSource === 'phone' || core.inMainChat?.() === true;
+        if(phoneProfile){const avatar=ui.byId('rail-avatar-image').parentElement.cloneNode(true);for(const node of avatar.querySelectorAll('[id]'))node.removeAttribute('id');phoneProfile.replaceChildren(avatar);}
     }
     function showSettingsUsage({ sessionId = '' } = {}) {
         const target = document.querySelector('[data-category="usage"].settings-category');
@@ -117,6 +119,14 @@ if (globalThis.WeftUiComponents) globalThis.WeftUiComponents.factories.usage = (
             ui.openSettings('usage', { sessionId: core.state.selectedSessionId });
         });
         globalThis.WeftUiLayout.mountUsage(conversation);
+        if(globalThis.weftmateDesktop)return;
+        const more=ui.element('button','icon-button phone-conversation-more');more.type='button';more.setAttribute('aria-label','对话操作');more.setAttribute('aria-haspopup','menu');more.append(WeftIcons.create('more',20));
+        more.addEventListener('click',()=>WeftPopover.menu(more,[
+            {name:'输出与来源',icon:'folder',action:()=>window.WeftDesktop.showResources(more)},
+            ...(!conversation.hidden?[{name:'本对话用量',icon:'chart',action:()=>conversation.click()}]:[])
+        ]));
+        conversation.before(more);
+        phoneProfile=ui.element('button','icon-button phone-header-profile');phoneProfile.type='button';phoneProfile.setAttribute('aria-label','个人资料与设置');phoneProfile.addEventListener('click',()=>ui.openSettings('account'));conversation.after(phoneProfile);renderConversationUsage();
     }
     return { mountUsage, showSettingsUsage, renderConversationUsage };
 };

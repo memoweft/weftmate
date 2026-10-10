@@ -1,0 +1,146 @@
+✔ real HTML IDs support bootstrap and ResizeObserver without app.failed (42.8331ms)
+✔ bootstrap restores a new-conversation draft before the empty composer can overwrite it (12.7184ms)
+✔ Android updates show the official package link and QR while Back keeps the draft (7.1982ms)
+✔ error toast is tappable, visibly fades, and reentry cancels an older hide (7.9381ms)
+✔ transient chat errors use only the toast while ordinary progress stays inline (4.6058ms)
+✔ attachment draft belongs to account and conversation, and only receipt IDs cross the bridge (8.7276ms)
+✔ unknown native picker leaves text draft and reports failure (4.5072ms)
+✔ picker event after more than 45 seconds restores draft without a bridge timeout (6.7928ms)
+✔ picker cancellation and Back clear waiting without losing text or accepting late results (7.5915ms)
+✔ failed picker event shows a dismissible error and leaves the message draft (4.2628ms)
+✔ account switch rejects late picker event and old picker timeout reports app incompatibility (9.4397ms)
+✔ attachment only send does not retry, preserves draft on error, and clears on accepted reply (5.9339ms)
+✔ HTTP failure classification is safe and can remain in the conversation (7.6284ms)
+✔ restored failed turn keeps a safe reason in its conversation and back closes selection first (10.6396ms)
+✔ accepted send followed by upstream failure restores private attachments without resending (6.496ms)
+✔ completed new turn before send reply adopts its conversation and keeps terminal status (5.3527ms)
+✔ send timeout without durable evidence preserves draft and blocks accidental resend (5.1539ms)
+✔ durable completion before bridge timeout resolves saving status without a second send (5.6904ms)
+✔ account transition hides the previous account attachment view (4.8664ms)
+✔ native draft list restores only the current account and conversation (7.1126ms)
+✔ late native list cannot revive an attachment removed while it was loading (5.7529ms)
+✔ shared history follows exact session ID across pages and rejects the previous selection (14.8067ms)
+✖ shared send keeps phone drafts separate and blocks uncertain duplicate (7.7571ms)
+✔ host image picker scopes drafts to the exact DSH session and offers file selection (12.3734ms)
+✔ host file picker keeps one attachment UUID under the selected DSH session (6.7897ms)
+✔ host draft preview uses its session-scoped attachment-UUID original instead of the thumbnail (8.3821ms)
+✔ draft display URL stays inside its owner and conversation and falls back for old data (5.1373ms)
+✔ host image send uses one request ID and clears image drafts only after acceptance (25.5068ms)
+✔ host session waits for native outbox before another image request can be sent (7.6201ms)
+✔ shared history previews only the exact session media URL and preserves text-only legacy rows (7.8624ms)
+✔ accepted shared send clears its draft and shared stop uses the selected session (5.9006ms)
+✔ supplement and resume commands stay in their root file task card (5.1707ms)
+✔ older outbox snapshot cannot clear a newly submitted shared request (9.6094ms)
+✔ account transition invalidates late shared history and clears its selection (6.0626ms)
+✔ switching back to a phone conversation keeps local send on chat.send (5.8254ms)
+✔ one searchable recent list mixes exact phone and computer IDs with honest model and execution source (15.8064ms)
+✔ late A conversation list cannot replace the unified drawer after switching to B (10.054ms)
+✔ image validation and preview errors describe current limits (4.154ms)
+✔ assistant messages and live progress use content alignment without per-message avatars (3.6274ms)
+✔ burst streaming coalesces Markdown updates to one frame and preserves the live content container (6.4943ms)
+✔ streaming preserves scroll-back and ignores a queued frame after the turn ends (3.4226ms)
+✔ live follow moves directly to the bottom and never pulls upward as content grows (3.2358ms)
+✔ 100 growing snapshots follow monotonically at 60Hz (9.017ms)
+✔ 100 growing snapshots follow monotonically at 120Hz (7.8354ms)
+✔ 100 growing snapshots follow monotonically at 180Hz (6.1349ms)
+✔ manual scroll-back stops live follow but still reveals text, and a stale frame cannot revive it (4.0728ms)
+✔ a revised stream snapshot and saved completion show exact final text (4.1465ms)
+✔ native draft thumbnail opens a full-screen preview and Back restores the same attachment control (6.3791ms)
+✔ image preview closes immediately when reduced motion is requested (5.1192ms)
+✔ persisted user images render without filename, remain phone-scoped, and close on account change (5.8701ms)
+✔ late phone message projection cannot restore another account thumbnail after switching (6.2472ms)
+✔ phone message keeps real text and file names while omitting image labels and status (4.7866ms)
+✔ image-only messages show multiple uncropped images in order without a visible caption (3.7995ms)
+✔ shared phone image opens its scoped original without visible sync status (7.562ms)
+✔ large or unknown original images never decode automatically in the chat timeline (15.7827ms)
+✔ image preview rejects other hosts, attachment IDs, conversation IDs and unexpected queries (4.7294ms)
+✔ sync completion refreshes only the current phone conversation and drops an A-to-B reply (5.5118ms)
+✔ UI-2a category approval preserves scope and original request through timeout and restart (22.2502ms)
+✔ UI-2a category permission remains unavailable without a server risk category (7.5098ms)
+✔ UI-2a approval mode late reads cannot label another conversation or account (5.8775ms)
+✔ UI-2a an older mode read cannot overwrite a newly saved mode in the same conversation (4.9864ms)
+✔ dedicated approvals and questions stay actionable when the general activity index is unavailable (13.1046ms)
+✔ task15-question-client sequential single, multiple and free answers preserve exact labels without granting a tool permission (13.0824ms)
+✔ task15-question-client original repeated or empty IDs and empty selections remain legal while answer shape follows each original question (4.4269ms)
+✔ task15-question-client an uncertain source or network result keeps the same batch and can explicitly retry its persisted original answer (19.3709ms)
+✔ task15-question-client a replayed answered snapshot cannot downgrade native completion and task cancellation does not submit another answer (17.5779ms)
+✔ task15-question-client pagination uses the batch UUID and reads an older pending task by its original source identity (7.6259ms)
+✔ task15-question-client closing a view preserves question drafts and late account replies cannot display another account answer (11.6867ms)
+✔ task15-question-client native answer uses a dedicated route with requestId and answer under the existing identity guards (2.2611ms)
+✔ task15-approval-client pending approvals follow exact root and supplement receipts without persistent ordinary-chat controls (8.5543ms)
+✔ task15-approval-client allowed-once records the decision once and waits for native processing (9.5858ms)
+✔ task15-approval-client rejected records the decision once and waits for native processing (12.4819ms)
+✔ task15-approval-client an unknown network reply is read back and can retry only its persisted request on the same device (27.2885ms)
+✔ task15-approval-client replayed answered receipts cannot regress an already-read resolved or unavailable approval (20.3784ms)
+✔ task15-approval-client task cancellation and other invalidation have different messages and no decision buttons (12.3104ms)
+✔ task15-approval-client paging omits the first cursor and loads older pending tasks by their exact task identity (7.5053ms)
+✔ task15-approval-client a changed call tuple cannot update a known approval and late account/device/session results stay out of the new view (25.7102ms)
+✔ task15-approval-client leaving during a decision retains its marker and returning to the original task reads native processing (7.8287ms)
+✔ task15-approval-client native methods use dedicated authenticated routes and keep both account guards (2.0344ms)
+✖ terminal-output-limit mobile history requires the normalized pair and preserves legacy terminal meanings (15.8946ms)
+✔ terminal-output-limit mobile keeps an old pure-reply card bound to its source while newer turns clear the timeline (9.0241ms)
+✔ terminal-output-limit mobile session and account boundaries reject late old reasons (12.1867ms)
+✔ synthetic mobile tool progress follows dotted RPC identity and keeps unrelated execution receipts hidden (6.647ms)
+✔ synthetic ordinary mobile chat and invalid RPC IDs do not show execution cards (29.1907ms)
+✔ synthetic mobile failed detail stays recoverable, and a late receipt relocates its unchanged failure card (13.9365ms)
+✔ synthetic late mobile task payload cannot cross account epoch or conversation boundaries (12.3092ms)
+✔ manual shared status check reconciles the saved request once and refreshes connectivity (7.0068ms)
+✔ restart restores only a live owner-scoped shared session (16.1264ms)
+✔ owner switch and removed shared session fall back without showing old account content (16.205ms)
+✔ switching chat source clears transient acceptance and matching turn end clears it (6.0277ms)
+✔ M1-0 mobile execution is collapsed by default, groups calls once, and ends across a card boundary (8.4102ms)
+✔ M0-3 mobile requests the tail first, prepends older events, and preserves the forward cursor (9.8286ms)
+✔ M1-0 mobile native bridge preserves beforeSeq and accepts the shared timeline event families (1.9569ms)
+✔ consecutive steps show readable descriptions before their raw detail (6.8843ms)
+✔ model restart stays pending on mobile through a two-minute native load and is not resubmitted (13.6649ms)
+ℹ tests 95
+ℹ suites 0
+ℹ pass 93
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1058.5485
+
+✖ failing tests:
+
+test at apps\mobile-ui\tests\chat-interactions.test.mjs:397:1
+✖ shared send keeps phone drafts separate and blocks uncertain duplicate (7.7571ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /待核对/. Input:
+
+  ''
+
+      at TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w3/apps/mobile-ui/tests/chat-interactions.test.mjs:412:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '',
+    expected: /待核对/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at apps\mobile-ui\tests\chat-interactions.test.mjs:1330:1
+✖ terminal-output-limit mobile history requires the normalized pair and preserves legacy terminal meanings (15.8946ms)
+  AssertionError [ERR_ASSERTION]: {"reason":"unknown","endReasonKind":"max-tokens"}
+  + actual - expected
+
+  + '电脑那边的进度还没确认'
+  - '电脑回合状态待确认'
+       ^
+
+      at TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w3/apps/mobile-ui/tests/chat-interactions.test.mjs:1344:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '电脑那边的进度还没确认',
+    expected: '电脑回合状态待确认',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
