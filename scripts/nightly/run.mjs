@@ -48,7 +48,7 @@ async function phase(name, platforms, action) {
   const began = Date.now(), item = { name, platforms, status: 'passed' }; phases.push(item);
   console.log(`Start ${name}`);
   try { const result = await action(); if (result) Object.assign(item, result); }
-  catch (error) { item.status = 'failed'; item.reason = error.message; }
+  catch (error) { item.status = 'failed'; item.reason = error.message.replace(/[A-Z]:[\\/][^\s"']+/gi, '[local artifact]'); }
   item.seconds = (Date.now() - began) / 1000;
   console.log(`${name}: ${item.status} (${item.seconds.toFixed(1)}s)${item.reason ? ' · ' + item.reason : ''}`);
   return item.status === 'passed';
@@ -76,8 +76,11 @@ try {
     const dirty = (await run('git', ['status', '--porcelain'], { name: 'worktree-status' })).output.trim();
     if (dirty) throw Error('专用回归工作树存在未提交修改，保留并退出');
     await run('git', ['checkout', '--detach', sourceCommit], { name: 'checkout' });
-    engineScripts = join(worktree, 'scripts/nightly');
-    reporting = await import(pathToFileURL(join(engineScripts, 'report.mjs')).href);
+    const candidateScripts = join(worktree, 'scripts/nightly');
+    try { await readFile(join(candidateScripts, 'report.mjs')); }
+    catch { throw Error('所选主干尚未包含 R0-3；合并前验证请使用 -Candidate'); }
+    reporting = await import(pathToFileURL(join(candidateScripts, 'report.mjs')).href);
+    engineScripts = candidateScripts;
     // npm ci only if the exact lockfile changed. Local dependencies are not shared
     // with developer trees and never point to another package's node_modules.
     const lock = await readFile(join(worktree, 'package-lock.json'), 'utf8');

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-10T00:36:49.134Z",
-  "sourceCommit": "47e869f60c9f78ef61faa5889adf5ace070dbd14",
-  "sourceDurationSeconds": 118.925,
+  "generatedAt": "2026-10-10T00:47:32.604Z",
+  "sourceCommit": "427fea6c6db12e2ab4cc63a7828b4ffe539858d6",
+  "sourceDurationSeconds": 150.524,
   "deletedImage": "missing alarm passed",
   "oldTimestamp": "stale alarm passed",
   "sceneFailure": "failed alarm passed",
