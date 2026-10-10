@@ -54,8 +54,7 @@ for (const theme of ['light', 'dark']) {
     }, fixture.credentials);
     const home = async () => {
       await page.goto(fixture.origin + '/personal/v1/ui');
-      await button(/^项目进度报告/).click();
-      await button('批准').waitFor();
+      try{await button(/^项目进度报告/).click();await button('批准').waitFor()}catch(error){console.error('Synthetic desktop landing:',await page.locator('body').innerText());throw error;}
     };
     const settings = async () => { await home(); await button('账户菜单').click(); await button('设置').click(); };
     const preparations = {

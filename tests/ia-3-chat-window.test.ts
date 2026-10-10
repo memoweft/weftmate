@@ -6,6 +6,17 @@ const context: any = { Intl, Date };
 runInNewContext('globalThis.WeftUiCore = {};\n' + readFileSync(new URL('../src/ui-core/chat-window.js', import.meta.url), 'utf8'), context);
 const model = context.WeftUiCore.ChatWindow;
 const event = (n: number, text = '纸船') => ({ eventId: `event-${n}`, orderKey: String(n).padStart(16, '0'), revision: 1, at: '2026-10-08T10:00:00Z', type: 'assistant.message', data: { text } });
+
+test('Android locale formatting cannot change ISO day identity or break old-day labels', () => {
+  const androidIntl = { DateTimeFormat: class {
+    format() { return '10/08/2026'; }
+    formatToParts() { return [{type:'month',value:'10'},{type:'literal',value:'/'},{type:'day',value:'08'},{type:'literal',value:'/'},{type:'year',value:'2026'}]; }
+  } };
+  const scope:any={Intl:androidIntl,Date};
+  runInNewContext('globalThis.WeftUiCore={};\n'+readFileSync(new URL('../src/ui-core/chat-window.js',import.meta.url),'utf8'),scope);
+  assert.equal(scope.WeftUiCore.ChatWindow.day('2026-10-08T10:00:00Z','Asia/Shanghai'),'2026-10-08');
+  assert.doesNotThrow(()=>scope.WeftUiCore.ChatWindow.label('2026-10-03','Asia/Shanghai'));
+});
 test('logical history keeps the live watermark independent, deduplicates revisions and bounds retained models', () => {
   const window = model.create(1000);
   window.merge({items: [event(100)], syncCursor: 'live-1', olderCursor: 'older-1', hasOlder: true, contentRevision: 1}, 'tail');

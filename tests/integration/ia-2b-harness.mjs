@@ -93,7 +93,7 @@ export async function harness(label, { memory = true, mainChat = false, provider
     const modelProfileId = (await api('/models')).body.models.find(row => row.name === 'ia2b-mimo').id;
     const hostId = (await api('/status')).body.hostId;
     if (memory) { await api('/settings/models', { backgroundModelProfileId: modelProfileId }, 'PATCH'); await until(async () => ['ready','degraded'].includes((await api('/memory/status')).body.state)); }
-    return { base, profile, ownerId, modelProfileId, hostId, api, command, complete, launch, close, usage,
+    return { base, profile, ownerId, modelProfileId, hostId, api, command, complete, launch, close, usage, credentials:{username,password},
       get app() { return app; }, get page() { return page; }, get launches() { return launches; } };
   } catch (error) { await close(); throw error; }
 }

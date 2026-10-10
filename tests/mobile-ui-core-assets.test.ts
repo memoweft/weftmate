@@ -96,7 +96,7 @@ test('publish command refuses stale generated assets before creating a release',
     'src/personal-access-ui/components/activity-view.js', 'src/personal-access-ui/activity.css', 'apps/mobile-ui/www/components/activity-view.js', 'apps/mobile-ui/www/activity.css',
     'src/personal-access-ui/components/offline.js', 'src/personal-access-ui/offline.css', 'apps/mobile-ui/www/components/offline.js', 'apps/mobile-ui/www/offline.css',
     'apps/mobile-ui/src/check.mjs', 'scripts/build-mobile-ui.mjs', 'src/personal-access/mobile-ui-release.mjs', 'src/personal-update/manifest.mjs', 'src/personal-access-ui/components/question-bar.js', 'src/personal-access-ui/components/usage.js', 'src/personal-access-ui/components/settings-controls.js', 'src/personal-access-ui/components/schedules.js', 'src/personal-access-ui/usage.css', 'src/personal-access-ui/popovers.js', 'apps/mobile-ui/www/popovers.js',
-    'src/personal-access-ui/conversation-scroll.js', 'apps/mobile-ui/www/conversation-scroll.js',
+    'src/personal-access-ui/conversation-scroll.js', 'apps/mobile-ui/www/conversation-scroll.js', 'src/personal-access-ui/components/main-chat.js', 'apps/mobile-ui/www/components/main-chat.js',
     'src/personal-access-ui/message-actions.js', 'src/personal-access-ui/message-actions.css', 'apps/mobile-ui/www/message-actions.js', 'apps/mobile-ui/www/message-actions.css',
     'src/personal-access-ui/icons.js', 'apps/mobile-ui/www/icons.js',
     'docs/legal/terms-zh.md', 'docs/legal/privacy-zh.md', 'apps/mobile-ui/www/legal/terms-zh.txt', 'apps/mobile-ui/www/legal/privacy-zh.txt']) {

@@ -123,6 +123,11 @@ export async function startTimelineCandidate(options = {}) {
   if (!options.inlineProgress) artifact = await service.submitToolArtifact({ sessionId, turn: 1, callId: 'artifact-1', messageHash: hash(goal), fileName: '项目进度报告.md', content: '# 项目进度报告\n\n已读取 3 个文件。42 项测试通过。\n' })
   if (artifact) {call('write', 'artifact-1', {fileName:artifact.fileName});result('artifact-1',JSON.stringify(artifact))}
   const bridge = async (method, params) => {
+    if (method === 'host.status') { const status=await request('/status'); return options.logicalMobile?status:{...status,personalCapabilities:{...status.personalCapabilities,chats:0}}; }
+    if (options.logicalMobile && method === 'shared.send' && params.chatId) {
+      const result = await request('/commands', {kind:'chat.message',targetDeviceId:hostId,...params}, 'POST');
+      return {command:result.command};
+    }
     if (method === 'cloud.callback') return {};
     if (method === 'shared.send') {
       const row = await command({requestId:params.requestId,kind:'session.message',sessionId:params.sessionId,text:params.text,intent:params.intent,targetDeviceId:hostId});

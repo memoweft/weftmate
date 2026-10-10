@@ -28,6 +28,9 @@
       const pathname = url.pathname, query = url.searchParams;
       const match = expression => expression.exec(pathname);
       let row;
+      if (pathname === '/personal/v1/status') return call('host.status');
+      if (pathname === '/personal/v1/commands' && method === 'POST' && body?.kind === 'session.side.create')
+        return call('host.business', { path:pathname,method,body });
       if (pathname === '/personal/v1/auth/me') {
         const profile = await call('auth.me');
         return { ...profile, account: account(profile), device: profile.device, csrfToken: 'native-managed' };
