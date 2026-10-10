@@ -103,6 +103,13 @@ export async function handlePersonalMemoryHttp({ manager, ownerId, request, path
   const method = request.method;
   const path = canonicalMemoryPathname(pathname);
   if (path === null) throw failure('INVALID_REQUEST');
+  const retryFormation = path.match(/^\/personal\/v1\/memory\/formation\/([^/]+)\/retry$/);
+  if (method === 'POST' && retryFormation) {
+    const body = await readJson(request);
+    if (url.search) throw failure('INVALID_REQUEST');
+    if (!record(body) || typeof body.requestId !== 'string' || !body.requestId.trim() || body.requestId.length > 128) throw failure('INVALID_REQUEST');
+    return { status: 202, body: await manager.retryFormation(ownerId, retryFormation[1], body.requestId) };
+  }
   if (method === 'GET' && path === '/personal/v1/memory/status') {
     if (url.search) throw failure('INVALID_REQUEST');
     return { status: 200, body: await manager.status(ownerId) };
@@ -232,7 +239,7 @@ export async function handlePersonalMemoryHttp({ manager, ownerId, request, path
           result.provenance.length > 200 || Buffer.byteLength(JSON.stringify(result), 'utf8') > MAX_DETAIL_BYTES) {
         throw failure('MEMORY_RESPONSE_INVALID', 503);
       }
-      const sources = result.provenance.flatMap((source) => {
+      const sources = [...result.provenance, ...(result.successor_provenance ?? []).map(source => ({...source, relation: 'superseded_by'}))].flatMap((source) => {
         const userSource = {
         evidenceId: bounded(source.evidence_id, 512), relation: bounded(source.relation, 64),
         currentnessState: bounded(source.currentness_state, 64),

@@ -1272,3 +1272,14 @@ Windows（视窗系统）程序与远程手机网页、Android（安卓）界面
 账户沿第7节注册 / 登录 / 本地设置流程；称呼写 ST-1 的 `PATCH /settings/personalization {preferredName}`；模型沿 `/account/models/check`、保存回执与 `/settings/models`，中断后只保存非秘密请求编号并核对原回执；记忆沿第11节状态和只读补整理预览，不自动运行；导入入口置灰。连接手机沿第7节一次性二维码 / 配对码及设备允许 / 拒绝，不新建信任协议。一次性码持有与同账户验证是原扫码批准路径；无配对码的新设备仍须在已登录电脑上明确允许。
 
 Apple（苹果端）：Mac 执行宿主按本节读取安装进度并保存步骤，远程 iPhone / Mac 只接「连电脑」说明与现有扫码 / 批准流程；Watch（手表）不显示七步引导。文案与提供方获取密钥说明的中文来源为 `src/ui-core/onboarding-copy.js`，英文随 L10N-1 补齐。
+
+
+### FX-17：纠正形成状态与重试
+
+`GET /memory/status` 增加可选 `failedCorrectionCount` 与 `formationIssues`。后者每项为 `{jobId,evidenceId,sessionId,text,intent,createdAt}`，`intent` 为 `correction` 或 `remember`。仅包含本账户可读、明确纠正／要求记住但形成被拒绝的原话；`no_change` 不再自动等同健康。重试中的作业计入既有 `pendingFormationCount`，成功或原话撤回后不再列入失败项。`GET /status.memory` 与 `/system.memory` 同样可带上述两字段。客户端应在对应回合下提示未生效，并在记忆健康处展开原话。
+
+新增 `POST /memory/formation/{jobId}/retry`，请求 `{requestId}`（非空字符串，最多128字符），返回202与原生形成回执（包含 `job_id,original_job_id`）。复用同一 `requestId` 核对不确定请求；明确发起另一轮重试使用新ID（标识）。权限为 `account:manage`，沿用同源与CSRF（跨站请求伪造防护）校验。宿主只调用Core（记忆核心）原生重处理，不直接改库，也不把202描述为形成成功。仍失败的重试可再次重试。
+
+动态复用 `memory.report` 类型，显示“有 1 条纠正没有生效”，动作 `view_memory` 打开原话与重试入口；重新处理后更新该条状态。来源接口 `sources[].relation` 可为 `superseded_by`，表示取代该旧理解的纠正原话，原来源不覆盖。
+
+Windows（视窗系统）与远程网页已有健康、动态、对应回合提示及重试。安卓界面包新增健康展开与重试，沿用现有记忆业务路由，不需要新增原生权限／版本号；Apple（苹果客户端）需接上述可选字段和重试路径，旧客户端可忽略。后台异步形成时，助手只确认“我记下了，稍后整理进记忆”；只有实际形成结果才能支持完成声明。

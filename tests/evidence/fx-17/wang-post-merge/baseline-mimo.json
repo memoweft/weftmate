@@ -1,0 +1,3661 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-10T01:48:31.450Z",
+  "model": "mimo",
+  "revision": {
+    "weftmate": "16481cb74941dccae95ec88e753655dae3437836",
+    "core": "983f53fb005a6aed0d6c1c2dd6cf0191afbf7eae"
+  },
+  "electron": true,
+  "steps": [
+    {
+      "id": "01",
+      "title": "原话进入真实桌面对话",
+      "status": "passed",
+      "checks": {
+        "completed": true,
+        "exactUserEvent": true,
+        "nonemptyReply": true
+      },
+      "startedAt": "2026-10-10T01:48:42.605Z",
+      "finishedAt": "2026-10-10T01:48:48.442Z"
+    },
+    {
+      "id": "02",
+      "title": "模型提议、用户确认组队提醒",
+      "status": "passed",
+      "checks": {
+        "proposal": true,
+        "confirmationCompleted": true,
+        "confirmationSource": true
+      },
+      "startedAt": "2026-10-10T01:48:48.442Z",
+      "semantic": {
+        "type": "llm_judge",
+        "prompt": "应主动提议以后用户想组队时提醒找王小明，邀请用户确认。",
+        "turn": 1,
+        "status": "skipped",
+        "reason": "No judge configured; enable --judge-model same or a configured model name."
+      },
+      "finishedAt": "2026-10-10T01:48:58.072Z"
+    },
+    {
+      "id": "03",
+      "title": "人物、关系、评价、决定和原话来源",
+      "status": "passed",
+      "checks": {
+        "person": true,
+        "relationship": true,
+        "evaluation": true,
+        "decision": true,
+        "personSource": true,
+        "relationshipSource": true,
+        "evaluationSource": true,
+        "decisionSource": true
+      },
+      "startedAt": "2026-10-10T01:48:58.073Z",
+      "items": [
+        {
+          "id": "entity-a62cfc048012d350511b17e40f5b350feec25ae6ac38b20a08040c98320fd9e2",
+          "kind": "entity",
+          "text": "用户",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-10T01:49:07.973Z",
+          "updatedAt": "2026-10-10T01:49:07.973Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 0
+        },
+        {
+          "id": "entity-e13182bd10cfb70b3f93b67a0a5d4199082222d3c3461b9defc5caf62bd3acbb",
+          "kind": "entity",
+          "text": "王小明",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-10T01:49:07.973Z",
+          "updatedAt": "2026-10-10T01:49:07.973Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        },
+        {
+          "id": "entity-d4df7ca559fe508ed27a78222af835cf03bb8116a1f43e533879fdde309f4a35",
+          "kind": "entity",
+          "text": "组队",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-10T01:49:30.797Z",
+          "updatedAt": "2026-10-10T01:49:30.797Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 2
+        },
+        {
+          "id": "relationship-3521fd4f7053b09bc4e99db2c846a37f39bd8e93bff906c63fe423432c7091d9",
+          "kind": "relationship",
+          "text": "王小明是我好兄弟。",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-10T01:49:07.973Z",
+          "updatedAt": "2026-10-10T01:49:07.973Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        },
+        {
+          "id": "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848",
+          "kind": "cognition",
+          "text": "王小明打游戏挺厉害",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-10T01:49:07.973Z",
+          "updatedAt": "2026-10-10T01:49:07.973Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        },
+        {
+          "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+          "kind": "cognition",
+          "text": "用户好，以后我想组队时，就提醒我找王小明。",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-10T01:49:30.797Z",
+          "updatedAt": "2026-10-10T01:49:30.797Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 2
+        }
+      ],
+      "sources": {
+        "entity-a62cfc048012d350511b17e40f5b350feec25ae6ac38b20a08040c98320fd9e2": [],
+        "entity-e13182bd10cfb70b3f93b67a0a5d4199082222d3c3461b9defc5caf62bd3acbb": [
+          {
+            "evidenceId": "bc04677b-489a-4594-9ee1-cfb8ddcc6373",
+            "relation": "support",
+            "currentnessState": "current",
+            "permissions": {
+              "allowLocalRead": true,
+              "allowCloudRead": true,
+              "allowInference": true
+            },
+            "contentAvailable": true,
+            "summary": "王小明打游戏挺厉害，是我好兄弟。",
+            "rawContent": "王小明打游戏挺厉害，是我好兄弟。",
+            "rawContentTruncated": false,
+            "recordedAt": "2026-10-10T01:48:48.534Z"
+          }
+        ],
+        "entity-d4df7ca559fe508ed27a78222af835cf03bb8116a1f43e533879fdde309f4a35": [
+          {
+            "evidenceId": "619634bc-cc05-4647-adab-d37471680abc",
+            "relation": "alias",
+            "currentnessState": "current",
+            "permissions": {
+              "allowLocalRead": true,
+              "allowCloudRead": true,
+              "allowInference": true
+            },
+            "contentAvailable": true,
+            "summary": "好，以后我想组队时，就提醒我找王小明。",
+            "rawContent": "好，以后我想组队时，就提醒我找王小明。",
+            "rawContentTruncated": false,
+            "recordedAt": "2026-10-10T01:48:58.121Z"
+          },
+          {
+            "evidenceId": "619634bc-cc05-4647-adab-d37471680abc",
+            "relation": "support",
+            "currentnessState": "current",
+            "permissions": {
+              "allowLocalRead": true,
+              "allowCloudRead": true,
+              "allowInference": true
+            },
+            "contentAvailable": true,
+            "summary": "好，以后我想组队时，就提醒我找王小明。",
+            "rawContent": "好，以后我想组队时，就提醒我找王小明。",
+            "rawContentTruncated": false,
+            "recordedAt": "2026-10-10T01:48:58.121Z"
+          }
+        ],
+        "relationship-3521fd4f7053b09bc4e99db2c846a37f39bd8e93bff906c63fe423432c7091d9": [
+          {
+            "evidenceId": "bc04677b-489a-4594-9ee1-cfb8ddcc6373",
+            "relation": "support",
+            "currentnessState": "current",
+            "permissions": {
+              "allowLocalRead": true,
+              "allowCloudRead": true,
+              "allowInference": true
+            },
+            "contentAvailable": true,
+            "summary": "王小明打游戏挺厉害，是我好兄弟。",
+            "rawContent": "王小明打游戏挺厉害，是我好兄弟。",
+            "rawContentTruncated": false,
+            "recordedAt": "2026-10-10T01:48:48.534Z"
+          }
+        ],
+        "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848": [
+          {
+            "evidenceId": "bc04677b-489a-4594-9ee1-cfb8ddcc6373",
+            "relation": "support",
+            "currentnessState": "current",
+            "permissions": {
+              "allowLocalRead": true,
+              "allowCloudRead": true,
+              "allowInference": true
+            },
+            "contentAvailable": true,
+            "summary": "王小明打游戏挺厉害，是我好兄弟。",
+            "rawContent": "王小明打游戏挺厉害，是我好兄弟。",
+            "rawContentTruncated": false,
+            "recordedAt": "2026-10-10T01:48:48.534Z"
+          }
+        ],
+        "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164": [
+          {
+            "evidenceId": "619634bc-cc05-4647-adab-d37471680abc",
+            "relation": "support",
+            "currentnessState": "current",
+            "permissions": {
+              "allowLocalRead": true,
+              "allowCloudRead": true,
+              "allowInference": true
+            },
+            "contentAvailable": true,
+            "summary": "好，以后我想组队时，就提醒我找王小明。",
+            "rawContent": "好，以后我想组队时，就提醒我找王小明。",
+            "rawContentTruncated": false,
+            "recordedAt": "2026-10-10T01:48:58.121Z"
+          },
+          {
+            "evidenceId": "bc04677b-489a-4594-9ee1-cfb8ddcc6373",
+            "relation": "support",
+            "currentnessState": "current",
+            "permissions": {
+              "allowLocalRead": true,
+              "allowCloudRead": true,
+              "allowInference": true
+            },
+            "contentAvailable": true,
+            "summary": "王小明打游戏挺厉害，是我好兄弟。",
+            "rawContent": "王小明打游戏挺厉害，是我好兄弟。",
+            "rawContentTruncated": false,
+            "recordedAt": "2026-10-10T01:48:48.534Z"
+          },
+          {
+            "evidenceId": "bc04677b-489a-4594-9ee1-cfb8ddcc6373",
+            "relation": "support",
+            "currentnessState": "current",
+            "permissions": {
+              "allowLocalRead": true,
+              "allowCloudRead": true,
+              "allowInference": true
+            },
+            "contentAvailable": true,
+            "summary": "助手提议（经用户确认）",
+            "rawContent": "记下了，稍后整理进记忆。\n\n顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？",
+            "rawContentTruncated": false,
+            "recordedAt": "2026-10-10T01:48:48.545Z",
+            "role": "assistant",
+            "messageId": "f1db9c5c-ce58-4bf3-bdba-55070cebe3bc",
+            "conversationId": "session-06a229fc-012f-40a1-8d44-6dfd73c16887"
+          }
+        ]
+      },
+      "storage": {
+        "entity": [
+          {
+            "id": "entity-e13182bd10cfb70b3f93b67a0a5d4199082222d3c3461b9defc5caf62bd3acbb",
+            "world_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "kind": "person",
+            "canonical_name": "王小明",
+            "invalid_at": null,
+            "created_at": "2026-10-10T01:49:07.973Z",
+            "updated_at": "2026-10-10T01:49:07.973Z",
+            "aliases_json": "[]"
+          },
+          {
+            "id": "entity-a62cfc048012d350511b17e40f5b350feec25ae6ac38b20a08040c98320fd9e2",
+            "world_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "kind": "person",
+            "canonical_name": "用户",
+            "invalid_at": null,
+            "created_at": "2026-10-10T01:49:07.973Z",
+            "updated_at": "2026-10-10T01:49:07.973Z",
+            "aliases_json": "[]"
+          },
+          {
+            "id": "entity-d4df7ca559fe508ed27a78222af835cf03bb8116a1f43e533879fdde309f4a35",
+            "world_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "kind": "topic",
+            "canonical_name": "组队",
+            "invalid_at": null,
+            "created_at": "2026-10-10T01:49:30.797Z",
+            "updated_at": "2026-10-10T01:49:30.797Z",
+            "aliases_json": "[\"\\u5f00\\u9ed1\"]"
+          }
+        ],
+        "relationship": [
+          {
+            "id": "relationship-3521fd4f7053b09bc4e99db2c846a37f39bd8e93bff906c63fe423432c7091d9",
+            "world_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "source_entity_id": "entity-a62cfc048012d350511b17e40f5b350feec25ae6ac38b20a08040c98320fd9e2",
+            "target_entity_id": "entity-e13182bd10cfb70b3f93b67a0a5d4199082222d3c3461b9defc5caf62bd3acbb",
+            "relation_type": "good_brother",
+            "content": "王小明是我好兄弟。",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "invalid_at": null,
+            "created_at": "2026-10-10T01:49:07.973Z",
+            "updated_at": "2026-10-10T01:49:07.973Z"
+          }
+        ],
+        "cognition": [
+          {
+            "id": "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848",
+            "subject_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "content": "王小明打游戏挺厉害",
+            "content_type": "attribute",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "scope": null,
+            "valid_at": null,
+            "invalid_at": null,
+            "asked_at": null,
+            "archived_at": null,
+            "muted_at": null,
+            "created_at": "2026-10-10T01:49:07.973Z",
+            "updated_at": "2026-10-10T01:49:07.973Z"
+          },
+          {
+            "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+            "subject_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "content": "用户好，以后我想组队时，就提醒我找王小明。",
+            "content_type": "preference",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "scope": null,
+            "valid_at": null,
+            "invalid_at": null,
+            "asked_at": null,
+            "archived_at": null,
+            "muted_at": null,
+            "created_at": "2026-10-10T01:49:30.797Z",
+            "updated_at": "2026-10-10T01:49:30.797Z"
+          }
+        ],
+        "cognition_transitions": [],
+        "relationship_transitions": [],
+        "interaction_commitment": [
+          {
+            "id": "6a455c1c-3f7d-4c84-8e4c-5339890ee5de",
+            "subject_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "conversation_id": "session-06a229fc-012f-40a1-8d44-6dfd73c16887",
+            "episode_id": "weftmate-turn-boundary-v1:42c1f3e8ec434f41ade9bcbe69a231df:6c81f3cc455d123f6e8bdeb8cb9599557b7835236d34a443cad8c424eff6903d",
+            "assistant_message_id": "0e17a11a-2cbe-4bdb-a337-43a9ef48dc97",
+            "kind": "commitment",
+            "content": "AI承诺提醒你去找王小明",
+            "raw_quote": "我会提醒你去找王小明",
+            "status": "active",
+            "created_at": "2026-10-10T01:48:58.138Z",
+            "updated_at": "2026-10-10T01:48:58.138Z"
+          },
+          {
+            "id": "44f76452-ee60-4e39-a9fb-cc8df057e1dc",
+            "subject_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "conversation_id": "session-06a229fc-012f-40a1-8d44-6dfd73c16887",
+            "episode_id": "weftmate-turn-boundary-v1:42c1f3e8ec434f41ade9bcbe69a231df:6c81f3cc455d123f6e8bdeb8cb9599557b7835236d34a443cad8c424eff6903d",
+            "assistant_message_id": "0e17a11a-2cbe-4bdb-a337-43a9ef48dc97",
+            "kind": "commitment",
+            "content": "AI承诺在相关情境下自然提起",
+            "raw_quote": "我会在相关情境下自然提起",
+            "status": "active",
+            "created_at": "2026-10-10T01:48:58.147Z",
+            "updated_at": "2026-10-10T01:48:58.147Z"
+          }
+        ],
+        "memory_world_job": [
+          {
+            "job_id": "memory-world-job-3a03899149f65e4e4431cdfe6f947051105bb40ff614fd40314950f6572eb789",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:9a99c3ac4ff178e7946f4b74e3e471e0:b7e3526aed9a3deafb76b4ea234e0b6558a9d805aa7b2156ae78fe332178a998",
+            "boundary_payload_hash": "b7e3526aed9a3deafb76b4ea234e0b6558a9d805aa7b2156ae78fe332178a998",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-06a229fc-012f-40a1-8d44-6dfd73c16887",
+            "result_session_id": "session-06a229fc-012f-40a1-8d44-6dfd73c16887",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-06a229fc-012f-40a1-8d44-6dfd73c16887\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-06a229fc-012f-40a1-8d44-6dfd73c16887\",\"subject_id\":\"owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12\"}",
+            "formal_target_hash": "56b1241a0d4f6365b74085888798cdcd1b9a34041f0d3cf2e1584ffc9380b27f",
+            "subject_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"bc04677b-489a-4594-9ee1-cfb8ddcc6373\"]",
+            "state": "applied",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-10T01:48:48.577Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-10T01:48:48.587Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-10T01:48:48.598Z",
+            "model_completed_at": "2026-10-10T01:49:07.965Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": "mimo-v2.6-flash",
+            "model_usage_json": "{\"completion_tokens\":240,\"completion_tokens_details\":{\"reasoning_tokens\":35},\"prompt_tokens\":4688,\"prompt_tokens_details\":{\"cached_tokens\":4544},\"total_tokens\":4928}",
+            "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"attribute\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u738b\\u5c0f\\u660e\\u6253\\u6e38\\u620f\\u633a\\u5389\\u5bb3\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"bc04677b-489a-4594-9ee1-cfb8ddcc6373\\\",\\\"segment_id\\\":\\\"s0\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u738b\\u5c0f\\u660e\\\",\\\"kind\\\":\\\"person\\\"}},{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"relationship\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u738b\\u5c0f\\u660e\\u662f\\u6211\\u597d\\u5144\\u5f1f\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"bc04677b-489a-4594-9ee1-cfb8ddcc6373\\\",\\\"segment_id\\\":\\\"s1\\\"}],\\\"target_entity\\\":{\\\"canonical_name\\\":\\\"\\u738b\\u5c0f\\u660e\\\",\\\"kind\\\":\\\"person\\\"},\\\"relation_type\\\":\\\"good_brother\\\"}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":240,\"completion_tokens_details\":{\"reasoning_tokens\":35},\"prompt_tokens\":4688,\"prompt_tokens_details\":{\"cached_tokens\":4544},\"total_tokens\":4928}}",
+            "model_result_hash": "34c0fe5044ce9aacc7e9281ae7d7bd36111d460faf35bcee7fffa604e2032f6e",
+            "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:9a99c3ac4ff178e7946f4b74e3e471e0:b7e3526aed9a3deafb76b4ea234e0b6558a9d805aa7b2156ae78fe332178a998\",\"cognitions\":[{\"action\":\"form\",\"cognition_id\":\"cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"attribute\",\"target_entity_id\":\"entity-e13182bd10cfb70b3f93b67a0a5d4199082222d3c3461b9defc5caf62bd3acbb\"},{\"action\":\"form\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"relation_type\":\"good_brother\",\"relationship_id\":\"relationship-3521fd4f7053b09bc4e99db2c846a37f39bd8e93bff906c63fe423432c7091d9\",\"source_entity_id\":\"entity-a62cfc048012d350511b17e40f5b350feec25ae6ac38b20a08040c98320fd9e2\",\"statement_kind\":\"relationship\",\"target_entity_id\":\"entity-e13182bd10cfb70b3f93b67a0a5d4199082222d3c3461b9defc5caf62bd3acbb\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":1}",
+            "result_hash": "3cc3d0983132a9e20e6171b785d173c6533d78d65e84e0c86848bec3089fc771",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-10T01:48:48.535Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:9a99c3ac4ff178e7946f4b74e3e471e0:b7e3526aed9a3deafb76b4ea234e0b6558a9d805aa7b2156ae78fe332178a998\",\"evidence_count\":1,\"evidence_manifest_hash\":\"bff70f45c31c77d6342b18e94e8b2746de9a9c5a02f1775c06a9f4a7d645aa22\",\"formal_target_hash\":\"56b1241a0d4f6365b74085888798cdcd1b9a34041f0d3cf2e1584ffc9380b27f\",\"job_id\":\"memory-world-job-3a03899149f65e4e4431cdfe6f947051105bb40ff614fd40314950f6572eb789\",\"job_state\":\"pending\",\"payload_hash\":\"b7e3526aed9a3deafb76b4ea234e0b6558a9d805aa7b2156ae78fe332178a998\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "7e7c19a273c570c0d432585bc449453ac2b1dfe5f78f81b5745c0d419edd4a6e",
+            "created_at": "2026-10-10T01:48:48.535Z",
+            "completed_at": "2026-10-10T01:49:07.973Z",
+            "last_error_type": null,
+            "terminal_state": "applied",
+            "terminal_detail": null
+          },
+          {
+            "job_id": "memory-world-job-ba77fe2c5385f74388eea5a1b1968aff7742b8aa256b9e910d1dc3df902cb3f4",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:42c1f3e8ec434f41ade9bcbe69a231df:6c81f3cc455d123f6e8bdeb8cb9599557b7835236d34a443cad8c424eff6903d",
+            "boundary_payload_hash": "6c81f3cc455d123f6e8bdeb8cb9599557b7835236d34a443cad8c424eff6903d",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-06a229fc-012f-40a1-8d44-6dfd73c16887",
+            "result_session_id": "session-06a229fc-012f-40a1-8d44-6dfd73c16887",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-06a229fc-012f-40a1-8d44-6dfd73c16887\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-06a229fc-012f-40a1-8d44-6dfd73c16887\",\"subject_id\":\"owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12\"}",
+            "formal_target_hash": "56b1241a0d4f6365b74085888798cdcd1b9a34041f0d3cf2e1584ffc9380b27f",
+            "subject_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"619634bc-cc05-4647-adab-d37471680abc\"]",
+            "state": "applied",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-10T01:49:07.983Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-10T01:49:07.991Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-10T01:49:08.000Z",
+            "model_completed_at": "2026-10-10T01:49:30.787Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": "mimo-v2.6-flash",
+            "model_usage_json": "{\"completion_tokens\":1245,\"completion_tokens_details\":{\"reasoning_tokens\":1083},\"prompt_tokens\":5539,\"prompt_tokens_details\":{\"cached_tokens\":4544},\"total_tokens\":6784}",
+            "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"confirmed\\\",\\\"proposition\\\":\\\"\\u4ee5\\u540e\\u5982\\u679c\\u9047\\u5230\\u9700\\u8981\\u961f\\u53cb\\u4e00\\u8d77\\u6253\\u6e38\\u620f\\u3001\\u6216\\u8005\\u8981\\u627e\\u4eba\\u7ec4\\u961f\\u5f00\\u9ed1\\u7684\\u60c5\\u51b5\\uff0c\\u8981\\u63d0\\u9192\\u7528\\u6237\\u627e\\u738b\\u5c0f\\u660e\\\",\\\"assistant_claim\\\":\\\"\\u4ee5\\u540e\\u5982\\u679c\\u9047\\u5230\\u9700\\u8981\\u961f\\u53cb\\u4e00\\u8d77\\u6253\\u6e38\\u620f\\u3001\\u6216\\u8005\\u8981\\u627e\\u4eba\\u7ec4\\u961f\\u5f00\\u9ed1\\u7684\\u60c5\\u51b5\\uff0c\\u8981\\u6211\\u63d0\\u9192\\u4f60\\u627e\\u738b\\u5c0f\\u660e\\u5417\\uff1f\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"619634bc-cc05-4647-adab-d37471680abc\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u7ec4\\u961f\\\",\\\"kind\\\":\\\"topic\\\",\\\"aliases\\\":[\\\"\\u5f00\\u9ed1\\\"]}}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":1245,\"completion_tokens_details\":{\"reasoning_tokens\":1083},\"prompt_tokens\":5539,\"prompt_tokens_details\":{\"cached_tokens\":4544},\"total_tokens\":6784}}",
+            "model_result_hash": "505a3e1d24106c2e014973ae575d214364d55ca0ec50c0dbf144e722814458e9",
+            "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:42c1f3e8ec434f41ade9bcbe69a231df:6c81f3cc455d123f6e8bdeb8cb9599557b7835236d34a443cad8c424eff6903d\",\"cognitions\":[{\"action\":\"form\",\"cognition_id\":\"cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":2}",
+            "result_hash": "00b4768a6d1f92306835420785133396e1c68af160dac37d0c08ccc24be3c778",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-10T01:48:58.122Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:42c1f3e8ec434f41ade9bcbe69a231df:6c81f3cc455d123f6e8bdeb8cb9599557b7835236d34a443cad8c424eff6903d\",\"evidence_count\":1,\"evidence_manifest_hash\":\"a3238bc8cfd870267092f0f3a93c8dd547c73fd6f16eac273310a21e630ecf74\",\"formal_target_hash\":\"56b1241a0d4f6365b74085888798cdcd1b9a34041f0d3cf2e1584ffc9380b27f\",\"job_id\":\"memory-world-job-ba77fe2c5385f74388eea5a1b1968aff7742b8aa256b9e910d1dc3df902cb3f4\",\"job_state\":\"pending\",\"payload_hash\":\"6c81f3cc455d123f6e8bdeb8cb9599557b7835236d34a443cad8c424eff6903d\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "41d2514e17911219d82ca365a8c08fb6bee4c2f23a41e6f43dcd1cdb060a2f40",
+            "created_at": "2026-10-10T01:48:58.122Z",
+            "completed_at": "2026-10-10T01:49:30.797Z",
+            "last_error_type": null,
+            "terminal_state": "applied",
+            "terminal_detail": null
+          }
+        ]
+      },
+      "finishedAt": "2026-10-10T01:49:32.549Z"
+    },
+    {
+      "id": "04",
+      "title": "新会话、换模型、改写问题仍召回",
+      "status": "passed",
+      "checks": {
+        "newSession": true,
+        "changedModel": true,
+        "completed": true,
+        "replyName": true,
+        "formalMemoryAdopted": true
+      },
+      "startedAt": "2026-10-10T01:54:36.069Z",
+      "semantic": {
+        "type": "llm_judge",
+        "prompt": "新会话应根据此前确认的组队决定回答找王小明，不能只询问或编造别人。",
+        "turn": 3,
+        "status": "skipped",
+        "reason": "No judge configured; enable --judge-model same or a configured model name."
+      },
+      "finishedAt": "2026-10-10T01:54:54.855Z"
+    },
+    {
+      "id": "05",
+      "title": "自然纠正、两个模型的当前理解和失效解释",
+      "status": "passed",
+      "checks": {
+        "correctionCompleted": true,
+        "latestStored": true,
+        "oldInvalid": true,
+        "oldSourceExplainsChange": true,
+        "correctedSource": true,
+        "bothRepliesLatest": true,
+        "bothAdoptLatest": true,
+        "oldExcluded": true,
+        "replacementReason": true,
+        "bothExplainReplacement": true
+      },
+      "startedAt": "2026-10-10T01:54:54.856Z",
+      "items": [
+        {
+          "id": "entity-a62cfc048012d350511b17e40f5b350feec25ae6ac38b20a08040c98320fd9e2",
+          "kind": "entity",
+          "text": "用户",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-10T01:49:07.973Z",
+          "updatedAt": "2026-10-10T01:49:07.973Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 0
+        },
+        {
+          "id": "entity-e13182bd10cfb70b3f93b67a0a5d4199082222d3c3461b9defc5caf62bd3acbb",
+          "kind": "entity",
+          "text": "王小明",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-10T01:49:07.973Z",
+          "updatedAt": "2026-10-10T01:49:07.973Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        },
+        {
+          "id": "entity-d4df7ca559fe508ed27a78222af835cf03bb8116a1f43e533879fdde309f4a35",
+          "kind": "entity",
+          "text": "组队",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-10T01:49:30.797Z",
+          "updatedAt": "2026-10-10T01:49:30.797Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 2
+        },
+        {
+          "id": "relationship-3521fd4f7053b09bc4e99db2c846a37f39bd8e93bff906c63fe423432c7091d9",
+          "kind": "relationship",
+          "text": "王小明是我好兄弟。",
+          "truncated": false,
+          "currentState": "not_current",
+          "createdAt": "2026-10-10T01:49:07.973Z",
+          "updatedAt": "2026-10-10T01:55:23.739Z",
+          "lifecycle": {
+            "invalidAt": "2026-10-10T01:55:23.739Z",
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        },
+        {
+          "id": "relationship-0f8565e8209ae6dcc913dd3bef9a670a76037ec755133928831e8132d3d7da42",
+          "kind": "relationship",
+          "text": "用户更正一下：王小明是我的表弟，不是好兄弟。",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-10T01:55:23.739Z",
+          "updatedAt": "2026-10-10T01:55:23.739Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        },
+        {
+          "id": "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848",
+          "kind": "cognition",
+          "text": "王小明打游戏挺厉害",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-10T01:49:07.973Z",
+          "updatedAt": "2026-10-10T01:49:07.973Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        },
+        {
+          "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+          "kind": "cognition",
+          "text": "用户好，以后我想组队时，就提醒我找王小明。",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-10T01:49:30.797Z",
+          "updatedAt": "2026-10-10T01:49:30.797Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 2
+        }
+      ],
+      "sources": {
+        "entity-a62cfc048012d350511b17e40f5b350feec25ae6ac38b20a08040c98320fd9e2": [],
+        "entity-e13182bd10cfb70b3f93b67a0a5d4199082222d3c3461b9defc5caf62bd3acbb": [
+          {
+            "evidenceId": "bc04677b-489a-4594-9ee1-cfb8ddcc6373",
+            "relation": "support",
+            "currentnessState": "current",
+            "permissions": {
+              "allowLocalRead": true,
+              "allowCloudRead": true,
+              "allowInference": true
+            },
+            "contentAvailable": true,
+            "summary": "王小明打游戏挺厉害，是我好兄弟。",
+            "rawContent": "王小明打游戏挺厉害，是我好兄弟。",
+            "rawContentTruncated": false,
+            "recordedAt": "2026-10-10T01:48:48.534Z"
+          }
+        ],
+        "entity-d4df7ca559fe508ed27a78222af835cf03bb8116a1f43e533879fdde309f4a35": [
+          {
+            "evidenceId": "619634bc-cc05-4647-adab-d37471680abc",
+            "relation": "alias",
+            "currentnessState": "current",
+            "permissions": {
+              "allowLocalRead": true,
+              "allowCloudRead": true,
+              "allowInference": true
+            },
+            "contentAvailable": true,
+            "summary": "好，以后我想组队时，就提醒我找王小明。",
+            "rawContent": "好，以后我想组队时，就提醒我找王小明。",
+            "rawContentTruncated": false,
+            "recordedAt": "2026-10-10T01:48:58.121Z"
+          },
+          {
+            "evidenceId": "619634bc-cc05-4647-adab-d37471680abc",
+            "relation": "support",
+            "currentnessState": "current",
+            "permissions": {
+              "allowLocalRead": true,
+              "allowCloudRead": true,
+              "allowInference": true
+            },
+            "contentAvailable": true,
+            "summary": "好，以后我想组队时，就提醒我找王小明。",
+            "rawContent": "好，以后我想组队时，就提醒我找王小明。",
+            "rawContentTruncated": false,
+            "recordedAt": "2026-10-10T01:48:58.121Z"
+          }
+        ],
+        "relationship-3521fd4f7053b09bc4e99db2c846a37f39bd8e93bff906c63fe423432c7091d9": [
+          {
+            "evidenceId": "bc04677b-489a-4594-9ee1-cfb8ddcc6373",
+            "relation": "support",
+            "currentnessState": "not_current",
+            "permissions": {
+              "allowLocalRead": true,
+              "allowCloudRead": true,
+              "allowInference": true
+            },
+            "contentAvailable": true,
+            "summary": "王小明打游戏挺厉害，是我好兄弟。",
+            "rawContent": "王小明打游戏挺厉害，是我好兄弟。",
+            "rawContentTruncated": false,
+            "recordedAt": "2026-10-10T01:48:48.534Z"
+          },
+          {
+            "evidenceId": "a0b32d3f-b120-4183-a358-3e657c093ae2",
+            "relation": "superseded_by",
+            "currentnessState": "current",
+            "permissions": {
+              "allowLocalRead": true,
+              "allowCloudRead": true,
+              "allowInference": true
+            },
+            "contentAvailable": true,
+            "summary": "更正一下：王小明是我的表弟，不是好兄弟。以后组队还是找他。",
+            "rawContent": "更正一下：王小明是我的表弟，不是好兄弟。以后组队还是找他。",
+            "rawContentTruncated": false,
+            "recordedAt": "2026-10-10T01:55:09.457Z"
+          },
+          {
+            "evidenceId": "a0b32d3f-b120-4183-a358-3e657c093ae2",
+            "relation": "superseded_by",
+            "currentnessState": "current",
+            "permissions": {
+              "allowLocalRead": true,
+              "allowCloudRead": true,
+              "allowInference": true
+            },
+            "contentAvailable": true,
+            "summary": "更正一下：王小明是我的表弟，不是好兄弟。以后组队还是找他。",
+            "rawContent": "更正一下：王小明是我的表弟，不是好兄弟。以后组队还是找他。",
+            "rawContentTruncated": false,
+            "recordedAt": "2026-10-10T01:55:09.457Z"
+          }
+        ],
+        "relationship-0f8565e8209ae6dcc913dd3bef9a670a76037ec755133928831e8132d3d7da42": [
+          {
+            "evidenceId": "a0b32d3f-b120-4183-a358-3e657c093ae2",
+            "relation": "support",
+            "currentnessState": "current",
+            "permissions": {
+              "allowLocalRead": true,
+              "allowCloudRead": true,
+              "allowInference": true
+            },
+            "contentAvailable": true,
+            "summary": "更正一下：王小明是我的表弟，不是好兄弟。以后组队还是找他。",
+            "rawContent": "更正一下：王小明是我的表弟，不是好兄弟。以后组队还是找他。",
+            "rawContentTruncated": false,
+            "recordedAt": "2026-10-10T01:55:09.457Z"
+          }
+        ],
+        "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848": [
+          {
+            "evidenceId": "bc04677b-489a-4594-9ee1-cfb8ddcc6373",
+            "relation": "support",
+            "currentnessState": "current",
+            "permissions": {
+              "allowLocalRead": true,
+              "allowCloudRead": true,
+              "allowInference": true
+            },
+            "contentAvailable": true,
+            "summary": "王小明打游戏挺厉害，是我好兄弟。",
+            "rawContent": "王小明打游戏挺厉害，是我好兄弟。",
+            "rawContentTruncated": false,
+            "recordedAt": "2026-10-10T01:48:48.534Z"
+          }
+        ],
+        "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164": [
+          {
+            "evidenceId": "619634bc-cc05-4647-adab-d37471680abc",
+            "relation": "support",
+            "currentnessState": "current",
+            "permissions": {
+              "allowLocalRead": true,
+              "allowCloudRead": true,
+              "allowInference": true
+            },
+            "contentAvailable": true,
+            "summary": "好，以后我想组队时，就提醒我找王小明。",
+            "rawContent": "好，以后我想组队时，就提醒我找王小明。",
+            "rawContentTruncated": false,
+            "recordedAt": "2026-10-10T01:48:58.121Z"
+          },
+          {
+            "evidenceId": "bc04677b-489a-4594-9ee1-cfb8ddcc6373",
+            "relation": "support",
+            "currentnessState": "current",
+            "permissions": {
+              "allowLocalRead": true,
+              "allowCloudRead": true,
+              "allowInference": true
+            },
+            "contentAvailable": true,
+            "summary": "王小明打游戏挺厉害，是我好兄弟。",
+            "rawContent": "王小明打游戏挺厉害，是我好兄弟。",
+            "rawContentTruncated": false,
+            "recordedAt": "2026-10-10T01:48:48.534Z"
+          },
+          {
+            "evidenceId": "bc04677b-489a-4594-9ee1-cfb8ddcc6373",
+            "relation": "support",
+            "currentnessState": "current",
+            "permissions": {
+              "allowLocalRead": true,
+              "allowCloudRead": true,
+              "allowInference": true
+            },
+            "contentAvailable": true,
+            "summary": "助手提议（经用户确认）",
+            "rawContent": "记下了，稍后整理进记忆。\n\n顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？",
+            "rawContentTruncated": false,
+            "recordedAt": "2026-10-10T01:48:48.545Z",
+            "role": "assistant",
+            "messageId": "f1db9c5c-ce58-4bf3-bdba-55070cebe3bc",
+            "conversationId": "session-06a229fc-012f-40a1-8d44-6dfd73c16887"
+          }
+        ]
+      },
+      "storage": {
+        "entity": [
+          {
+            "id": "entity-e13182bd10cfb70b3f93b67a0a5d4199082222d3c3461b9defc5caf62bd3acbb",
+            "world_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "kind": "person",
+            "canonical_name": "王小明",
+            "invalid_at": null,
+            "created_at": "2026-10-10T01:49:07.973Z",
+            "updated_at": "2026-10-10T01:49:07.973Z",
+            "aliases_json": "[]"
+          },
+          {
+            "id": "entity-a62cfc048012d350511b17e40f5b350feec25ae6ac38b20a08040c98320fd9e2",
+            "world_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "kind": "person",
+            "canonical_name": "用户",
+            "invalid_at": null,
+            "created_at": "2026-10-10T01:49:07.973Z",
+            "updated_at": "2026-10-10T01:49:07.973Z",
+            "aliases_json": "[]"
+          },
+          {
+            "id": "entity-d4df7ca559fe508ed27a78222af835cf03bb8116a1f43e533879fdde309f4a35",
+            "world_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "kind": "topic",
+            "canonical_name": "组队",
+            "invalid_at": null,
+            "created_at": "2026-10-10T01:49:30.797Z",
+            "updated_at": "2026-10-10T01:49:30.797Z",
+            "aliases_json": "[\"\\u5f00\\u9ed1\"]"
+          }
+        ],
+        "relationship": [
+          {
+            "id": "relationship-3521fd4f7053b09bc4e99db2c846a37f39bd8e93bff906c63fe423432c7091d9",
+            "world_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "source_entity_id": "entity-a62cfc048012d350511b17e40f5b350feec25ae6ac38b20a08040c98320fd9e2",
+            "target_entity_id": "entity-e13182bd10cfb70b3f93b67a0a5d4199082222d3c3461b9defc5caf62bd3acbb",
+            "relation_type": "good_brother",
+            "content": "王小明是我好兄弟。",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "invalid_at": "2026-10-10T01:55:23.739Z",
+            "created_at": "2026-10-10T01:49:07.973Z",
+            "updated_at": "2026-10-10T01:55:23.739Z"
+          },
+          {
+            "id": "relationship-0f8565e8209ae6dcc913dd3bef9a670a76037ec755133928831e8132d3d7da42",
+            "world_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "source_entity_id": "entity-a62cfc048012d350511b17e40f5b350feec25ae6ac38b20a08040c98320fd9e2",
+            "target_entity_id": "entity-e13182bd10cfb70b3f93b67a0a5d4199082222d3c3461b9defc5caf62bd3acbb",
+            "relation_type": "cousin",
+            "content": "用户更正一下：王小明是我的表弟，不是好兄弟。",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "invalid_at": null,
+            "created_at": "2026-10-10T01:55:23.739Z",
+            "updated_at": "2026-10-10T01:55:23.739Z"
+          }
+        ],
+        "cognition": [
+          {
+            "id": "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848",
+            "subject_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "content": "王小明打游戏挺厉害",
+            "content_type": "attribute",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "scope": null,
+            "valid_at": null,
+            "invalid_at": null,
+            "asked_at": null,
+            "archived_at": null,
+            "muted_at": null,
+            "created_at": "2026-10-10T01:49:07.973Z",
+            "updated_at": "2026-10-10T01:49:07.973Z"
+          },
+          {
+            "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+            "subject_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "content": "用户好，以后我想组队时，就提醒我找王小明。",
+            "content_type": "preference",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "scope": null,
+            "valid_at": null,
+            "invalid_at": null,
+            "asked_at": null,
+            "archived_at": null,
+            "muted_at": null,
+            "created_at": "2026-10-10T01:49:30.797Z",
+            "updated_at": "2026-10-10T01:49:30.797Z"
+          }
+        ],
+        "cognition_transitions": [],
+        "relationship_transitions": [
+          {
+            "id": "relationship-transition-019538c8489dbf77507b1bf0a6bb723c40d15181ed36a5cbbee3a425dcb6c67b",
+            "prior_relationship_id": "relationship-3521fd4f7053b09bc4e99db2c846a37f39bd8e93bff906c63fe423432c7091d9",
+            "replacement_relationship_id": "relationship-0f8565e8209ae6dcc913dd3bef9a670a76037ec755133928831e8132d3d7da42",
+            "reason": "corrects",
+            "revision": 3
+          }
+        ],
+        "interaction_commitment": [
+          {
+            "id": "6a455c1c-3f7d-4c84-8e4c-5339890ee5de",
+            "subject_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "conversation_id": "session-06a229fc-012f-40a1-8d44-6dfd73c16887",
+            "episode_id": "weftmate-turn-boundary-v1:42c1f3e8ec434f41ade9bcbe69a231df:6c81f3cc455d123f6e8bdeb8cb9599557b7835236d34a443cad8c424eff6903d",
+            "assistant_message_id": "0e17a11a-2cbe-4bdb-a337-43a9ef48dc97",
+            "kind": "commitment",
+            "content": "AI承诺提醒你去找王小明",
+            "raw_quote": "我会提醒你去找王小明",
+            "status": "active",
+            "created_at": "2026-10-10T01:48:58.138Z",
+            "updated_at": "2026-10-10T01:48:58.138Z"
+          },
+          {
+            "id": "44f76452-ee60-4e39-a9fb-cc8df057e1dc",
+            "subject_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "conversation_id": "session-06a229fc-012f-40a1-8d44-6dfd73c16887",
+            "episode_id": "weftmate-turn-boundary-v1:42c1f3e8ec434f41ade9bcbe69a231df:6c81f3cc455d123f6e8bdeb8cb9599557b7835236d34a443cad8c424eff6903d",
+            "assistant_message_id": "0e17a11a-2cbe-4bdb-a337-43a9ef48dc97",
+            "kind": "commitment",
+            "content": "AI承诺在相关情境下自然提起",
+            "raw_quote": "我会在相关情境下自然提起",
+            "status": "active",
+            "created_at": "2026-10-10T01:48:58.147Z",
+            "updated_at": "2026-10-10T01:48:58.147Z"
+          }
+        ],
+        "memory_world_job": [
+          {
+            "job_id": "memory-world-job-3a03899149f65e4e4431cdfe6f947051105bb40ff614fd40314950f6572eb789",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:9a99c3ac4ff178e7946f4b74e3e471e0:b7e3526aed9a3deafb76b4ea234e0b6558a9d805aa7b2156ae78fe332178a998",
+            "boundary_payload_hash": "b7e3526aed9a3deafb76b4ea234e0b6558a9d805aa7b2156ae78fe332178a998",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-06a229fc-012f-40a1-8d44-6dfd73c16887",
+            "result_session_id": "session-06a229fc-012f-40a1-8d44-6dfd73c16887",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-06a229fc-012f-40a1-8d44-6dfd73c16887\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-06a229fc-012f-40a1-8d44-6dfd73c16887\",\"subject_id\":\"owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12\"}",
+            "formal_target_hash": "56b1241a0d4f6365b74085888798cdcd1b9a34041f0d3cf2e1584ffc9380b27f",
+            "subject_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"bc04677b-489a-4594-9ee1-cfb8ddcc6373\"]",
+            "state": "applied",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-10T01:48:48.577Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-10T01:48:48.587Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-10T01:48:48.598Z",
+            "model_completed_at": "2026-10-10T01:49:07.965Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": "mimo-v2.6-flash",
+            "model_usage_json": "{\"completion_tokens\":240,\"completion_tokens_details\":{\"reasoning_tokens\":35},\"prompt_tokens\":4688,\"prompt_tokens_details\":{\"cached_tokens\":4544},\"total_tokens\":4928}",
+            "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"attribute\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u738b\\u5c0f\\u660e\\u6253\\u6e38\\u620f\\u633a\\u5389\\u5bb3\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"bc04677b-489a-4594-9ee1-cfb8ddcc6373\\\",\\\"segment_id\\\":\\\"s0\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u738b\\u5c0f\\u660e\\\",\\\"kind\\\":\\\"person\\\"}},{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"relationship\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u738b\\u5c0f\\u660e\\u662f\\u6211\\u597d\\u5144\\u5f1f\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"bc04677b-489a-4594-9ee1-cfb8ddcc6373\\\",\\\"segment_id\\\":\\\"s1\\\"}],\\\"target_entity\\\":{\\\"canonical_name\\\":\\\"\\u738b\\u5c0f\\u660e\\\",\\\"kind\\\":\\\"person\\\"},\\\"relation_type\\\":\\\"good_brother\\\"}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":240,\"completion_tokens_details\":{\"reasoning_tokens\":35},\"prompt_tokens\":4688,\"prompt_tokens_details\":{\"cached_tokens\":4544},\"total_tokens\":4928}}",
+            "model_result_hash": "34c0fe5044ce9aacc7e9281ae7d7bd36111d460faf35bcee7fffa604e2032f6e",
+            "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:9a99c3ac4ff178e7946f4b74e3e471e0:b7e3526aed9a3deafb76b4ea234e0b6558a9d805aa7b2156ae78fe332178a998\",\"cognitions\":[{\"action\":\"form\",\"cognition_id\":\"cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"attribute\",\"target_entity_id\":\"entity-e13182bd10cfb70b3f93b67a0a5d4199082222d3c3461b9defc5caf62bd3acbb\"},{\"action\":\"form\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"relation_type\":\"good_brother\",\"relationship_id\":\"relationship-3521fd4f7053b09bc4e99db2c846a37f39bd8e93bff906c63fe423432c7091d9\",\"source_entity_id\":\"entity-a62cfc048012d350511b17e40f5b350feec25ae6ac38b20a08040c98320fd9e2\",\"statement_kind\":\"relationship\",\"target_entity_id\":\"entity-e13182bd10cfb70b3f93b67a0a5d4199082222d3c3461b9defc5caf62bd3acbb\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":1}",
+            "result_hash": "3cc3d0983132a9e20e6171b785d173c6533d78d65e84e0c86848bec3089fc771",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-10T01:48:48.535Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:9a99c3ac4ff178e7946f4b74e3e471e0:b7e3526aed9a3deafb76b4ea234e0b6558a9d805aa7b2156ae78fe332178a998\",\"evidence_count\":1,\"evidence_manifest_hash\":\"bff70f45c31c77d6342b18e94e8b2746de9a9c5a02f1775c06a9f4a7d645aa22\",\"formal_target_hash\":\"56b1241a0d4f6365b74085888798cdcd1b9a34041f0d3cf2e1584ffc9380b27f\",\"job_id\":\"memory-world-job-3a03899149f65e4e4431cdfe6f947051105bb40ff614fd40314950f6572eb789\",\"job_state\":\"pending\",\"payload_hash\":\"b7e3526aed9a3deafb76b4ea234e0b6558a9d805aa7b2156ae78fe332178a998\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "7e7c19a273c570c0d432585bc449453ac2b1dfe5f78f81b5745c0d419edd4a6e",
+            "created_at": "2026-10-10T01:48:48.535Z",
+            "completed_at": "2026-10-10T01:49:07.973Z",
+            "last_error_type": null,
+            "terminal_state": "applied",
+            "terminal_detail": null
+          },
+          {
+            "job_id": "memory-world-job-ba77fe2c5385f74388eea5a1b1968aff7742b8aa256b9e910d1dc3df902cb3f4",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:42c1f3e8ec434f41ade9bcbe69a231df:6c81f3cc455d123f6e8bdeb8cb9599557b7835236d34a443cad8c424eff6903d",
+            "boundary_payload_hash": "6c81f3cc455d123f6e8bdeb8cb9599557b7835236d34a443cad8c424eff6903d",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-06a229fc-012f-40a1-8d44-6dfd73c16887",
+            "result_session_id": "session-06a229fc-012f-40a1-8d44-6dfd73c16887",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-06a229fc-012f-40a1-8d44-6dfd73c16887\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-06a229fc-012f-40a1-8d44-6dfd73c16887\",\"subject_id\":\"owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12\"}",
+            "formal_target_hash": "56b1241a0d4f6365b74085888798cdcd1b9a34041f0d3cf2e1584ffc9380b27f",
+            "subject_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"619634bc-cc05-4647-adab-d37471680abc\"]",
+            "state": "applied",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-10T01:49:07.983Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-10T01:49:07.991Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-10T01:49:08.000Z",
+            "model_completed_at": "2026-10-10T01:49:30.787Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": "mimo-v2.6-flash",
+            "model_usage_json": "{\"completion_tokens\":1245,\"completion_tokens_details\":{\"reasoning_tokens\":1083},\"prompt_tokens\":5539,\"prompt_tokens_details\":{\"cached_tokens\":4544},\"total_tokens\":6784}",
+            "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"confirmed\\\",\\\"proposition\\\":\\\"\\u4ee5\\u540e\\u5982\\u679c\\u9047\\u5230\\u9700\\u8981\\u961f\\u53cb\\u4e00\\u8d77\\u6253\\u6e38\\u620f\\u3001\\u6216\\u8005\\u8981\\u627e\\u4eba\\u7ec4\\u961f\\u5f00\\u9ed1\\u7684\\u60c5\\u51b5\\uff0c\\u8981\\u63d0\\u9192\\u7528\\u6237\\u627e\\u738b\\u5c0f\\u660e\\\",\\\"assistant_claim\\\":\\\"\\u4ee5\\u540e\\u5982\\u679c\\u9047\\u5230\\u9700\\u8981\\u961f\\u53cb\\u4e00\\u8d77\\u6253\\u6e38\\u620f\\u3001\\u6216\\u8005\\u8981\\u627e\\u4eba\\u7ec4\\u961f\\u5f00\\u9ed1\\u7684\\u60c5\\u51b5\\uff0c\\u8981\\u6211\\u63d0\\u9192\\u4f60\\u627e\\u738b\\u5c0f\\u660e\\u5417\\uff1f\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"619634bc-cc05-4647-adab-d37471680abc\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u7ec4\\u961f\\\",\\\"kind\\\":\\\"topic\\\",\\\"aliases\\\":[\\\"\\u5f00\\u9ed1\\\"]}}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":1245,\"completion_tokens_details\":{\"reasoning_tokens\":1083},\"prompt_tokens\":5539,\"prompt_tokens_details\":{\"cached_tokens\":4544},\"total_tokens\":6784}}",
+            "model_result_hash": "505a3e1d24106c2e014973ae575d214364d55ca0ec50c0dbf144e722814458e9",
+            "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:42c1f3e8ec434f41ade9bcbe69a231df:6c81f3cc455d123f6e8bdeb8cb9599557b7835236d34a443cad8c424eff6903d\",\"cognitions\":[{\"action\":\"form\",\"cognition_id\":\"cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":2}",
+            "result_hash": "00b4768a6d1f92306835420785133396e1c68af160dac37d0c08ccc24be3c778",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-10T01:48:58.122Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:42c1f3e8ec434f41ade9bcbe69a231df:6c81f3cc455d123f6e8bdeb8cb9599557b7835236d34a443cad8c424eff6903d\",\"evidence_count\":1,\"evidence_manifest_hash\":\"a3238bc8cfd870267092f0f3a93c8dd547c73fd6f16eac273310a21e630ecf74\",\"formal_target_hash\":\"56b1241a0d4f6365b74085888798cdcd1b9a34041f0d3cf2e1584ffc9380b27f\",\"job_id\":\"memory-world-job-ba77fe2c5385f74388eea5a1b1968aff7742b8aa256b9e910d1dc3df902cb3f4\",\"job_state\":\"pending\",\"payload_hash\":\"6c81f3cc455d123f6e8bdeb8cb9599557b7835236d34a443cad8c424eff6903d\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "41d2514e17911219d82ca365a8c08fb6bee4c2f23a41e6f43dcd1cdb060a2f40",
+            "created_at": "2026-10-10T01:48:58.122Z",
+            "completed_at": "2026-10-10T01:49:30.797Z",
+            "last_error_type": null,
+            "terminal_state": "applied",
+            "terminal_detail": null
+          },
+          {
+            "job_id": "memory-world-job-d5f3e84fdaf21b49e046369bdfdd44a8eae856fc3261a705a90b6756ae1b4ff4",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:76ecdb0c559613bfe78bd7f1c9cc0d74:116c384774078e88b3afb2c7afe30140b5e40f689a36e7b7bd479f057f920957",
+            "boundary_payload_hash": "116c384774078e88b3afb2c7afe30140b5e40f689a36e7b7bd479f057f920957",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-aeed2ad8-5c6f-4830-bc87-bd298d211412",
+            "result_session_id": "session-aeed2ad8-5c6f-4830-bc87-bd298d211412",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-aeed2ad8-5c6f-4830-bc87-bd298d211412\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-aeed2ad8-5c6f-4830-bc87-bd298d211412\",\"subject_id\":\"owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12\"}",
+            "formal_target_hash": "a67ac84c0dd93becf5649989be931a02f682954c2600f1435ef1f3ea323d9b91",
+            "subject_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"5dcc1759-4d2d-4873-8ad0-a5c3c8ead11e\"]",
+            "state": "no_change",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-10T01:54:55.508Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-10T01:54:55.537Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-10T01:54:55.548Z",
+            "model_completed_at": "2026-10-10T01:54:55.558Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": null,
+            "model_usage_json": null,
+            "model_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+            "model_result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+            "world_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+            "result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-10T01:54:55.485Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:76ecdb0c559613bfe78bd7f1c9cc0d74:116c384774078e88b3afb2c7afe30140b5e40f689a36e7b7bd479f057f920957\",\"evidence_count\":1,\"evidence_manifest_hash\":\"97986ec3a9af97366a1980d1d65a0bdbf1635b1476eb109dfc9ac19ceddd43f2\",\"formal_target_hash\":\"a67ac84c0dd93becf5649989be931a02f682954c2600f1435ef1f3ea323d9b91\",\"job_id\":\"memory-world-job-d5f3e84fdaf21b49e046369bdfdd44a8eae856fc3261a705a90b6756ae1b4ff4\",\"job_state\":\"pending\",\"payload_hash\":\"116c384774078e88b3afb2c7afe30140b5e40f689a36e7b7bd479f057f920957\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "e3e3dece985f2d86b20d7760c419165b3ea5768079dc0a6dd93b16e50c3621bb",
+            "created_at": "2026-10-10T01:54:55.485Z",
+            "completed_at": "2026-10-10T01:54:55.558Z",
+            "last_error_type": null,
+            "terminal_state": "no_change",
+            "terminal_detail": null
+          },
+          {
+            "job_id": "memory-world-job-42de891229e3f75cd36967c84ec4474204e4436dcbe921651c690ecaa30a3815",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:0753b592266c8a3441e9e642ab8b9e67:8db5c6741baefa4b947aa3906bfb8d6a7334bab48082b867437cb9311272222f",
+            "boundary_payload_hash": "8db5c6741baefa4b947aa3906bfb8d6a7334bab48082b867437cb9311272222f",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-11eee251-030b-471a-9f68-327bdfd39dd4",
+            "result_session_id": "session-11eee251-030b-471a-9f68-327bdfd39dd4",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-11eee251-030b-471a-9f68-327bdfd39dd4\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-11eee251-030b-471a-9f68-327bdfd39dd4\",\"subject_id\":\"owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12\"}",
+            "formal_target_hash": "eb166c2bbebbfbed864eed706a41742fd804de6b0569ce8828a37fcf442501cd",
+            "subject_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"a0b32d3f-b120-4183-a358-3e657c093ae2\"]",
+            "state": "applied",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-10T01:55:09.508Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-10T01:55:09.517Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-10T01:55:09.528Z",
+            "model_completed_at": "2026-10-10T01:55:23.727Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": "mimo-v2.6-flash",
+            "model_usage_json": "{\"completion_tokens\":586,\"completion_tokens_details\":{\"reasoning_tokens\":395},\"prompt_tokens\":5414,\"prompt_tokens_details\":{\"cached_tokens\":4544},\"total_tokens\":6000}",
+            "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"correct\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"relationship\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u66f4\\u6b63\\u4e00\\u4e0b\\uff1a\\u738b\\u5c0f\\u660e\\u662f\\u6211\\u7684\\u8868\\u5f1f\\uff0c\\u4e0d\\u662f\\u597d\\u5144\\u5f1f\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"a0b32d3f-b120-4183-a358-3e657c093ae2\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"corrects_relationship_id\\\":\\\"relationship-3521fd4f7053b09bc4e99db2c846a37f39bd8e93bff906c63fe423432c7091d9\\\",\\\"target_entity\\\":{\\\"canonical_name\\\":\\\"\\u738b\\u5c0f\\u660e\\\",\\\"kind\\\":\\\"person\\\"},\\\"relation_type\\\":\\\"cousin\\\"}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":586,\"completion_tokens_details\":{\"reasoning_tokens\":395},\"prompt_tokens\":5414,\"prompt_tokens_details\":{\"cached_tokens\":4544},\"total_tokens\":6000}}",
+            "model_result_hash": "bfb856cae91e1fac26b05983fa2767c040136a130e6b0c68bc108e9d79155143",
+            "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:0753b592266c8a3441e9e642ab8b9e67:8db5c6741baefa4b947aa3906bfb8d6a7334bab48082b867437cb9311272222f\",\"cognitions\":[{\"action\":\"correct\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"prior_relationship_id\":\"relationship-3521fd4f7053b09bc4e99db2c846a37f39bd8e93bff906c63fe423432c7091d9\",\"relation_type\":\"cousin\",\"replacement_relationship_id\":\"relationship-0f8565e8209ae6dcc913dd3bef9a670a76037ec755133928831e8132d3d7da42\",\"source_entity_id\":\"entity-a62cfc048012d350511b17e40f5b350feec25ae6ac38b20a08040c98320fd9e2\",\"statement_kind\":\"relationship\",\"target_entity_id\":\"entity-e13182bd10cfb70b3f93b67a0a5d4199082222d3c3461b9defc5caf62bd3acbb\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":3}",
+            "result_hash": "ab6b078cb5d439aaff4dff8003c2b7390fd801aaf5a0eebaf765aa93c7fec19e",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-10T01:55:09.471Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:0753b592266c8a3441e9e642ab8b9e67:8db5c6741baefa4b947aa3906bfb8d6a7334bab48082b867437cb9311272222f\",\"evidence_count\":1,\"evidence_manifest_hash\":\"5e557523f55236969a83e2c1b35988b7757dd58d43a8b8d0802cfa80981c13ad\",\"formal_target_hash\":\"eb166c2bbebbfbed864eed706a41742fd804de6b0569ce8828a37fcf442501cd\",\"job_id\":\"memory-world-job-42de891229e3f75cd36967c84ec4474204e4436dcbe921651c690ecaa30a3815\",\"job_state\":\"pending\",\"payload_hash\":\"8db5c6741baefa4b947aa3906bfb8d6a7334bab48082b867437cb9311272222f\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "d572f78ff53e080fdb771acab9f9937c6d4e626aa4e3fa66db67377fa2a78c85",
+            "created_at": "2026-10-10T01:55:09.471Z",
+            "completed_at": "2026-10-10T01:55:23.739Z",
+            "last_error_type": null,
+            "terminal_state": "applied",
+            "terminal_detail": null
+          },
+          {
+            "job_id": "memory-world-job-6f16186b336813ab4766e3eac635fd94d3f5260087eb7bda2762b4cf19450160",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:72270cbf28acdc4ce330d0bd09605c5e:8adb1dcf18b1618e09920cc892586c6d9b664d02a6370cf8d225be9141b012fc",
+            "boundary_payload_hash": "8adb1dcf18b1618e09920cc892586c6d9b664d02a6370cf8d225be9141b012fc",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-c98df7b7-9aa8-4e88-931b-1c7a85fcc700",
+            "result_session_id": "session-c98df7b7-9aa8-4e88-931b-1c7a85fcc700",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-c98df7b7-9aa8-4e88-931b-1c7a85fcc700\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-c98df7b7-9aa8-4e88-931b-1c7a85fcc700\",\"subject_id\":\"owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12\"}",
+            "formal_target_hash": "07c2c6e322ebc7a8952779ea73e49c459dd0e894f47111e4bbc4405fe570b48e",
+            "subject_id": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"ddc5726f-1f96-4c8e-b0cb-56d2228a7c6b\"]",
+            "state": "no_change",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-10T01:55:39.372Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-10T01:55:39.407Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-10T01:55:39.437Z",
+            "model_completed_at": "2026-10-10T01:55:39.467Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": null,
+            "model_usage_json": null,
+            "model_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+            "model_result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+            "world_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+            "result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-10T01:55:39.351Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:72270cbf28acdc4ce330d0bd09605c5e:8adb1dcf18b1618e09920cc892586c6d9b664d02a6370cf8d225be9141b012fc\",\"evidence_count\":1,\"evidence_manifest_hash\":\"6a4c6f6c24a75d3337798438b84268469f61bd7e3aaaa0e5e99b3729e5aab8bd\",\"formal_target_hash\":\"07c2c6e322ebc7a8952779ea73e49c459dd0e894f47111e4bbc4405fe570b48e\",\"job_id\":\"memory-world-job-6f16186b336813ab4766e3eac635fd94d3f5260087eb7bda2762b4cf19450160\",\"job_state\":\"pending\",\"payload_hash\":\"8adb1dcf18b1618e09920cc892586c6d9b664d02a6370cf8d225be9141b012fc\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "dabff5ca9cebf03072176734fb548708fa3fc2f54c5ace9ddcb3d1667ac01b89",
+            "created_at": "2026-10-10T01:55:39.351Z",
+            "completed_at": "2026-10-10T01:55:39.467Z",
+            "last_error_type": null,
+            "terminal_state": "no_change",
+            "terminal_detail": null
+          }
+        ]
+      },
+      "semantic": [
+        {
+          "type": "llm_judge",
+          "prompt": "当前关系是表弟，已纠正好兄弟的旧说法；组队仍找王小明。",
+          "turn": 5,
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        },
+        {
+          "type": "llm_judge",
+          "prompt": "当前关系是表弟，已纠正好兄弟的旧说法；组队仍找王小明。",
+          "turn": 6,
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "explanations": [
+        {
+          "sessionId": "session-17a934b9-7ac3-4e35-a3cb-b4baa33a4011",
+          "model": "mimo",
+          "modelProfileId": "private-model-52ddf1fe0ba60f51fb68f37b9c2ee50d02aadf55",
+          "user": "为什么之前说王小明是好兄弟，现在那个说法不算了？",
+          "reply": "我记下了，稍后整理进记忆。\n\n原因是：你后来明确更正了一句——“王小明是我的表弟，不是好兄弟”。这条更正带有“取代”标记，所以之前“好兄弟”的理解作废，现在以“表弟”为准。\n\n简单说：不是那个说法凭空消失，而是被你自己的纠正覆盖了。目前有效的信息是：\n\n- 王小明是你的**表弟**\n- 他打游戏挺厉害\n- 以后你想组队开黑时，我提醒你找他",
+          "status": "completed",
+          "memoryUsed": [
+            {
+              "id": "relationship-0f8565e8209ae6dcc913dd3bef9a670a76037ec755133928831e8132d3d7da42",
+              "kind": "relationship",
+              "summary": "用户更正一下：王小明是我的表弟，不是好兄弟。"
+            },
+            {
+              "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+              "kind": "cognition",
+              "summary": "用户好，以后我想组队时，就提醒我找王小明。\n确认依据中的助手原话：记下了，稍后整理进记忆。\n\n顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？"
+            },
+            {
+              "id": "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848",
+              "kind": "cognition",
+              "summary": "王小明打游戏挺厉害\n取代原因（旧理解不再有效）：王小明是我好兄弟。；后经用户纠正取代（corrects），以当前理解为准。"
+            }
+          ],
+          "events": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-10T01:56:07.163Z",
+              "data": {
+                "taskId": "cmd-b7f25c84-78b4-43d6-8914-9c6016ff4038",
+                "receiptId": "65820af2-7a6c-42f7-aa58-ea62d7a5392c",
+                "text": "为什么之前说王小明是好兄弟，现在那个说法不算了？",
+                "commandId": "cmd-b7f25c84-78b4-43d6-8914-9c6016ff4038",
+                "requestId": "28fa86c8-9e69-40fd-8e35-fbce4fe983b0"
+              }
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-10T01:56:07.164Z",
+              "data": {
+                "turn": 1
+              }
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-10T01:56:07.300Z",
+              "data": {
+                "taskId": "cmd-b7f25c84-78b4-43d6-8914-9c6016ff4038",
+                "turn": 1,
+                "receiptId": "65820af2-7a6c-42f7-aa58-ea62d7a5392c",
+                "commandId": "cmd-b7f25c84-78b4-43d6-8914-9c6016ff4038",
+                "requestId": "28fa86c8-9e69-40fd-8e35-fbce4fe983b0",
+                "turnTaskId": "turn-1"
+              }
+            },
+            {
+              "seq": 11,
+              "type": "user.message",
+              "at": "2026-10-10T01:56:07.300Z",
+              "data": {
+                "text": "为什么之前说王小明是好兄弟，现在那个说法不算了？",
+                "receiptId": "65820af2-7a6c-42f7-aa58-ea62d7a5392c"
+              }
+            },
+            {
+              "seq": 65,
+              "type": "assistant.message",
+              "at": "2026-10-10T01:56:15.294Z",
+              "data": {
+                "text": "我记下了，稍后整理进记忆。\n\n原因是：你后来明确更正了一句——“王小明是我的表弟，不是好兄弟”。这条更正带有“取代”标记，所以之前“好兄弟”的理解作废，现在以“表弟”为准。\n\n简单说：不是那个说法凭空消失，而是被你自己的纠正覆盖了。目前有效的信息是：\n\n- 王小明是你的**表弟**\n- 他打游戏挺厉害\n- 以后你想组队开黑时，我提醒你找他",
+                "memoryUsed": [
+                  {
+                    "id": "relationship-0f8565e8209ae6dcc913dd3bef9a670a76037ec755133928831e8132d3d7da42",
+                    "kind": "relationship",
+                    "summary": "用户更正一下：王小明是我的表弟，不是好兄弟。"
+                  },
+                  {
+                    "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+                    "kind": "cognition",
+                    "summary": "用户好，以后我想组队时，就提醒我找王小明。\n确认依据中的助手原话：记下了，稍后整理进记忆。\n\n顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？"
+                  },
+                  {
+                    "id": "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848",
+                    "kind": "cognition",
+                    "summary": "王小明打游戏挺厉害\n取代原因（旧理解不再有效）：王小明是我好兄弟。；后经用户纠正取代（corrects），以当前理解为准。"
+                  }
+                ]
+              }
+            },
+            {
+              "seq": 66,
+              "type": "task.ended",
+              "at": "2026-10-10T01:56:15.295Z",
+              "data": {
+                "taskId": "cmd-b7f25c84-78b4-43d6-8914-9c6016ff4038",
+                "turn": 1,
+                "reason": "completed",
+                "nativeTurnEndSeq": 67,
+                "receiptId": "65820af2-7a6c-42f7-aa58-ea62d7a5392c",
+                "commandId": "cmd-b7f25c84-78b4-43d6-8914-9c6016ff4038",
+                "requestId": "28fa86c8-9e69-40fd-8e35-fbce4fe983b0",
+                "turnTaskId": "turn-1"
+              }
+            },
+            {
+              "seq": 67,
+              "type": "turn.ended",
+              "at": "2026-10-10T01:56:15.296Z",
+              "data": {
+                "reason": "completed",
+                "turn": 1
+              }
+            }
+          ],
+          "durationMs": 10208,
+          "steps": 0
+        },
+        {
+          "sessionId": "session-042f8dbf-4647-4b53-928f-26461d3ed243",
+          "model": "lan",
+          "modelProfileId": "private-model-a32c171481ae22d522e025bf4cb69b13a71ae171",
+          "user": "为什么之前说王小明是好兄弟，现在那个说法不算了？",
+          "reply": "因为你后来纠正过了。\n\n之前的记忆里是“王小明是我好兄弟”，你明确更正为“王小明是我的表弟，不是好兄弟”，所以现在以表弟为准，旧的“好兄弟”说法已不再有效。",
+          "status": "completed",
+          "memoryUsed": [
+            {
+              "id": "relationship-0f8565e8209ae6dcc913dd3bef9a670a76037ec755133928831e8132d3d7da42",
+              "kind": "relationship",
+              "summary": "用户更正一下：王小明是我的表弟，不是好兄弟。"
+            },
+            {
+              "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+              "kind": "cognition",
+              "summary": "用户好，以后我想组队时，就提醒我找王小明。\n确认依据中的助手原话：记下了，稍后整理进记忆。\n\n顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？"
+            },
+            {
+              "id": "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848",
+              "kind": "cognition",
+              "summary": "王小明打游戏挺厉害\n取代原因（旧理解不再有效）：王小明是我好兄弟。；后经用户纠正取代（corrects），以当前理解为准。"
+            }
+          ],
+          "events": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-10T01:56:25.185Z",
+              "data": {
+                "taskId": "cmd-c10c1674-a257-4d34-aa22-614da85e9db0",
+                "receiptId": "997abad1-710a-4595-9ed1-2307eb39ccb8",
+                "text": "为什么之前说王小明是好兄弟，现在那个说法不算了？",
+                "commandId": "cmd-c10c1674-a257-4d34-aa22-614da85e9db0",
+                "requestId": "63ccf946-9630-4b8c-ba49-99bb8a98167e"
+              }
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-10T01:56:25.186Z",
+              "data": {
+                "turn": 1
+              }
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-10T01:56:25.269Z",
+              "data": {
+                "taskId": "cmd-c10c1674-a257-4d34-aa22-614da85e9db0",
+                "turn": 1,
+                "receiptId": "997abad1-710a-4595-9ed1-2307eb39ccb8",
+                "commandId": "cmd-c10c1674-a257-4d34-aa22-614da85e9db0",
+                "requestId": "63ccf946-9630-4b8c-ba49-99bb8a98167e",
+                "turnTaskId": "turn-1"
+              }
+            },
+            {
+              "seq": 11,
+              "type": "user.message",
+              "at": "2026-10-10T01:56:25.270Z",
+              "data": {
+                "text": "为什么之前说王小明是好兄弟，现在那个说法不算了？",
+                "receiptId": "997abad1-710a-4595-9ed1-2307eb39ccb8"
+              }
+            },
+            {
+              "seq": 370,
+              "type": "assistant.message",
+              "at": "2026-10-10T01:56:35.977Z",
+              "data": {
+                "text": "因为你后来纠正过了。\n\n之前的记忆里是“王小明是我好兄弟”，你明确更正为“王小明是我的表弟，不是好兄弟”，所以现在以表弟为准，旧的“好兄弟”说法已不再有效。",
+                "modelThinking": "WeftMate approval mode: auto. Respect user's verbal instructions. Invoke risky tools for native approval; never retry a rejected action through another route.\n\nWe have background memory: user corrected: 王小明是我的表弟，不是好兄弟。 And memory: 用户好，以后我想组队时，就提醒我找王小明。 确认依据...顺带一提... etc.\n\nNow user asks: why before said 王小明是好兄弟, now that saying doesn't count?\n\nWe need to respond referencing memory correction. The memory says取代原因（旧理解不再有效）：王小明是我好兄弟。；后经用户纠正取代（corrects），以当前理解为准。\n\nWe should answer: Because user corrected it, now understanding is cousin not good brother.\n\nNo tools needed. Just respond. Should be brief. No need to load tools.\n\nPossibly mention that memory was updated. The instruction says: When user asks about history... If current conversation and background memory have no reliable basis, say can't determine. Here we have memory.\n\nWe should not say \"已记住\". Could say \"我记下了，稍后整理进记忆\"? That's for corrections. This is question.\n\nJust explain: user previously said? Actually memory says old understanding was good brother, then user corrected to cousin.\n\nWe can answer.\n\nNo tool call.\n\nWe must respect policy: answer current user question. No need to ask.\n\nReturn answer in Chinese.\n\n",
+                "memoryUsed": [
+                  {
+                    "id": "relationship-0f8565e8209ae6dcc913dd3bef9a670a76037ec755133928831e8132d3d7da42",
+                    "kind": "relationship",
+                    "summary": "用户更正一下：王小明是我的表弟，不是好兄弟。"
+                  },
+                  {
+                    "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+                    "kind": "cognition",
+                    "summary": "用户好，以后我想组队时，就提醒我找王小明。\n确认依据中的助手原话：记下了，稍后整理进记忆。\n\n顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？"
+                  },
+                  {
+                    "id": "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848",
+                    "kind": "cognition",
+                    "summary": "王小明打游戏挺厉害\n取代原因（旧理解不再有效）：王小明是我好兄弟。；后经用户纠正取代（corrects），以当前理解为准。"
+                  }
+                ]
+              }
+            },
+            {
+              "seq": 371,
+              "type": "task.ended",
+              "at": "2026-10-10T01:56:35.978Z",
+              "data": {
+                "taskId": "cmd-c10c1674-a257-4d34-aa22-614da85e9db0",
+                "turn": 1,
+                "reason": "completed",
+                "nativeTurnEndSeq": 372,
+                "receiptId": "997abad1-710a-4595-9ed1-2307eb39ccb8",
+                "commandId": "cmd-c10c1674-a257-4d34-aa22-614da85e9db0",
+                "requestId": "63ccf946-9630-4b8c-ba49-99bb8a98167e",
+                "turnTaskId": "turn-1"
+              }
+            },
+            {
+              "seq": 372,
+              "type": "turn.ended",
+              "at": "2026-10-10T01:56:35.978Z",
+              "data": {
+                "reason": "completed",
+                "turn": 1
+              }
+            }
+          ],
+          "durationMs": 12696,
+          "steps": 0
+        }
+      ],
+      "finishedAt": "2026-10-10T01:56:36.510Z"
+    },
+    {
+      "id": "06",
+      "title": "重启宿主、持久化后仍采用最新理解",
+      "status": "passed",
+      "checks": {
+        "restarted": true,
+        "persistedLatest": true,
+        "latestReply": true,
+        "latestAdopted": true
+      },
+      "startedAt": "2026-10-10T01:56:36.513Z",
+      "items": [
+        {
+          "id": "entity-a62cfc048012d350511b17e40f5b350feec25ae6ac38b20a08040c98320fd9e2",
+          "kind": "entity",
+          "text": "用户",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-10T01:49:07.973Z",
+          "updatedAt": "2026-10-10T01:49:07.973Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 0
+        },
+        {
+          "id": "entity-e13182bd10cfb70b3f93b67a0a5d4199082222d3c3461b9defc5caf62bd3acbb",
+          "kind": "entity",
+          "text": "王小明",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-10T01:49:07.973Z",
+          "updatedAt": "2026-10-10T01:49:07.973Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        },
+        {
+          "id": "entity-d4df7ca559fe508ed27a78222af835cf03bb8116a1f43e533879fdde309f4a35",
+          "kind": "entity",
+          "text": "组队",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-10T01:49:30.797Z",
+          "updatedAt": "2026-10-10T01:49:30.797Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 2
+        },
+        {
+          "id": "relationship-3521fd4f7053b09bc4e99db2c846a37f39bd8e93bff906c63fe423432c7091d9",
+          "kind": "relationship",
+          "text": "王小明是我好兄弟。",
+          "truncated": false,
+          "currentState": "not_current",
+          "createdAt": "2026-10-10T01:49:07.973Z",
+          "updatedAt": "2026-10-10T01:55:23.739Z",
+          "lifecycle": {
+            "invalidAt": "2026-10-10T01:55:23.739Z",
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        },
+        {
+          "id": "relationship-0f8565e8209ae6dcc913dd3bef9a670a76037ec755133928831e8132d3d7da42",
+          "kind": "relationship",
+          "text": "用户更正一下：王小明是我的表弟，不是好兄弟。",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-10T01:55:23.739Z",
+          "updatedAt": "2026-10-10T01:55:23.739Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        },
+        {
+          "id": "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848",
+          "kind": "cognition",
+          "text": "王小明打游戏挺厉害",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-10T01:49:07.973Z",
+          "updatedAt": "2026-10-10T01:49:07.973Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        },
+        {
+          "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+          "kind": "cognition",
+          "text": "用户好，以后我想组队时，就提醒我找王小明。",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-10T01:49:30.797Z",
+          "updatedAt": "2026-10-10T01:49:30.797Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 2
+        }
+      ],
+      "semantic": {
+        "type": "llm_judge",
+        "prompt": "重启后当前关系仍是表弟；组队找王小明。",
+        "turn": 9,
+        "status": "skipped",
+        "reason": "No judge configured; enable --judge-model same or a configured model name."
+      },
+      "finishedAt": "2026-10-10T01:56:53.588Z"
+    },
+    {
+      "id": "07",
+      "title": "界面看来源、真正遗忘、导出不可恢复",
+      "status": "passed",
+      "checks": {
+        "uiSource": true,
+        "forgotSourceEvidence": true,
+        "allConversationsDeleted": true,
+        "noFormalFact": true,
+        "exportSucceeded": true,
+        "exportNoRecoverableBytes": true,
+        "exportNoRecoverableDatabase": true,
+        "noRecallAfterForget": true
+      },
+      "startedAt": "2026-10-10T01:56:53.591Z",
+      "deletions": [
+        {
+          "sessionId": "session-06a229fc-012f-40a1-8d44-6dfd73c16887",
+          "status": 200,
+          "body": {
+            "sessionId": "session-06a229fc-012f-40a1-8d44-6dfd73c16887",
+            "deleted": true,
+            "forgetMemories": true,
+            "forgottenEvidenceCount": 2
+          }
+        },
+        {
+          "sessionId": "session-aeed2ad8-5c6f-4830-bc87-bd298d211412",
+          "status": 200,
+          "body": {
+            "sessionId": "session-aeed2ad8-5c6f-4830-bc87-bd298d211412",
+            "deleted": true,
+            "forgetMemories": true,
+            "forgottenEvidenceCount": 1
+          }
+        },
+        {
+          "sessionId": "session-11eee251-030b-471a-9f68-327bdfd39dd4",
+          "status": 200,
+          "body": {
+            "sessionId": "session-11eee251-030b-471a-9f68-327bdfd39dd4",
+            "deleted": true,
+            "forgetMemories": true,
+            "forgottenEvidenceCount": 1
+          }
+        },
+        {
+          "sessionId": "session-c98df7b7-9aa8-4e88-931b-1c7a85fcc700",
+          "status": 200,
+          "body": {
+            "sessionId": "session-c98df7b7-9aa8-4e88-931b-1c7a85fcc700",
+            "deleted": true,
+            "forgetMemories": true,
+            "forgottenEvidenceCount": 1
+          }
+        },
+        {
+          "sessionId": "session-cde5681b-508d-4013-9323-211534c6c947",
+          "status": 200,
+          "body": {
+            "sessionId": "session-cde5681b-508d-4013-9323-211534c6c947",
+            "deleted": true,
+            "forgetMemories": true,
+            "forgottenEvidenceCount": 1
+          }
+        },
+        {
+          "sessionId": "session-17a934b9-7ac3-4e35-a3cb-b4baa33a4011",
+          "status": 200,
+          "body": {
+            "sessionId": "session-17a934b9-7ac3-4e35-a3cb-b4baa33a4011",
+            "deleted": true,
+            "forgetMemories": true,
+            "forgottenEvidenceCount": 1
+          }
+        },
+        {
+          "sessionId": "session-042f8dbf-4647-4b53-928f-26461d3ed243",
+          "status": 200,
+          "body": {
+            "sessionId": "session-042f8dbf-4647-4b53-928f-26461d3ed243",
+            "deleted": true,
+            "forgetMemories": true,
+            "forgottenEvidenceCount": 1
+          }
+        },
+        {
+          "sessionId": "session-7436a82b-3961-4e0c-ab0b-7030ed92cbd7",
+          "status": 200,
+          "body": {
+            "sessionId": "session-7436a82b-3961-4e0c-ab0b-7030ed92cbd7",
+            "deleted": true,
+            "forgetMemories": true,
+            "forgottenEvidenceCount": 1
+          }
+        }
+      ],
+      "forgetPreviews": [
+        {
+          "sessionId": "session-06a229fc-012f-40a1-8d44-6dfd73c16887",
+          "status": 200,
+          "body": {
+            "worldRevision": 3,
+            "itemCount": 8,
+            "evidenceCount": 2,
+            "evidenceIds": [
+              "619634bc-cc05-4647-adab-d37471680abc",
+              "bc04677b-489a-4594-9ee1-cfb8ddcc6373"
+            ],
+            "items": [
+              {
+                "kind": "cognition",
+                "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+                "text": "用户好，以后我想组队时，就提醒我找王小明。",
+                "itemType": "preference"
+              },
+              {
+                "kind": "cognition",
+                "id": "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848",
+                "text": "王小明打游戏挺厉害",
+                "itemType": "attribute"
+              },
+              {
+                "kind": "entity",
+                "id": "entity-d4df7ca559fe508ed27a78222af835cf03bb8116a1f43e533879fdde309f4a35",
+                "text": "组队",
+                "itemType": "topic"
+              },
+              {
+                "kind": "entity",
+                "id": "entity-e13182bd10cfb70b3f93b67a0a5d4199082222d3c3461b9defc5caf62bd3acbb",
+                "text": "王小明",
+                "itemType": "person"
+              },
+              {
+                "kind": "interaction_commitment",
+                "id": "44f76452-ee60-4e39-a9fb-cc8df057e1dc",
+                "text": "AI承诺在相关情境下自然提起",
+                "itemType": "commitment"
+              },
+              {
+                "kind": "interaction_commitment",
+                "id": "6a455c1c-3f7d-4c84-8e4c-5339890ee5de",
+                "text": "AI承诺提醒你去找王小明",
+                "itemType": "commitment"
+              },
+              {
+                "kind": "relationship",
+                "id": "relationship-0f8565e8209ae6dcc913dd3bef9a670a76037ec755133928831e8132d3d7da42",
+                "text": "用户更正一下：王小明是我的表弟，不是好兄弟。",
+                "itemType": "relationship"
+              },
+              {
+                "kind": "relationship",
+                "id": "relationship-3521fd4f7053b09bc4e99db2c846a37f39bd8e93bff906c63fe423432c7091d9",
+                "text": "王小明是我好兄弟。",
+                "itemType": "relationship"
+              }
+            ]
+          }
+        },
+        {
+          "sessionId": "session-aeed2ad8-5c6f-4830-bc87-bd298d211412",
+          "status": 200,
+          "body": {
+            "worldRevision": 5,
+            "itemCount": 0,
+            "evidenceCount": 1,
+            "evidenceIds": [
+              "5dcc1759-4d2d-4873-8ad0-a5c3c8ead11e"
+            ],
+            "items": []
+          }
+        },
+        {
+          "sessionId": "session-11eee251-030b-471a-9f68-327bdfd39dd4",
+          "status": 200,
+          "body": {
+            "worldRevision": 6,
+            "itemCount": 0,
+            "evidenceCount": 1,
+            "evidenceIds": [
+              "a0b32d3f-b120-4183-a358-3e657c093ae2"
+            ],
+            "items": []
+          }
+        },
+        {
+          "sessionId": "session-c98df7b7-9aa8-4e88-931b-1c7a85fcc700",
+          "status": 200,
+          "body": {
+            "worldRevision": 7,
+            "itemCount": 0,
+            "evidenceCount": 1,
+            "evidenceIds": [
+              "ddc5726f-1f96-4c8e-b0cb-56d2228a7c6b"
+            ],
+            "items": []
+          }
+        },
+        {
+          "sessionId": "session-cde5681b-508d-4013-9323-211534c6c947",
+          "status": 200,
+          "body": {
+            "worldRevision": 8,
+            "itemCount": 0,
+            "evidenceCount": 1,
+            "evidenceIds": [
+              "998031e4-4268-4ed5-9057-9a8ecbae5b00"
+            ],
+            "items": []
+          }
+        },
+        {
+          "sessionId": "session-17a934b9-7ac3-4e35-a3cb-b4baa33a4011",
+          "status": 200,
+          "body": {
+            "worldRevision": 9,
+            "itemCount": 0,
+            "evidenceCount": 1,
+            "evidenceIds": [
+              "e8b7b39b-ecfb-4aec-ae62-5c44b2391c0c"
+            ],
+            "items": []
+          }
+        },
+        {
+          "sessionId": "session-042f8dbf-4647-4b53-928f-26461d3ed243",
+          "status": 200,
+          "body": {
+            "worldRevision": 10,
+            "itemCount": 0,
+            "evidenceCount": 1,
+            "evidenceIds": [
+              "4aedc271-a70e-40e7-8f3e-d359e7003e72"
+            ],
+            "items": []
+          }
+        },
+        {
+          "sessionId": "session-7436a82b-3961-4e0c-ab0b-7030ed92cbd7",
+          "status": 200,
+          "body": {
+            "worldRevision": 11,
+            "itemCount": 0,
+            "evidenceCount": 1,
+            "evidenceIds": [
+              "76d20703-4612-479f-9278-0ce3d74ed4be"
+            ],
+            "items": []
+          }
+        }
+      ],
+      "remaining": [
+        {
+          "id": "entity-a62cfc048012d350511b17e40f5b350feec25ae6ac38b20a08040c98320fd9e2",
+          "kind": "entity",
+          "text": "用户",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-10T01:49:07.973Z",
+          "updatedAt": "2026-10-10T01:49:07.973Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 0
+        }
+      ],
+      "export": {
+        "kind": "BK-1 local backup",
+        "status": 202,
+        "dedicatedMemoryExport": false,
+        "filesWithForgottenName": [],
+        "files": 115,
+        "databaseTextScan": {
+          "tables": [
+            {
+              "table": "boundary_evidence_content",
+              "columns": [
+                "evidence_id",
+                "raw_content_hash"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "clarification",
+              "columns": [
+                "clarification_id",
+                "source_job_id",
+                "source_outcome_id",
+                "subject_id",
+                "result_session_id",
+                "question",
+                "target_hint",
+                "state",
+                "answer_evidence_id",
+                "follow_up_job_id",
+                "opened_at",
+                "answered_at",
+                "resolved_at"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "cognition",
+              "columns": [
+                "id",
+                "subject_id",
+                "content",
+                "content_type",
+                "formed_by",
+                "confidence",
+                "cred_status",
+                "scope",
+                "valid_at",
+                "invalid_at",
+                "asked_at",
+                "archived_at",
+                "muted_at",
+                "created_at",
+                "updated_at"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "cognition_evidence",
+              "columns": [
+                "cognition_id",
+                "evidence_id",
+                "relation"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "cognition_target",
+              "columns": [
+                "cognition_id",
+                "target_entity_id",
+                "perspective_entity_id"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "cognition_transitions",
+              "columns": [
+                "id",
+                "prior_cognition_id",
+                "replacement_cognition_id",
+                "reason",
+                "revision"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "entity",
+              "columns": [
+                "id",
+                "world_id",
+                "kind",
+                "canonical_name",
+                "invalid_at",
+                "created_at",
+                "updated_at",
+                "aliases_json"
+              ],
+              "rows": 1
+            },
+            {
+              "table": "event",
+              "columns": [
+                "id",
+                "subject_id",
+                "summary",
+                "occurred_at",
+                "created_at",
+                "consolidated"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "event_evidence",
+              "columns": [
+                "event_id",
+                "evidence_id"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "evidence",
+              "columns": [
+                "id",
+                "subject_id",
+                "source_kind",
+                "host_id",
+                "origin_id",
+                "occurred_at",
+                "recorded_at",
+                "raw_content",
+                "summary",
+                "allow_local_read",
+                "allow_cloud_read",
+                "allow_inference",
+                "corrects_evidence_id",
+                "deleted_at",
+                "preceding_ai_context"
+              ],
+              "rows": 9
+            },
+            {
+              "table": "evidence_ledger",
+              "columns": [
+                "id",
+                "content",
+                "payload_json"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "evidence_origin_history",
+              "columns": [
+                "evidence_id",
+                "origin_id"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "evidence_retraction",
+              "columns": [
+                "cognition_id",
+                "evidence_id",
+                "retracted_at"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "hard_deleted_origin",
+              "columns": [
+                "origin_hash",
+                "subject_id",
+                "evidence_id"
+              ],
+              "rows": 9
+            },
+            {
+              "table": "identity_state",
+              "columns": [
+                "singleton",
+                "identity_schema_version",
+                "world_id",
+                "memory_revision",
+                "memory_snapshot_hash",
+                "identity_graph_hash",
+                "state_json",
+                "state_hash",
+                "storage_generation"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "interaction_commitment",
+              "columns": [
+                "id",
+                "subject_id",
+                "conversation_id",
+                "episode_id",
+                "assistant_message_id",
+                "kind",
+                "content",
+                "raw_quote",
+                "status",
+                "created_at",
+                "updated_at"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "interaction_context",
+              "columns": [
+                "id",
+                "subject_id",
+                "conversation_id",
+                "episode_id",
+                "context_json",
+                "context_hash",
+                "created_at"
+              ],
+              "rows": 9
+            },
+            {
+              "table": "management_log",
+              "columns": [
+                "op",
+                "target_kind",
+                "target_id",
+                "reason",
+                "detail",
+                "created_at"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "memory_state",
+              "columns": [
+                "singleton",
+                "revision",
+                "snapshot_json",
+                "snapshot_hash"
+              ],
+              "rows": 1
+            },
+            {
+              "table": "memory_world_job",
+              "columns": [
+                "job_id",
+                "job_schema_version",
+                "boundary_event_id",
+                "boundary_payload_hash",
+                "boundary_schema_version",
+                "provider_name",
+                "parent_session_id",
+                "result_session_id",
+                "boundary_mode",
+                "formal_target_json",
+                "formal_target_hash",
+                "subject_id",
+                "host_id",
+                "evidence_ids_json",
+                "state",
+                "attempts",
+                "next_attempt_at",
+                "claim_owner",
+                "claim_token",
+                "claimed_at",
+                "lease_expires_at",
+                "heartbeat_at",
+                "fencing_generation",
+                "model_dispatch_started_at",
+                "model_completed_at",
+                "model_task",
+                "model_provider",
+                "model_name",
+                "model_usage_json",
+                "model_result_json",
+                "model_result_hash",
+                "world_result_json",
+                "result_hash",
+                "delivery_receipt_json",
+                "delivery_receipt_hash",
+                "created_at",
+                "completed_at",
+                "last_error_type",
+                "terminal_state",
+                "terminal_detail"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "observed_source",
+              "columns": [
+                "subject_id",
+                "host_id",
+                "source_hash",
+                "evidence_id",
+                "version",
+                "payload_hash",
+                "permission_version",
+                "withdrawn_through",
+                "valid_at",
+                "valid_until"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "portable_import_receipt",
+              "columns": [
+                "receipt_id",
+                "schema_version",
+                "command_id",
+                "plan_hash",
+                "bundle_id",
+                "source_subject_id",
+                "target_subject_id",
+                "target_world_revision",
+                "target_snapshot_hash",
+                "after_world_revision",
+                "result_state",
+                "result_json",
+                "result_hash",
+                "completed_at"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "proposal_decision_receipts",
+              "columns": [
+                "proposal_id",
+                "offered_result_hash",
+                "effective_decision",
+                "world_revision",
+                "snapshot_hash",
+                "decided_at",
+                "receipt_hash"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "proposals",
+              "columns": [
+                "id",
+                "kind",
+                "base_revision",
+                "result_hash",
+                "payload_json",
+                "review_payload_json",
+                "status"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "relationship",
+              "columns": [
+                "id",
+                "world_id",
+                "source_entity_id",
+                "target_entity_id",
+                "relation_type",
+                "content",
+                "formed_by",
+                "confidence",
+                "cred_status",
+                "invalid_at",
+                "created_at",
+                "updated_at"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "relationship_evidence",
+              "columns": [
+                "relationship_id",
+                "evidence_id",
+                "relation"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "relationship_transitions",
+              "columns": [
+                "id",
+                "prior_relationship_id",
+                "replacement_relationship_id",
+                "reason",
+                "revision"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "retraction",
+              "columns": [
+                "id",
+                "prior_cognition_id",
+                "prior_relationship_id",
+                "reason",
+                "revision",
+                "created_at",
+                "prior_event_id"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "semantic_resolution",
+              "columns": [
+                "id",
+                "evidence_id",
+                "resolved_content",
+                "response_act",
+                "prompt_act",
+                "proposition_origin",
+                "assertion_strength",
+                "required_context",
+                "resolver_version",
+                "created_at"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "terminal_outcome",
+              "columns": [
+                "outcome_id",
+                "schema_version",
+                "job_id",
+                "boundary_event_id",
+                "provider_name",
+                "subject_id",
+                "parent_session_id",
+                "result_session_id",
+                "terminal_state",
+                "terminal_detail",
+                "world_revision",
+                "world_result_json",
+                "result_hash",
+                "occurred_at",
+                "delivery_state",
+                "attempts",
+                "next_attempt_at",
+                "claim_owner",
+                "claim_token",
+                "lease_expires_at",
+                "heartbeat_at",
+                "delivered_at",
+                "last_error"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "trust_command",
+              "columns": [
+                "command_id",
+                "schema_version",
+                "subject_id",
+                "actor",
+                "expected_world_revision",
+                "operation",
+                "target_kind",
+                "target_id",
+                "payload_json",
+                "request_hash",
+                "submitted_at"
+              ],
+              "rows": 9
+            },
+            {
+              "table": "trust_command_receipt",
+              "columns": [
+                "command_id",
+                "schema_version",
+                "accepted",
+                "result_state",
+                "before_revision",
+                "after_revision",
+                "affected_ids_json",
+                "transition_ids_json",
+                "result_hash",
+                "completed_at"
+              ],
+              "rows": 9
+            },
+            {
+              "table": "trust_command_rejection",
+              "columns": [
+                "command_id",
+                "reason_code"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "trust_delete_storage_status",
+              "columns": [
+                "command_id",
+                "state",
+                "detail_code"
+              ],
+              "rows": 9
+            },
+            {
+              "table": "world_delete_marker",
+              "columns": [
+                "subject_id",
+                "object_kind",
+                "item_id",
+                "deleted_at"
+              ],
+              "rows": 6
+            },
+            {
+              "table": "world_event",
+              "columns": [
+                "id",
+                "world_id",
+                "content",
+                "occurred_at",
+                "time_expression",
+                "participants_json",
+                "objects_json",
+                "formed_by",
+                "confidence",
+                "cred_status",
+                "invalid_at",
+                "created_at",
+                "updated_at"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "world_event_evidence",
+              "columns": [
+                "world_event_id",
+                "evidence_id",
+                "relation"
+              ],
+              "rows": 0
+            },
+            {
+              "table": "world_item_lifecycle",
+              "columns": [
+                "subject_id",
+                "object_kind",
+                "item_id",
+                "archived_at",
+                "muted_at",
+                "updated_at"
+              ],
+              "rows": 0
+            }
+          ],
+          "tableCount": 38,
+          "hits": [],
+          "hitCount": 0,
+          "needles": [
+            "王小明",
+            "好兄弟",
+            "表弟",
+            "王小明打游戏挺厉害，是我好兄弟。",
+            "更正一下：王小明是我的表弟，不是好兄弟。以后组队还是找他。"
+          ]
+        }
+      },
+      "semantic": {
+        "type": "llm_judge",
+        "prompt": "遗忘后不知道此前组队对象，不应重新说出王小明。",
+        "turn": 10,
+        "status": "skipped",
+        "reason": "No judge configured; enable --judge-model same or a configured model name."
+      },
+      "finishedAt": "2026-10-10T01:58:17.395Z"
+    },
+    {
+      "id": "08",
+      "title": "Core 真进程停止且无法重启、普通聊天和提示",
+      "status": "passed",
+      "checks": {
+        "actualCoreStopped": true,
+        "unavailable": true,
+        "chatCompleted": true,
+        "noMemoryInjected": true,
+        "chatNotice": true,
+        "memoryPageNotice": true
+      },
+      "startedAt": "2026-10-10T01:58:17.397Z",
+      "killedCoreProcesses": 1,
+      "memory": {
+        "ownerId": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+        "state": "unavailable",
+        "worldRevision": null,
+        "capabilities": {
+          "list": false,
+          "source": false,
+          "inject": false,
+          "correct": false,
+          "mute": false,
+          "deleteEvidence": false,
+          "deleteWorldItem": false
+        },
+        "pendingBoundaryCount": 1,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": "MEMORY_PROCESS_UNAVAILABLE",
+        "reasonCode": "MEMORY_PROCESS_UNAVAILABLE",
+        "backfill": null,
+        "captureError": null
+      },
+      "chatNotice": "WeftMate\n新对话\nCtrl N\n临时对话\nCtrl K\n\n旁聊\n未分组\n新对话\n新对话\n项目\n添加一个文件夹，开始项目对话。\ne\neval-1465c5b7-e439-4707-a3b3-4db1a1243f41\n新对话\n输出与来源\n本对话用量\n\n记忆暂时不可用，普通对话已保存，恢复后会自动补交。\n\n你好，请用一句中文打个招呼。\n\n你好！很高兴见到你。\n\n输入消息\n自动\nmimo\n开旁聊",
+      "memoryNotice": "有来源待处理。 记忆服务暂时不可用，请稍后刷新。",
+      "semantic": {
+        "type": "llm_judge",
+        "prompt": "记忆服务故障时普通问候仍可用。",
+        "turn": 11,
+        "status": "skipped",
+        "reason": "No judge configured; enable --judge-model same or a configured model name."
+      },
+      "finishedAt": "2026-10-10T01:58:29.243Z"
+    }
+  ],
+  "turns": [
+    {
+      "sessionId": "session-06a229fc-012f-40a1-8d44-6dfd73c16887",
+      "model": "mimo",
+      "modelProfileId": "private-model-52ddf1fe0ba60f51fb68f37b9c2ee50d02aadf55",
+      "user": "王小明打游戏挺厉害，是我好兄弟。",
+      "reply": "记下了，稍后整理进记忆。\n\n顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？",
+      "status": "completed",
+      "memoryUsed": [],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-10T01:48:43.972Z",
+          "data": {
+            "taskId": "cmd-4cef1a25-baef-49c1-8ae9-9fd57fd11a33",
+            "receiptId": "44fc2e36-6ee9-4a8d-8195-f1909bbee498",
+            "text": "王小明打游戏挺厉害，是我好兄弟。",
+            "commandId": "cmd-4cef1a25-baef-49c1-8ae9-9fd57fd11a33",
+            "requestId": "2478aa1e-6777-4662-a3e4-caac9856ba3d"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-10T01:48:43.973Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-10T01:48:44.042Z",
+          "data": {
+            "taskId": "cmd-4cef1a25-baef-49c1-8ae9-9fd57fd11a33",
+            "turn": 1,
+            "receiptId": "44fc2e36-6ee9-4a8d-8195-f1909bbee498",
+            "commandId": "cmd-4cef1a25-baef-49c1-8ae9-9fd57fd11a33",
+            "requestId": "2478aa1e-6777-4662-a3e4-caac9856ba3d",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-10T01:48:44.042Z",
+          "data": {
+            "text": "王小明打游戏挺厉害，是我好兄弟。",
+            "receiptId": "44fc2e36-6ee9-4a8d-8195-f1909bbee498"
+          }
+        },
+        {
+          "seq": 44,
+          "type": "assistant.message",
+          "at": "2026-10-10T01:48:48.015Z",
+          "data": {
+            "text": "记下了，稍后整理进记忆。\n\n顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 45,
+          "type": "task.ended",
+          "at": "2026-10-10T01:48:48.016Z",
+          "data": {
+            "taskId": "cmd-4cef1a25-baef-49c1-8ae9-9fd57fd11a33",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 46,
+            "receiptId": "44fc2e36-6ee9-4a8d-8195-f1909bbee498",
+            "commandId": "cmd-4cef1a25-baef-49c1-8ae9-9fd57fd11a33",
+            "requestId": "2478aa1e-6777-4662-a3e4-caac9856ba3d",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 46,
+          "type": "turn.ended",
+          "at": "2026-10-10T01:48:48.017Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 4627,
+      "steps": 0
+    },
+    {
+      "sessionId": "session-06a229fc-012f-40a1-8d44-6dfd73c16887",
+      "model": "mimo",
+      "modelProfileId": "private-model-52ddf1fe0ba60f51fb68f37b9c2ee50d02aadf55",
+      "user": "好，以后我想组队时，就提醒我找王小明。",
+      "reply": "明白，这是情境记忆：以后你想组队开黑时，我会提醒你去找王小明。不需要定时器，我会在相关情境下自然提起。",
+      "status": "completed",
+      "memoryUsed": [],
+      "events": [
+        {
+          "seq": 47,
+          "type": "task.queued",
+          "at": "2026-10-10T01:48:48.621Z",
+          "data": {
+            "taskId": "cmd-1ce5c4f3-e8b2-425f-a5f6-0847ce59fc7a",
+            "receiptId": "504555aa-bf05-4d48-ba4a-bc6a475104d7",
+            "text": "好，以后我想组队时，就提醒我找王小明。",
+            "commandId": "cmd-1ce5c4f3-e8b2-425f-a5f6-0847ce59fc7a",
+            "requestId": "0adc4f84-2cc8-4489-befb-e0d21a53c8a0"
+          }
+        },
+        {
+          "seq": 48,
+          "type": "turn.started",
+          "at": "2026-10-10T01:48:48.621Z",
+          "data": {
+            "turn": 2
+          }
+        },
+        {
+          "seq": 50,
+          "type": "task.started",
+          "at": "2026-10-10T01:48:49.146Z",
+          "data": {
+            "taskId": "cmd-1ce5c4f3-e8b2-425f-a5f6-0847ce59fc7a",
+            "turn": 2,
+            "receiptId": "504555aa-bf05-4d48-ba4a-bc6a475104d7",
+            "commandId": "cmd-1ce5c4f3-e8b2-425f-a5f6-0847ce59fc7a",
+            "requestId": "0adc4f84-2cc8-4489-befb-e0d21a53c8a0",
+            "turnTaskId": "turn-2"
+          }
+        },
+        {
+          "seq": 52,
+          "type": "user.message",
+          "at": "2026-10-10T01:48:49.146Z",
+          "data": {
+            "text": "好，以后我想组队时，就提醒我找王小明。",
+            "receiptId": "504555aa-bf05-4d48-ba4a-bc6a475104d7"
+          }
+        },
+        {
+          "seq": 73,
+          "type": "assistant.message",
+          "at": "2026-10-10T01:48:57.636Z",
+          "data": {
+            "text": "明白，这是情境记忆：以后你想组队开黑时，我会提醒你去找王小明。不需要定时器，我会在相关情境下自然提起。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 74,
+          "type": "task.ended",
+          "at": "2026-10-10T01:48:57.637Z",
+          "data": {
+            "taskId": "cmd-1ce5c4f3-e8b2-425f-a5f6-0847ce59fc7a",
+            "turn": 2,
+            "reason": "completed",
+            "nativeTurnEndSeq": 75,
+            "receiptId": "504555aa-bf05-4d48-ba4a-bc6a475104d7",
+            "commandId": "cmd-1ce5c4f3-e8b2-425f-a5f6-0847ce59fc7a",
+            "requestId": "0adc4f84-2cc8-4489-befb-e0d21a53c8a0",
+            "turnTaskId": "turn-2"
+          }
+        },
+        {
+          "seq": 75,
+          "type": "turn.ended",
+          "at": "2026-10-10T01:48:57.637Z",
+          "data": {
+            "reason": "completed",
+            "turn": 2
+          }
+        }
+      ],
+      "durationMs": 9579,
+      "steps": 0
+    },
+    {
+      "sessionId": "session-aeed2ad8-5c6f-4830-bc87-bd298d211412",
+      "model": "lan",
+      "modelProfileId": "private-model-a32c171481ae22d522e025bf4cb69b13a71ae171",
+      "user": "我们之前说组队可以找谁？",
+      "reply": "之前你说过，以后想组队时提醒你找 **王小明**。",
+      "status": "completed",
+      "memoryUsed": [
+        {
+          "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+          "kind": "cognition",
+          "summary": "用户好，以后我想组队时，就提醒我找王小明。\n确认依据中的助手原话：记下了，稍后整理进记忆。\n\n顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？"
+        }
+      ],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-10T01:54:45.461Z",
+          "data": {
+            "taskId": "cmd-f45ea383-3d4c-402c-b32c-158fd3ff9e5b",
+            "receiptId": "478773e5-d329-401e-af04-c8301711655a",
+            "text": "我们之前说组队可以找谁？",
+            "commandId": "cmd-f45ea383-3d4c-402c-b32c-158fd3ff9e5b",
+            "requestId": "501c0279-2b75-4ffb-bec7-379f0956f377"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-10T01:54:45.461Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-10T01:54:45.572Z",
+          "data": {
+            "taskId": "cmd-f45ea383-3d4c-402c-b32c-158fd3ff9e5b",
+            "turn": 1,
+            "receiptId": "478773e5-d329-401e-af04-c8301711655a",
+            "commandId": "cmd-f45ea383-3d4c-402c-b32c-158fd3ff9e5b",
+            "requestId": "501c0279-2b75-4ffb-bec7-379f0956f377",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T01:54:45.574Z",
+          "data": {
+            "text": "我们之前说组队可以找谁？",
+            "receiptId": "478773e5-d329-401e-af04-c8301711655a"
+          }
+        },
+        {
+          "seq": 333,
+          "type": "assistant.message",
+          "at": "2026-10-10T01:54:54.638Z",
+          "data": {
+            "text": "之前你说过，以后想组队时提醒你找 **王小明**。",
+            "modelThinking": "We need to answer user question: \"我们之前说组队可以找谁？\" They ask: we previously said who can we find for team? Background memory says: 用户好，以后我想组队时，就提醒我找王小明。确认依据中的助手原话：记下了，稍后整理进记忆。顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？\n\nSo answer: 王小明.\n\nWe should follow memory guidelines. The background memory is provided, not user new request. We should answer using memory.\n\nNo tools needed. Just answer.\n\nShould we also mention proposal? The memory already has confirmation? The memory says \"确认依据中的助手原话：记下了，稍后整理进记忆。\" And the assistant asked: \"顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？\" It seems user already confirmed? The memory says user good, in future when I want to team up, remind me to find Wang Xiaoming. Confirmation basis assistant said \"记下了...\" So likely user confirmed. Now user asks who.\n\nAnswer in Chinese.\n\nProbably just answer: 王小明.\n\nFollow guidelines: keep brief. No need to call tools.\n\nWe should not create files.\n\nProceed.",
+            "memoryUsed": [
+              {
+                "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+                "kind": "cognition",
+                "summary": "用户好，以后我想组队时，就提醒我找王小明。\n确认依据中的助手原话：记下了，稍后整理进记忆。\n\n顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 334,
+          "type": "task.ended",
+          "at": "2026-10-10T01:54:54.639Z",
+          "data": {
+            "taskId": "cmd-f45ea383-3d4c-402c-b32c-158fd3ff9e5b",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 335,
+            "receiptId": "478773e5-d329-401e-af04-c8301711655a",
+            "commandId": "cmd-f45ea383-3d4c-402c-b32c-158fd3ff9e5b",
+            "requestId": "501c0279-2b75-4ffb-bec7-379f0956f377",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 335,
+          "type": "turn.ended",
+          "at": "2026-10-10T01:54:54.640Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 11390,
+      "steps": 0
+    },
+    {
+      "sessionId": "session-11eee251-030b-471a-9f68-327bdfd39dd4",
+      "model": "mimo",
+      "modelProfileId": "private-model-52ddf1fe0ba60f51fb68f37b9c2ee50d02aadf55",
+      "user": "更正一下：王小明是我的表弟，不是好兄弟。以后组队还是找他。",
+      "reply": "我记下了，稍后整理进记忆：王小明是你的表弟（不是好兄弟），以后组队仍然找他。",
+      "status": "completed",
+      "memoryUsed": [
+        {
+          "id": "relationship-3521fd4f7053b09bc4e99db2c846a37f39bd8e93bff906c63fe423432c7091d9",
+          "kind": "relationship",
+          "summary": "王小明是我好兄弟。"
+        },
+        {
+          "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+          "kind": "cognition",
+          "summary": "用户好，以后我想组队时，就提醒我找王小明。\n确认依据中的助手原话：记下了，稍后整理进记忆。\n\n顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？"
+        },
+        {
+          "id": "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848",
+          "kind": "cognition",
+          "summary": "王小明打游戏挺厉害"
+        }
+      ],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-10T01:55:05.842Z",
+          "data": {
+            "taskId": "cmd-bf8a391f-45c2-4e5a-8e4b-698d7e6dd359",
+            "receiptId": "ac50fca4-7f0f-4042-9761-e9169ecd3747",
+            "text": "更正一下：王小明是我的表弟，不是好兄弟。以后组队还是找他。",
+            "commandId": "cmd-bf8a391f-45c2-4e5a-8e4b-698d7e6dd359",
+            "requestId": "2ede7340-1a4a-4bbc-b16d-ae7e62201c56"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-10T01:55:05.842Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-10T01:55:05.946Z",
+          "data": {
+            "taskId": "cmd-bf8a391f-45c2-4e5a-8e4b-698d7e6dd359",
+            "turn": 1,
+            "receiptId": "ac50fca4-7f0f-4042-9761-e9169ecd3747",
+            "commandId": "cmd-bf8a391f-45c2-4e5a-8e4b-698d7e6dd359",
+            "requestId": "2ede7340-1a4a-4bbc-b16d-ae7e62201c56",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T01:55:05.947Z",
+          "data": {
+            "text": "更正一下：王小明是我的表弟，不是好兄弟。以后组队还是找他。",
+            "receiptId": "ac50fca4-7f0f-4042-9761-e9169ecd3747"
+          }
+        },
+        {
+          "seq": 28,
+          "type": "assistant.message",
+          "at": "2026-10-10T01:55:08.161Z",
+          "data": {
+            "text": "我记下了，稍后整理进记忆：王小明是你的表弟（不是好兄弟），以后组队仍然找他。",
+            "memoryUsed": [
+              {
+                "id": "relationship-3521fd4f7053b09bc4e99db2c846a37f39bd8e93bff906c63fe423432c7091d9",
+                "kind": "relationship",
+                "summary": "王小明是我好兄弟。"
+              },
+              {
+                "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+                "kind": "cognition",
+                "summary": "用户好，以后我想组队时，就提醒我找王小明。\n确认依据中的助手原话：记下了，稍后整理进记忆。\n\n顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？"
+              },
+              {
+                "id": "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848",
+                "kind": "cognition",
+                "summary": "王小明打游戏挺厉害"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 29,
+          "type": "task.ended",
+          "at": "2026-10-10T01:55:08.161Z",
+          "data": {
+            "taskId": "cmd-bf8a391f-45c2-4e5a-8e4b-698d7e6dd359",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 30,
+            "receiptId": "ac50fca4-7f0f-4042-9761-e9169ecd3747",
+            "commandId": "cmd-bf8a391f-45c2-4e5a-8e4b-698d7e6dd359",
+            "requestId": "2ede7340-1a4a-4bbc-b16d-ae7e62201c56",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 30,
+          "type": "turn.ended",
+          "at": "2026-10-10T01:55:08.162Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 4839,
+      "steps": 0
+    },
+    {
+      "sessionId": "session-c98df7b7-9aa8-4e88-931b-1c7a85fcc700",
+      "model": "mimo",
+      "modelProfileId": "private-model-52ddf1fe0ba60f51fb68f37b9c2ee50d02aadf55",
+      "user": "王小明跟我是什么关系？我们组队该找谁？",
+      "reply": "王小明是你的**表弟**。组队开黑的话就找他。",
+      "status": "completed",
+      "memoryUsed": [
+        {
+          "id": "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848",
+          "kind": "cognition",
+          "summary": "王小明打游戏挺厉害"
+        },
+        {
+          "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+          "kind": "cognition",
+          "summary": "用户好，以后我想组队时，就提醒我找王小明。\n确认依据中的助手原话：记下了，稍后整理进记忆。\n\n顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？"
+        },
+        {
+          "id": "relationship-0f8565e8209ae6dcc913dd3bef9a670a76037ec755133928831e8132d3d7da42",
+          "kind": "relationship",
+          "summary": "用户更正一下：王小明是我的表弟，不是好兄弟。"
+        }
+      ],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-10T01:55:36.202Z",
+          "data": {
+            "taskId": "cmd-331b41c0-ec4e-4bce-855a-acf8fbd93c14",
+            "receiptId": "17782a9d-a601-4ec1-9d77-b054da1867b4",
+            "text": "王小明跟我是什么关系？我们组队该找谁？",
+            "commandId": "cmd-331b41c0-ec4e-4bce-855a-acf8fbd93c14",
+            "requestId": "0239e8f2-beff-4239-bc99-a2b662be688e"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-10T01:55:36.203Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-10T01:55:36.311Z",
+          "data": {
+            "taskId": "cmd-331b41c0-ec4e-4bce-855a-acf8fbd93c14",
+            "turn": 1,
+            "receiptId": "17782a9d-a601-4ec1-9d77-b054da1867b4",
+            "commandId": "cmd-331b41c0-ec4e-4bce-855a-acf8fbd93c14",
+            "requestId": "0239e8f2-beff-4239-bc99-a2b662be688e",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T01:55:36.313Z",
+          "data": {
+            "text": "王小明跟我是什么关系？我们组队该找谁？",
+            "receiptId": "17782a9d-a601-4ec1-9d77-b054da1867b4"
+          }
+        },
+        {
+          "seq": 32,
+          "type": "assistant.message",
+          "at": "2026-10-10T01:55:38.597Z",
+          "data": {
+            "text": "王小明是你的**表弟**。组队开黑的话就找他。",
+            "memoryUsed": [
+              {
+                "id": "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848",
+                "kind": "cognition",
+                "summary": "王小明打游戏挺厉害"
+              },
+              {
+                "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+                "kind": "cognition",
+                "summary": "用户好，以后我想组队时，就提醒我找王小明。\n确认依据中的助手原话：记下了，稍后整理进记忆。\n\n顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？"
+              },
+              {
+                "id": "relationship-0f8565e8209ae6dcc913dd3bef9a670a76037ec755133928831e8132d3d7da42",
+                "kind": "relationship",
+                "summary": "用户更正一下：王小明是我的表弟，不是好兄弟。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 33,
+          "type": "task.ended",
+          "at": "2026-10-10T01:55:38.597Z",
+          "data": {
+            "taskId": "cmd-331b41c0-ec4e-4bce-855a-acf8fbd93c14",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 34,
+            "receiptId": "17782a9d-a601-4ec1-9d77-b054da1867b4",
+            "commandId": "cmd-331b41c0-ec4e-4bce-855a-acf8fbd93c14",
+            "requestId": "0239e8f2-beff-4239-bc99-a2b662be688e",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 34,
+          "type": "turn.ended",
+          "at": "2026-10-10T01:55:38.599Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 5006,
+      "steps": 0
+    },
+    {
+      "sessionId": "session-cde5681b-508d-4013-9323-211534c6c947",
+      "model": "lan",
+      "modelProfileId": "private-model-a32c171481ae22d522e025bf4cb69b13a71ae171",
+      "user": "王小明跟我是什么关系？我们组队该找谁？",
+      "reply": "王小明是你表弟。\n\n按你之前说的组队偏好，组队开黑时找王小明。",
+      "status": "completed",
+      "memoryUsed": [
+        {
+          "id": "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848",
+          "kind": "cognition",
+          "summary": "王小明打游戏挺厉害"
+        },
+        {
+          "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+          "kind": "cognition",
+          "summary": "用户好，以后我想组队时，就提醒我找王小明。\n确认依据中的助手原话：记下了，稍后整理进记忆。\n\n顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？"
+        },
+        {
+          "id": "relationship-0f8565e8209ae6dcc913dd3bef9a670a76037ec755133928831e8132d3d7da42",
+          "kind": "relationship",
+          "summary": "用户更正一下：王小明是我的表弟，不是好兄弟。"
+        }
+      ],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-10T01:55:48.865Z",
+          "data": {
+            "taskId": "cmd-28a768c5-fd40-4ca0-a110-2b568d1b0405",
+            "receiptId": "839820cc-35a0-4527-9c8f-eda89b20f930",
+            "text": "王小明跟我是什么关系？我们组队该找谁？",
+            "commandId": "cmd-28a768c5-fd40-4ca0-a110-2b568d1b0405",
+            "requestId": "5dae684c-25b4-46c1-a5b9-0ec827376961"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-10T01:55:48.866Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-10T01:55:48.946Z",
+          "data": {
+            "taskId": "cmd-28a768c5-fd40-4ca0-a110-2b568d1b0405",
+            "turn": 1,
+            "receiptId": "839820cc-35a0-4527-9c8f-eda89b20f930",
+            "commandId": "cmd-28a768c5-fd40-4ca0-a110-2b568d1b0405",
+            "requestId": "5dae684c-25b4-46c1-a5b9-0ec827376961",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T01:55:48.947Z",
+          "data": {
+            "text": "王小明跟我是什么关系？我们组队该找谁？",
+            "receiptId": "839820cc-35a0-4527-9c8f-eda89b20f930"
+          }
+        },
+        {
+          "seq": 342,
+          "type": "assistant.message",
+          "at": "2026-10-10T01:55:56.392Z",
+          "data": {
+            "text": "王小明是你表弟。\n\n按你之前说的组队偏好，组队开黑时找王小明。",
+            "modelThinking": "We need to answer user question: 王小明跟我是什么关系？我们组队该找谁？\n\nWe have memory: 王小明打游戏挺厉害. 用户好，以后我想组队时，就提醒我找王小明。确认依据... 顺带一提... 记忆：用户更正一下：王小明是我的表弟，不是好兄弟。\n\nSo relationship: 表弟. 组队该找谁？ According to memory, user said以后我想组队时，就提醒我找王小明. So answer: 王小明是你表弟，组队该找王小明.\n\nWe should not call tools? Might need to check memory? The memory is provided in background. No need to load tools. Should just answer.\n\nWe have also shared-decisions about useful person proposal. Already confirmed? The memory shows user said以后我想组队时，就提醒我找王小明. Confirmation. And correction: 王小明是我的表弟，不是好兄弟.\n\nSo answer succinctly.\n\nNo tool needed. Might need to respect WeftMate approval mode auto. No risky action.\n\nWe should respond in Chinese.\n\nPotentially ask if need reminder? The user already said to remind. No need to propose again.\n\nJust answer.\n\nWe should not mention memory snapshot details.\n\nProvide answer: 王小明是你表弟，组队的话按你之前的偏好找他。\n\nNo tool call.\n\n",
+            "memoryUsed": [
+              {
+                "id": "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848",
+                "kind": "cognition",
+                "summary": "王小明打游戏挺厉害"
+              },
+              {
+                "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+                "kind": "cognition",
+                "summary": "用户好，以后我想组队时，就提醒我找王小明。\n确认依据中的助手原话：记下了，稍后整理进记忆。\n\n顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？"
+              },
+              {
+                "id": "relationship-0f8565e8209ae6dcc913dd3bef9a670a76037ec755133928831e8132d3d7da42",
+                "kind": "relationship",
+                "summary": "用户更正一下：王小明是我的表弟，不是好兄弟。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 343,
+          "type": "task.ended",
+          "at": "2026-10-10T01:55:56.393Z",
+          "data": {
+            "taskId": "cmd-28a768c5-fd40-4ca0-a110-2b568d1b0405",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 344,
+            "receiptId": "839820cc-35a0-4527-9c8f-eda89b20f930",
+            "commandId": "cmd-28a768c5-fd40-4ca0-a110-2b568d1b0405",
+            "requestId": "5dae684c-25b4-46c1-a5b9-0ec827376961",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 344,
+          "type": "turn.ended",
+          "at": "2026-10-10T01:55:56.394Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 9727,
+      "steps": 0
+    },
+    {
+      "sessionId": "session-17a934b9-7ac3-4e35-a3cb-b4baa33a4011",
+      "model": "mimo",
+      "modelProfileId": "private-model-52ddf1fe0ba60f51fb68f37b9c2ee50d02aadf55",
+      "user": "为什么之前说王小明是好兄弟，现在那个说法不算了？",
+      "reply": "我记下了，稍后整理进记忆。\n\n原因是：你后来明确更正了一句——“王小明是我的表弟，不是好兄弟”。这条更正带有“取代”标记，所以之前“好兄弟”的理解作废，现在以“表弟”为准。\n\n简单说：不是那个说法凭空消失，而是被你自己的纠正覆盖了。目前有效的信息是：\n\n- 王小明是你的**表弟**\n- 他打游戏挺厉害\n- 以后你想组队开黑时，我提醒你找他",
+      "status": "completed",
+      "memoryUsed": [
+        {
+          "id": "relationship-0f8565e8209ae6dcc913dd3bef9a670a76037ec755133928831e8132d3d7da42",
+          "kind": "relationship",
+          "summary": "用户更正一下：王小明是我的表弟，不是好兄弟。"
+        },
+        {
+          "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+          "kind": "cognition",
+          "summary": "用户好，以后我想组队时，就提醒我找王小明。\n确认依据中的助手原话：记下了，稍后整理进记忆。\n\n顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？"
+        },
+        {
+          "id": "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848",
+          "kind": "cognition",
+          "summary": "王小明打游戏挺厉害\n取代原因（旧理解不再有效）：王小明是我好兄弟。；后经用户纠正取代（corrects），以当前理解为准。"
+        }
+      ],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-10T01:56:07.163Z",
+          "data": {
+            "taskId": "cmd-b7f25c84-78b4-43d6-8914-9c6016ff4038",
+            "receiptId": "65820af2-7a6c-42f7-aa58-ea62d7a5392c",
+            "text": "为什么之前说王小明是好兄弟，现在那个说法不算了？",
+            "commandId": "cmd-b7f25c84-78b4-43d6-8914-9c6016ff4038",
+            "requestId": "28fa86c8-9e69-40fd-8e35-fbce4fe983b0"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-10T01:56:07.164Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-10T01:56:07.300Z",
+          "data": {
+            "taskId": "cmd-b7f25c84-78b4-43d6-8914-9c6016ff4038",
+            "turn": 1,
+            "receiptId": "65820af2-7a6c-42f7-aa58-ea62d7a5392c",
+            "commandId": "cmd-b7f25c84-78b4-43d6-8914-9c6016ff4038",
+            "requestId": "28fa86c8-9e69-40fd-8e35-fbce4fe983b0",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T01:56:07.300Z",
+          "data": {
+            "text": "为什么之前说王小明是好兄弟，现在那个说法不算了？",
+            "receiptId": "65820af2-7a6c-42f7-aa58-ea62d7a5392c"
+          }
+        },
+        {
+          "seq": 65,
+          "type": "assistant.message",
+          "at": "2026-10-10T01:56:15.294Z",
+          "data": {
+            "text": "我记下了，稍后整理进记忆。\n\n原因是：你后来明确更正了一句——“王小明是我的表弟，不是好兄弟”。这条更正带有“取代”标记，所以之前“好兄弟”的理解作废，现在以“表弟”为准。\n\n简单说：不是那个说法凭空消失，而是被你自己的纠正覆盖了。目前有效的信息是：\n\n- 王小明是你的**表弟**\n- 他打游戏挺厉害\n- 以后你想组队开黑时，我提醒你找他",
+            "memoryUsed": [
+              {
+                "id": "relationship-0f8565e8209ae6dcc913dd3bef9a670a76037ec755133928831e8132d3d7da42",
+                "kind": "relationship",
+                "summary": "用户更正一下：王小明是我的表弟，不是好兄弟。"
+              },
+              {
+                "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+                "kind": "cognition",
+                "summary": "用户好，以后我想组队时，就提醒我找王小明。\n确认依据中的助手原话：记下了，稍后整理进记忆。\n\n顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？"
+              },
+              {
+                "id": "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848",
+                "kind": "cognition",
+                "summary": "王小明打游戏挺厉害\n取代原因（旧理解不再有效）：王小明是我好兄弟。；后经用户纠正取代（corrects），以当前理解为准。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 66,
+          "type": "task.ended",
+          "at": "2026-10-10T01:56:15.295Z",
+          "data": {
+            "taskId": "cmd-b7f25c84-78b4-43d6-8914-9c6016ff4038",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 67,
+            "receiptId": "65820af2-7a6c-42f7-aa58-ea62d7a5392c",
+            "commandId": "cmd-b7f25c84-78b4-43d6-8914-9c6016ff4038",
+            "requestId": "28fa86c8-9e69-40fd-8e35-fbce4fe983b0",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 67,
+          "type": "turn.ended",
+          "at": "2026-10-10T01:56:15.296Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 10208,
+      "steps": 0
+    },
+    {
+      "sessionId": "session-042f8dbf-4647-4b53-928f-26461d3ed243",
+      "model": "lan",
+      "modelProfileId": "private-model-a32c171481ae22d522e025bf4cb69b13a71ae171",
+      "user": "为什么之前说王小明是好兄弟，现在那个说法不算了？",
+      "reply": "因为你后来纠正过了。\n\n之前的记忆里是“王小明是我好兄弟”，你明确更正为“王小明是我的表弟，不是好兄弟”，所以现在以表弟为准，旧的“好兄弟”说法已不再有效。",
+      "status": "completed",
+      "memoryUsed": [
+        {
+          "id": "relationship-0f8565e8209ae6dcc913dd3bef9a670a76037ec755133928831e8132d3d7da42",
+          "kind": "relationship",
+          "summary": "用户更正一下：王小明是我的表弟，不是好兄弟。"
+        },
+        {
+          "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+          "kind": "cognition",
+          "summary": "用户好，以后我想组队时，就提醒我找王小明。\n确认依据中的助手原话：记下了，稍后整理进记忆。\n\n顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？"
+        },
+        {
+          "id": "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848",
+          "kind": "cognition",
+          "summary": "王小明打游戏挺厉害\n取代原因（旧理解不再有效）：王小明是我好兄弟。；后经用户纠正取代（corrects），以当前理解为准。"
+        }
+      ],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-10T01:56:25.185Z",
+          "data": {
+            "taskId": "cmd-c10c1674-a257-4d34-aa22-614da85e9db0",
+            "receiptId": "997abad1-710a-4595-9ed1-2307eb39ccb8",
+            "text": "为什么之前说王小明是好兄弟，现在那个说法不算了？",
+            "commandId": "cmd-c10c1674-a257-4d34-aa22-614da85e9db0",
+            "requestId": "63ccf946-9630-4b8c-ba49-99bb8a98167e"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-10T01:56:25.186Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-10T01:56:25.269Z",
+          "data": {
+            "taskId": "cmd-c10c1674-a257-4d34-aa22-614da85e9db0",
+            "turn": 1,
+            "receiptId": "997abad1-710a-4595-9ed1-2307eb39ccb8",
+            "commandId": "cmd-c10c1674-a257-4d34-aa22-614da85e9db0",
+            "requestId": "63ccf946-9630-4b8c-ba49-99bb8a98167e",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T01:56:25.270Z",
+          "data": {
+            "text": "为什么之前说王小明是好兄弟，现在那个说法不算了？",
+            "receiptId": "997abad1-710a-4595-9ed1-2307eb39ccb8"
+          }
+        },
+        {
+          "seq": 370,
+          "type": "assistant.message",
+          "at": "2026-10-10T01:56:35.977Z",
+          "data": {
+            "text": "因为你后来纠正过了。\n\n之前的记忆里是“王小明是我好兄弟”，你明确更正为“王小明是我的表弟，不是好兄弟”，所以现在以表弟为准，旧的“好兄弟”说法已不再有效。",
+            "modelThinking": "WeftMate approval mode: auto. Respect user's verbal instructions. Invoke risky tools for native approval; never retry a rejected action through another route.\n\nWe have background memory: user corrected: 王小明是我的表弟，不是好兄弟。 And memory: 用户好，以后我想组队时，就提醒我找王小明。 确认依据...顺带一提... etc.\n\nNow user asks: why before said 王小明是好兄弟, now that saying doesn't count?\n\nWe need to respond referencing memory correction. The memory says取代原因（旧理解不再有效）：王小明是我好兄弟。；后经用户纠正取代（corrects），以当前理解为准。\n\nWe should answer: Because user corrected it, now understanding is cousin not good brother.\n\nNo tools needed. Just respond. Should be brief. No need to load tools.\n\nPossibly mention that memory was updated. The instruction says: When user asks about history... If current conversation and background memory have no reliable basis, say can't determine. Here we have memory.\n\nWe should not say \"已记住\". Could say \"我记下了，稍后整理进记忆\"? That's for corrections. This is question.\n\nJust explain: user previously said? Actually memory says old understanding was good brother, then user corrected to cousin.\n\nWe can answer.\n\nNo tool call.\n\nWe must respect policy: answer current user question. No need to ask.\n\nReturn answer in Chinese.\n\n",
+            "memoryUsed": [
+              {
+                "id": "relationship-0f8565e8209ae6dcc913dd3bef9a670a76037ec755133928831e8132d3d7da42",
+                "kind": "relationship",
+                "summary": "用户更正一下：王小明是我的表弟，不是好兄弟。"
+              },
+              {
+                "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+                "kind": "cognition",
+                "summary": "用户好，以后我想组队时，就提醒我找王小明。\n确认依据中的助手原话：记下了，稍后整理进记忆。\n\n顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？"
+              },
+              {
+                "id": "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848",
+                "kind": "cognition",
+                "summary": "王小明打游戏挺厉害\n取代原因（旧理解不再有效）：王小明是我好兄弟。；后经用户纠正取代（corrects），以当前理解为准。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 371,
+          "type": "task.ended",
+          "at": "2026-10-10T01:56:35.978Z",
+          "data": {
+            "taskId": "cmd-c10c1674-a257-4d34-aa22-614da85e9db0",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 372,
+            "receiptId": "997abad1-710a-4595-9ed1-2307eb39ccb8",
+            "commandId": "cmd-c10c1674-a257-4d34-aa22-614da85e9db0",
+            "requestId": "63ccf946-9630-4b8c-ba49-99bb8a98167e",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 372,
+          "type": "turn.ended",
+          "at": "2026-10-10T01:56:35.978Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 12696,
+      "steps": 0
+    },
+    {
+      "sessionId": "session-7436a82b-3961-4e0c-ab0b-7030ed92cbd7",
+      "model": "mimo",
+      "modelProfileId": "private-model-52ddf1fe0ba60f51fb68f37b9c2ee50d02aadf55",
+      "user": "王小明跟我是什么关系？我们组队该找谁？",
+      "reply": "王小明是你的表弟。组队的话就找他——他打游戏挺厉害，是合适的队友人选。",
+      "status": "completed",
+      "memoryUsed": [
+        {
+          "id": "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848",
+          "kind": "cognition",
+          "summary": "王小明打游戏挺厉害"
+        },
+        {
+          "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+          "kind": "cognition",
+          "summary": "用户好，以后我想组队时，就提醒我找王小明。\n确认依据中的助手原话：记下了，稍后整理进记忆。\n\n顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？"
+        },
+        {
+          "id": "relationship-0f8565e8209ae6dcc913dd3bef9a670a76037ec755133928831e8132d3d7da42",
+          "kind": "relationship",
+          "summary": "用户更正一下：王小明是我的表弟，不是好兄弟。"
+        }
+      ],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-10T01:56:51.534Z",
+          "data": {
+            "taskId": "cmd-42e9c4ae-d3a5-462f-aa2e-0eea98d43f9d",
+            "receiptId": "99d7e0cc-c5f6-419c-81a0-f8315076111f",
+            "text": "王小明跟我是什么关系？我们组队该找谁？",
+            "commandId": "cmd-42e9c4ae-d3a5-462f-aa2e-0eea98d43f9d",
+            "requestId": "962b1d75-e03f-440b-99e8-e9cb1b8787ae"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-10T01:56:51.535Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-10T01:56:51.926Z",
+          "data": {
+            "taskId": "cmd-42e9c4ae-d3a5-462f-aa2e-0eea98d43f9d",
+            "turn": 1,
+            "receiptId": "99d7e0cc-c5f6-419c-81a0-f8315076111f",
+            "commandId": "cmd-42e9c4ae-d3a5-462f-aa2e-0eea98d43f9d",
+            "requestId": "962b1d75-e03f-440b-99e8-e9cb1b8787ae",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T01:56:51.928Z",
+          "data": {
+            "text": "王小明跟我是什么关系？我们组队该找谁？",
+            "receiptId": "99d7e0cc-c5f6-419c-81a0-f8315076111f"
+          }
+        },
+        {
+          "seq": 32,
+          "type": "assistant.message",
+          "at": "2026-10-10T01:56:53.189Z",
+          "data": {
+            "text": "王小明是你的表弟。组队的话就找他——他打游戏挺厉害，是合适的队友人选。",
+            "memoryUsed": [
+              {
+                "id": "cognition-d875921d09a3fd0e6769243b410c0cec74239dcb17c8a730242dc3f776785848",
+                "kind": "cognition",
+                "summary": "王小明打游戏挺厉害"
+              },
+              {
+                "id": "cognition-3708d8376a8ed42f49728841e7b2cd74caa6b6b3a46443d29d442cf940f5e164",
+                "kind": "cognition",
+                "summary": "用户好，以后我想组队时，就提醒我找王小明。\n确认依据中的助手原话：记下了，稍后整理进记忆。\n\n顺带一提：以后如果遇到需要队友一起打游戏、或者要找人组队开黑的情况，要我提醒你找王小明吗？"
+              },
+              {
+                "id": "relationship-0f8565e8209ae6dcc913dd3bef9a670a76037ec755133928831e8132d3d7da42",
+                "kind": "relationship",
+                "summary": "用户更正一下：王小明是我的表弟，不是好兄弟。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 33,
+          "type": "task.ended",
+          "at": "2026-10-10T01:56:53.189Z",
+          "data": {
+            "taskId": "cmd-42e9c4ae-d3a5-462f-aa2e-0eea98d43f9d",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 34,
+            "receiptId": "99d7e0cc-c5f6-419c-81a0-f8315076111f",
+            "commandId": "cmd-42e9c4ae-d3a5-462f-aa2e-0eea98d43f9d",
+            "requestId": "962b1d75-e03f-440b-99e8-e9cb1b8787ae",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 34,
+          "type": "turn.ended",
+          "at": "2026-10-10T01:56:53.191Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 2632,
+      "steps": 0
+    },
+    {
+      "sessionId": "session-651f5e07-b1c5-4353-a7cb-3ab658dfeaef",
+      "model": "mimo",
+      "modelProfileId": "private-model-52ddf1fe0ba60f51fb68f37b9c2ee50d02aadf55",
+      "user": "我们之前说组队可以找谁？",
+      "reply": "我无法确定之前约定的组队找谁——当前对话和我的记忆里都没有可靠的相关记录，所以现在不能给你一个准确的名字。如果你愿意，可以直接告诉我，我这次会按你说的处理。",
+      "status": "completed",
+      "memoryUsed": [],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-10T01:57:47.933Z",
+          "data": {
+            "taskId": "cmd-33ec71df-a911-4dab-bdf4-5981d586d1b3",
+            "receiptId": "2da5d8d2-42ce-470c-b577-529c0405d62a",
+            "text": "我们之前说组队可以找谁？",
+            "commandId": "cmd-33ec71df-a911-4dab-bdf4-5981d586d1b3",
+            "requestId": "7ad165ba-43f4-4da4-b638-47c5dded9776"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-10T01:57:47.933Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-10T01:57:47.993Z",
+          "data": {
+            "taskId": "cmd-33ec71df-a911-4dab-bdf4-5981d586d1b3",
+            "turn": 1,
+            "receiptId": "2da5d8d2-42ce-470c-b577-529c0405d62a",
+            "commandId": "cmd-33ec71df-a911-4dab-bdf4-5981d586d1b3",
+            "requestId": "7ad165ba-43f4-4da4-b638-47c5dded9776",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-10T01:57:47.993Z",
+          "data": {
+            "text": "我们之前说组队可以找谁？",
+            "receiptId": "2da5d8d2-42ce-470c-b577-529c0405d62a"
+          }
+        },
+        {
+          "seq": 46,
+          "type": "assistant.message",
+          "at": "2026-10-10T01:58:17.074Z",
+          "data": {
+            "text": "我无法确定之前约定的组队找谁——当前对话和我的记忆里都没有可靠的相关记录，所以现在不能给你一个准确的名字。如果你愿意，可以直接告诉我，我这次会按你说的处理。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 47,
+          "type": "task.ended",
+          "at": "2026-10-10T01:58:17.075Z",
+          "data": {
+            "taskId": "cmd-33ec71df-a911-4dab-bdf4-5981d586d1b3",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 48,
+            "receiptId": "2da5d8d2-42ce-470c-b577-529c0405d62a",
+            "commandId": "cmd-33ec71df-a911-4dab-bdf4-5981d586d1b3",
+            "requestId": "7ad165ba-43f4-4da4-b638-47c5dded9776",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 48,
+          "type": "turn.ended",
+          "at": "2026-10-10T01:58:17.075Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 29581,
+      "steps": 0
+    },
+    {
+      "sessionId": "session-9fa73b96-f42c-4ed6-b848-cb2357ddba5d",
+      "model": "mimo",
+      "modelProfileId": "private-model-52ddf1fe0ba60f51fb68f37b9c2ee50d02aadf55",
+      "user": "你好，请用一句中文打个招呼。",
+      "reply": "你好！很高兴见到你。",
+      "status": "completed",
+      "memoryUsed": [],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-10T01:58:20.408Z",
+          "data": {
+            "taskId": "cmd-b4ff5576-6df0-4996-8781-85205bd92822",
+            "receiptId": "0f50f205-d427-47e3-a8b5-6c3933e2dba3",
+            "text": "你好，请用一句中文打个招呼。",
+            "commandId": "cmd-b4ff5576-6df0-4996-8781-85205bd92822",
+            "requestId": "02f4b61a-18b9-4d94-8d74-0c301dc81ed1"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-10T01:58:20.408Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-10T01:58:20.456Z",
+          "data": {
+            "taskId": "cmd-b4ff5576-6df0-4996-8781-85205bd92822",
+            "turn": 1,
+            "receiptId": "0f50f205-d427-47e3-a8b5-6c3933e2dba3",
+            "commandId": "cmd-b4ff5576-6df0-4996-8781-85205bd92822",
+            "requestId": "02f4b61a-18b9-4d94-8d74-0c301dc81ed1",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-10T01:58:20.456Z",
+          "data": {
+            "text": "你好，请用一句中文打个招呼。",
+            "receiptId": "0f50f205-d427-47e3-a8b5-6c3933e2dba3"
+          }
+        },
+        {
+          "seq": 26,
+          "type": "assistant.message",
+          "at": "2026-10-10T01:58:28.465Z",
+          "data": {
+            "text": "你好！很高兴见到你。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 27,
+          "type": "task.ended",
+          "at": "2026-10-10T01:58:28.466Z",
+          "data": {
+            "taskId": "cmd-b4ff5576-6df0-4996-8781-85205bd92822",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 28,
+            "receiptId": "0f50f205-d427-47e3-a8b5-6c3933e2dba3",
+            "commandId": "cmd-b4ff5576-6df0-4996-8781-85205bd92822",
+            "requestId": "02f4b61a-18b9-4d94-8d74-0c301dc81ed1",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 28,
+          "type": "turn.ended",
+          "at": "2026-10-10T01:58:28.466Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 8663,
+      "steps": 0
+    }
+  ],
+  "initialMemory": {
+    "ownerId": "owner-40dc7266-c132-4c7c-b09d-a95cdf9c3b12",
+    "state": "ready",
+    "version": "2.0.0",
+    "worldRevision": 0,
+    "capabilities": {
+      "list": true,
+      "source": true,
+      "inject": true,
+      "correct": true,
+      "mute": true,
+      "deleteEvidence": true,
+      "deleteWorldItem": true
+    },
+    "pendingBoundaryCount": 0,
+    "blockedBoundaryCount": 0,
+    "discardedBoundaryCount": 0,
+    "lastFailureCode": null,
+    "pendingFormationCount": 0,
+    "failedFormationCount": 0,
+    "failedCorrectionCount": 0,
+    "formationIssues": [],
+    "backfill": null,
+    "captureError": null
+  },
+  "finishedAt": "2026-10-10T01:58:29.740Z",
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "eightStepGate": true
+  },
+  "mimoUsage": {
+    "requests": 21,
+    "returnedUsage": 21,
+    "missingUsage": 0,
+    "input": 36090,
+    "cached": 28416,
+    "output": 2475,
+    "knownCnyLowerBound": 0.01319232
+  },
+  "credentialScan": {
+    "scanned": 450,
+    "matches": 0
+  }
+}

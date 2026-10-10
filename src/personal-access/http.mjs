@@ -760,7 +760,8 @@ export function createHttpHandler(context) {
           personalCapabilities: { activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
           executionAccount: context.hostOwner(ownerId),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
-          backend: backendStatus, memory: { state: memoryStatus.state, inject: memoryStatus.capabilities?.inject === true },
+          backend: backendStatus, memory: { state: memoryStatus.state, inject: memoryStatus.capabilities?.inject === true,
+            failedCorrectionCount: memoryStatus.failedCorrectionCount ?? 0, formationIssues: memoryStatus.formationIssues ?? [] },
           updates: await context.updateStatus(), nativeMinimumVersions: context.nativeMinimumVersions,
         });
       }

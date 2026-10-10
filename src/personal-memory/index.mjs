@@ -467,6 +467,9 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         !boundaryFailures.has(ownerId)
         ? 'connected' : 'unknown';
     },
+    async retryFormation(ownerId, jobId, requestId) {
+      return withOwner(ownerId, entry => entry.rpc.request('retry_formation', { job_id: jobId, request_id: requestId }));
+    },
     async status(ownerId) {
       owner(ownerId);
       if (!enabled) return { state: 'disabled', worldRevision: null, capabilities: capabilities(null),
@@ -481,12 +484,15 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           entry.backlogCount = backlog.pendingBoundaryCount;
           const revision = revisionResult?.world_revision ?? revisionResult?.revision;
           entry.routeReady = health?.runtime?.route_ready === true;
-          const jobs = entry.capabilities?.methods?.includes('query_jobs')
-            ? (await entry.rpc.request('query_jobs', { operation: 'list' })).jobs ?? [] : [];
+          const jobResult = entry.capabilities?.methods?.includes('query_jobs')
+            ? await entry.rpc.request('query_jobs', { operation: 'list' }) : {};
+          const jobs = jobResult.jobs ?? [];
+          const formationIssues = (jobResult.formation_requests ?? []).filter(item => ['no_change', 'dead'].includes(item.state)).map(item => ({ jobId: item.job_id, evidenceId: item.evidence_id, sessionId: item.session_id, text: item.text, intent: item.intent, createdAt: item.created_at }));
+          const failedCorrectionCount = formationIssues.filter(item => item.intent === 'correction').length;
           const pendingFormationCount = jobs.filter(job => ['pending', 'processing', 'retry'].includes(job.worker?.state)).length;
           const failedFormationCount = jobs.filter(job => ['failed', 'blocked', 'uncertain', 'dead'].includes(job.worker?.state)).length;
           const routeState = processingHealth ? await processingHealth(ownerId).catch(() => 'unavailable') : 'ready';
-          const ready = entry.routeReady && routeState === 'ready' && backlog.pendingBoundaryCount === 0 && !pendingFormationCount && !failedFormationCount;
+          const ready = entry.routeReady && routeState === 'ready' && backlog.pendingBoundaryCount === 0 && !pendingFormationCount && !failedFormationCount && !formationIssues.length;
           if (backlog.pendingBoundaryCount === 0) boundaryFailures.delete(ownerId);
           else boundaryFailures.set(ownerId, backlog.lastFailureCode === 'MEMORY_SOURCE_DELETED'
             ? 'MEMORY_BOUNDARY_PENDING' : backlog.lastFailureCode ?? 'MEMORY_BOUNDARY_PENDING');
@@ -494,10 +500,10 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
             version: health?.version ?? health?.runtime?.version ?? await readSourceVersion(),
             worldRevision: Number.isSafeInteger(revision) ? revision : null,
             capabilities: { ...capabilities(entry), inject: entry.routeReady && backlog.pendingBoundaryCount === 0 }, ...backlog,
-            pendingFormationCount, failedFormationCount,
+            pendingFormationCount, failedFormationCount, failedCorrectionCount, formationIssues,
             ...(!entry.routeReady || routeState === 'unavailable' ? { reasonCode: 'MEMORY_MODEL_UNAVAILABLE' }
               : routeState === 'waiting' ? { reasonCode: 'MEMORY_MODEL_WAITING' }
-              : failedFormationCount ? { reasonCode: 'MEMORY_FORMATION_FAILED' }
+              : formationIssues.length || failedFormationCount ? { reasonCode: 'MEMORY_FORMATION_FAILED' }
               : pendingFormationCount ? { reasonCode: 'MEMORY_FORMATION_PENDING' }
               : backlog.pendingBoundaryCount ? { reasonCode: backlog.lastFailureCode === 'MEMORY_SOURCE_DELETED'
                 ? 'MEMORY_BOUNDARY_PENDING' : backlog.lastFailureCode ?? 'MEMORY_BOUNDARY_PENDING' } : {}) };
@@ -587,6 +593,11 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         // Core reads accepted Evidence in the same permission-filtered snapshot.
         // Keep it visibly provisional and never fabricate a formal World item.
         const recent = new Map();
+        const pendingCorrections = new Map();
+        for (const snapshot of [world, style, identity]) for (const item of snapshot?.preview?.pending_corrections ?? []) {
+          pendingCorrections.set(item.evidence_id, item);
+          recent.set(item.evidence_id, { ...item, id: item.evidence_id });
+        }
         for (const snapshot of [world, style, identity]) for (const item of snapshot?.preview?.recent_evidence ?? []) {
           if (typeof item.id === 'string' && typeof item.text === 'string' && item.text.trim()) recent.set(item.id, item);
         }
@@ -614,7 +625,8 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
               fragments.join('\n\n').length + rendered.length + 2 <= formalBudget && !fragments.includes(rendered.trim())) fragments.push(rendered.trim());
           for (const [index, pair] of pairs.entries()) {
             const [kind, id] = Array.isArray(pair) ? pair : [];
-            const claim = claims[index]?.trim();
+            let claim = claims[index]?.trim();
+            if (claim && (snapshot?.preview?.pending_corrections ?? []).length) claim = '记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。' + claim.replace(/^记忆(?:（过往）)?：/, '');
             const summary = claim?.replace(/^记忆(?:（过往）)?：/, '').trim().slice(0, 240);
             if (!['cognition', 'entity', 'relationship', 'event'].includes(kind) ||
                 typeof id !== 'string' || !summary || seen.has(`${kind}:${id}`) ||
@@ -623,7 +635,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
             memories.push({ id, kind, summary }); fragments.push(claim);
           }
         }
-        if (typeof interaction?.rendered_context === 'string' && interaction.rendered_context.trim()) {
+        if (!pendingCorrections.size && typeof interaction?.rendered_context === 'string' && interaction.rendered_context.trim()) {
           const remaining = formalBudget - fragments.join('\n\n').length - 2;
           if (interaction.rendered_context.trim().length <= remaining) fragments.push(interaction.rendered_context.trim());
         }
