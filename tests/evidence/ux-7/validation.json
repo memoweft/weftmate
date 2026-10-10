@@ -1,12 +1,12 @@
 {
   "command": "node .github/scripts/ci-unit-tests.mjs required",
   "platform": "win32",
-  "tests": 1317,
-  "pass": 1305,
+  "tests": 1330,
+  "pass": 1318,
   "fail": 0,
   "cancelled": 0,
   "skipped": 12,
-  "durationMs": 1214172.9034,
+  "durationMs": 1215122.5632,
   "initialAttempt": {
     "skipped": 12,
     "fail": 35,
@@ -22,5 +22,9 @@
   },
   "typecheckExit": 0,
   "androidRoutesPass": 14,
-  "androidProbePass": 1
+  "androidProbePass": 1,
+  "mergedMain": "e85b7122",
+  "mobileVisualPass": 1,
+  "mobileCoreRelatedPass": 56,
+  "latestUiMatrixPass": 216
 }

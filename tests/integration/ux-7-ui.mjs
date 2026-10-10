@@ -7,16 +7,18 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
-import { exposeUx7Desktop, mockUx7Requests, prepareUx7Suggestions, ux7Replies } from './ux-7-scenes.mjs';
+import { exposeUx7Desktop, mockUx7Requests, prepareUx7Suggestions, ux7Replies, closeUx7Routes, assertUx7RouteErrors } from './ux-7-scenes.mjs';
 const root = resolve(import.meta.dirname, '../..'), out = join(root, 'tests/evidence/ux-7');
 await mkdir(out, { recursive: true });
 const env = { ...process.env }; for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_)/.test(key) || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
 const rows = [], errors = [], checks = []; let app, browser, profile, fixture, replies = ux7Replies;
+const pages=new Set();let activeScene=null;
 const coreCode = 'globalThis.__ux7core || uiCore';
 const delay = ms => new Promise(done => setTimeout(done, ms));
 async function selectSession(page) { await page.waitForFunction(()=>globalThis.__ux7core?.state.account);await core(page,'return core.selectSession(arg);',fixture.sessionId); }
 async function core(page, code, arg) { return page.evaluate(({code, arg, coreCode}) => new Function('core', 'arg', code)(eval(coreCode), arg), {code, arg, coreCode}); }
 async function shot(page, surface, theme, scene) {
+  activeScene={surface,theme,scene};
   const screenshot = `${surface}-${theme}-${scene}.png`; await delay(180); await page.screenshot({ path: join(out, screenshot) });
   const metrics = await page.evaluate(() => { const field = document.querySelector('#message-text,#draft'), slot = document.querySelector('#composer-above-slot'), bar = document.querySelector('#next-suggestions'), scroll = document.querySelector('.next-suggestions-scroll');
     return { viewport: {width:innerWidth,height:innerHeight}, documentOverflow:document.documentElement.scrollWidth>innerWidth+1, priority:slot?.dataset.priority,
@@ -61,13 +63,14 @@ try {
   console.log('UX-7 fixture starting'); fixture = await startTimelineCandidate({historyCount:0,interactive:true,composer:true}); await fixture.complete(); console.log('UX-7 fixture complete');
   profile=await mkdtemp(join(tmpdir(),'weftmate-ux7-ui-'));
   app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:root,args:['scripts/review-gallery/electron.mjs'],env:{...env,REVIEW_PROFILE:profile,REVIEW_ORIGIN:fixture.origin,REVIEW_THEME:'light'}});
-  console.log('UX-7 Electron launched'); const p=await app.firstWindow(); p.setDefaultTimeout(12000); p.on('pageerror',e=>errors.push(e.message)); await exposeUx7Desktop(p); await localUiSession(p,fixture.credentials); await mockUx7Requests(p,()=>replies,{legacy:true}); console.log('UX-7 authenticated');
+  console.log('UX-7 Electron launched'); const p=await app.firstWindow(); pages.add(p);p.setDefaultTimeout(12000); p.on('pageerror',e=>errors.push(e.message)); await exposeUx7Desktop(p); await localUiSession(p,fixture.credentials); await mockUx7Requests(p,()=>replies,{legacy:true}); console.log('UX-7 authenticated');
   for(const width of [1200,480])for(const theme of ['light','dark']) { console.log('UX-7 reload',width,theme); await p.reload(); console.log('UX-7 select',width,theme); await selectSession(p); console.log('UX-7 selected'); await p.locator('#message-text').waitFor();
     await app.evaluate(({BrowserWindow},width)=>BrowserWindow.getAllWindows()[0].setContentSize(width,800),width); await exercise(p,`electron-${width}`,theme); }
   browser=await chromium.launch({channel:'chrome',headless:true});
   for(const size of [{width:390,height:844},{width:360,height:780}])for(const theme of ['light','dark']) {
-    const web=await browser.newPage({viewport:size,isMobile:true,hasTouch:true});web.setDefaultTimeout(12000);web.on('pageerror',e=>errors.push(e.message));await exposeUx7Desktop(web);await web.goto(fixture.origin+'/personal/v1/ui');await localUiSession(web,fixture.credentials);await mockUx7Requests(web,()=>replies,{legacy:true});await selectSession(web);await exercise(web,`mobile-web-${size.width}`,theme);await web.close();
-    const bundle=await browser.newPage({viewport:size,isMobile:true,hasTouch:true});bundle.setDefaultTimeout(12000);bundle.on('pageerror',e=>errors.push(e.message));await mockUx7Requests(bundle,()=>replies);await bundle.goto(fixture.mobileUrl);await bundle.waitForFunction(()=>state.booted);await bundle.evaluate(async id=>{await selectSharedSession(id);closeDrawer()},fixture.sessionId);await exercise(bundle,`android-bundle-${size.width}`,theme);await bundle.close();
+    const web=await browser.newPage({viewport:size,isMobile:true,hasTouch:true});pages.add(web);web.setDefaultTimeout(12000);web.on('pageerror',e=>errors.push(e.message));await exposeUx7Desktop(web);await web.goto(fixture.origin+'/personal/v1/ui');await localUiSession(web,fixture.credentials);await mockUx7Requests(web,()=>replies,{legacy:true});await selectSession(web);await exercise(web,`mobile-web-${size.width}`,theme);assertUx7RouteErrors(web);await closeUx7Routes(web);await web.close();
+    const bundle=await browser.newPage({viewport:size,isMobile:true,hasTouch:true});pages.add(bundle);bundle.setDefaultTimeout(12000);bundle.on('pageerror',e=>errors.push(e.message));await mockUx7Requests(bundle,()=>replies);await bundle.goto(fixture.mobileUrl);await bundle.waitForFunction(()=>state.booted);await bundle.evaluate(async id=>{await selectSharedSession(id);closeDrawer()},fixture.sessionId);await exercise(bundle,`android-bundle-${size.width}`,theme);assertUx7RouteErrors(bundle);await closeUx7Routes(bundle);await bundle.close();
   }
-  assert.deepEqual(errors,[]);await writeFile(join(out,'ui-checks.json'),JSON.stringify({synthetic:true,modelRequests:0,rows,checks,errors},null,2));
-} finally { await writeFile(join(out,'ui-checks.partial.json'),JSON.stringify({rows,checks,errors},null,2));await browser?.close();await app?.close();await fixture?.close();if(profile)await rm(profile,{recursive:true,force:true});if(fixture)await rm(fixture.root,{recursive:true,force:true}); }
+  for(const p of pages)assertUx7RouteErrors(p);assert.deepEqual(errors,[]);await writeFile(join(out,'ui-checks.json'),JSON.stringify({synthetic:true,modelRequests:0,rows,checks,errors},null,2));
+} catch(error) { console.error('UX-7 original failure:',activeScene,error);throw error;
+} finally { await writeFile(join(out,'ui-checks.partial.json'),JSON.stringify({rows,checks,errors,activeScene},null,2));for(const p of pages)await closeUx7Routes(p);await browser?.close();await app?.close();await fixture?.close();if(profile)await rm(profile,{recursive:true,force:true});if(fixture)await rm(fixture.root,{recursive:true,force:true}); }

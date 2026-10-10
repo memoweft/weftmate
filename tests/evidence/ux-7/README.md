@@ -37,6 +37,8 @@
 
 本包最终共258张截图：主矩阵216、触摸16、真实安卓6、补充16、审稿4。审稿浅深见 [Windows浅色](gallery/review-windows-next-suggestions-light.png)、[Windows深色](gallery/review-windows-next-suggestions-dark.png)、[手机浅色](gallery/review-mobile-web-next-suggestions-light.png)、[手机深色](gallery/review-mobile-web-next-suggestions-dark.png)。
 
+合最新main（UX-5 / QA-5）后216主矩阵已重拍并通过。重载旧文档的路由取消与当前文档真实错误分开记录，当前代次路由错误仍断言；12组位移 / 高度0px、渲染错误0。原生截图测试时code34 / 0.8.21，最终合主干继承code35 / 0.8.22，未由本包递增；新增业务路由仍需要编排统一安排新壳。
+
 同前缀场景包括`replies-1/2/3`、`hover`、`focus`、`pressed`、`disabled`、`filled`、`long-overflow`、`dismissed`、`completion`、`completion-accepted`、`setting-off`、四类`priority-*`及`no-model`。审稿页增加`next-suggestions`场景；建议响应为确定性合成模型输出，呈现与交互代码为产品代码。
 
 [触屏补全16项](mobile-gestures-checks.json)验证灰字点击 / 右滑，两种手机尺寸、浅深、网页 / 安卓界面包全部接受成功；手机不显示Tab提示。
@@ -68,7 +70,7 @@
 
 `tests/next-suggestions.test.ts`覆盖结束 / 放弃 / 实际取消 / 账户开关同步与隔离 / 临时对话 / 暂态边界 / 用量分类；`tests/next-suggestions-ui.test.ts`覆盖32种优先级组合、防抖、取消、迟到响应、输入法、收起不再出现；`tests/model-scheduler-suggestions.test.ts`以真实随机端口单槽HTTP（超文本传输协议）替身证明忙时零推理、前台抢占、无重试、完整body（响应内容）期间持有租约。
 
-交付前按CI（持续集成）同一命令`node .github/scripts/ci-unit-tests.mjs required`完整复验：**1317项、1305通过、0失败、12项沿用条件跳过**，耗时1214.173秒。第一遍35个失败已定位修复：手机独立脚本拼接边界、发布夹具漏新资产、生命周期预期拒绝过晚处理、数值账本新增固定类别；Apple生成文件按既有LF规则重新生成，未修改生成比较断言。没有删除用例、增加skip（跳过）或放宽保护断言；账本键集合加入固定类别并补类别值断言。最新外部忙观测与宿主相关39/39、最新取消 / 路由25/25、实际导出5/5、手机夹具37/37、账本 / 生命周期 / Apple26/26定向通过（有重叠，不相加）。`npm run typecheck`与`node --check src/main.mjs`通过，Android路由14/14、独立原生探针1/1。详见[验证数字](validation.json)。
+交付前按CI（持续集成）同一命令`node .github/scripts/ci-unit-tests.mjs required`完整复验：**1330项、1318通过、0失败、12项沿用条件跳过**，耗时1215.123秒。第一遍35个失败已定位修复：手机独立脚本拼接边界、发布夹具漏新资产、生命周期预期拒绝过晚处理、数值账本新增固定类别；Apple生成文件按既有LF规则重新生成，未修改生成比较断言。没有删除用例、增加skip（跳过）或放宽保护断言；账本键集合加入固定类别并补类别值断言。最新外部忙观测与宿主相关39/39、最新取消 / 路由25/25、实际导出5/5、手机夹具37/37、账本 / 生命周期 / Apple26/26定向通过（有重叠，不相加）。`npm run typecheck`与`node --check src/main.mjs`通过，Android路由14/14、独立原生探针1/1。详见[验证数字](validation.json)。
 
 4c清理：**已清理进程10**（首轮观察器两次挂起各5个），最终三重条件核对需额外强制终止0、残留0；本包安卓应用 / 调试映射已移除，MuMu关闭，原三个孤儿测试APK保留。见[进程清理](cleanup.json)、[安卓清理](android-cleanup.json)。公开凭据与参照图扫描见[扫描](public-scan.json)。已推送并开 [PR #185](https://github.com/memoweft/weftmate/pull/185)，最新GitHub结果见[PR检查](https://github.com/memoweft/weftmate/pull/185/checks)。没有合并或正式部署。
 
