@@ -121,7 +121,7 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
                 else if (error.code === 'NETWORK')
                     effects.historyNotice('连接中断，稍后将从原位置续读。');
                 else if (error.code !== 'UNAUTHORIZED')
-                    effects.historyNotice('历史暂时无法读取，请稍后重试。');
+                    effects.historyNotice('历史暂时无法读取，请稍后重试。', 'read-failure');
             }
         };
         const promise = run();
@@ -168,7 +168,7 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
         }
         catch {
             if (core.conversationTaskCurrent(context))
-                effects.historyNotice('更早内容暂时无法读取，请重试。');
+                effects.historyNotice('更早内容暂时无法读取，请重试。', 'read-failure');
         }
         finally {
             if (generation === core.state.historyGeneration) {

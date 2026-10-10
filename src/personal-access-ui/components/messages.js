@@ -12,8 +12,10 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
         globalThis.WeftContent?.closeGallery(false);
         ui.byId('transcript').replaceChildren();
     }
-    function historyNotice(message) {
-        if (core.connectionView?.().kind !== 'online' && /暂时无法读取|同步未完成/.test(message || '')) message = '';
+    function historyNotice(message, kind = 'ordinary') {
+        // Only read failures merge into connection state; preserve all other notices.
+        ui.byId('timeline-status').dataset.noticeKind = kind;
+        if (kind === 'read-failure' && core.connectionView?.().kind !== 'online') message = '';
         ui.byId('timeline-status').textContent = message;
         ui.byId('timeline-status').hidden = !message;
     }

@@ -743,7 +743,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   globalThis.WeftPresenceView.mount({core:uiCore,badgeTarget:document.querySelector('.topbar .brand'),composerTarget:$('composer-dock'),toast,
     openLogin:()=>globalThis.WeftMobileCloud.core?.startCloudJourney(),openDevices:()=>page('devices')});
   uiCore.observeConnection(value=>{
-    if(value.kind!=='online')for(const notice of document.querySelectorAll('.chat-read-notice'))notice.hidden=true;
+    if(value.kind!=='online')for(const notice of document.querySelectorAll('.chat-read-notice'))if(!notice.dataset.noticeKind||notice.dataset.noticeKind==='read-failure')notice.hidden=true;
     if(state.page==='chat'&&state.chatSource==='host'){
       if(state.logicalChats)renderOptimisticMessages();else renderSharedConversation();
     }

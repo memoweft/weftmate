@@ -155,7 +155,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         } catch (error) {
             if (token !== scope() || generation !== historyWindow.state.generation) return;
             if (error.code === 'CURSOR_RESET_REQUIRED') { clearLogical(true); notify(); return readPage({}, 'tail'); }
-            effects.historyNotice('历史暂时无法读取，请重试。');
+            effects.historyNotice('历史暂时无法读取，请重试。', 'read-failure');
         }
     }
     async function refreshChatDates() {

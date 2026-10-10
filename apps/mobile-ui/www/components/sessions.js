@@ -170,9 +170,11 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
   state.sharedRunning=lastTurn==='running'||!!session?.running;
   const live=[...content.querySelectorAll('.message.assistant')].at(-1),lastUser=[...content.querySelectorAll('.message.user')].at(-1);if(live&&(!lastUser||Number(live.dataset.seq)>Number(lastUser.dataset.seq)))globalThis.WeftReplyMotion?.indicator(live.querySelector('.markdown'),state.sharedRunning&&uiCore.state.online);
   if(uiCore.state.online&&(lastTurn==='running'||state.sharedRunning))content.append(el('p','shared-turn-state reply-status',uiCore.state.online?'正在处理…':`${uiCore.connectionView().label} · 等待接续`));
-  else if(lastTurn&&lastTurn!=='completed')content.append(el('p','shared-turn-state',lastTurn==='error'&&lastEndReasonKind==='max-tokens'
+  // Disconnected turns wait in the single connection row; retain their terminal
+  // explanation in conversation content only after the computer is reachable.
+  else if(uiCore.state.online&&lastTurn&&lastTurn!=='completed')content.append(el('p','shared-turn-state',lastTurn==='error'&&lastEndReasonKind==='max-tokens'
     ?'本轮因输出限制结束，可继续对话。':{
-      aborted:'电脑回合已停止',error:'电脑回合未完成',blocked:'电脑回合等待处理',unknown:'电脑回合状态待确认'}[lastTurn]||'电脑回合状态待确认'));
+      aborted:'电脑回合已停止',error:'电脑回合未完成',blocked:'电脑回合等待处理',unknown:'电脑那边的进度还没确认'}[lastTurn]||'电脑那边的进度还没确认'));
   if(!state.sharedEvents.length&&!state.sharedError)content.append(el('p','muted',state.sharedLoading?'正在读取电脑会话…':'这段会话还没有可显示的文字记录'));
   content.append(...saved);renderTimeline();if(!uiCore.state.online)for(const progress of content.querySelectorAll('.inline-progress-text')){progress.textContent=`${uiCore.connectionView().label} · 等待接续`;progress.classList.remove('is-running')}renderConversationTasks();renderOptimisticMessages();updateComposer();if(state.scrollPinned)scrollBottom();else scroll.scrollTop=previousScroll;}
 

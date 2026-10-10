@@ -207,14 +207,21 @@ function toast(text,issue=false,undo){const box=$('toast');clearTimeout(toast.ti
   if(undo){const button=el('button','toast-undo','撤销归档');button.type='button';button.onclick=async event=>{event.stopPropagation();button.disabled=true;try{await undo();closeToast()}catch(error){toast(safeError(error),true)}};box.append(button)}
   toast.timer=setTimeout(closeToast,undo?10000:issue?5200:3500)}
 
-function status(text,issue=false){const line=$('chat-status');
-  const connection=typeof uiCore!=='undefined'?uiCore.connectionView?.():null;
-  if (/发送结果待核对|正在提交到电脑会话|电脑已受理消息/.test(text||'')) text='';
-  if (/主对话暂时无法读取|离线副本同步/.test(text||'') && connection?.kind!=='online') text='';
-  line.textContent='';line.classList.remove('error');
-  let notice=$('chat-content').querySelector('.chat-read-notice');
-  if(!notice){notice=el('p','chat-read-notice');notice.setAttribute('role','status');$('chat-content').prepend(notice)}
-  notice.textContent=text||'';notice.hidden=!text;
+function status(text,issue=false,kind='ordinary'){const line=$('chat-status');
+  // Pending shared sends already explain the outcome on their original message,
+  // beside Check status / Retry. Never repeat that explanation at the composer.
+  if(kind==='message-pending'){line.textContent='';line.classList.remove('error');return}
+  // Read/sync failures belong to the connection bar while disconnected, and to
+  // conversation content while online. They are never transient error toasts.
+  if(kind==='read-failure'){
+    let notice=[...$('chat-content').querySelectorAll('.chat-read-notice')].find(node=>node.dataset.statusNotice);
+    if(uiCore.connectionView?.().kind!=='online'){notice?.remove();return}
+    if(!notice){notice=el('p','chat-read-notice');notice.dataset.statusNotice='true';notice.dataset.noticeKind='read-failure';notice.setAttribute('role','status');$('chat-content').prepend(notice)}
+    notice.textContent=text||'';notice.hidden=!text;return;
+  }
+  // Preserve the application's original progress/status and red error toast.
+  line.textContent=issue?'':text;line.classList.remove('error');if(issue&&text)toast(text,true);
+  if(!text){for(const notice of $('chat-content').querySelectorAll('.chat-read-notice'))if(notice.dataset.statusNotice)notice.remove();}
 }
 
 function closeImagePreview({restoreFocus=true}={}){globalThis.WeftContent?.closeGallery(restoreFocus);const box=$('image-preview');if(box.hidden){state.previewScope=null;state.previewReturnFocus=null;return;}
