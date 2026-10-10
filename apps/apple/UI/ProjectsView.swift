@@ -52,7 +52,7 @@ struct ProjectHeading: View {
                 else { app.collapsedProjects.insert(project.id) }
             } label: {
                 HStack(spacing: AppleTokens.Space.p8) {
-                    WeftIcon("folder", size: 16)
+                    WeftIcon("folder-open", size: 16)
                     Text(project.name).lineLimit(2)
                 }.frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
             }.buttonStyle(.plain).accessibilityLabel(project.name)
