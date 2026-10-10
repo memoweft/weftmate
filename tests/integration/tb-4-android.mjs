@@ -57,6 +57,9 @@ try{
     run('reverse','--remove',`tcp:${new URL(f.origin).port}`);reversed=false;
     for(const theme of ['light','dark']){await page.evaluate(async theme=>{await call('settings.appearance',{value:theme});applyTheme(theme);},theme);for(const name of ['聊天','动态','目标','成果库']){await tab(name).click();await delay(800);await shot(`${theme}-offline-${{'聊天':'chat','动态':'activity','目标':'goals','成果库':'library'}[name]}`);}}
     report.checks.push('real-native-offline-four-pages-light-dark');
+    run('reverse',`tcp:${new URL(f.origin).port}`,`tcp:${new URL(f.origin).port}`);reversed=true;
+    for(const theme of ['light','dark']){await page.evaluate(async theme=>{await call('settings.appearance',{value:theme});applyTheme(theme);},theme);await tab('聊天').click();await page.evaluate(()=>{uiCore.state.models=[];uiCore.state.modelProfileId=null;uiCore.state.mainChat.modelDisplayName='';updateComposer();});assert.equal(await b('发送').isDisabled(),true);await shot(`${theme}-no-model-chat`);}
+    report.checks.push('native-unavailable-model-view-send-disabled-synthetic-state');
   }
   if(!process.argv.includes('--synthetic-only')){
   // Reconnect the actual native transport to the fixed DSH and one paid MiMo reminder.
