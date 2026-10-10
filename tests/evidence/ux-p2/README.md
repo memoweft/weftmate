@@ -37,13 +37,13 @@ D49 已加入 `docs/PLAN.md`，消息操作与无模型 / 记忆规范已同步 
 
 ## 验证
 
-- 最后相关 Node（脚本运行环境）单元 / 契约 **179/179**；手机聊天 / 视觉 / 排队交互 **97/97**；`npm run typecheck`、手机母版生成 / 一致性与语法检查通过。
+- 最后相关 Node（脚本运行环境）单元 / 契约 **179/179**；手机聊天 / 视觉 / 排队交互 **97/97**，另含 IA-4（手机主对话）2 项同批 **99/99**；`npm run typecheck`、手机母版生成 / 一致性与语法检查通过。
 - `ux-4-message-actions.mjs`：真实桌面、手机网页、安卓界面包、手机本机、长回复通过；已处理用户无编辑，助手反馈 / 引用 / 换模型重新生成 / 版本 / 脱敏导出保留。[记录](interaction/interaction-checks.json)。
 - `ux-4-main-chat.mjs`：重新生成产生带来源旁聊，主对话历史不变，原分支接口保留。[记录](main-actions/main-chat-checks.json)。
 - `ux-p2-final.mjs`：账户时区 `8:28`、操作条几何位置、悬停 / 聚焦、手机长按 / 时间、单条纠正提示、菜单键盘与选中态。[记录](final-checks.json)。
 - `ux-p2-walkthrough.mjs`、`ux-p2-states.mjs`、`ux-p2-overlays.mjs`：全部走查截图；前图用原提交资源，后图用当前界面。确认窗口的结构验收与实际行为验证在表里区分。
 - Android（安卓）独立包 `com.memoweft.weftmate.mobile.uxp2qa`：`assembleDebug / assembleDebugAndroidTest` 通过，真实 MuMu 主对话、可用输入、设置、搜索浅深通过，[记录](android-native-checks.json)。原生实拍当时为 0.8.16 / code29；最后合入 S3a 后沿用 main 的 0.8.17 / code30，本包未自行改号；两个 APK、端口转发已清除，本包启动的模拟器已关闭。
-- 审稿页别名更新，构建生成 74/204 场景图片；未实现 / 未取得的其他平台格子保留原状态。impeccable（界面设计打磨）机械检查仅报告原有 Markdown（标记文本）引用块的 2px 引用线，属于正文引用语义，不是侧栏装饰；未把扫描当作视觉验收。
+- 审稿页别名更新，构建生成 86/204 场景图片；未实现 / 未取得的其他平台格子保留原状态。impeccable（界面设计打磨）机械检查仅报告原有 Markdown（标记文本）引用块的 2px 引用线，属于正文引用语义，不是侧栏装饰；未把扫描当作视觉验收。
 - 完整测试由推送后的 CI（持续集成）执行，本包只取 `gh pr checks` 快照，最终结果由 Claude 看。
 
 ## 第 8 条清单自查
