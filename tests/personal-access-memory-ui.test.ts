@@ -1,4 +1,4 @@
-import { desktopFeatureSource, desktopHtml } from './helpers/desktop-ui-source.mjs'
+import { desktopFeatureSource, desktopHtml, mountDesktopTestTree } from './helpers/desktop-ui-source.mjs'
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
@@ -180,6 +180,9 @@ test('memory view preserves chat draft and discards a successful response for an
     id: string
     children: Node[] = []
     parentNode: Node | null = null
+    get parentElement() { return this.parentNode }
+    tagName = 'DIV'
+    attributes = new Map<string, string>()
     listeners = new Map<string, Array<(event: any) => void>>()
     hidden = false
     disabled = false
@@ -202,7 +205,8 @@ test('memory view preserves chat draft and discards a successful response for an
     before(...nodes: Node[]) { if (!this.parentNode) return; const at = this.parentNode.children.indexOf(this); for (const node of nodes) node.parentNode = this.parentNode; this.parentNode.children.splice(at, 0, ...nodes) }
     after(...nodes: Node[]) { if (!this.parentNode) return; const at = this.parentNode.children.indexOf(this) + 1; for (const node of nodes) node.parentNode = this.parentNode; this.parentNode.children.splice(at, 0, ...nodes) }
     replaceChildren(...nodes: Node[]) { this.children = nodes }
-    setAttribute() {}
+    setAttribute(name: string, value: string) { this.attributes.set(name, value) }
+    getAttribute(name: string) { return this.attributes.get(name) ?? null }
     removeAttribute() {}
     querySelectorAll() { return [] }
     querySelector() { return null }
@@ -212,6 +216,13 @@ test('memory view preserves chat draft and discards a successful response for an
   }
   const nodes = new Map<string, Node>()
   const get = (id: string) => { if (!nodes.has(id)) nodes.set(id, new Node(id)); return nodes.get(id)! }
+  const descendants = (node: Node): Node[] => node.children.flatMap(child => [child, ...descendants(child)])
+  const visibleText = (node: Node): string => [node.textContent, ...node.children.map(visibleText)].join(' ')
+  const memoryButton = (text: string) => {
+    const matches = descendants(get('memory-list')).filter(node => node.tagName === 'BUTTON' && visibleText(node).includes(text))
+    assert.equal(matches.length, 1, `one memory button named ${text}`)
+    return matches[0]
+  }
   const memoryItem = { id: 'memory-a-1', kind: 'cognition', text: '合成账户A的独立记忆。',
     currentState: 'current', lifecycle: { invalidAt: null, archivedAt: null, mutedAt: null }, sourceCount: 1 }
   ;(memoryItem as any).truncated = true
@@ -335,15 +346,17 @@ test('memory view preserves chat draft and discards a successful response for an
   }
   const storage = new Map<string, string>()
   const document = { body: new Node('body'), visibilityState: 'visible',
-    getElementById: get, createElement: (tag: string) => new Node(tag),
+    getElementById: get, createElement: (tag: string) => { const node = new Node(); node.tagName = tag.toUpperCase(); return node },
     createTextNode: (text: string) => { const node = new Node(); node.textContent = text; return node },
-    createElementNS: (_namespace: string, tag: string) => new Node(tag),
+    createElementNS: (_namespace: string, tag: string) => { const node = new Node(); node.tagName = tag.toUpperCase(); return node },
     querySelector: (selector: string) => selector === '.local-badge' ? get('local-badge') : selector === 'section.settings-category[data-category="general"]' ? get('general-panel') : null,
     querySelectorAll: () => [], addEventListener() {} }
   const window = { location: { hash: '', pathname: '/personal/v1/ui', search: '' },
     history: { replaceState() {} }, addEventListener() {}, WeftIcons: null as any }
-  const context = { document, window, location: { protocol: 'http:' }, fetch, URL, URLSearchParams, AbortSignal, Intl, Event,
-    globalThis: { crypto: { randomUUID: () => `synthetic-${++requestSequence}` } },
+  mountDesktopTestTree(document, get)
+  const context = { document, window, location: { ...window.location, protocol: 'http:' }, fetch, URL, URLSearchParams, AbortSignal, Intl, Event,
+    Option: class extends Node { constructor(text: string, value: string) { super(); this.tagName = 'OPTION'; this.textContent = text; this.value = value } },
+    crypto: { randomUUID: () => `synthetic-${++requestSequence}` },
     localStorage: { getItem: (key: string) => storage.get(key) ?? null,
       setItem: (key: string, value: string) => { storage.set(key, value) }, removeItem: (key: string) => { storage.delete(key) } },
     setTimeout, clearTimeout, setInterval: () => 1, clearInterval() {}, console }
@@ -357,15 +370,15 @@ test('memory view preserves chat draft and discards a successful response for an
   get('rail-memory').fire('click')
   for (let i = 0; i < 20 && get('memory-list').children.length === 0; i++) await flush()
   assert.equal(get('memory-list').children.length, 2, JSON.stringify({ requests, status: get('memory-status').textContent }))
-  assert.match(get('memory-list').children[0].children[0].children[0].textContent, /仅显示片段/)
-  const lifecycle = get('memory-list').children[0].children[0].children[1].textContent
+  assert.match(visibleText(memoryButton(memoryItem.text)), /仅显示片段/)
+  const lifecycle = visibleText(memoryButton(memoryItem.text))
   assert.match(lifecycle, /已失效/)
   assert.match(lifecycle, /已归档/)
   assert.match(lifecycle, /已停用/)
   ;(memoryItem.lifecycle as any).invalidAt = null
   ;(memoryItem.lifecycle as any).archivedAt = null
   ;(memoryItem.lifecycle as any).mutedAt = null
-  get('memory-list').children[0].children[0].fire('click')
+  memoryButton(memoryItem.text).fire('click')
   for (let i = 0; i < 20 && !get('memory-detail-status').textContent.includes('详情与来源已读取'); i++) await flush()
   assert.deepEqual(get('memory-sources').children.map((row) => row.children[0].textContent.split(' · ')[0]), [
     '当前来源', '来源不再支持当前理解', '来源已删除', '来源未允许本机模型读取',
@@ -385,7 +398,7 @@ test('memory view preserves chat draft and discards a successful response for an
   assert.match(get('memory-receipt-id').textContent, /^memory-/)
   assert.equal(requests.filter((url) => url.endsWith('/memory/items/cognition/memory-a-1/correct')).length, 1)
   for (let i = 0; i < 20 && get('memory-list').children.length !== 2; i++) await flush()
-  get('memory-list').children[1].children[0].fire('click')
+  memoryButton(secondItem.text).fire('click')
   for (let i = 0; i < 20 && get('memory-delete-action').hidden; i++) await flush()
   get('memory-delete-action').fire('click')
   assert.equal(get('memory-confirm-action').disabled, true, 'wait for preview before confirmation')
@@ -401,7 +414,7 @@ test('memory view preserves chat draft and discards a successful response for an
   assert.ok(cleanupGetCount > 0, 'automatic recovery only queried the original receipt')
   assert.equal(retryPostCount, 0, 'refresh must not POST cleanup')
   for (let i = 0; i < 20 && get('memory-list').children.length !== 1; i++) await flush()
-  get('memory-list').children[0].children[0].fire('click')
+  memoryButton(memoryItem.text).fire('click')
   for (let i = 0; i < 20 && get('memory-correct-action').hidden; i++) await flush()
   assert.equal(get('memory-correct-action').hidden, false, 'confirmed cleanup must not lock new actions')
   assert.equal(get('memory-detail-check').textContent, '重试底层清理')
@@ -442,7 +455,7 @@ test('memory view preserves chat draft and discards a successful response for an
   for (let i = 0; i < 20 && !finishDelayedCorrect; i++) await flush()
   assert.ok(finishDelayedCorrect)
   get('memory-detail-close').fire('click')
-  get('memory-list').children[0].children[0].fire('click')
+  memoryButton(memoryItem.text).fire('click')
   for (let i = 0; i < 20 && !get('memory-detail-status').textContent.includes('详情与来源已读取'); i++) await flush()
   finishDelayedCorrect!()
   for (let i = 0; i < 20 && !get('memory-detail-status').textContent.includes('请关闭后重新打开'); i++) await flush()
@@ -451,7 +464,7 @@ test('memory view preserves chat draft and discards a successful response for an
   assert.equal(get('memory-correct-action').hidden, true)
   get('memory-detail-close').fire('click')
   for (let i = 0; i < 20 && get('memory-list').children.length !== 1; i++) await flush()
-  get('memory-list').children[0].children[0].fire('click')
+  memoryButton(memoryItem.text).fire('click')
   for (let i = 0; i < 20 && get('memory-correct-action').hidden; i++) await flush()
   rejectNextCorrect = true
   get('memory-correct-action').fire('click')
@@ -467,7 +480,7 @@ test('memory view preserves chat draft and discards a successful response for an
   assert.notEqual(correctRequestIds.at(-1), rejectedId, 'explicit resubmit gets a fresh requestId')
   get('memory-detail-close').fire('click')
   for (let i = 0; i < 20 && get('memory-list').children.length !== 1; i++) await flush()
-  get('memory-list').children[0].children[0].fire('click')
+  memoryButton(memoryItem.text).fire('click')
   for (let i = 0; i < 20 && get('memory-correct-action').hidden; i++) await flush()
   missingNextCorrect = true
   get('memory-correct-action').fire('click')
@@ -483,7 +496,7 @@ test('memory view preserves chat draft and discards a successful response for an
   memoryItems = [memoryItem]
   get('memory-refresh').fire('click')
   for (let i = 0; i < 20 && get('memory-list').children.length !== 1; i++) await flush()
-  get('memory-list').children[0].children[0].fire('click')
+  memoryButton(memoryItem.text).fire('click')
   for (let i = 0; i < 20 && get('memory-correct-action').hidden; i++) await flush()
   loseNextCorrect = true
   get('memory-correct-action').fire('click')
