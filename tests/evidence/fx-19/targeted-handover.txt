@@ -1,0 +1,239 @@
+✔ UX-3 thinking is conversation-local and a late account response cannot set the new identity (20.7764ms)
+✔ UX-3 subtask projection preserves true background lifetime, failures, names and timestamps (7.8215ms)
+✖ UX-3 provider reasoning enables a session override, restores defaults, and leaves unsupported routes alone (1.5475ms)
+✔ UX-3 authenticated thinking preference persists and is exposed by sessions without changing model defaults (2286.9596ms)
+✔ UX-3 native request snapshots thinking per turn and preserves the default config exactly (0.3425ms)
+✔ UX-3 script-wrapped native background results retain the launch step and never invent a task from file text (3.6872ms)
+✔ deletion removes disposed native subagent logs recursively while retaining independent forks (28.7449ms)
+✔ concurrent cold resumes share a native handle and model reads finish before forgetting disposes it (2.112ms)
+▶ P1-03 · DSH session / agent adapter
+  ✔ create/resume/send/cancel only use supported client methods; cancel is a receipt (3.1589ms)
+  ✔ fails closed when the live approval receipt is no longer pending (13.0494ms)
+  ✔ accepts the pinned direct client-response receipt without RPC envelope unwrapping (0.4529ms)
+  ✔ resume preserves the DSH subagent cancel fence but permits ordinary fork lineage (0.5815ms)
+  ✔ resume history entries reconcile through the HistoryEntry event wrapper (0.6396ms)
+  ✔ normalizes required raw DSH session/agent/tool events and drops reasoning (0.3641ms)
+  ✔ reconciles deterministic seq order, dedupes replay, and makes cancelled turns terminal-safe (0.2291ms)
+  ✔ unknown and error frames expose only redacted metadata/digests (1.8447ms)
+  ✔ output limit is a non-success terminal and seals late chunks without guessing unknown kinds (1.9767ms)
+  ✔ dedupes raw seq per session, not across two ordinary sessions (0.3359ms)
+✔ P1-03 · DSH session / agent adapter (23.8068ms)
+✔ two devices share an owner, concurrent duplicate request runs once, conflict and authentication stay bounded (1959.6012ms)
+✔ session ownership, target, strict fields and event cursor (1690.8999ms)
+✔ restart marks dispatching uncertain without replay; pending resumes; corrupt store refuses startup (1490.1609ms)
+✔ occupied port fails and leaves existing listener usable (2998.7482ms)
+✔ store write failure refuses acceptance before backend side effects (1527.9995ms)
+✔ revocation while preflight waits rejects an unissued command (1605.0282ms)
+✔ lost message receipt remains uncertain and is never replayed on restart (1600.3206ms)
+✔ close prevents a blocked dispatch from writing or invoking the old backend after same-root restart (4667.7782ms)
+✔ close during a blocked acceptance preflight cannot persist the request (4435.4948ms)
+✔ valid JSON with tampered payload, missing source device or duplicate request ID fails closed (1544.2565ms)
+✔ event cursor advances across fully filtered and trailing hidden history (1489.5862ms)
+✔ history byte paging preserves the public response boundary without failing a large page (1506.1119ms)
+✔ backend errors and malformed event data never expose arbitrary codes or content (1448.103ms)
+✔ full command ledger or unreconciled text budget rejects new work before persistence or dispatch (2031.9866ms)
+✔ UPD-2 status exposes authenticated read-only layer versions without source paths or install actions (1416.7774ms)
+✔ UPD-2 standalone host reports unavailable UI and mobile versions without inventing them (1343.4017ms)
+✖ FX-10 describing many requested sessions uses one native list and preserves individual descriptor facts (2.7533ms)
+✔ durable history pagination keeps sparse DSH seq and excludes tools, injected context, paths and secrets (3.2746ms)
+✔ many hidden deltas advance the scanned watermark without delaying an aborted turn (4.0695ms)
+✔ 2400+ event session opens the recent tail without inspecting its beginning and pages older/incremental (4.1197ms)
+✔ old explicit afterSeq=-1 reads every page forwards, keeping sparse hidden seq watermarks (19.4536ms)
+✔ byte paging truncates a huge event and returns all 200 large messages without a failed page (13.2024ms)
+✔ native lifecycle, interactions, artifact results and reserved queue projection share distinct seq (2.3876ms)
+✔ empty/hidden histories advance correctly and zero beforeSeq is an empty older page (0.2759ms)
+✖ host callbacks preflight selected model and ownership before dispatch; create binds then selects (1.072ms)
+✔ configured chat and restricted desktop capability stay separate from real tool verification (0.4891ms)
+✖ document artifact preflight permits only the original owner and restricted session (0.293ms)
+✔ parallel tool completion metadata visits source ranges once across 3000-event pagination (43.1037ms)
+✔ incremental cursor waits for a pending native step end, then publishes the correct terminal without skipping seq (0.5993ms)
+✔ an intermediate model step end does not end its task and only new raw events update the lifecycle cut (0.2157ms)
+✔ host model directory exposes only an exact comparable public route identity (5.2274ms)
+✖ task stop checks owner and personal-remote preset before exact callback (1.2198ms)
+✔ native stop observation reaches missing historical sessions with owner and runtime fences (1.715ms)
+✔ a native batch uses its real RPC ID, saves a stable answer, and sends the answer exactly once (2272.9ms)
+✔ answer validation preserves native single, multi and free-text semantics and exact batch order (1942.868ms)
+✔ questions fail closed for missing or forged source, body fields, CSRF and another account (3243.9306ms)
+✔ a live reconnect retains one exact batch, while a native outside answer supplies no invented portal answer (1728.8027ms)
+✔ native not-pending and uncertain response receipts stay truthful and never resend saved answers (3793.121ms)
+✔ runtime replacement seals registrations already awaiting describe and leaves the new child batch untouched (2010.4016ms)
+✔ a native outside answer or lost own ACK never attributes the portal answer to native consumption (5291.0001ms)
+✔ native terminal evidence arriving during registration cannot recreate a historical pending batch (1719.8593ms)
+✔ task stop and service restart leave old batches unavailable and reject late answers (1829.6729ms)
+✔ answer IDs collide in both directions with commands, task stops and approval decisions (1870.8579ms)
+✔ question information remains available to clarify an uncertain execution without lifting its guard (1800.7225ms)
+✔ revoked source credentials and a changed model destination cannot receive late information answers (3684.0777ms)
+✔ shared-chat session scope still exposes no question channel (1684.8801ms)
+✔ a reconnect snapshot gap cannot seal an existing question or cause a duplicate native answer (1540.2839ms)
+✖ backend snapshots and responses capture the parent generation before awaits and discard replacements (0.7286ms)
+✖ workspaces isolate accounts and sessions using the native cwd creation payload (15.2252ms)
+✔ archive preserves experience and restores without changing ownership (1.5726ms)
+✔ default deletion stops the running session and removes its records and files while retaining memory (113.9677ms)
+✔ forget option calls MemoWeft true delete only for this account/session source evidence (0.7703ms)
+✔ conversation preview is read-only; snippet opt-in reaches sources recovered from context (1.3279ms)
+✔ unavailable or rejected true forgetting keeps the conversation available for retry (0.2251ms)
+✔ HTTP contract hides archived sessions, denies send, restores and deletes durably (2049.9294ms)
+✔ uncertain dispatch and rejected true forgetting do not claim deletion (0.5113ms)
+✔ cold deletion acquires a native lifecycle before removing the session (0.395ms)
+✔ pending source erasure keeps its evidence plan when Core has removed the source jobs (0.5625ms)
+✔ pin, manual unread/read, arrival unread and native user title persist independently (2.1141ms)
+✔ groups create, rename, move and delete restore membership without losing sessions (1.1516ms)
+✔ all metadata, groups and forks deny another account; fork leaves source and memory bindings unchanged (2.5883ms)
+✔ menu names, shortcuts and archived taxonomy are shared across renderers (14.0587ms)
+✖ backend fork copies workspace and experience independently, binds model and pins native title (16.9404ms)
+✔ HTTP metadata and groups enforce cookie CSRF, account isolation and durable restart (3753.119ms)
+✔ D35 progress uses real kinds/objects and prioritizes failure and stopped states (20.1367ms)
+✔ FX-10 native turn history makes stop usable before the session list catches up and removes it on terminal evidence (3.7671ms)
+✔ FX-10 live conversation reads remain independent of slow host/model refresh and coalesce overlapping ticks (19.5183ms)
+✔ FX-10 a newer idle snapshot overrides an old unended start without inventing an ending (2.7308ms)
+✔ FX-10 an accepted new session delivers its first message while an older session list is still loading (6.1424ms)
+✔ FX-10 receipt lookup replaces a pending command snapshot before optimistic delivery reads it (2.0594ms)
+✔ D35 chronology splits only at visible conversation boundaries and approvals stay on their own step (2.6593ms)
+✔ FX-11 progress counts actual activities and keeps internal names out of running and historical summaries (2.4449ms)
+✔ running composer reports observed phases and hides them on an idle session without changing stop availability (1.795ms)
+✔ core registers distinct actions, constructs independent stores and has no DOM dependency (3.3579ms)
+✔ history accepts gaps, sorts by event sequence, rejects duplicates/foreign sessions and keeps the latest terminal (1.8084ms)
+✔ timeline merges a completed step/artifact into its existing step and never mutates event input (1.7948ms)
+✔ history pages use host watermarks/cursors and keep stale reads out after a session switch (4.2851ms)
+✔ shared send/stop actions choose steer or queue and block unresolved submissions (3.9867ms)
+✔ question drafts keep native option order, exact labels and one single-choice answer (2.6099ms)
+✔ approval identity and terminal merges prevent a stale pending row from reopening a decision (1.954ms)
+✔ resource pagination deduplicates calls, prefers captured snapshots and replaces old output versions (2.7929ms)
+✔ memory reads discard a response for another account and reset authenticated state (2.7928ms)
+✔ appearance persistence and session sorting work without a window or DOM (1.7541ms)
+✔ system settings are read once as data and sent through the existing protected routes (3.5513ms)
+✔ source references parse nested native arguments, deduplicate values and tolerate unavailable details (3.4208ms)
+✔ login input validation and protected transport do not need form elements (1.7161ms)
+✔ model form validation and durable request recovery stay in core and never persist a credential (1.9209ms)
+✔ appearance keeps unknown saved fields while the control defaults stay stable (1.39ms)
+✔ UI-3 intent overrides do not change the composer selection and empty running drafts cannot send (1.9676ms)
+✔ UI-3 queue projection follows sequence, batches, receipt reconciliation and terminal reasons (1.8509ms)
+✔ UI-3 cancel/edit retains request identity, handles 409 and never stops a running task (2.1064ms)
+✔ UI-3 stale cancellation cannot populate another account or conversation (1.7976ms)
+✔ UI-3 stop targets the current root and leaves the later queue untouched (1.5732ms)
+✔ UI-3 approvals and sources share summaries for shell/files/web/subtask and unknown tools (3.2071ms)
+✔ UI-3 outputs group by path, keep creation order and expose older versions (2.114ms)
+✔ UI-3 native approval reasons keep the risk prose and fold embedded raw parameters (3.4776ms)
+✔ UI-3 attachment shortcuts respect unresolved submissions and restore the selected intent (1.814ms)
+✔ D36 switching conversations preserves the account running-input preference (2.1089ms)
+✔ D36 account preferences survive recreation, isolate accounts and preserve temporary send overrides (2.0841ms)
+✔ D36 stage timer uses the latest persisted turn and omits unknown or future timestamps (1.8223ms)
+✔ D36 native account storage survives an origin change and rejects a late previous account read (2.5999ms)
+✔ session lifecycle actions use protected writes and never enable an archived/read-only session by inference (1.8365ms)
+✔ UI-P4 native occupancy uses the projected current surface, never cumulative billing tokens (2.1453ms)
+✔ UI-P4 shows an optimistic message before the host answers and blocks a duplicate click (2.075ms)
+✔ UI-P4 unconfirmed delivery retries the original request ID after checking the receipt (2.3308ms)
+✔ UI-P4 a later confirmed task supersedes the original pending POST snapshot (1.8239ms)
+✔ UI-P4 first message appears before session creation and survives an account boundary safely (1.9637ms)
+✔ UI-P4 switching accounts during receipt lookup never retries the old account text (1.6468ms)
+✔ UI-P4 a new draft reads the account approval mode and applies its chosen mode before sending (15.2181ms)
+✔ UI-P4 starting another new conversation does not display an earlier uncreated failed message (2.0235ms)
+✔ FIX-8 new desktop drafts clear phone selection, pagination and late handoff callbacks (2.0779ms)
+✔ FIX-8 stop notices count only the current conversation queued messages and confirm fallback receipts (7.7265ms)
+✔ FIX-8 refreshed session titles repaint the selected header after a local account is bound (1.8222ms)
+✔ FIX-8 an accepted creation observed before the pending POST snapshot still sends the first draft once (1.5525ms)
+✔ a delayed lifecycle response cannot replace another account session list (1.3778ms)
+✔ reminder reads work in the mobile settings category and discard a late account response (3.0471ms)
+✔ MS-1 saved default selects the next new conversation without rebinding the existing session (1.762ms)
+ℹ tests 135
+ℹ suites 1
+ℹ pass 127
+ℹ fail 8
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 34850.2719
+
+✖ failing tests:
+
+test at tests\composer-menu.test.ts:38:1
+✖ UX-3 provider reasoning enables a session override, restores defaults, and leaves unsupported routes alone (1.5475ms)
+  Error: SESSION_UNAVAILABLE
+      at fail (file:///D:/AIProjects/WeftMate/Worktrees/w5/src/personal-access-backend.mjs:11:40)
+      at requireSession (file:///D:/AIProjects/WeftMate/Worktrees/w5/src/personal-access-backend.mjs:64:36)
+      at async file:///D:/AIProjects/WeftMate/Worktrees/w5/src/personal-access-backend.mjs:301:25
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/composer-menu.test.ts:46:2)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    code: 'SESSION_UNAVAILABLE'
+  }
+
+test at tests\personal-access-host.test.ts:8:1
+✖ FX-10 describing many requested sessions uses one native list and preserves individual descriptor facts (2.7533ms)
+  TypeError: gateway is not a function
+      at Object.describeSession (file:///D:/AIProjects/WeftMate/Worktrees/w5/src/personal-access-backend.mjs:483:26)
+      at TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/personal-access-host.test.ts:23:78)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at tests\personal-access-host.test.ts:177:1
+✖ host callbacks preflight selected model and ownership before dispatch; create binds then selects (1.072ms)
+  Error: SESSION_READ_ONLY
+      at fail (file:///D:/AIProjects/WeftMate/Worktrees/w5/src/personal-access-backend.mjs:11:40)
+      at file:///D:/AIProjects/WeftMate/Worktrees/w5/src/personal-access-backend.mjs:196:11
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/personal-access-host.test.ts:213:20)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    code: 'SESSION_READ_ONLY'
+  }
+
+test at tests\personal-access-host.test.ts:250:1
+✖ document artifact preflight permits only the original owner and restricted session (0.293ms)
+  Error: SESSION_UNAVAILABLE
+      at fail (file:///D:/AIProjects/WeftMate/Worktrees/w5/src/personal-access-backend.mjs:11:40)
+      at requireSession (file:///D:/AIProjects/WeftMate/Worktrees/w5/src/personal-access-backend.mjs:64:36)
+      at async Object.preflight (file:///D:/AIProjects/WeftMate/Worktrees/w5/src/personal-access-backend.mjs:164:9)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/personal-access-host.test.ts:263:20)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    code: 'SESSION_UNAVAILABLE'
+  }
+
+test at tests\personal-task-stop-backend.test.ts:5:1
+✖ task stop checks owner and personal-remote preset before exact callback (1.2198ms)
+  Error: SESSION_UNAVAILABLE
+      at fail (file:///D:/AIProjects/WeftMate/Worktrees/w5/src/personal-access-backend.mjs:11:40)
+      at requireSession (file:///D:/AIProjects/WeftMate/Worktrees/w5/src/personal-access-backend.mjs:64:36)
+      at async Object.stopTask (file:///D:/AIProjects/WeftMate/Worktrees/w5/src/personal-access-backend.mjs:359:7)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/personal-task-stop-backend.test.ts:25:17)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    code: 'SESSION_UNAVAILABLE'
+  }
+
+test at tests\personal-user-questions.test.ts:479:1
+✖ backend snapshots and responses capture the parent generation before awaits and discard replacements (0.7286ms)
+  Error: SESSION_UNAVAILABLE
+      at fail (file:///D:/AIProjects/WeftMate/Worktrees/w5/src/personal-access-backend.mjs:11:40)
+      at requireSession (file:///D:/AIProjects/WeftMate/Worktrees/w5/src/personal-access-backend.mjs:64:36)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Object.listUserQuestions (file:///D:/AIProjects/WeftMate/Worktrees/w5/src/personal-access-backend.mjs:390:23)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/personal-user-questions.test.ts:491:17)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    code: 'SESSION_UNAVAILABLE'
+  }
+
+test at tests\session-experience.test.ts:10:1
+✖ workspaces isolate accounts and sessions using the native cwd creation payload (15.2252ms)
+  Error: SESSION_READ_ONLY
+      at fail (file:///D:/AIProjects/WeftMate/Worktrees/w5/src/personal-access-backend.mjs:11:40)
+      at file:///D:/AIProjects/WeftMate/Worktrees/w5/src/personal-access-backend.mjs:196:11
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/session-experience.test.ts:19:5)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    code: 'SESSION_READ_ONLY'
+  }
+
+test at tests\session-menu.test.ts:61:1
+✖ backend fork copies workspace and experience independently, binds model and pins native title (16.9404ms)
+  Error: SESSION_UNAVAILABLE
+      at fail (file:///D:/AIProjects/WeftMate/Worktrees/w5/src/personal-access-backend.mjs:11:40)
+      at file:///D:/AIProjects/WeftMate/Worktrees/w5/src/personal-access-backend.mjs:63:88
+      at async requireSession (file:///D:/AIProjects/WeftMate/Worktrees/w5/src/personal-access-backend.mjs:63:21)
+      at async Object.forkSession (file:///D:/AIProjects/WeftMate/Worktrees/w5/src/personal-access-backend.mjs:225:22)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/session-menu.test.ts:68:18)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    code: 'SESSION_UNAVAILABLE'
+  }

@@ -43,7 +43,7 @@ test('UX-3 provider reasoning enables a session override, restores defaults, and
  assert.equal(modelReasoning({baseUrl:'https://example.invalid/v1',model:'unknown'}),null);
  const profile:any={id:'model-a',name:'synthetic',baseUrl:'https://api.openai.com/v1',model:'gpt-5',reasoningEffort:'low'},selections:any[]=[];
  const backend=createPersonalAccessBackend({currentOrigin:()=> 'http://127.0.0.1:1',profiles:()=>[profile],hasCredential:()=>true,routeForProfile:()=>({provider:'synthetic-provider'}),listSessions:async()=>({items:[{sessionId:'session-a',agentPreset:'personal-remote'}]}),resolveSession:async()=>({profile}),ensureKnownSession:async()=>{},queue:async(action:any)=>action(),gateway:async(path:string,init:any)=>{
-  if(path==='/models')return {groups:[{id:'synthetic-provider',models:[{id:profile.model}]}]};if(path.endsWith('/models'))selections.push(JSON.parse(init.body));return {accepted:true};
+  if(path==='/models')return {groups:[{id:'synthetic-provider',models:[{id:profile.model}]}]};if(path==='/sessions/session-a')return {sessionId:'session-a',agentPreset:'personal-remote'};if(path.endsWith('/models'))selections.push(JSON.parse(init.body));return {accepted:true};
  }} as any);
  await backend.sendMessage({sessionId:'session-a',text:'合成',deepThinking:true});assert.equal(selections.length,0,'sending never writes the native session/global selection');
  await backend.sendMessage({sessionId:'session-a',text:'合成',deepThinking:false});assert.equal(selections.length,0);assert.equal(profile.reasoningEffort,'low');
