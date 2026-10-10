@@ -1,0 +1,265 @@
+{
+  "realElectron": true,
+  "realCore": true,
+  "syntheticModel": true,
+  "shots": [
+    "desktop-1120-light.png",
+    "desktop-1120-dark.png",
+    "desktop-480-light.png",
+    "desktop-480-dark.png",
+    "phone-360-light.png",
+    "phone-360-dark.png",
+    "phone-390-light.png",
+    "phone-390-dark.png"
+  ],
+  "status": {
+    "ownerId": "owner-bf370b92-66bb-4e0f-ae52-7836cc0fe1e0",
+    "state": "recovering",
+    "version": "2.0.0",
+    "worldRevision": 0,
+    "capabilities": {
+      "list": true,
+      "source": true,
+      "inject": true,
+      "correct": true,
+      "mute": true,
+      "deleteEvidence": true,
+      "deleteWorldItem": true
+    },
+    "pendingBoundaryCount": 0,
+    "blockedBoundaryCount": 0,
+    "discardedBoundaryCount": 0,
+    "lastFailureCode": null,
+    "pendingFormationCount": 1,
+    "recoveringFormationCount": 1,
+    "failedFormationCount": 0,
+    "failedCorrectionCount": 0,
+    "formationIssues": [],
+    "reasonCode": "MEMORY_FORMATION_RECOVERING",
+    "backfill": null,
+    "captureError": null
+  },
+  "activityDuring": [
+    {
+      "id": "activity-19e1d0f0ffe839666d54112e9bbd07319d45c2027cf8dc384624c23149423dfc",
+      "at": "2026-10-10T07:51:01.460Z",
+      "type": "memory.report",
+      "title": "正在继续整理上次没做完的记忆",
+      "summary": "原话已保存，整理完成后会自动恢复正常。",
+      "source": {},
+      "actions": [
+        {
+          "kind": "view_memory",
+          "label": "查看记忆",
+          "target": {}
+        }
+      ],
+      "state": "completed",
+      "notification": {
+        "level": "silent",
+        "type": "memory.report",
+        "initiatedBy": "assistant",
+        "title": "正在继续整理上次没做完的记忆",
+        "body": "原话已保存，整理完成后会自动恢复正常。",
+        "notify": false,
+        "sound": false,
+        "decision": "activity",
+        "reason": "silent",
+        "decidedAt": "2026-10-10T07:51:01.460Z"
+      },
+      "revision": 1,
+      "attentionRevision": 5,
+      "createdSequence": 5,
+      "read": false
+    },
+    {
+      "id": "activity-0382807312b1fb4964a64f6f3c70298ad4b01bed6c48920d5ec8442eeebe0184",
+      "at": "2026-10-10T07:50:57.241Z",
+      "type": "memory.paused",
+      "title": "记忆已暂停",
+      "summary": "记忆暂时无法更新，可在记忆页查看状态。",
+      "source": {},
+      "actions": [
+        {
+          "kind": "view_memory",
+          "label": "查看记忆",
+          "target": {}
+        }
+      ],
+      "state": "completed",
+      "notification": {
+        "level": "normal",
+        "type": "memory.paused",
+        "initiatedBy": "assistant",
+        "title": "记忆已暂停",
+        "body": "记忆暂时无法更新，可在记忆页查看状态。",
+        "notify": true,
+        "sound": false,
+        "decision": "silent",
+        "reason": "allowed",
+        "decidedAt": "2026-10-10T07:50:57.241Z"
+      },
+      "revision": 1,
+      "attentionRevision": 4,
+      "createdSequence": 4,
+      "read": false
+    },
+    {
+      "id": "activity-a8277164faf918c5b68251251bfcea484a2fea455926b0bf013ddffd24542ba8",
+      "at": "2026-10-10T07:50:40.413Z",
+      "type": "memory.paused",
+      "title": "记忆已暂停",
+      "summary": "记忆暂时无法更新，可在记忆页查看状态。",
+      "source": {},
+      "actions": [
+        {
+          "kind": "view_memory",
+          "label": "查看记忆",
+          "target": {}
+        }
+      ],
+      "state": "completed",
+      "notification": {
+        "level": "normal",
+        "type": "memory.paused",
+        "initiatedBy": "assistant",
+        "title": "记忆已暂停",
+        "body": "记忆暂时无法更新，可在记忆页查看状态。",
+        "notify": true,
+        "sound": false,
+        "decision": "silent",
+        "reason": "allowed",
+        "decidedAt": "2026-10-10T07:50:40.414Z"
+      },
+      "revision": 1,
+      "attentionRevision": 1,
+      "createdSequence": 1,
+      "read": false
+    }
+  ],
+  "finalStatus": {
+    "ownerId": "owner-bf370b92-66bb-4e0f-ae52-7836cc0fe1e0",
+    "state": "ready",
+    "version": "2.0.0",
+    "worldRevision": 1,
+    "capabilities": {
+      "list": true,
+      "source": true,
+      "inject": true,
+      "correct": true,
+      "mute": true,
+      "deleteEvidence": true,
+      "deleteWorldItem": true
+    },
+    "pendingBoundaryCount": 0,
+    "blockedBoundaryCount": 0,
+    "discardedBoundaryCount": 0,
+    "lastFailureCode": null,
+    "pendingFormationCount": 0,
+    "recoveringFormationCount": 0,
+    "failedFormationCount": 0,
+    "failedCorrectionCount": 0,
+    "formationIssues": [],
+    "backfill": null,
+    "captureError": null
+  },
+  "activityAfter": [
+    {
+      "id": "activity-19e1d0f0ffe839666d54112e9bbd07319d45c2027cf8dc384624c23149423dfc",
+      "at": "2026-10-10T07:51:01.460Z",
+      "type": "memory.report",
+      "title": "上次没做完的记忆已整理完成",
+      "summary": "记忆已恢复正常。",
+      "source": {},
+      "actions": [
+        {
+          "kind": "view_memory",
+          "label": "查看记忆",
+          "target": {}
+        }
+      ],
+      "state": "completed",
+      "notification": {
+        "level": "silent",
+        "type": "memory.report",
+        "initiatedBy": "assistant",
+        "title": "上次没做完的记忆已整理完成",
+        "body": "记忆已恢复正常。",
+        "notify": false,
+        "sound": false,
+        "decision": "activity",
+        "reason": "silent",
+        "decidedAt": "2026-10-10T07:51:01.460Z"
+      },
+      "revision": 2,
+      "attentionRevision": 6,
+      "createdSequence": 5,
+      "read": false
+    },
+    {
+      "id": "activity-0382807312b1fb4964a64f6f3c70298ad4b01bed6c48920d5ec8442eeebe0184",
+      "at": "2026-10-10T07:50:57.241Z",
+      "type": "memory.paused",
+      "title": "记忆已暂停",
+      "summary": "记忆暂时无法更新，可在记忆页查看状态。",
+      "source": {},
+      "actions": [
+        {
+          "kind": "view_memory",
+          "label": "查看记忆",
+          "target": {}
+        }
+      ],
+      "state": "completed",
+      "notification": {
+        "level": "normal",
+        "type": "memory.paused",
+        "initiatedBy": "assistant",
+        "title": "记忆已暂停",
+        "body": "记忆暂时无法更新，可在记忆页查看状态。",
+        "notify": true,
+        "sound": false,
+        "decision": "silent",
+        "reason": "allowed",
+        "decidedAt": "2026-10-10T07:50:57.241Z"
+      },
+      "revision": 1,
+      "attentionRevision": 4,
+      "createdSequence": 4,
+      "read": false
+    },
+    {
+      "id": "activity-a8277164faf918c5b68251251bfcea484a2fea455926b0bf013ddffd24542ba8",
+      "at": "2026-10-10T07:50:40.413Z",
+      "type": "memory.paused",
+      "title": "记忆已暂停",
+      "summary": "记忆暂时无法更新，可在记忆页查看状态。",
+      "source": {},
+      "actions": [
+        {
+          "kind": "view_memory",
+          "label": "查看记忆",
+          "target": {}
+        }
+      ],
+      "state": "completed",
+      "notification": {
+        "level": "normal",
+        "type": "memory.paused",
+        "initiatedBy": "assistant",
+        "title": "记忆已暂停",
+        "body": "记忆暂时无法更新，可在记忆页查看状态。",
+        "notify": true,
+        "sound": false,
+        "decision": "silent",
+        "reason": "allowed",
+        "decidedAt": "2026-10-10T07:50:40.414Z"
+      },
+      "revision": 1,
+      "attentionRevision": 1,
+      "createdSequence": 1,
+      "read": false
+    }
+  ],
+  "passed": true
+}
