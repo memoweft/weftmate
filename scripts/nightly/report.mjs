@@ -9,12 +9,12 @@ export const key = row => `${row.platform}/${row.scene}/${row.theme}`;
 // and Chromium/Electron emit non-interlaced 8-bit PNG; other formats fail visibly.
 export function pixels(png) {
   if (!png.subarray(0, 8).equals(Buffer.from('89504e470d0a1a0a', 'hex'))) throw Error('Invalid PNG');
-  let width, height, channels, palette, alpha, data = [];
+  let width, height, channels, colorType, palette, alpha, data = [];
   for (let p = 8; p < png.length;) {
     const n = png.readUInt32BE(p), name = png.toString('ascii', p + 4, p + 8), bytes = png.subarray(p + 8, p + 8 + n);
     if (name === 'IHDR') {
       width = bytes.readUInt32BE(0); height = bytes.readUInt32BE(4);
-      channels = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 }[bytes[9]];
+      colorType = bytes[9]; channels = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 }[colorType];
       if (bytes[8] !== 8 || bytes[12] !== 0 || !channels) throw Error('Unsupported PNG pixel format');
     }
     if (name === 'PLTE') palette = bytes;
@@ -38,7 +38,7 @@ export function pixels(png) {
   const rgba = Buffer.alloc(width * height * 4);
   for (let i = 0; i < width * height; i++) {
     const offset = i * channels, target = i * 4;
-    if (palette) { const index = decoded[offset]; rgba[target] = palette[index * 3]; rgba[target + 1] = palette[index * 3 + 1]; rgba[target + 2] = palette[index * 3 + 2]; rgba[target + 3] = alpha?.[index] ?? 255; }
+    if (colorType === 3) { const index = decoded[offset]; if (!palette) throw Error('PNG palette missing'); rgba[target] = palette[index * 3]; rgba[target + 1] = palette[index * 3 + 1]; rgba[target + 2] = palette[index * 3 + 2]; rgba[target + 3] = alpha?.[index] ?? 255; }
     else if (channels < 3) { rgba.fill(decoded[offset], target, target + 3); rgba[target + 3] = channels === 2 ? decoded[offset + 1] : 255; }
     else { decoded.copy(rgba, target, offset, offset + 3); rgba[target + 3] = channels === 4 ? decoded[offset + 3] : 255; }
   }
