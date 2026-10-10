@@ -207,6 +207,6 @@
       return parts.join('\n\n') + '\n';
     }
     return { readMessageFeedback: readFeedback, loadMessageFeedback, saveMessageFeedback, allMessageEvents, messageSource, readMessageInput, completeMessageEvent,
-      messageBusy, branchMessage, retryMessageBranch, messageExport, conversationExportEvents };
+      messageBusy, branchMessage, retryMessageBranch, hasPendingMessageBranch: () => !!environment.storage.getItem(storageKey('message-action-pending')), messageExport, conversationExportEvents };
   };
 })();

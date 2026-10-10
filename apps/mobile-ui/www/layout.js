@@ -83,7 +83,7 @@ const mobileMarkup = String.raw`
           <button id="pick-camera" type="button" role="menuitem"><span class="icon icon-camera" aria-hidden="true"></span>相机</button>
           <button id="pick-image" type="button" role="menuitem" aria-label="照片"><span class="icon icon-image" aria-hidden="true"></span>照片<span>从系统相册选择</span></button>
           <button id="pick-file" type="button" role="menuitem"><span class="icon icon-attach" aria-hidden="true"></span>文件<span>从系统文件中选择</span></button>
-          <button id="pick-thinking" type="button" role="menuitemcheckbox" aria-checked="false" hidden><span class="icon icon-model" aria-hidden="true"></span>深入思考</button><p id="attachment-note" class="attachment-note" hidden>附件会保存到这段电脑会话；普通文件将以文件卡显示。</p>
+          <hr id="thinking-separator" class="wm-menu-separator" hidden><button id="pick-thinking" type="button" role="menuitemcheckbox" aria-checked="false" hidden><span class="icon icon-model" aria-hidden="true"></span>深入思考</button><p id="attachment-note" class="attachment-note" hidden>附件会保存到这段电脑会话；普通文件将以文件卡显示。</p>
         </div>
       </section>
       <section id="generic-page" class="page" aria-live="polite"><div id="page-content"></div></section>

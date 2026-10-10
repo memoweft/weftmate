@@ -43,7 +43,11 @@
       "preview-close-active": "rgba(255,255,255,.28)",
       "mobile-success": "#637b5a",
       "mobile-warning": "#b88436",
-      "mobile-image-canvas": "#20221f"
+      "mobile-image-canvas": "#20221f",
+      "scrollbar-light": "#b9bfca",
+      "scrollbar-light-hover": "#929ba9",
+      "scrollbar-dark": "#59616e",
+      "scrollbar-dark-hover": "#7b8697"
     },
     "space": {
       "1": "1px",
