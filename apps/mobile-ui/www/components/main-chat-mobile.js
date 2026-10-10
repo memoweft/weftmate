@@ -118,7 +118,7 @@
   send=function(options={}){return main()?uiCore.sendMainDraft($('draft').value,options.intent):state.logicalChats&&!window.weftNative?uiCore.sendDraft($('draft').value,options.intent):oldSend(options);};
   selectSharedSession=function(id){return state.logicalChats?uiCore.selectLogicalSession(id):nativeSides(id);};
   updatePageHeader=function(){oldHeader();if(state.logicalChats&&state.page==='chat'){$('menu-button').hidden=false;$('page-back').hidden=main();}
-    if(main()){$('header-title').textContent='WeftMate';$('header-subtitle').textContent='主对话';}};
+    if(main()&&state.page==='chat'){$('header-title').textContent='WeftMate';$('header-subtitle').textContent='主对话';}};
   refreshAttachmentDrafts=async function(...args){if(state.logicalChats&&!window.weftNative){renderAttachmentDrafts();updateComposer();return true;}return oldDrafts(...args);};
   removeAttachment=async function(id){if(state.logicalChats&&!window.weftNative)return uiCore.removeAttachmentDraft(id);return oldRemove(id);};
   selectConversation=function(id){if(state.logicalChats&&id===null)return uiCore.openSideChat({entry:'composer'}).catch(error=>toast(uiCore.failureMessage(error)));return oldSelectConversation(id);};

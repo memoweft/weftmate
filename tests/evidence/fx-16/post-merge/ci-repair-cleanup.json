@@ -1,0 +1,7 @@
+{
+  "scope": "creation time + executable path + own worktree / isolated profile command line",
+  "remaining": 0,
+  "checkedAt": "2026-10-10T13:32:09.8601879+08:00",
+  "forcedStopped": 0,
+  "checkedAfter": "2026-10-10T13:06:18.6522631+08:00"
+}
