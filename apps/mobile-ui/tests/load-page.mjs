@@ -8,4 +8,6 @@ export const mobileSource = "globalThis.WeftIcons={create:()=>document.createEle
   // presentation is exercised by reply-motion.test.ts and real three-surface tests.
   .filter(name => name !== 'ui-core/reply-motion.js')
   // Dropdown geometry and native option DOM belong to the real-browser semantic suites.
-  .map(name => readFileSync(new URL(name, www), 'utf8') + (name === 'popovers.js' ? '\nglobalThis.WeftPopover.bindSettingsSelect = () => {}; globalThis.WeftPopover.modelGate = () => {};' : '')).join('\n');
+  // Separate script elements have independent parsing boundaries in the browser.
+  // Preserve that boundary so an IIFE cannot be parsed as a call on the previous factory.
+  .map(name => readFileSync(new URL(name, www), 'utf8') + (name === 'popovers.js' ? '\nglobalThis.WeftPopover.bindSettingsSelect = () => {}; globalThis.WeftPopover.modelGate = () => {};' : '')).join('\n;\n');
