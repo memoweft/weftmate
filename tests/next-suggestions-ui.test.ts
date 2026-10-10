@@ -47,3 +47,14 @@ test('UX-7 account/session switches reject late response, IME composing and sett
   assert.equal(f.core.nextSuggestionsView().suggestions.length,0);f.core.setSuggestionsComposing(true);f.core.nextSuggestionsInput('输入');assert.equal(f.timers.size,0);
   f.core.setSuggestionsComposing(false);f.core.state.personalization.nextSuggestionsEnabled=false;f.core.syncNextSuggestions();f.core.nextSuggestionsInput('输入');assert.equal(f.timers.size,0);
 });
+test('UX-7 actual conversation exporter includes only sent messages while reply suggestions and gray completion remain ephemeral',async()=>{
+  const f=fixture();runInNewContext(readFileSync(new URL('../src/ui-core/message-actions.js',import.meta.url),'utf8'),f.global);
+  const actions=f.global.WeftUiCore.factories.messageActions(f.core,{}, {storage:{getItem:()=>null}});
+  const events=[{seq:1,type:'user.message',data:{text:'帮我列提纲'}},{seq:2,type:'assistant.message',data:{text:'提纲包含三个部分'}},{seq:3,type:'turn.ended',data:{reason:'completed'}}];
+  f.core.state.historyEvents=new Map(events.map(row=>[row.seq,row]));f.core.syncNextSuggestions();
+  const before=actions.messageExport([...f.core.state.historyEvents.values()],'合成对话');await f.core.requestNextSuggestions('replies');
+  assert.equal(f.core.nextSuggestionsView().suggestions.length,1);assert.equal(actions.messageExport([...f.core.state.historyEvents.values()],'合成对话'),before);
+  f.draft='请把';f.core.nextSuggestionsInput('请把');await f.core.requestNextSuggestions('completion','请把');
+  assert.equal(f.core.nextSuggestionsView().completion,'保存成文件');const exported=actions.messageExport([...f.core.state.historyEvents.values()],'合成对话');
+  assert.equal(exported,before);assert.doesNotMatch(exported,/继续说第二点|保存成文件|请把/);
+});

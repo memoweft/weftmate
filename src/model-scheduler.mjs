@@ -111,7 +111,7 @@ export async function runPreemptibleFormation(queue, signal, work,
 
 /** Private loopback bridge shared by native DSH streams and MemoWeft workers. */
 export async function createModelScheduler({ isIdle, profileFor, backgroundRoute, credentialFor, fetchImpl = fetch,
-  beginUsage = null, finishUsage = null, backgroundReady = null, onEvent = () => {},
+  beginUsage = null, finishUsage = null, backgroundReady = null, suggestionReady = null, onEvent = () => {},
   heartbeatMs = 15_000, memoryProfileFor = null }) {
   const queues = new Map();
   const progress = new Map();
@@ -217,6 +217,7 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
           for (const lease of suggestionLeases) if (lease.destinationUrl === destinationUrl) lease.preempt();
         }
         let preemptSuggestion = null;
+        const readyForSuggestion = suggestionReady ?? backgroundReady;
         if (priority === 'suggestion') {
           preemptSuggestion = () => { controller.abort(suggestionBusy()); response.destroy(); };
           // Track the readiness probe as well as the granted socket so a new
@@ -224,7 +225,7 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
           const lease = { destinationUrl, preempt: preemptSuggestion };
           suggestionLeases.add(lease);
           response.once('close', () => suggestionLeases.delete(lease));
-          if (destinationProfile && backgroundReady && !await backgroundReady(destinationProfile)) throw suggestionBusy();
+          if (destinationProfile && readyForSuggestion && !await readyForSuggestion(destinationProfile, { signal: controller.signal })) throw suggestionBusy();
         }
         const selectedQueue = await queueFor({ profileId: url.searchParams.get('profileId'), baseUrl: url.searchParams.get('baseUrl') }, controller.signal);
         if (priority === 'suggestion') {
@@ -232,7 +233,7 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
           if (selectedQueue) release = await selectedQueue.acquire('suggestion', controller.signal, null, preemptSuggestion);
           else if (isIdle && !await isIdle()) throw suggestionBusy();
           // No retry or model switch after an idle slot was acquired.
-          if (destinationProfile && backgroundReady && !await backgroundReady(destinationProfile)) {
+          if (destinationProfile && readyForSuggestion && !await readyForSuggestion(destinationProfile, { signal: controller.signal })) {
             release?.(); throw suggestionBusy();
           }
           controller.signal.throwIfAborted();

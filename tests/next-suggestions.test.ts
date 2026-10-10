@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { createNextSuggestions, parseSuggestions, suggestionContext } from '../src/personal-access/next-suggestions.mjs';
 import { createUsageStore } from '../src/personal-access/usage.mjs';
 import { createPersonalAccessService } from '../src/personal-access/index.mjs';
-import { suggestionReasoning } from '../src/personal-access-backend.mjs';
+import { suggestionReasoning, suggestionCompletionBody } from '../src/personal-access-backend.mjs';
 
 function fixture(options:any = {}) {
   const events:any[] = [{seq:1,type:'user.message',data:{text:'帮我列一个报告提纲'}},
@@ -45,6 +45,13 @@ test('UX-7 speculative requests use existing provider declarations at the lighte
   assert.deepEqual(suggestionReasoning({baseUrl:'https://dashscope.aliyuncs.com/compatible-mode/v1',model:'qwen3-max'}),{enable_thinking:false});
   assert.deepEqual(suggestionReasoning({baseUrl:'https://api.openai.com/v1',model:'gpt-5'}),{reasoning_effort:'low'});
   assert.deepEqual(suggestionReasoning({baseUrl:'http://127.0.0.1:1/v1',model:'synthetic'}),{});
+  const body={model:'gpt-5',max_tokens:160,temperature:0.3,stream:false,messages:[]};
+  assert.deepEqual(suggestionCompletionBody({baseUrl:'https://api.openai.com/v1',model:'gpt-5'},body),{model:'gpt-5',max_completion_tokens:1024,reasoning_effort:'low',stream:false,messages:[]});
+  assert.equal(body.max_tokens,160);assert.equal(body.temperature,0.3);
+  assert.throws(()=>suggestionCompletionBody({baseUrl:'https://api.openai.com/v1',model:'gpt-5-pro'},body,{high:'high'}),{code:'MODEL_SUGGESTION_UNAVAILABLE'});
+  assert.equal(suggestionCompletionBody({baseUrl:'https://api.openai.com/v1',model:'gpt-5'},body,{low:'minimal'}).reasoning_effort,'minimal');
+  assert.equal(suggestionCompletionBody({baseUrl:'https://api.openai.com/v1',model:'gpt-5-chat-latest'},body,false).reasoning_effort,undefined);
+  assert.deepEqual(suggestionCompletionBody({baseUrl:'https://api.xiaomimimo.com/v1',model:'mimo-v2.6-flash'},{...body,model:'mimo-v2.6-flash'}),{...body,model:'mimo-v2.6-flash',thinking:{type:'disabled'}});
 });
 test('UX-7 completed reply generates at most three, temporary conversations work, no state/history/evidence/export writes',async()=>{
   const f=fixture({session:{temporary:true}}),before=JSON.stringify(f.account),history=JSON.stringify(f.events);
@@ -70,12 +77,13 @@ test('UX-7 cancel really aborts provider signal, stale requestId and another dev
   assert.deepEqual((await work).suggestions,[]);assert.equal(f.aborted,true);assert.equal(f.calls,1);assert.equal(f.finishes.length,1);
 });
 test('UX-7 typing, send, switch, toggle off, model change and disconnected client abandon in-flight inference without retry',async()=>{
-  for(const scenario of ['typing','send','switch','off','model-change','disconnect','native-running']) {
+  for(const scenario of ['typing','send','switch','off','model-change','model-unavailable','disconnect','native-running']) {
     const f=fixture(),response=new EventEmitter();f.hold();const work=f.run(body,'o',response);await delay();
     if(['typing','switch'].includes(scenario))f.service.cancel('o','s');
     if(scenario==='send')f.account.commands.new={kind:'session.message',state:'pending'};
     if(scenario==='off')f.account.personalization.nextSuggestionsEnabled=false;
     if(scenario==='model-change')f.account.sessions.s.modelProfileId='other';
+    if(scenario==='model-unavailable')f.context.messageModelUsable=()=>false;
     if(scenario==='disconnect')response.emit('close');
     if(scenario==='native-running')f.context.backend.describeSession=async()=>({running:true});
     f.service.reconcile('o');assert.deepEqual((await work).suggestions,[],scenario);assert.equal(f.aborted,true);assert.equal(f.calls,1);

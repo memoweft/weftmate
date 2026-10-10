@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { createInferenceQueue, createModelScheduler } from '../src/model-scheduler.mjs';
 import { acquireModelSlot, scheduledModelFetch } from '../src/model-scheduler-client.mjs';
+import { suggestionModelReady } from '../src/background-model-selection.mjs';
 
 const pause = () => new Promise(resolve => setTimeout(resolve, 10));
 async function until(check: () => boolean) {
@@ -203,4 +204,85 @@ test('without a scheduler usage begins before inference and cancellation during 
     }, ''), { message: 'INPUT_CHANGED' });
     assert.equal(starts, 1); assert.equal(f.calls(), 0);
   } finally { abort.abort(); await f.close(); }
+});
+
+test('external switcher leases and direct llama slots prevent speculative upstream inference', async () => {
+  const cases = [
+    { status: { activeLeases: 1, queuedLeases: 0, maintenanceQueued: 0 } },
+    { status: { activeLeases: 0, queuedLeases: 1, maintenanceQueued: 0 } },
+    { status: { activeLeases: 0, queuedLeases: 0, maintenanceQueued: 1 } },
+    { slots: [{ is_processing: true }] },
+    { slots: null, slotsCode: 503 },
+    { slots: [] },
+    { slots: [{}] },
+    { slots: [{ is_processing: 'false' }] },
+    { slots: { is_processing: false } },
+  ];
+  for (const row of cases) {
+    let inference = 0;
+    const server = createServer((request, response) => {
+      response.setHeader('content-type', 'application/json');
+      if (request.url === '/props') return response.end(JSON.stringify({ total_slots: 1 }));
+      if (request.url === '/switch/status') {
+        if (row.status) return response.end(JSON.stringify({ switching: false, currentModelId: 'synthetic', ...row.status }));
+        response.writeHead(404); return response.end('{}');
+      }
+      if (request.url === '/slots?fail_on_no_slot=1') { response.writeHead(row.slotsCode ?? 200); return response.end(JSON.stringify(row.slots)); }
+      inference++; response.end('{}');
+    });
+    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+    const profile = { id: 'local', model: 'synthetic', baseUrl: `http://127.0.0.1:${(server.address() as any).port}/v1` };
+    const bridge = await createModelScheduler({ isIdle: async () => true, backgroundReady: async () => true,
+      suggestionReady: (value, { signal }) => suggestionModelReady(value, { signal, credentialFor: () => 'synthetic' }),
+      profileFor: () => profile, credentialFor: () => 'synthetic', backgroundRoute: () => null });
+    try {
+      await assert.rejects(scheduledModelFetch(`${profile.baseUrl}/chat/completions`, { priority: 'suggestion' }, bridge.url), { code: 'MODEL_SUGGESTION_BUSY' });
+      assert.equal(inference, 0, JSON.stringify(row));
+      assert.deepEqual(bridge.queue.status(), { active: null, foregroundPending: 0, backgroundPending: 0 });
+    } finally { await bridge.close(); server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); }
+  }
+});
+
+test('suggestion occupancy requires truthful idle observations, supports old switcher slots fallback, and cancels probes', async () => {
+  const profile = { baseUrl: 'http://127.0.0.1:1/v1', model: 'synthetic' };
+  let status: any = { switching: false, currentModelId: 'synthetic', activeLeases: 0, queuedLeases: 0, maintenanceQueued: 0 };
+  let slots: any = [{ is_processing: false }], slotsCalls = 0, props: any = { total_slots: 1 };
+  const options = { credentialFor: () => 'synthetic', fetchImpl: async (url, init) => {
+    assert.equal(init.headers.authorization, 'Bearer synthetic');
+    if (String(url).endsWith('/props')) return Response.json(props);
+    if (String(url).endsWith('/switch/status')) return Response.json(status);
+    slotsCalls++; return Response.json(slots);
+  } };
+  assert.equal(await suggestionModelReady(profile, options), true); assert.equal(slotsCalls, 0);
+  status.activeLeases = '0'; assert.equal(await suggestionModelReady(profile, options), false);
+  status.activeLeases = -1; assert.equal(await suggestionModelReady(profile, options), false);
+  status = { switching: false, currentModelId: 'synthetic' };
+  assert.equal(await suggestionModelReady(profile, options), true); assert.equal(slotsCalls, 1);
+  status.switching = true; assert.equal(await suggestionModelReady(profile, options), false);
+  status = { switching: false, currentModelId: 'other' }; assert.equal(await suggestionModelReady(profile, options), false);
+  status = { switching: false, currentModelId: 'synthetic' }; slots = [{ is_processing: true }];
+  assert.equal(await suggestionModelReady(profile, options), false);
+  props = {}; assert.equal(await suggestionModelReady(profile, options), false);
+  const cancelled = new AbortController(); cancelled.abort();
+  assert.equal(await suggestionModelReady(profile, { ...options, signal: cancelled.signal }), false);
+  assert.equal(await suggestionModelReady({ baseUrl: 'https://cloud.invalid/v1' }, { fetchImpl: async () => assert.fail('cloud is not probed') }), true);
+  const live = new AbortController();
+  const pending = suggestionModelReady(profile, { signal: live.signal, fetchImpl: async (_url, { signal }) => new Promise((_resolve, reject) => {
+    signal.addEventListener('abort', () => reject(signal.reason), { once: true }); live.abort();
+  }) });
+  assert.equal(await pending, false);
+});
+
+test('suggestion readiness is rechecked after native slot acquisition and a changed external state releases without inference', async () => {
+  let probes = 0;
+  const profile = { id: 'local', baseUrl: 'http://127.0.0.1:1/v1', model: 'synthetic' };
+  const bridge = await createModelScheduler({ isIdle: async () => true, backgroundReady: async () => true,
+    suggestionReady: async (_profile, { signal }) => { assert.equal(signal.aborted, false); return ++probes === 1; },
+    profileFor: () => profile, credentialFor: () => 'synthetic', backgroundRoute: () => null,
+    fetchImpl: async () => Response.json({ total_slots: 1 }) });
+  try {
+    await assert.rejects(acquireModelSlot('suggestion', undefined, bridge.url, { profileId: 'local' }), { code: 'MODEL_SUGGESTION_BUSY' });
+    assert.equal(probes, 2);
+    assert.deepEqual(bridge.queue.status(), { active: null, foregroundPending: 0, backgroundPending: 0 });
+  } finally { await bridge.close(); }
 });
