@@ -41,7 +41,17 @@ npm start
 
 密码重置与换邮箱事务递增 `auth_epoch`，撤销该账号旧云会话、授权码、刷新族与 pending 验证码。已发 JWT 最多 5 分钟有效；本服务 `/account` 和邮箱变更接口还检查实时 epoch，因此重置立即拒绝旧 access token。本地宿主密码和数据不变。重置后尝试发送「密码已更改」；通知服务失败不回滚已提交的重置，响应 `notificationAccepted=false` 并记录无邮箱的操作错误。本包未实现通知补投递队列。
 
-`createMailer(config).send({to,subject,text}) → {id}`：file 每封写独立 JSON 并 fsync，供查看验证码，**不会发送真实邮件**。Resend 固定 HTTPS API、10 秒超时、幂等请求标识，凭据与明确发件人缺任一项不可启用。返回 provider id 表示服务商接受，不保证送达。模板覆盖注册、找回、新设备确认、新邮箱验证、密码已更改。测试 Resend 使用注入 mock fetch，不连接服务商。[Resend API](https://resend.com/docs/api-reference/emails/send-email)
+`createMailer(config).send({to,subject,text,html?,accountId?}) → {id}`：file（文件传输）每封写独立 JSON（结构化消息）并 fsync（同步落盘），包括可选 `html`，供查看验证码，**不会发送真实邮件**。Resend 固定 HTTPS API（加密发信接口）、10 秒超时、幂等请求标识，凭据与明确发件人缺任一项不可启用。`html` 必须为字符串，最多 65,536 UTF-8（字符编码）字节，发送和落盘前校验；未提供时继续只发 `text`。返回 provider id（服务商标识）表示服务商接受，不保证送达。测试 Resend 使用注入 mock fetch（模拟请求），不连接服务商。[Resend API](https://resend.com/docs/api-reference/emails/send-email)
+
+六种邮件（注册邮箱、找回密码、新设备登录、新邮箱验证、密码已更改、邮箱已更改）共用表格卡片，同时提供 `subject / text / html`。四种验证码邮件的纯文字布局保持原样，包含 `验证码：<六位连续数字>`；网页邮件只在一个文本节点显示六位数字，以字距拉开，便于整串复制。验证码只接受六位 ASCII（基础字符集）数字；所有动态值在进入 HTML（网页邮件）时转义。主题与隐藏预览只说明用途，不包含验证码、邮箱或账号标识；设备确认保留设备标识和内容权限需另行配对的说明。通知邮件不虚构支持联系方式。
+
+颜色、字号、间距、圆角、字体从桌面 `tokens.css` 和 `design/tokens/tokens.json` 生成独立的 `src/mail-tokens.mjs`；品牌 PNG（位图）由现有 `src/personal-access-ui/favicon.svg` 转换，原图形不变。开发时在主仓运行 `node services/cloud/scripts/build-mail-assets.mjs` 即可重新生成，使用主仓已有 Playwright（浏览器自动化），云服务运行时不依赖它或桌面源码，也没有新增依赖。
+
+标识选用本云域名的固定图片 `https://api.weftmate.com/assets/mail/weftmate-mark.png`。服务提供这一精确 GET / HEAD（读取／仅头部）资源，使用 PNG 类型、128×128 像素、公共缓存、无 Cookie（会话信息）、无参数、无收件人级访问记录；未开放目录遍历或通用文件服务。相较 CID（邮件附件引用），普通 HTTPS PNG 更适合 Gmail、Outlook、Apple Mail（苹果邮件）、QQ 和 163 的网页／手机邮箱；CID 虽可离线显示，但服务商也明确提示部分网页邮箱会拒绝。固定资源会多一次可缓存的图片读取，所有邮件共享同一地址，不能用来识别一封信或收件人。图片被拦截时，56×56 的显式宽高、替代文字与独立标题保持版式。[Resend 内嵌图片说明](https://resend.com/docs/dashboard/emails/embed-inline-images)、[Gmail 图片设置](https://support.google.com/mail/answer/145919)、[Outlook 图片拦截说明](https://support.microsoft.com/en-us/outlook/block-or-unblock-automatic-picture-downloads-in-classic-outlook-email-messages)
+
+版式以表格和行内样式为基础；`<style>` 仅含深色与窄屏媒体查询，无外链样式、网页字体、脚本、表单、背景图、跟踪像素或第三方资源。不支持媒体查询的客户端保持完整浅色；支持 `prefers-color-scheme: dark`（跟随系统深色）时同时改变画布、卡片、文字和分隔线。未声明全局自动深色，避免只改变部分区域。经典 Outlook 使用条件表格固定最大阅读宽度，可能将圆角退化为直角。客户端强制反色、图片策略及预览提取由客户端控制，本包不声称浏览器截图等于实际送达验收。
+
+上线无需新增配置项或数据库迁移：按现有发布方式包含整个 `services/cloud/`（特别是 `assets/weftmate-mark.png` 与 `src/mail-tokens.mjs`），重启云服务即可；现有 nginx（反向代理）`location /` 会转发固定图片，不需修改它。上线后由本人授权验证固定图片和六种真实邮箱送达；MAIL-1 未连接服务器、未发真实邮件。完整合成截图、六种文案、选区／剪贴板断言和兼容性限制见 [邮件证据](../../tests/evidence/mail-1/README.md)。
 
 ## OIDC、存储与密钥
 

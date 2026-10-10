@@ -23,6 +23,6 @@ if ($SkipApple) { $arguments += '--skip-apple' }
 if ($SkipAndroid) { $arguments += '--skip-android' }
 if ($DevicesOnly) { $arguments += '--devices-only' }
 if ($Scene) { $arguments += @('--scene', $Scene) }
-# Node owns the deadline, phase logs, finally cleanup and report even after a failure.
+# Stable Node bootstrap owns the global lock; tested engine owns deadline, phases and cleanup.
 & node @arguments
 exit $LASTEXITCODE

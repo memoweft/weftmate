@@ -44,7 +44,7 @@ export async function collectEvidence(captureDirectory, { includeRepositoryEvide
   const candidates = [];
   const failures = [];
   for (const name of await readdir(captureDirectory).catch(() => [])) {
-    if (!/^review-(windows|mobile-web)-.+-(light|dark)\.json$/.test(name)) continue;
+    if (!/^review-(windows|mobile-web|android|iphone|mac|watch)-.+-(light|dark)\.json$/.test(name)) continue;
     const row = JSON.parse(await readFile(join(captureDirectory, name), 'utf8'));
     if (row.status !== 'failed') continue;
     if (name !== `review-${row.platform}-${row.scene}-${row.theme}.json` || !catalog.scenes.some(scene => scene.id === row.scene) || !catalog.themes.includes(row.theme) || row.synthetic !== true || !/^[a-f0-9]{40}$/.test(row.commit) || !Number.isFinite(Date.parse(row.generatedAt)) || typeof row.reason !== 'string' || !row.reason.trim()) throw Error('Invalid capture failure provenance');
