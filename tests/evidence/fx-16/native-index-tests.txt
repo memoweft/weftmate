@@ -1,0 +1,21 @@
+✔ deletion removes disposed native subagent logs recursively while retaining independent forks (15.7572ms)
+✔ concurrent cold resumes share a native handle and model reads finish before forgetting disposes it (2.1506ms)
+✔ thinking-aware cache shares bounded ranges, survives reopening and hides thinking on ordinary reads (35.2767ms)
+✔ public range cache survives cold reopening, updates only stable live suffix and physically erases after native rewrite (58.4225ms)
+✔ public cache honors the native delayed step-end watermark and publishes its final classification once closed (37.6156ms)
+✔ activity uses stable native identities, redacts temporary task/approval/question content before persistence and prevents erasure replay (3.6329ms)
+✔ approval status updates keep one activity, native response identity and increment attention without preserving forgotten body (0.8938ms)
+✔ native terminal task waits for background effects and shares the IA-3 result activity identity (0.4537ms)
+✔ activity HTTP snapshots, filtered all-read, version conflicts, restart, native actions and deletion changes (3175.6661ms)
+✔ MEM-D formation pending does not masquerade as pause; model unavailability creates one event per real transition (2907.5922ms)
+✔ native timeline reads the live immutable log or DSH inspected snapshot without activating a session (0.8901ms)
+✔ timeline reads official live session events without adding unsupported durable types or reentering publication (28.0586ms)
+✔ human tool descriptions use tool names/parameters and retain a bounded generic fallback (0.2917ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6350.1473

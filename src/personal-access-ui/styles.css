@@ -635,6 +635,16 @@ kbd { font: inherit; font-size: var(--wm-font-size-10); color: var(--ink-muted);
 .preview-content h2:not(:first-child) { margin-top: var(--wm-space-28); }
 .resource-usage { padding: var(--wm-space-12) 0; border-bottom: 1px solid var(--line); }
 .resource-usage summary { font-size: var(--wm-font-size-12); overflow-wrap: anywhere; color: var(--ink-secondary); cursor: pointer; }
+.resource-usage > summary { list-style: none; display: flex; align-items: center; gap: var(--wm-space-8); }
+.resource-usage > summary::-webkit-details-marker { display: none; }
+.resource-usage > summary::marker { content: ''; }
+.resource-usage > summary:hover { color: var(--ink); background: var(--surface-soft); }
+.resource-usage > summary:active { background: var(--accent-soft); }
+.resource-usage > summary:focus-visible { outline: var(--wm-space-2) solid var(--accent); outline-offset: var(--wm-space-3); border-radius: var(--wm-radius-4); }
+.resource-usage > summary .progress-chevron { margin-inline-start: auto; }
+.resource-usage[open] > summary .progress-chevron { transform: rotate(0deg); }
+.resource-usage > .timeline-raw { max-height: none; overflow: visible; }
+.message-form textarea { resize: none; }
 .resource-location { font-size: var(--wm-font-size-12); overflow-wrap: anywhere; }
 .resource-actions { display: flex; flex-wrap: wrap; gap: var(--wm-space-6); margin-bottom: var(--wm-space-18); }
 .artifact-action { display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; margin: var(--wm-space-4) var(--wm-space-6) 0 0; min-height: 34px; padding: var(--wm-space-6) var(--wm-space-10); border: 1px solid var(--line); border-radius: var(--wm-radius-8); background: var(--surface); color: var(--ink-secondary); font: inherit; font-size: var(--wm-font-size-12); font-weight: 400; text-decoration: none; cursor: pointer; }

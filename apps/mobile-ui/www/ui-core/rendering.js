@@ -102,7 +102,16 @@
         link.addEventListener('click', event => { event.preventDefault(); const target = content.querySelector(`[id="${href.slice(1).replace(/[^\w:.-]/g,'')}"]`); target?.scrollIntoView({block:'nearest'}); }); continue;
       }
       const url = globalThis.WeftFormat?.safeLink(href); if (!url) { link.removeAttribute('href'); continue; }
-      link.addEventListener('click', event => { if (globalThis.weftmateDesktop?.openExternal || options.openExternal) { event.preventDefault(); void (options.openExternal ? options.openExternal(url) : weftmateDesktop.openExternal(url)); } });
+      link.addEventListener('click', async event => {
+        const captured=globalThis.WeftOpenCapturedSource;
+        if(captured||globalThis.weftmateDesktop?.openExternal||options.openExternal){
+          event.preventDefault();
+          if(captured&&await captured(url,link))return;
+          if(options.openExternal){await options.openExternal(url);return;}
+          if(globalThis.weftmateDesktop?.openExternal){await weftmateDesktop.openExternal(url);return;}
+          const external=node('a');external.href=url;external.target='_blank';external.rel='noopener noreferrer';external.click();
+        }
+      });
       const page = options.pages?.find(page => page.url === url && page.title);
       if (page) { link.classList.add('render-link-card'); link.replaceChildren(node('strong','',page.title),node('small','',new URL(url).hostname)); }
     }

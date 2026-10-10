@@ -1,0 +1,48 @@
+{
+  "androidNative": "MuMu ADB 127.0.0.1:7555 refused connection; existing MuMu services left untouched",
+  "androidPackageChromium": true,
+  "phoneSize": {
+    "width": 390,
+    "height": 844
+  },
+  "checks": [
+    {
+      "name": "second-account-real-api-desktop",
+      "executionAccount": false,
+      "nickname": "合成执行者",
+      "hint": "这台电脑由账号 合成执行者 负责执行；当前账号只能聊天。切回 合成执行者 或在 合成执行者 的设置里移交。"
+    },
+    {
+      "name": "second-account-real-api-phone-web",
+      "hint": "这台电脑由账号 合成执行者 负责执行；当前账号只能聊天。切回 合成执行者 或在 合成执行者 的设置里移交。"
+    },
+    {
+      "name": "android-package-memory-preview",
+      "emptyCopy": "过去的对话已全部整理，没有需要补的回合。",
+      "calls": [
+        {
+          "path": "/personal/v1/memory/status",
+          "method": "GET"
+        },
+        {
+          "path": "/personal/v1/memory/items?kind=all&limit=20&includeSources=true",
+          "method": "GET"
+        },
+        {
+          "path": "/personal/v1/memory/backfill",
+          "method": "GET"
+        }
+      ],
+      "scope": {
+        "globalBusiness": "undefined",
+        "adapterBusiness": "function"
+      }
+    },
+    {
+      "name": "android-package-account-hint",
+      "hint": "这台电脑由账号 合成执行者 负责执行；当前账号只能聊天。切回 合成执行者 或在 合成执行者 的设置里移交。"
+    }
+  ],
+  "passed": true,
+  "cleaned": true
+}

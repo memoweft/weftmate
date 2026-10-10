@@ -1,0 +1,585 @@
+✔ identity mapping is additive, idempotent and keeps project/group/fork/shared provenance (22.3549ms)
+✔ main segment rejects legacy lifecycle and direct sends, while its original identity stays readable (0.9985ms)
+✔ real HTTP service migrates once, preserves old APIs, isolates accounts and reopens a stopped preimage (10202.3161ms)
+✖ memory status distinguishes ready, degraded, disabled and unavailable; absent capabilities keep actions hidden (537.2095ms)
+✖ a delayed A list success after B is displayed cannot replace or append to B (613.9264ms)
+✖ a delayed A list failure after B is displayed cannot clear B data or show A failure (184.1973ms)
+✖ first list page establishes its revision, while a changed later page clears the old snapshot (470.7312ms)
+✖ unreadable source content is withheld and labels stay human-readable (386.7722ms)
+✖ overlong encoded paths and unsupported point-segment IDs fail visibly without dropping cursor or facts (302.3481ms)
+✖ memory IDs keep a legal colon literal so the host pathname matches the account route (258.9375ms)
+✖ empty state separates blocked pending sources from previously deleted-source history (284.9993ms)
+✖ capability-gated correction and mute use one request ID and refresh detail and sources (174.2541ms)
+✖ item deletion requires typing confirmation and reports incomplete storage cleanup honestly (285.5614ms)
+✖ source evidence deletion uses the evidence ID and refreshes the source list (326.3079ms)
+✖ forget confirmation cannot submit after preview failure or a changed revision (320.3502ms)
+✖ revision conflict refreshes the changed account snapshot without resubmitting (247.7965ms)
+✖ timeout checks the same request receipt and never sends a second memory command (307.1825ms)
+✖ item and source actions remain hidden when capability or current source state forbids them (313.8893ms)
+✖ unknown receipt keeps the original request marker for manual review without resending (285.9407ms)
+✖ late A mutation receipt cannot render or refresh A data after B logs in (266.3849ms)
+✖ correction result belongs to the acted-on item and clears when a different item opens (297.0731ms)
+✖ delete conflict copy names source or dependency conflict without guessing another memory (276.5663ms)
+✖ project session saves owner-host choice before POST and selects only the exact bound session (233.322ms)
+✖ lost project-session POST receipt reuses the saved request before selecting a session (218.7701ms)
+✖ browser workspace persists two request IDs and goal before exact session and shared send (225.7818ms)
+✖ closing the drawer in the same frame prevents its delayed open animation (345.0562ms)
+✖ empty projects keep browser first and hide project-only model controls (299.3017ms)
+✖ project list failure does not hide browser entry and browser 404 differs from outage (269.3088ms)
+✖ adopted phone conversation keeps one card and sends the next turn through its DSH session (451.791ms)
+✖ an open original phone card observes a later desktop adoption without navigation (441.7227ms)
+✖ mobile handoff selects only a unique exact original model and preserves a manual choice (282.1008ms)
+✖ phone model publish sends only a saved model identity through JS and keeps the request ID (232.1931ms)
+✖ account model import keeps phone selection and asks before replacing an endpoint credential (220.2784ms)
+✖ late account model directory from A cannot replace B model list (222.3579ms)
+✔ M1-0 mobile navigation has no standalone task page or task-detail implementation (10.2242ms)
+✔ two devices share an owner, concurrent duplicate request runs once, conflict and authentication stay bounded (3554.1369ms)
+✔ session ownership, target, strict fields and event cursor (3163.094ms)
+✔ restart marks dispatching uncertain without replay; pending resumes; corrupt store refuses startup (3351.082ms)
+✔ occupied port fails and leaves existing listener usable (4688.6434ms)
+✔ store write failure refuses acceptance before backend side effects (2372.5849ms)
+✔ revocation while preflight waits rejects an unissued command (2099.3768ms)
+✔ lost message receipt remains uncertain and is never replayed on restart (2322.6147ms)
+✔ close prevents a blocked dispatch from writing or invoking the old backend after same-root restart (5440.6879ms)
+✔ close during a blocked acceptance preflight cannot persist the request (5604.3746ms)
+✔ valid JSON with tampered payload, missing source device or duplicate request ID fails closed (2373.4494ms)
+✔ event cursor advances across fully filtered and trailing hidden history (2186.0609ms)
+✔ history byte paging preserves the public response boundary without failing a large page (2544.1476ms)
+✖ backend errors and malformed event data never expose arbitrary codes or content (2301.7827ms)
+✔ full command ledger or unreconciled text budget rejects new work before persistence or dispatch (4287.1074ms)
+✔ UPD-2 status exposes authenticated read-only layer versions without source paths or install actions (2935.3033ms)
+✔ UPD-2 standalone host reports unavailable UI and mobile versions without inventing them (2789.8543ms)
+✔ isolated synthetic memory HTTP contract keeps owners, cursors and receipts separate (9402.3631ms)
+✔ memory page keeps scripts external and uses only the candidate static publisher (6.5261ms)
+✔ memory view preserves chat draft and discards a successful response for another cookie owner (186.7724ms)
+✔ two accounts have independent devices, command IDs, sync events and shared-model access (11767.3369ms)
+✔ unknown usernames and another account password failures cannot lock the original owner (9775.504ms)
+✔ v2 owner, live cookie, nine commands and sync directory survive one v3 migration (10052.4343ms)
+✔ public registration never claims unconfigured v2 owner data; trusted setup can claim it later (7231.2799ms)
+✔ concurrent accounts keep owner, text and duplicate request namespace through delayed dispatch (9712.6905ms)
+✔ a persisted shared ID stops being shared when its current host profile drifts to private cloud (6325.8826ms)
+ℹ tests 60
+ℹ suites 0
+ℹ pass 28
+ℹ fail 32
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 55328.512
+
+✖ failing tests:
+
+test at tests\mobile-memory-page.test.ts:326:1
+✖ memory status distinguishes ready, degraded, disabled and unavailable; absent capabilities keep actions hidden (537.2095ms)
+  AssertionError [ERR_ASSERTION]: mobile app bootstrap did not finish
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async openMemory (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:299:3)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:336:5)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:347:1
+✖ a delayed A list success after B is displayed cannot replace or append to B (613.9264ms)
+  AssertionError [ERR_ASSERTION]: mobile app bootstrap did not finish
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async openMemory (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:299:3)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:349:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:361:1
+✖ a delayed A list failure after B is displayed cannot clear B data or show A failure (184.1973ms)
+  AssertionError [ERR_ASSERTION]: mobile app bootstrap did not finish
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async openMemory (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:299:3)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:363:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:374:1
+✖ first list page establishes its revision, while a changed later page clears the old snapshot (470.7312ms)
+  AssertionError [ERR_ASSERTION]: mobile app bootstrap did not finish
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async openMemory (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:299:3)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:385:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:408:1
+✖ unreadable source content is withheld and labels stay human-readable (386.7722ms)
+  AssertionError [ERR_ASSERTION]: mobile app bootstrap did not finish
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async openMemory (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:299:3)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:415:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:429:1
+✖ overlong encoded paths and unsupported point-segment IDs fail visibly without dropping cursor or facts (302.3481ms)
+  AssertionError [ERR_ASSERTION]: mobile app bootstrap did not finish
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async openMemory (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:299:3)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:433:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:440:1
+✖ memory IDs keep a legal colon literal so the host pathname matches the account route (258.9375ms)
+  AssertionError [ERR_ASSERTION]: mobile app bootstrap did not finish
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async openMemory (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:299:3)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:444:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:451:1
+✖ empty state separates blocked pending sources from previously deleted-source history (284.9993ms)
+  AssertionError [ERR_ASSERTION]: mobile app bootstrap did not finish
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async openMemory (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:299:3)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:456:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:471:1
+✖ capability-gated correction and mute use one request ID and refresh detail and sources (174.2541ms)
+  AssertionError [ERR_ASSERTION]: mobile app bootstrap did not finish
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async openMemory (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:299:3)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:490:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:515:1
+✖ item deletion requires typing confirmation and reports incomplete storage cleanup honestly (285.5614ms)
+  AssertionError [ERR_ASSERTION]: mobile app bootstrap did not finish
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async openMemory (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:299:3)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:531:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:550:1
+✖ source evidence deletion uses the evidence ID and refreshes the source list (326.3079ms)
+  AssertionError [ERR_ASSERTION]: mobile app bootstrap did not finish
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async openMemory (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:299:3)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:568:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:585:1
+✖ forget confirmation cannot submit after preview failure or a changed revision (320.3502ms)
+  AssertionError [ERR_ASSERTION]: mobile app bootstrap did not finish
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async openMemory (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:299:3)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:595:5)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:608:1
+✖ revision conflict refreshes the changed account snapshot without resubmitting (247.7965ms)
+  AssertionError [ERR_ASSERTION]: mobile app bootstrap did not finish
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async openMemory (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:299:3)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:624:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:635:1
+✖ timeout checks the same request receipt and never sends a second memory command (307.1825ms)
+  AssertionError [ERR_ASSERTION]: mobile app bootstrap did not finish
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async openMemory (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:299:3)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:652:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:665:1
+✖ item and source actions remain hidden when capability or current source state forbids them (313.8893ms)
+  AssertionError [ERR_ASSERTION]: mobile app bootstrap did not finish
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async openMemory (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:299:3)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:675:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:683:1
+✖ unknown receipt keeps the original request marker for manual review without resending (285.9407ms)
+  AssertionError [ERR_ASSERTION]: mobile app bootstrap did not finish
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async openMemory (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:299:3)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:693:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:706:1
+✖ late A mutation receipt cannot render or refresh A data after B logs in (266.3849ms)
+  AssertionError [ERR_ASSERTION]: mobile app bootstrap did not finish
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async openMemory (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:299:3)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:716:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:733:1
+✖ correction result belongs to the acted-on item and clears when a different item opens (297.0731ms)
+  AssertionError [ERR_ASSERTION]: mobile app bootstrap did not finish
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async openMemory (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:299:3)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:750:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:766:1
+✖ delete conflict copy names source or dependency conflict without guessing another memory (276.5663ms)
+  AssertionError [ERR_ASSERTION]: mobile app bootstrap did not finish
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async openMemory (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:299:3)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:775:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:802:1
+✖ project session saves owner-host choice before POST and selects only the exact bound session (233.322ms)
+  AssertionError [ERR_ASSERTION]: mobile app did not boot
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:821:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:835:1
+✖ lost project-session POST receipt reuses the saved request before selecting a session (218.7701ms)
+  AssertionError [ERR_ASSERTION]: mobile app did not boot
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:852:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:865:1
+✖ browser workspace persists two request IDs and goal before exact session and shared send (225.7818ms)
+  AssertionError [ERR_ASSERTION]: mobile app did not boot
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:885:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:908:1
+✖ closing the drawer in the same frame prevents its delayed open animation (345.0562ms)
+  AssertionError [ERR_ASSERTION]: mobile app did not boot
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:910:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:918:1
+✖ empty projects keep browser first and hide project-only model controls (299.3017ms)
+  AssertionError [ERR_ASSERTION]: mobile app did not boot
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:923:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:934:1
+✖ project list failure does not hide browser entry and browser 404 differs from outage (269.3088ms)
+  AssertionError [ERR_ASSERTION]: mobile app did not boot
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:940:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:958:1
+✖ adopted phone conversation keeps one card and sends the next turn through its DSH session (451.791ms)
+  AssertionError [ERR_ASSERTION]: bootstrap ready
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:978:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:996:1
+✖ an open original phone card observes a later desktop adoption without navigation (441.7227ms)
+  AssertionError [ERR_ASSERTION]: bootstrap ready
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:1014:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:1023:1
+✖ mobile handoff selects only a unique exact original model and preserves a manual choice (282.1008ms)
+  AssertionError [ERR_ASSERTION]: bootstrap ready
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async picker (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:1035:5)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:1043:17)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:1066:1
+✖ phone model publish sends only a saved model identity through JS and keeps the request ID (232.1931ms)
+  AssertionError [ERR_ASSERTION]: mobile app bootstrap did not finish
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async openModels (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:306:3)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:1071:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:1082:1
+✖ account model import keeps phone selection and asks before replacing an endpoint credential (220.2784ms)
+  AssertionError [ERR_ASSERTION]: mobile app bootstrap did not finish
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async openModels (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:306:3)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:1088:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\mobile-memory-page.test.ts:1100:1
+✖ late account model directory from A cannot replace B model list (222.3579ms)
+  AssertionError [ERR_ASSERTION]: mobile app bootstrap did not finish
+      at waitUntil (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:296:10)
+      at async openModels (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:306:3)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/mobile-memory-page.test.ts:1106:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+
+test at tests\personal-access-core.test.ts:486:1
+✖ backend errors and malformed event data never expose arbitrary codes or content (2301.7827ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+      body: {
+        error: {
+  +       code: 'BACKEND_UNAVAILABLE'
+  -       code: 'SERVICE_UNAVAILABLE'
+        }
+      },
+      status: 503
+    }
+  
+      at TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/tests/personal-access-core.test.ts:506:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { status: 503, body: { error: [Object] } },
+    expected: { status: 503, body: { error: [Object] } },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,125 @@
+{
+  "commit": "dff7f1de4dd505c712d7cb7ff0860bf89b50d8e6",
+  "batches": [
+    {
+      "batch": "lan",
+      "files": [
+        {
+          "file": "src\\plugins\\grounded-writing.mjs",
+          "matchesWorkingTree": true,
+          "sha256": "62e0c110c20a79abe68c12417e495d20082a6543155fd7b9fa958a850eac20bb"
+        },
+        {
+          "file": "src\\plugins\\personal-prompt.mjs",
+          "matchesWorkingTree": true,
+          "sha256": "68c824eec98036532639de037e67ee5ba2715fc4fded48ced126dea2016fae62"
+        },
+        {
+          "file": "src\\plugins\\personal-personalization.mjs",
+          "matchesWorkingTree": true,
+          "sha256": "3455552e68b8da99340921c8f3d63160fe49c707681b015ec837e5845e0a467a"
+        },
+        {
+          "file": "src\\plugins\\personal-web-fetch.mjs",
+          "matchesWorkingTree": true,
+          "sha256": "2eaa212a0bed3f7f0f5107c051f62f9e1e83435dbb7ebe9f57b45a1b12b3bfce"
+        },
+        {
+          "file": "src\\plugins\\weftmate-compaction.mjs",
+          "matchesWorkingTree": true,
+          "sha256": "23e80fb4d825bcdf3c6c82608167292d78a3781aea04be29b5fa158160f850e6"
+        }
+      ]
+    },
+    {
+      "batch": "mimo-languages",
+      "files": [
+        {
+          "file": "src\\plugins\\grounded-writing.mjs",
+          "matchesWorkingTree": true,
+          "sha256": "62e0c110c20a79abe68c12417e495d20082a6543155fd7b9fa958a850eac20bb"
+        },
+        {
+          "file": "src\\plugins\\personal-prompt.mjs",
+          "matchesWorkingTree": true,
+          "sha256": "68c824eec98036532639de037e67ee5ba2715fc4fded48ced126dea2016fae62"
+        },
+        {
+          "file": "src\\plugins\\personal-personalization.mjs",
+          "matchesWorkingTree": true,
+          "sha256": "3455552e68b8da99340921c8f3d63160fe49c707681b015ec837e5845e0a467a"
+        },
+        {
+          "file": "src\\plugins\\personal-web-fetch.mjs",
+          "matchesWorkingTree": true,
+          "sha256": "2eaa212a0bed3f7f0f5107c051f62f9e1e83435dbb7ebe9f57b45a1b12b3bfce"
+        },
+        {
+          "file": "src\\plugins\\weftmate-compaction.mjs",
+          "matchesWorkingTree": true,
+          "sha256": "23e80fb4d825bcdf3c6c82608167292d78a3781aea04be29b5fa158160f850e6"
+        }
+      ]
+    },
+    {
+      "batch": "mimo-node",
+      "files": [
+        {
+          "file": "src\\plugins\\grounded-writing.mjs",
+          "matchesWorkingTree": true,
+          "sha256": "62e0c110c20a79abe68c12417e495d20082a6543155fd7b9fa958a850eac20bb"
+        },
+        {
+          "file": "src\\plugins\\personal-prompt.mjs",
+          "matchesWorkingTree": true,
+          "sha256": "68c824eec98036532639de037e67ee5ba2715fc4fded48ced126dea2016fae62"
+        },
+        {
+          "file": "src\\plugins\\personal-personalization.mjs",
+          "matchesWorkingTree": true,
+          "sha256": "3455552e68b8da99340921c8f3d63160fe49c707681b015ec837e5845e0a467a"
+        },
+        {
+          "file": "src\\plugins\\personal-web-fetch.mjs",
+          "matchesWorkingTree": true,
+          "sha256": "2eaa212a0bed3f7f0f5107c051f62f9e1e83435dbb7ebe9f57b45a1b12b3bfce"
+        },
+        {
+          "file": "src\\plugins\\weftmate-compaction.mjs",
+          "matchesWorkingTree": true,
+          "sha256": "23e80fb4d825bcdf3c6c82608167292d78a3781aea04be29b5fa158160f850e6"
+        }
+      ]
+    },
+    {
+      "batch": "mimo-web",
+      "files": [
+        {
+          "file": "src\\plugins\\grounded-writing.mjs",
+          "matchesWorkingTree": true,
+          "sha256": "62e0c110c20a79abe68c12417e495d20082a6543155fd7b9fa958a850eac20bb"
+        },
+        {
+          "file": "src\\plugins\\personal-prompt.mjs",
+          "matchesWorkingTree": true,
+          "sha256": "68c824eec98036532639de037e67ee5ba2715fc4fded48ced126dea2016fae62"
+        },
+        {
+          "file": "src\\plugins\\personal-personalization.mjs",
+          "matchesWorkingTree": true,
+          "sha256": "3455552e68b8da99340921c8f3d63160fe49c707681b015ec837e5845e0a467a"
+        },
+        {
+          "file": "src\\plugins\\personal-web-fetch.mjs",
+          "matchesWorkingTree": true,
+          "sha256": "2eaa212a0bed3f7f0f5107c051f62f9e1e83435dbb7ebe9f57b45a1b12b3bfce"
+        },
+        {
+          "file": "src\\plugins\\weftmate-compaction.mjs",
+          "matchesWorkingTree": true,
+          "sha256": "23e80fb4d825bcdf3c6c82608167292d78a3781aea04be29b5fa158160f850e6"
+        }
+      ]
+    }
+  ]
+}

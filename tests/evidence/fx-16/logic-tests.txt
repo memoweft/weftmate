@@ -1,0 +1,47 @@
+✔ FX-16 selection locks text and attachments until draft restoration, then first input survives (5.0834ms)
+✔ FX-16 later selection wins and account boundary discards old restoration (1.3285ms)
+✔ FX-16 list summaries do not read history per request and update from observed events (1.364ms)
+✔ FX-16 mobile components use defined script globals or exported browser globals (5620.9257ms)
+✔ identity mapping is additive, idempotent and keeps project/group/fork/shared provenance (23.1964ms)
+✔ main segment rejects legacy lifecycle and direct sends, while its original identity stays readable (1.52ms)
+✔ real HTTP service migrates once, preserves old APIs, isolates accounts and reopens a stopped preimage (7376.8606ms)
+✔ memory status distinguishes ready, degraded, disabled and unavailable; absent capabilities keep actions hidden (102.076ms)
+✔ a delayed A list success after B is displayed cannot replace or append to B (49.4627ms)
+✔ a delayed A list failure after B is displayed cannot clear B data or show A failure (45.4481ms)
+✔ first list page establishes its revision, while a changed later page clears the old snapshot (10.3074ms)
+✔ unreadable source content is withheld and labels stay human-readable (30.3752ms)
+✔ overlong encoded paths and unsupported point-segment IDs fail visibly without dropping cursor or facts (14.054ms)
+✔ memory IDs keep a legal colon literal so the host pathname matches the account route (12.4736ms)
+✔ empty state separates blocked pending sources from previously deleted-source history (17.8686ms)
+✔ capability-gated correction and mute use one request ID and refresh detail and sources (17.3175ms)
+✔ item deletion requires typing confirmation and reports incomplete storage cleanup honestly (16.3471ms)
+✔ source evidence deletion uses the evidence ID and refreshes the source list (19.847ms)
+✔ forget confirmation cannot submit after preview failure or a changed revision (28.9953ms)
+✔ revision conflict refreshes the changed account snapshot without resubmitting (14.8538ms)
+✔ timeout checks the same request receipt and never sends a second memory command (43.8884ms)
+✔ item and source actions remain hidden when capability or current source state forbids them (15.9009ms)
+✔ unknown receipt keeps the original request marker for manual review without resending (29.0348ms)
+✔ late A mutation receipt cannot render or refresh A data after B logs in (91.3556ms)
+✔ correction result belongs to the acted-on item and clears when a different item opens (19.0606ms)
+✔ delete conflict copy names source or dependency conflict without guessing another memory (22.0966ms)
+✔ project session saves owner-host choice before POST and selects only the exact bound session (26.4565ms)
+✔ lost project-session POST receipt reuses the saved request before selecting a session (15.2713ms)
+✔ browser workspace persists two request IDs and goal before exact session and shared send (23.3513ms)
+✔ closing the drawer in the same frame prevents its delayed open animation (15.5493ms)
+✔ empty projects keep browser first and hide project-only model controls (23.8546ms)
+✔ project list failure does not hide browser entry and browser 404 differs from outage (63.0751ms)
+✔ adopted phone conversation keeps one card and sends the next turn through its DSH session (40.2665ms)
+✔ an open original phone card observes a later desktop adoption without navigation (34.2433ms)
+✔ mobile handoff selects only a unique exact original model and preserves a manual choice (147.0173ms)
+✔ phone model publish sends only a saved model identity through JS and keeps the request ID (33.7532ms)
+✔ account model import keeps phone selection and asks before replacing an endpoint credential (47.4779ms)
+✔ late account model directory from A cannot replace B model list (53.7187ms)
+✔ M1-0 mobile navigation has no standalone task page or task-detail implementation (2.1558ms)
+ℹ tests 39
+ℹ suites 0
+ℹ pass 39
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7749.8063

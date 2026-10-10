@@ -1,0 +1,182 @@
+locator.click: Timeout 20000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: '收起右侧面板', exact: true })[22m
+[2m    - locator resolved to <button type="button" aria-label="收起右侧面板" class="button quiet small">收起</button>[22m
+[2m  - attempting click action[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div aria-hidden="true" class="desktop-titlebar">…</div> intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m    - waiting 20ms[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div aria-hidden="true" class="desktop-titlebar">…</div> intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m      - waiting 100ms[22m
+[2m    38 × waiting for element to be visible, enabled and stable[22m
+[2m       - element is visible, enabled and stable[22m
+[2m       - scrolling into view if needed[22m
+[2m       - done scrolling[22m
+[2m       - <div aria-hidden="true" class="desktop-titlebar">…</div> intercepts pointer events[22m
+[2m     - retrying click action[22m
+[2m       - waiting 500ms[22m
+
+WeftMate
+新对话
+输出与来源
+本对话用量
+请查官方资料，用中文写一份简短说明，附上来源链接，存到 C:\temp\weftmate-eval-fact-node24-BUhDWF/说明.md。主题：Node.js 24.0.0 相比 22.0.0 有哪些值得留意的变化？包括 Windows 工具链、原生扩展兼容和 NODE_MODULE_VERSION。
+可从以下官方资料开始：
+https://nodejs.org/en/blog/release/v24.0.0
+https://nodejs.org/en/blog/release/v22.0.0
+https://nodejs.org/api/n-api.html#implications-of-abi-stability
+工具已就绪
+
+I'll outline the deliverable first, then gather official evidence.
+
+提纲：1) Node 24.0.0 vs 22.0.0 概览（发布日期、主要变化）；2) Windows 工具链变化；3) 原生扩展兼容（ABI 稳定性对 Node-API/普通原生模块的影响）；4) NODE_MODULE_VERSION 变化；5) 出处（官方引文）。
+
+先抓取两个发布说明页面。
+
+访问了 2 次网页
+
+两个发布页已拿到关键信息（24.0.0：移除 MSVC、ClangCL；22.0.0：Windows 上以 C++20 编译）。还需要 n-API 的 ABI 稳定性段落，以及两版的 NODE_MODULE_VERSION 具体数值。
+
+访问了 2 次网页、搜索了 2 次
+
+I need exact NODE_MODULE_VERSION values for 24.0.0 and 22.0.0 — those come from node_version.h in each release tag. Fetching both from the Node.js GitHub raw files.
+
+访问了 2 次网页
+
+Evidence complete: v24.0.0 → NODE_MODULE_VERSION 137, v22.0.0 → 127, both from tagged src/node_version.h. Now drafting and running the required claim/source/verdict self-check before saving.
+
+处理了 1 个子任务
+
+The reviewer flagged several quotes I hadn't pasted verbatim. Verifying the exact passages before saving.
+
+搜索了 6 次、修改了 1 个文件
+说明.md
+已读回核验
+
+Markdown · 10.0 KB
+
+打开成果下载用默认程序打开在文件夹中显示
+读取了 1 个文件
+关键断言核对（subagent 审阅后修正版）
+#	草稿断言	来源	逐字依据	结论
+A	24 移除 MSVC、ClangCL 必需，限定于"compile Node.js on Windows"	[1]	"Starting with Node.js 24, support for MSVC has been removed, and ClangCL is now required to compile Node.js on Windows."	通过（不外推到扩展）
+B	22.0.0 的 Windows 工具链变更是 C++20 编译标准	[2]	"[2b1e7c2fcb] - (SEMVER-MAJOR) build: compile with C++20 support on Windows"	通过（未据此推断 22 用 MSVC，原文无此结论句，已标"未在官方资料中确认"）
+C	22→24 非 Node-API 扩展需重编译	[4][5][6]	"Node.js will refuse to load modules with a non-matching ABI version." / "increased whenever a C++ API changes"	通过（修正后）
+D	Node-API 跨主版本免重编译	[3]	"allow modules compiled for one major version to run on later major versions of Node.js without recompilation."	通过
+E	Node-API 例外的条件与边界	[3]	"it must use Node-API exclusively by restricting itself to using #include <node_api.h>"；"other parts of Node.js do not"；"none of the following APIs ... the Node.js C++ APIs ... the libuv APIs ... the V8 API"	通过（修正后：按 API 名而非头文件名引用；外部库不保证）
+F	NODE_MODULE_VERSION 24=137、22=127	[4][5]	"#define NODE_MODULE_VERSION 137" / "#define NODE_MODULE_VERSION 127"	通过（tag 级源，非 changelog 提交）
+G	值可被 NODE_EMBEDDER_MODULE_VERSION 覆盖、主版本线内不改	[4][5]	"Embedders building Node.js can define NODE_EMBEDDER_MODULE_VERSION to" / "Node.js will not change the module version during a Major release line"	通过（补 grep 逐字后）
+H	22/24 各自 10 月进入 LTS	[1][2]	"will enter long-term support (LTS) in October"	通过（补 grep 逐字后）
+
+文件：`[local path] 行，已读回确认）——覆盖 Windows 工具链、原生扩展兼容（含 Node-API 例外）、NODE_MODULE_VERSION 三主题，文末含 6 条带 capturedAt 与逐字引文的出处链接。
+
+有新内容 · 回到底部
+输入消息
+自动
+mimo
+说明.md
+2025-05-06, Version 24.0.0 (Current) | Node.js
++
+放大
+收起
+2025-05-06, Version 24.0.0 (Current) | Node.js
+
+读取 1 次
+
+打开网页 nodejs.org · 10 月 10 日 11:08
+访问时间：2026-10-10T03:08:16.802Z
+
+Node.js 24.0.0 (Current)
+RG
+
+Rafael Gonzaga
+
+Node.js 24.0.0 (Current)
+2025-05-06, Version 24.0.0 (Current), @RafaelGSS and @juanarbol
+
+We’re excited to announce the release of Node.js 24! This release brings several significant updates, including the upgrade of the V8 JavaScript engine to version 13.6 and npm to version 11. Starting with Node.js 24, support for MSVC has been removed, and ClangCL is now required to compile Node.js on Windows. The AsyncLocalStorage API now uses AsyncContextFrame by default, and URLPattern is available globally. These changes, along with many other improvements, continue to push the platform forward.
+
+As a reminder, Node.js 24 will enter long-term support (LTS) in October, but until then, it will be the "Current" release for the next six months. We encourage you to explore the new features and benefits offered by this latest release and evaluate their potential impact on your applications.
+
+Notable Changes
+V8 13.6
+
+The V8 engine is updated to version 13.6, which includes several new JavaScript features:
+
+Float16Array
+Explicit resource management
+RegExp.escape
+WebAssembly Memory64
+Error.isError
+
+The V8 update was a contribution by Michaël Zasso in #58070.
+
+npm 11
+
+Node.js 24 comes with npm 11, which includes several improvements and new features. This update brings enhanced performance, improved security features, and better compatibility with modern JavaScript packages.
+
+The npm update was a contribution by the npm team in #56274.
+
+AsyncLocalStorage defaults to AsyncContextFrame
+
+AsyncLocalStorage now uses AsyncContextFrame by default, which provides a more efficient implementation of asynchronous context tracking. This change improves performance and makes the API more robust for advanced use cases.
+
+This change was a contribution by Stephen Belanger in #55552.
+
+URLPattern as a global
+
+The URLPattern API is now exposed on the global object, making it easier to use without explicit imports. This API provides a powerful pattern matching system for URLs, similar to how regular expressions work for strings.
+
+This feature was a contribution by Jonas Badalič in #56950.
+
+Permission Model Improvements
+
+The experimental Permission Model introduced in Node.js 20 has been improved, and the flag has been changed from --experimental-permission to simply --permission, indicating its increasing stability and readiness for broader adoption.
+
+This change was a contribution by Rafael Gonzaga in #56240.
+
+Test Runner Enhancements
+
+The test runner module now automatically waits for subtests to finish, eliminating the need to manually await test promises. This makes writing tests more intuitive and reduces common errors related to unhandled promises.
+
+The test runner improvements were contributions by Colin Ihrig in #56664.
+
+Undici 7
+
+Node.js 24 includes Undici 7, which brings numerous improvements to the HTTP client capabilities, including better performance and support for newer HTTP features.
+
+Deprecations and Removals
+
+Several APIs have been deprecated or removed in this release:
+
+[Partial page: segment 0 of 5. Read further captured sections with browser action="read", snapshotId="capture-7d3a0c33-b85e-46bc-bed5-2eda2303cbf9", segmentIndex=1..4. Do not cite unread sections.]
+Outline:
+Node.js 24.0.0 (Current)
+2025-05-06, Version 24.0.0 (Current), @RafaelGSS and @juanarbol
+Notable Changes
+V8 13.6
+npm 11
+AsyncLocalStorage defaults to AsyncContextFrame
+URLPattern as a global
+Permission Model Improvements
+Test Runner Enhancements
+Undici 7
+Deprecations and Removals
+Semver-Major Commits
+Semver-Minor Commits
+Semver-Patch Commits
+SHASUMS
+
+Captured source: C:\Temp\weftmate-fact1-c58d89dc-3e76-46e3-9040-cca76323b11f\profile\conversations\00a4d8622178734183c89533a75e2db0857ed901521f6825d948785c8f6f0e81\session-f61f8341-5b45-48bb-b5b1-5706cb0de315\.weftmate-web-sources\capture-7d3a0c33-b85e-46bc-bed5-2eda2303cbf9.txt. Use grep/read for a specific missing fact; this preview is verbatim and may omit later sections. Read full segment 0 with browser action="read", snapshotId="capture-7d3a0c33-b85e-46bc-bed5-2eda2303cbf9", segmentIndex=0.
+
+(Content truncated. Fetch a more specific URL or section for the full text.)
+复制
