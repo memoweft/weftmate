@@ -22,12 +22,14 @@
     resetMemoryForAuthBoundary('已退出账户；请登录后重新读取记忆。');
     byId('draft').value = ''; byId('home-conversations').replaceChildren(); byId('conversation-list').replaceChildren();
     byId('cloud-access-banner').hidden = true;
+    if (native) void syncAccountAppearance();
   }
   async function enterAssistant() {
     core.state.cloudAuth.mode = 'authenticated';
     const account = native ? await call('cloud.adopt') : { ...core.state.account, owner: core.state.account.ownerId, deviceId: core.state.device.id, connectionVerified: true };
     state.authEpoch++; state.loggedIn = true; state.username = account.username; state.owner = account.owner || account.ownerId || '';
     state.deviceId = account.deviceId || account.device?.id || ''; state.profile = account; state.connection = account.connectionVerified === false ? 'checking' : 'connected';
+    if (native) await syncAccountAppearance();
     resetMemoryForAuthBoundary('请重新读取当前账户的记忆。'); showProfile(account);
     document.body.classList.remove('cloud-auth-active'); byId('cloud-auth-page').classList.remove('active');
     if (native) { await listConversations(); loadDraft(); await call('app.ready', { owner: state.owner, hasDraft: hasAnyDraft() }); }

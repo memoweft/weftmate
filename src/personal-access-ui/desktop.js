@@ -14,6 +14,7 @@
     root.dataset.theme = appearance.theme === 'system' ? media?.matches ? 'dark' : 'light' : appearance.theme
     root.style.colorScheme = root.dataset.theme
     root.dataset.accent = appearance.accent
+    globalThis.WeftSystemBars?.sync()
     root.style.setProperty('--text-size', `var(--wm-font-size-${appearance.fontSize}, ${appearance.fontSize}px)`)
     for (const key of Object.keys(defaults)) if (byId(`appearance-${key}`)) byId(`appearance-${key}`).value = appearance[key]
   }

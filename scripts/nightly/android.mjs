@@ -3,6 +3,7 @@ import { writeFile, readFile } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import { join } from 'node:path';
 import { chromium } from 'playwright';
+import { assertSystemBars } from './system-bars.mjs';
 import { repository, option } from '../review-gallery/common.mjs';
 const adb = 'D:/Software/MuMuPlayer/nx_main/adb.exe', serial = '127.0.0.1:7555', pkg = 'com.memoweft.weftmate.mobile.nightly';
 const command = (...args) => execFileSync(adb, ['-s', serial, ...args], { windowsHide: true, timeout: 10000, maxBuffer: 20 * 1024 * 1024 });
@@ -40,6 +41,22 @@ export async function startAndroid(out) {
     browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`, { noDefaults: true });
     const page = browser.contexts()[0].pages().find(row => row.url().includes('appassets'));
     if (!page) throw Error('Actual HybridActivity WebView missing');
-    return { browser, page, reverse, theme: async theme => { command('shell', 'cmd', 'uimode', 'night', theme === 'dark' ? 'yes' : 'no'); }, screenshot: async () => command('exec-out', 'screencap', '-p'), close };
+    await page.waitForFunction(() => document.documentElement.dataset.nativeInsets === 'true');
+    const safe = await page.evaluate(() => Object.fromEntries(['top','right','bottom','left'].map(side => [side, getComputedStyle(document.documentElement).getPropertyValue(`--native-safe-${side}`).trim()])));
+    // Gallery fixtures replace only the presentation transport. Preserve real native
+    // geometry when their synthetic pages navigate away from the asset-loader origin.
+    await page.addInitScript(safe => document.addEventListener('DOMContentLoaded', () => {
+      for (const [side, value] of Object.entries(safe)) document.documentElement.style.setProperty(`--native-safe-${side}`, value);
+      document.documentElement.dataset.nativeInsets = 'true';
+    }), safe);
+    return { browser, page, reverse, theme: async theme => { command('shell', 'cmd', 'uimode', 'night', theme === 'dark' ? 'yes' : 'no'); }, screenshot: async () => {
+      const renderedTheme = await page.evaluate(() => document.documentElement.dataset.theme);
+      await until(() => command('shell', 'run-as', pkg, 'cat', 'files/nightly-bars-theme.txt').toString().trim() === renderedTheme);
+      await page.evaluate(() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done))));
+      const image = command('exec-out', 'screencap', '-p');
+      const scale = await page.evaluate(() => devicePixelRatio);
+      assertSystemBars(image, { statusHeight: parseFloat(safe.top) * scale });
+      return image;
+    }, close };
   } catch (error) { await close().catch(() => {}); throw error; }
 }
