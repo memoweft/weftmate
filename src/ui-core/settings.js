@@ -45,6 +45,16 @@ globalThis.WeftUiCore.factories.settings = (core, effects, environment) => {
         writes = action;
         return action;
     }
+    let notificationWrites=Promise.resolve();
+    async function loadNotificationSettings(){return core.accessApi('/settings/notifications');}
+    function saveNotificationSettings(patch){
+        const identity=core.state.identityGeneration,account=owner();
+        const action=notificationWrites.catch(()=>{}).then(()=>{
+            if(identity!==core.state.identityGeneration||account!==owner())throw new Error('ACCOUNT_CHANGED');
+            return core.accessApi('/settings/notifications',{method:'PATCH',protectedWrite:true,body:patch});
+        });notificationWrites=action;return action;
+    }
+    async function sendTestNotification(){return core.accessApi('/settings/notifications/test',{method:'POST',protectedWrite:true,body:{}});}
     function sessionExpired() {
         core.clearSession();
         core.show('login');
@@ -85,5 +95,5 @@ globalThis.WeftUiCore.factories.settings = (core, effects, environment) => {
         void core.refreshModels();
         void core.refreshBrowserWorkspace();
     }
-    return { loadPersonalization, savePersonalization, sessionExpired, formatDate, refreshSystem, openAccount };
+    return { loadNotificationSettings, saveNotificationSettings, sendTestNotification, loadPersonalization, savePersonalization, sessionExpired, formatDate, refreshSystem, openAccount };
 };
