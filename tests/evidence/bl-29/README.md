@@ -162,3 +162,5 @@ Apple（苹果端）清单：
 required结果见required.json与required.txt：{"mode":"required","files":275,"exitCode":0,"passed":1432,"failed":0,"skipped":14,"failures":[]}
 
 vendor结果见vendor.json与vendor.txt：{"mode":"vendor","files":28,"exitCode":1,"passed":201,"failed":1,"skipped":0,"failures":["真实 Core RPC：capability、精确 history、启动对账、完整 capture 与 stale model 过滤往返","two local devices use the same attached empty session across a real Electron restart"]}
+
+合主线复验205通过／0失败，类型和卫生通过。PR的Windows打包门在vendor装配前发现主线新工作流缺少Landlock便携JavaScript入口：Windows根构建未生成该入口。仅补windows-package.yml的build:js与对应缓存目录，保留发货断言；YAML（工作流配置）解析和打包相关用例通过，云端重新执行中。
