@@ -1,0 +1,13 @@
+{
+  "mode": "vendor",
+  "files": 27,
+  "exitCode": 1,
+  "passed": 198,
+  "failed": 2,
+  "skipped": 1,
+  "failures": [
+    "local setup, same-account devices, password rotation and logout work in the real Electron host",
+    "groups the official hero controls and official input in one vendor-owned layout seam",
+    "WeftMate conversation workspace surface"
+  ]
+}
