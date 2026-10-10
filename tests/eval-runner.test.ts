@@ -169,11 +169,11 @@ async function fakeHost(t, options = {}) {
   return { run, calls, scratch, origin };
 }
 
-test('22 checked-in scenarios: 7 action, 13 memory, 2 manual; argument and schema validation', async () => {
+test('24 checked-in scenarios: 7 action, 15 memory, 2 manual; argument and schema validation', async () => {
   const scenarios = await loadScenarios('eval/scenarios/*.yaml');
-  assert.equal(scenarios.length, 22);
+  assert.equal(scenarios.length, 24);
   assert.equal(scenarios.filter(s => s.category === 'action').length, 7);
-  assert.equal(scenarios.filter(s => s.category === 'memory').length, 13);
+  assert.equal(scenarios.filter(s => s.category === 'memory').length, 15);
   assert.equal(scenarios.filter(s => s.manual && s.category === 'cross-device').length, 2);
   assert.equal((await loadScenarios('eval/scenarios/*.yaml', 'memory-03-switch-model')).length, 1);
   await assert.rejects(loadScenarios('eval/scenarios/*.yaml', 'missing'), /No scenarios/);

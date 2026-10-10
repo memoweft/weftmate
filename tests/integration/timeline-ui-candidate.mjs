@@ -13,7 +13,7 @@ const ok = value => ({ result: { ok: true, value } })
 export async function startTimelineCandidate(options = {}) {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-m0-3-')); let events = [];
   const dailySessions = new Map(), questionFrames = []; let relayPending = false;
-  let sessionId, taskId, running = true, artifact, service, questionFrame, processing = {phase: 'loading', modelName: '合成模型'}
+  let sessionId, taskId, running = true, artifact, service, questionFrame, setupComplete = false, processing = {phase: 'loading', modelName: '合成模型'}
   let contextUsage=options.composer?{usedTokens:713000,contextWindow:828000}:null;
   const receiptId = 'timeline-synthetic-receipt', runtimeId = randomUUID(), approvalId = randomUUID()
   const goal = '读取项目资料，运行测试，并保存一份进度报告。'
@@ -83,7 +83,7 @@ export async function startTimelineCandidate(options = {}) {
     getTaskReplyEvidence: async ({sessionId:id}) => ({ status: options.daily && dailySessions.get(id)?.events.at(-1)?.type==='turn/end'
       ? ({completed:'completed',error:'failed',aborted:'aborted'}[dailySessions.get(id).events.at(-1).data.reason.kind]||'completed') : running ? 'waiting' : 'completed', turn: 1,
       assistantChunks: 0, textChunks: 0, reasoningChunks: 0, assistantMessages: running ? 1 : 2, toolSaveObserved: !!artifact }),
-    listUserQuestions: async () => ({ runtimeId, questions: [...(questionFrame ? [questionFrame] : []), ...questionFrames.map(({callId, ...frame}) => frame)] }),
+    listUserQuestions: async () => ({ runtimeId, questions: setupComplete ? [...(questionFrame ? [questionFrame] : []), ...questionFrames.map(({callId, ...frame}) => frame)] : [] }),
     respondUserQuestion: async input => { const frame = questionFrames.find(frame => frame.questionRpcId === input.questionRpcId) || questionFrame; frame.nativeState = 'answered'; result(frame.callId || 'question-1', '{"answers":[{"id":"format","selected":["简要报告"]}]}'); return { accepted: true } },
   }
   const backupSettings = { enabled: true, directory: 'D:/Synthetic/UI-4-Backups', dailyDays: 7, weeklyCopies: 4 }, backupRows = [], backupOperations = [];
@@ -106,9 +106,22 @@ export async function startTimelineCandidate(options = {}) {
   const created = await command({ requestId: 'timeline-create', kind: 'session.create', modelProfileId: 'local', targetDeviceId: hostId })
   sessionId = created.sessionId
   const source = await command({ requestId: 'timeline-message', kind: 'session.message', sessionId, targetDeviceId: hostId, text: goal }); taskId = source.commandId
-  if (!options.inlineProgress) await service.trackToolApproval({ action: 'register_approval', runtimeId, approvalId, sessionId, turn: 1, callId: 'write-1', rootCallId: 'write-1', receiptId, messageHash: hash(goal), toolName: 'pwsh', argumentsHash: hash('write report'), reason: approvalReason })
   if (!options.inlineProgress) artifact = await service.submitToolArtifact({ sessionId, turn: 1, callId: 'artifact-1', messageHash: hash(goal), fileName: '项目进度报告.md', content: '# 项目进度报告\n\n已读取 3 个文件。42 项测试通过。\n' })
+  // Artifact submission queues a real host write. Do not expose a pending
+  // approval to the UI while that same task still has unconfirmed effects.
+  if (artifact) {
+    for (let attempt = 0; attempt < 100; attempt++) {
+      const rows = (await request('/commands')).commands;
+      if (rows.filter(row => row.kind === 'desktop.write_artifact').every(row => row.state === 'observed')) break;
+      if (attempt === 99) throw Error('Synthetic artifact write was not observed');
+      await new Promise(done => setTimeout(done, 20));
+    }
+  }
   if (artifact) {call('write', 'artifact-1', {fileName:artifact.fileName});result('artifact-1',JSON.stringify(artifact))}
+  // Register the pending overwrite only after the demo artifact write finishes.
+  // The production source guard correctly rejects approvals during unknown effects.
+  if (!options.inlineProgress) await service.trackToolApproval({ action: 'register_approval', runtimeId, approvalId, sessionId, turn: 1, callId: 'write-1', rootCallId: 'write-1', receiptId, messageHash: hash(goal), toolName: 'pwsh', argumentsHash: hash('write report'), reason: approvalReason })
+  setupComplete = true;
   const bridge = async (method, params) => {
     if (method === 'host.status') { const status=await request('/status'); return options.logicalMobile?status:{...status,personalCapabilities:{...status.personalCapabilities,chats:0}}; }
     if (options.logicalMobile && method === 'shared.send' && params.chatId) {

@@ -1,0 +1,9 @@
+{
+  "checks": [
+    "390×844 light: all → cognition → all; mixed records and pressed states restored",
+    "390×844 dark: all → cognition → all; mixed records and pressed states restored",
+    "360×780 light: all → cognition → all; mixed records and pressed states restored",
+    "360×780 dark: all → cognition → all; mixed records and pressed states restored"
+  ],
+  "errors": []
+}
