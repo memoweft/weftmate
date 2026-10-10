@@ -1,0 +1,23 @@
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs	﻿2026-10-10T11:35:58.3866561Z ##[group]Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs	2026-10-10T11:35:58.3867185Z ^[[36;1mnode --test apps/mobile-ui/tests/approval-interactions.test.mjs^[[0m
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs	2026-10-10T11:35:58.3929294Z shell: /usr/bin/bash -e {0}
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs	2026-10-10T11:35:58.3929582Z ##[endgroup]
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs	2026-10-10T11:36:32.4902489Z ✖ UI-2a 390×844 modes, risk confirmation, settings and three approval decisions (33668.986443ms)
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs	2026-10-10T11:36:32.5091891Z ℹ tests 1
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs	2026-10-10T11:36:32.5094084Z ℹ suites 0
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs	2026-10-10T11:36:32.5094392Z ℹ pass 0
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs	2026-10-10T11:36:32.5094674Z ℹ fail 1
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs	2026-10-10T11:36:32.5094943Z ℹ cancelled 0
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs	2026-10-10T11:36:32.5095233Z ℹ skipped 0
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs	2026-10-10T11:36:32.5095507Z ℹ todo 0
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs	2026-10-10T11:36:32.5120055Z ℹ duration_ms 34079.170722
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs	2026-10-10T11:36:32.5120439Z 
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs	2026-10-10T11:36:32.5120715Z ✖ failing tests:
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs	2026-10-10T11:36:32.5121077Z 
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs	2026-10-10T11:36:32.5121492Z test at apps/mobile-ui/tests/approval-interactions.test.mjs:17:1
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs	2026-10-10T11:36:32.5122586Z ✖ UI-2a 390×844 modes, risk confirmation, settings and three approval decisions (33668.986443ms)
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs	2026-10-10T11:36:32.5123470Z   page.waitForFunction: Timeout 30000ms exceeded.
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs	2026-10-10T11:36:32.5124566Z       at TestContext.<anonymous> (/home/runner/work/weftmate/weftmate/apps/mobile-ui/tests/approval-interactions.test.mjs:124:78) {
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs	2026-10-10T11:36:32.5125419Z     name: 'TimeoutError'
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs	2026-10-10T11:36:32.5125720Z   }
+Web cloud login interactions	Run node --test apps/mobile-ui/tests/approval-interactions.test.mjs	2026-10-10T11:36:32.5169956Z ##[error]Process completed with exit code 1.

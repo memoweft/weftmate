@@ -339,7 +339,7 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
                 receipt.approval.decisionRequestId !== operation.requestId || receipt.approval.decisionOutcome !== operation.outcome)
                 throw { code: 'REQUEST_FAILED' };
             core.conversationApprovals.entries.set(id, core.mergeApproval(core.conversationApprovals.entries.get(id), receipt.approval));
-            if (core.approvalContextCurrent(context)) void core.refreshSessions?.();
+            if (core.state.personalCapabilities?.sessionStatus === 1 && core.approvalContextCurrent(context)) void core.refreshSessions?.();
             effects.renderConversationApprovals();
             await core.refreshConversationApprovals(context, true);
         }
