@@ -111,11 +111,18 @@ const toolApprovals=uiCore.mobileDecisions.approvals;
 const toolQuestions=uiCore.mobileDecisions.questions;
 let libraryView=null;
 let searchView=null;
+let helpView=null,releaseNotice=null;
+function mobileHelpPage(kind,target){
+  helpView?.close();uiCore.syncMobileIdentity();helpView=WeftHelpView.mount({target,core:uiCore,kind,mobile:true,back:()=>page(state.returnPage||'chat'),run:action=>{
+    const actions={main:()=>uiCore.selectMainChat(),temporary:()=>mobileNewTemporaryConversation(),memory:()=>page('memory'),goals:()=>page('goals'),devices:()=>page('devices'),approvals:()=>page('approvals'),backups:()=>{page('settings');toast('备份与恢复请在电脑的设置中打开。');},about:()=>page('about')};return actions[action]?.();}});helpView.focus();
+}
+function mobileProfileMenu(trigger){WeftPopover.menu(trigger,[{name:'设置',icon:'settings',action:()=>page('settings')},{name:'帮助',icon:'info',action:()=>page('help')},{name:'更新内容',icon:'sync',action:()=>page('releases')}],error=>toast(safeError(error),true));}
+
 function mountMobileSearch(){
   searchView=WeftSearchView.mount({core:uiCore,mobile:true,notice:toast,open:async row=>{
     if(row.type==='actions'){
       const actions={new:()=>selectConversation(null),temporary:()=>mobileNewTemporaryConversation(),settings:()=>page('settings'),memory:()=>page('memory'),
-        activity:()=>page('activity'),goals:()=>page('goals'),library:()=>page('library'),
+        activity:()=>page('activity'),goals:()=>page('goals'),library:()=>page('library'),help:()=>page('help'),releases:()=>page('releases'),
         start:async()=>{const owner=state.owner,epoch=state.authEpoch;await selectConversation(null);if(owner!==state.owner||epoch!==state.authEpoch)return;$('draft').value=row.query;updateComposer();$('draft').focus();await send();}};
       return actions[row.id]?.();
     }
@@ -229,6 +236,7 @@ function syncMobileTabs(){
     tab.setAttribute('aria-label',id==='activity'&&unread?`动态，${unread} 条未读`:id==='goals'&&pending?'目标，有进行中或待处理任务':mobileTabNames[id]);
     const badge=tab.querySelector('.mobile-tab-badge');badge.hidden=id==='activity'?!unread:id==='goals'?!pending:true;badge.textContent=id==='activity'?(unread>99?'99+':String(unread)):'';
   }
+  if(releaseNotice){uiCore.syncMobileIdentity();void releaseNotice.check();}
   const profile=$('header-profile');if(profile){profile.hidden=!identity;const avatar=$('drawer-avatar');if(avatar){const copy=avatar.cloneNode(true);copy.removeAttribute('id');profile.replaceChildren(copy);}}
   if(visible&&state.page!=='chat'){
     $('header-title').textContent=mobileTabNames[state.page];$('header-subtitle').hidden=true;$('page-back').hidden=true;$('menu-button').hidden=true;
@@ -336,6 +344,7 @@ function page(name){
   if(name!=='activity'){if(activityTimer)clearInterval(activityTimer);activityTimer=null;}
   if(name==='memory')state.settingsChild=true;
   $('cloud-auth-page')?.classList.remove('active'); $('cloud-settings-page')?.classList.remove('active');
+  helpView?.close();
   workspaceNotices.clear();
   closeResourcePage({restoreFocus:false});clearTimeout(state.homePollTimer);
   closeApprovalModeMenu();closeApprovalRisk({restoreFocus:false});
@@ -347,10 +356,11 @@ function page(name){
   if(previousPage!==name)globalThis.WeftMobileMotion?.push($(name==='chat'?'chat-page':name==='home'?'home-page':'generic-page'),name==='home'||name==='settings'&&previousPage!=='settings');
   $('conversation-usage').hidden=!(name==='chat' && state.loggedIn && (state.sharedSessionId || uiCore.mobile?.selectedBinding()?.sessionId));
   $('header-subtitle').textContent=name==='chat'?'同一个助手，接着聊。':{
-    goals:'目标',library:'成果库',activity:'动态',schedules:'提醒与定时任务',about:'关于',general:'常规',personalization:'个性化',assistant:'助手',approvals:'审批',resources:'资料访问',usage:'用量',memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',settings:'设置',
+    help:'帮助与小技巧',releases:'更新内容',goals:'目标',library:'成果库',activity:'动态',schedules:'提醒与定时任务',about:'关于',general:'常规',personalization:'个性化',assistant:'助手',approvals:'审批',resources:'资料访问',usage:'用量',memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',settings:'设置',
     account:'账户',password:'修改密码',models:'对话模型',sync:'离线与同步',appearance:'外观',updates:'更新',connect:'连接电脑'
   }[name]||name;
   syncMobileTabs();
+  if(['help','releases'].includes(name))$('header-title').textContent=name==='help'?'帮助与小技巧':'更新内容';
   document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('current',b.dataset.page===name));
   if(name==='home'){renderHome();if(window.weftNative)void refreshHome();return}
   if(name==='chat'){
@@ -556,6 +566,8 @@ window.addEventListener('unhandledrejection',reportBootFailure);
 
 
 function renderPage(name){if(['activity','goals','library'].includes(name))return renderMobileTab(name);const target=$('page-content');target.className='';clear(target);if(name!=='settings')$('generic-page').scrollTop=0;const category=mobileSettingsRegistry.get(name);if(category)return category.mount(target);switch(name){
+  case 'help':return mobileHelpPage('help',target);
+  case 'releases':return mobileHelpPage('releases',target);
   case 'library':return libraryPage(target);
   case 'goals':return goalsPage(target);
   case 'activity':return activityPage(target);
@@ -755,7 +767,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     card:$('draft').parentElement, mobile:true, repaint:() => updateComposer() });
   $('menu-button').addEventListener('click',openDrawer);$('drawer-close').addEventListener('click',closeDrawer);$('drawer-scrim').addEventListener('click',closeDrawer);
   $('page-back').addEventListener('click',()=>{if(state.page==='chat'&&!state.logicalChats&&!state.tabSource)page('home');else handleBack()});
-  $('header-profile').addEventListener('click',()=>page('settings'));
+  $('header-profile').addEventListener('click',()=>mobileProfileMenu($('header-profile')));
   $('generic-page').addEventListener('scroll',()=>{if(['activity','goals','library'].includes(state.page))mobileTabScroll.set(state.page,$('generic-page').scrollTop);},{passive:true});
   document.querySelector('[data-action="temporary-chat"]').addEventListener('click', () => { void mobileNewTemporaryConversation(); });
   $('home-new-chat').addEventListener('click',()=>selectConversation(null));
@@ -768,7 +780,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     ...(!$('conversation-usage').hidden?[{name:'本对话用量',icon:'chart',action:()=>$('conversation-usage').click()}]:[])
   ]));
   $('resource-back').addEventListener('click',()=>closeResourcePage());
-  $('profile-link').addEventListener('click',()=>page('settings'));
+  $('profile-link').addEventListener('click',()=>mobileProfileMenu($('profile-link')));
   document.querySelectorAll('[data-page]').forEach(button=>button.addEventListener('click',()=>page(button.dataset.page)));
   document.querySelector('[data-action="new-chat"]').addEventListener('click',()=>selectConversation(null));
 
@@ -825,5 +837,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.visualViewport?.addEventListener('resize',syncViewport);syncViewport();
   systemThemeMedia.addEventListener('change',()=>{if(state.appearance==='system')applyTheme('system')});
   mountMobileSearch();
+  releaseNotice=WeftHelpView.notice({target:document.body,core:uiCore,open:()=>page('releases'),current:()=>state.loggedIn&&['chat','home'].includes(state.page)});
   boot();
 });

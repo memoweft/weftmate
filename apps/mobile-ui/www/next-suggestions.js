@@ -97,8 +97,7 @@
         field.addEventListener('compositionend', () => core.setSuggestionsComposing(false));
         field.addEventListener('keydown', event => {
             if (event.isComposing) return;
-            if (event.key === 'Tab' && !event.shiftKey && acceptCompletion()) { event.preventDefault(); event.stopImmediatePropagation(); return; }
-            if (event.key === 'Escape' && (!bar.hidden || !ghost.hidden)) { event.preventDefault(); event.stopImmediatePropagation(); core.dismissNextSuggestions(); paint(); return; }
+            if (globalThis.WeftShortcuts?.dispatch(event,{complete:()=>{if(!acceptCompletion())return false;event.stopImmediatePropagation();},dismiss:()=>{if(bar.hidden&&ghost.hidden)return false;event.stopImmediatePropagation();core.dismissNextSuggestions();paint();}})) return;
             if (!field.value && move(event, true)) return;
             if (event.key === 'Enter' && !event.shiftKey) core.cancelNextSuggestions();
         }, true);

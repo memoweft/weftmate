@@ -91,7 +91,7 @@ test('publish command refuses stale generated assets before creating a release',
   const isolatedRepository = path.join(root, 'repository')
   const copiedSources = path.join(isolatedRepository, 'src', 'ui-core')
   await cp(sourceDir, copiedSources, { recursive: true })
-  for (const name of ['src/ui-core/manifest.mjs', 'apps/mobile-ui/src/build-ui-core.mjs',
+  for (const name of ['scripts/build-release-notes.mjs', 'src/personal-access-ui/components/help-view.js', 'src/personal-access-ui/help.css', 'apps/mobile-ui/www/components/help-view.js', 'apps/mobile-ui/www/help.css', 'src/ui-core/manifest.mjs', 'apps/mobile-ui/src/build-ui-core.mjs',
     'src/personal-access-ui/components/presence.js', 'src/personal-access-ui/presence.css', 'apps/mobile-ui/www/components/presence.js', 'apps/mobile-ui/www/presence.css',
     'src/personal-access-ui/components/notifications.js', 'apps/mobile-ui/www/components/notifications.js',
     'src/personal-access-ui/components/goals-view.js', 'src/personal-access-ui/goals.css', 'apps/mobile-ui/www/components/goals-view.js', 'apps/mobile-ui/www/goals.css',

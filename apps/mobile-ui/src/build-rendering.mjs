@@ -30,5 +30,7 @@ const meta=await build({entryPoints:[join(root,'src/ui-core/mermaid-source.js')]
 const packages=new Set(['katex','markdown-it-footnote','dompurify','highlight.js','markdown-it','@mermaid-js/tiny','html-to-image']);
 for(const input of Object.keys(meta.metafile.inputs)){const tail=input.split('node_modules/').at(-1);if(tail&&input.includes('node_modules/'))packages.add(tail.startsWith('@')?tail.split('/').slice(0,2).join('/'):tail.split('/')[0]);}
 for(const name of packages){const dir=join(modules,name);let names;try{names=await readdir(dir);}catch{continue;}for(const file of names.filter(name=>/^(license|copying|notice)(\.|$)/i.test(name)))await cp(join(dir,file),join(desktop,'licenses/rendering',name.replace('/','-')+'-'+file));}
-await cp(join(desktop,'licenses/rendering'),join(mobile,'licenses/rendering'),{recursive:true});
+// Public mobile assets accept ordinary file names and supported extensions.
+await mkdir(join(mobile,'licenses/rendering'),{recursive:true});
+for(const name of await readdir(join(desktop,'licenses/rendering')))await cp(join(desktop,'licenses/rendering',name),join(mobile,'licenses/rendering',name.replaceAll('@','')+'.txt'));
 console.log(`[rendering] ${assets.length} offline assets; ${packages.size} dependency licenses`);
