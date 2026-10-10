@@ -138,3 +138,38 @@ ssh weftmate-cloud '/root/weftmate-deploy/rollback.sh'
 私有环境文件 `/etc/weftmate-cloud/cloud.env` 为0600；DynamicUser（动态服务用户）与 StateDirectory（服务数据目录）保存 `/var/lib/weftmate-cloud`，数据库/身份 key/邮件不进发布目录。API 与 relay 的 certbot（自动证书客户端）证书和续期已配置，frps 用 LoadCredential（服务私有凭据）读取私钥快照。基线与备份在 `/root/weftmate-deploy`；完整本地报告在仓库外 `Runtime/Orchestrator/d1.result.md`。
 
 当前邮件为 file transport（文件邮件传输），只写服务器私有 outbox（邮件输出目录），不发信。本人需配置 Resend 私有 key/发件域及 SPF/DKIM（发件来源与签名验证）。三个新 DNS（域名解析）A 记录已就绪；S2b 已实现阿里云 DNS-01 provider 和宿主 Node ACME 自动签发/续期/热载；本人仍需按 deploy README 创建仅限指定 DNS 区增删权限的 RAM 用户、私下填写服务器环境，升级 cloud schema 5 与宿主、开启宿主 ACME。S2b 尚未部署，不能据此声称生产内容证书已就绪。
+
+
+## CI-R1：手机经完整中继首次输入与文件任务
+
+`.github/workflows/relay.yml` 的独立 `Relay phone first input and file task` job（任务）在每个 PR（拉取请求）与 main 推送上运行，不依赖旧的中继 job。场景步骤最多 6 分钟，运行器最多 330 秒；条件轮询有 15–90 秒期限，不自动重跑失败断言。冷启动安装与固定 DSH（助手运行时）编译属于准备步骤，编译产物按 production pin（产品固定版本）缓存。
+
+使用真实云身份 / PKCE（证明密钥授权）/ DPoP（持有密钥证明）、已有设备批准、HAProxy（传输代理）/ frp（隧道）与宿主 TLS（加密传输）。Chromium（浏览器引擎）以 390×844 手机视口访问实际中继域名的 443。历史响应延迟 2 秒，交替切换两段会话 10 次；验证加载禁用、解锁后首次输入逐字保留、一次发送 / 一次模型回合。文件任务使用无真实密钥的合成 HTTP（网络协议）模型，调用原生加载工具 / 读 / 写 / 读回；手机至少两次审批，核对磁盘、模型读回与经中继查询的成果库及预览。
+
+合成项目是 Linux 临时目录；Windows 文件夹登记依赖 Windows 卷 / 文件身份，不在此 Linux 传输场景里伪造登记。桌面批准与云身份准备由既有身份测试助手执行；手机的宿主身份交换、界面、发送、审批和成果查询均走真实中继。浏览器路由在发出前拒绝其他域名 / 协议 / 端口，报告保存全部请求的域名 / 端口 / 路径，不保存 Cookie（会话凭据）、令牌或请求头。
+
+手动运行须用 Linux、Node 24、openssl、curl、HAProxy 和 Playwright（浏览器自动化）Chromium；不需 WSL（Windows 的 Linux 子系统）、真实账号或模型密钥：
+
+```bash
+npm ci
+npm ci --prefix services/cloud --ignore-scripts
+sudo apt-get install -y haproxy
+sudo setcap cap_net_bind_service=+ep /usr/sbin/haproxy
+node scripts/download-frp.mjs
+npx playwright install --with-deps chromium
+# 若已有匹配固定版本的编译 checkout（源码工作目录），直接指定它。
+# 否则在隔离目录准备一次，命令与 Actions 相同：
+DSH_PIN=$(node -p "JSON.parse(require('fs').readFileSync('tests/contract/dsh-pin.json')).commit")
+git clone https://github.com/deepseek-ai/deepseek-harness.git .local/relay-dsh
+git -C .local/relay-dsh checkout "$DSH_PIN"
+(cd .local/relay-dsh && npx pnpm@11.7.0 install --frozen-lockfile && npx pnpm@11.7.0 run build)
+WEFTMATE_RELAY_E2E=true \
+WEFTMATE_RELAY_FRONT_PORT=443 \
+WEFTMATE_FRP_DIR="$PWD/.local/frp/frp_0.71.0_linux_amd64" \
+WEFTMATE_HAPROXY=/usr/sbin/haproxy \
+WEFTMATE_DSH_CHECKOUT="$PWD/.local/relay-dsh" \
+WEFTMATE_RELAY_PHONE_REPORT="$PWD/.local/relay-phone" \
+node --test services/cloud/test/relay-phone.test.mjs
+```
+
+443 须空闲；其他服务全部使用随机回环端口。所有账号、目录、文件、模型响应及临时证书均为合成数据。运行器关闭自己创建的浏览器、宿主、DSH 与代理。成功与失败均生成 `report.json`、手机截图、路径级请求 / 响应记录、`proxy.log` 与 `runtime.log`；Actions 始终上传 `relay-phone-diagnostics`，保存 7 天，不上传私钥、身份数据库或配置。产品断言失败不会因重试而被隐藏。

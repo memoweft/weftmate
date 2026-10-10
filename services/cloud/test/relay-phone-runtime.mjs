@@ -36,12 +36,15 @@ export async function phoneRuntime(root, logs) {
       const calls = body.messages.flatMap(m => m.tool_calls ?? []);
       const step = calls.filter(c => c.id.startsWith('ci-r1-')).length;
       const tools = [
+        { name: 'load_tools', arguments: JSON.stringify({ names: ['read', 'write'] }) },
         { name: 'read', arguments: JSON.stringify({ file_path: input }) },
         { name: 'write', arguments: JSON.stringify({ file_path: output, content }) },
         { name: 'read', arguments: JSON.stringify({ file_path: output }) },
       ];
       const tool = isTask && tools[step];
-      if (tool) assert.ok(body.tools.some(t => t.function?.name === tool.name), 'native tool is available');
+      if (tool && !body.tools.some(t => t.function?.name === tool.name)) {
+        logs.push('Missing native tool: ' + tool.name); res.writeHead(500).end(JSON.stringify({ error: 'Missing native tool ' + tool.name })); return;
+      }
       const delta = tool ? { tool_calls: [{ index: 0, id: `ci-r1-${step}`, type: 'function', function: tool }] }
         : { content: isTask ? 'CI_R1_FILE_TASK_COMPLETED' : 'CI_R1_FIRST_INPUT_ACK' };
       res.writeHead(200, { 'content-type': 'text/event-stream' });
