@@ -454,6 +454,28 @@ UPD-1：资源服务从当前已验证 `ui` 版本读取既有白名单中的路
 
 MS-1：`defaultModelProfileId` 按账户保存，用于新对话；已有对话继续使用原绑定。后台配置默认跟随账户当前 / 最近聊天的模型，有会话和无会话的积压任务使用同一规则；没有最近聊天时才使用账户默认或已授权会话绑定，绝不回退到启动配置 `authRef`。标题、记忆整理以及后续关心/健康归纳按后台路由。仅本机回环且 `/props.total_slots=1` 的入口排队，云 API、多槽和未知槽数直接并行。本机 ModelSwitcher（模型切换代理）的后台请求仅在所选模型已经加载且未切换时进入推理；模型不一致则等待并释放槽位给聊天，后台不主动触发装卸。状态未知的已确认单槽服务也等待。单槽主对话整轮运行（含工具间隙）时后台推理等待，主请求在等待队列中优先；已开始的后台推理会完成后释放单槽。原生 compaction（上下文压缩）属于当前主请求，继续按主模型执行。记忆形成使用后台路由；World/interactions（记忆与经历）召回的来源权限按接收内容的主模型 modelTier 判定。
 
+### ST-1 个性化与助手设置
+
+| 方法与路径 | 请求 | 响应 / 权限 |
+|---|---|---|
+| GET `/settings/personalization` | 无查询 | 200 `{settings,updatedAt,synced:true}`；`sessions:read`，同一账户各设备读同一份 |
+| PATCH `/settings/personalization` | 下列字段的非空子集 | 200 同 GET；`account:manage`，沿用 Cookie（会话凭据）和 CSRF（跨站请求伪造防护）；非法类型、未知字段、超限返回 400 `INVALID_REQUEST` |
+| POST `/settings/personalization/style` | `{}`，无查询 | 200 同 GET；同 PATCH 权限；仅宿主本机从账户的本人消息提炼表达习惯，不调用模型、不保存原文；临时内容、已删除片段不参与 |
+
+`settings`：
+
+- `preferredName:""`（80 字）、`bio:""`（500 字）、`tone:"natural"`（`natural|concise|detailed|formal|casual`）、`toneInstructions:""`（500 字）。
+- `fixedInstructions:""`（4,000 字）；`useWritingStyle:false`、`writingStyle:""`（1,000 字）。长度按 Unicode（统一字符编码）码点计算，空文本合法；提炼结果可通过 PATCH 编辑／清空，清除不删除任何聊天记录。
+- `webSearch:true`、`verbosity:"medium"`（`short|medium|thorough`）、`thinkingDisplay:"collapsed"`（`collapsed|expanded|hidden`）、`defaultDeepThinking:false`、`messageMode:"queue"`（`queue|steer`）。
+
+服务端串行合并字段，冲突按最后一次成功写入为准；`updatedAt` 为宿主保存时间，旧账户无已保存设置时为 `null` 并返回默认值。旧本设备的 D36 引导偏好在首次读取时迁入未配置账户；以后账户值优先。客户端仅成功回执后显示「已同步」，读取／保存失败保留可重试状态，切账户丢弃迟到回执。
+
+称呼、简介、语气、自定义语气、详细程度、写作风格和固定说明在每个新回合通过 DSH（助手运行时）原生系统提示段组装，回合内保持快照，不改写历史；主对话、普通／项目旁聊和临时对话共用此机制。固定说明从不写入本人消息或 MemoWeft（记忆服务）摄取边界，也不成为 Evidence（记忆证据）。关闭网页搜索会从原生模型工具目录移除并拒绝 `web_search|web_fetch|browser`；不撤销普通文件／电脑能力。
+
+新建对话读取 `defaultDeepThinking`，仍沿 UX-3 的模型目录能力和 `/sessions/{id}/thinking`，不支持的模型以普通方式回答；既有对话保持自己的偏好。`assistant.message.data.modelThinking` 是可选的模型返回思考内容（最多 4,000 字，沿历史正文的安全投影），只用于展示三档，不作为回复正文、上下文交接或记忆输入；模型不提供时没有空思考块。原生来源接口与工具详情仍不返回此内容。
+
+`POST /offline/sync` 的加密副本追加 `personalization`，只携带上述账户设置，沿用既有记忆、副本权限和删除代次；离线直连共用系统提示组装函数，没有新增记忆／文件导出。离线模型没有会话级原生推理能力时不承诺默认深入思考。Android（安卓）原生 code27 开放上述两个设置路径；发布此界面包须声明最低原生 code27，旧壳保留兼容界面。Apple（苹果端）接线清单见 ST-1 证据。
+
 ### 3.16 对话输出与来源（UI-1b，1）
 
 | 方法与路径 | 请求参数 | 响应 / 状态 | 主要领域错误 | 使用端 |

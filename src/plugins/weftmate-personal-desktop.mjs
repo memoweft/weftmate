@@ -1,3 +1,4 @@
+import { installPersonalization } from './personal-personalization.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { resolve } from 'node:path';
@@ -648,6 +649,7 @@ export function apply(ctx) {
   const policyFor = (agent) => bridge.request({ action: 'approval_policy', sessionId: agent.session.id,
     turn: 0, callId: 'approval-policy', messageHash: '0'.repeat(64) });
   installConversationReasoning(ctx, policyFor);
+  installPersonalization(ctx, policyFor);
   const selectedModes = new WeakMap();
   const webExecution = new AsyncLocalStorage();
   const delegatedExecutions = new WeakMap();
