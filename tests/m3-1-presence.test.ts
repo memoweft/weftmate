@@ -148,7 +148,7 @@ test('M3-1 Android message-level status check reconciles the original pending re
 
 test('FX-20 normal desktop entrance owns each startup data read once',async()=>{
   const f=fixture(),counts:any={};const names=['refreshStatus','loadPersonalization','refreshActivity','refreshModels','refreshTasks','refreshHistory','refreshConversationTasks','restoreRequests','loadMessageModePreference'];
-  for(const name of names)f.core[name]=async(...args:any[])=>{counts[name]=(counts[name]||0)+1;if(name==='refreshTasks')assert.deepEqual(args,[false,false]);if(name==='refreshStatus')f.core.connectionSucceeded({runtime:'ready'});};
+  for(const name of names)f.core[name]=async(...args:any[])=>{counts[name]=(counts[name]||0)+1;if(name==='refreshTasks')assert.deepEqual(args,[false,false]);if(name==='refreshStatus')f.core.connectionSucceeded({runtime:'ready'});if(name==='loadMessageModePreference')await f.core.loadPersonalization();};
   f.core.refreshSessions=async()=>{counts.refreshSessions=(counts.refreshSessions||0)+1;f.core.state.historyGeneration++;await f.core.refreshHistory();await f.core.refreshConversationTasks();};
   await f.core.enterAssistant();for(const name of [...names,'refreshSessions'])assert.equal(counts[name],1,name);
 });
