@@ -1,0 +1,37 @@
+/* A single quiet strip above the composer. Its reserved height keeps suggestion changes motionless. */
+.composer-dock { --ink-secondary:var(--secondary); --ink-muted:var(--muted); --surface-soft:var(--soft); }
+.composer-above-slot { position:relative; min-height:var(--wm-space-40); margin:0 var(--wm-space-17) var(--wm-space-8); }
+.composer-dock .composer-above-slot { margin-inline:calc(var(--wm-space-8) + var(--wm-space-10) + var(--wm-space-1)); }
+.composer-above-slot > [data-composer-above] { margin:0; }
+.composer-above-slot > [data-composer-suppressed="true"] { display:none !important; }
+.composer-above-slot[data-priority="approval"] > [data-composer-above]:not([data-composer-above="approval"]),
+.composer-above-slot[data-priority="question"] > [data-composer-above]:not([data-composer-above="question"]),
+.composer-above-slot[data-priority="connection"] > [data-composer-above]:not([data-composer-above="connection"]),
+.composer-above-slot[data-priority="subtasks"] > [data-composer-above]:not([data-composer-above="subtasks"]),
+.composer-above-slot[data-priority="suggestions"] > [data-composer-above],
+.composer-above-slot[data-priority="none"] > [data-composer-above] { display:none !important; }
+.next-suggestions { position:absolute; inset:0; display:flex; align-items:center; gap:var(--wm-space-8); min-width:0; opacity:1; visibility:visible; transform:translateY(0); transition:opacity var(--wm-duration-160ms) var(--wm-easing-desktop),transform var(--wm-duration-160ms) var(--wm-easing-desktop),visibility 0s; }
+.next-suggestions[hidden] { display:flex !important; opacity:0; visibility:hidden; transform:translateY(var(--wm-space-3)); pointer-events:none; transition:opacity var(--wm-duration-exit) var(--wm-easing-desktop),transform var(--wm-duration-exit) var(--wm-easing-desktop),visibility 0s var(--wm-duration-exit); }
+.composer-above-slot[data-priority="approval"] .next-suggestions,.composer-above-slot[data-priority="question"] .next-suggestions,.composer-above-slot[data-priority="connection"] .next-suggestions,.composer-above-slot[data-priority="subtasks"] .next-suggestions { visibility:hidden !important; transition:none; }
+.composer-completion[hidden] { display:none; }
+.next-suggestions-label { color:var(--ink-muted); flex:none; font-size:var(--wm-font-size-11); line-height:var(--wm-line-height-1_4); }
+.next-suggestions-scroll { display:flex; flex:1; align-items:center; gap:var(--wm-space-6); min-width:0; overflow-x:auto; scrollbar-width:none !important; padding:var(--wm-space-2); }
+.next-suggestions-scroll.has-overflow { mask-image:linear-gradient(to right,#000 calc(100% - var(--wm-space-16)),transparent); }
+.next-suggestions-scroll::-webkit-scrollbar { display:none; }
+.next-suggestion-chip { appearance:none; flex:none; max-width:var(--wm-size-220); height:var(--wm-space-32); padding:0 var(--wm-space-12); border:1px solid var(--line); border-radius:var(--wm-radius-999); background:var(--surface-soft); color:var(--ink-secondary); font:inherit; font-size:var(--wm-font-size-13); line-height:var(--wm-line-height-1_4); overflow:hidden; white-space:nowrap; text-overflow:ellipsis; cursor:pointer; transition:background var(--wm-duration-160ms) var(--wm-easing-desktop),color var(--wm-duration-160ms) var(--wm-easing-desktop); }
+.next-suggestion-chip:hover:not(:disabled) { background:var(--accent-soft); color:var(--ink); }
+.next-suggestion-chip:active:not(:disabled) { background:var(--line); color:var(--ink); }
+.next-suggestion-chip:focus-visible,.next-suggestions-dismiss:focus-visible { outline:var(--wm-space-2) solid var(--accent); outline-offset:var(--wm-space-2); }
+.next-suggestion-chip:disabled,.next-suggestions-dismiss:disabled { opacity:.45; cursor:default; }
+.next-suggestions-dismiss { appearance:none; display:grid; place-items:center; flex:none; margin-left:auto; width:var(--wm-space-28); height:var(--wm-space-32); padding:0; border:0; border-radius:var(--wm-radius-8); color:var(--ink-muted); background:transparent; cursor:pointer; }
+.next-suggestions-dismiss:hover:not(:disabled) { color:var(--ink); background:var(--surface-soft); }
+.next-suggestions-dismiss:active:not(:disabled) { background:var(--line); }
+.message-form,.composer-card { position:relative; }
+.composer-completion { position:absolute; z-index:1; box-sizing:border-box; border-style:solid; border-color:transparent; overflow:hidden; white-space:pre-wrap; overflow-wrap:break-word; pointer-events:none; user-select:none; color:var(--ink-muted); }
+.composer-completion-prefix { color:transparent; }
+.composer-completion-prefix,.composer-completion-text { position:relative; top:var(--completion-scroll,0); }
+.composer-completion-text { pointer-events:auto; cursor:pointer; }
+.composer-completion-hint { position:absolute; right:var(--wm-space-8); bottom:var(--wm-space-4); color:var(--ink-muted); background:var(--surface); font-family:inherit; font-size:var(--wm-font-size-10); line-height:var(--wm-line-height-1_4); border:1px solid var(--line); border-radius:var(--wm-radius-4); padding:0 var(--wm-space-4); }
+.composer-completion-hint[hidden] { display:none; }
+@media (pointer:coarse),(max-width:600px) { .next-suggestion-chip { height:var(--wm-space-40); max-width:var(--wm-size-220); } .composer-above-slot { min-height:var(--wm-space-44); } .next-suggestions-dismiss { height:var(--wm-space-40); width:var(--wm-space-32); } }
+@media(prefers-reduced-motion:reduce) { .next-suggestions,.next-suggestions[hidden],.next-suggestion-chip { transition:none; } }

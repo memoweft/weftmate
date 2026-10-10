@@ -105,7 +105,7 @@ function scheduleSharedPoll(){stopSharedPoll();if(state.chatSource!=='host'||sta
   state.sharedPollTimer=setTimeout(async()=>{if(state.chatSource!=='host'||state.page!=='chat')return;
     await Promise.all([loadSharedHistory(),listSharedSessions()]);if(state.chatSource==='host')scheduleSharedPoll()},state.sharedRunning?3000:12000)}
 
-function selectSharedSession(sessionId){if(!state.sharedSessions.some(item=>item.sessionId===sessionId))return;
+function selectSharedSession(sessionId){uiCore.cancelNextSuggestions?.();if(!state.sharedSessions.some(item=>item.sessionId===sessionId))return;
   uiCore.syncMobileIdentity();void uiCore.updateSession(sessionId,{unread:false}).catch(error=>toast(safeError(error),true));
   const listed=state.sharedSessions.find(item=>item.sessionId===sessionId);
   const linked=state.conversations.find(item=>item.id===listed?.conversationId||item.binding?.sessionId===sessionId||

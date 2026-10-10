@@ -18,7 +18,7 @@ import { createLatestFileWriter } from './latest-file-writer.mjs';
  * v2 的 SDK 聊天/桥/旧 UI 等主链路已随 R4 退役删除（见 docs/ARCHITECTURE.md §4 退役清单）。
  */
 import { createHostLog } from './host-log.mjs';
-import { selectBackgroundProfile, backgroundModelReady } from './background-model-selection.mjs';
+import { selectBackgroundProfile, backgroundModelReady, suggestionModelReady } from './background-model-selection.mjs';
 import { checkModelConnection } from './model-connection-check.mjs';
 import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, screen, dialog, nativeTheme, session } from 'electron';
 import packageInfo from '../package.json' with { type: 'json' };
@@ -1717,6 +1717,7 @@ async function bootstrap() {
       return profile && memoryRecallModelTier(profile) === 'local' ? profile : null;
     },
     backgroundReady: profile => backgroundModelReady(profile, { credentialFor: credentialForModelProfile }),
+    suggestionReady: (profile, { signal }) => suggestionModelReady(profile, { credentialFor: credentialForModelProfile, signal }),
     beginUsage: input => input.sessionId && !input.ownerId && !personalAccessService?.ownerForSession(input.sessionId)
       ? null : personalAccessService?.beginUsage(input),
     finishUsage: input => personalAccessService?.finishUsage(input),

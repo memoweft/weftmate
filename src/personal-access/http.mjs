@@ -662,6 +662,8 @@ export function createHttpHandler(context) {
       if (['/personal/v1/settings/notifications', '/personal/v1/settings/notifications/test'].includes(pathname)) return await handleNotificationSettings(context, request, response, url, ownerId);
       if (await handlePush(context, request, response, url, ownerId, deviceId)) return;
       if (await context.activity.handleHttp(request, response, url, ownerId, deviceId)) return;
+      const suggestionsMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]{1,128})\/suggestions$/.exec(pathname);
+      if (suggestionsMatch && ['POST', 'DELETE'].includes(request.method)) return await context.nextSuggestions.handle(request, response, url, ownerId, suggestionsMatch[1]);
       const thinkingMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/thinking$/.exec(pathname);
       if (thinkingMatch && ['GET', 'PATCH'].includes(request.method)) {
         if (url.search) throw failure('INVALID_REQUEST');
@@ -758,6 +760,7 @@ export function createHttpHandler(context) {
         if (restartMatch) {
           if (!context.hostOwner(ownerId)) throw failure('FORBIDDEN', 403);
           exactKeys(await context.readJson(request), []);
+          context.nextSuggestions.cancel(ownerId);
           await context.systemManager.restart(restartMatch[1], ownerId);
         }
         const value = await context.systemManager.status(ownerId);
@@ -783,7 +786,7 @@ export function createHttpHandler(context) {
         }
         return context.json(response, 200, {
           ...context.service.status(ownerId),
-          personalCapabilities: { library: 1, libraryPreview: 1, libraryDesktopActions: context.library.desktopAvailable ? 1 : 0, taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, pushRegistration: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, creationReceipt: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
+          personalCapabilities: { nextSuggestions: typeof context.backend.modelCompletion === 'function' ? 1 : 0, library: 1, libraryPreview: 1, libraryDesktopActions: context.library.desktopAvailable ? 1 : 0, taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, pushRegistration: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, creationReceipt: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
           executionAccount: context.hostOwner(ownerId),
           executionAccountName: context.hostOwner(ownerId) ? null : context.executionAccountName(),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
@@ -1716,6 +1719,7 @@ export function createHttpHandler(context) {
           context.authenticate(request, 'commands:write');
           return publicCommand(context.accountState(ownerId).commands[command.commandId]);
         };
+        if (['session.message', 'chat.message'].includes(body.kind)) context.nextSuggestions.cancel(ownerId);
         if (temporarySessionPath) {
           exactKeys(body, ['requestId','modelProfileId','recallEnabled','autoDeleteDays'], ['requestId','modelProfileId']);
           body = { ...body, kind:'session.create', targetDeviceId:state.hostId, temporary:true };
