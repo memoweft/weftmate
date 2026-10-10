@@ -6,6 +6,17 @@ import {fixture as timelineFixture} from './helpers/chat-timeline-fixture.mjs';
 import {createChatOperations} from '../src/personal-access/chats.mjs';
 const wait=(ms:number)=>new Promise(resolve=>setTimeout(resolve,ms));
 const plain=(value:any)=>JSON.parse(JSON.stringify(value));
+test('UX-6b dates use account calendar days and preserve complete cross-year dates',()=>{
+  const context:any={};runInNewContext(readFileSync('src/personal-access-ui/components/search-view.js','utf8'),context);
+  const format=context.WeftSearchView.formatDate,now=new Date('2026-10-10T06:05:00Z');
+  assert.equal(format('2026-10-10T06:05:00Z','Asia/Shanghai',now),'今天 14:05');
+  assert.equal(format('2026-10-09T15:59:00Z','Asia/Shanghai',now),'昨天');
+  assert.equal(format('2026-10-08T06:05:00Z','Asia/Shanghai',now),'10月8日');
+  assert.equal(format('2027-01-03T06:05:00Z','Asia/Shanghai',now),'2027年1月3日');
+  assert.equal(format('2026-10-10T06:05:00Z','America/Los_Angeles',now),'今天 23:05');
+  assert.equal(format('2026-12-31T20:00:00Z','Asia/Shanghai',new Date('2027-01-02T06:00:00Z')),'昨天');
+  assert.equal(format('待审批','Asia/Shanghai',now),'待审批');
+});
 function fixture(read:(path:string)=>any=async()=>({items:[],projects:[]})){
   const context:any={URLSearchParams,setTimeout,clearTimeout,WeftUiCore:{factories:{}}};runInNewContext(readFileSync('src/ui-core/search.js','utf8'),context);
   const values=new Map<string,string>(),core:any={state:{ownerId:'owner',identityGeneration:0},accessApi:read,memoryRequest:read};

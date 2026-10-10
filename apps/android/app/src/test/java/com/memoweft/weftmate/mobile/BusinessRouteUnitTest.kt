@@ -12,6 +12,20 @@ class BusinessRouteUnitTest {
         assertFalse(validBusinessPath("/personal/v1/chats?scope=search&q=<script>"))
         assertFalse(validBusinessPath("/personal/v1/chats/../search"))
     }
+    @Test fun nextSuggestionsUseOnlyTheirExactSessionRouteAndCancellationId() {
+        assertTrue(validBusinessPath("/personal/v1/sessions/session-one/suggestions"))
+        assertTrue(validBusinessPath("/personal/v1/sessions/session-one/suggestions?requestId=ux7-request:1"))
+        assertTrue(validBusinessPath("/personal/v1/sessions/session-one/suggestions?requestId=ux7-request%3A1"))
+        assertTrue(validBusinessPath("/personal/v1/sessions/session-one/suggestions?requestId=ux7-request%3a1"))
+        assertTrue(validBusinessPath("/personal/v1/sessions/" + "s".repeat(128) + "/suggestions?requestId=" + "%3A".repeat(128)))
+        for (path in listOf("/personal/v1/suggestions", "/personal/v1/sessions/../suggestions",
+            "/personal/v1/sessions/session%2Fone/suggestions", "/personal/v1/sessions/session-one/suggestions/raw",
+            "/personal/v1/sessions/session-one/suggestions?requestId=", "/personal/v1/sessions/session-one/suggestions?ownerId=other",
+            "/personal/v1/sessions/session-one/suggestions?requestId=one&ownerId=other",
+            "/personal/v1/sessions/session-one/suggestions?requestId=%2F", "/personal/v1/sessions/session-one/suggestions?requestId=ux7%253A1",
+            "/personal/v1/sessions/session-one/suggestions?requestId=%5C", "/personal/v1/sessions/session-one/suggestions?requestId=" + "a".repeat(129)))
+            assertFalse(path, validBusinessPath(path))
+    }
     @Test fun sessionPagingAndEncodedSearchUseTheExistingBusinessTransport() {
         assertTrue(validBusinessPath("/personal/v1/sessions?archived=all&limit=100&cursor=session-next&q=%E7%BA%B8"))
         assertTrue(validBusinessPath("/personal/v1/sessions?q=" + "%E7%BA%B8".repeat(256)))

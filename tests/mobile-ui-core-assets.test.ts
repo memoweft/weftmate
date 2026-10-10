@@ -102,6 +102,7 @@ test('publish command refuses stale generated assets before creating a release',
     'src/personal-access-ui/message-actions.js', 'src/personal-access-ui/message-actions.css', 'apps/mobile-ui/www/message-actions.js', 'apps/mobile-ui/www/message-actions.css',
     'src/personal-access-ui/icons.js', 'apps/mobile-ui/www/icons.js',
     'src/personal-access-ui/components/search-view.js', 'src/personal-access-ui/search.css', 'apps/mobile-ui/www/components/search-view.js', 'apps/mobile-ui/www/search.css',
+    'src/personal-access-ui/next-suggestions.js', 'src/personal-access-ui/next-suggestions.css', 'apps/mobile-ui/www/next-suggestions.js', 'apps/mobile-ui/www/next-suggestions.css',
     'src/personal-access-ui/controls.css', 'apps/mobile-ui/www/controls.css',
     'src/personal-access-ui/rendering.css','apps/mobile-ui/www/rendering.css','src/personal-access-ui/katex.css','apps/mobile-ui/www/katex.css',
     'docs/legal/terms-zh.md', 'docs/legal/privacy-zh.md', 'apps/mobile-ui/www/legal/terms-zh.txt', 'apps/mobile-ui/www/legal/privacy-zh.txt']) {

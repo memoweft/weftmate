@@ -7,6 +7,7 @@ import {renderingSample} from '../helpers/rendering-sample.mjs';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { startMainChatCandidate } from './main-chat-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
+import { exposeUx7Desktop, mockUx7Requests, prepareUx7Suggestions } from './ux-7-scenes.mjs';
 import { repository, outDirectory, runScene, catalog } from '../../scripts/review-gallery/common.mjs';
 const out = outDirectory();
 const sceneIndex = process.argv.indexOf('--scene'), onlyScene = sceneIndex < 0 ? null : process.argv[sceneIndex + 1];
@@ -16,13 +17,14 @@ for (const theme of ['light', 'dark']) {
   const env = { ...process.env };
   for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key.startsWith('MEMOWEFT_') || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
   Object.assign(env, { REVIEW_PROFILE: profile, REVIEW_THEME: theme, REVIEW_ORIGIN: fixture.origin });
-  let application, page, mainFixture, renderingSeeded=false, closing = false, ownerId;
+  let application, page, mainFixture, suggestionFixture, renderingSeeded=false, closing = false, ownerId;
   const errors = [];
   try {
     application = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), cwd: repository,
       args: [join(repository, 'scripts/review-gallery/electron.mjs'), '--force-device-scale-factor=1', '--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding'], env, timeout: 90000 });
     console.log('Desktop shell launched.');
     page = await application.firstWindow(); page.setDefaultTimeout(30000);
+    await exposeUx7Desktop(page); await mockUx7Requests(page);
     page.on('pageerror', error => errors.push(error.message));
     await page.addInitScript(theme => {
       localStorage.setItem('weftmate.desktop.appearance.v1', JSON.stringify({ theme, accent: 'neutral', fontSize: '15' }));
@@ -78,9 +80,16 @@ for (const theme of ['light', 'dark']) {
       usage: async () => { await settings(); await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '用量', exact: true }).click(); await page.getByRole('heading', { name: '用量与费用', exact: true }).waitFor(); await button('刷新用量').waitFor(); },
       'session-menu': async () => { await home(); await button('项目进度报告').click({button:'right'}); await page.getByRole('menu', { name: '对话操作', exact: true }).waitFor(); await page.getByRole('menuitem', { name: '归档 A', exact: true }).waitFor(); await page.getByRole('menuitem', { name: '删除 D', exact: true }).waitFor(); },
     };
-    for (const scene of catalog.scenes.filter(row => !['login','main-chat'].includes(row.id) && (!onlyScene || row.id === onlyScene)).sort((a,b)=>Number(a.id==='question')-Number(b.id==='question'))) {
+    for (const scene of catalog.scenes.filter(row => !['login','main-chat','next-suggestions'].includes(row.id) && (!onlyScene || row.id === onlyScene)).sort((a,b)=>Number(a.id==='question')-Number(b.id==='question'))) {
       await shot(scene.id, preparations[scene.id]);
       if (scene.id === 'onboarding') await page.evaluate(async () => { const me = await (await fetch('/personal/v1/auth/me')).json(); await fetch('/personal/v1/onboarding', { method: 'PATCH', headers: { 'content-type': 'application/json', 'X-WeftMate-CSRF': me.csrfToken }, body: JSON.stringify({ step: 'first', completed: true }) }); });
+    }
+    if(!onlyScene||onlyScene==='next-suggestions'){
+      closing=true;await page.unrouteAll({behavior:'ignoreErrors'});await application.evaluate(({app})=>app.exit(0)).catch(()=>{});await application.close().catch(()=>{});
+      suggestionFixture=await startTimelineCandidate({historyCount:0,interactive:true,composer:true});await suggestionFixture.complete();
+      application=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:repository,args:[join(repository,'scripts/review-gallery/electron.mjs'),'--force-device-scale-factor=1'],env:{...env,REVIEW_ORIGIN:suggestionFixture.origin}});
+      page=await application.firstWindow();page.setDefaultTimeout(30000);closing=false;page.on('pageerror',e=>errors.push(e.message));await exposeUx7Desktop(page);await localUiSession(page,suggestionFixture.credentials);await mockUx7Requests(page,undefined,{legacy:true});await page.reload();
+      await shot('next-suggestions',async()=>{await page.waitForFunction(()=>globalThis.__ux7core?.state.account);await page.evaluate(id=>__ux7core.selectSession(id),suggestionFixture.sessionId);await prepareUx7Suggestions(page);});
     }
     closing=true;await page.unrouteAll({behavior:'ignoreErrors'});await application.evaluate(({app})=>app.exit(0)).catch(()=>{});await application.close().catch(()=>{});mainFixture=await startMainChatCandidate();
     application=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:repository,args:[join(repository,'scripts/review-gallery/electron.mjs'),'--force-device-scale-factor=1'],env:{...env,REVIEW_ORIGIN:mainFixture.origin}});
@@ -93,6 +102,6 @@ for (const theme of ['light', 'dark']) {
     closing = true;
     await page?.unrouteAll({ behavior: 'ignoreErrors' }).catch(() => {});
     await application?.evaluate(({ app }) => app.exit(0)).catch(() => {});
-    await application?.close().catch(() => {}); await fixture.close();await mainFixture?.close(); await rm(profile, { recursive: true, force: true }); await rm(fixture.root, { recursive: true, force: true });if(mainFixture)await rm(mainFixture.root,{recursive:true,force:true});
+    await application?.close().catch(() => {}); await fixture.close();await mainFixture?.close();await suggestionFixture?.close(); await rm(profile, { recursive: true, force: true }); await rm(fixture.root, { recursive: true, force: true });if(mainFixture)await rm(mainFixture.root,{recursive:true,force:true});if(suggestionFixture)await rm(suggestionFixture.root,{recursive:true,force:true});
   }
 }

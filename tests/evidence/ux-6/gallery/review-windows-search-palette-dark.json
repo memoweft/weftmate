@@ -3,13 +3,13 @@
   "scene": "search-palette",
   "theme": "dark",
   "file": "review-windows-search-palette-dark.png",
-  "commit": "7543282d67aaef9b369fb1551e5bc8d5ed59163a",
-  "generatedAt": "2026-10-10T06:57:34.658Z",
+  "commit": "4b2c4232e6fe78997f5b3a1adea519286898f5ce",
+  "generatedAt": "2026-10-10T08:51:46.248Z",
   "synthetic": true,
   "viewport": {
     "width": 1200,
     "height": 800
   },
   "source": "production createPersonalDesktop + FE-1a isolated host",
-  "text": "WeftMate\n搜索\nCtrl K\nWeftMate\n动态\n3\n目标\n成果库\n新旁聊\nCtrl N\n\n旁聊\n未分组\n项目进度报告\n项目\n添加一个文件夹，开始项目对话。\nT\nTimelineFixture\n项目进度报告\n输出与来源\n本对话用量\n读取项目资料，运行测试，并保存一份进度报告。\n\n我会先读取资料并运行测试，再整理 项目进度报告。\n\n覆盖现有报告前，需要你批准。\n\n用到了 1 条记忆\n读取了 3 个文件、已运行 1 个命令\n等待批准：运行命令：node scripts/report.mjs\n项目进度报告.md\n已读回核验\n\nMarkdown · 68 字节\n\n打开成果下载用默认程序打开在文件夹中显示\n要运行命令：node scripts/report.mjs\n批准\n拒绝\n另有 1 个问题，处理审批后回答\n输入消息\n自动\n合成会话\n全部\n对话\n项目\n成果\n定时任务\n记忆\n\n11 项\n\n最近使用\n项目进度报告\n10月10日\n↵\nWeftMate\n项目进度报告.md\n10月10日\n操作\n新建旁聊\n新建临时对话\n新建项目\n打开设置\n打开记忆\n打开动态\n打开目标\n打开成果库\n关闭\nEsc\n切换类型\n←\n→\n上下选择\n↑\n↓\n打开\n↵\n操作\nAlt\n↵"
+  "text": "WeftMate\n搜索\nCtrl K\nWeftMate\n动态\n3\n目标\n成果库\n新旁聊\nCtrl N\n\n旁聊\n未分组\n项目进度报告\n项目\n添加一个文件夹，开始项目对话。\nT\nTimelineFixture\n项目进度报告\n输出与来源\n本对话用量\n\n读取项目资料，运行测试，并保存一份进度报告。\n\n我会先读取资料并运行测试，再整理 项目进度报告。\n\n覆盖现有报告前，需要你批准。\n\n用到了 1 条记忆\n读取了 3 个文件、已运行 1 个命令\n等待批准：运行命令：node scripts/report.mjs\n项目进度报告.md\n已读回核验\n\nMarkdown · 68 字节\n\n打开成果下载用默认程序打开在文件夹中显示\n要运行命令：node scripts/report.mjs\n批准\n拒绝\n另有 1 个问题，处理审批后回答\n输入消息\n自动\n合成会话\n全部\n对话\n项目\n成果\n定时任务\n记忆\n\n11 项\n\n最近使用\n项目进度报告\n10月10日\n↵\nWeftMate\n项目进度报告.md\n10月10日\n操作\n新建旁聊\n新建临时对话\n新建项目\n打开设置\n打开记忆\n打开动态\n打开目标\n打开成果库\n关闭\nEsc\n切换类型\n←\n→\n上下选择\n↑\n↓\n打开\n↵\n操作\nAlt\n↵"
 }

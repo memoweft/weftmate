@@ -17,6 +17,7 @@
     { "id": "conversation", "label": "对话中 · 执行步骤", "unavailable": ["watch"] },
     { "id": "composer-menu", "label": "输入区 / 附件与深入思考", "unavailable": ["watch"] },
     { "id": "composer-context", "label": "输入区 / 上下文用量", "unavailable": ["watch"] },
+    { "id": "next-suggestions", "label": "输入区 / 下一步建议", "unavailable": ["iphone", "mac", "watch"] },
     { "id": "approval", "label": "审批卡" },
     { "id": "question", "label": "提问条", "unavailable": ["watch"] },
     { "id": "outputs-sources", "label": "输出与来源", "unavailable": ["watch"] },

@@ -121,6 +121,7 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
   const get = (id: string) => { if (!nodes.has(id)) { const node = new FakeElement('div', id); node.hidden = hiddenIds.has(id); nodes.set(id, node) }; return nodes.get(id)! }
   const brandTitle = new FakeElement('strong')
   const drawerBrand = new FakeElement('div');drawerBrand.className='drawer-brand';get('drawer').append(drawerBrand);
+  const drawerNew = new FakeElement('div');drawerNew.className='drawer-new-group';get('drawer').append(drawerNew);
   const nav = ['chat', 'things', 'memory', 'capabilities', 'workspaces', 'devices', 'notifications', 'settings', 'connect']
     .map((page) => { const button = new FakeElement('button'); button.dataset.page = page; button.textContent = page; return button })
   const newChat = new FakeElement('button'); newChat.dataset.action = 'new-chat'
