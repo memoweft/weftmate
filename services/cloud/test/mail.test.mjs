@@ -104,7 +104,7 @@ test('six templates share a safe card, code-free subject/preview and continuous 
     assert.equal(/验证码：(\d{6})/.exec(message.text)[1], '012345');
     assert.match(message.text, /^.+\n验证码：012345\n10 分钟内有效，只能使用一次。\n/);
     assert.match(message.html, /class="mail-ink mail-code"[^>]*>012345<\/p>/);
-    assert.match(message.html, /letter-spacing:8px;white-space:nowrap/);
+    assert.match(message.html, /font-variant-numeric:tabular-nums;[^"]*letter-spacing:4px;white-space:nowrap/);
     assert.match(message.html, /@media \(prefers-color-scheme: dark\)/);
     assert.match(message.html, /\[if mso\]/);
     assert.doesNotMatch(message.subject, /012345/);
