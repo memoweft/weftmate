@@ -391,6 +391,24 @@ function memoryItemsPath(kind,query,after){try{const params=[`kind=${memoryPathE
 function memoryListAllowed(memory=state.memory){return !!memory?.boundOwnerId&&memory.boundScope===memory.scope&&memory.capabilities.list===true&&
   ['ready','recovering','degraded'].includes(memory.statusState)}
 
+// Search stays in chat. Reuse the memory page's verified native scope and raw
+// host-owner binding, without changing its form or treating scope as owner ID.
+async function searchMemoryPage(query,after){
+  const scope=state.owner,epoch=state.authEpoch,current=()=>state.loggedIn&&state.owner===scope&&state.authEpoch===epoch&&!state.transitionPending;
+  const reject=code=>Object.assign(new Error(code),{code});
+  try{
+    const profile=await effects.nativeCall('auth.me');if(!current())throw reject('STALE_CONTEXT');
+    if(profile?.connectionVerified!==true||profile.owner!==scope)throw reject('MEMORY_OWNER_MISMATCH');
+    const status=await business({path:'/personal/v1/memory/status'});if(!current())throw reject('STALE_CONTEXT');
+    if(!['ready','recovering','degraded'].includes(status.state)||status.capabilities?.list!==true)throw reject(status.state==='disabled'?'MEMORY_DISABLED':'MEMORY_UNAVAILABLE');
+    if(typeof status.ownerId!=='string'||!status.ownerId||!Number.isSafeInteger(status.worldRevision))throw reject('MEMORY_RESPONSE_INVALID');
+    const params=new URLSearchParams({kind:'all',limit:'50',...(query?{query}:{}),...(after?{after}:{})});
+    const page=await business({path:`/personal/v1/memory/items?${params}`});if(!current())throw reject('STALE_CONTEXT');
+    if(page.ownerId!==status.ownerId)throw reject('MEMORY_OWNER_MISMATCH');
+    if(page.worldRevision!==status.worldRevision)throw reject('MEMORY_REVISION_CHANGED');return page;
+  }catch(error){if(!error.code)error.code=error.message;throw error;}
+}
+
 function startMemorySnapshot(target,kind,query){if(!Object.hasOwn(MEMORY_KINDS,kind)){return}
   if(typeof query!=='string'||[...query].length>120){const memory=state.memory;memory.error='搜索内容最多120个字符，请缩短后重试。';memory.loading=false;effects.renderMemoryList(target);return}
   if(state.memory.scope!==(state.owner||''))state.memory=emptyMemoryState(state.owner||'');
@@ -400,7 +418,7 @@ function startMemorySnapshot(target,kind,query){if(!Object.hasOwn(MEMORY_KINDS,k
   memory.boundOwnerId=null;memory.boundScope='';memory.items=[];memory.nextCursor=null;memory.hasMore=false;
   memory.selectedItem=null;memory.detail=null;memory.sources=[];memory.detailLoading=false;memory.sourcesLoading=false;
   memory.detailError='';memory.sourceError='';memory.error='';memory.loading=true;effects.renderMemoryList(target);
-  const token=memoryToken();void loadMemorySnapshot(target,token)}
+  const token=memoryToken();return loadMemorySnapshot(target,token)}
 
 async function loadMemorySnapshot(target,token){try{
     const profile=await effects.nativeCall('auth.me');if(!memoryCurrent(token))return;
@@ -610,5 +628,5 @@ async function submitMemoryAction(operation,evidenceId=null,correction=''){const
     await business({path:`/personal/v1/memory/formation/${memoryPathEncode(jobId)}/retry`,method:'POST',body:{requestId}});
     if(memoryCurrent(token)) await startMemorySnapshot(state.memory.target,state.memory.kind,state.memory.query);
   }
-  return { mobile: { business, retryMemoryFormation, composerState, draftKey, sharedDraftKey, attachmentConversationId, attachmentKey, currentAttachments, selectionKey, chatSourceKey, savedSharedSelection, hasAnyDraft, sharedViewCurrent, trackSharedAcceptedTurn, waitForSharedTurn, acceptSharedCommand, reconcileSharedDelivery, loadSharedOutbox, checkSharedPending, listConversations, selectedSharedSession, selectedBinding, matchingOriginalHostModels, refreshHandoffModelName, refreshHandoff, loadLinkedHistory, acceptSend, newSharedRequestId, sendShared, sendLinked, send, stop, emptyMemoryState, memoryToken, memoryCurrent, memoryFailureText, memoryFail, memoryOwnerMatches, memoryRevisionMatches, memoryPathEncode, memoryItemsPath, memoryListAllowed, startMemorySnapshot, loadMemorySnapshot, loadMemoryItems, loadMemoryMore, memoryPathIdSupported, memoryMarkerKey, savedMemoryMarker, persistMemoryMarker, clearMemoryMarker, newMemoryRequestId, memoryActionAllowed, openMemoryDetail, loadMemoryDetail, memoryReceiptMessage, memoryReceiptRejected, handleMemoryReceipt, reconcileMemoryMarker, submitMemoryAction } };
+  return { mobile: { business, searchMemoryPage, retryMemoryFormation, composerState, draftKey, sharedDraftKey, attachmentConversationId, attachmentKey, currentAttachments, selectionKey, chatSourceKey, savedSharedSelection, hasAnyDraft, sharedViewCurrent, trackSharedAcceptedTurn, waitForSharedTurn, acceptSharedCommand, reconcileSharedDelivery, loadSharedOutbox, checkSharedPending, listConversations, selectedSharedSession, selectedBinding, matchingOriginalHostModels, refreshHandoffModelName, refreshHandoff, loadLinkedHistory, acceptSend, newSharedRequestId, sendShared, sendLinked, send, stop, emptyMemoryState, memoryToken, memoryCurrent, memoryFailureText, memoryFail, memoryOwnerMatches, memoryRevisionMatches, memoryPathEncode, memoryItemsPath, memoryListAllowed, startMemorySnapshot, loadMemorySnapshot, loadMemoryItems, loadMemoryMore, memoryPathIdSupported, memoryMarkerKey, savedMemoryMarker, persistMemoryMarker, clearMemoryMarker, newMemoryRequestId, memoryActionAllowed, openMemoryDetail, loadMemoryDetail, memoryReceiptMessage, memoryReceiptRejected, handleMemoryReceipt, reconcileMemoryMarker, submitMemoryAction } };
 };

@@ -13,8 +13,9 @@ function blendDesktopColor(base, scrim) {
   document.documentElement.classList.add('weftmate-desktop');
   document.documentElement.dataset.nativePlatform = native.platform;
   const bar = document.createElement('div');
-  bar.className = 'desktop-titlebar'; bar.textContent = 'WeftMate'; bar.setAttribute('aria-hidden', 'true');
+  bar.className = 'desktop-titlebar'; bar.textContent = 'WeftMate';
   const mark = document.createElement('span'); mark.className = 'wm-brand'; bar.prepend(mark);
+  const toggle = document.getElementById('rail-open'); toggle.classList.add('titlebar-rail-toggle'); toggle.title = '切换会话侧栏 · Ctrl B'; toggle.setAttribute('aria-label', '切换会话侧栏'); bar.append(toggle);
   document.body.prepend(bar);
   let modals = [], lastPalette = '';
   const updateTheme = () => {
