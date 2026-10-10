@@ -1,0 +1,547 @@
+{
+  "realElectron": true,
+  "realPinnedDsh": true,
+  "turns": [
+    {
+      "round": 1,
+      "prompt": "我要做一个十分钟的项目周报，主题是网站上线。请给三点提纲，每点一句，不调用工具。",
+      "reply": "**网站上线项目周报提纲（10分钟）**\n\n1. **上线成果**：本周网站正式上线，核心页面与功能全部发布，关键指标（如访问量、转化）初始表现。\n2. **问题与处理**：上线过程中遇到的问题（如性能、兼容性、内容缺失）及已采取的修复措施。\n3. **下周计划**：基于数据反馈的优化方向、待办事项与资源需求，确保平稳运营。",
+      "replyMs": 2966,
+      "suggestions": [
+        "请帮我把这三点扩写成十分钟的演讲稿",
+        "请为每点补充具体数据和例子",
+        "请给出开场白和结束语"
+      ],
+      "suggestionMs": 1884,
+      "usage": {
+        "requests": 1,
+        "inputTokens": 254,
+        "cachedInputTokens": 128,
+        "outputTokens": 36,
+        "cost": 0.0002005599999999998
+      }
+    },
+    {
+      "round": 2,
+      "prompt": "请继续展开第二点“上线检查”，列出三个具体检查项。不调用工具。",
+      "reply": "**第二点「上线检查」展开：**\n\n1. **功能与链接检查**：逐页验证核心流程（注册、下单、支付等）是否正常，页面链接、表单提交是否无死链和报错。\n2. **性能与兼容性检查**：测试首页加载速度、移动端适配，以及主流浏览器（Chrome/Safari/Edge）显示是否一致。\n3. **数据与安全检查**：确认统计代码/埋点已正确上报，HTTPS 证书有效，后台账号权限与敏感信息配置无泄露风险。",
+      "replyMs": 3383,
+      "suggestions": [
+        "请展开第三点下周计划，列出三个具体事项",
+        "把这三点提纲整理成一页PPT文案",
+        "帮我写一段2分钟的开场白"
+      ],
+      "suggestionMs": 1373,
+      "usage": {
+        "requests": 1,
+        "inputTokens": 401,
+        "cachedInputTokens": 192,
+        "outputTokens": 38,
+        "cost": 0.0002888400000000003
+      }
+    },
+    {
+      "round": 3,
+      "prompt": "把刚才的上线检查整理成一小段可复制的待办清单，保留三个要点。不调用工具。",
+      "reply": "上线检查待办清单：\n\n```\n- [ ] 功能与链接检查：验证核心流程（注册/下单/支付）、页面链接与表单提交，确认无死链和报错\n- [ ] 性能与兼容性检查：测试首页加载速度、移动端适配，核对主流浏览器（Chrome/Safari/Edge）显示一致\n- [ ] 数据与安全检查：确认统计埋点正常上报、HTTPS 证书有效、后台权限与敏感配置无泄露\n```",
+      "replyMs": 2295,
+      "suggestions": [
+        "把这三点提纲整理成可直接讲的口播稿",
+        "再展开第一点上线成果的具体数据",
+        "再展开第三点下周计划的具体事项"
+      ],
+      "suggestionMs": 1340,
+      "usage": {
+        "requests": 1,
+        "inputTokens": 541,
+        "cachedInputTokens": 320,
+        "outputTokens": 38,
+        "cost": 0.00030340000000000054
+      }
+    },
+    {
+      "round": 4,
+      "prompt": "我准备明天上午九点执行这份清单，请给我一句适合写在提醒里的短句。先不要真的设提醒，不调用工具。",
+      "reply": "提醒短句：\n\n**\"执行网站上线检查清单：功能链接、性能兼容、数据安全\"**\n\n需要设置时告诉我即可。",
+      "replyMs": 1378,
+      "suggestions": [
+        "帮我设置明天上午九点的提醒",
+        "把这份清单再精简成一句话版本"
+      ],
+      "suggestionMs": 1737,
+      "usage": {
+        "requests": 1,
+        "inputTokens": 473,
+        "cachedInputTokens": 0,
+        "outputTokens": 24,
+        "cost": 0.0005209999999999998
+      }
+    },
+    {
+      "round": 5,
+      "prompt": "工作结束后想向同事汇报，请把这次安排写成两句自然的消息。不调用工具。",
+      "reply": "给同事的两句汇报消息：\n\n\"各位，网站上线检查已于今天上午完成，功能链接、性能兼容、数据安全三部分均已核对通过。检查结果和遗留问题我会整理后同步，如有异常请随时反馈。\"",
+      "replyMs": 1870,
+      "suggestions": [
+        "帮我把这三段回复合并成一份完整记录",
+        "把汇报消息再改得更口语化一些",
+        "检查清单里再补充一条回滚预案"
+      ],
+      "suggestionMs": 4517,
+      "usage": {
+        "requests": 1,
+        "inputTokens": 407,
+        "cachedInputTokens": 0,
+        "outputTokens": 38,
+        "cost": 0.0004829999999999999
+      }
+    }
+  ],
+  "completion": {
+    "draft": "请把刚才的安排",
+    "requestId": "quality-completion",
+    "suggestions": [],
+    "completion": "整理成一段简洁的总结，方便我直接发给团队。",
+    "durationMs": 1853
+  },
+  "usage": {
+    "month": "2026-10",
+    "timeZone": "Asia/Shanghai",
+    "sessionId": null,
+    "total": {
+      "requests": 12,
+      "unknownRequests": 0,
+      "unpricedRequests": 0,
+      "inputTokens": 20144,
+      "cachedInputTokens": 13504,
+      "outputTokens": 605,
+      "cost": 0.00812008
+    },
+    "days": [
+      {
+        "day": "2026-10-01",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-02",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-03",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-04",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-05",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-06",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-07",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-08",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-09",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-10",
+        "requests": 12,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 20144,
+        "cachedInputTokens": 13504,
+        "outputTokens": 605,
+        "cost": 0.00812008
+      },
+      {
+        "day": "2026-10-11",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-12",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-13",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-14",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-15",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-16",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-17",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-18",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-19",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-20",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-21",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-22",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-23",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-24",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-25",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-26",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-27",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-28",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-29",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-30",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-31",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      }
+    ],
+    "sessions": [
+      {
+        "sessionId": "session-d55911a9-b6cc-4bbc-9037-3e3129770fd5",
+        "requests": 12,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 20144,
+        "cachedInputTokens": 13504,
+        "outputTokens": 605,
+        "cost": 0.00812008
+      }
+    ],
+    "models": [
+      {
+        "profileId": "private-model-fa68098bf328cf3bb9241616f504d4dbe174baf1",
+        "requests": 12,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 20144,
+        "cachedInputTokens": 13504,
+        "outputTokens": 605,
+        "cost": 0.00812008
+      }
+    ],
+    "categories": [
+      {
+        "category": "conversation",
+        "requests": 6,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 17683,
+        "cachedInputTokens": 12864,
+        "outputTokens": 412,
+        "cost": 0.00590028
+      },
+      {
+        "category": "next-suggestions",
+        "requests": 6,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 2461,
+        "cachedInputTokens": 640,
+        "outputTokens": 193,
+        "cost": 0.0022198
+      }
+    ],
+    "budget": {
+      "monthlyLimit": null,
+      "effectiveLimit": null,
+      "temporaryLimit": null,
+      "state": "unlimited"
+    }
+  },
+  "wire": [
+    {
+      "model": "mimo-v2.6-flash",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null
+    },
+    {
+      "model": "mimo-v2.6-flash",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null
+    },
+    {
+      "status": 200
+    },
+    {
+      "status": 200
+    },
+    {
+      "model": "mimo-v2.6-flash",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null
+    },
+    {
+      "status": 200
+    },
+    {
+      "model": "mimo-v2.6-flash",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null
+    },
+    {
+      "status": 200
+    },
+    {
+      "model": "mimo-v2.6-flash",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null
+    },
+    {
+      "status": 200
+    },
+    {
+      "model": "mimo-v2.6-flash",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null
+    },
+    {
+      "status": 200
+    }
+  ]
+}

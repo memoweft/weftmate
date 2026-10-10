@@ -1,0 +1,536 @@
+{
+  "realElectron": true,
+  "realPinnedDsh": true,
+  "turns": [
+    {
+      "round": 1,
+      "prompt": "我要做一个十分钟的项目周报，主题是网站上线。请给三点提纲，每点一句，不调用工具。",
+      "reply": "**网站上线项目周报提纲（10 分钟）**\n\n1. **上线成果**：本周网站正式上线，核心页面与主要功能均已发布，访问与运行情况正常。\n2. **过程与问题**：回顾上线前的测试、部署与配合过程，说明遇到的问题及解决方式。\n3. **后续计划**：列出上线后的优化方向、数据观察重点与下周具体任务安排。",
+      "replyMs": 3887,
+      "suggestions": [
+        "帮我把这三点提纲扩展成十分钟讲稿",
+        "按这三点写一份配套的PPT大纲"
+      ],
+      "suggestionMs": 1523,
+      "usage": {
+        "requests": 1,
+        "inputTokens": 244,
+        "cachedInputTokens": 0,
+        "outputTokens": 28,
+        "cost": 0.0002999999999999999
+      }
+    },
+    {
+      "round": 2,
+      "prompt": "请继续展开第二点“上线检查”，列出三个具体检查项。不调用工具。",
+      "reply": "**第二点：上线检查**\n\n1. **功能与链接检查**：逐项验证核心功能（注册登录、搜索、下单/表单提交等）是否可用，并检查各页面链接及跳转是否正常。\n2. **兼容与性能检查**：确认网站在 Chrome、Safari、Edge 及手机端的显示与操作正常，同时检查页面加载速度和图片、样式是否完整。\n3. **安全与数据检查**：检查 HTTPS 证书、后台登录权限与数据备份是否到位，并确认访问统计、错误日志等监控工具已正常运行。",
+      "replyMs": 3125,
+      "suggestions": [
+        "请继续展开第三点“后续计划”，列出三个具体任务。"
+      ],
+      "suggestionMs": 4667,
+      "usage": {
+        "requests": 1,
+        "inputTokens": 398,
+        "cachedInputTokens": 0,
+        "outputTokens": 20,
+        "cost": 0.000438
+      }
+    },
+    {
+      "round": 3,
+      "prompt": "把刚才的上线检查整理成一小段可复制的待办清单，保留三个要点。不调用工具。",
+      "reply": "```markdown\n**网站上线检查待办**\n- [ ] 功能与链接检查：验证核心功能（注册登录、搜索、下单/表单提交等）可用，各页面链接及跳转正常。\n- [ ] 兼容与性能检查：确认 Chrome、Safari、Edge 及手机端显示操作正常，页面加载速度和图片、样式完整。\n- [ ] 安全与数据检查：检查 HTTPS 证书、后台登录权限与数据备份，确认访问统计、错误日志等监控正常运行。\n```",
+      "replyMs": 2120,
+      "suggestions": [
+        "把第一点和第三点也整理成待办清单",
+        "把这三点待办清单合并成一段完整文字"
+      ],
+      "suggestionMs": 2102,
+      "usage": {
+        "requests": 1,
+        "inputTokens": 547,
+        "cachedInputTokens": 192,
+        "outputTokens": 30,
+        "cost": 0.0004188399999999993
+      }
+    },
+    {
+      "round": 4,
+      "prompt": "我准备明天上午九点执行这份清单，请给我一句适合写在提醒里的短句。先不要真的设提醒，不调用工具。",
+      "reply": "执行网站上线检查清单（功能、兼容、安全三项）",
+      "replyMs": 1742,
+      "suggestions": [],
+      "suggestionMs": 5065,
+      "usage": {
+        "requests": 1,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      }
+    },
+    {
+      "round": 5,
+      "prompt": "工作结束后想向同事汇报，请把这次安排写成两句自然的消息。不调用工具。",
+      "reply": "我计划明天上午九点执行网站上线检查清单，覆盖功能链接、浏览器兼容和安全数据三项内容。检查完成后我会同步结果，如有问题会及时反馈并跟进处理。",
+      "replyMs": 2231,
+      "suggestions": [],
+      "suggestionMs": 5058,
+      "usage": {
+        "requests": 1,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      }
+    }
+  ],
+  "completion": {
+    "draft": "请把刚才的安排",
+    "requestId": "quality-completion",
+    "suggestions": [],
+    "completion": "",
+    "durationMs": 2395
+  },
+  "usage": {
+    "month": "2026-10",
+    "timeZone": "Asia/Shanghai",
+    "sessionId": null,
+    "total": {
+      "requests": 12,
+      "unknownRequests": 2,
+      "unpricedRequests": 2,
+      "inputTokens": 19239,
+      "cachedInputTokens": 12992,
+      "outputTokens": 479,
+      "cost": 0.00746484
+    },
+    "days": [
+      {
+        "day": "2026-10-01",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-02",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-03",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-04",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-05",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-06",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-07",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-08",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-09",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-10",
+        "requests": 12,
+        "unknownRequests": 2,
+        "unpricedRequests": 2,
+        "inputTokens": 19239,
+        "cachedInputTokens": 12992,
+        "outputTokens": 479,
+        "cost": 0.00746484
+      },
+      {
+        "day": "2026-10-11",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-12",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-13",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-14",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-15",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-16",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-17",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-18",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-19",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-20",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-21",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-22",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-23",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-24",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-25",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-26",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-27",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-28",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-29",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-30",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-31",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      }
+    ],
+    "sessions": [
+      {
+        "sessionId": "session-3c2aabdd-5bd3-43ee-9f46-5ba573e09d39",
+        "requests": 12,
+        "unknownRequests": 2,
+        "unpricedRequests": 2,
+        "inputTokens": 19239,
+        "cachedInputTokens": 12992,
+        "outputTokens": 479,
+        "cost": 0.00746484
+      }
+    ],
+    "models": [
+      {
+        "profileId": "private-model-4565c6919f4d1143a17639ed3f6443f69d6fe569",
+        "requests": 12,
+        "unknownRequests": 2,
+        "unpricedRequests": 2,
+        "inputTokens": 19239,
+        "cachedInputTokens": 12992,
+        "outputTokens": 479,
+        "cost": 0.00746484
+      }
+    ],
+    "categories": [
+      {
+        "category": "conversation",
+        "requests": 6,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 17682,
+        "cachedInputTokens": 12800,
+        "outputTokens": 392,
+        "cost": 0.005922
+      },
+      {
+        "category": "next-suggestions",
+        "requests": 6,
+        "unknownRequests": 2,
+        "unpricedRequests": 2,
+        "inputTokens": 1557,
+        "cachedInputTokens": 192,
+        "outputTokens": 87,
+        "cost": 0.00154284
+      }
+    ],
+    "budget": {
+      "monthlyLimit": null,
+      "effectiveLimit": null,
+      "temporaryLimit": null,
+      "state": "unlimited"
+    }
+  },
+  "wire": [
+    {
+      "model": "mimo-v2.6-flash",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null
+    },
+    {
+      "model": "mimo-v2.6-flash",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null
+    },
+    {
+      "status": 200
+    },
+    {
+      "status": 200
+    },
+    {
+      "model": "mimo-v2.6-flash",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null
+    },
+    {
+      "status": 200
+    },
+    {
+      "model": "mimo-v2.6-flash",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null
+    },
+    {
+      "status": 200
+    },
+    {
+      "model": "mimo-v2.6-flash",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null
+    },
+    {
+      "status": 200
+    },
+    {
+      "model": "mimo-v2.6-flash",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null
+    },
+    {
+      "status": 200
+    }
+  ]
+}
