@@ -179,7 +179,7 @@ async function renderConversation({silent=false}={}){if(state.page!=='chat')retu
     const localByEvent=new Map(result.messages.filter(m=>typeof m.sourceEventId==='string')
       .map(m=>[m.sourceEventId,m]));
     const appendLocal=m=>{const row=messageNode(m.role,m.text,m.thumbnails,previewScope,m.messageId||m.id);content.append(row);
-      row.querySelector('.message-tools')?.remove();mobileMessageActions?.bind(row,{seq:m.messageId||m.id,type:m.role==='user'?'user.message':'assistant.message',data:{text:m.text}},id,{local:true});return row;};
+      row.querySelector('.message-tools')?.remove();mobileMessageActions?.bind(row,{seq:m.messageId||m.id,type:m.role==='user'?'user.message':'assistant.message',at:m.createdAt||m.at||m.timestamp||m.time,data:{text:m.text}},id,{local:true});return row;};
     for(const m of result.messages)if(!binding||Number.isSafeInteger(m.serverSeq)&&
       m.serverSeq<=binding.cutoverSyncSeq)appendLocal(m);
     if(binding){content.append(el('div','handoff-divider','从这里起，由电脑模型接着处理'));

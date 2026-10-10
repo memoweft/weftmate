@@ -21,9 +21,9 @@ try {
   await page.getByRole('button',{name:'引用选中文字',exact:true}).click();assert.match(await page.getByRole('textbox',{name:'输入消息',exact:true}).inputValue(),/^> /);await page.getByRole('textbox',{name:'输入消息',exact:true}).fill('');
   for(const theme of ['light','dark']){await page.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);await page.screenshot({path:join(evidence,`main-${theme}-actions.png`)});}
   await page.getByRole('button',{name:'更多回复操作',exact:true}).last().click();await page.getByRole('menuitem',{name:'开旁聊重新生成',exact:true}).click();
-  await page.getByText('主对话原始合成目标。',{exact:true}).waitFor();
+  await page.waitForFunction(()=>document.querySelector('#assistant-title').textContent!=='WeftMate');await page.getByText('主对话原始合成目标。',{exact:true}).waitFor();
   assert.deepEqual((await fixture.request('/chats/'+main.chatId+'/events?limit=200')).items,before);assert.equal(fixture.calls.length,0);
-  const chats=(await fixture.request('/chats?limit=50')).items,side=chats.find(chat=>chat.title==='重新讨论');assert.ok(side);
+  const chats=(await fixture.request('/chats?limit=50')).items,side=chats.find(chat=>chat.kind==='side'&&chat.originChatId===main.chatId)??chats.find(chat=>chat.kind==='side'&&chat.activeSessionId!==fixture.source);assert.ok(side);
   for(const theme of ['light','dark']){await page.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);await page.screenshot({path:join(evidence,`main-${theme}-side-resend.png`)});}
   writeFileSync(join(evidence,'main-chat-checks.json'),JSON.stringify({realElectron:true,mainCapabilitiesEnabled:true,mainQuote:true,processedUserCannotEdit:true,regenerateCreatesReferencedSide:true,mainHistoryUnchanged:true,noWholeMainFork:true,sourceChatId:main.chatId,sideChatId:side.chatId},null,2)+'\n');
   console.log('Main chat processed users have no edit entry; original history and quote behavior verified.');

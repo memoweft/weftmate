@@ -6,8 +6,8 @@
 .message-action:hover, .message-action[aria-pressed=true] { background:var(--accent-soft); color:var(--accent); }
 .message-action:focus-visible { outline:2px solid var(--accent); outline-offset:var(--wm-space-2); }
 .message-action:disabled { opacity:.5; cursor:not-allowed; }
-.message-action-primary { background:var(--accent); color:var(--wm-color-on-action); padding-inline:var(--wm-space-20); min-height:var(--wm-space-44); }
-.message-action-primary:hover { background:var(--accent); color:var(--wm-color-on-action); }
+.message-action-primary { background:var(--accent); color:var(--surface); padding-inline:var(--wm-space-20); min-height:var(--wm-space-44); }
+.message-action-primary:hover { background:var(--accent); color:var(--surface); }
 .message-versions { font-size:var(--wm-font-size-12); }
 .message-action-dialog { width:min(var(--wm-size-740),calc(100vw - 32px)); max-height:85dvh; overflow:auto; background:var(--surface); color:var(--ink); border:1px solid var(--line); border-radius:var(--wm-radius-16); padding:var(--wm-space-24); }
 .message-action-dialog::backdrop { background:var(--wm-color-desktop-scrim); }
@@ -36,6 +36,7 @@
 ::-webkit-scrollbar-thumb { background:var(--scroll-thumb); border:var(--wm-space-2) solid transparent; background-clip:padding-box; border-radius:var(--wm-radius-999); }
 ::-webkit-scrollbar-thumb:hover { background-color:var(--scroll-thumb-hover); border-width:var(--wm-space-1); }
 ::-webkit-scrollbar-button { display:none; width:0; height:0; }
+@supports selector(::-webkit-scrollbar) { * { scrollbar-width:auto!important; scrollbar-color:auto!important; } }
 textarea { resize:none!important; overflow:auto; caret-color:var(--accent); }
 #message-text,#draft { min-height:0; max-height:none; line-height:var(--wm-line-height-1_6); }
 summary { list-style:none; cursor:pointer; }
@@ -67,7 +68,7 @@ summary:focus-visible { outline:var(--wm-space-2) solid var(--accent); outline-o
 .model-empty-card p { font-size:var(--wm-font-size-18); line-height:var(--wm-line-height-1_6); }
 .needs-model-empty { display:flex!important; flex-direction:column; }
 .needs-model-empty > .welcome,.needs-model-empty > #chat-intro { display:none; }
-.model-setup-button { display:inline-flex; align-items:center; justify-content:center; min-height:var(--wm-space-44); padding:var(--wm-space-10) var(--wm-space-20); border:0; border-radius:var(--wm-radius-10); background:var(--accent); color:var(--wm-color-on-action); font:inherit; cursor:pointer; }
+.model-setup-button { display:inline-flex; align-items:center; justify-content:center; min-height:var(--wm-space-44); padding:var(--wm-space-10) var(--wm-space-20); border:0; border-radius:var(--wm-radius-10); background:var(--accent); color:var(--surface); font:inherit; cursor:pointer; }
 .model-setup-button:hover { filter:brightness(.95); }
 .model-setup-button:active { filter:brightness(.9); }
 .model-setup-button:focus-visible { outline:var(--wm-space-2) solid var(--accent); outline-offset:var(--wm-space-3); }
@@ -103,3 +104,11 @@ summary:focus-visible { outline:var(--wm-space-2) solid var(--accent); outline-o
 .memory-health::before { display:none!important; }
 
 .wm-menu-item.danger { color:var(--danger); }
+
+.menu-toggle-state { display:grid; place-items:center; flex:0 0 var(--wm-space-20); width:var(--wm-space-20); height:var(--wm-space-20); border:var(--wm-space-1) solid var(--line); border-radius:var(--wm-radius-6); margin-left:auto; }
+[aria-checked=true] > .menu-toggle-state { background:var(--accent); color:var(--surface); border-color:var(--accent); }
+#pick-thinking::after { content:''; display:block; width:var(--wm-space-20); height:var(--wm-space-20); margin-left:auto; border:var(--wm-space-1) solid var(--line); border-radius:var(--wm-radius-6); }
+#pick-thinking[aria-checked=true]::after { display:grid; place-items:center; color:var(--surface); background:var(--accent); border-color:var(--accent); }
+
+.memory-health.is-healthy .memory-issue-bar > svg { color:var(--success); }
+.memory-health.is-warning .memory-issue-bar > svg,.memory-issue-bar[data-formation-notice] > svg { color:var(--warning,var(--wm-color-warning)); }

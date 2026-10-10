@@ -65,7 +65,7 @@ async function shot(page,scene,surface,themeValue,state='正常') {
  console.log(file,defects.join(' / '));
 }
 async function theme(page,value,mobile=false){await page.evaluate(({value,mobile})=>{if(mobile)applyTheme(value);else document.documentElement.dataset.theme=value;},{value,mobile});}
-async function visibleReply(page){const name=await page.evaluate(()=>{const viewport=document.querySelector('#chat-scroll').getBoundingClientRect();return [...document.querySelectorAll('.message.assistant')].find(n=>{const r=n.getBoundingClientRect();return r.top>=viewport.top&&r.bottom<=viewport.bottom})?.getAttribute('aria-label')});assert.ok(name);const row=page.getByRole('group',{name,exact:true});await row.hover();return row;}
+async function visibleReply(page){const name=await page.evaluate(()=>{const viewport=document.querySelector('#chat-scroll').getBoundingClientRect();return [...document.querySelectorAll('.message.assistant')].find(n=>{const r=n.getBoundingClientRect();return r.top>=viewport.top&&r.bottom<=viewport.bottom})?.getAttribute('aria-label')});assert.ok(name);const row=page.getByRole('group',{name,exact:true});await row.focus();await row.hover();return row;}
 async function closeDialogs(page){await page.evaluate(()=>document.querySelectorAll('dialog[open]').forEach(d=>d.close()));}
 try {
  f=await startTimelineCandidate({daily:true,sidebar:true,logicalMobile:true,composerMenu:true,interactive:true,inlineProgress:true,historyCount:0,schedules:true,backups:true,usageSamples:true});

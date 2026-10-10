@@ -28,7 +28,8 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
             button.setAttribute('role', checked === undefined ? 'menuitem' : 'menuitemcheckbox');
             button.append(window.WeftIcons.create(icon, 20), ui.element('span', 'wm-menu-label', name));
             if (checked !== undefined) { button.setAttribute('aria-checked', String(checked));
-                if (checked) button.append(window.WeftIcons.create('allow', 16)); }
+                const indicator=ui.element('span','menu-toggle-state');indicator.setAttribute('aria-hidden','true');
+                if (checked) indicator.append(window.WeftIcons.create('allow', 16));button.append(indicator); }
             button.addEventListener('click', action); menu.append(button); return button;
         };
         const pick = id => { closeComposerMenu(true); ui.byId(id).click(); };

@@ -281,10 +281,10 @@ function processEvent(message){const {event,data}=message;if(state.page==='goals
       state.activeSend=null;state.sendUncertain=false;state.authEpoch++;state.transitionPending=true;state.busy=false;state.models=[];closeModelMenu();closeAttachmentMenu();cancelAttachmentPick();resetMemoryForAuthBoundary('正在切换账户，已清除上一个账户的记忆显示。');
       state.progressText='';state.phase='idle';
       status('正在切换账户并停止原回合…');renderAttachmentDrafts()}
-    else{state.transitionPending=!!data.oldTurnPending;if(state.transitionPending)status('等待原回合安全结束…')}
+    else{state.transitionPending=!!data.oldTurnPending;status(state.transitionPending?'等待原回合安全结束…':'')}
     updateComposer();
   }
-  if(event==='account.retired'){invalidateLiveProgress();state.transitionPending=false;state.busy=false;updateComposer();
+  if(event==='account.retired'){const wasTransitioning=state.transitionPending;invalidateLiveProgress();state.transitionPending=false;state.busy=false;if(wasTransitioning)status('');updateComposer();
     if(state.page==='chat')renderConversation();}
   if(event==='chat.delegated'&&data?.conversationId===state.conversationId&&state.chatSource==='phone'){
     state.busy=false;invalidateLiveProgress();state.phase='idle';

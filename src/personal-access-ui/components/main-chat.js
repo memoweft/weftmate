@@ -201,7 +201,9 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         tools = ui.element('div', 'main-chat-tools'); tools.hidden = true;
         tools.append(iconButton('search', '搜索主对话', () => { searchPanel.open = !searchPanel.open; searchPanel.hidden = !searchPanel.open; if (searchPanel.open) searchPanel.querySelector('input').focus(); }),
             iconButton('clock', '跳到日期', () => { const date = tools.querySelector('input'); date.hidden = !date.hidden; if (!date.hidden) { date.value=''; date.focus();  } }));
-        const date = ui.element('input'); date.type = 'text'; date.placeholder='YYYY-MM-DD'; date.inputMode='numeric'; date.pattern='[0-9]{4}-[0-9]{2}-[0-9]{2}'; date.hidden = true; date.setAttribute('aria-label', '跳到日期'); date.addEventListener('change', () => {date.hidden=true;void core.jumpChatDate(date.value).catch(() => ui.toast('日期暂时无法定位，请重试。')).finally(()=>tools.querySelectorAll('button')[1].focus());}); tools.append(date);
+        const date = ui.element('input'); date.type = 'text'; date.placeholder='YYYY-MM-DD'; date.inputMode='numeric'; date.pattern='[0-9]{4}-[0-9]{2}-[0-9]{2}'; date.hidden = true; date.setAttribute('aria-label', '跳到日期');
+        const jumpDate=()=>{if(!date.value)return;if(!date.checkValidity()){date.setAttribute('aria-invalid','true');ui.toast('请按年-月-日填写日期，例如 2026-10-10。');return;}date.removeAttribute('aria-invalid');date.hidden=true;void core.jumpChatDate(date.value).catch(() => ui.toast('日期暂时无法定位，请重试。')).finally(()=>tools.querySelectorAll('button')[1].focus());};
+        date.addEventListener('change',jumpDate);date.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();jumpDate();}if(event.key==='Escape'){event.preventDefault();event.stopPropagation();date.hidden=true;tools.querySelectorAll('button')[1].focus();}});tools.append(date);
         if (ui.mobile) ui.byId('chat-page').prepend(tools);
         else ui.byId('assistant-title').parentElement.after(tools);
         searchPanel = ui.element('form', 'main-chat-search'); searchPanel.hidden = true; searchPanel.setAttribute('aria-label', '主对话内搜索');
