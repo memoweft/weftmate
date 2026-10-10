@@ -16,8 +16,8 @@ test('f787c3c native data upgrades with preserved side history and a successful 
   const root=mkdtempSync(join(tmpdir(),'weftmate-fx21-upgrade-')),source=join(root,'old');mkdirSync(source);
   let h;
   try {
-    execFileSync('git',['archive','f787c3c','--output='+join(root,'old.tar')]);
-    execFileSync('tar',['-xf',join(root,'old.tar'),'-C',source]);
+    // Stream the archive: GNU tar (Git for Windows) reads a drive-letter archive path as a remote host.
+    execFileSync('tar',['-x','-C',source],{input:execFileSync('git',['archive','f787c3c'],{maxBuffer:1<<30})});
     symlinkSync(resolve('node_modules'),join(source,'node_modules'),process.platform==='win32'?'junction':'dir');
     mkdirSync(join(source,'vendor'));symlinkSync(resolve('vendor/dsh-runtime'),join(source,'vendor/dsh-runtime'),process.platform==='win32'?'junction':'dir');
     h=await migrationHost({source,old:true});

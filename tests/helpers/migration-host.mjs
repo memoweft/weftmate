@@ -42,11 +42,14 @@ export async function migrationHost({ executable, source = resolve(process.env.F
   finally { await prep.close(); }
   const config = join(root,'desktop-config.json');
   writeFileSync(config,JSON.stringify({schemaVersion:1,dataDirectory:profile,accessPort:0,updates:{channel:'preview'}}));
+  // Headless Linux runners have no desktop secret service; Chromium's basic store lets the
+  // synthetic model key be saved so this integration path runs there too. Windows uses DPAPI.
+  const linuxKeyring = process.platform === 'linux' ? ['--password-store=basic'] : [];
   h.launch = async () => {
     const env = {...process.env};
     for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_|MIMO_API_KEY|MODEL_SWITCH_UNIFIED_KEY|ELECTRON_RUN_AS_NODE)/.test(key)) delete env[key];
     env.WEFTMATE_MEMOWEFT_ENABLED = '0';
-    h.app = await _electron.launch({executablePath:h.executable || createRequire(import.meta.url)('electron'),args:h.executable?[`--desktop-config=${config}`]:[h.source,`--user-data-dir=${profile}`,'--personal-host','--access-port=0'],cwd:h.source,env,timeout:90000});
+    h.app = await _electron.launch({executablePath:h.executable || createRequire(import.meta.url)('electron'),args:[...(h.executable?[`--desktop-config=${config}`]:[h.source,`--user-data-dir=${profile}`,'--personal-host','--access-port=0']),...linuxKeyring],cwd:h.source,env,timeout:90000});
     h.page = await h.app.firstWindow(); h.page.setDefaultTimeout(15000);
     await h.page.waitForURL('**/personal/v1/ui*');
     await localUiSession(h.page,h.credentials,'FX21',{mainChat:!h.old});
@@ -79,7 +82,8 @@ export async function migrationHost({ executable, source = resolve(process.env.F
   try {
     await h.launch();
     const requestId = randomUUID();
-    assert.equal((await h.api('/account/models',{requestId,name:'FX21 合成模型',baseUrl:`http://127.0.0.1:${server.address().port}/v1`,modelId:'synthetic-fx21',apiKey:'synthetic-fx21-key'})).status,202);
+    const added = await h.api('/account/models',{requestId,name:'FX21 合成模型',baseUrl:`http://127.0.0.1:${server.address().port}/v1`,modelId:'synthetic-fx21',apiKey:'synthetic-fx21-key'});
+    assert.equal(added.status,202,JSON.stringify(added.body));
     await until(async () => (await h.api('/account/models/by-request/'+requestId)).body.operation?.status==='succeeded');
     h.modelId=(await h.api('/models')).body.models.find(m=>m.name==='FX21 合成模型').id;
     h.hostId=(await h.api('/status')).body.hostId;
