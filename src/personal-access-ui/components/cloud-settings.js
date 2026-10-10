@@ -19,7 +19,7 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         const actions = ui.byId('cloud-account-actions');
         actions.append(button('换绑邮箱', () => accountFlow('email')), button('修改密码', () => accountFlow('password')),
             button('退出登录', () => void act(core.cloudLogout)), button('退出所有其他设备', () => confirmAction('退出所有其他设备', '其他设备将退出登录，当前设备继续可用。', async () => { await core.cloudLogoutOthers(); await refreshDirectory(); })),
-            button('注销账号', () => accountFlow('delete'), 'danger'));
+            button('注销账号', () => ui.openSettings('data'), 'danger'));
         if (globalThis.weftmateDesktop) {
             actions.append(button('设置离线密码', () => accountFlow('emergency')));
             ui.byId('cloud-device-actions').append(button('添加设备', () => void showPairing()));

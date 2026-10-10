@@ -158,6 +158,10 @@ export function bindSessionModel(sessionId: string, profileId: string, restoreIn
 export function profileHasSessionBinding(profileId: string): boolean {
   return Object.values(read().sessionBindings ?? {}).some((binding) => binding.profileId === profileId);
 }
+export function unbindSessionModel(sessionId: string): void {
+  const settings=read();if(!settings.sessionBindings?.[sessionId])return;
+  delete settings.sessionBindings[sessionId];write(settings);
+}
 
 /** Explicitly persisted by legacy migration; it is intentionally not activeId. */
 export function legacyCompatibilityProfileId(): string | null {
