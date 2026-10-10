@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import {_electron} from 'playwright';
 import {createRequire} from 'node:module';
@@ -9,6 +11,7 @@ process.env.TEMP=process.env.TMP='C:/Temp';
 const root=mkdtempSync('C:/Temp/weftmate-ux9-native-'),folder=join(root,'SyntheticSelection');mkdirSync(folder);
 const fixture=await startFixture(),repository=resolve('.'),out=join(repository,'tests/evidence/ux-9');let app;
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 try{
  app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:repository,args:['scripts/review-gallery/electron.mjs'],env:{...env,REVIEW_PROFILE:join(root,'profile'),REVIEW_ORIGIN:fixture.origin,REVIEW_LIBRARY_TOKEN:fixture.libraryDesktopToken,REVIEW_THEME:'light'}});
  const page=await app.firstWindow();await localUiSession(page,fixture.credentials,'UX-9 native selection',{mainChat:true});await page.getByRole('button',{name:'WeftMate 主对话',exact:true}).waitFor();await page.locator('#new-session').click();await page.getByRole('button',{name:'选择文件夹',exact:true}).waitFor();

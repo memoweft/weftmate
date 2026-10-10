@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import { execFileSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
@@ -21,6 +23,7 @@ mkdirSync(evidence, { recursive: true });
 let candidate = await startTimelineCandidate({ historyCount: 0, interactive: true, riskApproval: true, baseTime: Date.parse('2026-10-08T08:00:00Z') });
 const env = { ...process.env };
 for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key.startsWith('MEMOWEFT_') || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 let application, fixtureOwner, page; const errors = [];
 async function until(check) { const deadline = performance.now() + 30000; while (performance.now() < deadline) { if (await check()) return; await new Promise(done => setTimeout(done, 100)); } throw Error('Fixture condition timed out'); }
 try {

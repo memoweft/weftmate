@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Synthetic model, real Electron/DSH: project escape still requires explicit one-shot approval in allow-all. */
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
@@ -29,6 +31,7 @@ const model=createServer(async(req,res)=>{
 });
 await new Promise(done=>model.listen(0,'127.0.0.1',done));
 const env={...process.env};for(const key of Object.keys(env))if(key.startsWith('WEFTMATE_')||key.startsWith('MEMOWEFT_')||key==='ELECTRON_RUN_AS_NODE')delete env[key];env.WEFTMATE_BASELINE_TRACE=join(root,'requests.jsonl');
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 let app,page;const pause=ms=>new Promise(done=>setTimeout(done,ms));
 async function api(path,body,method=body?'POST':'GET'){return page.evaluate(async({path,body,method})=>{const me=await(await fetch('/personal/v1/auth/me')).json();const response=await fetch('/personal/v1'+path,{method,headers:{'content-type':'application/json','x-weftmate-csrf':me.csrfToken},body:body?JSON.stringify(body):undefined});return{status:response.status,body:await response.json()};},{path,body,method});}
 async function until(check){const end=Date.now()+60000;while(Date.now()<end){const value=await check();if(value)return value;await pause(200);}throw Error('Synthetic project escalation timed out');}

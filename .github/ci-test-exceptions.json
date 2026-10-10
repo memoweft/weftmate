@@ -10,7 +10,7 @@
   "platformTests": [
     {
       "file": "tests/dsh-web-runtime-lifecycle.test.ts",
-      "name": "ready child 与 descendant 都随 close 退出，且迟到 close 事件不触发 respawn",
+      "name": "ready child \u4e0e descendant \u90fd\u968f close \u9000\u51fa\uff0c\u4e14\u8fdf\u5230 close \u4e8b\u4ef6\u4e0d\u89e6\u53d1 respawn",
       "platforms": [
         "darwin",
         "linux"
@@ -20,7 +20,7 @@
     },
     {
       "file": "tests/dsh-vendor-closure.test.ts",
-      "name": "当前平台可把未构建的外部平台 optional 包留在闭包 manifest 中",
+      "name": "\u5f53\u524d\u5e73\u53f0\u53ef\u628a\u672a\u6784\u5efa\u7684\u5916\u90e8\u5e73\u53f0 optional \u5305\u7559\u5728\u95ed\u5305 manifest \u4e2d",
       "platforms": [
         "linux"
       ],
@@ -31,20 +31,18 @@
       "file": "tests/migration-first-message.test.ts",
       "name": "real main gateway and pinned DSH create a fresh main session and answer its first message",
       "platforms": [
-        "darwin",
-        "linux"
+        "darwin"
       ],
-      "reason": "Adds a model through the real desktop host, which stores the key with Electron safeStorage. Headless Linux/macOS runners have no OS secret service (the host answers STORAGE_UNAVAILABLE), so this integration path is verified on Windows: the local vendor gate and the nightly regression run it. Follow-up: give the Linux vendor job a keyring so it runs there as well.",
+      "reason": "Headless macOS has no unlocked OS keychain. Linux runs with an isolated D-Bus session and GNOME keyring in the pinned vendor job; Windows uses safeStorage. No plaintext fallback.",
       "tracking": "https://github.com/memoweft/weftmate/pull/200"
     },
     {
       "file": "tests/migration-first-message.test.ts",
       "name": "f787c3c native data upgrades with preserved side history and a successful first main message",
       "platforms": [
-        "darwin",
-        "linux"
+        "darwin"
       ],
-      "reason": "Adds a model through the real desktop host, which stores the key with Electron safeStorage. Headless Linux/macOS runners have no OS secret service (the host answers STORAGE_UNAVAILABLE), so this integration path is verified on Windows: the local vendor gate and the nightly regression run it. Follow-up: give the Linux vendor job a keyring so it runs there as well.",
+      "reason": "Headless macOS has no unlocked OS keychain. Linux runs with an isolated D-Bus session and GNOME keyring in the pinned vendor job; Windows uses safeStorage. No plaintext fallback.",
       "tracking": "https://github.com/memoweft/weftmate/pull/200"
     }
   ]

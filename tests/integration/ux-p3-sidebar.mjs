@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** D50 / UX-P3: production Electron and touch bundles against synthetic isolated hosts. */
 import assert from 'node:assert/strict';
 import {_electron,chromium} from 'playwright';
@@ -12,6 +14,7 @@ import {localUiSession} from '../helpers/local-ui-session.mjs';
 const root=resolve(import.meta.dirname,'../..'),out=join(root,'tests/evidence/ux-p3');await mkdir(out,{recursive:true});
 const before=process.argv.includes('--before'),prefix=before?'before':'after';
 const env={...process.env};for(const k of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(k)||k==='ELECTRON_RUN_AS_NODE')delete env[k];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const errors=[],checks=[],shots=[],scrollSurfaces=[];let f,app,browser,profile;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));const b=(p,name)=>p.getByRole('button',{name,exact:true}).filter({visible:true});
 async function shot(p,s,t,name){await wait(140);const file=`${prefix}-${s}-${t}-${name}.png`;await p.screenshot({path:join(out,file)});shots.push(file);scrollSurfaces.push({file,...await p.evaluate(()=>({selectorSupported:CSS.supports('selector(::-webkit-scrollbar)'),webkitSupported:CSS.supports('(-webkit-appearance:none)'),surfaces:[...document.querySelectorAll('#chat-scroll,#session-list,.settings-navigation,.settings-content,[role=menu],dialog,.timeline-preview,.library-surface,.goals-surface,.activity-surface,.model-options')].map(n=>({tag:n.tagName,id:n.id,class:String(n.className),width:getComputedStyle(n).scrollbarWidth,color:getComputedStyle(n).scrollbarColor,button:getComputedStyle(n,'::-webkit-scrollbar-button').display,buttonHeight:getComputedStyle(n,'::-webkit-scrollbar-button').height}))}))});assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false,file+' no horizontal overflow');console.log(file);}

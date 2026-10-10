@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
 import { mkdtemp,mkdir,writeFile,rm } from 'node:fs/promises';
@@ -11,6 +13,7 @@ const executable=resolve(process.argv[2]);let application;
 await mkdir(profile);await writeFile(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 saveDesktopConfig(configFile,{schemaVersion:1,dataDirectory:profile,accessPort:0,production:{cloudIssuer:'',relayEnabled:false,acmeEnabled:false},updates:{channel:'preview'}});
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_|ELECTRON_RUN_AS_NODE)/.test(key))delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 try{
  application=await _electron.launch({executablePath:executable,args:[],cwd:root,env,timeout:90000});
  const page=await application.firstWindow({timeout:90000});await page.waitForURL('**/personal/v1/ui*');await page.waitForFunction(()=>globalThis.__WeftUiStarted===true);

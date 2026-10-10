@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
@@ -17,6 +19,7 @@ const results = [], errors = [];
 let app, candidate, browser, server, phase = 'after';
 const env = { ...process.env };
 for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key.startsWith('MEMOWEFT_') || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 async function check(page, locator, name, size, enforce = true) {
   await locator.waitFor(); await page.waitForTimeout(300);
   const rect = await locator.evaluate(node => { const r = node.getBoundingClientRect(), v = visualViewport; return { presentation: node.dataset.presentation, left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height, viewport: { left: v?.offsetLeft || 0, top: v?.offsetTop || 0, width: v?.width || innerWidth, height: v?.height || innerHeight }, scrollHeight: node.scrollHeight, clientHeight: node.clientHeight }; });

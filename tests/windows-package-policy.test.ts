@@ -35,10 +35,10 @@ describe('Windows candidate package policy', () => {
 
   it('detects development-machine paths and bounds updater errors', () => {
     assert.equal(containsDevelopmentPath('D:\\AIProjects\\WeftMate\\Repository\\src'), true);
-    assert.equal(containsDevelopmentPath('C:/Users/yun/private'), true);
+    assert.equal(containsDevelopmentPath('C:/Users/<user>/private'), true);
     assert.equal(containsDevelopmentPath('resources/dsh-runtime'), false);
-    const failure = sanitizeUpdateFailure(new Error('ENOENT C:\\Users\\yun\\private\\latest.yml token=secret'));
-    assert.doesNotMatch(failure, /C:|yun|token|secret|ENOENT/);
+    const failure = sanitizeUpdateFailure(new Error('ENOENT C:\\Users\\<user>\\private\\latest.yml token=secret'));
+    assert.doesNotMatch(failure, /C:|<user>|token|secret|ENOENT/);
     assert.match(sanitizeUpdateFailure(new Error('signature mismatch')), /签名/);
   });
 });

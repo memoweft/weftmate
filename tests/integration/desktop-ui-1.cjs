@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Minimal isolated Electron entry for the portable interaction suite; FE-1a also launches the real program. */
 const { app, BrowserWindow } = require('electron')
 const { mkdtempSync, realpathSync } = require('node:fs')

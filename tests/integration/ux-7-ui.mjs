@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** UX-7 production Electron/mobile presentation with deterministic ephemeral model responses. */
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
@@ -11,6 +13,7 @@ import { exposeUx7Desktop, mockUx7Requests, prepareUx7Suggestions, ux7Replies, c
 const root = resolve(import.meta.dirname, '../..'), out = join(root, 'tests/evidence/ux-7');
 await mkdir(out, { recursive: true });
 const env = { ...process.env }; for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_)/.test(key) || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const rows = [], errors = [], checks = []; let app, browser, profile, fixture, replies = ux7Replies;
 const pages=new Set();let activeScene=null;
 const coreCode = 'globalThis.__ux7core || uiCore';

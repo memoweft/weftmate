@@ -44,5 +44,5 @@ export function forbiddenArchiveEntry(entry) {
 export function containsDevelopmentPath(text) {
   const value = String(text)
   return /D:[\\/]AIProjects[\\/](?:WeftMate[\\/]Repository|Shared[\\/]Dependencies)/i.test(value)
-    || /C:[\\/]Users[\\/]yun(?:[\\/]|$)/i.test(value)
+    || /[A-Za-z]:[\\/]+Users[\\/]+(?:<user>|[^\\/\r\n"\x27<>]+)(?:[\\/]|$)/i.test(value)
 }

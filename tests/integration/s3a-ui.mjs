@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Native phone sizes/permission sheet and the actual Electron settings form. */
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
@@ -33,6 +35,7 @@ try{
  }
  await p.close();p=null;
  const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+ env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
  app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:resolve('.'),args:['scripts/review-gallery/electron.mjs'],env:{...env,REVIEW_PROFILE:profile,REVIEW_ORIGIN:f.origin,REVIEW_THEME:'light'}});
  const desktop=await app.firstWindow();desktop.on('pageerror',e=>report.errors.push(e.message));await localUiSession(desktop,f.credentials,'S3a layout synthetic',{mainChat:true});
  await desktop.getByRole('button',{name:'账户菜单',exact:true}).click();await desktop.getByRole('button',{name:'设置',exact:true}).click();await desktop.getByRole('navigation',{name:'设置分类'}).getByRole('button',{name:'通知',exact:true}).click();

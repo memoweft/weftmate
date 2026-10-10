@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import { chromium, _electron } from 'playwright';
 import { createRequire } from 'node:module';
@@ -32,6 +34,7 @@ try {
       }
       profile=await mkdtemp(join(tmpdir(),'weftmate-and1-desktop-'));
       const env={...process.env,REVIEW_PROFILE:profile,REVIEW_THEME:theme,REVIEW_ORIGIN:fixture.origin};delete env.ELECTRON_RUN_AS_NODE;
+      env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
       application=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),args:['scripts/review-gallery/electron.mjs','--force-device-scale-factor=1'],env,timeout:60000});
       const page=await application.firstWindow();await page.addInitScript(theme=>localStorage.setItem('weftmate.desktop.appearance.v1',JSON.stringify({theme,accent:'neutral',fontSize:'15'})),theme);await page.reload();await localUiSession(page,fixture.credentials,'AND-1 合成桌面',{mainChat:true});
       await application.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows()[0];w.setContentSize(480,800);w.show();w.focus()});await page.waitForTimeout(350);

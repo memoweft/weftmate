@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Private backup is read-only; only its disposable copy is started, then restored and hashed. */
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
@@ -42,6 +44,7 @@ const difference = (a, b) => ({ added: [...b.keys()].filter(key => !a.has(key)).
   changed: [...a.keys()].filter(key => b.has(key) && a.get(key) !== b.get(key)).length });
 const env = { ...process.env, NODE_OPTIONS: `--require=${join(repository, 'tests/integration/r0-1-offline.cjs')}` };
 for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_|MIMO_API_KEY|MODEL_SWITCH_UNIFIED_KEY|ELECTRON_RUN_AS_NODE)/.test(key)) delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 env.LOCALAPPDATA = join(root, 'Local'); await mkdir(env.LOCALAPPDATA);
 async function start(installed) {
   application = await _electron.launch({ executablePath: installed ? executable : createRequire(import.meta.url)('electron'),

@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** MOB-P1: isolated real host, synthetic content, shipped phone assets and Electron. */
 import assert from 'node:assert/strict';
 import {chromium, _electron} from 'playwright';
@@ -88,6 +90,7 @@ try{
   await capture(p,surface,width,theme);await p.close();
  }
  if(!before){profile=await mkdtemp(join(tmpdir(),'weftmate-mobp1-electron-'));const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+ env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
   app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:resolve('.'),args:['scripts/review-gallery/electron.mjs','--force-device-scale-factor=1'],env:{...env,REVIEW_PROFILE:profile,REVIEW_ORIGIN:f.origin,REVIEW_THEME:'light'}});const p=await app.firstWindow();p.setDefaultTimeout(8000);await p.route('**/personal/v1/ui/app.js',route=>route.fulfill({contentType:'text/javascript',body:exposeCore(readFileSync(resolve('src/personal-access-ui/app.js'),'utf8'))}));await p.route('**/personal/v1/memory/**',route=>route.fulfill({json:memoryResponse(new URL(route.request().url()).pathname)}));await localUiSession(p,f.credentials);await p.locator('#message-text:not([disabled])').waitFor();
   for(const width of [1120,480])for(const theme of ['light','dark']){await app.evaluate(({BrowserWindow},width)=>BrowserWindow.getAllWindows()[0].setContentSize(width,800),width);await capture(p,'electron',width,theme);}
  }
