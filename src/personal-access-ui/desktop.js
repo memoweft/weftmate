@@ -19,36 +19,7 @@
   }
   applyAppearance(appearanceStore.value)
   media?.addEventListener?.('change', () => { if (appearance.theme === 'system') applyAppearance() })
-  function markdown(text, cls = 'markdown-body') {
-    const content = node('div', cls)
-    if (window.WeftFormat?.render) content.innerHTML = window.WeftFormat.render(text)
-    else content.textContent = text
-    // Keep links and images in the workspace; never open a separate window.
-    for (const link of content.querySelectorAll('a')) {
-      link.removeAttribute('target')
-      link.addEventListener('click', e => {
-        e.preventDefault()
-        let url
-        try { url = new URL(link.getAttribute('href'), location.href) } catch { return }
-        if (!['https:', 'http:'].includes(url.protocol)) return
-        const target = openPreview(link.textContent || '网页', link, `url:${url.href}`, 'webpage')
-        const description = node('p', 'muted', '查看网页地址，或让助手读取网页内容。')
-        const address = node('input'); address.readOnly = true; address.value = url.href; address.setAttribute('aria-label', '网页地址')
-        const copy = node('button', 'button secondary small', '复制地址'); copy.type = 'button'
-        copy.addEventListener('click', async () => { try { await navigator.clipboard.writeText(url.href); copy.textContent = '已复制' } catch { copy.textContent = '请选择地址复制' } })
-        target.content.replaceChildren(description, address, copy)
-      })
-    }
-    for (const image of content.querySelectorAll('img')) {
-      image.addEventListener('click', () => showImage(image.src, image.alt || '图片', image))
-    }
-    for (const pre of content.querySelectorAll('pre')) {
-      const copy = node('button', 'code-copy', '复制'); copy.type = 'button'
-      copy.addEventListener('click', async () => { try { await navigator.clipboard.writeText(pre.querySelector('code')?.textContent || ''); copy.textContent = '已复制' } catch { copy.textContent = '请选择文字复制' } })
-      pre.append(copy)
-    }
-    return content
-  }
+  function markdown(text, cls = 'markdown-body', options = {}) { return globalThis.WeftContent.create(text, cls, options) }
   function fileLabel(file) {
     const ext = (file.fileName || '').split('.').pop().toLowerCase()
     const mime = (file.contentType || '').split(';')[0]
