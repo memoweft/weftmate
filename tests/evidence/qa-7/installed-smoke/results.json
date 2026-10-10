@@ -12,7 +12,7 @@
   ],
   "packaged": {
     "isPackaged": true,
-    "appPath": "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa7-install-IVrul0\\Programs\\resources\\app.asar"
+    "appPath": "C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-qa7-install-IVrul0\\Programs\\resources\\app.asar"
   },
   "folderCommands": [
     {
@@ -150,7 +150,7 @@
           "content": "{\"loaded\":[\"read\",\"write\"]}"
         },
         {
-          "content": "<path>C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-fx21-wVwBQl\\synthetic-project\\brief.md</path>\n<type>file</type>\n<content>\n1: FX21 synthetic project file\n\n(End of file - total 1 lines)\n</content>"
+          "content": "<path>C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-fx21-wVwBQl\\synthetic-project\\brief.md</path>\n<type>file</type>\n<content>\n1: FX21 synthetic project file\n\n(End of file - total 1 lines)\n</content>"
         }
       ]
     },
@@ -161,10 +161,10 @@
           "content": "{\"loaded\":[\"read\",\"write\"]}"
         },
         {
-          "content": "<path>C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-fx21-wVwBQl\\synthetic-project\\brief.md</path>\n<type>file</type>\n<content>\n1: FX21 synthetic project file\n\n(End of file - total 1 lines)\n</content>"
+          "content": "<path>C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-fx21-wVwBQl\\synthetic-project\\brief.md</path>\n<type>file</type>\n<content>\n1: FX21 synthetic project file\n\n(End of file - total 1 lines)\n</content>"
         },
         {
-          "content": "<path>C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-fx21-wVwBQl\\synthetic-project\\approved.md</path>\n<type>file</type>\n<content>\nCreated file\n</content>{\"artifact\":{\"taskId\":\"cmd-28a175d8-052d-4137-9356-0b4ea3384ba1\",\"artifactId\":\"artifact-9d68e9f6-da3c-4a18-84d1-258895af2c86\",\"fileName\":\"approved.md\",\"contentType\":\"text/plain; charset=utf-8\",\"size\":28,\"sha256\":\"ca1e3c188b81dba2447c0d51777b8ba76a6387668ed78fac6ab2b2cfdb18de43\",\"state\":\"observed\"},\"createdFilePath\":\"C:\\\\Users\\\\yun\\\\AppData\\\\Local\\\\Temp\\\\weftmate-fx21-wVwBQl\\\\synthetic-project\\\\approved.md\"}"
+          "content": "<path>C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-fx21-wVwBQl\\synthetic-project\\approved.md</path>\n<type>file</type>\n<content>\nCreated file\n</content>{\"artifact\":{\"taskId\":\"cmd-28a175d8-052d-4137-9356-0b4ea3384ba1\",\"artifactId\":\"artifact-9d68e9f6-da3c-4a18-84d1-258895af2c86\",\"fileName\":\"approved.md\",\"contentType\":\"text/plain; charset=utf-8\",\"size\":28,\"sha256\":\"ca1e3c188b81dba2447c0d51777b8ba76a6387668ed78fac6ab2b2cfdb18de43\",\"state\":\"observed\"},\"createdFilePath\":\"C:\\Users\\<user>\\\\AppData\\\\Local\\\\Temp\\\\weftmate-fx21-wVwBQl\\\\synthetic-project\\\\approved.md\"}"
         }
       ]
     },

@@ -180,7 +180,7 @@
               "fileName": "approved.txt",
               "type": "document",
               "size": 29,
-              "location": "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa7-live-zgPryp\\QA7-project\\approved.txt",
+              "location": "C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-qa7-live-zgPryp\\QA7-project\\approved.txt",
               "exists": true,
               "createdAt": "2026-10-10T16:30:51.351Z",
               "modifiedAt": "2026-10-10T16:30:51.351Z",
