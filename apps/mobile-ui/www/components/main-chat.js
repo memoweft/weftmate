@@ -5,7 +5,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
     let rows = [], offsets = [], frame = null, anchor = null, observer, sidebar, tools, searchPanel, origin, top, bottom, generation = 0, fixedNavigation;
     const box = () => ui.byId('chat-scroll'), list = () => ui.byId('transcript');
     const listStart = () => list().getBoundingClientRect().top - box().getBoundingClientRect().top + box().scrollTop;
-    const fixedTitle = () => document.body.classList.contains('goals-open') ? '目标' : document.body.classList.contains('activity-open') ? '动态' : 'WeftMate';
+    const fixedTitle = () => document.body.classList.contains('library-open') ? '成果库' : document.body.classList.contains('goals-open') ? '目标' : document.body.classList.contains('activity-open') ? '动态' : 'WeftMate';
     const main = () => core.inMainChat?.() === true;
     const button = (text, name, action, className = 'button quiet small') => {
         const node = ui.element('button', className, text); node.type = 'button'; node.setAttribute('aria-label', name || text);

@@ -1319,6 +1319,30 @@ D33：删除对话前取消该对话的原生安排、清除当前目标及管�
 
 Apple（苹果端）：Mac 执行宿主按本节读取安装进度并保存步骤，远程 iPhone / Mac 只接「连电脑」说明与现有扫码 / 批准流程；Watch（手表）不显示七步引导。文案与提供方获取密钥说明的中文来源为 `src/ui-core/onboarding-copy.js`，英文随 L10N-1 补齐。
 
+### 9.9 成果库（TB-3 正式，D33 / D43）
+
+`GET /status.personalCapabilities` 精确声明 `library:1,libraryPreview:1`；电脑具备原生打开适配时声明 `libraryDesktopActions:1`，否则为0。客户端按精确版本启用，不把字段存在当作支持。
+
+| 方法与路径 | 请求 | 响应 / 行为 |
+|---|---|---|
+| GET `/library` | `cursor?,limit?`（默认50，1–200）、`projectId?`、`type?`（document / spreadsheet / image / code / other）、`after?,before?`（时间字符串，按产出时间含边界）、`search?`（文件名包含匹配，忽略大小写，≤200字符） | 200 `{items,total,projects:[{id,name}],hasMore,nextCursor,revision}`，新到旧；游标签名绑定账户、筛选与成果修订。新增 / 删除途中继续旧页返回409 `CURSOR_RESET_REQUIRED`，重新读第一页。 |
+| GET `/library/{id}` | 无 | 200 `{item}`，补原生来源的 `seq,eventId`，打开来源时定位成果工具结果；后台子任务沿父任务的原生回执定位父工具步骤。 |
+| GET `/library/{id}/preview` | 无 | 200 `{item,kind,text?,contentType?,data?,reason?}`；kind=markdown / text / code / image / pdf / unsupported / missing。data为Base64（二进制文本编码），不含任意路径参数。文本≤128 KiB（千二进制字节）、光栅图片≤5 MiB（兆二进制字节）、PDF≤20 MiB；其它格式 / 超限保留索引，返回unsupported；超限reason=too_large。 |
+| POST `/library/{id}/open` | `{}` | 200 `{opened:true}`，用默认程序打开索引中的实际文件；仅桌面主进程可调用。 |
+| POST `/library/{id}/show` | `{}` | 200 `{opened:true}`，在文件夹中显示索引中的实际文件；仅桌面主进程可调用。 |
+
+`LibraryItem` 为 `{id,fileName,type,size,location,createdAt,modifiedAt,exists,projectId,projectName,source,previewPath,actions:{open,show}}`。id复用artifactId，source含 `chatId?,sessionId,taskId,messageId,turn,callId`；详情加 `seq,eventId`。messageId是原命令身份，seq/eventId是产出它的原生时间线条目，不能混用。项目是产出时所属项目；修改会话归属不重新归类旧文件。location为本账户已验证输出的原位置，供本人复制路径；只通过ID读取 / 打开，不提供路径读取或执行接口。远程网页不显示桌面打开 / 定位按钮。
+
+索引直接投影已有助手成果回执，覆盖主对话分段、旁聊、项目与后台子任务；同一原位置显示最新产出回执。原生文件仍留在原处，返回当前大小 / 修改时间；原文件移走、删除、换成链接或被其它文件替换时exists=false，界面写“已不在原位置”。不扫描账户外目录、不登记用户上传的输入附件。旧文本导出从已校验快照恢复为带真实文件名的输出文件，一次持久登记，之后移动不会重新生成；这些输出与可清理的对话快照分别保存。
+
+文本 / 图片 / PDF共用原有侧面板或手机全屏成果预览容器与安全文本呈现，PDF用隔离的Blob（内存文件）文档框架；SVG只作文本，不执行图片脚本。预览只读索引内普通文件，拒绝链接、身份替换和读取中增长超过上限。移动不报业务错误，文件不存在时返回missing；未登记、临时或已清理ID返回404 `NOT_FOUND`。
+
+MEM-2以执行回合冻结的记忆策略排除临时产出，混合旧来源无法确定时整体排除。D33删除 / 遗忘沿现有派生内容清理标记索引失效，删除原位置元数据；不删除用户原文件或已导出文件。清理前来源的迟到输出不能复活索引；原生正文是否保留仍按D33默认不勾的原话规则。账户切换、筛选换代的迟到页面 / 预览均丢弃。
+
+桌面操作复用 `wm:desktop:artifact`，渲染器只传ID与library-open / library-show。主进程核对登录并用宿主进程私有的 `X-WeftMate-Desktop` 标记及CSRF（跨站请求伪造防护）调用上述POST，再次核对账户、索引和文件存在状态；标记不发给网页、不持久保存。网页 / 手机即使有正常Cookie（会话凭据）和CSRF也返回403 `FORBIDDEN`，没有任意路径或任意程序启动口子。
+
+TB-4复用手机菜单 `page('library')` 与ui-core模型，不另建索引。安卓业务桥只加入成果列表 / 详情 / 预览的精确路径，拒绝open / show；需要新壳版本，由编排统一递增。本包不改变安卓版本号。Apple（苹果端）按上述能力和模型接线，Mac用本机原生动作，iPhone沿全屏预览与来源定位。
+
 
 ### FX-17：纠正形成状态与重试
 

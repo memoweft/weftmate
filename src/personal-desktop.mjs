@@ -41,7 +41,7 @@ export function restoreDesktopBounds(saved, displays) {
     y: Math.max(area.y, Math.min(bounds.y, area.y + area.height - height)) };
 }
 
-export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, startInTray = false, onStatus = () => {} }) {
+export function createPersonalDesktop({ libraryDesktopToken = null, origin, setupGrant = null, isQuitting, startInTray = false, onStatus = () => {} }) {
   const stateFile = join(app.getPath('userData'), 'desktop-window.json');
   let saved = {};
   try { saved = JSON.parse(readFileSync(stateFile, 'utf8')); } catch { /* first launch */ }
@@ -80,7 +80,7 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
     const error = await shell.openPath(directory); if (error) throw new Error('LOG_FOLDER_UNAVAILABLE');
     return { opened: true };
   });
-  const fetchLocal = path => desktopSession.fetch(new URL(`/personal/v1${path}`, contentOrigin).href, { credentials: 'include' });
+  const fetchLocal = (path, options = {}) => desktopSession.fetch(new URL(`/personal/v1${path}`, contentOrigin).href, { ...options, credentials: 'include' });
   const jsonLocal = async path => {
     const response = await fetchLocal(path);
     if (!response.ok) throw new Error('Session unavailable');
@@ -180,7 +180,13 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
     return settings();
   });
   handle('wm:desktop:artifact', async ({ artifactId, action } = {}) => {
-    if (!/^[A-Za-z0-9_-]{1,128}$/.test(artifactId) || !['open', 'show'].includes(action)) throw new Error('Invalid artifact');
+    if (!/^[A-Za-z0-9_-]{1,128}$/.test(artifactId) || !['open', 'show', 'library-open', 'library-show'].includes(action)) throw new Error('Invalid artifact');
+    if (action.startsWith('library-')) {
+      const auth = await jsonLocal('/auth/me');
+      const response = await fetchLocal(`/library/${artifactId}/${action.slice(8)}`, { method: 'POST', headers: { 'content-type': 'application/json', origin:contentOrigin, 'x-weftmate-csrf': auth.csrfToken, 'x-weftmate-desktop': libraryDesktopToken }, body: '{}' });
+      if (!response.ok) throw new Error('Artifact unavailable');
+      return response.json();
+    }
     // Authorization and checksum verification remain in the existing artifact download route.
     // The renderer passes an ID, never an arbitrary filesystem path or URL.
     const response = await fetchLocal(`/artifacts/${artifactId}/download`);
