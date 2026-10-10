@@ -44,6 +44,8 @@ export async function startAndroid(out) {
     const page = browser.contexts()[0].pages().find(row => row.url().includes('appassets'));
     if (!page) throw Error('Actual HybridActivity WebView missing');
     await page.waitForFunction(() => document.documentElement.dataset.nativeInsets === 'true');
+    await page.waitForFunction(() => state.booted);
+    const entryUrl = page.url();
     const safe = await page.evaluate(() => Object.fromEntries(['top','right','bottom','left'].map(side => [side, getComputedStyle(document.documentElement).getPropertyValue(`--native-safe-${side}`).trim()])));
     // Gallery fixtures replace only the presentation transport. Preserve real native
     // geometry when their synthetic pages navigate away from the asset-loader origin.
@@ -51,7 +53,7 @@ export async function startAndroid(out) {
       for (const [side, value] of Object.entries(safe)) document.documentElement.style.setProperty(`--native-safe-${side}`, value);
       document.documentElement.dataset.nativeInsets = 'true';
     }), safe);
-    return { browser, page, reverse, theme: async () => {}, screenshot: async () => {
+    return { browser, page, entryUrl, reverse, theme: async () => {}, screenshot: async () => {
       const renderedTheme = await page.evaluate(() => document.documentElement.dataset.theme);
       await until(() => command('shell', 'run-as', pkg, 'cat', 'files/nightly-bars-theme.txt').toString().trim() === renderedTheme);
       await page.evaluate(() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done))));

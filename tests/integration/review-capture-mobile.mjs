@@ -7,7 +7,7 @@ import {startRenderingCandidate} from './ux-5-fixture.mjs';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { startMainChatCandidate } from './main-chat-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
-import { mockUx7Requests, prepareUx7Suggestions } from './ux-7-scenes.mjs';
+import { mockUx7Requests, prepareUx7Suggestions, ux7Replies } from './ux-7-scenes.mjs';
 import { mobileBridge } from '../../scripts/review-gallery/mobile-bridge.mjs';
 import { repository, outDirectory, runScene, catalog } from '../../scripts/review-gallery/common.mjs';
 import { startAndroid } from '../../scripts/nightly/android.mjs';
@@ -30,7 +30,6 @@ catch (error) { server.closeAllConnections(); await new Promise(done=>server.clo
 const browser = android?.browser || await chromium.launch({ headless: true });
 let currentBridge;
 if (android) {
-  await android.reverse(server.address().port);
   await android.page.exposeFunction('__reviewNative', async payload => {
     try { return { id: payload.id, ok: true, result: await currentBridge(payload) }; }
     catch (error) { return { id: payload.id, ok: false, error: { code: error.message } }; }
@@ -46,14 +45,24 @@ try {
     try {
       const bridge = mobileBridge(fixture, theme);
       currentBridge = bridge;
-      if (android) { await android.reverse(new URL(candidate.mobileUrl).port); await android.theme(theme); }
+      const navigate = async (current, url) => {
+        if (!android) return current.goto(url);
+        const source = [candidate, mainFixture, suggestionFixture, renderingFixture].find(fixture=>fixture?.mobileUrl === url);
+        currentBridge = source ? async payload => {
+          if (payload.method === 'settings.appearance') return {value:theme};
+          if (source === suggestionFixture && payload.method === 'host.business' && payload.params?.path?.includes('/suggestions')) return {requestId:payload.params.body?.requestId,suggestions:ux7Replies,completion:payload.params.body?.kind === 'completion' ? '保存成文件' : '',available:true};
+          return source.mobileBridge(payload);
+        } : bridge;
+        return current.goto(android.entryUrl);
+      };
+      if (android) await android.theme(theme);
       page.setDefaultTimeout(30000); page.on('pageerror', error => errors.push(error.message));
       if (!android) await page.exposeFunction('__reviewNative', async payload => {
         try { return { id: payload.id, ok: true, result: await bridge(payload) }; }
         catch (error) { return { id: payload.id, ok: false, error: { code: error.message } }; }
       });
       if (!android) await page.addInitScript(() => { window.weftNative = { postMessage(value) { window.__reviewNative(JSON.parse(value)).then(result => window.weftNative.onmessage({ data: JSON.stringify(result) })); } }; });
-      await page.goto(`http://127.0.0.1:${server.address().port}/`);
+      await navigate(page, `http://127.0.0.1:${server.address().port}/`);
       const button = name => page.getByRole('button', { name, exact: typeof name === 'string' });
       const conversation = title => button(new RegExp(`^${title} [0-9]`));
       const shot = (scene, prepare, current = page) => (!onlyScene || scene === onlyScene) && !(android && catalog.scenes.find(row => row.id === scene).unavailable?.includes('android'))
@@ -97,19 +106,19 @@ try {
         if (body.method === 'settings.appearance') return route.fulfill({ json: { result: { value: theme } } });
         await route.continue();
       });
-      await shot('rendering',async()=>{const rendered=renderingFixture=await startRenderingCandidate();{await questionPage.goto(rendered.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);await questionPage.evaluate(()=>listSharedSessions());await questionPage.getByRole('button',{name:'打开导航',exact:true}).click();await questionPage.getByRole('button',{name:'渲染样张',exact:true}).click();await questionPage.getByRole('heading',{name:'公式与图表',exact:true}).scrollIntoViewIfNeeded();await questionPage.locator('.render-diagram img').waitFor();}},questionPage);
-      await shot('library', async () => { await questionPage.goto(candidate.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);await questionPage.getByRole('tab',{name:/^成果库(?:，|$)/}).click();await questionPage.getByRole('button',{name:'预览 项目进度报告.md',exact:true}).waitFor(); },questionPage);
+      await shot('rendering',async()=>{const rendered=renderingFixture=await startRenderingCandidate();{await navigate(questionPage, rendered.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);await questionPage.evaluate(()=>listSharedSessions());await questionPage.getByRole('button',{name:'打开导航',exact:true}).click();await questionPage.getByRole('button',{name:'渲染样张',exact:true}).click();await questionPage.getByRole('heading',{name:'公式与图表',exact:true}).scrollIntoViewIfNeeded();await questionPage.locator('.render-diagram img').waitFor();}},questionPage);
+      await shot('library', async () => { await navigate(questionPage, candidate.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);await questionPage.getByRole('tab',{name:/^成果库(?:，|$)/}).click();await questionPage.getByRole('button',{name:'预览 项目进度报告.md',exact:true}).waitFor(); },questionPage);
       await shot('goals', async () => {
-        await questionPage.goto(candidate.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);await questionPage.getByRole('tab',{name:/^目标(?:，|$)/}).click();await questionPage.getByRole('heading',{name:'目标',exact:true}).waitFor();await questionPage.getByRole('article',{name:'提交合成报告',exact:true}).waitFor();
+        await navigate(questionPage, candidate.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);await questionPage.getByRole('tab',{name:/^目标(?:，|$)/}).click();await questionPage.getByRole('heading',{name:'目标',exact:true}).waitFor();await questionPage.getByRole('article',{name:'提交合成报告',exact:true}).waitFor();
       },questionPage);
       await shot('activity', async () => {
         await candidate.recordActivity({key:'gallery-paused',type:'memory.paused',title:'记忆已暂停',summary:'记忆暂时无法更新，可在记忆页查看状态。',level:'normal'});
-        await questionPage.goto(candidate.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);
+        await navigate(questionPage, candidate.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);
         await questionPage.getByRole('tab',{name:/^动态(?:，|$)/}).click();
         await questionPage.getByRole('heading',{name:'动态',exact:true}).waitFor();await questionPage.getByText('记忆已暂停',{exact:true}).waitFor();
       },questionPage);
       await shot('question', async () => {
-        await questionPage.goto(candidate.mobileUrl);
+        await navigate(questionPage, candidate.mobileUrl);
         await questionPage.waitForFunction(() => state.booted && state.loggedIn);
         await questionPage.getByRole('tab',{name:/^动态(?:，|$)/}).click();
         await questionPage.getByRole('button',{name:'更多操作 需要审批',exact:true}).click();
@@ -118,10 +127,10 @@ try {
         await questionPage.getByRole('region',{name:'待回答问题'}).waitFor();
         await questionPage.getByRole('radio',{name:'简要报告',exact:true}).waitFor();
       }, questionPage);
-      await shot('next-suggestions', async () => { suggestionFixture=await startTimelineCandidate({historyCount:0,interactive:true,composer:true});await suggestionFixture.complete();if(android)await android.reverse(new URL(suggestionFixture.mobileUrl).port);await mockUx7Requests(questionPage); await questionPage.goto(suggestionFixture.mobileUrl); await questionPage.waitForFunction(()=>state.booted); await questionPage.evaluate(async id=>{await selectSharedSession(id);closeDrawer()},suggestionFixture.sessionId); await prepareUx7Suggestions(questionPage); }, questionPage);
+      await shot('next-suggestions', async () => { suggestionFixture=await startTimelineCandidate({historyCount:0,interactive:true,composer:true});await suggestionFixture.complete();await mockUx7Requests(questionPage); await navigate(questionPage, suggestionFixture.mobileUrl); await questionPage.waitForFunction(()=>state.booted); await questionPage.evaluate(async id=>{await selectSharedSession(id);closeDrawer()},suggestionFixture.sessionId); await prepareUx7Suggestions(questionPage); }, questionPage);
       const mainPage=android?.page || await context.newPage();
       await shot('main-chat',async()=>{
-        mainFixture=await startMainChatCandidate(300,{logicalMobile:true});if(android)await android.reverse(new URL(mainFixture.mobileUrl).port);await mainPage.goto(mainFixture.mobileUrl);
+        mainFixture=await startMainChatCandidate(300,{logicalMobile:true});await navigate(mainPage, mainFixture.mobileUrl);
         await mainPage.getByRole('button',{name:'搜索主对话',exact:true}).waitFor();await mainPage.waitForFunction(()=>document.querySelector('.main-chat-row'));
         await mainPage.evaluate(theme=>applyTheme(theme),theme);
         await mainPage.getByRole('button',{name:'搜索主对话',exact:true}).click();await mainPage.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('合成');await mainPage.getByRole('searchbox',{name:'主对话搜索关键词'}).press('Enter');await mainPage.locator('mark').first().waitFor();
