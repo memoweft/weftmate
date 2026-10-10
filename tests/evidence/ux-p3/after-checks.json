@@ -1,0 +1,852 @@
+{
+  "synthetic": true,
+  "realElectron": true,
+  "modelRequests": 0,
+  "shots": [
+    "after-electron-1200-light-sidebar-idle.png",
+    "after-electron-1200-light-sidebar-running.png",
+    "after-electron-1200-light-sidebar-unread.png",
+    "after-electron-1200-light-sidebar-pinned.png",
+    "after-electron-1200-light-sidebar-temporary.png",
+    "after-electron-1200-light-project-hover-selected.png",
+    "after-electron-1200-light-project-menu.png",
+    "after-electron-1200-light-project-keyboard.png",
+    "after-electron-1200-light-chat-hover-card.png",
+    "after-electron-1200-light-pin-tooltip.png",
+    "after-electron-1200-light-archive-tooltip.png",
+    "after-electron-1200-light-pinned-hover.png",
+    "after-electron-1200-light-chat-keyboard.png",
+    "after-electron-1200-light-chat-menu.png",
+    "after-electron-1200-light-long-project.png",
+    "after-electron-1200-light-project-collapsed.png",
+    "after-electron-1200-light-account-menu.png",
+    "after-electron-1200-light-settings-general.png",
+    "after-electron-1200-light-settings-memory.png",
+    "after-electron-1200-light-memory-menu.png",
+    "after-electron-1200-light-activity.png",
+    "after-electron-1200-light-goals.png",
+    "after-electron-1200-light-library.png",
+    "after-electron-1200-light-narrow-sidebar.png",
+    "after-electron-480-light-sidebar.png",
+    "after-electron-480-light-chat-hover-card.png",
+    "after-electron-480-light-settings-general.png",
+    "after-electron-480-light-settings-memory.png",
+    "after-electron-1200-dark-sidebar-idle.png",
+    "after-electron-1200-dark-sidebar-running.png",
+    "after-electron-1200-dark-sidebar-unread.png",
+    "after-electron-1200-dark-sidebar-pinned.png",
+    "after-electron-1200-dark-sidebar-temporary.png",
+    "after-electron-1200-dark-project-hover-selected.png",
+    "after-electron-1200-dark-project-menu.png",
+    "after-electron-1200-dark-project-keyboard.png",
+    "after-electron-1200-dark-chat-hover-card.png",
+    "after-electron-1200-dark-pin-tooltip.png",
+    "after-electron-1200-dark-archive-tooltip.png",
+    "after-electron-1200-dark-pinned-hover.png",
+    "after-electron-1200-dark-chat-keyboard.png",
+    "after-electron-1200-dark-chat-menu.png",
+    "after-electron-1200-dark-long-project.png",
+    "after-electron-1200-dark-project-collapsed.png",
+    "after-electron-1200-dark-account-menu.png",
+    "after-electron-1200-dark-settings-general.png",
+    "after-electron-1200-dark-settings-memory.png",
+    "after-electron-1200-dark-memory-menu.png",
+    "after-electron-1200-dark-activity.png",
+    "after-electron-1200-dark-goals.png",
+    "after-electron-1200-dark-library.png",
+    "after-electron-1200-dark-narrow-sidebar.png",
+    "after-electron-480-dark-sidebar.png",
+    "after-electron-480-dark-chat-hover-card.png",
+    "after-electron-480-dark-settings-general.png",
+    "after-electron-480-dark-settings-memory.png",
+    "after-phone-web-390-light-drawer.png",
+    "after-phone-web-390-light-long-press-menu.png",
+    "after-phone-web-390-light-settings.png",
+    "after-phone-web-390-dark-drawer.png",
+    "after-phone-web-390-dark-long-press-menu.png",
+    "after-phone-web-390-dark-settings.png",
+    "after-phone-web-360-light-drawer.png",
+    "after-phone-web-360-light-long-press-menu.png",
+    "after-phone-web-360-light-settings.png",
+    "after-phone-web-360-dark-drawer.png",
+    "after-phone-web-360-dark-long-press-menu.png",
+    "after-phone-web-360-dark-settings.png",
+    "after-android-bundle-390-light-drawer.png",
+    "after-android-bundle-390-light-long-press-menu.png",
+    "after-android-bundle-390-light-notifications.png",
+    "after-android-bundle-390-dark-drawer.png",
+    "after-android-bundle-390-dark-long-press-menu.png",
+    "after-android-bundle-390-dark-notifications.png",
+    "after-android-bundle-360-light-drawer.png",
+    "after-android-bundle-360-light-long-press-menu.png",
+    "after-android-bundle-360-light-notifications.png",
+    "after-android-bundle-360-dark-drawer.png",
+    "after-android-bundle-360-dark-long-press-menu.png",
+    "after-android-bundle-360-dark-notifications.png"
+  ],
+  "checks": [
+    {
+      "state": "running",
+      "theme": "light",
+      "status": {
+        "slots": 1,
+        "labels": [
+          "正在运行"
+        ]
+      }
+    },
+    {
+      "state": "unread",
+      "theme": "light",
+      "status": {
+        "slots": 1,
+        "labels": [
+          "未读"
+        ]
+      }
+    },
+    {
+      "state": "pinned",
+      "theme": "light",
+      "status": {
+        "slots": 1,
+        "labels": []
+      }
+    },
+    {
+      "state": "temporary",
+      "theme": "light",
+      "status": {
+        "slots": 1,
+        "labels": []
+      }
+    },
+    {
+      "theme": "light",
+      "aligned": {
+        "left": 0,
+        "right": 0,
+        "gap": 3
+      }
+    },
+    {
+      "state": "running",
+      "theme": "dark",
+      "status": {
+        "slots": 1,
+        "labels": [
+          "正在运行"
+        ]
+      }
+    },
+    {
+      "state": "unread",
+      "theme": "dark",
+      "status": {
+        "slots": 1,
+        "labels": [
+          "未读"
+        ]
+      }
+    },
+    {
+      "state": "pinned",
+      "theme": "dark",
+      "status": {
+        "slots": 1,
+        "labels": []
+      }
+    },
+    {
+      "state": "temporary",
+      "theme": "dark",
+      "status": {
+        "slots": 1,
+        "labels": []
+      }
+    },
+    {
+      "theme": "dark",
+      "aligned": {
+        "left": 0,
+        "right": 0,
+        "gap": 3
+      }
+    },
+    {
+      "scrolling": [
+        {
+          "tag": "UL",
+          "class": "session-list",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        }
+      ]
+    }
+  ],
+  "scrollSurfaces": [
+    {
+      "screenshots": [
+        "after-electron-1200-light-sidebar-idle.png",
+        "after-electron-1200-light-sidebar-running.png",
+        "after-electron-1200-light-sidebar-unread.png",
+        "after-electron-1200-light-sidebar-pinned.png",
+        "after-electron-1200-light-sidebar-temporary.png",
+        "after-electron-1200-light-project-hover-selected.png",
+        "after-electron-1200-light-project-keyboard.png",
+        "after-electron-1200-light-chat-hover-card.png",
+        "after-electron-1200-light-pin-tooltip.png",
+        "after-electron-1200-light-archive-tooltip.png",
+        "after-electron-1200-light-pinned-hover.png",
+        "after-electron-1200-light-chat-keyboard.png",
+        "after-electron-1200-light-long-project.png",
+        "after-electron-1200-light-project-collapsed.png",
+        "after-electron-1200-light-account-menu.png",
+        "after-electron-1200-light-settings-general.png",
+        "after-electron-1200-light-settings-memory.png",
+        "after-electron-1200-light-activity.png",
+        "after-electron-1200-light-goals.png",
+        "after-electron-1200-light-library.png",
+        "after-electron-1200-light-narrow-sidebar.png",
+        "after-electron-480-light-sidebar.png",
+        "after-electron-480-light-chat-hover-card.png",
+        "after-electron-480-light-settings-general.png",
+        "after-electron-480-light-settings-memory.png",
+        "after-electron-1200-dark-sidebar-idle.png",
+        "after-electron-1200-dark-sidebar-running.png",
+        "after-electron-1200-dark-sidebar-unread.png",
+        "after-electron-1200-dark-sidebar-pinned.png",
+        "after-electron-1200-dark-sidebar-temporary.png",
+        "after-electron-1200-dark-project-hover-selected.png",
+        "after-electron-1200-dark-project-keyboard.png",
+        "after-electron-1200-dark-chat-hover-card.png",
+        "after-electron-1200-dark-pin-tooltip.png",
+        "after-electron-1200-dark-archive-tooltip.png",
+        "after-electron-1200-dark-pinned-hover.png",
+        "after-electron-1200-dark-chat-keyboard.png",
+        "after-electron-1200-dark-long-project.png",
+        "after-electron-1200-dark-project-collapsed.png",
+        "after-electron-1200-dark-account-menu.png",
+        "after-electron-1200-dark-settings-general.png",
+        "after-electron-1200-dark-settings-memory.png",
+        "after-electron-1200-dark-activity.png",
+        "after-electron-1200-dark-goals.png",
+        "after-electron-1200-dark-library.png",
+        "after-electron-1200-dark-narrow-sidebar.png",
+        "after-electron-480-dark-sidebar.png",
+        "after-electron-480-dark-chat-hover-card.png",
+        "after-electron-480-dark-settings-general.png",
+        "after-electron-480-dark-settings-memory.png",
+        "after-phone-web-390-light-drawer.png",
+        "after-phone-web-390-light-settings.png",
+        "after-phone-web-390-dark-drawer.png",
+        "after-phone-web-390-dark-settings.png",
+        "after-phone-web-360-light-drawer.png",
+        "after-phone-web-360-light-settings.png",
+        "after-phone-web-360-dark-drawer.png",
+        "after-phone-web-360-dark-settings.png"
+      ],
+      "selectorSupported": true,
+      "webkitSupported": true,
+      "surfaces": [
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "session-menu rail-new-menu",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "UL",
+          "id": "session-list",
+          "class": "session-list",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "chat-scroll",
+          "class": "chat-scroll",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "composer-menu",
+          "class": "model-popover composer-menu",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "approval-mode-menu",
+          "class": "model-popover approval-popover",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "model-options",
+          "class": "model-options",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "SECTION",
+          "id": "",
+          "class": "library-surface library-page",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "SECTION",
+          "id": "",
+          "class": "goals-surface goals-page",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "SECTION",
+          "id": "",
+          "class": "activity-surface activity-page",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIALOG",
+          "id": "password-dialog",
+          "class": "dialog",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIALOG",
+          "id": "revoke-dialog",
+          "class": "dialog confirm-dialog",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIALOG",
+          "id": "memory-detail-dialog",
+          "class": "dialog memory-detail-dialog",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIALOG",
+          "id": "legal-reader",
+          "class": "legal-reader",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIALOG",
+          "id": "account-model-dialog",
+          "class": "dialog model-editor-dialog",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIALOG",
+          "id": "settings-dialog",
+          "class": "settings-dialog",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "NAV",
+          "id": "",
+          "class": "settings-navigation",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "settings-content",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        }
+      ]
+    },
+    {
+      "screenshots": [
+        "after-electron-1200-light-project-menu.png",
+        "after-electron-1200-light-memory-menu.png",
+        "after-electron-1200-dark-project-menu.png",
+        "after-electron-1200-dark-memory-menu.png"
+      ],
+      "selectorSupported": true,
+      "webkitSupported": true,
+      "surfaces": [
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "session-menu rail-new-menu",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "UL",
+          "id": "session-list",
+          "class": "session-list",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "chat-scroll",
+          "class": "chat-scroll",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "composer-menu",
+          "class": "model-popover composer-menu",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "approval-mode-menu",
+          "class": "model-popover approval-popover",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "model-options",
+          "class": "model-options",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "SECTION",
+          "id": "",
+          "class": "library-surface library-page",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "SECTION",
+          "id": "",
+          "class": "goals-surface goals-page",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "SECTION",
+          "id": "",
+          "class": "activity-surface activity-page",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIALOG",
+          "id": "password-dialog",
+          "class": "dialog",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIALOG",
+          "id": "revoke-dialog",
+          "class": "dialog confirm-dialog",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIALOG",
+          "id": "memory-detail-dialog",
+          "class": "dialog memory-detail-dialog",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIALOG",
+          "id": "legal-reader",
+          "class": "legal-reader",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIALOG",
+          "id": "account-model-dialog",
+          "class": "dialog model-editor-dialog",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIALOG",
+          "id": "settings-dialog",
+          "class": "settings-dialog",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "NAV",
+          "id": "",
+          "class": "settings-navigation",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "settings-content",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "wm-menu",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        }
+      ]
+    },
+    {
+      "screenshots": [
+        "after-electron-1200-light-chat-menu.png",
+        "after-electron-1200-dark-chat-menu.png",
+        "after-phone-web-390-light-long-press-menu.png",
+        "after-phone-web-390-dark-long-press-menu.png",
+        "after-phone-web-360-light-long-press-menu.png",
+        "after-phone-web-360-dark-long-press-menu.png"
+      ],
+      "selectorSupported": true,
+      "webkitSupported": true,
+      "surfaces": [
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "session-menu rail-new-menu",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "UL",
+          "id": "session-list",
+          "class": "session-list",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "chat-scroll",
+          "class": "chat-scroll",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "composer-menu",
+          "class": "model-popover composer-menu",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "approval-mode-menu",
+          "class": "model-popover approval-popover",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "model-options",
+          "class": "model-options",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "SECTION",
+          "id": "",
+          "class": "library-surface library-page",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "SECTION",
+          "id": "",
+          "class": "goals-surface goals-page",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "SECTION",
+          "id": "",
+          "class": "activity-surface activity-page",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIALOG",
+          "id": "password-dialog",
+          "class": "dialog",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIALOG",
+          "id": "revoke-dialog",
+          "class": "dialog confirm-dialog",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIALOG",
+          "id": "memory-detail-dialog",
+          "class": "dialog memory-detail-dialog",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIALOG",
+          "id": "legal-reader",
+          "class": "legal-reader",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIALOG",
+          "id": "account-model-dialog",
+          "class": "dialog model-editor-dialog",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIALOG",
+          "id": "settings-dialog",
+          "class": "settings-dialog",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "NAV",
+          "id": "",
+          "class": "settings-navigation",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "settings-content",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "session-menu",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        }
+      ]
+    },
+    {
+      "screenshots": [
+        "after-android-bundle-390-light-drawer.png",
+        "after-android-bundle-390-light-notifications.png",
+        "after-android-bundle-390-dark-drawer.png",
+        "after-android-bundle-390-dark-notifications.png",
+        "after-android-bundle-360-light-drawer.png",
+        "after-android-bundle-360-light-notifications.png",
+        "after-android-bundle-360-dark-drawer.png",
+        "after-android-bundle-360-dark-notifications.png"
+      ],
+      "selectorSupported": true,
+      "webkitSupported": true,
+      "surfaces": [
+        {
+          "tag": "DIV",
+          "id": "chat-scroll",
+          "class": "chat-scroll",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "attachment-popover",
+          "class": "popover attachment-popover",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "approval-mode-popover",
+          "class": "popover approval-mode-popover",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        }
+      ]
+    },
+    {
+      "screenshots": [
+        "after-android-bundle-390-light-long-press-menu.png",
+        "after-android-bundle-390-dark-long-press-menu.png",
+        "after-android-bundle-360-light-long-press-menu.png",
+        "after-android-bundle-360-dark-long-press-menu.png"
+      ],
+      "selectorSupported": true,
+      "webkitSupported": true,
+      "surfaces": [
+        {
+          "tag": "DIV",
+          "id": "chat-scroll",
+          "class": "chat-scroll",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "attachment-popover",
+          "class": "popover attachment-popover",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "approval-mode-popover",
+          "class": "popover approval-mode-popover",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        },
+        {
+          "tag": "DIALOG",
+          "id": "",
+          "class": "session-action-dialog session-action-sheet",
+          "width": "auto",
+          "color": "auto",
+          "button": "none",
+          "buttonHeight": "0px"
+        }
+      ]
+    }
+  ],
+  "errors": []
+}

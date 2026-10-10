@@ -6,6 +6,15 @@ import org.json.JSONObject
 
 class ActivityNotificationPolicyTest {
     private val host = HostIdentity("http://127.0.0.1:12345", "synthetic", "owner-a", "host-a", "device-a", "synthetic-cookie", "synthetic-csrf")
+    @Test fun nativeCopyUsesHostPresentationAndFallsBackForOldHosts() {
+        val row = JSONObject().put("type", "task.completed").put("title", "任务完成").put("summary", "已完成")
+            .put("notification", JSONObject().put("title", "整理项目资料").put("body", "已完成 · 点开查看结果"))
+        assertEquals("整理项目资料", ActivityNotificationPolicy.title(row))
+        assertEquals("已完成 · 点开查看结果", ActivityNotificationPolicy.body(row))
+        row.remove("notification")
+        assertEquals("任务完成", ActivityNotificationPolicy.title(row))
+        assertEquals("已完成", ActivityNotificationPolicy.body(row))
+    }
     @Test fun hostDecisionIsTheOnlyAuthority() {
         for (type in listOf("approval.pending", "question.pending", "task.completed", "task.failed", "reminder.triggered", "memory.paused", "system.notification.test"))
             for (notify in listOf(true, false)) for (read in listOf(true, false)) for (seen in listOf(true, false)) {

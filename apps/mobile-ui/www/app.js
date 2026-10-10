@@ -669,6 +669,8 @@ document.addEventListener('DOMContentLoaded',()=>{
       clearTimeout(state.homePollTimer);
       clearTimeout(toolApprovals.pollTimer);toolApprovals.pollTimer=null;clearTimeout(toolQuestions.pollTimer);toolQuestions.pollTimer=null}
     else if(state.page==='home')void refreshHome();
+    else if(state.page==='memory'&&state.memory?.view==='list'&&!state.memory.loading)startMemorySnapshot(memoryTarget,state.memory.kind,state.memory.query);
+    else if(state.page==='general')page('general');
     else if(state.chatSource==='host'&&state.page==='chat'){void loadSharedHistory();scheduleSharedPoll()}
     else{if(toolApprovals.detail&&approvalViewCurrent(toolApprovals.detail.context))void refreshToolApprovals(toolApprovals.detail.context);
       if(toolQuestions.detail&&approvalViewCurrent(toolQuestions.detail.context))void refreshToolQuestions(toolQuestions.detail.context)}});

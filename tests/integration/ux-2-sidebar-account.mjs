@@ -49,13 +49,13 @@ try {
   const recent = ids[7];
   for(const theme of ['light','dark']) {
     await desktop.evaluate(t=>{document.documentElement.dataset.theme=t;const preferences=WeftUiCore.createAppearance(localStorage);preferences.set({...preferences.value,theme:t});},theme);
-    const more = button(desktop, `更多操作 ${recent.title}`);
+    const more = button(desktop, recent.title);
     await more.waitFor();
     await button(desktop, recent.title).hover();
     await button(desktop, `置顶 ${recent.title}`).waitFor({state:'visible'});
     await desktop.getByRole('tooltip',{name:'对话详情'}).waitFor();
     await desktop.getByRole('tooltip').getByText(recent.title,{exact:true}).waitFor();
-    await desktop.getByRole('tooltip').getByText('所属项目 / 分组：合成项目1',{exact:true}).waitFor();
+    await desktop.getByRole('tooltip').getByText('合成项目1',{exact:true}).waitFor();
     await shot(desktop,'desktop',theme,'hover');
     await button(desktop, `置顶 ${recent.title}`).click();
     await button(desktop, `取消置顶 ${recent.title}`).waitFor({state:'visible'});
@@ -116,7 +116,7 @@ try {
         assert.equal((await fixture.request('/sessions?archived=all')).sessions.find(row=>row.sessionId===recent.id).archived,false);
         await button(page,'打开导航').click(); await button(page,'关闭导航').click(); await page.evaluate(()=>page('settings'));
       }
-      await button(page,'用量详情').filter({visible:true}).waitFor(); await page.getByText(new RegExp(expected)).filter({visible:true}).waitFor(); await shot(page,surface,theme,'settings-usage');
+      if(surface==='android-ui'){await button(page,'用量详情').filter({visible:true}).waitFor(); await page.getByText(new RegExp(expected)).filter({visible:true}).waitFor();}else{assert.equal(await page.locator('#settings-usage-strip').isVisible(),false);} await shot(page,surface,theme,'settings-usage');
       if(surface==='mobile-web') { await button(page,'关闭设置').click(); await button(page,'切换会话侧栏').click(); }
       else { await page.evaluate(()=>page('home')); await button(page,'打开导航').click(); }
       await button(conversations,'收起对话 合成项目1').click();
