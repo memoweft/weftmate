@@ -89,6 +89,17 @@ test('old queue preference migrates once, account changes ignore late reads and 
   let resolve:any;core.accessApi=()=>new Promise(done=>resolve=done);const read=core.loadPersonalization();core.state.identityGeneration++;core.state.ownerId='b';resolve({settings:{preferredName:'OLD'},updatedAt:'saved'});await read;assert.notEqual(core.state.personalization.preferredName,'OLD');
 });
 
+test('unchanged settings polling preserves a temporary send intent and avoids repainting the composer', async () => {
+  const environment:any={WeftUiCore:{factories:{}}};runInNewContext(readFileSync(new URL('../src/ui-core/settings.js',import.meta.url),'utf8'),environment);
+  let paints=0, settings={...P.defaults};
+  const core:any={state:{identityGeneration:1,ownerId:'a'},accessApi:async()=>({settings:{...settings},updatedAt:'saved'})};
+  Object.assign(core,environment.WeftUiCore.factories.settings(core,{updateAvailability:()=>paints++},{storage:{getItem:()=>null}}));
+  await core.loadPersonalization();core.state.messageMode='steer';await core.loadPersonalization();
+  assert.equal(core.state.messageMode,'steer');assert.equal(paints,1);
+  settings={...settings,tone:'formal'};await core.loadPersonalization();assert.equal(core.state.messageMode,'steer');assert.equal(paints,2);
+  settings={...settings,messageMode:'steer'};await core.loadPersonalization();assert.equal(paints,3);
+});
+
 test('default deep thinking is applied only to newly created capable models', async t => {
   const root=await mkdtemp(join(tmpdir(),'weftmate-st1-capability-'));
   const models=[{id:'supported',name:'合成支持模型',configured:true,deepThinking:{supported:true}},{id:'ordinary',name:'合成普通模型',configured:true,deepThinking:{supported:false}}];
