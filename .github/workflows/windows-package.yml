@@ -44,6 +44,9 @@ jobs:
       - uses: pnpm/action-setup@v4
         with:
           version: 11.7.0
+      # Keep this list in step with vendor-tests.yml: the launcher entry package
+      # (native/landlock-run/packages/entry) compiles into its own lib directory, and
+      # a cache hit skips compilation, so a missing path only fails on later runs.
       - name: Cache pinned Windows DSH compilation
         id: dsh-cache
         uses: actions/cache/restore@v4
@@ -55,7 +58,8 @@ jobs:
             .local/package-dsh/apps/*/lib
             .local/package-dsh/apps/web/dist
             .local/package-dsh/native/landlock-run/lib
-          key: package-dsh-patched-windows-node24-${{ env.DSH_PIN }}-${{ hashFiles('patches/dsh/*.patch') }}-v1
+            .local/package-dsh/native/landlock-run/packages/*/lib
+          key: package-dsh-patched-windows-node24-${{ env.DSH_PIN }}-${{ hashFiles('patches/dsh/*.patch') }}-v2
       - name: Link pinned DSH workspace dependencies
         working-directory: .local/package-dsh
         run: pnpm install --frozen-lockfile
@@ -76,7 +80,8 @@ jobs:
             .local/package-dsh/apps/*/lib
             .local/package-dsh/apps/web/dist
             .local/package-dsh/native/landlock-run/lib
-          key: package-dsh-patched-windows-node24-${{ env.DSH_PIN }}-${{ hashFiles('patches/dsh/*.patch') }}-v1
+            .local/package-dsh/native/landlock-run/packages/*/lib
+          key: package-dsh-patched-windows-node24-${{ env.DSH_PIN }}-${{ hashFiles('patches/dsh/*.patch') }}-v2
       - name: Assemble and verify pinned vendor
         run: |
           npm run vendor:dsh
