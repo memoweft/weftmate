@@ -40,13 +40,17 @@ jobs:
           version: 11.7.0
       - name: Cache pinned DSH compilation
         id: dsh-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: |
             .local/relay-dsh/node_modules
-            .local/relay-dsh/**/lib
-            .local/relay-dsh/**/dist
-          key: relay-phone-dsh-linux-node24-${{ env.DSH_PIN }}-v2
+            .local/relay-dsh/packages/*/*/lib
+            .local/relay-dsh/vendor/*/lib
+            .local/relay-dsh/apps/*/lib
+            .local/relay-dsh/apps/web/dist
+            .local/relay-dsh/native/landlock-run/lib
+            .local/relay-dsh/native/landlock-run/packages/*/lib
+          key: relay-phone-dsh-linux-node24-${{ env.DSH_PIN }}-v3
       - name: Build pinned native tools (no model keys)
         if: steps.dsh-cache.outputs.cache-hit != 'true'
         working-directory: .local/relay-dsh
@@ -54,14 +58,20 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm run build
       - name: Save compiled fixture before scenario assertions
+        timeout-minutes: 2
+        continue-on-error: true
         if: steps.dsh-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: |
             .local/relay-dsh/node_modules
-            .local/relay-dsh/**/lib
-            .local/relay-dsh/**/dist
-          key: relay-phone-dsh-linux-node24-${{ env.DSH_PIN }}-v2
+            .local/relay-dsh/packages/*/*/lib
+            .local/relay-dsh/vendor/*/lib
+            .local/relay-dsh/apps/*/lib
+            .local/relay-dsh/apps/web/dist
+            .local/relay-dsh/native/landlock-run/lib
+            .local/relay-dsh/native/landlock-run/packages/*/lib
+          key: relay-phone-dsh-linux-node24-${{ env.DSH_PIN }}-v3
       - name: Relay phone first input and file task
         timeout-minutes: 6
         run: node --test services/cloud/test/relay-phone.test.mjs
