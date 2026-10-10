@@ -59,6 +59,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Nightly maintenance regressions (no device or task registration)
+        run: node --test tests/nightly-regression.test.mjs
+
       # The synthetic memory HTTP fixture listens on a second loopback host.
       # Linux/Windows accept 127/8; macOS needs the alias explicitly configured.
       - name: Configure macOS fixture loopback

@@ -8,7 +8,7 @@ import { join,resolve } from 'node:path';
 import { createPersonalAccessService } from '../../../../src/personal-access/index.mjs';
 import { PERSONAL_HOST_MARKER,PERSONAL_HOST_MARKER_CONTENT } from '../../../../src/host-mode.mjs';
 import { localUiSession } from '../../../../tests/helpers/local-ui-session.mjs';
-const root=mkdtempSync('C:/Temp/weftmate-fx16-native-live-'),profile=join(root,'profile'),out=resolve('tests/evidence/fx-16/native-live');mkdirSync(profile);mkdirSync(out,{recursive:true});
+const root=mkdtempSync('C:/Temp/weftmate-fx16-native-live-'),profile=join(root,'profile'),out=resolve(process.env.FX16_NATIVE_OUT||'tests/evidence/fx-16/native-live');mkdirSync(profile);mkdirSync(out,{recursive:true});
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 writeFileSync(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const credentials={username:'QA1Synthetic',password:`synthetic-${randomUUID()}-password`,deviceName:'QA1 desktop'};
@@ -43,7 +43,7 @@ try{
  const own=(await api('/auth/me')).body.account.ownerId,modelId=(await api('/sessions')).body.sessions[0].modelProfileId;
  const p95=v=>[...v].sort((a,b)=>a-b)[Math.ceil(v.length*.95)-1];report.populations=[];
  let populated=1;
- for(const count of [500,2000]){
+ for(const count of process.env.FX16_MERGE_RECHECK ? [500] : [500,2000]){
   while(populated<count){const amount=Math.min(50,count-populated);await app.evaluate(async(_electron,input)=>globalThis.__fx16NativeCreate(input),{ownerId:own,modelProfileId:modelId,count:amount,offset:populated});populated+=amount;console.log('native seeded',populated);}
   await page.reload();await page.locator('#assistant-view').waitFor({state:'visible'});await page.waitForFunction(()=>globalThis.__WeftUiStarted===true);
   const times={sessions:[],chats:[]};for(let n=0;n<30;n++)for(const path of ['sessions','chats']){const t=performance.now();const r=await api('/'+path+'?archived=all&limit=100');assert.equal(r.status,200);times[path].push(performance.now()-t);assert.equal((r.body.sessions||r.body.items).length,100);}

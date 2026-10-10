@@ -38,10 +38,17 @@ const saveObserved = () => {
   renameSync(envOutput + '.tmp', envOutput)
 }
 saveObserved()
-if (mode === 'descendant') {
+if (mode === 'descendant' || mode === 'dispose-ack') {
   const descendant = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { stdio: 'ignore' })
   if (process.env.WEFTMATE_TEST_DESCENDANT_PID) writeFileSync(process.env.WEFTMATE_TEST_DESCENDANT_PID, String(descendant.pid))
 }
+if (mode === 'dispose-ack') process.on('message', (frame) => {
+  if (frame.protocol !== 'weftmate.runtime-shutdown.v1' || frame.action !== 'dispose') return
+  setTimeout(() => {
+    writeFileSync(process.env.WEFTMATE_TEST_SHUTDOWN_FILE, 'drained')
+    process.send({ protocol: 'weftmate.runtime-shutdown.v1', action: 'disposed' })
+  }, 150)
+})
 const delay = mode === 'starting' ? 10_000 : 0
 setTimeout(() => {
   console.log('dsh web: http://127.0.0.1:43123')
@@ -108,6 +115,23 @@ function runtime(checkoutPath: string, env: NodeJS.ProcessEnv): DshWebRuntime {
 }
 
 describe('DshWebRuntime lifecycle fences（阶段 0）', () => {
+  test('Windows shutdown drains native persistence before collecting root and descendant', { skip: process.platform !== 'win32' }, async () => {
+    const checkout = await makeCheckout('dispose-ack')
+    const rootFile = join(root, 'dispose-root.pid'), descendantFile = join(root, 'dispose-descendant.pid'), shutdownFile = join(root, 'dispose.state')
+    const web = runtime(checkout, { WEFTMATE_TEST_MODE: 'dispose-ack', WEFTMATE_TEST_ROOT_PID: rootFile,
+      WEFTMATE_TEST_DESCENDANT_PID: descendantFile, WEFTMATE_TEST_SHUTDOWN_FILE: shutdownFile })
+    try {
+      await web.start()
+      // Fake CLI has no package closure; designate this exact owned carrier
+      // as the secure-bootstrap child to exercise the production handshake.
+      ;(web as any).secureChildren.add((web as any).child)
+      const rootPid = Number(await waitForFile(rootFile)), descendantPid = Number(await waitForFile(descendantFile))
+      await web.close()
+      assert.equal(await readFile(shutdownFile, 'utf8'), 'drained')
+      assert.equal(isAlive(rootPid), false)
+      assert.equal(isAlive(descendantPid), false)
+    } finally { await web.close() }
+  })
   test('显式 checkoutPath/runtimePath 压过环境变量', async () => {
     const checkout = await makeCheckout('explicit-checkout')
     const vendor = join(root, 'explicit-vendor')

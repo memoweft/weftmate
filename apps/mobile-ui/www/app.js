@@ -31,6 +31,10 @@ const androidBridge = WeftUiCore.createAndroidBridge({
 });
 const mobileWebBridge=window.weftNative?null:WeftUiCore.createMobileWebBridge();
 const mobileEffects = {
+  syncLibraryIdentity:()=>uiCore.syncMobileIdentity(),
+  renderLibrary:()=>{if(state.page==='library')libraryView?.render();},
+  clearLibraryPreview:()=>{if(state.resourceView?.context?.kind==='library')closeResourcePage();},
+  openLibrarySource:source=>openMobileLibrarySource(source),
   resetGoalsView:()=>goalsView?.reset(),
   renderGoals:()=>{if(state.page==='goals')goalsView?.render();},
   syncActivityIdentity:()=>uiCore.syncMobileIdentity(),
@@ -93,6 +97,31 @@ const mobileMessageActions = globalThis.WeftMessageActions?.create({core:uiCore,
 const conversationTasks=uiCore.mobileDecisions.tasks;
 const toolApprovals=uiCore.mobileDecisions.approvals;
 const toolQuestions=uiCore.mobileDecisions.questions;
+let libraryView=null;
+async function openMobileLibrarySource(source){
+  await listSharedSessions();
+  if(source.chatId&&source.chatId===uiCore.state.mainChat?.chatId){await uiCore.selectMainChat(source.eventId);return;}
+  await uiCore.selectLogicalSession(source.sessionId);
+  await uiCore.loadMobileHistory();await uiCore.state.historyInFlight?.promise;
+  await Promise.all([uiCore.refreshConversationTasks(),uiCore.refreshConversationApprovals(),uiCore.refreshConversationQuestions()]);
+  renderSharedConversation();
+  if(Number.isSafeInteger(source.seq)){
+    while(state.sharedHasOlder&&!state.sharedEvents.some(event=>event.seq===source.seq))await uiCore.loadMobileOlderHistory();
+    const row=document.querySelector(`[data-seq="${source.seq}"]`);row?.scrollIntoView({block:'center'});if(row){row.tabIndex=-1;row.focus();}
+  }
+}
+async function libraryPage(target){
+  uiCore.syncMobileIdentity();
+  libraryView=WeftLibraryView.mount({target,core:uiCore,notice:toast,openPreview:(item,trigger)=>{
+    showResourcePage(item.fileName,{kind:'library',owner:state.owner},trigger);
+    return $('resource-content');
+  }});libraryView.render();
+  const generation=state.generation,owner=state.owner;
+  try{const status=await uiCore.accessApi('/status');if(generation!==state.generation||owner!==state.owner)return;uiCore.state.personalCapabilities=status.personalCapabilities??{};
+    if(uiCore.state.personalCapabilities.library!==1){target.replaceChildren(el('p','library-empty','请更新电脑上的 WeftMate 后查看成果库。'));return;}
+    await uiCore.readLibrary();
+  }catch(error){if(generation===state.generation){uiCore.library.error=safeError(error);libraryView?.render();}}
+}
 let goalsView=null,goalsTimer=null;
 function focusGoalStep(){
   const focus=state.goalStepFocus;if(!focus)return;
@@ -111,7 +140,7 @@ async function goalsPage(target){
   try{const info=await uiCore.accessApi('/status');if(generation!==state.generation||owner!==state.owner||state.page!=='goals')return;uiCore.state.personalCapabilities=info.personalCapabilities??{};await uiCore.readGoals();clearInterval(goalsTimer);goalsTimer=setInterval(()=>{if(state.page==='goals'&&state.loggedIn&&document.visibilityState==='visible')void uiCore.readGoals();},6000);}
   catch(error){if(generation===state.generation)toast(safeError(error));}
 }
-let activityView=null,activityTimer=null,activityReturn=false;
+let activityView=null,activityTimer=null,activityReturn=false,notificationActivityId=null;
 async function activityPage(target){
   uiCore.syncMobileIdentity();
   activityView=WeftActivityView.mount({target,core:uiCore});activityView.render();
@@ -119,7 +148,10 @@ async function activityPage(target){
   try {const info=await uiCore.accessApi('/status');if(generation!==state.generation||owner!==state.owner)return;
     uiCore.state.personalCapabilities=info.personalCapabilities??{};
     if(uiCore.state.personalCapabilities.activity!==1){target.replaceChildren(document.createTextNode('这台电脑尚不支持动态。更新电脑上的 WeftMate 后重试。'));return;}
-    await uiCore.readActivity();clearInterval(activityTimer);activityTimer=setInterval(()=>{if(state.page==='activity'&&state.loggedIn&&document.visibilityState==='visible')void uiCore.refreshActivity();},6000);
+    await uiCore.setActivityFilter('all');
+    if(notificationActivityId){const id=notificationActivityId;while(state.page==='activity'&&owner===state.owner&&!uiCore.activity.items.some(row=>row.id===id)&&uiCore.activity.nextCursor)await uiCore.readActivity(true);
+      if(owner===state.owner&&state.page==='activity'){const row=target.querySelector(`[data-activity-id="${CSS.escape(id)}"]`);row?.scrollIntoView({block:'center'});row?.focus();notificationActivityId=null;}}
+    clearInterval(activityTimer);activityTimer=setInterval(()=>{if(state.page==='activity'&&state.loggedIn&&document.visibilityState==='visible')void uiCore.refreshActivity();},6000);
   }catch(error){if(generation===state.generation){uiCore.activity.error=safeError(error);activityView?.render();}}
 }
 
@@ -181,6 +213,7 @@ function call(method, params={}, timeoutMs=45000) { return mobileWebBridge?mobil
 
 
 function page(name){
+  if(name!=='library'){libraryView?.dispose();libraryView=null;if(state.resourceView?.context?.kind==='library')closeResourcePage();}
   if(name!=='goals'){if(goalsTimer)clearInterval(goalsTimer);goalsTimer=null;goalsView=null;}
   if(name!=='activity'){if(activityTimer)clearInterval(activityTimer);activityTimer=null;activityView=null;}
   if(name==='memory')state.settingsChild=true;
@@ -196,7 +229,7 @@ function page(name){
   if(previousPage!==name)globalThis.WeftMobileMotion?.push($(name==='chat'?'chat-page':name==='home'?'home-page':'generic-page'),name==='home'||name==='settings'&&previousPage!=='settings');
   $('conversation-usage').hidden=!(name==='chat' && state.loggedIn && (state.sharedSessionId || uiCore.mobile?.selectedBinding()?.sessionId));
   $('header-subtitle').textContent=name==='chat'?'同一个助手，接着聊。':{
-    goals:'目标',activity:'动态',schedules:'提醒与定时任务',about:'关于',general:'常规',personalization:'个性化',assistant:'助手',approvals:'审批',resources:'资料访问',usage:'用量',memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',settings:'设置',
+    goals:'目标',library:'成果库',activity:'动态',schedules:'提醒与定时任务',about:'关于',general:'常规',personalization:'个性化',assistant:'助手',approvals:'审批',resources:'资料访问',usage:'用量',memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',settings:'设置',
     account:'账户',password:'修改密码',models:'对话模型',sync:'离线与同步',appearance:'外观',updates:'更新',connect:'连接电脑'
   }[name]||name;
   document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('current',b.dataset.page===name));
@@ -281,10 +314,10 @@ function processEvent(message){const {event,data}=message;if(state.page==='goals
       state.activeSend=null;state.sendUncertain=false;state.authEpoch++;state.transitionPending=true;state.busy=false;state.models=[];closeModelMenu();closeAttachmentMenu();cancelAttachmentPick();resetMemoryForAuthBoundary('正在切换账户，已清除上一个账户的记忆显示。');
       state.progressText='';state.phase='idle';
       status('正在切换账户并停止原回合…');renderAttachmentDrafts()}
-    else{state.transitionPending=!!data.oldTurnPending;if(state.transitionPending)status('等待原回合安全结束…')}
+    else{state.transitionPending=!!data.oldTurnPending;status(state.transitionPending?'等待原回合安全结束…':'')}
     updateComposer();
   }
-  if(event==='account.retired'){invalidateLiveProgress();state.transitionPending=false;state.busy=false;updateComposer();
+  if(event==='account.retired'){const wasTransitioning=state.transitionPending;invalidateLiveProgress();state.transitionPending=false;state.busy=false;if(wasTransitioning)status('');updateComposer();
     if(state.page==='chat')renderConversation();}
   if(event==='chat.delegated'&&data?.conversationId===state.conversationId&&state.chatSource==='phone'){
     state.busy=false;invalidateLiveProgress();state.phase='idle';
@@ -326,6 +359,9 @@ function processEvent(message){const {event,data}=message;if(state.page==='goals
     const label=state.artifactSaveLabel;state.artifactSaveLabel=null;if(label)label.textContent=data.status==='saved'?'已保存到手机并核对内容':
       data.status==='cancelled'?'已取消保存':'保存未完成，请重试';
   }
+  if(event==='navigation.activity'&&data.activityId){notificationActivityId=data.activityId;page('activity');}
+  if(event==='notifications.needed'){toast('开启系统通知后，可在应用外收到审批、任务结果和提醒。你可以随时在通知设置中关闭。');void call('notifications.requestPermission');}
+  if(event==='notifications.action'){toast(data.accepted?'已提交审批决定':'审批未提交，请在动态中核对并重试',!data.accepted);if(state.page==='activity')void uiCore.refreshActivity();}
   if(event==='notifications.permission'&&state.page==='notifications')page('notifications');
   if(event==='theme.system')state.nativeSystemDark=!!data.dark;
   if(event==='theme.system'&&state.appearance==='system'){
@@ -359,7 +395,7 @@ async function boot(){
     if(info.cloudApp){
       try{const appearance=await uiCore.mobileAppearance();if(typeof appearance.systemDark==='boolean')state.nativeSystemDark=appearance.systemDark;applyTheme(appearance.value)}catch{applyTheme('system')}
       await call('app.ready',{owner:state.owner||'',hasDraft:hasAnyDraft()});
-      await WeftMobileCloud.init();state.booted=true;return;
+      await WeftMobileCloud.init();state.booted=true;if(info.launchActivityId){notificationActivityId=info.launchActivityId;page('activity');}return;
     }
     showProfile({displayName:info.username||'本机个人空间'});
     // Restore the selected phone/new or host session before updateComposer can persist the
@@ -399,7 +435,8 @@ window.addEventListener('unhandledrejection',reportBootFailure);
 
 
 
-function renderPage(name){const target=$('page-content');clear(target);if(name!=='goals')target.classList.remove('goals-page');if(name!=='activity')target.classList.remove('activity-page');if(name!=='settings')$('generic-page').scrollTop=0;const category=mobileSettingsRegistry.get(name);if(category)return category.mount(target);switch(name){
+function renderPage(name){const target=$('page-content');clear(target);if(name!=='activity')target.classList.remove('activity-page');if(name!=='goals')target.classList.remove('goals-page');if(name!=='library')target.classList.remove('library-page');if(name!=='settings')$('generic-page').scrollTop=0;const category=mobileSettingsRegistry.get(name);if(category)return category.mount(target);switch(name){
+  case 'library':return libraryPage(target);
   case 'goals':return goalsPage(target);
   case 'activity':return activityPage(target);
   case 'usage':return usagePage(target, state.usageSessionId || '');

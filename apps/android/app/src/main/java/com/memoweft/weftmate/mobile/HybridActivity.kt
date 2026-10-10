@@ -118,6 +118,8 @@ class HybridActivity : Activity() {
     private val fallbackInProgress = AtomicBoolean(false)
     private val compatShown = AtomicBoolean(false)
     private val authInFlight = AtomicBoolean(false)
+    private var notificationPoll: ScheduledFuture<*>? = null
+    private val notificationPolling = AtomicBoolean(false)
     private val sharedReconcileInFlight = AtomicBoolean(false)
     private val accountTransition = AtomicBoolean(false)
     private val syncRegistrationLock = Any()
@@ -159,6 +161,7 @@ class HybridActivity : Activity() {
     @Volatile private var pageGeneration = 0
     private var events: JavaScriptReplyProxy? = null
     @Volatile private var activeConversation: String? = null
+    private var compatibilityMessage: TextView? = null
     private var lastUiError: String? = null
     private var pendingSpeech: Pair<SpeechAttempt, Int>? = null
     private var pendingAvatarScope: String? = null
@@ -216,7 +219,7 @@ class HybridActivity : Activity() {
                 insets
             }
         }
-        web = WebView(this)
+        web = WebView(this).apply { setBackgroundColor(Weave.surface) }
         motionSettings.forEach { contentResolver.registerContentObserver(Settings.Global.getUriFor(it), false, motionObserver) }
         container.addView(web, FrameLayout.LayoutParams(-1, -1))
         setContentView(container)
@@ -547,13 +550,16 @@ class HybridActivity : Activity() {
         if (!compatShown.compareAndSet(false, true)) return
         runOnUiThread {
             if (closed.get()) return@runOnUiThread
+            compatibilityMessage?.let { (web.parent as? FrameLayout)?.removeView(it) }
             val message = TextView(this).apply {
+                setBackgroundColor(Weave.surface)
                 text = "$reason\n打开原生界面继续使用"
                 textSize = DesignTokens.font16
                 setPadding(DesignTokens.fallbackPadding, DesignTokens.fallbackTop, DesignTokens.fallbackPadding, DesignTokens.fallbackPadding)
                 setOnClickListener { startActivity(Intent(this@HybridActivity, MainActivity::class.java)) }
             }
-            (web.parent as? FrameLayout)?.addView(message, FrameLayout.LayoutParams(-1, -2))
+            compatibilityMessage = message
+            if (!currentPageReady) (web.parent as? FrameLayout)?.addView(message, FrameLayout.LayoutParams(-1, -2))
         }
     }
 
@@ -639,15 +645,14 @@ class HybridActivity : Activity() {
     }
     private fun cancelPreviousNotifications(previous: HostIdentity?, next: HostIdentity?) {
         val before = owner(previous)
-        if (before != null && before != owner(next)) notices(before).cancelVisible()
+        if (before != null && before != owner(next)) { notices(before).cancelVisible(); if (previous != null) ActivityNotifications(this).cancelScope(previous) }
     }
     private fun notices(scope: String = owner(secrets.host()) ?: "local"): MobileNotifications =
         noticeCache.computeIfAbsent(scope) { MobileNotifications(this, it) }
     private fun note(category: String, title: String, summary: String, conversationId: String? = null,
         scope: String = owner(secrets.host()) ?: "local") {
         if (closed.get()) return
-        val mayShow = NotificationScopeGate.mayShow(scope, activeScope, foreground, accountTransition.get())
-        try { notices(scope).record(category, title, summary, conversationId, mayShow) }
+        try { notices(scope).record(category, title, summary, conversationId, false) }
         catch (_: Exception) { /* Notification failure cannot change a persisted model/tool outcome. */ }
     }
     private fun appearance(): String = displayPrefs.getString("appearance:$activeScope", "system")
@@ -833,6 +838,11 @@ class HybridActivity : Activity() {
             uiHasDraft = draft
             draftKnowledgeReady = true
             currentPageReady = true
+            runOnUiThread {
+                compatibilityMessage?.visibility = View.GONE
+                compatShown.set(false)
+                handleNotificationIntent()
+            }
             if (bundles.state().active != "builtin") lastUiError = null
             JSONObject().put("bridgeVersion", 1)
         }
@@ -867,6 +877,7 @@ class HybridActivity : Activity() {
                 .put("backgroundSync", SyncJobService.status(this))
                 .put("ui", uiState(bundles.state()))
                 .put("launchConversationId", launch)
+                .put("launchActivityId", if (intent?.getStringExtra("ownerScope") == scope) intent?.getStringExtra("activityId") ?: "" else "")
                 .put("notificationOtherAccount", intent?.getStringExtra("conversationId")?.isNotBlank() == true &&
                     intent?.getStringExtra("ownerScope") != scope)
         }
@@ -1202,11 +1213,27 @@ class HybridActivity : Activity() {
             JSONObject().put("conversationId", conversation).put("name", name)
                 .put("status", result.status).put("summary", result.summary)
         }
-        "notifications.state" -> { requireHost(); notices().state() }
+        "notifications.state" -> { requireHost(); ActivityNotifications(this).state() }
         "notifications.inbox" -> { requireHost(); JSONObject().put("items", notices().inbox()) }
         "notifications.set" -> { requireHost(); notices().setEnabled(params.getString("category"), params.getBoolean("enabled")) }
+        "notifications.openSettings" -> {
+            requireHost()
+            runOnUiThread { startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName)) }
+            JSONObject().put("opened", true)
+        }
+        "notifications.openBatterySettings" -> {
+            requireHost()
+            runOnUiThread { startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))) }
+            JSONObject().put("opened", true)
+        }
+        "notifications.poll" -> {
+            val host = requireHost()
+            ActivityNotifications(this).poll(host, api) { !closed.get() && !accountTransition.get() && secrets.host() == host }
+            ActivityNotifications(this).state()
+        }
         "notifications.requestPermission" -> {
             requireHost()
+            ActivityNotifications(this).markPermissionAsked()
             if (android.os.Build.VERSION.SDK_INT >= 33) runOnUiThread {
                 requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), NOTIFY_REQUEST)
             }
@@ -2010,7 +2037,46 @@ class HybridActivity : Activity() {
         if (!closed.get()) web.evaluateJavascript("window.dispatchEvent(new Event('weft-back'))", null)
     }
 
+    private fun pollNotifications() {
+        if (closed.get() || accountTransition.get() || !notificationPolling.compareAndSet(false, true)) return
+        try { syncWorker.execute {
+            try {
+                val host = secrets.host() ?: return@execute
+                val notices = ActivityNotifications(this)
+                val needed = notices.poll(host, api) { !closed.get() && !accountTransition.get() && secrets.host() == host }
+                if (needed && foreground && currentPageReady && secrets.host() == host && !notices.state().optBoolean("permissionAsked")) {
+                    notices.markPermissionAsked()
+                    emit("notifications.needed", JSONObject())
+                }
+            } catch (_: Exception) { /* Same durable cursor is retried by polling or periodic work. */ }
+            finally { notificationPolling.set(false) }
+        } } catch (_: RejectedExecutionException) { notificationPolling.set(false) }
+    }
+    private fun handleNotificationIntent() {
+        val id = intent?.getStringExtra("activityId") ?: return
+        val host = secrets.host() ?: return
+        if (intent?.getStringExtra("ownerScope") != owner(host)) { emit("notification.otherAccount", JSONObject()); return }
+        emit("navigation.activity", JSONObject().put("activityId", id))
+        val outcome = intent?.getStringExtra("notificationOutcome") ?: return
+        if (!ActivityNotifications(this).validIntent(host, intent)) return
+        intent.removeExtra("notificationOutcome")
+        val execute = {
+            worker.execute {
+                try { ActivityNotifications(this).respond(host, id, outcome) { !closed.get() && !accountTransition.get() && secrets.host() == host }
+                    emit("notifications.action", JSONObject().put("accepted", true)); pollNotifications()
+                } catch (_: Exception) { emit("notifications.action", JSONObject().put("accepted", false)) }
+            }
+        }
+        runOnUiThread {
+            val keyguard = getSystemService(android.app.KeyguardManager::class.java)
+            if (keyguard.isDeviceLocked || keyguard.isKeyguardLocked) keyguard.requestDismissKeyguard(this, object : android.app.KeyguardManager.KeyguardDismissCallback() {
+                override fun onDismissSucceeded() { if (!closed.get() && secrets.host() == host) execute() }
+            }) else execute()
+        }
+    }
     override fun onResume() { super.onResume(); if (closed.get()) return; foreground = true; checkForUpdate(); restartUpdateSubscription(); scheduleSharedReconcile();
+        if (notificationPoll == null) notificationPoll = localTurnRenewWorker.scheduleWithFixedDelay({ pollNotifications() }, 1, 5, TimeUnit.SECONDS)
+        emit("notifications.permission", ActivityNotifications(this).state())
         syncMotionPreference()
         preferHighDisplayRefreshRate()
         secrets.host()?.let { queueSync(it, accountEpoch.get(), null) } }
@@ -2046,6 +2112,7 @@ class HybridActivity : Activity() {
         if (closed.get()) return
         setIntent(intent)
         receiveCloudCallback(intent)
+        handleNotificationIntent()
         val id = intent.getStringExtra("conversationId")?.takeIf { it.isNotBlank() }
         val notificationScope = intent.getStringExtra("ownerScope")
         if (id != null && notificationScope == (owner(secrets.host()) ?: "local"))
@@ -2073,7 +2140,7 @@ class HybridActivity : Activity() {
             else { clearAttachmentPick(attempt); emitAttachmentResult(attempt, "cancelled") }
             return
         }
-        if (requestCode == NOTIFY_REQUEST) emit("notifications.permission", notices().state())
+        if (requestCode == NOTIFY_REQUEST) { emit("notifications.permission", ActivityNotifications(this).state()); pollNotifications() }
         if (requestCode == CAMERA_REQUEST) {
             val pending = pendingCameraPermission
             pendingCameraPermission = null
@@ -2358,6 +2425,7 @@ class HybridActivity : Activity() {
         modelWorker.shutdownNow()
         updateConnection.getAndSet(null)?.disconnect()
         updateWorker.shutdownNow()
+        notificationPoll?.cancel(true)
         streamWorker.shutdownNow()
         if (::web.isInitialized) web.destroy()
         super.onDestroy()

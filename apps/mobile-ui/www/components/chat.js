@@ -364,6 +364,8 @@ function updateComposer(){uiCore.syncMobileIdentity();mobileMessageActions?.refr
   $('plus-button').disabled=view.attachmentsDisabled;
   for(const button of $('attachment-drafts').querySelectorAll('button'))button.disabled=view.attachmentItemDisabled;
   $('model-button').disabled=view.modelDisabled;$('voice-button').disabled=view.voiceDisabled;
+  WeftPopover.modelGate({missing:state.loggedIn && (view.host?uiCore.state.modelsKnown===true&&!uiCore.state.models.some(model=>model.configured!==false&&model.available!==false):!state.model),
+    field:$('draft'),send:button,empty:!$('chat-content').querySelector('.message'),content:$('chat-content'),composer:$('composer-dock'),openSettings:()=>page('models')});
   syncChatInsets();updateApprovalModeButton();updatePageHeader();
 }
 
@@ -511,4 +513,4 @@ function refreshCloudDevices(){const owner=state.owner,epoch=state.authEpoch;
 
 /* Keep the existing mode value/change contract; use shared menu geometry. */
 
-function paintMobileThinking(){const view=uiCore.thinkingView(),host=state.chatSource==='host';$('pick-thinking').hidden=!host||!view.supported;$('pick-thinking').setAttribute('aria-checked',String(view.enabled));$('pick-thinking').disabled=view.busy;$('thinking-badge').hidden=!host||!view.supported||!view.enabled;}
+function paintMobileThinking(){const view=uiCore.thinkingView(),host=state.chatSource==='host';$('thinking-separator').hidden=!host||!view.supported;$('pick-thinking').hidden=!host||!view.supported;$('pick-thinking').setAttribute('aria-checked',String(view.enabled));$('pick-thinking').disabled=view.busy;$('thinking-badge').hidden=!host||!view.supported||!view.enabled;}

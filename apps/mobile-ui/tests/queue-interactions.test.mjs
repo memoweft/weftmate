@@ -17,6 +17,7 @@ test('UI-3m named controls preserve intent, edit/cancel races and latest output 
       const fixture=window.fixture={requests:[],mode:'auto',race:false,events:[{seq:1,type:'task.started',data:{taskId:'cmd-root',text:'当前任务'}}],next:2};
       window.weftNative={postMessage(json){const request=JSON.parse(json);fixture.requests.push(request);const {method,params}=request;let result={},error;
         if(method==='app.bootstrap')result={loggedIn:false};
+        if(method==='models.host')result={models:[{profileId:'synthetic',displayName:'合成模型',configured:true}]};
         if(method==='settings.appearance')result={value:'light'};
         if(method==='attachments.list')result={attachments:[]};
         if(method==='shared.outbox.list')result={source:'host',commands:[]};
@@ -29,6 +30,7 @@ test('UI-3m named controls preserve intent, edit/cancel races and latest output 
           fixture.events.push({seq,type:params.intent==='steer'?'user.message':'task.queued',data:{taskId,text:params.text,...(params.intent==='steer'?{taskAction:'supplement'}:{})}});
           result={source:'host',sessionId:'s1',requestId:params.requestId,state:'accepted'};}
         if(method==='host.business'){
+          if(params.path==='/personal/v1/settings/personalization'){fixture.personalization={...WeftPersonalization.defaults,...fixture.personalization,...params.body};result={settings:fixture.personalization};}
           if(params.path.endsWith('/approval-mode'))result={mode:fixture.mode};
           if(params.path.endsWith('/cancel')){if(fixture.race)error={code:'TASK_NOT_QUEUED',status:409};else{const taskId=params.path.split('/').at(-2);fixture.events.push({seq:fixture.next++,type:'task.ended',data:{taskId,reason:'cancelled'}});}}
           if(params.path.includes('/resources')){if(fixture.offlineResources)error={code:'HOST_UNAVAILABLE',status:503};else result={outputs:[{artifactId:'old',fileName:'报告.md',createdAt:'2026-10-07T00:00:00Z'},{artifactId:'new',fileName:'报告.md',createdAt:'2026-10-08T00:00:00Z'}],sources:[{key:'tool:read',kind:'tool',name:'read_file',uses:[{id:'read',summary:'读取报告',path:'/sessions/s1/events/9/detail'}]}],hasMore:false,nextSeq:9};}
@@ -44,7 +46,7 @@ test('UI-3m named controls preserve intent, edit/cancel races and latest output 
     async function selectMode(label){
       await page.getByRole('button',{name:'返回',exact:true}).click();
       await page.getByRole('button',{name:'打开导航',exact:true}).click();await page.getByRole('button',{name:'设置',exact:true}).click();
-      await page.getByRole('button',{name:/^常规/}).click();
+      await page.getByRole('button',{name:/^助手/}).click();
       const mode=page.getByRole('combobox',{name:'回复进行中时发送的消息',exact:true});await mode.click();await page.getByRole('option',{name:label,exact:true}).click();
       await page.getByRole('button',{name:'返回',exact:true}).click();await page.getByRole('button',{name:'返回',exact:true}).click();
       await page.getByRole('button',{name:'排队验收 正在运行',exact:true}).click();

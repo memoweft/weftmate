@@ -1,3 +1,4 @@
+import { cloudPush } from './push.mjs';
 import { Provider, interactionPolicy, errors } from 'oidc-provider';
 import { calculateJwkThumbprint, createLocalJWKSet, jwtVerify } from 'jose';
 import { createHosts } from './hosts.mjs';
@@ -339,6 +340,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
     [`${CLOUD_PATH}/auth/logout/others`, 'logoutOthers'],
     [`${CLOUD_PATH}/devices/rename`, 'deviceRename'],
     [`${CLOUD_PATH}/devices`, 'devices'],
+    [`${CLOUD_PATH}/auth/push/registration`, 'push/registration'],
     [`${CLOUD_PATH}/auth/authorization`, 'appAuthorize'],
     [`${CLOUD_PATH}/auth/authorization/resume`, 'appResume'],
   ]);
@@ -427,6 +429,14 @@ export async function createIdentity({ database, config, mailer, logger, now = D
         if (route === 'account') {
           if (req.method !== 'GET') throw new CloudError(405, 'METHOD_NOT_ALLOWED');
           reply(res, 200, { account: accounts.public(await authenticate(req)) });
+          return true;
+        }
+        if (route === 'push/registration') {
+          if (url.search) throw new CloudError(400, 'INVALID_REQUEST');
+          if (req.method !== 'GET' && !allowedOrigin(req.headers.origin)) throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
+          const body = req.method === 'PUT' ? await bodyOf(req) : undefined;
+          const account = await authenticate(req, true);
+          reply(res, 200, await cloudPush(database, now).registration(account.id, req.cloudToken.device_fingerprint, req.method, body));
           return true;
         }
         if (route === 'devices') {

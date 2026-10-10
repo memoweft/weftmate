@@ -7,6 +7,38 @@ import { deflateSync } from 'node:zlib';
 import { execFileSync } from 'node:child_process';
 import { inspect, difference, pixels, retention, previousRun } from '../scripts/nightly/report.mjs';
 import { startTimelineCandidate } from './integration/timeline-ui-candidate.mjs';
+import { androidPackages, androidPackageReason } from '../scripts/nightly/android-packages.mjs';
+
+test('Android inventory names leftover test packages without classifying the daily or unknown package as disposable', async () => {
+  const output = 'package:com.memoweft.weftmate.mobile\npackage:com.memoweft.weftmate.mobile.s3aqa\npackage:com.memoweft.weftmate.mobile.stage15memoryqa.test\npackage:com.memoweft.weftmate.mobile.debug.test\npackage:com.memoweft.weftmate.mobile.unknown\n';
+  assert.deepEqual(androidPackages(output).testPackages, ['com.memoweft.weftmate.mobile.debug.test', 'com.memoweft.weftmate.mobile.s3aqa', 'com.memoweft.weftmate.mobile.stage15memoryqa.test']);
+  const reason = androidPackageReason(output);
+  const result = await inspect([], { phases: [{ name: 'android', status: 'skipped', reason }] });
+  assert.ok(result.alerts[0].message.includes('com.memoweft.weftmate.mobile.stage15memoryqa.test'));
+  assert.ok(reason.includes('com.memoweft.weftmate.mobile.unknown'));
+  assert.equal(androidPackageReason('error: device offline'), '');
+});
+
+test('task registration prefers the stable alias and WhatIf describes the complete action without registering', { skip: process.platform !== 'win32' }, async () => {
+  const root = await mkdtemp(join(tmpdir(), 'weftmate-nightly-task-'));
+  try {
+    const alias = join(root, 'Microsoft', 'WindowsApps', 'pwsh.exe');
+    await mkdir(join(root, 'Microsoft', 'WindowsApps'), { recursive: true });
+    await writeFile(alias, 'synthetic alias');
+    // Mock every ScheduledTasks constructor and mutation. The actual task
+    // service is never called, even if ShouldProcess regresses.
+    const harness = join(root, 'verify.ps1');
+    await writeFile(harness, `param([string]$Registration, [string]$FakeLocal)\n$ErrorActionPreference = 'Stop'\n$env:LOCALAPPDATA = $FakeLocal\nfunction New-ScheduledTaskAction { param($Execute,$Argument,$WorkingDirectory) @{ Execute=$Execute; Arguments=$Argument; WorkingDirectory=$WorkingDirectory } }\nfunction New-ScheduledTaskTrigger {}\nfunction New-ScheduledTaskPrincipal {}\nfunction New-ScheduledTaskSettingsSet {}\nfunction Register-ScheduledTask { throw 'registration must never run' }\n& $Registration -WhatIf -MaxMinutes 17\n`);
+    const run = () => execFileSync('pwsh', ['-NoProfile', '-File', harness, join(process.cwd(), 'scripts/nightly/register-task.ps1'), root], { encoding: 'utf8' });
+    const withAlias = run();
+    assert.ok(withAlias.includes(`Execute: ${alias}`));
+    assert.match(withAlias, /Arguments: -NoProfile -WindowStyle Hidden -File ".*run-nightly\.ps1" -MaxMinutes 17/);
+    assert.ok(withAlias.includes(`WorkingDirectory: ${join(process.cwd(), 'scripts/nightly')}`));
+    await rm(alias);
+    const fallback = execFileSync('pwsh', ['-NoProfile', '-Command', '(Get-Command pwsh).Source'], { encoding: 'utf8' }).trim();
+    assert.ok(run().includes(`Execute: ${fallback}`));
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
 
 // Minimal non-interlaced 8-bit PNG, enough to verify decoded pixel comparisons.
 function png(color, filter = 0) {
@@ -90,4 +122,38 @@ test('synthetic artifact write is observed before exposing its task approval', a
       assert.equal(questions.length, 1); assert.equal(questions[0].status, 'pending');
     }
   } finally { await fixture.close(); await rm(fixture.root, { recursive: true, force: true }); }
+});
+
+test('temp pruning removes only stale unused weftmate-* directories and never follows a junction', { skip: process.platform !== 'win32' }, async () => {
+  const root = await mkdtemp(join(tmpdir(), 'nightly-prune-root-'));
+  const outside = await mkdtemp(join(tmpdir(), 'nightly-prune-outside-'));
+  const script = join(process.cwd(), 'scripts/nightly/prune-temp.ps1');
+  const ps = (command, options = {}) => execFileSync('pwsh', ['-NoProfile', '-Command', command], { encoding: 'utf8', ...options });
+  let holder;
+  try {
+    await writeFile(join(outside, 'keep.txt'), 'outside data');
+    for (const name of ['weftmate-old', 'weftmate-recent', 'weftmate-in-use', 'other-old']) {
+      await mkdir(join(root, name, 'nested'), { recursive: true }); await writeFile(join(root, name, 'nested', 'file.txt'), name);
+    }
+    // A junction inside a stale directory must be unlinked, not traversed.
+    ps(`New-Item -ItemType Junction -Path '${join(root, 'weftmate-old', 'link')}' -Target '${outside}' | Out-Null`);
+    const old = "(Get-Date).AddDays(-3)";
+    for (const name of ['weftmate-old', 'weftmate-in-use', 'other-old'])
+      ps(`$d = Get-Item -LiteralPath '${join(root, name)}'; $d.CreationTime = ${old}; $d.LastWriteTime = ${old}`);
+    const { spawn } = await import('node:child_process');
+    holder = spawn('pwsh', ['-NoProfile', '-Command', `Start-Sleep 60 # ${join(root, 'weftmate-in-use')}`], { stdio: 'ignore' });
+    await new Promise(done => setTimeout(done, 1500));
+    const run = extra => JSON.parse(execFileSync('pwsh', ['-NoProfile', '-File', script, '-Hours', '48', '-Roots', root, ...extra], { encoding: 'utf8' }).trim().split(/\r?\n/).pop());
+    const preview = run([]);
+    assert.deepEqual([preview.applied, preview.found, preview.selected, preview.deleted, preview.keptRecent, preview.keptInUse], [false, 3, 1, 0, 1, 1]);
+    await access(join(root, 'weftmate-old'));
+    const applied = run(['-Apply']);
+    assert.deepEqual([applied.applied, applied.selected, applied.deleted, applied.failed], [true, 1, 1, 0]);
+    await assert.rejects(access(join(root, 'weftmate-old')));
+    for (const kept of ['weftmate-recent', 'weftmate-in-use', 'other-old']) await access(join(root, kept, 'nested', 'file.txt'));
+    assert.equal(await readFile(join(outside, 'keep.txt'), 'utf8'), 'outside data');
+  } finally {
+    holder?.kill();
+    await rm(root, { recursive: true, force: true }); await rm(outside, { recursive: true, force: true });
+  }
 });

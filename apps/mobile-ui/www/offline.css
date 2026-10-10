@@ -15,7 +15,7 @@
 .offline-empty{max-width:36ch;margin:var(--wm-space-24) auto;line-height:1.6}
 .offline-composer{max-width:72ch;width:100%;margin:0 auto;padding-bottom:var(--wm-space-12);display:grid;grid-template-columns:1fr auto;gap:var(--wm-space-8)}
 .offline-composer label{grid-column:1/-1;font-size:var(--wm-font-size-14)}
-.offline-composer textarea{display:block;box-sizing:border-box;width:100%;resize:vertical;margin-top:var(--wm-space-8);padding:var(--wm-space-12);font:inherit;color:inherit;caret-color:var(--wm-color-brand-light);background:inherit;border:1px solid var(--line,var(--wm-color-control-border));border-radius:var(--wm-radius-12)}
+.offline-composer textarea{display:block;box-sizing:border-box;width:100%;resize:none;overflow:auto;margin-top:var(--wm-space-8);padding:var(--wm-space-12);font:inherit;color:inherit;caret-color:var(--wm-color-brand-light);background:inherit;border:1px solid var(--line,var(--wm-color-control-border));border-radius:var(--wm-radius-12)}
 .offline-composer p{font-size:var(--wm-font-size-14);margin:0;align-self:center}
 .offline-chat button,.offline-launcher{font:inherit;color:inherit;background:var(--canvas,var(--bg));border:1px solid var(--line,var(--wm-color-control-border));border-radius:var(--wm-radius-8);padding:var(--wm-space-8) var(--wm-space-12);cursor:pointer}
 .offline-chat button:hover,.offline-launcher:hover{border-color:var(--wm-color-control-border-hover)}
