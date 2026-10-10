@@ -104,8 +104,11 @@ test('D29 real browser: in-app login → device approval → remembered session 
     await sidebar.waitFor({ state: 'visible' });
     // A closing/off-canvas mobile rail can still have visible layout boxes.
     // Use its accessible open state before attempting a real pointer click.
-    if (await sidebar.getAttribute('aria-expanded') !== 'true') await sidebar.click();
-    assert.equal(await sidebar.getAttribute('aria-expanded'), 'true');
+    const narrow = await page.evaluate(() => matchMedia('(max-width: 640px)').matches);
+    if (narrow) {
+      if (await sidebar.getAttribute('aria-expanded') !== 'true') await sidebar.click();
+      assert.equal(await sidebar.getAttribute('aria-expanded'), 'true');
+    } else if (!(await menu.isVisible())) await sidebar.click();
     await menu.click();
     await button(page, '设置').click();
     const picker = page.getByRole('combobox', { name: '设置分类', exact: true });
