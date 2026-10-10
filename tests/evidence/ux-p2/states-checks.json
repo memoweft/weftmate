@@ -1,0 +1,1411 @@
+{
+  "synthetic": true,
+  "modelRequests": 0,
+  "rows": [
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "side-running-approval-question",
+      "state": "运行中 / 审批 / 提问",
+      "screenshot": "after-electron-1200-light-side-running-approval-question.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "context-tooltip",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-context-tooltip.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "subtask-menu",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-subtask-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "session-menu",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-session-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "session-rename-dialog",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-session-rename-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "session-delete-dialog",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-session-delete-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "project-new-dialog",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-project-new-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "project-long-dialog",
+      "state": "超长文本",
+      "screenshot": "after-electron-1200-light-project-long-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "outputs-empty",
+      "state": "空列表",
+      "screenshot": "after-electron-1200-light-outputs-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "history-loading",
+      "state": "加载中",
+      "screenshot": "after-electron-1200-light-history-loading.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "history-error",
+      "state": "出错",
+      "screenshot": "after-electron-1200-light-history-error.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "side-running-approval-question",
+      "state": "运行中 / 审批 / 提问",
+      "screenshot": "after-electron-1200-dark-side-running-approval-question.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "context-tooltip",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-context-tooltip.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "subtask-menu",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-subtask-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "session-menu",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-session-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "session-rename-dialog",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-session-rename-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "session-delete-dialog",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-session-delete-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "project-new-dialog",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-project-new-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "project-long-dialog",
+      "state": "超长文本",
+      "screenshot": "after-electron-1200-dark-project-long-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "outputs-empty",
+      "state": "空列表",
+      "screenshot": "after-electron-1200-dark-outputs-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "history-loading",
+      "state": "加载中",
+      "screenshot": "after-electron-1200-dark-history-loading.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "history-error",
+      "state": "出错",
+      "screenshot": "after-electron-1200-dark-history-error.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "light",
+      "scene": "side-running-approval-question",
+      "state": "运行中 / 审批 / 提问",
+      "screenshot": "after-electron-480-light-side-running-approval-question.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "light",
+      "scene": "context-tooltip",
+      "state": "正常",
+      "screenshot": "after-electron-480-light-context-tooltip.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "light",
+      "scene": "subtask-menu",
+      "state": "正常",
+      "screenshot": "after-electron-480-light-subtask-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "light",
+      "scene": "session-menu",
+      "state": "正常",
+      "screenshot": "after-electron-480-light-session-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "light",
+      "scene": "session-rename-dialog",
+      "state": "正常",
+      "screenshot": "after-electron-480-light-session-rename-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "light",
+      "scene": "session-delete-dialog",
+      "state": "正常",
+      "screenshot": "after-electron-480-light-session-delete-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "light",
+      "scene": "project-new-dialog",
+      "state": "正常",
+      "screenshot": "after-electron-480-light-project-new-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "light",
+      "scene": "project-long-dialog",
+      "state": "超长文本",
+      "screenshot": "after-electron-480-light-project-long-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "light",
+      "scene": "outputs-empty",
+      "state": "空列表",
+      "screenshot": "after-electron-480-light-outputs-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "light",
+      "scene": "history-loading",
+      "state": "加载中",
+      "screenshot": "after-electron-480-light-history-loading.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "light",
+      "scene": "history-error",
+      "state": "出错",
+      "screenshot": "after-electron-480-light-history-error.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "dark",
+      "scene": "side-running-approval-question",
+      "state": "运行中 / 审批 / 提问",
+      "screenshot": "after-electron-480-dark-side-running-approval-question.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "dark",
+      "scene": "context-tooltip",
+      "state": "正常",
+      "screenshot": "after-electron-480-dark-context-tooltip.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "dark",
+      "scene": "subtask-menu",
+      "state": "正常",
+      "screenshot": "after-electron-480-dark-subtask-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "dark",
+      "scene": "session-menu",
+      "state": "正常",
+      "screenshot": "after-electron-480-dark-session-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "dark",
+      "scene": "session-rename-dialog",
+      "state": "正常",
+      "screenshot": "after-electron-480-dark-session-rename-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "dark",
+      "scene": "session-delete-dialog",
+      "state": "正常",
+      "screenshot": "after-electron-480-dark-session-delete-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "dark",
+      "scene": "project-new-dialog",
+      "state": "正常",
+      "screenshot": "after-electron-480-dark-project-new-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "dark",
+      "scene": "project-long-dialog",
+      "state": "超长文本",
+      "screenshot": "after-electron-480-dark-project-long-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "dark",
+      "scene": "outputs-empty",
+      "state": "空列表",
+      "screenshot": "after-electron-480-dark-outputs-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "dark",
+      "scene": "history-loading",
+      "state": "加载中",
+      "screenshot": "after-electron-480-dark-history-loading.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "dark",
+      "scene": "history-error",
+      "state": "出错",
+      "screenshot": "after-electron-480-dark-history-error.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "light",
+      "scene": "outputs-sources",
+      "state": "正常",
+      "screenshot": "after-electron-480-light-outputs-sources.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "light",
+      "scene": "output-preview",
+      "state": "正常",
+      "screenshot": "after-electron-480-light-output-preview.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "dark",
+      "scene": "outputs-sources",
+      "state": "正常",
+      "screenshot": "after-electron-480-dark-outputs-sources.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "dark",
+      "scene": "output-preview",
+      "state": "正常",
+      "screenshot": "after-electron-480-dark-output-preview.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "scene": "side-completed",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-side-completed.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "scene": "attachment-menu",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-attachment-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "scene": "activity",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-activity.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "scene": "goals",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-goals.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "scene": "things",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-things.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "scene": "projects-list",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-light-projects-list.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "scene": "computer-offline",
+      "state": "电脑离线",
+      "screenshot": "after-android-bundle-360-light-computer-offline.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "scene": "side-completed",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-side-completed.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "scene": "attachment-menu",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-attachment-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "scene": "activity",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-activity.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "scene": "goals",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-goals.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "scene": "things",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-things.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "scene": "projects-list",
+      "state": "正常",
+      "screenshot": "after-android-bundle-360-dark-projects-list.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "scene": "computer-offline",
+      "state": "电脑离线",
+      "screenshot": "after-android-bundle-360-dark-computer-offline.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "scene": "side-completed",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-side-completed.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "scene": "attachment-menu",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-attachment-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "scene": "activity",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-activity.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "scene": "goals",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-goals.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "scene": "things",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-things.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "scene": "projects-list",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-light-projects-list.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "scene": "computer-offline",
+      "state": "电脑离线",
+      "screenshot": "after-android-bundle-390-light-computer-offline.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "scene": "side-completed",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-side-completed.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "scene": "attachment-menu",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-attachment-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "scene": "activity",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-activity.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "scene": "goals",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-goals.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "scene": "things",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-things.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "scene": "projects-list",
+      "state": "正常",
+      "screenshot": "after-android-bundle-390-dark-projects-list.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "scene": "computer-offline",
+      "state": "电脑离线",
+      "screenshot": "after-android-bundle-390-dark-computer-offline.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "light",
+      "scene": "login",
+      "state": "未登录",
+      "screenshot": "after-electron-480-light-login.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "dark",
+      "scene": "login",
+      "state": "未登录",
+      "screenshot": "after-electron-480-dark-login.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    }
+  ],
+  "errors": []
+}
