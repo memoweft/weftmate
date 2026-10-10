@@ -12,6 +12,7 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         if (status.blockedBoundaryCount > 0) return `记忆暂停：${status.blockedBoundaryCount} 条来源需要处理`;
         if (status.failedFormationCount > 0) return `记忆暂停：${status.failedFormationCount} 条整理失败，请检查模型服务`;
         if (waiting) return `正在补交 ${waiting} 条${code === 'MEMORY_BUSY' ? '，服务忙，稍后自动重试' : ''}`;
+        if (code === 'MEMORY_FORMATION_RECOVERING') return '正在继续整理上次没做完的记忆';
         if (status.pendingFormationCount > 0) return `正在整理 ${status.pendingFormationCount} 条已提交的对话`;
         if (status.state === 'unavailable' || status.captureError) return '记忆暂停：服务暂不可用，恢复后自动补交';
         return status.state === 'ready' ? '记忆正常' : '记忆暂停：请检查模型与宿主连接';
@@ -91,12 +92,12 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
             const payload = await core.memoryRequest('/status');
             if (!core.memoryViewCurrent(token))
                 return false;
-            if (!['ready', 'degraded', 'disabled', 'unavailable'].includes(payload?.state) || !payload?.capabilities)
+            if (!['ready', 'recovering', 'degraded', 'disabled', 'unavailable'].includes(payload?.state) || !payload?.capabilities)
                 throw { code: 'REQUEST_FAILED' };
             core.memory.status = payload;
-            if (!['ready', 'degraded'].includes(payload.state) || payload.capabilities.list !== true) {
+            if (!['ready', 'recovering', 'degraded'].includes(payload.state) || payload.capabilities.list !== true) {
                 core.invalidateMemorySnapshot(payload.state === 'disabled' ? '记忆尚未接入当前宿主。'
-                    : ['ready', 'degraded'].includes(payload.state) ? '当前账户没有记忆列表权限。' : '记忆服务暂时不可用，请稍后刷新。', payload.state !== 'disabled');
+                    : ['ready', 'recovering', 'degraded'].includes(payload.state) ? '当前账户没有记忆列表权限。' : '记忆服务暂时不可用，请稍后刷新。', payload.state !== 'disabled');
                 return false;
             }
             return true;
@@ -116,7 +117,7 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
     function memoryActionAllowed(action) {
         const global = core.memory.status?.capabilities;
         const selected = core.memory.selected;
-        if (!selected || selected.stale || !['ready', 'degraded'].includes(core.memory.status?.state)
+        if (!selected || selected.stale || !['ready', 'recovering', 'degraded'].includes(core.memory.status?.state)
             || core.memory.activeOperation || core.memory.unresolvedMarker)
             return false;
         if (action === 'correct' && selected.kind === 'entity')
@@ -331,7 +332,7 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
     }
     async function loadMemoryPage({ more = false } = {}) {
         const token = core.memoryIdentity();
-        if (!core.memoryViewCurrent(token) || !['ready', 'degraded'].includes(core.memory.status?.state) || core.memory.status.capabilities.list !== true)
+        if (!core.memoryViewCurrent(token) || !['ready', 'recovering', 'degraded'].includes(core.memory.status?.state) || core.memory.status.capabilities.list !== true)
             return;
         const queryGeneration = more ? core.memory.queryGeneration : ++core.memory.queryGeneration;
         const kind = core.memory.kind;

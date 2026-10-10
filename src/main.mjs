@@ -3353,7 +3353,7 @@ async function bootstrap() {
                   lastError: sessionReferenceScan.state === 'failed' ? 'REFERENCE_SCAN_FAILED' : null, canRestart: true },
                 memory: { state: memory.state, version: memory.version ?? null,
                   reasonCode: memory.reasonCode ?? null, pendingBoundaryCount: memory.pendingBoundaryCount ?? null,
-                  pendingFormationCount: memory.pendingFormationCount ?? null, failedFormationCount: memory.failedFormationCount ?? null,
+                  pendingFormationCount: memory.pendingFormationCount ?? null, recoveringFormationCount: memory.recoveringFormationCount ?? 0, failedFormationCount: memory.failedFormationCount ?? null,
                   failedCorrectionCount: memory.failedCorrectionCount ?? 0, formationIssues: memory.formationIssues ?? [],
                   lastError: memory.lastFailureCode ?? memory.reasonCode ?? null, canRestart: !!personalMemoryManager },
                 queue: modelScheduler.queue.status() };
