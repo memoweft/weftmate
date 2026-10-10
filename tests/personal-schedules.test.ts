@@ -59,6 +59,7 @@ test('native UI create/edit preserves stable id, pause and exact run receipts; f
   await f.restart();await f.manager.manage(f.agent,'forget',undefined,{receiptIds:['ui-source'],sourceTexts:[]});
   assert.deepEqual((await f.manager.manage(f.agent,'list')).items.map((r:any)=>r.text),['无关安排']);
   assert.equal((await f.manager.manage(f.agent,'notifications')).items.length,0);
+  await assert.rejects(f.manager.manage(f.agent,'create',undefined,input),{status:404});
 });
 
 async function fixture(t: any, timeZone = 'Asia/Shanghai') {

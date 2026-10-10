@@ -615,7 +615,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         const goalErased = backend.goals ? await backend.goals({ sessionId, ownerId, action: 'forget', receiptIds, sourceTexts }) : null;
         const cleaned = await callBackend(() => backend.cleanupMemoryCopies({ sessionId, ownerId, sourceTexts, deleteConversationSnippets,
           ...(schedulesErased?.removedNativeIds?.length ? { scheduleIds: schedulesErased.removedNativeIds } : {}),
-          ...(goalErased?.clearedGoalId ? { goalIds: [goalErased.clearedGoalId] } : {}) }));
+          ...(goalErased?.clearedGoalIds?.length ? { goalIds: goalErased.clearedGoalIds } : {}) }));
         if (cleaned?.forgottenSeqs?.length) await serial(() => mutate(ownerId, next => {
           const session = next.sessions[sessionId];
           if (session) session.forgottenSeqs = [...new Set([...(session.forgottenSeqs ?? []), ...cleaned.forgottenSeqs])];

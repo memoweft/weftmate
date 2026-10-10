@@ -13,15 +13,23 @@ export async function createNativeGoalManager({ ctx, foldGoal, file }) {
     if (input.action === 'list') { const value = foldGoal(agent.session.events); return { goal: value.goal ? { ...value.goal, roundsStarted: value.roundsStarted, createdAt: value.createdAt, updatedAt: value.updatedAt } : null }; }
     const work = queue.then(async () => {
       const key = `${agent.id}:${input.requestId}`, fingerprint = createHash('sha256').update(JSON.stringify(input)).digest('hex'), prior = operations[key];
-      if (prior) { if (fingerprint !== prior.fingerprint) throw Object.assign(new Error('REQUEST_CONFLICT'), { status: 409 }); return prior.result; }
+      if (prior) { if (fingerprint !== prior.fingerprint) throw Object.assign(new Error('REQUEST_CONFLICT'), { status: 409 }); if (prior.result?.erased) throw Object.assign(new Error('SOURCE_UNAVAILABLE'), {status:404}); return prior.result; }
       const goals = service(agent); if (!goals) throw new Error('CAPABILITY_UNAVAILABLE');
       let result;
       if (input.action === 'erase' || input.action === 'forget') {
-        const goal = goals.get(agent), source = goal && operations[`${agent.id}:source:${goal.id}`];
-        if (input.action === 'forget' && goal && !input.receiptIds?.includes(source?.receiptId) && !input.sourceTexts?.some(text => text && goal.objective.includes(text))) return { cleared: false };
-        if (goal) goals.clear(agent, { id: goal.id, revision: goal.revision });
-        for (const id of Object.keys(operations)) if (id.startsWith(`${agent.id}:`)) delete operations[id];
-        result = { cleared: true, ...(goal ? { clearedGoalId: goal.id } : {}) };
+        const goal = goals.get(agent), erased = new Set();
+        for (const event of agent.session.events) if (event.type === 'goal/change' && event.data?.goal) {
+          const past = event.data.goal, source = operations[`${agent.id}:source:${past.id}`];
+          if (input.action === 'erase' || input.receiptIds?.includes(source?.receiptId) || input.sourceTexts?.some(text => text && past.objective.includes(text))) erased.add(past.id);
+        }
+        if (goal && (input.action === 'erase' || input.sourceTexts?.some(text=>text && goal.objective.includes(text)))) erased.add(goal.id);
+        if (goal && erased.has(goal.id)) goals.clear(agent, { id: goal.id, revision: goal.revision });
+        for (const [id, operation] of Object.entries(operations)) if (id.startsWith(`${agent.id}:`)) {
+          if (input.action === 'erase') delete operations[id];
+          else if (erased.has(operation.result?.ref?.id)) operation.result = {erased:true};
+          else if ([...erased].some(goalId=>id===`${agent.id}:source:${goalId}`)) delete operations[id];
+        }
+        result = { cleared: !goal || erased.has(goal.id), clearedGoalIds: [...erased] };
       } else if (input.action === 'create') result = { goal: goals.create(agent, { objective: input.objective }) };
       else if (input.action === 'complete') result = { goal: goals.complete(agent, input.ref) };
       else if (input.action === 'archive') result = { ref: goals.clear(agent, input.ref), archived: true };

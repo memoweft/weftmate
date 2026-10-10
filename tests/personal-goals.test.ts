@@ -6,6 +6,7 @@ import { nextCalendarInput } from '../src/personal-access/schedules-calendar.mjs
 import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import { eraseSessionMemoryArtifact } from '../src/runtime/dsh-adapter/memory-erasure.mjs';
 import { observeActivityEvents } from '../src/personal-access/activity.mjs';
+import { eraseChatCopies } from '../src/personal-access/chat-erasure.mjs';
 import { runInNewContext } from 'node:vm';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -59,12 +60,27 @@ test('scheduled text result produces one native task dynamic while ordinary plai
 });
 
 test('shared goal page resets old account data before new reads and ignores late responses',async()=>{
-  const factories:any={},environment:any={crypto:{randomUUID:()=> 'fixture'}},reads:any[]=[];
+  let resets=0;const factories:any={},environment:any={crypto:{randomUUID:()=> 'fixture'}},reads:any[]=[];
   runInNewContext(await readFile(new URL('../src/ui-core/goals.js',import.meta.url),'utf8'),{globalThis:{WeftUiCore:{factories}},URLSearchParams,Set});
   const core:any={state:{identityGeneration:1,ownerId:'one',personalCapabilities:{taskOverview:1,scheduleEditing:1,goals:1}},accessApi:(path:string)=>new Promise(resolve=>reads.push({path,owner:core.state.ownerId,resolve})),failureMessage:()=> '读取失败'};
-  Object.assign(core,factories.goals(core,{},environment));const old=core.readGoals();await Promise.resolve();await Promise.resolve();
+  Object.assign(core,factories.goals(core,{resetGoalsView:()=>resets++},environment));const old=core.readGoals();await Promise.resolve();await Promise.resolve();
   core.goalsPage.tasks=[{title:'old private data'}];core.state.identityGeneration++;core.state.ownerId='two';const current=core.readGoals();assert.equal(core.goalsPage.tasks.length,0);await Promise.resolve();await Promise.resolve();
   for(const read of reads.filter(r=>r.owner==='two'))read.resolve(read.path==='/tasks'?{items:[{title:'new data'}],recent:[]}:read.path==='/sessions'?{sessions:[]}:{items:[]});await current;
   for(const read of reads.filter(r=>r.owner==='one'))read.resolve(read.path==='/tasks'?{items:[{title:'old private data'}],recent:[]}:read.path==='/sessions'?{sessions:[]}:{items:[]});await old;
-  assert.equal(core.goalsPage.tasks[0].title,'new data');assert.equal(core.goalsPage.loading,false);
+  assert.equal(core.goalsPage.tasks[0].title,'new data');assert.equal(core.goalsPage.loading,false);assert.equal(resets,2);
+});
+
+test('forgetting archived native goals scrubs historical IDs and refuses the original create replay',async t=>{
+  const root=await mkdtemp(join(tmpdir(),'weftmate-tb2-goal-tombstone-'));t.after(()=>rm(root,{recursive:true,force:true}));let current:any;
+  const agent:any={id:'session',session:{events:[]}},service={get:()=>current,create:(_agent:any,input:any)=>{current={id:'goal-source',revision:1,objective:input.objective};agent.session.events.push({type:'goal/change',data:{goal:{...current}}});return current;},clear:()=>{current=undefined;return {id:'goal-source',revision:2};}};
+  const ctx:any={get:(name:string)=>name==='agentPresets'?null:service,sessions:{flush:async()=>{}}};
+  const manager=await createNativeGoalManager({ctx,foldGoal:()=>({goal:current}),file:join(root,'requests.json')});
+  const request={action:'create',requestId:'original-request',objective:'TB2-archived-private'};await manager.manage(agent,request);await manager.manage(agent,{action:'archive',requestId:'archive',ref:{id:'goal-source',revision:1}});
+  const erased=await manager.manage(agent,{action:'forget',sourceTexts:['TB2-archived-private'],receiptIds:[]});assert.deepEqual(erased.clearedGoalIds,['goal-source']);
+  await assert.rejects(manager.manage(agent,request),{status:404});assert.equal(current,undefined);assert.ok(!(await readFile(join(root,'requests.json'),'utf8')).includes('TB2-archived-private'));
+});
+
+test('goal-only erasure advances the deletion generation even when there are no dynamics',()=>{
+  const account:any={sessions:{side:{}},commands:{},activity:{version:1,generation:0,sequence:0,items:{},changes:[],sources:{},operations:{}}};
+  eraseChatCopies(account,{sessionId:'side'});assert.equal(account.activity.generation,1);
 });

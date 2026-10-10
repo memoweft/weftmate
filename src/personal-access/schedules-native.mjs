@@ -1,7 +1,7 @@
 /** Management adapter over DSH's native schedule tools, never a timer service. */
 import { readFile, mkdir, writeFile, rename } from 'node:fs/promises';
 import path from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import { scheduleContent, nextCalendarInput } from './schedules-calendar.mjs';
 
 /** Latest claimed user intent, including a reminder requested by a live steer. */
@@ -134,13 +134,14 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
     return serial(async () => {
       const b = bucket(agent.id);
       b.operations ??= {};
-      const fingerprint = JSON.stringify({ action, id, input });
+      const encoded = JSON.stringify({ action, id, input }), hash = value => createHash('sha256').update(value).digest('hex'), fingerprint = hash(encoded);
       if (input.requestId && b.operations[input.requestId]) {
         const prior = b.operations[input.requestId];
-        if (prior.fingerprint !== fingerprint) throw Object.assign(new Error('REQUEST_CONFLICT'), { status: 409 });
+        if (prior.fingerprint !== fingerprint && prior.fingerprint !== encoded) throw Object.assign(new Error('REQUEST_CONFLICT'), { status: 409 });
+        if (prior.result?.erased) throw Object.assign(new Error('SOURCE_UNAVAILABLE'), { status:404 });
         return prior.result;
       }
-      const done = async result => { if (input.requestId) b.operations[input.requestId] = { fingerprint, result }; await save(); return result; };
+      const done = async result => { const targetId = id ?? result.item?.id; if (input.requestId) b.operations[input.requestId] = { fingerprint, targetId, sourceReceiptId: input.sourceReceiptId ?? b.items[targetId]?.sourceReceiptId, result }; await save(); return result; };
       if (action === 'erase' || action === 'forget') {
         const removed = new Set(), nativeIds = new Set();
         for (const row of Object.values(b.items)) {
@@ -152,7 +153,19 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
           nativeIds.add(row.nativeId); nativeIds.add(row.record.id);
         }
         if (action === 'erase') delete state.sessions[agent.id];
-        else { b.notifications = b.notifications.filter(n => !removed.has(n.scheduleId) && !input.sourceTexts?.some(text => text && n.text.includes(text))); b.operations = {}; }
+        else {
+          b.notifications = b.notifications.filter(n => !removed.has(n.scheduleId) && !input.sourceTexts?.some(text => text && n.text.includes(text)));
+          for (const operation of Object.values(b.operations)) {
+            let legacy; try { if(operation.fingerprint.startsWith('{'))legacy = JSON.parse(operation.fingerprint); } catch { /* Hash-only receipts. */ }
+            operation.targetId ??= operation.result?.item?.id ?? legacy?.id;
+            operation.sourceReceiptId ??= legacy?.input?.sourceReceiptId;
+            if (legacy) operation.fingerprint = hash(operation.fingerprint);
+            if (removed.has(operation.targetId) || input.receiptIds?.includes(operation.sourceReceiptId) || input.sourceTexts?.some(text=>text && JSON.stringify(operation.result).includes(text))) {
+              if (operation.result?.item?.nativeId) nativeIds.add(operation.result.item.nativeId);
+              operation.result = {erased:true};
+            }
+          }
+        }
         await save(); return { ok: true, removedIds: [...removed], removedNativeIds: [...nativeIds] };
       }
       if (action === 'create' || action === 'edit') {

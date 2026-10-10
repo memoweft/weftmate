@@ -30,6 +30,7 @@ const androidBridge = WeftUiCore.createAndroidBridge({
   onEvent: message => processEvent(message),
 });
 const mobileEffects = {
+  resetGoalsView:()=>goalsView?.reset(),
   renderGoals:()=>{if(state.page==='goals')goalsView?.render();},
   syncActivityIdentity:()=>uiCore.syncMobileIdentity(),
   activityVisible:()=>state.page==='activity',

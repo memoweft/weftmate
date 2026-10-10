@@ -3,7 +3,7 @@ globalThis.WeftUiCore.factories.goals = (core,effects,environment) => {
     const model={tasks:[],recent:[],schedules:[],goals:[],sessions:[],errors:{},loading:false,generation:0,busy:new Set()};
     let flight,identity;
     const scope=()=>`${core.state.identityGeneration}:${core.state.account?.ownerId ?? core.state.ownerId}`;
-    function resetGoals(){model.generation++;Object.assign(model,{tasks:[],recent:[],schedules:[],goals:[],sessions:[],errors:{},loading:false});model.busy.clear();flight=null;effects.renderGoals?.();}
+    function resetGoals(){model.generation++;Object.assign(model,{tasks:[],recent:[],schedules:[],goals:[],sessions:[],errors:{},loading:false});model.busy.clear();flight=null;effects.resetGoalsView?.();effects.renderGoals?.();}
     async function readGoals(){
         core.syncMobileIdentity?.();if(identity!==scope()){identity=scope();resetGoals();}if(flight)return flight;
         const token=scope(),generation=model.generation;model.loading=true;effects.renderGoals?.();
