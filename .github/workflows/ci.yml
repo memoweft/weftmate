@@ -126,7 +126,7 @@ jobs:
         with:
           repository: memoweft/memoweft
           # FX-17 correction-memory candidate; replace after Claude squash.
-          ref: 983f53f
+          ref: 52e48969bf7cea6e9b96812f9c0ef630e3e57db6
           path: memoweft-core
           persist-credentials: false
       - name: Setup Node
