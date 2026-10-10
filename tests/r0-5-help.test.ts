@@ -32,3 +32,10 @@ test('every shortcut in the panel registry dispatches its own action with identi
     if(row.mod)assert.equal(registry.dispatch({...event,ctrlKey:false,metaKey:true},actions),true);}
   const source=readFileSync('src/personal-access-ui/components/help-view.js','utf8');assert.match(source,/for\(const row of WeftShortcuts.rows\)/);assert.match(source,/line.dataset.shortcutId=row.id/);
 });
+test('approval shortcut names and number bindings derive from the same mode table without duplicate registration',()=>{
+  const {context}=fixture(),registry=context.WeftShortcuts,modes=[['auto','自动（推荐）'],['ask','每次询问'],['accept-edits','自动接受文件修改'],['plan','先出计划'],['allow-all','全部允许']];
+  registry.registerApprovalModes(modes);registry.registerApprovalModes(modes);
+  const rows=registry.rows.filter((row:any)=>row.mode);assert.equal(rows.length,modes.length);
+  for(const [index,[mode,label]]of modes.entries()){const row=rows.find((row:any)=>row.mode===mode);assert.equal(row.label,`审批菜单：${label}`);let selected='';
+    assert.equal(registry.dispatch({key:String(index+1)}, {[row.id]:()=>selected=mode}),true);assert.equal(selected,mode);assert.equal(registry.dispatch({key:String(index+1),ctrlKey:true},{[row.id]:()=>selected=mode}),false);}
+});
