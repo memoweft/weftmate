@@ -36,7 +36,7 @@
     states.set(element, {text}); element.classList.add('reply-status'); element.classList.toggle('reply-working', running);
     let sheen = element.querySelector('.reply-sheen');
     if (running && !sheen) { sheen = document.createElement('span'); sheen.className = 'reply-sheen'; sheen.setAttribute('aria-hidden','true'); element.append(sheen); }
-    if (sheen) { if (sheen._replyText !== text) { sheen._replyText=text;sheen.replaceChildren(...Array.from({length:5},(_,index)=>{const part=document.createElement('span');part.className='reply-sheen-part';part.textContent=text;part.style.setProperty('--reply-phase',`${index*25}%`);part.style.setProperty('--reply-offset',String(index/5));return part;})); } if (!running) sheen.remove(); }
+    if (sheen) { if (sheen._replyText !== text) { sheen._replyText=text;sheen.replaceChildren(...Array.from({length:5},(_,index)=>{const part=document.createElement('span');part.className='reply-sheen-part';part.setAttribute('data-text',text);part.style.setProperty('--reply-phase',`${index*25}%`);part.style.setProperty('--reply-offset',String(index/5));return part;})); } if (!running) sheen.remove(); }
     visible?.observe(element);
     if (changed && transition && !reduced() && !paused()) {
       const copy = document.createElement('span'); copy.className = 'reply-status-out'; copy.textContent = saved.text; copy.setAttribute('aria-hidden','true');
