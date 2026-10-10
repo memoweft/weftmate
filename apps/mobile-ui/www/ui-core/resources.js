@@ -131,7 +131,7 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             if (error.code === 'UNAUTHORIZED')
                 return;
             effects.historyNotice(error.code === 'NETWORK'
-                ? '连接中断，重连后会查询原有事情记录。' : '事情记录暂时无法读取，请点击刷新。');
+                ? '连接中断，重连后会查询原有事情记录。' : '事情记录暂时无法读取，请点击刷新。', 'read-failure');
         }
     }
     function updateFromCommand(command) {

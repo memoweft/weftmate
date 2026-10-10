@@ -266,11 +266,11 @@ async function sendShared(options={}){if(core.state.sessionSelecting||core.state
       effects.clearAcceptedHostAttachments(attachmentIds);
       effects.status('电脑已受理消息，等待会话记录更新');waitForSharedTurn(sessionId,text,afterSeq,attachmentIds);void effects.loadSharedHistory();
     }else if(result.state==='uncertain'){optimistic.status='failed';state.sharedPending={requestId,state:'uncertain',text,attachmentIds,afterSeq};
-      effects.status('发送结果待核对 · 请求已保留，不会自动重发')}
+      effects.status('发送结果待核对 · 请求已保留，不会自动重发',false,'message-pending')}
     else{optimistic.status='failed';state.sharedPending=null;effects.status(effects.safeError(new Error(result.errorCode||'OPERATION_FAILED')),true)}
   }catch(e){if(!sharedViewCurrent(owner,epoch,generation,sessionId)||optimistic.status==='accepted')return;
     optimistic.status='failed';state.sharedPending=e?.message==='TIMEOUT'?{requestId,state:'uncertain',text,attachmentIds,afterSeq}:null;
-    if(state.sharedPending)effects.status('发送结果待核对 · 请查看电脑会话或待处理记录');
+    if(state.sharedPending)effects.status('发送结果待核对 · 请查看电脑会话或待处理记录',false,'message-pending');
     else effects.status(effects.safeError(e),true)}
   finally{if(sharedViewCurrent(owner,epoch,generation,sessionId)){effects.updateComposer();effects.renderSharedConversation();effects.scheduleSharedPoll()}}}
 

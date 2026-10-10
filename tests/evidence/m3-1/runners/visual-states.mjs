@@ -25,7 +25,7 @@ try{
       document.documentElement.dataset.theme=theme;m31Core.presence.success({runtime:'ready'});
       m31Core.beginOptimistic({sessionId:m31Core.state.selectedSessionId,requestId:'m31-review-unconfirmed',text:'这条消息的发送结果需要核对。'}).status='failed';
       m31Core.presence.failure({code:'HOST_OFFLINE'},{independent:true,cloudOffline:true});
-      m31Ui.historyNotice('主对话暂时无法读取，请重试。');m31Ui.updateAvailability();document.getElementById('toast').hidden=true;
+      m31Ui.historyNotice('主对话暂时无法读取，请重试。','read-failure');m31Ui.updateAvailability();document.getElementById('toast').hidden=true;
     },theme);await page.waitForTimeout(500);
     const pending=await page.evaluate(()=>({copies:(document.getElementById('transcript').textContent.match(/发送结果待核对/g)||[]).length,readHidden:document.getElementById('timeline-status').hidden}));
     assert.equal(pending.copies,1,JSON.stringify(await page.evaluate(()=>({selected:m31Core.state.selectedSessionId,main:m31Core.inMainChat(),rows:m31Core.optimisticMessages(),text:document.getElementById('transcript').textContent}))));assert.equal(pending.readHidden,true);

@@ -26,13 +26,14 @@ globalThis.WeftPresenceView = {
             const model = value.kind === 'online' && value.host?.model === 'unavailable';
             bar.hidden = value.kind === 'online' && !runtime && !model;
             copy.textContent = runtime ? value.host.runtime==='restarting' ? '助手正在重启 · 草稿会保留' : '助手暂不可用 · 草稿会保留'
-                : model ? '模型暂不可用 · 请检查设置' : ({connecting:'正在连接 · 草稿会保留',host_offline:'电脑离线 · 可用云端聊天，不能操作电脑',network_unavailable:'网络不可用 · 草稿会保留',login_required:'请重新登录 · 草稿会保留',approval_required:'请在已登录设备批准访问'})[value.kind] || '';
+                : model ? '模型暂不可用 · 请检查设置' : ({connecting:'正在连接 · 草稿会保留',host_offline:'电脑离线 · 等待接续',network_unavailable:'网络不可用 · 草稿会保留',login_required:'请重新登录 · 草稿会保留',approval_required:'请在已登录设备批准访问'})[value.kind] || '';
             copy.title = value.description || copy.textContent;
             retry.textContent = value.kind === 'login_required' ? '重新登录' : value.kind === 'approval_required' ? '查看设备' : '重试';
             offline.hidden = value.kind !== 'host_offline' || typeof core.openOfflineMode !== 'function';
             if (value.kind !== 'online' && (value.failures > 0 || value.kind !== 'connecting')) disconnected = true;
             else if (disconnected && lastKind && lastKind !== 'online') { disconnected = false; toast('连接已恢复，正在接续。'); }
-            if(value.kind!=='online') for(const notice of document.querySelectorAll('.offline-notice,#timeline-status')) { if(/暂时无法读取|同步未完成/.test(notice.textContent))notice.hidden=true; }
+            // Only explicitly classified read/sync notices join connection state.
+            for(const notice of document.querySelectorAll('.offline-notice,[data-notice-kind="read-failure"]'))notice.hidden=!notice.textContent||value.kind!=='online';
             lastKind = value.kind;
         };
         const unsubscribe = core.observeConnection(paint); paint(core.connectionView());

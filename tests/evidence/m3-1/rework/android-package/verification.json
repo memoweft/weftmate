@@ -120,12 +120,12 @@
       "copy": {
         "rect": {
           "x": 45,
-          "y": 597.203125,
+          "y": 605.59375,
           "width": 192,
-          "height": 33.59375,
-          "top": 597.203125,
+          "height": 16.796875,
+          "top": 605.59375,
           "right": 237,
-          "bottom": 630.796875,
+          "bottom": 622.390625,
           "left": 45
         },
         "style": "0px"
@@ -296,12 +296,12 @@
       "copy": {
         "rect": {
           "x": 45,
-          "y": 597.203125,
+          "y": 605.59375,
           "width": 192,
-          "height": 33.59375,
-          "top": 597.203125,
+          "height": 16.796875,
+          "top": 605.59375,
           "right": 237,
-          "bottom": 630.796875,
+          "bottom": 622.390625,
           "left": 45
         },
         "style": "0px"
@@ -472,12 +472,12 @@
       "copy": {
         "rect": {
           "x": 45,
-          "y": 533.203125,
+          "y": 541.59375,
           "width": 162,
-          "height": 33.59375,
-          "top": 533.203125,
+          "height": 16.796875,
+          "top": 541.59375,
           "right": 207,
-          "bottom": 566.796875,
+          "bottom": 558.390625,
           "left": 45
         },
         "style": "0px"
@@ -648,12 +648,12 @@
       "copy": {
         "rect": {
           "x": 45,
-          "y": 533.203125,
+          "y": 541.59375,
           "width": 162,
-          "height": 33.59375,
-          "top": 533.203125,
+          "height": 16.796875,
+          "top": 541.59375,
           "right": 207,
-          "bottom": 566.796875,
+          "bottom": 558.390625,
           "left": 45
         },
         "style": "0px"
@@ -705,6 +705,72 @@
         "width": 318,
         "height": 54
       }
+    },
+    {
+      "theme": "light",
+      "scene": "error-toast",
+      "toast": {
+        "x": 24,
+        "y": 16,
+        "width": 342,
+        "height": 48
+      },
+      "field": {
+        "x": 21,
+        "y": 652,
+        "width": 348,
+        "height": 54
+      }
+    },
+    {
+      "theme": "light",
+      "scene": "read-failure",
+      "text": "主对话暂时无法读取，请重试"
+    },
+    {
+      "theme": "light",
+      "scene": "sync-failure",
+      "text": "离线副本同步未完成，请稍后重试。"
+    },
+    {
+      "theme": "light",
+      "scene": "unconfirmed-turn-merged",
+      "online": "电脑那边的进度还没确认",
+      "offline": "电脑离线 · 等待接续",
+      "separateTurnRows": 0
+    },
+    {
+      "theme": "dark",
+      "scene": "error-toast",
+      "toast": {
+        "x": 24,
+        "y": 16,
+        "width": 342,
+        "height": 48
+      },
+      "field": {
+        "x": 21,
+        "y": 652,
+        "width": 348,
+        "height": 54
+      }
+    },
+    {
+      "theme": "dark",
+      "scene": "read-failure",
+      "text": "主对话暂时无法读取，请重试"
+    },
+    {
+      "theme": "dark",
+      "scene": "sync-failure",
+      "text": "离线副本同步未完成，请稍后重试。"
+    },
+    {
+      "theme": "dark",
+      "scene": "unconfirmed-turn-merged",
+      "online": "电脑那边的进度还没确认",
+      "offline": "电脑离线 · 等待接续",
+      "separateTurnRows": 0
     }
   ]
 }
