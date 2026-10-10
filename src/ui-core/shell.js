@@ -201,6 +201,8 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         core.state.refreshing = true;
         try {
             await core.refreshStatus();
+            await core.loadPersonalization().catch(() => {});
+            await core.refreshActivity?.();
             await core.refreshModels();
             await core.refreshSessions();
             await core.refreshTasks();
@@ -230,11 +232,13 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         await core.loadMessageModePreference();
         await core.refreshAssistant();
         effects.startAssistantRefresh();
+        await effects.resumeOnboarding?.();
     }
     async function load() {
         core.show('loading');
         try {
             const accountState = await core.api('/state');
+            if (await effects.startOnboarding?.(accountState)) return;
             if (core.state.setupGrant) {
                 core.clearSession();
                 effects.showRegistration();
@@ -263,6 +267,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         }
     }
     function clearSession() {
+        core.resetActivity?.();
         core.resetLogicalSession?.();
         effects.cancelCloudLogin();
         effects.removeResourcePreview();

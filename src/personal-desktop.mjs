@@ -184,6 +184,18 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
     else { const error = await shell.openPath(file); if (error) throw new Error('Default application unavailable'); }
     return { opened: true };
   });
+  handle('wm:desktop:conversation-export', async ({ contentType, bytes, ownerId } = {}) => {
+    if (!['text/markdown', 'image/png'].includes(contentType) || typeof ownerId !== 'string' ||
+        !(bytes instanceof Uint8Array)) throw new Error('Invalid conversation export');
+    if ((await jsonLocal('/auth/me')).account?.ownerId !== ownerId) throw new Error('Conversation export owner mismatch');
+    const extension = contentType === 'image/png' ? 'png' : 'md';
+    const selected = await dialog.showSaveDialog(win, { title: '导出对话', defaultPath: join(app.getPath('downloads'), `WeftMate-对话.${extension}`),
+      filters: [{ name: extension === 'png' ? 'PNG' : 'Markdown', extensions: [extension] }] });
+    if (selected.canceled || !selected.filePath) return { canceled: true };
+    if ((await jsonLocal('/auth/me')).account?.ownerId !== ownerId) throw new Error('Conversation export owner mismatch');
+    await writeFile(selected.filePath, bytes, { mode: 0o600 });
+    return { exported: true };
+  });
   handle('wm:desktop:memory-export', async ({ format, ownerId } = {}) => {
     if (!['json', 'markdown'].includes(format) || typeof ownerId !== 'string') throw new Error('Invalid memory export');
     const filename = format === 'json' ? 'weftmate-memory.json' : 'weftmate-memory.md';
@@ -241,6 +253,41 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
   let reminderNotified = new Set();
   try { reminderNotified = new Set(JSON.parse(readFileSync(reminderNotificationsFile, 'utf8'))); } catch { /* first use */ }
   let timer, stopped = false, ownerId = null, initialized = false;
+  const activityNotifiedFile = join(app.getPath('userData'), 'desktop-activity-notifications.json');
+  const writeActivityNotified = createLatestFileWriter(activityNotifiedFile);
+  let activityNotified;
+  try { activityNotified = new Set(JSON.parse(readFileSync(activityNotifiedFile, 'utf8'))); } catch { activityNotified = new Set(); }
+  const activityNotifications = new Map();
+  let activityCursor = null;
+  async function pollActivity(me) {
+    const page = await jsonLocal(`/activity?filter=unread&limit=200`);
+    if (activityCursor) {
+      try {
+        const delta = await jsonLocal(`/activity/changes?cursor=${encodeURIComponent(activityCursor)}&limit=200`);
+        for (const id of delta.removals) { activityNotifications.get(id)?.close(); activityNotifications.delete(id); }
+        activityCursor = delta.nextCursor;
+      } catch { activityCursor = page.syncCursor; }
+    } else activityCursor = page.syncCursor;
+    let cursor = null, current = page;
+    do {
+      for (const item of current.items) {
+        const key = `${me.account?.ownerId}:${item.id}`;
+        if (activityNotified.has(key) || item.notification.level === 'silent' || stopped || !Notification.isSupported()) continue;
+        const notification = new Notification({ title: `WeftMate · ${item.title}`, body: item.summary, icon: notificationIcon,
+          silent: item.notification.level !== 'important' });
+        notifications.add(notification); activityNotifications.set(item.id, notification);
+        notification.on('click', () => show({ activityId: item.id, sessionId: item.source.sessionId }));
+        notification.on('close', () => { notifications.delete(notification); if (activityNotifications.get(item.id) === notification) activityNotifications.delete(item.id); });
+        const legacyType = { 'reminder.triggered':'assistant.message', 'approval.pending':'approval.requested', 'question.pending':'question.asked', 'task.completed':'turn.ended' }[item.type] ?? item.type;
+        const event = { sessionId: item.source.sessionId, type: legacyType, activityType: item.type, activityId: item.id, attentionRevision: item.attentionRevision };
+        notification.on('show', () => app.emit('weftmate-desktop-notification-shown', event));
+        notification.show(); app.emit('weftmate-desktop-notification', event);
+        activityNotified.add(key); await writeActivityNotified(JSON.stringify([...activityNotified]));
+      }
+      cursor = current.nextCursor;
+      if (cursor) current = await jsonLocal(`/activity?filter=unread&limit=200&cursor=${encodeURIComponent(cursor)}`);
+    } while (cursor && !stopped);
+  }
   async function poll() {
     try {
       const meResponse = await fetchLocal('/auth/me');
@@ -248,7 +295,13 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
       if (!meResponse.ok) throw new Error('Session unavailable');
       const me = await meResponse.json();
       const identity = `${me.account?.ownerId}:${me.device?.id}`;
-      if (ownerId !== identity) { ownerId = identity; watermarks.clear(); initialized = false; }
+      if (ownerId !== identity) { ownerId = identity; watermarks.clear(); initialized = false; activityCursor = null; for (const notification of notifications) notification.close(); }
+      const capabilityStatus = await jsonLocal('/status');
+      if (capabilityStatus.personalCapabilities?.activityNotification === 1) {
+        await pollActivity(me);
+        updateStatus({ host: capabilityStatus.backend?.runtime === 'ready' ? '运行中' : '暂不可用' });
+        return;
+      }
       const { sessions = [] } = await jsonLocal('/sessions');
       for (const row of sessions) {
         const last = watermarks.get(row.sessionId);
@@ -294,6 +347,7 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
     stopped = true; clearTimeout(timer);
     for (const notification of notifications) notification.close();
     nativeTheme.removeListener('updated', updatePalette);
+    ipcMain.removeHandler('wm:desktop:conversation-export');
     for (const request of networkRequests.values()) request.abort();
     for (const channel of ['wm:desktop:capture-region', 'wm:desktop:clipboard-image', 'wm:desktop:project-folder', 'wm:desktop:settings', 'wm:desktop:identity', 'wm:desktop:credentials', 'wm:desktop:key', 'wm:desktop:key-reset', 'wm:desktop:proof', 'wm:desktop:connect-host', 'wm:desktop:activate-host', 'wm:desktop:fetch', 'wm:desktop:fetch-abort', 'wm:desktop:clear-sessions', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);
     await save(); await desktopSession.cookies.flushStore(); desktopSession.flushStorageData();

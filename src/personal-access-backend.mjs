@@ -216,7 +216,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       await requireSession(sessionId, ownerId);
       return gateway(`/sessions/${encodeURIComponent(sessionId)}/chat-handoff`, { method: 'POST', body: JSON.stringify({ action: 'install', handoff }) });
     },
-    async forkSession({ sessionId, ownerId, childId, modelProfileId, title: sourceTitle }) {
+    async forkSession({ sessionId, ownerId, childId, modelProfileId, title: sourceTitle, beforeSeq }) {
       requireRuntime()
       const source = await requireSession(sessionId, ownerId)
       const profile = modelProfile(modelProfileId ?? source.profile.id)
@@ -226,7 +226,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       await mkdir(cwd, { recursive: true, mode: 0o700 })
       try {
         try { await access(sourceCwd); await cp(sourceCwd, cwd, { recursive: true }) } catch (error) { if (error.code !== 'ENOENT') throw error }
-        const result = await gateway(`/sessions/${encodeURIComponent(sessionId)}/fork`, { method: 'POST', body: JSON.stringify({ sessionId: childId, cwd, copyWorkspace: false }) })
+        const result = await gateway(`/sessions/${encodeURIComponent(sessionId)}/fork`, { method: 'POST', body: JSON.stringify({ sessionId: childId, cwd, copyWorkspace: false, ...(beforeSeq !== undefined ? { beforeSeq } : {}) }) })
         if (result.sessionId !== childId) fail('SESSION_UNAVAILABLE')
         bindSession(childId, profile.id)
         const route = routeForProfile(profile.id)
@@ -458,7 +458,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         || afterSeq !== undefined && (!Number.isSafeInteger(afterSeq) || afterSeq < -1)
         || beforeSeq !== undefined && (!Number.isSafeInteger(beforeSeq) || beforeSeq < 0)
         || afterSeq !== undefined && beforeSeq !== undefined || !Number.isInteger(limit) || limit < 1 || limit > 200) fail('INVALID_COMMAND')
-      const query = `limit=${limit}${afterSeq === undefined ? '' : `&afterSeq=${afterSeq}`}${beforeSeq === undefined ? '' : `&beforeSeq=${beforeSeq}`}`
+      const query = `includeThinking=true&limit=${limit}${afterSeq === undefined ? '' : `&afterSeq=${afterSeq}`}${beforeSeq === undefined ? '' : `&beforeSeq=${beforeSeq}`}`
       return gateway(`/sessions/${encodeURIComponent(sessionId)}/history?${query}`)
     },
     async readEventDetail({ sessionId, seq }) {

@@ -1,5 +1,50 @@
 /* Shared settings state, data and actions. Presentation is supplied through named effects. */
 globalThis.WeftUiCore.factories.settings = (core, effects, environment) => {
+    let writes = Promise.resolve();
+    let settingsGeneration = 0;
+    const owner = () => core.state.account?.ownerId || core.state.ownerId;
+    function acceptPersonalization(value, identity) {
+        if (identity !== core.state.identityGeneration || !value?.settings) return value;
+        const old = core.state.personalization;
+        const changed = JSON.stringify(old) !== JSON.stringify(value.settings);
+        const oldDisplay = core.state.personalization?.thinkingDisplay;
+        if (core.state.personalizationOwner !== owner() || old?.messageMode !== value.settings.messageMode) {
+            core.state.messageModeOwner = owner();
+            core.state.messageMode = value.settings.messageMode;
+        }
+        core.state.personalization = value.settings;
+        core.state.personalizationOwner = owner();
+        if (changed) effects.updateAvailability?.();
+        if (oldDisplay !== value.settings.thinkingDisplay) globalThis.document?.dispatchEvent(new Event('weft:personalization'));
+        return value;
+    }
+    async function loadPersonalization() {
+        const identity = core.state.identityGeneration;
+        const generation = settingsGeneration;
+        const value = await core.accessApi('/settings/personalization');
+        if (identity !== core.state.identityGeneration || generation !== settingsGeneration || !value?.settings) return value;
+        // Adopt a pre-ST-1 device preference once; subsequent devices read the account value.
+        if (!value.updatedAt) {
+            let prior;
+            try { prior = environment.storage?.getItem(`weftmate:message-mode:${owner()}`); } catch {}
+            if (!prior && environment.messageModeStorage) try { prior = await environment.messageModeStorage(`weftmate:message-mode:${owner()}`); } catch {}
+            if (identity !== core.state.identityGeneration || generation !== settingsGeneration) return value;
+            if (prior === 'steer') return savePersonalization({messageMode: prior});
+        }
+        return acceptPersonalization(value, identity);
+    }
+    function savePersonalization(patch, extract = false) {
+        const identity = core.state.identityGeneration, account = owner();
+        const action = writes.catch(() => {}).then(async () => {
+            if (identity !== core.state.identityGeneration || account !== owner()) throw new Error('ACCOUNT_CHANGED');
+            const value = await core.accessApi('/settings/personalization' + (extract ? '/style' : ''),
+                { method: extract ? 'POST' : 'PATCH', protectedWrite: true, body: extract ? {} : patch });
+            settingsGeneration++;
+            return acceptPersonalization(value, identity);
+        });
+        writes = action;
+        return action;
+    }
     function sessionExpired() {
         core.clearSession();
         core.show('login');
@@ -40,5 +85,5 @@ globalThis.WeftUiCore.factories.settings = (core, effects, environment) => {
         void core.refreshModels();
         void core.refreshBrowserWorkspace();
     }
-    return { sessionExpired, formatDate, refreshSystem, openAccount };
+    return { loadPersonalization, savePersonalization, sessionExpired, formatDate, refreshSystem, openAccount };
 };

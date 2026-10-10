@@ -1,3 +1,4 @@
+import { accountPersonalization } from './personalization.mjs';
 import { createMemoryIngestion } from './memory-ingestion.mjs';
 import { modelTierFor } from '../model-tier.ts';
 import { currentChatProfile } from '../background-model-selection.mjs';
@@ -53,6 +54,8 @@ import { eraseChatCopies } from './chat-erasure.mjs';
 import { createMainChat } from './main-chat.mjs';
 import { createChatLifecycle } from './chat-lifecycle.mjs';
 import { createSideChats } from './side-chats.mjs';
+import { createActivity } from './activity.mjs';
+import { activityState, reconcileActivity } from './activity-store.mjs';
 export { explicitNotepadOpenIntent } from './command-policy.mjs';
 export { uniqueSessionOwner } from './store.mjs';
 
@@ -116,9 +119,12 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const storeFile = path.join(root, 'store.json');
   const restoredCloudOwners = await readFile(path.join(root, 'backup-cloud-owners.json'), 'utf8').then(JSON.parse).catch(error => { if (error.code === 'ENOENT') return []; throw error; });
   let rootState;
+  let freshInstallation = false;
   const usage = await createUsageStore({ root, clock });
   // Accessors preserve the original service's live state across module boundaries.
   const context = {
+    get activity() { return activity; },
+    ownerIds: () => Object.keys(rootState.accounts),
     get chats() { return chats; },
     get chatTimeline() { return chatTimeline; },
     get sideChats() { return sideChats; },
@@ -336,6 +342,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     else { migrateProjects(rootState); validateSingleStore(rootState); }
   } catch (error) {
     if (error?.code !== 'ENOENT') throw failure('STORE_CORRUPT', 500);
+    freshInstallation = true;
     rootState = {
       version: SINGLE_ACCOUNT_VERSION,
       ownerId: `owner-${randomUUID()}`,
@@ -365,6 +372,10 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     await durableWrite(storeFile, migrated);
     rootState = migrated;
   }
+  if (freshInstallation) {
+    rootState.onboarding = { step: 'welcome', completed: false, started: false };
+    await durableWrite(storeFile, rootState);
+  }
   if (Object.values(rootState.accounts).some(account => !account.chatIdentity)) {
     // No listeners/writers are active yet. The BK-1 profile upgrade snapshot
     // precedes host startup; also retain the exact access-store preimage when
@@ -374,6 +385,13 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     catch (error) { if (error.code !== 'ENOENT') throw error; await durableWrite(before, rootState); }
     const migrated = structuredClone(rootState);
     for (const account of Object.values(migrated.accounts)) reconcileChatIdentity(account, migrated.hostId, new Date(clock()).toISOString());
+    validateStore(migrated);
+    await durableWrite(storeFile, migrated);
+    rootState = migrated;
+  }
+  if (Object.values(rootState.accounts).some(account => !account.activity)) {
+    const migrated = structuredClone(rootState);
+    for (const account of Object.values(migrated.accounts)) activityState(account);
     validateStore(migrated);
     await durableWrite(storeFile, migrated);
     rootState = migrated;
@@ -525,6 +543,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     assertCurrent();
     for (const account of Object.values(next.accounts)) {
       reconcileChatIdentity(account, next.hostId, new Date(timestamp()).toISOString());
+      reconcileActivity(account);
       for (const [conversationId, binding] of Object.entries(account.conversationBindings ?? {})) {
         const state = account.commands[binding.adoptCommandId]?.state;
         if (state === 'rejected') delete account.conversationBindings[conversationId];
@@ -565,10 +584,12 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   }
 
   const scheduleOperations = createScheduleOperations(context);
+  const activity = createActivity(context);
   const offline = await createOfflineService(context);
   const temporaryChats = createTemporaryChats(context);
   const memoryIngestion = createMemoryIngestion(context);
   const service = {
+    recordActivity: activity.record,
     captureMemoryTurn: memoryIngestion.capture,
     memoryTurnPolicy: temporaryChats.policy,
     expireTemporaryChats: temporaryChats.sweep,
@@ -649,6 +670,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       await restoreSchedulesWithRetry();
       temporaryChats.start();
       await memoryIngestion.start();
+      activity.start();
       hostCloudIdentity?.start();
       hostRelay?.start(origin);
       for (const [ownerId, account] of Object.entries(rootState.accounts)) {
@@ -710,6 +732,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       const project = account.projects?.[session.projectId];
       return { conversationWorkspace: sessionWorkspace(path.join(path.dirname(root), 'conversations'), match.ownerId, session.workspaceChatId ?? sessionId),
         deepThinking: (chatForSession(account,sessionId)?.deepThinking ?? session.deepThinking) === true,
+        personalization: accountPersonalization(account),
 
         mode: session.approvalMode ?? account.defaultApprovalMode ?? 'auto',
         allowedCategories: session.allowedApprovalCategories ?? [],
@@ -764,6 +787,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       closePromise = (async () => {
         await memoryIngestion.close();
         await temporaryChats.close();
+        await activity.close();
         await sideChats.close();
         await chatTimeline.close();
         await offline.close();

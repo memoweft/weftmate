@@ -101,13 +101,21 @@
 
 `backend.capabilities` 还含 `desktopOpenApp,naturalLanguageDesktop`；`modules` 含 `memory,mods,tasks,notifications,workspaces,capabilities`。这些是能力/状态字段，不代表存在同名 HTTP 路由。FX-9 增加可选 `executionAccount:boolean`，表示当前账号是否为这台电脑的执行账号；`false` 时仅可聊天，界面须说明不能操作电脑或读取原账号资料。旧宿主缺字段时按既有能力投影处理。
 
-### 3.3 会话列表与管理（10）
+### 3.3 会话列表与管理（12）
 
 | 方法与路径 | 请求参数/体 | 响应示例 / 状态 | 主要领域错误 | 使用端 |
 |---|---|---|---|---|
 | GET `/sessions` | 可选单值 `archived=false`（默认）、`true`（仅归档）、`all`（全部）；无列表分页/搜索参数 | 200 `{"sessions":[{"sessionId":"session-…","title":"资料整理","running":true,"sendAvailable":true,"archived":false,"modelProfileId":"local","processing":{"phase":"queued","ahead":1,"modelName":"Muse Q5"}}],"snapshotAt":"2026-10-09T00:00:00.000Z"}` | 后端整体失败/单会话降级 | 桌、手、安、苹 |
 | PATCH `/sessions/{sessionId}/metadata` | `pinned?,unread?,title?,groupId?,projectId?`，至少一项；布尔值、非空标题≤256字符；groupId为本账号分组ID或null | 200 `{sessionId,pinned?,unread?,title?,groupId?,readMessageSeq?}`；原生 `sessionTitle.rename` 写用户标题，停止自动标题覆盖；手动已读记录最新助手消息水位 | 400 INVALID_REQUEST；404 SESSION_UNAVAILABLE / NOT_FOUND；409 SESSION_BUSY | 桌、手、安、苹 |
 | POST `/sessions/{sessionId}/fork` | 空对象 `{}`；原对话须空闲 | 201 `{sessionId,title}`；原生 DSH（助手运行时）事件种子及 parentSession 分叉谱系创建可继续的独立对话，标题加「（分叉）」；复制独立工作目录与经验，继承模型、分组或项目绑定；项目文件夹不复制，普通对话复制独立工作目录；不复制 MemoWeft（记忆核心）的记忆来源/绑定，原对话不变 | 404 SESSION_UNAVAILABLE；409 SESSION_BUSY；503 BACKEND_UNAVAILABLE | 桌、手、安、苹 |
+| POST `/sessions/{sessionId}/message-branches` | `{requestId,seq,action:"edit"\|"regenerate",modelProfileId?}`；`seq` 是原生用户 / 助手消息锚点；仅本人可写的空闲旁聊 | 201 `{sessionId,title,modelProfileId,sendRequestId,text,groupId,action,sourceSessionId,sourceSeq,inputSourceSessionId,userSeq,seedThroughSeq,attachments?,originalAttachments?,attachmentMessageId?}`；原生事件种子在对应用户消息的回合开始前截断，旧回复及后续回合不进入新版本；`text` 是原始用户输入，编辑时由客户端替换。仅创建分支，尚未发起推理 | 409 SESSION_BUSY / SESSION_READ_ONLY / MAIN_CHAT_PROTECTED / REQUEST_CONFLICT；404 SOURCE_UNAVAILABLE / SESSION_UNAVAILABLE；422 MODEL_UNAVAILABLE | 桌、手、安；苹待接 |
+| GET `/sessions/{sessionId}/message-branches` | 无 | 200 `{groups:[{groupId,action,sourceSessionId,sourceSeq,versions:[{sessionId,anchorSeq? ,afterSeq?}]}]}`；第一项为原版，其余按创建顺序；原版用 `anchorSeq`，新版本用 `afterSeq` 后第一条同角色消息定位 | 404 SESSION_UNAVAILABLE；409 SESSION_READ_ONLY | 桌、手、安；苹待接 |
+
+UX-4：创建分支后，通过原有 `/commands` 发送 `kind:"session.message",targetDeviceId,sessionId,text,mode:"queue"`，**必须使用返回的 `sendRequestId`**，并带回返回的附件字段。宿主复制已上传原件与模型原先读取的材料，不从用户文件夹重新读取附件；图片材料从原生历史附件取回，文字材料按原暂存大小及哈希核对。本人用户消息通过原生回执与输入哈希核对后恢复本人原文，编辑读取原生锚点，避免历史摘要 / 旧缓存改变输入。分支继承模型（可显式换模型）、项目 / 分组、审批模式、临时记忆设置和深入思考；已有对话的模型不改变。分支 `requestId` 同体重试复用同一分支，异体返回 REQUEST_CONFLICT；消息送达不确定时先查 `/commands/by-request/{sendRequestId}` 再重放同一消息体。原分支及后续历史保留，切版只是打开另一个 `sessionId`。删除来源 / 版本或遗忘时清除对应派生分支回执，不用旧回执还原原话。
+
+主对话遵循 D42 / IA：编辑称「从这里开旁聊并重发」，重新生成同样开旁聊。使用既有 `session.side.create`，`originChatId/originEventId` 指向所选消息，父级为本账户主对话；原主对话保留，以来源引用带上下文，不做整条主对话分叉，也不创建主对话版本切换。重新生成先按逻辑历史找到锚点前的用户消息，支持跨执行段。新旁聊创建回执被受理后再发修改后的 / 原始用户输入。
+
+UX-4 的有用 / 没用反馈仅存当前设备、当前账号的本机记录（`version,sessionId,seq,rating,reason,note,at`；手机本机记录用 `source:"phone",conversationId,messageId` 代替宿主锚点）；没有上传反馈的 HTTP 路由。Windows（视窗系统）通过已有原生加密偏好存储持久化反馈，避免程序随机端口变化丢记录；网页 / 安卓在设备存储保存。导出复用完整历史分页，主对话用跨段 `/chats/{id}/events`；客户端脱敏后预览并保存 Markdown（标记文本）/ PNG（图片文件），工具步骤默认不含，附件仅列名称。安卓新增系统保存文件桥，界面包最低原生 code27。Apple（苹果端）须用相同消息锚点、回执与版本关系，反馈留设备端，导出前沿用凭据 / 本机路径脱敏与预览边界。
 | GET `/session-groups` | 无查询 | 200 `{groups:[{id,name}]}`，仅当前账号 | — | 桌、手、安、苹 |
 | POST `/session-groups` | `{name}`，去首尾空白、非空、≤256字符 | 201 `{group:{id,name}}` | 400 INVALID_REQUEST | 桌、手、安、苹 |
 | PATCH `/session-groups/{id}` | `{name}`，同上 | 200 `{group:{id,name}}` | 404 NOT_FOUND | 桌、手、安、苹 |
@@ -138,7 +146,7 @@ UI-P4：每会话可选只读 `contextUsage:{usedTokens,contextWindow}`。`usedT
 | 方法与路径 | 请求参数 | 响应 / 状态 | 主要领域错误 | 使用端 |
 |---|---|---|---|---|
 | GET `/sessions/{sessionId}/events` | 无游标：最近 N 条；`beforeSeq` 非负，排除边界向前翻页；`afterSeq` ≥ -1，排除边界正向增量。两者互斥。`limit` 默认 100，1–200 | 200 `{events,nextSeq,hasMore,nextBeforeSeq,hasOlder,latestSeq}`；事件按 seq 升序 | 400 `INVALID_REQUEST`；404 `SESSION_UNAVAILABLE`；503 `BACKEND_UNAVAILABLE` | 桌、手、安、苹 |
-| GET `/sessions/{sessionId}/events/{seq}/detail` | 非负安全整数 seq；无查询 | 200 `{"seq":42,"text":"原始参数与工具输出的 JSON 文本","truncated":true}`；`truncated` 仅截断时出现 | 400 `INVALID_REQUEST`；404 `SESSION_UNAVAILABLE`；503 `BACKEND_UNAVAILABLE`（无该工具详情时） | 桌、手、安、苹 |
+| GET `/sessions/{sessionId}/events/{seq}/detail` | 非负安全整数 seq；无查询 | 200 工具 / 审批保持 `{"seq":42,"text":"原始参数与工具输出的 JSON 文本","truncated":true}`；UX-4 用户 / 助手正文返回 `{seq,type:"user.message"|"assistant.message",text}`，按需读取完整可见正文；`truncated` 仅工具截断时出现 | 400 `INVALID_REQUEST`；404 `SESSION_UNAVAILABLE`；503 `BACKEND_UNAVAILABLE`（无该工具详情时） | 桌、手、安、苹 |
 
 这是 JSON（结构化数据）分页 / 轮询，不是 SSE（服务端推送事件）。每页事件 seq 严格递增，但不保证连续；消息、执行与交互共用 DSH 原生 seq。`limit` 按公开时间线条目计数，过滤的文字 chunk（片段）、推理和注入上下文不占条目数。
 
@@ -148,7 +156,7 @@ UI-P4：每会话可选只读 `contextUsage:{usedTokens,contextWindow}`。`usedT
 - **旧 `afterSeq=-1` 兼容**：继续从会话开头正向分页，绝不改成尾页。A3 后 Apple 首屏使用无游标尾页；该兼容路径仍供旧客户端使用，新事件及字段均为追加。
 - 空日志 `events:[],nextSeq:-1,latestSeq:-1,nextBeforeSeq:null,hasMore:false,hasOlder:false`。`beforeSeq=0` 可返回空页。客户端按 `(sessionId,seq)` 去重，开始/完成按 stepId 更新，禁止自行给 seq 加一。
 - 消息最多显示 4,000 个 UTF-16（字符串编码）单元；工具投影不带原始参数 / 输出。单条大记录截断并标记 `truncated`，整页按字节分页；长会话不再返回 `HISTORY_WINDOW_LIMIT`。用户原件消息仍可由原有附件登记恢复显示文本。
-- 详情只读取工具调用、工具结果和审批原始记录；推理、注入上下文不开放。返回最多 64,000 个 UTF-16 单元，超出标记截断。详情与历史使用同一账号 / 会话读取权限，不公开本机路径形式的下载引用。
+- 工具详情读取工具调用、工具结果和审批原始记录，仍最多 64,000 个 UTF-16 单元，超出标记截断。UX-4 另允许读取公开用户 / 助手消息的完整文字，用于复制、编辑及导出；只取正文，不含推理或注入上下文，原生消息分页仍保留 4,000 字符展示上限。删除原话 / 账号切换后拒绝详情，避免从旧缓存重现内容。详情与历史使用同一账号 / 会话读取权限，不公开本机路径形式的下载引用。
 
 保留既有类型：`user.message`（`text,receiptId,images,originalAttachments,attachmentMessageId` 等）、`assistant.message`（`text,images,memoryUsed?`）、`turn.started`（`turn`）、`turn.ended`（`reason`，可有 `turn,endReasonKind`）。输出预算耗尽仍为 `reason:"error",endReasonKind:"max-tokens"`。执行事件见第 4 节。历史图片下载仍见 3.5。
 
@@ -446,6 +454,28 @@ UPD-1：资源服务从当前已验证 `ui` 版本读取既有白名单中的路
 
 MS-1：`defaultModelProfileId` 按账户保存，用于新对话；已有对话继续使用原绑定。后台配置默认跟随账户当前 / 最近聊天的模型，有会话和无会话的积压任务使用同一规则；没有最近聊天时才使用账户默认或已授权会话绑定，绝不回退到启动配置 `authRef`。标题、记忆整理以及后续关心/健康归纳按后台路由。仅本机回环且 `/props.total_slots=1` 的入口排队，云 API、多槽和未知槽数直接并行。本机 ModelSwitcher（模型切换代理）的后台请求仅在所选模型已经加载且未切换时进入推理；模型不一致则等待并释放槽位给聊天，后台不主动触发装卸。状态未知的已确认单槽服务也等待。单槽主对话整轮运行（含工具间隙）时后台推理等待，主请求在等待队列中优先；已开始的后台推理会完成后释放单槽。原生 compaction（上下文压缩）属于当前主请求，继续按主模型执行。记忆形成使用后台路由；World/interactions（记忆与经历）召回的来源权限按接收内容的主模型 modelTier 判定。
 
+### ST-1 个性化与助手设置
+
+| 方法与路径 | 请求 | 响应 / 权限 |
+|---|---|---|
+| GET `/settings/personalization` | 无查询 | 200 `{settings,updatedAt,synced:true}`；`sessions:read`，同一账户各设备读同一份 |
+| PATCH `/settings/personalization` | 下列字段的非空子集 | 200 同 GET；`account:manage`，沿用 Cookie（会话凭据）和 CSRF（跨站请求伪造防护）；非法类型、未知字段、超限返回 400 `INVALID_REQUEST` |
+| POST `/settings/personalization/style` | `{}`，无查询 | 200 同 GET；同 PATCH 权限；仅宿主本机从账户的本人消息提炼表达习惯，不调用模型、不保存原文；临时内容、已删除片段不参与 |
+
+`settings`：
+
+- `preferredName:""`（80 字）、`bio:""`（500 字）、`tone:"natural"`（`natural|concise|detailed|formal|casual`）、`toneInstructions:""`（500 字）。
+- `fixedInstructions:""`（4,000 字）；`useWritingStyle:false`、`writingStyle:""`（1,000 字）。长度按 Unicode（统一字符编码）码点计算，空文本合法；提炼结果可通过 PATCH 编辑／清空，清除不删除任何聊天记录。
+- `webSearch:true`、`verbosity:"medium"`（`short|medium|thorough`）、`thinkingDisplay:"collapsed"`（`collapsed|expanded|hidden`）、`defaultDeepThinking:false`、`messageMode:"queue"`（`queue|steer`）。
+
+服务端串行合并字段，冲突按最后一次成功写入为准；`updatedAt` 为宿主保存时间，旧账户无已保存设置时为 `null` 并返回默认值。旧本设备的 D36 引导偏好在首次读取时迁入未配置账户；以后账户值优先。客户端仅成功回执后显示「已同步」，读取／保存失败保留可重试状态，切账户丢弃迟到回执。
+
+称呼、简介、语气、自定义语气、详细程度、写作风格和固定说明在每个新回合通过 DSH（助手运行时）原生系统提示段组装，回合内保持快照，不改写历史；主对话、普通／项目旁聊和临时对话共用此机制。固定说明从不写入本人消息或 MemoWeft（记忆服务）摄取边界，也不成为 Evidence（记忆证据）。关闭网页搜索会从原生模型工具目录移除并拒绝 `web_search|web_fetch|browser`；不撤销普通文件／电脑能力。
+
+新建对话读取 `defaultDeepThinking`，仍沿 UX-3 的模型目录能力和 `/sessions/{id}/thinking`，不支持的模型以普通方式回答；既有对话保持自己的偏好。`assistant.message.data.modelThinking` 是可选的模型返回思考内容（最多 4,000 字，沿历史正文的安全投影），只用于展示三档，不作为回复正文、上下文交接或记忆输入；模型不提供时没有空思考块。原生来源接口与工具详情仍不返回此内容。
+
+`POST /offline/sync` 的加密副本追加 `personalization`，只携带上述账户设置，沿用既有记忆、副本权限和删除代次；离线直连共用系统提示组装函数，没有新增记忆／文件导出。离线模型没有会话级原生推理能力时不承诺默认深入思考。Android（安卓）原生 code27 开放上述两个设置路径；发布此界面包须声明最低原生 code27，旧壳保留兼容界面。Apple（苹果端）接线清单见 ST-1 证据。
+
 ### 3.16 对话输出与来源（UI-1b，1）
 
 | 方法与路径 | 请求参数 | 响应 / 状态 | 主要领域错误 | 使用端 |
@@ -540,7 +570,7 @@ MS-1：`defaultModelProfileId` 按账户保存，用于新对话；已有对话�
 | `artifact.created` | `taskId,artifactId,fileName,contentType,size,detailSeq,completedStep,artifacts?` | 原生 tool/result 含成果引用时，该 seq 投影为成果条目；completedStep 带同一步的完成字段，客户端同时结束该 stepId。同一步生成多个文件时，artifacts 数组逐项含 taskId、artifactId、fileName、contentType、size；顶层字段保留首项供旧客户端读取。每项以 artifactId 渲染卡片，共享原生 seq。此 taskId 可为根命令 ID，completedStep.taskId 仍是原生回合键。预览、下载和验证元数据仍使用 3.8 成果接口 |
 | `task.started` | `taskId,turn,receiptId?,commandId?,requestId?,turnTaskId?` | 原生 step/start 的 step=1；原生输入回执关联已登记命令时 taskId 为根命令 ID，turnTaskId 为 `turn-<turn>`；保留独立 seq 的既有 turn.started |
 | `task.ended` | `taskId,turn?,reason,receiptId?,commandId?,requestId?,turnTaskId?,nativeTurnEndSeq?,endReasonKind?,tasks?` | 执行结束来自原生最终 step/end + turn/end；排队取消来自原生 inbox canceled（已取消）splice，`reason:"canceled"` 且无 turn。中间模型 step 不结束任务；保留 turn.ended，未进入 step 的阻断回合仍只返回 turn.ended |
-| `task.queued` | `taskId,receiptId,text,commandId?,requestId?,tasks?` | 投影原生 `agent/inbox/spliced` 向 next-turn 的插入；seq 保留原值，taskId 为已关联的根命令 ID。next-step 插话不生成新目标排队卡。极少数原生批量 splice 用 tasks 数组表示同 seq 的多项，顶层为首项 |
+| `task.queued` | `taskId,receiptId,text,commandId?,requestId?,tasks?,inherited?` | 投影原生 `agent/inbox/spliced` 向 next-turn 的插入；seq 保留原值，taskId 为已关联的根命令 ID。next-step 插话不生成新目标排队卡。极少数原生批量 splice 用 tasks 数组表示同 seq 的多项，顶层为首项；UX-4 锚点分支的构造种子内插入标 `inherited:true`，沿用原生 Inbox（收件队列）忽略构造种子的语义，不显示为新分支的待执行目标 |
 
 M1-0b 生命周期事件的 `receiptId` 为原生关联键。与已登记命令匹配时，`taskId` 指向 `/tasks/{id}` 根命令；步骤仍按 `turnTaskId` 或 turn 关联，不能把步骤的原生回合键发到任务控制接口。极短的派发窗口里，回执尚未写入命令表，task.queued 的 taskId 暂为 receiptId，started/ended 暂保留原生回合键；客户端通过 Command.receiptId 与 rootTaskId 补齐关联，不假造新 seq。用户消息仍仅在 DSH 实际领取时出现，以 receiptId 结束对应排队展示。取消的任务没有 user.message，保留 canceled 时间线事实。queued/started/ended 使用原生 seq，历史分页和 SSE（服务端事件流）重连水位保持不变。
 
@@ -1069,7 +1099,7 @@ App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协�
 
 自动回写在主对话身份/历史/日期/搜索/增量读取时对账：仅处理主对话身份建立后新受理的普通/项目旁聊根任务，原生工具或成果事实表明它是执行任务；纯闲聊不因每条回复生成卡。不追溯迁移前旧任务。原生 `completed/failed/aborted` 分别显示完成/失败/停止，停止绝不显示完成；缺乏确定证据保留待对账。归档不阻止已受理任务回写。回写不启动主对话模型、不追加 DSH 消息、不重新摄取记忆；没有新增后台计时器。
 
-同一旁聊根任务保持同一 `resultId/mainEventId/activityId`，后续续做/显式更正增加 `resultRevision` 和 `notificationRevision`，更新原卡；手动分享已有自动结果也复用身份。普通手动分享以来源消息去重。`requiresResponse` 当前为false，不凭问号产生待办或代表用户认可/批准。TB-1（动态）复用这些来源和通知版本，不再复制消息或发第二份通知；动态已读、推送和结构化待回应接线留对应包。删除旁聊清空派生摘要、成果引用与搜索正文，保留 `deleted:true` 的无正文锚点；重复分享请求也只返回当前墓碑。D33 原话/派生数据跨段清理见9.5，接力见9.6。
+同一旁聊根任务保持同一 `resultId/mainEventId/activityId`，后续续做/显式更正增加 `resultRevision` 和 `notificationRevision`，更新原卡；手动分享已有自动结果也复用身份。普通手动分享以来源消息去重。`requiresResponse` 当前为false，不凭问号产生待办或代表用户认可/批准。TB-1（动态）复用根任务结果的 `activityId`，读写与通知见9.8；普通文字分享不据此生成“任务完成”。删除旁聊清空派生摘要、成果引用与搜索正文，保留 `deleted:true` 的无正文锚点；重复分享请求也只返回当前墓碑。D33 原话/派生数据跨段清理见9.5，接力见9.6。
 
 
 ### 9.5 D33 跨段清理（IA-2b / 2.5）
@@ -1144,6 +1174,43 @@ D33与删除会话清理同一缓存，SQLite使用安全删除及VACUUM（数�
 
 Apple（苹果端）接线：新建入口发送 `/sessions/temporary`；侧栏/标题/输入区显示状态；菜单分别接记忆与召回开关和四档期限；切换说明之前形成的保留；主对话导向临时旁聊。持久化模型添加本节公开字段，`cacheAllowed:false` 的历史不写离线缓存，离线副本继续消费宿主过滤结果；到期404移除本机展示缓存。原生界面与Watch（手表）实机验收由Apple工作包完成。
 
+### 9.8 动态与通知（TB-1 正式，D19 / D35 / D41 / D43）
+
+`GET /status.personalCapabilities` 增加精确数字版本 `activity:1, activityChanges:1, activityRead:1, activityNotification:1`。客户端只接受已认识的精确版本；旧宿主隐藏入口，手机显示升级说明。这里是原生事实的持久投影，不新增任务执行器或调度器。宿主每轮有界读取 DSH（助手运行时）公开事件与原生 schedule（调度）送达事实；来源离线保留水位，不把读取失败记作任务失败。后台工作仍在运行或副作用未核实时，不产生任务完成条目。
+
+| 方法 / 路径 | 输入 | 响应 / 语义 |
+|---|---|---|
+| GET `/activity` | `filter=all\|unread\|actionable`，`type=task\|reminder\|memory\|approval\|question\|system` 或完整类型，可选 `cursor,limit`（1–200，默认50） | `{items,nextCursor,hasMore,unreadCount,actionableCount,timeZone,snapshotCursor,syncCursor}`；按时间与ID反序。分页冻结首次水位，新事件不挤入旧页；账户时区用于按天分组 |
+| GET `/activity/changes` | 可选 `cursor,limit,filter,type`；筛选只决定返回的已读快照范围，不过滤变更本身 | `{upserts,removals,nextCursor,hasMore,unreadCount,actionableCount,snapshotCursor}`；修改、已读与删除均传递；空游标从0开始；按ID更新，删除只携带ID，无旧正文 |
+| GET `/activity/unread` | 无参数 | `{unreadCount,actionableCount}`；已读与待处理分别计数，标读不批准任务 |
+| PATCH `/activity/{id}/read` | `{requestId,read:boolean,attentionRevision}` | `{item}`；可见内容版本必须一致，否则409 `REQUEST_CONFLICT`；同请求同体幂等，异体或与原命令 / 审批 / 问题请求身份碰撞409 |
+| POST `/activity/read` | `{requestId,through:snapshotCursor}` | `{unreadCount,actionableCount}`；只覆盖快照水位与筛选范围内未发生新内容的条目；旧页面不标读后来事件；幂等规则同上 |
+
+读取要求原 `sessions:read`，写入要求原 `commands:write` 与 CSRF（跨站请求伪造防护）；按账户认证隔离，不接收客户端传入账户ID。游标签名绑定账户、用途、分页筛选与删除代次；无效或跨账户409 `CURSOR_RESET_REQUIRED`。删除代次使旧列表 / 已读快照失效；增量游标仍能读出无正文删除ID。客户端收到重置先清旧正文再重读，身份 / 筛选变化的迟到响应不得填回。
+
+每项 `Activity={id,at,type,title,summary,source,actions,state,read,revision,attentionRevision,createdSequence,notification,temporary?}`。`id` 与首次 `at` 稳定；同项正文或状态变化增加版本与注意水位。`summary` 最多160字符；`state=pending|completed|unavailable` 是待办状态，任务成功 / 失败 / 停止由 `type` 区分。`source` 按真实可用来源携带 `hostId,chatId,chatKind,sessionId,projectId,taskId,eventId,seq,messageId,scheduleId,memoryJobId`，不暴露路径、工具参数、凭据或私有推理。主对话结果与动态复用同一根任务 `activityId`；正文显式分享不是任务成功事实。
+
+`actions=[{kind,label,target}]` 只描述实际存在的类型化动作，不是可执行网址。TB-1 支持 `open_chat`（原对话 / 旁聊及消息定位）、`respond_approval`（原 `sessionId,taskId,approvalId`）、`answer_question`（原 `sessionId,taskId,questionRpcId`）、`view_memory`。批准 / 拒绝仍直接走3.7的原审批路径、原回执校验与持久请求身份；问题打开原问题条，整批回答仍走3.7。动态没有通用任意执行接口，也不会因标读而完成待办。有效回执后原审批条与动态同时收为已处理；外部回答、取消、失效与重启都沿原生终态同步。未知动作不提供按钮。
+
+既有 `GET /sync/events` 事件通道兼容增加 `activity:{cursor,unreadCount,actionableCount}`，不占用手机聊天事件的 `seq` 或伪造对话消息。客户端据此或既有前台状态轮询，使用 `/activity/changes` 获取增量；桌面后台通知在主进程观察，窗口隐藏仍可送达。这里使用既有认证轮询通道，没有另建未授权推送服务或宣称已有安卓后台送达。旧 `/notifications` 继续从相同原生提醒事实读取，旧客户端读取不改变账户已读。
+
+| `type` | 通知等级 `notification.level` | 首版来源与边界 |
+|---|---|---|
+| `reminder.triggered` | `important`（重要） | 原生提醒 / 定时任务已经送达，稳定送达 / 消息身份去重 |
+| `approval.pending`, `question.pending` | `important` | 原审批 / 问题确实待处理；处理后的版本为 `silent` |
+| `task.failed` | `important` | 原生任务失败，不把断线或未知结果冒充失败 |
+| `task.completed`, `task.stopped` | `normal`（普通） | 原生终态；后台工作与副作用同时核对 |
+| `memory.paused` | `normal` | 记忆暂停 / 不可用状态发生变化；MEM-D的正常形成不算暂停，模型不可用与本人暂停补整理按真实原因生成 |
+| `memory.submission.completed` | `silent`（静默） | M3-A离线对话补交已受理，或MEM-D有实际提交的历史补交已结束；不称正式记忆形成 |
+| `memory.report` | `normal` | 类型与接缝预留，MEM-3尚未生成周报 |
+| `system.update.available` | `normal` | 现有更新状态确实提供新版本；不暴露更新源或增加安装授权 |
+| `system.reconnected` | `silent` | 已观察就绪的宿主重启后再次就绪，或运行时不可用后恢复；首次安装启动不伪造恢复事件，不凭单个会话读取失败断言电脑离线 |
+
+`notification={level,type}` 的 `type` 是 ST-6（通知设置）的按类型开关接缝；ST-6未实施前维持现有系统通知行为。等级不是权限，重要不跳过未来勿扰或主动打扰限制。桌面用现有原生通知，每条动态ID最多一份系统通知，内容修订不重复弹出；点击带对应 `activityId` 打开动态并聚焦条目。通知去重仅持久保存账户与条目ID，无标题 / 正文。删除增量关闭对应已显示通知。S3a后续消费同一ID、等级与类型接安卓后台通知，约15分钟以上延迟的边界仍按D41说明；不得创建第二个提醒调度器。
+
+宿主可信接缝 `service.recordActivity(ownerId,{key,type,at?,title,summary,source?,actions?,level?})` 只允许已登记的记忆与系统类型，`key` 使用上游稳定事件 / 回执ID；相同事实与正文不会重复插入。它不暴露为公共HTTP（网络请求）写入接口。MEM-D / MEM-3 / S3a使用该接缝提供真实状态，不能提交临时正文或未发生的成功。
+
+删除会话 / D33遗忘沿 `eraseChatCopies` 清动态摘要、动作、原生观察摘要与待完成投影；无正文墓碑和抑制水位防止旧通知、旧回执、迟到观察或重启重建正文。账户删除带走整个账户存储。临时 / 混合临时来源在持久化前只保留泛化标题、原来源ID和安全动作：完成摘要固定“临时对话中的任务已完成”，失败 / 停止也只描述状态；临时审批 / 问题不带对象、问题正文或工具参数。此规则同时约束系统通知。
 
 ## 11. 记忆摄取健康与历史补整理（MEM-D）
 
@@ -1161,3 +1228,20 @@ Apple（苹果端）接线：新建入口发送 `/sessions/temporary`；侧栏/�
 补整理按原回合时间顺序进行，每步重核对会话及来源；临时对话、当前关闭记忆的对话、回合冻结策略禁止摄取的内容和已遗忘来源均排除。排除已确认投递的回合及Core已接受的边界；事件标识沿实时摄取算法保持一致，重复确认、重启与未知回执不会重复形成。历史回合默认不自动运行；升级后新完成的普通回合由持久日志恢复漏掉的IPC（进程间通信），先写outbox再尝试投递，忙／路由不可用／子进程离线均退避重试。宿主重启恢复outbox和已确认的补整理进度，暂停状态也持久保留。
 
 Windows（视窗系统）程序与远程手机网页、Android（安卓）界面包已接入。安卓现有 `host.business` 记忆路由支持这些接口，无需新增权限；Apple（苹果端）需接记忆页健康、预览／确认、暂停／继续／取消及进度，旧客户端可忽略新增字段。确认与溯源语义未改变，不把助手提议当作用户事实。
+
+
+## 12. 首次使用引导与模型发现（ONB-1）
+
+仅全新宿主安装建立未开始的引导；升级已有数据目录不补建。旧账户、预先配置的账户，以及已完成引导的安装不自动显示。引导开始后绑定当前账户；其他账户不读取该账户的中断进度。设置可主动重新查看。步骤与完成状态在宿主中原子保存，客户端不另存账户、模型或称呼。
+
+| 路径 | 请求 | 返回与授权 |
+|---|---|---|
+| `GET /onboarding` | 无查询 | 200 `{onboarding:null\|{step,completed,started,ownerId?}}`；账户创建前可读安装进度，绑定账户后只有该账户可读，其他身份返回 `null`。旧安装返回 `null`。 |
+| `PATCH /onboarding` | `{step,completed}` | 200 同上；`step=welcome\|account\|model\|memory\|import\|phone\|first`，`completed` 为布尔。无账户时仅宿主直接同源地址；有账户后沿 Cookie（会话凭据）/CSRF（跨站请求伪造防护）与 `account:manage`。用于每次前进 / 返回 / 完成，以及主动重新查看。 |
+| `POST /models/discover` | `{addresses?:string[]}` | 200 `{results:[{baseUrl,models:string[]}]}`；`account:manage` 与原 Cookie/CSRF。只向本机及已发现的局域网邻居的常见模型端口读取 `/v1/models`；可补充明确的本机 / 私网地址。不发送密钥，不重定向，不发对话，不保存模型，必须由用户选中结果并保存。 |
+
+当前默认探测端口为 11434、1234、8000、5000，避免自动探测日用模型代理 8081；邻居来源为操作系统已有邻居表，不枚举整个网段。其他端口可填补充地址，仍只读模型目录。`addresses` 不接受公网地址、带凭据 / 参数 / 片段的地址。目录不公开或需要密钥的服务仍走已有的模型表单与逐项诊断。未配置模型可跳过，但「开始聊天」要求当前账户至少有一个已配置模型，首页保留设置提示。
+
+账户沿第7节注册 / 登录 / 本地设置流程；称呼写 ST-1 的 `PATCH /settings/personalization {preferredName}`；模型沿 `/account/models/check`、保存回执与 `/settings/models`，中断后只保存非秘密请求编号并核对原回执；记忆沿第11节状态和只读补整理预览，不自动运行；导入入口置灰。连接手机沿第7节一次性二维码 / 配对码及设备允许 / 拒绝，不新建信任协议。一次性码持有与同账户验证是原扫码批准路径；无配对码的新设备仍须在已登录电脑上明确允许。
+
+Apple（苹果端）：Mac 执行宿主按本节读取安装进度并保存步骤，远程 iPhone / Mac 只接「连电脑」说明与现有扫码 / 批准流程；Watch（手表）不显示七步引导。文案与提供方获取密钥说明的中文来源为 `src/ui-core/onboarding-copy.js`，英文随 L10N-1 补齐。

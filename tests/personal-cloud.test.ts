@@ -156,8 +156,18 @@ test('BK-1 portable cloud ownership reconnects only after verified subject and f
 
 test('claim interruption resumes the same claimId after restart; backup and all existing identifiers/passwords/cookies/sync/data remain intact', async t => {
   const f = await fixture(t)
+  const assertBusinessStore = async () => {
+    const current = JSON.parse(await readFile(join(f.root, 'store.json'), 'utf8')), before = JSON.parse(f.oldStore)
+    // Activity is an independent observation of the restart, never a cloud claim mutation.
+    for (const [ownerId, account] of Object.entries(current.accounts) as [string, any][]) {
+      assert.equal(account.activity.secret, before.accounts[ownerId].activity.secret)
+      assert.ok(Object.values(account.activity.items).every((row: any) => row.type === 'system.reconnected' && row.notification.level === 'silent'))
+      delete account.activity; delete before.accounts[ownerId].activity
+    }
+    assert.deepEqual(current, before)
+  }
   assert.equal(await readFile(join(f.root, 'cloud-identity', 'backup', 'store.json'), 'utf8'), f.oldStore)
-  assert.equal(await readFile(join(f.root, 'store.json'), 'utf8'), f.oldStore)
+  await assertBusinessStore()
   f.interrupt()
   const first = await f.bind()
   assert.equal(first.result.status, 503)
@@ -167,7 +177,7 @@ test('claim interruption resumes the same claimId after restart; backup and all 
   assert.equal(next.claim.claimId, first.claim.claimId)
   assert.equal(next.result.status, 200)
   assert.equal((await f.bind()).claim.claimId, first.claim.claimId)
-  assert.equal(await readFile(join(f.root, 'store.json'), 'utf8'), f.oldStore)
+  await assertBusinessStore()
   assert.equal(await readFile(join(f.root, 'sync', 'events.json'), 'utf8'), f.oldSync)
   assert.equal(JSON.parse(f.oldSync).lastSeq, 1)
   assert.equal(await readFile(join(f.root, 'memory-fixture', 'evidence'), 'utf8'), 'private synthetic memory')

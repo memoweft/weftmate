@@ -1,3 +1,5 @@
+import { handlePersonalization } from './personalization.mjs';
+import { handleOnboarding } from './onboarding.mjs';
 import { hasPrivateContent } from './temporary-chats.mjs';
 import { canonicalProviderModelId } from '../model-connection-check.mjs';
 import { currentChatProfile } from '../background-model-selection.mjs';
@@ -113,6 +115,7 @@ export function createHttpHandler(context) {
           context.cloudIdentity?.browserConfiguration()) === true) return;
         throw failure('NOT_FOUND', 404);
       }
+      if (['/personal/v1/onboarding', '/personal/v1/models/discover'].includes(pathname)) return await handleOnboarding(context, request, response, url);
       if (request.method === 'GET' && pathname === '/personal/v1/auth/state') {
         if (url.search) throw failure('INVALID_REQUEST');
         return context.json(response, 200, { configured: context.registeredAccountCount() > 0,
@@ -534,7 +537,7 @@ export function createHttpHandler(context) {
         const afterText = url.searchParams.get('afterSeq') ?? '0';
         const limitText = url.searchParams.get('limit') ?? '100';
         if (!/^\d+$/.test(afterText) || !/^\d+$/.test(limitText)) throw failure('INVALID_REQUEST');
-        return context.json(response, 200, context.syncStores.get(ownerId).page({ afterSeq: Number(afterText), limit: Number(limitText) }));
+        return context.json(response, 200, { ...context.syncStores.get(ownerId).page({ afterSeq: Number(afterText), limit: Number(limitText) }), activity: context.activity.watermark(ownerId) });
       }
       const sharedConversationMatch = /^\/personal\/v1\/sync\/conversations\/([A-Za-z0-9_-]{1,128})\/shared$/.exec(pathname);
       if (sharedConversationMatch && request.method === 'GET') {
@@ -629,6 +632,8 @@ export function createHttpHandler(context) {
         }
       }
       if (await context.scheduleOperations.handleHttp(request, response, url, ownerId)) return;
+      if (['/personal/v1/settings/personalization', '/personal/v1/settings/personalization/style'].includes(pathname)) return await handlePersonalization(context, request, response, url, ownerId);
+      if (await context.activity.handleHttp(request, response, url, ownerId, deviceId)) return;
       const thinkingMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/thinking$/.exec(pathname);
       if (thinkingMatch && ['GET', 'PATCH'].includes(request.method)) {
         if (url.search) throw failure('INVALID_REQUEST');
@@ -750,7 +755,7 @@ export function createHttpHandler(context) {
         }
         return context.json(response, 200, {
           ...context.service.status(ownerId),
-          personalCapabilities: { temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
+          personalCapabilities: { activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
           executionAccount: context.hostOwner(ownerId),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
           backend: backendStatus, memory: { state: memoryStatus.state, inject: memoryStatus.capabilities?.inject === true },
@@ -1296,6 +1301,14 @@ export function createHttpHandler(context) {
         return context.json(response, request.method === 'POST' ? 201 : 200,
           await context.sessionOperations.groups(ownerId, request.method, groupMatch[1], body));
       }
+      const branchMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/message-branches$/.exec(pathname);
+      if (branchMatch && ['GET', 'POST'].includes(request.method)) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        context.authenticate(request, request.method === 'POST' ? 'commands:write' : 'sessions:read');
+        return context.json(response, request.method === 'POST' ? 201 : 200, request.method === 'POST'
+          ? await context.sessionOperations.messageBranches.create(ownerId, branchMatch[1], await context.readJson(request, 2048))
+          : context.sessionOperations.messageBranches.versions(ownerId, branchMatch[1]));
+      }
       const metadataMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/(metadata|fork)$/.exec(pathname);
       if (metadataMatch && (request.method === 'PATCH' && metadataMatch[2] === 'metadata' || request.method === 'POST' && metadataMatch[2] === 'fork')) {
         if (url.search) throw failure('INVALID_REQUEST');
@@ -1396,7 +1409,18 @@ export function createHttpHandler(context) {
         if (url.search || !Number.isSafeInteger(seq)) throw failure('INVALID_REQUEST');
         if (!Object.hasOwn(state.sessions, sessionId)) throw failure('SESSION_UNAVAILABLE', 404);
         if (typeof context.backend.readEventDetail !== 'function') throw failure('BACKEND_UNAVAILABLE', 503);
-        return context.json(response, 200, await context.callBackend(() => context.backend.readEventDetail({ sessionId, seq, ownerId })));
+        if (state.sessions[sessionId].forgottenSeqs?.includes(seq)) throw failure('SOURCE_UNAVAILABLE', 404);
+        const detail = await context.callBackend(() => context.backend.readEventDetail({ sessionId, seq, ownerId }));
+        const current = context.authenticate(request, 'sessions:read');
+        if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+        const latest = context.accountState(ownerId).sessions[sessionId];
+        if (!latest || latest.forgottenSeqs?.includes(seq)) throw failure('SOURCE_UNAVAILABLE', 404);
+        if (['user.message', 'assistant.message'].includes(detail.type)) {
+          const event = context.publicHistoryEvent(ownerId, sessionId, { seq, type: detail.type, data: {
+            text: detail.text, messageHash: detail.messageHash, receiptId: detail.receiptId } });
+          return context.json(response, 200, { seq, type: detail.type, text: event.data.text });
+        }
+        return context.json(response, 200, detail);
       }
       const eventMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/events$/.exec(pathname);
       if (request.method === 'GET' && eventMatch) {

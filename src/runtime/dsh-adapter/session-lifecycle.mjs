@@ -100,12 +100,17 @@ export function nativeSessionLifecycle(ctx) {
       await ensure({ sessionId }, true)
       const source = ctx.sessions.get(sessionId)
       if (ctx.agents.get(sessionId)?.status !== 'idle') throw Object.assign(new Error('session busy'), { code: 'agent-busy' })
+      if (ctx.agents.get(sessionId)?.inbox?.hasPending) throw Object.assign(new Error('session busy'), { code: 'agent-busy' })
+      const before = options.beforeSeq
+      if (before !== undefined && (!Number.isSafeInteger(before) || before < 0 || !source.events.some(event => event.seq === before)))
+        throw Object.assign(new Error('invalid fork anchor'), { code: 'invalid-request' })
+      const seed = before === undefined ? source.events : source.events.filter(event => event.seq < before)
       if (options.copyWorkspace !== false && source.header.cwd) await cp(source.header.cwd, options.cwd, { recursive: true })
       // Use the native fork transaction's immutable event seed and lineage.
       // Agent creation owns the native session lifecycle, with a fresh cwd,
       // rather than publishing a bare SessionStore child without an agent.
-      await serial(options.sessionId, () => ensure({ ...options, seed: source.events, parentSession: sessionId, agentPreset: source.header.agentPreset }))
-      return { sessionId: options.sessionId, latestSeq: source.events.at(-1)?.seq ?? -1 }
+      await serial(options.sessionId, () => ensure({ ...options, seed, parentSession: sessionId, agentPreset: source.header.agentPreset }))
+      return { sessionId: options.sessionId, latestSeq: seed.at(-1)?.seq ?? -1 }
     }),
     remove: sessionId => serial(sessionId, async () => {
       const persistence = ctx.get('sessionPersistence')

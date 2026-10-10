@@ -6,6 +6,21 @@ import { join } from 'node:path';
 import { createHistoryCache } from '../src/runtime/dsh-adapter/history-cache.mjs';
 import { createDshSessionAdapter } from '../src/runtime/dsh-adapter/sessions.mjs';
 
+test('thinking-aware cache shares bounded ranges, survives reopening and hides thinking on ordinary reads', async () => {
+  const root=await mkdtemp(join(tmpdir(),'st1-thinking-cache-')),file=join(root,'history.sqlite');
+  let reads=0;
+  const entries=[{seq:0,type:'assistant/message',data:{content:[{type:'reasoning',text:'模型提供的思考'},{type:'text',text:'正式回复'}]}}];
+  const cache=createHistoryCache({file,source:async()=>({revision:'one'}),readNative:async()=>{reads++;return entries}});
+  // The cache projector is synchronous; use the pure native event projection here.
+  const {projectHistoryEvent}=await import('../src/runtime/dsh-adapter/sessions.mjs');
+  const projection=(rows:any,options:any)=>({events:rows.map((row:any)=>projectHistoryEvent(row,null,null,null,null,options.includeThinking)),nextSeq:0,latestSeq:0,hasMore:false});
+  try {
+    assert.equal((await cache.read('session',{includeThinking:true},projection)).events[0].data.modelThinking,'模型提供的思考');
+    assert.equal((await cache.read('session',{},projection)).events[0].data.modelThinking,undefined);
+    assert.equal(reads,1);
+  } finally {await cache.close();await rm(root,{recursive:true,force:true})}
+});
+
 test('public range cache survives cold reopening, updates only stable live suffix and physically erases after native rewrite', async () => {
   const root = await mkdtemp(join(tmpdir(), 'ia2b-cache-')), file = join(root, 'history.sqlite');
   let revision = 'one', live = false, nativeReads = 0, projected = 0;

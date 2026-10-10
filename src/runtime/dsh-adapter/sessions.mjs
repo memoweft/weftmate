@@ -99,14 +99,14 @@ export function contextUsage(value) {
 }
 const HISTORY_PAGE_LIMIT = 200
 const HISTORY_RESPONSE_BYTES_LIMIT = 900_000
-function safeHistoryText(value) {
+function safeHistoryText(value, limit = HISTORY_TEXT_LIMIT) {
   const raw = String(value ?? '')
-  const text = raw.slice(0, HISTORY_TEXT_LIMIT)
+  const text = raw.slice(0, limit)
     .replace(/(?:[A-Za-z]:\\|\\\\)[^\s"'<>]+/g, '[local path]')
     .replace(/(^|[\s(])\/(?:[^\s"'<>/]+\/)*[^\s"'<>/]+/g, '$1[local path]')
     .replace(/\bBearer\s+[^\s,;]+/gi, 'Bearer [redacted]')
     .replace(/(?:sk-[A-Za-z0-9_-]{8,}|(?:api[_-]?key|token|secret|password)\s*[:=]\s*[^\s,;]+)/gi, '[redacted]')
-  return { text, ...(raw.length > HISTORY_TEXT_LIMIT ? { truncated: true } : {}) }
+  return { text, ...(raw.length > limit ? { truncated: true } : {}) }
 }
 function messageText(message, includeHash = false) {
   if (!Array.isArray(message?.content)) return null
@@ -130,7 +130,7 @@ function messageImages(message) {
 }
 
 /** Stable public timeline; private reasoning and injected messages stay private. */
-export function projectHistoryEvent(raw, call = null, contextTurn = null, closingTurn = null, inbox = null) {
+export function projectHistoryEvent(raw, call = null, contextTurn = null, closingTurn = null, inbox = null, includeThinking = false) {
   const event = raw?.event ?? raw
   const seq = event?.seq
   if (!Number.isSafeInteger(seq) || seq < 0) return null
@@ -151,7 +151,9 @@ export function projectHistoryEvent(raw, call = null, contextTurn = null, closin
     const message = event.data?.message ?? event.data
     const data = messageText(message)
     const images = messageImages(message)
-    if (data || images.length) projected = { seq, type: 'assistant.message', data: { ...(data ?? { text: '' }),
+    const modelThinking = includeThinking && Array.isArray(message?.content) ? message.content.filter(part => part?.type === 'reasoning' && typeof part.text === 'string').map(part => part.text).join('') : '';
+    if (data || images.length || modelThinking) projected = { seq, type: 'assistant.message', data: { ...(data ?? { text: '' }),
+      ...(modelThinking ? { modelThinking: safeHistoryText(modelThinking).text } : {}),
       ...(images.length ? { images } : {}),
       ...(Array.isArray(event.data?.memoryUsed) ? { memoryUsed: event.data.memoryUsed
         .filter(item => ['cognition', 'entity', 'relationship', 'event'].includes(item?.kind) &&
@@ -451,7 +453,7 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
         const previous = entries[i]?.event ?? entries[i]
         if (Number.isSafeInteger(previous.data?.turn)) { contextTurn = previous.data.turn; break }
       }
-      const event = projectHistoryEvent(entries[index], raw.type === 'tool/result' ? relatedCall(entries, index, cache) : null, contextTurn, raw.type === 'step/end' ? resolveStepEnd(entries, index, cache) : null, ['agent/inbox/spliced', 'step/start', 'step/end'].includes(raw.type) ? indexInboxTimeline(entries, cache, index) : null)
+      const event = projectHistoryEvent(entries[index], raw.type === 'tool/result' ? relatedCall(entries, index, cache) : null, contextTurn, raw.type === 'step/end' ? resolveStepEnd(entries, index, cache) : null, ['agent/inbox/spliced', 'step/start', 'step/end'].includes(raw.type) ? indexInboxTimeline(entries, cache, index) : null, options.includeThinking === true)
       const size = event ? Buffer.byteLength(JSON.stringify(event), 'utf8') : 0
       if (event && (events.length === limit || bytes + size > HISTORY_RESPONSE_BYTES_LIMIT)) { hasMore = true; break }
       scanned = raw.seq
@@ -588,6 +590,14 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
       requireOrdinarySummary((listed?.items ?? []).find(item => sessionIdOf(item) === sessionId), sessionId)
       const entries = await logFor(sessionId), index = lowerBound(entries, seq)
       const event = entries[index]?.event ?? entries[index]
+      const messageType = event?.seq === seq ? projectHistoryEvent(event)?.type : null;
+      if (['user.message', 'assistant.message'].includes(messageType)) {
+        const message = event.data?.message ?? event.data;
+        const raw = (message.content ?? []).filter(part => part.type === 'text').map(part => part.text).join('');
+        return { seq, type: messageType, text: safeHistoryText(raw, Infinity).text,
+          ...(messageType === 'user.message' ? { messageHash: createHash('sha256').update(raw, 'utf8').digest('hex'),
+            receiptId: event.data?.source?.rpcId } : {}) };
+      }
       if (event?.seq !== seq || !['tool/call', 'tool/result', 'approval/asked', 'approval/decided'].includes(event.type))
         throw new DshAdapterError('session-not-found', 'history.detail')
       const call = event.type === 'tool/call' ? event : relatedCall(entries, index, callIndex(sessionId, entries))

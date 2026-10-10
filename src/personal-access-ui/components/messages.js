@@ -1,5 +1,13 @@
 /* Desktop messages component: paint data, bind controls, invoke shared actions. */
 globalThis.WeftUiComponents.factories.messages = (core, ui) => {
+    ui.messageActions = globalThis.WeftMessageActions?.create({ core,
+        draft: () => ui.byId('message-text'), selectSession: async id => { await core.refreshSessions(); await core.selectSession(id); },
+        notice: message => ui.toast(message), events: () => core.timelineEventsForContext(),
+        sessionId: () => core.state.selectedSessionId,
+        save: globalThis.weftmateDesktop?.exportConversation ? async blob => globalThis.weftmateDesktop.exportConversation({
+            contentType: blob.type.startsWith('image/') ? 'image/png' : 'text/markdown',
+            bytes: new Uint8Array(await blob.arrayBuffer()), ownerId: core.state.ownerId }) : undefined,
+        title: () => core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId)?.title });
     function clearHistoryView() {
         ui.byId('transcript').replaceChildren();
     }
@@ -108,8 +116,10 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
                 ui.appendOriginalFiles(row, event);
             if (originalImages.length)
                 ui.appendUnpreviewedOriginalImages(row, originalImages);
-            if (event.type === 'assistant.message')
+            if (event.type === 'assistant.message') {
+                globalThis.WeftModelThinking?.(core, row, event);
                 ui.appendReplyMemory(row, event);
+            }
             const taskLabel = core.messageTaskLabel(event);
             if (event.type === 'user.message' && taskLabel) row.append(ui.element('small', 'message-task-label', taskLabel));
             if (event.data.truncated === true)
@@ -119,6 +129,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
                 list.insertBefore(row, next);
             else
                 list.append(row);
+            ui.messageActions?.bind(row, event, event.sourceRef?.sessionId || sessionId);
             if (incremental && events.length <= 20 && event.type === 'assistant.message') {
                 globalThis.WeftMotion?.reveal(row.querySelector('.message-text'), '160ms');
                 globalThis.WeftMotion?.reveal(row.querySelector('.reply-memory'), '160ms');

@@ -1,0 +1,25 @@
+{
+  "startedAt": "2026-10-09T23:46:35.363Z",
+  "steps": [
+    "Real cloud entrypoint health",
+    "actual process exit/relaunch restores interrupted model step",
+    "read-only discovery; no automatic registration or inference",
+    "authenticated reload resumes memory step",
+    "390x844 QR URL: same cloud account, code verification, desktop approval, trusted recipient and connection",
+    "first main chat message sent once to real MiMo and replied",
+    "completed installation does not reopen onboarding",
+    "settings replay; every step skipped, intermediate steps back/forward; narrow 480x640",
+    "fresh-install welcome/account/model/memory/import/phone/first"
+  ],
+  "realElectron": true,
+  "paidUsage": {
+    "requests": 1,
+    "unknownRequests": 0,
+    "unpricedRequests": 0,
+    "inputTokens": 2108,
+    "cachedInputTokens": 1664,
+    "outputTokens": 3,
+    "cost": 0.00048328
+  },
+  "passed": true
+}
