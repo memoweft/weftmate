@@ -446,6 +446,13 @@ export function validateSingleStore(store) {
         !validToolApprovals(command, store) || !validUserQuestions(command, store)) {
       throw failure('STORE_CORRUPT', 500);
     }
+    if (command.libraryPrivate !== undefined && typeof command.libraryPrivate !== 'boolean' ||
+        command.libraryErased !== undefined && command.libraryErased !== true ||
+        [command.nativeFile, command.libraryExport].some(metadata => metadata !== undefined &&
+          (!plainObject(metadata) || command.kind !== INTERNAL_ARTIFACT_KIND || !path.isAbsolute(metadata.path ?? '') ||
+          !validTime(metadata.createdAt) || !validTime(metadata.modifiedAt) ||
+          !/^\d+$/.test(metadata.device ?? '') || !/^\d+$/.test(metadata.inode ?? '') ||
+          metadata.size !== command.size || metadata.sha256 !== command.sha256 || typeof metadata.snapshot !== 'boolean'))) throw failure('STORE_CORRUPT', 500);
     requestIds.add(command.requestId);
     try {
       const payload = canonicalCommand(command.payload, store.hostId, true);

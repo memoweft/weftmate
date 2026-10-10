@@ -1,0 +1,15 @@
+{
+  "platform": "windows",
+  "scene": "library",
+  "theme": "light",
+  "file": "review-windows-library-light.png",
+  "commit": "6ff41f9b17e01075d4a9ed4f38e4f97f74ac2880",
+  "generatedAt": "2026-10-10T02:22:48.349Z",
+  "synthetic": true,
+  "viewport": {
+    "width": 1200,
+    "height": 800
+  },
+  "source": "production createPersonalDesktop + FE-1a isolated host",
+  "text": "WeftMate\nWeftMate\n动态\n2\n成果库\n新旁聊\nCtrl N\n临时对话\nCtrl K\n\n旁聊\n未分组\n项目进度报告\n项目\n添加一个文件夹，开始项目对话。\nT\nTimelineFixture\n项目进度报告\n输出与来源\n本对话用量\n成果库\n刷新\n\n对话里做好的文件，都在这里。\n\n全部\n文档\n表格\n图片\n代码\n其它\n全部项目\n全部时间\n列表视图\n网格视图\n\n1 个文件\n\n项目进度报告.md\n文档 · 68 B\n10月10日\n打开来源对话\n复制路径\n项目进度报告.md\n+\n放大\n收起\n打开来源对话\n复制路径\n项目进度报告\n\n已读取 3 个文件。42 项测试通过。"
+}

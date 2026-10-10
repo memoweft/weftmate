@@ -88,12 +88,17 @@ test('personal preset preserves the native delegation schema and explains collec
   const root = mkdtempSync(join(tmpdir(), 'weftmate-delegation-'))
   t.after(() => rmSync(root, { recursive: true, force: true }))
   const preset = await import(stagePersonalPlugins(root).preset)
-  const handlers = new Map()
-  preset.apply({ tools: { register: () => () => {}, restrict: () => () => {} },
+  const handlers = new Map(), registered = new Map()
+  preset.apply({ tools: { register: (tool: any) => { registered.set(tool.name, tool); return () => {} }, restrict: () => () => {} },
     on: (name: string, handler: any) => handlers.set(name, handler), effect() {} })
   const native = { name: 'subagent', description: 'Native standalone task; returns job id. Collect with job_output.', parameters: { prompt: {} } }
-  const assembly = await handlers.get('system-prompt/assemble')({}, {}, async () => ({ sections: [], tools: [native] }))
-  assert.equal(assembly.tools[0], native)
+  const scope = { session: { header: { agentPreset: 'personal-remote' } } }
+  const assemble = () => handlers.get('system-prompt/assemble')({}, { scope }, async () => ({ sections: [], tools: [native] }))
+  await assemble() // Populate the real personal tool catalog before loading by name.
+  registered.get('load_tools').execute({ names: ['subagent'] }, { agent: scope })
+  const assembly = await assemble()
+  assert.equal(assembly.tools[0].name, native.name)
+  assert.equal(assembly.tools[0].parameters, native.parameters)
   const guidance = assembly.sections.find((section: any) => section.name === 'weftmate:delegation-guidance').text
   assert.match(guidance, /Record each returned job id/)
   assert.match(guidance, /never redo delegated batches/)

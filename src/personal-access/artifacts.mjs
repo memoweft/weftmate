@@ -1,10 +1,11 @@
 import { scheduledCommandSource } from './schedules-authorization.mjs';
 import { digest, failure, id, validId, withDeadline } from './common.mjs';
-import { canonicalArtifact } from '../personal-artifacts/index.mjs';
+import { artifactContentType, canonicalArtifact } from '../personal-artifacts/index.mjs';
 import { INTERNAL_ARTIFACT_KIND, MAX_COMMANDS, SNAPSHOT_ID, WEB_SNAPSHOT_ID } from './constants.mjs';
 import { canonicalCommand, publicCommand, sourceMessageHash } from './command-policy.mjs';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import path from 'node:path';
+import { createReadStream } from 'node:fs';
 import { lstat, readFile, realpath } from 'node:fs/promises';
 import { MAX_ARTIFACT_BYTES, validArtifactFileName } from '../personal-artifacts/index.mjs';
 
@@ -19,22 +20,23 @@ export function createArtifactOperations(context) {
       const file = await realpath(filePath);
       const stat = await lstat(filePath);
       if (!stat.isFile() || stat.isSymbolicLink()) throw failure('INVALID_COMMAND');
+      const identity = await lstat(file, { bigint: true });
       const fileName = path.basename(file).normalize('NFC');
-      // Keep the current clients' text artifact contract; native tools can still write any file.
-      if (!validArtifactFileName(fileName) || !stat.size || stat.size > MAX_ARTIFACT_BYTES)
-        return { state: 'unavailable', reasonCode: 'ARTIFACT_FORMAT_UNSUPPORTED' };
-      const bytes = await readFile(file);
-      const content = bytes.toString('utf8');
-      if (content.includes('\0') || !Buffer.from(content, 'utf8').equals(bytes))
-        return { state: 'unavailable', reasonCode: 'ARTIFACT_FORMAT_UNSUPPORTED' };
-      const artifact = canonicalArtifact(fileName, content);
-      if (artifact.sha256 !== sha256) throw failure('ARTIFACT_UNVERIFIED', 409);
-      return operations.submitToolArtifact({ ...input, fileName, content,
-        nativeFile: file });
+      const bytes = stat.size <= MAX_ARTIFACT_BYTES ? await readFile(file) : null;
+      const hash = createHash('sha256');
+      if (bytes) hash.update(bytes); else for await (const chunk of createReadStream(file)) hash.update(chunk);
+      if (hash.digest('hex') !== sha256) throw failure('ARTIFACT_UNVERIFIED', 409);
+      const content = bytes?.toString('utf8') ?? '';
+      const text = validArtifactFileName(fileName) && stat.size > 0 && stat.size <= MAX_ARTIFACT_BYTES &&
+        !content.includes('\0') && Buffer.from(content, 'utf8').equals(bytes);
+      return operations.submitToolArtifact({ ...input, fileName, content: text ? content : undefined,
+        nativeFile: file, nativeMetadata: { size: stat.size, sha256,
+          createdAt: stat.birthtime.toISOString(), modifiedAt: stat.mtime.toISOString(),
+          device: String(identity.dev), inode: String(identity.ino), snapshot: text } });
     },
     /** Main-process only: create a bounded document from one accepted owner turn. */
     async submitToolArtifact({ sessionId, turn, callId, messageHash, receiptId,
-      sourceSnapshotIds, fileName, content, nativeFile }) {
+      sourceSnapshotIds, fileName, content, nativeFile, nativeMetadata }) {
       const ownerId = context.sessionOperations.executionOwnerForSession(sessionId);
       id(sessionId);
       if (!Number.isSafeInteger(turn) || turn < 0 || typeof callId !== 'string' ||
@@ -42,7 +44,9 @@ export function createArtifactOperations(context) {
           typeof messageHash !== 'string' || !/^[a-f0-9]{64}$/.test(messageHash)) {
         throw failure('INVALID_COMMAND');
       }
-      let artifact = canonicalArtifact(fileName, content);
+      let artifact = nativeFile && !nativeMetadata.snapshot
+        ? { fileName, size: nativeMetadata.size, sha256: nativeMetadata.sha256, contentType: artifactContentType(fileName) }
+        : canonicalArtifact(fileName, content);
       const state = context.accountState(ownerId);
       if (state.sessions[sessionId]?.origin !== 'personal-remote') throw failure('SESSION_READ_ONLY', 409);
       const projectSession = nativeFile === undefined && state.sessions[sessionId]?.projectId ? await context.checkedProjectSession(ownerId, sessionId) : null;
@@ -181,10 +185,11 @@ export function createArtifactOperations(context) {
         const payload = canonicalCommand({ requestId, kind: INTERNAL_ARTIFACT_KIND,
           targetDeviceId: next.hostId, sessionId, taskId: rootTaskId, artifactId,
           fileName: artifact.fileName, size: artifact.size, sha256: artifact.sha256,
+          ...(nativeFile ? { nativeFile: true } : {}),
           ...(projectSession || browserSession ? { sourceReceiptId: receiptId, sourceSnapshotIds } : {}) }, next.hostId, true);
         const now = new Date(context.timestamp()).toISOString();
         next.commands[commandId] = { commandId, ownerId, requestId,
-          ...(nativeFile !== undefined ? { nativeFileObserved: true } : {}),
+          ...(nativeFile !== undefined ? { nativeFileObserved: true, nativeFile: { path: nativeFile, ...nativeMetadata } } : {}),
           payloadHash: digest(JSON.stringify(payload)), payload,
           sourceDeviceId: source.sourceDeviceId, sourceAuthEpoch: source.sourceAuthEpoch,
           targetDeviceId: next.hostId, kind: INTERNAL_ARTIFACT_KIND, sessionId,
@@ -192,6 +197,8 @@ export function createArtifactOperations(context) {
           contentType: artifact.contentType, size: artifact.size, sha256: artifact.sha256,
           ...(projectSession || browserSession ? { sourceReceiptId: receiptId, sourceSnapshotIds } : {}),
           toolSource: { sessionId, turn, callId, sourceCommandId: source.commandId },
+          libraryProjectId: source.payload.projectId ?? null,
+          libraryPrivate: !(next.sessions[sessionId]?.memoryTurns?.[turn]?.ingest ?? (next.sessions[sessionId]?.memoryMode !== 'off' && next.sessions[sessionId]?.temporary !== true)),
           state: 'dispatching', createdAt: now, updatedAt: now };
         return commandId;
       }));
@@ -201,8 +208,8 @@ export function createArtifactOperations(context) {
       let work = context.activeByCommand.get(workKey);
       if (!work) {
         work = (async () => {
-          let observed = false;
-          try {
+          let observed = nativeFile !== undefined && !nativeMetadata.snapshot;
+          if (!observed) try {
             try { await context.artifactStore.inspect(ownerId, command.taskId, command.artifactId, command); observed = true; }
             catch (error) {
               if (error?.code !== 'ENOENT') throw error;

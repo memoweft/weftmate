@@ -526,7 +526,7 @@ MEM-2 实施显式分享确认前，临时内容返回上述临时边界错误�
 
 TB-2 读取原生 goal 服务与固定产物 `dsh-goal/lib/types/`，并先验证个人预设确实挂载了目标消费方；“包存在”不等于可续跑。未挂载或不可用时能力置为不支持、显示解释，不能搭自制续跑器凑验收。已实现的暂停 / 恢复 / 删除定时任务路由不改；旧 `/run` 每次是独立手动运行，继续禁止不确定时自动重发。需要可靠重试的新 UI 可在 TB-2 为 `/run` 增可选 `requestId`：旧空体保持原义，带 ID 才幂等，同 ID 不同体冲突；不得默默把两种语义混用。
 
-成果库条目复用已有 `{taskId,artifactId,fileName,contentType,size,sha256,verification}`，补 `chatId,sourceSessionId,createdAt,createdProjectId,currentProjectId,availability,actions`。`availability=available|source_deleted|file_missing|unsupported`，只有实际可用动作才返回。下载 / 预览仍用 CLIENT_API 3.8 按任务 / 成果身份的现有路径，不暴露宿主绝对路径。分享 / 本机定位通过已有原生桥授权，网页版不显示假定位按钮。
+成果库已在 CLIENT_API 9.9（TB-3）升格为正式契约：复用原artifactId / 任务 / 回合身份，按账户投影原生成果；具体字段、签名分页、临时排除、D33清理、原生动作与预览边界以9.9为准。本人可复制索引中已验证文件的位置，读取和原生打开始终只按成果ID授权。此正式实现取代本节早期availability / 路径草案；手机沿现有全屏预览容器，桌面沿原侧面板。
 
 ST-6 的设置写入与 M3-A 的离线同步字段由各包在现有设置 / 同步合同内扩展；IA-1 已固定路由、去重、删除与可用性语义，不在这里发明未经核对的云端内容接口。TB-1 的通知适配必须消费 ST-6 设置，不能先独立发一套推送再补限额。
 
