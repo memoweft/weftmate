@@ -401,6 +401,7 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(PLUGINS_DIR, 'personal-native-files.mjs'), join(dir, 'plugins', 'personal-native-files.mjs')],
     [join(PLUGINS_DIR, 'personal-reasoning.mjs'), join(dir, 'plugins', 'personal-reasoning.mjs')],
     [join(PLUGINS_DIR, 'personal-personalization.mjs'), join(dir, 'plugins', 'personal-personalization.mjs')],
+    [join(PLUGINS_DIR, 'grounded-writing.mjs'), join(dir, 'plugins', 'grounded-writing.mjs')],
     [join(here, 'ui-core', 'personalization.js'), join(dir, 'ui-core', 'personalization.js')],
     [join(PLUGINS_DIR, 'personal-project-context.mjs'), join(dir, 'plugins', 'personal-project-context.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-desktop-preset.mjs'), join(dir, 'plugins', 'weftmate-personal-desktop-preset.mjs')],
@@ -768,7 +769,7 @@ export interface DshWebRuntimeOptions {
       messageHash: string, receiptId: string, filePath: string, sha256: string } |
     { id: string, action: 'browse', sessionId: string, turn: number, callId: string,
       messageHash: string, receiptId: string, browserAction: 'open' | 'read' | 'follow',
-      url?: string, snapshotId?: string, segmentIndex?: number, linkId?: string } |
+      url?: string, snapshotId?: string, segmentIndex?: number, linkId?: string, query?: string } |
     { id: string, action: 'write_document', sessionId: string, turn: number, callId: string,
       messageHash: string, receiptId?: string, fileName: string, content: string,
       sourceSnapshotIds?: string[] } |
@@ -1811,6 +1812,7 @@ export class DshWebRuntime {
           (row.browserAction === 'open' && typeof row.url !== 'string') ||
           (row.browserAction !== 'open' && typeof row.snapshotId !== 'string') ||
           (row.browserAction === 'follow' && typeof row.linkId !== 'string') ||
+          (row.query !== undefined && (typeof row.query !== 'string' || !row.query.trim())) ||
           (row.segmentIndex !== undefined && (!Number.isSafeInteger(row.segmentIndex) || (row.segmentIndex as number) < 0))) return
     } else if (writeDocument) {
       const fileName = row.fileName
@@ -1898,6 +1900,7 @@ export class DshWebRuntime {
         ...(row.url === undefined ? {} : { url: row.url as string }),
         ...(row.snapshotId === undefined ? {} : { snapshotId: row.snapshotId as string }),
         ...(row.linkId === undefined ? {} : { linkId: row.linkId as string }),
+        ...(row.query === undefined ? {} : { query: row.query as string }),
         ...(row.segmentIndex === undefined ? {} : { segmentIndex: row.segmentIndex as number }) }
       : toolApproval
       ? { ...identity, action: row.action as 'register_approval' | 'read_approval' | 'resolve_approval', runtimeId: runtimeId!,
@@ -1952,9 +1955,10 @@ export class DshWebRuntime {
         }
         if (nativeFile || nativeBrowser) {
           if (!value || typeof value !== 'object') { settle({ ok: false, error: 'PERSONAL_TOOL_UNAVAILABLE' }); return }
-          // Results from these host-owned operations are already public projections; discard paths.
+          // Host-owned captures are in this conversation's workspace. Preserve
+          // their recovery path and original metadata for native evidence reads.
           const fields = nativeFile ? ['taskId', 'artifactId', 'fileName', 'contentType', 'size', 'sha256', 'state', 'reasonCode']
-            : ['snapshotId', 'url', 'title', 'text', 'links', 'outline', 'segmentIndex', 'segmentCount', 'truncated', 'captureTruncated', 'httpStatus']
+            : ['snapshotId', 'url', 'title', 'capturedAt', 'text', 'links', 'outline', 'segmentIndex', 'segmentCount', 'truncated', 'captureTruncated', 'httpStatus', 'query', 'excerpts', 'sourcePath', 'previewTruncated']
           settle({ ok: true, command: Object.fromEntries(fields.filter(key => value[key] !== undefined).map(key => [key, value[key]])) })
           return
         }

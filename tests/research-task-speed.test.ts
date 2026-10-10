@@ -32,6 +32,9 @@ test('native preview retains a full local capture, exact segment recovery and se
   assert.ok(text.startsWith(recovered.text));
   assert.equal(reads,1);
   const targeted = await browser.browse({...identity,browserAction:'read',snapshotId:first.snapshotId,query:'later precise'});
+  assert.ok(Number.isFinite(Date.parse(first.capturedAt)));
+  assert.equal(targeted.capturedAt, first.capturedAt);
+  assert.ok(archive.includes(`Captured: ${first.capturedAt}`));
   assert.ok(targeted.excerpts.every((e: any)=>e.text===text.slice(e.charStart,e.charEnd)));
   assert.ok(targeted.text.includes('later precise fact'));
   assert.ok(targeted.excerpts.reduce((sum: number,e:any)=>sum+e.text.length,0)<=4096);
@@ -41,5 +44,6 @@ test('native preview retains a full local capture, exact segment recovery and se
   const fetched = await provider.fetch({url:'https://example.org'});
   assert.equal(fetched.truncated,true);
   assert.ok(fetched.body.content.includes(first.sourcePath));
+  assert.ok(fetched.body.content.includes(`Accessed: ${first.capturedAt}`));
   assert.match(fetched.body.content,/segmentIndex=0/);
 });

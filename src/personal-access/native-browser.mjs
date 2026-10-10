@@ -48,7 +48,7 @@ export function createNativeBrowserOperations(context) {
         if (input.query !== undefined) {
           if (typeof input.query !== 'string' || !input.query.trim()) throw failure('INVALID_COMMAND');
           const excerpts = pageExcerpts(prior.segments.map(segment => segment.text).join(''), input.query);
-          return { snapshotId, url: prior.result.url, title: prior.result.title, sourcePath: prior.result.sourcePath,
+          return { snapshotId, url: prior.result.url, title: prior.result.title, capturedAt: prior.result.capturedAt, sourcePath: prior.result.sourcePath,
             query: input.query, excerpts, truncated: true,
             text: excerpts.length ? excerpts.map(e => `[characters ${e.charStart}-${e.charEnd}]\n${e.text}`).join('\n\n') : 'No matching captured paragraph. Try different terms or read an exact segment.' };
         }
@@ -71,8 +71,9 @@ export function createNativeBrowserOperations(context) {
       const directory = join(sessionWorkspace(join(dirname(context.root), 'conversations'), ownerId, sessionId), '.weftmate-web-sources');
       await mkdir(directory, { recursive: true });
       const sourcePath = join(directory, `${captureId}.txt`);
-      await writeFile(sourcePath, `Source: ${read.url}\nTitle: ${read.title}\nCaptured: ${new Date().toISOString()}\nCapture truncated: ${read.captureTruncated === true}\n\n${read.capturedText}`, { flag: 'wx' });
-      const result = { snapshotId: captureId, url: read.url, title: read.title,
+      const capturedAt = new Date().toISOString();
+      await writeFile(sourcePath, `Source: ${read.url}\nTitle: ${read.title}\nCaptured: ${capturedAt}\nCapture truncated: ${read.captureTruncated === true}\n\n${read.capturedText}`, { flag: 'wx' });
+      const result = { snapshotId: captureId, url: read.url, title: read.title, capturedAt,
         text: pagePreview(segments[0].text), sourcePath, previewTruncated: pagePreview(segments[0].text).length < segments[0].text.length,
         links: read.links, outline: read.outline,
         segmentIndex: 0, segmentCount: segments.length, truncated: read.truncated,

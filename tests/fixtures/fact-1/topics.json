@@ -1,0 +1,54 @@
+{
+  "baselineCommit": "56f08f58ce447b3e3b7f872de25b5bf62ba9b956",
+  "topics": [
+    {
+      "id": "node24", "title": "Node.js 24 升级说明与扩展兼容",
+      "question": "Node.js 24.0.0 相比 22.0.0 有哪些值得留意的变化？包括 Windows 工具链、原生扩展兼容和 NODE_MODULE_VERSION。",
+      "sources": ["https://nodejs.org/en/blog/release/v24.0.0", "https://nodejs.org/en/blog/release/v22.0.0", "https://nodejs.org/api/n-api.html#implications-of-abi-stability"],
+      "mustInclude": ["ClangCL 要求限于 Windows 编译 Node.js 本体", "区分 Node-API 稳定 ABI 扩展和直接依赖 V8/Node C++ API 的扩展；Node-API 兼容以所用版本被目标运行时支持及外部依赖兼容为前提", "24.0.0 的 NODE_MODULE_VERSION 为 137"],
+      "mustNotAssert": ["所有原生扩展都必须改用 ClangCL", "所有扩展都必须重编译", "24.0.0 的模块 ABI 为 134", "Node-API 保证任意外部依赖的 ABI 兼容"],
+      "numbers": {"NODE_MODULE_VERSION": 137, "V8": "13.6", "npmMajor": 11, "releaseDate": "2025-05-06"},
+      "regressionDocument": "tests/evidence/qa-4/web-document/node24说明.md"
+    },
+    {
+      "id": "node-dep0190", "title": "Node.js 子进程弃用条件",
+      "question": "Node.js 24.0.0 的 DEP0190 对 child_process.spawn/execFile 的 args 有什么影响？给出准确的触发条件、弃用阶段与建议。",
+      "sources": ["https://nodejs.org/docs/latest-v24.x/api/deprecations.html#DEP0190", "https://nodejs.org/en/blog/release/v24.0.0"],
+      "mustInclude": ["传 args 且 shell: true 才是该项弃用的组合条件", "v24.0.0 为运行时弃用", "风险来自 shell 参数没有转义"],
+      "mustNotAssert": ["所有 args 数组都被弃用", "spawn 或 execFile 已被移除", "该弃用要求禁止 shell:false 的参数数组"],
+      "numbers": {"deprecationId": "DEP0190", "runtimeDeprecation": "24.0.0"}
+    },
+    {
+      "id": "python312", "title": "Python 3.12 distutils 与 venv",
+      "question": "Python 3.12 移除 distutils、改变 venv 默认包后，旧项目如何理解兼容边界？也说明发布日期和 GIL 变化的范围。",
+      "sources": ["https://docs.python.org/3.12/whatsnew/3.12.html"],
+      "mustInclude": ["distutils 从标准库移除，第三方 setuptools 仍可提供", "venv 默认不再预装 setuptools，可以自行安装", "per-interpreter GIL 是子解释器层面的能力，不能概括为整个 Python 已去掉 GIL"],
+      "mustNotAssert": ["Python 3.12 无法再使用 distutils", "venv 已移除 pip", "Python 3.12 已全面取消 GIL"],
+      "numbers": {"releaseDate": "2023-10-02", "perInterpreterGIL": "PEP 684"}
+    },
+    {
+      "id": "typescript50", "title": "TypeScript 5.0 装饰器迁移",
+      "question": "TypeScript 5.0 的新装饰器与 experimentalDecorators 有什么区别？说明 emitDecoratorMetadata、参数装饰器和旧实现的迁移边界。",
+      "sources": ["https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html"],
+      "mustInclude": ["新装饰器不要求 experimentalDecorators", "旧 experimentalDecorators 支持继续存在", "新装饰器不兼容 emitDecoratorMetadata 且不允许修饰参数", "旧装饰器函数不一定可直接用于新语义"],
+      "mustNotAssert": ["5.0 已移除 experimentalDecorators", "新旧装饰器语义完全相同", "新装饰器支持参数装饰或 emitDecoratorMetadata"],
+      "numbers": {"version": "5.0"}
+    },
+    {
+      "id": "react19", "title": "React 19 ref 与 forwardRef",
+      "question": "根据 React 19 正式发布文章，解释 ref 作为 prop、forwardRef、ref 清理回调和类组件的区别，并说明这些改变是否代表 forwardRef 在 19 已被删除。",
+      "sources": ["https://react.dev/blog/2024/12/05/react-19"],
+      "mustInclude": ["函数组件可直接接收 ref prop", "forwardRef 的弃用和移除是未来计划，不是 React 19 已移除", "类组件的 ref 不作为 prop 传递而引用实例", "ref 回调可以返回清理函数"],
+      "mustNotAssert": ["React 19 已删除 forwardRef", "类组件也把 ref 作为普通 prop 接收", "所有 ref 回调均只能返回 void"],
+      "numbers": {"major": 19, "releaseArticleDate": "2024-12-05"}
+    },
+    {
+      "id": "http-redirects", "title": "HTTP 重定向方法保持条件",
+      "question": "按照 RFC 9110，比较 HTTP 301、302、303、307、308 的永久性和请求方法转换，特别是 POST 自动重定向时可以还是必须改成 GET。",
+      "sources": ["https://www.rfc-editor.org/rfc/rfc9110.html#section-15.4"],
+      "mustInclude": ["301/308 为永久，302/307 为临时", "301/302 因历史原因允许 POST 改为 GET，非强制", "307/308 自动重定向不得改变请求方法", "303 指向供检索的另一资源，可用 GET/HEAD"],
+      "mustNotAssert": ["301/302 必须把 POST 改为 GET", "307/308 可自动把 POST 改为 GET", "303 是永久重定向"],
+      "numbers": {"rfc": 9110, "permanent": [301, 308], "preserveMethod": [307, 308]}
+    }
+  ]
+}
