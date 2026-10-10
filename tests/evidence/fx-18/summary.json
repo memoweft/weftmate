@@ -1,0 +1,216 @@
+{
+  "weftmateCodeCommit": "6fdc4d64",
+  "coreCommit": "c6d449ddd716b49de7a725b4d1f44a0e01bf4f8b",
+  "corePr": "https://github.com/memoweft/memoweft/pull/100",
+  "weftmatePr": "https://github.com/memoweft/weftmate/pull/187",
+  "requiredUnitTests": {
+    "passed": 1290,
+    "failed": 0,
+    "skipped": 14,
+    "note": "12 existing conditional skips and 2 real-Core cases separately passed"
+  },
+  "matrix": {
+    "passed": 27,
+    "idle": 9,
+    "chat": 9,
+    "formation": 9
+  },
+  "formation": [
+    {
+      "method": "tray",
+      "attempt": 1,
+      "restartToProcessingMs": 7387,
+      "restartToHealthyMs": 7642,
+      "coreStartedAt": "2026-10-10T08:12:10.371Z",
+      "coreToProcessingMs": 521
+    },
+    {
+      "method": "tray",
+      "attempt": 2,
+      "restartToProcessingMs": 7309,
+      "restartToHealthyMs": 7562,
+      "coreStartedAt": "2026-10-10T08:12:24.500Z",
+      "coreToProcessingMs": 511
+    },
+    {
+      "method": "tray",
+      "attempt": 3,
+      "restartToProcessingMs": 7899,
+      "restartToHealthyMs": 8139,
+      "coreStartedAt": "2026-10-10T08:12:39.493Z",
+      "coreToProcessingMs": 479
+    },
+    {
+      "method": "task-manager-force",
+      "attempt": 1,
+      "restartToProcessingMs": 8976,
+      "restartToHealthyMs": 9212,
+      "coreStartedAt": "2026-10-10T08:12:54.604Z",
+      "coreToProcessingMs": 637
+    },
+    {
+      "method": "task-manager-force",
+      "attempt": 2,
+      "restartToProcessingMs": 8111,
+      "restartToHealthyMs": 8344,
+      "coreStartedAt": "2026-10-10T08:13:09.961Z",
+      "coreToProcessingMs": 574
+    },
+    {
+      "method": "task-manager-force",
+      "attempt": 3,
+      "restartToProcessingMs": 8438,
+      "restartToHealthyMs": 8684,
+      "coreStartedAt": "2026-10-10T08:13:24.767Z",
+      "coreToProcessingMs": 564
+    },
+    {
+      "method": "logout-taskkill",
+      "attempt": 1,
+      "restartToProcessingMs": 8461,
+      "restartToHealthyMs": 8699,
+      "coreStartedAt": "2026-10-10T08:13:41.453Z",
+      "coreToProcessingMs": 542
+    },
+    {
+      "method": "logout-taskkill",
+      "attempt": 2,
+      "restartToProcessingMs": 8892,
+      "restartToHealthyMs": 9115,
+      "coreStartedAt": "2026-10-10T08:13:58.718Z",
+      "coreToProcessingMs": 584
+    },
+    {
+      "method": "logout-taskkill",
+      "attempt": 3,
+      "restartToProcessingMs": 8586,
+      "restartToHealthyMs": 8875,
+      "coreStartedAt": "2026-10-10T08:14:15.585Z",
+      "coreToProcessingMs": 603
+    }
+  ],
+  "durable": {
+    "memory": [
+      {
+        "run": "exit-serial-final",
+        "jobCount": 36,
+        "evidenceCount": 36,
+        "cognitionCount": 36,
+        "duplicateSources": 0,
+        "duplicateBoundaries": 0,
+        "jobStates": {
+          "applied": 36
+        },
+        "formationLastUserQuotes": [
+          {
+            "method": "tray",
+            "attempt": 1,
+            "retained": true
+          },
+          {
+            "method": "tray",
+            "attempt": 2,
+            "retained": true
+          },
+          {
+            "method": "tray",
+            "attempt": 3,
+            "retained": true
+          },
+          {
+            "method": "task-manager-force",
+            "attempt": 1,
+            "retained": true
+          },
+          {
+            "method": "task-manager-force",
+            "attempt": 2,
+            "retained": true
+          },
+          {
+            "method": "task-manager-force",
+            "attempt": 3,
+            "retained": true
+          },
+          {
+            "method": "logout-taskkill",
+            "attempt": 1,
+            "retained": true
+          },
+          {
+            "method": "logout-taskkill",
+            "attempt": 2,
+            "retained": true
+          },
+          {
+            "method": "logout-taskkill",
+            "attempt": 3,
+            "retained": true
+          }
+        ],
+        "expectedCompletedBoundaries": 36,
+        "passed": true
+      }
+    ],
+    "streamingMessages": [
+      {
+        "method": "tray",
+        "attempt": 1,
+        "retained": true
+      },
+      {
+        "method": "tray",
+        "attempt": 2,
+        "retained": true
+      },
+      {
+        "method": "tray",
+        "attempt": 3,
+        "retained": true
+      },
+      {
+        "method": "task-manager-force",
+        "attempt": 1,
+        "retained": true
+      },
+      {
+        "method": "task-manager-force",
+        "attempt": 2,
+        "retained": true
+      },
+      {
+        "method": "task-manager-force",
+        "attempt": 3,
+        "retained": true
+      },
+      {
+        "method": "logout-taskkill",
+        "attempt": 1,
+        "retained": true
+      },
+      {
+        "method": "logout-taskkill",
+        "attempt": 2,
+        "retained": true
+      },
+      {
+        "method": "logout-taskkill",
+        "attempt": 3,
+        "retained": true
+      }
+    ],
+    "passed": true
+  },
+  "cleanup": {
+    "at": "2026-10-10T16:14:41.9843075+08:00",
+    "startedAt": "2026-10-10T07:37:58.0611786Z",
+    "criteria": "creation after this package baseline fixture + executable path + command line containing this worktree or its recorded synthetic roots; no parent PID matching",
+    "stopped": [],
+    "stoppedCount": 0,
+    "remainingOwnedProcesses": [],
+    "recordedCoreProcessCount": 72,
+    "remainingRecordedCoreProcesses": [],
+    "emulatorStarted": false,
+    "realModelRequests": 0
+  }
+}
