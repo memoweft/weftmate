@@ -15,6 +15,17 @@ async function start() {
   candidate = await startTimelineCandidate({ historyCount: 0, interactive: true, riskApproval: true, baseTime: Date.now() - 80000 })
   application = await _electron.launch({ executablePath, args: ['tests/integration/desktop-ui-1.cjs', candidate.origin + '/personal/v1/ui/'], cwd: root, env })
   const page = await application.firstWindow(); page.setDefaultTimeout(25000)
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async text => { globalThis.syntheticClipboardText = text; } } });
+    let api;
+    Object.defineProperty(globalThis, 'WeftUiCore', { configurable: true, get: () => api, set(value) {
+      api = value; const create = value.create;
+      value.create = (...args) => { const core = create(...args); const submit = core.submitQuestion; globalThis.syntheticQuestionCalls = [];
+        core.submitQuestion = (...values) => { const [context, row] = values, entry = core.conversationQuestions.entries.get(row.questionRpcId), source = core.conversationTasks.entries.get(row.taskId);
+          globalThis.syntheticQuestionCalls.push({current:core.approvalContextCurrent(context),authoritative:entry?.authoritative,notice:entry?.notice,same:entry&&core.sameQuestion(entry.row,row),sourceFresh:!!core.approvalSource(row,true),source:source?.payload?.source,sourceNotice:source?.notice,row:core.questionIdentity(row),busy:core.conversationQuestions.operations.has(row.questionRpcId)});
+          return submit(...values); }; return core; };
+    }});
+  });
   page.on('pageerror', error => errors.push(error.message))
   await localUiSession(page, candidate.credentials)
   await page.getByRole('button', { name: '停止回复', exact: true }).waitFor()
@@ -41,9 +52,10 @@ try {
     async function selectMode(label) {
       await page.getByRole('button', { name: '账户菜单' }).click()
       await page.getByRole('button', { name: '设置', exact: true }).click()
-      await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '常规', exact: true }).click()
+      await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '助手', exact: true }).click()
       await page.getByRole('combobox', { name: '回复进行中时发送的消息', exact: true }).click()
       await page.getByRole('option', { name: label, exact: true }).click()
+      await page.getByText('已同步 · 从下一次回复开始生效', { exact: true }).filter({visible:true}).waitFor()
       await page.getByRole('button', { name: '关闭设置', exact: true }).click()
     }
     await selectMode('引导')
@@ -64,7 +76,11 @@ try {
     await page.getByRole('region', { name: '待批准操作' }).waitFor({ state: 'hidden' })
     await page.getByRole('region', { name: '待回答问题' }).waitFor()
     await page.getByRole('radio', { name: '简要报告', exact: true }).click()
-    await page.getByRole('button', { name: '提交回答', exact: true }).click()
+    await page.getByRole('radio', { name: '简要报告', exact: true, checked: true }).waitFor()
+    const answered = page.waitForResponse(response => response.request().method() === 'POST' && /\/sessions\/[^/]+\/questions\/[^/?]+$/.test(new URL(response.url()).pathname))
+    await page.getByRole('button', { name: '提交回答', exact: true }).focus()
+    await page.getByRole('button', { name: '提交回答', exact: true }).press('Enter')
+    const answerReceipt = await answered; assert.equal(answerReceipt.status(), 200)
     await page.getByRole('region', { name: '待回答问题' }).waitFor({ state: 'hidden' })
     await candidate.complete(true)
     await page.getByRole('button', { name: /^项目进度报告(?:\s|$)/ }).click()
@@ -86,6 +102,7 @@ try {
     await preview.getByText(/Read 3 files successfully/).waitFor()
     await preview.getByRole('button', { name: '复制', exact: true }).click()
     await preview.getByRole('button', { name: '已复制', exact: true }).waitFor()
+    assert.match(await page.evaluate(() => globalThis.syntheticClipboardText), /Read 3 files successfully/)
     await preview.getByRole('button', { name: '再打开一项' }).click()
     await page.getByRole('dialog', { name: '输出与来源' }).getByRole('button', { name: '项目进度报告.md', exact: true }).click()
     assert.equal(await preview.getByRole('tab').count(), 2)
@@ -135,5 +152,5 @@ try {
   }
   assert.deepEqual(errors, [])
   console.log('UI-1 Chromium interactions passed (semantic names/roles, isolated Electron).')
-} catch (error) { console.error('Synthetic operations:', candidate?.operations); if (application) console.error((await (await application.firstWindow()).locator('body').innerText()).slice(-1200)); throw error; } finally { await close() }
+} catch (error) { console.error('Synthetic operations:', candidate?.operations); if (application) { const page = await application.firstWindow(); console.error((await page.locator('body').innerText()).slice(-1200)); console.error('Synthetic question guards:', JSON.stringify(await page.evaluate(() => globalThis.syntheticQuestionCalls))); } throw error; } finally { await close() }
 
