@@ -152,14 +152,30 @@
     content._renderId ||= `wm-${++id}`; content._renderText = text;
     if (!globalThis.WeftFormat?.render) { content.textContent = text; return content; }
     content._highlightCache ||= new Map();
-    const template = node('div'); template.innerHTML = WeftFormat.render(text, {prefix:content._renderId,highlightCache:content._highlightCache});
+    const old = [...content.children].filter(el=>!el.classList.contains('render-table-actions') && !el.classList.contains('reply-indicator'));
     const streaming = options.streaming === true || content.classList.contains('reply-streaming');
-    const fresh = [...template.children], old = [...content.children].filter(el=>!el.classList.contains('render-table-actions') && !el.classList.contains('reply-indicator'));
+    let fresh;
+    if (streaming && WeftFormat.renderBlocks) {
+      content._blockCache ||= new Map();
+      const blocks=WeftFormat.renderBlocks(text,{prefix:content._renderId,highlightCache:content._highlightCache,blockCache:content._blockCache});
+      const nodes=blocks.map((html,index)=>{
+        if(old[index]?._renderHTML===html)return old[index];
+        const block=node('div');block.innerHTML=html;
+        if(block.children.length!==1)return null;
+        const next=block.firstElementChild;next._renderHTML=html;return next;
+      });
+      if(nodes.every(Boolean))fresh=nodes;
+    }
+    const template = node('div');
+    if(!fresh){template.innerHTML = WeftFormat.render(text, {prefix:content._renderId,highlightCache:content._highlightCache});fresh=[...template.children];}
+    // A first streamed Markdown marker (e.g. "#") can otherwise render an
+    // empty heading until a later token. Show that unfinished prefix literally.
+    if (options.streaming === true && text.trim() && !fresh.some(child=>child.textContent.trim())) fresh=[node('p','',text)];
     // Preserve unchanged blocks, live code controls, horizontal offsets and diagram views.
     for (let i=0;i<fresh.length;i++) {
-      const next=fresh[i], previous=old[i], html=next.outerHTML;
-      if (previous?._sourceHTML===html) continue;
-      if (previous?.classList.contains('render-code') && next.tagName==='PRE' && previous.dataset.language===next.dataset.language) { previous._update(next); previous._sourceHTML=html; continue; }
+      const next=fresh[i], previous=old[i]; if(next===previous)continue; const html=next.outerHTML;
+      if (previous?._sourceHTML===html) { previous._renderHTML=next._renderHTML; continue; }
+      if (previous?.classList.contains('render-code') && next.tagName==='PRE' && previous.dataset.language===next.dataset.language) { previous._update(next); previous._sourceHTML=html; previous._renderHTML=next._renderHTML; continue; }
       next._sourceHTML=html; const beforeText=previous?.textContent || '';
       if(previous) { if(previous.previousElementSibling?.classList.contains('render-table-actions'))previous.previousElementSibling.remove(); previous.replaceWith(next); }
       else content.append(next);

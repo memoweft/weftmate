@@ -47,9 +47,9 @@ export function createChatTimeline(context) {
     const chat = context.chats.requireChat(ownerId, chatId), key = `${ownerId}/${chatId}`;
     let index = indexes.get(key);
     if (!index || index.contentRevision !== chat.contentRevision) {
-      if (index) index.retired = true;
+      if (index) { index.retired = true; index.live.clear(); }
       index = { ownerId, chatId, contentRevision: chat.contentRevision, generation: randomBytes(16).toString('hex'),
-        rows: new Map(), ordered: [], changes: [], removed: new Set(), revision: 0, segments: new Map(), queue: Promise.resolve(), job: null, error: null };
+        rows: new Map(), ordered: [], changes: [], removed: new Set(), revision: 0, segments: new Map(), live: new Map(), liveRevision: 0, queue: Promise.resolve(), job: null, error: null };
       indexes.set(key, index);
     }
     return index;
@@ -83,7 +83,15 @@ export function createChatTimeline(context) {
     if (index.retired) throw failure('CURSOR_RESET_REQUIRED', 409);
     if (!Array.isArray(page?.events) || !Number.isSafeInteger(page.nextSeq)) throw failure('BACKEND_UNAVAILABLE', 503);
     for (const event of page.events) put(index, segment, event);
+    if (options.beforeSeq === undefined) { index.live.set(segment.sessionId, { segment, events: context.publicLiveEvents?.(index.ownerId,segment.sessionId,page.liveEvents ?? []) ?? [] }); index.liveRevision++; }
     return page;
+  }
+  function liveEvents(index) {
+    return [...index.live.values()].flatMap(({segment,events}) => context.publicLiveEvents?.(index.ownerId, segment.sessionId, events)?.map(event => ({
+      ...event, eventId: `event-${digest(`${segment.hostId}/${segment.sessionId}/${event.seq}`)}`,
+      chatId: index.chatId, orderKey: `${pad(segment.ordinal)}:${segment.segmentId}:${pad(event.seq)}`,
+      revision: event.data.cursor, sourceRef: { kind: 'native', hostId: segment.hostId, sessionId: segment.sessionId, seq: event.seq },
+    })) ?? []);
   }
   async function seed(index) {
     // Newest segments first; first readable page never waits for backfill.
@@ -234,7 +242,7 @@ export function createChatTimeline(context) {
           if (params.has('around')) { const found = rows.findIndex(row => row.eventId === params.get('around')); deletedAnchor = found < 0; start = found < 0 ? start : Math.max(0, found - Math.floor(limit / 2)); }
           let selected = rows.slice(start, start + limit);
           if (params.has('before')) { const key = decode(index, params.get('before'), 'history'); selected = selected.filter(row => row.orderKey < key); }
-          return { items: await hydrate(index, selected), olderCursor: selected.length ? token(index, 'history', selected[0].orderKey) : null,
+          return { items: await hydrate(index, selected), liveEvents: liveEvents(index), liveRevision: index.liveRevision, olderCursor: selected.length ? token(index, 'history', selected[0].orderKey) : null,
             newerCursor: selected.length ? token(index, 'history', selected.at(-1).orderKey) : null,
             hasOlder: start > 0 || building(index), hasNewer: start + selected.length < rows.length,
             syncCursor: token(index, 'sync', index.revision), deletedAnchor, ...info(index) };
@@ -244,7 +252,7 @@ export function createChatTimeline(context) {
           const since = decode(index, params.get('cursor'), 'sync');
           const changes = index.changes.slice(since, since + limit);
           const ids = [...new Set(changes.map(row => row.eventId))];
-          return { upserts: await hydrate(index, ids.map(id => index.rows.get(id)).filter(Boolean)),
+          return { upserts: await hydrate(index, ids.map(id => index.rows.get(id)).filter(Boolean)), liveEvents: liveEvents(index), liveRevision: index.liveRevision,
             removals: changes.filter(row => row.reason).map(({ eventId, revision, reason }) => ({ eventId, revision, reason })),
             nextCursor: token(index, 'sync', changes.at(-1)?.revision ?? index.revision),
             hasMore: (changes.at(-1)?.revision ?? index.revision) < index.revision || [...index.segments.values()].some(s => s.more), ...info(index) };
@@ -289,7 +297,7 @@ export function createChatTimeline(context) {
       }
       index.ordered = index.ordered.filter(row => !index.removed.has(row.eventId));
     },
-    invalidate(ownerId, chatId) { context.chats.invalidateSearch?.(ownerId); segmentGroups.delete(context.accountState(ownerId).chatIdentity.segments); const key = `${ownerId}/${chatId}`; const index = indexes.get(key); if (index) index.retired = true; indexes.delete(key); },
+    invalidate(ownerId, chatId) { context.chats.invalidateSearch?.(ownerId); segmentGroups.delete(context.accountState(ownerId).chatIdentity.segments); const key = `${ownerId}/${chatId}`; const index = indexes.get(key); if (index) { index.retired = true; index.live.clear(); } indexes.delete(key); },
     async close() { closed = true; await Promise.all([...jobs, ...[...indexes.values()].map(index => index.queue)]); indexes.clear(); },
   };
 }

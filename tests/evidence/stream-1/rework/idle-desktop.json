@@ -1,0 +1,153 @@
+{
+  "synthetic": true,
+  "systemBarsVerified": false,
+  "surfaces": [
+    {
+      "surface": "electron",
+      "idleWindow": {
+        "start": 1791658930019,
+        "end": 1791658936119,
+        "requests": [
+          {
+            "at": 1791658930188,
+            "path": "/personal/v1/sessions/session-5c3e1bc4-7280-4c80-88ab-861011bf9084/events"
+          },
+          {
+            "at": 1791658930438,
+            "path": "/personal/v1/sessions/session-5c3e1bc4-7280-4c80-88ab-861011bf9084/events"
+          },
+          {
+            "at": 1791658930688,
+            "path": "/personal/v1/sessions/session-5c3e1bc4-7280-4c80-88ab-861011bf9084/events"
+          },
+          {
+            "at": 1791658930938,
+            "path": "/personal/v1/sessions/session-5c3e1bc4-7280-4c80-88ab-861011bf9084/events"
+          },
+          {
+            "at": 1791658931188,
+            "path": "/personal/v1/sessions/session-5c3e1bc4-7280-4c80-88ab-861011bf9084/events"
+          },
+          {
+            "at": 1791658931438,
+            "path": "/personal/v1/sessions/session-5c3e1bc4-7280-4c80-88ab-861011bf9084/events"
+          },
+          {
+            "at": 1791658931688,
+            "path": "/personal/v1/sessions/session-5c3e1bc4-7280-4c80-88ab-861011bf9084/events"
+          },
+          {
+            "at": 1791658931938,
+            "path": "/personal/v1/sessions/session-5c3e1bc4-7280-4c80-88ab-861011bf9084/events"
+          },
+          {
+            "at": 1791658932188,
+            "path": "/personal/v1/sessions/session-5c3e1bc4-7280-4c80-88ab-861011bf9084/events"
+          },
+          {
+            "at": 1791658932440,
+            "path": "/personal/v1/sessions/session-5c3e1bc4-7280-4c80-88ab-861011bf9084/events"
+          },
+          {
+            "at": 1791658932688,
+            "path": "/personal/v1/sessions/session-5c3e1bc4-7280-4c80-88ab-861011bf9084/events"
+          },
+          {
+            "at": 1791658932938,
+            "path": "/personal/v1/sessions/session-5c3e1bc4-7280-4c80-88ab-861011bf9084/events"
+          },
+          {
+            "at": 1791658933188,
+            "path": "/personal/v1/sessions/session-5c3e1bc4-7280-4c80-88ab-861011bf9084/events"
+          },
+          {
+            "at": 1791658933438,
+            "path": "/personal/v1/sessions/session-5c3e1bc4-7280-4c80-88ab-861011bf9084/events"
+          },
+          {
+            "at": 1791658933688,
+            "path": "/personal/v1/sessions/session-5c3e1bc4-7280-4c80-88ab-861011bf9084/events"
+          },
+          {
+            "at": 1791658933938,
+            "path": "/personal/v1/status"
+          },
+          {
+            "at": 1791658933940,
+            "path": "/personal/v1/sessions/session-5c3e1bc4-7280-4c80-88ab-861011bf9084/events"
+          },
+          {
+            "at": 1791658933951,
+            "path": "/personal/v1/settings/personalization"
+          },
+          {
+            "at": 1791658933956,
+            "path": "/personal/v1/activity/unread"
+          },
+          {
+            "at": 1791658933963,
+            "path": "/personal/v1/models"
+          },
+          {
+            "at": 1791658933968,
+            "path": "/personal/v1/settings/models"
+          },
+          {
+            "at": 1791658933974,
+            "path": "/personal/v1/commands"
+          },
+          {
+            "at": 1791658933981,
+            "path": "/personal/v1/chats/main"
+          },
+          {
+            "at": 1791658933987,
+            "path": "/personal/v1/sessions"
+          },
+          {
+            "at": 1791658933988,
+            "path": "/personal/v1/chats"
+          },
+          {
+            "at": 1791658933995,
+            "path": "/personal/v1/projects"
+          },
+          {
+            "at": 1791658934003,
+            "path": "/personal/v1/sessions/session-5c3e1bc4-7280-4c80-88ab-861011bf9084/events"
+          },
+          {
+            "at": 1791658934008,
+            "path": "/personal/v1/usage"
+          },
+          {
+            "at": 1791658934008,
+            "path": "/personal/v1/sync/events"
+          },
+          {
+            "at": 1791658934017,
+            "path": "/personal/v1/sessions/session-5c3e1bc4-7280-4c80-88ab-861011bf9084/approvals"
+          },
+          {
+            "at": 1791658934019,
+            "path": "/personal/v1/sessions/session-5c3e1bc4-7280-4c80-88ab-861011bf9084/questions"
+          },
+          {
+            "at": 1791658934026,
+            "path": "/personal/v1/tasks/cmd-fe2a029d-2719-4282-8c76-1bdf5ad02641"
+          },
+          {
+            "at": 1791658934938,
+            "path": "/personal/v1/sessions/session-5c3e1bc4-7280-4c80-88ab-861011bf9084/events"
+          },
+          {
+            "at": 1791658935938,
+            "path": "/personal/v1/sessions/session-5c3e1bc4-7280-4c80-88ab-861011bf9084/events"
+          }
+        ]
+      },
+      "idleRequestsPerSecond": 5.573770491803279
+    }
+  ],
+  "errors": []
+}

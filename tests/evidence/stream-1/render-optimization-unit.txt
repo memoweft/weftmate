@@ -1,0 +1,25 @@
+▶ shared offline content: parsing, injection set, streaming, controls and failure fallback
+  ✔ headings, nested lists/tasks, quotes, rule, emphasis, links, footnotes and 30 languages (17.5564ms)
+  ✔ script, HTML events, dangerous protocols, SVG scripts, CSS expression, KaTeX extensions never execute (11.5315ms)
+  ✔ unclosed streaming code preserves controls and node identity, exact 30-line threshold (10.2819ms)
+  ✔ table copies escape pipes, CSV quotes, commas and multiline cells (3.2921ms)
+  ✔ plain streaming tails retain completed blocks and Markdown transitions still reparse references, lists and fences (13.8727ms)
+  ✔ math renders offline and failure returns exact delimited source (10.5796ms)
+  ✔ Mermaid graph and failed/injected syntax fallback without links or scripts (4439.8196ms)
+  ✔ known host titles become link cards; ordinary links use external marking without a fetch (2.9779ms)
+  ✔ an incomplete streamed diagram recovers to graph view when the syntax becomes valid (1339.021ms)
+  ✔ captured source links preserve provenance priority and the host title card (1514.0479ms)
+✔ shared offline content: parsing, injection set, streaming, controls and failure fallback (7807.9891ms)
+✔ mobile generated assets match every canonical ui-core file byte for byte (170.592ms)
+✔ check refuses changed, missing and unlisted copies; rebuild follows the source and removes stale files (327.9973ms)
+✔ mobile check validates nested component syntax as well as generated source parity (2626.447ms)
+✔ published mobile bundle includes the verified shared assets at their ui-core paths (2415.8729ms)
+✔ publish command refuses stale generated assets before creating a release (4433.8083ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10098.6019

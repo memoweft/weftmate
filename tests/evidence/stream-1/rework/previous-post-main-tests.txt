@@ -1,0 +1,34 @@
+▶ shared offline content: parsing, injection set, streaming, controls and failure fallback
+  ✔ headings, nested lists/tasks, quotes, rule, emphasis, links, footnotes and 30 languages (15.4688ms)
+  ✔ script, HTML events, dangerous protocols, SVG scripts, CSS expression, KaTeX extensions never execute (10.1743ms)
+  ✔ unclosed streaming code preserves controls and node identity, exact 30-line threshold (8.1735ms)
+  ✔ table copies escape pipes, CSV quotes, commas and multiline cells (2.2167ms)
+  ✔ plain streaming tails retain completed blocks and Markdown transitions still reparse references, lists and fences (27.2507ms)
+  ✔ math renders offline and failure returns exact delimited source (5.9449ms)
+  ✔ Mermaid graph and failed/injected syntax fallback without links or scripts (4411.5892ms)
+  ✔ known host titles become link cards; ordinary links use external marking without a fetch (2.4272ms)
+  ✔ an incomplete streamed diagram recovers to graph view when the syntax becomes valid (1337.4186ms)
+  ✔ captured source links preserve provenance priority and the host title card (1500.5926ms)
+✔ shared offline content: parsing, injection set, streaming, controls and failure fallback (7742.3874ms)
+✔ cross-segment pages keep stable ids and independent sync while old segments receive late events (34.1745ms)
+✔ dates use account timezone; Chinese search excludes tools, supports filters and resets after content invalidation (6.364ms)
+✔ mobile generated assets match every canonical ui-core file byte for byte (147.3422ms)
+✔ check refuses changed, missing and unlisted copies; rebuild follows the source and removes stale files (256.0101ms)
+✔ mobile check validates nested component syntax as well as generated source parity (2494.9975ms)
+✔ published mobile bundle includes the verified shared assets at their ui-core paths (2284.1815ms)
+✔ publish command refuses stale generated assets before creating a release (3958.2389ms)
+✔ live snapshots keep native anchors, cumulative text, reasoning private and final text authoritative across tool steps (3.7218ms)
+✔ stop/error snapshots settle without a live indicator, reconnect rebuilds exact text, retry replaces failed attempt (1.1056ms)
+✔ live snapshots have no separate erasure cache and D33 rejects forgotten provenance and deleting/cleanup accounts (0.3786ms)
+✔ logical client snapshot updates deduplicate, retain presentation identity, remove on final and reset on erasure (1.1968ms)
+✔ late logical/legacy snapshots cannot roll back a newer body or revive a finalized message (1.72ms)
+✔ completion SSE decodes split Unicode frames, observes usage, parses short text/old JSON and aborts while reading (5.8646ms)
+✔ D33 snippet erasure removes packed native text/reasoning/tool deltas even when the phrase crosses chunk boundaries (12.2581ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9265.0032

@@ -1,0 +1,17 @@
+✔ UI-2a 390×844 modes, risk confirmation, settings and three approval decisions (13633.8625ms)
+✔ live snapshots keep native anchors, cumulative text, reasoning private and final text authoritative across tool steps (3.2849ms)
+✔ stop/error snapshots settle without a live indicator, reconnect rebuilds exact text, retry replaces failed attempt (0.7184ms)
+✔ live snapshots have no separate erasure cache and D33 rejects forgotten provenance and deleting/cleanup accounts (0.2768ms)
+✔ logical client snapshot updates deduplicate, retain presentation identity, remove on final and reset on erasure (1.1092ms)
+✔ late logical/legacy snapshots cannot roll back a newer body or revive a finalized message (1.5571ms)
+✔ completion SSE decodes split Unicode frames, observes usage, parses short text/old JSON and aborts while reading (3.2768ms)
+✔ D33 snippet erasure removes packed native text/reasoning/tool deltas even when the phrase crosses chunk boundaries (10.0706ms)
+✔ STREAM-1b unchanged snapshots do not repaint; growth only paints the reply body (1.5497ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13982.3315

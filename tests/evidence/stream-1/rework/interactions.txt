@@ -1,0 +1,11 @@
+mobile approval-menu passed
+mobile risk-confirm passed
+mobile plus-menu passed
+mobile model-menu passed
+mobile search passed
+mobile session-menu passed
+mobile folder-menu passed
+mobile message-more passed
+mobile gallery passed
+mobile settings-dropdown passed
+STREAM-1b interactions passed

@@ -38,17 +38,30 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
             .map((item) => [item.attachmentId, item]));
         return ids.map((id) => originals.get(id)).filter(Boolean);
     }
-    function appendHistory(events) {
+    function appendHistory(events, liveEvents, liveSeq) {
         const accepted = [];
         const sessionId = core.state.selectedSessionId;
+        const previousLive = new Map([...core.state.historyEvents].filter(([,event])=>event.data?.live));
+        if (liveSeq !== undefined && liveSeq < (core.state.liveMessageSeq ?? -1)) liveEvents = undefined;
+        if (liveEvents !== undefined) {
+            core.state.liveMessageSeq = liveSeq ?? core.state.liveMessageSeq;
+            for (const [seq, event] of core.state.historyEvents) if (event.data?.live) core.state.historyEvents.delete(seq);
+        }
         for (const event of events) {
             if (!Number.isSafeInteger(event?.seq) || core.state.seenSeq.has(event.seq))
                 continue;
             if (typeof event.sessionId === 'string' && event.sessionId !== sessionId)
                 continue;
             core.state.seenSeq.add(event.seq);
+            if (Number.isSafeInteger(event.data?.streamSeq)) core.state.historyEvents.delete(event.data.streamSeq);
             core.state.historyEvents.set(event.seq, event);
             accepted.push(event);
+        }
+        for (const event of liveEvents || []) {
+            if ([...core.state.historyEvents.values()].some(row => row.data?.streamSeq === event.seq && !row.data?.live)) continue;
+            const message = { ...event, type: 'assistant.message', data: { ...event.data, streamSeq: event.seq, live: true } };
+            core.state.historyEvents.set(event.seq, message);
+            if (JSON.stringify(previousLive.get(event.seq)) !== JSON.stringify(message)) accepted.push(message);
         }
         const terminal = [...core.state.historyEvents.values()].filter(e => ['turn.started', 'turn.ended'].includes(e.type)).sort((a, b) => a.seq - b.seq).at(-1);
         if (terminal) {
@@ -56,10 +69,12 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
             core.state.turnEndReasonKind = core.state.turnStatus === 'error' && terminal.data?.endReasonKind === 'max-tokens' ? 'max-tokens' : null;
         }
         core.observeOptimistic?.(accepted);
-        effects.paintHistoryMessages(accepted);
-        effects.updateAvailability();
+        const removedLive=[...previousLive.keys()].some(seq=>!core.state.historyEvents.has(seq));
+        if(accepted.length||removedLive)effects.paintHistoryMessages(accepted);
+        if(accepted.some(event=>!event.data?.live)||removedLive||accepted.some(event=>!previousLive.has(event.seq)))effects.updateAvailability();
         if (accepted.some(event => ['approval.requested', 'approval.resolved', 'question.asked', 'question.answered'].includes(event.type)))
             void Promise.all([core.refreshConversationApprovals(), core.refreshConversationQuestions()]).catch(() => {});
+        return accepted.length>0||removedLive;
     }
     async function refreshHistory(reset = false, legacy = false) {
         if (!legacy && core.refreshLogicalHistory) return core.refreshLogicalHistory(reset);
@@ -72,6 +87,7 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
             core.state.historyHasMore = false;
             core.state.seenSeq.clear();
             core.state.historyEvents.clear();
+            core.state.liveMessageSeq = -1;
             core.state.nextBeforeSeq = null;
             core.state.hasOlder = false;
             core.state.olderLoading = false;
@@ -102,7 +118,7 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
                         core.state.hasOlder = page.hasOlder === true;
                         effects.renderOlderControl();
                     }
-                    core.appendHistory(page.events);
+                    core.appendHistory(page.events, page.liveEvents, page.liveSeq);
                     core.state.afterSeq = page.nextSeq;
                     if (!page.hasMore) {
                         effects.renderTurnStatus();
