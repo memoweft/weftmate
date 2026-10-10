@@ -1,0 +1,25 @@
+✔ offline cached phone binding keeps its read context and resource cache without enabling sends (29.12ms)
+✔ UX-6 mobile memory search binds opaque device scope to the raw host owner, refuses mixed owners and late account reads (6.831ms)
+✔ late offline-resource reply stays out after a conversation switch (2.7548ms)
+✔ late offline-resource reply stays out after a owner switch (2.6489ms)
+✔ mobile generated assets match every canonical ui-core file byte for byte (157.4289ms)
+✔ check refuses changed, missing and unlisted copies; rebuild follows the source and removes stale files (244.4111ms)
+✔ mobile check validates nested component syntax as well as generated source parity (2301.2784ms)
+✔ published mobile bundle includes the verified shared assets at their ui-core paths (2294.6704ms)
+✔ publish command refuses stale generated assets before creating a release (3697.8397ms)
+✔ account UI serves only its fixed public GET assets with restrictive headers (11.1223ms)
+✔ public account shell keeps secrets out of markup and code-generated HTML (13.9425ms)
+✔ UX-6 merges stable identities, title matches first, attention and recent order; excludes private/deleted content (4.0371ms)
+✔ UX-6 debounce issues only the final query and late response cannot replace it (371.9851ms)
+✔ UX-6 account switch and close discard in-flight replies; recent persistence stores identifiers only (2.4088ms)
+✔ UX-6 keyboard wraps rows/types, home/end select bounds, Esc closes, operation items have correct destinations (13.4012ms)
+✔ UX-6 account search reuses logical index, filters temporary/mixed sources and forgotten sequences, refuses old cursors (25.5208ms)
+✔ UX-6 invalid search parameters are rejected, deletion during reading does not resurrect a result (1.9745ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8852.7863

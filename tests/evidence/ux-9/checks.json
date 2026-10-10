@@ -1,0 +1,12 @@
+{
+  "checks": [
+    "Electron: new/existing/main branches, preserved draft and staged file, permission, 480px, light/dark menus",
+    "OS directory drop selects project; ordinary file drop remains an attachment",
+    "System-folder choice warns clearly and remains read-only by default",
+    "Remote 390x844 project list, permission, path suffix and computer-only new folder note",
+    "Android UI bundle selects existing project and disables folder action offline",
+    "Browser arbitrary folder strings rejected",
+    "Onboarding first-message step reuses the folder capsules"
+  ],
+  "errors": []
+}

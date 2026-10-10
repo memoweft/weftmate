@@ -1,0 +1,15 @@
+{
+  "platform": "windows",
+  "scene": "login",
+  "theme": "dark",
+  "file": "review-windows-login-dark.png",
+  "commit": "4b2c4232e6fe78997f5b3a1adea519286898f5ce",
+  "generatedAt": "2026-10-10T08:51:44.369Z",
+  "synthetic": true,
+  "viewport": {
+    "width": 1200,
+    "height": 800
+  },
+  "source": "production createPersonalDesktop + FE-1a isolated host",
+  "text": "WeftMate\n登录 WeftMate\n邮箱\n密码\n显示\n登录\n忘记密码？\n还没有账号？注册\n\n云服务尚未配置，请稍后重试。\n\n离线使用这台电脑"
+}

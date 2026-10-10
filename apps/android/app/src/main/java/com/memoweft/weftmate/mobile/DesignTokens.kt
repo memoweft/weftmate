@@ -99,4 +99,7 @@ object DesignTokens {
     const val durationExit = 120L
     const val durationStagger = 24L
     const val durationStaggerLimit = 60L
+    const val durationReplyFragment = 120L
+    const val durationReplyChange = 150L
+    const val durationReplyScroll = 160L
 }

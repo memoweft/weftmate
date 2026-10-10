@@ -3,7 +3,7 @@ globalThis.WeftUiComponents.factories.onboarding = (core, ui) => {
   const copy = globalThis.WeftOnboardingCopy;
   const steps = ['welcome', 'account', 'model', 'memory', 'import', 'phone', 'first'];
   let journey, panel, content, title, description, progress, next, back, skip, status, proceedModel;
-  let renderIdentity = 0, generation = 0, mounted = false, active = false, tested = null, authPositions = [], pendingTimer;
+  let renderIdentity = 0, generation = 0, mounted = false, active = false, tested = null, authPositions = [], pendingTimer, firstDraft;
   const node = (tag, cls, text) => ui.element(tag, cls, text);
   const button = (label, action, cls = 'secondary') => { const b = node('button', 'button ' + cls, label); b.type = 'button'; b.addEventListener('click', action); return b; };
   const say = text => { status.textContent = text; };
@@ -32,14 +32,16 @@ globalThis.WeftUiComponents.factories.onboarding = (core, ui) => {
     finally { if (active) { skip.disabled = false; back.disabled = steps.indexOf(journey.step) === 0; } }
   }
   async function finish(requireModel = false, sample) {
+    if(core.folderMutationPending?.())return;
     if (requireModel && (!core.state.account || !core.state.models.some(model => model.configured))) { say(copy.noModel); return; }
     try {
+      const draft=sample||firstDraft?.value||'';
       await persist('first', true); conceal();
       if (core.state.account) {
         await core.enterAssistant();
-        if (core.supportsChat?.('chats')) await core.selectMainChat();
+        if (core.supportsChat?.('chats')) {await core.selectMainChat();if(core.defaultFolderProject?.())await core.openSideChat({entry:'composer',parent:{kind:'project',id:core.defaultFolderProject().projectId}});}
         showSamples();
-        if (sample) ui.byId('message-text').value = sample;
+        if (draft) ui.byId('message-text').value = draft;
         ui.byId('message-text').focus();
       } else { ui.showRegistration(); }
     } catch { say(copy.error); }
@@ -62,6 +64,7 @@ globalThis.WeftUiComponents.factories.onboarding = (core, ui) => {
       next.disabled = !core.state.models.some(model => model.configured);
       if (next.disabled) content.append(node('p', '', copy.noModel), button(copy.configure, () => void move(2)));
       else for (const [i, sample] of copy.samples.entries()) { const card = button(sample, () => void finish(true, sample), 'quiet onboarding-example'); card.prepend(WeftIcons.create(['compose','memory','clock'][i], 20)); content.append(card); }
+      if(!next.disabled && globalThis.WeftFolderChoice){const composer=node('div','composer-card'),tools=node('div');firstDraft=node('textarea');firstDraft.rows=2;firstDraft.setAttribute('aria-label','第一句话');firstDraft.placeholder='想从什么开始？';composer.append(firstDraft,tools);content.append(composer);const folders=WeftFolderChoice.create(core,{form:composer,tools,toast:ui.toast,onboarding:true});folders.paint();void core.refreshSessionProjects().then(()=>folders.paint());}
     }
     title.focus();
   }
@@ -208,6 +211,8 @@ globalThis.WeftUiComponents.factories.onboarding = (core, ui) => {
     footer.append(back, skip, next); inner.append(progress, title, description, content, status, footer); panel.append(inner); document.body.append(panel);
     const replay = button(copy.replay, async () => { ui.hideSettingsDialog(); try { await persist('welcome'); render(); } catch { ui.toast(copy.error); } });
     document.querySelector('section.settings-category[data-category="general"]').append(replay);
+    const originalAvailability=ui.updateAvailability;
+    ui.updateAvailability=(...args)=>{originalAvailability(...args);if(active&&journey?.step==='first')next.disabled=!core.state.models.some(model=>model.configured)||core.folderMutationPending?.()===true;};
     const originalPaint = ui.paintScreen;
     ui.paintScreen = view => { originalPaint(view); if (active && journey?.step === 'account') { if (core.state.account) render(); else reveal(); } };
 

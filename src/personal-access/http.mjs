@@ -1,3 +1,4 @@
+import { hostname } from 'node:os';
 import { handlePush } from './push.mjs';
 import { handleNotificationSettings } from './notification-settings.mjs';
 import { handlePersonalization } from './personalization.mjs';
@@ -785,8 +786,8 @@ export function createHttpHandler(context) {
           };
         }
         return context.json(response, 200, {
-          ...context.service.status(ownerId),
-          personalCapabilities: { nextSuggestions: typeof context.backend.modelCompletion === 'function' ? 1 : 0, library: 1, libraryPreview: 1, libraryDesktopActions: context.library.desktopAvailable ? 1 : 0, taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, pushRegistration: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
+          ...context.service.status(ownerId), hostName:hostname(),
+          personalCapabilities: { nextSuggestions: typeof context.backend.modelCompletion === 'function' ? 1 : 0, library: 1, libraryPreview: 1, libraryDesktopActions: context.library.desktopAvailable ? 1 : 0, taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, pushRegistration: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, creationReceipt: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
           executionAccount: context.hostOwner(ownerId),
           executionAccountName: context.hostOwner(ownerId) ? null : context.executionAccountName(),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
@@ -1014,7 +1015,8 @@ export function createHttpHandler(context) {
       if (request.method === 'GET' && pathname === '/personal/v1/projects') {
         if (url.search) throw failure('INVALID_REQUEST');
         const current = context.authenticate(request, 'sessions:read');
-        return context.json(response, 200, { projects: Object.values(state.projects ?? {}).filter(project => !project.removed).map(publicProject)
+        return context.json(response, 200, { projects: Object.values(state.projects ?? {}).filter(project => !project.removed).map(project => ({ ...publicProject(project),
+            ...(request.headers['x-weftmate-desktop'] === context.libraryDesktopToken ? {rootPath:project.rootPath} : {}) }))
           .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
           canManage: context.hostOwner(ownerId) && current.via === 'cookie' && current.device.scopes.includes('account:manage') });
       }
@@ -1032,6 +1034,8 @@ export function createHttpHandler(context) {
         if (!context.hostOwner(ownerId)) throw failure('FORBIDDEN', 403);
         const body = await context.readJson(request);
         exactKeys(body, ['requestId', 'name', 'rootPath', 'instructions', 'permission'], ['requestId', 'name', 'rootPath']);
+        if (current.via === 'cookie' && request.headers['sec-fetch-site'] &&
+            request.headers['x-weftmate-desktop'] !== context.libraryDesktopToken) throw failure('PROJECT_NATIVE_SELECTION_REQUIRED', 403);
         const settings = projectSettings(body);
         if (!REQUEST_ID.test(body.requestId ?? '') || !validProjectName(body.name)) throw failure('INVALID_REQUEST');
         const hash = digest(JSON.stringify({ name: body.name, rootPath: body.rootPath,
@@ -1706,6 +1710,19 @@ export function createHttpHandler(context) {
           : taskActionMatch?.[2] === 'resume' ? 'resume' : null;
         const rootTaskId = taskAction ? id(taskActionMatch[1]) : null;
         let body = await context.readJson(request);
+        const waitForReceipt = body?.waitForReceipt === true;
+        if (Object.hasOwn(body ?? {}, 'waitForReceipt')) {
+          if (typeof body.waitForReceipt !== 'boolean' || !['session.create', 'session.side.create'].includes(body.kind)) throw failure('INVALID_REQUEST');
+          body = { ...body }; delete body.waitForReceipt;
+        }
+        const creationReceipt = async command => {
+          if (!waitForReceipt) return command;
+          // The command is already durable and dispatch owns its deadline.
+          // Waiting outside serial() lets the terminal durable commit finish.
+          await context.activeByCommand.get(`${ownerId}|${command.commandId}`);
+          context.authenticate(request, 'commands:write');
+          return publicCommand(context.accountState(ownerId).commands[command.commandId]);
+        };
         if (['session.message', 'chat.message'].includes(body.kind)) context.nextSuggestions.cancel(ownerId);
         if (temporarySessionPath) {
           exactKeys(body, ['requestId','modelProfileId','recallEnabled','autoDeleteDays'], ['requestId','modelProfileId']);
@@ -1848,7 +1865,7 @@ export function createHttpHandler(context) {
           return context.json(response, 202, taskAction
             ? { task: await context.taskDetail(state, rootTaskId), command: publicCommand(prior) }
             : adoptionId ? { ...context.conversationProjection(ownerId, adoptionId), command: publicCommand(prior) }
-              : { command: publicCommand(prior) });
+              : { command: await creationReceipt(publicCommand(prior)) });
         }
         if (payload.kind === 'session.message' && !taskAction) protectMainSession(state, payload.sessionId, 'MAIN_CHAT_ROUTE_REQUIRED');
         if (payload.projectId && (state.projects?.[payload.projectId]?.revoked ||
@@ -2045,7 +2062,7 @@ export function createHttpHandler(context) {
         return context.json(response, 202, taskAction
           ? { task: await context.taskDetail(context.accountState(ownerId), rootTaskId), command: result }
           : adoptionId ? { ...context.conversationProjection(ownerId, adoptionId), command: result }
-            : { command: result });
+            : { command: await creationReceipt(result) });
       }
       throw failure('NOT_FOUND', 404);
     } catch (error) {

@@ -29,6 +29,46 @@ function fixture(read: (path: string, options: any) => any = () => response({}))
 const plain = (value: any) => JSON.parse(JSON.stringify(value))
 const deferred = () => { let resolve!: (value: any) => void; const promise = new Promise(done => { resolve = done }); return { promise, resolve } }
 
+function sideFixture() {
+  const f=fixture();Object.assign(f.core.state,{personalCapabilities:{chats:1,sideChats:1,chatSend:1,creationReceipt:1},
+    mainChat:{chatId:'main',activeSessionId:'session-test',sendAvailable:true},selectedChatId:'main',chats:[]});
+  for(const name of ['refreshHistory','refreshConversationTasks','refreshApprovalMode','updateSession'])f.core[name]=async()=>{};
+  return f;
+}
+test('FX-19 creation stays locked through the durable receipt and entity read, then preserves the first draft',async()=>{
+  const f=sideFixture(),receipt=deferred(),entity=deferred();let posted;
+  f.core.accessApi=async(path,options)=>{if(path.startsWith('/commands/by-request/'))throw {code:'NOT_FOUND'};
+    if(path==='/commands'){posted=options;return receipt.promise}if(path==='/chats/side')return entity.promise;return {}};
+  const work=f.core.openSideChat();await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(posted.body.waitForReceipt,true);assert.equal(posted.timeoutMs,45000);
+  assert.equal(f.core.composerState('first').messageDisabled,true);assert.equal(f.core.composerState('first').sendDisabled,true);
+  receipt.resolve({command:{kind:'session.side.create',requestId:posted.body.requestId,state:'accepted_by_dsh',sessionId:'session-new',chatId:'side'}});
+  await new Promise(resolve=>setImmediate(resolve));assert.equal(f.core.composerState('first').messageDisabled,true,'accepted receipt alone cannot unlock the unfinished selection');
+  entity.resolve({chat:{chatId:'side',activeSessionId:'session-new',kind:'side',sendAvailable:true,modelProfileId:'local'}});await work;
+  assert.equal(f.core.state.selectedSessionId,'session-new');assert.equal(f.core.composerState('首条草稿').messageDisabled,false);assert.equal(f.core.composerState('首条草稿').sendDisabled,false);
+  const restored=f.paints.filter(row=>row.name==='restoreMainChatDraft').length;await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(f.paints.filter(row=>row.name==='restoreMainChatDraft').length,restored,'no late restoration can erase the first input');
+});
+test('FX-19 a timed out/disconnected creation releases the input lock and retries the original receipt without duplicating POST',async()=>{
+  for(const error of [{code:'NETWORK'},{code:'TIMEOUT'}]){
+    const f=sideFixture();let posts=0,requestId,accepted=false;
+    f.core.accessApi=async(path,options)=>{if(path.startsWith('/commands/by-request/')){if(!accepted)throw {code:'NOT_FOUND'};return {command:{kind:'session.side.create',requestId,state:'accepted_by_dsh',sessionId:'session-new',chatId:'side'}}}
+      if(path==='/commands'){posts++;requestId=options.body.requestId;throw error}if(path==='/chats/side')return {chat:{chatId:'side',activeSessionId:'session-new',sendAvailable:true,modelProfileId:'local'}};return {}};
+    await assert.rejects(f.core.openSideChat(),e=>e.code===error.code);
+    assert.equal(f.core.state.sideCreating,null);assert.equal(f.core.composerState('草稿').messageDisabled,false);assert.equal(f.core.composerState('草稿').sendDisabled,true);
+    assert.equal(f.core.sideCreateIntent.requestId,requestId);accepted=true;await f.core.openSideChat();assert.equal(posts,1);assert.equal(f.core.composerState('草稿').sendDisabled,false);
+  }
+});
+test('FX-19 definite HTTP or terminal creation rejection clears only its own send lock',async()=>{
+  for(const failure of ['http','rejected','failed']){
+    const f=sideFixture();f.core.accessApi=async(path,options)=>{if(path.startsWith('/commands/by-request/'))throw {code:'NOT_FOUND'};
+      if(failure==='http')throw {code:'MODEL_UNAVAILABLE',status:409};return {command:{requestId:options.body.requestId,state:failure,errorCode:'MODEL_UNAVAILABLE'}}};
+    await assert.rejects(f.core.openSideChat(),e=>e.code==='MODEL_UNAVAILABLE');
+    assert.equal(f.core.state.sideCreating,null);assert.equal(f.core.sideCreateIntent,null);assert.equal(f.core.state.unresolvedSubmission,false);
+    assert.equal(f.core.composerState('保留草稿').messageDisabled,false);assert.equal(f.core.composerState('保留草稿').sendDisabled,false);assert.equal(f.core.state.selectedSessionId,'session-test');
+  }
+});
+
 test('D35 progress uses real kinds/objects and prioritizes failure and stopped states', () => {
   const { api } = fixture();
   const steps = [
@@ -697,4 +737,12 @@ test('MS-1 saved default selects the next new conversation without rebinding the
   f.core.startNewConversation();
   assert.equal(f.core.state.modelProfileId, 'cloud');
   assert.equal(f.core.state.sessions[0].modelProfileId, 'local');
+});
+
+test('UX-9 folder registration keeps editing available but blocks a send until project selection is ready',async()=>{
+ const f=fixture(),reply=deferred();f.core.refreshSessionProjects=async()=>{};
+ const registration=f.core.registerFolderChoice(()=>reply.promise,{});
+ assert.equal(f.core.composerState('合成草稿').messageDisabled,false);assert.equal(f.core.composerState('合成草稿').sendDisabled,true);
+ await f.core.sendDraft('合成草稿');assert.equal(f.requests.length,0);
+ reply.resolve({project:{projectId:'project-synthetic'}});await registration;assert.equal(f.core.composerState('合成草稿').sendDisabled,false);
 });

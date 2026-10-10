@@ -110,7 +110,11 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         notify();
         if (supports('chatTimeline')) await readPage(anchor ? { around: anchor } : {}, 'tail');
         else effects.historyNotice('这台电脑尚不支持主对话历史，请更新电脑程序。');
-        if (anchor) effects.focusMainEvent?.(anchor); else effects.scrollToLatest();
+        if (anchor) {
+            const event = historyWindow.state.events.get(anchor);
+            if (event) { historyWindow.state.expanded.add(globalThis.WeftUiCore.ChatWindow.day(event.at,historyWindow.state.timeZone)); notify(); }
+            effects.focusMainEvent?.(anchor);
+        } else effects.scrollToLatest();
         void Promise.all([core.refreshConversationTasks(), core.refreshConversationApprovals(), core.refreshConversationQuestions()]).catch(() => {});
         if (core.state.selectedSessionId) void core.refreshApprovalMode(core.state.selectedSessionId);
     }
@@ -252,7 +256,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         if (!command) {
             try { command = (await core.createSideChat(intent)).command; }
             catch (error) {
-                if (error.status >= 400 && error.status < 500 && error.code !== 'REQUEST_CONFLICT') {core.sideCreateIntent=null;core.forgetMarker(intent.requestId);core.operation('旁聊未创建，请核对后重试。');}
+                if (error.status >= 400 && error.status < 500 && error.code !== 'REQUEST_CONFLICT') {core.sideCreateIntent=null;core.forgetMarker(intent.requestId);core.operation('旁聊未创建，请核对后重试。',false,intent.requestId);}
                 throw error;
             }
         }
@@ -261,7 +265,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             if (token !== scope()) return;
         }
         if (command?.state !== 'accepted_by_dsh') {
-            if (['rejected','failed'].includes(command?.state)) {core.sideCreateIntent=null;core.forgetMarker(intent.requestId);core.operation('旁聊未创建，请重试。');}
+            if (['rejected','failed'].includes(command?.state)) {core.sideCreateIntent=null;core.forgetMarker(intent.requestId);core.operation('旁聊未创建，请重试。',false,intent.requestId);}
             throw { code: command?.errorCode || 'NETWORK' };
         }
         if (token !== scope()) return;
@@ -309,7 +313,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
     async function sendDraft(text = effects.readMessageDraft(), intent) {
         if (core.state.sessionSelecting || core.state.sideCreating) return;
         if (!inMain()) return legacy.sendDraft(text, intent, true);
-        if (!supports('chatSend') || core.state.submitting || core.state.unresolvedSubmission || !core.state.modelProfileId || (!text.trim() && !core.currentAttachmentDrafts().length)) return;
+        if (!supports('chatSend') || core.folderMutationPending?.() || core.state.submitting || core.state.unresolvedSubmission || !core.state.modelProfileId || (!text.trim() && !core.currentAttachmentDrafts().length)) return;
         const attachments = core.currentAttachmentDrafts();
         const row = { ownerId: core.state.ownerId, chatId: core.state.selectedChatId, requestId: attachments.length ? core.attachmentAttempt(core.attachmentDraftKey(), text, attachments).requestId : environment.crypto.randomUUID(), text, status: 'sending', files: attachments.map(item => item.file.name) };
         pending.set(row.requestId, row); notify(); effects.scrollToLatest();
@@ -340,7 +344,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         const available = supports('chatSend') && core.state.mainChat.sendAvailable && core.state.models.some(model => model.id === core.state.modelProfileId);
         return { ...view, messageDisabled: !available || !!core.state.attachmentUpload, attachmentsDisabled: !available || !!core.state.attachmentUpload || core.state.submitting,
             modelDisabled: view.modelDisabled || !!core.state.mainChat.activeSessionId,
-            sendDisabled: !available || core.state.submitting || core.state.unresolvedSubmission || (!text.trim() && !core.currentAttachmentDrafts().length),
+            sendDisabled: !available || core.folderMutationPending?.() || core.state.submitting || core.state.unresolvedSubmission || (!text.trim() && !core.currentAttachmentDrafts().length),
             hint: core.executionAccountHint?.() || (core.state.mainChat.contextOrganizing ? '正在整理上下文，消息将继续排队。' : !supports('chatSend') ? '请更新电脑程序以发送主对话消息。' : !core.state.modelProfileId ? '选择模型后开始聊天。' : '') };
     }
     async function loadConversationResources() {
@@ -364,7 +368,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
     }
     return { cancelSessionSelection, pageSessions, searchSessions, supportsChat: supports, inMainChat: inMain, refreshLogicalSessions: refreshSessions, selectLogicalSession: selectSession, selectMainChat, refreshLogicalHistory: refreshHistory, loadOlderLogicalHistory: loadOlderHistory, jumpChatDate, searchMainChat, moveSearchHit,
         mainChatDays: () => historyWindow.days(), expandChatDay: date => { historyWindow.state.expanded.add(date); notify(); }, openSideChat,
-        startChatConversation: () => supports('sideChats') && core.state.mainChat ? openSideChat({ entry: 'composer' }).catch(error => effects.toast(core.failureMessage(error))) : (core.state.selectedChatId = null, legacy.startNewConversation(true)),
+        startChatConversation: () => supports('sideChats') && core.state.mainChat ? openSideChat({ entry: 'composer', ...((core.currentFolderProject?.() || core.defaultFolderProject?.()) ? {parent:{kind:'project',id:(core.currentFolderProject?.() || core.defaultFolderProject()).projectId}} : {}) }).catch(error => effects.toast(core.failureMessage(error))) : (core.state.selectedChatId = null, legacy.startNewConversation(true)),
         sendMainDraft: sendDraft, observeMainOptimistic: observeOptimistic, mainComposerState: composerState, loadMainResources: loadConversationResources,
         mainOptimisticMessages: () => inMain() ? [...pending.values()].filter(row => row.ownerId === core.state.ownerId && row.chatId === core.state.selectedChatId) : legacy.optimisticMessages(true),
         retryMainRequest: async requestId => { const row = pending.get(requestId); if (row) await checkMainRequest(row); },

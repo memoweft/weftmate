@@ -173,8 +173,10 @@
   }
   const { sessionGroup, sortSessions } = globalThis.WeftUiCore
   function toggleRail(force) {
-    const collapsed = force === undefined ? !document.body.classList.contains('rail-collapsed') : force
+    const narrow = window.matchMedia?.('(max-width: 640px)').matches
+    const collapsed = force === undefined ? narrow ? byId('session-rail').classList.contains('is-open') : !document.body.classList.contains('rail-collapsed') : force
     document.body.classList.toggle('rail-collapsed', collapsed)
+    if (narrow) { byId('session-rail').classList.toggle('is-open', !collapsed); byId('rail-backdrop').hidden = collapsed }
     byId('rail-open').setAttribute('aria-expanded', String(!collapsed))
     if (collapsed) byId('rail-open').focus()
   }
@@ -186,8 +188,7 @@
       appearance[key] = e.target.value; applyAppearance()
       try { appearanceStore.set(appearance) } catch { /* device storage can be unavailable */ }
     })
-    byId('session-search').addEventListener('input', actions.renderSessions)
-    byId('search-sessions').addEventListener('click', () => { toggleRail(false); byId('session-search').focus() })
+
     byId('account-menu-trigger').addEventListener('click', () => {
       const menu = byId('account-menu'); menu.hidden = !menu.hidden
       byId('account-menu-trigger').setAttribute('aria-expanded', String(!menu.hidden))
@@ -214,7 +215,7 @@
       if ((e.ctrlKey || e.metaKey) && !e.altKey) {
         const key = e.key.toLowerCase()
         if (key === 'n') { e.preventDefault(); byId('new-session').click() }
-        if (key === 'k') { e.preventDefault(); toggleRail(false); byId('session-search').focus(); byId('session-search').select() }
+        if (key === 'k') { e.preventDefault(); actions.openSearch?.() }
         if (key === 'b') { e.preventDefault(); toggleRail() }
         if (key === ',') { e.preventDefault(); globalThis.WeftSettingsNavigation?.open('general') }
       } else if (e.key === 'Escape' && !e.defaultPrevented) {
