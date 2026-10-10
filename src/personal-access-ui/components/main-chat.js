@@ -193,7 +193,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
     function mountMainChat() {
         sidebar = button('WeftMate', 'WeftMate 主对话', () => core.selectMainChat(), 'rail-main-chat');
         const avatar = ui.element('span', 'wm-brand chat-avatar'); avatar.setAttribute('aria-hidden', 'true'); sidebar.prepend(avatar); sidebar.hidden = true;
-        if (ui.mobile) ui.byId('session-list').before(sidebar);
+        if (ui.mobile) ui.byId('drawer').querySelector('.drawer-new-group').before(sidebar);
         else ui.byId('session-rail').querySelector('.rail-top').before(sidebar);
         const heading = ui.element('div', 'rail-side-heading', '旁聊'); ui.byId('session-list').before(heading);
         // TB-4 owns the future fixed pages; retain the explicit extension point hidden.

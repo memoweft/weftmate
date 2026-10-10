@@ -10,7 +10,7 @@ const sessionId = 'session-12345678-1234-4234-8234-123456789abc'
 const response = (body: object) => ({ ok: true, status: 200, json: async () => body })
 const plain = (value: any) => JSON.parse(JSON.stringify(value))
 
-function fixture(fetch: (...args: any[]) => Promise<any>) {
+function fixture(fetch: (...args: any[]) => Promise<any>, overrides: Record<string,any> = {}) {
   const values = new Map<string, string>()
   const storage = { getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => { values.set(key, value) }, removeItem: (key: string) => { values.delete(key) } }
@@ -20,9 +20,9 @@ function fixture(fetch: (...args: any[]) => Promise<any>) {
     sharedSessions: [{ sessionId, sendAvailable: false }], sharedEvents: [], linkedEvents: new Map(),
     handoffViews: new Map([[conversationId, { status: 'uncertain', cached: true, hostAvailable: false, binding }]]),
     conversations: [{ id: conversationId, binding }] }
-  const environment: any = { AbortSignal, URL, URLSearchParams }
+  const environment: any = { AbortSignal, URL, URLSearchParams, setTimeout, clearTimeout }
   runInNewContext(source, environment)
-  const effects = new Proxy({}, { get: () => () => {} })
+  const effects = new Proxy(overrides, { get: (target,key) => target[key as string] ?? (() => {}) })
   const core = environment.WeftUiCore.create({ mobileState: state, storage, fetch, effects, crypto: { randomUUID: () => 'synthetic-request' } })
   core.syncMobileIdentity()
   return { state, core, values }
@@ -41,6 +41,17 @@ test('offline cached phone binding keeps its read context and resource cache wit
   assert.equal(f.core.state.phoneBindings.get(conversationId).status, 'uncertain')
   assert.equal(f.state.sharedSessions[0].sendAvailable, false)
   assert.equal(f.core.state.sessions[0].sendAvailable, false)
+})
+
+test('UX-6 mobile memory search binds opaque device scope to the raw host owner, refuses mixed owners and late account reads',async()=>{
+  let wrong=false,release:any,recovering=false;const f=fixture(async(path:string)=>{
+    if(path.endsWith('/status'))return response({ownerId:'raw-account-a',state:recovering?'recovering':'ready',worldRevision:2,capabilities:{list:true}});
+    if(release==='wait')await new Promise(done=>release=done);
+    return response({ownerId:wrong?'raw-account-b':'raw-account-a',worldRevision:2,items:[{id:'memory-a',text:'合成偏好'}]});
+  },{nativeCall:async()=>({owner:'owner-a',connectionVerified:true})});
+  assert.equal((await f.core.mobile.searchMemoryPage('偏好')).items[0].id,'memory-a');assert.equal(f.core.state.ownerId,'owner-a');recovering=true;assert.equal((await f.core.mobile.searchMemoryPage('偏好')).items[0].id,'memory-a');
+  wrong=true;await assert.rejects(()=>f.core.mobile.searchMemoryPage('偏好'),{code:'MEMORY_OWNER_MISMATCH'});wrong=false;
+  release='wait';const pending=f.core.mobile.searchMemoryPage('偏好');while(typeof release!=='function')await new Promise(done=>setTimeout(done,1));f.state.owner='owner-b';f.state.authEpoch++;release();await assert.rejects(()=>pending,{code:'STALE_CONTEXT'});
 })
 
 for (const boundary of ['conversation', 'owner']) test(`late offline-resource reply stays out after a ${boundary} switch`, async () => {

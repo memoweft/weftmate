@@ -1045,6 +1045,10 @@ App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协�
 
 ### 9.3 跨段历史、日期与搜索（IA-2.2 正式）
 
+UX-6 / D53：既有 `GET /chats` 支持 `scope=search`，用于当前账户统一搜索面板的对话类型。此模式仅接受 `scope,q?,limit?,cursor?`（`q` 去首尾空格、最多120字符；`limit` 默认50、1–200）。省略或空 `q` 返回最近对话；有输入时合并主对话与旁聊标题命中、正文命中，返回 `{items,total,hasMore,nextCursor,indexState}`。每项保留原 Chat（逻辑对话）字段，增加 `match:title|content`；正文项另含 `eventId,sourceRef,at,snippet,highlights`，使用9.3原索引和来源身份，打开仍走原对话定位。排序为标题命中优先、置顶、活动时间倒序、稳定标识；单个消息为单项，标题项和正文项可共存。`total` 是此搜索快照的命中项数；`indexState=building` 表示较早内容仍按9.3补索引，客户端显示更新结果入口，不把局部结果称为完整历史。
+
+此模式排除临时及混合临时来源（MEM-2），不从已删除对话重建索引；D33删除的原话、记忆与派生内容不返回。按D33明确保留的原聊天文字仍遵守原历史边界。游标只在内存保存，绑定账户、关键词、页长及对话／删除代次；内容删除、遗忘、隐私模式或元数据修订使旧页409 `CURSOR_RESET_REQUIRED`，读取期间清理同样拒绝旧结果。不会把正文写入另一套索引或客户端持久存储。其余类型复用 `/projects`、`/library?search`、`/schedules`、`/memory/items?kind=all&query`；手机与安卓仍走已有业务路径白名单，无新增路由、权限或壳能力。
+
 能力增加 `chatTimeline:1,chatSearch:1`。路径均以 `/personal/v1` 为前缀，读取沿用 `sessions:read`，只读当前账户自己的逻辑对话。主对话尚无段时正常返回空页；不创建执行段，不执行模型。ui-core（共用功能层）的 `readChatEvents/readChatChanges/readChatDates/locateChatDate/searchChat` 提供同一路径。
 
 | GET 路径 | 参数 | 响应 |
