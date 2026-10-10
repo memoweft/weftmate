@@ -70,7 +70,7 @@ try{
   await button(page,`${dateLabel}，收起`).waitFor();await shot('desktop-light-date');
   await button(page,`${dateLabel}，收起`).click();await page.getByRole('button',{name:new RegExp(`^${dateLabel} · \\d+ 条，展开$`)}).waitFor();await shot('desktop-light-folded');
   await page.getByRole('button',{name:new RegExp(`^${dateLabel} · \\d+ 条，展开$`)}).click();
-  const menu=page.getByLabel('消息菜单',{exact:true}).first();await menu.click();await button(page,'从这里开旁聊').first().click();
+  const sourceMessage=page.getByRole('group',{name:/^我的消息：/}).first();await sourceMessage.focus();const menu=sourceMessage.getByLabel('消息菜单',{exact:true});await menu.click();await button(page,'从这里开旁聊').first().click();
   await page.getByRole('textbox',{name:'旁聊名称'}).fill('合成旁聊：纸船核对');await page.getByRole('textbox',{name:'旁聊第一句话'}).fill('请核对纸船');
   await button(page,'确认开旁聊').click();await page.getByRole('dialog',{name:'开旁聊',exact:true}).waitFor({state:'hidden'});await page.getByText('相关上下文尚未带入',{exact:true}).waitFor();
   assert.equal(await page.locator('#message-text').inputValue(),'请核对纸船');await shot('desktop-light-side-origin');
