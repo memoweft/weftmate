@@ -38,6 +38,10 @@
   --wm-color-mobile-success: #637b5a;
   --wm-color-mobile-warning: #b88436;
   --wm-color-mobile-image-canvas: #20221f;
+  --wm-color-scrollbar-light: #b9bfca;
+  --wm-color-scrollbar-light-hover: #929ba9;
+  --wm-color-scrollbar-dark: #59616e;
+  --wm-color-scrollbar-dark-hover: #7b8697;
   --wm-space-1: 1px;
   --wm-space-2: 2px;
   --wm-space-3: 3px;

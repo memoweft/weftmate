@@ -1,0 +1,1814 @@
+{
+  "realElectron": true,
+  "synthetic": true,
+  "modelRequests": 0,
+  "rows": [
+    {
+      "scene": "main-history",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-main-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "reply-menu",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-reply-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "reply-model-submenu",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-reply-model-submenu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "user-hover",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-user-hover.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "user-focus",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-user-focus.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "composer-menu",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-composer-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "composer-long",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "超长文本",
+      "screenshot": "after-electron-1200-light-composer-long.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "composer-empty",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "空输入",
+      "screenshot": "after-electron-1200-light-composer-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "main-search",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-main-search.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "date-control",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-date-control.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "account-menu",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-account-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-general",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-settings-general.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-personalization",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-settings-personalization.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-assistant",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-settings-assistant.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-notifications",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-settings-notifications.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-appearance",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-settings-appearance.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-account",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-settings-account.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-devices",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-settings-devices.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-usage",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-settings-usage.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-archived",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-settings-archived.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-models",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-settings-models.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-approvals",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-settings-approvals.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-memory",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-settings-memory.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-schedules",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-settings-schedules.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-resources",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-settings-resources.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-system",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-settings-system.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-backups",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-settings-backups.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-about",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-settings-about.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "dialog-password-dialog",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "打开态（结构验收）",
+      "screenshot": "after-electron-1200-light-dialog-password-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "dialog-revoke-dialog",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "打开态（结构验收）",
+      "screenshot": "after-electron-1200-light-dialog-revoke-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "dialog-memory-detail-dialog",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "打开态（结构验收）",
+      "screenshot": "after-electron-1200-light-dialog-memory-detail-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "dialog-legal-reader",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "打开态（结构验收）",
+      "screenshot": "after-electron-1200-light-dialog-legal-reader.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "dialog-account-model-dialog",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "打开态（结构验收）",
+      "screenshot": "after-electron-1200-light-dialog-account-model-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-normal",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-memory-normal.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-export-menu",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-memory-export-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-empty",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "空列表",
+      "screenshot": "after-electron-1200-light-memory-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-warning",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "异常",
+      "screenshot": "after-electron-1200-light-memory-warning.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-rejected",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "异常",
+      "screenshot": "after-electron-1200-light-memory-rejected.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-rejected-expanded",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-memory-rejected-expanded.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-error",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "出错",
+      "screenshot": "after-electron-1200-light-memory-error.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "no-model-history",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "没配模型",
+      "screenshot": "after-electron-1200-light-no-model-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "no-model-empty",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "没配模型 / 空对话",
+      "screenshot": "after-electron-1200-light-no-model-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "activity",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "空列表",
+      "screenshot": "after-electron-1200-light-activity.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "onboarding-0",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-onboarding-0.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "onboarding-1",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-onboarding-1.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "onboarding-2",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-onboarding-2.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "onboarding-3",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-onboarding-3.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "onboarding-4",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-onboarding-4.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "onboarding-5",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-onboarding-5.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "onboarding-6",
+      "surface": "electron-1200",
+      "theme": "light",
+      "state": "正常",
+      "screenshot": "after-electron-1200-light-onboarding-6.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "main-history",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-main-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "reply-menu",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-reply-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "reply-model-submenu",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-reply-model-submenu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "user-hover",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-user-hover.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "user-focus",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-user-focus.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "composer-menu",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-composer-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "composer-long",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "超长文本",
+      "screenshot": "after-electron-1200-dark-composer-long.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "composer-empty",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "空输入",
+      "screenshot": "after-electron-1200-dark-composer-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "main-search",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-main-search.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "date-control",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-date-control.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "account-menu",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-account-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-general",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-settings-general.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-personalization",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-settings-personalization.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-assistant",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-settings-assistant.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-notifications",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-settings-notifications.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-appearance",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-settings-appearance.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-account",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-settings-account.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-devices",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-settings-devices.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-usage",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-settings-usage.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-archived",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-settings-archived.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-models",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-settings-models.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-approvals",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-settings-approvals.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-memory",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-settings-memory.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-schedules",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-settings-schedules.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-resources",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-settings-resources.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-system",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-settings-system.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-backups",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-settings-backups.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "settings-about",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-settings-about.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "dialog-password-dialog",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "打开态（结构验收）",
+      "screenshot": "after-electron-1200-dark-dialog-password-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "dialog-revoke-dialog",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "打开态（结构验收）",
+      "screenshot": "after-electron-1200-dark-dialog-revoke-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "dialog-memory-detail-dialog",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "打开态（结构验收）",
+      "screenshot": "after-electron-1200-dark-dialog-memory-detail-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "dialog-legal-reader",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "打开态（结构验收）",
+      "screenshot": "after-electron-1200-dark-dialog-legal-reader.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "dialog-account-model-dialog",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "打开态（结构验收）",
+      "screenshot": "after-electron-1200-dark-dialog-account-model-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-normal",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-memory-normal.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-export-menu",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-memory-export-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-empty",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "空列表",
+      "screenshot": "after-electron-1200-dark-memory-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-warning",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "异常",
+      "screenshot": "after-electron-1200-dark-memory-warning.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-rejected",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "异常",
+      "screenshot": "after-electron-1200-dark-memory-rejected.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-rejected-expanded",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-memory-rejected-expanded.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "memory-error",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "出错",
+      "screenshot": "after-electron-1200-dark-memory-error.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "no-model-history",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "没配模型",
+      "screenshot": "after-electron-1200-dark-no-model-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "no-model-empty",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "没配模型 / 空对话",
+      "screenshot": "after-electron-1200-dark-no-model-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "activity",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "空列表",
+      "screenshot": "after-electron-1200-dark-activity.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "onboarding-0",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-onboarding-0.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "onboarding-1",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-onboarding-1.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "onboarding-2",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-onboarding-2.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "onboarding-3",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-onboarding-3.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "onboarding-4",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-onboarding-4.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "onboarding-5",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-onboarding-5.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "scene": "onboarding-6",
+      "surface": "electron-1200",
+      "theme": "dark",
+      "state": "正常",
+      "screenshot": "after-electron-1200-dark-onboarding-6.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    }
+  ],
+  "checks": [
+    "D49 external actions 1200 light",
+    "autosize grow shrink cap 1200 light",
+    "D49 external actions 1200 dark",
+    "autosize grow shrink cap 1200 dark"
+  ],
+  "errors": []
+}

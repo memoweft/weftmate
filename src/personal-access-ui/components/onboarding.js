@@ -210,8 +210,7 @@ globalThis.WeftUiComponents.factories.onboarding = (core, ui) => {
     document.querySelector('section.settings-category[data-category="general"]').append(replay);
     const originalPaint = ui.paintScreen;
     ui.paintScreen = view => { originalPaint(view); if (active && journey?.step === 'account') { if (core.state.account) render(); else reveal(); } };
-    const hint = node('div', 'onboarding-model-hint'); hint.hidden = true; hint.append(node('span', '', copy.noModel), button(copy.configure, () => ui.openSettings('models'))); ui.byId('assistant-view').prepend(hint);
-    const update = ui.updateAvailability; ui.updateAvailability = (...args) => { update(...args); hint.hidden = !core.state.account || core.state.models.some(model => model.configured) || core.state.currentView !== 'assistant'; };
+
   }
   return { mountOnboarding, startOnboarding, resumeOnboarding };
 };

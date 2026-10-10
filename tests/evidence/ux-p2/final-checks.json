@@ -1,0 +1,952 @@
+{
+  "rows": [
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "D49-user-hover",
+      "state": "最终确认",
+      "screenshot": "after-electron-1200-light-D49-user-hover.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "D49-user-keyboard",
+      "state": "最终确认",
+      "screenshot": "after-electron-1200-light-D49-user-keyboard.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "D49-reply-menu",
+      "state": "最终确认",
+      "screenshot": "after-electron-1200-light-D49-reply-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "D49-model-submenu",
+      "state": "最终确认",
+      "screenshot": "after-electron-1200-light-D49-model-submenu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "memory-turn-warning",
+      "state": "最终确认",
+      "screenshot": "after-electron-1200-light-memory-turn-warning.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "memory-rejected-expanded-final",
+      "state": "最终确认",
+      "screenshot": "after-electron-1200-light-memory-rejected-expanded-final.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "dialog-password-dialog",
+      "state": "最终确认",
+      "screenshot": "after-electron-1200-light-dialog-password-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "dialog-revoke-dialog",
+      "state": "最终确认",
+      "screenshot": "after-electron-1200-light-dialog-revoke-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "dialog-memory-detail-dialog",
+      "state": "最终确认",
+      "screenshot": "after-electron-1200-light-dialog-memory-detail-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "D49-user-hover",
+      "state": "最终确认",
+      "screenshot": "after-electron-1200-dark-D49-user-hover.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "D49-user-keyboard",
+      "state": "最终确认",
+      "screenshot": "after-electron-1200-dark-D49-user-keyboard.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "D49-reply-menu",
+      "state": "最终确认",
+      "screenshot": "after-electron-1200-dark-D49-reply-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "D49-model-submenu",
+      "state": "最终确认",
+      "screenshot": "after-electron-1200-dark-D49-model-submenu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "memory-turn-warning",
+      "state": "最终确认",
+      "screenshot": "after-electron-1200-dark-memory-turn-warning.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "memory-rejected-expanded-final",
+      "state": "最终确认",
+      "screenshot": "after-electron-1200-dark-memory-rejected-expanded-final.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "dialog-password-dialog",
+      "state": "最终确认",
+      "screenshot": "after-electron-1200-dark-dialog-password-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "dialog-revoke-dialog",
+      "state": "最终确认",
+      "screenshot": "after-electron-1200-dark-dialog-revoke-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "dialog-memory-detail-dialog",
+      "state": "最终确认",
+      "screenshot": "after-electron-1200-dark-dialog-memory-detail-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "light",
+      "scene": "D49-user-hover",
+      "state": "最终确认",
+      "screenshot": "after-electron-480-light-D49-user-hover.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "light",
+      "scene": "D49-user-keyboard",
+      "state": "最终确认",
+      "screenshot": "after-electron-480-light-D49-user-keyboard.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "light",
+      "scene": "D49-reply-menu",
+      "state": "最终确认",
+      "screenshot": "after-electron-480-light-D49-reply-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "light",
+      "scene": "D49-model-submenu",
+      "state": "最终确认",
+      "screenshot": "after-electron-480-light-D49-model-submenu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "light",
+      "scene": "memory-turn-warning",
+      "state": "最终确认",
+      "screenshot": "after-electron-480-light-memory-turn-warning.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "light",
+      "scene": "memory-rejected-expanded-final",
+      "state": "最终确认",
+      "screenshot": "after-electron-480-light-memory-rejected-expanded-final.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "light",
+      "scene": "dialog-password-dialog",
+      "state": "最终确认",
+      "screenshot": "after-electron-480-light-dialog-password-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "light",
+      "scene": "dialog-revoke-dialog",
+      "state": "最终确认",
+      "screenshot": "after-electron-480-light-dialog-revoke-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "light",
+      "scene": "dialog-memory-detail-dialog",
+      "state": "最终确认",
+      "screenshot": "after-electron-480-light-dialog-memory-detail-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "dark",
+      "scene": "D49-user-hover",
+      "state": "最终确认",
+      "screenshot": "after-electron-480-dark-D49-user-hover.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "dark",
+      "scene": "D49-user-keyboard",
+      "state": "最终确认",
+      "screenshot": "after-electron-480-dark-D49-user-keyboard.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "dark",
+      "scene": "D49-reply-menu",
+      "state": "最终确认",
+      "screenshot": "after-electron-480-dark-D49-reply-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "dark",
+      "scene": "D49-model-submenu",
+      "state": "最终确认",
+      "screenshot": "after-electron-480-dark-D49-model-submenu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "dark",
+      "scene": "memory-turn-warning",
+      "state": "最终确认",
+      "screenshot": "after-electron-480-dark-memory-turn-warning.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "dark",
+      "scene": "memory-rejected-expanded-final",
+      "state": "最终确认",
+      "screenshot": "after-electron-480-dark-memory-rejected-expanded-final.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "dark",
+      "scene": "dialog-password-dialog",
+      "state": "最终确认",
+      "screenshot": "after-electron-480-dark-dialog-password-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "dark",
+      "scene": "dialog-revoke-dialog",
+      "state": "最终确认",
+      "screenshot": "after-electron-480-dark-dialog-revoke-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-480",
+      "theme": "dark",
+      "scene": "dialog-memory-detail-dialog",
+      "state": "最终确认",
+      "screenshot": "after-electron-480-dark-dialog-memory-detail-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "scene": "D49-long-press",
+      "state": "最终确认",
+      "screenshot": "after-android-bundle-360-light-D49-long-press.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "scene": "D49-tap-time",
+      "state": "最终确认",
+      "screenshot": "after-android-bundle-360-light-D49-tap-time.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "scene": "no-model-history",
+      "state": "最终确认",
+      "screenshot": "after-android-bundle-360-light-no-model-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-360",
+      "theme": "light",
+      "scene": "no-model-empty",
+      "state": "最终确认",
+      "screenshot": "after-android-bundle-360-light-no-model-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "scene": "D49-long-press",
+      "state": "最终确认",
+      "screenshot": "after-android-bundle-360-dark-D49-long-press.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "scene": "D49-tap-time",
+      "state": "最终确认",
+      "screenshot": "after-android-bundle-360-dark-D49-tap-time.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "scene": "no-model-history",
+      "state": "最终确认",
+      "screenshot": "after-android-bundle-360-dark-no-model-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-360",
+      "theme": "dark",
+      "scene": "no-model-empty",
+      "state": "最终确认",
+      "screenshot": "after-android-bundle-360-dark-no-model-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "scene": "D49-long-press",
+      "state": "最终确认",
+      "screenshot": "after-android-bundle-390-light-D49-long-press.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "scene": "D49-tap-time",
+      "state": "最终确认",
+      "screenshot": "after-android-bundle-390-light-D49-tap-time.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "scene": "no-model-history",
+      "state": "最终确认",
+      "screenshot": "after-android-bundle-390-light-no-model-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-390",
+      "theme": "light",
+      "scene": "no-model-empty",
+      "state": "最终确认",
+      "screenshot": "after-android-bundle-390-light-no-model-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "scene": "D49-long-press",
+      "state": "最终确认",
+      "screenshot": "after-android-bundle-390-dark-D49-long-press.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "scene": "D49-tap-time",
+      "state": "最终确认",
+      "screenshot": "after-android-bundle-390-dark-D49-tap-time.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "scene": "no-model-history",
+      "state": "最终确认",
+      "screenshot": "after-android-bundle-390-dark-no-model-history.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "android-bundle-390",
+      "theme": "dark",
+      "scene": "no-model-empty",
+      "state": "最终确认",
+      "screenshot": "after-android-bundle-390-dark-no-model-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    }
+  ],
+  "checks": [
+    "account timezone 8:28",
+    "D49 outside/right hover/focus",
+    "processed users no edit",
+    "submenu current check and arrows/Esc",
+    "retry absent normally",
+    "single rejected notice",
+    "touch copy/quote menu and tap time"
+  ],
+  "errors": [],
+  "synthetic": true,
+  "modelRequests": 0
+}

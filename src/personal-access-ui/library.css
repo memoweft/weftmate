@@ -58,7 +58,7 @@
 .library-open .preview-tab { max-width:calc(var(--wm-space-64) * 3); }
 .session-menu-item-with-icon { justify-content:flex-start; gap:var(--wm-space-12); }
 .session-menu-item-with-icon > .wm-icon { flex:none; }
-.session-menu-description { display:block; margin-top:var(--wm-space-4); font-size:var(--wm-font-size-12); line-height:1.5; }
+.session-menu-description, .wm-menu-description { display:block; margin-top:var(--wm-space-4); font-size:var(--wm-font-size-12); line-height:1.5; }
 .library-skeleton-row { display:flex; align-items:center; gap:var(--wm-space-12); padding:var(--wm-space-24) var(--wm-space-8); border-bottom:1px solid var(--line); }
 .library-skeleton-icon,.library-skeleton-line { background:var(--surface-soft,var(--soft)); border-radius:var(--wm-radius-8); }
 .library-skeleton-icon { width:var(--wm-space-48); height:var(--wm-space-48); }

@@ -1,0 +1,1591 @@
+{
+  "rows": [
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "settings-个性化-select-回复语气",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-light-settings-个性化-select-回复语气.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "settings-助手-select-回答详细程度",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-light-settings-助手-select-回答详细程度.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "settings-助手-select-显示思考过程",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-light-settings-助手-select-显示思考过程.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "settings-助手-select-回复进行中时发送的消息",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-light-settings-助手-select-回复进行中时发送的消息.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "settings-外观-select-主题色",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-light-settings-外观-select-主题色.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "settings-外观-select-字号",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-light-settings-外观-select-字号.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "settings-审批-select-新对话的默认模式",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-light-settings-审批-select-新对话的默认模式.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "settings-模型-select-对话默认模型",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-light-settings-模型-select-对话默认模型.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "model-editor",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-light-model-editor.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "model-editor-select-位置",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-light-model-editor-select-位置.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "goals-empty",
+      "state": "空列表",
+      "screenshot": "after-electron-1200-light-goals-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "goal-schedule-form",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-light-goal-schedule-form.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "goal-schedule-form-select-所属对话",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-light-goal-schedule-form-select-所属对话.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "goal-schedule-form-select-到点做什么",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-light-goal-schedule-form-select-到点做什么.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "goal-schedule-form-select-重复",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-light-goal-schedule-form-select-重复.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "goal-schedule-form-select-时间-小时",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-light-goal-schedule-form-select-时间-小时.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "goal-schedule-form-select-时间-分钟",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-light-goal-schedule-form-select-时间-分钟.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "goal-long-form",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-light-goal-long-form.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "goal-long-form-select-所属对话",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-light-goal-long-form-select-所属对话.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "new-chat-menu",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-light-new-chat-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "temporary-empty",
+      "state": "空对话",
+      "screenshot": "after-electron-1200-light-temporary-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "project-edit-dialog",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-light-project-edit-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "project-remove-dialog",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-light-project-remove-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "light",
+      "scene": "project-conversation-empty",
+      "state": "空对话",
+      "screenshot": "after-electron-1200-light-project-conversation-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "settings-个性化-select-回复语气",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-dark-settings-个性化-select-回复语气.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "settings-助手-select-回答详细程度",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-dark-settings-助手-select-回答详细程度.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "settings-助手-select-显示思考过程",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-dark-settings-助手-select-显示思考过程.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "settings-助手-select-回复进行中时发送的消息",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-dark-settings-助手-select-回复进行中时发送的消息.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "settings-外观-select-主题色",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-dark-settings-外观-select-主题色.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "settings-外观-select-字号",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-dark-settings-外观-select-字号.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "settings-审批-select-新对话的默认模式",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-dark-settings-审批-select-新对话的默认模式.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "settings-模型-select-对话默认模型",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-dark-settings-模型-select-对话默认模型.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "model-editor",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-dark-model-editor.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "model-editor-select-位置",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-dark-model-editor-select-位置.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "goals-empty",
+      "state": "空列表",
+      "screenshot": "after-electron-1200-dark-goals-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "goal-schedule-form",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-dark-goal-schedule-form.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "goal-schedule-form-select-所属对话",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-dark-goal-schedule-form-select-所属对话.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "goal-schedule-form-select-到点做什么",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-dark-goal-schedule-form-select-到点做什么.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "goal-schedule-form-select-重复",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-dark-goal-schedule-form-select-重复.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "goal-schedule-form-select-时间-小时",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-dark-goal-schedule-form-select-时间-小时.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "goal-schedule-form-select-时间-分钟",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-dark-goal-schedule-form-select-时间-分钟.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "goal-long-form",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-dark-goal-long-form.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "goal-long-form-select-所属对话",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-dark-goal-long-form-select-所属对话.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "new-chat-menu",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-dark-new-chat-menu.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "temporary-empty",
+      "state": "空对话",
+      "screenshot": "after-electron-1200-dark-temporary-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "project-edit-dialog",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-dark-project-edit-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "project-remove-dialog",
+      "state": "打开态",
+      "screenshot": "after-electron-1200-dark-project-remove-dialog.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "electron-1200",
+      "theme": "dark",
+      "scene": "project-conversation-empty",
+      "state": "空对话",
+      "screenshot": "after-electron-1200-dark-project-conversation-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-360",
+      "theme": "light",
+      "scene": "login",
+      "state": "未登录",
+      "screenshot": "after-phone-web-360-light-login.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "scene": "login",
+      "state": "未登录",
+      "screenshot": "after-phone-web-360-dark-login.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-360",
+      "theme": "light",
+      "scene": "goals-empty",
+      "state": "空列表",
+      "screenshot": "after-phone-web-360-light-goals-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-360",
+      "theme": "light",
+      "scene": "goal-schedule-form",
+      "state": "打开态",
+      "screenshot": "after-phone-web-360-light-goal-schedule-form.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-360",
+      "theme": "light",
+      "scene": "goal-schedule-form-select-所属对话",
+      "state": "打开态",
+      "screenshot": "after-phone-web-360-light-goal-schedule-form-select-所属对话.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-360",
+      "theme": "light",
+      "scene": "goal-schedule-form-select-到点做什么",
+      "state": "打开态",
+      "screenshot": "after-phone-web-360-light-goal-schedule-form-select-到点做什么.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-360",
+      "theme": "light",
+      "scene": "goal-schedule-form-select-重复",
+      "state": "打开态",
+      "screenshot": "after-phone-web-360-light-goal-schedule-form-select-重复.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-360",
+      "theme": "light",
+      "scene": "goal-schedule-form-select-时间-小时",
+      "state": "打开态",
+      "screenshot": "after-phone-web-360-light-goal-schedule-form-select-时间-小时.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-360",
+      "theme": "light",
+      "scene": "goal-schedule-form-select-时间-分钟",
+      "state": "打开态",
+      "screenshot": "after-phone-web-360-light-goal-schedule-form-select-时间-分钟.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-360",
+      "theme": "light",
+      "scene": "goal-long-form",
+      "state": "打开态",
+      "screenshot": "after-phone-web-360-light-goal-long-form.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-360",
+      "theme": "light",
+      "scene": "goal-long-form-select-所属对话",
+      "state": "打开态",
+      "screenshot": "after-phone-web-360-light-goal-long-form-select-所属对话.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "scene": "goals-empty",
+      "state": "空列表",
+      "screenshot": "after-phone-web-360-dark-goals-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "scene": "goal-schedule-form",
+      "state": "打开态",
+      "screenshot": "after-phone-web-360-dark-goal-schedule-form.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "scene": "goal-schedule-form-select-所属对话",
+      "state": "打开态",
+      "screenshot": "after-phone-web-360-dark-goal-schedule-form-select-所属对话.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "scene": "goal-schedule-form-select-到点做什么",
+      "state": "打开态",
+      "screenshot": "after-phone-web-360-dark-goal-schedule-form-select-到点做什么.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "scene": "goal-schedule-form-select-重复",
+      "state": "打开态",
+      "screenshot": "after-phone-web-360-dark-goal-schedule-form-select-重复.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "scene": "goal-schedule-form-select-时间-小时",
+      "state": "打开态",
+      "screenshot": "after-phone-web-360-dark-goal-schedule-form-select-时间-小时.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "scene": "goal-schedule-form-select-时间-分钟",
+      "state": "打开态",
+      "screenshot": "after-phone-web-360-dark-goal-schedule-form-select-时间-分钟.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "scene": "goal-long-form",
+      "state": "打开态",
+      "screenshot": "after-phone-web-360-dark-goal-long-form.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-360",
+      "theme": "dark",
+      "scene": "goal-long-form-select-所属对话",
+      "state": "打开态",
+      "screenshot": "after-phone-web-360-dark-goal-long-form-select-所属对话.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-390",
+      "theme": "light",
+      "scene": "login",
+      "state": "未登录",
+      "screenshot": "after-phone-web-390-light-login.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "scene": "login",
+      "state": "未登录",
+      "screenshot": "after-phone-web-390-dark-login.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-390",
+      "theme": "light",
+      "scene": "goals-empty",
+      "state": "空列表",
+      "screenshot": "after-phone-web-390-light-goals-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-390",
+      "theme": "light",
+      "scene": "goal-schedule-form",
+      "state": "打开态",
+      "screenshot": "after-phone-web-390-light-goal-schedule-form.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-390",
+      "theme": "light",
+      "scene": "goal-schedule-form-select-所属对话",
+      "state": "打开态",
+      "screenshot": "after-phone-web-390-light-goal-schedule-form-select-所属对话.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-390",
+      "theme": "light",
+      "scene": "goal-schedule-form-select-到点做什么",
+      "state": "打开态",
+      "screenshot": "after-phone-web-390-light-goal-schedule-form-select-到点做什么.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-390",
+      "theme": "light",
+      "scene": "goal-schedule-form-select-重复",
+      "state": "打开态",
+      "screenshot": "after-phone-web-390-light-goal-schedule-form-select-重复.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-390",
+      "theme": "light",
+      "scene": "goal-schedule-form-select-时间-小时",
+      "state": "打开态",
+      "screenshot": "after-phone-web-390-light-goal-schedule-form-select-时间-小时.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-390",
+      "theme": "light",
+      "scene": "goal-schedule-form-select-时间-分钟",
+      "state": "打开态",
+      "screenshot": "after-phone-web-390-light-goal-schedule-form-select-时间-分钟.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-390",
+      "theme": "light",
+      "scene": "goal-long-form",
+      "state": "打开态",
+      "screenshot": "after-phone-web-390-light-goal-long-form.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-390",
+      "theme": "light",
+      "scene": "goal-long-form-select-所属对话",
+      "state": "打开态",
+      "screenshot": "after-phone-web-390-light-goal-long-form-select-所属对话.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "scene": "goals-empty",
+      "state": "空列表",
+      "screenshot": "after-phone-web-390-dark-goals-empty.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "scene": "goal-schedule-form",
+      "state": "打开态",
+      "screenshot": "after-phone-web-390-dark-goal-schedule-form.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "scene": "goal-schedule-form-select-所属对话",
+      "state": "打开态",
+      "screenshot": "after-phone-web-390-dark-goal-schedule-form-select-所属对话.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "scene": "goal-schedule-form-select-到点做什么",
+      "state": "打开态",
+      "screenshot": "after-phone-web-390-dark-goal-schedule-form-select-到点做什么.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "scene": "goal-schedule-form-select-重复",
+      "state": "打开态",
+      "screenshot": "after-phone-web-390-dark-goal-schedule-form-select-重复.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "scene": "goal-schedule-form-select-时间-小时",
+      "state": "打开态",
+      "screenshot": "after-phone-web-390-dark-goal-schedule-form-select-时间-小时.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "scene": "goal-schedule-form-select-时间-分钟",
+      "state": "打开态",
+      "screenshot": "after-phone-web-390-dark-goal-schedule-form-select-时间-分钟.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "scene": "goal-long-form",
+      "state": "打开态",
+      "screenshot": "after-phone-web-390-dark-goal-long-form.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "surface": "phone-web-390",
+      "theme": "dark",
+      "scene": "goal-long-form-select-所属对话",
+      "state": "打开态",
+      "screenshot": "after-phone-web-390-dark-goal-long-form-select-所属对话.png",
+      "defects": [],
+      "checklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    }
+  ],
+  "errors": [],
+  "synthetic": true,
+  "modelRequests": 0
+}
