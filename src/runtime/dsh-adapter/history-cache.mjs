@@ -35,7 +35,7 @@ export function createHistoryCache({ file, source, readNative }) {
       const epoch = epochs.get(id) ?? 0;
       return serial(async () => {
         if (closed) throw new Error('history cache closed');
-        const native = await source(id), before = native ? {...native,revision:native.revision + ':thinking-v1'} : null, sql = await database();
+        const native = await source(id), before = native ? {...native,revision:native.revision + ':thinking-v1:stream-v1'} : null, sql = await database();
         let meta = sql.prepare('SELECT * FROM segments WHERE id=?').get(id);
         if (!before) { sql.prepare('DELETE FROM events WHERE session=?').run(id); sql.prepare('DELETE FROM segments WHERE id=?').run(id); return null; }
         if (meta?.revision !== before.revision) {

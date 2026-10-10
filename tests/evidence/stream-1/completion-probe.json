@@ -1,0 +1,84 @@
+[
+  {
+    "mode": "before",
+    "started": 1791652133371,
+    "inputCharacters": 320,
+    "status": 200,
+    "headersMs": 4153,
+    "content": "{\"completion\":\"扩展成可执行的分类方案。\"}",
+    "usage": {
+      "completion_tokens": 13,
+      "prompt_tokens": 142,
+      "total_tokens": 155,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "reasoningCharacters": 0,
+    "durationMs": 4156
+  },
+  {
+    "mode": "compact-json",
+    "started": 1791652137536,
+    "inputCharacters": 236,
+    "error": "AbortError",
+    "durationMs": 5002
+  },
+  {
+    "mode": "plain-stream",
+    "started": 1791652142539,
+    "inputCharacters": 226,
+    "status": 200,
+    "headersMs": 1378,
+    "chunks": [
+      {
+        "ms": 1379,
+        "length": 1
+      },
+      {
+        "ms": 1953,
+        "length": 2
+      },
+      {
+        "ms": 2382,
+        "length": 1
+      },
+      {
+        "ms": 2873,
+        "length": 2
+      },
+      {
+        "ms": 3448,
+        "length": 1
+      },
+      {
+        "ms": 3864,
+        "length": 4
+      },
+      {
+        "ms": 4307,
+        "length": 2
+      },
+      {
+        "ms": 4621,
+        "length": 5
+      }
+    ],
+    "content": "按年份和类别归档，证件单独加密备份。",
+    "usage": {
+      "completion_tokens": 14,
+      "prompt_tokens": 97,
+      "total_tokens": 111,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "durationMs": 4690
+  }
+]

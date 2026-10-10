@@ -1,0 +1,1026 @@
+{
+  "started": 1791654336055,
+  "timeline": [
+    {
+      "layer": "gateway",
+      "at": 1791654339008,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        }
+      ],
+      "liveEvents": []
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654339074,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ],
+      "liveEvents": []
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654339150,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ],
+      "liveEvents": []
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654339204,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ],
+      "liveEvents": []
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654339258,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ],
+      "liveEvents": []
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654339312,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ],
+      "liveEvents": []
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654339366,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ],
+      "liveEvents": []
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654339420,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ],
+      "liveEvents": []
+    },
+    {
+      "layer": "provider",
+      "at": 1791654339448,
+      "text": "第一段。"
+    },
+    {
+      "layer": "provider",
+      "at": 1791654339453,
+      "text": "第一段。"
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654339484,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ],
+      "liveEvents": [
+        {
+          "seq": 15,
+          "type": "assistant.delta",
+          "at": "2026-10-10T17:45:39.452Z",
+          "data": {
+            "text": "第一段。",
+            "cursor": 16,
+            "turn": 1,
+            "step": 1,
+            "streaming": true,
+            "sourceSeqs": [
+              7
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654339538,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ],
+      "liveEvents": [
+        {
+          "seq": 15,
+          "type": "assistant.delta",
+          "at": "2026-10-10T17:45:39.452Z",
+          "data": {
+            "text": "第一段。",
+            "cursor": 16,
+            "turn": 1,
+            "step": 1,
+            "streaming": true,
+            "sourceSeqs": [
+              7
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654339594,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ],
+      "liveEvents": [
+        {
+          "seq": 15,
+          "type": "assistant.delta",
+          "at": "2026-10-10T17:45:39.452Z",
+          "data": {
+            "text": "第一段。",
+            "cursor": 16,
+            "turn": 1,
+            "step": 1,
+            "streaming": true,
+            "sourceSeqs": [
+              7
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654339648,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ],
+      "liveEvents": [
+        {
+          "seq": 15,
+          "type": "assistant.delta",
+          "at": "2026-10-10T17:45:39.452Z",
+          "data": {
+            "text": "第一段。",
+            "cursor": 16,
+            "turn": 1,
+            "step": 1,
+            "streaming": true,
+            "sourceSeqs": [
+              7
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654339702,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ],
+      "liveEvents": [
+        {
+          "seq": 15,
+          "type": "assistant.delta",
+          "at": "2026-10-10T17:45:39.452Z",
+          "data": {
+            "text": "第一段。",
+            "cursor": 16,
+            "turn": 1,
+            "step": 1,
+            "streaming": true,
+            "sourceSeqs": [
+              7
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "layer": "provider",
+      "at": 1791654339750,
+      "text": "第二段。"
+    },
+    {
+      "layer": "provider",
+      "at": 1791654339753,
+      "text": "第二段。"
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654339761,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ],
+      "liveEvents": [
+        {
+          "seq": 15,
+          "type": "assistant.delta",
+          "at": "2026-10-10T17:45:39.452Z",
+          "data": {
+            "text": "第一段。第二段。",
+            "cursor": 17,
+            "turn": 1,
+            "step": 1,
+            "streaming": true,
+            "sourceSeqs": [
+              7
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654339816,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ],
+      "liveEvents": [
+        {
+          "seq": 15,
+          "type": "assistant.delta",
+          "at": "2026-10-10T17:45:39.452Z",
+          "data": {
+            "text": "第一段。第二段。",
+            "cursor": 17,
+            "turn": 1,
+            "step": 1,
+            "streaming": true,
+            "sourceSeqs": [
+              7
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654339869,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ],
+      "liveEvents": [
+        {
+          "seq": 15,
+          "type": "assistant.delta",
+          "at": "2026-10-10T17:45:39.452Z",
+          "data": {
+            "text": "第一段。第二段。",
+            "cursor": 17,
+            "turn": 1,
+            "step": 1,
+            "streaming": true,
+            "sourceSeqs": [
+              7
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654339922,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ],
+      "liveEvents": [
+        {
+          "seq": 15,
+          "type": "assistant.delta",
+          "at": "2026-10-10T17:45:39.452Z",
+          "data": {
+            "text": "第一段。第二段。",
+            "cursor": 17,
+            "turn": 1,
+            "step": 1,
+            "streaming": true,
+            "sourceSeqs": [
+              7
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654339976,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ],
+      "liveEvents": [
+        {
+          "seq": 15,
+          "type": "assistant.delta",
+          "at": "2026-10-10T17:45:39.452Z",
+          "data": {
+            "text": "第一段。第二段。",
+            "cursor": 17,
+            "turn": 1,
+            "step": 1,
+            "streaming": true,
+            "sourceSeqs": [
+              7
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654340031,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ],
+      "liveEvents": [
+        {
+          "seq": 15,
+          "type": "assistant.delta",
+          "at": "2026-10-10T17:45:39.452Z",
+          "data": {
+            "text": "第一段。第二段。",
+            "cursor": 17,
+            "turn": 1,
+            "step": 1,
+            "streaming": true,
+            "sourceSeqs": [
+              7
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "layer": "provider",
+      "at": 1791654340051,
+      "text": "第三段。"
+    },
+    {
+      "layer": "provider",
+      "at": 1791654340054,
+      "text": "第三段。"
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654340094,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ],
+      "liveEvents": [
+        {
+          "seq": 15,
+          "type": "assistant.delta",
+          "at": "2026-10-10T17:45:39.452Z",
+          "data": {
+            "text": "第一段。第二段。第三段。",
+            "cursor": 18,
+            "turn": 1,
+            "step": 1,
+            "streaming": true,
+            "sourceSeqs": [
+              7
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654340146,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ],
+      "liveEvents": [
+        {
+          "seq": 15,
+          "type": "assistant.delta",
+          "at": "2026-10-10T17:45:39.452Z",
+          "data": {
+            "text": "第一段。第二段。第三段。",
+            "cursor": 18,
+            "turn": 1,
+            "step": 1,
+            "streaming": true,
+            "sourceSeqs": [
+              7
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654340200,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ],
+      "liveEvents": [
+        {
+          "seq": 15,
+          "type": "assistant.delta",
+          "at": "2026-10-10T17:45:39.452Z",
+          "data": {
+            "text": "第一段。第二段。第三段。",
+            "cursor": 18,
+            "turn": 1,
+            "step": 1,
+            "streaming": true,
+            "sourceSeqs": [
+              7
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654340252,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ],
+      "liveEvents": [
+        {
+          "seq": 15,
+          "type": "assistant.delta",
+          "at": "2026-10-10T17:45:39.452Z",
+          "data": {
+            "text": "第一段。第二段。第三段。",
+            "cursor": 18,
+            "turn": 1,
+            "step": 1,
+            "streaming": true,
+            "sourceSeqs": [
+              7
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654340306,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        }
+      ],
+      "liveEvents": [
+        {
+          "seq": 15,
+          "type": "assistant.delta",
+          "at": "2026-10-10T17:45:39.452Z",
+          "data": {
+            "text": "第一段。第二段。第三段。",
+            "cursor": 18,
+            "turn": 1,
+            "step": 1,
+            "streaming": true,
+            "sourceSeqs": [
+              7
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "layer": "provider",
+      "at": 1791654340353,
+      "text": "第四段。"
+    },
+    {
+      "layer": "provider",
+      "at": 1791654340355,
+      "text": "第四段。"
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654340374,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        },
+        {
+          "type": "assistant.message",
+          "seq": 23,
+          "length": 16
+        }
+      ],
+      "liveEvents": []
+    },
+    {
+      "layer": "gateway",
+      "at": 1791654340437,
+      "events": [
+        {
+          "type": "task.queued",
+          "seq": 3,
+          "length": 6
+        },
+        {
+          "type": "turn.started",
+          "seq": 4
+        },
+        {
+          "type": "task.started",
+          "seq": 6
+        },
+        {
+          "type": "user.message",
+          "seq": 7,
+          "length": 6
+        },
+        {
+          "type": "assistant.message",
+          "seq": 23,
+          "length": 16
+        },
+        {
+          "type": "task.ended",
+          "seq": 24
+        },
+        {
+          "type": "turn.ended",
+          "seq": 26
+        }
+      ],
+      "liveEvents": []
+    }
+  ],
+  "native": [
+    {
+      "at": 1791654339452,
+      "seq": 15,
+      "type": "assistant/chunk",
+      "chunk": "block-start"
+    },
+    {
+      "at": 1791654339454,
+      "seq": 16,
+      "type": "assistant/chunk",
+      "chunk": "text-delta",
+      "length": 4
+    },
+    {
+      "at": 1791654339751,
+      "seq": 17,
+      "type": "assistant/chunk",
+      "chunk": "text-delta",
+      "length": 4
+    },
+    {
+      "at": 1791654340052,
+      "seq": 18,
+      "type": "assistant/chunk",
+      "chunk": "text-delta",
+      "length": 4
+    },
+    {
+      "at": 1791654340355,
+      "seq": 19,
+      "type": "assistant/chunk",
+      "chunk": "text-delta",
+      "length": 4
+    },
+    {
+      "at": 1791654340356,
+      "seq": 20,
+      "type": "assistant/chunk",
+      "chunk": "block-end"
+    },
+    {
+      "at": 1791654340357,
+      "seq": 21,
+      "type": "assistant/chunk",
+      "chunk": "usage"
+    },
+    {
+      "at": 1791654340358,
+      "seq": 22,
+      "type": "assistant/chunk",
+      "chunk": "finish"
+    },
+    {
+      "at": 1791654340360,
+      "seq": 23,
+      "type": "assistant/message"
+    },
+    {
+      "at": 1791654340374,
+      "seq": 26,
+      "type": "turn/end"
+    }
+  ],
+  "synthetic": true,
+  "chunkIntervalMs": 300
+}

@@ -97,6 +97,23 @@ export function render(source, { prefix = 'wm', highlightCache } = {}) {
   if(highlightCache){highlightCache.clear();for(const [key,value] of env.nextHighlightCache)highlightCache.set(key,value);}
   return result;
 }
+/** Parse the complete document so references/footnotes stay correct, but only
+ * sanitize changed top-level blocks while a reply is growing. */
+export function renderBlocks(source, { prefix = 'wm', highlightCache, blockCache = new Map() } = {}) {
+  const env = { docId: prefix.replace(/[^\w-]/g,''), highlightCache, nextHighlightCache: highlightCache ? new Map() : null };
+  const tokens = markdown.parse(String(source || ''),env), groups=[];
+  let group=[],depth=0;
+  for(const token of tokens){group.push(token);depth+=token.nesting;if(depth===0){groups.push(group);group=[];}}
+  if(group.length)groups.push(group);
+  const nextCache=new Map(),blocks=groups.map(tokens=>{
+    const raw=markdown.renderer.render(tokens,markdown.options,env);
+    const safe=blockCache.get(raw) ?? DOMPurify.sanitize(raw,{USE_PROFILES:{html:true,mathMl:true,svg:true},ADD_ATTR:['target','rel'],FORBID_TAGS:['script','style','iframe','object','embed','form','input'],FORBID_ATTR:['srcdoc']});
+    nextCache.set(raw,safe);return safe;
+  });
+  blockCache.clear();for(const [raw,safe]of nextCache)blockCache.set(raw,safe);
+  if(highlightCache){highlightCache.clear();for(const [key,value]of env.nextHighlightCache)highlightCache.set(key,value);}
+  return blocks;
+}
 export function plainText(source) {
   const tokens = markdown.parse(String(source || ''), {}), lines = [];
   function inline(tokens) { return (tokens || []).map(t => t.type === 'image' ? t.content : t.children ? inline(t.children) : ['text','code_inline','math_inline','html_inline'].includes(t.type) ? t.content : ['softbreak','hardbreak'].includes(t.type) ? '\n' : '').join(''); }
