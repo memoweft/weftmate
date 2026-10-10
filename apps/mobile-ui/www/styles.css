@@ -618,6 +618,27 @@ body.mobile-keyboard-visible #app{height:var(--viewport-height,100dvh)}
 .drawer-new-group .nav-primary {flex:1;margin:0;border:0;border-radius:var(--wm-radius-8);min-width:0;min-height:var(--wm-space-44);padding-inline:var(--wm-space-8);}
 .drawer-new-group .icon-button {border-radius:var(--wm-radius-8);background:var(--accent-soft);color:var(--accent);}
 
+/* D55: drawer, home and navigation share desktop status meanings. */
+:root { --session-attention:var(--wm-color-attention-light); --session-failure:var(--wm-color-failure-light); --session-completed:var(--wm-color-brand-light); }
+:root[data-theme="dark"] { --session-attention:var(--wm-color-attention-dark); --session-failure:var(--wm-color-failure-dark); --session-completed:var(--wm-color-brand-dark); }
+.mobile-session-status.is-completed:after,.mobile-session-status.is-failed:after,.mobile-session-status.is-approval:after,.mobile-session-status.is-question:after { content:""; width:var(--wm-space-6); height:var(--wm-space-6); border-radius:var(--wm-radius-circle); background:var(--session-completed); }
+.mobile-session-status.is-failed:after { background:var(--session-failure); }
+.mobile-session-status.is-approval:after,.mobile-session-status.is-question:after { background:var(--session-attention); }
+.mobile-session-status.status-entering:after { animation:mobile-status-enter var(--wm-duration-status) ease-out; }
+@keyframes mobile-status-enter { from {opacity:0} to {opacity:1} }
+.session-group-toggle { display:flex; align-items:center; }
+.session-group-toggle .mobile-session-status,.mobile-project-toggle .mobile-session-status,.rail-main-chat .mobile-session-status { margin-inline-start:auto; }
+.home-conversation .mobile-session-status { margin-inline-start:var(--wm-space-8); }
+.chat-attention-dot { display:inline-block; flex:none; width:var(--wm-space-6); height:var(--wm-space-6); border-radius:var(--wm-radius-circle); background:var(--session-attention); }
+.search-result-end .session-status { display:grid; place-items:center; width:var(--wm-space-20); }
+.search-result-end .session-unread-dot { width:var(--wm-space-6); height:var(--wm-space-6); border-radius:var(--wm-radius-circle); background:var(--session-completed); }
+.search-result-end .is-approval,.search-result-end .is-question { background:var(--session-attention); }
+.search-result-end .is-failed { background:var(--session-failure); }
+.search-result-end .session-running-dot { margin:0; width:var(--wm-space-14); height:var(--wm-space-14); background:transparent; border:var(--wm-space-2) solid var(--line); border-top-color:var(--muted); animation:mobile-status-spin var(--wm-duration-working) linear infinite; }
+@media(prefers-reduced-motion:reduce) { .mobile-session-status:after,.search-result-end .session-running-dot { animation:none!important; } }
+
+.drawer .session-group-toggle,.home-conversations .session-group-toggle { display:flex; align-items:center; }
+.mobile-project-toggle .mobile-session-status { flex:0 0 var(--wm-space-20); }
 /* Android WindowInsets and Safari viewport-fit share one set of page coordinates. */
 :root{--safe-top:max(env(safe-area-inset-top,0px),var(--native-safe-top,0px));--safe-right:max(env(safe-area-inset-right,0px),var(--native-safe-right,0px));--safe-bottom:max(env(safe-area-inset-bottom,0px),var(--native-safe-bottom,0px));--safe-left:max(env(safe-area-inset-left,0px),var(--native-safe-left,0px))}
 :root[data-native-insets=true]{--safe-bottom:var(--native-safe-bottom,0px)}

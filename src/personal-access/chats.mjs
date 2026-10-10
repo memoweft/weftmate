@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { bounded, digest, exactKeys, failure, validId } from './common.mjs';
 import { chatForSession } from './chat-identity.mjs';
 import { REQUEST_ID } from './constants.mjs';
+import { readSnapshotSeq } from './session-status.mjs';
 
 export function createChatOperations(context) {
   const pages = new Map();
@@ -34,7 +35,7 @@ export function createChatOperations(context) {
       }
       rows.sort((a,b) => Number(b.match === 'title') - Number(a.match === 'title') || Number(b.pinned) - Number(a.pinned) || String(b.at ?? b.updatedAt ?? b.createdAt ?? '').localeCompare(String(a.at ?? a.updatedAt ?? a.createdAt ?? '')) || a.chatId.localeCompare(b.chatId) || String(a.eventId??'').localeCompare(String(b.eventId??'')));
     }
-    if (account !== context.accountState(ownerId) && generation !== digest(JSON.stringify([context.accountState(ownerId).activity?.generation ?? 0,candidates.map(chat => {const latest=context.accountState(ownerId).chatIdentity.chats[chat.chatId];return [latest?.chatId,latest?.revision,latest?.contentRevision];})]))) throw failure('CURSOR_RESET_REQUIRED', 409);
+    if (account.sessions !== context.accountState(ownerId).sessions && generation !== digest(JSON.stringify([context.accountState(ownerId).activity?.generation ?? 0,candidates.map(chat => {const latest=context.accountState(ownerId).chatIdentity.chats[chat.chatId];return [latest?.chatId,latest?.revision,latest?.contentRevision];})]))) throw failure('CURSOR_RESET_REQUIRED', 409);
     const candidateIds = new Set(candidates.map(chat=>chat.chatId));
     for (const segment of Object.values(context.accountState(ownerId).chatIdentity.segments)) if (candidateIds.has(segment.chatId) && hasPrivateContent(context.accountState(ownerId).sessions[segment.sessionId])) throw failure('CURSOR_RESET_REQUIRED', 409);
     total ??= rows.length;
@@ -63,15 +64,20 @@ export function createChatOperations(context) {
         ? { kind: 'project', id: session.projectId } : { kind: 'main', id: identity.mainChatId } };
     if (!session) return { ...base, title: 'WeftMate', pinned: true, archived: false,
       unread: chat.unread, groupId: null, projectId: null, running: false, sendAvailable: !account.memoryCleanupPending,
-      taskAvailable: false };
+      taskAvailable: false, attention: null, lastOutcome: null };
     let described, summary;
     try {
       described = (snapshot ?? await context.sessionOperations.describe(ownerId,[segment.sessionId])).get(segment.sessionId);
+      // A delayed native snapshot must not reintroduce pre-erasure titles or sources.
+      if (account.sessions !== context.accountState(ownerId).sessions) return view(ownerId,chatId);
       if (!described || described.unavailable) throw failure('SESSION_UNAVAILABLE', 404);
       summary = await context.sessionOperations.summary(ownerId, segment.sessionId);
-    } catch { return { ...base, title: session.title ?? '', pinned: chat.kind === 'main' || session.pinned === true,
+    } catch {
+      if (account.sessions !== context.accountState(ownerId).sessions) return view(ownerId,chatId);
+      summary = session.deleting ? {} : await context.sessionOperations.summary(ownerId,segment.sessionId);
+      return { ...base, title: session.title ?? '', pinned: chat.kind === 'main' || session.pinned === true,
       archived: session.archived === true, unread: session.unread === true, groupId: session.groupId ?? null,
-      projectId: session.projectId ?? null, running: false, sendAvailable: false, taskAvailable: false, unavailable: true }; }
+      projectId: session.projectId ?? null, attention: null, lastOutcome: null, ...summary, running: false, sendAvailable: false, taskAvailable: false, unavailable: true }; }
     const project = account.projects?.[session.projectId];
     const canSend = !session.deleting && !session.archived && context.messageModelUsable(ownerId, session) &&
       (session.origin === 'personal-remote' && described.agentPreset === 'personal-remote' &&
@@ -112,13 +118,14 @@ export function createChatOperations(context) {
         if (body.expectedRevision !== chat.revision) throw failure('REVISION_CHANGED', 409);
         const projected = await view(ownerId, chatId);
         const active = account.chatIdentity.segments[chat.activeSegmentId];
+        const knownReadSeq = active ? context.sessionOperations.readSeq(ownerId,active.sessionId) : -1;
         const readPage = !body.unread && active ? await context.callBackend(() => context.backend.readEvents({ ownerId, sessionId: active.sessionId, limit: 200 })) : null;
         const response = { chat: { ...projected, unread: body.unread, revision: chat.revision + 1 } };
         await context.mutate(ownerId, next => {
           const current = next.chatIdentity.chats[chatId]; current.unread = body.unread; current.revision++;
           if (readPage) {
             const session = next.sessions[active.sessionId]; session.unread = false;
-            session.readMessageSeq = Math.max(-1, ...readPage.events.filter(row=>row.type==='assistant.message').map(row=>row.seq));
+            session.readMessageSeq = Math.max(session.readMessageSeq ?? -1,readSnapshotSeq(readPage,knownReadSeq));
             current.sessionRevision = digest(JSON.stringify(session));
           }
           next.chatOperations ??= {};
@@ -177,6 +184,7 @@ export function createChatOperations(context) {
       const nextCursor = remaining.length ? `chat-page-${digest(JSON.stringify({ownerId,filter,ids:remaining}))}` : null;
       if (nextCursor) pages.set(nextCursor, { ownerId, filter, ids: remaining });
       return { items, nextCursor, hasMore: remaining.length > 0,
+        statusSummary: await context.sessionOperations.statusSummary(ownerId,snapshot),
         groups: Object.values(account.sessionGroups ?? {}), indexState: 'ready' };
     },
   };

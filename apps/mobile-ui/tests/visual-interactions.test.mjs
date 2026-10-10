@@ -19,7 +19,7 @@ test('UI-2 mobile home, themes, progressive detail, full-screen sources, drafts 
   await new Promise(done=>server.listen(0,'127.0.0.1',done));await mkdir(evidence,{recursive:true});
   const browser=await chromium.launch({headless:true}),page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
-  const capture=async name=>{await page.evaluate(()=>Promise.allSettled(document.getAnimations().map(a=>a.finished)));await page.screenshot({path:resolve(evidence,name)})};
+  const capture=async name=>{await page.evaluate(()=>Promise.allSettled(document.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished)));await page.screenshot({path:resolve(evidence,name)})};
   try{
     await page.addInitScript(()=>{
       const now='2026-10-08T06:00:00.000Z';
@@ -32,7 +32,7 @@ test('UI-2 mobile home, themes, progressive detail, full-screen sources, drafts 
       window.fixture={requests:[],appearance:'light',failResources:false,failDetail:false,approval,artifact,source,
         sessions:[{sessionId:'report',source:'host',title:'整理项目进展',sendAvailable:true,createdAt:now,modelDisplayName:'当前模型'},
           {sessionId:'running',source:'host',title:'准备下周的安排',sendAvailable:true,running:true,modelDisplayName:'当前模型'},
-          {sessionId:'approve',source:'host',title:'整理临时文件',sendAvailable:true,modelDisplayName:'当前模型'}],
+          {sessionId:'approve',source:'host',title:'整理临时文件',sendAvailable:true,attention:'approval',lastOutcome:null,modelDisplayName:'当前模型'}],
         histories:{report:[{seq:1,type:'user.message',at:now,data:{text:'整理这周的项目进展，写一份简洁的报告。'}},step(3),
           {seq:4,type:'artifact.created',at:now,data:artifact},{seq:5,type:'assistant.message',at:now,data:{text:'# 项目进展\n\n已整理本周的记录。\n\n- 完成手机审批模式\n- 统一会话与来源阅读\n- 下一步：核对跨设备体验\n\n报告已保存，点文件即可查看。'}},
           {seq:6,type:'assistant.message',at:now,data:{text:'## 待核对\n\n保留每项工作的验证结果。\n\n'+Array(12).fill('可在原会话继续补充，相关来源也会保留。').join('\n\n')}}],
@@ -77,7 +77,7 @@ test('UI-2 mobile home, themes, progressive detail, full-screen sources, drafts 
       }};
     });
     await page.goto(`http://127.0.0.1:${server.address().port}/`);await page.waitForFunction(()=>state.booted&&state.page==='home');
-    await page.getByRole('img',{name:'待审批',exact:true}).waitFor();
+    await page.locator('#home-page').getByRole('img',{name:'等你批准',exact:true}).waitFor();
     assert.equal(await page.locator('#home-conversations [aria-label="正在运行"]').count(),1);
     await page.locator('#home-page').getByRole('button',{name:'搜索',exact:true}).click();const search=page.getByRole('combobox',{name:'搜索内容',exact:true});await search.fill('项目');await page.getByRole('tab',{name:'对话',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#search-results').getAttribute('aria-busy')==='false');assert.equal(await page.getByRole('option').count(),1);await search.fill('');await page.getByRole('button',{name:'关闭搜索',exact:true}).click();await page.getByRole('dialog',{name:'搜索',exact:true}).waitFor({state:'hidden'});
     for(const theme of ['light','dark']){

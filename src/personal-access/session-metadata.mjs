@@ -3,9 +3,35 @@ import { randomUUID } from 'node:crypto';
 import { protectMainSession } from './chat-identity.mjs';
 import { failure, plainObject, validId } from './common.mjs';
 import { createMessageBranches } from './message-branches.mjs';
+import { terminalOutcome, aggregateStatus, readSnapshotSeq } from './session-status.mjs';
+import { chatForSession } from './chat-identity.mjs';
 
 export function createSessionMetadata(context) {
   const index = new Map(), initializing = new Map(), descriptions = new Map();
+  const interactions = new WeakMap();
+  function attentionIndex(account) {
+    // accountState adds owner/host fields in a fresh wrapper; commands retains
+    // the immutable persisted snapshot identity across calls.
+    const identity = account.commands ?? account.sessions;
+    const now = context.timestamp?.() ?? Date.now(), prior = interactions.get(identity);
+    const closedCount = context.closedToolRuntimeIds?.size ?? 0, terminalCount = context.questionNativeTerminals?.size ?? 0;
+    if (prior && now < prior.expiresAt && prior.closedCount === closedCount && prior.terminalCount === terminalCount) return prior.rows;
+    const rows = new Map(); let expiresAt = Infinity;
+    if (!account.memoryCleanupPending) for (const command of Object.values(account.commands ?? {})) {
+      for (const [kind, entries] of [['question', command.userQuestions], ['approval', command.toolApprovals]]) {
+        for (const row of entries ?? []) {
+          if (row.status !== 'pending' || !account.sessions[row.sessionId] || account.sessions[row.sessionId].deleting || context.closedToolRuntimeIds?.has(row.runtimeId)) continue;
+          if (kind === 'approval') {
+            const timeout = Date.parse(row.createdAt) + 600000;
+            if (timeout <= now || context.approvalUnavailableReason?.(account, row)) continue;
+            if (Number.isFinite(timeout)) expiresAt = Math.min(expiresAt, timeout);
+          } else if (context.questionNativeTerminals?.has(`${row.runtimeId}|${row.questionRpcId}`) || context.questionUnavailableReason?.(account, row)) continue;
+          if (rows.get(row.sessionId) !== 'approval') rows.set(row.sessionId, kind);
+        }
+      }
+    }
+    interactions.set(identity, { rows, expiresAt, closedCount, terminalCount }); return rows;
+  }
   const key = (ownerId, sessionId) => `${ownerId}|${sessionId}`;
   function observe(ownerId, sessionId, events) {
     if (context.closing) return;
@@ -17,6 +43,10 @@ export function createSessionMetadata(context) {
       if (!event || typeof event !== 'object') continue;
       if (metadata.forgottenSeqs?.includes(event.seq)) continue;
       if (event.type === 'assistant.message' && Number.isSafeInteger(event.seq)) row.latestMessageSeq = Math.max(row.latestMessageSeq, event.seq);
+      const outcome = terminalOutcome(event);
+      if (outcome && Number.isSafeInteger(event.seq) && event.seq > (row.outcomeSeq ?? -1)) {
+        row.outcomeSeq = event.seq; row.lastOutcome = outcome;
+      }
       if (Number.isFinite(Date.parse(event.at)) && (!row.updatedAt || event.at > row.updatedAt)) row.updatedAt = event.at;
     }
     index.set(key(ownerId, sessionId), row);
@@ -43,7 +73,16 @@ export function createSessionMetadata(context) {
           if (context.closing) break;
           // Activity may already have observed an old forward page. It is not
           // proof that the latest tail (activity time/unread) has been indexed.
-          try { const history = await context.callBackend(() => context.backend.readEvents({ownerId, sessionId, limit:200})); observe(ownerId, sessionId, history.events ?? []); }
+          try {
+            let history = await context.callBackend(() => context.backend.readEvents({ownerId, sessionId, limit:200}));
+            observe(ownerId, sessionId, history.events ?? []);
+            // A long running turn can push the last terminal beyond the tail.
+            // Recover it once at startup, never while serving a list.
+            while ((history.hasOlder ?? history.hasMore) && !index.get(key(ownerId,sessionId))?.lastOutcome && history.nextBeforeSeq !== undefined && !context.closing) {
+              history = await context.callBackend(() => context.backend.readEvents({ownerId,sessionId,beforeSeq:history.nextBeforeSeq,limit:200}));
+              observe(ownerId, sessionId, history.events ?? []);
+            }
+          }
           catch { /* The selected history read can repair an unavailable startup entry. */ }
         }
       })();
@@ -105,8 +144,10 @@ export function createSessionMetadata(context) {
         // Snapshot the newest message while marking read, so a later completion
         // remains unread even when the running turn was opened earlier.
         if (patch.unread === false) {
+          const prior = index.get(key(ownerId,sessionId)), knownSeq = Math.max(prior?.latestMessageSeq ?? -1,prior?.outcomeSeq ?? -1);
           const history = await context.callBackend(() => context.backend.readEvents({ ownerId, sessionId, limit: 200 }));
-          patch = { ...patch, readMessageSeq: Math.max(-1, ...(history.events ?? []).filter(event => event.type === 'assistant.message').map(event => event.seq)) };
+          observe(ownerId, sessionId, history.events ?? []);
+          patch = { ...patch, readMessageSeq: Math.max(session.readMessageSeq ?? -1,readSnapshotSeq(history,knownSeq)) };
         }
         await context.mutate(ownerId, next => {
           Object.assign(next.sessions[sessionId], patch);
@@ -157,12 +198,31 @@ export function createSessionMetadata(context) {
     async summary(ownerId, sessionId) {
       const metadata = requireSession(ownerId, sessionId);
       const row = index.get(key(ownerId, sessionId));
-      const latestMessageSeq = row?.latestMessageSeq ?? -1;
+      const latestMessageSeq = Math.max(row?.latestMessageSeq ?? -1, row?.outcomeSeq ?? -1);
       const activityTimes = [metadata.attachedAt, row?.updatedAt].map(value => Date.parse(value)).filter(Number.isFinite);
       return { ...memorySettings(metadata), pinned: metadata.pinned === true, unread: metadata.unread === true || latestMessageSeq > (metadata.readMessageSeq ?? -1),
+        attention: attentionIndex(context.accountState(ownerId)).get(sessionId) ?? null, lastOutcome: row?.lastOutcome ?? null,
         ...(activityTimes.length ? { updatedAt: new Date(Math.max(...activityTimes)).toISOString() } : {}),
         groupId: metadata.groupId ?? null, ...(metadata.title ? { title: metadata.title } : {}),
         ...(metadata.parentSessionId ? { parentSessionId: metadata.parentSessionId } : {}) };
+    },
+    readSeq(ownerId, sessionId) { const row = index.get(key(ownerId,sessionId)); return Math.max(row?.latestMessageSeq ?? -1,row?.outcomeSeq ?? -1); },
+    async statusSummary(ownerId, nativeDescriptions) {
+      const account = context.accountState(ownerId), projects = {}, groups = {}, main = [], all = [];
+      for (const [sessionId, metadata] of Object.entries(account.sessions)) {
+        if (metadata.deleting || metadata.archived) continue;
+        const row = index.get(key(ownerId,sessionId)), status = { attention: attentionIndex(account).get(sessionId) ?? null,
+          lastOutcome: row?.lastOutcome ?? null, running: nativeDescriptions?.get(sessionId)?.running === true,
+          unread: metadata.unread === true || Math.max(row?.latestMessageSeq ?? -1,row?.outcomeSeq ?? -1) > (metadata.readMessageSeq ?? -1) };
+        all.push(status);
+        if (metadata.projectId) (projects[metadata.projectId] ??= []).push(status);
+        else {
+          main.push(status);
+          if (chatForSession(account,sessionId)?.kind !== 'main') (groups[metadata.pinned ? 'pinned' : metadata.groupId ?? 'ungrouped'] ??= []).push(status);
+        }
+      }
+      return { main: aggregateStatus(main), all: aggregateStatus(all), projects: Object.fromEntries(Object.entries(projects).map(([id,rows])=>[id,aggregateStatus(rows)])),
+        groups: Object.fromEntries(Object.entries(groups).map(([id,rows])=>[id,aggregateStatus(rows)])) };
     },
   };
 }

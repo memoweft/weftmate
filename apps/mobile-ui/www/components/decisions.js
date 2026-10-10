@@ -135,7 +135,7 @@ function approvalMeaning(row,cache,attempt){if(attempt?.busy)return '正在提�
   return row.outcome==='allowed-once'?'执行端已处理本次允许；任务结果仍以执行记录为准。':'执行端已处理本次拒绝。'}
 
 function fillApprovalCard(card,row,context,cache){const attempt=approvalAttempt(context,row);
-  const signature=JSON.stringify([row,cache.error,attempt?.busy,attempt?.unknown,attempt?.checked]);if(card.dataset.signature===signature)return;
+  const signature=JSON.stringify([context,row,cache.error,attempt?.busy,attempt?.unknown,attempt?.checked]);if(card.dataset.signature===signature)return;
   const focused=document.activeElement,focusChoice=focused?.dataset?.approvalChoice;
   const hadFocus=focusChoice&&focused.parent===card.querySelector('.approval-actions')||focused?.closest?.('.tool-approval')===card;
   const resolving=card.dataset.approvalId&&!card.classList.contains('is-resolved')&&row.status!=='pending';

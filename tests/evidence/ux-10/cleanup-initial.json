@@ -1,0 +1,29 @@
+{
+  "processes": [
+    {
+      "ProcessId": 62776,
+      "CreationDate": "2026-10-10T18:11:48.033346+08:00",
+      "ExecutablePath": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+      "CommandLine": "\"D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe\"  \"--inspect=0\" \"--remote-debugging-port=0\" \"tests/integration/desktop-ui-1.cjs\" \"http://127.0.0.1:57528/personal/v1/ui/\""
+    },
+    {
+      "ProcessId": 32468,
+      "CreationDate": "2026-10-10T18:11:48.176173+08:00",
+      "ExecutablePath": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+      "CommandLine": "\"D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe\" --type=gpu-process --user-data-dir=\"C:\\weftmate-ci-i8V36l\\weftmate-desktop-interactions-LCY9dW\" --gpu-preferences=UAAAAAAAAADgAAAEAAAAAAAAAAAAAGAAOAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAABgAAAAAAAAAGAAAAAAAAAAIAAAAAAAAAAgAAAAAAAAACAAAAAAAAAA= --use-gl=angle --use-angle=d3d11-warp-webgl --field-trial-handle=1984,i,664605994735175515,8765212966097944015,262144 --enable-features=PdfUseShowSaveFilePicker --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,NetworkServiceSandbox,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=2044,i,3047487465904123458,16078987582189019981,4 --trace-process-track-uuid=3190708988185955192 --mojo-platform-channel-handle=1928 /prefetch:2"
+    },
+    {
+      "ProcessId": 46796,
+      "CreationDate": "2026-10-10T18:11:48.19578+08:00",
+      "ExecutablePath": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+      "CommandLine": "\"D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe\" --type=utility --utility-sub-type=network.mojom.NetworkService --lang=zh-CN --service-sandbox-type=none --user-data-dir=\"C:\\weftmate-ci-i8V36l\\weftmate-desktop-interactions-LCY9dW\" --field-trial-handle=1984,i,664605994735175515,8765212966097944015,262144 --enable-features=PdfUseShowSaveFilePicker --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,NetworkServiceSandbox,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=2044,i,3047487465904123458,16078987582189019981,4 --trace-process-track-uuid=3190708989122997041 --mojo-platform-channel-handle=2216 /prefetch:11"
+    },
+    {
+      "ProcessId": 55832,
+      "CreationDate": "2026-10-10T18:11:48.214899+08:00",
+      "ExecutablePath": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+      "CommandLine": "\"D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe\" --type=renderer --user-data-dir=\"C:\\weftmate-ci-i8V36l\\weftmate-desktop-interactions-LCY9dW\" --app-path=\"D:\\AIProjects\\WeftMate\\Worktrees\\w7\\tests\\integration\" --enable-sandbox --force-device-scale-factor=1 --remote-debugging-port=0 --disable-gpu-compositing --video-capture-use-gpu-memory-buffer --lang=zh-CN --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=4 --time-ticks-at-unix-epoch=-1791369375024485 --launch-time-ticks=257733184205 --field-trial-handle=1984,i,664605994735175515,8765212966097944015,262144 --enable-features=PdfUseShowSaveFilePicker --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,NetworkServiceSandbox,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=2044,i,3047487465904123458,16078987582189019981,4 --trace-process-track-uuid=3190708990060038890 --mojo-platform-channel-handle=2792 /prefetch:1"
+    }
+  ],
+  "forcedCount": 4
+}
