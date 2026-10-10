@@ -2,6 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {scan,check} from '../apps/apple/Scripts/check_callback_isolation.mjs';
+test('callback review hashes are independent of Git checkout line endings',()=>{
+ const source='view.visualEffect { @Sendable value in\n Task { @MainActor in model.accept(value) }\n}';
+ assert.deepEqual(scan(source),scan(source.replaceAll('\n','\r\n')));
+ assert.notDeepEqual(scan(source),scan(source.replace('@MainActor','')));
+});
 test('Apple reviewed callbacks retain their exact isolation boundary',()=>{
  assert.match(execFileSync(process.execPath,['apps/apple/Scripts/check_callback_isolation.mjs'],{encoding:'utf8'}),/0 failures/);
 });

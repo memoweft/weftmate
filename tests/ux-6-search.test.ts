@@ -41,7 +41,7 @@ test('UX-6 account switch and close discard in-flight replies; recent persistenc
   const closing=f.core.openSearch();f.core.closeSearch();resolve({items:[{chatId:'late',title:'late'}]});await closing;assert.equal(f.core.search.rows.length,0);
 });
 test('UX-6 keyboard wraps rows/types, home/end select bounds, Esc closes, operation items have correct destinations',async()=>{
-  const f=fixture();await f.core.openSearch();assert.deepEqual(plain(f.core.searchActions()).map((row:any)=>row.id),['new','temporary','project','settings','memory','activity','goals','library']);
+  const f=fixture();await f.core.openSearch();assert.deepEqual(plain(f.core.searchActions()).map((row:any)=>row.id),['new','temporary','project','settings','memory','activity','goals','library','help','releases','shortcuts']);
   assert.equal(f.core.searchActions('hello')[0].query,'hello');f.core.navigateSearch('ArrowUp');assert.equal(f.core.search.selected,f.core.search.rows.length-1);f.core.navigateSearch('Home');assert.equal(f.core.search.selected,0);
   f.core.navigateSearch('ArrowLeft');assert.equal(f.core.search.type,'memory');await wait(10);f.core.navigateSearch('Escape');assert.equal(f.core.search.open,false);
 });

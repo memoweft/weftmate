@@ -37,6 +37,7 @@
         bindDesktop: core.cloudBindDesktop });
     for (const mount of ["mountAuth", "mountAccount", "mountSettings", "mountMemory", "mountApprovals", "mountComposer", "mountPhone", "mountSessions", "mountCloudSettings", "mountShell", "mountSettingsNavigation", "mountMainChat", "mountActivity", "mountGoals", "mountLibrary", "mountSearch"])
         ui[mount]();
+    ui.mountHelp();
     ui.mountOnboarding();
     globalThis.WeftPresenceView.mount({core, badgeTarget:ui.byId('assistant-connection'),
         composerTarget:ui.byId('message-form').parentElement, toast:ui.toast,

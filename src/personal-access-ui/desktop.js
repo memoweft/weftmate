@@ -201,9 +201,7 @@
 
     const input = byId('message-text')
     input.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) {
-        e.preventDefault(); if (!input.disabled) actions.sendDraft(input.value, e.ctrlKey || e.metaKey ? 'queue' : undefined)
-      }
+      WeftShortcuts.dispatch(e,{send:()=>{if(!input.disabled)actions.sendDraft(input.value)},queue:()=>{if(!input.disabled)actions.sendDraft(input.value,'queue')},newline:()=>false})
     })
     const add = files => { if (!byId('message-attachments').disabled && files.length) actions.addFiles(files) }
     byId('attachment-add').tabIndex = 0
@@ -215,19 +213,14 @@
     form.addEventListener('drop', e => { e.preventDefault(); form.classList.remove('is-dragging'); add([...(e.dataTransfer?.files || [])]) })
     document.addEventListener('keydown', e => {
       if (!actions.isAssistant() || e.isComposing || document.querySelector('dialog[open]')) return
-      if ((e.ctrlKey || e.metaKey) && !e.altKey) {
-        const key = e.key.toLowerCase()
-        if (key === 'n') { e.preventDefault(); byId('new-session').click() }
-        if (key === 'k') { e.preventDefault(); actions.openSearch?.() }
-        if (key === 'b') { e.preventDefault(); toggleRail() }
-        if (key === ',') { e.preventDefault(); globalThis.WeftSettingsNavigation?.open('general') }
-      } else if (e.key === 'Escape' && !e.defaultPrevented) {
-        e.preventDefault()
+      WeftShortcuts.dispatch(e,{new:()=>byId('new-session').click(),search:()=>actions.openSearch?.(),sidebar:()=>toggleRail(),settings:()=>globalThis.WeftSettingsNavigation?.open('general'),
+        shortcuts:()=>{if(!globalThis.weftmateDesktop&&matchMedia('(max-width:720px)').matches)return false;actions.openShortcuts?.()},escape:()=>{
+        if(e.defaultPrevented)return false
         if (picker) { hidePicker(true) }
         else if (preview && !preview.panel.hidden) closePreview()
         else if (!byId('account-menu').hidden) { byId('account-menu').hidden = true; byId('account-menu-trigger').setAttribute('aria-expanded', 'false'); byId('account-menu-trigger').focus() }
         else actions.stop()
-      }
+      }})
     })
     applyAppearance()
   }
