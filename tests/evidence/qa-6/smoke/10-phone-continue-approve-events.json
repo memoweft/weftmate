@@ -1,0 +1,78 @@
+[
+  {
+    "seq": 4,
+    "type": "task.queued",
+    "at": "2026-10-10T13:08:19.356Z",
+    "data": {
+      "taskId": "cmd-2a3505ec-3766-42d3-b0c1-d5a11a9845a2",
+      "receiptId": "63106a2c-c815-480d-b1e3-99f74c817a1b",
+      "text": "仅在这次临时对话里：第777个测试箱的颜色是紫色。只回复收到。",
+      "commandId": "cmd-2a3505ec-3766-42d3-b0c1-d5a11a9845a2",
+      "requestId": "bd28ad23-ede6-456b-b6c8-695d25f94eaf"
+    }
+  },
+  {
+    "seq": 5,
+    "type": "turn.started",
+    "at": "2026-10-10T13:08:19.356Z",
+    "data": {
+      "turn": 1
+    }
+  },
+  {
+    "seq": 7,
+    "type": "task.started",
+    "at": "2026-10-10T13:08:19.405Z",
+    "data": {
+      "taskId": "cmd-2a3505ec-3766-42d3-b0c1-d5a11a9845a2",
+      "turn": 1,
+      "receiptId": "63106a2c-c815-480d-b1e3-99f74c817a1b",
+      "commandId": "cmd-2a3505ec-3766-42d3-b0c1-d5a11a9845a2",
+      "requestId": "bd28ad23-ede6-456b-b6c8-695d25f94eaf",
+      "turnTaskId": "turn-1"
+    }
+  },
+  {
+    "seq": 11,
+    "type": "user.message",
+    "at": "2026-10-10T13:08:19.405Z",
+    "data": {
+      "text": "仅在这次临时对话里：第777个测试箱的颜色是紫色。只回复收到。",
+      "receiptId": "63106a2c-c815-480d-b1e3-99f74c817a1b"
+    }
+  },
+  {
+    "seq": 35,
+    "type": "assistant.message",
+    "at": "2026-10-10T13:08:22.194Z",
+    "data": {
+      "text": "收到",
+      "modelThinking": "The user says: \"仅在这次临时对话里：第777个测试箱的颜色是紫色。只回复收到。\" — Just in this temporary conversation: the 777th test box's color is purple. Only reply \"收到\".",
+      "memoryUsed": []
+    }
+  },
+  {
+    "seq": 36,
+    "type": "task.ended",
+    "at": "2026-10-10T13:08:22.195Z",
+    "data": {
+      "taskId": "cmd-2a3505ec-3766-42d3-b0c1-d5a11a9845a2",
+      "turn": 1,
+      "reason": "completed",
+      "nativeTurnEndSeq": 37,
+      "receiptId": "63106a2c-c815-480d-b1e3-99f74c817a1b",
+      "commandId": "cmd-2a3505ec-3766-42d3-b0c1-d5a11a9845a2",
+      "requestId": "bd28ad23-ede6-456b-b6c8-695d25f94eaf",
+      "turnTaskId": "turn-1"
+    }
+  },
+  {
+    "seq": 37,
+    "type": "turn.ended",
+    "at": "2026-10-10T13:08:22.195Z",
+    "data": {
+      "reason": "completed",
+      "turn": 1
+    }
+  }
+]

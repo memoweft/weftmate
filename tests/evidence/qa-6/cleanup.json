@@ -1,0 +1,77 @@
+{
+  "at": "2026-10-10T22:08:25.8825990+08:00",
+  "criteria": "creation after baseline start + executable path + command line containing this worktree or recorded QA6 temporary path; no parent-PID matching",
+  "extraStoppedNow": [],
+  "uniqueRecordedTerminations": 7,
+  "recordedTerminations": [
+    {
+      "ProcessId": 28296,
+      "Name": "node.exe",
+      "CreationDate": "2026-10-10T21:29:38.400146+08:00"
+    },
+    {
+      "ProcessId": 42396,
+      "Name": "WeftMate.exe",
+      "CreationDate": "2026-10-10T21:02:20.982817+08:00"
+    },
+    {
+      "ProcessId": 47508,
+      "Name": "WeftMate.exe",
+      "CreationDate": "2026-10-10T21:02:20.969093+08:00"
+    },
+    {
+      "ProcessId": 50992,
+      "Name": "WeftMate.exe",
+      "CreationDate": "2026-10-10T21:02:20.448265+08:00"
+    },
+    {
+      "ProcessId": 59188,
+      "Name": "WeftMate.exe",
+      "CreationDate": "2026-10-10T21:02:24.66675+08:00"
+    },
+    {
+      "ProcessId": 6012,
+      "Name": "WeftMate.exe",
+      "CreationDate": "2026-10-10T21:02:26.298091+08:00"
+    },
+    {
+      "ProcessId": 61416,
+      "Name": "node.exe",
+      "CreationDate": "2026-10-10T20:59:51.952015+08:00"
+    }
+  ],
+  "remainingOwnedProcesses": [],
+  "remainingRecordedCoreProcesses": [],
+  "backupCopiesRemaining": 0,
+  "privateSigningDirectoriesRemaining": 0,
+  "ownLanLockRemaining": false,
+  "emulatorStarted": false,
+  "emulatorStopped": false,
+  "deletedOwnedDirectories": [
+    "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa6-approval-recheck-AZRF1i",
+    "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa6-exit-formation-final-SipgGq",
+    "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa6-smoke-installed-nIXCec",
+    "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa6-smoke-T021Dd",
+    "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa6-smoke-gA4uzX",
+    "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa6-supplement-installed-hwM4UM",
+    "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa6-supplement-7ONfLp",
+    "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa6-upgrade-WGRx6d",
+    "C:\\weftmate-ci-CFDDlp"
+  ],
+  "directoryDeletionFailures": [],
+  "additionalCodeCleanupRejected": {
+    "reason": "blocked by policy; no more specific reason returned",
+    "action": "Remove exported old source and its dependency junctions, local diagnostics/public build key, and detached QA6 Core worktree",
+    "retained": [
+      ".local/qa-6/old-source",
+      ".local/qa-6/old-source.tar",
+      ".local/qa-6/old-assets.tar",
+      ".local/qa-6/keys.json",
+      ".local/qa-6/migration-private.txt",
+      "C:/Temp/weftmate-qa6-core"
+    ],
+    "privateBackupCopiesDeleted": true,
+    "privateSigningKeysDeleted": true,
+    "noAlternateDeletionAttempted": true
+  }
+}

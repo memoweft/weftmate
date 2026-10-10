@@ -1,0 +1,166 @@
+{
+  "sessions": [
+    {
+      "sessionId": "session-626d970f-e7a7-4bdf-9f72-d70c7d90eedc",
+      "hostId": "host-ff1dc49d-5f22-487a-85f7-9885ab8c68af",
+      "archived": false,
+      "modelProfileId": "private-model-fa79278faaf40f4161e4b1ce2b11134b2c03f131",
+      "title": "写入文件并尊重拒绝",
+      "temporary": false,
+      "hasTemporaryContent": false,
+      "memoryMode": "on",
+      "recallEnabled": true,
+      "autoDeleteDays": 30,
+      "expiresAt": null,
+      "pinned": false,
+      "unread": false,
+      "attention": "approval",
+      "lastOutcome": "completed",
+      "updatedAt": "2026-10-10T13:11:41.423Z",
+      "groupId": null,
+      "running": true,
+      "taskAvailable": true,
+      "contextUsage": {
+        "usedTokens": 3967,
+        "contextWindow": 131072
+      },
+      "deepThinking": false,
+      "sendAvailable": true
+    },
+    {
+      "sessionId": "session-b0dfb90d-ab0e-4ca5-9f1d-e4cf921e11f4",
+      "hostId": "host-ff1dc49d-5f22-487a-85f7-9885ab8c68af",
+      "archived": false,
+      "modelProfileId": "private-model-fa79278faaf40f4161e4b1ce2b11134b2c03f131",
+      "title": "请整理这个合成文件夹 C:/Users/",
+      "temporary": false,
+      "hasTemporaryContent": false,
+      "memoryMode": "on",
+      "recallEnabled": true,
+      "autoDeleteDays": 30,
+      "expiresAt": null,
+      "pinned": false,
+      "unread": true,
+      "attention": null,
+      "lastOutcome": "completed",
+      "updatedAt": "2026-10-10T13:10:11.846Z",
+      "groupId": null,
+      "running": false,
+      "taskAvailable": true,
+      "contextUsage": {
+        "usedTokens": 5121,
+        "contextWindow": 131072
+      },
+      "deepThinking": false,
+      "sendAvailable": true
+    },
+    {
+      "sessionId": "session-cb787591-15b8-40f1-98b8-e29a22d565ee",
+      "hostId": "host-ff1dc49d-5f22-487a-85f7-9885ab8c68af",
+      "archived": false,
+      "modelProfileId": "private-model-fa79278faaf40f4161e4b1ce2b11134b2c03f131",
+      "title": "仅在这次临时对话里：第777个",
+      "temporary": true,
+      "hasTemporaryContent": true,
+      "memoryMode": "off",
+      "recallEnabled": true,
+      "autoDeleteDays": 30,
+      "expiresAt": "2026-11-09T13:08:19.103Z",
+      "pinned": false,
+      "unread": true,
+      "attention": null,
+      "lastOutcome": "completed",
+      "updatedAt": "2026-10-10T13:08:22.195Z",
+      "groupId": null,
+      "running": false,
+      "taskAvailable": true,
+      "contextUsage": {
+        "usedTokens": 2462,
+        "contextWindow": 131072
+      },
+      "deepThinking": false,
+      "sendAvailable": true
+    },
+    {
+      "sessionId": "session-a3efcce9-3fa5-43fd-a879-ffecdb58cb0c",
+      "hostId": "host-ff1dc49d-5f22-487a-85f7-9885ab8c68af",
+      "archived": false,
+      "modelProfileId": "private-model-fa79278faaf40f4161e4b1ce2b11134b2c03f131",
+      "title": "QA6渲染样张",
+      "temporary": false,
+      "hasTemporaryContent": false,
+      "memoryMode": "on",
+      "recallEnabled": true,
+      "autoDeleteDays": 30,
+      "expiresAt": null,
+      "pinned": false,
+      "unread": false,
+      "attention": null,
+      "lastOutcome": "completed",
+      "updatedAt": "2026-10-10T13:06:50.119Z",
+      "groupId": null,
+      "running": false,
+      "taskAvailable": true,
+      "contextUsage": {
+        "usedTokens": 3513,
+        "contextWindow": 131072
+      },
+      "deepThinking": false,
+      "sendAvailable": true
+    },
+    {
+      "sessionId": "session-cd9c96dd-9334-49f2-84b2-e2ad4c699365",
+      "hostId": "host-ff1dc49d-5f22-487a-85f7-9885ab8c68af",
+      "archived": false,
+      "modelProfileId": "private-model-fa79278faaf40f4161e4b1ce2b11134b2c03f131",
+      "title": "记住花茶加柠檬偏好",
+      "temporary": false,
+      "hasTemporaryContent": false,
+      "memoryMode": "on",
+      "recallEnabled": true,
+      "autoDeleteDays": 30,
+      "expiresAt": null,
+      "pinned": false,
+      "unread": true,
+      "attention": null,
+      "lastOutcome": "completed",
+      "updatedAt": "2026-10-10T13:06:19.092Z",
+      "groupId": null,
+      "running": false,
+      "taskAvailable": true,
+      "contextUsage": {
+        "usedTokens": 2375,
+        "contextWindow": 131072
+      },
+      "deepThinking": false,
+      "sendAvailable": true
+    }
+  ],
+  "groups": [],
+  "snapshotAt": "2026-10-10T13:12:12.543Z",
+  "statusSummary": {
+    "main": {
+      "attention": "approval",
+      "running": true,
+      "unread": false,
+      "lastOutcome": "completed"
+    },
+    "all": {
+      "attention": "approval",
+      "running": true,
+      "unread": false,
+      "lastOutcome": "completed"
+    },
+    "projects": {},
+    "groups": {
+      "ungrouped": {
+        "attention": "approval",
+        "running": true,
+        "unread": false,
+        "lastOutcome": "completed"
+      }
+    }
+  },
+  "hasMore": false,
+  "nextCursor": null
+}

@@ -1,0 +1,1076 @@
+{
+  "startedAt": "2026-10-10T13:06:09.988Z",
+  "installed": true,
+  "checks": [
+    {
+      "name": "00-no-false-recovery",
+      "passed": true,
+      "durationMs": 1006
+    },
+    {
+      "name": "01-main-chat",
+      "passed": false,
+      "durationMs": 487,
+      "error": "COMMAND_REJECTED:BACKEND_UNAVAILABLE"
+    },
+    {
+      "name": "02-preference",
+      "passed": true,
+      "durationMs": 7370,
+      "sessionId": "session-cd9c96dd-9334-49f2-84b2-e2ad4c699365",
+      "approvals": 0,
+      "reply": "我记下了，稍后会整理进记忆：你喝第 951 种花茶时喜欢加一片柠檬。"
+    },
+    {
+      "name": "03-side-recall",
+      "passed": true,
+      "durationMs": 3817,
+      "sessionId": "session-a3efcce9-3fa5-43fd-a879-ffecdb58cb0c",
+      "approvals": 0,
+      "reply": "加一片柠檬。"
+    },
+    {
+      "name": "04-correction",
+      "passed": true,
+      "durationMs": 9545,
+      "sessionId": "session-a3efcce9-3fa5-43fd-a879-ffecdb58cb0c",
+      "approvals": 0,
+      "reply": "记下了，稍后整理进记忆：第951种花茶不加柠檬，改加一片苹果。"
+    },
+    {
+      "name": "12-rendering-motion",
+      "passed": true,
+      "durationMs": 4636,
+      "sessionId": "session-a3efcce9-3fa5-43fd-a879-ffecdb58cb0c",
+      "approvals": 0,
+      "reply": "```javascript\nconst greeting = \"你好，世界\";\nconsole.log(greeting);\nexport default greeting;\n```\n\n| 名称 | 数量 | 备注 |\n| --- | --- | --- |\n| 花茶 | 951 | 加一片苹果 |\n| 绿茶 | 12 | 清饮 |\n\n$$E=mc^2$$\n\n```mermaid\nflowchart TD\n    A[开始] --> B[完成]\n```",
+      "counts": {
+        "code": 2,
+        "table": 1,
+        "math": 1,
+        "mermaid": 1,
+        "actions": 15
+      },
+      "clipboardNonempty": true,
+      "streamFrames": 30,
+      "streamMotionSeen": true
+    },
+    {
+      "name": "13-suggestions",
+      "passed": false,
+      "durationMs": 30001,
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.next-suggestion-chip').first() to be visible\u001b[22m\n"
+    },
+    {
+      "name": "14-search-title-body-menu",
+      "passed": true,
+      "durationMs": 1549,
+      "title": true,
+      "body": true,
+      "ctrlK": true
+    },
+    {
+      "name": "15-folder-project",
+      "passed": false,
+      "durationMs": 30497,
+      "error": "locator.selectOption: Error: strict mode violation: getByLabel('文件权限', { exact: true }) resolved to 2 elements:\n    1) <select class=\"\" hidden=\"\" tabindex=\"-1\" aria-label=\"文件权限\" aria-hidden=\"true\">…</select> aka getByRole('region', { name: '在文件夹里工作' }).locator('select')\n    2) <button type=\"button\" role=\"combobox\" aria-label=\"文件权限\" aria-expanded=\"false\" aria-haspopup=\"listbox\" class=\"settings-select \" aria-controls=\"settings-options-439cb51c-22d7-47ac-b620-b39466c1ad34-list\">…</button> aka getByRole('combobox', { name: '文件权限' })\n\nCall log:\n\u001b[2m  - waiting for getByLabel('文件权限', { exact: true })\u001b[22m\n"
+    },
+    {
+      "name": "05-file-approval",
+      "passed": true,
+      "durationMs": 11710,
+      "sessionId": "session-b0dfb90d-ab0e-4ca5-9f1d-e4cf921e11f4",
+      "approvals": 3,
+      "reply": "\n\n\n已完成：读取了 a.txt（合成会议笔记）和 b.txt（合成阅读清单），并在同一目录生成 `index.md` 列出两份文件内容，未操作该目录以外的文件。"
+    },
+    {
+      "name": "06-reminder-set",
+      "passed": true,
+      "durationMs": 12400,
+      "sessionId": "session-b0dfb90d-ab0e-4ca5-9f1d-e4cf921e11f4",
+      "approvals": 0,
+      "reply": "\n\n已设置提醒：今天 21:10（约2分钟后）提醒你「QA6日用冒烟活动」。"
+    },
+    {
+      "name": "07-personalization",
+      "passed": true,
+      "durationMs": 673
+    },
+    {
+      "name": "08-dark",
+      "passed": true,
+      "durationMs": 376
+    },
+    {
+      "name": "09-temporary",
+      "passed": true,
+      "durationMs": 3226,
+      "sessionId": "session-cb787591-15b8-40f1-98b8-e29a22d565ee",
+      "approvals": 0,
+      "reply": "收到"
+    },
+    {
+      "name": "10-phone-continue-approve",
+      "passed": false,
+      "durationMs": 31630,
+      "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-session-id=\"session-b0dfb90d-ab0e-4ca5-9f1d-e4cf921e11f4\"] > button').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-description=\"已完成，未读\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    58 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n"
+    },
+    {
+      "name": "11-reminder-delivery",
+      "passed": true,
+      "durationMs": 70251,
+      "activity": {
+        "id": "activity-e6876ba12a920ec4df64cfc2b1562e5270a02254f3bcdae0e2178b7c610ca4be",
+        "at": "2026-10-10T13:10:11.844Z",
+        "type": "reminder.triggered",
+        "title": "提醒",
+        "summary": "提醒：QA6日用冒烟活动",
+        "source": {
+          "chatId": "chat-ca6dfd5a-f2fe-44eb-b677-d60679df4a1c",
+          "chatKind": "side",
+          "sessionId": "session-b0dfb90d-ab0e-4ca5-9f1d-e4cf921e11f4",
+          "eventId": "event-c8d2d99285bc9623353b889c7fd0ffe876eb1aad6c822ed15849760228cc2d99",
+          "messageId": "5f990c4e-decd-43c3-80d9-d70abbc830b7",
+          "scheduleId": "session-b0dfb90d-ab0e-4ca5-9f1d-e4cf921e11f4:schedule-1-281",
+          "seq": 284
+        },
+        "actions": [
+          {
+            "kind": "open_chat",
+            "label": "打开对话",
+            "target": {
+              "chatId": "chat-ca6dfd5a-f2fe-44eb-b677-d60679df4a1c",
+              "chatKind": "side",
+              "sessionId": "session-b0dfb90d-ab0e-4ca5-9f1d-e4cf921e11f4",
+              "eventId": "event-c8d2d99285bc9623353b889c7fd0ffe876eb1aad6c822ed15849760228cc2d99",
+              "messageId": "5f990c4e-decd-43c3-80d9-d70abbc830b7",
+              "seq": 284
+            }
+          }
+        ],
+        "state": "completed",
+        "notification": {
+          "level": "important",
+          "type": "reminder.triggered",
+          "initiatedBy": "user",
+          "title": "提醒",
+          "body": "提醒：QA6日用冒烟活动",
+          "notify": true,
+          "sound": true,
+          "decision": "notify",
+          "reason": "allowed",
+          "decidedAt": "2026-10-10T13:10:12.062Z"
+        },
+        "revision": 1,
+        "attentionRevision": 13,
+        "createdSequence": 13,
+        "read": false
+      },
+      "notifications": [
+        {
+          "title": "请整理这个合成文件夹 C:/Users/yun/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-f",
+          "body": "已完成 · 点开查看结果",
+          "at": 1791637686401
+        },
+        {
+          "title": "请在2分钟后提醒我站起来活动，提醒内容为QA6日用冒烟活动。",
+          "body": "已完成 · 点开查看结果",
+          "at": 1791637698711
+        }
+      ]
+    },
+    {
+      "name": "22-drag-folder",
+      "passed": false,
+      "durationMs": 10074,
+      "error": "locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.folder-confirm') to be visible\u001b[22m\n"
+    },
+    {
+      "name": "16-settings-categories",
+      "passed": true,
+      "durationMs": 4439,
+      "categories": [
+        {
+          "id": "general",
+          "name": "常规"
+        },
+        {
+          "id": "personalization",
+          "name": "个性化"
+        },
+        {
+          "id": "assistant",
+          "name": "助手"
+        },
+        {
+          "id": "notifications",
+          "name": "通知"
+        },
+        {
+          "id": "appearance",
+          "name": "外观"
+        },
+        {
+          "id": "account",
+          "name": "账户"
+        },
+        {
+          "id": "devices",
+          "name": "设备"
+        },
+        {
+          "id": "usage",
+          "name": "用量"
+        },
+        {
+          "id": "archived",
+          "name": "已归档"
+        },
+        {
+          "id": "models",
+          "name": "模型"
+        },
+        {
+          "id": "approvals",
+          "name": "审批"
+        },
+        {
+          "id": "memory",
+          "name": "记忆"
+        },
+        {
+          "id": "schedules",
+          "name": "提醒与定时任务"
+        },
+        {
+          "id": "resources",
+          "name": "资料访问"
+        },
+        {
+          "id": "system",
+          "name": "系统状态"
+        },
+        {
+          "id": "backups",
+          "name": "备份与恢复"
+        },
+        {
+          "id": "about",
+          "name": "关于"
+        }
+      ]
+    },
+    {
+      "name": "17-reduce-motion-and-disable-suggestions",
+      "passed": false,
+      "durationMs": 128,
+      "error": "locator.selectOption: Error: strict mode violation: getByLabel('减少动态效果', { exact: true }) resolved to 2 elements:\n    1) <select hidden=\"\" tabindex=\"-1\" aria-hidden=\"true\" aria-label=\"减少动态效果\" class=\"reply-motion-select\">…</select> aka getByLabel('减少动态效果').first()\n    2) <button type=\"button\" role=\"combobox\" aria-label=\"减少动态效果\" aria-expanded=\"false\" aria-haspopup=\"listbox\" class=\"settings-select reply-motion-select\" aria-controls=\"settings-options-8e6c3f72-22b3-4b2d-888b-52b918517031-list\">…</button> aka getByRole('combobox', { name: '减少动态效果' })\n\nCall log:\n\u001b[2m  - waiting for getByLabel('减少动态效果', { exact: true })\u001b[22m\n"
+    },
+    {
+      "name": "18-page-动态",
+      "passed": false,
+      "durationMs": 30000,
+      "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '动态', exact: true })\u001b[22m\n"
+    },
+    {
+      "name": "18-page-目标",
+      "passed": true,
+      "durationMs": 458,
+      "heading": [
+        "正在读取账户状态",
+        "在这台电脑上设置账户",
+        "注册新账户",
+        "登录 WeftMate",
+        "等待已有设备允许",
+        "今天想做什么？",
+        "成果库",
+        "目标",
+        "动态",
+        "已同步的本地对话",
+        "外观",
+        "账户与设备",
+        "记忆",
+        ""
+      ]
+    },
+    {
+      "name": "18-page-成果库",
+      "passed": true,
+      "durationMs": 430,
+      "heading": [
+        "正在读取账户状态",
+        "在这台电脑上设置账户",
+        "注册新账户",
+        "登录 WeftMate",
+        "等待已有设备允许",
+        "今天想做什么？",
+        "成果库",
+        "目标",
+        "动态",
+        "已同步的本地对话",
+        "外观",
+        "账户与设备",
+        "记忆",
+        ""
+      ]
+    },
+    {
+      "name": "19-offline-reconnect",
+      "passed": true,
+      "durationMs": 10191,
+      "draftPreserved": true,
+      "toasts": [
+        {
+          "at": 1791637870073,
+          "text": "连接已恢复，正在接续。"
+        },
+        {
+          "at": 1791637870075,
+          "text": "连接已恢复，正在接续。"
+        },
+        {
+          "at": 1791637870108,
+          "text": "连接已恢复，正在接续。"
+        },
+        {
+          "at": 1791637870112,
+          "text": "连接已恢复，正在接续。"
+        },
+        {
+          "at": 1791637870119,
+          "text": "连接已恢复，正在接续。"
+        },
+        {
+          "at": 1791637870188,
+          "text": "连接已恢复，正在接续。"
+        },
+        {
+          "at": 1791637870191,
+          "text": "连接已恢复，正在接续。"
+        }
+      ]
+    },
+    {
+      "name": "20-desktop-reject",
+      "passed": true,
+      "durationMs": 11664,
+      "singleClick": true,
+      "fileAbsent": true
+    },
+    {
+      "name": "20-phone-reject",
+      "passed": false,
+      "durationMs": 96,
+      "error": "Expected values to be strictly equal:\n\n404 !== 200\n"
+    },
+    {
+      "name": "23-desktop-approval-races",
+      "passed": false,
+      "durationMs": 49884,
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '批准', exact: true }) to be visible\u001b[22m\n"
+    },
+    {
+      "name": "23-phone-approval-races",
+      "passed": false,
+      "durationMs": 30519,
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '批准', exact: true }) to be visible\u001b[22m\n"
+    },
+    {
+      "name": "21-responsive-light-dark",
+      "passed": true,
+      "durationMs": 431,
+      "phoneSystemBars": "not covered by emulated viewport"
+    },
+    {
+      "name": "daily-1",
+      "passed": true,
+      "durationMs": 4518,
+      "sessionId": "session-4206af7d-856f-4e3b-89a1-b4ec8cfb79de",
+      "approvals": 0,
+      "reply": "小织，晚上好 🍵\n\n第951种花茶现在不加柠檬了，改成放一片苹果即可。"
+    },
+    {
+      "name": "daily-2",
+      "passed": true,
+      "durationMs": 3056,
+      "sessionId": "session-4206af7d-856f-4e3b-89a1-b4ec8cfb79de",
+      "approvals": 0,
+      "reply": "小织，建议下一步：在 `index.md` 末尾加一行更新时间戳，方便以后分辨版本；之后就可以把这批文件归档了。"
+    },
+    {
+      "name": "daily-3",
+      "passed": true,
+      "durationMs": 4142,
+      "sessionId": "session-b6c8c4c5-ec88-4a56-8042-26e44a78d475",
+      "approvals": 0,
+      "reply": "小织，你好！\n\n第951种花茶现在不加柠檬了，改加**一片苹果**。"
+    },
+    {
+      "name": "daily-4",
+      "passed": true,
+      "durationMs": 5585,
+      "sessionId": "session-b6c8c4c5-ec88-4a56-8042-26e44a78d475",
+      "approvals": 0,
+      "reply": "建议：先打开 `index.md` 快速核对一下两份文件的内容是否都列全了，没问题就可以把这个临时文件夹清理掉。"
+    },
+    {
+      "name": "daily-5",
+      "passed": true,
+      "durationMs": 4876,
+      "sessionId": "session-8adfdcbe-33b7-4dcd-87a2-49381103522a",
+      "approvals": 0,
+      "reply": "小织，你好呀 🍵\n\n第951种花茶现在不加柠檬了——按你之前的纠正，应该加**一片苹果**。慢慢享用～"
+    },
+    {
+      "name": "daily-6",
+      "passed": true,
+      "durationMs": 6555,
+      "sessionId": "session-8adfdcbe-33b7-4dcd-87a2-49381103522a",
+      "approvals": 0,
+      "reply": "小织，很短的建议：既然 index.md 已经写好，下一步花一分钟打开它核对一遍两份文件内容有没有抄漏，确认无误就可以收工了 🍵"
+    },
+    {
+      "name": "daily-7",
+      "passed": true,
+      "durationMs": 5107,
+      "sessionId": "session-dd735b15-df8d-46c4-9db2-0a4c30b5c645",
+      "approvals": 0,
+      "reply": "小织，你好～\n\n第951种花茶现在加**一片苹果**就好（不加柠檬了）。"
+    },
+    {
+      "name": "daily-8",
+      "passed": true,
+      "durationMs": 2979,
+      "sessionId": "session-dd735b15-df8d-46c4-9db2-0a4c30b5c645",
+      "approvals": 0,
+      "reply": "小织，下一步建议：花两分钟快速浏览一遍整理后的文件夹，确认归位正确、没有遗漏或重复，然后就可以放心休息了。"
+    },
+    {
+      "name": "daily-9",
+      "passed": true,
+      "durationMs": 3115,
+      "sessionId": "session-08106c80-a1ae-475b-9ce2-80adc98cc790",
+      "approvals": 0,
+      "reply": "小织你好！\n\n第951种花茶现在加一片苹果就好——不加柠檬了（按你后来的更正）。"
+    },
+    {
+      "name": "daily-10",
+      "passed": true,
+      "durationMs": 3511,
+      "sessionId": "session-08106c80-a1ae-475b-9ce2-80adc98cc790",
+      "approvals": 0,
+      "reply": "小织，下一步建议：把整理好的文件做个简单备份，然后休息一下。"
+    },
+    {
+      "name": "daily-11",
+      "passed": true,
+      "durationMs": 4568,
+      "sessionId": "session-fb9ca8d6-16a8-4414-a596-e544107cdd30",
+      "approvals": 0,
+      "reply": "小织，你好！\n\n第951种花茶现在不加柠檬了，改为加**一片苹果**。"
+    },
+    {
+      "name": "daily-12",
+      "passed": true,
+      "durationMs": 3204,
+      "sessionId": "session-fb9ca8d6-16a8-4414-a596-e544107cdd30",
+      "approvals": 0,
+      "reply": "小织，下一步建议：快速浏览一遍整理好的文件，确认没有放错位置的，然后休息一下。"
+    },
+    {
+      "name": "daily-13",
+      "passed": true,
+      "durationMs": 4866,
+      "sessionId": "session-eee8e95d-b5fc-4a0f-a920-b14a65cbd56e",
+      "approvals": 0,
+      "reply": "小织，你好！\n\n第951种花茶现在应该加**一片苹果**，不再加柠檬了。我记下了，稍后整理进记忆。"
+    },
+    {
+      "name": "daily-14",
+      "passed": true,
+      "durationMs": 13090,
+      "sessionId": "session-eee8e95d-b5fc-4a0f-a920-b14a65cbd56e",
+      "approvals": 0,
+      "reply": "小织，整理完文件后，建议花两分钟把要点记成一条待办清单，剩下的事心里就有数了。"
+    },
+    {
+      "name": "daily-15",
+      "passed": true,
+      "durationMs": 6910,
+      "sessionId": "session-18550002-3671-4ca2-af78-9b8724ccd877",
+      "approvals": 0,
+      "reply": "小织，你好呀！\n\n第951种花茶现在不加柠檬了，改加**一片苹果**。"
+    },
+    {
+      "name": "daily-16",
+      "passed": true,
+      "durationMs": 5855,
+      "sessionId": "session-18550002-3671-4ca2-af78-9b8724ccd877",
+      "approvals": 0,
+      "reply": "下一步：把整理好的文件做个简短备份，然后休息两分钟再继续。"
+    },
+    {
+      "name": "daily-17",
+      "passed": true,
+      "durationMs": 3802,
+      "sessionId": "session-c702d979-de6e-47b3-ab40-309f448e1547",
+      "approvals": 0,
+      "reply": "小织，你好！\n\n第951种花茶现在不加柠檬了，改加**一片苹果**就好。"
+    },
+    {
+      "name": "daily-18",
+      "passed": true,
+      "durationMs": 4814,
+      "sessionId": "session-c702d979-de6e-47b3-ab40-309f448e1547",
+      "approvals": 0,
+      "reply": "小织，下一步建议：花5分钟把整理好的文件快速浏览一遍，确认没有放错位置的，然后就去休息一下。"
+    },
+    {
+      "name": "daily-19",
+      "passed": true,
+      "durationMs": 4107,
+      "sessionId": "session-c4ae7dac-2ad7-4b65-974d-3aade3390268",
+      "approvals": 0,
+      "reply": "小织，你好！\n\n第951种花茶现在不加柠檬了，改加**一片苹果**即可。"
+    },
+    {
+      "name": "daily-20",
+      "passed": true,
+      "durationMs": 4278,
+      "sessionId": "session-c4ae7dac-2ad7-4b65-974d-3aade3390268",
+      "approvals": 0,
+      "reply": "小织，建议：整理完就顺手把没用的旧文件归到一个\"待清理\"文件夹，稍后统一删掉，别边整理边纠结。"
+    },
+    {
+      "name": "daily-21",
+      "passed": true,
+      "durationMs": 4058,
+      "sessionId": "session-0436e3a8-3676-4b68-a9d0-ff273d986f23",
+      "approvals": 0,
+      "reply": "小织，你好～\n\n现在喝第951种花茶，按你的最新纠正：不加柠檬了，改为加**一片苹果**。"
+    },
+    {
+      "name": "daily-22",
+      "passed": true,
+      "durationMs": 3238,
+      "sessionId": "session-0436e3a8-3676-4b68-a9d0-ff273d986f23",
+      "approvals": 0,
+      "reply": "小织，整理完文件后：花两分钟把待力建个清单，挑最要紧的一项先做。"
+    },
+    {
+      "name": "daily-23",
+      "passed": true,
+      "durationMs": 4121,
+      "sessionId": "session-3b3a289b-2b3a-4433-a15e-3fe6272faff2",
+      "approvals": 0,
+      "reply": "小织，你好～\n\n第951种花茶不加柠檬了，改成加**一片苹果**就好。🍵🍎"
+    },
+    {
+      "name": "daily-24",
+      "passed": true,
+      "durationMs": 10873,
+      "sessionId": "session-3b3a289b-2b3a-4433-a15e-3fe6272faff2",
+      "approvals": 0,
+      "reply": "小织，建议：整理完文件后，顺手清掉重复和过期的那几份，剩下的按用途归成两三类就收工。\n\n另外，要不要我把“给你建议时保持这种简短风格”记为偏好？以后请按这种风格给我建议——要这样做吗？"
+    },
+    {
+      "name": "daily-25",
+      "passed": true,
+      "durationMs": 5166,
+      "sessionId": "session-5c83a338-f442-4203-9c56-f8147c1437dc",
+      "approvals": 0,
+      "reply": "小织，你好！\n\n你喝的第951种花茶，现在按你的最新说法：不加柠檬了，改为加**一片苹果**。"
+    },
+    {
+      "name": "daily-26",
+      "passed": true,
+      "durationMs": 3215,
+      "sessionId": "session-5c83a338-f442-4203-9c56-f8147c1437dc",
+      "approvals": 0,
+      "reply": "小织，建议：整理完文件后，花两分钟把没用的旧文件清进回收站，再把留下的按项目分个文件夹就好。"
+    },
+    {
+      "name": "daily-27",
+      "passed": true,
+      "durationMs": 2777,
+      "sessionId": "session-70f818d6-be04-4c70-a738-9d6a74325395",
+      "approvals": 0,
+      "reply": "小织，你好～\n\n第951种花茶现在不加柠檬了，改为加**一片苹果**即可。"
+    },
+    {
+      "name": "daily-28",
+      "passed": true,
+      "durationMs": 3523,
+      "sessionId": "session-70f818d6-be04-4c70-a738-9d6a74325395",
+      "approvals": 0,
+      "reply": "小织，下一步建议：快速浏览一遍整理好的文件，确认归类无误，然后记下还缺的文件，回头补上。"
+    },
+    {
+      "name": "daily-29",
+      "passed": true,
+      "durationMs": 10071,
+      "sessionId": "session-a0be261b-e7e4-4174-9bd2-8839a5bb4ef6",
+      "approvals": 0,
+      "reply": "小织，你好呀～\n\n你现在喝的第 951 种花茶，不加柠檬了，改加**一片苹果**。"
+    },
+    {
+      "name": "daily-30",
+      "passed": true,
+      "durationMs": 3732,
+      "sessionId": "session-a0be261b-e7e4-4174-9bd2-8839a5bb4ef6",
+      "approvals": 0,
+      "reply": "小织，建议：歇两分钟，喝口刚泡好的花茶（加一片苹果），回来再继续下一步。"
+    },
+    {
+      "name": "daily-31",
+      "passed": true,
+      "durationMs": 5889,
+      "sessionId": "session-713860c2-f3c0-4208-848f-cd73c2f09f2b",
+      "approvals": 0,
+      "reply": "小织你好～\n\n你现在喝的第951种花茶，不加柠檬了，改成加**一片苹果**就好。"
+    },
+    {
+      "name": "daily-32",
+      "passed": true,
+      "durationMs": 3278,
+      "sessionId": "session-713860c2-f3c0-4208-848f-cd73c2f09f2b",
+      "approvals": 0,
+      "reply": "小织，建议：把刚才整理好的文件做个备份或压缩包，免得后面误改。"
+    },
+    {
+      "name": "daily-33",
+      "passed": true,
+      "durationMs": 7344,
+      "sessionId": "session-74c22926-03f9-4270-a3d9-02fd72dead3d",
+      "approvals": 0,
+      "reply": "小织，你好呀！\n\n第951种花茶现在不加柠檬了，改成加**一片苹果**就够了。"
+    },
+    {
+      "name": "daily-34",
+      "passed": true,
+      "durationMs": 4519,
+      "sessionId": "session-74c22926-03f9-4270-a3d9-02fd72dead3d",
+      "approvals": 0,
+      "reply": "小织，整理完文件后建议顺手做一次快速备份——哪怕只是把重要文件夹复制一份到别处，花两分钟就能避免之后的意外丢失。"
+    },
+    {
+      "name": "daily-35",
+      "passed": true,
+      "durationMs": 4154,
+      "sessionId": "session-f81174fb-5aac-4f01-a775-3ec5d8817bdd",
+      "approvals": 0,
+      "reply": "小织，你好！\n\n第951种花茶现在应该加**一片苹果**——不加柠檬了（按你之前的更正）。"
+    },
+    {
+      "name": "daily-36",
+      "passed": true,
+      "durationMs": 4031,
+      "sessionId": "session-f81174fb-5aac-4f01-a775-3ec5d8817bdd",
+      "approvals": 0,
+      "reply": "小织，建议：**把整理后的文件做个简单备份**（复制一份到别处或网盘），这样后面改动也不怕丢。"
+    },
+    {
+      "name": "daily-37",
+      "passed": true,
+      "durationMs": 4377,
+      "sessionId": "session-10c32624-50bd-4d11-ba36-0e0966f68696",
+      "approvals": 0,
+      "reply": "小织，你好！\n\n第951种花茶现在应该加**一片苹果**（不加柠檬了）。我记下了，稍后整理进记忆。"
+    },
+    {
+      "name": "daily-38",
+      "passed": true,
+      "durationMs": 2765,
+      "sessionId": "session-10c32624-50bd-4d11-ba36-0e0966f68696",
+      "approvals": 0,
+      "reply": "小织，整理完文件后，建议：**花两分钟扫一眼刚才的归类，把放错位置的挑出来就行**，不用再重构。"
+    },
+    {
+      "name": "daily-39",
+      "passed": true,
+      "durationMs": 4227,
+      "sessionId": "session-fde1db28-1771-42c6-a3f3-619978f382df",
+      "approvals": 0,
+      "reply": "小织，你好！\n\n第951种花茶现在应该加**一片苹果**——之前加柠檬的做法已经改掉了，不再放柠檬。"
+    },
+    {
+      "name": "daily-40",
+      "passed": true,
+      "durationMs": 3793,
+      "sessionId": "session-fde1db28-1771-42c6-a3f3-619978f382df",
+      "approvals": 0,
+      "reply": "小织，建议：喝口茶歇一下，再花两分钟把刚才整理的结果快速扫一眼确认没漏，然后就停手。"
+    },
+    {
+      "name": "daily-41",
+      "passed": true,
+      "durationMs": 3652,
+      "sessionId": "session-e0684f02-5898-4921-b5fd-a9494d7bf968",
+      "approvals": 0,
+      "reply": "小织，你好！\n\n按你上次的更正：现在喝第 951 种花茶，不加柠檬，改加**一片苹果**。"
+    },
+    {
+      "name": "daily-42",
+      "passed": true,
+      "durationMs": 5329,
+      "sessionId": "session-e0684f02-5898-4921-b5fd-a9494d7bf968",
+      "approvals": 0,
+      "reply": "小织，建议：稍作休息，喝口茶（第951种花茶加一片苹果），再顺手核对一下刚整理的文件有没有遗漏。"
+    },
+    {
+      "name": "daily-43",
+      "passed": true,
+      "durationMs": 4968,
+      "sessionId": "session-31da88cd-321c-4443-82db-c6d1b7b4ed88",
+      "approvals": 0,
+      "reply": "小织，你好！\n\n第951种花茶现在不加柠檬了，改加**一片苹果**。"
+    },
+    {
+      "name": "daily-44",
+      "passed": true,
+      "durationMs": 9285,
+      "sessionId": "session-31da88cd-321c-4443-82db-c6d1b7b4ed88",
+      "approvals": 0,
+      "reply": "小织，下一步建议：整理完就快速通读一遍，把重复和过期的内容删掉，再归档。"
+    },
+    {
+      "name": "daily-45",
+      "passed": true,
+      "durationMs": 3335,
+      "sessionId": "session-166c4a54-ef93-48f7-bb08-139abcec892d",
+      "approvals": 0,
+      "reply": "小织，你好！\n\n第951种花茶现在加**一片苹果**就行——不加柠檬了（你之前已改成加苹果片）。"
+    },
+    {
+      "name": "daily-46",
+      "passed": true,
+      "durationMs": 3265,
+      "sessionId": "session-166c4a54-ef93-48f7-bb08-139abcec892d",
+      "approvals": 0,
+      "reply": "小织，下一步建议：把整理好的文件做个简单备份，然后休息五分钟再继续。"
+    },
+    {
+      "name": "daily-47",
+      "passed": true,
+      "durationMs": 3415,
+      "sessionId": "session-07cbd314-9b20-4ef5-8682-a2641ab9dfdc",
+      "approvals": 0,
+      "reply": "小织，你好！\n\n第951种花茶现在不加柠檬了，改成加**一片苹果**。"
+    },
+    {
+      "name": "daily-48",
+      "passed": true,
+      "durationMs": 2481,
+      "sessionId": "session-07cbd314-9b20-4ef5-8682-a2641ab9dfdc",
+      "approvals": 0,
+      "reply": "建议：顺手把整理后的成果简单核对一遍，确认没漏文件就行。"
+    },
+    {
+      "name": "daily-49",
+      "passed": true,
+      "durationMs": 6194,
+      "sessionId": "session-827ced01-2ead-40b3-a214-4fff984bcdfc",
+      "approvals": 0,
+      "reply": "小织，你好呀～\n\n第951种花茶现在不加柠檬了，改成**加一片苹果**就好。我记下了，稍后整理进记忆。"
+    },
+    {
+      "name": "daily-50",
+      "passed": true,
+      "durationMs": 3061,
+      "sessionId": "session-827ced01-2ead-40b3-a214-4fff984bcdfc",
+      "approvals": 0,
+      "reply": "小织，整理完文件后，建议花两分钟把这次用到的临时文件清一下，再列个三件事的小清单定下优先级——很快就能进入正事了。"
+    },
+    {
+      "name": "daily-51",
+      "passed": true,
+      "durationMs": 2931,
+      "sessionId": "session-cd421ea3-eb8a-4455-911c-63a20cca1daa",
+      "approvals": 0,
+      "reply": "小织，你好！\n\n第951种花茶现在不加柠檬了，改成加**一片苹果**即可。"
+    },
+    {
+      "name": "daily-52",
+      "passed": true,
+      "durationMs": 3821,
+      "sessionId": "session-cd421ea3-eb8a-4455-911c-63a20cca1daa",
+      "approvals": 0,
+      "reply": "小织，建议：花几分钟把整理好的文件做个简单备份，然后休息一下。"
+    },
+    {
+      "name": "daily-53",
+      "passed": true,
+      "durationMs": 4659,
+      "sessionId": "session-795656c1-3a1f-4aa6-9905-59eeab930436",
+      "approvals": 0,
+      "reply": "小织，你好！\n\n第951种花茶现在不加柠檬了，改加**一片苹果**。"
+    },
+    {
+      "name": "daily-54",
+      "passed": true,
+      "durationMs": 9274,
+      "sessionId": "session-795656c1-3a1f-4aa6-9905-59eeab930436",
+      "approvals": 0,
+      "reply": "小织，建议下一步先快速复查一遍刚才整理的文件有没有放错位置，再列个三件待办清单，从最要紧的开始做。"
+    }
+  ],
+  "errors": [],
+  "motionSamples": [
+    {
+      "at": 1791637605600,
+      "indicator": 0,
+      "status": 6,
+      "animations": 0,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637605821,
+      "indicator": 0,
+      "status": 6,
+      "animations": 4,
+      "inputY": 675.3333740234375
+    },
+    {
+      "at": 1791637605976,
+      "indicator": 0,
+      "status": 7,
+      "animations": 10,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637606130,
+      "indicator": 0,
+      "status": 7,
+      "animations": 5,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637606282,
+      "indicator": 0,
+      "status": 7,
+      "animations": 5,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637606434,
+      "indicator": 0,
+      "status": 7,
+      "animations": 5,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637606587,
+      "indicator": 0,
+      "status": 7,
+      "animations": 5,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637606740,
+      "indicator": 0,
+      "status": 7,
+      "animations": 5,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637606891,
+      "indicator": 0,
+      "status": 7,
+      "animations": 5,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637607044,
+      "indicator": 0,
+      "status": 7,
+      "animations": 6,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637607198,
+      "indicator": 0,
+      "status": 7,
+      "animations": 5,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637607351,
+      "indicator": 0,
+      "status": 7,
+      "animations": 5,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637607502,
+      "indicator": 0,
+      "status": 7,
+      "animations": 5,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637607659,
+      "indicator": 0,
+      "status": 7,
+      "animations": 7,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637607813,
+      "indicator": 0,
+      "status": 7,
+      "animations": 7,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637607966,
+      "indicator": 0,
+      "status": 7,
+      "animations": 8,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637608120,
+      "indicator": 0,
+      "status": 7,
+      "animations": 7,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637608271,
+      "indicator": 0,
+      "status": 7,
+      "animations": 7,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637608423,
+      "indicator": 0,
+      "status": 7,
+      "animations": 7,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637608578,
+      "indicator": 0,
+      "status": 7,
+      "animations": 7,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637608731,
+      "indicator": 0,
+      "status": 7,
+      "animations": 7,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637608884,
+      "indicator": 0,
+      "status": 7,
+      "animations": 7,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637609035,
+      "indicator": 0,
+      "status": 7,
+      "animations": 8,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637609189,
+      "indicator": 0,
+      "status": 7,
+      "animations": 7,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637609345,
+      "indicator": 0,
+      "status": 7,
+      "animations": 7,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637609497,
+      "indicator": 0,
+      "status": 7,
+      "animations": 7,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637609650,
+      "indicator": 0,
+      "status": 7,
+      "animations": 7,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637609802,
+      "indicator": 0,
+      "status": 7,
+      "animations": 7,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637609955,
+      "indicator": 0,
+      "status": 7,
+      "animations": 8,
+      "inputY": 699.3333740234375
+    },
+    {
+      "at": 1791637610107,
+      "indicator": 0,
+      "status": 7,
+      "animations": 7,
+      "inputY": 699.3333740234375
+    }
+  ],
+  "offlineGeometry": {
+    "bars": 1,
+    "bottom": 602.6666870117188,
+    "input": 621.3333740234375
+  },
+  "notifications": [
+    {
+      "title": "请整理这个合成文件夹 C:/Users/yun/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-f",
+      "body": "已完成 · 点开查看结果",
+      "at": 1791637686401
+    },
+    {
+      "title": "请在2分钟后提醒我站起来活动，提醒内容为QA6日用冒烟活动。",
+      "body": "已完成 · 点开查看结果",
+      "at": 1791637698711
+    },
+    {
+      "title": "提醒",
+      "body": "提醒：QA6日用冒烟活动",
+      "at": 1791637813685
+    },
+    {
+      "title": "请写入 C:/Users/yun/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-folder/d",
+      "body": "已完成 · 点开查看结果",
+      "at": 1791637882401
+    },
+    {
+      "title": "需要审批",
+      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：write {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-folder/desktop-race.txt\",\"cont",
+      "at": 1791637902554
+    },
+    {
+      "title": "请写入 C:/Users/yun/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-folder/d",
+      "body": "已完成 · 点开查看结果",
+      "at": 1791638513125
+    },
+    {
+      "title": "需要审批",
+      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：write {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-folder/phone-race.txt\",\"conten",
+      "at": 1791638516542
+    }
+  ],
+  "elapsedMs": 1380974,
+  "fatal": "Error: QA5_WAIT_TIMEOUT\n    at until (file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/evidence/qa-6/runners/harness.mjs:15:145)\n    at async file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/evidence/qa-6/runners/smoke.mjs:47:125",
+  "finishedAt": "2026-10-10T13:29:10.962Z",
+  "uninstalled": true
+}

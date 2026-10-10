@@ -1,0 +1,129 @@
+PASS 00-no-false-recovery
+FAIL 01-main-chat COMMAND_REJECTED:BACKEND_UNAVAILABLE
+PASS 02-preference
+PASS 03-side-recall
+PASS 04-correction
+PASS 12-rendering-motion
+FAIL 13-suggestions locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('.next-suggestion-chip').first() to be visible[22m
+
+PASS 14-search-title-body-menu
+FAIL 15-folder-project locator.selectOption: Error: strict mode violation: getByLabel('文件权限', { exact: true }) resolved to 2 elements:
+    1) <select class="" hidden="" tabindex="-1" aria-label="文件权限" aria-hidden="true">…</select> aka getByRole('region', { name: '在文件夹里工作' }).locator('select')
+    2) <button type="button" role="combobox" aria-label="文件权限" aria-expanded="false" aria-haspopup="listbox" class="settings-select " aria-controls="settings-options-439cb51c-22d7-47ac-b620-b39466c1ad34-list">…</button> aka getByRole('combobox', { name: '文件权限' })
+
+Call log:
+[2m  - waiting for getByLabel('文件权限', { exact: true })[22m
+
+PASS 05-file-approval
+PASS 06-reminder-set
+PASS 07-personalization
+PASS 08-dark
+PASS 09-temporary
+FAIL 10-phone-continue-approve locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('[data-session-id="session-b0dfb90d-ab0e-4ca5-9f1d-e4cf921e11f4"] > button').first()[22m
+[2m    - locator resolved to <button type="button" aria-description="已完成，未读">…</button>[22m
+[2m  - attempting click action[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is not visible[22m
+[2m    - retrying click action[22m
+[2m    - waiting 20ms[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is not visible[22m
+[2m    - retrying click action[22m
+[2m      - waiting 100ms[22m
+[2m    58 × waiting for element to be visible, enabled and stable[22m
+[2m       - element is not visible[22m
+[2m     - retrying click action[22m
+[2m       - waiting 500ms[22m
+
+PASS 11-reminder-delivery
+FAIL 22-drag-folder locator.waitFor: Timeout 10000ms exceeded.
+Call log:
+[2m  - waiting for locator('.folder-confirm') to be visible[22m
+
+PASS 16-settings-categories
+FAIL 17-reduce-motion-and-disable-suggestions locator.selectOption: Error: strict mode violation: getByLabel('减少动态效果', { exact: true }) resolved to 2 elements:
+    1) <select hidden="" tabindex="-1" aria-hidden="true" aria-label="减少动态效果" class="reply-motion-select">…</select> aka getByLabel('减少动态效果').first()
+    2) <button type="button" role="combobox" aria-label="减少动态效果" aria-expanded="false" aria-haspopup="listbox" class="settings-select reply-motion-select" aria-controls="settings-options-8e6c3f72-22b3-4b2d-888b-52b918517031-list">…</button> aka getByRole('combobox', { name: '减少动态效果' })
+
+Call log:
+[2m  - waiting for getByLabel('减少动态效果', { exact: true })[22m
+
+FAIL 18-page-动态 locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: '动态', exact: true })[22m
+
+PASS 18-page-目标
+PASS 18-page-成果库
+PASS 19-offline-reconnect
+PASS 20-desktop-reject
+FAIL 20-phone-reject Expected values to be strictly equal:
+
+404 !== 200
+
+FAIL 23-desktop-approval-races locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: '批准', exact: true }) to be visible[22m
+
+FAIL 23-phone-approval-races locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: '批准', exact: true }) to be visible[22m
+
+PASS 21-responsive-light-dark
+PASS daily-1
+PASS daily-2
+PASS daily-3
+PASS daily-4
+PASS daily-5
+PASS daily-6
+PASS daily-7
+PASS daily-8
+PASS daily-9
+PASS daily-10
+PASS daily-11
+PASS daily-12
+PASS daily-13
+PASS daily-14
+PASS daily-15
+PASS daily-16
+PASS daily-17
+PASS daily-18
+PASS daily-19
+PASS daily-20
+PASS daily-21
+PASS daily-22
+PASS daily-23
+PASS daily-24
+PASS daily-25
+PASS daily-26
+PASS daily-27
+PASS daily-28
+PASS daily-29
+PASS daily-30
+PASS daily-31
+PASS daily-32
+PASS daily-33
+PASS daily-34
+PASS daily-35
+PASS daily-36
+PASS daily-37
+PASS daily-38
+PASS daily-39
+PASS daily-40
+PASS daily-41
+PASS daily-42
+PASS daily-43
+PASS daily-44
+PASS daily-45
+PASS daily-46
+PASS daily-47
+PASS daily-48
+PASS daily-49
+PASS daily-50
+PASS daily-51
+PASS daily-52
+PASS daily-53
+PASS daily-54

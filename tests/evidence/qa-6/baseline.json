@@ -1,0 +1,9 @@
+{
+  "baseline": "480d65e462652a3111d2b40e09f697b2f78b8f8e",
+  "core": "233cc2f0b27a921a699a9c4c43b1a612375970f8",
+  "branch": "wp/qa-6-migration-gate",
+  "npmCiExitCode": 0,
+  "fixed": true,
+  "firstMeasurementAt": "2026-10-10T12:55:03.764Z",
+  "startedAt": "2026-10-10T12:55:03.764Z"
+}
