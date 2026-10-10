@@ -156,6 +156,9 @@
   --wm-duration-exit: 120ms;
   --wm-duration-stagger: 24ms;
   --wm-duration-staggerLimit: 60ms;
+  --wm-duration-replyFragment: 120ms;
+  --wm-duration-replyChange: 150ms;
+  --wm-duration-replyScroll: 160ms;
   --wm-easing-standard: ease;
   --wm-easing-smooth: ease-in-out;
   --wm-easing-desktop: cubic-bezier(.16,1,.3,1);

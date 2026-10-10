@@ -12,7 +12,7 @@ export async function render(source, colors) {
   if (/%%\{|^\s*---|\b(?:click|href|callback|classDef|style)\b|<|javascript:|data:|https?:/im.test(source)) throw new Error('Unsafe diagram');
   const mermaid=await library();
   mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', suppressErrorRendering: true,
-    htmlLabels: false, theme: 'base', themeVariables: { primaryColor: colors.surface, primaryTextColor: colors.ink,
+    htmlLabels: false, theme: 'base', themeCSS: '.node rect,.node circle,.node ellipse,.node polygon,.node path {filter:none!important;box-shadow:none!important;}', themeVariables: { primaryColor: colors.surface, primaryTextColor: colors.ink,
       primaryBorderColor: colors.line, lineColor: colors.ink, secondaryColor: colors.surface,
       tertiaryColor: colors.surface, background: colors.surface, fontFamily: colors.font },
     flowchart: {htmlLabels: false}, sequence: {useMaxWidth: true} });
