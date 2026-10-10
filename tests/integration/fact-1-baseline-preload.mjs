@@ -6,7 +6,7 @@ import { pathToFileURL } from 'node:url';
 if (process.env.FACT1_PHASE === 'before') {
   const root = resolve(import.meta.dirname, '../..');
   const files = ['src/plugins/personal-prompt.mjs', 'src/plugins/personal-personalization.mjs',
-    'src/plugins/personal-web-fetch.mjs', 'src/plugins/weftmate-compaction.mjs', 'src/personal-access/native-browser.mjs', 'src/ui-core/personalization.js'];
+    'src/plugins/personal-web-fetch.mjs', 'src/plugins/weftmate-compaction.mjs', 'src/personal-access/native-browser.mjs', 'src/personal-browser/index.mjs', 'src/ui-core/personalization.js'];
   const sources = new Map(files.map(file => [pathToFileURL(resolve(root, file)).href,
     execFileSync('git', ['show', '56f08f58ce447b3e3b7f872de25b5bf62ba9b956:' + file], {cwd:root,encoding:'utf8',windowsHide:true})]));
   registerHooks({load(url, context, next) {
