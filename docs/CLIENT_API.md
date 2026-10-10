@@ -101,6 +101,31 @@
 
 `backend.capabilities` 还含 `desktopOpenApp,naturalLanguageDesktop`；`modules` 含 `memory,mods,tasks,notifications,workspaces,capabilities`。这些是能力/状态字段，不代表存在同名 HTTP 路由。FX-9 增加可选 `executionAccount:boolean`，表示当前账号是否为这台电脑的执行账号；`false` 时仅可聊天，界面须说明不能操作电脑或读取原账号资料。旧宿主缺字段时按既有能力投影处理。FX-16 增加可选 `executionAccountName:string|null`：非执行账号只收到执行账号昵称；昵称为邮箱时返回「原账号」，不返回登录邮箱、身份或凭据。
 
+#### M3-1 连接状态与接回
+
+`GET /status` 增加可选只读 `presence:{host:"online",bootId,startedAt,authorization:"active",runtime:"ready|restarting|unavailable",model:"available|unavailable"}`。`bootId` 为本次宿主启动的随机编号，`startedAt` 为 UTC（协调世界时）时间；不作为消息或同步游标。`runtime=restarting` 表示现有 `/system/host/restart` 正在执行，`unavailable` 表示原生运行时不可用／诊断未完成，均与宿主传输在线分开。`model` 来自当前账户现有聊天能力投影；它不是实际推理成功保证。后端／记忆诊断各使用1.5秒独立等待预算，失败仍返回可达宿主的200状态；不因模型或记忆失败将电脑判离线。
+
+`GET /sync/events` 兼容增加 `presence:{host:"online",bootId,startedAt,authorization:"active",runtime:"restarting|unknown"}`，供轻量同步确认宿主仍可达；同步通道不额外调用模型诊断，精确运行时／模型状态读取 `/status`。账号／设备在别处被撤权后，既有鉴权在 `/status`、同步与命令查询前返回401 `UNAUTHORIZED`；未批准设备沿云会话202 `pending_approval`／403 `DEVICE_NOT_TRUSTED`。撤权不能表示为电脑离线，也不能继续使用旧内容授权。无新增业务路由；旧客户端可忽略新增字段。
+
+ui-core（共用功能层）`Presence` 判定如下，各客户端采用相同优先级：
+
+| 状态 | 依据 | 允许的操作 |
+|---|---|---|
+| 在线 | 当前身份的宿主请求成功或独立 `/status` 成功 | 原账户权限内发送／操作；模型不可用与运行时重启另给说明 |
+| 正在连接 | 首次连接，或尚未独立确认的传输失败 | 写草稿、查看已读取内容；不自动重发消息 |
+| 电脑离线 | 独立宿主探测失败，且云 `/hosts/connect` 确认offline；或已授权内容通道至少3次跨时间失败，首尾至少2秒，另一次独立 `/status` 失败 | 已有副本的手机可明确打开M3-A离线模式；云授权核对仍必需，不能操作电脑 |
+| 网络不可用 | 浏览器联网状态／网络事件为false；安卓连接异常且系统没有活动网络 | 写草稿、查看缓存；无法调用云模型，联网立即接回 |
+| 需要重新登录 | 401、`UNAUTHORIZED/AUTH_REQUIRED/LOGIN_REQUIRED/CLOUD_TOKEN_INVALID/ACCOUNT_REVOKED` | 按现有身份边界保留草稿，重新登录 |
+| 需要批准这台设备 | `DEVICE_NOT_TRUSTED/PAIRING_REQUIRED/PENDING_APPROVAL` | 在已有设备允许访问；批准前不读电脑内容 |
+
+同一秒内并发失败只计一次；普通403、400、模型不可用、离线副本和业务错误不计传输失败。任何成功的当前身份宿主响应清除失败计数。切账号／退出使旧探测失效。现有认证续期、可信宿主与证书固定规则保持；当前选定通道不可达不等于模型失败，也不允许绕过信任访问新地址。
+
+Windows程序、远程网页、手机网页与安卓界面包共用同一策略：前台失败按1／2／4／8／16／30秒指数退避，后续上限30秒，每轮乘0.8–1.0随机抖动；后台失败15／30／60／120秒，上限120秒。在线时独立探测前台15秒、后台60秒。回到前台、窗口获焦、网络恢复和手动重试立即探测；同一时刻只运行一个探测。正常前台列表6秒、流式回执250毫秒仅在线时运行；手机原有会话轮询离线暂停。网页后台计时可能受系统节流，安卓进程被挂起后由既有S3a后台任务接续，不声称应用未运行仍按秒精确唤醒。
+
+重连复用原会话的 `afterSeq` 或逻辑对话的 `syncCursor/nextCursor`，原生事件按`seq`、逻辑条目按`eventId/revision`合并；同步日志与原生日志水位不得混用。工具／审批／提问重读当前原生状态，保留已展开详情。409 `CURSOR_RESET_REQUIRED`走原尾页重置，不发送新的模型请求。已受理消息只核对原`requestId`／`commandId`／`receiptId`，不重新生成。未收到受理回执显示「待确认」；只有原编号查询404后显示「未送达，重试」，用户重试前再查一次，再原样重放同编号、文字与附件元数据。重复点击共用同一次核对，已受理不再重放；原编号异体仍返回`REQUEST_CONFLICT`。正文与附件在现有草稿／原生发件箱保存，网页重放正文只留当前会话内存，不将敏感正文新增到标记存储。
+
+传输断线只补读已由DSH（助手运行时）产生的事件；它不能复原执行进程被强制终止时尚未生成或持久化的内容。进程重启后按原回执与游标重置核对已有记录，不为缺少结束事件自动重新生成；不能把仍待核对的任务说成已完成。D40加密电脑任务暂存仍属于S7，离线聊天入口不伪装为电脑任务已经排队。
+
 ### 3.3 会话列表与管理（12）
 
 | 方法与路径 | 请求参数/体 | 响应示例 / 状态 | 主要领域错误 | 使用端 |

@@ -120,6 +120,7 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
   void core.loadPersonalization().catch(() => {});
   try {
     const status = await core.accessApi('/status');
+    core.connectionSucceeded?.(status.presence || {runtime:status.backend?.runtime === 'unavailable' ? 'unavailable' : 'ready'});
     if (owner !== state.owner || epoch !== state.authEpoch) return;
     const exact = ['chats','chatTimeline','chatSearch','chatSend','sideChats','chatResources'].every(key => status.personalCapabilities?.[key] === 1);
     core.state.personalCapabilities = status.personalCapabilities || {};

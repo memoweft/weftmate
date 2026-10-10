@@ -1,0 +1,15 @@
+.presence-badge { display:inline-flex; align-items:center; gap:var(--wm-space-6); min-width:0; color:var(--ink-secondary,var(--muted)); font-size:var(--wm-font-size-12); }
+.presence-dot { width:var(--wm-space-6); height:var(--wm-space-6); flex:none; border-radius:var(--wm-radius-circle); background:var(--warning,var(--accent)); }
+.presence-badge[data-state=online] .presence-dot { background:var(--success,var(--accent)); }
+.presence-badge[data-state=network_unavailable] .presence-dot, .presence-badge[data-state=login_required] .presence-dot { background:var(--danger); }
+.presence-label { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.presence-bar { display:flex; align-items:center; gap:var(--wm-space-12); flex-wrap:wrap; margin-block-end:var(--wm-space-8); padding:var(--wm-space-10) var(--wm-space-12); border-radius:var(--wm-radius-10); background:var(--surface-soft,var(--soft)); color:var(--ink-secondary,var(--muted)); font-size:var(--wm-font-size-14); line-height:var(--wm-line-height-1_6); }
+.presence-bar[hidden], .presence-action[hidden] { display:none; }
+.presence-copy { flex:1; min-width:var(--wm-size-160); overflow-wrap:anywhere; }
+.presence-actions { display:flex; flex-wrap:wrap; gap:var(--wm-space-6); }
+.presence-action { appearance:none; padding:var(--wm-space-6) var(--wm-space-10); border:var(--wm-space-1) solid var(--line); border-radius:var(--wm-radius-8); background:var(--surface); color:var(--ink); font:inherit; cursor:pointer; }
+.presence-action:hover { background:var(--surface-soft,var(--soft)); }
+.presence-action:active { background:var(--accent-soft); }
+.presence-action:focus-visible { outline:var(--wm-space-2) solid var(--accent); outline-offset:var(--wm-space-2); }
+.presence-action:disabled { color:var(--ink-muted,var(--muted)); cursor:default; }
+@media (max-width:720px) { .presence-action { min-height:var(--wm-space-44); } .presence-bar { gap:var(--wm-space-8); } }

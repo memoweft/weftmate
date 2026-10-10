@@ -35,5 +35,5 @@ test('usage strip reads the budget time zone and rejects account changes during 
 test('session activity is latest actual history time, falls back to attachment and ignores malformed event dates',async()=>{
   const metadata:any={ownerId:'a',attachedAt:'2026-10-01T00:00:00.000Z'},events:any[]=[{seq:1,at:'2026-10-05T00:00:00.000Z'},{seq:2,at:'invalid'}];
   const context:any={accountState:()=>({sessions:{s:metadata}}),callBackend:(fn:any)=>fn(),backend:{readEvents:async()=>({events})}};
-  const operations=createSessionMetadata(context);assert.equal((await operations.summary('a','s')).updatedAt,'2026-10-05T00:00:00.000Z');events.length=0;assert.equal((await operations.summary('a','s')).updatedAt,metadata.attachedAt);
+  const operations=createSessionMetadata(context);await operations.initialize('a');assert.equal((await operations.summary('a','s')).updatedAt,'2026-10-05T00:00:00.000Z');events.length=0;operations.invalidate('a','s');assert.equal((await operations.summary('a','s')).updatedAt,metadata.attachedAt);
 });

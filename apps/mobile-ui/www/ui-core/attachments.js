@@ -144,17 +144,18 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
         core.state.attachmentAttempts.set(key, attempt);
         return attempt;
     }
-    async function sendDesktopMessageWithAttachments(text, requestId, mode) {
+    async function sendDesktopMessageWithAttachments(text, requestId, mode, snapshot) {
         const sessionId = core.state.selectedSessionId;
         const key = core.attachmentDraftKey(sessionId);
-        const drafts = key ? [...core.currentAttachmentDrafts()] : [];
+        const drafts = snapshot?.drafts || (key ? [...core.currentAttachmentDrafts()] : []);
         if (!key || drafts.length < 1 || drafts.length > 4 || core.state.attachmentUpload)
             return null;
         const scope = core.attachmentScope(sessionId);
         const controller = new AbortController();
         const attempt = core.attachmentAttempt(key, text, drafts);
         if (requestId) attempt.requestId = requestId;
-        const messageId = core.state.attachmentGroups.get(key) || `message-${environment.crypto.randomUUID()}`;
+        const messageId = snapshot?.messageId || core.state.attachmentGroups.get(key) || `message-${environment.crypto.randomUUID()}`;
+        if (snapshot) snapshot.messageId = messageId;
         core.state.attachmentGroups.set(key, messageId);
         const upload = { controller, scope, key, requestId: attempt.requestId };
         core.state.attachmentUpload = upload;

@@ -82,8 +82,18 @@ const mobileEffects = {
   paintScreen: view => page(view === 'login' ? 'connect' : view),
 };
 const uiCore = WeftUiCore.create({ fetch: mobileWebBridge?.fetch || androidBridge.fetch, storage: localStorage,
-  crypto: globalThis.crypto, effects: mobileEffects, mobileState: state, attachmentDrafts, logicalChats:true });
+  crypto: globalThis.crypto, effects: mobileEffects, mobileState: state, attachmentDrafts, logicalChats:true,
+  networkAvailable:()=>globalThis.navigator?.onLine });
 uiCore.android = androidBridge;
+function startMobileConnection() {
+  uiCore.syncMobileIdentity();
+  uiCore.startConnection(async()=>{
+    await listSharedSessions();
+    if(state.logicalChats) await uiCore.refreshLogicalHistory();else await loadSharedHistory();
+    await Promise.all([uiCore.reconcileMainRequests(),uiCore.refreshConversationTasks(),uiCore.refreshConversationApprovals(),uiCore.refreshConversationQuestions()]);
+    await globalThis.WeftMobileCloud.core?.offlineConnectionRestored?.();
+  });
+}
 const mobileMessageActions = globalThis.WeftMessageActions?.create({core:uiCore, draft:()=>$('draft'),
   selectSession:async id=>{await listSharedSessions();await selectSharedSession(id)},
   copy: text=>call('clipboard.copy',{text}), save:async(blob,name)=>{
@@ -486,6 +496,7 @@ async function boot(){
     try{const appearance=await uiCore.mobileAppearance();if(typeof appearance.systemDark==='boolean')state.nativeSystemDark=appearance.systemDark;applyTheme(appearance.value)}catch{applyTheme('system')}
     await call('app.ready',{owner:state.owner||'',hasDraft:hasAnyDraft()});
     await listSharedSessions();
+    startMobileConnection();
     if(state.logicalChats && !info.launchConversationId)await uiCore.selectMainChat();
     else if(!info.launchConversationId)page('home');else updatePageHeader();
     state.booted=true;
@@ -693,6 +704,11 @@ function handleBack(){if(document.querySelector('.session-menu[role=menu]')){Wef
   if(state.logicalChats&&!uiCore.inMainChat()){void selectMobileTab('chat');return}
   if(window.weftNative)void call('app.exit').catch(error=>toast(safeError(error)));}
 document.addEventListener('DOMContentLoaded',()=>{
+  globalThis.WeftPresenceView.mount({core:uiCore,badgeTarget:document.querySelector('.topbar .brand'),composerTarget:$('composer-dock'),toast,
+    openLogin:()=>globalThis.WeftMobileCloud.core?.startCloudJourney(),openDevices:()=>page('devices')});
+  window.addEventListener('online',()=>uiCore.connectionNetwork(true));
+  window.addEventListener('offline',()=>uiCore.connectionNetwork(false));
+  document.addEventListener('visibilitychange',()=>uiCore.connectionVisibility(document.visibilityState==='hidden'));
   $('menu-button').addEventListener('click',openDrawer);$('drawer-close').addEventListener('click',closeDrawer);$('drawer-scrim').addEventListener('click',closeDrawer);
   $('page-back').addEventListener('click',()=>{if(state.page==='chat'&&!state.logicalChats&&!state.tabSource)page('home');else handleBack()});
   $('header-profile').addEventListener('click',()=>page('settings'));

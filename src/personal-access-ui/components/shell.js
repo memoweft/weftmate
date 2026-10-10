@@ -3,10 +3,10 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
     function paintConnection(online) {
         const badge = document.querySelector('.local-badge');
         badge.hidden = true;
-        ui.byId('assistant-connection').hidden = true;
+        ui.byId('assistant-connection').hidden = false;
         ui.byId('connection-copy').textContent = online ? '已连接' : '连接中断，可稍后重试。';
         const banner = ui.byId('connection-banner');
-        banner.hidden = online;
+        banner.hidden = true;
         banner.classList.toggle('is-offline', !online);
         banner.textContent = online ? '' : '连接中断，正在重试…';
     }
@@ -227,6 +227,11 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
     }
     function startAssistantRefresh() {
         core.stopAssistantRefresh();
+        core.startConnection(async () => {
+            await core.refreshAssistant();
+            await Promise.all([core.refreshHistory(), core.reconcileMainRequests(), core.refreshConversationTasks(), core.refreshConversationApprovals(), core.refreshConversationQuestions()]);
+            await core.offlineConnectionRestored?.();
+        });
         core.state.refreshTimer = setInterval(() => {
             if (document.visibilityState === 'visible')
                 void core.refreshAssistant();
