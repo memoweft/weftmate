@@ -50,6 +50,8 @@ def main():
     env = {k: v for k, v in os.environ.items() if not re.match(r'^(WEFTMATE_|MEMOWEFT_|MIMO_|MODEL_SWITCH_|CLOUD_)', k)}
     temp = root / 'temporary'
     temp.mkdir(exist_ok=True)
+    env['PATH'] = os.pathsep.join(['/opt/homebrew/bin', '/usr/local/bin', str(Path.home() / '.local/bin'), env.get('PATH', '/usr/bin:/bin:/usr/sbin:/sbin')])
+    env['WEFTMATE_TEST_HOST_NAME'] = 'synthetic-host'
     env['TMPDIR'] = str(temp) + '/'
 
     def remaining():
@@ -180,6 +182,9 @@ def main():
         if booted():
             status.update(status='skipped', reason='被占用，未拍（Apple 模拟器）')
             return
+        missing = [tool for tool in ['node', 'npm', 'git', 'python3', 'xcrun', 'xcodebuild', 'swiftc'] if not shutil.which(tool, path=env['PATH'])]
+        if missing:
+            raise FileNotFoundError('所需工具找不到：' + ', '.join(missing))
         run(['git', 'fetch', 'origin', 'main'], 'fetch', origin)
         if args.candidate:
             run(['git', 'fetch', root / 'candidate.bundle', 'HEAD'], 'candidate-fetch', origin)
@@ -190,8 +195,6 @@ def main():
         run(['git', 'checkout', '--detach', args.commit], 'checkout')
         run(['npm', 'ci'], 'npm')
         run(['npm', 'ci'], 'cloud-npm', tree / 'services/cloud')
-        # PATH may be minimal when launched through ssh; caller uses the same
-        # configured ssh mac environment as existing A15/A10 native runners.
         run(['python3', 'Scripts/generate_project.py'], 'project', tree / 'apps/apple')
         runtimes = json.loads(run(['xcrun', 'simctl', 'list', 'runtimes', '-j'], 'runtimes'))['runtimes']
         types = json.loads(run(['xcrun', 'simctl', 'list', 'devicetypes', '-j'], 'types'))['devicetypes']
@@ -265,7 +268,7 @@ def main():
     except Exception as exc:
         # Public gallery metadata must never include a machine path from OSError.
         reason = re.sub(r'/(?:Users|private|var|tmp)/[^\s\x27\x22]+', '[local artifact]', str(exc))
-        status.update(status='failed', reason=reason)
+        status.update(status='environment' if isinstance(exc, FileNotFoundError) else 'failed', reason=reason)
     finally:
         signal.alarm(0)
         for signum in [signal.SIGTERM, signal.SIGHUP, signal.SIGINT]:

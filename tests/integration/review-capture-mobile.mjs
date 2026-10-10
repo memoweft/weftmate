@@ -24,7 +24,9 @@ const server = createServer(async (req, res) => {
 });
 await new Promise(done => server.listen(0, '127.0.0.1', done));
 const device = process.argv.includes('--android');
-const android = device ? await startAndroid(out) : null;
+let android;
+try { android = device ? await startAndroid(out) : null; }
+catch (error) { server.closeAllConnections(); await new Promise(done=>server.close(done)); throw error; }
 const browser = android?.browser || await chromium.launch({ headless: true });
 let currentBridge;
 if (android) {
@@ -77,7 +79,7 @@ try {
         'composer-menu': async()=>{await report();await button('添加图片或文件').click();await page.getByRole('menu',{name:'添加附件'}).waitFor();await page.getByRole('menuitem',{name:'相机'}).waitFor();},
         'composer-context': async()=>{await report();await button('背景信息窗口：86% 已用').click();await page.getByRole('tooltip').waitFor();},
         conversation: async () => { await report(); await page.getByText(/读取了 1 个文件/).click(); await page.getByText(/^读取(?: 1 个文件|项目记录)/).waitFor(); },
-        'outputs-sources': async () => { await report(); await button('输出与来源').click(); await button(/^notes.md 1 次使用$/).waitFor(); },
+        'outputs-sources': async () => { await report(); await button('对话操作').click(); await page.getByRole('menuitem', { name:'输出与来源', exact:true }).click(); await button(/^notes.md 1 次使用$/).waitFor(); },
         approval: async () => { await home(); await conversation('整理临时文件').click(); await button('批准').waitFor(); },
         'search-palette': async () => { await home();await button('打开导航').click();await page.getByRole('navigation',{name:'主导航',exact:true}).getByRole('button',{name:'搜索',exact:true}).click();await page.getByRole('dialog',{name:'搜索',exact:true}).waitFor();await page.waitForFunction(()=>document.querySelector('#search-results')?.getAttribute('aria-busy')==='false'); },
         memory: async () => { await home(); await button('打开导航').click(); await button('记忆').click(); await button(/使用中文说明/).waitFor(); },

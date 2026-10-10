@@ -1,10 +1,11 @@
-param([Parameter(Mandatory)][string]$Since, [Parameter(Mandatory)][string]$RootsJson)
+param([Parameter(Mandatory)][string]$Since, [Parameter(Mandatory)][string]$RootsJson, [int]$OwnerPid = 0, [int]$BootstrapPid = 0)
 $ErrorActionPreference = 'Stop'
 $started = [datetime]::Parse($Since).ToUniversalTime()
 $roots = @(Get-Content -LiteralPath $RootsJson -Raw | ConvertFrom-Json)
 $killed = @()
 # 4c: timestamp + executable + command path, never a parent-PID tree.
 foreach ($process in Get-CimInstance Win32_Process) {
+    if ($process.ProcessId -in @($OwnerPid, $BootstrapPid)) { continue }
     if (!$process.CreationDate -or $process.CreationDate.ToUniversalTime() -lt $started) { continue }
     if (!$process.ExecutablePath -or !$process.CommandLine) { continue }
     if ([IO.Path]::GetFileName($process.ExecutablePath) -notmatch '^(node|electron|python|python3|java|chrome|chrome-headless-shell|pwsh|powershell)\.exe$') { continue }
