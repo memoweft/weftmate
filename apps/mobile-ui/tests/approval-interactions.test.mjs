@@ -63,12 +63,12 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
       window.fixture.resetApproval=()=>{window.fixture.approval={...approval}};
     },{approval});
     await page.goto(`http://127.0.0.1:${server.address().port}/`);await page.waitForFunction(()=>state.booted);
-    const seed=async(sessionId='s1')=>page.evaluate(id=>{
+    const seed=async(sessionId='s1')=>{await page.evaluate(id=>{
       stopSharedPoll();state.loggedIn=true;state.owner='synthetic-ui2a';state.deviceId='phone-synthetic';state.chatSource='host';
       state.sharedSessionId=id;state.conversationId=null;state.generation++;state.sharedHostAvailable=true;
       state.sharedSessions=[{sessionId:id,title:'整理临时文件',sendAvailable:true,source:'host'}];state.sharedEvents=[];
       page('chat');renderSharedConversation();closeToast();
-    },sessionId);
+    },sessionId);await page.evaluate(()=>uiCore.retryConnection());};
     const label=page.locator('#approval-mode-label'),menu=page.locator('#approval-mode-popover');
     await seed();await page.waitForFunction(()=>document.getElementById('approval-mode-label').textContent==='自动');
     await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
@@ -134,5 +134,5 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),390);
     await page.evaluate(()=>applyTheme('dark'));await showApproval();await screenshot('05-dark-approval.png');
     assert.deepEqual(errors,[]);
-  }finally{await browser.close();await new Promise(done=>server.close(done))}
+  }catch(error){console.log('approval-state',await page.evaluate(()=>({owner:state.owner,page:state.page,generation:state.generation,history:uiCore.state.historyGeneration,connection:uiCore.connectionView(),approval:fixture.approval,requests:fixture.requests.slice(-8).map(r=>({method:r.method,path:r.params?.path})),toast:document.getElementById('toast')?.textContent})));throw error;}finally{await browser.close();await new Promise(done=>server.close(done))}
 });
