@@ -49,6 +49,8 @@ export async function startTimelineCandidate(options = {}) {
       if(action==='create'){const row={id:randomUUID(),revision:1,objective,phase:'active',roundsStarted:0,createdAt:Date.now(),updatedAt:Date.now()};goalRows.set(id,row);return {ref:{id:row.id,revision:row.revision}};}
       const row=goalRows.get(id);assert.equal(ref.id,row.id);row.phase='complete';row.revision++;return {ref:{id:row.id,revision:row.revision}};
     }}:{}),
+    ...(options.goals?{getTaskReplyEvidence:async()=>({status:running?'streaming':'completed',turn:1,step:1,assistantChunks:1,textChunks:1,reasoningChunks:0,assistantMessages:1,toolSaveObserved:false,
+      startedAt:new Date(baseTime).toISOString(),...(running?{}:{terminalAt:new Date().toISOString()})})}:{}),
     getStatus: async () => ({ runtime: 'ready', referenceScan: 'ready', capabilities: { chat: { available: true, inferenceVerified: false } } }), listModels: async () => [{ id: 'local', name: '合成会话', model: options.usageSamples ? 'mimo-v2.6-flash' : 'synthetic', sourceKind: options.usageSamples ? 'cloud' : 'local', configured: true, ...(options.composerMenu?{deepThinking:{supported:true,effort:'high'}}:{}) }], preflight: async () => ({ ok: true }),
     createSession: async input => { operations.push({ kind: 'create' });
       if(options.daily){if(sessionId)dailySessions.get(sessionId).running=running;events=[];running=false;dailySessions.set(input.sessionId,{events,running:false,title:'新对话'});}

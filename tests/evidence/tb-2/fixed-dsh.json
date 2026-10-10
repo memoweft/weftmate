@@ -17,6 +17,7 @@
     "keyboard-form-open",
     "native-waiting-approval-overview",
     "native-background-job-stays-active",
+    "native-step-anchor-opens-original-details",
     "native-background-job-stop",
     "d33-native-goal-schedule-cleanup-preserves-unrelated",
     "d33-adapter-store-no-forgotten-content",
