@@ -1,0 +1,77 @@
+[
+  {
+    "seq": 227,
+    "type": "task.queued",
+    "at": "2026-10-10T16:29:17.007Z",
+    "data": {
+      "taskId": "cmd-6aa10f67-6be3-49ca-862b-f05c5c7afd14",
+      "receiptId": "f6be2337-f710-4b65-b1af-11d62bac49c2",
+      "text": "纠正刚才的偏好：第973种花茶不加柠檬，改成加一片苹果，请记住。",
+      "commandId": "cmd-6aa10f67-6be3-49ca-862b-f05c5c7afd14",
+      "requestId": "a87e61c4-5830-422d-ab1a-8358d60e712a"
+    }
+  },
+  {
+    "seq": 228,
+    "type": "turn.started",
+    "at": "2026-10-10T16:29:17.009Z",
+    "data": {
+      "turn": 5
+    }
+  },
+  {
+    "seq": 230,
+    "type": "task.started",
+    "at": "2026-10-10T16:29:17.166Z",
+    "data": {
+      "taskId": "cmd-6aa10f67-6be3-49ca-862b-f05c5c7afd14",
+      "turn": 5,
+      "receiptId": "f6be2337-f710-4b65-b1af-11d62bac49c2",
+      "commandId": "cmd-6aa10f67-6be3-49ca-862b-f05c5c7afd14",
+      "requestId": "a87e61c4-5830-422d-ab1a-8358d60e712a",
+      "turnTaskId": "turn-5"
+    }
+  },
+  {
+    "seq": 231,
+    "type": "user.message",
+    "at": "2026-10-10T16:29:17.166Z",
+    "data": {
+      "text": "纠正刚才的偏好：第973种花茶不加柠檬，改成加一片苹果，请记住。",
+      "receiptId": "f6be2337-f710-4b65-b1af-11d62bac49c2"
+    }
+  },
+  {
+    "seq": 248,
+    "type": "assistant.message",
+    "at": "2026-10-10T16:29:26.011Z",
+    "data": {
+      "text": "我记下了，稍后会整理进记忆：**第973种花茶改为加一片苹果**（取代之前\"加柠檬\"的说法）。",
+      "memoryUsed": []
+    }
+  },
+  {
+    "seq": 249,
+    "type": "task.ended",
+    "at": "2026-10-10T16:29:26.012Z",
+    "data": {
+      "taskId": "cmd-6aa10f67-6be3-49ca-862b-f05c5c7afd14",
+      "turn": 5,
+      "reason": "completed",
+      "nativeTurnEndSeq": 250,
+      "receiptId": "f6be2337-f710-4b65-b1af-11d62bac49c2",
+      "commandId": "cmd-6aa10f67-6be3-49ca-862b-f05c5c7afd14",
+      "requestId": "a87e61c4-5830-422d-ab1a-8358d60e712a",
+      "turnTaskId": "turn-5"
+    }
+  },
+  {
+    "seq": 250,
+    "type": "turn.ended",
+    "at": "2026-10-10T16:29:26.012Z",
+    "data": {
+      "reason": "completed",
+      "turn": 5
+    }
+  }
+]

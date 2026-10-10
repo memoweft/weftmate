@@ -1,0 +1,1218 @@
+{
+  "tests": {
+    "required": {
+      "tests": 1429,
+      "pass": 1415,
+      "fail": 0,
+      "skipped": 14,
+      "cancelled": 0,
+      "durationMs": 982904.8347
+    },
+    "vendor": {
+      "tests": 203,
+      "pass": 203,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "durationMs": 132456.729
+    }
+  },
+  "testExits": {
+    "vendorExit": 0,
+    "requiredExit": 0
+  },
+  "migration": {
+    "backupReadOnly": true,
+    "sourceTaskUntouched": true,
+    "randomPort": true,
+    "publicOrigin": null,
+    "rehearsalAccountPassword": "temporary synthetic password on the copy only",
+    "paidModelRequests": 0,
+    "networkBoundary": "loopback only; 8081 and 18186 denied",
+    "originalFileCount": 66050,
+    "generatedModuleFallbackRecreated": true,
+    "legacyAccountChosen": true,
+    "accountProbeScope": "All stored account identities; synthetic local login aliases/passwords exist only on disposable copy. No account names, ids or private memory text exported.",
+    "accountIdentityRetained": true,
+    "prepareScript": true,
+    "rehearsalRefused": [
+      "Apply",
+      "Rollback"
+    ],
+    "sourceRuntimeReady": "ready",
+    "sourceVisibility": {
+      "accounts": [
+        {
+          "preStubHealth": {
+            "httpStatus": 200,
+            "normal": true,
+            "pendingBoundaryCount": 0
+          },
+          "stubSelectionHttp": 200,
+          "health": {
+            "httpStatus": 200,
+            "normal": true,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": 0,
+            "failedFormationCount": 0,
+            "reasonCode": null
+          },
+          "preview": {
+            "httpStatus": 200,
+            "sessionCount": 1,
+            "turnCount": 3,
+            "estimatedUsage": {
+              "inputTokens": 18108,
+              "outputTokens": 3000,
+              "approximate": true
+            }
+          },
+          "syntheticIndex": 0,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 3,
+          "conversationsVisible": true,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 200,
+              "count": 0,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 200,
+              "count": 0,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 200,
+              "count": 0,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        },
+        {
+          "preStubHealth": null,
+          "stubSelectionHttp": null,
+          "health": {
+            "httpStatus": 200,
+            "normal": false,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": null,
+            "failedFormationCount": null,
+            "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+          },
+          "preview": {
+            "httpStatus": 503,
+            "sessionCount": null,
+            "turnCount": null,
+            "estimatedUsage": null
+          },
+          "syntheticIndex": 1,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 0,
+          "conversationsVisible": false,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        },
+        {
+          "preStubHealth": null,
+          "stubSelectionHttp": null,
+          "health": {
+            "httpStatus": 200,
+            "normal": false,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": null,
+            "failedFormationCount": null,
+            "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+          },
+          "preview": {
+            "httpStatus": 503,
+            "sessionCount": null,
+            "turnCount": null,
+            "estimatedUsage": null
+          },
+          "syntheticIndex": 2,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 0,
+          "conversationsVisible": false,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        },
+        {
+          "preStubHealth": null,
+          "stubSelectionHttp": null,
+          "health": {
+            "httpStatus": 200,
+            "normal": false,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": null,
+            "failedFormationCount": null,
+            "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+          },
+          "preview": {
+            "httpStatus": 503,
+            "sessionCount": null,
+            "turnCount": null,
+            "estimatedUsage": null
+          },
+          "syntheticIndex": 3,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 0,
+          "conversationsVisible": false,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        }
+      ],
+      "conversationsVisible": true,
+      "memoryVisible": false
+    },
+    "installedRuntimeReady": true,
+    "localLogin": true,
+    "sameDataDirectory": true,
+    "installedVisibility": {
+      "accounts": [
+        {
+          "preStubHealth": {
+            "httpStatus": 200,
+            "normal": true,
+            "pendingBoundaryCount": 0
+          },
+          "stubSelectionHttp": 200,
+          "health": {
+            "httpStatus": 200,
+            "normal": true,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": 0,
+            "failedFormationCount": 0,
+            "reasonCode": null
+          },
+          "preview": {
+            "httpStatus": 200,
+            "sessionCount": 1,
+            "turnCount": 3,
+            "estimatedUsage": {
+              "inputTokens": 18108,
+              "outputTokens": 3000,
+              "approximate": true
+            }
+          },
+          "syntheticIndex": 0,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 3,
+          "conversationsVisible": true,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 200,
+              "count": 0,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 200,
+              "count": 0,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 200,
+              "count": 0,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        },
+        {
+          "preStubHealth": null,
+          "stubSelectionHttp": null,
+          "health": {
+            "httpStatus": 200,
+            "normal": false,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": null,
+            "failedFormationCount": null,
+            "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+          },
+          "preview": {
+            "httpStatus": 503,
+            "sessionCount": null,
+            "turnCount": null,
+            "estimatedUsage": null
+          },
+          "syntheticIndex": 1,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 0,
+          "conversationsVisible": false,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        },
+        {
+          "preStubHealth": null,
+          "stubSelectionHttp": null,
+          "health": {
+            "httpStatus": 200,
+            "normal": false,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": null,
+            "failedFormationCount": null,
+            "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+          },
+          "preview": {
+            "httpStatus": 503,
+            "sessionCount": null,
+            "turnCount": null,
+            "estimatedUsage": null
+          },
+          "syntheticIndex": 2,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 0,
+          "conversationsVisible": false,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        },
+        {
+          "preStubHealth": null,
+          "stubSelectionHttp": null,
+          "health": {
+            "httpStatus": 200,
+            "normal": false,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": null,
+            "failedFormationCount": null,
+            "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+          },
+          "preview": {
+            "httpStatus": 503,
+            "sessionCount": null,
+            "turnCount": null,
+            "estimatedUsage": null
+          },
+          "syntheticIndex": 3,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 0,
+          "conversationsVisible": false,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        }
+      ],
+      "conversationsVisible": true,
+      "memoryVisible": false
+    },
+    "verifyScript": true,
+    "mainProbe": {
+      "httpStatus": 202,
+      "commandState": "accepted_by_dsh",
+      "syntheticReply": true,
+      "originalConversationCount": 3,
+      "originalConversationsRetained": true,
+      "totalAfter": 3,
+      "health": {
+        "state": "ready",
+        "pendingBoundaryCount": 0,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0
+      }
+    },
+    "components": {
+      "port": "random loopback, reachable",
+      "login": "copied owner with temporary local password, passed",
+      "memoryBridge": "isolated pinned Core against copied data; model traffic blocked",
+      "relay": "disabled for the offline rehearsal",
+      "certificate": "ACME disabled; existing certificate files preserved in the backup"
+    },
+    "startupFileChanges": {
+      "added": 738,
+      "removed": 32787,
+      "changed": 68
+    },
+    "sourceRollback": true,
+    "rollbackVisibility": {
+      "accounts": [
+        {
+          "preStubHealth": {
+            "httpStatus": 200,
+            "normal": true,
+            "pendingBoundaryCount": 0
+          },
+          "stubSelectionHttp": 200,
+          "health": {
+            "httpStatus": 200,
+            "normal": true,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": 0,
+            "failedFormationCount": 0,
+            "reasonCode": null
+          },
+          "preview": {
+            "httpStatus": 200,
+            "sessionCount": 1,
+            "turnCount": 3,
+            "estimatedUsage": {
+              "inputTokens": 18108,
+              "outputTokens": 3000,
+              "approximate": true
+            }
+          },
+          "syntheticIndex": 0,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 3,
+          "conversationsVisible": true,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 200,
+              "count": 0,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 200,
+              "count": 0,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 200,
+              "count": 0,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        },
+        {
+          "preStubHealth": null,
+          "stubSelectionHttp": null,
+          "health": {
+            "httpStatus": 200,
+            "normal": false,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": null,
+            "failedFormationCount": null,
+            "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+          },
+          "preview": {
+            "httpStatus": 503,
+            "sessionCount": null,
+            "turnCount": null,
+            "estimatedUsage": null
+          },
+          "syntheticIndex": 1,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 0,
+          "conversationsVisible": false,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        },
+        {
+          "preStubHealth": null,
+          "stubSelectionHttp": null,
+          "health": {
+            "httpStatus": 200,
+            "normal": false,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": null,
+            "failedFormationCount": null,
+            "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+          },
+          "preview": {
+            "httpStatus": 503,
+            "sessionCount": null,
+            "turnCount": null,
+            "estimatedUsage": null
+          },
+          "syntheticIndex": 2,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 0,
+          "conversationsVisible": false,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        },
+        {
+          "preStubHealth": null,
+          "stubSelectionHttp": null,
+          "health": {
+            "httpStatus": 200,
+            "normal": false,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": null,
+            "failedFormationCount": null,
+            "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+          },
+          "preview": {
+            "httpStatus": 503,
+            "sessionCount": null,
+            "turnCount": null,
+            "estimatedUsage": null
+          },
+          "syntheticIndex": 3,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 0,
+          "conversationsVisible": false,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        }
+      ],
+      "conversationsVisible": true,
+      "memoryVisible": false
+    },
+    "restoredCopy": {
+      "added": 0,
+      "removed": 0,
+      "changed": 0
+    },
+    "backupAfter": {
+      "added": 0,
+      "removed": 0,
+      "changed": 0
+    },
+    "hashesMatchAfterRehearsalRestore": true,
+    "profileLifecyclePassed": true,
+    "conversationCountsPreserved": true,
+    "syntheticLocalRouteForCoreHealth": true,
+    "localStubRejectedRequests": 3,
+    "cloudModelRequests": 0,
+    "previewOnly": true,
+    "backfillConfirmed": false,
+    "legacyMemoryHealthyAcrossPhases": true,
+    "passed": true,
+    "backupCopyDeleted": true
+  },
+  "live": {
+    "checks": [
+      {
+        "name": "main-first",
+        "passed": true
+      },
+      {
+        "name": "main-round-1",
+        "passed": true
+      },
+      {
+        "name": "main-round-2",
+        "passed": true
+      },
+      {
+        "name": "main-round-3",
+        "passed": true
+      },
+      {
+        "name": "main-round-4",
+        "passed": true
+      },
+      {
+        "name": "main-round-5",
+        "passed": true
+      },
+      {
+        "name": "side-recall-corrected",
+        "passed": true
+      },
+      {
+        "name": "natural-stream",
+        "passed": true
+      },
+      {
+        "name": "next-suggestions",
+        "passed": true
+      },
+      {
+        "name": "gray-completion",
+        "passed": false,
+        "error": "locator.waitFor: Timeout 18000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.composer-completion:not([hidden])') to be visible\u001b[22m\n"
+      },
+      {
+        "name": "folder-picker",
+        "passed": true
+      },
+      {
+        "name": "project-read-write",
+        "passed": true
+      },
+      {
+        "name": "real-folder-drag",
+        "passed": false,
+        "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.folder-confirm') to be visible\u001b[22m\n"
+      },
+      {
+        "name": "phone-web",
+        "passed": false,
+        "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'WeftMate 主对话', exact: true })\u001b[22m\n"
+      },
+      {
+        "name": "android",
+        "passed": false
+      }
+    ],
+    "health": {
+      "ownerId": "owner-6801266a-b030-4be8-ae77-ee017f1f958f",
+      "state": "ready",
+      "version": "2.0.0",
+      "worldRevision": 2,
+      "capabilities": {
+        "list": true,
+        "source": true,
+        "inject": true,
+        "correct": true,
+        "mute": true,
+        "deleteEvidence": true,
+        "deleteWorldItem": true
+      },
+      "pendingBoundaryCount": 0,
+      "blockedBoundaryCount": 0,
+      "discardedBoundaryCount": 0,
+      "lastFailureCode": null,
+      "pendingFormationCount": 0,
+      "recoveringFormationCount": 0,
+      "failedFormationCount": 0,
+      "failedCorrectionCount": 0,
+      "formationIssues": [],
+      "backfill": null,
+      "captureError": null
+    },
+    "usage": {
+      "status": 200,
+      "body": {
+        "month": "2026-10",
+        "timeZone": "Asia/Shanghai",
+        "sessionId": null,
+        "total": {
+          "requests": 31,
+          "unknownRequests": 3,
+          "unpricedRequests": 3,
+          "inputTokens": 108029,
+          "cachedInputTokens": 76864,
+          "outputTokens": 3100,
+          "cost": 0.03890228
+        },
+        "days": [
+          {
+            "day": "2026-10-01",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-02",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-03",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-04",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-05",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-06",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-07",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-08",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-09",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-10",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-11",
+            "requests": 31,
+            "unknownRequests": 3,
+            "unpricedRequests": 3,
+            "inputTokens": 108029,
+            "cachedInputTokens": 76864,
+            "outputTokens": 3100,
+            "cost": 0.03890228
+          },
+          {
+            "day": "2026-10-12",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-13",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-14",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-15",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-16",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-17",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-18",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-19",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-20",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-21",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-22",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-23",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-24",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-25",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-26",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-27",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-28",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-29",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-30",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          },
+          {
+            "day": "2026-10-31",
+            "requests": 0,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 0,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "cost": 0
+          }
+        ],
+        "sessions": [
+          {
+            "sessionId": "session-606d8a31-18a0-4d3f-9bf8-2a33aad82f64",
+            "requests": 13,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 60270,
+            "cachedInputTokens": 46144,
+            "outputTokens": 1327,
+            "cost": 0.01770288
+          },
+          {
+            "sessionId": "session-84bff2d0-502f-4ba6-9879-69e910622f5e",
+            "requests": 9,
+            "unknownRequests": 1,
+            "unpricedRequests": 1,
+            "inputTokens": 27870,
+            "cachedInputTokens": 17536,
+            "outputTokens": 310,
+            "cost": 0.01130472
+          },
+          {
+            "sessionId": "session-64df5150-1a29-4bd7-9fc9-cef73968cf20",
+            "requests": 9,
+            "unknownRequests": 2,
+            "unpricedRequests": 2,
+            "inputTokens": 19889,
+            "cachedInputTokens": 13184,
+            "outputTokens": 1463,
+            "cost": 0.00989468
+          }
+        ],
+        "models": [
+          {
+            "profileId": "private-model-e4a1c3aa390a58674359fa62bae26f480bdf3dc3",
+            "requests": 31,
+            "unknownRequests": 3,
+            "unpricedRequests": 3,
+            "inputTokens": 108029,
+            "cachedInputTokens": 76864,
+            "outputTokens": 3100,
+            "cost": 0.03890228
+          }
+        ],
+        "categories": [
+          {
+            "category": "conversation",
+            "requests": 26,
+            "unknownRequests": 0,
+            "unpricedRequests": 0,
+            "inputTokens": 106920,
+            "cachedInputTokens": 76800,
+            "outputTokens": 3043,
+            "cost": 0.037742
+          },
+          {
+            "category": "next-suggestions",
+            "requests": 5,
+            "unknownRequests": 3,
+            "unpricedRequests": 3,
+            "inputTokens": 1109,
+            "cachedInputTokens": 64,
+            "outputTokens": 57,
+            "cost": 0.00116028
+          }
+        ],
+        "budget": {
+          "monthlyLimit": null,
+          "effectiveLimit": null,
+          "temporaryLimit": null,
+          "state": "unlimited"
+        }
+      }
+    },
+    "uninstalled": true,
+    "motion": {
+      "frames": 8004,
+      "dotFrames": 0,
+      "distinctTextLengths": 11
+    }
+  },
+  "phone": {
+    "rows": 24,
+    "failed": []
+  },
+  "android": {
+    "rows": 3,
+    "errors": [
+      {
+        "scene": "search",
+        "theme": "light",
+        "error": "locator.click: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#mobile-search-entry')\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-label=\"搜索\" class=\"search-entry\" aria-haspopup=\"dialog\" id=\"mobile-search-entry\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    23 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n"
+      },
+      {
+        "scene": "more",
+        "theme": "light",
+        "error": "locator.click: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#conversation-more')\u001b[22m\n\u001b[2m    - locator resolved to <button aria-label=\"对话操作\" class=\"icon-button\" aria-haspopup=\"menu\" id=\"conversation-more\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    23 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n"
+      },
+      {
+        "fatal": "locator.click: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#draft')\u001b[22m\n\u001b[2m    - locator resolved to <textarea rows=\"1\" disabled id=\"draft\" aria-label=\"输入消息\" placeholder=\"这段会话仅可查看\"></textarea>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not stable\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is not stable\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m  3 × retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m  19 × retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\u001b[2m       - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n"
+      }
+    ],
+    "navVisible": 0,
+    "badBars": []
+  },
+  "usage": {
+    "requests": 31,
+    "inputTokens": 108029,
+    "cachedInputTokens": 76864,
+    "outputTokens": 3100,
+    "unknown": 3,
+    "cost": 0.038902280000000004
+  },
+  "verdict": {
+    "canMigrate": false,
+    "oldProductBlockersResolved": true,
+    "fixedBaselineChecksAllGreen": false,
+    "androidRealConnectionAccepted": false,
+    "androidSystemNavigationBarAccepted": false,
+    "galleryScope": "native layout fixture only; not an actual host connection pass"
+  }
+}
