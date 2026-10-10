@@ -1,0 +1,9 @@
+{
+  "qa4-confirm-then-correct": {
+    "turns": ["我喝第903种花茶时偏好加一小撮肉桂粉。请提议以后喝这种茶时提醒我加肉桂粉。", "好，以后我喝第903种花茶时，就提醒我加一小撮肉桂粉。", "纠正一下，第903种花茶不加肉桂粉，改为加一片柠檬。"],
+    "expected": {"superseded": 2, "currentSuccessors": 1, "contains": "柠檬", "bothSidesHaveSources": true},
+    "durability": {"unrelatedTurns": 34, "restart": true, "recallModel": "local-quality", "question": "我喝第903种花茶加什么？不要调用工具。", "onlySuccessorInMemoryUsed": true}
+  },
+  "rejected-correction": {"inject": "invalid compiler interpretation", "expected": ["visible health count", "memory activity event", "original quote", "retry formation", "truthful turn notice", "no completed-memory claim"]},
+  "cross-session-omitted-topic": {"turns": ["我每天跑步五公里。", "好，以后提醒我每天跑五公里。", "纠正一下，不是五公里，改成三公里。"], "expected": "preference and decision both stop asserting five kilometers"}
+}

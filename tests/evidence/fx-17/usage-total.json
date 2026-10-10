@@ -1,0 +1,175 @@
+{
+  "runs": [
+    {
+      "run": "after-mimo-1",
+      "requests": 9,
+      "returnedUsage": 9,
+      "missingUsage": 0,
+      "input": 34197,
+      "output": 1184,
+      "cached": 19136
+    },
+    {
+      "run": "alternate-final",
+      "requests": 6,
+      "returnedUsage": 6,
+      "missingUsage": 0,
+      "input": 15354,
+      "output": 1194,
+      "cached": 11968
+    },
+    {
+      "run": "before-mimo",
+      "requests": 9,
+      "returnedUsage": 9,
+      "missingUsage": 0,
+      "input": 33774,
+      "output": 1282,
+      "cached": 28736
+    },
+    {
+      "run": "before-mimo-2",
+      "requests": 9,
+      "returnedUsage": 9,
+      "missingUsage": 0,
+      "input": 35132,
+      "output": 1377,
+      "cached": 26816
+    },
+    {
+      "run": "delayed-post-merge",
+      "requests": 13,
+      "returnedUsage": 13,
+      "missingUsage": 0,
+      "input": 52534,
+      "output": 1640,
+      "cached": 43072
+    },
+    {
+      "run": "full-mimo",
+      "requests": 145,
+      "returnedUsage": 145,
+      "missingUsage": 0,
+      "input": 855621,
+      "output": 3679,
+      "cached": 739008
+    },
+    {
+      "run": "fx15-alternate",
+      "requests": 6,
+      "returnedUsage": 6,
+      "missingUsage": 0,
+      "input": 15483,
+      "output": 685,
+      "cached": 9088
+    },
+    {
+      "run": "fx15-alternate-verified",
+      "requests": 8,
+      "returnedUsage": 8,
+      "missingUsage": 0,
+      "input": 26451,
+      "output": 1319,
+      "cached": 21376
+    },
+    {
+      "run": "fx15-delayed",
+      "requests": 14,
+      "returnedUsage": 14,
+      "missingUsage": 0,
+      "input": 57906,
+      "output": 1702,
+      "cached": 45696
+    },
+    {
+      "run": "fx15-delayed-final",
+      "requests": 13,
+      "returnedUsage": 13,
+      "missingUsage": 0,
+      "input": 52724,
+      "output": 1442,
+      "cached": 40832
+    },
+    {
+      "run": "rejection-final",
+      "requests": 9,
+      "returnedUsage": 9,
+      "missingUsage": 0,
+      "input": 36046,
+      "output": 1761,
+      "cached": 27520
+    },
+    {
+      "run": "rejection-mimo",
+      "requests": 10,
+      "returnedUsage": 10,
+      "missingUsage": 0,
+      "input": 40864,
+      "output": 1938,
+      "cached": 35456
+    },
+    {
+      "run": "rejection-verified",
+      "requests": 10,
+      "returnedUsage": 10,
+      "missingUsage": 0,
+      "input": 41422,
+      "output": 2096,
+      "cached": 31808
+    },
+    {
+      "run": "wang-eight",
+      "requests": 22,
+      "returnedUsage": 22,
+      "missingUsage": 0,
+      "input": 36145,
+      "output": 1574,
+      "cached": 24128
+    },
+    {
+      "run": "wang-eight-final",
+      "requests": 25,
+      "returnedUsage": 24,
+      "missingUsage": 1,
+      "input": 52295,
+      "output": 2849,
+      "cached": 35136
+    },
+    {
+      "run": "wang-final",
+      "requests": 5,
+      "returnedUsage": 5,
+      "missingUsage": 0,
+      "input": 15510,
+      "output": 1157,
+      "cached": 9088
+    },
+    {
+      "run": "wang-post-merge",
+      "requests": 21,
+      "returnedUsage": 21,
+      "missingUsage": 0,
+      "input": 36090,
+      "output": 2475,
+      "cached": 28416
+    },
+    {
+      "run": "wang-verified",
+      "requests": 21,
+      "returnedUsage": 20,
+      "missingUsage": 1,
+      "input": 36242,
+      "output": 2299,
+      "cached": 18944
+    }
+  ],
+  "total": {
+    "requests": 355,
+    "returnedUsage": 353,
+    "missingUsage": 2,
+    "input": 1473790,
+    "output": 31653,
+    "cached": 1196224
+  },
+  "scope": "All actual MiMo requests including failed, cancelled, rewritten and repeated runs; proxy counted once; missing usage is unknown. No price estimate."
+}
