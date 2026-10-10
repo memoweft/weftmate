@@ -1,5 +1,39 @@
 /* Shared shell state, data and actions. Presentation is supplied through named effects. */
+// Shared request cadence. Hidden surfaces keep only the presence probe; view
+// timers check foreground before reading. Native facts, rather than body
+// repainting, trigger task/approval/question refreshes.
+globalThis.WeftUiCore.polling = Object.freeze({stream:250,idle:1500,legacy:3000,overview:5500,presence:15000,background:60000,settings:30000,releaseRetry:30000,waitWeb:30000,waitNative:15000});
 globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
+    let overviewRead, factsRead, factsScope, factsSignature;
+    const polling = globalThis.WeftUiCore.polling;
+    const canWaitForReply=()=>core.state.personalCapabilities?.replyWait===1&&environment.canWaitForReply?.()!==false;
+    const replyWaitMilliseconds=()=>environment.nativeMobile?polling.waitNative:polling.waitWeb;
+    function foreground() { return core.state.background !== true; }
+    async function refreshAssistantOverview() {
+        if (!foreground() || !core.state.csrfToken) return;
+        if(core.state.personalCapabilities?.replyStreaming!==1)return core.refreshAssistant();
+        if(!core.state.online)return;
+        if (overviewRead) return overviewRead;
+        overviewRead = Promise.all([core.refreshSessions(), core.refreshActivity?.()]).catch(() => {}).finally(() => { overviewRead = null; });
+        return overviewRead;
+    }
+    async function refreshConversationFacts(force = false) {
+        const context = core.conversationTaskContext();
+        if (!foreground() || !core.conversationTaskCurrent(context)) return;
+        const scope = JSON.stringify(context);
+        const signature = JSON.stringify(core.timelineEventsForContext(context).filter(event => !event.data?.live &&
+            /^(user\.|turn\.|task\.|step\.|tool\.|approval\.|question\.|artifact\.)/.test(event.type)).map(event => [event.seq,event.eventId,event.type]));
+        if (!force && scope === factsScope && signature === factsSignature) return factsRead?.promise;
+        if (factsRead?.scope===scope) { await factsRead.promise; return refreshConversationFacts(force); }
+        factsScope = scope; factsSignature = signature;
+        const owned={scope};
+        owned.promise = (async () => {
+            await core.refreshTasks(false, false);
+            if (core.conversationTaskCurrent(context)) await core.refreshConversationTasks();
+            if (core.conversationTaskCurrent(context) && core.state.turnStatus !== 'running') void core.refreshUsageBudget?.();
+        })().catch(() => { if (factsScope === scope) factsSignature = null; }).finally(() => { if(factsRead===owned)factsRead = null; });
+        factsRead=owned;return owned.promise;
+    }
     function failureMessage(error, context) {
         switch (error?.code) {
             case 'USAGE_LIMIT_REACHED': return '本月用量已达到上限，云端模型请求已暂停。请在设置 → 用量提高本月上限，或切换本地模型。';
@@ -145,6 +179,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         }
         if (typeof payload.ownerId !== 'string' || typeof payload.hostId !== 'string')
             throw { code: 'REQUEST_FAILED' };
+        core.state.hostStatusSnapshot = {payload,at:Date.now(),identity:core.state.identityGeneration};
         if (core.state.ownerId !== payload.ownerId) {
             core.state.ownerId = payload.ownerId;
             core.state.unresolvedRequests = new Set(core.readMarkers().filter((marker) => marker.kind !== 'desktop.open_app' || !marker.commandId).map((marker) => marker.requestId));
@@ -187,6 +222,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
             effects.renderBrowserModels();
     }
     function stopAssistantRefresh() {
+        core.historyWaitAbort?.abort();
         core.stopConnection?.();
         if (core.state.refreshTimer)
             clearInterval(core.state.refreshTimer);
@@ -200,7 +236,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         try {
             // Receipts and native history control the composer. Model settings,
             // host diagnostics and the complete session list must not delay them.
-            await Promise.all([core.refreshHistory(), ...core.readMarkers()
+            await Promise.all([core.refreshHistory(false,false,true), ...core.readMarkers()
                 .filter(marker => ['session.create', 'session.message', 'session.cancel', 'chat.message', 'session.side.create'].includes(marker.kind))
                 .map(marker => core.lookupRequest(marker))]);
         } finally { core.state.liveRefreshing = false; }
@@ -415,5 +451,5 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         }
         effects.paintScreen(view);
     }
-    return { failureMessage, requestJson, accessApi, acceptSession, accountToken, accountCurrent, setOnline, operation, refreshStatus, refreshModels, stopAssistantRefresh, refreshLiveConversation, refreshAssistant, enterAssistant, load, clearSession, show };
+    return { polling, canWaitForReply, replyWaitMilliseconds, foreground, refreshAssistantOverview, refreshConversationFacts, failureMessage, requestJson, accessApi, acceptSession, accountToken, accountCurrent, setOnline, operation, refreshStatus, refreshModels, stopAssistantRefresh, refreshLiveConversation, refreshAssistant, enterAssistant, load, clearSession, show };
 };

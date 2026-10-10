@@ -8,7 +8,7 @@ import { join,resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
-const out=resolve('tests/evidence/stream-1/rework');mkdirSync(out,{recursive:true});
+const out=resolve(process.env.WEFTMATE_STREAM_EVIDENCE_DIR || 'tests/evidence/stream-1/rework');mkdirSync(out,{recursive:true});
 const f=await startTimelineCandidate({interactive:true,daily:true,inlineProgress:true,sidebar:true,composerMenu:true,historyCount:0,baseTime:Date.now()});
 const profile=mkdtempSync(join(tmpdir(),'weftmate-stream1b-'));let app,browser,timer;
 const mobileOnly=process.argv.includes('--mobile-only');const previous=mobileOnly?JSON.parse(readFileSync(join(out,'interactions.json'),'utf8')):null;const report={synthetic:true,systemBarsVerified:false,surfaces:previous?previous.surfaces.filter(row=>row.surface==='electron'):[],errors:[]};

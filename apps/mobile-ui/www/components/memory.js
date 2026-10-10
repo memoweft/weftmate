@@ -99,7 +99,7 @@ function memoryIngestionPanel(target){
     pause.textContent=job?.state==='paused'?'继续整理':'暂停整理';
     progress.textContent=job?`${({running:'正在补整理',paused:'已暂停',cancelled:'已取消',completed:'补交完成'})[job.state]}：已提交 ${job.submittedTurns-job.skippedTurns} / ${job.totalTurns} 回合。${active?'暂停或取消后不再提交后续回合；已提交的回合继续整理。':''}`:'';
   }
-  async function refresh(){if(!memoryCurrent(token)||!section.isConnected||busy)return;
+  async function refresh(){if(!memoryCurrent(token)||!section.isConnected||busy||document.visibilityState==='hidden')return;
     try{const value=await uiCore.mobile.business({path:'/personal/v1/memory/status',method:'GET'});if(memoryCurrent(token)&&section.isConnected){state.memory.healthStatus=value;paint(value)}}catch{if(memoryCurrent(token))health.textContent='记忆状态暂时无法读取，请刷新重试。';}}
   actions.append(preview,pause,cancel);section.append(health,actions,card,progress);target.append(section);paint(state.memory.healthStatus);
   const poll=async()=>{if(!section.isConnected||!memoryCurrent(token))return;await refresh();setTimeout(poll,3000);};setTimeout(poll,3000);

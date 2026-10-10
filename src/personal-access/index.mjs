@@ -127,9 +127,13 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   let rootState;
   let dataControls = null;
   let freshInstallation = false;
+  const accountWaiters=new Set();let accountRevision=0;
   const usage = await createUsageStore({ root, clock });
   // Accessors preserve the original service's live state across module boundaries.
   const context = {
+    get accountRevision(){return accountRevision;},
+    waitAccountChange(revision,signal){if(revision!==accountRevision||signal.aborted)return Promise.resolve();
+      return new Promise(resolve=>{const wake=()=>{accountWaiters.delete(wake);signal.removeEventListener('abort',wake);resolve();};accountWaiters.add(wake);signal.addEventListener('abort',wake,{once:true});});},
     get dataControls() { return dataControls; },
     async clearRestoredCloudOwner(ownerId) {
       if (!Array.isArray(restoredCloudOwners) || !restoredCloudOwners.some(row=>row.ownerId===ownerId)) return;
@@ -603,6 +607,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       throw error;
     }
     rootState = next;
+    accountRevision++;for(const wake of [...accountWaiters])wake();
     for (const ownerId of Object.keys(rootState.accounts)) {
       const previous = beforeDataAccounts?.[ownerId];
       if (['sessions','commands','projects','personalization','defaultApprovalMode','notificationSettings','account'].some(key=>!isDeepStrictEqual(previous?.[key],rootState.accounts[ownerId][key]))) dataControls?.invalidate(ownerId);

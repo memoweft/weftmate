@@ -805,7 +805,7 @@ export function createHttpHandler(context) {
         return context.json(response, 200, {
           ...context.service.status(ownerId), hostName:hostName(),
           presence: presence(backendStatus),
-          personalCapabilities: { replyStreaming: 1, sessionStatus: 1, nextSuggestions: typeof context.backend.modelCompletion === 'function' ? 1 : 0, library: 1, libraryPreview: 1, libraryDesktopActions: context.library.desktopAvailable ? 1 : 0, taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, pushRegistration: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, creationReceipt: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
+          personalCapabilities: { replyWait: typeof context.backend.waitForEvents === 'function' ? 1 : 0, replyStreaming: 1, sessionStatus: 1, nextSuggestions: typeof context.backend.modelCompletion === 'function' ? 1 : 0, library: 1, libraryPreview: 1, libraryDesktopActions: context.library.desktopAvailable ? 1 : 0, taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, pushRegistration: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, creationReceipt: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
           executionAccount: context.hostOwner(ownerId),
           executionAccountName: context.hostOwner(ownerId) ? null : context.executionAccountName(),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
@@ -1226,8 +1226,18 @@ export function createHttpHandler(context) {
       }
       const chatTimelineMatch = /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)\/(events|changes|dates|locate|search)$/.exec(pathname);
       if (request.method === 'GET' && chatTimelineMatch) {
+        const revision=context.accountRevision,waitText=url.searchParams.get('waitMs'),liveText=url.searchParams.get('liveRevision');
+        if(waitText!==null&&(chatTimelineMatch[2]!=='changes'||!/^\d+$/.test(waitText)||Number(waitText)<1||Number(waitText)>30000||!/^\d+$/.test(liveText??'')||typeof context.backend.waitForEvents!=='function'))throw failure('INVALID_REQUEST');
+        if(waitText!==null){url.searchParams.delete('waitMs');url.searchParams.delete('liveRevision');}
         if (chatTimelineMatch[1] === state.chatIdentity.mainChatId) await context.sideChats.reconcile(ownerId);
-        const result = await context.chatTimeline.query(ownerId, chatTimelineMatch[1], chatTimelineMatch[2], url.searchParams);
+        let result = await context.chatTimeline.query(ownerId, chatTimelineMatch[1], chatTimelineMatch[2], url.searchParams);
+        if(waitText!==null&&!result.hasMore&&!result.upserts.length&&!result.removals.length&&result.liveRevision===Number(liveText)){
+          const controller=new AbortController(),abort=()=>controller.abort();response.on('close',abort);
+          try{await context.chatTimeline.waitForChange(ownerId,chatTimelineMatch[1],revision,Number(waitText),controller.signal);}finally{response.off('close',abort);}
+          if(controller.signal.aborted)return;
+          if(chatTimelineMatch[1]===state.chatIdentity.mainChatId)await context.sideChats.reconcile(ownerId);
+          result=await context.chatTimeline.query(ownerId,chatTimelineMatch[1],chatTimelineMatch[2],url.searchParams);
+        }
         const current = context.authenticate(request, 'sessions:read');
         if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
         return context.json(response, 200, result);

@@ -25,7 +25,7 @@ globalThis.WeftUiCore.factories.client = (core) => {
         readMainChat: () => core.accessApi('/chats/main'),
         readChat: id => core.accessApi(`/chats/${encodeURIComponent(id)}`),
         readChatEvents: (id, params = {}) => core.accessApi(`/chats/${encodeURIComponent(id)}/events?${new URLSearchParams(params)}`),
-        readChatChanges: (id, cursor, limit = 50) => core.accessApi(`/chats/${encodeURIComponent(id)}/changes?${new URLSearchParams({ cursor, limit })}`),
+        readChatChanges: (id, cursor, limit = 50, wait) => core.accessApi(`/chats/${encodeURIComponent(id)}/changes?${new URLSearchParams({ cursor, limit,...(wait?{waitMs:wait.ms,liveRevision:wait.liveRevision}:{}) })}`,wait?{signal:wait.signal,timeoutMs:wait.ms+5000}:undefined),
         readChatDates: (id, from, to) => core.accessApi(`/chats/${encodeURIComponent(id)}/dates?${new URLSearchParams({ from, to })}`),
         locateChatDate: (id, date) => core.accessApi(`/chats/${encodeURIComponent(id)}/locate?${new URLSearchParams({ date })}`),
         searchChat: (id, params) => core.accessApi(`/chats/${encodeURIComponent(id)}/search?${new URLSearchParams(params)}`),

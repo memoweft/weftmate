@@ -7,6 +7,8 @@ import { createHistoryCache } from './history-cache.mjs';
  * persistence.inspect uses DSH's revision-aware prepared-session cache instead.
  */
 export function nativeTimelineLog(ctx, { cache = true } = {}) {
+  const waiters=new Set();
+  ctx.on?.('session/event',(session,event)=>{for(const wake of waiters)wake(session.id,event.seq);});
   const index = new Map(), changed = new Map(); let initialized;
   const summary = (session, prior = {}) => ({ ...prior, sessionId:session.id,
     agentPreset:session.header.agentPreset, ...(session.header.origin ? {origin:session.header.origin} : {}),
@@ -37,6 +39,15 @@ export function nativeTimelineLog(ctx, { cache = true } = {}) {
     if (!persistence) throw Object.assign(new Error('session not found'), { code: 'session-not-found' })
     return (await persistence.inspect(sessionId)).events
   }
+  read.waitForChange=async(sessionId,seq,ms,signal)=>{
+    let release;
+    const pending=new Promise(resolve=>release=resolve);
+    const wake=(id,next)=>{if(id===null||id===sessionId&&next>seq)release();};
+    waiters.add(wake);
+    const timer=setTimeout(release,ms),abort=()=>release();signal?.addEventListener('abort',abort,{once:true});
+    try {const events=await read(sessionId);if(signal?.aborted||(events.at(-1)?.event??events.at(-1))?.seq>seq)return;await pending;}
+    finally {clearTimeout(timer);waiters.delete(wake);signal?.removeEventListener('abort',abort);}
+  };
   read.listSessions=listSessions;
   read.sessionSummary=async(id,load)=>{await ensureIndex(load);return one(id);};
   read.refreshSession=async(id,load)=>{
@@ -60,7 +71,7 @@ export function nativeTimelineLog(ctx, { cache = true } = {}) {
     } });
   read.historyPage = (id, options, project) => history.read(id, options, project);
   read.invalidate = id => history.invalidate(id);
-  read.close = () => history.close();
+  read.close = () => {for(const wake of waiters)wake(null,Infinity);history.close();};
   read.setProjector = project => {
     ctx.on?.('agent/status', ({ agent, status }) => {
       if (status !== 'idle' || agent.session.header.agentPreset !== 'personal-remote') return;

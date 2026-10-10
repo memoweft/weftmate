@@ -47,6 +47,15 @@ const mobileEffects = {
   openActivityMemory:()=>page('memory'),
   openActivitySettings:()=>page('about'),
   nativeCall: (...args) => call(...args),
+  foregroundRestored: async () => {
+    if(!state.loggedIn)return;
+    if(['chat','home'].includes(state.page))await listSharedSessions();
+    if(state.page==='chat'&&state.chatSource==='host'){await loadSharedHistory();await uiCore.refreshConversationFacts(true);scheduleSharedPoll();}
+    else if(state.page==='activity')await uiCore.refreshActivity();
+    else if(state.page==='goals')await uiCore.readGoals();
+    else if(state.page==='library')await uiCore.readLibrary();
+    else if(state.page==='data')await $('page-content').dataView?.refresh();
+  },
   readMessageDraft: () => $('draft').value,
   clearMessageDraft: () => { $('draft').value = ''; },
   readChatStatus: () => $('chat-status').textContent,
@@ -83,7 +92,8 @@ const mobileEffects = {
 };
 const uiCore = WeftUiCore.create({ fetch: mobileWebBridge?.fetch || androidBridge.fetch, storage: localStorage,
   crypto: globalThis.crypto, effects: mobileEffects, mobileState: state, attachmentDrafts, logicalChats:true,
-  networkAvailable:()=>globalThis.navigator?.onLine,nativeMobile:!!window.weftNative });
+  networkAvailable:()=>globalThis.navigator?.onLine,nativeMobile:!!window.weftNative,
+  canWaitForReply:()=>!window.weftNative||androidBridge.canWaitForReply() });
 uiCore.android = androidBridge;
 function startMobileConnection() {
   uiCore.syncMobileIdentity();
@@ -195,7 +205,7 @@ async function openGoalSource(source){
 async function goalsPage(target){
   uiCore.syncMobileIdentity();goalsView??=WeftGoalsView.mount({target,core:uiCore,toast,openSource:openGoalSource});goalsView.render();
   const generation=state.generation,owner=state.owner;
-  try{const info=await uiCore.accessApi('/status');if(generation!==state.generation||owner!==state.owner||state.page!=='goals')return;uiCore.state.personalCapabilities=info.personalCapabilities??{};await uiCore.readGoals();clearInterval(goalsTimer);goalsTimer=setInterval(()=>{if(state.page==='goals'&&state.loggedIn&&document.visibilityState==='visible')void uiCore.readGoals();},6000);}
+  try{const info=await uiCore.accessApi('/status');if(generation!==state.generation||owner!==state.owner||state.page!=='goals')return;uiCore.state.personalCapabilities=info.personalCapabilities??{};await uiCore.readGoals();clearInterval(goalsTimer);goalsTimer=setInterval(()=>{if(state.page==='goals'&&state.loggedIn&&document.visibilityState==='visible')void uiCore.readGoals();},uiCore.polling.overview);}
   catch(error){if(generation===state.generation){uiCore.goalsPage.errors={tasks:'电脑离线，连接电脑后可查看目标。',schedules:'电脑离线，连接电脑后可查看定时任务。',goals:'电脑离线，连接电脑后可查看长期目标。'};goalsView?.render();}}
 }
 let activityView=null,activityTimer=null,activityReturn=false,notificationActivityId=null;
@@ -209,7 +219,7 @@ async function activityPage(target){
     if(notificationActivityId)await uiCore.setActivityFilter('all');else await uiCore.readActivity();
     if(notificationActivityId){const id=notificationActivityId;while(state.page==='activity'&&owner===state.owner&&!uiCore.activity.items.some(row=>row.id===id)&&uiCore.activity.nextCursor)await uiCore.readActivity(true);
       if(owner===state.owner&&state.page==='activity'){const row=target.querySelector(`[data-activity-id="${CSS.escape(id)}"]`);row?.scrollIntoView({block:'center'});row?.focus();notificationActivityId=null;}}
-    clearInterval(activityTimer);activityTimer=setInterval(()=>{if(state.page==='activity'&&state.loggedIn&&document.visibilityState==='visible')void uiCore.refreshActivity();},6000);
+    clearInterval(activityTimer);activityTimer=setInterval(()=>{if(state.page==='activity'&&state.loggedIn&&document.visibilityState==='visible')void uiCore.refreshActivity();},uiCore.polling.overview);
   }catch(error){if(generation===state.generation){uiCore.activity.error=uiCore.activity.items.length?'电脑离线，正在显示已读取的动态。':'电脑离线，连接电脑后可读取动态。';activityView?.render();}}
 }
 
@@ -261,8 +271,10 @@ function mountMobileTabs(){
     tab.append(icon,el('span','mobile-tab-label',name));tab.onclick=()=>void selectMobileTab(id);tabs.append(tab);
   }
   tabs.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const buttons=[...tabs.querySelectorAll('[role=tab]')],index=buttons.indexOf(document.activeElement),next=buttons[event.key==='Home'?0:event.key==='End'?3:(index+(event.key==='ArrowLeft'?-1:1)+4)%4];next.focus();void selectMobileTab(next.dataset.tab);});
-  const refresh=async()=>{if(!state.loggedIn||document.visibilityState==='hidden')return;await uiCore.refreshActivity();if(uiCore.state.personalCapabilities.taskOverview===1)await uiCore.readGoals();syncMobileTabs();};
-  clearInterval(mobileBadgeTimer);mobileBadgeTimer=setInterval(()=>void refresh(),6000);
+  const refresh=async()=>{if(!state.loggedIn||document.visibilityState==='hidden')return;
+    if(['chat','home'].includes(state.page))await listSharedSessions();
+    if(state.page!=='activity')await uiCore.refreshActivity();syncMobileTabs();};
+  clearInterval(mobileBadgeTimer);mobileBadgeTimer=setInterval(()=>void refresh(),uiCore.polling.overview);
   window.addEventListener('online',()=>void refresh());syncMobileTabs();
 }
 function renderMobileTab(name){
@@ -827,7 +839,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     else if(state.page==='home')void refreshHome();
     else if(state.page==='memory'&&state.memory?.view==='list'&&!state.memory.loading)startMemorySnapshot(memoryTarget,state.memory.kind,state.memory.query);
     else if(state.page==='general')page('general');
-    else if(state.chatSource==='host'&&state.page==='chat'){void loadSharedHistory();scheduleSharedPoll()}
+    else if(state.chatSource==='host'&&state.page==='chat'){scheduleSharedPoll()}
     else{if(toolApprovals.detail&&approvalViewCurrent(toolApprovals.detail.context))void refreshToolApprovals(toolApprovals.detail.context);
       if(toolQuestions.detail&&approvalViewCurrent(toolQuestions.detail.context))void refreshToolQuestions(toolQuestions.detail.context)}});
   if(window.ResizeObserver)new ResizeObserver(syncChatInsets).observe($('composer-dock'));

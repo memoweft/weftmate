@@ -22,7 +22,8 @@ export async function startTimelineCandidate(options = {}) {
   const goal = '读取项目资料，运行测试，并保存一份进度报告。'
   const approvalReason = `${options.riskApproval ? '[weftmate:overwrite] ' : ''}覆盖项目中的 progress.md。原文件将被替换，可从 Git 恢复。`
   const operations = [], baseTime = options.baseTime || Date.parse('2026-10-07T08:00:00Z')
-  const append = (type, data) => { const event = { seq: events.length, time: baseTime + events.length * 500, type, data }; events.push(event); return event }
+  const eventWaiters=new Set();
+  const append = (type, data) => { const event = { seq: events.length, time: baseTime + events.length * 500, type, data }; events.push(event);for(const wake of eventWaiters)wake(sessionId,event.seq); return event }
   const call = (name, id, args) => append('tool/call', { turn: 1, callId: id, name, arguments: JSON.stringify(args) })
   const result = (id, text, isError = false) => append('tool/result', { turn: 1, message: { source: { kind: 'tool', callId: id }, content: [{ type: 'tool-result', toolCallId: id, isError, content: [{ type: 'text', text }] }] } })
   const adapter = createDshSessionAdapter({ sessions: { list: async () => ok({ items: [{ sessionId, origin: 'user' }] }) }, events: {} }, { readLog: async () => events })
@@ -31,6 +32,12 @@ export async function startTimelineCandidate(options = {}) {
   const goalRows = new Map();
   if(options.goals){scheduleRows[0]={...scheduleRows[0],createdAt:new Date().toISOString(),revision:1,kind:'reminder',repeat:{kind:'daily',time:'09:00:00'}};}
   const backend = {
+    async waitForEvents({sessionId:id,seq,timeoutMs,signal}){
+      let release;const pending=new Promise(resolve=>release=resolve),wake=(changed,next)=>{if(changed===id&&next>seq)release();};
+      eventWaiters.add(wake);const timer=setTimeout(release,timeoutMs),abort=()=>release();signal?.addEventListener('abort',abort,{once:true});
+      try {const rows=id===sessionId?events:dailySessions.get(id)?.events;if(signal?.aborted||(rows?.at(-1)?.seq??-1)>seq)return;await pending;}
+      finally{clearTimeout(timer);eventWaiters.delete(wake);signal?.removeEventListener('abort',abort);}
+    },
     deleteSession: async ({sessionId:id}) => { dailySessions.delete(id); if(id===sessionId){events=[];running=false;} return {deleted:true}; },
     chatRelayState: async () => ({ pending: relayPending, safe: !running }),
     prepareChatHandoff: async ({sessionId}) => ({text:'Synthetic bounded handoff',sourceSessionId:sessionId,throughSeq:1,sourceRefs:[]}),

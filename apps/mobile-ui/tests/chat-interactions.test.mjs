@@ -8,7 +8,7 @@ import {mobileSource as source,mobileHtml as html} from './load-page.mjs';
 const styles=readFileSync(new URL('../www/styles.css',import.meta.url),'utf8');
 const htmlIds=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(match=>match[1]));
 
-function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFrames=false,frameMs=1000/60}={}){
+function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFrames=false,frameMs=1000/60,virtualClock=false}={}){
   const intervals=new Map();const timers=new Map();let nextTimer=0,nextInterval=0,now=0;
   const nodes=new Map();
   let domReady;
@@ -89,6 +89,7 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
   const localStorage={setItem(key,value){saved.set(key,String(value))},removeItem(key){saved.delete(key)},
     getItem(key){return saved.get(key)??null},key(index){return [...saved.keys()][index]??null},get length(){return saved.size}};
   const context=vm.createContext({document,window,innerHeight:window.innerHeight,localStorage,URL,AbortSignal,crypto:globalThis.crypto,performance:{now:()=>now},
+    Date:virtualClock?class extends Date{static now(){return now}}:Date,
     // Page refresh intervals are tracked separately from the controlled send/retry clock.
     setInterval:(fn,delay)=>{const id=`interval-${++nextInterval}`;intervals.set(id,{fn,delay});return id},clearInterval:id=>intervals.delete(id),
     setTimeout:(fn,delay)=>{const id=++nextTimer;timers.set(id,{fn,delay,due:now+delay});return id},clearTimeout:id=>timers.delete(id),
@@ -111,8 +112,32 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
   const previewNote=()=>gallery()?.querySelector('.render-gallery-note')||node('image-preview-note');
   const previewTitle=()=>gallery()?.querySelector('h2')||node('image-preview-name');
   const previewVisible=()=>!!gallery()?.open;
-  return {run,node,gallery,previewImage,previewNote,previewTitle,previewVisible,timers,bridge,flush,reply,advance,frames,flushFrame,document,storage:saved,domReady:()=>domReady(),observed:()=>observed};
+  return {run,node,gallery,previewImage,previewNote,previewTitle,previewVisible,timers,intervals,now:()=>now,bridge,flush,reply,advance,frames,flushFrame,document,storage:saved,domReady:()=>domReady(),observed:()=>observed};
 }
+
+test('BL-29 synthetic 30-second request budgets include every bridge method in foreground idle and hidden',async()=>{
+  const session={sessionId:'s1',source:'host',running:false,sendAvailable:true,taskAvailable:false};
+  const h=harness({virtualClock:true,autoBoot:true,autoResults:{
+    'host.status':{ownerId:'A',hostId:'host',hostName:'synthetic-host',personalCapabilities:{replyStreaming:1},backend:{capabilities:{chat:{available:true}}}},
+    'shared.sessions.list':{source:'host',hostAvailable:true,sessions:[session]},'shared.projects.list':{projects:[]},
+    'shared.sessions.events':{source:'host',sessionId:'s1',events:[],nextSeq:-1,hasMore:false,liveSeq:-1,liveEvents:[]},
+    'shared.approvals.list':{approvals:[]},'shared.questions.list':{questions:[]},'activity.list':{hostAvailable:true,activities:[]},
+    'updates.status':{activeVersion:'0.8.25',nativeVersion:'synthetic'},
+  }});
+  h.document.visibilityState='visible';
+  h.run('window.weftNative.onmessage=event=>androidBridge.receive(event)');
+  h.run(`Object.assign(state,{loggedIn:true,owner:'A',deviceId:'device',authEpoch:1,page:'chat',chatSource:'host',sharedSessionId:'s1',sharedSessions:[${JSON.stringify(session)}],sharedHostAvailable:true});uiCore.syncMobileIdentity();uiCore.state.personalCapabilities={replyStreaming:1};uiCore.presence.success();startMobileConnection();mountMobileTabs();scheduleSharedPoll();`);
+  const advance=async ms=>{for(let n=0;n<ms;n+=50){h.advance(50);for(const interval of h.intervals.values()){
+    interval.due??=h.now()+interval.delay;if(interval.due<=h.now()){interval.due+=interval.delay;interval.fn();}}
+    for(let flush=0;flush<8;flush++)await h.flush();}};
+  await advance(6500);let before=h.bridge.length;await advance(30000);
+  const foreground=h.bridge.slice(before);assert.ok(foreground.some(row=>row.method==='shared.sessions.events'),'counts the actual history timer');
+  assert.ok(foreground.some(row=>row.method==='shared.sessions.list'),'counts independent metadata refresh');
+  assert.ok(foreground.length<=66,`foreground idle: ${foreground.length} calls / 30s (2/s + 10% scheduling margin)`);
+  h.document.visibilityState='hidden';h.run('stopSharedPoll();uiCore.connectionVisibility(true)');before=h.bridge.length;
+  await advance(30000);assert.ok(h.bridge.length-before<=3,`hidden: ${h.bridge.length-before} calls / 30s`);
+  h.run('stopSharedPoll();uiCore.stopConnection()');
+});
 
 test('real HTML IDs support bootstrap and ResizeObserver without app.failed',async()=>{
   assert.equal(htmlIds.has('composer-dock'),true);
