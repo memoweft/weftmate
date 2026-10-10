@@ -77,6 +77,7 @@ try {
         conversation: async () => { await report(); await page.getByText(/读取了 1 个文件/).click(); await page.getByText(/^读取(?: 1 个文件|项目记录)/).waitFor(); },
         'outputs-sources': async () => { await report(); await button('输出与来源').click(); await button(/^notes.md 1 次使用$/).waitFor(); },
         approval: async () => { await home(); await conversation('整理临时文件').click(); await button('批准').waitFor(); },
+        'search-palette': async () => { await home();await button('打开导航').click();await page.getByRole('navigation',{name:'主导航',exact:true}).getByRole('button',{name:'搜索',exact:true}).click();await page.getByRole('dialog',{name:'搜索',exact:true}).waitFor();await page.waitForFunction(()=>document.querySelector('#search-results')?.getAttribute('aria-busy')==='false'); },
         memory: async () => { await home(); await button('打开导航').click(); await button('记忆').click(); await button(/使用中文说明/).waitFor(); },
         appearance: async () => { await settings(); await button(/^外观 /).click(); await button(new RegExp(`^${theme === 'dark' ? '深色' : '浅色'}`)).click(); },
         general: async () => { await settings(); await button(/^助手/).click(); await page.getByRole('combobox', { name: '回复进行中时发送的消息', exact: true }).waitFor(); },

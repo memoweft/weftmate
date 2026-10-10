@@ -12,6 +12,7 @@
   "scenes": [
     { "id": "onboarding", "label": "首次使用引导 / 连手机", "unavailable": ["watch"] },
     { "id": "login", "label": "登录页", "unavailable": ["watch"] },
+    { "id": "search-palette", "label": "搜索面板 / 类型、最近使用与操作", "unavailable": ["android", "iphone", "mac", "watch"] },
     { "id": "sessions", "label": "侧栏 · 项目、状态与长按", "unavailable": ["watch"] },
     { "id": "conversation", "label": "对话中 · 执行步骤", "unavailable": ["watch"] },
     { "id": "composer-menu", "label": "输入区 / 附件与深入思考", "unavailable": ["watch"] },

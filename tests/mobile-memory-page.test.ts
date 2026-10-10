@@ -66,6 +66,7 @@ class FakeElement {
   after(...nodes: FakeElement[]) { const p = this.parentNode; if (!p) return; const i = p.children.indexOf(this); p.children.splice(i + 1, 0, ...nodes); for (const n of nodes) n.parentNode = p }
   before(...nodes: FakeElement[]) { const p=this.parentNode;if(!p)return;const i=p.children.indexOf(this);p.children.splice(i,0,...nodes);for(const node of nodes)node.parentNode=p; }
   remove() { if (this.parentNode) this.parentNode.children = this.parentNode.children.filter((x) => x !== this); this.parentNode = null }
+  cloneNode(deep = false) { const node = new FakeElement(this.tagName,this.id);node.className=this.className;node._text=this._text;node.attributes=new Map(this.attributes);node.dataset={...this.dataset};if(deep)node.append(...this.children.map(child=>child.cloneNode(true)));return node; }
   setAttribute(name: string, value: string) { this.attributes.set(name, value) }
   getAttribute(name: string) { return this.attributes.get(name) ?? null }
   focus() {}
@@ -119,6 +120,7 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
   const hiddenIds = new Set([...html.matchAll(/<[^>]*\bid="([^"]+)"[^>]*\bhidden\b[^>]*>/g)].map(match => match[1]))
   const get = (id: string) => { if (!nodes.has(id)) { const node = new FakeElement('div', id); node.hidden = hiddenIds.has(id); nodes.set(id, node) }; return nodes.get(id)! }
   const brandTitle = new FakeElement('strong')
+  const drawerBrand = new FakeElement('div');drawerBrand.className='drawer-brand';get('drawer').append(drawerBrand);
   const nav = ['chat', 'things', 'memory', 'capabilities', 'workspaces', 'devices', 'notifications', 'settings', 'connect']
     .map((page) => { const button = new FakeElement('button'); button.dataset.page = page; button.textContent = page; return button })
   const newChat = new FakeElement('button'); newChat.dataset.action = 'new-chat'
