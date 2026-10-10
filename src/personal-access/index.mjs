@@ -240,6 +240,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get projectToolSource() { return projectToolSource; },
     get publicAuth() { return publicAuth; },
     get publicHistoryEvent() { return publicHistoryEvent; },
+    publicLiveEvents: (...args) => context.sessionOperations.publicLiveEvents(...args),
     get questionDeliveries() { return questionDeliveries; },
     get questionNativeTerminals() { return questionNativeTerminals; },
     get queuedHashes() { return queuedHashes; },

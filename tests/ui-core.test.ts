@@ -746,3 +746,13 @@ test('UX-9 folder registration keeps editing available but blocks a send until p
  await f.core.sendDraft('合成草稿');assert.equal(f.requests.length,0);
  reply.resolve({project:{projectId:'project-synthetic'}});await registration;assert.equal(f.core.composerState('合成草稿').sendDisabled,false);
 });
+
+
+test('STREAM-1b a new main-chat user message enables live reads until native terminal evidence',()=>{
+ const f=fixture();Object.assign(f.core.state,{mainChat:{chatId:'main',running:false},selectedChatId:'main',activeChatSource:'desktop'});
+ assert.equal(f.core.mainReplyActive(),false);
+ f.core.state.chatWindow.events.set('user',{eventId:'user',orderKey:'1',type:'user.message',data:{text:'继续'}});
+ assert.equal(f.core.mainReplyActive(),true);
+ f.core.state.chatWindow.events.set('end',{eventId:'end',orderKey:'2',type:'turn.ended',data:{reason:'aborted'}});
+ assert.equal(f.core.mainReplyActive(),false,'aborted replies return to idle reads');
+});

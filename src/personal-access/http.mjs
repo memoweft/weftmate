@@ -805,7 +805,7 @@ export function createHttpHandler(context) {
         return context.json(response, 200, {
           ...context.service.status(ownerId), hostName:hostName(),
           presence: presence(backendStatus),
-          personalCapabilities: { sessionStatus: 1, nextSuggestions: typeof context.backend.modelCompletion === 'function' ? 1 : 0, library: 1, libraryPreview: 1, libraryDesktopActions: context.library.desktopAvailable ? 1 : 0, taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, pushRegistration: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, creationReceipt: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
+          personalCapabilities: { replyStreaming: 1, sessionStatus: 1, nextSuggestions: typeof context.backend.modelCompletion === 'function' ? 1 : 0, library: 1, libraryPreview: 1, libraryDesktopActions: context.library.desktopAvailable ? 1 : 0, taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, pushRegistration: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, creationReceipt: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
           executionAccount: context.hostOwner(ownerId),
           executionAccountName: context.hostOwner(ownerId) ? null : context.executionAccountName(),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
@@ -1529,6 +1529,7 @@ export function createHttpHandler(context) {
         }
         const projection = {
           cacheAllowed: !hasPrivateContent(context.accountState(ownerId).sessions[sessionId]),
+          ...(beforeSeq === undefined && page.liveEvents ? { liveSeq: page.liveSeq, liveEvents: context.publicLiveEvents(ownerId, sessionId, page.liveEvents) } : {}),
           events: page.events.map((rawEvent) => {
             const event = context.publicHistoryEvent(ownerId, sessionId, rawEvent);
             const data = plainObject(event.data) && event.data.truncated === false

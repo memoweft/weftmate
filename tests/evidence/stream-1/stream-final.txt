@@ -1,0 +1,27 @@
+▶ shared offline content: parsing, injection set, streaming, controls and failure fallback
+  ✔ headings, nested lists/tasks, quotes, rule, emphasis, links, footnotes and 30 languages (16.1277ms)
+  ✔ script, HTML events, dangerous protocols, SVG scripts, CSS expression, KaTeX extensions never execute (11.0052ms)
+  ✔ unclosed streaming code preserves controls and node identity, exact 30-line threshold (11.4581ms)
+  ✔ table copies escape pipes, CSV quotes, commas and multiline cells (3.0424ms)
+  ✔ plain streaming tails retain completed blocks and Markdown transitions still reparse references, lists and fences (33.336ms)
+  ✔ math renders offline and failure returns exact delimited source (7.0041ms)
+  ✔ Mermaid graph and failed/injected syntax fallback without links or scripts (4511.7257ms)
+  ✔ known host titles become link cards; ordinary links use external marking without a fetch (3.5771ms)
+  ✔ an incomplete streamed diagram recovers to graph view when the syntax becomes valid (843.7634ms)
+  ✔ captured source links preserve provenance priority and the host title card (1965.3361ms)
+✔ shared offline content: parsing, injection set, streaming, controls and failure fallback (7957.8075ms)
+✔ live snapshots keep native anchors, cumulative text, reasoning private and final text authoritative across tool steps (7.8754ms)
+✔ stop/error snapshots settle without a live indicator, reconnect rebuilds exact text, retry replaces failed attempt (1.043ms)
+✔ live snapshots have no separate erasure cache and D33 rejects forgotten provenance and deleting/cleanup accounts (0.5273ms)
+✔ logical client snapshot updates deduplicate, retain presentation identity, remove on final and reset on erasure (2.3374ms)
+✔ late logical/legacy snapshots cannot roll back a newer body or revive a finalized message (2.7216ms)
+✔ completion SSE decodes split Unicode frames, observes usage, parses short text/old JSON and aborts while reading (5.4902ms)
+✔ D33 snippet erasure removes packed native text/reasoning/tool deltas even when the phrase crosses chunk boundaries (29.8104ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8440.5253
