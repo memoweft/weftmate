@@ -29,7 +29,8 @@ function fixture(root:string) {
     backend:{describeSession:async()=>({running}),cancelSession:async()=>{cancelled=true;running=false},deleteSession:async()=>{deleted=true;return {deleted:true}}},
     memoryManager:{status:async()=>({capabilities:{deleteEvidence:true}}),query:async(_owner:string,method:string)=>method==='query_jobs'?{jobs:[{acceptance:{parent_session_id:'session-a',evidence_ids:['e-a']}},{acceptance:{parent_session_id:'session-other',evidence_ids:['e-other']}}]}:{world_revision:2},
       submitCommand:async(owner:string,command:any)=>{calls.push({owner,command});return {result_state:'applied',storage_cleanup:{state:'complete'}}}}};
-  return {account,operations:createSessionOperations(context),calls,context,start:()=>{running=true},get cancelled(){return cancelled},get deleted(){return deleted}};
+  context.sessionOperations = createSessionOperations(context);
+  return {account,operations:context.sessionOperations,calls,context,start:()=>{running=true},get cancelled(){return cancelled},get deleted(){return deleted}};
 }
 test('archive preserves experience and restores without changing ownership',async()=>{
   const f=fixture('unused');await f.operations.archiveSession('owner','session-a',true);assert.equal(f.account.sessions['session-a'].archived,true);

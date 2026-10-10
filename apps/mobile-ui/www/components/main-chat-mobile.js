@@ -31,7 +31,7 @@
       }
       appendSharedFiles(node,event,event.sourceRef?.sessionId);target.append(node);
     }},
-    renderSessions:()=>{ state.sharedSessions=uiCore.state.sessions.filter(row=>row.kind!=='main').map(row=>({...row,source:'host'}));renderConversationList(); },
+    renderSessions:()=>{ state.sharedSessions=uiCore.state.sessions.filter(row=>row.kind!=='main').map(row=>({...row,source:'host'}));renderConversationList(); if(uiCore.state.sessionListNextCursor||uiCore.state.sessionListCursor){const more=el('button','quiet',uiCore.state.sessionListNextCursor?'更早的对话':'最近对话');more.type='button';more.onclick=()=>uiCore.pageSessions(!!uiCore.state.sessionListNextCursor).catch(error=>toast(uiCore.failureMessage(error)));$('conversation-list').append(more);} },
     paintSelectedSession:id=>{
       state.chatSource='host';state.conversationId=null;state.sharedSessionId=id;state.sharedGeneration++;
       state.sharedRunning=!!uiCore.state.sessions.find(row=>row.sessionId===id)?.running;
@@ -49,7 +49,7 @@
   Object.assign(mobileEffects,presentation,{
     renderMainChat(){if(!state.logicalChats)return;if(main()){state.sharedSessionId=uiCore.state.selectedSessionId;state.sharedRunning=!!uiCore.state.mainChat.running;ensureList();}presentation.renderMainChat();if(main()&&state.scrollPinned&&!uiCore.state.chatWindow.hasNewer)scrollBottom();},
     paintSelectedSession:id=>presentation.paintSelectedSession(id),
-    showConversation:()=>{if(main())ensureList();page('chat');scheduleSharedPoll();},closeRail:closeDrawer,
+    showConversation:()=>{if(main())ensureList();if(['activity','goals','library'].includes(state.page)&&!state.tabSource&&!state.selectingMainTab)return;page('chat');scheduleSharedPoll();},closeRail:closeDrawer,
     paintModels:()=>updateComposer(),paintDesktopComposer:()=>{},paintSessionApprovalMode:()=>updateApprovalModeButton(),
     removeResourcePreview:()=>closeResourcePage({restoreFocus:false}),closeResourcePreview:()=>closeResourcePage({restoreFocus:false}),
     closePhoneImagePreview:()=>closeImagePreview({restoreFocus:false}),
@@ -62,15 +62,18 @@
     restoreMainNativeRequests:async()=>{if(window.weftNative){const rows=await call('shared.outbox.list');uiCore.restoreMainRequests(rows.commands||[]);}await uiCore.restoreRequests();},
     loadAttachmentHasher:async()=>({hashBlobSha256:async blob=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',await blob.arrayBuffer()))].map(value=>value.toString(16).padStart(2,'0')).join('')}),
     closeApprovalMenu:closeApprovalModeMenu,renderApprovalMode:updateApprovalModeButton,approvalModeReadFailed:()=>status('审批模式暂时无法读取'),
-    selectNativeSideSession:async id=>{
+    selectNativeSideSession:async (id, empty, current)=>{
       uiCore.state.selectedSessionId=id;uiCore.state.activeChatSource='desktop';
       if(!state.sharedSessions.some(row=>row.sessionId===id))await uiCore.refreshLogicalSessions();
-      nativeSides(id);await uiCore.loadMobileHistory();
+      if (!current()) return;
+      nativeSides(id);if(!empty)await uiCore.loadMobileHistory();
     },
     transferNativeAttachments:async(from,to,files)=>{
       if(!window.weftNative){uiCore.state.attachmentDrafts.set(to,files);return;}
       const fromId=from.split('|').at(-1),toId=to.split('|').at(-1);
+      const owner=state.owner,epoch=state.authEpoch;
       await call('attachments.move',{fromConversationId:fromId,conversationId:toId,attachmentIds:files.map(row=>row.attachmentId)});
+      if(owner!==state.owner||epoch!==state.authEpoch)return;
       attachmentDrafts.set(attachmentKey(toId),files);attachmentDrafts.delete(attachmentKey(fromId));await refreshAttachmentDrafts();
     },
     sendMainNativeMessage:async fields=>{
@@ -97,12 +100,12 @@
   const nativeComposer=uiCore.mobile.composerState;
   uiCore.mobile.composerState=text=>{
     if(!main())return nativeComposer(text);
-    const running=!!uiCore.state.mainChat.running,available=state.loggedIn&&state.sharedHostAvailable&&uiCore.state.mainChat.sendAvailable;
+    const running=!!uiCore.state.mainChat.running,available=!uiCore.state.sessionSelecting&&!uiCore.state.sideCreating&&state.loggedIn&&state.sharedHostAvailable&&uiCore.state.mainChat.sendAvailable;
     const modelReady=uiCore.state.models.some(model=>model.id===uiCore.state.modelProfileId);
     const attachments=currentAttachments().length;state.sharedRunning=running;
     const hasDraft=!!text.trim()||attachments>0;
     try{const key=sharedDraftKey(uiCore.state.selectedChatId);if(text)localStorage.setItem(key,text);else localStorage.removeItem(key);}catch{}
-    return {host:true,ready:available&&modelReady&&hasDraft&&!uiCore.state.submitting&&!uiCore.state.unresolvedSubmission,sendHidden:running&&!hasDraft,
+    return {host:true,processingHint:uiCore.executionAccountHint(),ready:available&&modelReady&&hasDraft&&!uiCore.state.submitting&&!uiCore.state.unresolvedSubmission,sendHidden:running&&!hasDraft,
       draftDisabled:!available,placeholder:running?WeftUiCore.runningPlaceholder(uiCore.composerInputMode(state.sharedSessionId)):'和 WeftMate 聊聊…',
       modelName:uiCore.state.mainChat.modelDisplayName||uiCore.state.models.find(row=>row.id===uiCore.state.modelProfileId)?.name||'选择模型',
       modelLabel:'当前模型',modelDisabled:!!state.sharedSessionId,attachmentsDisabled:!available||!!state.attachmentPick||uiCore.state.submitting,
@@ -115,7 +118,8 @@
   send=function(options={}){return main()?uiCore.sendMainDraft($('draft').value,options.intent):state.logicalChats&&!window.weftNative?uiCore.sendDraft($('draft').value,options.intent):oldSend(options);};
   selectSharedSession=function(id){return state.logicalChats?uiCore.selectLogicalSession(id):nativeSides(id);};
   updatePageHeader=function(){oldHeader();if(state.logicalChats&&state.page==='chat'){$('menu-button').hidden=false;$('page-back').hidden=main();}
-    if(main()){$('header-title').textContent='WeftMate';$('header-subtitle').textContent='主对话';}};
+    if(main()&&state.page==='chat'){$('header-title').textContent='WeftMate';$('header-subtitle').textContent='主对话';$('page-back').hidden=!state.tabSource;}
+    if(state.page==='chat'&&!main())$('menu-button').hidden=true;syncMobileTabs();};
   refreshAttachmentDrafts=async function(...args){if(state.logicalChats&&!window.weftNative){renderAttachmentDrafts();updateComposer();return true;}return oldDrafts(...args);};
   removeAttachment=async function(id){if(state.logicalChats&&!window.weftNative)return uiCore.removeAttachmentDraft(id);return oldRemove(id);};
   selectConversation=function(id){if(state.logicalChats&&id===null)return uiCore.openSideChat({entry:'composer'}).catch(error=>toast(uiCore.failureMessage(error)));return oldSelectConversation(id);};
@@ -127,10 +131,13 @@
     const list=$('model-options');list.replaceChildren();await uiCore.refreshThinkingModels();
     for(const model of uiCore.state.models){const option=el('button','model-option',model.name||model.displayName||model.id);option.type='button';option.setAttribute('role','option');option.setAttribute('aria-selected',String(model.id===uiCore.state.modelProfileId));option.onclick=()=>{uiCore.selectModelProfile(model.id);closeModelMenu();};list.append(option);}placeModelMenu();};
   presentation.mountMainChat();
+  mountMobileTabs();
   $('open-side-chat').hidden=true;
   const sideHeading=$('drawer').querySelector('.rail-side-heading');if(sideHeading)sideHeading.hidden=true;
+  let searchTimer;
+  $('conversation-search').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{if(state.logicalChats)void uiCore.searchSessions($('conversation-search').value).catch(error=>toast(uiCore.failureMessage(error)));},200);});
   const oldRenderMain=mobileEffects.renderMainChat;
-  mobileEffects.renderMainChat=()=>{oldRenderMain();$('open-side-chat').hidden=!state.logicalChats;if(sideHeading)sideHeading.hidden=!state.logicalChats;};
+  mobileEffects.renderMainChat=()=>{oldRenderMain();$('open-side-chat').hidden=!state.logicalChats;if(sideHeading)sideHeading.hidden=!state.logicalChats;syncMobileTabs();};
   // Touch selection exposes a single row's existing actions. Scrolling cancels a long press.
   let timer,pointerStart,longPressedRow;
   transcript.addEventListener('pointerdown',event=>{const row=event.target.closest('.logical-message,.main-chat-row.message');if(!row||row.classList.contains('user')||event.target.closest('button,a,summary'))return;

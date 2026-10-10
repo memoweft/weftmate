@@ -151,7 +151,7 @@ export async function startTimelineCandidate(options = {}) {
     }
     if (method === 'shared.commands.byRequest') return request(`/commands/by-request/${encodeURIComponent(params.requestId)}`);
     if (['app.ready', 'app.activity', 'events.subscribe'].includes(method)) return {}
-    if (method === 'app.bootstrap') return { loggedIn: true, username: credentials.username, owner: hash(`${origin}|${auth.account.ownerId}`), busy: false, model: { source: 'host', displayName: '合成会话' } }
+    if (method === 'app.bootstrap') return { deviceId:auth.device.id, loggedIn: true, username: credentials.username, owner: hash(`${origin}|${auth.account.ownerId}`), busy: false, model: { source: 'host', displayName: '合成会话' } }
     if (method === 'auth.me') return { device: auth.device, deviceId: auth.device.id, displayName: '隔离测试账号', connectionVerified: true, owner: hash(`${origin}|${auth.account.ownerId}`) }
     if (method === 'settings.appearance') return { value: options.appearanceTheme || 'light' }
     if (method === 'notifications.state') return {systemAllowed:true};

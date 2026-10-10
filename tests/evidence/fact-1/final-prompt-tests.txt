@@ -1,0 +1,12 @@
+✔ managed-child browser IPC preserves query, exact excerpts, capture time and recovery path (8.3068ms)
+✔ research self-check defaults on, follows the account turn snapshot, and off retains evidence rules (1.2729ms)
+✔ browser query evidence appears under its actual source URL without exposing raw text in the list (3.7029ms)
+✔ research pressure and timeout use durable native checkpoints below the capacity threshold (120.1365ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 230.3522

@@ -31,7 +31,7 @@
 .settings-dialog::backdrop { background: var(--wm-color-desktop-scrim); }
 .settings-sidebar { padding: var(--wm-space-16) var(--wm-space-12); background: var(--canvas); border-right: var(--wm-space-1) solid var(--line); min-height: 0; display: flex; flex-direction: column; gap: var(--wm-space-16); }
 .settings-search { width: 100%; padding: var(--wm-space-8) var(--wm-space-12); background: var(--surface); border: var(--wm-space-1) solid var(--line); border-radius: var(--wm-radius-8); }
-.settings-navigation { display: flex; flex-direction: column; gap: var(--wm-space-settings-nav-gap); overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.settings-navigation { display: flex; flex-direction: column; gap: var(--wm-space-settings-nav-gap); overflow: auto;   }
 .settings-nav-group { font-size: var(--wm-font-size-12); font-weight: 500; color: var(--ink-secondary); padding: var(--wm-space-16) var(--wm-space-12) var(--wm-space-8); }
 .settings-nav-group:first-child { padding-top: 0; }
 .settings-nav-item { width: 100%; border: 0; border-radius: var(--wm-radius-8); padding: var(--wm-space-10) var(--wm-space-12); background: transparent; color: var(--ink-secondary); display: flex; align-items: center; gap: var(--wm-space-12); text-align: left; font: inherit; }
@@ -41,7 +41,7 @@
 .settings-head { display: flex; align-items: center; justify-content: space-between; gap: var(--wm-space-24); padding: var(--wm-space-28) var(--wm-space-36) var(--wm-space-20); }
 .settings-head h1 { font-size: var(--wm-font-size-24); letter-spacing: normal; }
 .settings-dialog #account-view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.settings-content { overflow: auto; flex: 1; padding: 0 var(--wm-space-36) var(--wm-space-36); scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.settings-content { overflow: auto; flex: 1; padding: 0 var(--wm-space-36) var(--wm-space-36);   }
 .settings-category { min-width: 0; }
 .settings-category > .card { border: 0; border-radius: 0; box-shadow: none; padding: 0; margin: 0 0 var(--wm-space-28); background: transparent; }
 .settings-category .group-heading { margin-bottom: var(--wm-space-20); }

@@ -240,6 +240,7 @@ function openImagePreview(url,name,button,scope,{original=false,display=false,no
   $('image-preview-close').focus()}
 
 function openDrawer(){closeAttachmentMenu();closeModelMenu();state.drawer=true;
+  $('drawer').inert=false;$('main').inert=true;if($('mobile-bottom-tabs'))$('mobile-bottom-tabs').inert=true;
   const generation=++drawerFrameGeneration;
   renderConversationList();$('drawer-scrim').hidden=false;
   void listSharedSessions();
@@ -247,6 +248,7 @@ function openDrawer(){closeAttachmentMenu();closeModelMenu();state.drawer=true;
     $('drawer').classList.add('open');$('drawer-scrim').classList.add('open')});$('drawer-close').focus()}
 
 function closeDrawer(){const wasOpen=state.drawer;const scrimCopy=wasOpen?globalThis.WeftMobileMotion?.snapshot($('drawer-scrim')):null;const copy=wasOpen?globalThis.WeftMobileMotion?.snapshot($('drawer')):null;state.drawer=false;drawerFrameGeneration++;
+  $('drawer').inert=true;$('main').inert=false;if($('mobile-bottom-tabs'))$('mobile-bottom-tabs').inert=false;
   $('drawer').classList.remove('open');$('drawer-scrim').classList.remove('open');
   clearTimeout(closeDrawer.timer);$('drawer-scrim').hidden=true;globalThis.WeftMobileMotion?.dismiss(scrimCopy);globalThis.WeftMobileMotion?.dismiss(copy,false,'drawer')}
 
@@ -360,7 +362,7 @@ function updateComposer(){uiCore.syncMobileIdentity();mobileMessageActions?.refr
   renderContextUsage();
   paintMobileThinking();
   globalThis.WeftComposerSubtasks?.paint($('composer-subtasks'),globalThis.WeftUiCore.composerSubtasks([...uiCore.state.historyEvents.values()]),{scope:`${state.owner}/${state.authEpoch}/${state.sharedSessionId}`,root:$('chat-content')});
-  $('device-line').hidden=true;$('device-line').textContent='';$('device-line').setAttribute('role','status');$('model-label').textContent=view.modelName;$('model-button').setAttribute('aria-label',view.modelLabel);
+  $('device-line').hidden=!view.processingHint;$('device-line').textContent=view.processingHint||'';$('device-line').setAttribute('role','status');$('model-label').textContent=view.modelName;$('model-button').setAttribute('aria-label',view.modelLabel);
   $('plus-button').disabled=view.attachmentsDisabled;
   for(const button of $('attachment-drafts').querySelectorAll('button'))button.disabled=view.attachmentItemDisabled;
   $('model-button').disabled=view.modelDisabled;$('voice-button').disabled=view.voiceDisabled;

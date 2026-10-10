@@ -67,6 +67,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         if (!legacy && !temporary && core.startChatConversation) return core.startChatConversation();
         if (temporary) core.state.selectedChatId = null;
         if (core.state.submitting || core.state.unresolvedSubmission) return;
+        core.cancelSessionSelection?.();
         const fromPhone = core.state.activeChatSource === 'phone';
         if (fromPhone && core.state.selectedPhoneConversationId && !core.readPhoneOutbox())
             core.state.phoneDrafts.set(core.state.selectedPhoneConversationId, effects.readMessageDraft());
@@ -332,7 +333,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
                     : recovery && !recoveryHere ? '旧设备有未确认文字，请先切回原手机对话核对。'
                         : recoveryHere ? '重新登录后保留了旧文字。先核对服务器是否已接收，再决定是否重新同步。' : core.state.phoneSendNotice || ''
             : !core.state.online ? '等待重新连接电脑。'
-                : core.state.executionAccount === false ? '这台电脑已有执行账号。当前账号仅可聊天，不能操作电脑或读取原账号资料；请退出后登录这台电脑的原账号。'
+                : core.state.executionAccount === false ? executionAccountHint()
                 : selected?.archived ? '这段对话已归档，请在会话菜单中恢复后继续。'
                     : selected && !canSendHere ? '旧会话历史可读；要继续聊天或在对话中执行，请新建受限远端会话。'
                     : !chat || !model ? '电脑尚无可用模型。历史可阅读，聊天请先在电脑设置中配置模型。' : '';
@@ -391,7 +392,12 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         if (value?.phase === 'queued' && Number.isSafeInteger(value.ahead) && value.ahead > 0) return `模型排队中，前面还有 ${value.ahead} 个请求`;
         return { memory: '正在读取记忆…', retrying: '模型响应慢，正在重试…', reasoning: '正在思考…', answering: '正在回复…' }[value?.phase] || '等待模型回复…';
     }
-    return { refreshThinkingModels, thinkingView, setDeepThinking, handleOptimisticCreation, beginOptimistic, optimisticMessages, reconcileOptimistic, observeOptimistic, startNewConversation, retryOptimistic,
+    function executionAccountHint() {
+        if (core.state.executionAccount !== false) return '';
+        const name = core.state.executionAccountName || '原账号';
+        return `这台电脑由账号 ${name} 负责执行；当前账号只能聊天。切回 ${name} 或在 ${name} 的设置里移交。`;
+    }
+    return { executionAccountHint, refreshThinkingModels, thinkingView, setDeepThinking, handleOptimisticCreation, beginOptimistic, optimisticMessages, reconcileOptimistic, observeOptimistic, startNewConversation, retryOptimistic,
         addAttachmentFiles, composerInputMode, conversationRunning, messageModePreference, loadMessageModePreference, sendDraft, stopCurrentTurn, composerState, selectModelProfile, setMessageMode, processingLabel, processingStageLabel };
 };
 

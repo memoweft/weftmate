@@ -1,0 +1,23 @@
+✔ public target parser and IP classifier deny local, reserved and rebinding forms (5.8099ms)
+✔ late DNS after proxy close cannot open a new upstream connection (14.8521ms)
+✔ closing during system Fake-IP resolution prevents starting the DoH fallback (3.4729ms)
+✔ idle proxy clients are bounded before they send a request (103.6261ms)
+✔ HTTPS CONNECT uses the reviewed address through the tunnel without a direct fallback (7.1155ms)
+✔ Fake-IP answers alone use fixed DoH then connect to the reviewed public address (5.0367ms)
+✔ mixed Fake-IP/private answers never invoke DoH fallback (4.2905ms)
+✔ DoH JSON accepts only matching public A/AAAA answers within 64KiB (3.846ms)
+✔ pinned proxy reaches only the reviewed synthetic host and refuses mixed DNS answers (7.1616ms)
+✔ UTF-8 browser capture segments stay bounded and carry one stable capture version (5.3056ms)
+✔ hidden reader rejects a top-level HTTPS downgrade and DOM/URL navigation mismatch (1423.2249ms)
+✔ a cleaned slot reuses one in-memory session with one fixed download-deny handler (2116.6561ms)
+✔ a long rendered page exposes a small lead and marks capture beyond its 256 KiB limit incomplete (720.0654ms)
+✔ failed cleanup quarantines each partition and reports bounded failure without sharing state (2844.6066ms)
+✔ browser workspace freezes human URLs, follows only observed links, and saves proven source (8557.7564ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8797.3634

@@ -76,7 +76,8 @@ class FakeElement {
   contains(value: FakeElement) { return value === this || this.children.some((child) => child.contains(value)) }
   querySelector(selector: string): FakeElement | null {
     const matches = (node: FakeElement) => selector.startsWith('.') ? node.classList.contains(selector.slice(1)) :
-      selector.startsWith('#') ? node.id === selector.slice(1) : false
+      selector.startsWith('#') ? node.id === selector.slice(1) :
+      selector === '[role=status]' ? node.getAttribute('role') === 'status' : node.tagName === selector.toUpperCase()
     return this.children.find(matches) ?? this.children.map((child) => child.querySelector(selector)).find(Boolean) ?? null
   }
   querySelectorAll() { return [] as FakeElement[] }
@@ -270,7 +271,8 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
       getItem: (key: string) => storage.get(key) ?? null, setItem: (key: string, value: string) => storage.set(key, value),
       removeItem: (key: string) => storage.delete(key),
     } }
-  runInNewContext(source, { document, window, localStorage: timers.localStorage, setTimeout: timers.setTimeout,
+  // Browser scripts read viewport metrics as bare globals as well as window properties.
+  runInNewContext(source, { document, window, innerHeight: window.innerHeight, innerWidth: 390, localStorage: timers.localStorage, setTimeout: timers.setTimeout,
     clearTimeout: timers.clearTimeout, requestAnimationFrame: timers.requestAnimationFrame, URLSearchParams,
     console, Intl, Date, Error, Map, Set, Promise, URL, crypto: webcrypto, AbortSignal, TextEncoder,
     ResizeObserver:class { observe(){} unobserve(){} disconnect(){} } })

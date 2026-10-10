@@ -1,0 +1,30 @@
+✔ startup summary loads the latest history even when the activity scan already observed an older page (1.9032ms)
+✔ D33 cached forget: lists, search, pages, native index and restart cannot revive erased content (1847.8246ms)
+✔ D33 cached forget-title: lists, search, pages, native index and restart cannot revive erased content (1646.5942ms)
+✔ D33 cached delete: lists, search, pages, native index and restart cannot revive erased content (1426.5467ms)
+✔ FX-16 selection locks text and attachments until draft restoration, then first input survives (2.247ms)
+✔ FX-16 later selection wins and account boundary discards old restoration (0.8202ms)
+✔ FX-16 list summaries do not read history per request and update from observed events (1.1135ms)
+✔ FX-16 Android session paging preserves the complete query through its business adapter (1.8465ms)
+✔ FX-16 native sidebar index builds once and follows live creation, status and deletion (1.2839ms)
+✔ FX-16 mobile components use defined script globals or exported browser globals (3063.2454ms)
+✔ pin, manual unread/read, arrival unread and native user title persist independently (2.2354ms)
+✔ groups create, rename, move and delete restore membership without losing sessions (0.8086ms)
+✔ all metadata, groups and forks deny another account; fork leaves source and memory bindings unchanged (1.0616ms)
+✔ menu names, shortcuts and archived taxonomy are shared across renderers (8.7011ms)
+✔ backend fork copies workspace and experience independently, binds model and pins native title (17.4002ms)
+✔ HTTP metadata and groups enforce cookie CSRF, account isolation and durable restart (3214.5041ms)
+✔ project expansion is per project and account, survives recreation and storage refusal is harmless (2.0364ms)
+✔ projects show newest activity first, include fallback times and exclude archived or other projects (1.3271ms)
+✔ usage strip honors effective temporary limit, zero / exceeded limits and unknown pricing (14.3771ms)
+✔ usage strip discards a late response when account identity changes (1.0269ms)
+✔ usage strip reads the budget time zone and rejects account changes during its summary request (4.7153ms)
+✔ session activity is latest actual history time, falls back to attachment and ignores malformed event dates (2.26ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5151.0546

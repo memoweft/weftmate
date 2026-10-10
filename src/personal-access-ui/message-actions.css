@@ -28,15 +28,6 @@
 @media(max-width:600px) { .message-action { min-width:var(--wm-space-44); min-height:var(--wm-space-44); } .message-action-dialog { padding:var(--wm-space-16); } }
 
 /* Shared control surfaces used by Electron, remote web and the Android bundle. */
-:root { --scroll-thumb:var(--wm-color-scrollbar-light); --scroll-thumb-hover:var(--wm-color-scrollbar-light-hover); }
-:root[data-theme=dark] { --scroll-thumb:var(--wm-color-scrollbar-dark); --scroll-thumb-hover:var(--wm-color-scrollbar-dark-hover); }
-* { scrollbar-width:thin; scrollbar-color:var(--scroll-thumb) transparent; }
-::-webkit-scrollbar { width:var(--wm-space-8); height:var(--wm-space-8); }
-::-webkit-scrollbar-track { background:transparent; }
-::-webkit-scrollbar-thumb { background:var(--scroll-thumb); border:var(--wm-space-2) solid transparent; background-clip:padding-box; border-radius:var(--wm-radius-999); }
-::-webkit-scrollbar-thumb:hover { background-color:var(--scroll-thumb-hover); border-width:var(--wm-space-1); }
-::-webkit-scrollbar-button { display:none; width:0; height:0; }
-@supports selector(::-webkit-scrollbar) { * { scrollbar-width:auto!important; scrollbar-color:auto!important; } }
 textarea { resize:none!important; overflow:auto; caret-color:var(--accent); }
 #message-text,#draft { min-height:0; max-height:none; line-height:var(--wm-line-height-1_6); }
 summary { list-style:none; cursor:pointer; }

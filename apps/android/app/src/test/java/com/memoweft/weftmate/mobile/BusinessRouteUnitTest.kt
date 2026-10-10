@@ -5,6 +5,23 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @Test fun sessionPagingAndEncodedSearchUseTheExistingBusinessTransport() {
+        assertTrue(validBusinessPath("/personal/v1/sessions?archived=all&limit=100&cursor=session-next&q=%E7%BA%B8"))
+        assertTrue(validBusinessPath("/personal/v1/sessions?q=" + "%E7%BA%B8".repeat(256)))
+        assertFalse(validBusinessPath("/personal/v1/sessions/session-next"))
+        assertFalse(validBusinessPath("/personal/v1/sessions?q=<script>"))
+    }
+    @Test fun goalsPageSchedulesAndLongTermGoalsUseExactAccountRoutes() {
+        for (path in listOf("/personal/v1/schedules", "/personal/v1/schedules/session-one/schedule-1",
+            "/personal/v1/schedules/session-one/schedule-1/pause", "/personal/v1/schedules/session-one/schedule-1/resume",
+            "/personal/v1/schedules/session-one/schedule-1/run", "/personal/v1/goals",
+            "/personal/v1/goals/session-one/complete", "/personal/v1/goals/session-one/archive"))
+            assertTrue(path, validBusinessPath(path))
+        for (path in listOf("/personal/v1/schedules?ownerId=other", "/personal/v1/schedules/session-one",
+            "/personal/v1/schedules/session-one/schedule-1/delete", "/personal/v1/schedules/../goals",
+            "/personal/v1/goals/session-one", "/personal/v1/goals/session-one/clear", "/personal/v1/goals/session%2Fone/archive"))
+            assertFalse(path, validBusinessPath(path))
+    }
     @Test fun libraryOnlyReadsIndexedOutputRoutes() {
         assertTrue(validBusinessPath("/personal/v1/library?type=image&search=%E5%9B%BE&cursor=" + "a".repeat(800)))
         assertTrue(validBusinessPath("/personal/v1/library/artifact-one"))

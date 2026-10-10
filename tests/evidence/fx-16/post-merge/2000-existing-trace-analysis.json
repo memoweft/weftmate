@@ -1,0 +1,55 @@
+{
+  "scope": "Existing 2000-session run; browser network timings, no CPU attribution",
+  "commands": [
+    {
+      "at": "2026-10-10T04:27:16.710Z",
+      "durationMs": 180.484,
+      "status": 202
+    },
+    {
+      "at": "2026-10-10T04:27:22.572Z",
+      "durationMs": 79.609,
+      "status": 202
+    },
+    {
+      "at": "2026-10-10T04:27:27.615Z",
+      "durationMs": 70.287,
+      "status": 202
+    },
+    {
+      "at": "2026-10-10T04:27:32.651Z",
+      "durationMs": 117.487,
+      "status": 202
+    },
+    {
+      "at": "2026-10-10T04:27:37.634Z",
+      "durationMs": 87.587,
+      "status": 202
+    },
+    {
+      "at": "2026-10-10T04:27:42.668Z",
+      "durationMs": 101.5,
+      "status": 202
+    },
+    {
+      "at": "2026-10-10T04:27:47.627Z",
+      "durationMs": 60.97,
+      "status": 202
+    },
+    {
+      "at": "2026-10-10T04:27:52.742Z",
+      "durationMs": 156.997,
+      "status": 202
+    },
+    {
+      "at": "2026-10-10T04:27:58.745Z",
+      "durationMs": 148.847,
+      "status": 202
+    },
+    {
+      "at": "2026-10-10T04:28:03.652Z",
+      "durationMs": 54.685,
+      "status": 202
+    }
+  ]
+}
