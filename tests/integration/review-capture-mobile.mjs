@@ -79,7 +79,7 @@ try {
         approval: async () => { await home(); await conversation('整理临时文件').click(); await button('批准').waitFor(); },
         memory: async () => { await home(); await button('打开导航').click(); await button('记忆').click(); await button(/使用中文说明/).waitFor(); },
         appearance: async () => { await settings(); await button(/^外观 /).click(); await button(new RegExp(`^${theme === 'dark' ? '深色' : '浅色'}`)).click(); },
-        general: async () => { await settings(); await button(/^常规 /).click(); await page.getByRole('combobox', { name: '回复进行中时发送的消息', exact: true }).waitFor(); },
+        general: async () => { await settings(); await button(/^助手/).click(); await page.getByRole('combobox', { name: '回复进行中时发送的消息', exact: true }).waitFor(); },
         usage: async () => { await settings(); await button(/^用量 /).click(); await page.getByRole('heading', { name: '用量与费用', exact: true }).waitFor(); await button('刷新用量').waitFor(); },
         'session-menu': async () => { await home(); await page.getByRole('main').getByRole('button', { name: '更多操作 整理项目进展', exact: true }).click(); await page.getByRole('dialog', { name: '对话操作', exact: true }).waitFor(); await button('归档').waitFor(); await button('删除').waitFor(); },
       };

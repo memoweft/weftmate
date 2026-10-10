@@ -68,6 +68,7 @@
                 disabled: '未启用', unavailable: '不可用', unconfigured: '尚未配置', degraded: '需要处理' };
             const core = { authBase, accessBase, receiptIdPattern, state, memory, conversationTasks, conversationApprovals, conversationQuestions, api, browserRequestId, browserModelId, memoryBase, memoryKinds, memoryPreDispatchCodes, memoryItemId, memoryPathId, markerId, sessionIdPattern, syncIdPattern, originalAttachmentBytes, sharedImageBytes, sharedMessageBytes, sharedTextBytes, attachmentImageTypes, attachmentTextTypes, attachmentTypePattern, approvalModes, currentApprovalMode, approvalIdPattern, approvalRequestPattern, approvalIdentityFields, questionIdentityFields, resourceCache, serviceStateLabels };
             core.state.messageMode = 'queue';
+            core.state.personalization = null; core.state.personalizationOwner = null;
             core.state.projects = [];
             core.state.projectCanManage = false;
             core.state.projectPending = null;
