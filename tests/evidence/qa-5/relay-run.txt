@@ -1,0 +1,9 @@
+file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/evidence/qa-5/runners/relay-task.mjs:451
+  report.passed=false;report.error=redact(error.message||error);report.pageErrors=pageErrors.map(redact);report.failedRequests=failedRequests;throw new Error(report.error);
+                                                                                                                                                    ^
+
+Error: Command failed: wsl.exe -d Ubuntu --exec wslpath -a [local diagnostic path]
+    at file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/evidence/qa-5/runners/relay-task.mjs:451:149
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+Node.js v24.15.0

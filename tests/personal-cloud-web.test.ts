@@ -25,7 +25,7 @@ test('public cloud configuration exposes no account data; binding status require
   const binding = await fetch(origin + '/personal/v1/cloud/binding', { headers: { cookie } })
   assert.deepEqual(await binding.json(), { status: 'unbound', canManage: true, hostId })
   const ui = await fetch(origin + '/personal/v1/ui/')
-  assert.match(ui.headers.get('content-security-policy')!, /connect-src 'self' http:\/\/127\.0\.0\.1:19379 https:;/)
+  assert.match(ui.headers.get('content-security-policy')!, /connect-src 'self' http:\/\/127\.0\.0\.1:19379 https: blob:;/)
   for (const asset of ['cloud-login.js', 'cloud-ui.js', 'cloud-vendor.js']) {
     const response = await fetch(origin + '/personal/v1/ui/' + asset)
     assert.equal(response.status, 200); assert.match(response.headers.get('content-type')!, /javascript/)

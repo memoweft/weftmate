@@ -31,11 +31,7 @@ globalThis.WeftLibraryView={mount({target,core,desktop=false,openPreview,copyPat
         const content=openPreview(item,trigger);globalThis.WeftDesktop?.configureLibraryPreview(core.library.items,preview);content.replaceChildren(skeleton());
         try{const data=await core.libraryPreview(item);if(epoch!==previewEpoch||identity!==core.state.identityGeneration||generation!==core.library.generation||!content.isConnected)return;
             content.replaceChildren();const actions=node('div','library-preview-actions');appendActions(actions,item,true);content.append(actions);
-            if(data.kind==='image'){const image=node('img','preview-image');image.alt=item.fileName;image.src=`data:${data.contentType};base64,${data.data}`;content.append(image);}
-            else if(data.kind==='pdf'){const frame=node('iframe','library-pdf');frame.title=`预览 ${item.fileName}`;const blob=new Blob([Uint8Array.from(atob(data.data),c=>c.charCodeAt(0))],{type:'application/pdf'}),url=URL.createObjectURL(blob);frame.src=url+'#toolbar=0&navpanes=0&scrollbar=0&view=FitH';content.append(frame);const observer=new MutationObserver(()=>{if(!frame.isConnected){URL.revokeObjectURL(url);observer.disconnect();}});observer.observe(document.body,{childList:true,subtree:true});}
-            else if(data.kind==='markdown'){const body=node('div','markdown-body');if(globalThis.WeftFormat?.render)body.innerHTML=WeftFormat.render(data.text);else body.textContent=data.text;content.append(body);}
-            else if(data.text!==undefined){const pre=node('pre','library-text'),code=node('code','',data.text);pre.append(code);content.append(pre);}
-            else content.append(node('p','library-empty',data.kind==='missing'?'已不在原位置。文件可能已被移动或删除。':data.reason==='too_large'?'文件较大，请用电脑上的程序打开。':'这个文件暂时无法预览，可在电脑上打开。'));
+            WeftContent.preview(content,data,{name:item.fileName,artifactId:item.id,desktop:false});
         }catch(error){if(epoch===previewEpoch&&content.isConnected)content.replaceChildren(node('p','library-empty','暂时无法读取，请重试。'),button('重新读取',()=>preview(item,trigger)));}
     }
     function entries(item){

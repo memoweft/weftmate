@@ -1,0 +1,38 @@
+{
+  "requests": 279,
+  "withUsage": 278,
+  "missingUsage": 1,
+  "inputTokens": 1485643,
+  "cachedInputTokens": 1172096,
+  "outputTokens": 11021,
+  "sources": [
+    {
+      "source": "correction/results.json",
+      "requests": 147,
+      "withUsage": 146,
+      "missingUsage": 1,
+      "inputTokens": 943792,
+      "outputTokens": 4731,
+      "cachedInputTokens": 794688
+    },
+    {
+      "source": "smoke-flow-fixture/usage.json",
+      "requests": 33,
+      "withUsage": 33,
+      "missingUsage": 0,
+      "inputTokens": 146109,
+      "outputTokens": 2225,
+      "cachedInputTokens": 103424
+    },
+    {
+      "source": "smoke/usage.json",
+      "requests": 99,
+      "withUsage": 99,
+      "missingUsage": 0,
+      "inputTokens": 395742,
+      "outputTokens": 4065,
+      "cachedInputTokens": 273984
+    }
+  ],
+  "note": "Actual MiMo proxy requests, including failed/cancelled attempts; synthetic exit/erasure and LAN requests excluded. Missing usage is not free usage. Not a bill."
+}

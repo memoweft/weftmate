@@ -62,7 +62,7 @@
       const actions=node('div','dialog-footer');const cancel=button('取消','deny',()=>{card?.remove();card=null;choose.focus();});cancel.className='button secondary';
       const save=button('在这个文件夹里工作','folder',()=>{});save.className='button primary';save.type='submit';actions.append(cancel,save);formCard.append(status,actions);card.append(formCard);form.before(card);WeftPopover.bindSettingsSelect(access);
       formCard.onsubmit=async event=>{event.preventDefault();if(token!==scope()||blocked())return;busy=true;save.disabled=cancel.disabled=true;paint();
-        try{const result=await core.registerFolderChoice(fields=>native.createFolderProject(fields),{requestId:card.dataset.requestId||=crypto.randomUUID(),name:name.value.trim(),rootPath:choice.rootPath,permission:access.value});
+        try{const result=await core.registerFolderChoice(fields=>native.createFolderProject(fields),{requestId:card.dataset.requestId||=crypto.randomUUID(),name:name.value.trim().normalize('NFC'),rootPath:choice.rootPath,permission:access.value});
           if(token!==scope())return;busy=false;if(await select(result.project)){card?.remove();card=null;}else{status.textContent='项目已创建，对话尚未移入，请重试';save.disabled=cancel.disabled=false;}}
         catch(err){if(token===scope()){status.textContent='未完成，请核对文件夹和名称后重试';save.disabled=cancel.disabled=false;}}finally{busy=false;paint();}};
       name.focus();

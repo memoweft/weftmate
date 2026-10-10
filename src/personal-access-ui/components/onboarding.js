@@ -32,6 +32,7 @@ globalThis.WeftUiComponents.factories.onboarding = (core, ui) => {
     finally { if (active) { skip.disabled = false; back.disabled = steps.indexOf(journey.step) === 0; } }
   }
   async function finish(requireModel = false, sample) {
+    if(core.folderMutationPending?.())return;
     if (requireModel && (!core.state.account || !core.state.models.some(model => model.configured))) { say(copy.noModel); return; }
     try {
       const draft=sample||firstDraft?.value||'';
@@ -210,6 +211,8 @@ globalThis.WeftUiComponents.factories.onboarding = (core, ui) => {
     footer.append(back, skip, next); inner.append(progress, title, description, content, status, footer); panel.append(inner); document.body.append(panel);
     const replay = button(copy.replay, async () => { ui.hideSettingsDialog(); try { await persist('welcome'); render(); } catch { ui.toast(copy.error); } });
     document.querySelector('section.settings-category[data-category="general"]').append(replay);
+    const originalAvailability=ui.updateAvailability;
+    ui.updateAvailability=(...args)=>{originalAvailability(...args);if(active&&journey?.step==='first')next.disabled=!core.state.models.some(model=>model.configured)||core.folderMutationPending?.()===true;};
     const originalPaint = ui.paintScreen;
     ui.paintScreen = view => { originalPaint(view); if (active && journey?.step === 'account') { if (core.state.account) render(); else reveal(); } };
 
