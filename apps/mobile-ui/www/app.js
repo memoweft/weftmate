@@ -32,17 +32,18 @@ const androidBridge = WeftUiCore.createAndroidBridge({
 const mobileWebBridge=window.weftNative?null:WeftUiCore.createMobileWebBridge();
 const mobileEffects = {
   syncLibraryIdentity:()=>uiCore.syncMobileIdentity(),
-  renderLibrary:()=>{if(state.page==='library')libraryView?.render();},
+  renderLibrary:()=>{libraryView?.render();},
   clearLibraryPreview:()=>{if(state.resourceView?.context?.kind==='library')closeResourcePage();},
   openLibrarySource:source=>openMobileLibrarySource(source),
   resetGoalsView:()=>goalsView?.reset(),
-  renderGoals:()=>{if(state.page==='goals')goalsView?.render();},
+  renderGoals:()=>{goalsView?.render();syncMobileTabs();},
   syncActivityIdentity:()=>uiCore.syncMobileIdentity(),
   activityVisible:()=>state.page==='activity',
-  renderActivity:()=>{if(state.page==='activity')activityView?.render();},
-  async prepareActivityApproval(target){activityReturn=true;await selectSharedSession(target.sessionId);},
-  activityActionFinished:()=>{if(activityReturn){activityReturn=false;page('activity');}},
-  openActivitySource:target=>selectSharedSession(target.sessionId),
+  renderActivity:()=>{activityView?.render();syncMobileTabs();},
+  renderActivityBadge:()=>syncMobileTabs(),
+  async prepareActivityApproval(target){rememberTabSource();activityReturn=true;await selectSharedSession(target.sessionId);},
+  activityActionFinished:()=>{if(activityReturn){activityReturn=false;state.tabSource=null;page('activity');}},
+  openActivitySource:target=>openGoalSource(target),
   openActivityMemory:()=>page('memory'),
   openActivitySettings:()=>page('about'),
   nativeCall: (...args) => call(...args),
@@ -99,6 +100,7 @@ const toolApprovals=uiCore.mobileDecisions.approvals;
 const toolQuestions=uiCore.mobileDecisions.questions;
 let libraryView=null;
 async function openMobileLibrarySource(source){
+  rememberTabSource();
   await listSharedSessions();
   if(source.chatId&&source.chatId===uiCore.state.mainChat?.chatId){await uiCore.selectMainChat(source.eventId);return;}
   await uiCore.selectLogicalSession(source.sessionId);
@@ -112,7 +114,7 @@ async function openMobileLibrarySource(source){
 }
 async function libraryPage(target){
   uiCore.syncMobileIdentity();
-  libraryView=WeftLibraryView.mount({target,core:uiCore,notice:toast,openPreview:(item,trigger)=>{
+  libraryView??=WeftLibraryView.mount({target,core:uiCore,notice:toast,openPreview:(item,trigger)=>{
     showResourcePage(item.fileName,{kind:'library',owner:state.owner},trigger);
     return $('resource-content');
   }});libraryView.render();
@@ -120,7 +122,7 @@ async function libraryPage(target){
   try{const status=await uiCore.accessApi('/status');if(generation!==state.generation||owner!==state.owner)return;uiCore.state.personalCapabilities=status.personalCapabilities??{};
     if(uiCore.state.personalCapabilities.library!==1){target.replaceChildren(el('p','library-empty','请更新电脑上的 WeftMate 后查看成果库。'));return;}
     await uiCore.readLibrary();
-  }catch(error){if(generation===state.generation){uiCore.library.error=safeError(error);libraryView?.render();}}
+  }catch(error){if(generation===state.generation){uiCore.library.error=error.status===401||error.status===403?safeError(error):'电脑离线，连接电脑后可查看成果库。';libraryView?.render();}}
 }
 let goalsView=null,goalsTimer=null;
 function focusGoalStep(){
@@ -131,28 +133,97 @@ function focusGoalStep(){
   state.scrollPinned=false;step.scrollIntoView({block:'center'});step.querySelector('summary')?.focus();state.goalStepFocus=null;
 }
 async function openGoalSource(source){
+  rememberTabSource();
   await listSharedSessions();if(state.logicalChats&&source.chatKind==='main')await uiCore.selectMainChat(source.eventId);else await selectSharedSession(source.sessionId);
+  await refreshConversationTasks();
+  await Promise.all([refreshToolApprovals(),refreshToolQuestions()]);
   if(Number.isSafeInteger(source.seq)){state.goalStepFocus={seq:source.seq,stepId:source.stepId,chatId:source.chatId,sessionId:source.sessionId,owner:state.owner,epoch:state.authEpoch};focusGoalStep();}
 }
 async function goalsPage(target){
-  uiCore.syncMobileIdentity();uiCore.resetGoals();goalsView=WeftGoalsView.mount({target,core:uiCore,toast,openSource:openGoalSource});goalsView.render();
+  uiCore.syncMobileIdentity();goalsView??=WeftGoalsView.mount({target,core:uiCore,toast,openSource:openGoalSource});goalsView.render();
   const generation=state.generation,owner=state.owner;
   try{const info=await uiCore.accessApi('/status');if(generation!==state.generation||owner!==state.owner||state.page!=='goals')return;uiCore.state.personalCapabilities=info.personalCapabilities??{};await uiCore.readGoals();clearInterval(goalsTimer);goalsTimer=setInterval(()=>{if(state.page==='goals'&&state.loggedIn&&document.visibilityState==='visible')void uiCore.readGoals();},6000);}
-  catch(error){if(generation===state.generation)toast(safeError(error));}
+  catch(error){if(generation===state.generation){uiCore.goalsPage.errors={tasks:'电脑离线，连接电脑后可查看目标。',schedules:'电脑离线，连接电脑后可查看定时任务。',goals:'电脑离线，连接电脑后可查看长期目标。'};goalsView?.render();}}
 }
 let activityView=null,activityTimer=null,activityReturn=false,notificationActivityId=null;
 async function activityPage(target){
   uiCore.syncMobileIdentity();
-  activityView=WeftActivityView.mount({target,core:uiCore});activityView.render();
+  activityView??=WeftActivityView.mount({target,core:uiCore,mobile:true});activityView.render();
   const generation=state.generation,owner=state.owner;
   try {const info=await uiCore.accessApi('/status');if(generation!==state.generation||owner!==state.owner)return;
     uiCore.state.personalCapabilities=info.personalCapabilities??{};
     if(uiCore.state.personalCapabilities.activity!==1){target.replaceChildren(document.createTextNode('这台电脑尚不支持动态。更新电脑上的 WeftMate 后重试。'));return;}
-    await uiCore.setActivityFilter('all');
+    if(notificationActivityId)await uiCore.setActivityFilter('all');else await uiCore.readActivity();
     if(notificationActivityId){const id=notificationActivityId;while(state.page==='activity'&&owner===state.owner&&!uiCore.activity.items.some(row=>row.id===id)&&uiCore.activity.nextCursor)await uiCore.readActivity(true);
       if(owner===state.owner&&state.page==='activity'){const row=target.querySelector(`[data-activity-id="${CSS.escape(id)}"]`);row?.scrollIntoView({block:'center'});row?.focus();notificationActivityId=null;}}
     clearInterval(activityTimer);activityTimer=setInterval(()=>{if(state.page==='activity'&&state.loggedIn&&document.visibilityState==='visible')void uiCore.refreshActivity();},6000);
-  }catch(error){if(generation===state.generation){uiCore.activity.error=safeError(error);activityView?.render();}}
+  }catch(error){if(generation===state.generation){uiCore.activity.error=uiCore.activity.items.length?'电脑离线，正在显示已读取的动态。':'电脑离线，连接电脑后可读取动态。';activityView?.render();}}
+}
+
+// The four page models and their mounted controls live for the signed-in identity.
+const mobileTabPages=new Map(),mobileTabScroll=new Map();
+const mobileTabNames={chat:'聊天',activity:'动态',goals:'目标',library:'成果库'};
+let mobileTabIdentity='',mobileBadgeTimer,keyboardShown=false,viewportRestHeight=0;
+function rememberTabSource(){if(['activity','goals','library'].includes(state.page)){state.tabSource=state.page;mobileTabScroll.set(state.page,$('generic-page').scrollTop);}}
+function resetMobileTabPages(){
+  libraryView?.dispose();activityView?.destroy();goalsView?.close();libraryView=activityView=goalsView=null;
+  mobileTabPages.clear();mobileTabScroll.clear();state.tabSource=null;state.activeTab='chat';
+}
+function syncMobileTabs(){
+  const tabs=$('mobile-bottom-tabs');if(!tabs)return;
+  const identity=state.loggedIn?`${state.owner}:${state.authEpoch}`:'';
+  if(identity!==mobileTabIdentity){mobileTabIdentity=identity;resetMobileTabPages();}
+  const rootChat=state.page==='chat'&&!state.tabSource&&(!state.logicalChats||uiCore.inMainChat());
+  const visible=!!identity&&!document.body.classList.contains('cloud-auth-active')&&(rootChat||['activity','goals','library'].includes(state.page))&&!keyboardShown;
+  tabs.hidden=!visible;document.body.classList.toggle('mobile-tabs-visible',visible);
+  const active=rootChat?'chat':state.page; if(mobileTabNames[active])state.activeTab=active;
+  const unread=uiCore.activity.unreadCount||0,pending=(uiCore.goalsPage.tasks||[]).some(row=>!['completed','failed','stopped'].includes(row.status))||uiCore.activity.actionableCount>0;
+  for(const tab of tabs.querySelectorAll('[role=tab]')){
+    const id=tab.dataset.tab,selected=id===state.activeTab;tab.setAttribute('aria-selected',String(selected));tab.tabIndex=selected?0:-1;
+    tab.setAttribute('aria-label',id==='activity'&&unread?`动态，${unread} 条未读`:id==='goals'&&pending?'目标，有进行中或待处理任务':mobileTabNames[id]);
+    const badge=tab.querySelector('.mobile-tab-badge');badge.hidden=id==='activity'?!unread:id==='goals'?!pending:true;badge.textContent=id==='activity'?(unread>99?'99+':String(unread)):'';
+  }
+  const profile=$('header-profile');if(profile){profile.hidden=!identity;const avatar=$('drawer-avatar');if(avatar){const copy=avatar.cloneNode(true);copy.removeAttribute('id');profile.replaceChildren(copy);}}
+  if(visible&&state.page!=='chat'){
+    $('header-title').textContent=mobileTabNames[state.page];$('header-subtitle').hidden=true;$('page-back').hidden=true;$('menu-button').hidden=true;
+    $('outputs-button').hidden=true;$('conversation-usage').hidden=true;document.querySelector('.main-chat-tools')?.setAttribute('hidden','');
+  }
+}
+async function selectMobileTab(name){
+  if(!state.loggedIn||!mobileTabNames[name])return;
+  state.tabSource=null;state.settingsChild=false;
+  if(name==='chat'&&state.logicalChats&&!uiCore.inMainChat()){
+    state.selectingMainTab=true;try{await uiCore.selectMainChat();}finally{state.selectingMainTab=false;}
+  }else page(name);
+  syncMobileTabs();
+}
+function mountMobileTabs(){
+  const tabs=$('mobile-bottom-tabs');if(!tabs)return; $('app').append(tabs);$('chat-page').setAttribute('role','tabpanel');$('chat-page').setAttribute('aria-labelledby','mobile-tab-chat');tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','手机主导航');
+  const icons={chat:'chat',activity:'bell',goals:'approval',library:'folder'};
+  for(const [id,name]of Object.entries(mobileTabNames)){
+    const tab=el('button','mobile-tab');tab.type='button';tab.id=`mobile-tab-${id}`;tab.dataset.tab=id;tab.setAttribute('role','tab');
+    tab.setAttribute('aria-controls',id==='chat'?'chat-page':`mobile-panel-${id}`);
+    const icon=el('span','mobile-tab-icon');icon.append(WeftIcons.create(icons[id],22));const badge=el('span',`mobile-tab-badge${id==='goals'?' is-dot':''}`);badge.setAttribute('aria-hidden','true');badge.hidden=true;icon.append(badge);
+    tab.append(icon,el('span','mobile-tab-label',name));tab.onclick=()=>void selectMobileTab(id);tabs.append(tab);
+  }
+  tabs.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const buttons=[...tabs.querySelectorAll('[role=tab]')],index=buttons.indexOf(document.activeElement),next=buttons[event.key==='Home'?0:event.key==='End'?3:(index+(event.key==='ArrowLeft'?-1:1)+4)%4];next.focus();void selectMobileTab(next.dataset.tab);});
+  const refresh=async()=>{if(!state.loggedIn||document.visibilityState==='hidden')return;await uiCore.refreshActivity();if(uiCore.state.personalCapabilities.taskOverview===1)await uiCore.readGoals();syncMobileTabs();};
+  clearInterval(mobileBadgeTimer);mobileBadgeTimer=setInterval(()=>void refresh(),6000);
+  window.addEventListener('online',()=>void refresh());syncMobileTabs();
+}
+function renderMobileTab(name){
+  let target=mobileTabPages.get(name);if(!target){target=el('section','mobile-tab-panel');target.id=`mobile-panel-${name}`;target.setAttribute('role','tabpanel');target.setAttribute('aria-labelledby',`mobile-tab-${name}`);mobileTabPages.set(name,target);}
+  $('page-content').className='mobile-tab-content';$('page-content').replaceChildren(target);
+  const work={activity:activityPage,goals:goalsPage,library:libraryPage}[name](target);
+  $('generic-page').scrollTop=mobileTabScroll.get(name)||0;
+  Promise.resolve(work).finally(()=>{if(state.page===name){$('generic-page').scrollTop=mobileTabScroll.get(name)||0;syncMobileTabs();}});
+}
+function syncMobileKeyboard(nativeShown){
+  const height=window.visualViewport?.height||innerHeight;
+  const editing=/^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName);
+  if(!editing)viewportRestHeight=height;
+  keyboardShown=typeof nativeShown==='boolean'?nativeShown:editing&&height<viewportRestHeight-100;
+  document.body.classList.toggle('mobile-keyboard-visible',keyboardShown);syncMobileTabs();syncChatInsets();
 }
 
 
@@ -213,9 +284,10 @@ function call(method, params={}, timeoutMs=45000) { return mobileWebBridge?mobil
 
 
 function page(name){
-  if(name!=='library'){libraryView?.dispose();libraryView=null;if(state.resourceView?.context?.kind==='library')closeResourcePage();}
-  if(name!=='goals'){if(goalsTimer)clearInterval(goalsTimer);goalsTimer=null;goalsView=null;}
-  if(name!=='activity'){if(activityTimer)clearInterval(activityTimer);activityTimer=null;activityView=null;}
+  if(mobileTabNames[state.page]&&state.page!=='chat')mobileTabScroll.set(state.page,$('generic-page').scrollTop);
+  WeftPopover.closeMenu();libraryView?.deactivate();
+  if(name!=='goals'){if(goalsTimer)clearInterval(goalsTimer);goalsTimer=null;}
+  if(name!=='activity'){if(activityTimer)clearInterval(activityTimer);activityTimer=null;}
   if(name==='memory')state.settingsChild=true;
   $('cloud-auth-page')?.classList.remove('active'); $('cloud-settings-page')?.classList.remove('active');
   workspaceNotices.clear();
@@ -232,6 +304,7 @@ function page(name){
     goals:'目标',library:'成果库',activity:'动态',schedules:'提醒与定时任务',about:'关于',general:'常规',personalization:'个性化',assistant:'助手',approvals:'审批',resources:'资料访问',usage:'用量',memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',settings:'设置',
     account:'账户',password:'修改密码',models:'对话模型',sync:'离线与同步',appearance:'外观',updates:'更新',connect:'连接电脑'
   }[name]||name;
+  syncMobileTabs();
   document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('current',b.dataset.page===name));
   if(name==='home'){renderHome();if(window.weftNative)void refreshHome();return}
   if(name==='chat'){
@@ -435,7 +508,7 @@ window.addEventListener('unhandledrejection',reportBootFailure);
 
 
 
-function renderPage(name){const target=$('page-content');clear(target);if(name!=='activity')target.classList.remove('activity-page');if(name!=='goals')target.classList.remove('goals-page');if(name!=='library')target.classList.remove('library-page');if(name!=='settings')$('generic-page').scrollTop=0;const category=mobileSettingsRegistry.get(name);if(category)return category.mount(target);switch(name){
+function renderPage(name){if(['activity','goals','library'].includes(name))return renderMobileTab(name);const target=$('page-content');target.className='';clear(target);if(name!=='settings')$('generic-page').scrollTop=0;const category=mobileSettingsRegistry.get(name);if(category)return category.mount(target);switch(name){
   case 'library':return libraryPage(target);
   case 'goals':return goalsPage(target);
   case 'activity':return activityPage(target);
@@ -606,18 +679,24 @@ const approvalRequestPattern=/^[A-Za-z0-9_.:-]{1,128}$/;
 
 
 
-function handleBack(){if(mobileMessageActions?.dismiss())return;if(!$('resource-page').hidden){closeResourcePage();return}
+function handleBack(){if(document.querySelector('.session-menu[role=menu]')){WeftPopover.closeMenu();return;}if(mobileMessageActions?.dismiss())return;if(!$('resource-page').hidden){closeResourcePage();return}
   if(!$('image-preview').hidden){closeImagePreview();return}
   if(approvalModeState.confirmation){closeApprovalRisk();return}if(approvalModeState.menu){closeApprovalModeMenu({restoreFocus:true});return}
   if(state.attachmentMenu){closeAttachmentMenu({restoreFocus:true});return}if(state.attachmentPick){cancelAttachmentPick({announce:true});return}if(state.menu){closeModelMenu();$('model-button').focus();return}
   if(state.drawer){closeDrawer();$('menu-button').focus();return}
+  if(!state.loggedIn){if(window.weftNative)void call('app.exit').catch(error=>toast(safeError(error)));return}
   if(state.page==='home')return;
   if(state.settingsChild && state.page!=='settings'){page('settings');state.settingsChild=false;return}
-  if(state.page!=='chat'){page(state.returnPage||'chat');return}
-  if(document.activeElement===$('draft')){$('draft').blur();return}page('home')}
+  if(state.page!=='chat'){if(mobileTabNames[state.page])void selectMobileTab('chat');else page(state.returnPage||'chat');return}
+  if(keyboardShown){$('draft').blur();return}
+  if(state.tabSource){const origin=state.tabSource;state.tabSource=null;page(origin);return}
+  if(state.logicalChats&&!uiCore.inMainChat()){void selectMobileTab('chat');return}
+  if(window.weftNative)void call('app.exit').catch(error=>toast(safeError(error)));}
 document.addEventListener('DOMContentLoaded',()=>{
   $('menu-button').addEventListener('click',openDrawer);$('drawer-close').addEventListener('click',closeDrawer);$('drawer-scrim').addEventListener('click',closeDrawer);
-  $('page-back').addEventListener('click',()=>{if(state.page==='chat')page('home');else handleBack()});
+  $('page-back').addEventListener('click',()=>{if(state.page==='chat'&&!state.logicalChats&&!state.tabSource)page('home');else handleBack()});
+  $('header-profile').addEventListener('click',()=>page('settings'));
+  $('generic-page').addEventListener('scroll',()=>{if(['activity','goals','library'].includes(state.page))mobileTabScroll.set(state.page,$('generic-page').scrollTop);},{passive:true});
   document.querySelector('[data-action="temporary-chat"]').addEventListener('click', () => { void mobileNewTemporaryConversation(); });
   $('home-new-chat').addEventListener('click',()=>selectConversation(null));
   $('home-settings').addEventListener('click',()=>page('settings'));
@@ -663,18 +742,21 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.addEventListener('click',event=>{if(state.menu&&!$('model-popover').contains(event.target)&&!$('model-button').contains(event.target))closeModelMenu();
     if(approvalModeState.menu&&!$('approval-mode-popover').contains(event.target)&&!approvalModeState.menu.trigger.contains(event.target))closeApprovalModeMenu();
     if(state.attachmentMenu&&!$('attachment-popover').contains(event.target)&&!$('plus-button').contains(event.target))closeAttachmentMenu()});
-  window.addEventListener('weft-back',handleBack);window.addEventListener('keydown',event=>{if(event.key==='Escape')handleBack()});
+  window.addEventListener('weft-back',handleBack);window.addEventListener('weft-keyboard',event=>syncMobileKeyboard(event.detail?.visible));window.addEventListener('keydown',event=>{if(event.key==='Escape')handleBack()});
   window.addEventListener('resize',()=>{if(state.menu)placeModelMenu();if(approvalModeState.menu)placeApprovalModeMenu();if(state.attachmentMenu)placeAttachmentMenu();syncChatInsets()});
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){stopSharedPoll();
       clearTimeout(state.homePollTimer);
       clearTimeout(toolApprovals.pollTimer);toolApprovals.pollTimer=null;clearTimeout(toolQuestions.pollTimer);toolQuestions.pollTimer=null}
     else if(state.page==='home')void refreshHome();
+    else if(state.page==='memory'&&state.memory?.view==='list'&&!state.memory.loading)startMemorySnapshot(memoryTarget,state.memory.kind,state.memory.query);
+    else if(state.page==='general')page('general');
     else if(state.chatSource==='host'&&state.page==='chat'){void loadSharedHistory();scheduleSharedPoll()}
     else{if(toolApprovals.detail&&approvalViewCurrent(toolApprovals.detail.context))void refreshToolApprovals(toolApprovals.detail.context);
       if(toolQuestions.detail&&approvalViewCurrent(toolQuestions.detail.context))void refreshToolQuestions(toolQuestions.detail.context)}});
   if(window.ResizeObserver)new ResizeObserver(syncChatInsets).observe($('composer-dock'));
   const syncViewport=()=>{if(window.visualViewport){document.documentElement.style.setProperty('--viewport-height',`${window.visualViewport.height}px`);
-    if(state.menu)placeModelMenu();if(approvalModeState.menu)placeApprovalModeMenu();if(state.attachmentMenu)placeAttachmentMenu()}};
+    if(state.menu)placeModelMenu();if(approvalModeState.menu)placeApprovalModeMenu();if(state.attachmentMenu)placeAttachmentMenu()}syncMobileKeyboard();};
+  document.addEventListener('focusout',()=>requestAnimationFrame(()=>syncMobileKeyboard()));
   window.visualViewport?.addEventListener('resize',syncViewport);syncViewport();
   systemThemeMedia.addEventListener('change',()=>{if(state.appearance==='system')applyTheme('system')});
   boot();

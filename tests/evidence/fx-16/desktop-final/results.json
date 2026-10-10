@@ -1,0 +1,1480 @@
+{
+  "runnerPid": 25176,
+  "startedAt": "2026-10-10T01:39:43.088Z",
+  "realMain": true,
+  "realDsh": true,
+  "syntheticModel": true,
+  "checks": [
+    {
+      "name": "stability-cycle-1",
+      "status": "passed",
+      "durationMs": 26493,
+      "immediateMs": 4.4000000059604645,
+      "stopMs": 286
+    },
+    {
+      "name": "stability-cycle-2",
+      "status": "passed",
+      "durationMs": 20454,
+      "immediateMs": 3,
+      "stopMs": 609
+    },
+    {
+      "name": "stability-cycle-3",
+      "status": "passed",
+      "durationMs": 2358,
+      "immediateMs": 5.199999988079071,
+      "stopMs": 426
+    },
+    {
+      "name": "stability-cycle-4",
+      "status": "passed",
+      "durationMs": 21945,
+      "immediateMs": 3.699999988079071,
+      "stopMs": 2059
+    },
+    {
+      "name": "stability-cycle-5",
+      "status": "passed",
+      "durationMs": 23097,
+      "immediateMs": 4.799999982118607,
+      "stopMs": 2067
+    },
+    {
+      "name": "stability-cycle-6",
+      "status": "passed",
+      "durationMs": 6219,
+      "immediateMs": 2.9000000059604645,
+      "stopMs": 2125
+    },
+    {
+      "name": "stability-cycle-7",
+      "status": "passed",
+      "durationMs": 23890,
+      "immediateMs": 2.800000011920929,
+      "stopMs": 2130
+    },
+    {
+      "name": "stability-cycle-8",
+      "status": "passed",
+      "durationMs": 23074,
+      "immediateMs": 3.0999999940395355,
+      "stopMs": 2130
+    },
+    {
+      "name": "stability-cycle-9",
+      "status": "passed",
+      "durationMs": 6265,
+      "immediateMs": 2.399999976158142,
+      "stopMs": 2210
+    },
+    {
+      "name": "stability-cycle-10",
+      "status": "passed",
+      "durationMs": 27113,
+      "immediateMs": 2.300000011920929,
+      "stopMs": 2148
+    },
+    {
+      "name": "stability-cycle-11",
+      "status": "passed",
+      "durationMs": 23186,
+      "immediateMs": 2.199999988079071,
+      "stopMs": 1632
+    },
+    {
+      "name": "stability-cycle-12",
+      "status": "passed",
+      "durationMs": 6684,
+      "immediateMs": 2.800000011920929,
+      "stopMs": 2046
+    },
+    {
+      "name": "stability-cycle-13",
+      "status": "passed",
+      "durationMs": 23860,
+      "immediateMs": 2.5999999940395355,
+      "stopMs": 2117
+    },
+    {
+      "name": "stability-cycle-14",
+      "status": "passed",
+      "durationMs": 23432,
+      "immediateMs": 2,
+      "stopMs": 1619
+    },
+    {
+      "name": "stability-cycle-15",
+      "status": "passed",
+      "durationMs": 6664,
+      "immediateMs": 2.4000000059604645,
+      "stopMs": 1600
+    },
+    {
+      "name": "stability-cycle-16",
+      "status": "passed",
+      "durationMs": 23364,
+      "immediateMs": 2.199999988079071,
+      "stopMs": 1619
+    },
+    {
+      "name": "stability-cycle-17",
+      "status": "passed",
+      "durationMs": 23507,
+      "immediateMs": 2.9000000059604645,
+      "stopMs": 2147
+    },
+    {
+      "name": "stability-cycle-18",
+      "status": "passed",
+      "durationMs": 6758,
+      "immediateMs": 2.199999988079071,
+      "stopMs": 2111
+    },
+    {
+      "name": "stability-cycle-19",
+      "status": "passed",
+      "durationMs": 23881,
+      "immediateMs": 2.5,
+      "stopMs": 2118
+    },
+    {
+      "name": "stability-cycle-20",
+      "status": "passed",
+      "durationMs": 25576,
+      "immediateMs": 2.7000000178813934,
+      "stopMs": 2123
+    },
+    {
+      "name": "stability-cycle-21",
+      "status": "passed",
+      "durationMs": 7103,
+      "immediateMs": 2.2000000178813934,
+      "stopMs": 2113
+    },
+    {
+      "name": "stability-cycle-22",
+      "status": "passed",
+      "durationMs": 23627,
+      "immediateMs": 2,
+      "stopMs": 2139
+    },
+    {
+      "name": "stability-cycle-23",
+      "status": "passed",
+      "durationMs": 23215,
+      "immediateMs": 2.4000000059604645,
+      "stopMs": 2107
+    },
+    {
+      "name": "stability-cycle-24",
+      "status": "passed",
+      "durationMs": 6910,
+      "immediateMs": 2,
+      "stopMs": 2121
+    },
+    {
+      "name": "stability-cycle-25",
+      "status": "passed",
+      "durationMs": 23828,
+      "immediateMs": 2.2000000178813934,
+      "stopMs": 2119
+    },
+    {
+      "name": "stability-cycle-26",
+      "status": "passed",
+      "durationMs": 23015,
+      "immediateMs": 2.7999999821186066,
+      "stopMs": 2146
+    },
+    {
+      "name": "stability-cycle-27",
+      "status": "passed",
+      "durationMs": 6564,
+      "immediateMs": 2,
+      "stopMs": 2128
+    },
+    {
+      "name": "stability-cycle-28",
+      "status": "passed",
+      "durationMs": 23121,
+      "immediateMs": 2,
+      "stopMs": 2089
+    },
+    {
+      "name": "stability-cycle-29",
+      "status": "passed",
+      "durationMs": 23038,
+      "immediateMs": 2.199999988079071,
+      "stopMs": 2092
+    },
+    {
+      "name": "stability-cycle-30",
+      "status": "passed",
+      "durationMs": 9455,
+      "immediateMs": 2.5999999940395355,
+      "stopMs": 2118
+    },
+    {
+      "name": "stability-cycle-31",
+      "status": "passed",
+      "durationMs": 24891,
+      "immediateMs": 2,
+      "stopMs": 2797
+    },
+    {
+      "name": "stability-cycle-32",
+      "status": "passed",
+      "durationMs": 24620,
+      "immediateMs": 3,
+      "stopMs": 3581
+    },
+    {
+      "name": "stability-cycle-33",
+      "status": "passed",
+      "durationMs": 8041,
+      "immediateMs": 2.800000011920929,
+      "stopMs": 2655
+    },
+    {
+      "name": "stability-cycle-34",
+      "status": "passed",
+      "durationMs": 23876,
+      "immediateMs": 3,
+      "stopMs": 2006
+    },
+    {
+      "name": "stability-cycle-35",
+      "status": "passed",
+      "durationMs": 25363,
+      "immediateMs": 3.5,
+      "stopMs": 3788
+    },
+    {
+      "name": "stability-cycle-36",
+      "status": "passed",
+      "durationMs": 7026,
+      "immediateMs": 2.199999988079071,
+      "stopMs": 2118
+    },
+    {
+      "name": "stability-cycle-37",
+      "status": "passed",
+      "durationMs": 22973,
+      "immediateMs": 2.899999976158142,
+      "stopMs": 2133
+    },
+    {
+      "name": "stability-cycle-38",
+      "status": "passed",
+      "durationMs": 23365,
+      "immediateMs": 1.9000000059604645,
+      "stopMs": 2013
+    },
+    {
+      "name": "stability-cycle-39",
+      "status": "passed",
+      "durationMs": 7042,
+      "immediateMs": 2.800000011920929,
+      "stopMs": 2141
+    },
+    {
+      "name": "stability-cycle-40",
+      "status": "passed",
+      "durationMs": 29123,
+      "immediateMs": 2.399999976158142,
+      "stopMs": 2743
+    },
+    {
+      "name": "stability-cycle-41",
+      "status": "passed",
+      "durationMs": 23368,
+      "immediateMs": 2.0999999940395355,
+      "stopMs": 2127
+    },
+    {
+      "name": "stability-cycle-42",
+      "status": "passed",
+      "durationMs": 6200,
+      "immediateMs": 2.7000000178813934,
+      "stopMs": 2163
+    },
+    {
+      "name": "stability-cycle-43",
+      "status": "passed",
+      "durationMs": 23866,
+      "immediateMs": 2.399999976158142,
+      "stopMs": 2110
+    },
+    {
+      "name": "stability-cycle-44",
+      "status": "passed",
+      "durationMs": 23883,
+      "immediateMs": 2.5,
+      "stopMs": 2144
+    },
+    {
+      "name": "stability-cycle-45",
+      "status": "passed",
+      "durationMs": 7026,
+      "immediateMs": 2.899999976158142,
+      "stopMs": 2133
+    },
+    {
+      "name": "stability-cycle-46",
+      "status": "passed",
+      "durationMs": 23887,
+      "immediateMs": 2.0999999940395355,
+      "stopMs": 2062
+    },
+    {
+      "name": "stability-cycle-47",
+      "status": "passed",
+      "durationMs": 23874,
+      "immediateMs": 2.2999999821186066,
+      "stopMs": 2134
+    },
+    {
+      "name": "stability-cycle-48",
+      "status": "passed",
+      "durationMs": 8032,
+      "immediateMs": 2.7999999821186066,
+      "stopMs": 2533
+    },
+    {
+      "name": "stability-cycle-49",
+      "status": "passed",
+      "durationMs": 23863,
+      "immediateMs": 2.2000000178813934,
+      "stopMs": 1995
+    },
+    {
+      "name": "stability-cycle-50",
+      "status": "passed",
+      "durationMs": 27097,
+      "immediateMs": 2.800000011920929,
+      "stopMs": 2592
+    },
+    {
+      "name": "stability-cycle-51",
+      "status": "passed",
+      "durationMs": 7772,
+      "immediateMs": 3.2000000178813934,
+      "stopMs": 2674
+    },
+    {
+      "name": "stability-cycle-52",
+      "status": "passed",
+      "durationMs": 24405,
+      "immediateMs": 2.5999999940395355,
+      "stopMs": 2628
+    },
+    {
+      "name": "stability-cycle-53",
+      "status": "passed",
+      "durationMs": 23014,
+      "immediateMs": 2.2000000178813934,
+      "stopMs": 2135
+    },
+    {
+      "name": "stability-cycle-54",
+      "status": "passed",
+      "durationMs": 6462,
+      "immediateMs": 2.199999988079071,
+      "stopMs": 2133
+    },
+    {
+      "name": "stability-cycle-55",
+      "status": "passed",
+      "durationMs": 23997,
+      "immediateMs": 2.800000011920929,
+      "stopMs": 2605
+    },
+    {
+      "name": "stability-cycle-56",
+      "status": "passed",
+      "durationMs": 26038,
+      "immediateMs": 2.5999999940395355,
+      "stopMs": 2545
+    },
+    {
+      "name": "stability-cycle-57",
+      "status": "passed",
+      "durationMs": 7036,
+      "immediateMs": 2.5,
+      "stopMs": 2036
+    },
+    {
+      "name": "stability-cycle-58",
+      "status": "passed",
+      "durationMs": 23325,
+      "immediateMs": 2.399999976158142,
+      "stopMs": 2051
+    },
+    {
+      "name": "stability-cycle-59",
+      "status": "passed",
+      "durationMs": 24408,
+      "immediateMs": 2.9000000059604645,
+      "stopMs": 2632
+    },
+    {
+      "name": "stability-cycle-60",
+      "status": "passed",
+      "durationMs": 11857,
+      "immediateMs": 2.699999988079071,
+      "stopMs": 2529
+    },
+    {
+      "name": "stability-cycle-61",
+      "status": "passed",
+      "durationMs": 24962,
+      "immediateMs": 4,
+      "stopMs": 3038
+    },
+    {
+      "name": "stability-cycle-62",
+      "status": "passed",
+      "durationMs": 23878,
+      "immediateMs": 2.300000011920929,
+      "stopMs": 2014
+    },
+    {
+      "name": "stability-cycle-63",
+      "status": "passed",
+      "durationMs": 7098,
+      "immediateMs": 2.2999999821186066,
+      "stopMs": 2139
+    },
+    {
+      "name": "stability-cycle-64",
+      "status": "passed",
+      "durationMs": 23898,
+      "immediateMs": 2.399999976158142,
+      "stopMs": 2057
+    },
+    {
+      "name": "stability-cycle-65",
+      "status": "passed",
+      "durationMs": 24425,
+      "immediateMs": 2.5,
+      "stopMs": 2650
+    }
+  ],
+  "errors": [],
+  "requestCount": 8779,
+  "stability": {
+    "elapsedMs": 1988223,
+    "p99Ms": 34.570239,
+    "maxMs": 125.960191,
+    "storeWatchEvents": 1612,
+    "exactStoreWrites": 806,
+    "samples": [
+      {
+        "at": 1791596394837,
+        "rss": 168284160,
+        "heapUsed": 21594260
+      },
+      {
+        "at": 1791596404840,
+        "rss": 171597824,
+        "heapUsed": 28011648
+      },
+      {
+        "at": 1791596414848,
+        "rss": 176058368,
+        "heapUsed": 30163300
+      },
+      {
+        "at": 1791596424848,
+        "rss": 164909056,
+        "heapUsed": 24532344
+      },
+      {
+        "at": 1791596434860,
+        "rss": 167395328,
+        "heapUsed": 25167164
+      },
+      {
+        "at": 1791596444864,
+        "rss": 173678592,
+        "heapUsed": 26481540
+      },
+      {
+        "at": 1791596454864,
+        "rss": 179339264,
+        "heapUsed": 28644604
+      },
+      {
+        "at": 1791596464864,
+        "rss": 185020416,
+        "heapUsed": 36461224
+      },
+      {
+        "at": 1791596474865,
+        "rss": 195321856,
+        "heapUsed": 33194716
+      },
+      {
+        "at": 1791596484867,
+        "rss": 198066176,
+        "heapUsed": 26333584
+      },
+      {
+        "at": 1791596494879,
+        "rss": 196308992,
+        "heapUsed": 38926368
+      },
+      {
+        "at": 1791596504885,
+        "rss": 219385856,
+        "heapUsed": 47991700
+      },
+      {
+        "at": 1791596514885,
+        "rss": 258314240,
+        "heapUsed": 33654648
+      },
+      {
+        "at": 1791596524894,
+        "rss": 225595392,
+        "heapUsed": 37072168
+      },
+      {
+        "at": 1791596534899,
+        "rss": 174034944,
+        "heapUsed": 29218812
+      },
+      {
+        "at": 1791596544907,
+        "rss": 173879296,
+        "heapUsed": 28346072
+      },
+      {
+        "at": 1791596554913,
+        "rss": 181940224,
+        "heapUsed": 31861424
+      },
+      {
+        "at": 1791596564923,
+        "rss": 195035136,
+        "heapUsed": 35229732
+      },
+      {
+        "at": 1791596574926,
+        "rss": 199315456,
+        "heapUsed": 42955512
+      },
+      {
+        "at": 1791596584927,
+        "rss": 206983168,
+        "heapUsed": 49016812
+      },
+      {
+        "at": 1791596594935,
+        "rss": 226430976,
+        "heapUsed": 46830340
+      },
+      {
+        "at": 1791596604941,
+        "rss": 223113216,
+        "heapUsed": 23958096
+      },
+      {
+        "at": 1791596614942,
+        "rss": 224800768,
+        "heapUsed": 47675380
+      },
+      {
+        "at": 1791596624946,
+        "rss": 227307520,
+        "heapUsed": 31645844
+      },
+      {
+        "at": 1791596634949,
+        "rss": 226381824,
+        "heapUsed": 42537828
+      },
+      {
+        "at": 1791596644949,
+        "rss": 227393536,
+        "heapUsed": 26591472
+      },
+      {
+        "at": 1791596654954,
+        "rss": 227205120,
+        "heapUsed": 43473492
+      },
+      {
+        "at": 1791596664954,
+        "rss": 226258944,
+        "heapUsed": 26646228
+      },
+      {
+        "at": 1791596674954,
+        "rss": 227885056,
+        "heapUsed": 38813304
+      },
+      {
+        "at": 1791596684955,
+        "rss": 228982784,
+        "heapUsed": 29054288
+      },
+      {
+        "at": 1791596694961,
+        "rss": 228626432,
+        "heapUsed": 25257904
+      },
+      {
+        "at": 1791596704973,
+        "rss": 227483648,
+        "heapUsed": 34082840
+      },
+      {
+        "at": 1791596714983,
+        "rss": 226713600,
+        "heapUsed": 30516592
+      },
+      {
+        "at": 1791596724992,
+        "rss": 229203968,
+        "heapUsed": 44797440
+      },
+      {
+        "at": 1791596734991,
+        "rss": 226062336,
+        "heapUsed": 27112660
+      },
+      {
+        "at": 1791596744999,
+        "rss": 229277696,
+        "heapUsed": 39817696
+      },
+      {
+        "at": 1791596755001,
+        "rss": 227471360,
+        "heapUsed": 29015020
+      },
+      {
+        "at": 1791596765004,
+        "rss": 228896768,
+        "heapUsed": 44611592
+      },
+      {
+        "at": 1791596775005,
+        "rss": 228458496,
+        "heapUsed": 33770164
+      },
+      {
+        "at": 1791596785010,
+        "rss": 229224448,
+        "heapUsed": 40342128
+      },
+      {
+        "at": 1791596795020,
+        "rss": 226340864,
+        "heapUsed": 41181812
+      },
+      {
+        "at": 1791596805027,
+        "rss": 228626432,
+        "heapUsed": 36205360
+      },
+      {
+        "at": 1791596815033,
+        "rss": 224841728,
+        "heapUsed": 25530548
+      },
+      {
+        "at": 1791596825042,
+        "rss": 228847616,
+        "heapUsed": 40801876
+      },
+      {
+        "at": 1791596835053,
+        "rss": 226881536,
+        "heapUsed": 33522532
+      },
+      {
+        "at": 1791596845065,
+        "rss": 228085760,
+        "heapUsed": 28848724
+      },
+      {
+        "at": 1791596855066,
+        "rss": 226496512,
+        "heapUsed": 41111644
+      },
+      {
+        "at": 1791596865077,
+        "rss": 227020800,
+        "heapUsed": 28962240
+      },
+      {
+        "at": 1791596875090,
+        "rss": 227811328,
+        "heapUsed": 29940388
+      },
+      {
+        "at": 1791596885103,
+        "rss": 230998016,
+        "heapUsed": 43747720
+      },
+      {
+        "at": 1791596895108,
+        "rss": 227282944,
+        "heapUsed": 34100860
+      },
+      {
+        "at": 1791596905111,
+        "rss": 228347904,
+        "heapUsed": 40671600
+      },
+      {
+        "at": 1791596915120,
+        "rss": 227438592,
+        "heapUsed": 31601680
+      },
+      {
+        "at": 1791596925119,
+        "rss": 228581376,
+        "heapUsed": 37529752
+      },
+      {
+        "at": 1791596935121,
+        "rss": 228524032,
+        "heapUsed": 23092148
+      },
+      {
+        "at": 1791596945128,
+        "rss": 229027840,
+        "heapUsed": 34364460
+      },
+      {
+        "at": 1791596955128,
+        "rss": 227614720,
+        "heapUsed": 39332304
+      },
+      {
+        "at": 1791596965137,
+        "rss": 229937152,
+        "heapUsed": 44887272
+      },
+      {
+        "at": 1791596975138,
+        "rss": 230907904,
+        "heapUsed": 49042796
+      },
+      {
+        "at": 1791596985146,
+        "rss": 227827712,
+        "heapUsed": 30666816
+      },
+      {
+        "at": 1791596995151,
+        "rss": 227057664,
+        "heapUsed": 20889932
+      },
+      {
+        "at": 1791597005155,
+        "rss": 229756928,
+        "heapUsed": 47893160
+      },
+      {
+        "at": 1791597015157,
+        "rss": 225087488,
+        "heapUsed": 31403480
+      },
+      {
+        "at": 1791597025162,
+        "rss": 236322816,
+        "heapUsed": 38858820
+      },
+      {
+        "at": 1791597035166,
+        "rss": 235032576,
+        "heapUsed": 26490424
+      },
+      {
+        "at": 1791597045172,
+        "rss": 234577920,
+        "heapUsed": 32740144
+      },
+      {
+        "at": 1791597055183,
+        "rss": 235855872,
+        "heapUsed": 41277316
+      },
+      {
+        "at": 1791597065188,
+        "rss": 237621248,
+        "heapUsed": 43614000
+      },
+      {
+        "at": 1791597075187,
+        "rss": 235122688,
+        "heapUsed": 29787464
+      },
+      {
+        "at": 1791597085192,
+        "rss": 235450368,
+        "heapUsed": 33996248
+      },
+      {
+        "at": 1791597095192,
+        "rss": 238096384,
+        "heapUsed": 47993240
+      },
+      {
+        "at": 1791597105196,
+        "rss": 236118016,
+        "heapUsed": 31417752
+      },
+      {
+        "at": 1791597115209,
+        "rss": 234795008,
+        "heapUsed": 34201484
+      },
+      {
+        "at": 1791597125221,
+        "rss": 236093440,
+        "heapUsed": 42043752
+      },
+      {
+        "at": 1791597135224,
+        "rss": 236072960,
+        "heapUsed": 48524560
+      },
+      {
+        "at": 1791597145231,
+        "rss": 236302336,
+        "heapUsed": 47691264
+      },
+      {
+        "at": 1791597155243,
+        "rss": 233738240,
+        "heapUsed": 33625588
+      },
+      {
+        "at": 1791597165245,
+        "rss": 236179456,
+        "heapUsed": 41681572
+      },
+      {
+        "at": 1791597175254,
+        "rss": 236355584,
+        "heapUsed": 43875020
+      },
+      {
+        "at": 1791597185263,
+        "rss": 236326912,
+        "heapUsed": 27387080
+      },
+      {
+        "at": 1791597195263,
+        "rss": 236322816,
+        "heapUsed": 38288648
+      },
+      {
+        "at": 1791597205264,
+        "rss": 238678016,
+        "heapUsed": 48290176
+      },
+      {
+        "at": 1791597215269,
+        "rss": 237576192,
+        "heapUsed": 44795960
+      },
+      {
+        "at": 1791597225272,
+        "rss": 236187648,
+        "heapUsed": 24965328
+      },
+      {
+        "at": 1791597235277,
+        "rss": 235380736,
+        "heapUsed": 33610872
+      },
+      {
+        "at": 1791597245280,
+        "rss": 238243840,
+        "heapUsed": 47803784
+      },
+      {
+        "at": 1791597255281,
+        "rss": 232837120,
+        "heapUsed": 24729268
+      },
+      {
+        "at": 1791597265285,
+        "rss": 236003328,
+        "heapUsed": 49183812
+      },
+      {
+        "at": 1791597275287,
+        "rss": 236568576,
+        "heapUsed": 32792888
+      },
+      {
+        "at": 1791597285297,
+        "rss": 235319296,
+        "heapUsed": 35428672
+      },
+      {
+        "at": 1791597295301,
+        "rss": 236564480,
+        "heapUsed": 36076524
+      },
+      {
+        "at": 1791597305305,
+        "rss": 234717184,
+        "heapUsed": 29630712
+      },
+      {
+        "at": 1791597315316,
+        "rss": 236400640,
+        "heapUsed": 39381824
+      },
+      {
+        "at": 1791597325329,
+        "rss": 233947136,
+        "heapUsed": 31393016
+      },
+      {
+        "at": 1791597335330,
+        "rss": 233213952,
+        "heapUsed": 28817868
+      },
+      {
+        "at": 1791597345343,
+        "rss": 236130304,
+        "heapUsed": 46303604
+      },
+      {
+        "at": 1791597355348,
+        "rss": 235864064,
+        "heapUsed": 45727196
+      },
+      {
+        "at": 1791597365350,
+        "rss": 233725952,
+        "heapUsed": 33315916
+      },
+      {
+        "at": 1791597375353,
+        "rss": 233758720,
+        "heapUsed": 43120852
+      },
+      {
+        "at": 1791597385366,
+        "rss": 233988096,
+        "heapUsed": 25616648
+      },
+      {
+        "at": 1791597395370,
+        "rss": 233398272,
+        "heapUsed": 33998064
+      },
+      {
+        "at": 1791597405378,
+        "rss": 236228608,
+        "heapUsed": 44938868
+      },
+      {
+        "at": 1791597415384,
+        "rss": 231628800,
+        "heapUsed": 23652928
+      },
+      {
+        "at": 1791597425392,
+        "rss": 237301760,
+        "heapUsed": 43648976
+      },
+      {
+        "at": 1791597435403,
+        "rss": 234131456,
+        "heapUsed": 35334036
+      },
+      {
+        "at": 1791597445414,
+        "rss": 237240320,
+        "heapUsed": 40007096
+      },
+      {
+        "at": 1791597455427,
+        "rss": 234590208,
+        "heapUsed": 40761844
+      },
+      {
+        "at": 1791597465430,
+        "rss": 238546944,
+        "heapUsed": 47542400
+      },
+      {
+        "at": 1791597475433,
+        "rss": 239804416,
+        "heapUsed": 47290676
+      },
+      {
+        "at": 1791597485433,
+        "rss": 235077632,
+        "heapUsed": 36699032
+      },
+      {
+        "at": 1791597495437,
+        "rss": 234741760,
+        "heapUsed": 28350296
+      },
+      {
+        "at": 1791597505440,
+        "rss": 236859392,
+        "heapUsed": 27917320
+      },
+      {
+        "at": 1791597515444,
+        "rss": 233697280,
+        "heapUsed": 27447572
+      },
+      {
+        "at": 1791597525445,
+        "rss": 239534080,
+        "heapUsed": 34339324
+      },
+      {
+        "at": 1791597535448,
+        "rss": 235360256,
+        "heapUsed": 35499940
+      },
+      {
+        "at": 1791597545453,
+        "rss": 233783296,
+        "heapUsed": 30399036
+      },
+      {
+        "at": 1791597555452,
+        "rss": 237281280,
+        "heapUsed": 42718480
+      },
+      {
+        "at": 1791597565465,
+        "rss": 235446272,
+        "heapUsed": 37289856
+      },
+      {
+        "at": 1791597575473,
+        "rss": 240156672,
+        "heapUsed": 46626048
+      },
+      {
+        "at": 1791597585480,
+        "rss": 239800320,
+        "heapUsed": 37074648
+      },
+      {
+        "at": 1791597595485,
+        "rss": 239427584,
+        "heapUsed": 43824540
+      },
+      {
+        "at": 1791597605486,
+        "rss": 238223360,
+        "heapUsed": 30128156
+      },
+      {
+        "at": 1791597615495,
+        "rss": 238186496,
+        "heapUsed": 50283932
+      },
+      {
+        "at": 1791597625505,
+        "rss": 239804416,
+        "heapUsed": 45653452
+      },
+      {
+        "at": 1791597635508,
+        "rss": 238628864,
+        "heapUsed": 48194568
+      },
+      {
+        "at": 1791597645517,
+        "rss": 239226880,
+        "heapUsed": 46175556
+      },
+      {
+        "at": 1791597655519,
+        "rss": 239669248,
+        "heapUsed": 23140264
+      },
+      {
+        "at": 1791597665524,
+        "rss": 238899200,
+        "heapUsed": 37835580
+      },
+      {
+        "at": 1791597675534,
+        "rss": 239284224,
+        "heapUsed": 30761328
+      },
+      {
+        "at": 1791597685538,
+        "rss": 236007424,
+        "heapUsed": 40520376
+      },
+      {
+        "at": 1791597695544,
+        "rss": 239902720,
+        "heapUsed": 37744544
+      },
+      {
+        "at": 1791597705544,
+        "rss": 237895680,
+        "heapUsed": 24899196
+      },
+      {
+        "at": 1791597715548,
+        "rss": 237268992,
+        "heapUsed": 26167992
+      },
+      {
+        "at": 1791597725552,
+        "rss": 236523520,
+        "heapUsed": 26449084
+      },
+      {
+        "at": 1791597735555,
+        "rss": 237133824,
+        "heapUsed": 28830740
+      },
+      {
+        "at": 1791597745565,
+        "rss": 239321088,
+        "heapUsed": 37063200
+      },
+      {
+        "at": 1791597755567,
+        "rss": 239140864,
+        "heapUsed": 41652208
+      },
+      {
+        "at": 1791597765574,
+        "rss": 239685632,
+        "heapUsed": 48397272
+      },
+      {
+        "at": 1791597775578,
+        "rss": 237830144,
+        "heapUsed": 24795348
+      },
+      {
+        "at": 1791597785579,
+        "rss": 238358528,
+        "heapUsed": 48935172
+      },
+      {
+        "at": 1791597795592,
+        "rss": 240738304,
+        "heapUsed": 41854040
+      },
+      {
+        "at": 1791597805592,
+        "rss": 236548096,
+        "heapUsed": 36054424
+      },
+      {
+        "at": 1791597815595,
+        "rss": 237797376,
+        "heapUsed": 39835176
+      },
+      {
+        "at": 1791597825599,
+        "rss": 236617728,
+        "heapUsed": 36302056
+      },
+      {
+        "at": 1791597835599,
+        "rss": 242323456,
+        "heapUsed": 48839096
+      },
+      {
+        "at": 1791597845606,
+        "rss": 237670400,
+        "heapUsed": 21709980
+      },
+      {
+        "at": 1791597855613,
+        "rss": 238329856,
+        "heapUsed": 31212400
+      },
+      {
+        "at": 1791597865615,
+        "rss": 238161920,
+        "heapUsed": 36980956
+      },
+      {
+        "at": 1791597875617,
+        "rss": 237129728,
+        "heapUsed": 27001052
+      },
+      {
+        "at": 1791597885617,
+        "rss": 240226304,
+        "heapUsed": 40696568
+      },
+      {
+        "at": 1791597895629,
+        "rss": 237785088,
+        "heapUsed": 37595724
+      },
+      {
+        "at": 1791597905630,
+        "rss": 237195264,
+        "heapUsed": 41979456
+      },
+      {
+        "at": 1791597915630,
+        "rss": 235810816,
+        "heapUsed": 41723836
+      },
+      {
+        "at": 1791597925636,
+        "rss": 241356800,
+        "heapUsed": 50393244
+      },
+      {
+        "at": 1791597935643,
+        "rss": 242782208,
+        "heapUsed": 48499668
+      },
+      {
+        "at": 1791597945648,
+        "rss": 240050176,
+        "heapUsed": 23919812
+      },
+      {
+        "at": 1791597955649,
+        "rss": 241934336,
+        "heapUsed": 41045036
+      },
+      {
+        "at": 1791597965657,
+        "rss": 238149632,
+        "heapUsed": 41771456
+      },
+      {
+        "at": 1791597975669,
+        "rss": 237404160,
+        "heapUsed": 28736736
+      },
+      {
+        "at": 1791597985679,
+        "rss": 236535808,
+        "heapUsed": 35371648
+      },
+      {
+        "at": 1791597995692,
+        "rss": 237740032,
+        "heapUsed": 39541360
+      },
+      {
+        "at": 1791598005700,
+        "rss": 236236800,
+        "heapUsed": 29255104
+      },
+      {
+        "at": 1791598015701,
+        "rss": 238075904,
+        "heapUsed": 21914252
+      },
+      {
+        "at": 1791598025708,
+        "rss": 241332224,
+        "heapUsed": 47050848
+      },
+      {
+        "at": 1791598035718,
+        "rss": 241459200,
+        "heapUsed": 30699212
+      },
+      {
+        "at": 1791598045729,
+        "rss": 241733632,
+        "heapUsed": 52272828
+      },
+      {
+        "at": 1791598055739,
+        "rss": 238686208,
+        "heapUsed": 42759744
+      },
+      {
+        "at": 1791598065742,
+        "rss": 238841856,
+        "heapUsed": 48758292
+      },
+      {
+        "at": 1791598075756,
+        "rss": 239120384,
+        "heapUsed": 40623036
+      },
+      {
+        "at": 1791598085763,
+        "rss": 236482560,
+        "heapUsed": 39735600
+      },
+      {
+        "at": 1791598095772,
+        "rss": 237469696,
+        "heapUsed": 29267532
+      },
+      {
+        "at": 1791598105777,
+        "rss": 235343872,
+        "heapUsed": 27717244
+      },
+      {
+        "at": 1791598115792,
+        "rss": 239112192,
+        "heapUsed": 43599048
+      },
+      {
+        "at": 1791598125795,
+        "rss": 241082368,
+        "heapUsed": 48095640
+      },
+      {
+        "at": 1791598135798,
+        "rss": 234360832,
+        "heapUsed": 28628600
+      },
+      {
+        "at": 1791598145807,
+        "rss": 236843008,
+        "heapUsed": 46194368
+      },
+      {
+        "at": 1791598155817,
+        "rss": 234983424,
+        "heapUsed": 26293632
+      },
+      {
+        "at": 1791598165822,
+        "rss": 235171840,
+        "heapUsed": 35405772
+      },
+      {
+        "at": 1791598175826,
+        "rss": 237064192,
+        "heapUsed": 48899300
+      },
+      {
+        "at": 1791598185838,
+        "rss": 237277184,
+        "heapUsed": 46179652
+      },
+      {
+        "at": 1791598195840,
+        "rss": 238592000,
+        "heapUsed": 35754916
+      },
+      {
+        "at": 1791598205842,
+        "rss": 237129728,
+        "heapUsed": 26797792
+      },
+      {
+        "at": 1791598215853,
+        "rss": 240513024,
+        "heapUsed": 41439528
+      },
+      {
+        "at": 1791598225863,
+        "rss": 239153152,
+        "heapUsed": 42049620
+      },
+      {
+        "at": 1791598235872,
+        "rss": 225415168,
+        "heapUsed": 26092912
+      },
+      {
+        "at": 1791598245879,
+        "rss": 224182272,
+        "heapUsed": 34321636
+      },
+      {
+        "at": 1791598255880,
+        "rss": 227385344,
+        "heapUsed": 29136128
+      },
+      {
+        "at": 1791598265879,
+        "rss": 224534528,
+        "heapUsed": 21647476
+      },
+      {
+        "at": 1791598275885,
+        "rss": 228413440,
+        "heapUsed": 47646816
+      },
+      {
+        "at": 1791598285892,
+        "rss": 225525760,
+        "heapUsed": 43011816
+      },
+      {
+        "at": 1791598295895,
+        "rss": 227889152,
+        "heapUsed": 28239204
+      },
+      {
+        "at": 1791598305905,
+        "rss": 228532224,
+        "heapUsed": 35866208
+      },
+      {
+        "at": 1791598315906,
+        "rss": 231895040,
+        "heapUsed": 48481980
+      },
+      {
+        "at": 1791598325909,
+        "rss": 229330944,
+        "heapUsed": 42723192
+      },
+      {
+        "at": 1791598335919,
+        "rss": 226869248,
+        "heapUsed": 46161152
+      },
+      {
+        "at": 1791598345921,
+        "rss": 223449088,
+        "heapUsed": 33298644
+      },
+      {
+        "at": 1791598355929,
+        "rss": 224366592,
+        "heapUsed": 44523000
+      },
+      {
+        "at": 1791598365932,
+        "rss": 225316864,
+        "heapUsed": 48178420
+      },
+      {
+        "at": 1791598375940,
+        "rss": 229625856,
+        "heapUsed": 42864048
+      }
+    ]
+  },
+  "logScan": {
+    "files": 1,
+    "bodyHits": 0,
+    "keyHits": 0,
+    "bytes": 70043
+  },
+  "modelCalls": 123,
+  "finishedAt": "2026-10-10T02:13:03.068Z",
+  "cleaned": true,
+  "root": "removed isolated FX14 profile"
+}

@@ -1,0 +1,32 @@
+{
+  "checks": [
+    {
+      "name": "desktop-light-document",
+      "width": 1200,
+      "overflow": false,
+      "preview": true
+    },
+    {
+      "name": "desktop-dark-document",
+      "width": 1200,
+      "overflow": false,
+      "preview": true
+    },
+    {
+      "name": "desktop-light-source-open",
+      "width": 1200,
+      "overflow": false,
+      "preview": true
+    },
+    {
+      "name": "desktop-dark-source-open",
+      "width": 1200,
+      "overflow": false,
+      "preview": true
+    }
+  ],
+  "errors": [
+    "ui[mount] is not a function"
+  ],
+  "realElectron": true
+}

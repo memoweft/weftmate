@@ -281,7 +281,9 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             if (core.state.currentView !== 'memory' || busy) return;
             const token = core.memoryIdentity();
             try { const status = await core.memoryRequest('/status'); if (!core.memoryViewCurrent(token)) return;
+                const changed = Number.isInteger(core.memory.status?.worldRevision) && core.memory.status.worldRevision !== status.worldRevision;
                 core.memory.status = status; paint(status);
+                if (changed && !core.memory.loading) void core.loadMemoryPage();
             } catch { if (core.memoryViewCurrent(token)) health.textContent = '记忆状态暂时无法读取，请刷新重试。'; }
         }
         preview.addEventListener('click', async () => {
@@ -312,6 +314,10 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
     }
     function mountMemory() {
         mountIngestion();
+        const refreshButton = ui.byId('memory-refresh'); refreshButton.className = 'icon-button';
+        refreshButton.replaceChildren(WeftIcons.create('sync', 18)); refreshButton.setAttribute('aria-label', '刷新记忆'); refreshButton.title = '刷新记忆';
+        const searchButton = ui.byId('memory-search-form').querySelector('button[type=submit]');
+        if (searchButton) { searchButton.className = 'icon-button memory-search-submit'; searchButton.replaceChildren(WeftIcons.create('search', 18)); searchButton.setAttribute('aria-label', '搜索记忆'); ui.byId('memory-query').parentElement.append(searchButton); }
         const select=ui.byId('memory-kind'); select.prepend(new Option('全部','all')); select.value='all'; select.parentElement.hidden=true;
         const filters=ui.element('div','memory-type-filters');filters.setAttribute('role','group');filters.setAttribute('aria-label','记忆类型');
         for (const [kind,name] of [['all','全部'],...Object.entries(core.memoryKinds)]) { const button=ui.element('button','memory-type-filter',name); button.type='button';button.dataset.kind=kind;button.addEventListener('click',()=>{select.value=kind;select.dispatchEvent(new Event('change'));ui.syncMemoryFilters();});filters.append(button); }

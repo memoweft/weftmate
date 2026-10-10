@@ -22,10 +22,11 @@ data class HttpReply(val status: Int, val body: JSONObject, val cookie: String? 
 internal fun validBusinessPath(path: String): Boolean {
     val route = path.substringBefore('?')
     // Opaque chat cursors plus an encoded 256-character search exceed the old memory-route budget.
-    if (path.length > if (route.startsWith("/personal/v1/chats") || route.startsWith("/personal/v1/library") || route.startsWith("/personal/v1/activity")) 4096 else 512) return false
+    if (path.length > if (route.startsWith("/personal/v1/chats") || route == "/personal/v1/sessions" || route.startsWith("/personal/v1/library") || route.startsWith("/personal/v1/activity")) 4096 else 512) return false
     if (path == "/personal/v1/sessions/temporary") return true
     val query = path.substringAfter('?', "")
     if (query.matches(Regex("[A-Za-z0-9._~=&%+-]*")) && route.matches(Regex("/personal/v1/activity(/changes|/unread|/read|/[A-Za-z0-9_-]{1,160}/read)?"))) return true
+    if (route == "/personal/v1/sessions" && query.matches(Regex("[A-Za-z0-9._~=&%+-]*"))) return true
     if (query.matches(Regex("[A-Za-z0-9._~=&%+-]*")) && route.matches(Regex("/personal/v1/chats(/main|/[A-Za-z0-9_-]{1,128}(/(events|changes|dates|locate|search|resources|metadata|archive|unarchive|results))?)?"))) return true
     if (query.matches(Regex("[A-Za-z0-9._~=&%+-]*")) && route.matches(Regex("/personal/v1/library(/[A-Za-z0-9_-]{1,128}(/preview)?)?"))) return true
     if (query.isEmpty() && route == "/personal/v1/commands") return true
@@ -37,6 +38,9 @@ internal fun validBusinessPath(path: String): Boolean {
         query.matches(Regex("(month=[0-9]{4}-(0[1-9]|1[0-2]))?(&?sessionId=[A-Za-z0-9_-]{1,128})?")))) return true
     if (query.isEmpty() && (route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/(metadata|fork|chat|message-branches)")) ||
         route.matches(Regex("/personal/v1/session-groups(/[A-Za-z0-9_-]{1,128})?")))) return true
+    // TB-2 goals page: schedule management and native long-term goals use exact account routes.
+    if (query.isEmpty() && (route.matches(Regex("/personal/v1/schedules(/[A-Za-z0-9_-]{1,128}/[A-Za-z0-9_-]{1,128}(/(pause|resume|run))?)?")) ||
+        route.matches(Regex("/personal/v1/goals(/[A-Za-z0-9_-]{1,128}/(complete|archive))?")))) return true
     if (route == "/personal/v1/settings/usage" && query.isEmpty()) return true
     if (route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/resources")) &&
         (query.isEmpty() || query.matches(Regex("afterSeq=(-1|[0-9]+)")))) return true

@@ -1,0 +1,412 @@
+{
+  "method": "MiMo rubric judge; overlapping dimensions counted independently, repeated same claim deduplicated; omissions separate",
+  "input": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\tests\\evidence\\fact-1\\anchored\\mimo-node\\results.json",
+  "judgements": [
+    {
+      "id": "node24-1",
+      "documentSha256": "43fc6af5ffe8bb7a721ad2c8d4bf6384ea96675410d21292795b3c17237163ac",
+      "durationMs": 4744,
+      "usage": {
+        "completion_tokens": 57,
+        "prompt_tokens": 30180,
+        "total_tokens": 30237,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "parseError": true,
+        "raw": "{\"unsupported\":[],\"scope\":[],\"number\":[],\"uncertainty\":{\"appropriate\":true,\"issues\":[]},\"missing\":[],\"citations\":{\"titlesAndLinks\":true,\"accessTimes\":true,\"verbatimExcerpts\":true,\"claimMapping\":true,\"issues\":[]}}parameter"
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 1025,
+            "text": "草稿断言: 24.0.0 于 2025-05-06 发布并为当时 Current | 出处[1]原文: \"Node.js 24.0.0 (Current)\" / \"Date: 2025-05-06\" | 原文主体: v24.0.0 发布页标题与日期 | 草稿主体: Node.js 24.0.0 发布日期与状态 | 条件/例外: 无 | 数字: 2025-05-06 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 22.0.0 于 2024-04-24 发布，2024-10 进入 LTS | 出处[2]原文: \"Date: 2024-04-24\" / \"2024-10-22, Node.js 22 (Jod) entered LTS\" | 原文主体: v22.0.0 发布页 | 草稿主体: Node.js 22.0.0 发布日期与 LTS 节点 | 条件/例外: LTS 日期为发布页所载计划生效记录 | 数字: 2024-04-24、2024-10-22 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 24 起 Windows 上编译 Node.js 本身移除 MSVC 支持、ClangCL 成为必需 | 出处[1]原文: \"Starting with Node.js 24, support for MSVC has been removed, and ClangCL is now required to compile Node.js on Windows.\" | 原文主体: 编译 Node.js on Windows | 草稿主体: 编译 Node.js 本身在 Windows 需 ClangCL | 条件/例外: 仅限编译 Node.js 本身；不得扩大为原生扩展必须用 ClangCL（n-api 页面未给出该要求） | 数字: 无 | 结论: 一致（草稿保留限定语）"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 22 系列在 Windows 上引入 C++20 编译支持 | 出处[2]原文: \"build: compile with C++20 support on Windows (StefanStojanovic)\" | 原文主体: v22.0.0 变更条目（构建） | 草稿主体: Node.js 22.0.0 Windows 构建引入 C++20 | 条件/例外: 指 Node.js 自身构建的编译标准 | 数字: C++20 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 24.0.0 升级 V8 至 13.6、npm 至 11 | 出处[1]原文: \"the upgrade of the V8 JavaScript engine to version 13.6 and npm to version 11\" | 原文主体: v24.0.0 高亮 | 草稿主体: 24.0.0 引擎与 npm 版本 | 条件/例外: 无 | 数字: 13.6、11 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 22.0.0 的 V8 为 12.4.254.14 | 出处[2]原文: \"V8 12.4.254.14\" | 原文主体: v22.0.0 高亮 | 草稿主体: 22.0.0 V8 版本 | 条件/例外: 无 | 数字: 12.4.254.14 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 24 中 AsyncLocalStorage 默认使用 AsyncContextFrame、URLPattern 全局可用 | 出处[1]原文: \"The AsyncLocalStorage API now uses AsyncContextFrame by default, and URLPattern is available globally.\" | 原文主体: v24.0.0 行为变化 | 草稿主体: 24.0.0 运行时行为变化 | 条件/例外: 无 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: Node-API 提供 ABI 稳定性保证 | 出处[3]原文: \"Although Node-API provides an ABI stability guarantee...\" | 原文主体: Node-API | 草稿主体: Node-API | 条件/例外: 同句并列 other parts of Node.js do not | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: node.h 等非 Node-API 部分不提供跨大版本 ABI 稳定保证 | 出处[3]原文: \"none of the following APIs provide an ABI stability guarantee across major versions:\"（列 #include <node.h> 等） | 原文主体: node.h/node_buffer.h/node_version.h/node_object_wrap.h 等及外部库 | 草稿主体: 直接包含这些头文件的原生扩展 | 条件/例外: 还包括 addon 使用的外部库可能无保证 | 数字: 无 | 结论: 一致（草稿带上\"外部库同样需自行确认\"）"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 仅用 Node-API 且所用外部库提供类似保证，扩展才能跨大版本 ABI 兼容；stable Node-API addons 可免重编译加载 | 出处[3]原文: \"Thus, for an addon to remain ABI-compatible across Node.js major versions, it must use Node-API exclusively by restricting itself to using\" + \"and by checking, for all external libraries that it uses, that the external library makes ABI stability guarantees similar to Node-API.\" | 原文主体: 单个 addon 的跨大版本兼容条件 | 草稿主体: 原生扩展 | 条件/例外: 必须 exclusively 使用 Node-api.h 且外部库需有类似保证；与\"普通模块不兼容\"规则同段并存 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 普通（非 Node-API）原生模块的 ABI 不跨 Node.js 大版本，24 与 22 大版本不同故需按构建链重编译 | 出处[1][2]原文: 各页 SEMVER-MAJOR \"src: update NODE_MODULE_VERSION to ...\" 条目 | 原文主体: 两版本均为 SEMVER-MAJOR 且递增 NODE_MODULE_VERSION | 草稿主体: 普通原生模块跨 22/24 需重编译（ABI 变更） | 条件/例外: stable Node-API addons 例外，须与规则同句并存 | 数字: 见下行 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 22.0.0 发布时 NODE_MODULE_VERSION 升至 127、24.0.0 升至 137 | 出处[2]原文: \"[582ff5037c] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 127 (Michaël Zasso) #52465\"（v22.0.0 页所列最终项，其后无更高值）；出处[1]原文: \"[f26cab1b85] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 137 (Michaël Zasso) #58070\"（v24.0.0 页所列最终项，其后无更高值；24.0.0 内另见 134 为较早条目） | 原文主体: 各自 release 页 SEMVER-MAJOR 列表 | 草稿主体: 22.0.0=127、24.0.0=137 | 条件/例外: 以发布页所列本版本最终 update 条目为准 | 数字: 127、137（页面另列 122/124/126 与 134 为同版本内演进） | 结论: 一致（134/126 等为过程值，草稿仅取各 release 最终值）"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 22 支持 require() ESM 图、WebSocket 默认启用 | 出处[2]原文: \"lib: enable WebSocket by default (Aras Abbasi) #51594\"（require ESM 见同页 require(esm) 条目） | 原文主体: v22.0.0 变更 | 草稿主体: Node.js 22 运行时 | 条件/例外: require() ESM 图按发布页措辞限定为 supported | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 22.0.0 于 2024-04-24 发布，2024-10 进入 LTS | 出处[2]原文: \"Date: 2024-04-24\" / \"2024-10-22, Node.js 22 (Jod) entered LTS\" | 原文主体: v22.0.0 发布页 | 草稿主体: Node.js 22.0.0 发布日期与 LTS 节点 | 条件/例外: LTS 日期为发布页所载记录 | 数字: 2024-04-24、2024-10-22 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 24 起 Windows 编译 Node.js 本身移除 MSVC、ClangCL 必需 | 出处[1]原文: \"Starting with Node.js 24, support for MSVC has been removed, and ClangCL is now required to compile Node.js on Windows.\" | 原文主体: 编译 Node.js on Windows | 草稿主体: 编译 Node.js 本身在 Windows 需 ClangCL | 条件/例外: 仅限编译 Node.js 本身，未扩大为原生扩展要求（草稿第 8、16 行明确保留此限定） | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 22 在 Windows 引入 C++20 编译支持 | 出处[2]原文: \"build: compile with C++20 support on Windows (StefanStojanovic)\" | 原文主体: v22.0.0 构建条目 | 草稿主体: Node.js 22 Windows 构建 C++20 | 条件/例外: 指 Node.js 自身构建 | 数字: C++20 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 24.0.0 V8 13.6、npm 11 | 出处[1]原文: \"the upgrade of the V8 JavaScript engine to version 13.6 and npm to version 11\" | 原文主体: v24.0.0 高亮 | 草稿主体: 24.0.0 引擎与 npm | 条件/例外: 无 | 数字: 13.6、11 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 22.0.0 V8 12.4.254.14 | 出处[2]原文: \"V8 12.4.254.14\" | 原文主体: v22.0.0 高亮 | 草稿主体: 22.0.0 V8 版本 | 条件/例外: 无 | 数字: 12.4.254.14 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 24 中 ALS 默认 AsyncContextFrame、URLPattern 全局可用 | 出处[1]原文: \"The AsyncLocalStorage API now uses AsyncContextFrame by default, and URLPattern is available globally.\" | 原文主体: v24.0.0 行为变化 | 草稿主体: 24.0.0 运行时行为 | 条件/例外: 无 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: Node-API 提供 ABI 稳定保证，其他部分不提供 | 出处[3]原文: \"Although Node-API provides an ABI stability guarantee, other parts of Node.js do not, and any external libraries used from the addon may not.\" | 原文主体: Node-API | 草稿主体: Node-API（草稿第 12 行原样并列 other parts 不提供） | 条件/例外: 同句并存 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: node.h 等及外部库无跨大版本 ABI 保证 | 出处[3]原文: \"none of the following APIs provide an ABI stability guarantee across major versions:\"（列 #include <node.h> 等） | 原文主体: node.h/node_buffer.h/node_version.h/node_object_wrap.h 及外部库 | 草稿主体: 直接包含这些头的扩展（草稿含\"外部库也可能没有保证\"） | 条件/例外: 保留 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 仅用 Node-API 且外部库有类似保证才可跨大版本 ABI 兼容 | 出处[3]原文: \"it must use Node-API exclusively by restricting itself to using\" + \"the external library makes ABI stability guarantees similar to Node-API\" | 原文主体: 单个 addon 跨大版本兼容条件 | 草稿主体: 原生扩展（草稿第 14 行与\"普通模块不兼容\"规则同段并存） | 条件/例外: exclusively + 外部库类似保证 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 普通原生模块 ABI 不跨大版本，22→24 需重编译，stable Node-API 例外 | 出处[3]及[1][2] SEMVER-MAJOR 条目 | 原文主体: 各版本 NODE_MODULE_VERSION 递增 | 草稿主体: 普通模块跨 22/24 需重编译 | 条件/例外: 草稿第 25 行同句给出 stable Node-API 例外 | 数字: 见下行 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 22.0.0=127、24.0.0=137 | 出处[2]原文: \"[582ff5037c] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 127 (Michaël Zasso) #52465\"（该页最终项）；出处[1]原文: \"[f26cab1b85] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 137 (Michaël Zasso) #58070\"（该页最终项） | 原文主体: 各 release 页 SEMVER-MAJOR 列表 | 草稿主体: 22.0.0=127、24.0.0=137 | 条件/例外: 以发布页最终 update 条目为准，134/126/124/122 为过程值未采用 | 数字: 127、137 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 22 默认启用 WebSocket、require() 支持加载 ESM | 出处[2]原文: \"lib: enable WebSocket by default (Aras Abbasi) #51594\" | 原文主体: v22.0.0 变更 | 草稿主体: Node.js 22 运行时 | 条件/例外: require(esm) 按发布页 supported 措辞限定 | 数字: 无 | 结论: 一致"
+          }
+        ],
+        "lastSaveSeq": 973,
+        "beforeFinalSave": true
+      }
+    },
+    {
+      "id": "node-dep0190-1",
+      "documentSha256": "3b1e80276c96fe6e8e1379197198c943acea54d0980229cd384d106c69409075",
+      "durationMs": 1670,
+      "usage": {
+        "completion_tokens": 56,
+        "prompt_tokens": 32318,
+        "total_tokens": 32374,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [],
+        "scope": [],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": true,
+          "verbatimExcerpts": true,
+          "claimMapping": true,
+          "issues": []
+        }
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 1321,
+            "text": "草稿断言: DEP0190 类型为 Runtime 弃用 | 出处[1]原文: \"Type: Runtime\" | 原文主体: DEP0190 | 草稿主体: DEP0190 | 条件/例外: 无 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1321,
+            "text": "草稿断言: 触发条件为给 execFile 或 spawn 传入 args 数组且 shell 为 true 或 '/path/to/shell'，值不转义仅按空格分隔可致 shell 注入 | 出处[1]原文: \"When an args array is passed to child_process.execFile or child_process.spawn with the option { shell: true } or { shell: '/path/to/shell' }, the values are not escaped, only space-separated, which can lead to shell injection.\" | 原文主体: execFile/spawn 传 args 数组 + shell 选项 | 草稿主体: 同一 | 条件/例外: 必须同时满足 args 数组与 shell 选项 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1321,
+            "text": "草稿断言: v24.0.0 中该项为 Runtime 弃用（PR #57199），v23.11.0/v22.15.0 中为 Documentation-only（PR #57389） | 出处[3]原文: \"- version: v24.0.0 ... description: Runtime deprecation.\" 与 \"- version: - v23.11.0 - v22.15.0 ... description: Documentation-only deprecation.\" | 原文主体: DEP0190 History YAML | 草稿主体: 同一 | 条件/例外: 版本对应关系须保留 | 数字: v24.0.0 / v23.11.0 / v22.15.0 / #57199 / #57389 | 结论: 一致"
+          },
+          {
+            "seq": 1321,
+            "text": "草稿断言: Node.js 24.0.0 于 2025-05-06 发布（Current），发布说明含 \"Deprecation of passing args to spawn and execFile in child_process (#57199)\" | 出处[2]原文: \"2025-05-06, Version 24.0.0 (Current)\" 与 \"Deprecation of passing args to spawn and execFile in child_process (#57199)\" | 原文主体: Node.js v24.0.0 发布博客 | 草稿主体: 同一 | 条件/例外: 无 | 数字: 2025-05-06 / 24.0.0 / #57199 | 结论: 一致"
+          },
+          {
+            "seq": 1321,
+            "text": "草稿断言: Runtime 弃用影响所有代码；--throw-deprecation 会抛错，--pending-deprecation 会对 node_modules 代码也发出警告 | 出处[1]原文: \"Runtime (all code)\"、\"When the --throw-deprecation command-line flag is used, a Runtime deprecation will cause an error to be thrown.\"、\"When --pending-deprecation is used, warnings will also be emitted for code loaded from node_modules.\" | 原文主体: 弃用类型总说明（Runtime） | 草稿主体: 同一 | 条件/例外: --pending-deprecation 行为属文档总述而非 DEP0190 单独条目，草稿须注明是通用说明 | 数字: 无 | 结论: 已修正（将该建议写为弃用类型通用说明）"
+          },
+          {
+            "seq": 1321,
+            "text": "草稿断言: v24.0.0 标签源文档正文只写 { shell: true }，latest-v24.x 文档正文含 { shell: '/path/to/shell' } | 出处[3]原文: \"with the option { shell: true }\" ；出处[1]原文: \"{ shell: true } or { shell: '/path/to/shell' }\" | 原文主体: 两处正文措辞不同 | 草稿主体: 触发条件引用 [1] 完整措辞，History 版本引用 [3] | 条件/例外: 不用 [3] 正文单独支撑 shell 路径形式 | 数字: 无 | 结论: 已修正（分列引用）"
+          }
+        ],
+        "lastSaveSeq": 1277,
+        "beforeFinalSave": true
+      }
+    },
+    {
+      "id": "node24-2",
+      "documentSha256": "41ad323a7c62f37696d0a6d3f6b02ce650882e5b154ea61981a93154df4fe417",
+      "durationMs": 42939,
+      "usage": {
+        "completion_tokens": 56,
+        "prompt_tokens": 12049,
+        "total_tokens": 12105,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [],
+        "scope": [],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": true,
+          "verbatimExcerpts": true,
+          "claimMapping": true,
+          "issues": []
+        }
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 885,
+            "text": "证据: v24 MSVC→ClangCL | 草稿断言: Node.js 24 起移除 MSVC 支持，Windows 上编译 Node.js 需要 ClangCL | 出处[1]原文: \"Starting with Node.js 24, support for MSVC has been removed, and ClangCL is now required to compile Node.js on Windows.\" | 原文主体: 编译 Node.js 本身 (compile Node.js on Windows) | 草稿主体: 同（构建 Node.js 核心） | 条件/例外: 指构建 Node.js 本体，不等同于禁止使用兼容包装库编写插件 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 885,
+            "text": "证据: v22 C++20 | 草稿断言: Node.js 22.0.0 起 Windows 构建改用 C++20 | 出处[2]原文: \"[2b1e7c2fcb] - (SEMVER-MAJOR) build: compile with C++20 support on Windows (StefanStojanovic) #52465\" | 原文主体: Windows 上以 C++20 支持进行编译（build 项） | 草稿主体: 同 | 条件/例外: 针对构建工具链的 SEMVER-MAJOR 变更 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 885,
+            "text": "证据: NODE_MODULE_VERSION 137 | 草稿断言: Node.js 24 将 NODE_MODULE_VERSION 更新为 137 | 出处[1]原文: \"[f26cab1b85] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 137 (Michaël Zasso) #58070\" | 原文主体: src: update NODE_MODULE_VERSION to 137（v24.0.0 与 v22 两份发布说明的改动列表） | 草稿主体: Node.js 24 的 NODE_MODULE_VERSION=137 | 条件/例外: 该行位于 v24.0.0 release notes 的 Notable Changes 列表中 | 数字: 137 | 结论: 一致"
+          },
+          {
+            "seq": 885,
+            "text": "证据: NODE_MODULE_VERSION 137 vs 127 | 草稿断言: Node.js 22 为 127，24 为 137，二者不兼容 | 出处[2]原文: \"[582ff5037c] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 127 (Michaël Zasso) #52465\" | 原文主体: v22.0.0 发布说明中 update NODE_MODULE_VERSION to 127 | 草稿主体: 22→127、24→137 | 条件/例外: 127 行同在 v22.0.0 release notes 改动列表中 | 数字: 127, 137 | 结论: 一致"
+          },
+          {
+            "seq": 885,
+            "text": "证据: 非 Node-API 无 ABI 保证 | 草稿断言: 除 Node-API 外，node.h/uv.h/v8.h 相关 API 跨大版本不保证 ABI 稳定 | 出处[3]原文: \"Although Node-API provides an ABI stability guarantee, other parts of Node.js do not, and any external libraries used from the addon may not.\" | 原文主体: Node.js 其余部分及插件所用外部库 | 草稿主体: 同 | 条件/例外: 明确列出 node.h、uv.h、v8.h 均不提供跨大版本 ABI 稳定保证 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 885,
+            "text": "证据: Node-API 兼容条件 | 草稿断言: 想跨大版本保持 ABI 兼容，插件必须只使用 Node-API（node_api.h）并确认外部库有同等保证 | 出处[3]原文: \"for an addon to remain ABI-compatible across Node.js major versions, it must use Node-API exclusively by restricting itself to using #include <node_api.h> ... and by checking, for all external libraries that it uses, that the external library makes ABI stability guarantees similar to Node-API.\" | 原文主体: addon 保持跨大版本 ABI 兼容的条件 | 草稿主体: 同 | 条件/例外: 必须排除 node.h/uv.h/v8.h，并检查外部库保证 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 885,
+            "text": "证据: Node-API 目标 | 草稿断言: Node-API 使为一个大版本编译的模块可在后续大版本上不重新编译运行 | 出处[3]原文: \"allow modules compiled for one major version to run on later major versions of Node.js without recompilation\" | 原文主体: Node-API 的设计目标 | 草稿主体: 同 | 条件/例外: 前提是仅用 Node-API；不代表非 Node-API 原生模块免重编译 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 885,
+            "text": "证据: V8/npm 版本 | 草稿断言: Node.js 24 升级 V8 13.6、npm 11 | 出处[1]原文: \"the upgrade of the V8 JavaScript engine to version 13.6 and npm to version 11\" | 原文主体: Node.js 24 的发布亮点 | 草稿主体: 同 | 条件/例外: 无 | 数字: 13.6, 11 | 结论: 一致"
+          }
+        ],
+        "lastSaveSeq": 809,
+        "beforeFinalSave": true
+      }
+    },
+    {
+      "id": "node-dep0190-2",
+      "documentSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "notScorable": true,
+      "reason": "No final document; factual error counts are unknown, not zero",
+      "taskStatus": "failed"
+    },
+    {
+      "id": "node24-1",
+      "documentSha256": "43fc6af5ffe8bb7a721ad2c8d4bf6384ea96675410d21292795b3c17237163ac",
+      "durationMs": 1437,
+      "usage": {
+        "completion_tokens": 55,
+        "prompt_tokens": 30180,
+        "total_tokens": 30235,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [],
+        "scope": [],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": true,
+          "verbatimExcerpts": true,
+          "claimMapping": true,
+          "issues": []
+        }
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 1025,
+            "text": "草稿断言: 24.0.0 于 2025-05-06 发布并为当时 Current | 出处[1]原文: \"Node.js 24.0.0 (Current)\" / \"Date: 2025-05-06\" | 原文主体: v24.0.0 发布页标题与日期 | 草稿主体: Node.js 24.0.0 发布日期与状态 | 条件/例外: 无 | 数字: 2025-05-06 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 22.0.0 于 2024-04-24 发布，2024-10 进入 LTS | 出处[2]原文: \"Date: 2024-04-24\" / \"2024-10-22, Node.js 22 (Jod) entered LTS\" | 原文主体: v22.0.0 发布页 | 草稿主体: Node.js 22.0.0 发布日期与 LTS 节点 | 条件/例外: LTS 日期为发布页所载计划生效记录 | 数字: 2024-04-24、2024-10-22 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 24 起 Windows 上编译 Node.js 本身移除 MSVC 支持、ClangCL 成为必需 | 出处[1]原文: \"Starting with Node.js 24, support for MSVC has been removed, and ClangCL is now required to compile Node.js on Windows.\" | 原文主体: 编译 Node.js on Windows | 草稿主体: 编译 Node.js 本身在 Windows 需 ClangCL | 条件/例外: 仅限编译 Node.js 本身；不得扩大为原生扩展必须用 ClangCL（n-api 页面未给出该要求） | 数字: 无 | 结论: 一致（草稿保留限定语）"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 22 系列在 Windows 上引入 C++20 编译支持 | 出处[2]原文: \"build: compile with C++20 support on Windows (StefanStojanovic)\" | 原文主体: v22.0.0 变更条目（构建） | 草稿主体: Node.js 22.0.0 Windows 构建引入 C++20 | 条件/例外: 指 Node.js 自身构建的编译标准 | 数字: C++20 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 24.0.0 升级 V8 至 13.6、npm 至 11 | 出处[1]原文: \"the upgrade of the V8 JavaScript engine to version 13.6 and npm to version 11\" | 原文主体: v24.0.0 高亮 | 草稿主体: 24.0.0 引擎与 npm 版本 | 条件/例外: 无 | 数字: 13.6、11 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 22.0.0 的 V8 为 12.4.254.14 | 出处[2]原文: \"V8 12.4.254.14\" | 原文主体: v22.0.0 高亮 | 草稿主体: 22.0.0 V8 版本 | 条件/例外: 无 | 数字: 12.4.254.14 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 24 中 AsyncLocalStorage 默认使用 AsyncContextFrame、URLPattern 全局可用 | 出处[1]原文: \"The AsyncLocalStorage API now uses AsyncContextFrame by default, and URLPattern is available globally.\" | 原文主体: v24.0.0 行为变化 | 草稿主体: 24.0.0 运行时行为变化 | 条件/例外: 无 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: Node-API 提供 ABI 稳定性保证 | 出处[3]原文: \"Although Node-API provides an ABI stability guarantee...\" | 原文主体: Node-API | 草稿主体: Node-API | 条件/例外: 同句并列 other parts of Node.js do not | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: node.h 等非 Node-API 部分不提供跨大版本 ABI 稳定保证 | 出处[3]原文: \"none of the following APIs provide an ABI stability guarantee across major versions:\"（列 #include <node.h> 等） | 原文主体: node.h/node_buffer.h/node_version.h/node_object_wrap.h 等及外部库 | 草稿主体: 直接包含这些头文件的原生扩展 | 条件/例外: 还包括 addon 使用的外部库可能无保证 | 数字: 无 | 结论: 一致（草稿带上\"外部库同样需自行确认\"）"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 仅用 Node-API 且所用外部库提供类似保证，扩展才能跨大版本 ABI 兼容；stable Node-API addons 可免重编译加载 | 出处[3]原文: \"Thus, for an addon to remain ABI-compatible across Node.js major versions, it must use Node-API exclusively by restricting itself to using\" + \"and by checking, for all external libraries that it uses, that the external library makes ABI stability guarantees similar to Node-API.\" | 原文主体: 单个 addon 的跨大版本兼容条件 | 草稿主体: 原生扩展 | 条件/例外: 必须 exclusively 使用 Node-api.h 且外部库需有类似保证；与\"普通模块不兼容\"规则同段并存 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 普通（非 Node-API）原生模块的 ABI 不跨 Node.js 大版本，24 与 22 大版本不同故需按构建链重编译 | 出处[1][2]原文: 各页 SEMVER-MAJOR \"src: update NODE_MODULE_VERSION to ...\" 条目 | 原文主体: 两版本均为 SEMVER-MAJOR 且递增 NODE_MODULE_VERSION | 草稿主体: 普通原生模块跨 22/24 需重编译（ABI 变更） | 条件/例外: stable Node-API addons 例外，须与规则同句并存 | 数字: 见下行 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 22.0.0 发布时 NODE_MODULE_VERSION 升至 127、24.0.0 升至 137 | 出处[2]原文: \"[582ff5037c] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 127 (Michaël Zasso) #52465\"（v22.0.0 页所列最终项，其后无更高值）；出处[1]原文: \"[f26cab1b85] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 137 (Michaël Zasso) #58070\"（v24.0.0 页所列最终项，其后无更高值；24.0.0 内另见 134 为较早条目） | 原文主体: 各自 release 页 SEMVER-MAJOR 列表 | 草稿主体: 22.0.0=127、24.0.0=137 | 条件/例外: 以发布页所列本版本最终 update 条目为准 | 数字: 127、137（页面另列 122/124/126 与 134 为同版本内演进） | 结论: 一致（134/126 等为过程值，草稿仅取各 release 最终值）"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 22 支持 require() ESM 图、WebSocket 默认启用 | 出处[2]原文: \"lib: enable WebSocket by default (Aras Abbasi) #51594\"（require ESM 见同页 require(esm) 条目） | 原文主体: v22.0.0 变更 | 草稿主体: Node.js 22 运行时 | 条件/例外: require() ESM 图按发布页措辞限定为 supported | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 22.0.0 于 2024-04-24 发布，2024-10 进入 LTS | 出处[2]原文: \"Date: 2024-04-24\" / \"2024-10-22, Node.js 22 (Jod) entered LTS\" | 原文主体: v22.0.0 发布页 | 草稿主体: Node.js 22.0.0 发布日期与 LTS 节点 | 条件/例外: LTS 日期为发布页所载记录 | 数字: 2024-04-24、2024-10-22 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 24 起 Windows 编译 Node.js 本身移除 MSVC、ClangCL 必需 | 出处[1]原文: \"Starting with Node.js 24, support for MSVC has been removed, and ClangCL is now required to compile Node.js on Windows.\" | 原文主体: 编译 Node.js on Windows | 草稿主体: 编译 Node.js 本身在 Windows 需 ClangCL | 条件/例外: 仅限编译 Node.js 本身，未扩大为原生扩展要求（草稿第 8、16 行明确保留此限定） | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 22 在 Windows 引入 C++20 编译支持 | 出处[2]原文: \"build: compile with C++20 support on Windows (StefanStojanovic)\" | 原文主体: v22.0.0 构建条目 | 草稿主体: Node.js 22 Windows 构建 C++20 | 条件/例外: 指 Node.js 自身构建 | 数字: C++20 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 24.0.0 V8 13.6、npm 11 | 出处[1]原文: \"the upgrade of the V8 JavaScript engine to version 13.6 and npm to version 11\" | 原文主体: v24.0.0 高亮 | 草稿主体: 24.0.0 引擎与 npm | 条件/例外: 无 | 数字: 13.6、11 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 22.0.0 V8 12.4.254.14 | 出处[2]原文: \"V8 12.4.254.14\" | 原文主体: v22.0.0 高亮 | 草稿主体: 22.0.0 V8 版本 | 条件/例外: 无 | 数字: 12.4.254.14 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 24 中 ALS 默认 AsyncContextFrame、URLPattern 全局可用 | 出处[1]原文: \"The AsyncLocalStorage API now uses AsyncContextFrame by default, and URLPattern is available globally.\" | 原文主体: v24.0.0 行为变化 | 草稿主体: 24.0.0 运行时行为 | 条件/例外: 无 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: Node-API 提供 ABI 稳定保证，其他部分不提供 | 出处[3]原文: \"Although Node-API provides an ABI stability guarantee, other parts of Node.js do not, and any external libraries used from the addon may not.\" | 原文主体: Node-API | 草稿主体: Node-API（草稿第 12 行原样并列 other parts 不提供） | 条件/例外: 同句并存 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: node.h 等及外部库无跨大版本 ABI 保证 | 出处[3]原文: \"none of the following APIs provide an ABI stability guarantee across major versions:\"（列 #include <node.h> 等） | 原文主体: node.h/node_buffer.h/node_version.h/node_object_wrap.h 及外部库 | 草稿主体: 直接包含这些头的扩展（草稿含\"外部库也可能没有保证\"） | 条件/例外: 保留 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 仅用 Node-API 且外部库有类似保证才可跨大版本 ABI 兼容 | 出处[3]原文: \"it must use Node-API exclusively by restricting itself to using\" + \"the external library makes ABI stability guarantees similar to Node-API\" | 原文主体: 单个 addon 跨大版本兼容条件 | 草稿主体: 原生扩展（草稿第 14 行与\"普通模块不兼容\"规则同段并存） | 条件/例外: exclusively + 外部库类似保证 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 普通原生模块 ABI 不跨大版本，22→24 需重编译，stable Node-API 例外 | 出处[3]及[1][2] SEMVER-MAJOR 条目 | 原文主体: 各版本 NODE_MODULE_VERSION 递增 | 草稿主体: 普通模块跨 22/24 需重编译 | 条件/例外: 草稿第 25 行同句给出 stable Node-API 例外 | 数字: 见下行 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 22.0.0=127、24.0.0=137 | 出处[2]原文: \"[582ff5037c] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 127 (Michaël Zasso) #52465\"（该页最终项）；出处[1]原文: \"[f26cab1b85] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 137 (Michaël Zasso) #58070\"（该页最终项） | 原文主体: 各 release 页 SEMVER-MAJOR 列表 | 草稿主体: 22.0.0=127、24.0.0=137 | 条件/例外: 以发布页最终 update 条目为准，134/126/124/122 为过程值未采用 | 数字: 127、137 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 22 默认启用 WebSocket、require() 支持加载 ESM | 出处[2]原文: \"lib: enable WebSocket by default (Aras Abbasi) #51594\" | 原文主体: v22.0.0 变更 | 草稿主体: Node.js 22 运行时 | 条件/例外: require(esm) 按发布页 supported 措辞限定 | 数字: 无 | 结论: 一致"
+          }
+        ],
+        "lastSaveSeq": 973,
+        "beforeFinalSave": true
+      }
+    }
+  ]
+}

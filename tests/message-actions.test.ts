@@ -23,6 +23,7 @@ function fixture() {
     requestIdUsed:()=>false, modelVisible:(_owner:string,id:string)=>['m','other'].includes(id),
     backend:{describeSession:async()=>({running}),readEvents:async()=>({events,hasMore:false,nextSeq:11}),
       forkSession:async(input:any)=>{calls.push(input);return {title:'合成（分叉）',latestSeq:3}}}};
+  context.sessionOperations = createSessionOperations(context);
   return { account, calls, context, operations: createMessageBranches(context), run:()=>{running=true} };
 }
 test('edit and regeneration fork at a native turn boundary, preserve source, inherit project and approval, and select a new model',async()=>{

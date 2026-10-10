@@ -1,0 +1,30 @@
+{
+  "stopped": [
+    {
+      "createdAt": "2026-10-10T11:37:30.03641+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-a005538c-526b-4fdb-8ed3-53c99dfd017e",
+      "pid": 54912,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "createdAt": "2026-10-10T11:37:30.307693+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-a005538c-526b-4fdb-8ed3-53c99dfd017e",
+      "pid": 53480,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "createdAt": "2026-10-10T11:37:30.307759+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-a005538c-526b-4fdb-8ed3-53c99dfd017e",
+      "pid": 44052,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "createdAt": "2026-10-10T11:37:34.695375+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-a005538c-526b-4fdb-8ed3-53c99dfd017e",
+      "pid": 62376,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    }
+  ],
+  "at": "2026-10-10T12:01:03.7184510+08:00",
+  "reason": "RFC target is beyond frozen capture limit; rerun HTTP with native section-anchor extraction. Completed React samples remain valid on unchanged no-fragment branch."
+}

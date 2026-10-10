@@ -3,6 +3,7 @@ import { digest, exactKeys, failure, validTime } from './common.mjs';
 import { randomUUID } from 'node:crypto';
 import { REQUEST_ID } from './constants.mjs';
 import { hasPrivateContent } from './temporary-chats.mjs';
+import { nativeFailureReason } from './notification-content.mjs';
 import { ACTIVITY_TYPES, activityState, activityCounts, activitySource, putActivity, activityToken, readActivityToken, activityMatches, nativeTaskActivity } from './activity-store.mjs';
 
 export function observeActivityEvents(account,sessionId,events,nextSeq,observeReminders=true) {
@@ -13,7 +14,7 @@ export function observeActivityEvents(account,sessionId,events,nextSeq,observeRe
   for(const event of events){
     if(session.forgottenSeqs?.includes(event.seq))continue;
     const data=event.data??{}, at=validTime(event.at)?event.at:new Date().toISOString();
-    if(event.type==='turn.started') {scan.turn=data.turn;scan.executed=false;delete scan.summary;
+    if(event.type==='turn.started') {scan.turn=data.turn;scan.executed=false;delete scan.summary;delete scan.failureReason;
       const commands=Object.values(account.commands).filter(c=>c.kind==='session.message'&&c.sessionId===sessionId&&c.state==='accepted_by_dsh');
       scan.taskId=commands.find(c=>c.receiptId===(data.receiptId??data.rpcId)||c.dshTurn===data.turn)?.commandId;
     }
@@ -22,14 +23,16 @@ export function observeActivityEvents(account,sessionId,events,nextSeq,observeRe
       if(command)scan.taskId=command.rootTaskId??command.commandId;
     }
     if(event.type.startsWith('step.')||event.type==='artifact.created')scan.executed=true;
+    if(event.type==='step.failed'&&!hasPrivateContent(session))scan.failureReason=nativeFailureReason(data)||scan.failureReason;
     if(event.type==='assistant.message'&&!hasPrivateContent(session))scan.summary=String(data.text??'').slice(0,160);
-    if(event.type==='turn.ended' && (scan.executed||account.commands[scan.taskId]?.scheduleSourceId||['failed','aborted'].includes(data.reason))){
-      const result={completed:'completed',failed:'failed',aborted:'stopped'}[data.reason];
-      if(result){const terminal={at,state:result,turn:scan.turn,seq:event.seq,...(scan.taskId?{taskId:scan.taskId}:{}),...(scan.summary?{summary:scan.summary}:{})};
+    if(event.type==='turn.ended' && (scan.executed||account.commands[scan.taskId]?.scheduleSourceId||['failed','error','blocked','aborted'].includes(data.reason))){
+      const result={completed:'completed',failed:'failed',error:'failed',blocked:'failed',aborted:'stopped'}[data.reason];
+      if(result){const failureReason=result==='failed'&&!hasPrivateContent(session)?nativeFailureReason(data)||scan.failureReason:undefined;
+        const terminal={at,state:result,turn:scan.turn,seq:event.seq,...(scan.taskId?{taskId:scan.taskId}:{}),...(scan.summary?{summary:scan.summary}:{}),...(failureReason?{failureReason}:{})};
         scan.terminals??={};scan.terminals[scan.taskId??event.seq]=terminal;
         if(!Object.values(account.chatResults??{}).some(row=>row.taskId===scan.taskId))nativeTaskActivity(account,sessionId,terminal);
       }
-      scan.executed=false;delete scan.summary;
+      scan.executed=false;delete scan.summary;delete scan.failureReason;
     }
     if(observeReminders&&(event.type==='assistant.message'&&data.reminder || event.type==='user.message'&&data.reminder)){
       putActivity(account,`reminder:${sessionId}:${data.messageId??data.id??event.seq}`,{at,type:'reminder.triggered',title:'提醒',summary:data.text,initiatedBy:data.initiatedBy==='assistant'?'assistant':'user',
@@ -64,11 +67,11 @@ export function createActivity(context) {
           const afterSeq=context.accountState(ownerId).activity?.sources[sessionId]?.afterSeq??-1;
           const page=await context.callBackend(()=>context.backend.readEvents({ownerId,sessionId,afterSeq,limit:200}));
           if(!Array.isArray(page.events)||!Number.isSafeInteger(page.nextSeq)||page.nextSeq<afterSeq)throw failure('BACKEND_UNAVAILABLE',503);
-          await context.serial(()=>context.mutate(ownerId,next=>observeActivityEvents(next,sessionId,page.events.map(event=>context.publicHistoryEvent(ownerId,sessionId,event)),page.nextSeq,!context.backend.schedules),()=>{
+          if (page.nextSeq > afterSeq || page.events.length) await context.serial(()=>context.mutate(ownerId,next=>observeActivityEvents(next,sessionId,page.events.map(event=>context.publicHistoryEvent(ownerId,sessionId,event)),page.nextSeq,!context.backend.schedules),()=>{
             const live=context.accountState(ownerId);if(!live.sessions[sessionId]||live.sessions[sessionId].deleting||live.memoryCleanupPending||(live.activity?.generation??0)!==generation)throw failure('SOURCE_UNAVAILABLE',404);
           }));
           if(context.backend.schedules){const notices=await context.backend.schedules({ownerId,sessionId,action:'notifications'});
-            await context.serial(()=>context.mutate(ownerId,next=>{if(!next.sessions[sessionId]||next.sessions[sessionId].deleting||next.memoryCleanupPending||(next.activity?.generation??0)!==generation)return;
+            if (notices.items?.length) await context.serial(()=>context.mutate(ownerId,next=>{if(!next.sessions[sessionId]||next.sessions[sessionId].deleting||next.memoryCleanupPending||(next.activity?.generation??0)!==generation)return;
               for(const notice of notices.items??[]){if(Object.values(next.activity?.items??{}).some(row=>row.type==='reminder.triggered'&&row.source.sessionId===sessionId&&row.source.messageId===notice.messageId))continue;putActivity(next,`reminder:${sessionId}:${notice.messageId??notice.id}`,{at:notice.createdAt,type:'reminder.triggered',title:notice.kind==='task'?'定时任务触发':'提醒',summary:notice.text,initiatedBy:notice.initiatedBy==='assistant'?'assistant':'user',
                 source:activitySource(next,sessionId,{messageId:notice.messageId,scheduleId:notice.id,...(Number.isSafeInteger(notice.seq)?{seq:notice.seq}:{})}),actions:[{kind:'open_chat',label:'打开对话',target:activitySource(next,sessionId,{messageId:notice.messageId,...(Number.isSafeInteger(notice.seq)?{seq:notice.seq}:{})})}],level:'important'});}
             }));}

@@ -14,7 +14,7 @@ function paintChatMemoryAvailability(value) {
 }
 async function exportMyMemories(format) {
   const owner=state.owner,epoch=state.authEpoch;
-  try { const result=await business({path:`/personal/v1/memory/export?format=${format}`,method:'GET'});
+  try { const result=await uiCore.mobile.business({path:`/personal/v1/memory/export?format=${format}`,method:'GET'});
     if(owner!==state.owner||epoch!==state.authEpoch)return;
     const url=URL.createObjectURL(new Blob([result.content],{type:`${result.contentType};charset=utf-8`}));
     const link=el('a');link.href=url;link.download=result.filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -79,12 +79,12 @@ function memoryIngestionPanel(target){
   const token=memoryToken();let prepared=null,busy=false,job=state.memory.healthStatus?.backfill;
   const preview=action('整理过去的对话',async()=>{
     preview.disabled=true;message.textContent='正在统计可整理的过去对话…';
-    try{const value=await business({path:'/personal/v1/memory/backfill',method:'GET'});if(!memoryCurrent(token))return;
-      prepared=value;message.textContent=!value.turnCount?'过去的对话已全部补交，没有需要重复整理的回合。':`可整理 ${value.sessionCount} 个会话、${value.turnCount} 个回合。预计输入约 ${value.estimatedUsage.inputTokens.toLocaleString()}、输出约 ${value.estimatedUsage.outputTokens.toLocaleString()} 个词元；实际用量取决于模型与重试。跳过临时对话、已关闭记忆的对话及已遗忘内容。`;confirm.hidden=!value.turnCount;card.hidden=false;preview.hidden=true;
+    try{const value=await uiCore.mobile.business({path:'/personal/v1/memory/backfill',method:'GET'});if(!memoryCurrent(token))return;
+      prepared=value;message.textContent=!value.turnCount?'过去的对话已全部整理，没有需要补的回合。':`可整理 ${value.sessionCount} 个会话、${value.turnCount} 个回合。预计输入约 ${value.estimatedUsage.inputTokens.toLocaleString()}、输出约 ${value.estimatedUsage.outputTokens.toLocaleString()} 个词元；实际用量取决于模型与重试。跳过临时对话、已关闭记忆的对话及已遗忘内容。`;confirm.hidden=!value.turnCount;card.hidden=false;preview.hidden=true;
     }catch{if(memoryCurrent(token))message.textContent='统计失败，请检查连接后重试。'}finally{preview.disabled=false;}
   },false);
   async function change(body){busy=true;for(const b of [preview,confirm,pause,cancel])b.disabled=true;
-    try{await business({path:'/personal/v1/memory/backfill',method:'POST',body});if(!memoryCurrent(token))return;confirm.hidden=true;card.hidden=true;prepared=null;preview.hidden=false;message.textContent='';}
+    try{await uiCore.mobile.business({path:'/personal/v1/memory/backfill',method:'POST',body});if(!memoryCurrent(token))return;confirm.hidden=true;card.hidden=true;prepared=null;preview.hidden=false;message.textContent='';}
     catch{if(memoryCurrent(token))message.textContent='操作未确认，请刷新核对进度后重试。';}
     finally{busy=false;for(const b of [preview,confirm,pause,cancel])b.disabled=false;await refresh();}}
   const confirm=action('确认开始整理',()=>{if(prepared)void change({action:'start',previewId:prepared.previewId,confirm:true})},true);confirm.hidden=true;
@@ -93,13 +93,13 @@ function memoryIngestionPanel(target){
   const card=el('section','memory-backfill-confirm');card.hidden=true;card.setAttribute('aria-label','确认整理过去的对话');
   const cancelPreview=action('取消',()=>{prepared=null;card.hidden=true;preview.hidden=false;preview.focus()},false);card.append(el('h3','','整理过去的对话'),message,confirm,cancelPreview);
   function paint(value){job=value?.backfill;WeftPopover.memoryHealth(health,value,{text:uiCore.memoryHealthText(value),count:value?.formedMemoryCount??state.memory.totalCount,onSource:id=>selectSharedSession(id),
-      onRetry:async(issue,requestId)=>{await business({path:`/personal/v1/memory/formation/${encodeURIComponent(issue.jobId)}/retry`,method:'POST',body:{requestId}});if(memoryCurrent(token))await refresh();}});
+      onRetry:async(issue,requestId)=>{await uiCore.mobile.business({path:`/personal/v1/memory/formation/${encodeURIComponent(issue.jobId)}/retry`,method:'POST',body:{requestId}});if(memoryCurrent(token))await refresh();}});
     const active=job&&['running','paused'].includes(job.state);preview.disabled=busy||!!active;preview.hidden=!!active||!card.hidden;pause.hidden=cancel.hidden=!active;
     pause.textContent=job?.state==='paused'?'继续整理':'暂停整理';
     progress.textContent=job?`${({running:'正在补整理',paused:'已暂停',cancelled:'已取消',completed:'补交完成'})[job.state]}：已提交 ${job.submittedTurns-job.skippedTurns} / ${job.totalTurns} 回合。${active?'暂停或取消后不再提交后续回合；已提交的回合继续整理。':''}`:'';
   }
   async function refresh(){if(!memoryCurrent(token)||!section.isConnected||busy)return;
-    try{const value=await business({path:'/personal/v1/memory/status',method:'GET'});if(memoryCurrent(token)&&section.isConnected){state.memory.healthStatus=value;paint(value)}}catch{if(memoryCurrent(token))health.textContent='记忆状态暂时无法读取，请刷新重试。';}}
+    try{const value=await uiCore.mobile.business({path:'/personal/v1/memory/status',method:'GET'});if(memoryCurrent(token)&&section.isConnected){state.memory.healthStatus=value;paint(value)}}catch{if(memoryCurrent(token))health.textContent='记忆状态暂时无法读取，请刷新重试。';}}
   actions.append(preview,pause,cancel);section.append(health,actions,card,progress);target.append(section);paint(state.memory.healthStatus);
   const poll=async()=>{if(!section.isConnected||!memoryCurrent(token))return;await refresh();setTimeout(poll,3000);};setTimeout(poll,3000);
 }
@@ -110,7 +110,7 @@ function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||s
   renderMemoryReceipt(target);
   if(!state.loggedIn||!state.owner){target.append(action('连接个人账户',()=>page('connect')));return}
   if(state.transitionPending){target.append(action('返回账户连接',()=>page('connect'),false));return}
-  if(!memoryListAllowed(memory)){target.append(action(memory.error?'重新读取':'刷新记忆状态',()=>startMemorySnapshot(target,memory.kind,memory.query),false));return}
+  if(!memoryListAllowed(memory)){const retry=action(memory.error?'重新读取':'刷新记忆状态',()=>startMemorySnapshot(target,memory.kind,memory.query),false);if(!memory.error){retry.classList.add('icon-button');retry.replaceChildren(WeftIcons.create('sync',20));retry.setAttribute('aria-label','刷新记忆状态');}target.append(retry);return}
   const select=el('select');select.setAttribute('aria-label','记忆类别');select.hidden=true;
   for(const [kind,label] of Object.entries(MEMORY_KINDS)){const option=el('option','',label);option.value=kind;option.selected=memory.kind===kind;select.append(option)}
   select.value=memory.kind;select.disabled=memory.loading;
@@ -127,10 +127,10 @@ function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||s
   form.addEventListener('submit',event=>{event.preventDefault();memory.queryDraft=search.input.value;
     const query=search.input.value.trim();if([...query].length>120){memory.error='搜索内容最多120个字符，请缩短后重试。';renderMemoryList(target);return}
     startMemorySnapshot(target,memory.kind,query)});
-  const actions=el('div','form-actions');const submit=action('搜索',()=>{},true);submit.type='submit';
-  const refresh=action(memory.loading?'正在刷新…':'刷新',()=>startMemorySnapshot(target,memory.kind,memory.query),false);refresh.type='button';refresh.disabled=memory.loading;
-  actions.append(submit,refresh);form.append(actions);target.append(form);
-  if(memoryListAllowed(memory)){const more=action('更多记忆操作',()=>WeftPopover.openMenu(more,['json','markdown'].map(format=>({name:`导出我的记忆 · ${format==='json'?'JSON':'Markdown'}`,icon:'download',action:()=>exportMyMemories(format)}))),false);more.replaceChildren(WeftIcons.create('more',20));more.setAttribute('aria-label','更多记忆操作');actions.append(more)}
+  const actions=el('div','form-actions memory-toolbar');const submit=action('搜索',()=>{},true);submit.type='submit';
+  const refresh=action('刷新记忆',()=>startMemorySnapshot(target,memory.kind,memory.query),false);refresh.type='button';refresh.disabled=memory.loading;refresh.classList.add('icon-button');refresh.replaceChildren(WeftIcons.create('sync',20));refresh.setAttribute('aria-label',memory.loading?'正在刷新记忆':'刷新记忆');
+  submit.classList.add('memory-search-submit');submit.replaceChildren(WeftIcons.create('search',20));submit.setAttribute('aria-label','搜索记忆');search.box.classList.add('memory-search-field');search.box.append(submit);actions.append(refresh);form.append(actions);target.append(form);
+  if(memoryListAllowed(memory)){const more=action('更多记忆操作',()=>WeftPopover.openMenu(more,['json','markdown'].map(format=>({name:`导出我的记忆 · ${format==='json'?'JSON':'Markdown'}`,icon:'download',action:()=>exportMyMemories(format)}))),false);more.classList.add('icon-button');more.replaceChildren(WeftIcons.create('more',20));more.setAttribute('aria-label','更多记忆操作');actions.append(more)}
   if(memory.pendingBoundaryCount>0)target.append(notice(`有 ${memory.pendingBoundaryCount} 条来源尚未处理${memory.blockedBoundaryCount>0?`，其中 ${memory.blockedBoundaryCount} 条已暂停自动处理`:''}。恢复后会按顺序自动补交。`,'来源待处理'));
   if(memory.lastFailureCode==='MEMORY_SOURCE_DELETED'&&memory.discardedBoundaryCount>0)
     target.append(notice(`${memory.discardedBoundaryCount} 条来源已删除；这不表示仍有待处理来源。`,'来源状态'));
