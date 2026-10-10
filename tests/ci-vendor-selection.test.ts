@@ -21,8 +21,8 @@ test('CI modes fail loudly without the pin and run complete vendor files without
     json('tests/contract/dsh-pin.json', { commit: 'synthetic-pin' })
     writeFileSync(join(root, 'tests/mixed.test.ts'), `import test from 'node:test';
       test('independent', () => {}); test('vendor protected', () => {});`)
-    writeFileSync(join(root, 'tests/vendor-only.test.ts'), `import test from 'node:test';
-      test('future vendor regression', () => { throw Error('synthetic product regression'); });`)
+    writeFileSync(join(root, 'tests/vendor-only.test.ts'), `import { describe, test } from 'node:test';
+      describe('vendor suite', () => { test('future vendor regression', () => { throw Error('synthetic product regression'); }); });`)
     const missing = run('vendor')
     assert.notEqual(missing.status, 0)
     assert.match(missing.stderr, /requires a prebuilt pinned/)

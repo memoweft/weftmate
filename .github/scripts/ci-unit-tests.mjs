@@ -72,7 +72,11 @@ const result = spawnSync(process.execPath, [...args, ...selected], { env, encodi
 const output = (result.stdout || '') + (result.stderr || '');
 process.stdout.write(output);
 const count = name => Number(new RegExp(`^# ${name} (\\d+)$`, 'm').exec(output)?.[1] || 0);
-const summary = { mode, files: selected.length, exitCode: result.status ?? 1, passed: count('pass'), failed: count('fail'), skipped: count('skipped'), failures: [...output.matchAll(/^\s*not ok \d+ - (.+)$/gm)].map(match => match[1]) };
+// Failed parent suites repeat their leaf failure; report assertions once so
+// the failing-name list agrees with Node's failed-test count.
+const failures = [...output.matchAll(/^\s*not ok \d+ - ([^\r\n]+)\r?\n([\s\S]*?)^\s*\.\.\.$/gm)]
+  .filter(match => /^\s*type: 'test'\s*$/m.test(match[2])).map(match => match[1]);
+const summary = { mode, files: selected.length, exitCode: result.status ?? 1, passed: count('pass'), failed: count('fail'), skipped: count('skipped'), failures };
 console.log(`Test result: ${JSON.stringify(summary)}`);
 const reportIndex = process.argv.indexOf('--report');
 if (reportIndex >= 0) writeFileSync(process.argv[reportIndex + 1], JSON.stringify(summary, null, 2) + '\n');
