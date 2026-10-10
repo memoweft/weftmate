@@ -103,6 +103,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         const move = (id, element) => { if (element) panels.get(id).append(element); };
         move('approvals', ui.byId('approval-settings-heading').closest('section'));
         move('appearance', ui.byId('appearance-heading').closest('section'));
+        if (globalThis.WeftReplyMotion) { const control=WeftReplyMotion.preferenceControl(); panels.get('appearance').append(WeftSettingsControls.row('减少动态效果', '跟随系统偏好；开启后所有状态与回复动效停止。', control)); WeftSettingsControls.select(control); }
         move('account', ui.byId('account-heading').closest('section'));
         move('account', ui.byId('cloud-account'));
         move('devices', ui.byId('devices-heading').closest('section'));

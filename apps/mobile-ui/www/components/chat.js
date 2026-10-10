@@ -393,7 +393,7 @@ function renderQueuedTasks(){uiCore.syncMobileIdentity();const context=conversat
 let conversationScroll;
 function ensureConversationScroll(){return conversationScroll ||= globalThis.WeftConversationScroll($('chat-scroll'),$('chat-content'),$('jump-latest'),pinned=>state.scrollPinned=pinned)}
 function scrollBottom(force=false){const wasPinned=state.scrollPinned,scroll=ensureConversationScroll();
-  if(force)scroll.latest();else if(wasPinned)scroll.follow();else scroll.hold()}
+  if(force)scroll.latest();else if(wasPinned)scroll.follow(true);else scroll.hold()}
 function handleChatScroll(){const scroll=ensureConversationScroll();scroll.scrolled();if(!scroll.pinned&&$('chat-scroll').scrollTop<40)void loadOlderHistory()}
 function renderContextUsage(){const value=globalThis.WeftUiCore.contextUsageView(selectedSharedSession()?.contextUsage),button=$('context-usage');
   button.setAttribute('aria-label',value.label);button.classList.toggle('is-warning',value.warning);button.classList.toggle('is-indeterminate',value.ratio===null);
