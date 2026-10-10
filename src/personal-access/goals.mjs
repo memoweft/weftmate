@@ -12,7 +12,7 @@ export function createGoalOperations(context) {
     return session;
   }
   async function overview(ownerId) {
-    const account = context.accountState(ownerId), generation = account.activity?.generation ?? 0, items = [], recent = [], since = context.timestamp() - 7 * 86400000, names = new Map();
+    const account = context.accountState(ownerId), generation = account.activity?.generation ?? 0, items = [], recent = [], since = context.timestamp() - 7 * 86400000, names = new Map(), timelines = new Map();
     if (account.memoryCleanupPending) return { items, recent, timeZone: context.usage.settings(ownerId).timeZone };
     for (const command of Object.values(account.commands)) {
       const session = account.sessions[command.sessionId];
@@ -29,7 +29,13 @@ export function createGoalOperations(context) {
         : pending ? 'approval' : question ? 'question' : command.state === 'rejected' ? 'failed' : task.control.state === 'uncertain' || jobs.unconfirmed || e.status === 'unconfirmed' && command.state === 'accepted_by_dsh' ? 'unconfirmed'
         : ended ? terminal?.type.slice(5) ?? (e.status === 'aborted' ? 'stopped' : e.status)
         : ['pending','dispatching'].includes(command.state) || e.status === 'waiting' && e.turn === null ? 'queued' : 'running';
-      const privateSource = hasPrivateContent(session), source = activitySource(account, command.sessionId, { taskId: command.commandId }), chat = account.chatIdentity?.chats[source.chatId];
+      const privateSource = hasPrivateContent(session);
+      if (!ended && Number.isSafeInteger(e.turn) && context.backend?.readEvents && !timelines.has(command.sessionId)) {
+        try { timelines.set(command.sessionId,(await context.backend.readEvents({ownerId,sessionId:command.sessionId,limit:50})).events ?? []); }
+        catch { timelines.set(command.sessionId,[]); }
+      }
+      const nativeStep = timelines.get(command.sessionId)?.findLast(event => event.type.startsWith('step.') && event.data?.turn === e.turn);
+      const source = activitySource(account, command.sessionId, { taskId: command.commandId, ...(nativeStep ? {seq:nativeStep.seq,stepId:nativeStep.data.stepId} : {}) }), chat = account.chatIdentity?.chats[source.chatId];
       if (!privateSource && !session.title && !names.has(command.sessionId) && context.backend?.describeSession) names.set(command.sessionId, (await context.backend.describeSession(command.sessionId,ownerId))?.title);
       const finishedAt = ['completed','failed','stopped'].includes(status) ? terminal?.at ?? e.terminalAt ?? (status === 'stopped' ? task.control.stopObservedAt : null) ?? command.updatedAt : null;
       const step = task.executionSteps?.findLast(row => row.state === 'running');
@@ -38,7 +44,7 @@ export function createGoalOperations(context) {
         conversationTitle: privateSource ? '临时对话' : chat?.kind === 'main' ? 'WeftMate 主对话' : session.title ?? names.get(command.sessionId) ?? '旁聊', status, createdAt: command.createdAt,
         startedAt: e.startedAt ?? e.firstChunkAt ?? null, finishedAt,
         elapsedSeconds: Math.max(0, Math.floor(((finishedAt ? Date.parse(finishedAt) : context.timestamp()) - Date.parse(e.startedAt ?? e.firstChunkAt ?? command.createdAt)) / 1000)),
-        step: privateSource ? '打开临时对话查看进展。' : ended ? '打开对话查看结果' : jobs.active ? `${jobs.active} 项后台工作正在执行` : pending ? '等待你批准操作' : question ? '等待你补充信息' : step ? verbs[step.toolName] ?? '正在处理一个步骤' : e.step ? `正在处理第 ${e.step} 步` : status === 'queued' ? '等待开始' : '正在生成回复',
+        step: privateSource ? '打开临时对话查看进展。' : ended ? '打开对话查看结果' : jobs.active ? `${jobs.active} 项后台工作正在执行` : pending ? '等待你批准操作' : question ? '等待你补充信息' : nativeStep?.type==='step.started' && nativeStep.data.summary ? String(nativeStep.data.summary).slice(0,160) : step ? verbs[step.toolName] ?? '正在处理一个步骤' : status === 'queued' ? '等待开始' : '正在生成回复',
         canStop: task.control.canStop && !ended && command.state !== 'rejected' };
       if (['completed','failed','stopped'].includes(status)) { if (finishedAt && Date.parse(finishedAt) >= since) recent.push(row); } else items.push(row);
     }

@@ -92,8 +92,19 @@ const conversationTasks=uiCore.mobileDecisions.tasks;
 const toolApprovals=uiCore.mobileDecisions.approvals;
 const toolQuestions=uiCore.mobileDecisions.questions;
 let goalsView=null,goalsTimer=null;
+function focusGoalStep(){
+  const focus=state.goalStepFocus;if(!focus)return;
+  if(state.owner!==focus.owner||state.authEpoch!==focus.epoch||state.sharedSessionId!==focus.sessionId||state.page!=='chat'){state.goalStepFocus=null;return;}
+  const step=$('chat-content').querySelector(`[data-detail-seq="${focus.seq}"]`)??(focus.stepId?[...$('chat-content').querySelectorAll(`[data-step="${CSS.escape(focus.stepId)}"]`)].find(node=>Number(node.dataset.detailSeq)>=focus.seq):null);if(!step)return;
+  for(let node=step;node;node=node.parentElement)if(node.tagName==='DETAILS')node.open=true;
+  state.scrollPinned=false;step.scrollIntoView({block:'center'});step.querySelector('summary')?.focus();state.goalStepFocus=null;
+}
+async function openGoalSource(source){
+  await listSharedSessions();selectSharedSession(source.sessionId);
+  if(Number.isSafeInteger(source.seq)){state.goalStepFocus={seq:source.seq,stepId:source.stepId,sessionId:source.sessionId,owner:state.owner,epoch:state.authEpoch};focusGoalStep();}
+}
 async function goalsPage(target){
-  uiCore.syncMobileIdentity();uiCore.resetGoals();goalsView=WeftGoalsView.mount({target,core:uiCore,openSource:source=>selectSharedSession(source.sessionId)});goalsView.render();
+  uiCore.syncMobileIdentity();uiCore.resetGoals();goalsView=WeftGoalsView.mount({target,core:uiCore,openSource:openGoalSource});goalsView.render();
   const generation=state.generation,owner=state.owner;
   try{const info=await uiCore.accessApi('/status');if(generation!==state.generation||owner!==state.owner||state.page!=='goals')return;uiCore.state.personalCapabilities=info.personalCapabilities??{};await uiCore.readGoals();clearInterval(goalsTimer);goalsTimer=setInterval(()=>{if(state.page==='goals'&&state.loggedIn&&document.visibilityState==='visible')void uiCore.readGoals();},6000);}
   catch(error){if(generation===state.generation)toast(safeError(error));}

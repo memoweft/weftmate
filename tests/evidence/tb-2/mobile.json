@@ -4,6 +4,7 @@
     "height": 844
   },
   "checks": [
+    "mobile-original-step-anchor",
     "menu-goals-three-sections",
     "mobile-light-dark-no-overflow",
     "mobile-native-path-create-pause-resume",
