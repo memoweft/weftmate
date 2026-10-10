@@ -79,9 +79,10 @@ export async function startTimelineCandidate(options = {}) {
     describeSession: async id => options.daily && dailySessions.has(id) ? {sessionId:id,running:id===sessionId?running:dailySessions.get(id).running,processing,agentPreset:'personal-remote',modelProfileId:'local',title:dailySessions.get(id).title} : id === sessionId ? { sessionId, running, processing, agentPreset: 'personal-remote', modelProfileId: 'local', title: '项目进度报告', ...(contextUsage ? {contextUsage} : {}) } : null,
     readEvents: async ({ sessionId: id, ...options }) => {if(dailySessions.has(id))return createDshSessionAdapter({sessions:{list:async()=>ok({items:[...dailySessions.keys()].map(sessionId=>({sessionId,origin:'user'}))})},events:{}},{readLog:async()=>dailySessions.get(id).events}).historyPage(id,options);return adapter.historyPage(id, options)},
     readEventDetail: async ({ sessionId: id, seq }) => dailySessions.has(id) ? createDshSessionAdapter({sessions:{list:async()=>ok({items:[{sessionId:id,origin:'user'}]})},events:{}},{readLog:async()=>dailySessions.get(id).events}).historyDetail(id,seq) : adapter.historyDetail(id, seq),
-    getTaskReplyEvidence: async ({sessionId:id}) => ({ status: options.daily && dailySessions.get(id)?.events.at(-1)?.type==='turn/end'
+    // Read on the async callback boundary, like DSH, after initialization updates.
+    getTaskReplyEvidence: async ({sessionId:id}) => { await Promise.resolve(); return { status: options.daily && dailySessions.get(id)?.events.at(-1)?.type==='turn/end'
       ? ({completed:'completed',error:'failed',aborted:'aborted'}[dailySessions.get(id).events.at(-1).data.reason.kind]||'completed') : running ? 'waiting' : 'completed', turn: 1,
-      assistantChunks: 0, textChunks: 0, reasoningChunks: 0, assistantMessages: running ? 1 : 2, toolSaveObserved: !!artifact }),
+      assistantChunks: 0, textChunks: 0, reasoningChunks: 0, assistantMessages: running ? 1 : 2, toolSaveObserved: !!artifact }; },
     listUserQuestions: async () => ({ runtimeId, questions: [...(questionFrame ? [questionFrame] : []), ...questionFrames.map(({callId, ...frame}) => frame)] }),
     respondUserQuestion: async input => { const frame = questionFrames.find(frame => frame.questionRpcId === input.questionRpcId) || questionFrame; frame.nativeState = 'answered'; result(frame.callId || 'question-1', '{"answers":[{"id":"format","selected":["简要报告"]}]}'); return { accepted: true } },
   }
