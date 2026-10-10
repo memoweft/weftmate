@@ -109,7 +109,7 @@ function renderTimeline(events=state.sharedEvents){if(!window.WeftTimeline)retur
     readDetail:seq=>uiCore.readTimelineDetail(context.sessionId,seq),
     fileLabel:artifact=>`${({'text/markdown':'Markdown','text/plain':'文本','application/pdf':'PDF','text/html':'网页'})[artifact.contentType]||'文件'} · ${attachmentSize(artifact.size||0)}`,
     openArtifact:artifact=>openTimelinePreview(context,()=>uiCore.readResource(uiCore.artifactPreviewPath(artifact.artifactId)),artifact.fileName||'成果',artifact),
-    downloadArtifact:artifact=>call('shared.artifacts.save',{artifactId:artifact.artifactId})})}
+    downloadArtifact:artifact=>call('shared.artifacts.save',{artifactId:artifact.artifactId})});focusGoalStep()}
 
 function olderControl(content){if(!state.sharedHasOlder)return;const button=el('button','quiet',state.sharedOlderLoading?'正在读取…':'加载更早内容');button.type='button';button.disabled=state.sharedOlderLoading;
   button.addEventListener('click',()=>{void loadOlderHistory()});content.append(button)}
