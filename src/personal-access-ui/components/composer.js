@@ -39,6 +39,7 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
             item('照片', 'image', () => pick('composer-photos'));
         }
         item(phone ? '文件' : '添加文件', 'attach', () => pick('message-attachments'));
+        if (core.supportsChat('sideChats')) item('开旁聊', 'compose', () => { closeComposerMenu(true); void core.openSideChat({ entry: 'composer' }).catch(error => ui.toast(core.failureMessage(error))); });
         if (native?.captureRegion) item('截图', 'camera', () => nativeImage(() => native.captureRegion()));
         if (native?.clipboardImage) item('粘贴剪贴板图片', 'image', () => nativeImage(() => native.clipboardImage()));
         else if (!phone && navigator.clipboard?.read) item('粘贴剪贴板图片', 'image', async () => {

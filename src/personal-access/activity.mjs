@@ -17,9 +17,13 @@ export function observeActivityEvents(account,sessionId,events,nextSeq,observeRe
       const commands=Object.values(account.commands).filter(c=>c.kind==='session.message'&&c.sessionId===sessionId&&c.state==='accepted_by_dsh');
       scan.taskId=commands.find(c=>c.receiptId===(data.receiptId??data.rpcId)||c.dshTurn===data.turn)?.commandId;
     }
+    if(event.type==='user.message' && typeof data.receiptId==='string') {
+      const command=Object.values(account.commands).find(c=>c.kind==='session.message'&&c.sessionId===sessionId&&c.receiptId===data.receiptId);
+      if(command)scan.taskId=command.rootTaskId??command.commandId;
+    }
     if(event.type.startsWith('step.')||event.type==='artifact.created')scan.executed=true;
     if(event.type==='assistant.message'&&!hasPrivateContent(session))scan.summary=String(data.text??'').slice(0,160);
-    if(event.type==='turn.ended' && (scan.executed||['failed','aborted'].includes(data.reason))){
+    if(event.type==='turn.ended' && (scan.executed||account.commands[scan.taskId]?.scheduleSourceId||['failed','aborted'].includes(data.reason))){
       const result={completed:'completed',failed:'failed',aborted:'stopped'}[data.reason];
       if(result){const terminal={at,state:result,turn:scan.turn,seq:event.seq,...(scan.taskId?{taskId:scan.taskId}:{}),...(scan.summary?{summary:scan.summary}:{})};
         scan.terminals??={};scan.terminals[scan.taskId??event.seq]=terminal;
@@ -74,6 +78,16 @@ export function createActivity(context) {
       if(context.memoryManager){const memory=await context.memoryManager.status(ownerId);
         await context.serial(()=>context.mutate(ownerId,next=>{const state=activityState(next);
           const job=next.memoryBackfillJob, backfillPaused=job?.state==='paused';
+          for(const issue of memory.formationIssues??[]) putActivity(next,`memory-formation:${issue.jobId}`,{
+            at:issue.createdAt,type:'memory.report',title:issue.intent==='correction'?'有 1 条纠正没有生效':'有 1 条记忆没有形成',
+            summary:'原话已保存，可在记忆中查看原话并重试形成。',source:activitySource(next,issue.sessionId,{memoryJobId:issue.jobId}),level:'important',state:'pending',
+            actions:[{kind:'view_memory',label:'查看原话与重试',target:{}}]});
+          for(const row of Object.values(state.items)) if(row.type==='memory.report'&&row.state==='pending'&&row.source?.memoryJobId&&
+            !(memory.formationIssues??[]).some(issue=>issue.jobId===row.source.memoryJobId)) {
+              putActivity(next,`memory-formation:${row.source.memoryJobId}`,{...row,title:'记忆纠正状态已更新',
+                summary:'这条记录已重新处理或撤回，请查看记忆中的最新状态。',state:'completed',level:'silent',
+                actions:[{kind:'view_memory',label:'查看记忆',target:{}}]});
+          }
           const paused=['paused','unavailable','failed'].includes(memory.state)||memory.reasonCode==='MEMORY_MODEL_UNAVAILABLE';
           const healthKey=backfillPaused?`backfill:${job.id}:paused`:paused?`paused:${memory.reasonCode??memory.state}`:`available:${memory.state}`;
           if(state.memoryState!==healthKey&&(paused||backfillPaused)){state.memoryTransition=(state.memoryTransition??0)+1;putActivity(next,`memory-paused:${state.memoryTransition}`,{

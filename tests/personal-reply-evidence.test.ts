@@ -43,6 +43,7 @@ test('only a matching physical native turn/end proves completed after observed s
   assert.equal(complete.textChunks, 1)
   assert.equal(complete.reasoningChunks, 1)
   assert.equal(complete.terminalAt, '2026-10-04T00:00:00.011Z')
+  assert.equal(complete.startedAt, '2026-10-04T00:00:00.000Z')
   assert.equal(JSON.stringify(complete).includes('private'), false)
   assert.equal(projectReplyEvidence(encoded(rows), { receiptId: 'receipt-b' }).status, 'unconfirmed')
   const mixed = structuredClone(rows)
