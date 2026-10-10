@@ -16,14 +16,18 @@ export function nativeTimelineLog(ctx, { cache = true } = {}) {
     projections:ctx.get('sessionProjections')?.snapshot(session) ?? prior.projections });
   ctx.on?.('session/created', session => { const row=summary(session);index.set(session.id,row);changed.set(session.id,row); });
   ctx.on?.('session/disposed', session => { const row=index.get(session.id);if(row){row.running=false;changed.set(session.id,row);} });
-  const listSessions = async load => {
+  const ensureIndex = async load => {
     initialized ||= Promise.resolve().then(load).then(value => {
       for (const row of value.items ?? []) index.set(row.sessionId,row);
       for (const [id,row] of changed) row ? index.set(id,row) : index.delete(id);
     }).catch(error => { initialized=null;throw error; });
     await initialized;
+  };
+  const one = id => {const row=index.get(id),live=ctx.get('sessions')?.get(id);return live?summary(live,row):row;};
+  const listSessions = async load => {
+    await ensureIndex(load);
     const rows=[];
-    for (const [id,row] of index) { const live=ctx.get('sessions')?.get(id);rows.push(live ? summary(live,row) : row); }
+    for (const id of index.keys()) rows.push(one(id));
     return {items:rows};
   };
   const read = async (sessionId) => {
@@ -34,6 +38,7 @@ export function nativeTimelineLog(ctx, { cache = true } = {}) {
     return (await persistence.inspect(sessionId)).events
   }
   read.listSessions=listSessions;
+  read.sessionSummary=async(id,load)=>{await ensureIndex(load);return one(id);};
   read.removeSession=id=>{index.delete(id);changed.set(id,null);};
   const persistence = ctx.get('sessionPersistence');
   if (!cache || !persistence?.config?.root || !persistence.listSnapshots) return read;
