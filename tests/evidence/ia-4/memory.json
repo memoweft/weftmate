@@ -1,0 +1,23 @@
+{
+  "samples": [
+    {
+      "historyMessages": 1000,
+      "heapBytes": 6429012,
+      "rendererPrivateBytes": 142381056,
+      "rendererCount": 3,
+      "cacheEvents": 1000,
+      "mountedRows": 29
+    },
+    {
+      "historyMessages": 10000,
+      "heapBytes": 6456336,
+      "rendererPrivateBytes": 143937536,
+      "rendererCount": 3,
+      "cacheEvents": 1000,
+      "mountedRows": 25
+    }
+  ],
+  "heapDeltaMiB": 0.026058197021484375,
+  "rendererPrivateDeltaMiB": 1.484375,
+  "comparison": "Separate Chromium renderer processes; identical phone UI, viewport, 5 history reads and 30 wheel gestures; forced JS GC before sampling. Chrome renderer private bytes only, excluding browser and synthetic host. Image decoder cache cannot be separately observed."
+}

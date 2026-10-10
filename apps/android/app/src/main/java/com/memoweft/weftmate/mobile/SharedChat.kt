@@ -51,7 +51,7 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
 
     private fun checked(row: SharedCommandRow, command: JSONObject): JSONObject {
         if (command.optString("requestId") != row.requestId ||
-            command.optString("sessionId") != row.sessionId ||
+            (if (row.payload.optString("kind") == "chat.message") command.optString("chatId") else command.optString("sessionId")) != row.sessionId ||
             command.optString("kind") != row.payload.getString("kind") ||
             row.payload.has("sourceSyncEventId") &&
             command.optString("sourceSyncEventId") != row.payload.getString("sourceSyncEventId"))
@@ -132,7 +132,7 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
             }
             for (i in rows.indices) {
                 if (!current()) throw ApiFailure(409, "ACCOUNT_SWITCHED")
-                val uploaded = api.uploadSharedImage(host, row.sessionId, row.requestId, rows[i])
+                val uploaded = api.uploadSharedImage(host, row.sessionId, row.requestId, rows[i], row.payload.optString("kind") == "chat.message")
                 val expected = refs.getJSONObject(i)
                 if (uploaded.optString("attachmentId") != expected.optString("attachmentId") ||
                     uploaded.optString("name") != expected.optString("name") ||
@@ -160,14 +160,15 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
 
     @Synchronized fun submit(host: HostIdentity, sessionId: String, text: String?, kind: String,
         requestId: String?, attachmentIds: List<String> = emptyList(),
-        sourceSyncEventId: String? = null, intent: String = "queue", current: () -> Boolean): JSONObject {
+        sourceSyncEventId: String? = null, intent: String = "queue", modelProfileId: String? = null, current: () -> Boolean): JSONObject {
+        val logical = kind == "chat.message"
         if (intent !in setOf("steer", "queue")) throw ApiFailure(400, "INVALID_REQUEST")
-        if (!sessionIdPattern.matches(sessionId) || kind !in setOf("session.message", "session.cancel"))
+        if (!sessionIdPattern.matches(sessionId) || kind !in setOf("session.message", "chat.message", "session.cancel"))
             throw ApiFailure(400, "INVALID_REQUEST")
-        if (kind == "session.message" && ((text.isNullOrBlank() && attachmentIds.isEmpty()) ||
+        if (kind in setOf("session.message", "chat.message") && ((text.isNullOrBlank() && attachmentIds.isEmpty()) ||
             (text?.length ?: 0) > 16_384))
             throw ApiFailure(400, "MESSAGE_INVALID")
-        if (kind != "session.message" && attachmentIds.isNotEmpty()) throw ApiFailure(400, "INVALID_REQUEST")
+        if (kind !in setOf("session.message", "chat.message") && attachmentIds.isNotEmpty()) throw ApiFailure(400, "INVALID_REQUEST")
         if (sourceSyncEventId != null && (kind != "session.message" ||
             !validImageScopeId(sourceSyncEventId))) throw ApiFailure(400, "INVALID_REQUEST")
         val id = requestId ?: "mobile-${UUID.randomUUID()}"
@@ -177,7 +178,7 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
         catch (error: ApiFailure) { if (error.status in 400..499) throw error }
         catch (_: Exception) { /* A previously verified session may be queued offline. */ }
         if (!current()) throw ApiFailure(409, "ACCOUNT_SWITCHED")
-        var selected = store.sharedSession(owner, host.hostId, sessionId)
+        var selected = if (logical) api.business(host, "/personal/v1/chats/$sessionId", "GET", null).getJSONObject("chat") else store.sharedSession(owner, host.hostId, sessionId)
         if (selected == null) {
             val listing = sessions(host)
             if (!listing.getBoolean("hostAvailable")) throw ApiFailure(503, "HOST_UNAVAILABLE")
@@ -187,9 +188,10 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
         if (!selected.optBoolean("sendAvailable")) throw ApiFailure(409, "SESSION_READ_ONLY")
         if (!current()) throw ApiFailure(409, "ACCOUNT_SWITCHED")
         val payload = JSONObject().put("requestId", id).put("kind", kind)
-            .put("targetDeviceId", host.hostId).put("sessionId", sessionId)
-        if (kind == "session.message") payload.put("text", text)
-            .put("intent", intent)
+            .put("targetDeviceId", host.hostId).put(if (logical) "chatId" else "sessionId", sessionId)
+        if (kind in setOf("session.message", "chat.message")) payload.put("text", text).put("mode", intent)
+        if (!logical && kind == "session.message") payload.put("intent", intent)
+        if (logical && modelProfileId != null) payload.put("modelProfileId", modelProfileId)
         if (sourceSyncEventId != null) payload.put("sourceSyncEventId", sourceSyncEventId)
         if (attachmentIds.isNotEmpty()) {
             val rows = attachments?.get(owner, sessionId, attachmentIds)
@@ -243,7 +245,7 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
         val command = api.commandByRequest(host, requestId)
         if (!current()) throw ApiFailure(409, "ACCOUNT_SWITCHED")
         val row = store.sharedCommand(Endpoints.ownerKey(host.origin, host.ownerId), host.hostId,
-            command.optString("sessionId"), requestId)
+            if (command.optString("kind") == "chat.message") command.optString("chatId") else command.optString("sessionId"), requestId)
         if (row != null) checked(row, command)
         return command
     }

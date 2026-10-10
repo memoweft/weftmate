@@ -1,0 +1,12 @@
+{
+  "processesRequiringForceTermination": 0,
+  "ownedProcessMatchesRemaining": 0,
+  "mumuInstance": 0,
+  "mumuStopped": true,
+  "isolatedPackageUninstalled": true,
+  "backgroundServicesUntouched": true,
+  "temporaryHostDirectoriesRetained": 3,
+  "deletionReview": "blocked by policy",
+  "plainModelKeyMatches": 0,
+  "scannedOwnTemporaryFiles": 99087
+}

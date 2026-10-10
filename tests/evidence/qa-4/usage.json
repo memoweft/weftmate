@@ -1,0 +1,57 @@
+{
+  "total": {
+    "requests": 103,
+    "returnedUsage": 102,
+    "missingUsage": 1,
+    "inputTokens": 442684,
+    "cachedInputTokens": 313856,
+    "outputTokens": 9316
+  },
+  "groups": [
+    {
+      "source": "android\\requests.jsonl",
+      "requests": 3
+    },
+    {
+      "source": "android-memory\\requests.jsonl",
+      "requests": 5
+    },
+    {
+      "source": "desktop\\requests.jsonl",
+      "requests": 0
+    },
+    {
+      "source": "mobile-web-complete\\requests.jsonl",
+      "requests": 6
+    },
+    {
+      "source": "mobile-web-final\\requests.jsonl",
+      "requests": 4
+    },
+    {
+      "source": "mobile-web-shipping\\requests.jsonl",
+      "requests": 4
+    },
+    {
+      "source": "relay-phone-verified\\requests.jsonl",
+      "requests": 4
+    },
+    {
+      "source": "web-document\\requests.jsonl",
+      "requests": 9
+    },
+    {
+      "source": "daily-mimo\\results.json",
+      "requests": 68
+    },
+    {
+      "source": "daily-mimo-before-correction-audit\\results.json",
+      "requests": 64
+    },
+    {
+      "source": "daily-mimo-initial\\results.json",
+      "requests": 40
+    }
+  ],
+  "method": "Actual MiMo upstream responses, deduplicated provider trace; daily single-slot proxy counted from direct upstream request records. Includes failed attempts, excludes synthetic/LAN. Missing usage is not zero usage. No price or bill inferred."
+}

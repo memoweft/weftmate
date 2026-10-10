@@ -16,6 +16,7 @@
     state.authEpoch++; state.loggedIn = false; state.owner = ''; state.username = ''; state.deviceId = '';
     state.sharedSessions = []; state.sharedEvents = []; state.conversations = []; state.conversationId = null;
     state.sharedSessionId = null; state.profile = null; state.connection = 'local';
+    uiCore.resetLogicalSession?.();state.logicalChats=false;
     stopSharedPoll(); clearTimeout(state.homePollTimer); clearTimeout(state.linkedPollTimer);
     state.handoffViews.clear(); state.linkedEvents.clear(); state.handoffSelections.clear();
     resetMemoryForAuthBoundary('已退出账户；请登录后重新读取记忆。');
@@ -34,7 +35,8 @@
       const result = await core.accessApi('/sessions').catch(() => ({ sessions: [] }));
       state.sharedSessions = result.sessions || []; state.sharedHostAvailable = true;
     }
-    page('home');
+    await listSharedSessions();
+    if(state.logicalChats)await uiCore.selectMainChat();else page('home');
   }
   async function scanPairing() {
     const dialog = element('dialog', 'cloud-camera'); dialog.setAttribute('aria-label', '扫描电脑二维码');

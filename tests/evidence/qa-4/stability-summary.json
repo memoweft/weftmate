@@ -1,0 +1,27 @@
+{
+  "completedCycles": 65,
+  "passedCycles": 40,
+  "failedCycles": 25,
+  "stop": {
+    "count": 40,
+    "medianMs": 859.0,
+    "p95Ms": 880,
+    "maxMs": 1395,
+    "overTwoSeconds": 0
+  },
+  "first30Independent": "stop-30.json",
+  "complete": true,
+  "parallelLoad": "Daily synthetic script and one exact UI regression started after the first 30 rounds; record actual overlap, not a quiescent-machine claim.",
+  "durationMs": 1821277,
+  "eventLoopP99Ms": 34.275327,
+  "eventLoopMaxMs": 72.876031,
+  "rssGrowthMiB": 78.8359375,
+  "storeWrites": 433,
+  "storeWritesPerMinute": 14.264716459934432,
+  "logScan": {
+    "files": 1,
+    "bodyHits": 0,
+    "keyHits": 0,
+    "bytes": 44228
+  }
+}
