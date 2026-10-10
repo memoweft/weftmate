@@ -41,7 +41,10 @@ test('real entrypoint starts on an isolated port, serves health, and closes on S
     }
   }
   child.kill('SIGTERM');
-  assert.deepEqual(await exited, [0, null]);
+  // Windows implements child.kill(SIGTERM) as forced termination rather than
+  // delivering a POSIX signal. Assert its exact result and durable DB below;
+  // Linux still verifies the service's graceful handler exits successfully.
+  assert.deepEqual(await exited, process.platform === 'win32' ? [null, 'SIGTERM'] : [0, null]);
   const db = new DatabaseSync(path.join(root, 'cloud.sqlite'));
   try { assert.equal(db.prepare('SELECT count(*) AS count FROM schema_migrations').get().count, 8); }
   finally { db.close(); }

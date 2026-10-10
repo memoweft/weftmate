@@ -13,11 +13,15 @@ async function writePrivate(file, value) {
     await handle.close();
   }
   await rename(temp, file);
-  const dir = await open(path.dirname(file), 'r');
-  try {
-    await dir.sync();
-  } finally {
-    await dir.close();
+  // Windows cannot fsync a directory handle (EPERM). The file was synced above;
+  // retain the directory durability barrier on POSIX, including production Linux.
+  if (process.platform !== 'win32') {
+    const dir = await open(path.dirname(file), 'r');
+    try {
+      await dir.sync();
+    } finally {
+      await dir.close();
+    }
   }
 }
 async function newKey() {
