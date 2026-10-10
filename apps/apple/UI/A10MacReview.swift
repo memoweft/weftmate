@@ -117,6 +117,17 @@ import WeftMateCore
             model.settingsRoute = .init(categoryID: category.id)
             _ = try await wait("settingsPage." + category.id)
             try await capture("settings-" + category.id, settings: true)
+            if category.id == "schedules" {
+                var action: NSObject?
+                for _ in 0..<100 {
+                    for window in NSApplication.shared.windows where window.isVisible { if let found = findButton("提醒操作", in: window) { action = found; break } }
+                    if action != nil { break }; try await Task.sleep(for: .milliseconds(100))
+                }
+                guard let action else { throw Failure(step: "Schedule menu missing") }
+                try pressNode(action, id: "scheduleActions"); try await Task.sleep(for: .milliseconds(400))
+                A16MacReview.captureVisible("settings-schedules-menu")
+                (action as? NSPopUpButton)?.menu?.cancelTrackingWithoutAnimation()
+            }
             visited.append(category.id)
         }
         try await press("closeSettings")

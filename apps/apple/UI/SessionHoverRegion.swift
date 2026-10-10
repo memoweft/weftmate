@@ -3,39 +3,81 @@ import SwiftUI
 import AppKit
 import WeftMateCore
 
-struct SessionRowBounds: PreferenceKey {
-    static let defaultValue: [String: Anchor<CGRect>] = [:]
-    static func reduce(value: inout [String: Anchor<CGRect>], nextValue: () -> [String: Anchor<CGRect>]) { value.merge(nextValue(), uniquingKeysWith: { _, new in new }) }
+/// The card is a native popover anchored to its row. No layout/preference closure reads UI state.
+struct SessionHoverCard: View {
+    let row: ConversationSummary
+    let device: String
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
+            HStack(spacing: AppleTokens.Space.p8) {
+                Text(row.title).font(AppleTokens.Fonts.headline)
+                WeftIcon("desktop", size: AppleTokens.Space.p16).accessibilityLabel(device)
+                Spacer()
+                Text(DeviceDateText.relativeTimestamp(row.updatedAt)).foregroundStyle(Weave.muted)
+            }
+            if let project = row.projectName { WeftLabel(project, icon: "folder", size: AppleTokens.Space.p16) }
+            else { Text("未分组").foregroundStyle(Weave.muted) }
+        }.font(AppleTokens.Fonts.caption).padding(AppleTokens.Space.p16)
+            .frame(width: AppleTokens.Space.p32 * 10).background(Weave.surface)
+            .clipShape(RoundedRectangle(cornerRadius: AppleTokens.Radius.r8))
+            .overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r8).strokeBorder(Weave.line))
+            .accessibilityIdentifier("sessionHoverDetails")
+    }
 }
-private struct SessionHintHeight: PreferenceKey {
-    static let defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+
+/// A nonactivating native panel preserves the draft/row keyboard responder while hovering.
+struct SessionHintPresenter: NSViewRepresentable {
+    let showing: Bool
+    let row: ConversationSummary
+    let device: String
+    let appearance: String
+    func makeNSView(context: Context) -> Marker { Marker() }
+    func updateNSView(_ view: Marker, context: Context) {
+        view.update(showing: showing, row: row, device: device, appearance: appearance)
+    }
+    static func dismantleNSView(_ view: Marker, coordinator: ()) { view.close() }
+    @MainActor final class Marker: NSView {
+        var panel: HintPanel?
+        override func hitTest(_ point: NSPoint) -> NSView? { nil }
+        func update(showing: Bool, row: ConversationSummary, device: String, appearance: String) {
+            guard showing, let window else { close(); return }
+            let hint = panel ?? HintPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+            let content = NSHostingView(rootView: SessionHoverCard(row: row, device: device).preferredColorScheme(AppleAppearance(rawValue: appearance)?.colorScheme))
+            hint.contentView = content; hint.isOpaque = false; hint.hasShadow = true; hint.ignoresMouseEvents = true
+            content.frame = CGRect(x: 0, y: 0, width: AppleTokens.Space.p32 * 11, height: AppleTokens.Space.p24 * 4)
+            content.layoutSubtreeIfNeeded()
+            let fitting = content.fittingSize
+            let size = CGSize(width: max(AppleTokens.Space.p32 * 11, fitting.width), height: max(AppleTokens.Space.p24 * 4, fitting.height))
+            let rect = window.convertToScreen(convert(bounds, to: nil))
+            hint.backgroundColor = .clear; hint.level = .floating
+            let visible = window.screen?.visibleFrame ?? rect
+            hint.setFrame(CGRect(x: min(rect.maxX + AppleTokens.Space.p8, visible.maxX - size.width), y: max(visible.minY, rect.maxY - size.height), width: size.width, height: size.height), display: true)
+            if panel == nil { window.addChildWindow(hint, ordered: .above) }; panel = hint
+            hint.orderFrontRegardless()
+        }
+        func close() { if let panel { panel.parent?.removeChildWindow(panel); panel.orderOut(nil) }; panel = nil }
+    }
+    @MainActor final class HintPanel: NSPanel {
+        override var canBecomeKey: Bool { false }
+        override var canBecomeMain: Bool { false }
+    }
 }
-struct SessionHoverOverlay: ViewModifier {
-    @ObservedObject var app: AppleAppModel
-    @State private var hintHeight: CGFloat = AppleTokens.Space.p28 * 6
-    func body(content: Content) -> some View {
-        content.overlayPreferenceValue(SessionRowBounds.self) { anchors in
-            GeometryReader { geometry in
-                if let row = app.hoveredSession, let anchor = anchors[row.id] {
-                    let rect = geometry[anchor]
-                    let below = rect.maxY + AppleTokens.Space.p4
-                    let top = below + hintHeight < geometry.size.height ? below : max(AppleTokens.Space.p12, rect.minY - hintHeight - AppleTokens.Space.p4)
-                    VStack(alignment: .leading, spacing: AppleTokens.Space.p6) {
-                        Text(row.title).font(AppleTokens.Fonts.headline)
-                        Text(row.projectName.map { "项目：" + $0 } ?? app.sessionGroups.first { $0.id == row.groupId }.map { "分组：" + $0.name } ?? "未分组")
-                        Text("更新时间：" + (row.updatedAt.map { DeviceDateText.timestamp($0) } ?? "未记录"))
-                        Text("执行电脑：" + (app.cloudLogin.hosts.first { $0.hostId == row.hostId }?.name ?? (row.hostId != nil && row.hostId == app.session?.hostId ? "当前连接的电脑" : "未记录")))
-                    }.font(AppleTokens.Fonts.caption).foregroundStyle(Weave.ink)
-                        .padding(AppleTokens.Space.p16).frame(width: geometry.size.width - AppleTokens.Space.p24, alignment: .leading)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .background(Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r8))
-                        .overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r8).strokeBorder(Weave.line))
-                        .background(GeometryReader { g in AppleTokens.Colors.clear.preference(key: SessionHintHeight.self, value: g.size.height) })
-                        .offset(x: AppleTokens.Space.p12, y: top).allowsHitTesting(false)
-                        .accessibilityIdentifier("sessionHoverDetails")
-                }
-            }.onPreferenceChange(SessionHintHeight.self) { hintHeight = $0 }
+
+/// Size delivery uses AppKit's main-thread layout, without a SwiftUI geometry closure.
+struct MacViewWidthObserver: NSViewRepresentable {
+    let changed: @MainActor (CGFloat) -> Void
+    func makeNSView(context: Context) -> Marker { Marker() }
+    func updateNSView(_ view: Marker, context: Context) { view.changed = changed; view.deliver() }
+    @MainActor final class Marker: NSView {
+        var changed: (@MainActor (CGFloat) -> Void)?
+        var last: CGFloat = -1
+        override func hitTest(_ point: NSPoint) -> NSView? { nil }
+        override func layout() { super.layout(); deliver() }
+        override func setFrameSize(_ newSize: NSSize) { super.setFrameSize(newSize); deliver() }
+        func deliver() {
+            let width = bounds.width
+            guard width > 0, width != last else { return }; last = width
+            DispatchQueue.main.async { [weak self] in self?.changed?(width) }
         }
     }
 }
@@ -44,12 +86,19 @@ struct SessionHoverOverlay: ViewModifier {
 struct SessionHoverRegion: NSViewRepresentable {
     let changed: (Bool) -> Void
     let identifier: String?
+    var contextMenu: (() -> NSMenu)? = nil
     init(identifier: String? = nil, changed: @escaping (Bool) -> Void) { self.identifier = identifier; self.changed = changed }
-    func makeNSView(context: Context) -> Region { let view = Region(); view.changed = changed; view.identifier = identifier.map { NSUserInterfaceItemIdentifier(rawValue: $0) }; return view }
-    func updateNSView(_ view: Region, context: Context) { view.changed = changed; view.identifier = identifier.map { NSUserInterfaceItemIdentifier(rawValue: $0) } }
+    func withContextMenu(_ menu: @escaping () -> NSMenu) -> Self { var copy = self; copy.contextMenu = menu; return copy }
+    func makeNSView(context: Context) -> Region { let view = Region(); view.contextMenu = contextMenu; view.changed = changed; view.identifier = identifier.map { NSUserInterfaceItemIdentifier(rawValue: $0) }; return view }
+    func updateNSView(_ view: Region, context: Context) { view.contextMenu = contextMenu; view.changed = changed; view.identifier = identifier.map { NSUserInterfaceItemIdentifier(rawValue: $0) } }
     final class Region: NSView {
         var changed: (Bool) -> Void = { _ in }
-        override func hitTest(_ point: NSPoint) -> NSView? { nil }
+        var contextMenu: (() -> NSMenu)?
+        override func hitTest(_ point: NSPoint) -> NSView? {
+            if contextMenu != nil, NSApplication.shared.currentEvent?.type == .rightMouseDown { return self }
+            return nil
+        }
+        override func menu(for event: NSEvent) -> NSMenu? { contextMenu?() }
         override var acceptsFirstResponder: Bool { false }
         override func isAccessibilityElement() -> Bool { false }
         override func updateTrackingAreas() {

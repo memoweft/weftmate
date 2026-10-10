@@ -70,6 +70,9 @@ import Security
                     try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
                     try Data(line.dropFirst("A10_REPORT:".count).utf8).write(to: destination.appendingPathComponent("native-report.json"))
                 }
+                if line.hasPrefix("A17_TEXT:") {
+                    try Data(line.dropFirst("A17_TEXT:".count).utf8).write(to: destination.deletingPathExtension().appendingPathExtension("text.json"))
+                }
                 if line.hasPrefix("A14_SCAN:") {
                     try Data(line.dropFirst("A14_SCAN:".count).utf8).write(to: destination.appendingPathComponent("storage-scan.json"))
                 }

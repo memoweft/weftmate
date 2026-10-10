@@ -12,6 +12,8 @@ import WeftMateCore
     @Published var indexState = "ready"
     @Published var dayCounts: [String: Int] = [:]
     @Published var loading = false
+    @Published var configuring = false
+    @Published var configurationError: String?
     @Published var error: String?
     @Published var query = ""
     @Published var hits: [ChatSearchPage.Hit] = []
@@ -20,6 +22,8 @@ import WeftMateCore
     @Published var target: ChatAnchor?
     @Published var draft = ""
     @Published var modelID = ""
+    @Published var thinking: SessionThinking?
+    @Published var thinkingBusy = false
     @Published var models: [SharedHostModel] = []
     @Published var attachments: [ConversationAttachmentDraft] = []
     @Published var command: LogicalCommand?
@@ -49,12 +53,14 @@ import WeftMateCore
     func clear() {
         window.reset(); visibleAnchor = nil; dayCounts = [:]; chat = nil; hits = []; query = ""; resources = []; resourceVisible = false; target = nil
         sideSource = nil; searchGeneration = UUID(); resourceGeneration = UUID(); command = nil; pending = nil
-        models = []; modelID = ""; timeZone = "UTC"; indexState = "ready"; assets = []; transferSource = nil; transferDraft = nil; transferFiles = []
+        configurationError = nil; thinking = nil; thinkingBusy = false; models = []; modelID = ""; timeZone = "UTC"; indexState = "ready"; assets = []; transferSource = nil; transferDraft = nil; transferFiles = []
         draft = ""; attachments.forEach { $0.removeTemporaryFiles() }; attachments = []; error = nil; loading = false; sending = false
     }
     func configure() async {
         guard let app else { return }
         let token = app.accountEpoch
+        configurationError = nil
+        configuring = true; defer { if app.accountEpoch == token { configuring = false } }
         if epoch != token { clear(); epoch = token }
         do {
             let caps = try await app.assistantClient.chatCapabilities()
@@ -70,7 +76,18 @@ import WeftMateCore
             guard app.accountEpoch == token else { return }; models = readModels
             if let bound = value.modelProfileId, value.activeSessionId != nil { modelID = bound }
             else if modelID.isEmpty { modelID = models.first(where: \.configured)?.id ?? "" }
-        } catch { if app.accountEpoch == token, !(await app.handleLogicalChatFailure(error)) { self.error = error.localizedDescription } }
+        } catch { if app.accountEpoch == token, !(await app.handleLogicalChatFailure(error)) { configurationError = "模型列表暂时无法读取，请检查电脑连接后重试。" } }
+    }
+    func refreshThinking(enabled: Bool? = nil) async {
+        guard let app, let sessionID = chat?.activeSessionId,
+              models.first(where: { $0.id == modelID })?.deepThinking?.supported == true else { thinking = nil; return }
+        let token = app.accountEpoch
+        thinkingBusy = true; defer { if token == app.accountEpoch { thinkingBusy = false } }
+        do {
+            let value = try await app.assistantClient.sessionThinking(sessionID: sessionID, enabled: enabled)
+            guard token == app.accountEpoch, chat?.activeSessionId == sessionID else { return }
+            thinking = value
+        } catch { if token == app.accountEpoch { self.error = "深入思考状态未确认，请重试。" } }
     }
     /// Invalidate every content-bearing projection and old callback before requesting a fresh page.
     func invalidate() {
@@ -86,7 +103,7 @@ import WeftMateCore
             await configure()
             if capabilities.timeline { await read(replace: true) }
             else { await app?.refresh() }
-        } else { error = failure.localizedDescription }
+        } else { error = "对话记录暂时无法读取，请检查电脑连接后重试。" }
     }
     func read(before: String? = nil, after: String? = nil, around: String? = nil, replace: Bool = false) async {
         guard let app, let chat, !loading else { return }
@@ -383,7 +400,7 @@ import WeftMateCore
                 before = page.hasOlder ? page.olderCursor : nil
             } while before != nil
             error = "原消息不可用，请重新读取。"
-        } catch { self.error = error.localizedDescription }
+        } catch { self.error = "操作暂时未完成，请检查电脑连接后重试。" }
     }
     /// Re-read the authoritative logical source, including the preceding page/segment.
     /// The original message is never edited; the accepted side chat receives a new turn.
@@ -438,6 +455,6 @@ import WeftMateCore
             let value = try await app.assistantClient.logicalChat(id: id)
             _ = try await app.assistantClient.patchChat(id: id, revision: value.revision, fields: fields, requestID: "apple-policy-" + UUID().uuidString.lowercased())
             guard app.accountEpoch == token else { return }; await app.refresh()
-        } catch { if app.accountEpoch == token { self.error = error.localizedDescription } }
+        } catch { if app.accountEpoch == token { self.error = "操作暂时未完成，请检查电脑连接后重试。" } }
     }
 }

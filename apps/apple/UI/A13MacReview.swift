@@ -19,15 +19,21 @@ import WeftMateCore
                 if let text = get(node, name) as? String, !text.isEmpty { values.append(text) }
             }
             let children = get(node, "accessibilityChildren") as? [Any] ?? node.performIfAvailable("accessibilityAttributeValue:", value: "AXChildren") as? [Any] ?? []
-            for child in children { visit(child) }
-            if let view = node as? NSView { for child in view.subviews { visit(child) } }
+            // The SwiftUI AX bridge can vend a new proxy for the same view on each
+            // traversal. Walking AX children AND physical subviews duplicates the
+            // remote save-panel tree exponentially. Prefer its semantic AX children;
+            // physical views remain the fallback before the AX tree materializes.
+            if !children.isEmpty { for child in children { visit(child) } }
+            else if let view = node as? NSView { for child in view.subviews { visit(child) } }
             if let window = node as? NSWindow, let content = window.contentView { visit(content) }
         }
         for window in NSApplication.shared.windows where window.isVisible { visit(window) }
         return Array(Set(values)).sorted()
     }
     private static func capture(_ scene: String, settings: Bool = false) async throws {
-        try await A10MacReview.capture(scene, settings: settings, identifier: settings ? "settingsPage.usage" : "conversationDetail")
+        if scene == "usage-month-picker" {
+            try await Task.sleep(for: .milliseconds(400)); A16MacReview.captureVisible(scene)
+        } else { try await A10MacReview.capture(scene, settings: settings, identifier: settings ? "settingsPage.usage" : "conversationDetail") }
         let data = try JSONSerialization.data(withJSONObject: ["scene": scene, "text": texts().joined(separator: "\n")])
         FileHandle.standardOutput.write(Data(("A13_TEXT:" + String(decoding: data, as: UTF8.self) + "\n").utf8))
     }

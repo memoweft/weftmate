@@ -32,7 +32,7 @@ struct WeftMateRootView: View {
                 if model.restoring {
                     VStack(spacing: AppleTokens.Space.p20) {
                         BrandMark(size: 48)
-                        ProgressView("正在打开 WeftMate…").font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
+                        ProgressView("正在打开 WeftMate…").font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted).accessibilityLabel("正在打开 WeftMate…").accessibilityIdentifier("app.loading")
                     }.frame(maxWidth: .infinity, maxHeight: .infinity).background(Weave.canvas)
                 } else if let session = model.session {
                     OfflineWorkspace(app: model, model: model.offline).id(session.account.ownerId)
@@ -46,10 +46,15 @@ struct WeftMateRootView: View {
         #endif
         .overlay { CloudAccessPresenter(cloud: model.cloudLogin) }
         .sheet(item: Binding(get: { model.deletionInSettings ? nil : model.deletionCandidate }, set: { model.deletionCandidate = $0 })) { _ in SessionDeleteSheet(app: model) }
+        #if os(iOS)
         .sheet(item: $model.sessionMenuCandidate) { row in
-            VStack(alignment: .leading, spacing: AppleTokens.Space.p16) { SessionActions(app: model, conversation: row, onSelect: { model.sessionMenuCandidate = nil }) }
-                .padding(AppleTokens.Space.p24)
+            NavigationStack {
+                List { SessionActions(app: model, conversation: row, onSelect: { model.sessionMenuCandidate = nil }) }
+                    .listStyle(.insetGrouped).navigationTitle("对话操作").navigationBarTitleDisplayMode(.inline)
+                    .toolbar { ToolbarItem(placement: .cancellationAction) { Button { model.sessionMenuCandidate = nil } label: { WeftIcon("deny") }.accessibilityLabel("关闭对话操作") } }
+            }.presentationDetents([.medium, .large])
         }
+        #endif
         .sheet(item: $model.projectEditor) { _ in ProjectEditorSheet(app: model) }
         .sheet(item: $model.projectConversation) { _ in ProjectConversationSheet(app: model) }
         .sheet(item: $model.groupCandidate) { _ in SessionGroupSheet(app: model) }
@@ -70,6 +75,17 @@ struct WeftMateRootView: View {
         .tint(Weave.accent)
         .preferredColorScheme(AppleAppearance(rawValue: model.appearanceMode)?.colorScheme)
         .task {
+            #if DEBUG && os(macOS)
+            let captureArgs = ProcessInfo.processInfo.arguments
+            if captureArgs.contains("--ui-testing"), captureArgs.contains("--lg2-capture"), captureArgs.contains("a17-loading") {
+                Task { @MainActor in
+                    NSApplication.shared.accessibilitySetValue(true, forAttribute: NSAccessibility.Attribute(rawValue: "AXEnhancedUserInterface"))
+                    NSApplication.shared.setActivationPolicy(.regular); NSApplication.shared.activate(ignoringOtherApps: true)
+                    try? await Task.sleep(for: .seconds(2))
+                    A16MacReview.captureVisible("loading", single: true); Darwin.exit(0)
+                }
+            }
+            #endif
             await model.start()
             #if DEBUG && os(macOS)
             if ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--lg2-capture") {
@@ -139,6 +155,9 @@ struct WeftMateRootView: View {
                         }
                     }
                 }
+                if let index = ProcessInfo.processInfo.arguments.firstIndex(of: "--a5-review-scene"), (ProcessInfo.processInfo.arguments[index + 1].hasPrefix("a17-") || ProcessInfo.processInfo.arguments[index + 1] == "session-menu") {
+                    A16MacReview.captureVisible(ProcessInfo.processInfo.arguments[index + 1], single: true); Darwin.exit(0)
+                }
                 // Capture only this process's own displayed window; never enumerate other apps.
                 typealias WindowImages = @convention(c) (CGRect, CFArray, UInt32) -> Unmanaged<CGImage>?
                 let settingsCapture = argsForSettingsCapture()
@@ -202,21 +221,29 @@ struct MacWorkspace: View {
     @Environment(\.openWindow) private var openWindow
     @State private var selected: SidebarSelection?
     @State private var search = ""
+    @State private var showingSidebar = false
+    @State private var availableWidth: CGFloat = 1080
 
     var body: some View {
-        GeometryReader { geometry in
+        Group {
             HSplitView {
-                sidebar
+                if availableWidth >= 720 { sidebar
                     .frame(minWidth: 230, idealWidth: 260, maxWidth: 320)
-                    .frame(height: geometry.size.height)
-                    .clipped()
+                    .frame(maxHeight: .infinity)
+                    .clipped() }
                 NavigationStack {
                     detail
                 }
                 .frame(minWidth: 440, maxWidth: .infinity)
-                .frame(height: geometry.size.height)
+                .frame(maxHeight: .infinity)
                 .clipped()
                 .toolbar {
+                    ToolbarItem(placement: .navigation) {
+                        if availableWidth < 720 {
+                            Button { showingSidebar.toggle() } label: { WeftIcon("sidebar") }
+                                .accessibilityLabel("侧栏").accessibilityIdentifier("macSidebarToggle").accessibilityValue(showingSidebar ? "已展开" : "已收起")
+                        }
+                    }
                     ToolbarItem(placement: .navigation) {
                         Button { Task { await model.refresh() } } label: {
                             WeftLabel("刷新", icon: "sync")
@@ -224,14 +251,28 @@ struct MacWorkspace: View {
                     }
                 }
             }
-            .frame(width: geometry.size.width, height: geometry.size.height)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .overlay(alignment: .topLeading) {
+            if showingSidebar && availableWidth < 720 {
+                ZStack(alignment: .topLeading) {
+                    AppleTokens.Colors.clear.contentShape(Rectangle()).onTapGesture { showingSidebar = false }
+                    WeaveCard(padding: AppleTokens.Space.p0) { sidebar }
+                        .frame(width: AppleTokens.Space.p28 * 10, height: AppleTokens.Space.p20 * 25)
+                        .clipShape(RoundedRectangle(cornerRadius: AppleTokens.Radius.r14))
+                        .padding(AppleTokens.Space.p8)
+                        .accessibilityElement(children: .contain).accessibilityIdentifier("compactSidebar")
+                }
+            }
+        }
+        .onExitCommand { showingSidebar = false }
+        .background(MacViewWidthObserver { availableWidth = $0 })
         #if DEBUG
         .task(id: model.conversations.count) {
             let args = ProcessInfo.processInfo.arguments
             guard args.contains("--ui-testing"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1) else { return }
             switch args[index + 1] {
-            case "a16-all", "a15-all", "a11-all", "a11-remote": break
+            case "a16-all", "a15-all", "a11-all", "a11-remote", "a17-empty", "a17-no-model", "a17-error": break
             case "memory", "memory-forget": selected = .memory
             case "appearance", "usage":
                 model.settingsRoute = .init(categoryID: args[index + 1]); openWindow(id: "settings")
@@ -253,6 +294,7 @@ struct MacWorkspace: View {
             Task { if let resolved = await model.resolveOpenedConversation(id), model.accountEpoch == epoch, model.openedSessionID == id { selected = .conversation(resolved) } }
         }
         .onChange(of: selected) { _, selection in
+            showingSidebar = false
             if case .conversation = selection {} else { model.closeConversation() }
         }
     }
@@ -265,6 +307,13 @@ struct MacWorkspace: View {
                         .padding(AppleTokens.Space.p12).background(selected == .conversation(main.id) ? Weave.accentSoft : Weave.soft)
                 }.buttonStyle(.plain).accessibilityIdentifier("mainChat.navigation").accessibilityValue(selected == .conversation(main.id) ? "已选择" : "")
             }
+            VStack(spacing: AppleTokens.Space.p4) {
+                ForEach([("动态", "bell"), ("目标", "plan"), ("成果库", "outputs")], id: \.0) { title, icon in
+                    Button {} label: { WeftLabel(title, icon: icon).frame(maxWidth: .infinity, alignment: .leading) }
+                        .buttonStyle(.plain).disabled(true).help("Apple 页面即将支持")
+                        .padding(.horizontal, AppleTokens.Space.p12).padding(.vertical, AppleTokens.Space.p6)
+                }
+            }.padding(.horizontal, AppleTokens.Space.p8)
             HStack(spacing: AppleTokens.Space.p7) {
                 WeftIcon("search").foregroundStyle(Weave.muted)
                 TextField("搜索对话", text: $search)
@@ -289,13 +338,13 @@ struct MacWorkspace: View {
                 ForEach(model.sections(query: search)) { section in
                     Section {
                         Button { if model.collapsedSessionGroups.contains(section.id) { model.collapsedSessionGroups.remove(section.id) } else { model.collapsedSessionGroups.insert(section.id) } } label: {
-                            HStack { WeftIcon(model.collapsedSessionGroups.contains(section.id) ? "right" : "collapse", size: 16); Text(section.title) }
-                        }.buttonStyle(.plain).accessibilityIdentifier("sessionGroup." + section.id)
+                            HStack { Text(section.title).font(AppleTokens.Fonts.caption); Spacer(); WeftIcon(model.collapsedSessionGroups.contains(section.id) ? "right" : "chevron", size: AppleTokens.Space.p12) }.foregroundStyle(Weave.muted)
+                        }.buttonStyle(SessionMenuRowStyle()).accessibilityIdentifier("sessionGroup." + section.id)
                         if !model.collapsedSessionGroups.contains(section.id) {
                             ForEach(section.rows) { conversation in
                                 EditableSessionRow(app: model, conversation: conversation, selected: selected == .conversation(conversation.id))
                                     .tag(SidebarSelection.conversation(conversation.id))
-                                    .listRowBackground(selected == .conversation(conversation.id) ? Weave.accent : AppleTokens.Colors.clear)
+                                    .listRowBackground(AppleTokens.Colors.clear).listRowSeparator(.hidden)
                             }
                         }
                     }
@@ -308,18 +357,13 @@ struct MacWorkspace: View {
                             ForEach(model.projectRows(project, query: search)) { conversation in
                                 EditableSessionRow(app: model, conversation: conversation, selected: selected == .conversation(conversation.id))
                                     .tag(SidebarSelection.conversation(conversation.id))
-                                    .listRowBackground(selected == .conversation(conversation.id) ? Weave.accent : AppleTokens.Colors.clear)
+                                    .listRowBackground(AppleTokens.Colors.clear).listRowSeparator(.hidden)
                             }
                             ProjectMoreRows(app: model, project: project, search: search)
                         }
                     }
                 }
-                Section {
-                    WeftLabel("记忆", icon: "memory").tag(SidebarSelection.memory)
-                        .accessibilityIdentifier("memoryNavigation")
-                    Button { openWindow(id: "settings") } label: { WeftLabel("设置", icon: "settings") }
-                        .accessibilityIdentifier("settingsNavigation")
-                }
+
             }
             .listStyle(.sidebar)
             .frame(minHeight: 0, maxHeight: .infinity)
@@ -330,7 +374,7 @@ struct MacWorkspace: View {
             Divider()
             MacAccountMenu(app: model)
         }
-        .background(Weave.soft).modifier(SessionHoverOverlay(app: model))
+        .background(Weave.soft)
     }
 
     @ViewBuilder private var detail: some View {
@@ -392,7 +436,12 @@ struct PhoneWorkspace: View {
         }
         .onChange(of: model.openedSessionID) { _, id in
             guard let id else { return }; let epoch = model.accountEpoch
-            Task { if let resolved = await model.resolveOpenedConversation(id), model.accountEpoch == epoch, model.openedSessionID == id { path = model.conversations.first(where: { $0.id == resolved })?.isMainChat == true ? [] : [resolved] } }
+            Task {
+                if let resolved = await model.resolveOpenedConversation(id), model.accountEpoch == epoch, model.openedSessionID == id {
+                    if model.conversations.first(where: { $0.id == resolved })?.isMainChat == true { path = [] }
+                    else { path = (path.first == "a16-side-list" ? ["a16-side-list"] : []) + [resolved] }
+                }
+            }
         }
         #if DEBUG
         .task {
@@ -405,7 +454,7 @@ struct PhoneWorkspace: View {
             }
         }
         #endif
-        .onChange(of: model.renamingSessionID) { _, id in if id != nil { path = [] } }
+        .onChange(of: model.renamingSessionID) { _, id in if id != nil { path = model.conversations.contains(where: \.isMainChat) ? ["a16-side-list"] : [] } }
         .environmentObject(health)
         .task(id: "\(model.accountEpoch)-\(scenePhase)-\(model.session?.verification.rawValue ?? "none")") {
             guard scenePhase == .active else { return }
@@ -418,6 +467,12 @@ struct PhoneWorkspace: View {
 
     private var sideList: some View {
                 List {
+                    Section {
+                        ForEach([("动态", "bell"), ("目标", "plan"), ("成果库", "outputs")], id: \.0) { title, icon in
+                            Button {} label: { WeftLabel(title, icon: icon) }.disabled(true).accessibilityHint("Apple 页面即将支持")
+                        }
+                    }
+
                     if let error = model.lifecycleError { InlineNotice(message: error, isError: true) }
                     ConversationListContent(model: model, search: $search)
                     ForEach(model.sections(query: search)) { section in

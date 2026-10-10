@@ -35,14 +35,18 @@ final class A7SessionMenuUITests: XCTestCase {
         let ready = try await get("/ready"), ids = try await get("/a5/ids")
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--ui-testing-namespace", "a7-" + UUID().uuidString.prefix(8), "--a5-local-server", "--a5-theme", theme, "--server-url", ready["host"] as! String]
-        app.launch(); try expect(app.descendants(matching: .any)["conversationList"].firstMatch)
+        app.launch()
+        let sideList = app.descendants(matching: .any).matching(identifier: "mainChat.sideList").firstMatch
+        XCTAssertTrue(sideList.waitForExistence(timeout: 30)); sideList.tap()
+        try expect(app.descendants(matching: .any)["conversationList"].firstMatch)
         return (app, ids)
     }
     @MainActor func testLightMenuArchiveAndForget() async throws { try await run("light") }
     @MainActor func testDarkMenuArchiveAndForget() async throws { try await run("dark") }
     @MainActor private func run(_ theme: String) async throws {
         let (app, ids) = try await launch(theme); defer { app.terminate() }
-        let id = ids["deletion"] as! String, forgetID = ids["forget"] as! String
+        let chatIDs = ids["chatIDs"] as! [String:String]
+        let id = chatIDs["deletion"]!, forgetID = chatIDs["forget"]!
         try menu(app, id)
         for name in ["sessionAction.pin", "sessionAction.unread", "sessionAction.rename", "sessionAction.fork", "移至分组", "sessionAction.archive", "sessionAction.delete"] { try expect(app.buttons[name]) }
         keep(app, "session-menu", theme)

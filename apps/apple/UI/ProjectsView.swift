@@ -18,7 +18,8 @@ import AppKit
         if args.contains("--ui-testing"), args.contains("--lg2-capture"), let i = args.firstIndex(of: "--a11-folder"), args.indices.contains(i + 1) { let folder = URL(fileURLWithPath: args[i + 1]); picker.directoryURL = folder.deletingLastPathComponent(); picker.nameFieldStringValue = folder.lastPathComponent }
         #endif
         panel = picker
-        picker.begin { response in
+        picker.begin { @Sendable response in
+            Task { @MainActor in
             if response == .OK, let url = picker.url {
                 acceptSelection(url, app: app)
                 #if DEBUG
@@ -26,6 +27,7 @@ import AppKit
                 #endif
             }
             panel = nil
+            }
         }
     }
 }
@@ -34,6 +36,8 @@ import AppKit
 struct ProjectHeading: View {
     @ObservedObject var app: AppleAppModel
     let project: Project
+    @State private var hovering = false
+    @FocusState private var rowFocused: Bool
     private var actionSize: CGFloat {
         #if os(macOS)
         AppleTokens.Space.p28
@@ -48,24 +52,32 @@ struct ProjectHeading: View {
                 else { app.collapsedProjects.insert(project.id) }
             } label: {
                 HStack(spacing: AppleTokens.Space.p8) {
-                    WeftIcon(app.collapsedProjects.contains(project.id) ? "right" : "collapse", size: 12)
                     WeftIcon("folder", size: 16)
                     Text(project.name).lineLimit(2)
                 }.frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
             }.buttonStyle(.plain).accessibilityLabel(project.name)
                 .accessibilityValue(app.collapsedProjects.contains(project.id) ? "已折叠" : "已展开")
                 .accessibilityIdentifier("projectToggle." + project.id)
-            Button { Task { await app.beginProjectConversation(project) } } label: { WeftIcon("plus", size: 16).frame(width: actionSize, height: actionSize) }
-                .buttonStyle(.plain).disabled(app.projectBusy)
-                .accessibilityLabel("在项目 \(project.name) 新建对话").accessibilityIdentifier("projectNewConversation." + project.id)
             #if os(macOS)
-            if app.canChooseProjectFolder {
+            let showActions = hovering || rowFocused
+            #else
+            let showActions = true
+            #endif
+            #if os(macOS)
+            Group {
                 Button { app.beginProject(project) } label: { WeftIcon("more", size: 16).frame(width: actionSize, height: actionSize) }
-                    .buttonStyle(.plain).accessibilityLabel("项目设置 \(project.name)").accessibilityIdentifier("projectSettings." + project.id)
+                    .buttonStyle(.plain).opacity(showActions ? 1 : 0).allowsHitTesting(showActions).accessibilityHidden(!showActions).disabled(!app.canChooseProjectFolder).help(app.canChooseProjectFolder ? "项目设置" : "请在项目所在电脑设置").accessibilityLabel("项目设置 \(project.name)").accessibilityIdentifier("projectSettings." + project.id)
             }
             #endif
+            Button { Task { await app.beginProjectConversation(project) } } label: { WeftIcon("plus", size: 16).frame(width: actionSize, height: actionSize) }
+                .buttonStyle(.plain).disabled(app.projectBusy).opacity(showActions ? 1 : 0).allowsHitTesting(showActions).accessibilityHidden(!showActions)
+                .accessibilityLabel("在项目 \(project.name) 新建对话").accessibilityIdentifier("projectNewConversation." + project.id)
         }.accessibilityElement(children: .contain).font(AppleTokens.Fonts.callout).foregroundStyle(Weave.ink)
-            .padding(.vertical, AppleTokens.Space.p8)
+            .padding(.vertical, AppleTokens.Space.p6).padding(.horizontal, AppleTokens.Space.p8)
+            #if os(macOS)
+            .background(hovering || rowFocused ? Weave.line.opacity(0.5) : AppleTokens.Colors.clear, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r8))
+            .background(SessionHoverRegion { hovering = $0 }).focusable().focusEffectDisabled().focused($rowFocused)
+            #endif
     }
 }
 struct ProjectsSectionTitle: View {
