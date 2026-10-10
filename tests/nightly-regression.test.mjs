@@ -7,6 +7,38 @@ import { deflateSync } from 'node:zlib';
 import { execFileSync } from 'node:child_process';
 import { inspect, difference, pixels, retention, previousRun } from '../scripts/nightly/report.mjs';
 import { startTimelineCandidate } from './integration/timeline-ui-candidate.mjs';
+import { androidPackages, androidPackageReason } from '../scripts/nightly/android-packages.mjs';
+
+test('Android inventory names leftover test packages without classifying the daily or unknown package as disposable', async () => {
+  const output = 'package:com.memoweft.weftmate.mobile\npackage:com.memoweft.weftmate.mobile.s3aqa\npackage:com.memoweft.weftmate.mobile.stage15memoryqa.test\npackage:com.memoweft.weftmate.mobile.debug.test\npackage:com.memoweft.weftmate.mobile.unknown\n';
+  assert.deepEqual(androidPackages(output).testPackages, ['com.memoweft.weftmate.mobile.debug.test', 'com.memoweft.weftmate.mobile.s3aqa', 'com.memoweft.weftmate.mobile.stage15memoryqa.test']);
+  const reason = androidPackageReason(output);
+  const result = await inspect([], { phases: [{ name: 'android', status: 'skipped', reason }] });
+  assert.ok(result.alerts[0].message.includes('com.memoweft.weftmate.mobile.stage15memoryqa.test'));
+  assert.ok(reason.includes('com.memoweft.weftmate.mobile.unknown'));
+  assert.equal(androidPackageReason('error: device offline'), '');
+});
+
+test('task registration prefers the stable alias and WhatIf describes the complete action without registering', { skip: process.platform !== 'win32' }, async () => {
+  const root = await mkdtemp(join(tmpdir(), 'weftmate-nightly-task-'));
+  try {
+    const alias = join(root, 'Microsoft', 'WindowsApps', 'pwsh.exe');
+    await mkdir(join(root, 'Microsoft', 'WindowsApps'), { recursive: true });
+    await writeFile(alias, 'synthetic alias');
+    // Mock every ScheduledTasks constructor and mutation. The actual task
+    // service is never called, even if ShouldProcess regresses.
+    const harness = join(root, 'verify.ps1');
+    await writeFile(harness, `param([string]$Registration, [string]$FakeLocal)\n$ErrorActionPreference = 'Stop'\n$env:LOCALAPPDATA = $FakeLocal\nfunction New-ScheduledTaskAction { param($Execute,$Argument,$WorkingDirectory) @{ Execute=$Execute; Arguments=$Argument; WorkingDirectory=$WorkingDirectory } }\nfunction New-ScheduledTaskTrigger {}\nfunction New-ScheduledTaskPrincipal {}\nfunction New-ScheduledTaskSettingsSet {}\nfunction Register-ScheduledTask { throw 'registration must never run' }\n& $Registration -WhatIf -MaxMinutes 17\n`);
+    const run = () => execFileSync('pwsh', ['-NoProfile', '-File', harness, join(process.cwd(), 'scripts/nightly/register-task.ps1'), root], { encoding: 'utf8' });
+    const withAlias = run();
+    assert.ok(withAlias.includes(`Execute: ${alias}`));
+    assert.match(withAlias, /Arguments: -NoProfile -WindowStyle Hidden -File ".*run-nightly\.ps1" -MaxMinutes 17/);
+    assert.ok(withAlias.includes(`WorkingDirectory: ${join(process.cwd(), 'scripts/nightly')}`));
+    await rm(alias);
+    const fallback = execFileSync('pwsh', ['-NoProfile', '-Command', '(Get-Command pwsh).Source'], { encoding: 'utf8' }).trim();
+    assert.ok(run().includes(`Execute: ${fallback}`));
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
 
 // Minimal non-interlaced 8-bit PNG, enough to verify decoded pixel comparisons.
 function png(color, filter = 0) {
