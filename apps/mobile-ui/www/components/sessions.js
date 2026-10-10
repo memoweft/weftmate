@@ -178,7 +178,11 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
     '发送结果待核对。请求已在手机保留，不会自动生成另一条消息。':'正在提交到电脑会话…');
     if(state.sharedPending.state==='uncertain'){const check=el('button','shared-check',state.sharedChecking?'正在核对…':'检查状态');
       check.disabled=!!state.sharedChecking;check.addEventListener('click',()=>{void checkSharedPending()});box.append(check)}content.append(box)}
-  if(!state.sharedEvents.length&&!state.sharedError)content.append(el('p','muted',state.sharedLoading?'正在读取电脑会话…':'这段会话还没有可显示的文字记录'));
+  if(!state.sharedError&&!content.querySelector('.message')){
+    if(state.sharedLoading)content.append(el('p','muted','正在读取电脑会话…'));
+    else if(!state.sharedEvents.length&&!state.sharedHasOlder&&!state.sharedPending&&!uiCore.optimisticMessages().length)content.append(welcomeState());
+    else if(state.sharedEvents.length||state.sharedHasOlder)content.append(el('p','muted','这段会话还没有可显示的文字记录'));
+  }
   content.append(...saved);renderTimeline();renderConversationTasks();renderOptimisticMessages();updateComposer();if(state.scrollPinned)scrollBottom();else scroll.scrollTop=previousScroll;}
 
 function renderOptimisticMessages(){if(state.chatSource!=='host'||state.page!=='chat')return;
@@ -529,6 +533,7 @@ function renderConversationList(){const target=$('conversation-list'),previousSc
 function updatePageHeader(){const home=state.page==='home',chat=state.page==='chat';
   $('menu-button').hidden=!home;$('page-back').hidden=home;$('home-new-chat').hidden=!home;
   $('outputs-button').hidden=!chat;
+  $('conversation-more').hidden=!chat;
   const title=chat?(state.chatSource==='host'?selectedSharedSession()?.title:state.conversations.find(item=>item.id===state.conversationId)?.title):null;
   $('header-subtitle').hidden=true;
   const pageTitle=mobileSettingsRegistry.get(state.page)?.name||({goals:'目标',library:'成果库',activity:'动态',memory:'记忆',settings:'设置',sync:'离线与同步',updates:'更新',connect:'连接电脑',password:'修改密码',capabilities:'能力与扩展',workspaces:'项目与成果'}[state.page])||'WeftMate';

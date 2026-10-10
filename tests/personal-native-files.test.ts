@@ -100,6 +100,7 @@ test('new owner conversations get separate host data directories; shared chat al
       gateway: async (route: string, init: any) => {
         if (route === '/models') return { groups: [{ id: 'fixture', models: [{ id: 'fixture' }] }] }
         if (route === '/sessions') { const request = JSON.parse(init.body); created.push(request); return { sessionId: request.sessionId } }
+        if (!init && /^\/sessions\/[^/]+$/.test(route)) return created.find(row=>row.sessionId===route.split('/').at(-1))
         return {}
       } })
     for (const sessionId of ['one', 'two']) await backend.createSession({ sessionId, modelProfileId: 'local', ownerId: 'owner' })

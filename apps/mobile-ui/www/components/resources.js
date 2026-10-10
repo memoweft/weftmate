@@ -37,7 +37,7 @@ function inlineTaskInfo(taskId,button){const context=conversationTaskContext(),e
 function appendTimelineArtifact(parent,artifact,context=conversationTaskContext()){const wrap=el('div','timeline-artifact'),open=el('button','secondary',artifact.fileName||'打开成果'),save=el('button','quiet','保存到手机');
   open.type='button';save.type='button';open.addEventListener('click',()=>openTimelinePreview(context,()=>uiCore.readResource(uiCore.artifactPreviewPath(artifact.artifactId)),artifact.fileName||'成果'));
   save.addEventListener('click',async()=>{try{const result=await call('shared.artifacts.save',{artifactId:artifact.artifactId});if(conversationTaskCurrent(context)){state.artifactSaveRequest=result.requestId;toast('请选择保存位置')}}catch(e){toast(safeError(e),true)}});
-  wrap.append(open,el('small','',`${artifact.contentType||'文件'} · ${artifact.size||0} 字节`),save);parent.append(wrap)}
+  wrap.append(open,el('small','',`${artifact.contentType||'文件'} · ${attachmentSize(artifact.size||0)}`),save);parent.append(wrap)}
 
 function closeResourcePage({restoreFocus=true}={}){const view=state.resourceView;state.resourceView=null;
   if($('mobile-bottom-tabs'))$('mobile-bottom-tabs').inert=false;
