@@ -5,6 +5,8 @@ import { createNativeGoalManager } from '../src/personal-access/goals-native.mjs
 import { nextCalendarInput } from '../src/personal-access/schedules-calendar.mjs';
 import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import { eraseSessionMemoryArtifact } from '../src/runtime/dsh-adapter/memory-erasure.mjs';
+import { observeActivityEvents } from '../src/personal-access/activity.mjs';
+import { runInNewContext } from 'node:vm';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -47,4 +49,22 @@ test('D33 removes selected native goal and schedule derived text while preservin
   await eraseSessionMemoryArtifact(persistence,'session',{sourceTexts:[secret],deleteConversationSnippets:false,goalIds:['goal-private'],scheduleIds:['schedule-private']});
   const cleaned=(await readFile(file,'utf8')).split('\n').map(line=>JSON.parse(line));
   assert.equal(cleaned[1].data.content[0].text,secret);assert.ok(!JSON.stringify(cleaned.slice(2)).includes(secret));assert.equal(cleaned[4].data.schedule.prompt,'无关安排');
+});
+
+test('scheduled text result produces one native task dynamic while ordinary plain replies do not',()=>{
+  const account:any={sessions:{side:{origin:'personal-remote'}},commands:{scheduled:{commandId:'scheduled',kind:'session.message',sessionId:'side',receiptId:'receipt',dshTurn:1,state:'accepted_by_dsh',scheduleSourceId:'ui-schedule'}},activity:undefined};
+  const events=[{type:'turn.started',seq:0,at:'2026-10-10T00:00:00Z',data:{turn:1}},{type:'user.message',seq:1,at:'2026-10-10T00:00:00Z',data:{receiptId:'receipt'}},{type:'assistant.message',seq:1,at:'2026-10-10T00:00:01Z',data:{text:'提醒内容已经整理。'}},{type:'turn.ended',seq:2,at:'2026-10-10T00:00:02Z',data:{reason:'completed'}}];
+  observeActivityEvents(account,'side',events,2);assert.equal(Object.values(account.activity.items).length,1);assert.equal((Object.values(account.activity.items)[0] as any).type,'task.completed');
+  const ordinary:any=structuredClone(account);delete ordinary.commands.scheduled.scheduleSourceId;delete ordinary.activity;observeActivityEvents(ordinary,'side',events,2);assert.equal(Object.values(ordinary.activity.items).length,0);
+});
+
+test('shared goal page resets old account data before new reads and ignores late responses',async()=>{
+  const factories:any={},environment:any={crypto:{randomUUID:()=> 'fixture'}},reads:any[]=[];
+  runInNewContext(await readFile(new URL('../src/ui-core/goals.js',import.meta.url),'utf8'),{globalThis:{WeftUiCore:{factories}},URLSearchParams,Set});
+  const core:any={state:{identityGeneration:1,ownerId:'one',personalCapabilities:{taskOverview:1,scheduleEditing:1,goals:1}},accessApi:(path:string)=>new Promise(resolve=>reads.push({path,owner:core.state.ownerId,resolve})),failureMessage:()=> '读取失败'};
+  Object.assign(core,factories.goals(core,{},environment));const old=core.readGoals();await Promise.resolve();await Promise.resolve();
+  core.goalsPage.tasks=[{title:'old private data'}];core.state.identityGeneration++;core.state.ownerId='two';const current=core.readGoals();assert.equal(core.goalsPage.tasks.length,0);await Promise.resolve();await Promise.resolve();
+  for(const read of reads.filter(r=>r.owner==='two'))read.resolve(read.path==='/tasks'?{items:[{title:'new data'}],recent:[]}:read.path==='/sessions'?{sessions:[]}:{items:[]});await current;
+  for(const read of reads.filter(r=>r.owner==='one'))read.resolve(read.path==='/tasks'?{items:[{title:'old private data'}],recent:[]}:read.path==='/sessions'?{sessions:[]}:{items:[]});await old;
+  assert.equal(core.goalsPage.tasks[0].title,'new data');assert.equal(core.goalsPage.loading,false);
 });

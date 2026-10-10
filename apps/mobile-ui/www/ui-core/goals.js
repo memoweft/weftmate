@@ -1,11 +1,11 @@
 /* Shared goal-page behavior. Native task receipts and schedule/goal APIs own mutations. */
 globalThis.WeftUiCore.factories.goals = (core,effects,environment) => {
     const model={tasks:[],recent:[],schedules:[],goals:[],sessions:[],errors:{},loading:false,generation:0,busy:new Set()};
-    let flight;
+    let flight,identity;
     const scope=()=>`${core.state.identityGeneration}:${core.state.account?.ownerId ?? core.state.ownerId}`;
     function resetGoals(){model.generation++;Object.assign(model,{tasks:[],recent:[],schedules:[],goals:[],sessions:[],errors:{},loading:false});model.busy.clear();flight=null;effects.renderGoals?.();}
     async function readGoals(){
-        core.syncMobileIdentity?.();if(flight)return flight;
+        core.syncMobileIdentity?.();if(identity!==scope()){identity=scope();resetGoals();}if(flight)return flight;
         const token=scope(),generation=model.generation;model.loading=true;effects.renderGoals?.();
         const work=(async()=>{
             const paths=[['tasks','/tasks','taskOverview'],['schedules','/schedules','scheduleEditing'],['goals','/goals','goals'],['sessions','/sessions',null]];

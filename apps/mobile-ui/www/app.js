@@ -168,7 +168,7 @@ function call(method, params={}, timeoutMs=45000) { return androidBridge.call(me
 
 
 function page(name){
-  if(name!=='goals'){clearInterval(goalsTimer);goalsTimer=null;goalsView=null;}
+  if(name!=='goals'){if(goalsTimer)clearInterval(goalsTimer);goalsTimer=null;goalsView=null;}
   if(name!=='activity'){if(activityTimer)clearInterval(activityTimer);activityTimer=null;activityView=null;}
   if(name==='memory')state.settingsChild=true;
   $('cloud-auth-page')?.classList.remove('active'); $('cloud-settings-page')?.classList.remove('active');

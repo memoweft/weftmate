@@ -17,9 +17,13 @@ export function observeActivityEvents(account,sessionId,events,nextSeq,observeRe
       const commands=Object.values(account.commands).filter(c=>c.kind==='session.message'&&c.sessionId===sessionId&&c.state==='accepted_by_dsh');
       scan.taskId=commands.find(c=>c.receiptId===(data.receiptId??data.rpcId)||c.dshTurn===data.turn)?.commandId;
     }
+    if(event.type==='user.message' && typeof data.receiptId==='string') {
+      const command=Object.values(account.commands).find(c=>c.kind==='session.message'&&c.sessionId===sessionId&&c.receiptId===data.receiptId);
+      if(command)scan.taskId=command.rootTaskId??command.commandId;
+    }
     if(event.type.startsWith('step.')||event.type==='artifact.created')scan.executed=true;
     if(event.type==='assistant.message'&&!hasPrivateContent(session))scan.summary=String(data.text??'').slice(0,160);
-    if(event.type==='turn.ended' && (scan.executed||['failed','aborted'].includes(data.reason))){
+    if(event.type==='turn.ended' && (scan.executed||account.commands[scan.taskId]?.scheduleSourceId||['failed','aborted'].includes(data.reason))){
       const result={completed:'completed',failed:'failed',aborted:'stopped'}[data.reason];
       if(result){const terminal={at,state:result,turn:scan.turn,seq:event.seq,...(scan.taskId?{taskId:scan.taskId}:{}),...(scan.summary?{summary:scan.summary}:{})};
         scan.terminals??={};scan.terminals[scan.taskId??event.seq]=terminal;

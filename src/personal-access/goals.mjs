@@ -28,7 +28,7 @@ export function createGoalOperations(context) {
       const status = task.control.state === 'stop_requested' ? task.control.stopStatus === 'stopped' ? 'stopped' : task.control.stopStatus === 'completed' ? 'completed' : 'stopping'
         : pending ? 'approval' : question ? 'question' : command.state === 'rejected' ? 'failed' : task.control.state === 'uncertain' || jobs.unconfirmed || e.status === 'unconfirmed' && command.state === 'accepted_by_dsh' ? 'unconfirmed'
         : ended ? terminal?.type.slice(5) ?? (e.status === 'aborted' ? 'stopped' : e.status)
-        : ['pending','dispatching'].includes(command.state) || e.status === 'waiting' ? 'queued' : 'running';
+        : ['pending','dispatching'].includes(command.state) || e.status === 'waiting' && e.turn === null ? 'queued' : 'running';
       const privateSource = hasPrivateContent(session), source = activitySource(account, command.sessionId, { taskId: command.commandId }), chat = account.chatIdentity?.chats[source.chatId];
       if (!privateSource && !session.title && !names.has(command.sessionId) && context.backend?.describeSession) names.set(command.sessionId, (await context.backend.describeSession(command.sessionId,ownerId))?.title);
       const finishedAt = ['completed','failed','stopped'].includes(status) ? terminal?.at ?? e.terminalAt ?? (status === 'stopped' ? task.control.stopObservedAt : null) ?? command.updatedAt : null;
@@ -36,8 +36,8 @@ export function createGoalOperations(context) {
       const verbs = { read:'正在读取文件',write:'正在保存文件',edit:'正在修改文件',glob:'正在查找文件',grep:'正在检索内容',pwsh:'正在运行命令',bash:'正在运行命令',web_fetch:'正在查看网页',subagent:'正在处理子任务',schedule_create:'正在安排定时任务',schedule_manage:'正在管理定时任务',create_goal:'正在建立目标',update_goal:'正在更新目标' };
       const row = { taskId: command.commandId, source, title: privateSource ? '临时对话中的任务' : String(command.taskLabel ?? command.payload.text ?? '正在处理的任务').slice(0,80),
         conversationTitle: privateSource ? '临时对话' : chat?.kind === 'main' ? 'WeftMate 主对话' : session.title ?? names.get(command.sessionId) ?? '旁聊', status, createdAt: command.createdAt,
-        startedAt: e.firstChunkAt ?? (e.turn ? command.updatedAt : null), finishedAt,
-        elapsedSeconds: Math.max(0, Math.floor(((finishedAt ? Date.parse(finishedAt) : context.timestamp()) - Date.parse(e.firstChunkAt ?? command.createdAt)) / 1000)),
+        startedAt: e.startedAt ?? e.firstChunkAt ?? null, finishedAt,
+        elapsedSeconds: Math.max(0, Math.floor(((finishedAt ? Date.parse(finishedAt) : context.timestamp()) - Date.parse(e.startedAt ?? e.firstChunkAt ?? command.createdAt)) / 1000)),
         step: privateSource ? '打开临时对话查看进展。' : ended ? '打开对话查看结果' : jobs.active ? `${jobs.active} 项后台工作正在执行` : pending ? '等待你批准操作' : question ? '等待你补充信息' : step ? verbs[step.toolName] ?? '正在处理一个步骤' : e.step ? `正在处理第 ${e.step} 步` : status === 'queued' ? '等待开始' : '正在生成回复',
         canStop: task.control.canStop && !ended && command.state !== 'rejected' };
       if (['completed','failed','stopped'].includes(status)) { if (finishedAt && Date.parse(finishedAt) >= since) recent.push(row); } else items.push(row);
