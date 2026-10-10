@@ -1,0 +1,23 @@
+{
+  "productionMobile": true,
+  "realHttp": true,
+  "synthetic": true,
+  "checks": [
+    "390-light: four-pages,profile,drawer,activity-menu-read,filters-scroll,library-menus-preview,goal-source-return,back-order,draft,keyboard-tabs",
+    "390-dark: four-pages,profile,drawer,activity-menu-read,filters-scroll,library-menus-preview,goal-source-return,back-order,draft,keyboard-tabs",
+    "390: notification-deeplink-all-filter-focused",
+    "390: simulated-browser-keyboard-geometry",
+    "390: cached-offline-activity,host-only-goals-library,no-model-send-disabled",
+    "360-light: four-pages,profile,drawer,activity-menu-read,filters-scroll,library-menus-preview,goal-source-return,back-order,draft,keyboard-tabs",
+    "360-dark: four-pages,profile,drawer,activity-menu-read,filters-scroll,library-menus-preview,goal-source-return,back-order,draft,keyboard-tabs",
+    "360: notification-deeplink-all-filter-focused",
+    "360: simulated-browser-keyboard-geometry",
+    "360: cached-offline-activity,host-only-goals-library,no-model-send-disabled",
+    "480-light: four-pages,profile,drawer,activity-menu-read,filters-scroll,library-menus-preview,goal-source-return,back-order,draft,keyboard-tabs",
+    "480-dark: four-pages,profile,drawer,activity-menu-read,filters-scroll,library-menus-preview,goal-source-return,back-order,draft,keyboard-tabs",
+    "480: notification-deeplink-all-filter-focused",
+    "480: simulated-browser-keyboard-geometry",
+    "480: cached-offline-activity,host-only-goals-library,no-model-send-disabled"
+  ],
+  "errors": []
+}
