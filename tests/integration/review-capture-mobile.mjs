@@ -92,8 +92,9 @@ try {
       }, questionPage);
       const mainPage=await context.newPage();
       await shot('main-chat',async()=>{
-        mainFixture=await startMainChatCandidate();await mainPage.goto(mainFixture.origin+'/personal/v1/ui');
-        await localUiSession(mainPage,mainFixture.credentials,'Synthetic main gallery',{mainChat:true});await mainPage.waitForFunction(()=>document.querySelector('#transcript .main-chat-row'));
+        mainFixture=await startMainChatCandidate(300,{logicalMobile:true});await mainPage.goto(mainFixture.mobileUrl);
+        await mainPage.getByRole('button',{name:'搜索主对话',exact:true}).waitFor();await mainPage.waitForFunction(()=>document.querySelector('.main-chat-row'));
+        await mainPage.evaluate(theme=>applyTheme(theme),theme);
       },mainPage);
       if (errors.length) throw Error('Mobile renderer failed');
       console.log(`Mobile ${theme}: scene outcomes recorded.`);
