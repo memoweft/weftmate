@@ -236,7 +236,7 @@ function syncMobileTabs(){
     tab.setAttribute('aria-label',id==='activity'&&unread?`动态，${unread} 条未读`:id==='goals'&&pending?'目标，有进行中或待处理任务':mobileTabNames[id]);
     const badge=tab.querySelector('.mobile-tab-badge');badge.hidden=id==='activity'?!unread:id==='goals'?!pending:true;badge.textContent=id==='activity'?(unread>99?'99+':String(unread)):'';
   }
-  if(releaseNotice){uiCore.syncMobileIdentity();void releaseNotice.check();}
+  if(releaseNotice)void releaseNotice.check();
   const profile=$('header-profile');if(profile){profile.hidden=!identity;const avatar=$('drawer-avatar');if(avatar){const copy=avatar.cloneNode(true);copy.removeAttribute('id');profile.replaceChildren(copy);}}
   if(visible&&state.page!=='chat'){
     $('header-title').textContent=mobileTabNames[state.page];$('header-subtitle').hidden=true;$('page-back').hidden=true;$('menu-button').hidden=true;

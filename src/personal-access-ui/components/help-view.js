@@ -45,8 +45,9 @@ globalThis.WeftHelpView={mount({target,core,kind,back,run,mobile=false}){
   dialog.append(header,body);document.body.append(dialog);dialog.onclose=()=>{dialog.remove();if(previous?.isConnected)previous.focus();};dialog.onkeydown=e=>{if(e.key==='Escape')e.stopPropagation();};dialog.showModal();close.focus();return dialog;
 },notice({target,core,open,current=()=>true}){
   let generation=0,lastScope,notice;
-  async function check(){const owner=core.state.ownerId;if(!owner||!current()){notice?.remove();lastScope=null;return;}const scope=`${owner}:${core.state.identityGeneration}`;if(lastScope===scope)return;lastScope=scope;const token=++generation;
-    try{let release=await core.currentRelease();if(token!==generation||scope!==`${core.state.ownerId}:${core.state.identityGeneration}`||!current())return;
+  const identity=()=>core.releaseIdentity?.()||core.state;
+  async function check(){const value=identity(),owner=value.ownerId;if(!owner||!current()){notice?.remove();lastScope=null;return;}const scope=`${owner}:${value.identityGeneration}`;if(lastScope===scope)return;lastScope=scope;const token=++generation;
+    try{let release=await core.currentRelease();const latest=identity();if(token!==generation||scope!==`${latest.ownerId}:${latest.identityGeneration}`||!current())return;
       if(release.pending){lastScope=null;return;}const changes=(release.versions?.length?release.versions:[release]).filter(row=>core.observeRelease(row.version,row.layer));if(!changes.length)return;release=changes.find(row=>row.layer==='ui'||row.layer==='mobile-ui')||changes[0];notice?.remove();notice=document.createElement('aside');notice.className='release-notice';notice.setAttribute('aria-label','已更新');notice.setAttribute('role','status');
       const link=document.createElement('button');link.className='release-notice-link';link.type='button';link.textContent=`已更新到 ${release.version} · 看看有什么新东西`;link.onclick=()=>{notice.remove();open();};
       const close=document.createElement('button');close.className='icon-button';close.type='button';close.setAttribute('aria-label','关闭更新提示');close.append(WeftIcons.create('deny',16));close.onclick=()=>notice.remove();notice.append(link,close);target.append(notice);

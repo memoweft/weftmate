@@ -15,7 +15,9 @@
   globalThis.WeftUiCore.helpTopics=Object.freeze(topics.map(Object.freeze));
   globalThis.WeftUiCore.filterHelp=filterHelp;
   globalThis.WeftUiCore.factories.help=(core,effects,env)=>{
-    const scope=()=>{core.syncMobileIdentity?.();return core.state.ownerId;};
+    // Reading a local notice must not refresh or replace the conversation snapshot.
+    const releaseIdentity=()=>env.mobileState?{ownerId:env.mobileState.loggedIn?env.mobileState.owner:null,identityGeneration:env.mobileState.authEpoch}:{ownerId:core.state.ownerId,identityGeneration:core.state.identityGeneration};
+    const scope=()=>releaseIdentity().ownerId;
     function observeRelease(version,layer='ui'){
       const owner=scope();if(!owner||!/^\d+\.\d+\.\d+(?:-[\w.-]+)?$/.test(version||''))return false;
       const key=`weftmate-release-seen:${encodeURIComponent(owner)}:${layer}`;
@@ -32,6 +34,6 @@
       const row=value.layers.find(row=>row.layer===(mobile?'mobile-ui':'ui')&&row.currentVersion)||value.layers.find(row=>row.layer==='app'&&row.currentVersion);
       return {version:row?.currentVersion||env.mobileState?.ui?.activeVersion||core.state.system?.host?.version||null,layer:row?.layer||(mobile?'mobile-ui':'ui'),audience:mobile?'mobile':'desktop',pending:row?.status==='starting',
         versions:value.layers.filter(row=>row.currentVersion&&row.scope!=='host-published'&&(mobile?row.layer==='mobile-ui':['app','ui'].includes(row.layer))).map(row=>({version:row.currentVersion,layer:row.layer}))};}
-    return {filterHelp,observeRelease,currentRelease};
+    return {filterHelp,observeRelease,currentRelease,releaseIdentity};
   };
 })();
