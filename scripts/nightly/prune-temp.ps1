@@ -26,15 +26,19 @@ foreach ($root in $Roots) {
         $forward = $dir.FullName -replace '\\', '/'
         if ($commandLines.IndexOf($dir.FullName, [StringComparison]::OrdinalIgnoreCase) -ge 0 -or
             $commandLines.IndexOf($forward, [StringComparison]::OrdinalIgnoreCase) -ge 0) { $inUse++; continue }
-        $selected += $dir
+        $selected += @{ directory = $dir; root = [IO.Path]::GetFullPath($root) }
     }
 }
 $deleted = 0; $failed = 0
 if ($Apply) {
-    foreach ($dir in $selected) {
-        # rd /s removes junctions as links and never descends into their targets.
-        cmd /c "rd /s /q `"\\?\$($dir.FullName)`"" 2>$null | Out-Null
-        if (Test-Path -LiteralPath $dir.FullName) { $failed++ } else { $deleted++ }
+    foreach ($entry in $selected) {
+        $target = [IO.Path]::GetFullPath($entry.directory.FullName)
+        # Keep discovery, boundary verification and deletion in PowerShell.
+        # PowerShell 7 removes junctions as links rather than traversing them.
+        if ([IO.Path]::GetDirectoryName($target) -ine $entry.root.TrimEnd('\') -or
+            [IO.Path]::GetFileName($target) -notlike 'weftmate-*') { $failed++; continue }
+        Remove-Item -LiteralPath $target -Recurse -Force -ErrorAction SilentlyContinue
+        if (Test-Path -LiteralPath $target) { $failed++ } else { $deleted++ }
     }
 }
 @{ hours = $Hours; applied = [bool]$Apply; found = $total; selected = $selected.Count; deleted = $deleted; failed = $failed
