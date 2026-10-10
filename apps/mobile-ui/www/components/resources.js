@@ -1,4 +1,11 @@
 /* Mobile resources presentation and named ui-core actions. */
+globalThis.WeftOpenCapturedSource=async(url,trigger)=>{
+  const context=conversationTaskContext();if(!conversationTaskCurrent(context))return true;
+  uiCore.syncMobileIdentity();
+  try{const source=await uiCore.capturedSourceForUrl(url);if(!conversationTaskCurrent(context))return true;if(!source)return false;
+    openResourceSource(source,context);const first=$('resource-content').querySelector('details');if(first)first.open=true;return true;
+  }catch{if(conversationTaskCurrent(context))toast('暂时无法读取出处，请重试。',true);return true;}
+};
 
 function groupTaskActivities(rows){return uiCore.groupTaskActivities(rows)}
 
@@ -85,7 +92,7 @@ function openResourceSource(item,context){if(!conversationTaskCurrent(context))r
         if(item.kind==='tool'){const presentation=uiCore.sourcePresentation(item.toolName||item.name,text);
           detail.append(el('p','source-summary',presentation.summary));const raw=el('details','resource-raw');
           raw.append(el('summary','','详情'));output.remove();raw.append(output);detail.append(raw);}
-        output.textContent=`${data.source?text:uiCore.executionDetailText(text)}${data.truncated||data.source?.truncated?'\n[内容已截断]':''}`;
+        output.textContent=`${data.source?text:item.kind==='webpage'?uiCore.capturedSourceText(text):uiCore.executionDetailText(text)}${data.truncated||data.source?.truncated?'\n[内容已截断]':''}`;
         const copy=el('button','timeline-action','复制');copy.addEventListener('click',()=>copyText(output.textContent));detail.append(copy);detail.dataset.loaded='true';
       }catch{if(state.resourceView===view){output.textContent='暂时无法读取，收起后可重试。';delete detail.dataset.loaded}}});target.append(detail)}
 }
