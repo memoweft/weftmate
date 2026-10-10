@@ -1,0 +1,9 @@
+{
+  "model": "mimo-v2.6-flash",
+  "requests": 8,
+  "promptTokens": 20949,
+  "completionTokens": 62,
+  "totalTokens": 21011,
+  "cachedPromptTokens": 11904,
+  "includesEarlierVerificationAttempts": true
+}
