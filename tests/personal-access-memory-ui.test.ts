@@ -334,11 +334,11 @@ test('memory view preserves chat draft and discards a successful response for an
     return response({ error: { code: 'NOT_FOUND' } }, 404)
   }
   const storage = new Map<string, string>()
-  const document = { body: { classList: { toggle() {} } }, visibilityState: 'visible',
+  const document = { body: new Node('body'), visibilityState: 'visible',
     getElementById: get, createElement: (tag: string) => new Node(tag),
     createTextNode: (text: string) => { const node = new Node(); node.textContent = text; return node },
     createElementNS: (_namespace: string, tag: string) => new Node(tag),
-    querySelector: (selector: string) => selector === '.local-badge' ? get('local-badge') : null,
+    querySelector: (selector: string) => selector === '.local-badge' ? get('local-badge') : selector === 'section.settings-category[data-category="general"]' ? get('general-panel') : null,
     querySelectorAll: () => [], addEventListener() {} }
   const window = { location: { hash: '', pathname: '/personal/v1/ui', search: '' },
     history: { replaceState() {} }, addEventListener() {}, WeftIcons: null as any }

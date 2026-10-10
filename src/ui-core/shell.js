@@ -231,11 +231,13 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         await core.loadMessageModePreference();
         await core.refreshAssistant();
         effects.startAssistantRefresh();
+        await effects.resumeOnboarding?.();
     }
     async function load() {
         core.show('loading');
         try {
             const accountState = await core.api('/state');
+            if (await effects.startOnboarding?.(accountState)) return;
             if (core.state.setupGrant) {
                 core.clearSession();
                 effects.showRegistration();
