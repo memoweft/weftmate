@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
-import { runVendorTests, vendorTestMarkdown } from '../scripts/nightly/vendor-tests.mjs'
+import { runVendorTests } from '../scripts/nightly/vendor-tests.mjs'
 import { inspect, report } from '../scripts/nightly/report.mjs'
 
 test('nightly vendor step records passes and failures and makes failed assertions red in the actual report', async () => {

@@ -1,16 +1,13 @@
 import { stagePersonalPlugins } from './support/personal-plugins.ts'
 import assert from 'node:assert/strict'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { EventEmitter } from 'node:events'
 import test from 'node:test'
 import { DshWebRuntime } from '../src/dsh-web-runtime.ts'
 import { sourceRange } from '../src/runtime/dsh-adapter/source-range.mjs'
 
-const vendorTools = pathToFileURL(join(process.cwd(), 'vendor', 'dsh-runtime', 'node_modules',
-  '@deepseek-ai', 'dsh-tools', 'lib', 'index.js')).href
 async function loadPlugin() {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-project-proof-'))
   const file = stagePersonalPlugins(root).plugin
