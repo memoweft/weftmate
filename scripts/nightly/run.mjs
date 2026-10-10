@@ -39,8 +39,8 @@ async function run(command, args, { cwd = worktree, env = {}, name = 'command', 
   const timer = setTimeout(() => { timedOut = true; child.kill(); }, Math.max(100, limit));
   try {
     const code = await completion;
-    if (timedOut || (code !== 0 && !allowFailure)) throw Error(timedOut ? '整晚总时长超时' : `${name} 运行失败（退出 ${code}；见 logs/${name}.log）`);
-    return { output, code };
+    if (!allowFailure && (timedOut || code !== 0)) throw Error(timedOut ? `${name} 超时（整晚截止时间或本命令时限）` : `${name} 运行失败（退出 ${code}；见 logs/${name}.log）`);
+    return { output, code: timedOut ? -1 : code, timedOut };
   } finally { clearTimeout(timer); children.delete(child); await log.close(); }
 }
 async function phase(name, platforms, action) {
@@ -91,8 +91,9 @@ try {
     await run('node', [join(worktree, 'node_modules/typescript/bin/tsc')], { name: 'typecheck' });
   });
   if (prepared) {
-    await phase('windows', ['windows'], () => run('node', [join(worktree, 'tests/integration/review-capture-desktop.mjs'), '--out', gallery], { name: 'windows' }).then(() => null));
-    await phase('mobile-web', ['mobile-web'], () => run('node', [join(worktree, 'tests/integration/review-capture-mobile.mjs'), '--out', gallery], { name: 'mobile-web' }).then(() => null));
+    const sceneArgs = value('--scene') ? ['--scene', value('--scene')] : [];
+    await phase('windows', ['windows'], () => process.argv.includes('--devices-only') ? skip('设备专项，未拍') : run('node', [join(worktree, 'tests/integration/review-capture-desktop.mjs'), '--out', gallery, ...sceneArgs], { name: 'windows' }).then(() => null));
+    await phase('mobile-web', ['mobile-web'], () => process.argv.includes('--devices-only') ? skip('设备专项，未拍') : run('node', [join(worktree, 'tests/integration/review-capture-mobile.mjs'), '--out', gallery, ...sceneArgs], { name: 'mobile-web' }).then(() => null));
     await phase('apple', ['mac', 'iphone', 'watch'], async () => {
       if (process.argv.includes('--skip-apple')) return skip('主动跳过，未拍');
       if (await isLocked('lan.lock')) return skip('被占用，未拍（LAN 锁）');
@@ -120,8 +121,11 @@ try {
         return skip(`被占用，未拍（已有启动的 MuMu${packages.output.includes('weftmate') ? ' / WeftMate 测试包' : ''}；不关闭他人的模拟器）`);
       }
       await run('pwsh', ['-NoProfile', '-File', join(scripts, 'build-android.ps1'), '-Worktree', worktree], { name: 'android-build' });
+      const beforeLaunch = JSON.parse((await run(cli, ['info', '--vmindex', '0'], { name: 'mumu-recheck' })).output);
+      if (beforeLaunch.is_process_started || beforeLaunch.is_android_started) return skip('被占用，未拍（构建期间他人启动 MuMu）');
       await run(cli, ['control', '--vmindex', '0', 'launch'], { name: 'mumu-launch' }); ownsMuMu = true;
       for (let i = 0; i < 90; i++) {
+        if (Date.now() >= deadline || cancelled) throw Error('整晚总时长超时或已停止');
         await run(adb, ['connect', '127.0.0.1:7555'], { name: 'adb-connect', allowFailure: true, limit: 5000 });
         const ready = await run(adb, ['-s', '127.0.0.1:7555', 'shell', 'getprop', 'sys.boot_completed'], { name: 'android-boot', allowFailure: true, limit: 5000 });
         if (ready.output.trim() === '1') break;
@@ -130,7 +134,7 @@ try {
       }
       const packages = (await run(adb, ['-s', '127.0.0.1:7555', 'shell', 'pm', 'list', 'packages', 'weftmate'], { name: 'android-packages' })).output;
       if (packages.includes('weftmate')) return skip('被占用，未拍（已有 WeftMate 测试包）');
-      await run('node', [join(worktree, 'tests/integration/review-capture-mobile.mjs'), '--android', '--out', gallery, '--state', join(out, 'android-state.json')], { name: 'android' });
+      await run('node', [join(worktree, 'tests/integration/review-capture-mobile.mjs'), '--android', '--out', gallery, '--state', join(out, 'android-state.json'), ...sceneArgs], { name: 'android' });
       cleanup.android = JSON.parse(await readFile(join(out, 'android-cleanup.json'), 'utf8'));
     });
   }
@@ -151,7 +155,10 @@ finally {
       for (const pkg of state.installed || []) await run(adb, ['-s', '127.0.0.1:7555', 'uninstall', pkg], { name: 'android-clean-uninstall', allowFailure: true, limit: 10000 });
     } catch {}
     await run(cli, ['control', '--vmindex', '0', 'shutdown'], { name: 'mumu-shutdown', allowFailure: true, limit: 15000 }).catch(() => {});
-    cleanup.android = { ...cleanup.android, ownedEmulatorShutdown: true };
+    const after = await run(cli, ['info', '--vmindex', '0'], { name: 'mumu-cleanup-info', allowFailure: true, limit: 5000 }).catch(() => null);
+    let info; try { info = JSON.parse(after?.output); } catch {}
+    cleanup.android = { ...cleanup.android, ownedEmulatorShutdown: !!info && !info.is_process_started && !info.is_android_started };
+    if (!cleanup.android.ownedEmulatorShutdown) phases.push({ name: 'android-cleanup', status: 'failed', reason: 'MuMu 关闭未得到确认' });
   }
   if (temp) await rm(temp, { recursive: true, force: true }).catch(() => {});
   const baseline = await previousRun(reports, gallery);
@@ -165,6 +172,9 @@ finally {
       try { await readFile(join(worktree, 'node_modules/electron/path.txt')); }
       catch { electron = join(repository, 'node_modules/electron/dist/electron.exe'); }
       await run(electron, [join(scripts, 'notify.mjs'), join(out, 'nightly-status.json'), join(out, 'notification-profile'), join(out, 'notification.json')], { cwd: repository, name: 'notification', allowFailure: true, limit: 10000 }).catch(() => {});
+      let notification;
+      try { notification = JSON.parse(await readFile(join(out, 'notification.json'), 'utf8')); } catch {}
+      if (!notification?.supported) await run('pwsh', ['-NoProfile', '-File', join(scripts, 'notify.ps1'), '-StatusPath', join(out, 'nightly-status.json'), '-ReceiptPath', join(out, 'notification.json')], { cwd: repository, name: 'notification-fallback', allowFailure: true, limit: 10000 });
     }
     await retention(reports);
     process.exitCode = result.alerts.length ? 1 : 0;

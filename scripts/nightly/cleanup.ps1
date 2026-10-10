@@ -7,11 +7,10 @@ $killed = @()
 foreach ($process in Get-CimInstance Win32_Process) {
     if (!$process.CreationDate -or $process.CreationDate.ToUniversalTime() -lt $started) { continue }
     if (!$process.ExecutablePath -or !$process.CommandLine) { continue }
-    if ([IO.Path]::GetFileName($process.ExecutablePath) -notmatch '^(node|electron|python|python3|java|chrome|pwsh|powershell)\.exe$') { continue }
+    if ([IO.Path]::GetFileName($process.ExecutablePath) -notmatch '^(node|electron|python|python3|java|chrome|chrome-headless-shell|pwsh|powershell)\.exe$') { continue }
     $matchesRoot = $false
     foreach ($root in $roots) {
-        if ($process.CommandLine.IndexOf($root, [StringComparison]::OrdinalIgnoreCase) -ge 0 -or
-            $process.CommandLine.IndexOf($root.Replace('\', '/'), [StringComparison]::OrdinalIgnoreCase) -ge 0) { $matchesRoot = $true }
+        if ($process.CommandLine.Replace('\', '/').IndexOf($root.Replace('\', '/'), [StringComparison]::OrdinalIgnoreCase) -ge 0) { $matchesRoot = $true }
     }
     if (!$matchesRoot -or $process.ProcessId -eq $PID) { continue }
     # Re-read to reject an exited/reused PID between enumeration and termination.
