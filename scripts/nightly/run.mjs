@@ -1,7 +1,7 @@
 import { spawn, execFileSync } from 'node:child_process';
 import { mkdtemp, mkdir, readFile, writeFile, open, rm, copyFile, readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, generateKeyPairSync } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { report, retention, previousRun } from './report.mjs';
 const scripts = fileURLToPath(new URL('.', import.meta.url));
@@ -85,7 +85,9 @@ try {
     }
     await run('node', [join(worktree, 'node_modules/electron/install.js')], { name: 'electron-install' });
     await run('node', [join(worktree, 'node_modules/playwright/cli.js'), 'install', 'chromium'], { name: 'chromium-install' });
-    await run('node', [join(worktree, 'scripts/build-mobile-ui.mjs'), '--output-dir', join(temp, 'mobile-release')], { name: 'build-mobile' });
+    const signingKey = join(temp, 'synthetic-signing.pem');
+    await writeFile(signingKey, generateKeyPairSync('ed25519').privateKey.export({ format: 'pem', type: 'pkcs8' }));
+    await run('node', [join(worktree, 'scripts/build-mobile-ui.mjs'), '--output-dir', join(temp, 'mobile-release')], { name: 'build-mobile', env: { WEFTMATE_UPDATE_PRIVATE_KEY_PATH: signingKey } });
     await run('node', [join(worktree, 'node_modules/typescript/bin/tsc')], { name: 'typecheck' });
   });
   if (prepared) {
