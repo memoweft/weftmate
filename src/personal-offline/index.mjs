@@ -1,3 +1,4 @@
+import { accountPersonalization } from '../personal-access/personalization.mjs';
 import { hasPrivateContent } from '../personal-access/temporary-chats.mjs';
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
@@ -81,7 +82,7 @@ export async function createOfflineService(context) {
           const known = body.generation === generation ? body.hashes ?? {} : {};
           const recentMessages = await recent(ownerId);
           const metadata = { generation, reset: body.generation !== generation, model, recent: recentMessages,
-            control, syncedAt: new Date(context.timestamp()).toISOString() };
+            personalization: accountPersonalization(context.accountState(ownerId)), control, syncedAt: new Date(context.timestamp()).toISOString() };
           let payload = { ...replicaDelta(snapshot, known), ...metadata };
           // Bound the resulting replica, not just this delta; otherwise small
           // incremental responses could grow an unbounded on-device snapshot.

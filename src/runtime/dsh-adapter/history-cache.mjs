@@ -16,14 +16,14 @@ export function createHistoryCache({ file, source, readNative }) {
     db.exec('PRAGMA secure_delete=ON; PRAGMA journal_mode=DELETE; CREATE TABLE IF NOT EXISTS segments (id TEXT PRIMARY KEY, revision TEXT NOT NULL, stable INTEGER NOT NULL, tail INTEGER NOT NULL); CREATE TABLE IF NOT EXISTS events (session TEXT NOT NULL, seq INTEGER NOT NULL, body TEXT NOT NULL, PRIMARY KEY(session,seq)) WITHOUT ROWID;');
     return db;
   }
-  function page(db, id, meta, { afterSeq, beforeSeq, limit = 50 }) {
+  function page(db, id, meta, { afterSeq, beforeSeq, limit = 50, includeThinking = false }) {
     const forward = afterSeq !== undefined;
     const rows = forward ? db.prepare('SELECT body FROM events WHERE session=? AND seq>? ORDER BY seq LIMIT ?').all(id, afterSeq, limit + 1)
       : db.prepare('SELECT body FROM events WHERE session=? AND seq<? ORDER BY seq DESC LIMIT ?').all(id, beforeSeq ?? Number.MAX_SAFE_INTEGER, limit + 1);
     let bytes = 0; const events = [];
     for (const row of rows) {
       if (events.length === limit || bytes + Buffer.byteLength(row.body) > 900000) break;
-      bytes += Buffer.byteLength(row.body); events.push(JSON.parse(row.body));
+      bytes += Buffer.byteLength(row.body); const event = JSON.parse(row.body); if (!includeThinking && event.data?.modelThinking) { const {modelThinking, ...data} = event.data; event.data = data; } events.push(event);
     }
     const more = rows.length > events.length;
     if (!forward) events.reverse();
@@ -35,7 +35,7 @@ export function createHistoryCache({ file, source, readNative }) {
       const epoch = epochs.get(id) ?? 0;
       return serial(async () => {
         if (closed) throw new Error('history cache closed');
-        const before = await source(id), sql = await database();
+        const native = await source(id), before = native ? {...native,revision:native.revision + ':thinking-v1'} : null, sql = await database();
         let meta = sql.prepare('SELECT * FROM segments WHERE id=?').get(id);
         if (!before) { sql.prepare('DELETE FROM events WHERE session=?').run(id); sql.prepare('DELETE FROM segments WHERE id=?').run(id); return null; }
         if (meta?.revision !== before.revision) {
@@ -49,7 +49,7 @@ export function createHistoryCache({ file, source, readNative }) {
             if (!incremental) sql.prepare('DELETE FROM events WHERE session=?').run(id);
             const insert = sql.prepare('INSERT OR REPLACE INTO events(session,seq,body) VALUES (?,?,?)');
             while (true) {
-              const projected = project(entries, { afterSeq: after, limit: 200 });
+              const projected = project(entries, { afterSeq: after, limit: 200, includeThinking: true });
               for (const event of projected.events) insert.run(id, event.seq, JSON.stringify(event));
               stable = projected.nextSeq; tail = projected.latestSeq;
               if (!projected.hasMore) break;

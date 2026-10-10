@@ -93,7 +93,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         picker = node('select', 'settings-category-picker'); picker.setAttribute('aria-label', '设置分类');
         content = node('div', 'settings-content');
         const originals = [...account.children]; account.append(content);
-        for (const id of ['general', 'appearance', 'account', 'devices', 'usage', 'models', 'approvals', 'memory', 'schedules', 'resources', 'system', 'backups', 'about']) {
+        for (const id of ['general', 'personalization', 'assistant', 'appearance', 'account', 'devices', 'usage', 'models', 'approvals', 'memory', 'schedules', 'resources', 'system', 'backups', 'about']) {
             const panel = node('section', 'settings-category'); panel.dataset.category = id; panel.hidden = true; panels.set(id, panel); content.append(panel);
         }
         const move = (id, element) => { if (element) panels.get(id).append(element); };
@@ -150,12 +150,6 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
             panels.get('general').append(globalThis.WeftSettingsControls.row('运行日志', '保留最近 7 天的运行状态，不记录对话、记忆内容或密钥。', logs));
         }
         description('general', '语言', '当前界面使用简体中文。', '简体中文');
-        const messageSetting = globalThis.WeftUiCore.messageModeSetting;
-        const messageMode = node('select'); messageMode.id = 'settings-message-mode'; messageMode.setAttribute('aria-label', messageSetting.name);
-        for (const [value, label] of messageSetting.options) messageMode.append(new Option(label, value));
-        const messageHelp = messageSetting.options.map(([, label, help]) => `${label}：${help}`).join(' ');
-        panels.get('general').append(globalThis.WeftSettingsControls.row(messageSetting.name, messageHelp, messageMode));
-        messageMode.addEventListener('change', () => core.setMessageMode(messageMode.value));
         const descriptions = { theme: '选择适合当前环境的颜色模式。', accent: '用于按钮、选中状态和交互提示。', fontSize: '调整阅读与输入的文字大小。' };
         for (const [key, help] of Object.entries(descriptions)) {
             const control = ui.byId('appearance-' + key), label = control.closest('label'), name = label.childNodes[0].textContent;
@@ -181,7 +175,8 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         for (const original of originals) if (original.parentNode === account) original.hidden = true;
         account.append(content); main.append(head, strip, picker); if (cloudNotice) main.append(cloudNotice); main.append(account); dialog.append(sidebar, main); document.body.append(dialog);
         registry = globalThis.WeftUiCore.settingsRegistry({
-            general: () => { messageMode.value = core.messageModePreference(); messageMode.dispatchEvent(new Event('weft:sync')); },
+            personalization: () => globalThis.WeftPersonalizationView(core, panels.get('personalization'), 'personalization'),
+            assistant: () => globalThis.WeftPersonalizationView(core, panels.get('assistant'), 'assistant'),
             account: () => { ui.selectCloudSettings?.('account'); ui.paintCloudSettings?.(); },
             devices: () => { ui.selectCloudSettings?.('devices'); ui.paintCloudSettings?.(); },
             memory: () => { if (core.state.currentView !== 'memory') void core.openMemory(); },
