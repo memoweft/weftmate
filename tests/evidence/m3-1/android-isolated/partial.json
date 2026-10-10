@@ -1,0 +1,59 @@
+{
+  "startedAt": "2026-10-10T08:30:53.109Z",
+  "realCloudEntrypoint": "services/cloud/src/main.mjs",
+  "realElectronEntrypoint": ".",
+  "sourceCommit": "886fe68f31e3060a2f66df38c1147d0af719cd8c",
+  "phase": "android-isolated",
+  "baselineHost": false,
+  "steps": [
+    "Real cloud entrypoint health",
+    "Mobile registration, real file mail, sixty-second resend deadline and bundled legal reading",
+    "Real desktop approves the waiting phone and recipient imports trusted host delivery",
+    "Approved phone adopts the real host session before relay login"
+  ],
+  "cloudTransport": "WSL docker-desktop; temporary standalone Alpine tools",
+  "visualChecks": [
+    {
+      "name": "login",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "login",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "waiting",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "waiting",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "native-host-offline",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "native-host-offline",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    }
+  ],
+  "nativePresence": {
+    "realNative": true,
+    "realFixedDsh": true,
+    "transport": "trusted direct loopback + ADB reverse; owned content transport gate",
+    "checks": []
+  }
+}

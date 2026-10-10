@@ -1,0 +1,68 @@
+{
+  "identityGeneration": 2,
+  "historyGeneration": 9,
+  "sessions": [
+    {
+      "title": "M3 接续验收",
+      "sessionId": "session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd",
+      "chatId": "chat-926d41e2-ae0e-4a2b-9f10-5ce9c34ac445",
+      "archived": false
+    },
+    {
+      "title": "M3 接续验收",
+      "sessionId": "session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23",
+      "chatId": "chat-0a14c31c-ab5f-4d15-b05b-c94b184daa52",
+      "archived": false
+    }
+  ],
+  "listed": [
+    {
+      "title": "M3 接续验收",
+      "sessionId": "session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd"
+    },
+    {
+      "title": "M3 接续验收",
+      "sessionId": "session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23"
+    }
+  ],
+  "phone": [],
+  "selectedSessionId": null,
+  "selectedChatId": "chat-8258c8f7-a7e4-48c2-be2b-cacf92c15cf6",
+  "domRows": [
+    {
+      "label": "未分组"
+    },
+    {
+      "label": "M3 接续验收",
+      "row": "session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd"
+    },
+    {
+      "label": "",
+      "row": "session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd"
+    },
+    {
+      "label": "",
+      "row": "session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd"
+    },
+    {
+      "label": "",
+      "row": "session-133e1d6e-3e5c-4b5b-a107-8bada5dfadbd"
+    },
+    {
+      "label": "M3 接续验收",
+      "row": "session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23"
+    },
+    {
+      "label": "",
+      "row": "session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23"
+    },
+    {
+      "label": "",
+      "row": "session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23"
+    },
+    {
+      "label": "",
+      "row": "session-a725cc1e-846b-4be7-b8a7-d3e0c58cfb23"
+    }
+  ]
+}

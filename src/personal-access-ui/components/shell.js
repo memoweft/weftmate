@@ -3,10 +3,10 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
     function paintConnection(online) {
         const badge = document.querySelector('.local-badge');
         badge.hidden = true;
-        ui.byId('assistant-connection').hidden = true;
+        ui.byId('assistant-connection').hidden = false;
         ui.byId('connection-copy').textContent = online ? '已连接' : '连接中断，可稍后重试。';
         const banner = ui.byId('connection-banner');
-        banner.hidden = online;
+        banner.hidden = true;
         banner.classList.toggle('is-offline', !online);
         banner.textContent = online ? '' : '连接中断，正在重试…';
     }
@@ -219,14 +219,23 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         ui.renderOptimisticMessages();
         ui.byId('model-hint').textContent = value.hint;
         ui.byId('model-hint').setAttribute('role', 'status');
-        ui.byId('model-hint').hidden = !value.hint || value.running || !ui.byId('approval-bar').hidden;
+        ui.byId('model-hint').hidden = !core.state.online || !value.hint || value.running || !ui.byId('approval-bar').hidden;
         ui.renderTimeline();
+        for (const waiting of ui.byId('transcript').querySelectorAll('.inline-waiting .inline-progress-text')) {
+            waiting.textContent = core.processingStageLabel(core.state.mainChat?.processing || core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId)?.processing);
+            waiting.classList.toggle('is-running', core.state.online);
+        }
         WeftPopover.modelGate({missing:!!core.state.account && core.state.modelsKnown===true && !core.state.models.some(model=>model.configured!==false&&model.available!==false),
           field:ui.byId('message-text'),send,empty:!ui.byId('transcript').querySelector('.message'),content:ui.byId('chat-scroll'),composer:ui.byId('message-form').parentElement,openSettings:()=>ui.openSettings('models')});
         if (ui.byId('chat-scroll').classList.contains('needs-model-empty')) ui.byId('chat-intro').hidden=true;
     }
     function startAssistantRefresh() {
         core.stopAssistantRefresh();
+        core.startConnection(async () => {
+            await core.refreshAssistant();
+            await Promise.all([core.refreshHistory(), core.reconcileMainRequests(), core.refreshConversationTasks(), core.refreshConversationApprovals(), core.refreshConversationQuestions()]);
+            await core.offlineConnectionRestored?.();
+        });
         core.state.refreshTimer = setInterval(() => {
             if (document.visibilityState === 'visible')
                 void core.refreshAssistant();

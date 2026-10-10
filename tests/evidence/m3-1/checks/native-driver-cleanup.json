@@ -1,0 +1,6 @@
+{
+  "terminated": 6,
+  "reason": "Owned native test host awaited a graceful listener close",
+  "cutoff": "2026-10-10T16:06:00+08:00",
+  "at": "2026-10-10T16:12:05.2930584+08:00"
+}

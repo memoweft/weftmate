@@ -1,0 +1,21 @@
+{
+  "startedAt": "2026-10-10T08:03:14.681Z",
+  "realCloudEntrypoint": "services/cloud/src/main.mjs",
+  "realElectronEntrypoint": ".",
+  "sourceCommit": "886fe68f31e3060a2f66df38c1147d0af719cd8c",
+  "phase": "android-cache-final",
+  "baselineHost": false,
+  "steps": [
+    "Real cloud entrypoint health"
+  ],
+  "cloudTransport": "WSL docker-desktop; temporary standalone Alpine tools",
+  "passed": false,
+  "error": "Isolated LG-1b package already installed",
+  "pageErrors": [],
+  "failedRequests": [
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    }
+  ]
+}
