@@ -1,0 +1,30 @@
+✔ callback review hashes are independent of Git checkout line endings (3.193ms)
+✔ Apple reviewed callbacks retain their exact isolation boundary (129.1265ms)
+✔ new and changed background callback actor access fails review (0.5433ms)
+✔ comments and string braces cannot hide a callback boundary (0.2399ms)
+✔ labelled actions and completions remain inside the reviewed boundary (1.0052ms)
+✔ release records have valid dates, semantic versions and user-facing categories; generated records match source (15.3545ms)
+✔ update notice establishes a baseline, shows once per account/version and survives reload; rollback never repeats (1.7069ms)
+✔ update notice ignores host-published phone bundle and obtains installed desktop version (2.7755ms)
+✔ help search filters all words locally across title, group and body; blank restores all topics (1.3686ms)
+✔ every shortcut in the panel registry dispatches its own action with identical modifier matching; composition is ignored (2.0796ms)
+✔ mobile release notice reads account identity without refreshing the live conversation snapshot (1.8101ms)
+✔ approval shortcut names and number bindings derive from the same mode table without duplicate registration (1.7305ms)
+✔ D55 desktop/mobile/search and host agree on every priority including stopped (1.7758ms)
+✔ D55 observed terminal without an assistant message is unread and read snapshots clear it (2.176ms)
+✔ D55 read covers messages before the tail but never consumes a terminal observed after its native snapshot (0.4985ms)
+✔ D55 pending native interactions update with account snapshots and disappear on answer, timeout or restart (0.6773ms)
+✔ D55 summary includes children beyond the first 100 rows and excludes archived/deleting sessions (2.6005ms)
+✔ D55 invalidate/forget/deletion cannot revive terminal facts and account summaries cover hidden pages (1.4513ms)
+✔ D55 restart finds a terminal behind a long current turn outside the list request (0.3387ms)
+✔ D55 native adapter backward pages recover the previous terminal behind 250 current tool calls (7.0683ms)
+✔ D55 real host API rebuilds outcome after restart, clears read and removes deleted/private-source status copies (2757.5624ms)
+✔ D55 latest main read uses the existing metadata route, respects newer history and identity, and requires exact capability 1 (3.5286ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3104.5262

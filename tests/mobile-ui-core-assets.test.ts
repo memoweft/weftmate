@@ -91,7 +91,7 @@ test('publish command refuses stale generated assets before creating a release',
   const isolatedRepository = path.join(root, 'repository')
   const copiedSources = path.join(isolatedRepository, 'src', 'ui-core')
   await cp(sourceDir, copiedSources, { recursive: true })
-  for (const name of ['src/personal-access-ui/components/data.js','src/personal-access-ui/data.css','apps/mobile-ui/www/components/data.js','apps/mobile-ui/www/data.css','src/ui-core/manifest.mjs', 'apps/mobile-ui/src/build-ui-core.mjs',
+  for (const name of ['src/personal-access-ui/components/data.js','src/personal-access-ui/data.css','apps/mobile-ui/www/components/data.js','apps/mobile-ui/www/data.css','scripts/build-release-notes.mjs', 'src/personal-access-ui/components/help-view.js', 'src/personal-access-ui/help.css', 'apps/mobile-ui/www/components/help-view.js', 'apps/mobile-ui/www/help.css', 'src/ui-core/manifest.mjs', 'apps/mobile-ui/src/build-ui-core.mjs',
     'src/personal-access-ui/system-bars.js', 'apps/mobile-ui/www/system-bars.js',
     'src/personal-access-ui/components/presence.js', 'src/personal-access-ui/presence.css', 'apps/mobile-ui/www/components/presence.js', 'apps/mobile-ui/www/presence.css',
     'src/personal-access-ui/components/notifications.js', 'apps/mobile-ui/www/components/notifications.js',

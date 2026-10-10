@@ -7,6 +7,8 @@ import renderAssets from './render-assets.json' with {type: 'json'};
 const files = new Map([
   ['/personal/v1/ui/components/data.js', ['components/data.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/data.css', ['data.css', 'text/css; charset=utf-8']],
+  ['/personal/v1/ui/help.css', ['help.css','text/css; charset=utf-8']],
+  ...['components/help-view.js','components/help.js'].map(name => [`/personal/v1/ui/${name}`, [name,'text/javascript; charset=utf-8']]),
   ...['components/presence.js','presence.css'].map(name => [`/personal/v1/ui/${name}`, [name, name.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8']]),
   ['/personal/v1/ui/search.css', ['search.css', 'text/css; charset=utf-8']],
   ...['components/search-view.js','components/search.js'].map(name => [`/personal/v1/ui/${name}`, [name, 'text/javascript; charset=utf-8']]),

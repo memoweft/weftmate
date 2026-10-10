@@ -96,6 +96,8 @@ function approvalSettingsPage(target){target.append(heading('审批'));
 
 function aboutSettingsPage(target){target.append(heading('关于'),group('WeftMate',[
   row('界面版本',state.ui?.activeVersion||'内置页面',()=>page('updates')),
+  row('更新内容','看看有什么新东西',()=>page('releases')),
+  row('帮助与小技巧','找到一个技巧，马上试试',()=>page('help')),
   row('服务条款','在应用内阅读',()=>mobileSettingsLegal('terms')),
   row('隐私政策','在应用内阅读',()=>mobileSettingsLegal('privacy'))]));
 }

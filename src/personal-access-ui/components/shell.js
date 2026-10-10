@@ -346,7 +346,9 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
             button.append(globalThis.WeftIcons.create(icon, 16), ui.element('span', '', label));
             button.onclick = () => { closeAccountMenu(); run(); }; menu.append(button); return button; };
         add('用量详情', 'chart', () => ui.openSettings('usage'));
-        add('帮助与反馈', 'info', () => ui.openSettings('about'));
+        add('更新内容', 'sync', () => ui.openReleases());
+        add('帮助', 'info', () => ui.openHelp());
+        if (globalThis.weftmateDesktop || !matchMedia('(max-width:720px)').matches) add('快捷键一览', 'keyboard', () => ui.openShortcuts());
         add('退出登录', 'logout', () => {
             const token = core.accountToken(), dialog = ui.element('dialog', 'dialog confirm-dialog'); dialog.setAttribute('aria-label', '退出登录');
             const body = ui.element('div', 'dialog-body'); body.append(ui.element('h2', '', '退出当前设备？'), ui.element('p', '', '退出后需要重新登录。电脑上的对话与文件会保留。'));
@@ -390,7 +392,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
 
         ui.byId('rail-backdrop').addEventListener('click', ui.closeRail);
         window.WeftDesktop?.init({ renderSessions: ui.renderSessions, openAccount: core.openAccount, sendDraft: core.sendDraft, addFiles: core.addAttachmentFiles,
-            stop: core.stopCurrentTurn, isAssistant: () => core.state.currentView === 'assistant', openSearch: () => ui.openSearch?.(), resources: core.loadConversationResources, openResource: ui.openConversationResource });
+            stop: core.stopCurrentTurn, isAssistant: () => core.state.currentView === 'assistant', openSearch: () => ui.openSearch?.(), openShortcuts: () => ui.openShortcuts?.(), resources: core.loadConversationResources, openResource: ui.openConversationResource });
         if (window.WeftDesktop)
             setInterval(() => {
                 if (core.state.currentView === 'assistant' && core.state.turnStatus === 'running')
