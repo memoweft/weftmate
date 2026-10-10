@@ -1,0 +1,11 @@
+{
+  "baseline": "b64378a9d46b85d24c4f8ae8c9853006ae7784c9",
+  "version": "0.1.1-preview.1",
+  "testAppId": "com.memoweft.weftmate.qa4",
+  "installerBytes": 183688580,
+  "sha256": "1fbe5a2d5efee7cb4283a2bb6e7c2d3046b9aeae7ccd9cb383fb5d270d993b45",
+  "authenticode": false,
+  "manifestSignedWithTemporaryEd25519Key": true,
+  "uploaded": false,
+  "productChangesInWorktree": false
+}

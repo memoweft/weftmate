@@ -95,4 +95,3 @@ try {
  }
  assert.deepEqual(errors,[]);await writeFile(join(out,phase+'-checks.json'),JSON.stringify({realElectron:true,synthetic:true,modelRequests:0,checks,errors},null,2));console.log('UX-P1 '+phase+' passed');
 } finally {await browser?.close();await app?.close();await f?.close();if(profile)await rm(profile,{recursive:true,force:true});if(f)await rm(f.root,{recursive:true,force:true});}
-

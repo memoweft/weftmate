@@ -1,0 +1,221 @@
+{
+  "source": "desktop/results.json",
+  "selected": "first 30 consecutive rounds, before starting any other QA-4 UI/build batch",
+  "rounds": [
+    {
+      "name": "stability-cycle-1",
+      "status": "passed",
+      "durationMs": 27023,
+      "immediateMs": 3,
+      "stopMs": 829
+    },
+    {
+      "name": "stability-cycle-2",
+      "status": "passed",
+      "durationMs": 20056,
+      "immediateMs": 2.2000000178813934,
+      "stopMs": 227
+    },
+    {
+      "name": "stability-cycle-3",
+      "status": "passed",
+      "durationMs": 2058,
+      "immediateMs": 1.899999976158142,
+      "stopMs": 224
+    },
+    {
+      "name": "stability-cycle-4",
+      "status": "passed",
+      "durationMs": 21100,
+      "immediateMs": 2.199999988079071,
+      "stopMs": 842
+    },
+    {
+      "name": "stability-cycle-5",
+      "status": "passed",
+      "durationMs": 20581,
+      "immediateMs": 2.199999988079071,
+      "stopMs": 333
+    },
+    {
+      "name": "stability-cycle-6",
+      "status": "passed",
+      "durationMs": 3173,
+      "immediateMs": 2,
+      "stopMs": 843
+    },
+    {
+      "name": "stability-cycle-7",
+      "status": "passed",
+      "durationMs": 20524,
+      "immediateMs": 2,
+      "stopMs": 229
+    },
+    {
+      "name": "stability-cycle-8",
+      "status": "passed",
+      "durationMs": 21170,
+      "immediateMs": 1.800000011920929,
+      "stopMs": 866
+    },
+    {
+      "name": "stability-cycle-9",
+      "status": "passed",
+      "durationMs": 2664,
+      "immediateMs": 1.7999999821186066,
+      "stopMs": 336
+    },
+    {
+      "name": "stability-cycle-10",
+      "status": "passed",
+      "durationMs": 21267,
+      "immediateMs": 2.4000000059604645,
+      "stopMs": 346
+    },
+    {
+      "name": "stability-cycle-11",
+      "status": "passed",
+      "durationMs": 20640,
+      "immediateMs": 2.0999999940395355,
+      "stopMs": 337
+    },
+    {
+      "name": "stability-cycle-12",
+      "status": "passed",
+      "durationMs": 3701,
+      "immediateMs": 2.199999988079071,
+      "stopMs": 858
+    },
+    {
+      "name": "stability-cycle-13",
+      "status": "passed",
+      "durationMs": 21016,
+      "immediateMs": 2,
+      "stopMs": 216
+    },
+    {
+      "name": "stability-cycle-14",
+      "status": "passed",
+      "durationMs": 22221,
+      "immediateMs": 2.5999999940395355,
+      "stopMs": 864
+    },
+    {
+      "name": "stability-cycle-15",
+      "status": "passed",
+      "durationMs": 4225,
+      "immediateMs": 2.600000023841858,
+      "stopMs": 859
+    },
+    {
+      "name": "stability-cycle-16",
+      "status": "passed",
+      "durationMs": 22162,
+      "immediateMs": 2,
+      "stopMs": 845
+    },
+    {
+      "name": "stability-cycle-17",
+      "status": "passed",
+      "durationMs": 21686,
+      "immediateMs": 2.199999988079071,
+      "stopMs": 351
+    },
+    {
+      "name": "stability-cycle-18",
+      "status": "passed",
+      "durationMs": 4746,
+      "immediateMs": 2.699999988079071,
+      "stopMs": 351
+    },
+    {
+      "name": "stability-cycle-19",
+      "status": "passed",
+      "durationMs": 22724,
+      "immediateMs": 2.100000023841858,
+      "stopMs": 880
+    },
+    {
+      "name": "stability-cycle-20",
+      "status": "passed",
+      "durationMs": 23292,
+      "immediateMs": 2.2999999821186066,
+      "stopMs": 850
+    },
+    {
+      "name": "stability-cycle-21",
+      "status": "passed",
+      "durationMs": 4212,
+      "immediateMs": 2.100000023841858,
+      "stopMs": 338
+    },
+    {
+      "name": "stability-cycle-22",
+      "status": "passed",
+      "durationMs": 23249,
+      "immediateMs": 2.2000000178813934,
+      "stopMs": 366
+    },
+    {
+      "name": "stability-cycle-23",
+      "status": "passed",
+      "durationMs": 23763,
+      "immediateMs": 2.2999999821186066,
+      "stopMs": 351
+    },
+    {
+      "name": "stability-cycle-24",
+      "status": "passed",
+      "durationMs": 6297,
+      "immediateMs": 2.2000000178813934,
+      "stopMs": 866
+    },
+    {
+      "name": "stability-cycle-25",
+      "status": "passed",
+      "durationMs": 24769,
+      "immediateMs": 2,
+      "stopMs": 865
+    },
+    {
+      "name": "stability-cycle-26",
+      "status": "passed",
+      "durationMs": 24236,
+      "immediateMs": 2.2000000178813934,
+      "stopMs": 864
+    },
+    {
+      "name": "stability-cycle-27",
+      "status": "passed",
+      "durationMs": 7308,
+      "immediateMs": 2.2999999821186066,
+      "stopMs": 867
+    },
+    {
+      "name": "stability-cycle-28",
+      "status": "passed",
+      "durationMs": 24333,
+      "immediateMs": 2.300000011920929,
+      "stopMs": 884
+    },
+    {
+      "name": "stability-cycle-29",
+      "status": "passed",
+      "durationMs": 25257,
+      "immediateMs": 2.5999999940395355,
+      "stopMs": 866
+    },
+    {
+      "name": "stability-cycle-30",
+      "status": "passed",
+      "durationMs": 10526,
+      "immediateMs": 2.5,
+      "stopMs": 1395
+    }
+  ],
+  "p95Ms": 884,
+  "maxMs": 1395,
+  "medianMs": 842.5,
+  "overTwoSeconds": 0,
+  "parallelWorkStartsAt": "2026-10-09T23:11:26.037884+00:00"
+}
