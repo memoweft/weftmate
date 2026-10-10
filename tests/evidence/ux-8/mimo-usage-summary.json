@@ -1,0 +1,11 @@
+{
+  "requests": 22,
+  "unknownRequests": 3,
+  "unpricedRequests": 3,
+  "inputTokens": 54067,
+  "cachedInputTokens": 27328,
+  "outputTokens": 12179,
+  "cost": 0.05164356,
+  "wireRequests": 22,
+  "attempts": 4
+}
