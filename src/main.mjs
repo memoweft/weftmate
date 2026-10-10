@@ -3320,6 +3320,10 @@ async function bootstrap() {
         const { relayFromEnvironment } = await import('./personal-relay/index.mjs');
         const { cloudIdentityFromEnvironment } = await import('./personal-cloud/index.mjs');
         personalAccessService = await createPersonalAccessService({
+          libraryNativeActions: async (action, file) => {
+            if (action === 'show') shell.showItemInFolder(file);
+            else { const error = await shell.openPath(file); if (error) throw new Error('Default application unavailable'); }
+          },
           root: join(userDataDir, 'personal-access'), port: accessPort, backend: accessBackend,
           cloudIdentity: cloudIdentityFromEnvironment(),
           relay: relayFromEnvironment(),
@@ -3383,7 +3387,7 @@ async function bootstrap() {
           // Explicit legacy setup links remain valid; the default first page is account login.
           const setupGrant = null;
           await desktopUpdates.prepareWindow();
-          personalDesktop = createPersonalDesktop({ origin: personalAccessOrigin, setupGrant, isQuitting: () => isQuitting,
+          personalDesktop = createPersonalDesktop({ libraryDesktopToken: personalAccessService?.libraryDesktopToken, origin: personalAccessOrigin, setupGrant, isQuitting: () => isQuitting,
             startInTray: process.argv.includes('--start-in-tray'),
             onStatus: status => { desktopStatus = status; refreshTrayMenu(); } });
           win = personalDesktop.window;

@@ -1,0 +1,30 @@
+{
+  "nativeAndroid": true,
+  "realElectron": true,
+  "syntheticAccounts": true,
+  "sizes": [
+    {
+      "screen": {
+        "width": 360,
+        "height": 780
+      },
+      "viewport": {
+        "width": 360,
+        "height": 756,
+        "dpr": 2
+      }
+    },
+    {
+      "screen": {
+        "width": 390,
+        "height": 844
+      },
+      "viewport": {
+        "width": 390,
+        "height": 820,
+        "dpr": 2
+      }
+    }
+  ],
+  "errors": []
+}
