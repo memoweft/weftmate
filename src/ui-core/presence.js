@@ -99,7 +99,7 @@
             connectionView: () => model.view(),
             observeConnection: listener => { listeners.add(listener); return () => listeners.delete(listener); },
             connectionSucceeded: host => { if (!['network_unavailable', 'login_required', 'approval_required'].includes(model.view().kind) || host) model.success(host); },
-            connectionFailed: error => { model.failure(error); if (active && timer === null && !running) schedule(model.delay(background)); },
+            connectionFailed: error => { const previous=model.view().kind;model.failure(error);if(active&&!running&&(timer===null||previous==='online'&&model.view().kind!=='online'))schedule(model.delay(background)); },
             connectionReady: () => model.view().canSend,
             retryConnection,
             startConnection: callback => { active = true; needsRecovery = true; recover = callback || recover; void retryConnection(); },

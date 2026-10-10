@@ -83,7 +83,7 @@ const mobileEffects = {
 };
 const uiCore = WeftUiCore.create({ fetch: mobileWebBridge?.fetch || androidBridge.fetch, storage: localStorage,
   crypto: globalThis.crypto, effects: mobileEffects, mobileState: state, attachmentDrafts, logicalChats:true,
-  networkAvailable:()=>globalThis.navigator?.onLine });
+  networkAvailable:()=>globalThis.navigator?.onLine,nativeMobile:!!window.weftNative });
 uiCore.android = androidBridge;
 function startMobileConnection() {
   uiCore.syncMobileIdentity();

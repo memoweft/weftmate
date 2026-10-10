@@ -1,0 +1,16 @@
+{"id":"40936-1","at":"2026-10-10T08:31:30.687Z","elapsedMs":0,"kind":"lease","origin":"http://127.0.0.1:49647","phase":"start"}
+{"id":"40936-2","at":"2026-10-10T08:31:30.693Z","elapsedMs":0,"kind":"lease","origin":"http://127.0.0.1:49647","phase":"start"}
+{"id":"40936-1","at":"2026-10-10T08:31:30.694Z","elapsedMs":7,"kind":"lease","origin":"http://127.0.0.1:49647","phase":"headers","status":200}
+{"id":"40936-1","at":"2026-10-10T08:31:30.695Z","elapsedMs":8,"kind":"lease","origin":"http://127.0.0.1:49647","phase":"first-chunk"}
+{"id":"40936-2","at":"2026-10-10T08:31:30.724Z","elapsedMs":31,"kind":"lease","origin":"http://127.0.0.1:49647","phase":"headers","status":204}
+{"id":"40936-3","at":"2026-10-10T08:31:30.774Z","elapsedMs":0,"kind":"model","origin":"http://127.0.0.1:55846","phase":"start","requestChars":8249,"requestedModel":"m31-native","stream":true}
+{"id":"40936-3","at":"2026-10-10T08:31:30.778Z","elapsedMs":4,"kind":"model","origin":"http://127.0.0.1:55846","phase":"headers","status":200}
+{"id":"40936-3","at":"2026-10-10T08:31:30.779Z","elapsedMs":5,"kind":"model","origin":"http://127.0.0.1:55846","phase":"first-chunk"}
+{"id":"40936-3","at":"2026-10-10T08:31:30.780Z","elapsedMs":6,"kind":"model","origin":"http://127.0.0.1:55846","phase":"first-content"}
+{"id":"40936-4","at":"2026-10-10T08:31:30.783Z","elapsedMs":0,"kind":"model","origin":"http://127.0.0.1:55846","phase":"start","requestChars":532,"requestedModel":"m31-native","stream":true}
+{"id":"40936-4","at":"2026-10-10T08:31:30.786Z","elapsedMs":3,"kind":"model","origin":"http://127.0.0.1:55846","phase":"headers","status":200}
+{"id":"40936-4","at":"2026-10-10T08:31:30.786Z","elapsedMs":3,"kind":"model","origin":"http://127.0.0.1:55846","phase":"first-chunk"}
+{"id":"40936-4","at":"2026-10-10T08:31:30.786Z","elapsedMs":3,"kind":"model","origin":"http://127.0.0.1:55846","phase":"first-content"}
+{"id":"40936-3","at":"2026-10-10T08:31:51.077Z","elapsedMs":20303,"kind":"model","origin":"http://127.0.0.1:55846","phase":"end","chunks":81,"bytes":11504,"reasoningChars":0,"contentChars":1911,"usage":{"prompt_tokens":100,"completion_tokens":300}}
+{"id":"40936-4","at":"2026-10-10T08:31:51.081Z","elapsedMs":20298,"kind":"model","origin":"http://127.0.0.1:55846","phase":"end","chunks":81,"bytes":11504,"reasoningChars":0,"contentChars":1911,"usage":{"prompt_tokens":100,"completion_tokens":300}}
+{"id":"40936-1","at":"2026-10-10T08:31:51.095Z","elapsedMs":20408,"kind":"lease","origin":"http://127.0.0.1:49647","phase":"cancel","chunks":1,"bytes":8}

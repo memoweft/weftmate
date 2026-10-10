@@ -1,0 +1,9 @@
+{"id":"33008-1","at":"2026-10-10T05:56:32.709Z","elapsedMs":0,"kind":"lease","origin":"http://127.0.0.1:56331","phase":"start"}
+{"id":"33008-1","at":"2026-10-10T05:56:32.713Z","elapsedMs":4,"kind":"lease","origin":"http://127.0.0.1:56331","phase":"headers","status":200}
+{"id":"33008-1","at":"2026-10-10T05:56:32.714Z","elapsedMs":5,"kind":"lease","origin":"http://127.0.0.1:56331","phase":"first-chunk"}
+{"id":"33008-2","at":"2026-10-10T05:56:32.773Z","elapsedMs":0,"kind":"model","origin":"http://127.0.0.1:57009","phase":"start","requestChars":8254,"requestedModel":"m31-stream","stream":true}
+{"id":"33008-2","at":"2026-10-10T05:56:32.777Z","elapsedMs":4,"kind":"model","origin":"http://127.0.0.1:57009","phase":"headers","status":200}
+{"id":"33008-2","at":"2026-10-10T05:56:32.778Z","elapsedMs":5,"kind":"model","origin":"http://127.0.0.1:57009","phase":"first-chunk"}
+{"id":"33008-2","at":"2026-10-10T05:56:32.778Z","elapsedMs":5,"kind":"model","origin":"http://127.0.0.1:57009","phase":"first-content"}
+{"id":"33008-2","at":"2026-10-10T05:56:51.096Z","elapsedMs":18323,"kind":"model","origin":"http://127.0.0.1:57009","phase":"error","chunks":71,"bytes":10437,"name":"TypeError"}
+{"id":"33008-1","at":"2026-10-10T05:56:51.111Z","elapsedMs":18402,"kind":"lease","origin":"http://127.0.0.1:56331","phase":"cancel","chunks":1,"bytes":8}

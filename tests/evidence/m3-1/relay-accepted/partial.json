@@ -1,0 +1,166 @@
+{
+  "startedAt": "2026-10-10T06:25:11.757Z",
+  "realCloudEntrypoint": "services/cloud/src/main.mjs",
+  "realElectronEntrypoint": ".",
+  "sourceCommit": "96fe9e4e18e10e24821d7fb9cd34cd0af9a66525",
+  "phase": "relay-accepted",
+  "baselineHost": false,
+  "steps": [
+    "Real cloud entrypoint health",
+    "Mobile registration, real file mail, sixty-second resend deadline and bundled legal reading",
+    "Real desktop approves the waiting phone and recipient imports trusted host delivery",
+    "Approved phone adopts the real host session before relay login"
+  ],
+  "cloudTransport": "WSL docker-desktop; temporary standalone Alpine tools",
+  "visualChecks": [
+    {
+      "name": "login",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "login",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "waiting",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "waiting",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    }
+  ],
+  "httpErrors": [
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 401,
+      "code": "INVALID_CREDENTIALS"
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 404,
+      "code": "NOT_FOUND"
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 404,
+      "code": "NOT_FOUND"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 503,
+      "code": "SERVICE_UNAVAILABLE"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 503,
+      "code": "SERVICE_UNAVAILABLE"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 503,
+      "code": "SERVICE_UNAVAILABLE"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 503,
+      "code": "SERVICE_UNAVAILABLE"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 503,
+      "code": "SERVICE_UNAVAILABLE"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 503,
+      "code": "SERVICE_UNAVAILABLE"
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 503,
+      "code": "SERVICE_UNAVAILABLE"
+    }
+  ],
+  "passed": false,
+  "error": "Real cloud readiness timeout",
+  "pageErrors": [],
+  "failedRequests": [
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 503
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 503
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 503
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 503
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 503
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 503
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "status": 503
+    }
+  ]
+}

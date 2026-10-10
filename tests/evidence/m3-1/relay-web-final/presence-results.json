@@ -1,0 +1,8 @@
+{
+  "checks": [],
+  "fixedDsh": true,
+  "realElectron": true,
+  "fullRelay": true,
+  "randomPorts": true,
+  "syntheticAccount": true
+}
