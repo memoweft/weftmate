@@ -145,6 +145,23 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         for (const state of expanded.get(spec.key) || []) { const detail = [...row.querySelectorAll('details')].find(detail => (detail.dataset.step || 'group') === state.key); if (detail) detail.open = state.open; }
         if (focus && !row.contains(document.activeElement)) ([...row.querySelectorAll('[aria-label]')].find(node => node.getAttribute('aria-label') === focusName) || row).focus({ preventScroll: true });
     }
+    function paintLiveChatMessages() {
+        if(!main()||core.state.chatWindow.search.query.trim())return false;
+        const live=core.mainChatDays().flatMap(group=>group.events).filter(event=>event.data?.live);
+        const keys=new Set(live.map(event=>event.presentationKey||event.eventId));
+        if(rows.some(spec=>spec.event?.data?.live&&!keys.has(spec.key)))return false;
+        for(const event of live){
+            const key=event.presentationKey||event.eventId,spec=rows.find(spec=>spec.key===key);
+            if(!spec)return false;
+            spec.event=event;const row=mounted.get(key);
+            if(row){
+                WeftContent.update(row.querySelector('.message-text,.markdown'),event.data.text,{streaming:event.data.streaming===true});
+                row.dataset.chatSignature=JSON.stringify([event,spec.collapsed,core.state.chatWindow.search.query,null]);
+            }
+        }
+        ui.conversationScroll?.follow(true);
+        return true;
+    }
     function renderMainChat() {
         if (!tools) return;
         tools.hidden = !main(); searchPanel.hidden = !main() || !searchPanel.open;
@@ -268,7 +285,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         ui.byId('jump-latest').addEventListener('click', () => { if (main() && core.state.chatWindow.hasNewer) void core.selectMainChat(); else if (main()) void core.markLatestChatRead?.(); });
         document.addEventListener('keydown', event => { if (event.key === 'Escape' && searchPanel.open) { searchPanel.open = false; searchPanel.hidden = true; void core.searchMainChat(''); } });
     }
-    return { mountMainChat, renderMainChat, focusMainEvent, resetMainChatView, renderChatOrigin, fixedPageNavigation: () => fixedNavigation,
+    return { mountMainChat, renderMainChat, paintLiveChatMessages, focusMainEvent, resetMainChatView, renderChatOrigin, fixedPageNavigation: () => fixedNavigation,
         mainChatAnchor: () => {const saved=rememberAnchor();const index=rows.findIndex(row=>row.key===saved?.key);const row=rows.slice(Math.max(0,index)).find(row=>row.event?.eventId||row.events?.length);return row?.event?.eventId||row?.events?.[0]?.eventId||null;},
         restoreMainChatDraft: text => { ui.byId('message-text').value = text; ui.updateAvailability(); },
         renderSessions: () => { original.renderSessions(); if (sidebar) { sidebar.hidden = !core.state.mainChat; const label = ui.byId('new-session'); label.childNodes.forEach(node => { if (node.nodeType === Node.TEXT_NODE) node.textContent = core.state.mainChat ? '新旁聊' : '新对话'; }); } renderMainChat(); },

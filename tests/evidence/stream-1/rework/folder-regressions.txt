@@ -1,0 +1,26 @@
+✔ UX-9 existing project moves the conversation and preserves attachment drafts (3.0058ms)
+✔ UX-9 blank conversation keeps pending folder without creating a second conversation (0.9767ms)
+✔ UX-9 main conversation creates a project side chat through the existing draft-transfer action (0.8311ms)
+✔ UX-9 no folder choice is remembered and isolated by account (0.764ms)
+✔ UX-9 selecting is locked during uncertain send and attachment upload (2.2601ms)
+✔ UX-9 high risk warnings cover disk, personal home and system locations (0.4683ms)
+✔ UX-9 dropped directory uses folder selection; ordinary and zero-byte files stay attachments (0.8852ms)
+✔ UX-9 new-folder API uses existing permission revisions and never returns a full browser path (2087.6879ms)
+✔ UX-9 a late folder mutation cannot keep a different account busy or release its new mutation (1.3276ms)
+✔ UX-9 folder registration is scoped to the original draft and leaves attachment drafts intact (1.0964ms)
+✔ live snapshots keep native anchors, cumulative text, reasoning private and final text authoritative across tool steps (4.2068ms)
+✔ stop/error snapshots settle without a live indicator, reconnect rebuilds exact text, retry replaces failed attempt (1.2144ms)
+✔ live snapshots have no separate erasure cache and D33 rejects forgotten provenance and deleting/cleanup accounts (0.741ms)
+✔ logical client snapshot updates deduplicate, retain presentation identity, remove on final and reset on erasure (1.7527ms)
+✔ late logical/legacy snapshots cannot roll back a newer body or revive a finalized message (3.1166ms)
+✔ completion SSE decodes split Unicode frames, observes usage, parses short text/old JSON and aborts while reading (5.1295ms)
+✔ D33 snippet erasure removes packed native text/reasoning/tool deltas even when the phrase crosses chunk boundaries (21.1607ms)
+✔ STREAM-1b unchanged snapshots do not repaint; growth only paints the reply body (1.8597ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2393.9672
