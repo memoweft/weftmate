@@ -111,7 +111,7 @@ function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||s
   renderMemoryReceipt(target);
   if(!state.loggedIn||!state.owner){target.append(action('连接个人账户',()=>page('connect')));return}
   if(state.transitionPending){target.append(action('返回账户连接',()=>page('connect'),false));return}
-  if(!memoryListAllowed(memory)){const retry=action(memory.error?'重新读取':'刷新记忆状态',()=>startMemorySnapshot(target,memory.kind,memory.query),false);if(!memory.error){retry.classList.add('icon-button');retry.replaceChildren(WeftIcons.create('sync',20));retry.setAttribute('aria-label','刷新记忆状态');}target.append(retry);return}
+  if(!memoryListAllowed(memory)){const retry=action('重新读取',()=>startMemorySnapshot(target,memory.kind,memory.query),false);retry.prepend(WeftIcons.create('sync',20));target.append(retry);return}
   const select=el('select');select.setAttribute('aria-label','记忆类别');select.hidden=true;
   for(const [kind,label] of Object.entries(MEMORY_KINDS)){const option=el('option','',label);option.value=kind;option.selected=memory.kind===kind;select.append(option)}
   select.value=memory.kind;select.disabled=memory.loading;
@@ -129,9 +129,8 @@ function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||s
     const query=search.input.value.trim();if([...query].length>120){memory.error='搜索内容最多120个字符，请缩短后重试。';renderMemoryList(target);return}
     startMemorySnapshot(target,memory.kind,query)});
   const actions=el('div','form-actions memory-toolbar');const submit=action('搜索',()=>{},true);submit.type='submit';
-  const refresh=action('刷新记忆',()=>startMemorySnapshot(target,memory.kind,memory.query),false);refresh.type='button';refresh.disabled=memory.loading;refresh.classList.add('icon-button');refresh.replaceChildren(WeftIcons.create('sync',20));refresh.setAttribute('aria-label',memory.loading?'正在刷新记忆':'刷新记忆');
-  submit.classList.add('memory-search-submit');submit.replaceChildren(WeftIcons.create('search',20));submit.setAttribute('aria-label','搜索记忆');search.box.classList.add('memory-search-field');search.box.append(submit);actions.append(refresh);form.append(actions);target.append(form);
-  if(memoryListAllowed(memory)){const more=action('更多记忆操作',()=>WeftPopover.openMenu(more,['json','markdown'].map(format=>({name:`导出我的记忆 · ${format==='json'?'JSON':'Markdown'}`,icon:'download',action:()=>exportMyMemories(format)}))),false);more.classList.add('icon-button');more.replaceChildren(WeftIcons.create('more',20));more.setAttribute('aria-label','更多记忆操作');actions.append(more)}
+  submit.classList.add('memory-search-submit');submit.replaceChildren(WeftIcons.create('search',20));submit.setAttribute('aria-label','搜索记忆');search.box.classList.add('memory-search-field');search.box.append(submit);form.append(actions);target.append(form);
+  if(memoryListAllowed(memory)){const more=action('更多记忆操作',()=>WeftPopover.menu(more,[{name:'刷新',icon:'sync',disabled:memory.loading,action:()=>startMemorySnapshot(target,memory.kind,memory.query)},...['json','markdown'].map(format=>({name:`导出我的记忆 · ${format==='json'?'JSON':'Markdown'}`,icon:'download',action:()=>exportMyMemories(format)}))]),false);more.classList.add('icon-button');more.replaceChildren(WeftIcons.create('more',20));more.setAttribute('aria-label','更多记忆操作');const title=target.querySelector('h1');const titleRow=el('div','memory-title-row');title.before(titleRow);titleRow.append(title,more);}
   if(memory.pendingBoundaryCount>0)target.append(notice(`有 ${memory.pendingBoundaryCount} 条来源尚未处理${memory.blockedBoundaryCount>0?`，其中 ${memory.blockedBoundaryCount} 条已暂停自动处理`:''}。恢复后会按顺序自动补交。`,'来源待处理'));
   if(memory.lastFailureCode==='MEMORY_SOURCE_DELETED'&&memory.discardedBoundaryCount>0)
     target.append(notice(`${memory.discardedBoundaryCount} 条来源已删除；这不表示仍有待处理来源。`,'来源状态'));
@@ -148,7 +147,8 @@ function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||s
   if(memory.hasMore){const more=action(memory.loading?'正在读取…':'加载更多',()=>loadMemoryMore(target),false);more.disabled=memory.loading;target.append(more)}
 }
 
-function memoryPage(target){memoryTarget=target;const scope=state.owner||'';if(!state.memory||state.memory.scope!==scope)state.memory=emptyMemoryState(scope);
+let memoryPullMounted=false;
+function memoryPage(target){memoryTarget=target;if(!memoryPullMounted){memoryPullMounted=true;WeftPopover.pullRefresh($('generic-page'),()=>startMemorySnapshot(memoryTarget,state.memory.kind,state.memory.query),()=>state.page==='memory'&&!state.memory.loading);}const scope=state.owner||'';if(!state.memory||state.memory.scope!==scope)state.memory=emptyMemoryState(scope);
   const memory=state.memory;memory.target='memory';memory.view='list';memory.flow++;
   memory.pendingMarker=savedMemoryMarker();
   if(!state.loggedIn||!scope||state.transitionPending){renderMemoryList(target);return}
