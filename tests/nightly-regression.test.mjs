@@ -8,6 +8,7 @@ import { execFileSync } from 'node:child_process';
 import { inspect, difference, pixels, retention, previousRun, report, expectedPhases } from '../scripts/nightly/report.mjs';
 import { bootstrap, launchEngine } from '../scripts/nightly/bootstrap.mjs';
 import { approveBaseline } from '../scripts/nightly/approve-baseline.mjs';
+import { buildForSmoke } from '../scripts/nightly/installed-build.mjs';
 import { startTimelineCandidate } from './integration/timeline-ui-candidate.mjs';
 import { androidPackages, androidPackageReason, androidBusyReason } from '../scripts/nightly/android-packages.mjs';
 
@@ -164,6 +165,38 @@ test('running MuMu is reusable only without active app, instrumentation, host te
   assert.match(androidBusyReason(installed,'','Active instrumentation:\n  * InstrumentationRecord{}'),/仪器测试/);
   assert.match(androidBusyReason(installed,'','',['node review-capture-mobile.mjs --android']),/Windows/);
   assert.match(androidBusyReason('package:com.memoweft.weftmate.mobile.nightly','',''),/仍已安装/);
+});
+
+test('installed diagnostic checks preserve release verification failure and never install or reuse an incomplete build', async () => {
+  const root=await mkdtemp(join(tmpdir(),'weftmate-nightly-build-'));
+  try {
+    const executable=join(root,'WeftMate.exe'), fail=async()=>{throw Error('Build step failed: scripts/verify-windows-package.mjs');};
+    await assert.rejects(buildForSmoke(fail,{},executable),/verify-windows-package/);
+    await writeFile(executable,'synthetic completed test build');
+    assert.deepEqual(await buildForSmoke(fail,{},executable),{buildPassed:false,buildError:'Build step failed: scripts/verify-windows-package.mjs',diagnosticUnpacked:true});
+    await assert.rejects(buildForSmoke(fail,{},executable,false),/verify-windows-package/);
+    await assert.rejects(buildForSmoke(async()=>{throw Error('compile failed')},{},executable),/compile failed/);
+  } finally { await rm(root,{recursive:true,force:true}); }
+});
+
+test('Apple report keeps completed Mac captures passed and distinguishes a failed iPhone batch from unstarted Watch', async () => {
+  const root=await mkdtemp(join(tmpdir(),'weftmate-nightly-apple-status-'));
+  try {
+    const {catalog}=await import('../scripts/review-gallery/common.mjs');
+    await mkdir(join(root,'gallery'));
+    for(const scene of catalog.scenes.filter(s=>!s.unavailable?.includes('mac'))) for(const theme of catalog.themes) {
+      const file=`review-mac-${scene.id}-${theme}.png`;
+      await writeFile(join(root,'gallery',file),png([100,120,140,255]));
+      await writeFile(join(root,'gallery',file.replace('.png','.json')),JSON.stringify({platform:'mac',scene:scene.id,theme,file,commit,generatedAt:new Date().toISOString(),synthetic:true}));
+    }
+    const result=await report(root,{commit,startedAt:new Date().toISOString(),phases:[{name:'apple',status:'failed',reason:'iPhone assertion failed',platformResults:{mac:{status:'passed'},iphone:{status:'failed',reason:'iPhone assertion failed'},watch:{status:'not-run',reason:'batch stopped before Watch'}}}],cleanup:{}});
+    assert.equal(result.phases.find(p=>p.name==='mac').status,'passed');
+    assert.equal(result.phases.find(p=>p.name==='mac').reason,'');
+    assert.equal(result.phases.find(p=>p.name==='iphone').status,'failed');
+    assert.equal(result.phases.find(p=>p.name==='watch').status,'not-run');
+    assert.equal(result.counts.mac.captured,result.counts.mac.expected);
+    assert.equal(result.summary.failedCells,0,'an unattempted cell must not be fabricated as a failed capture');
+  } finally { await rm(root,{recursive:true,force:true}); }
 });
 test('fresh gallery never fills occupied native cells with repository history', async () => {
   const root = await mkdtemp(join(tmpdir(), 'nightly-gallery-'));

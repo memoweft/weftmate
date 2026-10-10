@@ -19,6 +19,8 @@ export function completePhases(phases = []) {
     const existing=phases.find(item=>item.name===p.name);
     if(existing) return {...existing, platforms:p.platforms};
     const apple=['mac','iphone','watch'].includes(p.name) && phases.find(item=>item.name==='apple');
+    const own = apple?.platformResults?.[p.name];
+    if (own) return { ...p, ...own, derived:true, reportedStatus:true, status: own.status === 'not-run' && ['environment','skipped'].includes(apple.status) ? apple.status : own.status, reason:own.status === 'passed' ? '' : own.reason || apple.reason || '本端未进入拍图' };
     return { ...p, derived:!!apple, status:apple ? apple.status === 'failed' ? 'not-run' : apple.status : 'not-run',
       reason:apple ? apple.reason || '由 Apple 批次执行' : failure ? `前序 ${failure.name} 未完成：${failure.reason || '运行失败'}` : '编排没有执行此阶段' };
   }), ...phases.filter(p => !expectedPhases.some(e => e.name === p.name))];
@@ -123,10 +125,11 @@ export async function report(out, options) {
   for (const phase of options.phases) if (phase.platforms?.length) {
     const applicable = records.filter(r=>phase.platforms.includes(r.platform) && !catalog.scenes.find(s=>s.id===r.scene).unavailable?.includes(r.platform));
     phase.captures = { captured:applicable.filter(r=>r.path && r.status !== 'failed').length, expected:applicable.length, failed:applicable.filter(r=>r.status === 'failed').length };
-    if (phase.derived && phase.captures.captured) {
+    if (phase.reportedStatus && phase.status === 'passed' && phase.captures.captured < phase.captures.expected) Object.assign(phase, {status:'failed',reason:'本端拍图未完成：' + (options.phases.find(p=>p.name==='apple').reason || '缺图')});
+    if (phase.derived && !phase.reportedStatus && phase.captures.captured) {
       const interrupted=options.phases.find(p=>p.name==='apple').status === 'failed' && phase.captures.captured < phase.captures.expected;
       Object.assign(phase,{status:interrupted?'failed':'passed', reason:interrupted?phase.reason:''});
-    } else if (phase.derived && phase.status === 'passed') Object.assign(phase,{status:'not-run',reason:'Apple 批次未产生此端截图'});
+    } else if (phase.derived && !phase.reportedStatus && phase.status === 'passed') Object.assign(phase,{status:'not-run',reason:'Apple 批次未产生此端截图'});
     if (phase.status === 'passed' && phase.captures.failed) Object.assign(phase,{status:'failed',reason:`${phase.captures.failed} 格场景失败，见报警清单`});
   }
   for (const row of records) if (!row.path && row.status !== 'failed' && !catalog.scenes.find(s => s.id === row.scene).unavailable?.includes(row.platform)) {

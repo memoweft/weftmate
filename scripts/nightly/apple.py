@@ -38,7 +38,7 @@ def main():
     gallery = root / 'gallery'
     gallery.mkdir(exist_ok=True)
     lock = control / 'nightly.lock'
-    status = {'status': 'passed', 'reason': ''}
+    status = {'status': 'passed', 'reason': '', 'platformResults': {name: {'status': 'not-run'} for name in ['mac', 'iphone', 'watch']}}
     cleanup = {'createdDevices': [], 'deletedDevices': [], 'processesStopped': 0, 'bootedOwnedRemaining': []}
     tree = Path.home() / 'Desktop/WeftMate/weftmate-nightly'
     origin = Path.home() / 'Desktop/WeftMate/weftmate'
@@ -160,11 +160,20 @@ def main():
         if error:
             raise error
 
+    def platform_started(platform):
+        if status['platformResults'][platform]['status'] == 'not-run':
+            status['platformResults'][platform] = {'status': 'passed'}
+
+    def platform_failed(platform, reason):
+        status.update(status='failed')
+        status.setdefault('failures', []).append(reason)
+        status['reason'] = '; '.join(status['failures'])
+        result = status['platformResults'][platform]
+        result.update(status='failed', reason='; '.join(filter(None, [result.get('reason'), reason])))
+
     def capture_failure(platform, scene, theme, exc):
         reason = str(exc)
-        status.update(status='failed')
-        status.setdefault('failures', []).append(platform + '/' + scene + '/' + theme + ': ' + reason)
-        status['reason'] = '; '.join(status['failures'])
+        platform_failed(platform, platform + '/' + scene + '/' + theme + ': ' + reason)
         name = 'review-' + platform + '-' + scene + '-' + theme
         (gallery / (name + '.json')).write_text(json.dumps({
             'platform': platform, 'scene': scene, 'theme': theme,
@@ -235,6 +244,7 @@ def main():
                 get(driver, '/a5/setup')
                 get(driver, '/bootstrap')
                 ready = get(driver, '/ready')
+                platform_started('mac')
                 for scene in native_scenes:
                     image = root / ('mac-' + scene + '-' + theme + '.png')
                     native_scene = {'general': 'settings-general', 'onboarding': 'settings-devices'}.get(scene, scene)
@@ -244,14 +254,13 @@ def main():
                         save(image, 'mac', scene, theme, captured_at, 'native own-window AX (A10/A15 runner) + synthetic host')
                     except RuntimeError as exc:
                         capture_failure('mac', scene, theme, exc)
+                platform_started('iphone')
                 run(['xcrun', 'simctl', 'boot', phone], 'phone-boot')
                 run(['xcrun', 'simctl', 'bootstatus', phone, '-b'], 'phone-ready')
                 try:
                     test('WeftMatePhone', phone, 'A5ParityUITests/testNightly' + theme.title() + 'Gallery', {'WEFTMATE_A5_DRIVER': driver}, 'iphone-' + theme)
                 except RuntimeError as exc:
-                    status.update(status='failed')
-                    status.setdefault('failures', []).append(str(exc))
-                    status['reason'] = '; '.join(status['failures'])
+                    platform_failed('iphone', str(exc))
                 finally:
                     run(['xcrun', 'simctl', 'shutdown', phone], 'phone-shutdown', check=False)
             finally:
@@ -272,6 +281,7 @@ def main():
             child, info = fixture('apps/apple/Tests/a12_fixture.mjs', 'a12-' + theme)
             try:
                 ready = get(info['driver'], '/ready')
+                platform_started('watch')
                 run(['xcrun', 'simctl', 'boot', phone], 'paired-phone-boot')
                 run(['xcrun', 'simctl', 'bootstatus', phone, '-b'], 'paired-phone-ready')
                 app = root / 'Derived-WeftMatePhone/Build/Products/Debug-iphonesimulator/WeftMatePhone.app'
@@ -282,9 +292,7 @@ def main():
                 run(['xcrun', 'simctl', 'bootstatus', watch, '-b'], 'watch-ready')
                 test('WeftMateWatch', watch, 'A13WatchUITests/testNightly' + theme.title() + 'Approval', {'WEFTMATE_A12_DRIVER': info['driver']}, 'watch-' + theme)
             except RuntimeError as exc:
-                status.update(status='failed')
-                status.setdefault('failures', []).append(str(exc))
-                status['reason'] = '; '.join(status['failures'])
+                platform_failed('watch', str(exc))
             finally:
                 for device in [watch, phone]:
                     if device in booted():

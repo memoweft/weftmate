@@ -64,7 +64,7 @@ const adb = 'D:/Software/MuMuPlayer/nx_main/adb.exe', cli = 'D:/Software/MuMuPla
 let ownsMuMu = false;
 try {
   temp = await mkdtemp('C:/weftmate-nightly-');
-  await writeFile(join(out, 'cleanup-roots.json'), JSON.stringify([temp, worktree]));
+  await writeFile(join(out, 'cleanup-roots.json'), JSON.stringify([temp, worktree, out]));
   // Do not inherit real model, cloud, personal-host or relay configuration.
   for (const name of Object.keys(process.env)) if (/^(WEFTMATE_|MEMOWEFT_|MIMO_|MODEL_SWITCH_|CLOUD_|ELECTRON_RUN_AS_NODE)/.test(name)) delete process.env[name];
   process.env.TEMP = temp; process.env.TMP = temp;
@@ -91,7 +91,7 @@ try {
       const execution = await run('node', [join(worktree,'scripts/nightly/installed-smoke.mjs'),'--out',join(out,'installed-smoke')], {name:'installed-smoke', allowFailure:true});
       const result = JSON.parse(await readFile(join(out,'installed-smoke/results.json'),'utf8'));
       return { status: execution.code === 0 && result.passed ? 'passed' : 'failed', checks: result.checks,
-        reason: result.passed ? '' : '安装版冒烟失败，见 installed-smoke/results.json' };
+        reason: result.buildPassed === false ? `打包校验失败（保留红灯）；隔离程序原生检查完成 ${result.checks.length} 项，见 installed-smoke/results.json` : result.passed ? '' : '安装版冒烟失败，见 installed-smoke/results.json' };
     });
     const sceneArgs = value('--scene') ? ['--scene', value('--scene')] : [];
     await phase('windows', ['windows'], () => process.argv.includes('--devices-only') ? skip('设备专项，未拍') : run('node', [join(worktree, 'tests/integration/review-capture-desktop.mjs'), '--out', gallery, ...sceneArgs], { name: 'windows' }).then(() => null));
