@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "tests": 406,
+  "suites": 23,
+  "failed": 0,
+  "skipped": 0,
+  "liveCloudAndTLSFixture": true,
+  "jobs": 2,
+  "at": "2026-10-10T09:41:44.466467+00:00",
+  "fixtureRepairs": [
+    "Legacy conversations script includes read-only capability status request; history and attachment assertions unchanged.",
+    "Task permission fixture models executionAccount; desktopOpenApp remains unrelated."
+  ]
+}

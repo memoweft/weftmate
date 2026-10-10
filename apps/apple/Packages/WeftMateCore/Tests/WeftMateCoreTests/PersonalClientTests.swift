@@ -162,7 +162,7 @@ private func login(_ client: PersonalClient) async throws -> AccountSession {
     let projection = json("{\"source\":\"host\",\"conversationId\":\"\(conversationID)\",\"hostId\":\"host-test\",\"binding\":{\"sessionId\":\"session-host\",\"cutoverSyncSeq\":3},\"adoptedMessages\":[{\"sourceSyncEventId\":\"event-4\",\"state\":\"accepted_by_dsh\",\"receiptId\":\"receipt-4\"}]}")
     let hostPage = json("{\"events\":[{\"seq\":0,\"type\":\"user.message\",\"data\":{\"text\":\"adopted user truncated\",\"receiptId\":\"receipt-4\"}},{\"seq\":1,\"type\":\"assistant.message\",\"data\":{\"text\":\"host answer\"}}],\"nextSeq\":1,\"hasMore\":false}")
     let transport = ScriptTransport([step("/auth/login", auth()), step("/status", status()),
-        step("/auth/me", auth()), step("/sync/events?afterSeq=0&limit=100", sync), step("/sessions", sessions),
+        step("/auth/me", auth()), step("/status", status()), step("/sync/events?afterSeq=0&limit=100", sync), step("/sessions", sessions),
         step("/auth/me", auth()), step("/sync/events?afterSeq=0&limit=100", sync),
         step("/sync/conversations/\(conversationID)/shared", projection), step("/sessions/session-host/events?limit=100", hostPage)])
     let client = PersonalClient(credentialStore: store, transport: transport)
@@ -181,7 +181,7 @@ private func login(_ client: PersonalClient) async throws -> AccountSession {
     let tail = json(#"{"events":[{"seq":1,"type":"assistant.message","data":{"text":"host answer"}}],"nextSeq":1,"hasMore":false,"hasOlder":true,"nextBeforeSeq":1}"#)
     let older = json(#"{"events":[{"seq":0,"type":"user.message","data":{"text":"adopted user truncated","receiptId":"receipt-4"}}],"nextSeq":1,"hasMore":false,"hasOlder":false,"nextBeforeSeq":0}"#)
     let paged = ScriptTransport([step("/auth/login", auth()), step("/status", status()),
-        step("/auth/me", auth()), step("/sync/events?afterSeq=0&limit=100", sync), step("/sessions", sessions),
+        step("/auth/me", auth()), step("/status", status()), step("/sync/events?afterSeq=0&limit=100", sync), step("/sessions", sessions),
         step("/auth/me", auth()), step("/sync/events?afterSeq=0&limit=100", sync),
         step("/sync/conversations/\(conversationID)/shared", projection), step("/sessions/session-host/events?limit=100", tail),
         step("/auth/me", auth()), step("/sessions/session-host/events?beforeSeq=1&limit=100", older)])
@@ -290,6 +290,7 @@ private func login(_ client: PersonalClient) async throws -> AccountSession {
         "{\"seq\":\(seq),\"sourceDeviceId\":\"device-Phone\",\"eventId\":\"event-\(seq)\",\"conversationId\":\"\(id)\",\"kind\":\"conversation.created\",\"occurredAt\":\"2026-10-04T00:00:00Z\",\"payload\":{\"title\":\"\(title)\"}}"
     }
     let transport = ScriptTransport([step("/auth/login", auth()), step("/status", status()), step("/auth/me", auth()),
+        step("/status", status()),
         step("/sync/events?afterSeq=0&limit=100", json("{\"events\":[\(event(1, conversationID, "first"))],\"nextSeq\":1,\"hasMore\":true}")),
         step("/sync/events?afterSeq=1&limit=100", json("{\"events\":[\(event(2, id2, "second"))],\"nextSeq\":2,\"hasMore\":false}")),
         step("/sessions", json("{\"sessions\":[]}"))])

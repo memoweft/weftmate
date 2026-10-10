@@ -58,10 +58,11 @@ for theme in ([args.theme] if args.theme else ['light', 'dark']):
             assert len(sent) == 1 and sent[0]['mode'] == 'queue', 'Native send must reach the real host exactly once'
             assert native['authenticated'] and native['sendPressed'] and native['approvalBar']
             screenshots = sorted(destination.glob('*.png'))
-            assert len(screenshots) == 16
+            assert len(screenshots) == 18
+            assert all((destination / name).is_file() for name in ["settings-schedules-menu.png", "settings-archived-menu.png"])
             validation = dict(native, platform='mac', theme=theme, commit=commit, workingDiffSHA256=hashlib.sha256(source).hexdigest(), generatedAt=datetime.now(timezone.utc).isoformat(), synthetic=True, realPersonalHost=True, realCloudMain=True, compiledDshEngine=False, credentialStorage='keychain' if args.keychain else 'ephemeral capture only', hostSendCount=len(sent), hostSendMode=sent[0]['mode'], screenshots=[{'file': p.name, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()} for p in screenshots])
             (destination / 'validation.json').write_text(json.dumps(validation, ensure_ascii=False, indent=2) + '\n')
-            print('PASS Mac', theme, 'login; 13 native settings; native send with host acknowledgement; approval bar; 16 own-window screenshots', flush=True)
+            print('PASS Mac', theme, 'login; 13 native settings; native send with host acknowledgement; approval bar; 18 own-window screenshots', flush=True)
         finally:
             fixture.terminate()
             try:

@@ -1,0 +1,2596 @@
+{
+  "frames": [
+    {
+      "scene": "answered",
+      "source": "ocr:consistency/mac-dark/answered.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n末分組\n整理项目资料\n项目\n在电脑上添加项目后，可在这里开始对话。\n在电腩上创建\nJo\na5-tester\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n正在运行命令：npm run release..\n已回答：合成其他格式；摘要；步骤；合成补充；合成自由回答\n排队到下一条…\n十\n◎自动\n…\nA8_WAIT：读取项目资料，运行检查，并生成合成报告。\n合成模型~",
+      "theme": "dark"
+    },
+    {
+      "scene": "approval-priority",
+      "source": "ocr:consistency/mac-dark/approval-priority.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n末分組\n整理项目资料\n项目\n在电脑上添加项目后，可在这里开始对话。\n在电滋上创建\nJo\na5-tester\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n等待批准：运行命令：npm run release...〉\n> 要运行命令：npm run verify\n还有1个待批准\n处理审批后还有 3个问题\n排队到下一条..\n十\n◎自动\n…\nA8_WAIT：读取项目资料，运行检查，并生成合成报告。\n批准\n拒绝\n合成模型~",
+      "theme": "dark"
+    },
+    {
+      "scene": "chinese-detail",
+      "source": "ocr:consistency/mac-dark/chinese-detail.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n汽 目标\n成果库\nQ 搜索对话\n末分組\n整理项目资料\n项目\n在电脑上添加项目后，可在这里开始对话。\n炎\n在电滋上创建\nJo\na5-tester\nA8_WAIT：读取项目资料，运行检查，并\n生成合成报告。\n读取了 1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n正在运行命令：npm run release..\n已回答：合成其他格式：摘要；步骤：合成补充；合成自由回答\n已回答：完整记录；摘要；合成重试回答\n排队到下一条..\n十\n肉自动\n合成模型 9\nC 扩展服务 X\n扩展服务\n调用1次\n扩展服务\n详情\n参数\n操作：请求补充信息\n附加信息 2：合成附加值\n输出\n合成检童完成。\n重新读取来源\n复制原始内容\n十放大 收起",
+      "theme": "dark"
+    },
+    {
+      "scene": "chinese-sources",
+      "source": "ocr:consistency/mac-dark/chinese-sources.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n汽 目标\n成果库\nQ 搜索对话\n末分組\n整理项目资料\n项目\n在电脑上添加项目后，可在这里开始对话。\n在电腩上创建\nJo\na5-tester\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n正在运行命令：npm run release..\n已回答：合成其他格式；摘要；步骤；合成补充；合成自由回答\n已回答：完整记录：摘要；合成重试回答\n排队到下一条…\n十\n◎自动\n…\nA8_WAIT：读取项目资料，运行检查，并生成合成报告。\n合成模型~",
+      "theme": "dark"
+    },
+    {
+      "scene": "description",
+      "source": "ocr:consistency/mac-dark/description.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n汽 目标\n成果库\nQ 搜索对话\n末分組\n整理项目资料\n项目\n在电脑上添加项目后，可在这里开始对话。\n炎\n在电腩上创建\nJo\na5-tester\nA8_WAIT：读取项目资料，运行检查，并生成合成报告。\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n正在运行命令：npm run release..〉\nv 报告采用哪种格式？\n格式\n完整说明：只用于合成报告的格式选择。\n简要报告：便于阅该\n完整记录：包含完整过程\n簡要报告\n完整记录\n其他..\n还有 2个问题\n下一题\n排队到下一条..\n十\n②自动\n合成模型~",
+      "theme": "dark"
+    },
+    {
+      "scene": "free-answer",
+      "source": "ocr:consistency/mac-dark/free-answer.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n末分組\n整理项目资料\n项目\n在电脑上添加项目后，可在这里开始对话。\n在电腩上创建\nJo\na5-tester\nA8_WAIT：读取项目资料，运行检查，并生成合成报告。\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n正在运行命令：npm run release..〉\n〉还有什么要补充？\n合成自由回答\n还有 0个问题\n上一题\n提交回答\n排队到下一条…\n十\n◎自动\n合成模型~",
+      "theme": "dark"
+    },
+    {
+      "scene": "multiple-choice",
+      "source": "ocr:consistency/mac-dark/multiple-choice.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n末分組\n整理项目资料\n项目\n在电脑上添加项目后，可在这里开始对话。\n在电腩上创建\nJo\na5-tester\nA8_WAIT：读取项目资料，运行检查，并生成合成报告。\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n正在运行命令：npm run release..〉\n》报告包含哪些部分？\n可多选，也可补充说明\nv摘要\n还有1个问晒\n步骤\n合成补充\n上一题\n下一题\n排队到下一条…\n十\n◎自动\n合成模型~",
+      "theme": "dark"
+    },
+    {
+      "scene": "other-input-return",
+      "source": "ocr:consistency/mac-dark/other-input-return.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n汽 目标\n成果库\nQ 搜索对话\n末分組\n整理项目资料\n项目\n在电脑上添加项目后，可在这里开始对话。\n在电腩上创建\nJo\na5-tester\nA8_WAIT：读取项目资料，运行检查，并生成合成报告。\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n正在运行命令：npm run release..〉\nv 报告采用哪种格式？\n格式\n完整说明：只用于合成报告的格式选择。\n简要报告：便于阅该\n完整记录：包含完整过程\n简要报告\n完整记录\n还有 2个问题\n合成其他格式\n下一题\n排队到下一条..\n十\n◎自动\n合成模型~",
+      "theme": "dark"
+    },
+    {
+      "scene": "retry-reconciled",
+      "source": "ocr:consistency/mac-dark/retry-reconciled.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n汽 目标\n成果库\nQ 搜索对话\n末分組\n整理项目资料\n项目\n在电脑上添加项目后，可在这里开始对话。\n炎\n在电腩上创建\nJo\na5-tester\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n正在运行命令：npm run release..\n已回答：合成其他格式；摘要；步骤；合成补充；合成自由回答\n已回答：完整记录：摘要；合成重试回答\n排队到下一条…\n十\n◎自动\n…\nA8_WAIT：读取项目资料，运行检查，并生成合成报告。\n合成模型~",
+      "theme": "dark"
+    },
+    {
+      "scene": "single-choice",
+      "source": "ocr:consistency/mac-dark/single-choice.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n汽 目标\n成果库\nQ 搜索对话\n末分組\n整理项目资料\n项目\n在电脑上添加项目后，可在这里开始对话。\n在电腩上创建\nJo\na5-tester\nA8_WAIT：读取项目资料，运行检查，并生成合成报告。\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n正在运行命令：npm run release..〉\n〉 报告采用哪种格式？\nv 要报告\n还有 2个问题\n完整记录\n其他..\n下一题\n排队到下一条…\n十\n◎自动\n合成模型~",
+      "theme": "dark"
+    },
+    {
+      "scene": "usage-month-picker",
+      "source": "ocr:consistency/mac-dark/usage-month-picker.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n三目标\n成果库\n搜索对话\n末分組\n整理项目资料\n项目\n在电脑上添加项目后，\n可\nJo\na5-tester\n搜索设置\n设置\n常规\n外观\n账户\n设备\n用量\n可已归档\n助手\n模型\n⑦\n审批\n目记忆\n提醒与定时任务\n此电脑\n系统状态\n司 备份与恢复\n关于\n① 关于\n用量\n用量\n月份\n上\n>拶\n＞按\n＞按\n2026年12月\n2026年11月\nV 2026年10月\n2026年9月\n2026年8月\n2026年7月\n2026年6月\n2026年5月\n2026年4\n月\n2026年3\n月\n2026年2月\n2026年1月\n2025年12月\n2025年11月\n2025年10月\n2025年9月\n2025年8月\n2025年7月\n2025年6月\n2025年5月\n2025年4月\n2025年3月\n2025年2月\n2025年1月\n2024年12月\n2024年11月\n2024年10月\n2024年9月\n2024年8月\n2024年7月\n读取月份\n平洋时间\n限）",
+      "theme": "dark"
+    },
+    {
+      "scene": "usage-month-selected",
+      "source": "ocr:consistency/mac-dark/usage-month-selected.png",
+      "surface": "mac",
+      "text": "搜索设置\n设量\n常规\n外观\nJo\n账户\n设备\n山用量\n可 已归档\n助手\n何 模型\n审批\n目记忆\n提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n用量\n用量\n月份\n上一年\n2021年1月\n下一年\n读取月份\n2021年1月•北美太平洋时间\n本月合计 ¥0.000000\n输入0\n缓存命中0\n输出 0\n请求0\n＞ 按天\n> 按对话排行\n> 按模型排行\n月度上限\n每月金额（元，留空不限）\n保存月度上限\n仅本月金额（元）",
+      "theme": "dark"
+    },
+    {
+      "scene": "usage-month",
+      "source": "ocr:consistency/mac-dark/usage-month.png",
+      "surface": "mac",
+      "text": "搜索设置\n设量\n常规\n外观\nJo\n账户\n设备\n山用量\n可 已归档\n助手\n何 模型\n审批\n目记忆\n提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n用量\n用量\n月份\n上一年\n2026年10月\n下一年\n读取月份\n2026年10月•北美太平洋时间\n本月合计 ¥0.000512\n输入 1000\n缓存命中\n600\n输出 50\n请求 1\n＞ 按天\n> 按对话排行\n> 按模型排行\n月度上限\n每月金额（元，留空不限）\n保存月度上限\n仅本月金额（元）",
+      "theme": "dark"
+    },
+    {
+      "scene": "answered",
+      "source": "ocr:consistency/mac-light/answered.png",
+      "surface": "mac",
+      "text": "••〇\n整理项目资料\n（ WeftMate\n动态\n目标\nS 成果库\nQ 搜索对话\n来分組\n鍪理项目资料\n项目\n在电脑上添加项目后，可在这里开始对话。\n在电腕上创建\nJo a5-tester\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n正在运行命令：npm run release.. 〉\n已回答：合成其他格式；摘要；步骤；合成补充；合成自由回\n排队到下一条.\n十◎自动\n…§CS\nA8_WAIT：读取项目资料，运行检章，并生成合成报告。\n合成模型 Q",
+      "theme": "light"
+    },
+    {
+      "scene": "approval-priority",
+      "source": "ocr:consistency/mac-light/approval-priority.png",
+      "surface": "mac",
+      "text": "••〇\n整理项目资料\n（ WeftMate\n动态\n目标\nS 成果库\nQ 搜索对话\n未分組\n鍪理项目资料\n项目\n在电筋上添加项目后，可在这里开始对话。\n在电腩上创建\nJo a5-tester\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n等待批准：运行命令：npm run release.〉\n》 要运行命令：npm run verify\n还有1个待批准\n处理审批后还有 3个问题\n排队到下一条.\n…§CS\nA8_WAIT：读取项目资料，运行检查，并生成合成报告。\n批准\n拒绝\n合成模型、Q",
+      "theme": "light"
+    },
+    {
+      "scene": "chinese-detail",
+      "source": "ocr:consistency/mac-light/chinese-detail.png",
+      "surface": "mac",
+      "text": "••〇\n整理项目资料\n（ WeftMate\n动态\n目标\n乡 成果库\nQ 搜索对话\n末分組\n整理项目资料\n项目\n在电脑上添加项目后，可在这里开始对话。\n炎\n在电防上创建\nJo a5-tester\nA8_WAIT：读取项目资料，运行检直，并\n生成合成报告。\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n正在运行命令：npm run release.\n已回答：合成其他格式；摘要；步骤；合成补充；合成自由回答\n已回答：完整记录；捔要；合成重试回答\n排队到下一条.\n十◎自动\n合成模型丶\n◎ 扩展服务X\n扩展服务\n调用1次\n扩展服务\n~详情\n参数\n操作：清求补充信总\n附加信息 2：合成附加值\n输出\n合成检查完成。\n重新读取来源\n：§ CS\n＋放大 收起\n复制原始内容",
+      "theme": "light"
+    },
+    {
+      "scene": "chinese-sources",
+      "source": "ocr:consistency/mac-light/chinese-sources.png",
+      "surface": "mac",
+      "text": "••〇\n整理项目资料\n（ WeftMate\n动态\n目标\n§ 成果库\nQ 搜索对话\n来分組\n鍪理项目资料\n项目\n在电脑上添加项目后，可在这里开始对话。\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n炎\n在电驗上创难 正在运行命令：npm run release..〉\n已回答：合成其他格式；摘要；步骤；合成补充；合成自由回\n已回答：完整记录；摘要；合成重试回答\n排队到下一条.\n十◎自动\nJo a5-tester\n…§CS\nA8_WAIT：读取项目资料，运行检章，并生成合成报告。\n合成模型、9",
+      "theme": "light"
+    },
+    {
+      "scene": "description",
+      "source": "ocr:consistency/mac-light/description.png",
+      "surface": "mac",
+      "text": "••〇\n整理项目资料\n（ WeftMate\n动态\n目标\n§ 成果库\nQ 搜索对话\n末分组\n鍪理项目资料\n项目\n在电脑上添加项目后，可在这里开始对话。\n在电腕上创建\nJo a5-tester\n：§ CS\nA8_WAIT：读取项目资料，运行检查，并生成合成报告。\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n正在运行命令：npm run release.. 〉\nv 报告采用哪种格式？\n格式\n完整说明：只用于合成报告的格式选择。\n简要报告：便于阅读\n完鍪记录：包含完堅过程\n~ 简要报告\n完整记录\n其他..\n还有 2个问题\n下一题\n排队到下一条⋯\n＋◎自动\n合成模型 9",
+      "theme": "light"
+    },
+    {
+      "scene": "free-answer",
+      "source": "ocr:consistency/mac-light/free-answer.png",
+      "surface": "mac",
+      "text": "••〇\nS\n整理项目资料\n（ WeftMate\n动态\n目标\nS 成果库\nQ 搜索对话\n未分組.\n鍪理项目资料\n项目\n在电脑上添加项目后，可在这里开始对话。\n淡\n在电腩上创建\nJo as-tester\n：§ CS\nA8_WAIT：读取项目资料，运行检查，并生成合成报告。\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n正在运行命令：npm run release.. 〉\n〉 还有什么要补充？\n合成自由回答\n还有 0个问题\n上一题\n提交回答\n排队到下一条.\n＋◎自动\n• 合成模型 9",
+      "theme": "light"
+    },
+    {
+      "scene": "multiple-choice",
+      "source": "ocr:consistency/mac-light/multiple-choice.png",
+      "surface": "mac",
+      "text": "••〇\n整理项目资料\n（ WeftMate\n动态\n目标\n§ 成果库\nQ 搜索对话\n末分组\n鍪理项目资料\n项目\n在电脑上添加项目后，可在这里开始对话。\n在电腩上创建\nJo as-tester\n：§ CS\nA8_WAIT：读取项目资料，运行检查，并生成合成报告。\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n正在运行命令：npm run release.. 〉\n〉 报告包含哪些部分？\n可多选，也可补充说明\nv 摘要\n合成补充\n上一题\n还有1个问题\n～ 步骤\n下一题\n排队到下一条.\n＋◎自动\n合成模型、9",
+      "theme": "light"
+    },
+    {
+      "scene": "other-input-return",
+      "source": "ocr:consistency/mac-light/other-input-return.png",
+      "surface": "mac",
+      "text": "••〇\n整理项目资料\n（ WeftMate\n动态\n目标\n§ 成果库\nQ 搜索对话\n末分组\n鍪理项目资料\n项目\n在电脑上添加项目后，可在这里开始对话。\n炎\n在电腕上创建\nJo a5-tester\n：§ CS\nA8_WAIT：读取项目资料，运行检查，并生成合成报告。\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n正在运行命令：npm run release.. 〉\nv 报告采用哪种格式？\n格式\n完整说明：只用于合成报告的格式选择。\n简要报告：便于阅读\n完鍪记录：包含完堅过程\n简要扱告\n完整记录\n合成其他格式\n还有 2个问题\n下一题\n排队到下一条.\n十◎自动\n• 合成模型、9",
+      "theme": "light"
+    },
+    {
+      "scene": "retry-reconciled",
+      "source": "ocr:consistency/mac-light/retry-reconciled.png",
+      "surface": "mac",
+      "text": "••〇\n整理项目资料\n（ WeftMate\n动态\n目标\n§ 成果库\nQ 搜索对话\n来分組\n鍪理项目资料\n项目\n在电脑上添加项目后，可在这里开始对话。\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n在电驗上创难 正在运行命令：npm run release..〉\n已回答：合成其他格式；摘要；步骤；合成补充；合成自由回\n已回答：完整记录；摘要；合成重试回答\n排队到下一条.\n十◎自动\nJo a5-tester\n…§CS\nA8_WAIT：读取项目资料，运行检章，并生成合成报告。\n合成模型、9",
+      "theme": "light"
+    },
+    {
+      "scene": "single-choice",
+      "source": "ocr:consistency/mac-light/single-choice.png",
+      "surface": "mac",
+      "text": "••〇\n整理项目资料\n（ WeftMate\n动态\n目标\nS 成果库\nQ 搜索对话\n未分組.\n鍪理项目资料\n项目\n在电脑上添加项目后，可在这里开始对话。\n炎\n在电腩上创建\nJo a5-tester\n：§ CS\nA8_WAIT：读取项目资料，运行检查，并生成合成报告。\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n正在运行命令：npm run release.. 〉\n〉 报告采用哪种格式？\nv 简要报告\n还有2个问\n完整记录\n其他..\n下一题\n排队到下一条.\n合成模型 Q",
+      "theme": "light"
+    },
+    {
+      "scene": "usage-month-picker",
+      "source": "ocr:consistency/mac-light/usage-month-picker.png",
+      "surface": "mac",
+      "text": "鍪理项目资料\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n未分組.\n鍪理项目资料\n项目\n在电筋上添加项目后，可\n3o as-tester\n•\nC\n瞍索设置\n设置\n•常规\n外观\n2 账户\n设备\n山用量\n已归档\n助手\n向 模型\n⑦ 审批\n目记忆\nC 提醒与定时任务\n此电脑\n系统状态\n曰 备份与恢复\n关于\n① 关于\n用量\n用量\n2026年12月\n2026年11月\n月份V 2026年10月：\n2026年9月\n上\n2026年8月\n2026年7月\n2026年6月\n2026年5月\n2026年4月\n2026年3月\n2026年2月\n2026年1月\n2025年12月\n2025年11月\n2025年10月\n＞按\n2025年9月\n2025年8月\n＞按\n2025年7月\n2025年6月\n＞按\n2025年5月\n2025年4月\n2025年3月\n2025年2月\n2025年1月\n2024年12月\n2024年11月\n2024年10月\n2024年9月\n2024年8月\n2024年7月\n读取月份\n：平洋时间\n限）",
+      "theme": "light"
+    },
+    {
+      "scene": "usage-month-selected",
+      "source": "ocr:consistency/mac-light/usage-month-selected.png",
+      "surface": "mac",
+      "text": "•〇\n巴\n用量\n搜索设置\n用量\n设置\n常规\n3 外观\n3o 账户\n设备\n山 用量\n可 己归档\n助手\n回 模型\n◎ 审批\n目记忆\nC 提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n月份\n2021年1月\n上一年\n下一年\n读取月份\n2021年1月•北美太平洋时间\n本月合计 ¥0.000000\n输入0\n缓存命中0\n输出O\n请求O\n＞按天\n＞按对话排行\n＞按模型排行\n月度上限\n每月金额（元，留空不限）\n保存月度上限\n仅本月金额（元）\n×",
+      "theme": "light"
+    },
+    {
+      "scene": "usage-month",
+      "source": "ocr:consistency/mac-light/usage-month.png",
+      "surface": "mac",
+      "text": "•〇\n巴\n用量\n搜索设置\n用量\n设置\n常规\n3 外观\n3o 账户\n设备\n山 用量\n可 己归档\n助手\n回 模型\n◎ 审批\n目记忆\nC 提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n月份\n2026 年10月\n上一年\n下一年\n读取月份\n2026年10月 北美太平洋时间\n本月合计 ¥0.000512\n输入 1000\n缓存命中 600\n输出 50\n请求1\n＞按天\n＞按对话排行\n＞按模型排行\n月度上限\n每月金额（元，留空不限）\n保存月度上限\n仅本月金额（元）\n×",
+      "theme": "light"
+    },
+    {
+      "scene": "a7-mac-conversation-forget-dark-20261010T081514Z",
+      "source": "ocr:gallery/mac-dark/a7-mac-conversation-forget-dark-20261010T081514Z.png",
+      "surface": "mac",
+      "text": "可遗忘的合成对话\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n末分组\n可遗忘的合成对话\n可删除的合成对话\n整理项目资料\n排队与插话练习\n项目\n在电脑上添加项目后，可在这里开始对话。\n在电滋上创\nJo\na5-tester\n删除对话？\n这会永久删除对话、工作目录与经验，无法恢复。运行中的对话会先停止。\n同时忘掉从这段对话形成的记忆\n格一起忘掉3项记忆，清除1条来源。匈选删除原话也会清除其他\n对话里的对应片段。\n合成人物蓝色纸鹤（人物）\n合成资料协作关系（关系）\n偏好简洁的中文解释。（偏好）\n同时删除对话里含这句话的原话\n重新读取遗忘范围\n取消\n永久删除\n向 WeftMate 说说你的目标\n②自动\n合成模型、Q",
+      "theme": "dark"
+    },
+    {
+      "scene": "a7-mac-memory-forget-dark-20261010T081500Z",
+      "source": "ocr:gallery/mac-dark/a7-mac-memory-forget-dark-20261010T081500Z.png",
+      "surface": "mac",
+      "text": "记忆\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n记忆详情\n末分組\n偏好简洁的中文解释。\n忘掉这条记忆？\n忘掉会清除来源及以下记忆，之后的记忆导出不再包含它们。\n将忘掉3项记忆，清除1条来源。以下内容会一起忘掉：\n合成人物蓝色纸鹤（人物）\n搜索\n0 个来源\n同时删除对话里含这句话的原话\n默认保留对话原文；每选后别除对应原生对话片段及个人命令副本。以前的备份仍保留。\n完成",
+      "theme": "dark"
+    },
+    {
+      "scene": "review-mac-login-dark-20261010T081431Z",
+      "source": "ocr:gallery/mac-dark/review-mac-login-dark-20261010T081431Z.png",
+      "surface": "mac",
+      "text": "WeftMate\n登录 WeftMate\n邮箱\n密码\n忘记密码？\n还没有账号？注册\n登录\n显示",
+      "theme": "dark"
+    },
+    {
+      "scene": "review-mac-memory-dark-20261010T081445Z",
+      "source": "ocr:gallery/mac-dark/review-mac-memory-dark-20261010T081445Z.png",
+      "surface": "mac",
+      "text": "记忆\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n末分組\n可遗忘的合成对话\n可删除的合成对话\n整理项目资料\n排队与插话练习\n项目\n在电脑上添加项目后，可在这里开始对话。\nJo\na5-tester\n在电脑上创建\n且\n类别\n我的记忆\n查看记住的内容与来源，\n也可以纠正、停用或删除。\n认知\n搜索记忆\n记％服务可用\n偏好简洁的中文解释。\n当前有效\n搜索\n0 个来源",
+      "theme": "dark"
+    },
+    {
+      "scene": "a7-mac-conversation-forget-light-20261010T081416Z",
+      "source": "ocr:gallery/mac-light/a7-mac-conversation-forget-light-20261010T081416Z.png",
+      "surface": "mac",
+      "text": "• • CS 可遗忘的合成对话\n（ WeftMate\n口 动态\n三 目标\nS 成果库\nQ 搜索对话\n未分組\n可遗忘的合成对话\n可删除的合成对话\n整理项目资料\n排队与插话练习\n项目\n在电脑上添加项目后，可在这里开始对话。\n在电腩上创\nJo\na5-tester\n： K CS\n删除对话？\n这会永久删除对话、工作目录与经验，无法恢复。运行中的对话会先停止。\n同时忘掉从这段对话形成的记忆\n将一起忘掉3项记忆，清除1条来源。勾选删除原话也会清除其他\n对话里的对应片段。\n合成人物蓝色纸鹤（人物）\n合成资料协作关系（关系）\n偏好简洁的中文解释。（偏好）\n同时删除对话里含这句话的原话\n重新读取遗忘范围\n取消\n永久删除\n向 WeftMate 说说你的目标\n合成模型、9",
+      "theme": "light"
+    },
+    {
+      "scene": "a7-mac-memory-forget-light-20261010T081402Z",
+      "source": "ocr:gallery/mac-light/a7-mac-memory-forget-light-20261010T081402Z.png",
+      "surface": "mac",
+      "text": "•〇\nSS 记忆\nWeftMate\n口 动态\n目标\nS 成果库\nQ 搜索对话\n末分組\n可遗忘的合成对话\n可删除的合成对话\n整理项目资料\n排队与插话练习\n项目\n在电脑上添加项目后，可在这里开始对话。\nJo\na5-tester\n在电脑上创\n记忆详情\n偏好简洁的中文解释。\n忘掉这条记忆？\n忘掉会清除来源及以下记忆，之后的记忆导出不再包含它们。\n将忘掉3项记忆，清除1条来源。以下内容会一起忘掉：\n合成人物蓝色纸鹤（人物）\n合成资料协作关系（关系）\n偏好简洁的中文解释。（偏好）\n同时删除对话里含这句话的原话\n默认保留对话原文；勾选后删除对应原生对话片段及个人命令副本。以前的备份仍保留。\n重新读取遗忘范围\n取消\n确认忘掉\n完成\nCS\n搜案\n0个来源＞",
+      "theme": "light"
+    },
+    {
+      "scene": "review-mac-login-light-20261010T081330Z",
+      "source": "ocr:gallery/mac-light/review-mac-login-light-20261010T081330Z.png",
+      "surface": "mac",
+      "text": "weftMate\n登录 WeftMate\n邮箱\n密码\n忘记密码？\n还没有账号？注册\n登录\n显示",
+      "theme": "light"
+    },
+    {
+      "scene": "review-mac-memory-light-20261010T081345Z",
+      "source": "ocr:gallery/mac-light/review-mac-memory-light-20261010T081345Z.png",
+      "surface": "mac",
+      "text": "•〇\n记忆\n… WeftMate\n动态\n目标\n§ 成果库\nQ 搜索对话\n末分組\n可遗忘的合成对话\n可删除的合成对话\n整理项目资料\n排队与插话练习\n项目\n在电脑上添加项目后，可在这里开始对话。\nJo a5-tester\n炎\n在电滴上创建\n我的记忆\n查看记住的内容与来源，也可以纠正、停用或删除。\n类别 认知\ns2\n搜索记忆\n记忆服务可用\n偏好简洁的中文解释。\n当前有效\n搜案\n0 个来源＞",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-approval-light",
+      "source": "ocr:main-final/iphone-light/a16-approval-light.png",
+      "surface": "iphone",
+      "text": "22:20\nWeftMate\nJo\n45\nC 跳日期Q搜索\nA8_WAIT合成主对话任务\n> 读取文件\n〉 运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n〉 调用扩展服务\n> 运行命令 npm run verify\n〉 运行命令 npm run release\n< 成功•已完成：合成任务完成。\nA\n失败•执行失败：合成检查失败，请\n检查输入文件。\n口 停止．已停止：已停止当前任务。\n回到底部\n〉 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n+\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-assistant-message-menu-light",
+      "source": "ocr:main-final/iphone-light/a16-assistant-message-menu-light.png",
+      "surface": "iphone",
+      "text": "22:19\nD\nC 跳日期 Q搜索\nA16查找纸船\nWeftMate\nJo\n5\nQ\n<1/2>\nA16查找纸船 9500：用于日期、搜索\n与滚动验证。\n合成记录 9501：用于日期、搜索与\n滚动验证。\n索与\n合成i\n滚动！\n〉要运\n还有1个\n和 Wefi\n+\n9月29日 19:46\n复制\n心\n有用\n吧没用\nC5\n重新生成\n导出\n55\n引用\n开旁聊\n且 这次别记\n到底部\n拒绝",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-composer-menu-light",
+      "source": "ocr:main-final/iphone-light/a16-composer-menu-light.png",
+      "surface": "iphone",
+      "text": "22:20\nD\nWeftMate\nJo\n5\n⑤ 跳日期Q搜索\n滚动验让。\n合成记录 9999：用于日期、搜索与滚动验证。\nA8_WAIT 合成主对话任务\n〉 读取文件\n〉 运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n〉 调用扩展服务\n〉 运行命令 npm run verify\n> 运行命令 npm run release\n成功•已完成：合成任务完成。\n文件\n败，\nG\n相机\n2\n照片\n准\n开旁聊\n目这次别记\n添加合成附件\n回到底部\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-date-located-light",
+      "source": "ocr:main-final/iphone-light/a16-date-located-light.png",
+      "surface": "iphone",
+      "text": "22:17\nWeftMate\nJo\n70\n45\nC 跳日期Q搜索\nA8_WAIT合成主对话任务\n> 读取文件\n〉 运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n〉 调用扩展服务\n〉 运行命令 npm run verify\n〉 运行命令 npm run release\n成功•已完成：合成任务完成。\nA失败，执行失败：合成检查失败，请\n检查输入文件。\n〉\n口停止．已停止：已停止当前任务。\n回到底部\n〉 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n+\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-expanded-day-light",
+      "source": "ocr:main-final/iphone-light/a16-expanded-day-light.png",
+      "surface": "iphone",
+      "text": "22:17\nWeftMate\n3o\n..今0\n45\n跳口期\nQ 搜索\n查看更早记录\n2026年10月8日\n48条\n合成记录 9918：用于日期、搜索与\n滚动验证。\n合成记录 9919：用于日期、搜索与滚动验证。\n合成记录9920：用于日期、搜索与\n滚动验证。\n合成记录 9921：用于日期、搜索与滚动验证。\n合成记录 9922：用于日期.\n坤去上\n滚动验证。\n回到底部\n〉 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n+\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-export-preview-light",
+      "source": "ocr:main-final/iphone-light/a16-export-preview-light.png",
+      "surface": "iphone",
+      "text": "22:19\n..小0\n导出此条回复\n已隐藏常见凭据和本机路径，请确认预览后保存。\n合成记录 9501：用于日期、搜索与滚动验证。\n取消\n保存 Markdown",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-export-save-panel-light",
+      "source": "ocr:main-final/iphone-light/a16-export-save-panel-light.png",
+      "surface": "iphone",
+      "text": "22:19\n.00\n<\nQ 搜索\n我的iPhone\n保存\n我的iPhone为空\n保存为\nWeftMate-reply\n①标签",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-first-screen-light",
+      "source": "ocr:main-final/iphone-light/a16-first-screen-light.png",
+      "surface": "iphone",
+      "text": "22:17\nWeftMate\nJo\n70\n45\nC 跳日期Q搜索\nA8_WAIT合成主对话任务\n> 读取文件\n〉 运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n〉 调用扩展服务\n〉 运行命令 npm run verify\n〉 运行命令 npm run release\n成功•已完成：合成任务完成。\nA失败，执行失败：合成检查失败，请\n检查输入文件。\n〉\n口 停止．已停止：已停止当前任务。\n回到底部\n〉 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n+\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-native-date-picker-light",
+      "source": "ocr:main-final/iphone-light/a16-native-date-picker-light.png",
+      "surface": "iphone",
+      "text": "22:17\n121314 15 1617\n© 跳日期 Q搜索\nA8_WAIT合成主对话任务\n> 读取文件\n〉 运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n〉 调用扩展服务\n〉 运行命令 npm run verify\n〉 运行命令 npm run release\n成功•已完成：合成任务完成。\nA失败，执行失败：合成检查失败，请\n检查输入文件。\n〉\n口停止．已停止：已停止当前任务。\n回到底部\n〉 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n+\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-resources-light",
+      "source": "ocr:main-final/iphone-light/a16-resources-light.png",
+      "surface": "iphone",
+      "text": "22:17\n.00\n完成\n输出与来源\n输出内容\n还没有输出内容\n来源\n读取文件\nnotes.md\n运行命令\n搜索内容",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-result-opened-light",
+      "source": "ocr:main-final/iphone-light/a16-result-opened-light.png",
+      "surface": "iphone",
+      "text": "22:19\n<\n合成旁聊.\nJo\n5\n相关上下文尚未带入\nA8_WAIT 合成旁聊任务 completed\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n搜索了1次>\n合成任务完成。\n向 WeftMate 说说你的目标\n＋ ◎自动、\n合成模型~心",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-returned-source-light",
+      "source": "ocr:main-final/iphone-light/a16-returned-source-light.png",
+      "surface": "iphone",
+      "text": "22:19\nWeftMate\nJo\n5\nC 跳日期Q搜索\nA16查找纸船\nQ\n<112>\nA16查找纸船 9500：用于日期、搜索\n与滚动验证。\n合成记录9501：用于日期、搜索与\n滚动验证。\n合成记录9502：用于日期、搜索与\n滚动验证。\n合成记录 9503：用于日期、搜索与\n滚动验证。\n合成记录9504：用于日期\n滚动骀证\n〉 要运行命令：npm run verify\n批准\n还有1个待批准\n和 WeftMate 聊聊\n+\n回到底部\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-search-first-light",
+      "source": "ocr:main-final/iphone-light/a16-search-first-light.png",
+      "surface": "iphone",
+      "text": "22:18\nWeftMate\nJo\n45\nC 跳日期Q搜索\nA16查找纸船\nQ\n<1/2>\nA16查找纸船 9500：用于日期、搜索\n与滚动验证。\n回到底部\n〉 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n+\n批准\n拒绝\n合成模型\n我你在这不是一好\nqwer\nt\nyuio\nasd\nf\ng\nh\nj\n仑\nz xcvon\n123\ng\nK\nm\np\n匈\n拼",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-search-next-light",
+      "source": "ocr:main-final/iphone-light/a16-search-next-light.png",
+      "surface": "iphone",
+      "text": "22:18\nWeftMate\nJo\n45\nC 跳日期Q搜索\nA16查找纸船\nQ\n<212〉\nA16查找纸船 9520：用于日期、搜索\n与滚动验证。\n回到底部\n〉 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n+\n批准\n拒绝\n合成模型\n我你在这不是一好\nqwer\nt\nyuio\nasd\nf\ng\nh\nj\n仑\nz xcvon\n123\ng\nK\nm\np\n匈\n拼",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-sent-light",
+      "source": "ocr:main-final/iphone-light/a16-sent-light.png",
+      "surface": "iphone",
+      "text": "22:20\nD\nWeftMate\nJo\n5\n⑤ 跳日期Q搜索\n滚动验让。\n合成记录 9999：用于日期、搜索与滚动验证。\nA8_WAIT 合成主对话任务\n〉 读取文件\n〉 运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n〉 调用扩展服务\n〉 运行命令 npm run verify\n> 运行命令 npm run release\n\\ 成功•已完成：合成任务完成。\n回到底部\n，\n，..\n：.、..\n〉 要运行命令：npm run verify\n还有1个待批准\n批准\n拒绝\nA16-synthetic.txt\n移除\nA16合成主对话发送\n+\n核对原\n合成模型\n请求\n继续原\n请求\n排队中",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-side-source-light",
+      "source": "ocr:main-final/iphone-light/a16-side-source-light.png",
+      "surface": "iphone",
+      "text": "22:19\n..00\n合成对话\n< 返回来源消息\n相关上下文尚未带入\n米 正在读取…\n向 WeftMate 说说你的目标\n+ ②自动~\n模型、Q",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-temporary-expired-light",
+      "source": "ocr:main-final/iphone-light/a16-temporary-expired-light.png",
+      "surface": "iphone",
+      "text": "22:21\n.00\n会话已变更\n返回会话列表后刷新。",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-temporary-light",
+      "source": "ocr:main-final/iphone-light/a16-temporary-light.png",
+      "surface": "iphone",
+      "text": "22:20\n临时对话\nJo\n..00\n5\n临时对话•不会形成记忆，30 天后自动删除\n米 正在读取…\n向 WeftMate 说说你的目标\n＋ ◎自动、\n临时对话•不会形成记忆，30天后自动删除\n模型、Q",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-temporary-recall-off-light",
+      "source": "ocr:main-final/iphone-light/a16-temporary-recall-off-light.png",
+      "surface": "iphone",
+      "text": "22:21\n<\n临时对记 v 耳 此对话不形成记忆\nD 使用已有记忆\n临时对话．不会形成\nG 自动删除 7天\n食置顶\n标记沩未读\n重命名\n分叉\n移至项目\n：三 移至分组\n归档\n删除\n>\n向 WeftMate 说说你的目标\n＋ ◎自动、\n临时对话•不会形成记忆，7天后自动删除\n合成模型~Q",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-user-message-menu-light",
+      "source": "ocr:main-final/iphone-light/a16-user-message-menu-light.png",
+      "surface": "iphone",
+      "text": "22:18\nの\nWeftMate\nJo\n45\nC 跳日期 Q搜索\nA16查找纸船\nQ\n<1/2>\nA16查找纸船9500：用于日期、搜索\n与滚动验证。\n合成讠\n滚动！\n9月29日 19:16\n乙复制\n口 开旁聊\n且 这次别记\n合成记录 9503：用寸日期、搜索与\n滚动验证。\nH索与\n合成记录 9504：用于日期\n滚动骀证.\n回到底部\n〉 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n+\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "approval",
+      "source": "ocr:main-final/mac-dark/approval.png",
+      "surface": "mac",
+      "text": "WeftMate\n跳日期\nQ搜索\n运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n润用扩展服务\n运行命令 npm run verlfy\n运行命令 npm run release\nV成功•已完成：合成任务完成。\n企失败•执行失败：合成检查失败，请检查输入文件。\n停止•已停止：已停止当前任务。\n回到底部\n> 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n十～\n批准\n拒绝\n合成 型",
+      "theme": "dark"
+    },
+    {
+      "scene": "assistant-hover",
+      "source": "ocr:main-final/mac-dark/assistant-hover.png",
+      "surface": "mac",
+      "text": "WeftMate\n跳日期 Q 搜索\nA16查找纸船9500：用于日期、搜索与滚动验证。\n合成记录9501：用于日期、搜索与滚动验证。\n9月29日21:25\n6\n复制…V\n合成记录9502：用于日期、搜索与滚动验证。\n合成记录9503：用于日期、搜索与滚动验证。\n合成记录 9504：用于日期、搜索与滚动验证。\n合成记录9505：用于日期、搜索与滚动验证。\n回到底部\n> 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n十\n批准\n拒绝\n合成 型",
+      "theme": "dark"
+    },
+    {
+      "scene": "assistant-message-menu",
+      "source": "ocr:main-final/mac-dark/assistant-message-menu.png",
+      "surface": "mac",
+      "text": "WeftMate\n跳日期 Q 搜索\nA16查找纸船9500：用于日期、搜索与滚动验证。\n合成记录9501：用于日期、搜索与滚动验证。\n9月29日21:25\n6\n复制\n合成记录9503：用\n心 有用\n没用\n重新生成\n导出\n55 引用\n开旁聊\nEm\n这次别记\n2：用于日期、搜索与滚动验证。\n逾证。\n4：用于日期、搜索与滚动验证。\n合成记录9505：用于日期、搜索与滚动验证。\n回到底部\n》要运行命令：npm run verity\n还有1个待批准\n和 WeftMate 聊取\n批准\n拒绝\n合成模型",
+      "theme": "dark"
+    },
+    {
+      "scene": "composer-menu",
+      "source": "ocr:main-final/mac-dark/composer-menu.png",
+      "surface": "mac",
+      "text": "WeftMate\n跳日期\nQ\n搜索\n烫取文件\n运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n调用扩展服务\n运行命令 npm run verify\n运行命令 npm run release\nV 成功•已完成：合成任务完成。\n企失败•执行失败：合成检查失败，请检查输入文件。\n口 停止•已停止：已停止当前任务。\n》 要运行命令：npm run release\n和 WeftMate 聊聊，\n文件\n区域截图\n粘贴剪贴板图片\n开旁聊\n这次别记\n添加合成附件\n>\n>\n回到底部\n批准\n拒绝\n合成 型",
+      "theme": "dark"
+    },
+    {
+      "scene": "date-located",
+      "source": "ocr:main-final/mac-dark/date-located.png",
+      "surface": "mac",
+      "text": "WeftMate\n跳日期Q\n搜索\n合成记录9987：用于日期、搜索与滚动验证。\n00:25\n复制\n合成记录 9988：用于日期、搜索与滚动验证。\n合成记录9989：用于日期、搜索与滚动验证。\n合成记录 9990：用于日期、搜索与滚动验证。\n合成记录9991：用于日期、搜索与滚动验证。\n合成记录 9992：用于日期、搜索与滚动验证。\n合成记录9993：用于日期、搜索与滚动验证。\n回到底部\n》要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n批准\n拒绝\n合成模出",
+      "theme": "dark"
+    },
+    {
+      "scene": "delete-confirmation",
+      "source": "ocr:main-final/mac-dark/delete-confirmation.png",
+      "surface": "mac",
+      "text": "•\n•\n临时对话\n临时对话，不会形成记忆，7天后自动删除\n删除对话？\n这会永久删除对话、工作目录与经验，无法恢复。运行中的对话会先停止。\n同时忘掉从这段对话形成的记忆\n取消\n永久删除\n向 WeftMate 说说你的目标\n十◎自动。\n临时对话•不会形成记忆，7天后自动删除",
+      "theme": "dark"
+    },
+    {
+      "scene": "expanded-day",
+      "source": "ocr:main-final/mac-dark/expanded-day.png",
+      "surface": "mac",
+      "text": "WeftMate\n跳日期\nQ\n搜索\n查看更早记录\n2026年10月8日\n48栄\n合成记录 9918：用于日期、搜索与滚动验证。\n合成记录9919：用于日期、搜索与滚动验证。\n合成记录 9920：用于日期、搜索与滚动验证。\n合成记录9921：用于日期、搜索与滚动验证。\n回到底部\n合成记录9922：用于日期、搜索与派 。\n> 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n批准\n拒绝\n合成模型",
+      "theme": "dark"
+    },
+    {
+      "scene": "export-preview",
+      "source": "ocr:main-final/mac-dark/export-preview.png",
+      "surface": "mac",
+      "text": "•\n跳日期 Q 搜索\nWeftMate\nA16查找纸船 9500：用于日期、搜索与滚动验证。\n合成记录9501：用于日期、搜索与滚动验证。\n导出此条回复\n已隐藏常见凭据和本机路径，请确认预览后保存。\n合成记录 9501：用于日期、搜索与滚动验证。\n取消\n保存 Markdown\n> 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n十～\n批准\n拒绝\n合成棋型",
+      "theme": "dark"
+    },
+    {
+      "scene": "first-screen",
+      "source": "ocr:main-final/mac-dark/first-screen.png",
+      "surface": "mac",
+      "text": "WeftMate\n跳日期\nQ 搜索\n〉 读取文件\n运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n調用扩展服务\n运行命令 npm run verlfy\n运行命令 npm run release\n\\成功•已完成：合成任务完成。\n企失败•执行失败：合成检查失败，请检查输入文件。\n停止•已停止：已停止当前任务。\n回到底部\n> 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n十～\n批准\n拒绝\n合成 型",
+      "theme": "dark"
+    },
+    {
+      "scene": "move-group-menu",
+      "source": "ocr:main-final/mac-dark/move-group-menu.png",
+      "surface": "mac",
+      "text": "•\n•\n•\n临时对话\n临时对话•不会形成记忆，7天后自动删除\n还没有消息\n说说你想完成什么。\nV 目 此对话不形成记忆\nV ［D 使用已有记忆\n© 自动删除•7天\n置顶\n口 标记为未读\n重命名\n口\n分叉\n移至项目\n移至分组\n日归档\n回\n别除\nL 本对话用量\n>\nU\nR\n>\n向 WeftMate 说说你的目标\n十② 动\n临时对话•不会形成记忆，7天后自动别除\n合成模型 ＆\n+ 新建分组.\n移出分组\nA\nD",
+      "theme": "dark"
+    },
+    {
+      "scene": "move-project-menu",
+      "source": "ocr:main-final/mac-dark/move-project-menu.png",
+      "surface": "mac",
+      "text": "•\n•\n•\n临时对话\n临时对话•不会形成记忆，7天后自动刑除\nU\nR\nA\nD\n移出项目\n还没有消息\n说说你想完成什么。\nV 目 此对话不形成记忆\nV ［D 使用已有记忆\n© 自动删除•7天\n置顶\n口 标记为未读\n重命名\n分叉\n移至项目\nE 移至分组\n可 归档\n回\n删除\n本对话用量\n向 WeftMate 说说你的目标\n合成模型 ＆\n临时对话•不会形成记忆，7天后自动别除",
+      "theme": "dark"
+    },
+    {
+      "scene": "narrow-sidebar",
+      "source": "ocr:main-final/mac-dark/narrow-sidebar.png",
+      "surface": "mac",
+      "text": "1D\nWeftMate\nWeftMate\n动态\n三 目标\n成果库\nQ\n搜索对话\n末分組\n临时对话•合成对话\n合成旁聊•已停止\n合成旁聊•失敗\n合成旁聊•成功\n项目\n在电脑上添加项目后，可在这里开始对话。\nJo\na5-tester\n> 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n十~\n入文件。\n•\n在电筋上创建\n回到底部\n批准\n拒绝\n合成模型\n口",
+      "theme": "dark"
+    },
+    {
+      "scene": "narrow-window",
+      "source": "ocr:main-final/mac-dark/narrow-window.png",
+      "surface": "mac",
+      "text": "WeftMate\n跳日期\nQ 搜索\n〉 读取文件\n运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n調用扩展服务\n运行命令 npm run verlfy\n运行命令 npm run release\n\\成功•已完成：合成任务完成。\n企失败•执行失败：合成检查失败，请检查输入文件。\n停止•已停止：已停止当前任务。\n回到底部\n> 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n十～\n批准\n拒绝\n合成 型",
+      "theme": "dark"
+    },
+    {
+      "scene": "native-date-picker",
+      "source": "ocr:main-final/mac-dark/native-date-picker.png",
+      "surface": "mac",
+      "text": "1D\nWeftMate\n跳日期\nQ 搜索\n查看更早记录\n>\n2026年10月8日\n48栄\n〉 昨天\n48条\n今大\n31米.\n合成记录9987：用于日期、搜索与滚动验证。\n合成记录 9988：用于日期、搜索与滚动验证。\n合成记录9989：用于日期、搜索与滚动验证。\n回到底部\n> 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊取\n批准\n拒绝\n合成模型\n选择日期\n2026年10月\n四\n1•.\n五\n六\n27 28 29 30\n10\n11\n12 13 14 15 16\n17\n18 19 20\n21 22 23 24\n25 26\n27 28 29 30\n31\n跳到这一天",
+      "theme": "dark"
+    },
+    {
+      "scene": "resources",
+      "source": "ocr:main-final/mac-dark/resources.png",
+      "surface": "mac",
+      "text": "WeftMate\n跳日期\nQ 搜索\n淡取文件\n运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n調用扩展服务\n运行命令 npm run verlfy\n运行命令 npm run release\nV成功•已完成：合成任务完成。\n企失败•执行失败：合成检查失败，请检查输入文件。\n停止•已停止：已停止当前任务。\n回到底部\n> 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n十～\n批准\n拒绝\n合成 型",
+      "theme": "dark"
+    },
+    {
+      "scene": "result-opened",
+      "source": "ocr:main-final/mac-dark/result-opened.png",
+      "surface": "mac",
+      "text": "•••\n合成旁聊•成功\nS\n相关上下文尚未带入\nA8_WAIT 合成旁聊任务 completed\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n搜索了1次＞\n合成任务完成。\n06:55 0\n复制…v\n向 WeftMate 说说你的目标\n十② 动\n正在核对原会话和模型..\n模型、Q",
+      "theme": "dark"
+    },
+    {
+      "scene": "returned-source",
+      "source": "ocr:main-final/mac-dark/returned-source.png",
+      "surface": "mac",
+      "text": "1D\n跳日期 Q 搜索\nWeftMate\nA16查找纸船9500：用于日期、搜索与滚动验证。\n合成记录9501：用于日期、搜索与滚动验证。\n合成记录9502：用于日期、搜索与滚动验证。\n合成记录9503：用于日期、搜索与滚动验证。\n合成记录 9504：用于日期、搜索与滚动验证。\n合成记录9505：用于日期、搜索与滚动验证。\n合成记录 9506：用于日期、搜索与泽\n回到底部\n和 WeftMate 聊聊\n合成模型",
+      "theme": "dark"
+    },
+    {
+      "scene": "search-first",
+      "source": "ocr:main-final/mac-dark/search-first.png",
+      "surface": "mac",
+      "text": "跳日期\n1D\nQ\n搜索\nWeftMate\nA16查找纸船\nQ\n1/2\n>\nA16查找纸船9500：用于日期、搜索与滚动验证。\n合成记录9501：用于日期、搜索与滚动验证。\n合成记录9502：用于日期、搜索与滚动验证。\n合成记录9503：用于日期、搜索与滚动验证。\n合成记录9504：用于日期、搜索与泽\n回到底部\n> 要运行命令：npm run verify\n还有 1个待批准\n和 WeftMate 聊聊\n十×\n批准\n拒绝\n合成 型",
+      "theme": "dark"
+    },
+    {
+      "scene": "search-next",
+      "source": "ocr:main-final/mac-dark/search-next.png",
+      "surface": "mac",
+      "text": "1D\n跳日期 Q 搜索\nWeftMate\nA16 找纸船\nQ\n22\n合成记录9511：用于日期、搜索与滚动验证。\n合成记录9512：用于日期、搜索与滚动验证。\n合成记录9513：用于日期、搜索与滚动验证。\n合成记录 9514：用于日期、搜索与滚动验证。\n合成记录9515：用于日期、搜索与滚动验证。\n回到底部\n> 要运行命令：npm run verify\n还有 1个待批准\n和 WeftMate 聊聊\n十×\n批准\n拒绝\n合成模型",
+      "theme": "dark"
+    },
+    {
+      "scene": "sent",
+      "source": "ocr:main-final/mac-dark/sent.png",
+      "surface": "mac",
+      "text": "WeftMate\n跳日期\nQ 搜索\n运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n調用扩展服务\n运行命令 npm run verlfy\n运行命令 npm run release\nV成功•已完成：合成任务完成。\n企失败•执行失败：合成检查失败，请检查输入文件。\n停止•已停止：已停止当前任务。\n回到底部\n> 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n十～\n批准\n拒绝\n合成 型",
+      "theme": "dark"
+    },
+    {
+      "scene": "side-source",
+      "source": "ocr:main-final/mac-dark/side-source.png",
+      "surface": "mac",
+      "text": "••。\n合成对话\n返回来源消息\n相关上下文尚未带入\n还没有消息\n说说你想完成什么。\n向 WeftMate 说说你的目标\n十②自动\n合成模型 9",
+      "theme": "dark"
+    },
+    {
+      "scene": "temporary-expiry",
+      "source": "ocr:main-final/mac-dark/temporary-expiry.png",
+      "surface": "mac",
+      "text": "••\n•\n临时对话\n临时对话•不会形成记忆，30天后自动刑險\n还没有消息\n说说你想完成什么。\nV 目 此对话不形成记忆\nV ［D 使用已有记忆\n自动删除•30天\n置顶\n口 标记为未读\n重命名\n分叉\n移至项目\n移至分组\n日 归档\n回\n删除\nL 本对话用量\nU\nR\n1天\n7天\nV30天\n不自动删除\n>\n>\nA\nD\n向 WeftMate 说说你的目标\n合成模型 ＆\n临时对话•不会形成记忆，30天后自动刑除",
+      "theme": "dark"
+    },
+    {
+      "scene": "temporary-menu",
+      "source": "ocr:main-final/mac-dark/temporary-menu.png",
+      "surface": "mac",
+      "text": "•\n•\n•\n1D\n临时对话\n临时对话•不会形成记忆，30天后自动副除\n还没有消息\n说说你想完成什么。\n豆 此对话不形成记忆\nDn 使用已有记忆\n自动删除•30天\n置顶\n忆 标记为未读\n重命名\n口分叉\n口\n移至项目\n移至分组\n同 归档\n回 删除\n本对话用量\nP\nU\nR\nA\nD\n向 WeftMate 说说你的目标\n十⑧扇动、\n临时对话•不会形成记忆，30天后自动删除\n合成模型~",
+      "theme": "dark"
+    },
+    {
+      "scene": "temporary-seven-days",
+      "source": "ocr:main-final/mac-dark/temporary-seven-days.png",
+      "surface": "mac",
+      "text": "••。\n临时对话\n临时对话•不会形成记忆，7天后自动删除\n还没有消息\n说说你想完成什么。\n向 WeftMate 说说你的目标\n十② 动。\n临时对话•不会形成记忆，7天后自动删除\n合成模型、2",
+      "theme": "dark"
+    },
+    {
+      "scene": "temporary",
+      "source": "ocr:main-final/mac-dark/temporary.png",
+      "surface": "mac",
+      "text": "••\n临时对话\n临时对话•不会形成记忆，30天后自动副除\n还没有消息\n说说你想完成什么。\n向 WeftMate 说说你的目标\n十② 动。\n临时对话•不会形成记忆，30天后自动删除\n合成模型 9",
+      "theme": "dark"
+    },
+    {
+      "scene": "user-hover",
+      "source": "ocr:main-final/mac-dark/user-hover.png",
+      "surface": "mac",
+      "text": "1D\n跳日期\nQ 搜索\nWeftMate\nA16 找纸船\nQ\n< 1/2\n合成记录 9508：用于日期、搜索与滚动验址。\n合成记录9509：用于日期、搜索与滚动验证。\n合成记录9510：用于日期、搜索与滚动验证。\n合成记录9511：用于日期、搜索与滚动验证。\n合成记录 9512：用于日期、搜索与滚 A\n回到底部\n> 要运行命令：npm run verify\n还有 1个待批准\n和 WeftMate 聊聊\n十×\n批准\n拒绝\n合成 型",
+      "theme": "dark"
+    },
+    {
+      "scene": "user-message-menu",
+      "source": "ocr:main-final/mac-dark/user-message-menu.png",
+      "surface": "mac",
+      "text": "WeftMate\n跳日期\nQ 搜索\nA16 找纸船\nQ\n1/2\n>\n合成记录9501：用于日期、搜索与泽\nA16查找纸船9500：用于日期，搜索与滚动验证。\n9月29日 20:55\n复制\n• 开旁聊\n目这次别记\n合成记录9502：用于日期、搜索与滚动验证。\n合成记录9503：用于日期、搜索与滚动验证。\n合成记录9504：用于日期、搜索与泽\n回到底部\n> 要运行命令：npm run verlfy\n还有1个待批准\n和 WeftMate 聊聊，\n批准\n拒绝\n合成模型",
+      "theme": "dark"
+    },
+    {
+      "scene": "approval",
+      "source": "ocr:main-final/mac-light/approval.png",
+      "surface": "mac",
+      "text": "••〇\nD S WeftMate\nC 跳日期Q搜索\n〉 波取文件\n> 运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n》 調用扩展服务\n〉 运行命令 npm run verify\n> 运行命令 npm run release\n成功•已完成：合成任务完成。\n公 失败•执行失败：合成检查失败，请检查输入文件。\n口停止•已停止：已停止当前任务。\n回到底部\n> 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊职\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "assistant-hover",
+      "source": "ocr:main-final/mac-light/assistant-hover.png",
+      "surface": "mac",
+      "text": "••• DS WeftMate\nC 跳日期 Q搜索\nA16查找紙船9500：用于日期、搜索与滚动验证。\n合成记录 9501：用于日期、搜索与滚动验证。\n9月29日 21:20\n复制…\n合成记录9502：用于日期、搜索与滚动验证。\n合成记录 9503：用于日期、搜索与滚动验证。\n合成记录 9504：用于日期、搜索与滚动验证。\n合成记录 9505：用于日期、搜索与滚动验证。\n回到底部\n〉 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊职\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "assistant-message-menu",
+      "source": "ocr:main-final/mac-light/assistant-message-menu.png",
+      "surface": "mac",
+      "text": "••〇\nC 跳日期 Q搜索\nD SS WeftMate\nA16查找紙船9500：用于日期、搜索与滚动验证。\n合成记录 9501：用于日期、搜索与滚动验证。\n9月29日 21:20\n复刮\n合成记录 9503：用：\n心有用\n吧没用\n3 重新生成\nK 細t\n55 引用\n口 开旁聊\n目 这次别记\n2：用于日期、搜索与滚动验证。\n佥证。\n4：用于日期、搜索与滚动验证。\n合成记录 9505：用于日期、搜索与滚动验证。\n回到底部\n> 要运行命令：npm run verity\n还有1个待批准\n和 WeftMate 聊聊\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "composer-menu",
+      "source": "ocr:main-final/mac-light/composer-menu.png",
+      "surface": "mac",
+      "text": "••〇\nD S WeftMate\nC 跳日期Q搜索\n〉 读取文件\n〉 运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n〉 调用扩展服务\n〉 运行命令 npm run verify\n〉 运行命令 npm run release\nV 成功•已完成：合成任务完成。\n公 失败•执行失败：合成检查失败，请检查输入文件。\n口停止•已停止：已停止当前任务。\n》 要运行命令：npm run release\n和 WeftMate 聊职\nC 文件\n皇 区域截图\n粘贴剪贴板图片\n口 开旁聊\n目 这次别记\nCH 添加合成附件\n回到底部\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "date-located",
+      "source": "ocr:main-final/mac-light/date-located.png",
+      "surface": "mac",
+      "text": "••• DS WeftMate\nC 跳日期 Q搜索\n合成记录9987：用于日期、搜索与滚动验证。\n00:20心 复制⋯\n合成记录9988：用于日期、搜索与滚动验证。\n合成记录 9989：用于日期、搜索与滚动验证。\n合成记录9990：用于日期、搜索与滚动验证。\n合成记录 9991：用于日期、搜索与滚动验证。\n合成记录 9992：用于日期、搜索与滚动验证。\n合成记录 9993：用于日期、搜索与滚动验证。\n回到底部\n〉 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "delete-confirmation",
+      "source": "ocr:main-final/mac-light/delete-confirmation.png",
+      "surface": "mac",
+      "text": "•◎ 口SS 临时对话\n… K GS\n临时对话，不会形成记忆，7天后自动删除\n删除对话？\n这会永久删除对话、工作目录与经验，无法恢复。运行中的对话会先停止。\n同时忘掉从这段对话形成的记忆\n取消\n永久删除\n向 WeftMate 说说你的目标\n十◎自动\n临时对话．不会形成记忆，7 天后自动删除\n合成模型、Q.",
+      "theme": "light"
+    },
+    {
+      "scene": "expanded-day",
+      "source": "ocr:main-final/mac-light/expanded-day.png",
+      "surface": "mac",
+      "text": "••〇\nC 跳日期 Q搜索\nDS\n； WeftMate\n查看更早记录\n2026年10月8日\n48系\n合成记录 9918：用于日期、搜索与滚动验证。\n合成记录9919：用于日期、搜索与滚动验证。\n合成记录 9920：用于日期、搜索与滚动验证。\n合成记录9921：用于日期、搜索与滚动验证。\n回到底部\n合成记录9922：用于日期、搜索与派 。\n> 要运行命令：npm run verity\n还有1个待批准\n和 WeftMate 聊职\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "export-preview",
+      "source": "ocr:main-final/mac-light/export-preview.png",
+      "surface": "mac",
+      "text": "•• 日 5S WeftMate\n© 跳日期 Q搜索\nA16查找纸船 9500：用于日期、搜索与滚动验证。\n合成记录9501：用于日期、搜索与滚动验证。\n导出此条回复\n已路藏常见凭据和本机路径，请确认预览后保存。\n合成记录 9501：用于日期、搜索与滚动验证。\n取消\n保存 Markdown\n〉 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "first-screen",
+      "source": "ocr:main-final/mac-light/first-screen.png",
+      "surface": "mac",
+      "text": "••〇\nC 跳日期 Q搜索\nD CS WeftMate\n〉 波取文件\n> 运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n〉 調用扩展服务\n运行命令 npm run verify\n> 运行命令 npm run release\n成功•已完成：合成任务完成。\n公 失败•执行失败：合成检查失败，请检查输入文件。\n口停止•已停止：已停止当前任务。\n回到底部\n> 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "move-group-menu",
+      "source": "ocr:main-final/mac-light/move-group-menu.png",
+      "surface": "mac",
+      "text": "•〇\nDS一\n临时对话\n临时对话•不会形成记忆，7天后自动删除\n口\n还没有消息\n说说你想完成什么。\n5\nV 目 此对话不形成记忆\nV ［D 使用已有记忆\n© 自动删除 7天\n冷置顶\n辽 标记为未读\n•重命名\n口分叉\n移至项目\n= 移至分组\n可 归档\n向 删除\n本对话用量\n>\nU\nR\n>\n>+ 新建分组..\nA\n移出分组\nD\n向 WeftMate 说说你的目标\n十◎自动\n临时对话•不会形成记忆，7天后自动删除\n合成模型、你",
+      "theme": "light"
+    },
+    {
+      "scene": "move-project-menu",
+      "source": "ocr:main-final/mac-light/move-project-menu.png",
+      "surface": "mac",
+      "text": "DS\n临时对话\n临时对话•不会形成记忆，7天后自动删除\n还没有消息\n说说你想完成什么。\n5\n目 此对话不形成记忆\nV ［D 使用已有记忆\n心自动删除 7天\n众置顶\n辽 标记为未读\n•重命名\n口 分叉\n口 移至项目\n= 移至分组\n可 归档\n向 删除\nL 本对话用量\n>\nU\nR\n>\n>\nA\nD\n向 WeftMate 说说你的目标\n十◎自动\n临时对话•不会形成记忆，7天后自动删除\n合成模型、你\n移出项目",
+      "theme": "light"
+    },
+    {
+      "scene": "narrow-sidebar",
+      "source": "ocr:main-final/mac-light/narrow-sidebar.png",
+      "surface": "mac",
+      "text": "◎\nDS\nWeftMate\nWeftMate\n动态\n目标\n§ 成果库\nQ 搜索对话\n未分组.\n临时对话•合成对话\n合成旁聊•已停止\n合成旁聊•失敗\n合成旁聊•成功\n项目\n在电筋上添加项目后，可在这里开始对话。\nJo\na5-tester\n〉 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊职\n。\n。\n。\n在电腕上创建\n入文件。\n回到底部\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "narrow-window",
+      "source": "ocr:main-final/mac-light/narrow-window.png",
+      "surface": "mac",
+      "text": "••〇\nD CS WeftMate\nC 跳日期 Q搜索\n〉 波取文件\n> 运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n〉 調用扩展服务\n运行命令 npm run verify\n> 运行命令 npm run release\n成功•已完成：合成任务完成。\n公 失败•执行失败：合成检查失败，请检查输入文件。\n口停止•已停止：已停止当前任务。\n回到底部\n> 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "native-date-picker",
+      "source": "ocr:main-final/mac-light/native-date-picker.png",
+      "surface": "mac",
+      "text": "•\n•〇\n①D\nCS\nWeftMate\nC 跳日期 Q搜索\n查看更早记录\n2026年10月8日\n48条\n〉 昨天\n48条\n今天\n31米\n合成记录9987：用于日期、搜索与滚动验证。\n合成记录 9988：用于日期、搜索与滚动验证。\n合成记录9989：用于日期、搜索与滚动验证。\n回到底部\n> 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊职\n批准\n拒绝\n合成模型\n选择日期\n2026年10月\n日一二三四五六\n27 28 29 30\n2 3\n9|10\n18 19 20\n21 22 23 24\n25 26 27 28 29 30 31\n跳到这一天",
+      "theme": "light"
+    },
+    {
+      "scene": "resources",
+      "source": "ocr:main-final/mac-light/resources.png",
+      "surface": "mac",
+      "text": "•〇\n© 跳日期 Q搜索\n日 55 WeftMate\n〉 溃取文件\n〉 运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n输出与来源\n输出内容\n还没有输出内容\n来源\n还没有使用来源\n完成\n〉 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n十～\n回到底部\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "result-opened",
+      "source": "ocr:main-final/mac-light/result-opened.png",
+      "surface": "mac",
+      "text": "•〇\n口 S 合成旁聊•成功\n…§CS\n相关上下文尚未带入\nA8_WAIT 合成旁聊任务 completed\n读取了1个文件、已运行1个命令＞\n资料已经核对，接下来搜索并运行检查。\n搜索了1次＞\n合成任务完成。\n06:50 复制…\n向 WeftMate 说说你的目标\n＋◎自动\n合成模型、0",
+      "theme": "light"
+    },
+    {
+      "scene": "returned-source",
+      "source": "ocr:main-final/mac-light/returned-source.png",
+      "surface": "mac",
+      "text": "◎\n◎\n1D\nC 跳日期 Q搜索\nS\nWeftMate\n查看更早记录\n〉2026年9月28日\n48条\n2026年9月29日\n48系\n合成记录 9459：用于日期、搜索与滚动验证。\n合成记录 9460：用于日期、搜索与滚动验证。\n合成记录9461：用于日期、搜索与滚动验证。\n合成记录 9462：用于日期、搜索与滚动验证。\n回到底部\n和 WeftMate 聊聊\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "search-first",
+      "source": "ocr:main-final/mac-light/search-first.png",
+      "surface": "mac",
+      "text": "D S WeftMate\nC 跳日期 Q搜索\nA16查找纸船\nQ\n< 1/2\nA16查找纸船 9500：用于日期、搜索与滚动验证。\n合成记录 9501：用于日期、搜索与滚动验证。\n合成记录9502：用于日期、搜索与滚动验证。\n合成记录 9503：用于日期、搜索与滚动验证。\n合成记录9504：用于日期、搜索与泽\n回到底部\n> 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊职\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "search-next",
+      "source": "ocr:main-final/mac-light/search-next.png",
+      "surface": "mac",
+      "text": "••〇\nC 跳日期 Q搜索\nDS WeftMate\nA16查找纸船\nQ\n＜ 2/2\n合成记录 9511：用于日期、搜索与滚动验证。\n合成记录 9512：用于日期、搜索与滚动验证。\n合成记录 9513：用于日期、搜索与滚动验证。\n合成记录 9514：用于日期、搜索与滚动验证。\n合成记录 9515：用于日期、搜索与滚动验证。\n回到底部\n〉 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊职\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "sent",
+      "source": "ocr:main-final/mac-light/sent.png",
+      "surface": "mac",
+      "text": "••〇\nC 跳日期Q搜索\nD S WeftMate\n〉 波取文件\n> 运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n》 調用扩展服务\n〉 运行命令 npm run verify\n> 运行命令 npm run release\n成功•已完成：合成任务完成。\n公 失败•执行失败：合成检查失败，请检查输入文件。\n口停止•已停止：已停止当前任务。\n回到底部\n> 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊职\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "side-source",
+      "source": "ocr:main-final/mac-light/side-source.png",
+      "surface": "mac",
+      "text": "合成对话\n…§ CS\n＜返回来源消息\n相关上下文尚未带入\n还没有消息\n说说你想完成什么。\n向 WeftMate 说说你的目标\n十◎自动\n合成模型、9",
+      "theme": "light"
+    },
+    {
+      "scene": "temporary-expiry",
+      "source": "ocr:main-final/mac-light/temporary-expiry.png",
+      "surface": "mac",
+      "text": "临时对话\n临时对话，不会形成记忆，30 天后自动别除\n还没有消息\n说说你想完成什么。\n5\nV 目 此对话不形成记忆\nV ［D 使用已有记忆\n© 自动删除•30天>\n众置顶\n辽 标记为未读\n•重命名\n口分叉\n口 移至项目\n= 移至分组\n可 归档\n向 删除\nU\nR\n>\nA\nD\nL 本对话用量\n1天\n7天\n30天\n不自动删除\n向 WeftMate 说说你的目标\n十◎自动\n临时对话•不会形成记忆，30 天后自动删除\n合成模型、你",
+      "theme": "light"
+    },
+    {
+      "scene": "temporary-menu",
+      "source": "ocr:main-final/mac-light/temporary-menu.png",
+      "surface": "mac",
+      "text": "•〇\n临时对话\n临时对话•不会形成记忆，30天后自动删除\n还没有消息\n说说你想完成什么。\n5\n目 此对话不形成记忆\nVIn 使用已有记忆\n（3 自动删除•30天\n众置顶\n辽 标记为未读\n重命名\n口分叉\n口Z 移至项目\n= 移至分组\n可 归档\n@ 删除\nL 本对话用量\nU\nR\nA\nD\n向 WeftMate 说说你的目标\n十◎自动\n临时对话•不会形成记忆，30天后自动删除\n合成模型、\n仁",
+      "theme": "light"
+    },
+    {
+      "scene": "temporary-seven-days",
+      "source": "ocr:main-final/mac-light/temporary-seven-days.png",
+      "surface": "mac",
+      "text": "◎\n①S 临时对话\n…§ CS\n临时对话•不会形成记忆，7天后自动删除\n还没有消息\n说说你想完成什么。\n向 WeftMate 说说你的目标\n十◎自动\n临时对话•不会形成记忆，7天后自动删險\n合成模型、9",
+      "theme": "light"
+    },
+    {
+      "scene": "temporary",
+      "source": "ocr:main-final/mac-light/temporary.png",
+      "surface": "mac",
+      "text": "◎\n①S 临时对话\n…§ CS\n临时对话•不会形成记忆，30天后自动删除\n还没有消息\n说说你想完成什么。\n向 WeftMate 说说你的目标\n十◎自动\n临时对话•不会形成记忆，30天后自动删除\n合成模型、9",
+      "theme": "light"
+    },
+    {
+      "scene": "user-hover",
+      "source": "ocr:main-final/mac-light/user-hover.png",
+      "surface": "mac",
+      "text": "••〇\nC 跳日期 Q搜索\nD S WeftMate\nA16查找纸船\nQ\n<1/2＞\nA16查找纸船 9500：用于日期、搜索与滚动验证。\n合成记录 9501：用于日期、搜索与滚动验证。\n合成记录 9502：用于日期、搜索与滚动验证。\n合成记录 9503：用于日期、搜索与滚动验证。\n合成记录 9504：用于日期、搜索与汤\n回到底部\n> 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "user-message-menu",
+      "source": "ocr:main-final/mac-light/user-message-menu.png",
+      "surface": "mac",
+      "text": "••〇\nC 跳日期 Q搜索\nD S WeftMate\nA16查找纸船\nQ\n< 1/2\n合成记录9501：用于日期、搜索与洛\nA16查找纸船9500：用干月期，搜索与滚动验证。\n9月29日 20:50\n复制\n口 开旁聊\n目 这次别记\n合成记录9502：用于日期、搜索与滚动验证。\n合成记录 9503：用于日期、搜索与滚动验证。\n合成记录 9504：用于日期、搜索与汤\n回到底部\n> 要运行命令：npm run verity\n还有1个待批准\n和 WeftMate 聊聊\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "review-mac-session-menu-light-20261010T060800Z",
+      "source": "ocr:menu-final/review-mac-session-menu-light-20261010T060800Z.png",
+      "surface": "mac",
+      "text": "◎\n整理项目资料\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n未分組.\n可遗忘的合成对话\n可删除的合成对话\n鍪理项目资料\n排队与插话练习\n项目\n在电脑上添加项目后，可在这里开始对话。\n预览\n修改了1个文件＞\n§项目报告.md\n67宇节\n仍待核验\n预览\n⋯•\n目 此对话不形成记忆\nVIn 使用已有记忆\n（5 自动删除 30天\n冷 置顶\n辽 标记为已读\n重命名\n口分叉\n口 移至项目\n= 移至分组\n归档\n@ 删除\n本对话用量\nU\nR\nA\nD\n在电腩上创建\n》 要运行命令：rm synthetic-draft.txt\n处理审批后还有 1个问题\n排队到下一条.\n十◎自动\n批准\n拒绝\n合成模型、\n0\nJo a5-tester",
+      "theme": "light"
+    },
+    {
+      "scene": "a7-iphone-archived-light-20261010T082955Z",
+      "source": "ocr:menus/iphone-light/a7-iphone-archived-light-20261010T082955Z.png",
+      "surface": "iphone",
+      "text": "01:27\n..小口\n<\n已归档\n蓝色纸鹤\n完成\n口 蓝色纸鹤资料\n〉勺 恢复\n。。。\n我你在这不是一好个\nqwer\nt\nyuiO\np\nasd\nf\ng\nh\nj\nK\n仑\nz xcvon\nm\n匈\n123\ng\n拼",
+      "theme": "light"
+    },
+    {
+      "scene": "a7-iphone-archived-menu-light-20261010T082955Z",
+      "source": "ocr:menus/iphone-light/a7-iphone-archived-menu-light-20261010T082955Z.png",
+      "surface": "iphone",
+      "text": "01:28\n.00\n完成\n已归档\n搜索已归档对话\n口可遗忘/\nqwer\nt\ny\nui\nasdt\ng\nh\nj\n仑\nz xcvon\n123\ng\np\nK\nm\n匈\n拼",
+      "theme": "light"
+    },
+    {
+      "scene": "a7-iphone-archived-read-only-light-20261010T082955Z",
+      "source": "ocr:menus/iphone-light/a7-iphone-archived-read-only-light-20261010T082955Z.png",
+      "surface": "iphone",
+      "text": "01:27\n<\n蓝色纸鹤...\nJo\n.00\n5\n还没有消息\n说说你想完成什么。\n已归档，恢复后可以发送消息 恢复对话\n向 WeftMate 说说你的目标\n+ ◎自动~\n模型、Q\n当前电脑会话暂不能接收消息。草稿保留在本机。",
+      "theme": "light"
+    },
+    {
+      "scene": "a7-iphone-conversation-forget-light-20261010T082955Z",
+      "source": "ocr:menus/iphone-light/a7-iphone-conversation-forget-light-20261010T082955Z.png",
+      "surface": "iphone",
+      "text": "01:28\n删除对话？\n这会永久删除对话、工作目录与经验，无法\n恢复。运行中的对话会先停止。\n<\n同时忘掉从这段对话形成的记忆\n将一起忘掉3项记忆，清除1条来源。勾选\n删除原话也会清除其他对话里的对应片段。\n合成人物蓝色纸鹤（人物）\n合成资料协作关系（关系）\n偏好简洁的中文解释。（偏好）\n同时删除对话里含这句话的原话\n重新读取遗忘范围\n取消\n永久删除",
+      "theme": "light"
+    },
+    {
+      "scene": "a7-iphone-memory-forget-light-20261010T082955Z",
+      "source": "ocr:menus/iphone-light/a7-iphone-memory-forget-light-20261010T082955Z.png",
+      "surface": "iphone",
+      "text": "01:28\n忘掉这条记忆？\n忘掉会清除来源及以下记忆，之后的记忆导出\n不再包含它们。\n将忘掉3项记忆，清除1条来源。以下内容会\n一起忘掉：\n合成人物蓝色纸鹤（人物）\n合成资料协作关系（关系）\n偏好简洁的中文解释。（偏好）\n同时删除对话里含这句话的原话\n默认保留对话原文；勾选后删除对应原生对话片段及个人命令\n副本。以前的备份仍保留。\n重新读取遗忘范围\n取消 确认忘掉",
+      "theme": "light"
+    },
+    {
+      "scene": "a7-iphone-swipe-actions-expanded-light-20261010T082955Z",
+      "source": "ocr:menus/iphone-light/a7-iphone-swipe-actions-expanded-light-20261010T082955Z.png",
+      "surface": "iphone",
+      "text": "01:27\nの\n0\n×\n对话操作\n目\n此对话不形成记忆\n日\n］ 使用已有记忆\nG 自动删除•30天\n公置顶\n标记为未读\n重命名\n口分叉\n口\n移至项目\n：二 移至分组\n归档\n删除",
+      "theme": "light"
+    },
+    {
+      "scene": "review-iphone-session-menu-light-20261010T082955Z",
+      "source": "ocr:menus/iphone-light/review-iphone-session-menu-light-20261010T082955Z.png",
+      "surface": "iphone",
+      "text": "01:24\n<\nWeftMate\nJo\n.00\n5\n动态\n目标\n可删除的合成对话\n未分组\n<\n此对话不形成记忆\nV DD 使用已有记忆\n自动删除•30天＞\n置顶\n标记为未读\n重命名\n分叉\n移至项目\n：二 移至分组\n日归档\n删除",
+      "theme": "light"
+    },
+    {
+      "scene": "a14-forgotten",
+      "source": "ocr:offline/mac-dark/a14-forgotten.png",
+      "surface": "mac",
+      "text": "weftMate\n离线模式\n电脑离线：只能聊天和用记忆，不能操作电脑\n电脑离线：只能脚天和用记忆，不能操作电脑\n对话丷新对话\n重新连接",
+      "theme": "dark"
+    },
+    {
+      "scene": "a14-memory",
+      "source": "ocr:offline/mac-dark/a14-memory.png",
+      "surface": "mac",
+      "text": "weftMate\n离线模式\n电脑离线：只能聊天和用记忆，不能操作电脑\n你喜欢莱莉花茶，不加糖。\n电脑上线后自动同步\n对话 v 新对话\n重新连接\n我喝茶喜欢什么？",
+      "theme": "dark"
+    },
+    {
+      "scene": "a14-synced",
+      "source": "ocr:offline/mac-dark/a14-synced.png",
+      "surface": "mac",
+      "text": "weftMate\n离线对话\n你喜欢莱莉花茶，不加糖。\n巴同步\n收到，你徒步用墨绿色双肩背包。\n已同步\n巴同步\n对话\n新对话\n返回\n重新连接\n我喝茶喜欢什么？\n我徒步用墨绿色双肩背包。",
+      "theme": "dark"
+    },
+    {
+      "scene": "a14-forgotten",
+      "source": "ocr:offline/mac-light/a14-forgotten.png",
+      "surface": "mac",
+      "text": "WeftMate\n离线模式\n电脑离线：只能聊天和用记忆，不能操作电脑\n电腩离线：只能脚天和用记忆，不能操作电脑\n聊一聊⋯.\n对话 v 新对话\n重新连接",
+      "theme": "light"
+    },
+    {
+      "scene": "a14-memory",
+      "source": "ocr:offline/mac-light/a14-memory.png",
+      "surface": "mac",
+      "text": "WeftMate\n离线模式\n电脑离线：只能聊天和用记忆，不能操作电脑\n你喜欢莱和花茶，不加糖。\n电筋上线后自动同步\n电滴上线后自动同步\n电腩离线：只能脚天和用记忆，不能操作电脑\n聊一聊⋯.\n对话v 新对话\n重新连接\n我喝茶喜欢什么？",
+      "theme": "light"
+    },
+    {
+      "scene": "a14-synced",
+      "source": "ocr:offline/mac-light/a14-synced.png",
+      "surface": "mac",
+      "text": "WeftMate\n离线对话\n你喜欢茉莉花茶，不加糖。\n已同步.\n收到，你徒步用墨绿色双肩背包。\n已同步.\n已同步.\n新对话\n返回\n重新连接\n我喝茶喜欢什么？\n我徒步用墨绿色双肩背包。",
+      "theme": "light"
+    },
+    {
+      "scene": "a17-panel-account-light",
+      "source": "ocr:panels/iphone-light/a17-panel-account-light.png",
+      "surface": "iphone",
+      "text": "23:30\n⑤ 跳日期Q：\na5-tester\n本机账户：a5-tester\n本月¥0.000000 0\n次请求\n目记忆\n3健康\n交代一个！\n设置\n1 帮助/关于\n［ 退出登录\n回到底部\n和 WeftMate 聊聊\n+\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "a17-panel-camera-unavailable-light",
+      "source": "ocr:panels/iphone-light/a17-panel-camera-unavailable-light.png",
+      "surface": "iphone",
+      "text": "23:30\n0\n⑤ 跳日期 Q搜索\nWeftMate\nJo\n.00\n5\n公 相机暂不可用，可从照片或文件\n添加。\n重试\n回到底部\n和 WeftMate 聊聊\n+\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "a17-panel-files-light",
+      "source": "ocr:panels/iphone-light/a17-panel-files-light.png",
+      "surface": "iphone",
+      "text": "23:30\n..小0\n最近项目\n×\nQ 搜索\n无最近项目\n最近打开的文稿将在此处显示。\n①\n最近项目\n共享\n浏览",
+      "theme": "light"
+    },
+    {
+      "scene": "a17-panel-photos-light",
+      "source": "ocr:panels/iphone-light/a17-panel-photos-light.png",
+      "surface": "iphone",
+      "text": "23:30\n.00\nX\n正在载入⋯",
+      "theme": "light"
+    },
+    {
+      "scene": "a17-panel-plus-light",
+      "source": "ocr:panels/iphone-light/a17-panel-plus-light.png",
+      "surface": "iphone",
+      "text": "23:30\nWeftMate\nJo\n..90\n45\nC 跳日期Q搜索\n从这里开始\n交代一个目标，或聊聊今天想做的事。\nD文件\n相机\n照片\n口 开旁聊\n耳这次别记\n回到底部",
+      "theme": "light"
+    },
+    {
+      "scene": "a11-iphone-move-project-light",
+      "source": "ocr:projects/iphone-light/a11-iphone-move-project-light.png",
+      "surface": "iphone",
+      "text": "00:11\n<\nWeftMate\nJo\n….00\n5\n动态\n目标\n待移动的合成对话\n目 此对话不形成记忆\nv D 使用已有记忆\n⑤ 自动删除 30天＞\n公 置顶\n标记为未读\n重命名\n：1\n口 移至项目\n+\n•＞\n从下一回合使用项目文件\n夹，之前的文件与经验⋯\n合成资料\n移出项目\n＜ 传系刈咕",
+      "theme": "light"
+    },
+    {
+      "scene": "a11-iphone-project-moved-light",
+      "source": "ocr:projects/iphone-light/a11-iphone-project-moved-light.png",
+      "surface": "iphone",
+      "text": "00:12\n<\n待移动的.\nJo\n.00\n5\n还没有消息\n说说你想完成什么。\n已移至项目「合成资料」。从下一回合使用项目文件夹；之前的文件\n与经验留在原目录。\n向 WeftMate 说说你的目标\n十回自动、\n合成模型 9",
+      "theme": "light"
+    },
+    {
+      "scene": "a11-iphone-project-new-conversation-light",
+      "source": "ocr:projects/iphone-light/a11-iphone-project-new-conversation-light.png",
+      "surface": "iphone",
+      "text": "00:11\n.今0\n在「合成资料」新建对话\n任务将在电脑上的项目文件夹执行。手机只显示\n项目与对话。\n合成模型¢\n可读写项目文件，危险操作仍需审批。\n取消\n新建对话",
+      "theme": "light"
+    },
+    {
+      "scene": "a11-iphone-project-sent-light",
+      "source": "ocr:projects/iphone-light/a11-iphone-project-sent-light.png",
+      "surface": "iphone",
+      "text": "00:11\n<\n合成对话\nJo\n•0\n5\nA11合成项目消息\n正在处理合成目标。\n合成任务完成。\n项目：合成资料\n向 WeftMate 说说你的目标\n+ ◎自动～\n合成模型~9\n我你在这不是一好\nqwe\nt\nyuiO\nasd\nf\ng\nh\nj\n仑\nz xcvon\n123\ng\nK\nm\np\n匈\n拼",
+      "theme": "light"
+    },
+    {
+      "scene": "a11-iphone-projects-list-light",
+      "source": "ocr:projects/iphone-light/a11-iphone-projects-list-light.png",
+      "surface": "iphone",
+      "text": "00:11\n<\nWeftMate\nJo\n5\n口\n动态\n目标\n乡成果库\n未分组\n<\n受限聊天\n>\n待移动的合成对话\n项目\n合成资料\n+\n项目原有对话\nQ 搜索对话",
+      "theme": "light"
+    },
+    {
+      "scene": "a11-iphone-restricted-sent-light",
+      "source": "ocr:projects/iphone-light/a11-iphone-restricted-sent-light.png",
+      "surface": "iphone",
+      "text": "00:12\n<\n受限聊天\nJo\n.00\n5\nA11合成受限聊天\n正在处理合成目标。\n合成任务完成。\n这台电脑已有执行账号。当前账号仅可聊天，不能操作电脑或读取\n原账号资料；请在电脑退出后登录原账号。\n向 WeftMate 说说你的目标\n+\n合成模型、Q\n我你在这不是一好\nqwer\nt\nyuiO\nasd\nf\ng\nh\nj\n仑\nz ×cvbn\n123\ng\nK\nm\n亻<\np\n匈\n拼",
+      "theme": "light"
+    },
+    {
+      "scene": "a11-iphone-restricted-session-light",
+      "source": "ocr:projects/iphone-light/a11-iphone-restricted-session-light.png",
+      "surface": "iphone",
+      "text": "00:12\n<\n受限聊天\n••\nJo\n.00\n5\n还没有消息\n说说你想完成什么。\n这台电脑已有执行账号。当前账号仅可聊天，不能操作电脑或读取\n原账号资料；请在电脑退出后登录原账号。\n向 WeftMate 说说你的目标\n合成模型、9",
+      "theme": "light"
+    },
+    {
+      "scene": "move-project",
+      "source": "ocr:projects/mac-dark/move-project.png",
+      "surface": "mac",
+      "text": "待移动的合成对话\nWeftMate\n动态\n目标\n成果库\n搜索对话\n末分組\n受限聊天\n待移动的合成对话\n项目\nA11Folder\n合成对话\n合成资料\n项目原有对话\n向 WeftMate 说说你的目标\n十\n3o\na5-tester\n还没有消息\n说说你想完成什么。\n且 此对话不形成记忆\n使用已有记忆\n自动删除 30天\n诊 置顶\n忆 标记为未读\n重命名\n分叉\n口\n移至项目\n移至分组\n司 归档\n回 删除\n本对话用量\nP\nU\nR\n>\nA\nD\n合成模型~\n』 A11Folder\n口 合成资料\n移出项目",
+      "theme": "dark"
+    },
+    {
+      "scene": "project-create",
+      "source": "ocr:projects/mac-dark/project-create.png",
+      "surface": "mac",
+      "text": "WeftMate\nWeftMate\n• 动态\n目标\n成果库\nQ 搜索对话\n末分组.\n受限聊天\n待移动的合成对话\n项目\n跳日期\nQ\n搜索\n新建项目\n一个项目对应电脑上的一个文件夹。项目对话默认在这里读写文件和运行命令。\n选择文件夹...\nA11Folder\n项目名称\nA11Folder\n项目说明\n只便用合成资料，输出简洁中文。\n合成资料\n项目原有对话\n文件权限\n只读\n可写\n项目说明会自动带给模型。可写权限仅适用于项目文件夹；绝险操作继续按对话审批模式处理。\n取消\n创建项目\n和 WeftMate 聊聊\n十～\nJo\na5-tester\n事。\n回到底部\n模型\n合成模型",
+      "theme": "dark"
+    },
+    {
+      "scene": "project-moved",
+      "source": "ocr:projects/mac-dark/project-moved.png",
+      "surface": "mac",
+      "text": "待移动的合成对话\nWeftMate\n动态\n目标\n成果库\n搜索对话\n末分組\n受限聊天\n项目\nA11Folder\n合成对话\n待移动的合成对话\n+\n合成资料\n项目原有对话\n3o\na5-tester\n还没有消息\n说说你想完成什么。\n已移至项目「A11Folder」。从下一回合使用项目文件夹；之前的文件与经验留在原目录。\n向 WeftMate 说说你的目标\n十\n◎ 自动\n合成模型、0",
+      "theme": "dark"
+    },
+    {
+      "scene": "project-new-conversation",
+      "source": "ocr:projects/mac-dark/project-new-conversation.png",
+      "surface": "mac",
+      "text": "WeftMate\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n末分组.\n受限聊天\n待移动的合成对话\n项目\nA11Folder\n十\n合成资料\n项目原有对话\nJo\na5-tester\n跳日期\nQ\n搜索\n从这里开始\n交代一个目标，或聊聊今天想做的事。\n在「A11Folder」新建对话\n任务将在电脑上的项目文件夹执行。手机只显示项目与对话。\n项目对话使用的电脑模型 合成模型〇\n可读写项目文件，危险操作仍需审批。\n取消\n新建对话\n回到底部\n和 WeftMate 聊聊\n十～\n模型 合成模型",
+      "theme": "dark"
+    },
+    {
+      "scene": "project-remove",
+      "source": "ocr:projects/mac-dark/project-remove.png",
+      "surface": "mac",
+      "text": "待移动的合成对话\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n末分组\n受限聊天\n项目\n项目设置\n项目名称\n合成资料已改名\n项目说明\n仅阅读合成资料。\n号 合成资料已改名\n合成对话\n待移动的合成对话\n文件权限\n只读\n可写\n项目说明会自动带给模型。可写权限仅适用于项目文件夹；危险操作继续按对话审批模式处理。\n移除项目\n取消\n保存\n合成资料\n项目原有对话\n向 WeftMate 说说你的目标\nJo\na5-tester",
+      "theme": "dark"
+    },
+    {
+      "scene": "project-removed",
+      "source": "ocr:projects/mac-dark/project-removed.png",
+      "surface": "mac",
+      "text": "待移动的合成对话\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n还没有消息\n说说你想完成什么。\n末分組\n合成对话\n受限聊天\n待移动的合成对话\n项目\n合成资料\n项目原有对话\n已移至项目「A11Folder」。从下一回合使用项目文件夹；之前的文件与经验留在原目录。\n向 WeftMate 说说你的目标\n十\n◎ 自动\n合成模型、0\nJo\na5-tester",
+      "theme": "dark"
+    },
+    {
+      "scene": "project-send-ready",
+      "source": "ocr:projects/mac-dark/project-send-ready.png",
+      "surface": "mac",
+      "text": "合成对话\nWeftMate\n动态\n目标\n成果库\n搜索对话\n还没有消息\n说说你想完成什么。\n末分組\n受限聊天\n待移动的合成对话\n项目\n口 A11Folder\n合成对话\n合成资料\n项目原有对话\n项目：A11Folder\nA11 合成项目消息\n十\n◎ 自动\n合成模型~\n3o\na5-tester",
+      "theme": "dark"
+    },
+    {
+      "scene": "project-sent",
+      "source": "ocr:projects/mac-dark/project-sent.png",
+      "surface": "mac",
+      "text": "合成对话\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n正在处理合成目标。\n00:23\n复制\n末分組\n受限聊天\n待移动的合成对话\n项目\n口 A11Folder\n合成对话\n合成资料\n项目原有对话\n项目：A11Folder\n向 WeftMate 说说你的目标\n十\n3o\na5-tester\nA11 合成项目消息\n合成模型、Q",
+      "theme": "dark"
+    },
+    {
+      "scene": "project-settings",
+      "source": "ocr:projects/mac-dark/project-settings.png",
+      "surface": "mac",
+      "text": "待移动的合成对话\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n末分组\n受限聊天\n项目\nC A11Folder\n合成对话\n待移动的合成对话\n十\n合成资料\n项目原有对话\nJo\na5-tester\n项目设置\n项目名称\n合成资料已改名\n项目说明\n仅阅读合成资料。\n文件权限\n只读\n可写\n项目说明会自动带给模型。可写权限仅适用于项目文件夹；绝险操作继续按对话审批模式处理。\n移除项目\n取消\n保存\n向 WeftMate 说说你的目标\n◎自动\n合成模型、Q",
+      "theme": "dark"
+    },
+    {
+      "scene": "projects-created",
+      "source": "ocr:projects/mac-dark/projects-created.png",
+      "surface": "mac",
+      "text": "WeftMate\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n跳日期\nQ\n搜索\n从这里开始\n交代一个目标，或聊聊今天想做的事。\n末分組\n受限聊天\n待移动的合成对话\n项目\nA11Folder\n合成资料\n项目原有对话\n回到底部\n和 WeftMate 聊聊\n模型\n合成模型\n3o\na5-tester",
+      "theme": "dark"
+    },
+    {
+      "scene": "projects-list",
+      "source": "ocr:projects/mac-dark/projects-list.png",
+      "surface": "mac",
+      "text": "WeftMate\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n跳日期\nQ\n搜索\n从这里开始\n交代一个目标，或聊聊今天想做的事。\n末分組\n受限聊天\n待移动的合成对话\n项目\n合成资料\n项目原有对话\n回到底部\n和 WeftMate 聊聊\n模型\n合成模型\n3o\na5-tester",
+      "theme": "dark"
+    },
+    {
+      "scene": "restricted-session",
+      "source": "ocr:projects/mac-dark/restricted-session.png",
+      "surface": "mac",
+      "text": "受限聊天\nWeftMate\n动态\n目标\n成果库\n搜索对话\n还没有消息\n说说你想完成什么。\n末分組\n合成对话\n受限聊天\n待移动的合成对话\n项目\n合成资料\n项目原有对话\n这台电脑已有执行账号。当前账号仅可聊天，不能操作电脑或该取原账号资料；请在电脑退出后登录原账号。\n向 WeftMate 说说你的目标\n十\n合成模型 9\nJo\na5-tester",
+      "theme": "dark"
+    },
+    {
+      "scene": "move-project",
+      "source": "ocr:projects/mac-light/move-project.png",
+      "surface": "mac",
+      "text": "•\n•〇\n待移动的合成对话\nWeftMate\n动态\n目标\nS 成果库\nQ 搜索对话\n未分組\n受限聊天\n待移动的合成对话\n项目\nA11Folder\n合成对话\n⋯+\n。\n合成资料\n项目原有对话\n向 WeftMate 说说你的目标\n十◎角动\nJo a5-tester\n5\n目 此对话不形成记忆\nVIn 使用已有记忆\n自动删除 30天\n众 置顶\n辽 标记为未读\n重命名\nR\n口\n还没有消息\n说说你想完成什么。\n口 移至项目\n= 移至分组\n日归档\n@ 删除\nL 本对话用量\nA\nD\n合成模型、0\n口 A11Folder\n1 合成资料\n移出项目",
+      "theme": "light"
+    },
+    {
+      "scene": "project-create",
+      "source": "ocr:projects/mac-light/project-create.png",
+      "surface": "mac",
+      "text": "••\nCS WeftMate\nWeftMate\n口 动态\n目标\nS 成果库\nQ 搜索对话\n跳日期 Q搜索\n未分組\n受限聊天\n待移动的合成对话\n项目\n』 合成资料\n项目原有对话\n新建项目\n一个项目对应电脑上的一个文件夹。项目对话默认在这里读写文件和运行命令。\n选择文件夹.\nA11Folder\n项目名称\nA11Folder\n项目说明\n只便用合成资料，输出简活中文。\n文件权限\n只读 可写\n项目说明会自动带给模型。可写权限仅适用于项目文件夹；危险操作继续按对话审批模式处理。\n取消\n创建项目\n和 WeftMate 聊聊\n十、\nJo a5-tester\n事。\n回到底部\n模型 合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "project-moved",
+      "source": "ocr:projects/mac-light/project-moved.png",
+      "surface": "mac",
+      "text": "•\n•〇\nCS\n待移动的合成对话\nWeftMate\n动态\n目标\n乡 成果库\nQ 搜索对话\n未分組.\n受限聊天\n项目\nA11Folder\n合成对话\n待移动的合成对话\n+\n。\n合成资料\n项目原有对话\nJo a5-tester\n…§CS\n口\n还没有消息\n说说你想完成什么。\n已移至项目「A11Folder」。从下一回合使用项目文件夾；之前的文件与经验留在原目录。\n向 WeftMate 说说你的目标\n十◎自动\n合成模型、0",
+      "theme": "light"
+    },
+    {
+      "scene": "project-new-conversation",
+      "source": "ocr:projects/mac-light/project-new-conversation.png",
+      "surface": "mac",
+      "text": "••\nC WeftMate\nWeftMate\n动态\n目标\nS 成果库\nQ 搜索对话\n未分組\n受限聊天\n待移动的合成对话\n项目\nD A11Folder\n…+\n亡 合成资料\n项目原有对话\nJo a5-tester\n跳日期Q搜索\n口\n从这里开始\n交代一个目标，或聊聊今天想做的事。\n在「A11Folder」新建对话\n任务将在电脑上的项目文件夹执行。手机只显示项目与对话。\n项目对话使用的电脑模型 合成模型 夕\n可读写项目文件，危险操作仍需审批。\n取消\n新建对话\n回到底部\n和 WeftMate 聊聊\n十、\n模型 合成模型。",
+      "theme": "light"
+    },
+    {
+      "scene": "project-remove",
+      "source": "ocr:projects/mac-light/project-remove.png",
+      "surface": "mac",
+      "text": "••\n待移动的合成对话\n： （ CS\nWeftMate\n口 动态\n目标\nS 成果库\nQ 搜索对话\n项目设置\n项目名称\n合成资料已改名\n项目说明\n仅阅读合成资料。\n未分組\n受限聊天\n项目\n口 合成资料已改名\n合成对话\n待移动的合成对话\n文件权限 只读\n可写\n项目说明会自动带给模型。可写权限仅适用于项目文件夹；危险操作继续按对话审批模式处理。\n移除项目\n取消\n保存\n合成资料\n项目原有对话\n向 WeftMate 说说你的目标\n合成模型、9\n2 a5-tester",
+      "theme": "light"
+    },
+    {
+      "scene": "project-removed",
+      "source": "ocr:projects/mac-light/project-removed.png",
+      "surface": "mac",
+      "text": "•\n•〇\nCS\n待移动的合成对话\n…§CS\n… WeftMate\n动态\n目标\n§ 成果库\nQ 搜索对话\n未分組\n合成对话\n受限聊天\n待移动的合成对话\n项目\n二 合成资料\n项目原有对话\n口\n还没有消息\n说说你想完成什么。\n已移至项目「A11Folder」。从下一回合使用项目文件夾；之前的文件与经验留在原目录。\n向 WeftMate 说说你的目标\nJo a5-tester\n十◎自动\n合成模型、0",
+      "theme": "light"
+    },
+    {
+      "scene": "project-send-ready",
+      "source": "ocr:projects/mac-light/project-send-ready.png",
+      "surface": "mac",
+      "text": "•\n•〇\nS 合成对话\nWeftMate\n动态\n目标\nS 成果库\nQ 搜索对话\n未分組\n受限聊天\n待移动的合成对话\n项目\nA11Folder\n合成对话\n⋯+\n合成资料\n项目原有对话\n项目：A11Folder\nA11 合成项目消息\n十◎自动\nJo a5-tester\n⋯..\n…§CS\n口\n还没有消息\n说说你想完成什么。\n合成模型、0",
+      "theme": "light"
+    },
+    {
+      "scene": "project-sent",
+      "source": "ocr:projects/mac-light/project-sent.png",
+      "surface": "mac",
+      "text": "◎\n•〇\nS 合成对话\nWeftMate\n动态\n目标\nS 成果库\nQ 搜索对话\n未分組\n受限聊天\n待移动的合成对话\n项目\nA11Folder\n合成对话\n⋯+\n合成资料\n项目原有对话\nJo as-tester\n正在处理合成目标。\n00:22 复制⋯\n项目：A11Folder\n向 WeftMate 说说你的目标\n十◎角动\n…§CS\nA11 合成项目消息\n合成模型、0",
+      "theme": "light"
+    },
+    {
+      "scene": "project-settings",
+      "source": "ocr:projects/mac-light/project-settings.png",
+      "surface": "mac",
+      "text": "••\nK\n待移动的合成对话\n： （ CS\nWeftMate\n口 动态\n三 目标\nS 成果库\nQ 搜索对话\n末分組\n受限聊天\n项目\n项目设置\n项目名称\n合成资料已改名\n项目说明\n仅阅读合成资料。\n≥ A11Folder\n合成对话\n待移动的合成对话\n文件权限\n：只读\n可写\n项目说明会自动带给模型。可写权限仅适用于项目文件夹；危险操作继续按对话审批模式处理。\n移除项目\n取消\n保存\n口 合成资料\n项目原有对话\n向 WeftMate 说说你的目标\n合成模型、9\nJo a5-tester",
+      "theme": "light"
+    },
+    {
+      "scene": "projects-created",
+      "source": "ocr:projects/mac-light/projects-created.png",
+      "surface": "mac",
+      "text": "•〇\n59\nWeftMate\n（ WeftMate\n动态\n目标\n§ 成果库\nQ 搜索对话\n未分組\n受限聊天\n待移动的合成对话\n项目\nA11Folder\n十\n合成资料\n项目原有对话\nJo a5-tester\nC 跳日期 Q搜索\n和 WeftMate 聊聊\n＋、\n口\n从这里开始\n交代一个目标，或聊聊今天想做的事。\n回到底部\n模型 合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "projects-list",
+      "source": "ocr:projects/mac-light/projects-list.png",
+      "surface": "mac",
+      "text": "•\n•〇\n59\n（ WeftMate\n动态\n目标\nS 成果库\nQ 搜索对话\n未分組\n受限聊天\n待移动的合成对话\n项目\n口 合成资料\n项目原有对话\nWeftMate\nC 跳日期Q搜索\n口\n从这里开始\n交代一个目标，或聊聊今天想做的事。\n回到底部\n和 WeftMate 聊聊\n＋、\n模型 合成模型\nJo a5-tester",
+      "theme": "light"
+    },
+    {
+      "scene": "restricted-session",
+      "source": "ocr:projects/mac-light/restricted-session.png",
+      "surface": "mac",
+      "text": "•\n•〇\nC 受限聊天\n…§CS\n… WeftMate\n动态\n目标\nS 成果库\nQ 搜索对话\n未分組\n合成对话\n受限聊天\n待移动的合成对话\n项目\n口 合成资料\n项目原有对话\n口\n还没有消息\n说说你想完成什么。\n这台电滴已有执行账号。当前账号仅可聊天，不能操作电脑或该取原账号资料；请在电脑退出后登录原账号。\n向 WeftMate 说说你的目标\n合成模型、9\nJo a5-tester",
+      "theme": "light"
+    },
+    {
+      "scene": "approval",
+      "source": "ocr:settings-final/mac-dark/approval.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n末分組\n整理项目资料\n可遗忘的合成对话\nA5 合成资料\n排队与插话练习\n项目\n在电脑上添加项目后，可在这里开始对话。\n在电腩上创建\nJo\na5-tester\n读取了 1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n等待批准：运行命令：npm run release..〉\n>1个接队中\n> 要运行命令：npm run verify\n还有 1个待批准\n排队到下一条...\n十\nA8_WAIT：读取项目资料，运行检查，并生成合成报告。\nA10 合成排队消息\n批准\n拒绝\n合成模型~",
+      "theme": "dark"
+    },
+    {
+      "scene": "main",
+      "source": "ocr:settings-final/mac-dark/main.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n末分組\n整理项目资料\n可遗忘的合成对话\nA5 合成资料\n排队与插话练习\n项目\n在电脑上添加项目后，可在这里开始对话。\n炎\n在电腩上创建\nJo\na5-tester\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n等待批准：运行命令：npm run release...〉\n> 要运行命令：npm run verity\n还有 1个待批准\n排队到下一条….\n十\n网自动\n…\nA8_WAIT：读取项目资料，运行检查，并生成合成报告。\n批准\n拒绝\n合成模型~",
+      "theme": "dark"
+    },
+    {
+      "scene": "send-ready",
+      "source": "ocr:settings-final/mac-dark/send-ready.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n末分組\n整理项目资料\n可遗忘的合成对话\nA5 合成资料\n排队与插话练习\n项目\n在电脑上添加项目后，可在这里开始对话。\n炎\n在电脑上创建\nJo\na5-tester\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n等待批准：运行命令：npm run release...\n> 要运行命令：npm run verity\n还有 1个待批准\nA10 合成排队消息\n十\n…\nA8_WAIT：读取项目资料，运行检查，并生成合成报告。\n批准\n拒绝\n合成模型、9",
+      "theme": "dark"
+    },
+    {
+      "scene": "settings-about",
+      "source": "ocr:settings-final/mac-dark/settings-about.png",
+      "surface": "mac",
+      "text": "搜索设置\n巴\n关于\n关于\n设量\n常规\n外观\n2 账户\n一设备\n山用量\n可 已归档\n助手\n何 模型\n审批\n目记忆\n© 提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n①\n关于\nApp 版本\n当前安装的 WeftMate 版本与 build。\n所连电脑•界面与功能包\n宿主版本与更新状态（ui）。\n所连电脑•程序本体\n宿主版本与更新状态（app）。\n所连电脑•手机界面包\n宿主版本与更新状态（mobile-ui）。\n更新状态\n独立分发版可检查更新并打开下载页。\n检查更新\n刷新宿主版本\n服务条款\n隐私政策\n反馈\n×\n0.1.0/11\n宿主未提供版本\n宿主未提供版本状态\n0.1.0\n尚未配置\n宿主未提供版本\n尚未配置\n未配置更新源",
+      "theme": "dark"
+    },
+    {
+      "scene": "settings-account",
+      "source": "ocr:settings-final/mac-dark/settings-account.png",
+      "surface": "mac",
+      "text": "搜索设置\n设量\n常规\n外观\n2o 账户\n设备\n山用量\n可 已归档\n助手\n何 模型\n⑦ 审批\n目记忆\nC 提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n账户\n账户\n账户\n登录名\n登录设备\n当前使用电脑本地账户。云端邮箱、密码与注销换作在云账号登录后提供。\n退出登录/切换账户\n更換服务器\na5-tester\na5-tester\n合成 Mac",
+      "theme": "dark"
+    },
+    {
+      "scene": "settings-appearance",
+      "source": "ocr:settings-final/mac-dark/settings-appearance.png",
+      "surface": "mac",
+      "text": "搜索设置\n设量\n常规\n外观\n2 账户\n设备\n山用量\n可 已归档\n助手\n何 模型\n⑦ 审批\n目记忆\nC 提醒与定时任务\n此电脑\n系统状态\n百 备份与恢复\n关于\n① 关于\n外观\n外观\n颜色模式\n选择适合当前环境的颜色模式，保存到这台设备。\n主题色\n按钮、选中状态与交互提示使用统一主题色。\n字号\n随系统文字大小与辅助功能设置调整。\n小纬形象\n浅色\n深色\n跟随系统\n石墨\n系统默认",
+      "theme": "dark"
+    },
+    {
+      "scene": "settings-approvals",
+      "source": "ocr:settings-final/mac-dark/settings-approvals.png",
+      "surface": "mac",
+      "text": "搜索设置\n设量\n常规\n外观\n2 账户\n设备\n山用量\n可 已归档\n助手\n何 模型\n◎ 审批\n目记忆\nC 提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n审批\n审批\n默认审批模式\n按账户保存，只影响新建对话；已有对话在输入区切换。",
+      "theme": "dark"
+    },
+    {
+      "scene": "settings-archived-menu",
+      "source": "ocr:settings-final/mac-dark/settings-archived-menu.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n目标\n成果库\nQ\n搜索对话\n来分組\n整理项目资料\n可遗忘的合成对话\nA5 合成资料.\n排队与播话练习\n项目\n在电該上添加项目后，可\n瞍索设置\n设置\n.常规\n外观\nJo\n账户\n设备\n用量\n已归档\nJo\na5-tester\n可\n助手\n狗 模型\n审批\n且记忆\n提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n已归档\n已归档\n搜索已归档对话\n可删除的合成对话\n恢复\n删除",
+      "theme": "dark"
+    },
+    {
+      "scene": "settings-archived",
+      "source": "ocr:settings-final/mac-dark/settings-archived.png",
+      "surface": "mac",
+      "text": "搜索设置\n设量\n常规\n外观\n2 账户\n设备\n山用量\n已归档\n助手\n何 模型\n◎ 审批\n目记忆\n© 提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n已归档\n已归档\n搜索已归档对话\n口 可删除的合成对话\n×\n>台恢复••",
+      "theme": "dark"
+    },
+    {
+      "scene": "settings-backups",
+      "source": "ocr:settings-final/mac-dark/settings-backups.png",
+      "surface": "mac",
+      "text": "搜索设置\n设量\n常规\n外观\n2 账户\n一设备\n山用量\n可 已归档\n助手\n何 模型\n◎ 审批\n目记忆\nC 提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n备份与恢复\n备份与恢复\n自动备份\n电脑空闲时每日备份，运行中的任务不会被中断。\n保留每日备份\n最近的每日备份保留天数。\n保留每周备份\n额外保留的每周副本数量。\n立即备份\n本地备份不含凭据；目前未加密，请妥普保存。\n恢复备份\n暂无备份\n刷新备份\n7天\n4份\n立即备份",
+      "theme": "dark"
+    },
+    {
+      "scene": "settings-devices",
+      "source": "ocr:settings-final/mac-dark/settings-devices.png",
+      "surface": "mac",
+      "text": "搜索设置\n设量\n常规\n外观\n账户\n设备\n山用量\n可 已归档\n助手\n何 模型\n◎ 审批\n目记忆\n提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n设备\n设备\n你的设备\n同一个账户的设备会出现在这里。最近联系时间来自服务器记录。\n合成测试电脑\n最近联系时问未知\n合成 Mac 本机\n最近联系时问未知",
+      "theme": "dark"
+    },
+    {
+      "scene": "settings-general",
+      "source": "ocr:settings-final/mac-dark/settings-general.png",
+      "surface": "mac",
+      "text": "搜索设置\n设量\n常规\n外观\n2 账户\n设备\n山用量\n可 已归档\n助手\n何 模型\n⑦ 审批\n目记忆\n© 提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n常规\n常规\n回复进行中时发送的消息\n按账户保存在这台设备。\n排队\n等当前回复结束后作为下一条处理。\n引导\n插入当前回复，引导它调整方向。\n开机自启\n系统未找到此App，请将完整 App放入应用程序文件夹后重试。\n刷新登录项状态\n关闭窗口\n关闭主窗口后程序仍保留在 Dock，可再次打开。\n电脑连接\n更换电脑需退出当前连接，在设备分类重新连接。\n×\n排队\n引导\n保留程序\n已连接",
+      "theme": "dark"
+    },
+    {
+      "scene": "settings-memory",
+      "source": "ocr:settings-final/mac-dark/settings-memory.png",
+      "surface": "mac",
+      "text": "记忆\n搜索设置\n记忆\n设量\n常规\n外观\n2 账户\n设备\n山用量\n可 已归档\n助手\n何 模型\n审批\n目记忆\nC 提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n记忆管理\n查看它记得什么、从哪里来，并进行纠正。\n管理记忆",
+      "theme": "dark"
+    },
+    {
+      "scene": "settings-models",
+      "source": "ocr:settings-final/mac-dark/settings-models.png",
+      "surface": "mac",
+      "text": "目\n模型\n搜索设置\n模型\n设量\n常规\n外观\n2 账户\n设备\n山用量\n可 已归档\n助手\n主模型\n新对话创建时选择，已有对话保留原模型。\n后台模型\n标题与记忆整理等后续后台请求使用此模型。\n模型\n◎ 审批\n目记忆\n© 提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n模型档案与单价•元/百万令牌\n合成模型\n已配置 mimo-V2.6-flash 不支持深入思考\n×\n按对话选择\n跟随主模型\n缓存 0.020000•输入1,000000• 输出 2,000000",
+      "theme": "dark"
+    },
+    {
+      "scene": "settings-schedules-menu",
+      "source": "ocr:settings-final/mac-dark/settings-schedules-menu.png",
+      "surface": "mac",
+      "text": "◎\nWeftMate\n动态\n目标\n成果库\nQ\n搜索对话\n来分組\n整理项目资料\n可遗忘的合成对话\nA5 合成资料.\n排队与播话练习\n项目\n在电脑上添加项目后，可\n整理项目资料\n瞍索设置\n设置\n.常规\n外观\nJo\n账户\n设备\n用量\n可 已归档\n助手\n狗 模型\n⑦ 审批\n目记忆\n提醒与定时任务\nJo\na5-tester\n此电脑\n系统状态\n司 备份与恢复\n关于\n① 关于\n提醒与定时任务\n提醒与定时任务\n合成提醒：检查本周计划\n提醒•北美太平洋时间\n下次运行\n5\n已安排⋯•\n2050年10月8日 13:0\n删除",
+      "theme": "dark"
+    },
+    {
+      "scene": "settings-schedules",
+      "source": "ocr:settings-final/mac-dark/settings-schedules.png",
+      "surface": "mac",
+      "text": "搜索设置\n设量\n常规\n外观\n2 账户\n设备\n山用量\n已归档\n助手\n何 模型\n⑦ 审批\n目记忆\n©\n提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n提醒与定时任务\n提醒与定时任务\n合成提醒：检查本周计划\n提醒•北美太平洋时间\n下次运行\n已安排•••\n2050年10月8日13:00",
+      "theme": "dark"
+    },
+    {
+      "scene": "settings-system",
+      "source": "ocr:settings-final/mac-dark/settings-system.png",
+      "surface": "mac",
+      "text": "搜索设置\n设量\n常规\n外观\n2 账户\n设备\n山用量\n可 已归档\n助手\n何 模型\n⑦ 审批\n目记忆\nC 提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n①\n关于\n系统状态\n系统状态\n模型服务\n电脑宿主报告的实际状态；重启可能中断当前任务。\n宿主\n电脑宿主报告的实际状态；重启可能中断当前任务。\n记忆服务\n电脑宿主报告的实际状态；重启可能中断当前任务。\n刷新系统状态\n×\n运行正常\n合成夾具\n重启修复\n运行正常\n合成夹具\n重启修复\n尚末配置\n重启修复",
+      "theme": "dark"
+    },
+    {
+      "scene": "settings-usage",
+      "source": "ocr:settings-final/mac-dark/settings-usage.png",
+      "surface": "mac",
+      "text": "搜索设置\n设量\n常规\n外观\nJo\n账户\n设备\n山用量\n可 已归档\n助手\n何 模型\n审批\n目记忆\n提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n用量\n用量\n月份\n上一年\n2026年10月\n下一年\n读取月份\n2026年10月•北美太平洋时间\n本月合计 ¥0.001024\n输入 2000\n缓存命中 1200\n输出 100\n请求 2\n＞ 按天\n> 按对话排行\n> 按模型排行\n月度上限\n每月金额（元，留空不限）\n保存月度上限\n仅本月金额（元）",
+      "theme": "dark"
+    },
+    {
+      "scene": "approval",
+      "source": "ocr:settings-final/mac-light/approval.png",
+      "surface": "mac",
+      "text": "••〇\n整理项目资料\n… WeftMate\n动态\n目标\n§ 成果库\nQ 搜索对话\n末分組\n鍪理项目资料\n可遗忘的合成对话\nA5 合成资料\n排队与插话练习\n项目\n在电筋上添加项目后，可在这里开始对话。\n在电滴上创建\nJo as-tester\n⋯..\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n等待批准：运行命令：npm run release..\n>1个排队中\n〉 要运行命令：npm run verlfy\n还有 1个待批准\n排队到下一条.\n十◎自动\n：§ CS\nA8_WAIT：读取项目资料，运行检查，并生成合成报告。\nA10 合成排队消息\n批准\n拒绝\n合成模型、Q",
+      "theme": "light"
+    },
+    {
+      "scene": "main",
+      "source": "ocr:settings-final/mac-light/main.png",
+      "surface": "mac",
+      "text": "••〇\n整理项目资料\n（ WeftMate\n动态\n目标\n§ 成果库\nQ 搜索对话\n来分組\n鍪理项目资料\n可遗忘的合成对话\nA5 合成资料\n排队与插话练习\n项目\n在电筋上添加项目后，可在这里开始对话。\n在电滴上创建\nJo a5-tester\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n等待批准：运行命令：npm run release.〉\n> 要运行命令：npm run verlfty\n还有 1个待批准\n排队到下一条.\n十②自动\n…§CS\nA8_WAIT：读取项目资料，运行检查，并生成合成报告。\n批准\n拒绝\n合成模型、Q",
+      "theme": "light"
+    },
+    {
+      "scene": "send-ready",
+      "source": "ocr:settings-final/mac-light/send-ready.png",
+      "surface": "mac",
+      "text": "••〇\n整理项目资料\n（ WeftMate\n动态\n目标\n§ 成果库\nQ 搜索对话\n来分組\n鍪理项目资料\n可遗忘的合成对话\nA5 合成资料\n排队与插话练习\n项目\n在电筋上添加项目后，可在这里开始对话。\n炎\n在电滴上创建\nJo a5-tester\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n等待批准：运行命令：npm run release.〉\n》 要运行命令：npm run verity\n还有 1个待批准\nA10 合成排队消息\n…§CS\nA8_WAIT：读取项目资料，运行检查，并生成合成报告。\n批准\n拒绝\n合成模型、Q",
+      "theme": "light"
+    },
+    {
+      "scene": "settings-about",
+      "source": "ocr:settings-final/mac-light/settings-about.png",
+      "surface": "mac",
+      "text": "•〇\n搜索设置\n设置\n巴\n关于\n关于\n常规\n外观\n3o 账户\n设备\n山 用量\n可 已归档\n助手\n回 模型\n◎ 审批\n目记忆\nC 提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\nApp 版本\n当前安装的 WeftMate 版本与 build。\n所连电脑 界面与功能包\n宿主版本与更新状态（ui）。\n所连电脑•程序本体\n宿主版本与更新状态（app）。\n所连电脑•手机界面包\n宿主版本与更新状态（mobile-ui）。\n更新状态\n独立分发版可检查更新并打开下载页。\n检查更新\n刷新宿主版本\n服务条款\n隐私政策\n反馈\n×\n0.1.0/11\n宿主未提供版本\n宿主未提供版本状态\n0.1.0\n尚末配置\n宿主未提供版本\n尚未配置\n未配置更新源",
+      "theme": "light"
+    },
+    {
+      "scene": "settings-account",
+      "source": "ocr:settings-final/mac-light/settings-account.png",
+      "surface": "mac",
+      "text": "•〇\n巴\n账户\n搜索设置\n账户\n设置\n常规\n外观\n3o 账户\n设备\n山 用量\n可 己归档\n助手\n回 模型\n◎ 审批\n目记忆\nC 提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n账户\n登录名\n登录设备\n当前使用电脑本地账户。云端邮箱、密码与注销换作在云账号登录后提供。\n退出登录丿切换账户\n更换服务器\na5-tester\na5-tester\n合成 Mac.",
+      "theme": "light"
+    },
+    {
+      "scene": "settings-appearance",
+      "source": "ocr:settings-final/mac-light/settings-appearance.png",
+      "surface": "mac",
+      "text": "•〇\n巴\n外观\n瞍索设置\n外观\n设置\n常规\n外观\n3o 账户\n设备\n山 用量\n可 己归档\n助手\n回 模型\n◎ 审批\n目记忆\nC 提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n颜色模式\n选择适合当前环境的颜色模式，保存到这台设备。\n主题色\n按钮、选中状态与交互提示使用统一主题色。\n字号\n随系统文字大小与辅助功能设置调整。\n小纬形象\n×\n浅色\n深色 跟随系统\n石墨\n系统默认",
+      "theme": "light"
+    },
+    {
+      "scene": "settings-approvals",
+      "source": "ocr:settings-final/mac-light/settings-approvals.png",
+      "surface": "mac",
+      "text": "•〇\n巴\n审批\n搜索设置\n审批\n设置\n常规\n（3 外观\n3o 账户\n设备\n山 用量\n可 己归档\n助手\n回 模型\n◎ 审批\n目记忆\nC 提醒与定时任务\n此电脑\n系统状态\n曰 备份与恢复\n关于\n① 关于\n默认审批模式\n按账户保存，只影响新建对话；已有对话在输入区切换。\n×",
+      "theme": "light"
+    },
+    {
+      "scene": "settings-archived-menu",
+      "source": "ocr:settings-final/mac-light/settings-archived-menu.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n目标\n成果库\nQ\n搜索对话\n未分组\n鍪理项目资料\n可遗忘的合成对话\nA5 合成资料\n排队与插话练习\n项目\n在电脑上添加项目后，可\n瞍索设置\n设置\n常规\n外观\nJo\n账户\n日 设备\n用量\n已归档\nJo a5-tester\n助手\n愈 模型\n⑦ 审批\n目记忆\n© 提醒与定时任务\n此电脑\n系统状态\n司 备份与恢复\n关于\n① 关于\n已归档\n已归档\n搜索已归档对话\n可删除的合成对话\nCS\n>夕恢复•••\n四 删除",
+      "theme": "light"
+    },
+    {
+      "scene": "settings-archived",
+      "source": "ocr:settings-final/mac-light/settings-archived.png",
+      "surface": "mac",
+      "text": "•〇\n巴\n已归档\n搜索设置\n设置\n已归档\n搜索已归档对话\n常规\n（3 外观\n3o 账户\n设备\n用量\n已归档\n口 可删除的合成对话\n助手\n回 模型\n◎ 审批\n目记忆\nC 提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n×\n> 恢复•••",
+      "theme": "light"
+    },
+    {
+      "scene": "settings-backups",
+      "source": "ocr:settings-final/mac-light/settings-backups.png",
+      "surface": "mac",
+      "text": "•〇\n巴\n备份与恢复\n搜索设置\n备份与恢复\n设置\n常规\n外观\n3o 账户\n设备\n山 用量\n可 已归档\n助手\n回 模型\n◎ 审批\n目记忆\nC 提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n自动备份\n电脑空闲时每日备份，运行中的任务不会被中断。\n保留每日备份\n最近的每日备份保留天数。\n保留每周备份\n额外保留的每周副本数量。\n立即备份\n本地备份不含凭据；目前未加密，请妥普保存。\n恢复备份\n暂无备份\n刷新备份\n×\n0\n7天の\n4份\n立即备份",
+      "theme": "light"
+    },
+    {
+      "scene": "settings-devices",
+      "source": "ocr:settings-final/mac-light/settings-devices.png",
+      "surface": "mac",
+      "text": "•〇\n巴\n设备\n×CS\n搜索设置\n设备\n设置\n常规\n3 外观\n3o 账户\n设备\n山 用量\n可 己归档\n助手\n回 模型\n◎审批\n目记忆\nC 提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n你的设备\n同一个账户的设备会出现在这里。最近联系时间来自服务器记录。\n合成测试电脑\n最近联系时间未知\n合成 Mac 本机\n最近联系时间未知",
+      "theme": "light"
+    },
+    {
+      "scene": "settings-general",
+      "source": "ocr:settings-final/mac-light/settings-general.png",
+      "surface": "mac",
+      "text": "•〇\n巴\n常规\n搜索设置\n常规\n设置\n常规\n外观\n3o 账户\n设备\n山 用量\n可 已归档\n助手\n回 模型\n◎ 审批\n目记忆\nC 提醒与定时任务\n此电脑\n系统状态\n口 备份与恢复\n关于\n① 关于\n回复进行中时发送的消息\n按账户保存在这台设备。\n排队\n等当前回复结束后作为下一条处理。\n引导\n插入当前回复，引导它调整方向。\n开机自启\n系统未找到此 App，请将完整 App 放入应用程序文件夹后重试。\n刷新登录项状态\n关闭窗口\n关闭主窗口后程序仍保留在 Dock，可再次打开。\n电脑连接\n更换电脑需退出当前连接，在设备分类重新连接。\n×\n排队|引导\n保留程序\n已连接",
+      "theme": "light"
+    },
+    {
+      "scene": "settings-memory",
+      "source": "ocr:settings-final/mac-light/settings-memory.png",
+      "surface": "mac",
+      "text": "••〇\n巴\n记忆\n搜索设置\n记忆\n设置\n常规\n（3 外观\n3o 账户\n日 设备\n山 用量\n可 己归档\n助手\n回 模型\n◎ 审批\n目记忆\nC 提醒与定时任务\n此电脑\n』系统状态\n曰 备份与恢复\n关于\n① 关于\n记忆管理\n查看它记得什么、从哪里来，并进行纠正。\n管理记忆\n×",
+      "theme": "light"
+    },
+    {
+      "scene": "settings-models",
+      "source": "ocr:settings-final/mac-light/settings-models.png",
+      "surface": "mac",
+      "text": "•〇\n巴\n模型\n搜索设置\n模型\n设置\n常规\n3 外观\n3o 账户\n设备\n山 用量\n可 己归档\n助手\n回 模型\n◎ 审批\n目记忆\nC 提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n主模型\n新对话创建时选择，已有对话保留原模型。\n后台模型\n标题与记忆鳖理等后续后台请求使用此模型。\n模型档案与单价•元/ 百万令牌\n合成模型\n已配置•mimo-v2.6-flash．不支持深入思考\n×\n按对话选择\n跟随主模型の\n撥存 0.020000 输入1.000000• 输出2.000000",
+      "theme": "light"
+    },
+    {
+      "scene": "settings-schedules-menu",
+      "source": "ocr:settings-final/mac-light/settings-schedules-menu.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n目标\n成果库\nQ 搜案对话\n末分組.\n鍪理项目资料\n可遗忘的合成对话\nA5 合成资料\n排队与插话练习\n项目\n在电脑上添加项目后，可\n•\n◎\n瞍索设置\n设置\nJo a5-tester\n常规\n外观\nJo\n账户\n日 设备\n用量\n可 已归档\n助手\n愈模型\n◎ 审批\n目记忆\n© 提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n提醒与定时任务\n提醒与定时任务\n合成提醒：检查本周计划\n提醒•北美太平洋时间\n下次运行\nS9\n…K GS\n已安排⋯•\n2050年10月8日13:0\n向 删除",
+      "theme": "light"
+    },
+    {
+      "scene": "settings-schedules",
+      "source": "ocr:settings-final/mac-light/settings-schedules.png",
+      "surface": "mac",
+      "text": "•••\n搜索设置\n设置\n常规\n3 外观\n3o 账户\n设备\n用量\n己归档\n助手\n回 模型\n◎ 审批\n目记忆\nC 提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n提醒与定时任务\n提醒与定时任务\n合成提醒：检查本周计划\n提醒•北美太平洋时间\n下次运行\nS3\n已安排 ⋯•\n2050年10月8日13:00",
+      "theme": "light"
+    },
+    {
+      "scene": "settings-system",
+      "source": "ocr:settings-final/mac-light/settings-system.png",
+      "surface": "mac",
+      "text": "•〇\n巴\n系统状态\n搜索设置\n系统状态\n设置\n常规\n3 外观\n3o 账户\n设备\n山 用量\n可 已归档\n助手\n回 模型\n◎ 审批\n目记忆\nC 提醒与定时任务\n此电脑\n系统状态\n口 备份与恢复\n关于\n① 关于\n模型服务\n电脑宿主报告的实际状态；重启可能中断当前任务。\n宿主\n电脑宿主报告的实际状态；重启可能中断当前任务。\n记忆服务\n电脑宿主报告的实际状态；重启可能中断当前任务。\n刷新系统状态\n×\n运行正常\n合成夹具\n重启修复\n运行正常\n合成夾具\n重启修复\n尚未配置\n重启修复",
+      "theme": "light"
+    },
+    {
+      "scene": "settings-usage",
+      "source": "ocr:settings-final/mac-light/settings-usage.png",
+      "surface": "mac",
+      "text": "••〇\n巴\n用量\n搜索设置\n用量\n设置\n常规\n3 外观\n3o 账户\n设备\n山 用量\n可 己归档\n助手\n回 模型\n◎ 审批\n目记忆\nC 提醒与定时任务\n此电脑\n系统状态\n可 备份与恢复\n关于\n① 关于\n月份\n上一年\n2026 年10月\n下一年\n读取月份\n2026年10月 北美太平洋时间\n本月合计 ¥0.001024\n输入 2000\n缓存命中 1200\n输出 100\n请求 2\n＞按天\n＞按对话排行\n＞按模型排行\n月度上限\n每月金额（元，留空不限）\n保存月度上限\n仅本月金额（元）\n×",
+      "theme": "light"
+    },
+    {
+      "scene": "a15-account-menu-dark",
+      "source": "ocr:sidebar-verified/iphone-dark/a15-account-menu-dark.png",
+      "surface": "iphone",
+      "text": "00:02\n成果库\n未分组\n整理项目资料\n项目\n合成项目\na5-tester\n本机账户：a5-tester\n本月 ¥0.006400\n剩余 100%\n0次未报告完整用量，\n1次未定价；费用…\nE记忆\n健康\n合成项目对话6\n合成项目对话 5\n设置\n帮助 /关于\n退出登录\n合成项目对话4\n•\n合成项目对话3\n•\n合成项目对话 2\n•\n合成项目对话 1\n•\n合成\n搜索对话\n>\n>\n>\n>",
+      "theme": "dark"
+    },
+    {
+      "scene": "a15-archive-undo-dark",
+      "source": "ocr:sidebar-verified/iphone-dark/a15-archive-undo-dark.png",
+      "surface": "iphone",
+      "text": "00:02\nWeftMate\nJo\n成果库\n未分组\n整理项目资料\n项目\n合成项目\n合成项目对话5\n•\n>\n合成项目对话 4\n•\n>\n合成项目对话3\n•\n>\n合成项目对话 2\n•\n>\n合成项目对话 1\n•\n>\n合成项目对话0\n•\n>\n已归档「合成项目对话6」\n撤销归档",
+      "theme": "dark"
+    },
+    {
+      "scene": "a15-plus-menu-dark",
+      "source": "ocr:sidebar-verified/iphone-dark/a15-plus-menu-dark.png",
+      "surface": "iphone",
+      "text": "00:02\n<\n整理项目⋯.\n•••\nJo\n第3步失败\n启动子任务\n启动子任务\n合成失败•失败\n查看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n>\n且\n深入思考\n添加合成文件\n文件\n照片\n相机\n这次别记\n开旁聊",
+      "theme": "dark"
+    },
+    {
+      "scene": "a15-project-expanded-dark",
+      "source": "ocr:sidebar-verified/iphone-dark/a15-project-expanded-dark.png",
+      "surface": "iphone",
+      "text": "00:02\nWeftMate\nJo\n成果库\n未分组\nV\n整理项目资料\n>\n项目\n合成项目\n合成项目对话6\n•\n>\n合成项目对话5\n•\n>\n合成项目对话4\n•\n>\n合成项目对话3\n•\n>\n合成项目对话 2\n•\n合成项目对话 1\n•\n>\n合成\n搜索对话",
+      "theme": "dark"
+    },
+    {
+      "scene": "a15-recent-five-dark",
+      "source": "ocr:sidebar-verified/iphone-dark/a15-recent-five-dark.png",
+      "surface": "iphone",
+      "text": "00:02\n<\nWeftMate\n动态\n目标\n成果库\n未分组\n整理项目资料\n项目\n合成项目\n合成项目对话6\n•\n合成项目对话 5\n•\n合成项目对话 4\n•\n合成项目对话3\n•\n合\n搜索对话\n>\n>\n>\n>\n>",
+      "theme": "dark"
+    },
+    {
+      "scene": "a15-running-queue-dark",
+      "source": "ocr:sidebar-verified/iphone-dark/a15-running-queue-dark.png",
+      "surface": "iphone",
+      "text": "00:04\n<\n整理项目⋯.\n•••\nJo\n第3步失败\n启动子任务\n启动子任务\n合成失败•失败\n查看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n杏手西加粉坦\n>3个子任务\n>\n排队到下一条..\nA2-测试文件.txt\n移除\n+\n◎ 自动\n合成模型 9\n个",
+      "theme": "dark"
+    },
+    {
+      "scene": "a15-running-steer-dark",
+      "source": "ocr:sidebar-verified/iphone-dark/a15-running-steer-dark.png",
+      "surface": "iphone",
+      "text": "00:03\n<\n整理项目⋯.\n•••\nJo\n第3步失败\n启动子任务\n启动子任务\n合成失败•失败\n查看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n杏手西加粉坦\n>3个子任务\n>\n引导当前回复….\nA2-测试文件.txt\n移除\n+\n◎自动\n合成模型 9\n个",
+      "theme": "dark"
+    },
+    {
+      "scene": "a15-settings-usage-dark",
+      "source": "ocr:sidebar-verified/iphone-dark/a15-settings-usage-dark.png",
+      "surface": "iphone",
+      "text": "00:02\n完成\n设置\n本月 ¥0.006400•剩余 100%\n0次未报告完整用量，1次未定价；费用未估算。\n设置\n常规\n外观\n2o 账户\n设备\n用量\n已归档\n简体中文＞\n深色＞\na5-tester\n2台设备\n>\n本月费用与上限〉\n无＞\n助手\n每模型\n审批\n主模型与单价＞\n新对话默认模式＞\n搜索设置\n记忆与来泥",
+      "theme": "dark"
+    },
+    {
+      "scene": "a15-subtask-list-dark",
+      "source": "ocr:sidebar-verified/iphone-dark/a15-subtask-list-dark.png",
+      "surface": "iphone",
+      "text": "00:04\n<\n整理项目⋯.\n•••\nJo\n第3步失败\n启动子任务\n启动子任务\n合成失败•失败\n查看使用的来源\n>\n计 3个子任务\n合成进行中\n进行中 已用180.7秒\n合成完成\n完成\n0.0秒\n合成失败\n失败 0.0秒\n排队到下一条..\nA2-测试文件.txt\n移除\n+\n◎自动~\n合成模型 9\n个",
+      "theme": "dark"
+    },
+    {
+      "scene": "a15-subtask-step-dark",
+      "source": "ocr:sidebar-verified/iphone-dark/a15-subtask-step-dark.png",
+      "surface": "iphone",
+      "text": "00:04\n<\n整理项目….\n说明：合成失败\n错误\n合成子任务完成\n复制\n查看原始数据\n•••\nJo\n片 3个子任务\n合成进行中\n进行中 已用186.4秒\n合成完成\n完成\n0.0秒\n合成失败\n失败 0.0秒\n排队到下一条..\nA2-测试文件.txt\n移除\n+\n◎自动~\n合成模型 9\n个",
+      "theme": "dark"
+    },
+    {
+      "scene": "a15-subtasks-ended-dark",
+      "source": "ocr:sidebar-verified/iphone-dark/a15-subtasks-ended-dark.png",
+      "surface": "iphone",
+      "text": "00:04\n整理项目….\n成子仕务完成\n复制\n查看原始数据\n•••\nJo\n合成焦点保持\nA2-测试文件.txt\n移除\n+◎自动~\n合成模型、9\n个\n我你在这不是一好个v\nq\nw\ne\nt\ny\nU\ni\nO\np\na\n123\nS\nZ\n心\nd\n×\nf\nC\ng\nV\nh\nb\nj\nn\n拼\nK\nm\n仑",
+      "theme": "dark"
+    },
+    {
+      "scene": "a15-synthetic-attachments-dark",
+      "source": "ocr:sidebar-verified/iphone-dark/a15-synthetic-attachments-dark.png",
+      "surface": "iphone",
+      "text": "00:03\n<\n整理项目⋯.\n•••\nJo\n第3步失败\n启动子任务\n启动子任务\n合成失败•失败\n查看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n杏手西加粉坦\n>3个子任务\n>\n排队到下一条..\nA2-测试文件.txt\n移除\n+\n◎ 自动\n合成模型 9\n个",
+      "theme": "dark"
+    },
+    {
+      "scene": "a15-thinking-enabled-dark",
+      "source": "ocr:sidebar-verified/iphone-dark/a15-thinking-enabled-dark.png",
+      "surface": "iphone",
+      "text": "00:03\n<\n整理项目⋯.\n•••\nJo\n第3步失败\n启动子任务\n启动子任务\n合成失败•失败\n查看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n查看原始数据\n〉3个子任务\n深入思考已开启\n排队到下一条⋯\n+ ◎自动~\n◎\n合成模型 Q\n>",
+      "theme": "dark"
+    },
+    {
+      "scene": "a15-account-menu-light",
+      "source": "ocr:sidebar-verified/iphone-light/a15-account-menu-light.png",
+      "surface": "iphone",
+      "text": "23:57\n<\n成果库\n未分组\n整理项目资\n项目\n合成项目\na5-tester\n本机账户：a5-tester\n本月¥0.006400\n剩余 100%\n0次未报告完整用量，\n1次未定价；费用…\n记忆\n©健康\n合成项目对话6\n合成项目对话5\n设置\n①\n帮助/关于\n［>退出登录\n合成项目对话 4\n•〉\n合成项目对话 3\n•〉\n合成项目对话 2\n•〉\n合成项目对话1\n•\n•.'\nQ 搜索对话",
+      "theme": "light"
+    },
+    {
+      "scene": "a15-archive-undo-light",
+      "source": "ocr:sidebar-verified/iphone-light/a15-archive-undo-light.png",
+      "surface": "iphone",
+      "text": "23:57\n<\n巛\n成果库\n未分组\n整理项目资料\nWeftMate\nJo\n45\n米\n项目\n合成项目\n合成项目对话 5\n•〉\n合成项目对话 4\n•>\n合成项目对话 3\n•〉\n合成项目对话 2\n•〉\n合成项目对话1\n•〉\n合成项目对话0\n•\n已归档「合成项目对话6」\n撤销归档",
+      "theme": "light"
+    },
+    {
+      "scene": "a15-plus-menu-light",
+      "source": "ocr:sidebar-verified/iphone-light/a15-plus-menu-light.png",
+      "surface": "iphone",
+      "text": "23:57\n<\n整理项目..\nJo\n5\n第3步失败\n启动子任务\n启动子任务\n合成失败•失败\n查看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n>\nV\n深入思考\n添加合成文件\nD文件\n照片\n◎ 相机\n目这次别记\n口 开旁聊\n>\n©",
+      "theme": "light"
+    },
+    {
+      "scene": "a15-project-expanded-light",
+      "source": "ocr:sidebar-verified/iphone-light/a15-project-expanded-light.png",
+      "surface": "iphone",
+      "text": "23:56\n<\nWeftMate\nJo\n45\n成果库\n未分组\n整理项目资料\n米\n项目\n合成项目\n合成项目对话6\n•＞\n合成项目对话 5\n•>\n合成项目对话4\n•〉\n合成项目对话 3\n•＞\n合成项目对话 2\n•＞\n合成项目对话1\n•\nQ 搜索对话",
+      "theme": "light"
+    },
+    {
+      "scene": "a15-recent-five-light",
+      "source": "ocr:sidebar-verified/iphone-light/a15-recent-five-light.png",
+      "surface": "iphone",
+      "text": "23:56\n<\nWeftMate\nJo\n5\n口动态\n目标\n乡 成果库\n未分组\n整理项目资料\n米＞\n项目\n合成项目\n+\n合成项目对话6\n•〉\n合成项目对话 5\n•＞\n合成项目对话 4\n•〉\n合成项目对话 3\n•〉\n合\nQ 搜索对话",
+      "theme": "light"
+    },
+    {
+      "scene": "a15-running-queue-light",
+      "source": "ocr:sidebar-verified/iphone-light/a15-running-queue-light.png",
+      "surface": "iphone",
+      "text": "23:58\n<\n整理项目..\n第3步失败\n启动子任务\n启动子任务\n合成失败•失败\n查看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n杏手西 粉\n〉 3个子任务\n排队到下一条⋯\nD\nA2-测试文件.txt\n移除\n+ ◎自动~\nJo\n5\n>\nV\n合成模型 9",
+      "theme": "light"
+    },
+    {
+      "scene": "a15-running-steer-light",
+      "source": "ocr:sidebar-verified/iphone-light/a15-running-steer-light.png",
+      "surface": "iphone",
+      "text": "23:58\n<\n整理项目..\n第3步失败\n启动子任务\n启动子任务\n合成失败•失败\n查看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n杏手西 粉\n〉 3个子任务\n引导当前回复…\nA2-测试文件.txt\n移除\n+ ②自动～\nJo\n5\n>\nV\n合成模型 Q",
+      "theme": "light"
+    },
+    {
+      "scene": "a15-settings-usage-light",
+      "source": "ocr:sidebar-verified/iphone-light/a15-settings-usage-light.png",
+      "surface": "iphone",
+      "text": "23:57\n.00\n完成\n设置\n本月 ¥0.006400 剩余100%\n0次未报告完整用量，1次未定价；费用未估算。\n设置\n常规\n• 外观\n2o 账户\n设备\n區用量\n已归档\n简体中文＞\n浅色>\na5-tester\n2台设备＞\n本月费用与上限＞\n无＞\n助手\n模型\n◎ 审批\nQ 搜索设置\n主模型与单价＞\n新对话默认模式〉",
+      "theme": "light"
+    },
+    {
+      "scene": "a15-subtask-list-light",
+      "source": "ocr:sidebar-verified/iphone-light/a15-subtask-list-light.png",
+      "surface": "iphone",
+      "text": "23:58\n<\n整理项目..\n….\nJo\n5\n第3步失败\n启动子任务\n启动子任务\n合成失败•失败\n查看使用的来源\n>\nV\n1 3个子任务\n合成进行中\n进行中 已用188.0秒\n合成完成\n完成 0.0秒\n合成失败\n失败 0.0秒\n排队到下一条⋯\nD\nA2-测试文件.txt\n移除\n＋ ◎自动、\n合成模型 9",
+      "theme": "light"
+    },
+    {
+      "scene": "a15-subtask-step-light",
+      "source": "ocr:sidebar-verified/iphone-light/a15-subtask-step-light.png",
+      "surface": "iphone",
+      "text": "23:58\n<\n整理项目..\n说明：合成失败\n错误\n合成子任务完成\n复制\n查看原始数据\nJo\n5\n1 3个子任务\n合成进行中\n进行中 已用 193.7秒\n合成完成\n完成 0.0秒\n合成失败\n失败0.0秒\n排队到下一条⋯\nD\nA2-测试文件.txt\n移除\n＋ ◎自动、\n合成模型 9",
+      "theme": "light"
+    },
+    {
+      "scene": "a15-subtasks-ended-light",
+      "source": "ocr:sidebar-verified/iphone-light/a15-subtasks-ended-light.png",
+      "surface": "iphone",
+      "text": "23:59\n<\n整理项目..\n于仕务完成\n••。\nJo\n10\n5\n复制\n查看原始数据\n>\n合成焦点保持\nA2-测试文件.txt\n移除\n+ ◎自动~\n合成模型 9\n我你在这不是一好\nqwer\nt\nyuiO\nasd\nf\ng\nh\nj\n仑\nz xcvon\n123\ng\nK\nm\np\n匈\n拼",
+      "theme": "light"
+    },
+    {
+      "scene": "a15-synthetic-attachments-light",
+      "source": "ocr:sidebar-verified/iphone-light/a15-synthetic-attachments-light.png",
+      "surface": "iphone",
+      "text": "23:58\n<\n整理项目..\n第3步失败\n启动子任务\n启动子任务\n合成失败•失败\n查看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n杏手西 粉\n〉 3个子任务\n排队到下一条⋯\nD\nA2-测试文件.txt\n移除\n+ ◎自动~\nJo\n5\n>\nV\n合成模型 9",
+      "theme": "light"
+    },
+    {
+      "scene": "a15-thinking-enabled-light",
+      "source": "ocr:sidebar-verified/iphone-light/a15-thinking-enabled-light.png",
+      "surface": "iphone",
+      "text": "23:57\n<\n整理项目..\n第3步失败\n启动子任务\n启动子任务\n合成失败•失败\n查看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n查看原始数据\n〉 3个子任务\n深入思考已开启\n排队到下一条….\n＋◎自动~\nJo\n5\n>\nV\n>\n合成模型 9",
+      "theme": "light"
+    },
+    {
+      "scene": "account-menu",
+      "source": "ocr:sidebar-verified/mac-dark/account-menu.png",
+      "surface": "mac",
+      "text": "WeftMate\nWeftMate\n动态\n目标\n成果库\n搜索对话\n末分組\n整理项目资料\n项目\na5-tester\n本机账户：a5-tester\n本月¥0.006400•剩余100%\n0次未报告完整用量，1次未定价：费用未估算。\n设置\n耳记忆\n用量详情\n帮助/关于\n［ 退出登录\na5-tester\n跳日期\nQ\n搜索\n淡\n在电滋上创建\n和 WeftMate 聊聊\n从这里开始\n交代一个目标，或聊聊今天想做的事。\n回到底部\n模型\n合成模型",
+      "theme": "dark"
+    },
+    {
+      "scene": "archive-undo",
+      "source": "ocr:sidebar-verified/mac-dark/archive-undo.png",
+      "surface": "mac",
+      "text": "WeftMate\nWeftMate\n动态\n目标\n成果库\n搜索对话\n跳日期\nQ\n搜索\n末分組\n整理项目资料\n项目\n在电滋上创建\n口\n合成项目\n合成项目对话5\n合成项目对话4\n合成项目对话3\n合成项目对话2\n合成项目对话1\n合成项目对话0\n合成项目对话6只\n白 合成项目\n收起\n已归档「合成项目对话6」\n撤销归档\n和 WeftMate 聊聊\n3o\na5-tester\n从这里开始\n交代一个目标，或聊聊今天想做的事。\n刚刚\n回到底部\n模型\n合成模型",
+      "theme": "dark"
+    },
+    {
+      "scene": "draft-thinking-retry",
+      "source": "ocr:sidebar-verified/mac-dark/draft-thinking-retry.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n• 动态\n三 目标\n成果库\nQ 搜索对话\n末分組\n整理项目资料\n项目\n合成失败•失败\n查看使用的来源\n参数\n在「合成项目」新建对话\n任务将在电脑上的项目文件夹执行。手机只显示项目与对话。\n项目对话使用的电脑模型\n合成模型\n可读写项目文件，危险操作仍需审批。\n深入思考\n对话已创建，深入思考尚未确认。请重试保存后开始聊天。服务器暂\n不可达，请检查网络后重试。\nJo\n合成项目\n合成对话\n合成项目对话。\n合成项目对话5\n合成项目对话4\n合成项目对话3\na5-tester\n取消\n重试保存\nU\nA2-測试文件.txt\n移除\n十◎自动\n47615B87-F04E.\n移除\nD5CEA4BE-01F1..\n移除\n合成模型、\nQ.",
+      "theme": "dark"
+    },
+    {
+      "scene": "draft-thinking-saved",
+      "source": "ocr:sidebar-verified/mac-dark/draft-thinking-saved.png",
+      "surface": "mac",
+      "text": "合成对话\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n末分組\n弪理项目资料\n项目\n还没有消息\n说说你想完成什么。\n炎\n在电滋上创建\nJo\n合成项目\n合成对话\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项日对话3\na5-tester\n+\n深入思考已开启\n项目：合成项目\n向 WeftMate 说说你的目标\n合成模型、9",
+      "theme": "dark"
+    },
+    {
+      "scene": "hover-details",
+      "source": "ocr:sidebar-verified/mac-dark/hover-details.png",
+      "surface": "mac",
+      "text": "WeftMate\nWeftMate\n动态\n汽 目标\n成果库\n搜索对话\n跳日期\nQ\n搜索\n末分組\n整理项目资料\n项目\n在电滋上创建\n口\n合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话3\n合成项目对话2\n合成项目对话1\n合成项目对话0\n合成项目对话6只\n白 合成项目\n收起\n3o a5-tester\n和 WeftMate 聊聊\n从这里开始\n交代一个目标，或聊聊今天想做的事。\n刚刚\n回到底部\n模型\n合成模型",
+      "theme": "dark"
+    },
+    {
+      "scene": "narrow",
+      "source": "ocr:sidebar-verified/mac-dark/narrow.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n末分組\n整理项目资料\n项目\n合成失败•失败\n查看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n＞查看原始数据\n在电滋上创建\n口\nJo\n合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话3\n合成项目对话2\na5-tester\n排队到下一条….\nA2-測试文件.txt\n移除\n十②自动\n47615B87-F04E.\n移除\nD5CEA4BE-01F1..\n移除\n合成模型~",
+      "theme": "dark"
+    },
+    {
+      "scene": "plus-menu",
+      "source": "ocr:sidebar-verified/mac-dark/plus-menu.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n目标\n成果库\nQ\n搜索对话\n末分組\n整理项目资料\n项目\n第3步失败\n在电讀上创建\n启动子任务\n启动子任务\n合成失败•失敗\n查看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n>查看原始数据\n合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话3\n合成项目对话2\n合成项目对话1\n合成项目对话0\n〉 3个子任务\n排队到下一条….\n收起\nJo\na5-tester\n开旁聊\n这次别记\n添加文件\n区域截图\n6\n粘贴剪贴板图片\n添加合成文件\n深入思考\n合成模型、",
+      "theme": "dark"
+    },
+    {
+      "scene": "project-expanded",
+      "source": "ocr:sidebar-verified/mac-dark/project-expanded.png",
+      "surface": "mac",
+      "text": "WeftMate\nWeftMate\n动态\n目标\n成果库\n搜索对话\n跳日期\nQ\n搜索\n末分組\n整理项目资料\n项目\n炎\n在电滋上创建\n口\n合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话3\n合成项目对话2\n合成项目对话1\n合成项目对话0\n十\n收起\n3o a5-tester\n和 WeftMate 聊聊\n从这里开始\n交代一个目标，或聊聊今天想做的事。\n回到底部\n模型\n合成模型",
+      "theme": "dark"
+    },
+    {
+      "scene": "project-hover",
+      "source": "ocr:sidebar-verified/mac-dark/project-hover.png",
+      "surface": "mac",
+      "text": "WeftMate\nWeftMate\n动态\n目标\n成果库\n搜索对话\n跳日期\nQ\n搜索\n末分組\n整理项目资料\n项目\n在电滋上创建\n口\n合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话3\n合成项目对话2\n更多（2）\n十\n和 WeftMate 聊聊\n3o\na5-tester\n从这里开始\n交代一个目标，或聊聊今天想做的事。\n回到底部\n模型\n合成模型",
+      "theme": "dark"
+    },
+    {
+      "scene": "recent-five",
+      "source": "ocr:sidebar-verified/mac-dark/recent-five.png",
+      "surface": "mac",
+      "text": "WeftMate\nWeftMate\n动态\n目标\n成果库\n搜索对话\n跳日期\nQ\n搜索\n末分組\n整理项目资料\n项目\n炎\n在电脑上创建\n口\n合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话3\n合成项目对话2\n更多（2）\n•\n和 WeftMate 聊聊\n3o\na5-tester\n从这里开始\n交代一个目标，或聊聊今天想做的事。\n回到底部\n模型\n合成模型",
+      "theme": "dark"
+    },
+    {
+      "scene": "running-queue",
+      "source": "ocr:sidebar-verified/mac-dark/running-queue.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n汽 目标\n成果库\nQ 搜索对话\n末分組\n整理项目资料\n项目\n炎\n在电滋上创建\n口\n合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话3\n合成项目对话2\n合成项目对话1\n合成项目对话0\n收起\n3o\na5-tester\n复制\n> 查看原始数据\n启动子任务\n合成失败 失败\n查看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n>查看原始数据\n排队到下一条.\nU\nA2-測试文件.txt\n移除\n十\n◎自动\n47615B87-F04E..\n移除\nD5CEA4BE-01F1..\n移除\n合成模型、2",
+      "theme": "dark"
+    },
+    {
+      "scene": "running-steer",
+      "source": "ocr:sidebar-verified/mac-dark/running-steer.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n汽 目标\n成果库\nQ 搜索对话\n末分組\n整理项目资料\n项目\n炎\n在电滋上创建\n口\n合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话3\n合成项目对话2\n合成项目对话1\n合成项目对话0\n收起\nJo\na5-tester\n复制\n> 查看原始数据\n启动子任务\n合成失败 失败\n查看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n>查看原始数据\n引导当前回复..\nA2-測试文件.txt\n移除\n十\n◎自动\n47615B87-F04E..\n移除\nD5CEA4BE-01F1..\n移除\n合成模型、2",
+      "theme": "dark"
+    },
+    {
+      "scene": "subtask-list",
+      "source": "ocr:sidebar-verified/mac-dark/subtask-list.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n末分組\n整理项目资料\n项目\n口\n在电滋上创建\n合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话3\n合成项目对话2\n合成项目对话1\n合成项目对话0\n收起\n3o\na5-tester\n第3步失败\n启动子任务\n启动子任务\n合成失败•失败\n非\n3个子任务\n合成进行中\n合成完成\n合成失败\n排队到下一条..\nA2-測试文件.txt\n移除\n十\n◎自动\n47615B87-F04E..\n移除\nD5CEA4BE-01F1..\n移除\n进行中\n合成模型~\n巴用18.9秒\n完成\n0.0 秒\n失败 0.0秒",
+      "theme": "dark"
+    },
+    {
+      "scene": "subtask-step",
+      "source": "ocr:sidebar-verified/mac-dark/subtask-step.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n目标\n成果库\n搜索对话\n末分組\n整理项目资料\n项目\n口\n在电滋上创建\n合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话3\n合成项目对话2\n合成项目对话1\n合成项目对话0\n收起\n3o\na5-tester\n说明：合成失败\n错误\n合成子任务完成\n复制\n＞查看原始数据\n非3个子任务\n合成进行中\n合成完成\n合成失敗\n排队到下一条..\nA2-測试文件.txt\n移除\n十\n◎自动\n47615B87-F04E..\n移除\nD5CEA4BE-01F1..\n移除\n进行中\n合成模型~\n已用19.4秒\n完成\n0.0 秒\n失败 0.0秒",
+      "theme": "dark"
+    },
+    {
+      "scene": "subtasks-ended",
+      "source": "ocr:sidebar-verified/mac-dark/subtasks-ended.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n汽 目标\n成果库\nQ 搜索对话\n末分組\n整理项目资料\n项目\n在电滋上创建\n口\n合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话3\n合成项目对话2\n合成项目对话1\n合成项目对话0\n收起\nJo\na5-tester\n复制\n> 查看原始数据\n启动子任务\n合成失败 失败\n查看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n>查看原始数据\n排队到下一条..\nU\nA2-測试文件.txt\n移除\n十\n◎自动\n47615B87-F04E..\n移除\nD5CEA4BE-01F1..\n移除\n合成模型~9",
+      "theme": "dark"
+    },
+    {
+      "scene": "synthetic-attachments",
+      "source": "ocr:sidebar-verified/mac-dark/synthetic-attachments.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n汽 目标\n成果库\nQ 搜索对话\n末分組\n整理项目资料\n项目\n口\n炎\n在电滋上创建\n合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话3\n合成项目对话2\n合成项目对话1\n合成项目对话0\n收起\n3o\na5-tester\n第3步失败\n启动子任务\n启动子任务\n合成失败•失败\n查看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n3个子任务\n排队到下一条.\nU\nA2-測试文件.txt\n移除\n十\n◎自动\n47615B87-F04E.\n移除\nD5CEA4BE-01F1..\n移除\n合成模型、9",
+      "theme": "dark"
+    },
+    {
+      "scene": "thinking-enabled",
+      "source": "ocr:sidebar-verified/mac-dark/thinking-enabled.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n汽 目标\n成果库\nQ 搜索对话\n末分組\n整理项目资料\n项目\n在电滋上创建\n口\n合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话3\n合成项目对话2\n合成项目对话1\n合成项目对话0\n收起\nJo\na5-tester\n第3步失败\n启动子任务\n启动子任务\n合成失败•失败\n直看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n>查香原始数据\n3 个子任务\n深入思考已开启\n排队到下一条..\n十\n◎自动\n合成模型~",
+      "theme": "dark"
+    },
+    {
+      "scene": "account-menu",
+      "source": "ocr:sidebar-verified/mac-light/account-menu.png",
+      "surface": "mac",
+      "text": "◎\n•〇\nWeftMate\n（ WeftMate\n动态\n目标\n乡 成果库\nQ 搜索对话\n未分組\n整理项目资料\n项目\na5-tester\n本机账户：a5-tester\n本月¥0.006400•剩余100%\n0次未报告完整用量，1次未定价；费用未估算。\n设置\n目记忆\n用量详情\n帮助/关于\n［ 退出登录\n3o as-tester\n在电腕上创建\n⋯..\n9 跳日期Q搜索\n和 WeftMate 聊聊\n＋、\n口\n从这里开始\n交代一个目标，或聊聊今天想做的事。\n回到底部\n模型\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "archive-undo",
+      "source": "ocr:sidebar-verified/mac-light/archive-undo.png",
+      "surface": "mac",
+      "text": "WeftMate\n（ WeftMate\n动态\n目标\n乡 成果库\nQ 搜索对话\n未分組\n鍪理项目资料\n项目\n在电脑上创建\n合成项目\n合成项目对话5\n合成项目对话4\n合成项目对话3\n合成项目对话2\n合成项目对话1\n合成项目对话0\n。\n。\n•\n。\n。\n。\n收起\n已归档「合成项目对话6」\n撤销归档\nJo a5-tester\n….\nC 跳日期 Q搜索\n合成项目对话6只\n门 命成项目\n和 WeftMate 聊聊\n＋、\n口\n从这里开始\n交代一个目标，或聊聊今天想做的事。\n刚刚\n回到底部\n模型\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "draft-thinking-retry",
+      "source": "ocr:sidebar-verified/mac-light/draft-thinking-retry.png",
+      "surface": "mac",
+      "text": "••\nCS\n蹩理项目资料\n…•（C5\n（ WeftMate\n口 动态\n目标\n成果库\nQ 搜索对话\n未分組\n弪理项目资料\n项目\n合成失败•失败\n查看使用的来源\n参数\n在「合成项目」新建对话\n任务将在电脑上的项目文件夹执行。手机只显示项目与对话。\n项目对话使用的电脑模型\n•合成模型\n可该写项目文件，危险操作仍需审批。\n⑦ 深入思考\n公 对话已创建，深入思考尚未确认。请重试保存后开始聊天。服务器暂\n不可达，请检查网络后重试。\nJo\n合成项目\n合成项目对说\n合成项目对话\n合成项目对话 4\n合成项目对话 3\n合成项目对话？\na5-tester\n取消\n重试保存\nU\nA2-測试文件.Ixt\n移除\n93D5E906-660.• DCEDAC11-2670..\n移除\n移除\n合成模型\n©：",
+      "theme": "light"
+    },
+    {
+      "scene": "draft-thinking-saved",
+      "source": "ocr:sidebar-verified/mac-light/draft-thinking-saved.png",
+      "surface": "mac",
+      "text": "◎\n59\n合成对话\n…55\n… WeftMate\n动态\n目标\nS 成果库\nQ 搜索对话\n未分组.\n整理项目资料\n项目\n还没有消息\n说说你想完成什么。\n在电腩上创建\n合成项目\n合成对话\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项月对话3\nJo a5-tester\n•\n•\n。\n。\n：\n深入思考已开启\n项目：合成项目\n向 WeftMate 说说你的目标\n十Q自动\n合成模型、9",
+      "theme": "light"
+    },
+    {
+      "scene": "hover-details",
+      "source": "ocr:sidebar-verified/mac-light/hover-details.png",
+      "surface": "mac",
+      "text": "WeftMate\n（ WeftMate\n动态\n目标\nS 成果库\nQ 搜索对话\n未分組\n鍪理项目资料\n项目\n在电脑上创建\n合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话 3\n合成项目对话2\n合成项目对话1\n合成项目对话。\n。\n。\n。\n。\n。\n。\n收起\nJo a5-tester\n⋯..\nC 跳日期 Q 搜索\n合成项目对话6只\n心 合成项目\n和 WeftMate 聊聊\n＋、\n口\n从这里开始\n交代一个目标，或聊聊今天想做的事。\n刚刚\n回到底部\n模型\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "narrow",
+      "source": "ocr:sidebar-verified/mac-light/narrow.png",
+      "surface": "mac",
+      "text": "•〇\n整理项目资料\nWeftMate\n动态\n目标\n乡 成果库\nQ 搜索对话\n未分組\n鍪理项目资料\n项目\n合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话 3\n合成项月对话？\nJo a5-tester\n•\n。\n•\n。\n。\n合成失败•失败\n查看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n＞查看原始数据\n在电脑上创建\n排队到下一条…\nA2-測试文件.txt\n移除\n十◎自动\n93D5E906-660.• DCEDAC11-2670.\n移除\n移除\n合成模型、",
+      "theme": "light"
+    },
+    {
+      "scene": "plus-menu",
+      "source": "ocr:sidebar-verified/mac-light/plus-menu.png",
+      "surface": "mac",
+      "text": "整理项目资料\nWeftMate\n动态\n目标\n成果库\nQ\n搜索对话\n末分組.\n鏊理项目资料\n项目\n在电滴上创建\n合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话 3\n合成项目对话 2\n合成项目对话1\n合成项目对话0\n•\n。\n。\n。\n•\n收起\nJo a5-tester\n第3步失败\n启动子任务\n启动子任务\n合成失败•失败\n查看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n＞查看原始数帮\n〉 3个子任务\n排队到下一条⋯\n十Q自动、\n口 开旁聊\n目 这次别记\nC：\n添加文件\nH\n区域截图\n口 粘贴剪贴板图片\n添加合成文件\n深入思考\n••.\nC合成模型、只",
+      "theme": "light"
+    },
+    {
+      "scene": "project-expanded",
+      "source": "ocr:sidebar-verified/mac-light/project-expanded.png",
+      "surface": "mac",
+      "text": "◎\n•〇\n59\nWeftMate\n（ WeftMate\n动态\n目标\n§ 成果库\nQ 搜索对话\n未分组.\n整理项目资料\n项目\n在电脑上创建\n合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话 3\n合成项目对话2\n合成项目对话1\n合成项目对话。\n。\n。\n。\n。\n。\n。\n。\n收起\nJo a5-tester\nC 跳日期 Q 搜索\n和 WeftMate 聊聊\n＋、\n口\n从这里开始\n交代一个目标，或聊聊今天想做的事。\n回到底部\n模型\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "project-hover",
+      "source": "ocr:sidebar-verified/mac-light/project-hover.png",
+      "surface": "mac",
+      "text": "◎\n•〇\n59\nWeftMate\n（ WeftMate\n动态\n目标\n§ 成果库\nQ 搜索对话\n未分組\n鍪理项目资料\n项目\n在电腕上创建\n合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话 3\n合成项目对话2\n更多 （2）\n。\n。\n。\n。\n。\nJo a5-tester\nC 跳日期 Q 搜索\n和 WeftMate 聊聊\n＋、\n口\n从这里开始\n交代一个目标，或聊聊今天想做的事。\n回到底部\n模型\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "recent-five",
+      "source": "ocr:sidebar-verified/mac-light/recent-five.png",
+      "surface": "mac",
+      "text": "•〇\n（ WeftMate\n动态\n目标\nS 成果库\nQ 搜索对话\n未分組\n鍪理项目资料\n项目\n59\nWeftMate\n在电腕上创建\n合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话3\n合成项目对话2\n更多 （2）\n。\n。\n。\n。\n。\nJo a5-tester\nC 跳日期 Q 搜索\n和 WeftMate 聊聊\n＋、\n口\n从这里开始\n交代一个目标，或聊聊今天想做的事。\n回到底部\n模型\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "running-queue",
+      "source": "ocr:sidebar-verified/mac-light/running-queue.png",
+      "surface": "mac",
+      "text": "◎\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n未分組.\n鍪理项目资料\n项目\n亡 合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话 3\n合成项目对话2\n合成项目对话1\n合成项目对话0\n整理项目资料\n炎\n在电脑上创建\n。\n。\n。\n。\n。\n。\n收起\n3o as-tester\n••v\n6 CS\n复制\n＞ 查看原始数据\n启动子任务\n合成失败•失败\n查看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n＞查看原始数据\n排队到下一条.\nU\nA2-測试文件.txt\n移除\n93D5E906-660.\n移除\nDCEDAC11-2670.\n移除\n• 合成模型 9",
+      "theme": "light"
+    },
+    {
+      "scene": "running-steer",
+      "source": "ocr:sidebar-verified/mac-light/running-steer.png",
+      "surface": "mac",
+      "text": "◎\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n未分組.\n鍪理项目资料\n项目\n亡 合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话 3\n合成项目对话2\n合成项目对话1\n合成项目对话0\n整理项目资料\n在电脑上创建\n。\n。\n。\n。\n。\n。\n。\n收起\n3o as-tester\n••v\n6 CS\n复制\n＞ 查看原始数据\n启动子任务\n合成失败•失败\n查看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n＞查看原始数据\n引导当前回复…\nA2-測试文件.txt\n移除\n十◎角动\n93D5E906-660.\n移除\nDCEDAC11-2670.\n移除\n• 合成模型 9",
+      "theme": "light"
+    },
+    {
+      "scene": "subtask-list",
+      "source": "ocr:sidebar-verified/mac-light/subtask-list.png",
+      "surface": "mac",
+      "text": "◎\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n未分組.\n鍪理项目资料\n项目\n亡 合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话 3\n合成项目对话2\n合成项目对话1\n合成项目对话0\n整理项目资料\n在电脑上创建\n。\n。\n。\n•\n。\n。\n。\n收起\n3o as-tester\n⋯.\n第3步失败\n启动子任务\n启动子任务\n合成失败•失败\n米 3个子任务\n合成进行中\n合成完成\n合成失敗\n排队到下一条.\nU\nA2-測试文件.txt\n移除\n十◎廚动\n93D5E906-660.\n移除\nDCEDAC11-2670.\n移除\n…•55\n进行中 已用19.2秒\n完成 0.0秒\n失败 0.0秒\n• 合成模型 9",
+      "theme": "light"
+    },
+    {
+      "scene": "subtask-step",
+      "source": "ocr:sidebar-verified/mac-light/subtask-step.png",
+      "surface": "mac",
+      "text": "◎\n（ WeftMate\n动态\n目标\n成果库\nQ 搜索对话\n未分組.\n鍪理项目资料\n项目\n整理项目资料\n炎\n在电腕上创建\n合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话 3\n合成项目对话2\n合成项目对话1\n合成项目对话0\n。\n。\n。\n。\n。\n。\n。\n收起\n3o as-tester\n⋯.\n说明：合成失败\n错误\n合成子任务完成\n复制\n>查看原始数据\n# 3个子任务\n合成进行中\n合成完成\n合成失敗\n排队到下一条.\nU\nA2-測试文件.txt\n移除\n十◎廚动\n93D5E906-660.\n移除\nDCEDAC11-2670.\n移除\n⋯<\nK CS\n进行中 已用 19.7秒\n完成 0.0秒\n失败 0.0秒\n•合成模型、9",
+      "theme": "light"
+    },
+    {
+      "scene": "subtasks-ended",
+      "source": "ocr:sidebar-verified/mac-light/subtasks-ended.png",
+      "surface": "mac",
+      "text": "◎\n整理项目资料\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n未分組.\n鍪理项目资料\n项目\n亡 合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话 3\n合成项目对话2\n合成项目对话1\n合成项目对话0\n在电脑上创建\n。\n。\n。\n。\n。\n。\n收起\n3o as-tester\n复制\n＞ 查看原始数据\n启动子任务\n合成失败•失败\n查看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n＞查看原始数据\n排队到下一条.\nU\nA2-測试文件.txt\n移除\n93D5E906-660.\n移除\nDCEDAC11-2670.\n移除\n••v\n• 合成模型 9",
+      "theme": "light"
+    },
+    {
+      "scene": "synthetic-attachments",
+      "source": "ocr:sidebar-verified/mac-light/synthetic-attachments.png",
+      "surface": "mac",
+      "text": "◎\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n未分組.\n鍪理项目资料\n项目\n亡 合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话 3\n合成项目对话2\n合成项目对话1\n合成项目对话0\n整理项目资料\n在电脑上创建\n。\n。\n•\n。\n。\n。\n。\n收起\n3o as-tester\n⋯.\n第3步失败\n启动子任务\n启动子任务\n合成失败•失败\n查看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n> 3个子任务\n排队到下一条.\nA2-測试文件.txt\n移除\n93D5E906-660.\n移除\nDCEDAC11-2670.\n移除\n••v\n• 合成模型 9",
+      "theme": "light"
+    },
+    {
+      "scene": "thinking-enabled",
+      "source": "ocr:sidebar-verified/mac-light/thinking-enabled.png",
+      "surface": "mac",
+      "text": "◎\n整理项目资料\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n未分組\n鍪理项目资料\n项目\n在电脑上创建\n亡 合成项目\n合成项目对话6\n合成项目对话5\n合成项目对话4\n合成项目对话 3\n合成项目对话2\n合成项目对话1\n合成项目对话0\n。\n。\n。\n。\n•\n•\n•\n收起\n3o as-tester\n第3步失败\n启动子任务\n启动子任务\n合成失败•失败\n查看使用的来源\n参数\n说明：合成失败\n错误\n合成子任务完成\n复制\n>查看原始数据\n〉\n3个子任务\n深入思考已开启\n排队到下一条.\n十◎自动\n•合成模型、9",
+      "theme": "light"
+    },
+    {
+      "scene": "empty-dark",
+      "source": "ocr:states/iphone/empty-dark.png",
+      "surface": "iphone",
+      "text": "22:50\nWeftMate\nJo\n跳日期\nQ\n搜索\n米 正在读取对话⋯.\n回到底部\n和 WeftMate 聊聊\n+\n合成模型\n个",
+      "theme": "dark"
+    },
+    {
+      "scene": "empty-light",
+      "source": "ocr:states/iphone/empty-light.png",
+      "surface": "iphone",
+      "text": "22:47\nD\nC 跳日期Q搜索\nWeftMate\nJo\n..90\n45\n从这里开始\n交代一个目标，或聊聊今天想做的事。\n回到底部\n和 WeftMate 聊聊\n+\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "error-dark",
+      "source": "ocr:states/iphone/error-dark.png",
+      "surface": "iphone",
+      "text": "22:50\nWeftMate\nJo\n跳日期\nQ\n搜索\nA 模型列表暂时无法读取，请检查\n电脑连接后重试。\n重试\n回到底部\n先添加一个模型\n十\n个",
+      "theme": "dark"
+    },
+    {
+      "scene": "error-light",
+      "source": "ocr:states/iphone/error-light.png",
+      "surface": "iphone",
+      "text": "22:47\nD\nWeftMate\n⑤ 跳日期 Q搜索\nA 模型列表暂时无法读取，请检查\n电脑连接后重试。\nJo\n5\n重试\n回到底部\n先添加一个模型\n十",
+      "theme": "light"
+    },
+    {
+      "scene": "loading-dark",
+      "source": "ocr:states/iphone/loading-dark.png",
+      "surface": "iphone",
+      "text": "22:50\n心\n0\n正在打开 WeftMate...",
+      "theme": "dark"
+    },
+    {
+      "scene": "loading-light",
+      "source": "ocr:states/iphone/loading-light.png",
+      "surface": "iphone",
+      "text": "22:47\n.00\n正在打开 WeftMate..",
+      "theme": "light"
+    },
+    {
+      "scene": "no-model-dark",
+      "source": "ocr:states/iphone/no-model-dark.png",
+      "surface": "iphone",
+      "text": "22:50\nWeftMate\nJo\n跳日期\n搜索\n添加模型，开始对话\n连接一个本地或云端模型，WeftMate 就能\n开始帮你。\n设置模型\n先添加一个模型\n十\n个",
+      "theme": "dark"
+    },
+    {
+      "scene": "no-model-light",
+      "source": "ocr:states/iphone/no-model-light.png",
+      "surface": "iphone",
+      "text": "22:47\nWeftMate\nJo\n.00\n5\nC 跳日期 Q搜索\n添加模型，开始对话\n连接一个本地或云端模型，WeftMate 就能\n开始帮你。\n设置模型\n先添加一个模型\n十",
+      "theme": "light"
+    },
+    {
+      "scene": "empty-dark",
+      "source": "ocr:states/mac/empty-dark.png",
+      "surface": "mac",
+      "text": "•••\n©路日期Q\n搜索\nWeftMate\n从这里开始\n交代一个目标，或聊聊今天想做的事。\n和 WeftMate 聊取\n十×\n模型\n合成模型\n回到底部",
+      "theme": "dark"
+    },
+    {
+      "scene": "empty-light",
+      "source": "ocr:states/mac/empty-light.png",
+      "surface": "mac",
+      "text": "••• DS WeftMate\nC 跳日期 Q搜索\n从这里开始\n交代一个目标，或聊聊今天想做的事。\n回到底部\n和 WeftMate 聊职\n十\n模型 合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "error-dark",
+      "source": "ocr:states/mac/error-dark.png",
+      "surface": "mac",
+      "text": "•••\n⑨ 跳日期 Q\n搜索\nWeftMate\n公 模型列表暂时无法读取，请检查电脑连接后重试。\n重试\n回到底部\n先添加一个模型\n十～",
+      "theme": "dark"
+    },
+    {
+      "scene": "error-light",
+      "source": "ocr:states/mac/error-light.png",
+      "surface": "mac",
+      "text": "••• DS WeftMate\nC 跳日期 Q 搜索\nA 模型列表暂时无法读取，请检查电脑连接后重试。\n重试\n回到底部\n先添加一个模型\n十～",
+      "theme": "light"
+    },
+    {
+      "scene": "loading-dark",
+      "source": "ocr:states/mac/loading-dark.png",
+      "surface": "mac",
+      "text": "weftMate\nQ\n正在打升 WeftMate..",
+      "theme": "dark"
+    },
+    {
+      "scene": "loading-light",
+      "source": "ocr:states/mac/loading-light.png",
+      "surface": "mac",
+      "text": "WeftMate\n正在打开 WeftMate...",
+      "theme": "light"
+    },
+    {
+      "scene": "no-model-dark",
+      "source": "ocr:states/mac/no-model-dark.png",
+      "surface": "mac",
+      "text": "•\n跳日期 Q 搜索\nWeftMate\n添加模型，开始对话\n连接一个本地或云端模型，\nWeftMate 就能开始帮你。\n设置模型\n先添加一个模型\n十～",
+      "theme": "dark"
+    },
+    {
+      "scene": "no-model-light",
+      "source": "ocr:states/mac/no-model-light.png",
+      "surface": "mac",
+      "text": "•〇\nC 跳日期 Q搜索\nDS\nWeftMate\n添加模型，开始对话\n连接一个本地或云端模型，WeftMate 就能开始帮你。\n设置模型\n先添加一个模型",
+      "theme": "light"
+    },
+    {
+      "scene": "a7-mac-conversation-forget-dark-20261010T084803Z",
+      "source": "ocr:gallery/mac-dark/a7-mac-conversation-forget-dark-20261010T084803Z.png",
+      "surface": "mac",
+      "text": "可遗忘的合成对话\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n末分组\n可遗忘的合成对话\n可删除的合成对话\n整理项目资料\n排队与插话练习\n项目\n在电脑上添加项目后，可在这里开始对话。\n在电滋上创\nJo\na5-tester\n删除对话？\n这会永久删除对话、工作目录与经验，无法恢复。运行中的对话会先停止。\n同时忘掉从这段对话形成的记忆\n格一起忘掉3项记忆，清除1条来源。匈选删除原话也会清除其他\n对话里的对应片段。\n合成人物蓝色纸鹤（人物）\n合成资料协作关系（关系）\n偏好简洁的中文解释。（偏好）\n同时删除对话里含这句话的原话\n重新读取遗忘范围\n取消\n永久删除\n向 WeftMate 说说你的目标\n②自动\n合成模型、Q",
+      "theme": "dark"
+    },
+    {
+      "scene": "a7-mac-memory-forget-dark-20261010T084749Z",
+      "source": "ocr:gallery/mac-dark/a7-mac-memory-forget-dark-20261010T084749Z.png",
+      "surface": "mac",
+      "text": "记忆\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n末分組\n记忆详情\n偏好简洁的中文解释。\n忘掉这条记忆？\n忘掉会清除来源及以下记忆，之后的记忆导出不再包含它们。\n将忘掉3项记忆，清除1条来源。以下内容会一起忘掉：\n合成人物蓝色纸鹤（人物）\n搜索\n0 个来源\n同时删除对话里含这句话的原话\n默认保留对话原文；每选后别除对应原生对话片段及个人命令副本。以前的备份仍保留。\n完成",
+      "theme": "dark"
+    },
+    {
+      "scene": "review-mac-login-dark-20261010T084724Z",
+      "source": "ocr:gallery/mac-dark/review-mac-login-dark-20261010T084724Z.png",
+      "surface": "mac",
+      "text": "WeftMate\n登录 WeftMate\n邮箱\n密码\n忘记密码？\n还没有账号？注册\n登录\n显示",
+      "theme": "dark"
+    },
+    {
+      "scene": "review-mac-memory-dark-20261010T084736Z",
+      "source": "ocr:gallery/mac-dark/review-mac-memory-dark-20261010T084736Z.png",
+      "surface": "mac",
+      "text": "记忆\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n末分組\n可遗忘的合成对话\n可删除的合成对话\n整理项目资料\n排队与插话练习\n项目\n在电脑上添加项目后，可在这里开始对话。\nJo\na5-tester\n在电腩上创建\n且\n类别\n我的记忆\n查看记住的内容与来源，\n也可以纠正、停用或删除。\n认知\n搜索记忆\n记％服务可用\n偏好简洁的中文解释。\n当前有效\n搜索\n0 个来源",
+      "theme": "dark"
+    },
+    {
+      "scene": "a7-mac-conversation-forget-light-20261010T084711Z",
+      "source": "ocr:gallery/mac-light/a7-mac-conversation-forget-light-20261010T084711Z.png",
+      "surface": "mac",
+      "text": "• • CS 可遗忘的合成对话\n（ WeftMate\n口 动态\n目标\nS 成果库\nQ 搜索对话\n未分組\n可遗忘的合成对话\n可删除的合成对话\n整理项目资料\n排队与插话练习\n项目\n在电脑上添加项目后，可在这里开始对话。\n在电腩上创\nJo\na5-tester\n： K CS\n删除对话？\n这会永久删除对话、工作目录与经验，无法恢复。运行中的对话会先停止。\n同时忘掉从这段对话形成的记忆\n将一起忘掉3项记忆，清除1条来源。勾选删除原话也会清除其他\n对话里的对应片段。\n合成人物蓝色纸鹤（人物）\n合成资料协作关系（关系）\n偏好简洁的中文解释。（偏好）\n同时删除对话里含这句话的原话\n重新读取遗忘范围\n取消\n永久删除\n向 WeftMate 说说你的目标\n合成模型、9",
+      "theme": "light"
+    },
+    {
+      "scene": "a7-mac-memory-forget-light-20261010T084657Z",
+      "source": "ocr:gallery/mac-light/a7-mac-memory-forget-light-20261010T084657Z.png",
+      "surface": "mac",
+      "text": "•〇\n记忆\nWeftMate\n口 动态\n目标\nS 成果库\nQ 搜索对话\n末分組\n可遗忘的合成对话\n可删除的合成对话\n整理项目资料\n排队与插话练习\n项目\n在电脑上添加项目后，可在这里开始对话。\nJo\na5-tester\n在电脑上创\n记忆详情\n偏好简洁的中文解释。\n忘掉这条记忆？\n忘掉会清除来源及以下记忆，之后的记忆导出不再包含它们。\n将忘掉3项记忆，清除1条来源。以下内容会一起忘掉：\n合成人物蓝色纸鹤（人物）\n合成资料协作关系（关系）\n偏好简洁的中文解释。（偏好）\n同时删除对话里含这句话的原话\n默认保留对话原文；勾选后删除对应原生对话片段及个人命令副本。以前的备份仍保留。\n重新读取遗忘范围\n取消\n确认忘掉\n完成\nCS\n搜案\n0个来源＞",
+      "theme": "light"
+    },
+    {
+      "scene": "review-mac-login-light-20261010T084632Z",
+      "source": "ocr:gallery/mac-light/review-mac-login-light-20261010T084632Z.png",
+      "surface": "mac",
+      "text": "weftMate\n登录 WeftMate\n邮箱\n密码\n忘记密码？\n还没有账号？注册\n登录\n显示",
+      "theme": "light"
+    },
+    {
+      "scene": "review-mac-memory-light-20261010T084644Z",
+      "source": "ocr:gallery/mac-light/review-mac-memory-light-20261010T084644Z.png",
+      "surface": "mac",
+      "text": "••\n记忆\n… WeftMate\n动态\n目标\n§ 成果库\nQ 搜索对话\n末分組\n可遗忘的合成对话\n可删除的合成对话\n整理项目资料\n排队与插话练习\n项目\n在电脑上添加项目后，可在这里开始对话。\nJo a5-tester\n炎\n在电滴上创建\n我的记忆\n查看记住的内容与来源，也可以纠正、停用或删除。\n类别 认知\ns2\n搜索记忆\n记忆服务可用\n偏好简洁的中文解释。\n当前有效\n搜案\n0 个来源＞",
+      "theme": "light"
+    },
+    {
+      "scene": "no-model-dark",
+      "source": "ocr:large-text/no-model-dark.png",
+      "surface": "iphone",
+      "text": "运营商\n04:20\nWeftMate\nJo\n5\n⑤C\n连接一个本地\n或云端模型，\nWeftMate 就\n能开始帮你。\n设置模型\n先添加模型\n十",
+      "theme": "dark"
+    },
+    {
+      "scene": "no-model-light",
+      "source": "ocr:large-text/no-model-light.png",
+      "surface": "iphone",
+      "text": "运营商\nD\n04:22\nWeftMate\nJo\n©Q\n连接一个本地\n或云端模型，\nWeftMate 就\n能开始帮你。\n设置模型\n先添加模型\n十\n0\n5S",
+      "theme": "light"
+    },
+    {
+      "scene": "launch-1",
+      "source": "ocr:mac-launches/launch-1.png",
+      "surface": "mac",
+      "text": "◎\nK\nWeftMate\n（ WeftMate\n动态\n目标\n成果库\nQ 搜索对话\n来分組\n临时对话•合成对话\n合成旁聊•已停止\n合成旁聊•失敗\n合成旁聊•成功\n项目\n在电脑上添加项目后，可在这里开始对话。\n炎\n。\n。\n。\n在电脑上创建\nJo a5-tester\n跳日期 Q搜索\n查看更早记录\n〉\n2026年10月8日\n〉 昨天\nV今大\n合成记录 9983：用于日期、搜索与滚动验证。\n合成记录 9985：用于日期、搜索与滚动验证。\n》 要运行命令：npm run verlfy\n还有1个待批准\n和 WeftMate 聊聊\n＋、\n48糸\n48糸\n35 系\n合成记录 9984：用于日期、搜索与滚动验证。\n回到底部\n合成记录9986：用于日期、搜索与滚列道址。\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "launch-30",
+      "source": "ocr:mac-launches/launch-30.png",
+      "surface": "mac",
+      "text": "WeftMate\nWeftMate\n动态\n目标\n成果库\nQ 搜索对话\n末分组.\n临时对话•合成对话\n合成旁聊 已停止\n合成旁聊•失敗\n合成旁聊•成功\n项目\n在电脑上添加项目后，可在这里开始对话。\n炎\n在电腩上创建\nJo\na5-tester\n跳日期\n1Q\n搜索\n》 读取文件\n》 运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n湖用扩展服务\n>\n运行命令 npm run verity\n运行命令 npm run release\nV成功•已完成：合成任务完成。\n失败•执行失败：合成检查失败，请检查输入文件。\n停止•已停止：已停止当前任务。\n> 要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\nA8_WAII 成土河陌仕\n回到底部\n批准\n拒绝\n合成模型",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-approval-dark",
+      "source": "ocr:main-final/iphone-dark/a16-approval-dark.png",
+      "surface": "iphone",
+      "text": "04:57\nWeftMate\nJo\n© 跳日期Q搜索\nA8_WAIT 合成主对话任务\n〉 读取文件\n〉 运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n＞ 调用扩展服务\n〉 运行命令 npm run verify\n〉 运行命令 npm run release\n成功•已完成：合成任务完成。\nA\n失败 •执行失败：合成检查失败，请\n检查输入文件。\n>\n口 停止•已停止：已停止当前任务。\n回到底部\n〉要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n+\n批准\n拒绝\n合成模型",
+      "theme": "dark"
+    },
+    {
+      "scene": "a16-assistant-message-menu-dark",
+      "source": "ocr:main-final/iphone-dark/a16-assistant-message-menu-dark.png",
+      "surface": "iphone",
+      "text": "04:56\nWeftMate\n3o\n© 跳日期\nQ\n搜索\nA16查找纸船\n<\n1/2\nA16查找纸船 9500：用于日期、搜索\n与滚动验证。\n合成记录9501：用于日期、搜索与\n滚动验证。\n索与\n合成i\n滚动！\n叱\n〉要运\n还有1个\n和 Wefi\n+\n55\n9月30日 02:23\n复制\n有用\n没用\n重新生成\n导出\n引用\n开旁聊\n这次别记\n到底部\n拒绝",
+      "theme": "dark"
+    },
+    {
+      "scene": "a16-composer-menu-dark",
+      "source": "ocr:main-final/iphone-dark/a16-composer-menu-dark.png",
+      "surface": "iphone",
+      "text": "04:57\nWeftMate\nJo\n© 跳日期\nQ 搜索\n滚动验让。\n合成记录9999：用于日期、搜索与滚动验证。\nA8_WAIT 合成主对话任务\n〉 读取文件\n〉 运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n〉 调用扩展服务\n〉 运行命令 npm run verify\n> 运行命令 npm run release\n\\ 成功•已完成：合成任务完成。\n文件\n败，\n相机\n照片\n准\n开旁聊\n且\n这次别记\n添加合成附件\n合成模型\n>\n回到底部\n拒绝",
+      "theme": "dark"
+    },
+    {
+      "scene": "a16-date-located-dark",
+      "source": "ocr:main-final/iphone-dark/a16-date-located-dark.png",
+      "surface": "iphone",
+      "text": "04:54\nWeftMate\n© 跳日期Q搜索\nA8_WAIT 合成主对话任务\n> 读取文件\n〉 运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n〉 调用扩展服务\n〉 运行命令 npm run verify\n> 运行命令 npm run release\n成功•已完成：合成任务完成。\nA\n失败 •执行失败：合成检查失败，请\n检查输入文件。\n口 停止•已停止：已停止当前任务。\n回到底部\n〉要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n+\n批准\n拒绝\n合成模型\no",
+      "theme": "dark"
+    },
+    {
+      "scene": "a16-expanded-day-dark",
+      "source": "ocr:main-final/iphone-dark/a16-expanded-day-dark.png",
+      "surface": "iphone",
+      "text": "04:55\nWeftMate\nJo\n跳日期\n搜索\n查看更早记录\n~2026年10月8日\n48条\n合成记录9918：用于日期、搜索与\n滚动验证。\n合成记录 9919：用于日期、搜索与滚动验证。\n合成记录9920：用于日期、搜索与\n滚动验证。\n合成记录9921：用于日期、搜索与滚动验证。\n合成记录 9922：用于日期\n坤去上\n滚动验证。\n回到底部\n〉要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n+\n批准\n拒绝\n合成模型",
+      "theme": "dark"
+    },
+    {
+      "scene": "a16-export-preview-dark",
+      "source": "ocr:main-final/iphone-dark/a16-export-preview-dark.png",
+      "surface": "iphone",
+      "text": "04:56\n导出此条回复\n已隐藏常见凭据和本机路径，请确认预览后保存。\n合成记录9501：用于日期、搜索与滚动验证。\n取消\n保存 Markdown",
+      "theme": "dark"
+    },
+    {
+      "scene": "a16-export-save-panel-dark",
+      "source": "ocr:main-final/iphone-dark/a16-export-save-panel-dark.png",
+      "surface": "iphone",
+      "text": "04:56\n我的iPhone\n••\n保存\nQ\n搜索\n我的iPhone为空\n保存为\nWeftMate-reply\n标签",
+      "theme": "dark"
+    },
+    {
+      "scene": "a16-first-screen-dark",
+      "source": "ocr:main-final/iphone-dark/a16-first-screen-dark.png",
+      "surface": "iphone",
+      "text": "04:54\nWeftMate\n© 跳日期Q搜索\nA8_WAIT 合成主对话任务\n> 读取文件\n〉 运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n〉 调用扩展服务\n〉 运行命令 npm run verify\n> 运行命令 npm run release\n成功•已完成：合成任务完成。\n>\nA\n失败 •执行失败：合成检查失败，请\n检查输入文件。\n口 停止•已停止：已停止当前任务。\n回到底部\n〉要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n+\n批准\n拒绝\n合成模型\no",
+      "theme": "dark"
+    },
+    {
+      "scene": "a16-native-date-picker-dark",
+      "source": "ocr:main-final/iphone-dark/a16-native-date-picker-dark.png",
+      "surface": "iphone",
+      "text": "04:54\n11\n12\n13\n14\n15\n16\n17\nC\n© 跳日期\nQ\n搜索\nA8_WAIT 合成主对话任务\n> 读取文件\n〉 运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n〉 调用扩展服务\n〉 运行命令 npm run verify\n> 运行命令 npm run release\n成功•已完成：合成任务完成。\nA\n失败 •执行失败：合成检查失败，请\n检查输入文件。\n口 停止•已停止：已停止当前任务。\n回到底部\n〉要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n+\n批准\n拒绝\n合成模型\no",
+      "theme": "dark"
+    },
+    {
+      "scene": "a16-resources-dark",
+      "source": "ocr:main-final/iphone-dark/a16-resources-dark.png",
+      "surface": "iphone",
+      "text": "04:54\n输出与来源\n输出内容\n还没有输出内容\n来源\n读取文件\nnotes.md\n运行命令\n搜索内容\n完成",
+      "theme": "dark"
+    },
+    {
+      "scene": "a16-result-opened-dark",
+      "source": "ocr:main-final/iphone-dark/a16-result-opened-dark.png",
+      "surface": "iphone",
+      "text": "04:57\n<\n合成旁聊⋯.\n•••\nC\n相关上下文尚未带入\nA8_WAIT 合成旁聊任务 completed\n读取了1个文件、已运行1个命令〉\n资料已经核对，接下来搜索并运行检查。\n搜索了1次〉\n合成任务完成。\n向 WeftMate 说说你的目标\n+\n◎自动\n合成模型 9\nT",
+      "theme": "dark"
+    },
+    {
+      "scene": "a16-returned-source-dark",
+      "source": "ocr:main-final/iphone-dark/a16-returned-source-dark.png",
+      "surface": "iphone",
+      "text": "04:56\nL\nWeftMate\nJo\n跳日期\nQ\n搜索\nA16查找纸船\n<\n1/2\nA16查找纸船 9500：用于日期、搜索\n与滚动验证。\n合成记录9501：用于日期、搜索与\n滚动验证。\n合成记录9502：用于日期、搜索与\n滚动验证。\n合成记录9503：用于日期、搜索与\n滚动验证。\n合成记录 9504：用于日期\n滚动验讦.\n回到底部\n〉要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n+\n批准\n拒绝\n合成模型",
+      "theme": "dark"
+    },
+    {
+      "scene": "a16-search-first-dark",
+      "source": "ocr:main-final/iphone-dark/a16-search-first-dark.png",
+      "surface": "iphone",
+      "text": "04:55\nWeftMate\nJo\n跳日期\nQ\n搜索\nA16查找纸船\n<\n1/2\nA16查找纸船 9500：用于日期、搜索\n与滚动验证。\n回到底部\n〉要运行命令：npm run verify\n批准\n拒绝\n还有1个待批准\n和 WeftMate 聊聊\n+\n合成模型\n我你在这不是一好个v\nq\nw\ne\nt\ny\nU\ni\nO\np\na\nS\nd\nf\ng\nh\nj\nK\nZ\n×\nC\nV\nb\nn\nm\n123\n心\n拼\n仑",
+      "theme": "dark"
+    },
+    {
+      "scene": "a16-search-next-dark",
+      "source": "ocr:main-final/iphone-dark/a16-search-next-dark.png",
+      "surface": "iphone",
+      "text": "04:55\nWeftMate\n3o\n跳日期\nQ\n搜索\nA16查找纸船\nQ\n<\n212〉\nA16查找纸船 9520：用于日期、搜索\n与滚动验证。\n回到底部\n〉要运行命令：npm run verify\n批准\n拒绝\n还有1个待批准\n和 WeftMate 聊聊\n+\n合成模型\n我你在这不是一好仪v\nq\nw\ne\nt\ny\nU\ni\nO\np\na\nS\nd\nf\ng\nh\nj\nK\nZ\n×\nC\nV\nb\nn\nm\n123\n心\n拼\n仑",
+      "theme": "dark"
+    },
+    {
+      "scene": "a16-sent-dark",
+      "source": "ocr:main-final/iphone-dark/a16-sent-dark.png",
+      "surface": "iphone",
+      "text": "04:57\nWeftMate\n3o\n© 跳日期\nQ 搜索\n滚动验让。\n合成记录9999：用于日期、搜索与滚动验证。\nA8_WAIT 合成主对话任务\n〉 读取文件\n〉 运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n〉 调用扩展服务\n〉 运行命令 npm run verify\n> 运行命令 npm run release\n\\ 成功•已完成：合成任务完成。\n个\n回到底部\n〉 要运行命令：npm run verify\n还有1个待批准\n批准\n拒绝\nA16-synthetic.txt\n移除\nA16合成主对话发送\n+\n合成模型\n核对\n原\n请求\n继续原\n请求\n待核对",
+      "theme": "dark"
+    },
+    {
+      "scene": "a16-side-source-dark",
+      "source": "ocr:main-final/iphone-dark/a16-side-source-dark.png",
+      "surface": "iphone",
+      "text": "04:56\n合成对话\n＜ 返回来源消息\n相关上下文尚未带入\n米 正在读取⋯.\n向 WeftMate 说说你的目标\n◎ 审批模式、米\n模型 9\n个",
+      "theme": "dark"
+    },
+    {
+      "scene": "a16-temporary-dark",
+      "source": "ocr:main-final/iphone-dark/a16-temporary-dark.png",
+      "surface": "iphone",
+      "text": "04:57\n临时对话\n临时对话•不会形成记忆，30 天后自动删除\n* 正在读取…\n向 WeftMate 说说你的目标\n⑦自动\n模型 9\n临时对话•不会形成记忆，30 天后自动删除",
+      "theme": "dark"
+    },
+    {
+      "scene": "a16-temporary-expired-dark",
+      "source": "ocr:main-final/iphone-dark/a16-temporary-expired-dark.png",
+      "surface": "iphone",
+      "text": "04:58\n会话已变更\n返回会话列表后刷新。",
+      "theme": "dark"
+    },
+    {
+      "scene": "a16-temporary-expiry-dark",
+      "source": "ocr:main-final/iphone-dark/a16-temporary-expiry-dark.png",
+      "surface": "iphone",
+      "text": "04:58\n临时对话\n2o\n临时对话，不会形成记忆，30天后自动删除\n还没有消息\n说说你想完成什么。\n取消\n自动删除\n1天\n7天\n30天\n不自动删除",
+      "theme": "dark"
+    },
+    {
+      "scene": "a16-temporary-menu-dark",
+      "source": "ocr:main-final/iphone-dark/a16-temporary-menu-dark.png",
+      "surface": "iphone",
+      "text": "04:58\n<\n临时对记\n本对话用量\nVE\n临时对话．不会形成\n此对话不形成记忆\n使用已有记忆\n自动删除•30天\n父置顶\n标记为未读\n重命名\n分叉\n移至项目\n三 移至分组\n归档\n>\n>\n向 WeftMate 说说你的目标\n+\n自动\n临时对话•不会形成记忆，30 天后自动删除\n合成模型 9",
+      "theme": "dark"
+    },
+    {
+      "scene": "a16-temporary-recall-off-dark",
+      "source": "ocr:main-final/iphone-dark/a16-temporary-recall-off-dark.png",
+      "surface": "iphone",
+      "text": "04:58\n<\n临时对记\n山 本对话用量\n临时对话•不会形成\n且\n此对话不形成记忆\n使用已有记忆\n自动删除•7天\n父置顶\n标记为未读\n重命名\n分叉\n移至项目\n三 移至分组\n司归档\n>\n>\n向 WeftMate 说说你的目标\n+\n⑦自动\n临时对话•不会形成记忆，7天后自动删除\n合成模型 9",
+      "theme": "dark"
+    },
+    {
+      "scene": "a16-user-message-menu-dark",
+      "source": "ocr:main-final/iphone-dark/a16-user-message-menu-dark.png",
+      "surface": "iphone",
+      "text": "04:55\nWeftMate\n3o\n跳日期\nQ\n搜索\nA16查找纸船\n<\n1/2\n>\nA16查找纸船9500：用于日期、搜索\n与滚动验证。\n合成讠\n滚动！\n9月30日 01:53\n复制\n开旁聊\n亘 这次别记\n合成记录 9503：用于日期、搜索与\n滚动验证。\n！索与\n合成记录 9504：用于日期\n滚动验证.\n回到底部\n〉要运行命令：npm run verify\n还有1个待批准\n和 WeftMate 聊聊\n+\n批准\n拒绝\n合成模型\n。",
+      "theme": "dark"
+    },
+    {
+      "scene": "a16-temporary-expiry-light",
+      "source": "ocr:menu-policy-light/iphone-light/a16-temporary-expiry-light.png",
+      "surface": "iphone",
+      "text": "05:01\n<\n临时对话\n。。\nJo\n。今口\n5\n临时对话•不会形成记忆，30 天后自动删除\n还没有消息\n说说你想完成什么。\n取消\n自动删除\n1天\n7天\n30天\n不自动删除",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-temporary-menu-light",
+      "source": "ocr:menu-policy-light/iphone-light/a16-temporary-menu-light.png",
+      "surface": "iphone",
+      "text": "05:01\n<\n临时对记\n本对话用量\n临时对话．不会形成\nv 目 此对话不形成记忆\nV DD 使用已有记忆\n© 自动删除•30天\n识\n食置顶\n标记为未读\n重命名\n口分叉\n移至项目\n：三 移至分组\n日归档\n>\n向 WeftMate 说说你的目标\n+ ◎自动、\n临时对话•不会形成记忆，30 天后自动删除\n合成模型、9",
+      "theme": "light"
+    },
+    {
+      "scene": "a7-iphone-archived-dark-20261010T083615Z",
+      "source": "ocr:menus/iphone-dark/a7-iphone-archived-dark-20261010T083615Z.png",
+      "surface": "iphone",
+      "text": "01:33\n完成\n已归档\n蓝色纸鹤\n口 蓝色纸鹤资料\n〉夕恢复⋯\n我你在这不是一好 ～\nq\nw\ne\nt\ny\nU\ni\nO\np\na\nS\nZ\nd\n×\nf\nC\ng\nV\nh\nb\nj\nn\nK\nm\n123\n心\n拼\n仑",
+      "theme": "dark"
+    },
+    {
+      "scene": "a7-iphone-archived-menu-dark-20261010T083615Z",
+      "source": "ocr:menus/iphone-dark/a7-iphone-archived-menu-dark-20261010T083615Z.png",
+      "surface": "iphone",
+      "text": "01:34\n完成\n已归档\n搜索已归档对话\n可遗忘（\nq\nW\ne\nt\ny\nU\nO\np\na\nS\nd\n×\nf\ng\n123\nZ\n心\nC\nV\nh\nb\nn\nK\nm\n拼\n仑\n9",
+      "theme": "dark"
+    },
+    {
+      "scene": "a7-iphone-archived-read-only-dark-20261010T083615Z",
+      "source": "ocr:menus/iphone-dark/a7-iphone-archived-read-only-dark-20261010T083615Z.png",
+      "surface": "iphone",
+      "text": "01:34\n<\n蓝色纸鹤..\n••\nJo\n还没有消息\n说说你想完成什么。\n已归档，恢复后可以发送消息 恢复对话\n向 WeftMate 说说你的目标\n◎ 自动\n模型 9\n个\n当前电脑会话暂不能接收消息。草稿保留在本机。",
+      "theme": "dark"
+    },
+    {
+      "scene": "a7-iphone-conversation-forget-dark-20261010T083615Z",
+      "source": "ocr:menus/iphone-dark/a7-iphone-conversation-forget-dark-20261010T083615Z.png",
+      "surface": "iphone",
+      "text": "01:34\n删除对话？\n这会永久删除对话、工作目录与经验，无法\n恢复。运行中的对话会先停止。\n同时忘掉从这段对话形成的记忆\n将一起忘掉3项记忆，清除1条来源。勾选\n删除原话也会清除其他对话里的对应片段。\n合成人物蓝色纸鹤（人物）\n合成资料协作关系（关系）\n偏好简洁的中文解释。（偏好）\n• 同时删除对话里含这句话的原话\n重新读取遗忘范围\n取消\n永久删除",
+      "theme": "dark"
+    },
+    {
+      "scene": "a7-iphone-memory-forget-dark-20261010T083615Z",
+      "source": "ocr:menus/iphone-dark/a7-iphone-memory-forget-dark-20261010T083615Z.png",
+      "surface": "iphone",
+      "text": "01:35\n忘掉这条记忆？\n忘掉会清除来源及以下记忆，之后的记忆导出\n不再包含它们。\n将忘掉3项记忆，清除1条来源。以下内容会\n一起忘掉：\n合成人物蓝色纸鹤（人物）\n合成资料协作关系（关系）\n偏好简洁的中文解释。（偏好）\nC\n同时删除对话里含这句话的原话\n默认保留对话原文；勾选后删除对应原生对话片段及个人命令\n副本。以前的备份仍保留。\n重新读取遗忘范围\n取消 确认忘掉",
+      "theme": "dark"
+    },
+    {
+      "scene": "a7-iphone-swipe-actions-expanded-dark-20261010T083615Z",
+      "source": "ocr:menus/iphone-dark/a7-iphone-swipe-actions-expanded-dark-20261010T083615Z.png",
+      "surface": "iphone",
+      "text": "01:33\n0\n×\n对话操作\n且\n此对话不形成记忆\n使用已有记忆\n自动删除•30天\n可\n可\n置顶\n标记为未读\n重命名\n分叉\n移至项目\n移至分组\n归档\n删除",
+      "theme": "dark"
+    },
+    {
+      "scene": "review-iphone-session-menu-dark-20261010T083615Z",
+      "source": "ocr:menus/iphone-dark/review-iphone-session-menu-dark-20261010T083615Z.png",
+      "surface": "iphone",
+      "text": "01:31\n<\nWeftMate\nJo\n动态\n目标\n未分组\n可删除的合成对话\n且\n此对话不形成记忆\n使用已有记忆\n自动删除•30天＞\n>\n>\n>\n>\n可\n置顶\n标记为未读\n重命名\n分叉\n移至项目\n移至分组\n归档\n删除\n搜系灯咕",
+      "theme": "dark"
+    },
+    {
+      "scene": "a14-iphone-forgotten",
+      "source": "ocr:offline/iphone-dark/a14-iphone-forgotten.png",
+      "surface": "iphone",
+      "text": "04:18\n离线模式\n对话 新对话 重新连接\n电脑离线：只能聊天和用记忆，不能操作电脑\n电脑离线：只能聊天和用记忆，不能操作电脑\n聊一聊..\n个",
+      "theme": "dark"
+    },
+    {
+      "scene": "a14-iphone-memory",
+      "source": "ocr:offline/iphone-dark/a14-iphone-memory.png",
+      "surface": "iphone",
+      "text": "04:17\n.00\n离线模式\n对话 新对话 重新连接\n电脑离线：只能聊天和用记忆，不能操作电脑\n我喝茶喜欢什么？\n你喜欢茉莉花茶，不加糖。\n电脑上线后自动同步\n电脑上线后自动同步\n电脑离线：只能聊天和用记忆，不能操作电脑\n聊一聊…\n个\nqwer\nt\nyuiO\nasd\nf\ng\nh\nj\n仑\nz xcvon\n123\ng\nK\nm\np\n匈\n拼",
+      "theme": "dark"
+    },
+    {
+      "scene": "a14-iphone-preference",
+      "source": "ocr:offline/iphone-dark/a14-iphone-preference.png",
+      "surface": "iphone",
+      "text": "04:17\n.00\n离线模式\n对话 新对话 重新连接\n电脑离线：只能聊天和用记忆，不能操作电脑\n我喝茶喜欢什么？\n你喜欢茉莉花茶，不加糖。\n电脑上线后自动同步\n我徒步用墨绿色双肩背包。\n收到，你徒步用墨绿色双肩背包。\n电脑上线后自动同步\n电脑上线后自动同步\n电脑离线：只能聊天和用记忆，不能操作电脑\n聊一聊⋯\n个\nqwer\nt\nyuio\nasd\nf\ng\nh\nj\n仑\nz xcvon\n123\ng\nK\nm\np\n匈\n拼",
+      "theme": "dark"
+    },
+    {
+      "scene": "a14-iphone-synced",
+      "source": "ocr:offline/iphone-dark/a14-iphone-synced.png",
+      "surface": "iphone",
+      "text": "04:18\n离线对话\n对话 新对话 返回 重新连接\n我喝茶喜欢什么？\n你喜欢茉莉花茶，不加糖。\n已同步\n我徒步用墨绿色双肩背包。\n收到，你徒步用墨绿色双肩背包。\n已同步\n已同步",
+      "theme": "dark"
+    },
+    {
+      "scene": "a14-iphone-forgotten",
+      "source": "ocr:offline/iphone-light/a14-iphone-forgotten.png",
+      "surface": "iphone",
+      "text": "04:16\n离线模式\n对话 新对话 重新连接\n电脑离线：只能聊天和用记忆，不能操作电脑\n电脑离线：只能聊天和用记忆，不能操作电脑\n聊一聊..\n个",
+      "theme": "light"
+    },
+    {
+      "scene": "a14-iphone-memory",
+      "source": "ocr:offline/iphone-light/a14-iphone-memory.png",
+      "surface": "iphone",
+      "text": "04:16\n.00\n离线模式\n对话 新对话 重新连接\n电脑离线：只能聊天和用记忆，不能操作电脑\n我喝茶喜欢什么？\n你喜欢茉莉花茶，不加糖。\n电脑上线后自动同步\n电脑上线后自动同步\n电脑离线：只能聊天和用记忆，不能操作电脑\n聊一聊…\n个\nqwer\nt\nyuiO\nasd\nf\ng\nh\nj\n仑\nz xcvon\n123\ng\nK\nm\np\n匈\n拼",
+      "theme": "light"
+    },
+    {
+      "scene": "a14-iphone-preference",
+      "source": "ocr:offline/iphone-light/a14-iphone-preference.png",
+      "surface": "iphone",
+      "text": "04:16\n.00\n离线模式\n对话 新对话 重新连接\n电脑离线：只能聊天和用记忆，不能操作电脑\n我喝茶喜欢什么？\n你喜欢茉莉花茶，不加糖。\n电脑上线后自动同步\n我徒步用墨绿色双肩背包。\n收到，你徒步用墨绿色双肩背包。\n电脑上线后自动同步\n电脑上线后自动同步\n电脑离线：只能聊天和用记忆，不能操作电脑\n聊一聊…\n个\nqwer\nt\nyuio\nasd\nf\ng\nh\nj\n仑\nz xcvon\n123\ng\nK\nm\np\n匈\n拼",
+      "theme": "light"
+    },
+    {
+      "scene": "a14-iphone-synced",
+      "source": "ocr:offline/iphone-light/a14-iphone-synced.png",
+      "surface": "iphone",
+      "text": "04:16\n离线对话\n对话 新对话 返回 重新连接\n我喝茶喜欢什么？\n你喜欢茉莉花茶，不加糖。\n已同步\n我徒步用墨绿色双肩背包。\n收到，你徒步用墨绿色双肩背包。\n已同步\n已同步",
+      "theme": "light"
+    },
+    {
+      "scene": "a17-panel-account-dark",
+      "source": "ocr:panels/iphone-dark/a17-panel-account-dark.png",
+      "surface": "iphone",
+      "text": "04:19\n跳日期\nQ\na5-tester\n本机账户：a5-tester\n本月 ¥0.000000 0\n次请求\nE记忆\n④健康\n交代一个目\n①\n设置\n帮助 /关于\n［ 退出登录\n和 WeftMate 聊聊\n+\n合成模型",
+      "theme": "dark"
+    },
+    {
+      "scene": "a17-panel-camera-unavailable-dark",
+      "source": "ocr:panels/iphone-dark/a17-panel-camera-unavailable-dark.png",
+      "surface": "iphone",
+      "text": "04:19\nWeftMate\nJo\n跳日期\nQ\n搜索\nA 相机暂不可用，可从照片或文件\n添加。\n重试\n和 WeftMate 聊聊\n+\n合成模型の",
+      "theme": "dark"
+    },
+    {
+      "scene": "a17-panel-files-dark",
+      "source": "ocr:panels/iphone-dark/a17-panel-files-dark.png",
+      "surface": "iphone",
+      "text": "04:19\n最近项目\nX\n搜索\n无最近项目\n最近打开的文稿将在此处显示。\n最近项目\n共享\n浏览",
+      "theme": "dark"
+    },
+    {
+      "scene": "a17-panel-photos-dark",
+      "source": "ocr:panels/iphone-dark/a17-panel-photos-dark.png",
+      "surface": "iphone",
+      "text": "04:19\nX\n正在载入.",
+      "theme": "dark"
+    },
+    {
+      "scene": "a17-panel-plus-dark",
+      "source": "ocr:panels/iphone-dark/a17-panel-plus-dark.png",
+      "surface": "iphone",
+      "text": "04:19\nWeftMate\nJo\nQ 跳日期 Q搜索\n从这里开始\n交代一个目标，或聊聊今天想做的事。\n且\n文件\n相机\n照片\n开旁聊\n这次别记\n个",
+      "theme": "dark"
+    },
+    {
+      "scene": "a11-iphone-move-project-dark",
+      "source": "ocr:projects/iphone-dark/a11-iphone-move-project-dark.png",
+      "surface": "iphone",
+      "text": "04:14\n<\nWeftMate\n3o\n动态\n目标\n待移动的合成对话\n目 此对话不形成记忆\nV D 使用已有记忆\n自动删除•30天＞\n公置顶\n标记为未读\n重命名\n十\n移至项目\n<\n•\n从下一回合使用项目文件\n夹，之前的文件与经验⋯\n合成资料\n移出项目\n技系刈\n>\n>\n>",
+      "theme": "dark"
+    },
+    {
+      "scene": "a11-iphone-project-moved-dark",
+      "source": "ocr:projects/iphone-dark/a11-iphone-project-moved-dark.png",
+      "surface": "iphone",
+      "text": "04:15\n<\n待移动的….\n••\nJo\n还没有消息\n说说你想完成什么。\n已移至项目「合成资料」。从下一回合使用项目文件夹；之前的文件\n与经验留在原目录。\n向 WeftMate 说说你的目标\n◎自动\n合成模型v9\n个",
+      "theme": "dark"
+    },
+    {
+      "scene": "a11-iphone-project-new-conversation-dark",
+      "source": "ocr:projects/iphone-dark/a11-iphone-project-new-conversation-dark.png",
+      "surface": "iphone",
+      "text": "04:14\n<\nWeftMate\n动态\n目标\n成果库\n未分组\n<\n受限聊天\n在「合成资料」新建对话\n任务将在电脑上的项目文件夹执行。手机只显示\n项目与对话。\n合成模型\n可读写项目文件，危险操作仍需审批。\n取消\n新建对话",
+      "theme": "dark"
+    },
+    {
+      "scene": "a11-iphone-project-sent-dark",
+      "source": "ocr:projects/iphone-dark/a11-iphone-project-sent-dark.png",
+      "surface": "iphone",
+      "text": "04:14\n合成对话\n•••\nA11合成项目消息\n正在处理合成目标。\n合成任务完成。\n项目：合成资料\n向 WeftMate 说说你的目标\n＋◎自动、\n合成模型 9\n个\n我你在这不是一好仪～\nq\nw\ne\nt\ny\nU\ni\nO\np\na\n123\nS\nZ\n心\nd\n×\nf\nC\ng\nV\nh\nb\nj\nn\n拼\nK\nm\n仑",
+      "theme": "dark"
+    },
+    {
+      "scene": "a11-iphone-projects-list-dark",
+      "source": "ocr:projects/iphone-dark/a11-iphone-projects-list-dark.png",
+      "surface": "iphone",
+      "text": "04:14\n<\nWeftMate\n动态\n目标\n成果库\n未分组\n受限聊天\n待移动的合成对话\n项目\n合成资料\n十\n项目原有对话\n搜索对话\n>\n>",
+      "theme": "dark"
+    },
+    {
+      "scene": "a11-iphone-restricted-sent-dark",
+      "source": "ocr:projects/iphone-dark/a11-iphone-restricted-sent-dark.png",
+      "surface": "iphone",
+      "text": "04:15\n受限聊天\n••\nJo\nA11合成受限聊天\n正在处理合成目标。\n合成任务完成。\n这台电脑已有执行账号。当前账号仅可聊天，不能操作电脑或读取\n原账号资料；请在电脑退出后登录原账号。\n向 WeftMate 说说你的目标\n合成模型 9\n个\n我你在这不是一好仪～\nq\nw\ne\nt\ny\nU\ni\nO\np\na\nS\nZ\nd\n×\nf\nC\ng\nV\nh\nb\n123\nj\nn\n拼\nK\nm\n仑",
+      "theme": "dark"
+    },
+    {
+      "scene": "a11-iphone-restricted-session-dark",
+      "source": "ocr:projects/iphone-dark/a11-iphone-restricted-session-dark.png",
+      "surface": "iphone",
+      "text": "04:15\n<\n受限聊天\n•••\nJo\n还没有消息\n说说你想完成什么。\n这台电脑已有执行账号。当前账号仅可聊天，不能操作电脑或读取\n原账号资料；请在电脑退出后登录原账号。\n向 WeftMate 说说你的目标\n合成模型v9\n个",
+      "theme": "dark"
+    },
+    {
+      "scene": "review-iphone-appearance-dark-20261010T101715Z",
+      "source": "ocr:settings-final/iphone-dark/review-iphone-appearance-dark-20261010T101715Z.png",
+      "surface": "iphone",
+      "text": "03:14\n<\n外观\n颜色模式\n选择适合当前环境的颜色模式，保存到这\n台设备。\n浅色\n跟随系统\n完成\n主题色\n石墨\n按钮、选中状态与交互提示使用统一主题色。\n字号\n随系统文字大小与辅助功能设置调整。\n系统默认\n小纬形象",
+      "theme": "dark"
+    },
+    {
+      "scene": "review-iphone-conversation-menu-dark-20261010T101715Z",
+      "source": "ocr:settings-final/iphone-dark/review-iphone-conversation-menu-dark-20261010T101715Z.png",
+      "surface": "iphone",
+      "text": "03:16\n<\n整理项目.\n山 本对话用量\n乡项目报告.「\n33字节\n仍待核验\n预览\n•••\n<\n且\n此对话不形成记忆\n使用已有记忆\n自动删除•30天＞\n修改了1个文件\n乡项目报告.『\n67字节\n仍待核验\n预览\n•••\n置顶\n标记为已读\n重命名\n分叉\n移至项目\n： 移至分组\n归档\n>\n>\n要运行命令：rm\nsynthetic-draft.txt\n处理审批后还有1个问题\n批准\n拒绝\n排队到下一条..\n+\n◎自动\n合成模型 9",
+      "theme": "dark"
+    },
+    {
+      "scene": "review-iphone-conversation-usage-opened-dark-20261010T101715Z",
+      "source": "ocr:settings-final/iphone-dark/review-iphone-conversation-usage-opened-dark-20261010T101715Z.png",
+      "surface": "iphone",
+      "text": "03:17\n完成\n用量\n本对话：整理项目资料\n2026年10月\n上一年\n下一年\n读取月份\n2026年10月•北美太平洋时间\n本月合计\n输入\n缓存命中\n输出\n请求\n¥0.000512\n1000\n600\n50\n1\n按天\n按对话排行\n按模型排行\n>\n>\n>\n月度上限\n每月金额（元，留空不限）\n保存月度上限",
+      "theme": "dark"
+    },
+    {
+      "scene": "review-iphone-settings-about-dark-20261010T101715Z",
+      "source": "ocr:settings-final/iphone-dark/review-iphone-settings-about-dark-20261010T101715Z.png",
+      "surface": "iphone",
+      "text": "03:16\n<\n关于\nApp 版本\n当前安装的 WeftMate 版本与 build。\n0.1.0/11\n完成\n所连电脑•界面与功能包\n宿主版本与更新状态（ui）。\n宿主未提供版本\n宿主未提供版本状态\n所连电脑•程序本体\n宿主版本与更新状态（app）。\n0.1.0\n尚未配置\n所连电脑•手机界面包\n宿主版本与更新状态（mobile-ui）。\n宿主未提供版本\n尚未配置\n更新状态\nApp 由 TestFlight / App Store 自动更新。\n在手机上检查",
+      "theme": "dark"
+    },
+    {
+      "scene": "review-iphone-settings-account-dark-20261010T101715Z",
+      "source": "ocr:settings-final/iphone-dark/review-iphone-settings-account-dark-20261010T101715Z.png",
+      "surface": "iphone",
+      "text": "03:14\n账户\n完成\nw会码（至少8位）\n再次输入新密码\n修改密码\n换绑邮箱\n新邮箱\n发送新邮箱验证码\n退出所有其他设备\n注销账号\n云端账号数据全部删除且不可恢复；本机的对话\n与记忆仍留在设备上。\n输入密码确认注销\n注销账号\n退出登录",
+      "theme": "dark"
+    },
+    {
+      "scene": "review-iphone-settings-appearance-dark-20261010T101715Z",
+      "source": "ocr:settings-final/iphone-dark/review-iphone-settings-appearance-dark-20261010T101715Z.png",
+      "surface": "iphone",
+      "text": "03:14\n<\n外观\n颜色模式\n选择适合当前环境的颜色模式，保存到这\n台设备。\n浅色\n跟随系统\n完成\n主题色\n石墨\n按钮、选中状态与交互提示使用统一主题色。\n字号\n随系统文字大小与辅助功能设置调整。\n系统默认\n小纬形象",
+      "theme": "dark"
+    },
+    {
+      "scene": "review-iphone-settings-approvals-dark-20261010T101715Z",
+      "source": "ocr:settings-final/iphone-dark/review-iphone-settings-approvals-dark-20261010T101715Z.png",
+      "surface": "iphone",
+      "text": "03:15\n完成\n审批\n默认审批模式\n按账户保存，只影响新建对话；已有对话在输入\n区切换。\n自动",
+      "theme": "dark"
+    },
+    {
+      "scene": "review-iphone-settings-archived-dark-20261010T101715Z",
+      "source": "ocr:settings-final/iphone-dark/review-iphone-settings-archived-dark-20261010T101715Z.png",
+      "surface": "iphone",
+      "text": "03:15\n完成\n已归档\n搜索已归档对话\n口\n可删除的合成对话\n〉勺\n恢复",
+      "theme": "dark"
+    },
+    {
+      "scene": "review-iphone-settings-devices-dark-20261010T101715Z",
+      "source": "ocr:settings-final/iphone-dark/review-iphone-settings-devices-dark-20261010T101715Z.png",
+      "surface": "iphone",
+      "text": "03:15\n<\n刷新设备\n设备\n这台账户的设备\niPhone•合成iPhone 合成改名\n在线\n最近使用：2026-10-10T10:15:11.716Z\n改名\n移除\n完成\n这台设备\nLG2测试电脑\n离线\n最近使用：2026-10-10T10:14:06.579Z\n改名\n移除\n电脑\nWeftMate computer\n在线\n可执行任务\n最近使用：2026-10-10T10:15:08.876Z\n连接\n添加设备",
+      "theme": "dark"
+    },
+    {
+      "scene": "review-iphone-settings-general-dark-20261010T101715Z",
+      "source": "ocr:settings-final/iphone-dark/review-iphone-settings-general-dark-20261010T101715Z.png",
+      "surface": "iphone",
+      "text": "03:14\n<\n常规\n回复进行中时发送的消息\n按账户保存在这台设备。\n排队\n完成\n引导\n排队\n等当前回复结束后作为下一条处理。\n引导\n插入当前回复，引导它调整方向。\n电脑连接\n更换电脑需退出当前连接，在设备分类\n重新连接。\n已连接",
+      "theme": "dark"
+    },
+    {
+      "scene": "review-iphone-settings-home-dark-20261010T101715Z",
+      "source": "ocr:settings-final/iphone-dark/review-iphone-settings-home-dark-20261010T101715Z.png",
+      "surface": "iphone",
+      "text": "03:15\n完成\n设置\n本月¥0.000512•1次请求\n设置\n•常规\n简体中文＞\n外观\n深色＞\n2o 账户\n设备\nIg2-synthetic@example.com\n2 台设备\n>\n用量\n本月费用与上限〉\n司 已归档\n1条＞\n助手\n模型\n主模型与单价＞\n审批\n新对话默认模式\n>\n记忆\nQ 搜索设置\n提醒与定时仕穷\n记忆气立箔\n提醒与任务",
+      "theme": "dark"
+    },
+    {
+      "scene": "review-iphone-settings-memory-dark-20261010T101715Z",
+      "source": "ocr:settings-final/iphone-dark/review-iphone-settings-memory-dark-20261010T101715Z.png",
+      "surface": "iphone",
+      "text": "03:16\n<\n记忆\n完成\n记忆管理\n查看它记得什么、从哪里来，并进行纠正。\n管理记忆",
+      "theme": "dark"
+    },
+    {
+      "scene": "review-iphone-settings-models-dark-20261010T101715Z",
+      "source": "ocr:settings-final/iphone-dark/review-iphone-settings-models-dark-20261010T101715Z.png",
+      "surface": "iphone",
+      "text": "03:15\n<\n模型\n主模型\n新对话创建时选择，已有对话保留原模型。\n按对话选择\n完成\n后台模型\n标题与记忆整理等后续后台请求使用此模型。\n跟随主模型\n模型档案与单价•元/百万令牌\n合成模型\n已配置•mimo-v2.6-flash．不支持深入思考\n缓存 0.020000•输入1.000000•输出2.000000",
+      "theme": "dark"
+    },
+    {
+      "scene": "review-iphone-settings-schedules-dark-20261010T101715Z",
+      "source": "ocr:settings-final/iphone-dark/review-iphone-settings-schedules-dark-20261010T101715Z.png",
+      "surface": "iphone",
+      "text": "03:16\n<\n提醒与定时任务\n合成提醒：检查本周计划\n提醒 •北美太平洋时间\n已安排\n…\n完成\n下次运行\n2050年10月8日13:00\n5S",
+      "theme": "dark"
+    },
+    {
+      "scene": "review-iphone-settings-schedules-menu-dark-20261010T101715Z",
+      "source": "ocr:settings-final/iphone-dark/review-iphone-settings-schedules-menu-dark-20261010T101715Z.png",
+      "surface": "iphone",
+      "text": "03:16\n<\n提醒与定时任务\n合成提醒：检查本周计划\n提醒 •北美太平洋时间\n已安排\nI1\n暂停\n立即运行\n下次运个\n回\n删除\n完成\n3:00",
+      "theme": "dark"
+    },
+    {
+      "scene": "review-iphone-settings-usage-dark-20261010T101715Z",
+      "source": "ocr:settings-final/iphone-dark/review-iphone-settings-usage-dark-20261010T101715Z.png",
+      "surface": "iphone",
+      "text": "03:15\n完成\n用量\n2026年10月\n上一年\n下一年\n读取月份\n2026年10月•北美太平洋时间\n本月合计\n输入\n缓存命中\n输出\n请求\n¥0.000512\n1000\n600\n50\n1\n按天\n按对话排行\n按模型排行\n>\n月度上限\n每月金额（元，留空不限）\n保存月度上限\n仅本月金额（元）\n临时提高本月上限",
+      "theme": "dark"
+    },
+    {
+      "scene": "review-iphone-usage-dark-20261010T101715Z",
+      "source": "ocr:settings-final/iphone-dark/review-iphone-usage-dark-20261010T101715Z.png",
+      "surface": "iphone",
+      "text": "03:15\n完成\n用量\n2026年10月\n上一年\n下一年\n读取月份\n2026年10月•北美太平洋时间\n本月合计\n输入\n缓存命中\n输出\n请求\n¥0.000512\n1000\n600\n50\n1\n按天\n按对话排行\n按模型排行\n>\n月度上限\n每月金额（元，留空不限）\n保存月度上限\n仅本月金额（元）\n临时提高本月上限",
+      "theme": "dark"
+    },
+    {
+      "scene": "review-iphone-appearance-light-20261010T101252Z",
+      "source": "ocr:settings-final/iphone-light/review-iphone-appearance-light-20261010T101252Z.png",
+      "surface": "iphone",
+      "text": "03:10\n79\n<\n外观\n颜色模式\n选择适合当前环境的颜色模式，保存到这\n台设备。\n浅色\n深色\n跟随系统\n完成\n主题色\n石墨\n按钮、选中状态与交互提示使用统一主题色。\n字号\n随系统文字大小与辅助功能设置调整。\n系统默认\n小纬形象",
+      "theme": "light"
+    },
+    {
+      "scene": "review-iphone-conversation-menu-light-20261010T101252Z",
+      "source": "ocr:settings-final/iphone-light/review-iphone-conversation-menu-light-20261010T101252Z.png",
+      "surface": "iphone",
+      "text": "03:12\n<\n整理项目.\n项目报告.\n33字节\n仍待核验\n预览\n修改了1个文件\n乡项目报告.「\n67字节\n仍待核验\n预览\n••\n〉要运行命令：「m\nsynthetic-draft.txt\n处理审批后还有1个问题\n排队到下一条.\n+ ◎自动、\n本对话用量\n目 此对话不形成记忆\n使用已有记忆\n自动删除•30天＞\n人 置顶\n标记沩已读\nC 重命名\n口\n分叉\n口 移至项目\n：三 移至分组\n日归档\n>\n批准\n拒绝\n合成模型、Q",
+      "theme": "light"
+    },
+    {
+      "scene": "review-iphone-conversation-usage-opened-light-20261010T101252Z",
+      "source": "ocr:settings-final/iphone-light/review-iphone-conversation-usage-opened-light-20261010T101252Z.png",
+      "surface": "iphone",
+      "text": "03:12\n••••\n<\n用量\n本对话：整理项目资料\n完成\n2026年10月\n上一年\n下一年\n读取月份\n2026年10月•北美太平洋时间\n本月合计\n输入\n缓存命中\n输出\n请求\n¥0.000512\n1000\n600\n50\n1\n按天\n按对话排行\n按模型排行\n月度上限\n每月金额（元，留空不限）\n保存月度上限",
+      "theme": "light"
+    },
+    {
+      "scene": "review-iphone-settings-about-light-20261010T101252Z",
+      "source": "ocr:settings-final/iphone-light/review-iphone-settings-about-light-20261010T101252Z.png",
+      "surface": "iphone",
+      "text": "03:11\n••••\n10\n<\n关于\nApp 版本\n当前安装的 WeftMate 版本与 build。\n0.1.0/11\n完成\n所连电脑•界面与功能包\n宿主版本与更新状态（ui）。\n宿主未提供版本\n宿主未提供版本状态\n所连电脑 • 程序本体\n宿主版本与更新状态（app）。\n0.1.0\n尚未配置\n所连电脑•手机界面包\n宿主版本与更新状态（mobile-ui）。\n宿主未提供版本\n尚未配置\n更新状态\nApp 由 TestFlight/ App Store 自动更新。\n在手机上检查",
+      "theme": "light"
+    },
+    {
+      "scene": "review-iphone-settings-account-light-20261010T101252Z",
+      "source": "ocr:settings-final/iphone-light/review-iphone-settings-account-light-20261010T101252Z.png",
+      "surface": "iphone",
+      "text": "03:10\n••••\n<\n账户\n完成\nA 操作已取消。\n修改密码\n换绑邮箱\n新邮箱\n发送新邮箱验证码\n退出所有其他设备\n注销账号\n云端账号数据全部删除且不可恢复；本机的对话\n与记忆仍留在设备上。\n输入密码确认注销\n注销账号\n退出登录",
+      "theme": "light"
+    },
+    {
+      "scene": "review-iphone-settings-appearance-light-20261010T101252Z",
+      "source": "ocr:settings-final/iphone-light/review-iphone-settings-appearance-light-20261010T101252Z.png",
+      "surface": "iphone",
+      "text": "03:10\n79\n<\n外观\n颜色模式\n选择适合当前环境的颜色模式，保存到这\n台设备。\n浅色\n深色\n跟随系统\n完成\n主题色\n石墨\n按钮、选中状态与交互提示使用统一主题色。\n字号\n随系统文字大小与辅助功能设置调整。\n系统默认\n小纬形象",
+      "theme": "light"
+    },
+    {
+      "scene": "review-iphone-settings-approvals-light-20261010T101252Z",
+      "source": "ocr:settings-final/iphone-light/review-iphone-settings-approvals-light-20261010T101252Z.png",
+      "surface": "iphone",
+      "text": "03:11\n<\n完成\n审批\n默认审批模式\n按账户保存，只影响新建对话；已有对话在输入\n区切换。\n◎自动~",
+      "theme": "light"
+    },
+    {
+      "scene": "review-iphone-settings-archived-light-20261010T101252Z",
+      "source": "ocr:settings-final/iphone-light/review-iphone-settings-archived-light-20261010T101252Z.png",
+      "surface": "iphone",
+      "text": "03:11\n今口\n<\n已归档\n搜索已归档对话\n完成\n口 可删除的合成对话 〉勺恢复 …",
+      "theme": "light"
+    },
+    {
+      "scene": "review-iphone-settings-devices-light-20261010T101252Z",
+      "source": "ocr:settings-final/iphone-light/review-iphone-settings-devices-light-20261010T101252Z.png",
+      "surface": "iphone",
+      "text": "03:10\n70\n<\n刷新设备\n设备\n这台账户的设备\n日 iPhone•合成 iPhone 合成改名\n在线\n最近使用：2026-10-10T10:10:43.456Z\n改名\n移除\n完成\n这台设备\nLG2测试电脑\n离线\n最近使用：2026-10-10T10:09:36.122Z\n改名\n移除\n电脑\nWeftMate computer\n在线\n可执行任务\n最近使用：2026-10-10T10:10:38.700Z\n连接\n添加设备",
+      "theme": "light"
+    },
+    {
+      "scene": "review-iphone-settings-general-light-20261010T101252Z",
+      "source": "ocr:settings-final/iphone-light/review-iphone-settings-general-light-20261010T101252Z.png",
+      "surface": "iphone",
+      "text": "03:10\n<\n常规\n回复进行中时发送的消息\n按账户保存在这台设备。\n排队\n完成\n引导\n排队\n等当前回复结束后作为下一条处理。\n引导\n插入当前回复，引导它调整方向。\n电脑连接\n更换电脑需退出当前连接，在设备分类\n重新连接。\n已连接",
+      "theme": "light"
+    },
+    {
+      "scene": "review-iphone-settings-home-light-20261010T101252Z",
+      "source": "ocr:settings-final/iphone-light/review-iphone-settings-home-light-20261010T101252Z.png",
+      "surface": "iphone",
+      "text": "03:10\nv0\n完成\n设置\n本月¥0.000512•1次请求\n设置\n常规\n外观\n2o 账户\n设备\n區 用量\n已归档\n简体中文＞\n浅色＞\nlg2-synthetic@example.com\n2 台设备＞\n本月费用与上限〉\n1条＞\n助手\n模型\n◎审批\n目记 7\nQ 搜索设置\n提醒与定时仕分\n主模型与单价〉\n新对话默认模式＞\n记忆与立酒\n提醒与仕务",
+      "theme": "light"
+    },
+    {
+      "scene": "review-iphone-settings-memory-light-20261010T101252Z",
+      "source": "ocr:settings-final/iphone-light/review-iphone-settings-memory-light-20261010T101252Z.png",
+      "surface": "iphone",
+      "text": "03:11\n<\n记忆\n记忆管理\n查看它记得什么、从哪里来，并进行纠正。\n管理记忆\n完成",
+      "theme": "light"
+    },
+    {
+      "scene": "review-iphone-settings-models-light-20261010T101252Z",
+      "source": "ocr:settings-final/iphone-light/review-iphone-settings-models-light-20261010T101252Z.png",
+      "surface": "iphone",
+      "text": "03:11\n•⋯-。\n79\n<\n模型\n主模型\n新对话创建时选择，已有对话保留原模型。\n按对话选择\n完成\n后台模型\n标题与记忆整理等后续后台请求使用此模型。\n跟随主模型\n模型档案与单价•元/百万令牌\n合成模型\n已配置•mimo-v2.6-flash•不支持深入思考\n缓存 0.020000•输入1.000000•输出2.000000",
+      "theme": "light"
+    },
+    {
+      "scene": "review-iphone-settings-schedules-light-20261010T101252Z",
+      "source": "ocr:settings-final/iphone-light/review-iphone-settings-schedules-light-20261010T101252Z.png",
+      "surface": "iphone",
+      "text": "03:11\n<\n提醒与定时任务\n合成提醒：检查本周计划\n提醒•北美太平洋时间\n已安排\n…\n完成\n下次运行\n2050年10月8日 13:00\n55",
+      "theme": "light"
+    },
+    {
+      "scene": "review-iphone-settings-schedules-menu-light-20261010T101252Z",
+      "source": "ocr:settings-final/iphone-light/review-iphone-settings-schedules-menu-light-20261010T101252Z.png",
+      "surface": "iphone",
+      "text": "03:11\n<\n提醒与定时任务\n合成提醒：检查本周计划\n提醒•北美太平洋时间\n已安排\n|暂停\n〉 立即运行\n下次运\n删除\n｛5\n完成\n3:00",
+      "theme": "light"
+    },
+    {
+      "scene": "review-iphone-settings-usage-light-20261010T101252Z",
+      "source": "ocr:settings-final/iphone-light/review-iphone-settings-usage-light-20261010T101252Z.png",
+      "surface": "iphone",
+      "text": "03:10\n••••\n<\n用量\n完成\n2026年10月\n上一年\n下一年\n读取月份\n2026年10月•北美太平洋时间\n本月合计\n输入\n缓存命中\n输出\n请求\n¥0.000512\n1000\n600\n50\n1\n按天\n按对话排行\n按模型排行\n>\n月度上限\n每月金额（元，留空不限）\n保存月度上限\n仅本月金额（元）\n临时提高本月上限",
+      "theme": "light"
+    },
+    {
+      "scene": "review-iphone-usage-light-20261010T101252Z",
+      "source": "ocr:settings-final/iphone-light/review-iphone-usage-light-20261010T101252Z.png",
+      "surface": "iphone",
+      "text": "03:10\n••••\n<\n用量\n完成\n2026年10月\n上一年\n下一年\n读取月份\n2026年10月•北美太平洋时间\n本月合计\n输入\n缓存命中\n输出\n请求\n¥0.000512\n1000\n600\n50\n1\n按天\n按对话排行\n按模型排行\n>\n月度上限\n每月金额（元，留空不限）\n保存月度上限\n仅本月金额（元）\n临时提高本月上限",
+      "theme": "light"
+    },
+    {
+      "scene": "approval",
+      "source": "ocr:watch/approval.png",
+      "surface": "watch",
+      "text": "04:22\nWeftMate\n◎ 要运行命令：npm run\nrelease\n批准\n× 拒绝\n◎ 要运行命令：npm run\nverify",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-temporary-menu-light",
+      "source": "ocr:main-final/iphone-light/a16-temporary-menu-light.png",
+      "surface": "iphone",
+      "text": "05:01\n<\n临时对记\n本对话用量\n临时对话．不会形成\nv 目 此对话不形成记忆\nV DD 使用已有记忆\n© 自动删除•30天\n识\n食置顶\n标记为未读\n重命名\n口分叉\n移至项目\n：三 移至分组\n日归档\n>\n向 WeftMate 说说你的目标\n+ ◎自动、\n临时对话•不会形成记忆，30 天后自动删除\n合成模型、9",
+      "theme": "light"
+    },
+    {
+      "scene": "a16-temporary-expiry-light",
+      "source": "ocr:main-final/iphone-light/a16-temporary-expiry-light.png",
+      "surface": "iphone",
+      "text": "05:01\n<\n临时对话\n。。\nJo\n。今口\n5\n临时对话•不会形成记忆，30 天后自动删除\n还没有消息\n说说你想完成什么。\n取消\n自动删除\n1天\n7天\n30天\n不自动删除",
+      "theme": "light"
+    }
+  ],
+  "method": "Offline Vision OCR of original native PNGs",
+  "syntheticOnly": true
+}

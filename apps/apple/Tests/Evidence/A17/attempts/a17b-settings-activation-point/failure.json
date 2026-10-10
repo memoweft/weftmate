@@ -1,0 +1,8 @@
+{
+  "passed": false,
+  "test": "A6 light settings full flow",
+  "failure": "Native menu conversationUsage exposed an invalid AX activation point. All 11 categories and rename had passed; ledger validation did not finish.",
+  "repair": "iPhone conversation usage appears in the first native menu section, before the full conversation lifecycle actions. Test uses the identified enabled/hittable control centre; all category, rename, return, search and ledger assertions remain.",
+  "rootCause": "UIKit clipped the final usage row outside the native menu viewport. The AX frame was discoverable and sometimes reported hittable, but a centre tap dismissed the menu.",
+  "environmentCleanup": "Failed XCTest automatically started a long simctl diagnostics collection; runner now uses collect-test-diagnostics=never, consistent with other acceptance runners. Original xcresult failures/screenshots remain outside public final gates."
+}

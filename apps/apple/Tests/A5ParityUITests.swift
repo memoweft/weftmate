@@ -28,6 +28,11 @@ final class A5ParityUITests: XCTestCase {
             }
         }
     }
+    @MainActor private func openSideList(_ app: XCUIApplication) throws {
+        let side = app.descendants(matching: .any).matching(identifier: "mainChat.sideList").firstMatch
+        try expect(side); side.tap()
+        try expect(app.descendants(matching: .any).matching(identifier: "conversationList").firstMatch)
+    }
     @MainActor private func row(_ app: XCUIApplication, _ id: String) throws { let element=app.descendants(matching:.any).matching(identifier:"conversationRow." + id).firstMatch;try expect(element);element.tap() }
     @MainActor private func back(_ app: XCUIApplication) throws { let button=app.navigationBars.buttons.firstMatch;try expect(button);button.tap() }
     @MainActor private func send(_ app: XCUIApplication, _ text: String) throws {
@@ -55,9 +60,9 @@ final class A5ParityUITests: XCTestCase {
             app.launch()
             if scene == "login" { try expect(app.staticTexts["登录 WeftMate"]) }
             else {
-                try expect(app.descendants(matching: .any)["conversationList"].firstMatch)
+                try openSideList(app)
                 if ["conversation", "approval", "question", "outputs-sources", "session-menu", "composer-context", "composer-menu"].contains(scene) {
-                    try row(app, ids["review"] as! String)
+                    try row(app, (ids["chatIDs"] as! [String:String])["review"]!)
                     try expect(app.buttons["openConversationResources"])
                     if scene == "approval" { let control = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "approveOnce.")).firstMatch; reveal(app, control); try expect(control) }
                     if scene == "question" { let control = app.staticTexts["报告要采用哪种格式？"]; reveal(app, control); try expect(control) }
@@ -87,8 +92,8 @@ final class A5ParityUITests: XCTestCase {
         _ = try await get("/a5/setup");_ = try await get("/bootstrap")
         let ready=try await get("/ready"),ids=try await get("/a5/ids")
         let app=XCUIApplication();app.launchArguments=["--ui-testing","--ui-testing-namespace","a5-delete-" + UUID().uuidString.prefix(8),"--a5-local-server","--a5-theme","light","--server-url",ready["host"] as! String]
-        app.launch();try expect(app.descendants(matching:.any)["conversationList"].firstMatch)
-        try row(app,ids["forget"] as! String);try tap(app,"对话菜单");try tap(app,"删除")
+        app.launch();try openSideList(app)
+        try row(app,(ids["chatIDs"] as! [String:String])["forget"]!);try tap(app,"对话菜单");try tap(app,"删除")
         let toggle=app.buttons["forgetConversationMemories"];try expect(toggle);XCTAssertEqual(toggle.value as? String,"未勾选")
         toggle.tap()
         let checked=XCTNSPredicateExpectation(predicate:NSPredicate(format:"value == %@","已勾选"),object:toggle)
@@ -109,7 +114,7 @@ final class A5ParityUITests: XCTestCase {
         let app=XCUIApplication(),namespace="a5-frame-" + UUID().uuidString.prefix(8)
         for scene in ["conversation","approval","question"] {
             app.launchArguments=["--ui-testing","--ui-testing-namespace",namespace,"--a5-local-server","--a5-theme",theme,"--a5-review-scene",scene,"--server-url",ready["host"] as! String]
-            app.launch();try expect(app.descendants(matching:.any)["conversationList"].firstMatch);try row(app,ids["review"] as! String)
+            app.launch();try openSideList(app);try row(app,(ids["chatIDs"] as! [String:String])["review"]!)
             if scene == "approval" { try expect(app.buttons.matching(NSPredicate(format:"identifier BEGINSWITH %@","approveOnce.")).firstMatch) }
             else if scene == "question" { try expect(app.staticTexts["报告要采用哪种格式？"]) }
             else { try expect(app.buttons["openConversationResources"]) }
@@ -131,9 +136,9 @@ final class A5ParityUITests: XCTestCase {
         try tap(app,"设置 → 设备");try tap(app,"刷新设备")
         try tap(app,"connectHost." + (ready["hostId"] as! String));try expect(app.descendants(matching:.any)["cloudPairingReady"].firstMatch)
         try tap(app,"cloudRequestApproval");try expect(app.staticTexts["cloudWaiting"]);_ = try await get("/approve")
-        let ids=try await get("/a5/ids");try expect(app.descendants(matching:.any)["conversationList"].firstMatch);keep(app,"sessions",theme)
+        let ids=try await get("/a5/ids");try openSideList(app);keep(app,"sessions",theme)
         if behavior {
-            try row(app,ids["queue"] as! String)
+            try row(app,(ids["chatIDs"] as! [String:String])["queue"]!)
             try send(app,"A5_HOLD original task")
             try send(app,"A5_STEER supplemental instruction")
             try expect(app.staticTexts["已补充到当前任务"])
@@ -167,7 +172,7 @@ final class A5ParityUITests: XCTestCase {
             XCTAssertFalse(starts.contains("A5_CANCEL"));XCTAssertFalse(starts.contains("A5_EDIT"));XCTAssertTrue(starts.contains("A5_EDIT-changed"));XCTAssertFalse(starts.contains("A5_STEER supplemental instruction"))
             try back(app)
         }
-        try row(app,ids["review"] as! String)
+        try row(app,(ids["chatIDs"] as! [String:String])["review"]!)
         try expect(app.buttons["openConversationResources"]);keep(app,"conversation",theme)
         let allow=app.buttons.matching(NSPredicate(format:"identifier BEGINSWITH %@","approveOnce.")).firstMatch
         reveal(app,allow)
@@ -195,13 +200,13 @@ final class A5ParityUITests: XCTestCase {
             let refused=try await get("/a5/refused");XCTAssertEqual(refused["status"] as? Int,402)
             try fill(app,"usageTemporaryLimit","1");try tap(app,"临时提高本月上限")
             try tap(app,"closeAuxiliarySheetButton");try back(app)
-            try row(app,ids["deletion"] as! String);try tap(app,"对话菜单");try tap(app,"归档");try back(app)
+            try row(app,(ids["chatIDs"] as! [String:String])["deletion"]!);try tap(app,"对话菜单");try tap(app,"归档");try back(app)
             try tap(app,"phoneAccountMenu");try tap(app,"phoneMenu.settings");try tap(app,"settingsCategory.archived")
-            try tap(app,"restoreArchived." + (ids["deletion"] as! String));try tap(app,"完成")
-            try row(app,ids["deletion"] as! String);try tap(app,"对话菜单");try tap(app,"删除")
+            try tap(app,"restoreArchived." + ((ids["chatIDs"] as! [String:String])["deletion"]!));try tap(app,"完成")
+            try row(app,(ids["chatIDs"] as! [String:String])["deletion"]!);try tap(app,"对话菜单");try tap(app,"删除")
             try expect(app.buttons["forgetConversationMemories"])
             XCTAssertEqual(app.buttons["forgetConversationMemories"].value as? String,"未勾选");try tap(app,"confirmDeleteConversation")
-            try back(app);try row(app,ids["forget"] as! String);try tap(app,"对话菜单");try tap(app,"删除")
+            try back(app);try row(app,(ids["chatIDs"] as! [String:String])["forget"]!);try tap(app,"对话菜单");try tap(app,"删除")
             try expect(app.buttons["forgetConversationMemories"]);app.buttons["forgetConversationMemories"].tap()
             let checked=XCTNSPredicateExpectation(predicate:NSPredicate(format:"value == %@","已勾选"),object:app.buttons["forgetConversationMemories"])
             let checkedResult=await XCTWaiter.fulfillment(of:[checked],timeout:10);XCTAssertEqual(checkedResult,.completed)
@@ -211,7 +216,7 @@ final class A5ParityUITests: XCTestCase {
             let exists=final["workspaceExists"] as! [String:Bool];XCTAssertEqual(exists["deletion"],false);XCTAssertEqual(exists["forget"],false)
         }
         if !behavior { try tap(app,"closeAuxiliarySheetButton") }
-        if behavior { try back(app);try row(app,ids["review"] as! String) }
+        if behavior { try back(app);try row(app,(ids["chatIDs"] as! [String:String])["review"]!) }
         try tap(app,"对话菜单");try expect(app.buttons["归档"]);keep(app,"session-menu",theme)
         app.terminate()
     }

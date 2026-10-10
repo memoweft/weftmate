@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "configuration": "Release",
+  "platform": "macOS",
+  "architecture": "x86_64",
+  "binarySHA256": "3ccbf31b4066cc43aac66daea4eef9d8e5fc610bbc74f89ba3a78f280bfb290c",
+  "debugMenuAndLaunchMarkers": [
+    {
+      "marker": "添加合成附件",
+      "hits": 0
+    },
+    {
+      "marker": "添加合成文件",
+      "hits": 0
+    },
+    {
+      "marker": "--a16-driver",
+      "hits": 0
+    },
+    {
+      "marker": "--ui-testing-namespace",
+      "hits": 0
+    },
+    {
+      "marker": "--a17-open",
+      "hits": 0
+    }
+  ]
+}

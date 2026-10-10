@@ -329,7 +329,7 @@ function call(method, params={}, timeoutMs=45000) { return mobileWebBridge?mobil
 
 
 
-function page(name){
+function page(name,{dataLoaded=false}={}){
   if(mobileTabNames[state.page]&&state.page!=='chat')mobileTabScroll.set(state.page,$('generic-page').scrollTop);
   WeftPopover.closeMenu();libraryView?.deactivate();
   if(name!=='goals'){if(goalsTimer)clearInterval(goalsTimer);goalsTimer=null;}
@@ -352,7 +352,7 @@ function page(name){
   }[name]||name;
   syncMobileTabs();
   document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('current',b.dataset.page===name));
-  if(name==='home'){renderHome();if(window.weftNative)void refreshHome();return}
+  if(name==='home'){renderHome();if(window.weftNative)void refreshHome({dataLoaded});return}
   if(name==='chat'){
     if(state.chatSource==='host'){renderSharedConversation();loadSharedHistory();scheduleSharedPoll()}
     else{if(previousPage!=='chat')refreshAttachmentDrafts();renderConversation()}return}if(globalThis.WeftMobileCloud?.route(name))return;renderPage(name);
@@ -528,13 +528,13 @@ async function boot(){
     if(previousHost){state.restorePending=true;$('draft').value='';updateComposer();
       const content=$('chat-content');clear(content);content.append(notice('正在核对上次电脑会话…'));
       await restoreSharedSelection(previousHost,state.owner,state.authEpoch)}
-    else{loadDraft();if(state.conversationId){await renderConversation();void refreshHandoff(state.conversationId)}else showWelcome();void listSharedSessions()}
+    else{loadDraft();if(state.conversationId){await renderConversation();void refreshHandoff(state.conversationId)}else showWelcome();}
     try{const appearance=await uiCore.mobileAppearance();if(typeof appearance.systemDark==='boolean')state.nativeSystemDark=appearance.systemDark;applyTheme(appearance.value)}catch{applyTheme('system')}
     await call('app.ready',{owner:state.owner||'',hasDraft:hasAnyDraft()});
     await listSharedSessions();
     startMobileConnection();
-    if(state.logicalChats && !info.launchConversationId)await uiCore.selectMainChat();
-    else if(!info.launchConversationId)page('home');else updatePageHeader();
+    if(state.logicalChats && !info.launchConversationId){if(!uiCore.inMainChat())await uiCore.selectMainChat();}
+    else if(!info.launchConversationId)page('home',{dataLoaded:true});else updatePageHeader();
     state.booted=true;
     void resumeCloudLogin();void refreshCloudDevices();
     globalThis.WeftCloudMobile?.observe(refreshCloudDevices);

@@ -92,6 +92,9 @@ import WeftMateCore
         guard let image = unsafeBitCast(symbol, to: Images.self)(.null, array, 1)?.takeRetainedValue(),
               let png = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) else { throw Failure(step: "Own window has no image: " + scene) }
         FileHandle.standardOutput.write(Data(("A10_CAPTURE:" + scene + ":" + png.base64EncodedString() + "\n").utf8))
+        let words = Array(Set(windows.flatMap { A13MacReview.texts(in: $0) })).sorted().joined(separator: "\n")
+        let text = try JSONSerialization.data(withJSONObject: ["scene": scene, "text": words])
+        FileHandle.standardOutput.write(Data(("A13_TEXT:" + String(decoding: text, as: UTF8.self) + "\n").utf8))
     }
     static func run(_ model: AppleAppModel, openSettings: () -> Void) async throws {
         guard model.session?.verification == .verified, !model.conversations.isEmpty else { throw Failure(step: "Isolated login/list failed") }
@@ -117,6 +120,17 @@ import WeftMateCore
             model.settingsRoute = .init(categoryID: category.id)
             _ = try await wait("settingsPage." + category.id)
             try await capture("settings-" + category.id, settings: true)
+            if ["schedules", "archived"].contains(category.id) {
+                var action: NSObject?
+                for _ in 0..<100 {
+                    for window in NSApplication.shared.windows where window.isVisible { if let found = findButton(category.id == "schedules" ? "提醒操作" : "已归档对话操作", in: window) { action = found; break } }
+                    if action != nil { break }; try await Task.sleep(for: .milliseconds(100))
+                }
+                guard let action else { throw Failure(step: "Schedule menu missing") }
+                try pressNode(action, id: "scheduleActions"); try await Task.sleep(for: .milliseconds(400))
+                A16MacReview.captureVisible("settings-" + category.id + "-menu")
+                (action as? NSPopUpButton)?.menu?.cancelTrackingWithoutAnimation()
+            }
             visited.append(category.id)
         }
         try await press("closeSettings")

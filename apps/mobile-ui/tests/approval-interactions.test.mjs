@@ -44,11 +44,12 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
             result={mode:defaults?f.defaultMode:f.sessionModes[session],allowedCategories:[]}}
           else if(params.path==='/personal/v1/system')result={host:{state:'ready'},model:{state:'ready'},memory:{state:'disabled'},canRestart:false};
         }
-        if(method==='shared.approvals.list')result={approvals:f.approval?[f.approval]:[],nextBefore:null,hasMore:false};
+        if(method==='shared.approvals.list'){result={approvals:f.approval?[{...f.approval}]:[],nextBefore:null,hasMore:false};if(f.holdApprovalList){f.releaseApprovalList=()=>window.weftNative.onmessage({data:JSON.stringify({id:request.id,ok:true,result})});return}}
         if(method==='shared.approvals.decide'){
           f.approval={...f.approval,status:'answered',decisionOutcome:params.outcome,decisionRequestId:params.requestId,
             ...(params.scope?{decisionScope:params.scope}:{}),answeredAt:'2026-10-08T01:01:00.000Z'};
           result={approval:f.approval,requestId:params.requestId};
+          if(f.holdDecision){f.releaseDecision=()=>window.weftNative.onmessage({data:JSON.stringify({id:request.id,ok:true,result})});return}
         }
         if(method==='shared.questions.list')result={questions:[],nextBefore:null,hasMore:false};
         if(method==='shared.tasks.detail')result={taskId:'cmd-demo',sessionId:'s1',source:{commandId:'cmd-demo',kind:'session.message',
@@ -121,6 +122,8 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
     await page.evaluate(()=>Promise.allSettled(document.getAnimations().map(animation=>animation.finished)));
     for(const button of await card.locator('.approval-actions button').all()){const box=await button.boundingBox();assert.ok(box.height>=43.99,JSON.stringify(box))}
     await screenshot('03-three-buttons.png');
+    // A same-conversation refresh changes the captured view scope, not the pending native approval.
+    await page.evaluate(()=>{state.generation++;renderConversationApprovals();});
     await card.getByRole('button',{name:'批准',exact:true}).click();await page.waitForFunction(()=>fixture.approval.status==='answered');
     await card.waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>approvalRecord([...toolApprovals.sessions.get('s1').rows.values()][0])),'已允许 · 运行脚本');
     assert.equal(await card.isVisible(),false);await screenshot('04-resolved-line.png');
@@ -133,6 +136,31 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
     assert.equal(await page.evaluate(()=>Object.hasOwn(fixture.requests.filter(r=>r.method==='shared.approvals.decide').at(-1).params,'scope')),false);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),390);
     await page.evaluate(()=>applyTheme('dark'));await showApproval();await screenshot('05-dark-approval.png');
+    // Controlled recovery read arrives between press and release; no timing lottery.
+    await showApproval();
+    await page.evaluate(()=>{fixture.requests.length=0;fixture.holdApprovalList=true;fixture.approval={...fixture.approval,reason:fixture.approval.reason+' 已核对来源。'};globalThis.raceRead=refreshToolApprovals(undefined,{force:true})});
+    await page.waitForFunction(()=>!!fixture.releaseApprovalList);
+    const approve=card.getByRole('button',{name:'批准',exact:true}),box=await approve.boundingBox();
+    await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();
+    await page.evaluate(async()=>{fixture.holdApprovalList=false;fixture.releaseApprovalList();await raceRead});
+    await page.mouse.up();
+    await page.waitForFunction(()=>fixture.approval.status==='answered',{},{timeout:2000});
+    assert.equal(await page.evaluate(()=>fixture.requests.filter(r=>r.method==='shared.approvals.decide').length),1);
+    await card.waitFor({state:'hidden'});await page.waitForFunction(()=>uiCore.conversationApprovals.operations.size===0);
+    // Unchanged data keeps the controls; an old pending read cannot resurrect a decision.
+    await showApproval();
+    await page.evaluate(async()=>{globalThis.originalApprovalButton=document.querySelector('[data-approval-choice="allowed-once"]');
+      await refreshToolApprovals(undefined,{force:true});if(originalApprovalButton!==document.querySelector('[data-approval-choice="allowed-once"]'))throw Error('unchanged approval replaced');
+      fixture.requests.length=0;fixture.holdApprovalList=true;fixture.holdDecision=true;globalThis.staleRead=refreshToolApprovals(undefined,{force:true});});
+    await page.waitForFunction(()=>!!fixture.releaseApprovalList);
+    await card.getByRole('button',{name:'批准',exact:true}).click();
+    await page.waitForFunction(()=>!!fixture.releaseDecision);
+    assert.equal(await page.evaluate(()=>originalApprovalButton.isConnected&&originalApprovalButton.disabled),true);
+    await page.evaluate(()=>{fixture.holdApprovalList=false;fixture.holdDecision=false;fixture.releaseDecision()});
+    await page.waitForFunction(()=>uiCore.conversationApprovals.entries.get(fixture.approval.approvalId)?.row.status==='answered');
+    await page.evaluate(async()=>{fixture.releaseApprovalList();await staleRead});
+    assert.equal(await page.evaluate(()=>uiCore.conversationApprovals.entries.get(fixture.approval.approvalId).row.status),'answered');
+    assert.equal(await page.evaluate(()=>fixture.requests.filter(r=>r.method==='shared.approvals.decide').length),1);
     assert.deepEqual(errors,[]);
   }finally{await browser.close();await new Promise(done=>server.close(done))}
 });

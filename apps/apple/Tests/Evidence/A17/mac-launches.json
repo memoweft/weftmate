@@ -1,0 +1,216 @@
+{
+  "launches": [
+    {
+      "launch": 1,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "5ed16c5cd2dc8414474dae048fd056465ec0a83e40a0ee5874e8343c65023116",
+      "seconds": 10.62
+    },
+    {
+      "launch": 2,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "1dce52bdb11e5638c7066608ac5fb8c02c84ffef2a2b357efa209350ee26a474",
+      "seconds": 9.92
+    },
+    {
+      "launch": 3,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "a14c3052d49928952c863eb92095eab45319b57ee58758aa4b24709f510b964a",
+      "seconds": 9.62
+    },
+    {
+      "launch": 4,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "7f031349fd5a4251b3e8336e036987edcee396f953ffe0863814fbc15c6bd22b",
+      "seconds": 9.61
+    },
+    {
+      "launch": 5,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "03ea53a0b3ad46c3b24aa2492fbc1fd9e2e68aca430a55a3981f71f52a1be61f",
+      "seconds": 9.86
+    },
+    {
+      "launch": 6,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "e559bae41112dc4f8cf4bf05df59860c55e02b8b548abfdb5fc28d1b5155f1e1",
+      "seconds": 9.4
+    },
+    {
+      "launch": 7,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "03ea53a0b3ad46c3b24aa2492fbc1fd9e2e68aca430a55a3981f71f52a1be61f",
+      "seconds": 9.97
+    },
+    {
+      "launch": 8,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "7f031349fd5a4251b3e8336e036987edcee396f953ffe0863814fbc15c6bd22b",
+      "seconds": 9.89
+    },
+    {
+      "launch": 9,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "7e2ba1d2d2488390edbf694e2d590bcfde06ce70cf1bc2d5ea67e864db7351a9",
+      "seconds": 10.17
+    },
+    {
+      "launch": 10,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "7f031349fd5a4251b3e8336e036987edcee396f953ffe0863814fbc15c6bd22b",
+      "seconds": 10.42
+    },
+    {
+      "launch": 11,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "03ea53a0b3ad46c3b24aa2492fbc1fd9e2e68aca430a55a3981f71f52a1be61f",
+      "seconds": 10.11
+    },
+    {
+      "launch": 12,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "e9a523c258ce4aaabc59a91672a55d10eb8089cb2a1b09953d9ddb074a244cf3",
+      "seconds": 9.74
+    },
+    {
+      "launch": 13,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "03ea53a0b3ad46c3b24aa2492fbc1fd9e2e68aca430a55a3981f71f52a1be61f",
+      "seconds": 9.55
+    },
+    {
+      "launch": 14,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "7f031349fd5a4251b3e8336e036987edcee396f953ffe0863814fbc15c6bd22b",
+      "seconds": 9.72
+    },
+    {
+      "launch": 15,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "a14c3052d49928952c863eb92095eab45319b57ee58758aa4b24709f510b964a",
+      "seconds": 10.61
+    },
+    {
+      "launch": 16,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "1dce52bdb11e5638c7066608ac5fb8c02c84ffef2a2b357efa209350ee26a474",
+      "seconds": 9.58
+    },
+    {
+      "launch": 17,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "03ea53a0b3ad46c3b24aa2492fbc1fd9e2e68aca430a55a3981f71f52a1be61f",
+      "seconds": 9.93
+    },
+    {
+      "launch": 18,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "1dce52bdb11e5638c7066608ac5fb8c02c84ffef2a2b357efa209350ee26a474",
+      "seconds": 9.57
+    },
+    {
+      "launch": 19,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "7e2ba1d2d2488390edbf694e2d590bcfde06ce70cf1bc2d5ea67e864db7351a9",
+      "seconds": 9.62
+    },
+    {
+      "launch": 20,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "1dce52bdb11e5638c7066608ac5fb8c02c84ffef2a2b357efa209350ee26a474",
+      "seconds": 9.73
+    },
+    {
+      "launch": 21,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "4c376556c2fea22e88b3040c5f04e2c828ef005aa120451544a1a52d57db2b33",
+      "seconds": 9.62
+    },
+    {
+      "launch": 22,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "21a6569482b3f6f4d71dec0eb9cceaae82c3e014ce8881818c4dee2819a058ba",
+      "seconds": 10.48
+    },
+    {
+      "launch": 23,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "6727ac7be3800e1b58213b46ed3c3ac865ea59682286dfc1f770339c8ce59639",
+      "seconds": 10.14
+    },
+    {
+      "launch": 24,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "4ba4733bfbb2f534923d3e2f6f72539c204ebb6b979a641229305b4e77056170",
+      "seconds": 9.47
+    },
+    {
+      "launch": 25,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "03ea53a0b3ad46c3b24aa2492fbc1fd9e2e68aca430a55a3981f71f52a1be61f",
+      "seconds": 9.49
+    },
+    {
+      "launch": 26,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "7f031349fd5a4251b3e8336e036987edcee396f953ffe0863814fbc15c6bd22b",
+      "seconds": 9.86
+    },
+    {
+      "launch": 27,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "4c376556c2fea22e88b3040c5f04e2c828ef005aa120451544a1a52d57db2b33",
+      "seconds": 10.12
+    },
+    {
+      "launch": 28,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "21a6569482b3f6f4d71dec0eb9cceaae82c3e014ce8881818c4dee2819a058ba",
+      "seconds": 9.61
+    },
+    {
+      "launch": 29,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "08b0e3d3ecb857f07f172c1828c1dc2d457ad11648e0bb229b5f7e7dd41d0c17",
+      "seconds": 10.22
+    },
+    {
+      "launch": 30,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "e9a523c258ce4aaabc59a91672a55d10eb8089cb2a1b09953d9ddb074a244cf3",
+      "seconds": 9.86
+    }
+  ],
+  "passed": true,
+  "binarySHA256": "365284b8322a12092e6ebf4741679f77abe574ff4e98b95c8a645bbada605975"
+}

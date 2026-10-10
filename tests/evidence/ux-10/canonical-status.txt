@@ -1,0 +1,70 @@
+TAP version 13
+# Subtest: D55 desktop/mobile/search and host agree on every priority including stopped
+ok 1 - D55 desktop/mobile/search and host agree on every priority including stopped
+  ---
+  duration_ms: 1.369
+  type: 'test'
+  ...
+# Subtest: D55 observed terminal without an assistant message is unread and read snapshots clear it
+ok 2 - D55 observed terminal without an assistant message is unread and read snapshots clear it
+  ---
+  duration_ms: 1.6277
+  type: 'test'
+  ...
+# Subtest: D55 read covers messages before the tail but never consumes a terminal observed after its native snapshot
+ok 3 - D55 read covers messages before the tail but never consumes a terminal observed after its native snapshot
+  ---
+  duration_ms: 0.5809
+  type: 'test'
+  ...
+# Subtest: D55 pending native interactions update with account snapshots and disappear on answer, timeout or restart
+ok 4 - D55 pending native interactions update with account snapshots and disappear on answer, timeout or restart
+  ---
+  duration_ms: 0.5204
+  type: 'test'
+  ...
+# Subtest: D55 summary includes children beyond the first 100 rows and excludes archived/deleting sessions
+ok 5 - D55 summary includes children beyond the first 100 rows and excludes archived/deleting sessions
+  ---
+  duration_ms: 1.9633
+  type: 'test'
+  ...
+# Subtest: D55 invalidate/forget/deletion cannot revive terminal facts and account summaries cover hidden pages
+ok 6 - D55 invalidate/forget/deletion cannot revive terminal facts and account summaries cover hidden pages
+  ---
+  duration_ms: 0.7945
+  type: 'test'
+  ...
+# Subtest: D55 restart finds a terminal behind a long current turn outside the list request
+ok 7 - D55 restart finds a terminal behind a long current turn outside the list request
+  ---
+  duration_ms: 0.1789
+  type: 'test'
+  ...
+# Subtest: D55 native adapter backward pages recover the previous terminal behind 250 current tool calls
+ok 8 - D55 native adapter backward pages recover the previous terminal behind 250 current tool calls
+  ---
+  duration_ms: 4.1878
+  type: 'test'
+  ...
+# Subtest: D55 real host API rebuilds outcome after restart, clears read and removes deleted/private-source status copies
+ok 9 - D55 real host API rebuilds outcome after restart, clears read and removes deleted/private-source status copies
+  ---
+  duration_ms: 1704.6548
+  type: 'test'
+  ...
+# Subtest: D55 latest main read uses the existing metadata route, respects newer history and identity, and requires exact capability 1
+ok 10 - D55 latest main read uses the existing metadata route, respects newer history and identity, and requires exact capability 1
+  ---
+  duration_ms: 2.0265
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1920.5742

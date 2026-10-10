@@ -16,6 +16,7 @@ struct MessageActionsPresentation: ViewModifier {
     let regenerate: () -> Void
     let extra: () -> AnyView
     @State private var hovering = false
+    @FocusState private var actionFocused: Bool
     @State private var copied = false
     @State private var rating = ""
     @State private var exporting = false
@@ -25,11 +26,9 @@ struct MessageActionsPresentation: ViewModifier {
     @State private var exportDirectory: URL?
     @State private var exportStatus: String?
     private var timestamp: String {
-        guard let at else { return "时间未记录" }
-        let fractional = ISO8601DateFormatter(); fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        guard let date = fractional.date(from: at) ?? ISO8601DateFormatter().date(from: at) else { return "时间未记录" }
-        return date.formatted(date: .abbreviated, time: .shortened)
+        DeviceDateText.messageTimestamp(at, timeZone: TimeZone(identifier: app.mainChat.timeZone) ?? .current)
     }
+
     func body(content: Content) -> some View {
         VStack(alignment: user ? .trailing : .leading, spacing: AppleTokens.Space.p4) {
             content
@@ -41,18 +40,19 @@ struct MessageActionsPresentation: ViewModifier {
                         .buttonStyle(.plain).accessibilityIdentifier("message.copy." + id)
                     if !user { actionMenu }
                 }.font(AppleTokens.Fonts.caption).frame(maxWidth: .infinity, alignment: user ? .trailing : .leading)
-                    .opacity(hovering || (!user && latest) ? 1 : 0)
-                    .allowsHitTesting(hovering || (!user && latest))
-                    .accessibilityHidden(!(hovering || (!user && latest)))
+                    .opacity(hovering || actionFocused || (!user && latest) ? 1 : 0)
+                    .allowsHitTesting(hovering || actionFocused || (!user && latest))
+                    .accessibilityHidden(!(hovering || actionFocused || (!user && latest)))
                     .accessibilityIdentifier("message.hover." + id)
             }
             #endif
         }
         #if os(macOS)
         .background(SessionHoverRegion(identifier: "messageHover." + id) { hovering = $0 })
+        .focusable().focused($actionFocused)
         #endif
         .contentShape(Rectangle())
-        .contextMenu { if enabled { Text(timestamp); Button("复制") { copy() }; if !user { assistantActions }; extra() } }
+        .contextMenu { if enabled { Text(timestamp); Button { copy() } label: { Label("复制", image: "wm-copy") }; if !user { assistantActions }; extra() } }
         .sheet(isPresented: $exporting, onDismiss: {
             if saveAfterPreview { saveAfterPreview = false; saving = true }
             else { clearExportDirectory() }
@@ -67,12 +67,14 @@ struct MessageActionsPresentation: ViewModifier {
                 }.padding(AppleTokens.Space.p20).frame(minWidth: AppleTokens.Space.p24 * 10, minHeight: AppleTokens.Space.p32 * 10)
             }.accessibilityIdentifier("message.exportPreview")
         }
-        .fileExporter(isPresented: $saving, document: MessageExportDocument(text: exportText), contentType: MessageExportDocument.exportType, defaultFilename: "WeftMate-reply") { result in
+        .fileExporter(isPresented: $saving, document: MessageExportDocument(text: exportText), contentType: MessageExportDocument.exportType, defaultFilename: "WeftMate-reply") { @Sendable result in
+            Task { @MainActor in
             switch result {
             case .success: exportStatus = "已保存。"
             case .failure(let error): if (error as NSError).code != CocoaError.userCancelled.rawValue { exportStatus = "未能保存，请重试。" }
             }
             clearExportDirectory()
+            }
         }
         .fileDialogDefaultDirectory(exportDirectory)
         .onAppear { rating = app.messageRating(id) }
@@ -96,11 +98,11 @@ struct MessageActionsPresentation: ViewModifier {
             .menuStyle(.borderlessButton).fixedSize().accessibilityLabel("消息操作").accessibilityIdentifier(menuID)
     }
     @ViewBuilder private var assistantActions: some View {
-        Button { rate("useful") } label: { if rating == "useful" { Label("有用", systemImage: "checkmark") } else { Text("有用") } }
-        Button { rate("not-useful") } label: { if rating == "not-useful" { Label("没用", systemImage: "checkmark") } else { Text("没用") } }
-        Button("重新生成") { regenerate() }
-        Button("导出") { exportText = MessageExportDocument.redacted(text); exporting = true }
-        Button("引用") { quote() }
+        Toggle(isOn: Binding(get: { rating == "useful" }, set: { _ in rate("useful") })) { Label("有用", image: "wm-thumb-up") }
+        Toggle(isOn: Binding(get: { rating == "not-useful" }, set: { _ in rate("not-useful") })) { Label("没用", image: "wm-thumb-down") }
+        Button { regenerate() } label: { Label("重新生成", image: "wm-sync") }
+        Button { exportText = MessageExportDocument.redacted(text); exporting = true } label: { Label("导出", image: "wm-download") }
+        Button { quote() } label: { Label("引用", image: "wm-quote") }
     }
     private func rate(_ value: String) { rating = rating == value ? "" : value; app.rateMessage(id, rating: rating) }
     private func copy() {

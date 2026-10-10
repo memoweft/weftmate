@@ -205,22 +205,27 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
                 .map(marker => core.lookupRequest(marker))]);
         } finally { core.state.liveRefreshing = false; }
     }
-    async function refreshAssistant() {
+    async function refreshAssistant(personalizationLoaded = false) {
         if (core.state.refreshing || !core.state.csrfToken || core.state.connection && core.state.connection.kind !== 'online' && (core.state.connection.failures > 0 || core.state.connection.kind !== 'connecting'))
             return;
         core.state.refreshing = true;
         try {
             await core.refreshStatus();
-            await core.loadPersonalization().catch(() => {});
+            if (!personalizationLoaded) await core.loadPersonalization().catch(() => {});
             await core.refreshActivity?.();
             await core.refreshModels();
+            // The session selector owns its initial history and decisions.
+            // On later refreshes this routine owns those reads instead.
+            await core.refreshTasks(false, false);
+            const history = core.state.historyGeneration;
             await core.refreshSessions();
-            await core.refreshTasks();
-            await core.refreshHistory();
+            const selected = history !== core.state.historyGeneration;
+            if (!selected) await core.refreshHistory();
             void core.refreshUsageBudget?.();
             if (core.state.syncAvailable)
                 await core.refreshPhoneRecords();
-            await core.refreshConversationTasks();
+            if (!selected) await core.refreshConversationTasks();
+            else await core.conversationTasks.inFlight?.promise;
             await core.restoreRequests();
         }
         catch (error) {
@@ -240,7 +245,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         core.show('assistant');
         effects.closeRail();
         await core.loadMessageModePreference();
-        await core.refreshAssistant();
+        await core.refreshAssistant(true);
         effects.startAssistantRefresh();
         await effects.resumeOnboarding?.();
     }

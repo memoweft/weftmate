@@ -24,6 +24,28 @@ extension OperationNames {
 }
 
 public enum DeviceDateText {
+    public static func messageTimestamp(_ value: String?, timeZone: TimeZone, now: Date = Date()) -> String {
+        guard let date = ChatDay.date(value) else { return "时间未记录" }
+        var calendar = Calendar(identifier: .gregorian); calendar.timeZone = timeZone
+        let formatter = DateFormatter(); formatter.locale = Locale(identifier: "zh_CN"); formatter.timeZone = timeZone
+        formatter.dateFormat = calendar.isDate(date, inSameDayAs: now) ? "HH:mm" : "M月d日 HH:mm"
+        return formatter.string(from: date)
+    }
+    public static func relativeTimestamp(_ value: String?, now: Date = Date()) -> String {
+        guard let date = ChatDay.date(value) else { return "时间未记录" }
+        let minutes = max(0, Int(now.timeIntervalSince(date) / 60))
+        if minutes < 1 { return "刚刚" }
+        if minutes < 60 { return "\(minutes) 分" }
+        if minutes < 1440 { return "\(minutes / 60) 小时" }
+        return "\(minutes / 1440) 天"
+    }
+    public static func chatDay(_ value: String, timeZone: TimeZone, now: Date = Date()) -> String {
+        var calendar = Calendar(identifier: .gregorian); calendar.timeZone = timeZone
+        if value == ChatDay.key(now, timeZone: timeZone.identifier) { return "今天" }
+        if let yesterday = calendar.date(byAdding: .day, value: -1, to: now), value == ChatDay.key(yesterday, timeZone: timeZone.identifier) { return "昨天" }
+        return day(value)
+    }
+
     public static func timestamp(_ date: Date, timeZone: TimeZone = .current) -> String {
         let f = DateFormatter(); f.locale = Locale(identifier: "zh_CN"); f.calendar = Calendar(identifier: .gregorian); f.timeZone = timeZone
         f.dateFormat = "yyyy 年 M 月 d 日 HH:mm"; return f.string(from: date)

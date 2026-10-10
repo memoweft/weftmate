@@ -19,7 +19,9 @@ final class A6SettingsUITests: XCTestCase {
             let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true AND hittable == true"), object: element)
             XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 30), .completed)
         }
-        element.tap()
+        // Native iOS menus can expose an invalid AX activation point even
+        // while hittable. Use the centre of the identified control's frame.
+        element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
     }
     @MainActor private func fill(_ app: XCUIApplication, _ name: String, _ value: String, secure: Bool = false) throws {
         let field = secure ? app.secureTextFields[name] : app.textFields[name]
@@ -58,6 +60,8 @@ final class A6SettingsUITests: XCTestCase {
         try tap(app, "connectHost." + (ready["hostId"] as! String))
         try expect(app.descendants(matching: .any)["cloudPairingReady"].firstMatch)
         try tap(app, "cloudRequestApproval"); try expect(app.staticTexts["cloudWaiting"]); _ = try await get("/approve")
+        let sideList = app.descendants(matching: .any).matching(identifier: "mainChat.sideList").firstMatch
+        try expect(sideList); sideList.tap()
         try expect(app.descendants(matching: .any)["conversationList"].firstMatch)
         return (app, try await get("/a5/ids"))
     }
@@ -119,13 +123,18 @@ final class A6SettingsUITests: XCTestCase {
                 try expect(app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "合成改名")).firstMatch)
             }
             keep(app, "settings-" + id, theme)
+            if id == "schedules" {
+                try tap(app, "提醒操作"); keep(app, "settings-schedules-menu", theme)
+                app.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.25)).tap()
+            }
             try back(app)
             if id == "about" { XCTAssertEqual(app.buttons["settingsCategory.about"].frame.minY, listFrame.minY, accuracy: 2, "Returning must retain the list position") }
-            app.swipeDown()
+            // category() scrolls to the next row. A global pull-down at the top
+            // dismisses the native settings sheet instead of scrolling its list.
         }
-        try await searchAndDeepLink(app, ids: ids)
+        try await searchAndDeepLink(app, ids: ids, theme: theme)
     }
-    @MainActor private func searchAndDeepLink(_ app: XCUIApplication, ids: [String: Any]) async throws {
+    @MainActor private func searchAndDeepLink(_ app: XCUIApplication, ids: [String: Any], theme: String = "light") async throws {
         let search = app.searchFields["搜索设置"]
         // Pull the native list down to reveal its searchable field.
         for _ in 0..<3 { if search.isHittable { break }; app.swipeDown() }
@@ -137,9 +146,14 @@ final class A6SettingsUITests: XCTestCase {
         XCTAssertEqual(search.value as? String, "月度 上限")
         try tap(app, "关闭") // Native iOS search dismissal; restores the settings toolbar.
         try tap(app, "closeAuxiliarySheetButton")
-        let row = app.descendants(matching: .any)["conversationRow." + (ids["review"] as! String)].firstMatch
+        let row = app.descendants(matching: .any)["conversationRow." + ((ids["chatIDs"] as! [String:String])["review"]!)].firstMatch
         try expect(row); row.tap()
-        try tap(app, "对话菜单"); try tap(app, "conversationUsage")
+        try tap(app, "对话菜单")
+        keep(app, "conversation-menu", theme)
+        let menuTree = XCTAttachment(string: app.debugDescription)
+        menuTree.name = "a6-menu-accessibility"; menuTree.lifetime = .keepAlways; add(menuTree)
+        try tap(app, "conversationUsage")
+        keep(app, "conversation-usage-opened", theme)
         let focus = app.staticTexts.containing(NSPredicate(format: "label BEGINSWITH %@", "本对话：")).firstMatch
         try expect(focus)
         XCTAssertTrue(focus.label.contains("整理项目资料"))
@@ -161,12 +175,12 @@ final class A6SettingsUITests: XCTestCase {
         defer { app.terminate() }
         try openSettings(app); try category(app, "schedules")
         try expect(app.staticTexts["合成提醒：检查本周计划"])
-        try tap(app, "暂停"); try expect(app.buttons["恢复"])
+        try tap(app, "提醒操作"); try tap(app, "暂停"); try tap(app, "提醒操作"); try expect(app.buttons["恢复"])
         XCTAssertFalse(app.sheets["删除这条提醒或定时任务？已启动的任务和历史记录保留。"].exists)
-        try tap(app, "恢复"); try expect(app.buttons["暂停"])
+        try tap(app, "恢复"); try tap(app, "提醒操作"); try expect(app.buttons["暂停"])
         XCTAssertFalse(app.sheets["删除这条提醒或定时任务？已启动的任务和历史记录保留。"].exists)
         try tap(app, "立即运行")
-        try tap(app, "删除")
+        try tap(app, "提醒操作"); try tap(app, "删除")
         let confirm = app.sheets.buttons["删除"].firstMatch
         try expect(confirm); confirm.tap()
         try expect(app.staticTexts["暂无提醒或定时任务"])

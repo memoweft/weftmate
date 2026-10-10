@@ -1,0 +1,26 @@
+✔ startup summary loads the latest history even when the activity scan already observed an older page (2.0055ms)
+✔ D33 cached forget: lists, search, pages, native index and restart cannot revive erased content (2817.1843ms)
+✔ D33 cached forget-title: lists, search, pages, native index and restart cannot revive erased content (2558.1262ms)
+✔ D33 cached delete: lists, search, pages, native index and restart cannot revive erased content (2923.0393ms)
+✔ theme-color reads the rendered surface for light, dark, account and system changes (2.5127ms)
+✔ Android bar colours are generated from mobile surface tokens, not manually duplicated (1.0204ms)
+✔ anchored menus avoid cutout, status/caption and gesture insets (1.7894ms)
+✔ full-screen light/dark status-bar regression accepts continuous backgrounds and fails white-on-dark (21.5466ms)
+✔ D55 desktop/mobile/search and host agree on every priority including stopped (2.1982ms)
+✔ D55 observed terminal without an assistant message is unread and read snapshots clear it (2.1352ms)
+✔ D55 read covers messages before the tail but never consumes a terminal observed after its native snapshot (0.5261ms)
+✔ D55 pending native interactions update with account snapshots and disappear on answer, timeout or restart (0.801ms)
+✔ D55 summary includes children beyond the first 100 rows and excludes archived/deleting sessions (3.5824ms)
+✔ D55 invalidate/forget/deletion cannot revive terminal facts and account summaries cover hidden pages (2.7253ms)
+✔ D55 restart finds a terminal behind a long current turn outside the list request (0.5296ms)
+✔ D55 native adapter backward pages recover the previous terminal behind 250 current tool calls (6.6125ms)
+✔ D55 real host API rebuilds outcome after restart, clears read and removes deleted/private-source status copies (2885.5629ms)
+✔ D55 latest main read uses the existing metadata route, respects newer history and identity, and requires exact capability 1 (3.5168ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8617.4635
