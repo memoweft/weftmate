@@ -32,19 +32,19 @@ globalThis.WeftGoalsView={mount({target,core,openSource}){
             const parts=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(row?.nextRunAt?new Date(row.nextRunAt):new Date(Date.now()+3600000)).map(p=>[p.type,p.value]));
             date=field('日期','date',`${parts.year}-${parts.month}-${parts.day}`);time=field('时间','time',row?.repeat?.time.slice(0,5)??`${parts.hour}:${parts.minute}`);time.required=true;
             weekday=field('星期','select');for(const [index,label]of ['日','一','二','三','四','五','六'].entries()){const opt=el('option','',`星期${label}`);opt.value=String(index);weekday.append(opt);}weekday.value=String(row?.repeat?.weekday??1);
-            monthday=field('每月几日','number',row?.repeat?.day??1);monthday.min='1';monthday.max='31';interval=field('间隔分钟','number',row?.repeat?.seconds?row.repeat.seconds/60:5);interval.min='5';interval.step='1';
+            monthday=field('每月几日','number',row?.repeat?.day??1);monthday.min='1';monthday.max='31';interval=field('间隔秒数（至少 300 秒）','number',row?.repeat?.seconds??300);interval.min='300';interval.step='1';
             const toggle=()=>{date.parentElement.hidden=repeat.value!=='once';date.required=repeat.value==='once';weekday.parentElement.hidden=repeat.value!=='weekly';monthday.parentElement.hidden=repeat.value!=='monthly';interval.parentElement.hidden=repeat.value!=='interval';time.parentElement.hidden=repeat.value==='interval';time.required=repeat.value!=='interval';};repeat.onchange=toggle;toggle();
             form.append(el('p','muted',`时间按 ${zone} 安排；每月不存在的日期会跳过，电脑离线时恢复后补送。`));
         }else{description=field('目标说明','textarea');description.maxLength=32000;form.append(el('p','muted','目标关联到一个对话；每个对话同时保留一个目标。执行进展与结果在原对话查看。'));}
         const actions=el('div','goals-actions'),cancel=button('取消',()=>{form?.remove();form=null;}),submit=el('button','button primary','保存');submit.type='submit';actions.append(cancel,submit);form.append(actions);
         let requestId=crypto.randomUUID(),originalBody;
         form.onsubmit=async event=>{event.preventDefault();submit.disabled=true;
-            try{const body={requestId,sessionId:session.value};if(kind==='schedule'){Object.assign(body,{text:name.value,kind:mode.value,...(row?{expectedRevision:row.revision}:{})});const value=time.value.length===5?`${time.value}:00`:time.value;if(repeat.value==='interval')body.repeat={kind:'interval',seconds:Number(interval.value)*60};else if(repeat.value==='once')body.at={date:date.value,time:value};else body.repeat={kind:repeat.value,time:value,...(repeat.value==='weekly'?{weekday:Number(weekday.value)}:repeat.value==='monthly'?{day:Number(monthday.value)}:{})};}
+            try{const body={requestId,sessionId:session.value};if(kind==='schedule'){Object.assign(body,{text:name.value,kind:mode.value,...(row?{expectedRevision:row.revision}:{})});const value=time.value.length===5?`${time.value}:00`:time.value;if(repeat.value==='interval')body.repeat={kind:'interval',seconds:Number(interval.value)};else if(repeat.value==='once')body.at={date:date.value,time:value};else body.repeat={kind:repeat.value,time:value,...(repeat.value==='weekly'?{weekday:Number(weekday.value)}:repeat.value==='monthly'?{day:Number(monthday.value)}:{})};}
                 else Object.assign(body,{title:name.value,description:description.value});
                 // A retry after an uncertain write keeps the exact intent and ID.
                 if(originalBody&&JSON.stringify(body)!==originalBody){notice.textContent='先重试确认上次保存结果，再修改内容。';return;}originalBody=JSON.stringify(body);
                 const result=kind==='schedule'?await core.saveGoalSchedule(body,row):await core.saveLongGoal(body);if(result){form?.remove();form=null;notice.textContent='已保存。';}
-            }catch(error){if(error.status&&error.status<500){originalBody=null;requestId=crypto.randomUUID();}notice.textContent=error.code==='GOAL_ALREADY_EXISTS'?'这个对话已有目标，请完成或归档后再新建。':error.status===409?'内容已变化，请刷新后再试。':`${core.failureMessage(error)} 可用原内容重试确认。`;}
+            }catch(error){if(['SOURCE_UNAVAILABLE','SESSION_UNAVAILABLE'].includes(error.code)){form?.remove();form=null;notice.textContent='关联内容已清理，请重新新建。';return;}if(error.status&&error.status<500){originalBody=null;requestId=crypto.randomUUID();}notice.textContent=error.code==='GOAL_ALREADY_EXISTS'?'这个对话已有目标，请完成或归档后再新建。':error.status===409?'内容已变化，请刷新后再试。':`${core.failureMessage(error)} 可用原内容重试确认。`;}
             finally{submit.disabled=false;}
         };
         sections[kind==='schedule'?'schedules':'goals'].header.after(form);name.focus();
@@ -69,5 +69,5 @@ globalThis.WeftGoalsView={mount({target,core,openSource}){
         recentList.replaceChildren(...model.recent.map(taskRow));if(!model.recent.length)recentList.append(el('p','goals-empty','最近 7 天还没有完成的任务。'));
         if(focusedRow){const article=[...target.querySelectorAll('article')].find(n=>n.getAttribute('aria-label')===focusedRow);[...article?.querySelectorAll('button')??[]].find(n=>n.textContent===focusedLabel)?.focus();}
     }
-    return {render,focus:()=>title.focus()};
+    return {render,reset(){form?.remove();form=null;signature='';notice.textContent='';render();},focus:()=>title.focus()};
 }};
