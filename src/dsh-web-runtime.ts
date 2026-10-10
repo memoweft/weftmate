@@ -410,6 +410,7 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(PLUGINS_DIR, 'weftmate-personal-task-control.mjs'), join(dir, 'plugins', 'weftmate-personal-task-control.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-schedules.mjs'), join(dir, 'plugins', 'weftmate-personal-schedules.mjs')],
     [join(here, 'personal-access', 'schedules-native.mjs'), join(dir, 'personal-access', 'schedules-native.mjs')],
+    [join(here, 'personal-access', 'goals-native.mjs'), join(dir, 'personal-access', 'goals-native.mjs')],
     [join(here, 'personal-access', 'schedules-calendar.mjs'), join(dir, 'personal-access', 'schedules-calendar.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-shared-chat-preset.mjs'), join(dir, 'plugins', 'weftmate-personal-shared-chat-preset.mjs')],
     [join(PLUGINS_DIR, 'weftmate-mod-projects.mjs'), join(dir, 'plugins', 'weftmate-mod-projects.mjs')],
@@ -1541,7 +1542,7 @@ export class DshWebRuntime {
       value && typeof value === 'object' && !Array.isArray(value) &&
       Object.keys(value).every((key) => ['status', 'turn', 'step', 'assistantChunks',
         'textChunks', 'reasoningChunks', 'assistantMessages', 'toolSaveObserved',
-        'observedAt', 'terminalAt', 'firstChunkAt', 'lastChunkAt', 'endReasonKind'].includes(key)) &&
+        'startedAt', 'observedAt', 'terminalAt', 'firstChunkAt', 'lastChunkAt', 'endReasonKind'].includes(key)) &&
       ['waiting', 'streaming', 'completed', 'aborted', 'blocked', 'failed', 'unconfirmed'].includes(value.status as string) &&
       (value.turn === null || typeof value.turn === 'number' && Number.isSafeInteger(value.turn) && value.turn > 0) &&
       (value.step === undefined || typeof value.step === 'number' && Number.isSafeInteger(value.step) && value.step >= 0) &&
@@ -1549,7 +1550,7 @@ export class DshWebRuntime {
         typeof value[key] === 'number' && Number.isSafeInteger(value[key]) &&
         (value[key] as number) >= 0 && (value[key] as number) <= 12_000) &&
       typeof value.toolSaveObserved === 'boolean' &&
-      [value.observedAt, value.terminalAt, value.firstChunkAt, value.lastChunkAt].every(time) &&
+      [value.startedAt, value.observedAt, value.terminalAt, value.firstChunkAt, value.lastChunkAt].every(time) &&
       (value.endReasonKind === undefined || value.endReasonKind === 'max-tokens' &&
         value.status === 'failed' && value.turn !== null && typeof value.terminalAt === 'string') &&
       (value.status !== 'completed' || value.turn !== null && typeof value.terminalAt === 'string')

@@ -61,6 +61,14 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
     }
     if (Array.isArray(value)) return value.map(child => clean(child, redact, key))
     if (!value || typeof value !== 'object') return value
+    if (value.type === 'goal/change' && options.goalIds?.includes(value.data?.goal?.id)) {
+      changed = true;
+      return { ...value, data: { ...value.data, goal: { ...value.data.goal, objective: '[已遗忘的目标说明]', ...(value.data.goal.blockedReason ? { blockedReason: { code: value.data.goal.blockedReason.code, message: '[已遗忘的目标说明]' } } : {}) } } };
+    }
+    if (value.type === 'schedule/change' && options.scheduleIds?.includes(value.data?.schedule?.id)) {
+      changed = true;
+      return { ...value, data: { ...value.data, schedule: { ...value.data.schedule, prompt: '[已遗忘的安排说明]' } } };
+    }
     if (value.type === 'todo/write' && value.data?.todos?.length) {
       changed = true;
       return { ...value, data: { ...value.data, todos: [] } };

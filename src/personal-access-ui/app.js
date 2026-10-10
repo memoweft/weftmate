@@ -31,7 +31,7 @@
     ui.cloudUi = globalThis.WeftCloudUi.create({ acceptSession: core.acceptSession, enterAssistant: core.enterAssistant,
         openAccount: core.openAccount, show: core.show, accessApi: core.accessApi, toast: ui.toast,
         bindDesktop: core.cloudBindDesktop });
-    for (const mount of ["mountAuth", "mountAccount", "mountSettings", "mountMemory", "mountApprovals", "mountComposer", "mountPhone", "mountSessions", "mountCloudSettings", "mountShell", "mountSettingsNavigation", "mountMainChat", "mountActivity", "mountLibrary"])
+    for (const mount of ["mountAuth", "mountAccount", "mountSettings", "mountMemory", "mountApprovals", "mountComposer", "mountPhone", "mountSessions", "mountCloudSettings", "mountShell", "mountSettingsNavigation", "mountMainChat", "mountActivity", "mountGoals", "mountLibrary"])
         ui[mount]();
     ui.mountOnboarding();
     globalThis.__WeftUiStarted = true;

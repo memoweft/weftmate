@@ -10,7 +10,10 @@ export function eraseChatCopies(account, { sessionId = null, forgotten = false }
       delete command.nativeFile; delete command.libraryExport; delete command.libraryProjectId;
     }
   }
+  const generation = account.activity?.generation ?? 0;
+  for (const [id, row] of Object.entries(account.scheduleAuthorizations ?? {})) if (!forgotten && row.sessionId === sessionId) delete account.scheduleAuthorizations[id];
   removeActivity(account, row => forgotten || row.source.sessionId === sessionId);
+  if (account.activity && account.activity.generation === generation) { account.activity.generation++; account.activity.operations = {}; }
   if (account.activity) {
     account.activity.erasedBefore ??= {};
     for (const id of Object.keys(account.sessions)) if (forgotten || id === sessionId) account.activity.erasedBefore[id] = new Date().toISOString();
