@@ -1,0 +1,122 @@
+[
+  {
+    "number": 56,
+    "name": "fixed ApprovalService and ToolRuntime deliver approved/rejected native decisions without forcing automatic tools to ask",
+    "category": "夹具没跟上产品"
+  },
+  {
+    "number": 57,
+    "name": "native approvals still work after 256 tool calls in the same personal turn",
+    "category": "夹具没跟上产品"
+  },
+  {
+    "number": 58,
+    "name": "a tool-body ask waits for the native committed decision receipt before finishing its execution receipt",
+    "category": "夹具没跟上产品"
+  },
+  {
+    "number": 59,
+    "name": "the verified WeftMod script approval alias preserves actual execution identity and rejects unrelated names",
+    "category": "夹具没跟上产品"
+  },
+  {
+    "number": 60,
+    "name": "a tool-body effect whose committed approval response is lost becomes uncertain and blocks new root and nested calls",
+    "category": "夹具没跟上产品"
+  },
+  {
+    "number": 61,
+    "name": "a native cancelled body approval keeps its known cancellation receipt separate from unknown effects",
+    "category": "夹具没跟上产品"
+  },
+  {
+    "number": 62,
+    "name": "a lost completed execution receipt closes the local root without downgrading the confirmed completion",
+    "category": "夹具没跟上产品"
+  },
+  {
+    "number": 63,
+    "name": "cancelled, replaced and historical approvals cannot consume a later allowed answer",
+    "category": "夹具没跟上产品"
+  },
+  {
+    "number": 64,
+    "name": "a durable task-stop approval reports native cancellation before its abort signal arrives",
+    "category": "夹具没跟上产品"
+  },
+  {
+    "number": 65,
+    "name": "durable stop cannot be consumed by a replaced or changed source and other unavailability stays unavailable",
+    "category": "夹具没跟上产品"
+  },
+  {
+    "number": 66,
+    "name": "the exact user receipt is preserved for equal text in a later turn and a stale source turn is refused",
+    "category": "夹具没跟上产品"
+  },
+  {
+    "number": 75,
+    "name": "native background dispatch reads the pinned ToolResult value and separates concurrent call ownership",
+    "category": "夹具没跟上产品"
+  },
+  {
+    "number": 76,
+    "name": "unexpected multiple native registrations close every captured owned job and retain an unfinished receipt when cleanup is unknown",
+    "category": "夹具没跟上产品"
+  },
+  {
+    "number": 77,
+    "name": "native registration survives the pinned abort envelope losing value and kills only the newly created job",
+    "category": "夹具没跟上产品"
+  },
+  {
+    "number": 78,
+    "name": "a post-body approval receipt failure stops only its captured job and keeps the execution receipt unfinished",
+    "category": "夹具没跟上产品"
+  },
+  {
+    "number": 79,
+    "name": "native claim and durable receipt failures release just-created work without inventing a successful receipt",
+    "category": "夹具没跟上产品"
+  },
+  {
+    "number": 80,
+    "name": "refused ownership with a still-stopping or throwing cleanup records unknown effects rather than hiding a live job",
+    "category": "夹具没跟上产品"
+  },
+  {
+    "number": 83,
+    "name": "tool lifecycle derives a nested call from the real root event and records cancellation after the body settles",
+    "category": "夹具没跟上产品"
+  },
+  {
+    "number": 84,
+    "name": "empty no-model session survives personal-host restart with a visible failed reference scan",
+    "category": "产品真问题"
+  },
+  {
+    "number": 94,
+    "name": "artifact provenance in a 23000+ event history reads only its bound native turn",
+    "category": "夹具没跟上产品"
+  },
+  {
+    "number": 95,
+    "name": "physical DSH read result proves only its exact source receipt, snapshot and earlier call",
+    "category": "夹具没跟上产品"
+  },
+  {
+    "number": 96,
+    "name": "physical proof admits only the requested successful browser read tool before save",
+    "category": "夹具没跟上产品"
+  },
+  {
+    "number": 98,
+    "name": "project reader failure survives the actual child bridge without losing the UTF8 code",
+    "category": "夹具没跟上产品"
+  },
+  {
+    "number": 102,
+    "name": "official ToolRuntime gives the original personal-remote scope general tools while denying forged execution identity",
+    "category": "测试过时（另补齐原生审批夹具）"
+  }
+]
