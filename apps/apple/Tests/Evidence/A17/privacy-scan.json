@@ -1,0 +1,26 @@
+{
+  "syntheticOnly": true,
+  "rawAccessibilityFrames": 662,
+  "scans": [
+    {
+      "marker": "A15_SYNTHETIC_PRIVATE_BODY_NEVER_DISPLAY",
+      "hits": 0
+    },
+    {
+      "marker": "A15_SYNTHETIC_SECRET_NEVER_DISPLAY",
+      "hits": 0
+    },
+    {
+      "marker": "A16_SYNTHETIC_PRIVATE_BODY_NEVER_DISPLAY",
+      "hits": 0
+    },
+    {
+      "marker": "A16_SYNTHETIC_SECRET_NEVER_DISPLAY",
+      "hits": 0
+    }
+  ],
+  "uiCopy": {
+    "authoredStrings": 1927,
+    "screenshotFrames": 662
+  }
+}

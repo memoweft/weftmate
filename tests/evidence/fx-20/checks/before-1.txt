@@ -1,0 +1,18 @@
+✖ UI-2a 390×844 modes, risk confirmation, settings and three approval decisions (33166.2074ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 33537.2399
+
+✖ failing tests:
+
+test at apps\mobile-ui\tests\approval-interactions.test.mjs:17:1
+✖ UI-2a 390×844 modes, risk confirmation, settings and three approval decisions (33166.2074ms)
+  page.waitForFunction: Timeout 30000ms exceeded.
+      at TestContext.<anonymous> (D:\AIProjects\WeftMate\Worktrees\w3\apps\mobile-ui\tests\approval-interactions.test.mjs:124:78) {
+    name: 'TimeoutError'
+  }

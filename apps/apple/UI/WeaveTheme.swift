@@ -27,11 +27,12 @@ struct BrandMark: View {
 
 struct WeaveCard<Content: View>: View {
     let content: Content
-    init(@ViewBuilder content: () -> Content) { self.content = content() }
+    let padding: CGFloat
+    init(padding: CGFloat = AppleTokens.Space.p20, @ViewBuilder content: () -> Content) { self.padding = padding; self.content = content() }
     var body: some View {
         content
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(AppleTokens.Space.p20)
+            .padding(padding)
             .background(Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r14, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r14).strokeBorder(Weave.line, lineWidth: AppleTokens.Space.p1))
     }
@@ -46,13 +47,14 @@ enum AppleAppearance: String, CaseIterable, Identifiable {
 
 /// Actions grow with Dynamic Type and retain a 44 pt touch target.
 struct OutlineActionStyle: ButtonStyle {
+    var destructive = false
     @Environment(\.isEnabled) private var enabled
     func makeBody(configuration: Configuration) -> some View {
         configuration.label.font(AppleTokens.Fonts.callout.weight(.medium))
             .padding(.horizontal, AppleTokens.Space.p12).frame(minHeight: 44)
-            .foregroundStyle(Weave.ink)
+            .foregroundStyle(destructive ? Weave.danger : Weave.ink)
             .background(configuration.isPressed ? Weave.soft : Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r10))
-            .overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r10).strokeBorder(Weave.line))
+            .overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r10).strokeBorder(destructive ? Weave.danger : Weave.line))
             .opacity(enabled ? 1 : AppleTokens.Opacity.disabled)
     }
 }

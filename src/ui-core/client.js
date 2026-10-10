@@ -2,6 +2,18 @@
 globalThis.WeftUiCore.factories.client = (core) => {
     const write = (path, body, method = 'POST', options = {}) => core.accessApi(path, { method, protectedWrite: true, body, ...options });
     const authWrite = (path, body, method = 'POST') => core.api(path, { method, protectedWrite: true, body });
+    let detailScope; const detailReads = new Map();
+    function readTimelineDetail(sessionId, seq) {
+        const scope = JSON.stringify([core.state.ownerId, core.state.identityGeneration, core.state.device?.id]);
+        if (detailScope !== scope) { detailReads.clear(); detailScope = scope; }
+        const key = JSON.stringify([sessionId, seq]);
+        if (!detailReads.has(key)) {
+            const read = core.accessApi(`/sessions/${encodeURIComponent(sessionId)}/events/${seq}/detail`);
+            detailReads.set(key, read);
+            read.catch(() => { if (detailReads.get(key) === read) detailReads.delete(key); });
+        }
+        return detailReads.get(key);
+    }
     return {
         taskSourcePath: (taskId, snapshotId) => `/tasks/${encodeURIComponent(taskId)}/sources/${encodeURIComponent(snapshotId)}`,
         artifactPreviewPath: artifactId => `/artifacts/${encodeURIComponent(artifactId)}/preview`,
@@ -50,7 +62,7 @@ globalThis.WeftUiCore.factories.client = (core) => {
         submitMemoryCommand: (selected, operation, body) => core.memoryRequest(`/items/${selected.kind}/${core.memoryPathId(selected.id)}${operation === 'delete' ? '' : `/${operation}`}`, { method: operation === 'delete' ? 'DELETE' : 'POST', body }),
         readResource: path => core.accessApi(path),
         stopTask: (taskId, requestId) => core.accessApi(`/tasks/${encodeURIComponent(taskId)}/stop`, { method: 'POST', body: JSON.stringify({ requestId }) }),
-        readTimelineDetail: (sessionId, seq) => core.accessApi(`/sessions/${encodeURIComponent(sessionId)}/events/${seq}/detail`),
+        readTimelineDetail,
         writePhoneEvents: events => write('/sync/events', { events }),
         readPhoneEvents: afterSeq => core.accessApi(`/sync/events?afterSeq=${afterSeq}&limit=100`),
     };

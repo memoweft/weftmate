@@ -100,7 +100,7 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             cache.pending = null;
         }
     }
-    async function refreshTasks(append = false) {
+    async function refreshTasks(append = false, refreshConversation = true) {
         const identity = core.state.identityGeneration;
         const ownerId = core.state.ownerId;
         try {
@@ -122,7 +122,7 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             }
             effects.updateAvailability();
             await core.conversationTasks.inFlight?.promise;
-            if (identity === core.state.identityGeneration && ownerId === core.state.ownerId)
+            if (refreshConversation && identity === core.state.identityGeneration && ownerId === core.state.ownerId)
                 void core.refreshConversationTasks();
         }
         catch (error) {

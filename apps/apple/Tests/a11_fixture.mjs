@@ -54,6 +54,7 @@ const proxy=createServer(async(req,res)=>{
   const response=await fetch(started.origin+req.url,{method:req.method,headers,...(['GET','HEAD'].includes(req.method)?{}:{body:Buffer.concat(body)})});
   let bytes=Buffer.from(await response.arrayBuffer());
   if(pathname==='/personal/v1/sessions'&&response.ok){const data=JSON.parse(bytes);for(const s of data.sessions)if(s.sessionId===restricted.sessionId)s.taskAvailable=false;bytes=Buffer.from(JSON.stringify(data));}
+  if(pathname.startsWith('/personal/v1/chats')&&response.ok){const data=JSON.parse(bytes);const rows=data.items??(data.chat?[data.chat]:[]);for(const c of rows)if(c.activeSessionId===restricted.sessionId)c.taskAvailable=false;bytes=Buffer.from(JSON.stringify(data));}
   const outgoing={};for(const [k,v] of response.headers)if(!['content-length','transfer-encoding','content-encoding'].includes(k))outgoing[k]=v;
   res.writeHead(response.status,outgoing);res.end(bytes);
 });
@@ -63,7 +64,7 @@ const driver=createServer(async(req,res)=>{
  try {
   const path=new URL(req.url,'http://127.0.0.1').pathname;
   let data;
-  if(path==='/ready')data={host:origin,cloud:origin,hostId:started.hostId,projectId:project.projectId,projectSessionId:projectSession.sessionId,ordinaryId:ordinary.sessionId,restrictedId:restricted.sessionId};
+  if(path==='/ready'){const chats=(await api('/chats?kind=side&limit=200')).items;const logical=id=>chats.find(c=>c.activeSessionId===id)?.chatId??id;data={host:origin,cloud:origin,hostId:started.hostId,projectId:project.projectId,projectSessionId:projectSession.sessionId,ordinaryId:ordinary.sessionId,restrictedId:restricted.sessionId,projectChatId:logical(projectSession.sessionId),ordinaryChatId:logical(ordinary.sessionId),restrictedChatId:logical(restricted.sessionId)};}
   else if(path==='/report')data={projects:(await api('/projects')).projects,sessions:(await api('/sessions')).sessions,operations:synthetic.operations,creates,traffic,syntheticRootInspector:true,restrictedProjection:true};
   else throw Error('Unknown route');
   res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(data));
