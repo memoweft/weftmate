@@ -45,6 +45,17 @@ test('Relay phone first input and file task', {
       `--ignore-certificate-errors-spki-list=${Buffer.from(pairing.data.tlsSpki, 'base64url').toString('base64')}`] });
     phone = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     phone.setDefaultTimeout(15_000);
+    // The real cloud helpers perform identity setup. Capture the unmodified
+    // UI core only to hydrate it from the approved host's real /auth/me result;
+    // no cloud tokens, UI behavior, history or business responses are faked.
+    await phone.addInitScript(() => {
+      let value;
+      Object.defineProperty(globalThis, 'WeftUiCore', { configurable: true,
+        get: () => value, set: module => {
+          value = module; const create = module.create;
+          module.create = function(...args) { const core = create.apply(this, args); globalThis.__ciR1Core = core; return core; };
+        } });
+    });
     const routeViolations = [], pageErrors = [];
     phone.on('pageerror', error => pageErrors.push(error.message));
     // Reject any browser escape before dispatch, including a direct host port.
@@ -90,6 +101,15 @@ test('Relay phone first input and file task', {
         return result?.state === 'accepted_by_dsh'; }, 'command receipt timeout');
       return result;
     };
+    const enterApprovedSession = async () => {
+      await phone.waitForFunction(() => globalThis.__WeftUiStarted === true);
+      await phone.getByRole('heading', { name: '登录 WeftMate', exact: true }).waitFor();
+      await phone.evaluate(async () => {
+        const response = await fetch('/personal/v1/auth/me'); if (!response.ok) throw new Error('approved host session missing');
+        globalThis.__ciR1Core.acceptSession(await response.json()); await globalThis.__ciR1Core.enterAssistant();
+      });
+      await phone.locator('#assistant-view').waitFor();
+    };
     const sessions = [];
     for (let i = 0; i < 2; i++) {
       const accepted = await phoneApi('/commands', { requestId: randomUUID(), kind: 'session.create', targetDeviceId: started.hostId, modelProfileId: 'synthetic' });
@@ -98,19 +118,22 @@ test('Relay phone first input and file task', {
       assert.equal((await phoneApi(`/sessions/${created.sessionId}/metadata`, { title }, 'PATCH')).status, 200);
       sessions.push({ sessionId: created.sessionId, title });
     }
-    await phone.reload(); await phone.locator('#assistant-view').waitFor();
+    await phone.reload(); await enterApprovedSession();
     const draft = phone.locator('#message-text'), send = phone.locator('#send-message');
     let delayed = null;
     await phone.route('**/personal/v1/**/events*', async route => {
       const url = new URL(route.request().url());
       if (delayed && url.pathname.includes(delayed.sessionId) && !url.searchParams.has('afterSeq')) {
-        delayed.count++; const response = await route.fetch(); await pause(2000); await route.fulfill({ response });
+        delayed.count++; await pause(2000); await route.continue();
       } else await route.continue();
     });
     const select = async session => {
-      const rail = phone.getByRole('complementary', { name: '会话导航', exact: true });
-      if (!await rail.isVisible()) await phone.getByRole('button', { name: '切换会话侧栏', exact: true }).click();
-      await phone.locator(`[data-session-id="${session.sessionId}"]`).getByRole('button', { name: session.title, exact: true }).click();
+      const toggle = phone.getByRole('button', { name: '切换会话侧栏', exact: true });
+      if (await toggle.getAttribute('aria-expanded') !== 'true') await toggle.click();
+      const row = phone.locator(`[data-session-id="${session.sessionId}"]`);
+      const visibleTitle = (await phoneApi(`/sessions/${session.sessionId}`)).data.session?.title ?? session.title;
+      const button = row.getByRole('button', { name: visibleTitle, exact: true });
+      await button.click();
     };
     for (let i = 0; i < 10; i++) {
       const session = sessions[i % 2]; delayed = { sessionId: session.sessionId, count: 0 };
@@ -142,7 +165,7 @@ test('Relay phone first input and file task', {
     const fileSession = { sessionId: created.sessionId, title: '合成中继文件任务' };
     await phoneApi(`/sessions/${created.sessionId}/metadata`, { title: fileSession.title }, 'PATCH');
     assert.equal((await phoneApi(`/sessions/${created.sessionId}/approval-mode`, { mode: 'ask' }, 'PATCH')).status, 200);
-    await phone.reload(); await phone.locator('#assistant-view').waitFor(); await select(fileSession);
+    await phone.reload(); await enterApprovedSession(); await select(fileSession);
     await waitFor(() => draft.isEnabled(), 'file task composer locked');
     await draft.fill('CI_R1_FILE_TASK：在合成项目里读取 input.txt，新建 result.txt，再读回核验内容。'); await send.click();
     const approvedIds = new Set();
