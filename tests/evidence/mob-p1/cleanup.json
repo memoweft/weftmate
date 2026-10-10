@@ -1,0 +1,9 @@
+{
+  "forcedStopped": [],
+  "dailyDataTouched": false,
+  "timestamp": "2026-10-10T19:03:51.3658782+08:00",
+  "ownership": "creation time + executable + exact workspace/recorded canonical temp in command line; no parent PID matching",
+  "remainingCount": 0,
+  "emulatorStarted": false,
+  "forcedStoppedCount": 0
+}

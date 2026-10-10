@@ -533,8 +533,11 @@ test('backend errors and malformed event data never expose arbitrary codes or co
     const { token } = await service.enrollDevice({ name: 'phone' })
     await service.attachSession('known-session')
     const status = await request(origin, token, 'GET', '/personal/v1/status')
-    assert.equal(status.status, 503)
-    assert.deepEqual(status.body, { error: { code: 'SERVICE_UNAVAILABLE' } })
+    assert.equal(status.status, 200)
+    assert.equal(status.body.presence.host, 'online')
+    assert.equal(status.body.presence.runtime, 'unavailable')
+    assert.equal(status.body.backend.capabilities.chat.reasonCode, 'RUNTIME_UNAVAILABLE')
+    assert.equal(JSON.stringify(status.body).includes('PRIVATE_SECRET'), false)
     assert.equal(JSON.stringify(status.body).includes('private failure'), false)
     assert.equal((await request(origin, token, 'GET', '/personal/v1/sessions/known-session/events')).status, 503)
     f.backend.readEvents = async () => { throw Object.assign(new Error('private history text'),

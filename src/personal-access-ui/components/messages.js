@@ -12,7 +12,10 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
         globalThis.WeftContent?.closeGallery(false);
         ui.byId('transcript').replaceChildren();
     }
-    function historyNotice(message) {
+    function historyNotice(message, kind = 'ordinary') {
+        // Only read failures merge into connection state; preserve all other notices.
+        ui.byId('timeline-status').dataset.noticeKind = kind;
+        if (kind === 'read-failure' && core.connectionView?.().kind !== 'online') message = '';
         ui.byId('timeline-status').textContent = message;
         ui.byId('timeline-status').hidden = !message;
     }
@@ -48,10 +51,10 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             node.replaceChildren(globalThis.WeftContent.create(row.text || '附件', 'message-text markdown-body'));
             if (row.files?.length) node.append(ui.element('small', 'message-task-label', row.files.join(' · ')));
             if (row.status !== 'accepted') {
-                const status = ui.element('small', 'message-task-label', row.status === 'failed' ? '发送未确认，草稿已保留' : '发送中');
+                const status = ui.element('small', 'message-task-label', row.status === 'undelivered' ? '未送达，草稿已保留' : ['failed','confirming'].includes(row.status) ? '发送结果待核对，草稿已保留' : '发送中');
                 status.setAttribute('role', 'status'); node.append(status);
             }
-            if (row.status === 'failed') {
+            if (['failed','confirming','undelivered'].includes(row.status)) {
                 const retry = ui.element('button', 'button quiet small', '重试发送'); retry.type = 'button';
                 retry.addEventListener('click', () => core.retryOptimistic(row.requestId)); node.append(retry);
             }

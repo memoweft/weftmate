@@ -1,0 +1,1141 @@
+{
+  "checks": [
+    {
+      "name": "Actual HAProxy termination during fixed DSH stream",
+      "passed": true,
+      "modelGenerations": 1,
+      "segments": 90,
+      "exactReply": true,
+      "uniqueSeq": 7
+    },
+    {
+      "name": "Host content listener close/start preserves original native stream",
+      "passed": true,
+      "scope": "HTTP host restart; runtime process stays alive",
+      "segments": 90
+    },
+    {
+      "name": "Lost committed acceptance",
+      "passed": true,
+      "requestId": "fad0f684-373b-45d3-b01b-727f7883160b",
+      "sameNumberRetry": true
+    },
+    {
+      "name": "Dropped before host acceptance",
+      "passed": true,
+      "requestId": "1f0af2fc-7abd-4e74-ba30-9a6eea7bd2da",
+      "sameNumberRetry": true
+    },
+    {
+      "name": "Real MiMo long reply interrupted at phone transport",
+      "passed": true,
+      "characters": 4798,
+      "matchedUpstreamCharacters": 4798,
+      "originalRequestId": "4a396c29-2968-448e-be5e-f02846f78790"
+    },
+    {
+      "name": "Confirmed host offline opens M3-A mode and returns automatically after sync",
+      "passed": true
+    },
+    {
+      "name": "Actual native approval and tool progress restore across disconnect",
+      "passed": true
+    }
+  ],
+  "fixedDsh": true,
+  "realElectron": true,
+  "fullRelay": true,
+  "randomPorts": true,
+  "syntheticAccount": true,
+  "visuals": [
+    {
+      "surface": "electron",
+      "width": 1200,
+      "theme": "light",
+      "kind": "online",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      }
+    },
+    {
+      "surface": "electron",
+      "width": 1200,
+      "theme": "light",
+      "kind": "connecting",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 332,
+        "y": 618,
+        "width": 780,
+        "height": 60,
+        "top": 618,
+        "right": 1112,
+        "bottom": 678,
+        "left": 332
+      },
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      }
+    },
+    {
+      "surface": "electron",
+      "width": 1200,
+      "theme": "light",
+      "kind": "host_offline",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 332,
+        "y": 618,
+        "width": 780,
+        "height": 60,
+        "top": 618,
+        "right": 1112,
+        "bottom": 678,
+        "left": 332
+      },
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      }
+    },
+    {
+      "surface": "electron",
+      "width": 1200,
+      "theme": "light",
+      "kind": "network_unavailable",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 332,
+        "y": 618,
+        "width": 780,
+        "height": 60,
+        "top": 618,
+        "right": 1112,
+        "bottom": 678,
+        "left": 332
+      },
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      }
+    },
+    {
+      "surface": "electron",
+      "width": 1200,
+      "theme": "light",
+      "kind": "login_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 332,
+        "y": 618,
+        "width": 780,
+        "height": 60,
+        "top": 618,
+        "right": 1112,
+        "bottom": 678,
+        "left": 332
+      },
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      }
+    },
+    {
+      "surface": "electron",
+      "width": 1200,
+      "theme": "light",
+      "kind": "approval_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 332,
+        "y": 618,
+        "width": 780,
+        "height": 60,
+        "top": 618,
+        "right": 1112,
+        "bottom": 678,
+        "left": 332
+      },
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      }
+    },
+    {
+      "surface": "electron",
+      "width": 1200,
+      "theme": "dark",
+      "kind": "online",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      }
+    },
+    {
+      "surface": "electron",
+      "width": 1200,
+      "theme": "dark",
+      "kind": "connecting",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 332,
+        "y": 618,
+        "width": 780,
+        "height": 60,
+        "top": 618,
+        "right": 1112,
+        "bottom": 678,
+        "left": 332
+      },
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      }
+    },
+    {
+      "surface": "electron",
+      "width": 1200,
+      "theme": "dark",
+      "kind": "host_offline",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 332,
+        "y": 618,
+        "width": 780,
+        "height": 60,
+        "top": 618,
+        "right": 1112,
+        "bottom": 678,
+        "left": 332
+      },
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      }
+    },
+    {
+      "surface": "electron",
+      "width": 1200,
+      "theme": "dark",
+      "kind": "network_unavailable",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 332,
+        "y": 618,
+        "width": 780,
+        "height": 60,
+        "top": 618,
+        "right": 1112,
+        "bottom": 678,
+        "left": 332
+      },
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      }
+    },
+    {
+      "surface": "electron",
+      "width": 1200,
+      "theme": "dark",
+      "kind": "login_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 332,
+        "y": 618,
+        "width": 780,
+        "height": 60,
+        "top": 618,
+        "right": 1112,
+        "bottom": 678,
+        "left": 332
+      },
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      }
+    },
+    {
+      "surface": "electron",
+      "width": 1200,
+      "theme": "dark",
+      "kind": "approval_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 332,
+        "y": 618,
+        "width": 780,
+        "height": 60,
+        "top": 618,
+        "right": 1112,
+        "bottom": 678,
+        "left": 332
+      },
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      }
+    },
+    {
+      "surface": "electron",
+      "width": 480,
+      "theme": "light",
+      "kind": "online",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "viewport": {
+        "width": 480,
+        "height": 800
+      }
+    },
+    {
+      "surface": "electron",
+      "width": 480,
+      "theme": "light",
+      "kind": "connecting",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 619.21875,
+        "width": 456,
+        "height": 64.78125,
+        "top": 619.21875,
+        "right": 468,
+        "bottom": 684,
+        "left": 12
+      },
+      "viewport": {
+        "width": 480,
+        "height": 800
+      }
+    },
+    {
+      "surface": "electron",
+      "width": 480,
+      "theme": "light",
+      "kind": "host_offline",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 619.21875,
+        "width": 456,
+        "height": 64.78125,
+        "top": 619.21875,
+        "right": 468,
+        "bottom": 684,
+        "left": 12
+      },
+      "viewport": {
+        "width": 480,
+        "height": 800
+      }
+    },
+    {
+      "surface": "electron",
+      "width": 480,
+      "theme": "light",
+      "kind": "network_unavailable",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 619.21875,
+        "width": 456,
+        "height": 64.78125,
+        "top": 619.21875,
+        "right": 468,
+        "bottom": 684,
+        "left": 12
+      },
+      "viewport": {
+        "width": 480,
+        "height": 800
+      }
+    },
+    {
+      "surface": "electron",
+      "width": 480,
+      "theme": "light",
+      "kind": "login_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 619.21875,
+        "width": 456,
+        "height": 64.78125,
+        "top": 619.21875,
+        "right": 468,
+        "bottom": 684,
+        "left": 12
+      },
+      "viewport": {
+        "width": 480,
+        "height": 800
+      }
+    },
+    {
+      "surface": "electron",
+      "width": 480,
+      "theme": "light",
+      "kind": "approval_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 619.21875,
+        "width": 456,
+        "height": 64.78125,
+        "top": 619.21875,
+        "right": 468,
+        "bottom": 684,
+        "left": 12
+      },
+      "viewport": {
+        "width": 480,
+        "height": 800
+      }
+    },
+    {
+      "surface": "electron",
+      "width": 480,
+      "theme": "dark",
+      "kind": "online",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "viewport": {
+        "width": 480,
+        "height": 800
+      }
+    },
+    {
+      "surface": "electron",
+      "width": 480,
+      "theme": "dark",
+      "kind": "connecting",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 619.21875,
+        "width": 456,
+        "height": 64.78125,
+        "top": 619.21875,
+        "right": 468,
+        "bottom": 684,
+        "left": 12
+      },
+      "viewport": {
+        "width": 480,
+        "height": 800
+      }
+    },
+    {
+      "surface": "electron",
+      "width": 480,
+      "theme": "dark",
+      "kind": "host_offline",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 619.21875,
+        "width": 456,
+        "height": 64.78125,
+        "top": 619.21875,
+        "right": 468,
+        "bottom": 684,
+        "left": 12
+      },
+      "viewport": {
+        "width": 480,
+        "height": 800
+      }
+    },
+    {
+      "surface": "electron",
+      "width": 480,
+      "theme": "dark",
+      "kind": "network_unavailable",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 619.21875,
+        "width": 456,
+        "height": 64.78125,
+        "top": 619.21875,
+        "right": 468,
+        "bottom": 684,
+        "left": 12
+      },
+      "viewport": {
+        "width": 480,
+        "height": 800
+      }
+    },
+    {
+      "surface": "electron",
+      "width": 480,
+      "theme": "dark",
+      "kind": "login_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 619.21875,
+        "width": 456,
+        "height": 64.78125,
+        "top": 619.21875,
+        "right": 468,
+        "bottom": 684,
+        "left": 12
+      },
+      "viewport": {
+        "width": 480,
+        "height": 800
+      }
+    },
+    {
+      "surface": "electron",
+      "width": 480,
+      "theme": "dark",
+      "kind": "approval_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 619.21875,
+        "width": 456,
+        "height": 64.78125,
+        "top": 619.21875,
+        "right": 468,
+        "bottom": 684,
+        "left": 12
+      },
+      "viewport": {
+        "width": 480,
+        "height": 800
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 390,
+      "theme": "light",
+      "kind": "online",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 390,
+      "theme": "light",
+      "kind": "connecting",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 390,
+      "theme": "light",
+      "kind": "host_offline",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 613.03125,
+        "width": 366,
+        "height": 87.171875,
+        "top": 613.03125,
+        "right": 378,
+        "bottom": 700.203125,
+        "left": 12
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 390,
+      "theme": "light",
+      "kind": "network_unavailable",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 613.03125,
+        "width": 366,
+        "height": 87.171875,
+        "top": 613.03125,
+        "right": 378,
+        "bottom": 700.203125,
+        "left": 12
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 390,
+      "theme": "light",
+      "kind": "login_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 635.421875,
+        "width": 366,
+        "height": 64.78125,
+        "top": 635.421875,
+        "right": 378,
+        "bottom": 700.203125,
+        "left": 12
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 390,
+      "theme": "light",
+      "kind": "approval_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 613.03125,
+        "width": 366,
+        "height": 87.171875,
+        "top": 613.03125,
+        "right": 378,
+        "bottom": 700.203125,
+        "left": 12
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 390,
+      "theme": "dark",
+      "kind": "online",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 390,
+      "theme": "dark",
+      "kind": "connecting",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 390,
+      "theme": "dark",
+      "kind": "host_offline",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 613.03125,
+        "width": 366,
+        "height": 87.171875,
+        "top": 613.03125,
+        "right": 378,
+        "bottom": 700.203125,
+        "left": 12
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 390,
+      "theme": "dark",
+      "kind": "network_unavailable",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 613.03125,
+        "width": 366,
+        "height": 87.171875,
+        "top": 613.03125,
+        "right": 378,
+        "bottom": 700.203125,
+        "left": 12
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 390,
+      "theme": "dark",
+      "kind": "login_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 635.421875,
+        "width": 366,
+        "height": 64.78125,
+        "top": 635.421875,
+        "right": 378,
+        "bottom": 700.203125,
+        "left": 12
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 390,
+      "theme": "dark",
+      "kind": "approval_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 613.03125,
+        "width": 366,
+        "height": 87.171875,
+        "top": 613.03125,
+        "right": 378,
+        "bottom": 700.203125,
+        "left": 12
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 360,
+      "theme": "light",
+      "kind": "online",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "viewport": {
+        "width": 360,
+        "height": 780
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 360,
+      "theme": "light",
+      "kind": "connecting",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "viewport": {
+        "width": 360,
+        "height": 780
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 360,
+      "theme": "light",
+      "kind": "host_offline",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 526.640625,
+        "width": 336,
+        "height": 109.5625,
+        "top": 526.640625,
+        "right": 348,
+        "bottom": 636.203125,
+        "left": 12
+      },
+      "viewport": {
+        "width": 360,
+        "height": 780
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 360,
+      "theme": "light",
+      "kind": "network_unavailable",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 549.03125,
+        "width": 336,
+        "height": 87.171875,
+        "top": 549.03125,
+        "right": 348,
+        "bottom": 636.203125,
+        "left": 12
+      },
+      "viewport": {
+        "width": 360,
+        "height": 780
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 360,
+      "theme": "light",
+      "kind": "login_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 571.421875,
+        "width": 336,
+        "height": 64.78125,
+        "top": 571.421875,
+        "right": 348,
+        "bottom": 636.203125,
+        "left": 12
+      },
+      "viewport": {
+        "width": 360,
+        "height": 780
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 360,
+      "theme": "light",
+      "kind": "approval_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 549.03125,
+        "width": 336,
+        "height": 87.171875,
+        "top": 549.03125,
+        "right": 348,
+        "bottom": 636.203125,
+        "left": 12
+      },
+      "viewport": {
+        "width": 360,
+        "height": 780
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 360,
+      "theme": "dark",
+      "kind": "online",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "viewport": {
+        "width": 360,
+        "height": 780
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 360,
+      "theme": "dark",
+      "kind": "connecting",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "viewport": {
+        "width": 360,
+        "height": 780
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 360,
+      "theme": "dark",
+      "kind": "host_offline",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 526.640625,
+        "width": 336,
+        "height": 109.5625,
+        "top": 526.640625,
+        "right": 348,
+        "bottom": 636.203125,
+        "left": 12
+      },
+      "viewport": {
+        "width": 360,
+        "height": 780
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 360,
+      "theme": "dark",
+      "kind": "network_unavailable",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 549.03125,
+        "width": 336,
+        "height": 87.171875,
+        "top": 549.03125,
+        "right": 348,
+        "bottom": 636.203125,
+        "left": 12
+      },
+      "viewport": {
+        "width": 360,
+        "height": 780
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 360,
+      "theme": "dark",
+      "kind": "login_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 571.421875,
+        "width": 336,
+        "height": 64.78125,
+        "top": 571.421875,
+        "right": 348,
+        "bottom": 636.203125,
+        "left": 12
+      },
+      "viewport": {
+        "width": 360,
+        "height": 780
+      }
+    },
+    {
+      "surface": "phone-web",
+      "width": 360,
+      "theme": "dark",
+      "kind": "approval_required",
+      "projection": true,
+      "overflow": false,
+      "bar": {
+        "x": 12,
+        "y": 549.03125,
+        "width": 336,
+        "height": 87.171875,
+        "top": 549.03125,
+        "right": 348,
+        "bottom": 636.203125,
+        "left": 12
+      },
+      "viewport": {
+        "width": 360,
+        "height": 780
+      }
+    }
+  ],
+  "mimoUsage": [
+    {
+      "prompt_tokens": 100,
+      "completion_tokens": 900,
+      "total_tokens": 1000
+    },
+    {
+      "prompt_tokens": 100,
+      "completion_tokens": 900,
+      "total_tokens": 1000
+    },
+    {
+      "prompt_tokens": 100,
+      "completion_tokens": 900,
+      "total_tokens": 1000
+    },
+    {
+      "prompt_tokens": 100,
+      "completion_tokens": 900,
+      "total_tokens": 1000
+    },
+    {
+      "completion_tokens": 3346,
+      "prompt_tokens": 2356,
+      "total_tokens": 5702,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  ]
+}

@@ -1,6 +1,17 @@
 /* Shared presentation geometry for desktop and phone anchored menus. */
 (() => {
+  if(document.documentElement){
+    document.documentElement.dataset.inputModality='pointer';
+    document.addEventListener('pointerdown',()=>{document.documentElement.dataset.inputModality='pointer';},true);
+    document.addEventListener('keydown',event=>{if(!event.metaKey&&!event.ctrlKey&&!event.altKey)document.documentElement.dataset.inputModality='keyboard';},true);
+  }
   const active = new Map();
+  function pullRefresh(target, refresh, enabled = () => true) {
+    let start=null;
+    target.addEventListener('touchstart',event=>{start=enabled()&&target.scrollTop<=0?event.touches[0]?.clientY:null;},{passive:true});
+    target.addEventListener('touchend',event=>{const y=event.changedTouches[0]?.clientY;if(start!==null&&y-start>=64&&enabled())void refresh();start=null;},{passive:true});
+    target.addEventListener('touchcancel',()=>{start=null;},{passive:true});
+  }
   const clamp = (value, min, max) => Math.max(min, Math.min(value, Math.max(min, max)));
   function position(menu, trigger, { side = 'top', align = 'start' } = {}) {
     if (!menu || !trigger || menu.hidden) return;
@@ -245,7 +256,7 @@
           child=openMenu(item,values,{label:entry.name,onSelect:()=>{close();onSelect?.();}}); item.setAttribute('aria-expanded','true');
         } else { close(); onSelect?.(); await entry.action?.(item); }
       };
-      item.addEventListener('click', () => void activate());
+      item.addEventListener('click', event => {event.stopPropagation();void activate();});
       item.addEventListener('keydown', event => {if (entry.children && event.key==='ArrowRight') {event.preventDefault();void activate();}});
       menu.append(item);
     }
@@ -311,6 +322,6 @@
     const popup=openMenu(trigger,entries.map(entry=>({...entry,action:async()=>{try{await entry.action()}catch(error){onError(error)}}})),{onClose:()=>{dismissMenu=null}});
     dismissMenu=popup.close;return popup.close;
   }
-  globalThis.WeftPopover = { position, bindSelect, bindSettings, bindSettingsSelect, openMenu, autosize, modelGate, memoryHealth, menu, closeMenu:()=>dismissMenu?.() };
+  globalThis.WeftPopover = { position, bindSelect, bindSettings, bindSettingsSelect, openMenu, autosize, modelGate, memoryHealth, menu, pullRefresh, closeMenu:()=>dismissMenu?.() };
 
 })();

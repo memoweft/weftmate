@@ -1,0 +1,23 @@
+✔ conversation follows streaming growth, keyboard closure and approval layout clamping (6.2052ms)
+✔ touch, wheel and keyboard upward input stop following until bottom or a fresh send (2.564ms)
+✔ memory pull refresh requires a downward gesture from the top of the active page (2.1623ms)
+✔ mobile generated assets match every canonical ui-core file byte for byte (225.3735ms)
+✔ check refuses changed, missing and unlisted copies; rebuild follows the source and removes stale files (342.1284ms)
+✔ mobile check validates nested component syntax as well as generated source parity (3887.5571ms)
+✔ published mobile bundle includes the verified shared assets at their ui-core paths (3230.4095ms)
+✔ publish command refuses stale generated assets before creating a release (4107.4252ms)
+✔ isolated synthetic memory HTTP contract keeps owners, cursors and receipts separate (7069.316ms)
+✔ memory page keeps scripts external and uses only the candidate static publisher (2.9586ms)
+✔ memory view preserves chat draft and discards a successful response for another cookie owner (125.1211ms)
+✔ src/personal-access-ui/popovers.js: hidden source selects never get a visible proxy (4.4768ms)
+✔ src/personal-access-ui/popovers.js: closing a proxy menu tolerates WebViews without :popover-open (1.9404ms)
+✔ apps/mobile-ui/www/popovers.js: hidden source selects never get a visible proxy (1.0251ms)
+✔ apps/mobile-ui/www/popovers.js: closing a proxy menu tolerates WebViews without :popover-open (0.9014ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12391.4826

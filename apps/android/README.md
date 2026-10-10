@@ -1,6 +1,6 @@
 # WeftMate Android 客户端
 
-当前壳 **0.8.23 / code36**：UX-7 原生业务路由放行「下一步建议」的 `POST` / `DELETE /personal/v1/sessions/{id}/suggestions`。上一版 0.8.22 / code35：UX-5 消息里的 `http://` 外链也交给系统浏览器打开；界面包新增离线公式 / 图表 / 代码高亮资源，无新增权限。包含这些能力的界面包最低原生 code36。
+当前壳 **0.8.24 / code37**：M3-1 网络错误明确分类（无网 / 连接失败 / 超时）、独立的宿主状态探测（连接与读取各 5 秒预算）、登录时先接纳原生宿主会话再由共享层读取设备列表（修复有效登录被判成失效）。上一版 0.8.23 / code36：UX-7 放行「下一步建议」的 `POST` / `DELETE /personal/v1/sessions/{id}/suggestions`。包含这些能力的界面包最低原生 code37。
 
 TB-4 当前壳 **0.8.20 / code33**：底部四选项卡配合——根聊天页返回键退到后台（`app.exit` → `moveTaskToBack`）、输入法可见状态事件（`weft-keyboard`）；业务路由白名单放行目标页的 `/schedules…` 与 `/goals…`。含底部选项卡的界面包最低原生 code33。
 
