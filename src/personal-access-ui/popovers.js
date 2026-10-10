@@ -219,6 +219,7 @@
       item.disabled=!!entry.disabled; if (entry.mutationId) item.dataset.messageMutation=entry.mutationId;
       if (globalThis.WeftIcons) item.append(WeftIcons.create(entry.icon || 'right',16));
       const text=document.createElement('span');text.className='wm-menu-label';text.textContent=entry.name;item.append(text);
+      if (entry.description) { item.title=entry.description; const note=document.createElement('small'); note.className='wm-menu-description'; note.textContent=entry.description; text.append(note); item.setAttribute('aria-label',entry.name); item.setAttribute('aria-description',entry.description); }
       if (entry.checked && globalThis.WeftIcons) item.append(WeftIcons.create('allow',16));
       if (entry.children) { item.setAttribute('aria-haspopup','menu'); item.setAttribute('aria-expanded','false'); item.append(WeftIcons.create('right',16)); }
       const activate = async () => {

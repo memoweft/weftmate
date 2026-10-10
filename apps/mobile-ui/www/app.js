@@ -31,6 +31,10 @@ const androidBridge = WeftUiCore.createAndroidBridge({
 });
 const mobileWebBridge=window.weftNative?null:WeftUiCore.createMobileWebBridge();
 const mobileEffects = {
+  syncLibraryIdentity:()=>uiCore.syncMobileIdentity(),
+  renderLibrary:()=>{if(state.page==='library')libraryView?.render();},
+  clearLibraryPreview:()=>{if(state.resourceView?.context?.kind==='library')closeResourcePage();},
+  openLibrarySource:source=>openMobileLibrarySource(source),
   resetGoalsView:()=>goalsView?.reset(),
   renderGoals:()=>{if(state.page==='goals')goalsView?.render();},
   syncActivityIdentity:()=>uiCore.syncMobileIdentity(),
@@ -93,6 +97,31 @@ const mobileMessageActions = globalThis.WeftMessageActions?.create({core:uiCore,
 const conversationTasks=uiCore.mobileDecisions.tasks;
 const toolApprovals=uiCore.mobileDecisions.approvals;
 const toolQuestions=uiCore.mobileDecisions.questions;
+let libraryView=null;
+async function openMobileLibrarySource(source){
+  await listSharedSessions();
+  if(source.chatId&&source.chatId===uiCore.state.mainChat?.chatId){await uiCore.selectMainChat(source.eventId);return;}
+  await uiCore.selectLogicalSession(source.sessionId);
+  await uiCore.loadMobileHistory();await uiCore.state.historyInFlight?.promise;
+  await Promise.all([uiCore.refreshConversationTasks(),uiCore.refreshConversationApprovals(),uiCore.refreshConversationQuestions()]);
+  renderSharedConversation();
+  if(Number.isSafeInteger(source.seq)){
+    while(state.sharedHasOlder&&!state.sharedEvents.some(event=>event.seq===source.seq))await uiCore.loadMobileOlderHistory();
+    const row=document.querySelector(`[data-seq="${source.seq}"]`);row?.scrollIntoView({block:'center'});if(row){row.tabIndex=-1;row.focus();}
+  }
+}
+async function libraryPage(target){
+  uiCore.syncMobileIdentity();
+  libraryView=WeftLibraryView.mount({target,core:uiCore,notice:toast,openPreview:(item,trigger)=>{
+    showResourcePage(item.fileName,{kind:'library',owner:state.owner},trigger);
+    return $('resource-content');
+  }});libraryView.render();
+  const generation=state.generation,owner=state.owner;
+  try{const status=await uiCore.accessApi('/status');if(generation!==state.generation||owner!==state.owner)return;uiCore.state.personalCapabilities=status.personalCapabilities??{};
+    if(uiCore.state.personalCapabilities.library!==1){target.replaceChildren(el('p','library-empty','请更新电脑上的 WeftMate 后查看成果库。'));return;}
+    await uiCore.readLibrary();
+  }catch(error){if(generation===state.generation){uiCore.library.error=safeError(error);libraryView?.render();}}
+}
 let goalsView=null,goalsTimer=null;
 function focusGoalStep(){
   const focus=state.goalStepFocus;if(!focus)return;
@@ -184,6 +213,7 @@ function call(method, params={}, timeoutMs=45000) { return mobileWebBridge?mobil
 
 
 function page(name){
+  if(name!=='library'){libraryView?.dispose();libraryView=null;if(state.resourceView?.context?.kind==='library')closeResourcePage();}
   if(name!=='goals'){if(goalsTimer)clearInterval(goalsTimer);goalsTimer=null;goalsView=null;}
   if(name!=='activity'){if(activityTimer)clearInterval(activityTimer);activityTimer=null;activityView=null;}
   if(name==='memory')state.settingsChild=true;
@@ -199,7 +229,7 @@ function page(name){
   if(previousPage!==name)globalThis.WeftMobileMotion?.push($(name==='chat'?'chat-page':name==='home'?'home-page':'generic-page'),name==='home'||name==='settings'&&previousPage!=='settings');
   $('conversation-usage').hidden=!(name==='chat' && state.loggedIn && (state.sharedSessionId || uiCore.mobile?.selectedBinding()?.sessionId));
   $('header-subtitle').textContent=name==='chat'?'同一个助手，接着聊。':{
-    goals:'目标',activity:'动态',schedules:'提醒与定时任务',about:'关于',general:'常规',personalization:'个性化',assistant:'助手',approvals:'审批',resources:'资料访问',usage:'用量',memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',settings:'设置',
+    goals:'目标',library:'成果库',activity:'动态',schedules:'提醒与定时任务',about:'关于',general:'常规',personalization:'个性化',assistant:'助手',approvals:'审批',resources:'资料访问',usage:'用量',memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',settings:'设置',
     account:'账户',password:'修改密码',models:'对话模型',sync:'离线与同步',appearance:'外观',updates:'更新',connect:'连接电脑'
   }[name]||name;
   document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('current',b.dataset.page===name));
@@ -405,7 +435,8 @@ window.addEventListener('unhandledrejection',reportBootFailure);
 
 
 
-function renderPage(name){const target=$('page-content');clear(target);if(name!=='goals')target.classList.remove('goals-page');if(name!=='activity')target.classList.remove('activity-page');if(name!=='settings')$('generic-page').scrollTop=0;const category=mobileSettingsRegistry.get(name);if(category)return category.mount(target);switch(name){
+function renderPage(name){const target=$('page-content');clear(target);if(name!=='activity')target.classList.remove('activity-page');if(name!=='goals')target.classList.remove('goals-page');if(name!=='library')target.classList.remove('library-page');if(name!=='settings')$('generic-page').scrollTop=0;const category=mobileSettingsRegistry.get(name);if(category)return category.mount(target);switch(name){
+  case 'library':return libraryPage(target);
   case 'goals':return goalsPage(target);
   case 'activity':return activityPage(target);
   case 'usage':return usagePage(target, state.usageSessionId || '');
