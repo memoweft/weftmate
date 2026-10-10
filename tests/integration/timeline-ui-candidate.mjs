@@ -94,7 +94,7 @@ export async function startTimelineCandidate(options = {}) {
     importBackup: async () => {backupOperations.push('import');return {backup:{id:'ui4-import'}}},
     restore: async id => {backupOperations.push('restore:'+id);return {accepted:true}},
   } : null;
-  service = await createPersonalAccessService({ root, port: 0, backend, backupManager, memoryManager:options.memoryManager??null, uiHandler: servePersonalAccessUi })
+  service = await createPersonalAccessService({ root, port: 0, ...(options.clock?{clock:options.clock}:{}), backend, backupManager, memoryManager:options.memoryManager??null, uiHandler: servePersonalAccessUi })
   const started = await service.start(); let origin = started.origin;
   const { hostId } = started, grant = await service.issueSetupGrant()
   const credentials = { username: 'TimelineFixture', password: `isolated-${randomUUID()}`, deviceName: '隔离测试浏览器' }
@@ -119,6 +119,8 @@ export async function startTimelineCandidate(options = {}) {
     if (method === 'app.bootstrap') return { loggedIn: true, username: credentials.username, owner: hash(`${origin}|${auth.account.ownerId}`), busy: false, model: { source: 'host', displayName: '合成会话' } }
     if (method === 'auth.me') return { device: auth.device, deviceId: auth.device.id, displayName: '隔离测试账号', connectionVerified: true, owner: hash(`${origin}|${auth.account.ownerId}`) }
     if (method === 'settings.appearance') return { value: options.appearanceTheme || 'light' }
+    if (method === 'notifications.state') return {systemAllowed:true};
+    if (method === 'notifications.requestPermission') return {};
     if (method === 'attachments.list') return {attachments:[]}
     if (method === 'clipboard.copy') return {}
     if (method === 'conversations.list') return { conversations: [] }
@@ -176,7 +178,7 @@ export async function startTimelineCandidate(options = {}) {
     },
     restartWithCloud: async cloudIdentity => {
       await service.close();
-      service = await createPersonalAccessService({root,port:0,backend,backupManager,memoryManager:options.memoryManager??null,uiHandler:servePersonalAccessUi,cloudIdentity});
+      service = await createPersonalAccessService({root,port:0,...(options.clock?{clock:options.clock}:{}),backend,backupManager,memoryManager:options.memoryManager??null,uiHandler:servePersonalAccessUi,cloudIdentity});
       const started = await service.start(); origin = started.origin; assert.equal(started.hostId,hostId);
       return origin;
     },

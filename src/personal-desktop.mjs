@@ -1,4 +1,6 @@
 import { captureScreenRegion } from './personal-desktop-capture.mjs';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import packageInfo from '../package.json' with { type: 'json' };
 import { quoteWindowsLoginArgs, loginItemEnabled } from './desktop-autostart.mjs';
 /** Native shell for the same authenticated /personal/v1 client used remotely. */
@@ -93,6 +95,17 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
   const settings = () => ({ version: packageInfo.version, autoStart: loginItemEnabled(app.getLoginItemSettings(loginOptions), loginOptions.name, loginOptions.path),
     autoStartSupported: process.platform === 'win32' || process.platform === 'darwin' });
   handle('wm:desktop:settings', settings);
+  handle('wm:desktop:notification-permission', async () => {
+    await jsonLocal('/auth/me');
+    if(!Notification.isSupported())return {enabled:false};
+    if(process.platform!=='win32')return {enabled:null};
+    try{
+      const {stdout}=await promisify(execFile)('powershell.exe',['-NoProfile','-NonInteractive','-Command',
+        "$globalEnabled=(Get-ItemProperty -LiteralPath 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\PushNotifications' -Name ToastEnabled -ErrorAction SilentlyContinue).ToastEnabled; $appEnabled=(Get-ItemProperty -LiteralPath 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Notifications\\Settings\\com.memoweft.weftmate' -Name Enabled -ErrorAction SilentlyContinue).Enabled; if($globalEnabled -eq 0 -or $appEnabled -eq 0){'disabled'}elseif($globalEnabled -eq 1){'enabled'}else{'unknown'}"],{windowsHide:true});
+      return {enabled:stdout.trim()==='disabled'?false:stdout.trim()==='enabled'?true:null};
+    }catch{return {enabled:null};}
+  });
+  handle('wm:desktop:notification-settings', async () => {await jsonLocal('/auth/me');if(process.platform!=='win32')throw new Error('UNAVAILABLE');await shell.openExternal('ms-settings:notifications');return {opened:true};});
   handle('wm:desktop:clipboard-image', async () => {
     await jsonLocal('/auth/me'); const image = clipboard.readImage();
     return image.isEmpty() ? null : {name:'剪贴板图片.png',contentType:'image/png',dataUrl:image.toDataURL()};
@@ -272,9 +285,9 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
     do {
       for (const item of current.items) {
         const key = `${me.account?.ownerId}:${item.id}`;
-        if (activityNotified.has(key) || item.notification.level === 'silent' || stopped || !Notification.isSupported()) continue;
+        if (activityNotified.has(key) || item.notification.notify === false || item.notification.level === 'silent' || stopped || !Notification.isSupported()) continue;
         const notification = new Notification({ title: `WeftMate · ${item.title}`, body: item.summary, icon: notificationIcon,
-          silent: item.notification.level !== 'important' });
+          silent: item.notification.sound !== true });
         notifications.add(notification); activityNotifications.set(item.id, notification);
         notification.on('click', () => show({ activityId: item.id, sessionId: item.source.sessionId }));
         notification.on('close', () => { notifications.delete(notification); if (activityNotifications.get(item.id) === notification) activityNotifications.delete(item.id); });
@@ -349,7 +362,7 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
     nativeTheme.removeListener('updated', updatePalette);
     ipcMain.removeHandler('wm:desktop:conversation-export');
     for (const request of networkRequests.values()) request.abort();
-    for (const channel of ['wm:desktop:capture-region', 'wm:desktop:clipboard-image', 'wm:desktop:project-folder', 'wm:desktop:settings', 'wm:desktop:identity', 'wm:desktop:credentials', 'wm:desktop:key', 'wm:desktop:key-reset', 'wm:desktop:proof', 'wm:desktop:connect-host', 'wm:desktop:activate-host', 'wm:desktop:fetch', 'wm:desktop:fetch-abort', 'wm:desktop:clear-sessions', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);
+    for (const channel of ['wm:desktop:notification-permission','wm:desktop:notification-settings','wm:desktop:capture-region', 'wm:desktop:clipboard-image', 'wm:desktop:project-folder', 'wm:desktop:settings', 'wm:desktop:identity', 'wm:desktop:credentials', 'wm:desktop:key', 'wm:desktop:key-reset', 'wm:desktop:proof', 'wm:desktop:connect-host', 'wm:desktop:activate-host', 'wm:desktop:fetch', 'wm:desktop:fetch-abort', 'wm:desktop:clear-sessions', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);
     await save(); await desktopSession.cookies.flushStore(); desktopSession.flushStorageData();
   } };
 }

@@ -1,3 +1,4 @@
+import { finalizeNotifications } from './notification-settings.mjs';
 import { accountPersonalization } from './personalization.mjs';
 import { createMemoryIngestion } from './memory-ingestion.mjs';
 import { modelTierFor } from '../model-tier.ts';
@@ -541,9 +542,10 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     const value = await change(next);
     requireOpen();
     assertCurrent();
-    for (const account of Object.values(next.accounts)) {
+    for (const [accountOwnerId, account] of Object.entries(next.accounts)) {
       reconcileChatIdentity(account, next.hostId, new Date(timestamp()).toISOString());
       reconcileActivity(account);
+      finalizeNotifications(account, timestamp(), usage.settings(accountOwnerId).timeZone);
       for (const [conversationId, binding] of Object.entries(account.conversationBindings ?? {})) {
         const state = account.commands[binding.adoptCommandId]?.state;
         if (state === 'rejected') delete account.conversationBindings[conversationId];

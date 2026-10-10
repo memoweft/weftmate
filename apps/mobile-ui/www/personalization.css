@@ -23,3 +23,11 @@
   .personalization-form .settings-row:has(.settings-switch) { flex-direction: row; align-items: center; }
   .personalization-field { width: 100%; }
 }
+
+.notification-settings > h2 { margin: var(--wm-space-24) 0 var(--wm-space-8); font-size: var(--wm-font-size-18); }
+.notification-settings .settings-select, .notification-settings input[type=time] { display: inline-flex; align-items: center; justify-content: space-between; gap: var(--wm-space-12); min-height: var(--wm-space-44); min-width: 0; box-sizing: border-box; max-width: 45%; padding: var(--wm-space-8) var(--wm-space-12); border: var(--wm-space-1) solid var(--line); border-radius: var(--wm-radius-8); background: var(--surface); color: var(--ink); font: inherit; text-align: left; color-scheme: light; }
+.notification-settings .settings-select:disabled { opacity: var(--wm-opacity-disabled, 0.5); cursor: default; }
+.notification-settings :is(input,button):focus-visible { outline: var(--wm-space-2) solid var(--accent); outline-offset: var(--wm-space-2); }
+@media (max-width: 600px) { .notification-settings .settings-select, .notification-settings input[type=time] { width: 100%; max-width: none; } }
+
+[data-theme=dark] .notification-settings input[type=time] { color-scheme: dark; }
