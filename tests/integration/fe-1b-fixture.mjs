@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Real personal authentication, synthetic UI projections; all data lives in a fresh OS temp dir. */
 import { createServer } from 'node:http';
 import { Readable } from 'node:stream';

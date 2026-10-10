@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Isolated native-fact status acceptance; no external model or daily profile. */
 import assert from 'node:assert/strict';
 import {_electron,chromium} from 'playwright';
@@ -10,6 +12,7 @@ import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
 import {localUiSession} from '../helpers/local-ui-session.mjs';
 const out=resolve('tests/evidence/ux-10');await mkdir(out,{recursive:true});
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const wait=ms=>new Promise(done=>setTimeout(done,ms));
 const button=(page,name)=>page.getByRole('button',{name,exact:true}).filter({visible:true});
 let f,app,browser,profile;const report={synthetic:true,modelRequests:0,shots:[],checks:[],errors:[]};

@@ -55,7 +55,7 @@ const tempBase = process.platform === 'win32'
   ? parse(process.env.SystemRoot || 'C:\\Windows').root
   : realpathSync(process.env.RUNNER_TEMP || tmpdir());
 const temp = mkdtempSync(join(tempBase, 'weftmate-ci-'));
-const env = { ...process.env, TMPDIR: temp, TMP: temp, TEMP: temp };
+const env = { ...process.env, TMPDIR: temp, TMP: temp, TEMP: temp, WEFTMATE_TEST_HOST_NAME: 'synthetic-host' };
 const lines = [
   `### Unit tests (${mode})`,
   `${selected.length} test files; isolated canonical temp: ${temp}.`,

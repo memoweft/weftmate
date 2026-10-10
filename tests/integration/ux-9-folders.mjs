@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import {_electron,chromium} from 'playwright';
 import {createRequire} from 'node:module';
@@ -9,6 +11,7 @@ const repository=resolve(import.meta.dirname,'../..'), evidence=join(repository,
 mkdirSync('C:/Temp',{recursive:true});process.env.TMP=process.env.TEMP='C:/Temp';
 const fixture=await startFixture(),root=mkdtempSync('C:/Temp/weftmate-ux-9-'),folder=join(root,'SyntheticWorkspace');mkdirSync(folder);writeFileSync(join(folder,'notes.txt'),'Synthetic source.');
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 let app,browser,remote;const errors=[],checks=[];
 try {
  app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:repository,args:['scripts/review-gallery/electron.mjs','--force-device-scale-factor=1'],env:{...env,REVIEW_PROFILE:join(root,'profile'),REVIEW_ORIGIN:fixture.origin,REVIEW_LIBRARY_TOKEN:fixture.libraryDesktopToken,REVIEW_THEME:'light'}});

@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Production Electron and shipped mobile assets; isolated host, synthetic account, random ports. */
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
@@ -206,6 +208,7 @@ for (const surface of surfaces) {
   const fixture = await startRenderingCandidate(), profile = await mkdtemp(join(tmpdir(), 'weftmate-ux8-ui-'));
   const env = { ...process.env, REVIEW_PROFILE: profile, REVIEW_ORIGIN: fixture.origin, REVIEW_THEME: 'light', REVIEW_LIBRARY_TOKEN: fixture.libraryDesktopToken };
   for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key.startsWith('MEMOWEFT_') || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
+  env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
   let app, browser, page, phase = 'after';
   try {
     if (surface === 'desktop') {

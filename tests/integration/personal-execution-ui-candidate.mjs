@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /**
  * Explicit, loopback-only visual candidate for the Stage 15 execution cards.
  *

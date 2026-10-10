@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
 import { createRequire } from 'node:module';
@@ -8,6 +10,7 @@ import { startFixture } from './ux-4-fixture.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 const evidence=resolve('tests/evidence/ux-p2/interaction');mkdirSync(evidence,{recursive:true});
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const checks=[],errors=[];
 for(const surface of process.argv.includes('--local-only') ? [] : (process.argv.includes('--android-only')?['android-ui']:['desktop','mobile-web','android-ui'])) {
   const fixture=await startFixture(),profile=mkdtempSync(join(tmpdir(),'weftmate-ux4-electron-'));let app,browser,page;

@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import { _electron,chromium } from 'playwright';
 import { createRequire } from 'node:module';
@@ -17,6 +19,7 @@ const memoryManager={enabled:true,peek:()=> 'ready',status:async()=>({state:'rea
 const fixture=await startTimelineCandidate({logicalMobile:true,interactive:true,historyCount:0,memoryManager});
 const profile=await mkdtemp(join(tmpdir(),'weftmate-tb-1-desktop-'));
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 Object.assign(env,{REVIEW_PROFILE:profile,REVIEW_THEME:'light',REVIEW_ORIGIN:fixture.origin});
 let app,browser,mobileFixture;const report={realElectron:true,checks:[],errors:[]};
 const wait=async check=>{const end=Date.now()+30000;while(Date.now()<end){if(await check())return;await new Promise(r=>setTimeout(r,100));}throw Error('TB-1 condition timeout');};

@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
@@ -8,6 +10,7 @@ import { startFixture } from './ux-4-fixture.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 const fixture=await startFixture(),root=mkdtempSync(join(tmpdir(),'weftmate-ux4-main-')),evidence=resolve('tests/evidence/ux-p2/main-actions');mkdirSync(evidence,{recursive:true});let app,page;
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 async function accepted(command){while(['pending','dispatching','preflight'].includes(command.state)){await new Promise(resolve=>setTimeout(resolve,50));command=(await fixture.request('/commands/'+command.commandId)).command;}assert.equal(command.state,'accepted_by_dsh');return command;}
 try {
   const main=(await fixture.request('/chats/main')).chat;

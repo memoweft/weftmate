@@ -6,7 +6,7 @@
     "data": {
       "taskId": "cmd-495e8187-9cd8-4c62-998f-c32cbd7fac1b",
       "receiptId": "8447e278-55b8-4194-b381-7b4fae870630",
-      "text": "请写入 C:/Users/yun/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-folder/desktop-must-not-exist.txt，内容QA6_REJECTION。若我拒绝操作，直接停止，不要换工具重试。",
+      "text": "请写入 C:\\Users\\<user>/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-folder/desktop-must-not-exist.txt，内容QA6_REJECTION。若我拒绝操作，直接停止，不要换工具重试。",
       "commandId": "cmd-495e8187-9cd8-4c62-998f-c32cbd7fac1b",
       "requestId": "a27a4a03-bb9a-4098-8afd-eb0d222a7993"
     }
@@ -37,7 +37,7 @@
     "type": "user.message",
     "at": "2026-10-10T13:11:10.521Z",
     "data": {
-      "text": "请写入 C:/Users/yun/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-folder/desktop-must-not-exist.txt，内容QA6_REJECTION。若我拒绝操作，直接停止，不要换工具重试。",
+      "text": "请写入 C:\\Users\\<user>/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-folder/desktop-must-not-exist.txt，内容QA6_REJECTION。若我拒绝操作，直接停止，不要换工具重试。",
       "receiptId": "8447e278-55b8-4194-b381-7b4fae870630"
     }
   },
@@ -125,7 +125,7 @@
       "stepId": "call_c8f83ed7a6c0482580734d45",
       "toolName": "write",
       "turn": 1,
-      "summary": "[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：write\n{\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-folder/desktop-must-not-exist.txt\",\"content\":\"QA6_REJECTION\"}",
+      "summary": "[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：write\n{\"file_path\":\"C:\\Users\\<user>/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-folder/desktop-must-not-exist.txt\",\"content\":\"QA6_REJECTION\"}",
       "detailRef": {
         "seq": 76
       }

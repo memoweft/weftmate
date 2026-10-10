@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Explicit isolated 0.8.0/code13 Android Weave shell acceptance; no model requests. */
 import assert from 'node:assert/strict';
 import { execFile, execFileSync } from 'node:child_process';

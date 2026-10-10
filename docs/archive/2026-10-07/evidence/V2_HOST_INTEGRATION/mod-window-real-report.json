@@ -2,8 +2,8 @@
   "checks": {
     "mode": "real-http",
     "projectId": "mod-3c26cb61-ed9c-4c5e-ad11-20824714986c",
-    "fixtureDirectory": "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-mod-window-real-fixture-1vQFEl",
-    "evidenceRoot": "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-v2-native-20260915\\mod-window-real",
+    "fixtureDirectory": "C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-mod-window-real-fixture-1vQFEl",
+    "evidenceRoot": "C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-v2-native-20260915\\mod-window-real",
     "realFrameInvoke": true,
     "realIncrement": true,
     "realStopRestart": true,

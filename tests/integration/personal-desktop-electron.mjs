@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Real Windows Electron + real pinned DSH, isolated account and loopback model only. */
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
@@ -61,6 +63,7 @@ await new Promise(resolve => model.listen(0, '127.0.0.1', resolve));
 const executablePath = createRequire(import.meta.url)('electron');
 const env = { ...process.env };
 for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key.startsWith('MEMOWEFT_') || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const args = ['.', `--user-data-dir=${profile}`, '--personal-host', '--access-port=0'];
 let application, page, output = '';
 const report = { realElectron: true, realDsh: true, syntheticAccount: true, paidModelRequests: 0 };

@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
 import { mkdtemp, rm } from 'node:fs/promises';
@@ -16,6 +18,7 @@ for (const theme of ['light', 'dark']) {
   const profile = await mkdtemp(join(tmpdir(), 'weftmate-review-desktop-'));
   const env = { ...process.env };
   for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key.startsWith('MEMOWEFT_') || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
+  env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
   Object.assign(env, { REVIEW_PROFILE: profile, REVIEW_THEME: theme, REVIEW_ORIGIN: fixture.origin });
   let application, page, mainFixture, suggestionFixture, renderingSeeded=false, closing = false, ownerId;
   const errors = [];
