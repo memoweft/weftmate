@@ -168,7 +168,8 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
       lastEndReasonKind=lastTurn==='error'&&event.data?.endReasonKind==='max-tokens'?'max-tokens':''}
   }
   state.sharedRunning=lastTurn==='running'||!!session?.running;
-  if(uiCore.state.online&&(lastTurn==='running'||state.sharedRunning))content.append(el('p','shared-turn-state',uiCore.state.online?'正在处理…':`${uiCore.connectionView().label} · 等待接续`));
+  const live=[...content.querySelectorAll('.message.assistant')].at(-1),lastUser=[...content.querySelectorAll('.message.user')].at(-1);if(live&&(!lastUser||Number(live.dataset.seq)>Number(lastUser.dataset.seq)))globalThis.WeftReplyMotion?.indicator(live.querySelector('.markdown'),state.sharedRunning&&uiCore.state.online);
+  if(uiCore.state.online&&(lastTurn==='running'||state.sharedRunning))content.append(el('p','shared-turn-state reply-status',uiCore.state.online?'正在处理…':`${uiCore.connectionView().label} · 等待接续`));
   else if(lastTurn&&lastTurn!=='completed')content.append(el('p','shared-turn-state',lastTurn==='error'&&lastEndReasonKind==='max-tokens'
     ?'本轮因输出限制结束，可继续对话。':{
       aborted:'电脑回合已停止',error:'电脑回合未完成',blocked:'电脑回合等待处理',unknown:'电脑回合状态待确认'}[lastTurn]||'电脑回合状态待确认'));
@@ -178,13 +179,16 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
 function renderOptimisticMessages(){if(state.chatSource!=='host'||state.page!=='chat')return;
   uiCore.syncMobileIdentity();uiCore.observeOptimistic(state.sharedEvents);
   const content=$('chat-content');
-  for(const node of content.querySelectorAll('[data-optimistic]'))node.remove();
-  for(const row of uiCore.optimisticMessages()){
-    const node=messageNode('user',row.text||'附件');node.dataset.optimistic=row.requestId;
+  const rows=uiCore.optimisticMessages();
+  for(const node of content.querySelectorAll('[data-optimistic]'))if(!rows.some(row=>row.requestId===node.dataset.optimistic))node.remove();
+  for(const row of rows){
+    let node=[...content.children].find(node=>node.dataset.optimistic===row.requestId);const arriving=!node;
+    if(!node){node=messageNode('user',row.text||'附件');node.dataset.optimistic=row.requestId;}
+    const signature=JSON.stringify([row.text,row.status]);if(node.dataset.motionSignature===signature)continue;node.dataset.motionSignature=signature;node.querySelectorAll('.message-state,.quiet').forEach(note=>note.remove());
     node.classList.toggle('is-sending',row.status==='sending');node.classList.toggle('send-failed',row.status==='failed');
     if(row.status!=='accepted'){const note=el('small','message-state',row.status==='undelivered'?'未送达，草稿已保留':['failed','confirming'].includes(row.status)?'发送结果待核对，草稿已保留':'发送中');note.setAttribute('role','status');node.append(note)}
     if(['failed','confirming','undelivered'].includes(row.status)){const retry=el('button','shared-check',state.sharedPending?.requestId===row.requestId?'检查状态':'重试发送');retry.disabled=!uiCore.state.online;retry.addEventListener('click',()=>{
-      if(state.sharedPending?.requestId===row.requestId)void checkSharedPending();else void uiCore.retryOptimistic(row.requestId)});node.append(retry)}content.append(node)
+      if(state.sharedPending?.requestId===row.requestId)void checkSharedPending();else void uiCore.retryOptimistic(row.requestId)});node.append(retry)}content.append(node);if(arriving)globalThis.WeftReplyMotion?.reveal(node,'send');
   }
 }
 
@@ -293,7 +297,7 @@ function renderLiveProgress(){if(state.page!=='chat'||state.chatSource!=='phone'
     const body=el('div','message-body');body.append(el('div','markdown live-progress-text'),el('p','message-state'));
     node.append(body);content.append(node)}
   const text=node.querySelector('.live-progress-text'),phase=node.querySelector('.message-state');
-  if(globalThis.WeftContent){WeftContent.update(text,state.progressText,{copy:copyText,openExternal:url=>{location.href=url},downloadImage:globalThis.weftNative?saveRenderedImage:undefined});text.hidden=!state.progressText;phase.textContent=phaseLabel(state.phase);if(state.scrollPinned)scrollBottom();return;}
+  if(globalThis.WeftContent){WeftContent.update(text,state.progressText,{streaming:true,copy:copyText,openExternal:url=>{location.href=url},downloadImage:globalThis.weftNative?saveRenderedImage:undefined});text.hidden=!state.progressText;phase.textContent=phaseLabel(state.phase);if(state.scrollPinned)scrollBottom();return;}
   if(!text._liveTextNode){text._liveTextNode=document.createTextNode('');text.append(text._liveTextNode)}
   const shown=text._liveTextNode.data,target=state.progressText;
   if(!target.startsWith(shown)||(globalThis.WeftMobileMotion?.reduced()??window.matchMedia('(prefers-reduced-motion: reduce)').matches)){

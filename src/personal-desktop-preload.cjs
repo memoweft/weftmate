@@ -39,4 +39,9 @@ contextBridge.exposeInMainWorld('weftmateDesktop', {
     ipcRenderer.on('wm:desktop:conversation', listener);
     return () => ipcRenderer.removeListener('wm:desktop:conversation', listener);
   },
+  onVisibility: (callback) => {
+    const listener = (_event, hidden) => callback(hidden === true);
+    ipcRenderer.on('wm:desktop:visibility', listener);
+    return () => ipcRenderer.removeListener('wm:desktop:visibility', listener);
+  },
 });

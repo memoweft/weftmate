@@ -256,7 +256,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         if (!command) {
             try { command = (await core.createSideChat(intent)).command; }
             catch (error) {
-                if (error.status >= 400 && error.status < 500 && error.code !== 'REQUEST_CONFLICT') {core.sideCreateIntent=null;core.forgetMarker(intent.requestId);core.operation('旁聊未创建，请核对后重试。');}
+                if (error.status >= 400 && error.status < 500 && error.code !== 'REQUEST_CONFLICT') {core.sideCreateIntent=null;core.forgetMarker(intent.requestId);core.operation('旁聊未创建，请核对后重试。',false,intent.requestId);}
                 throw error;
             }
         }
@@ -265,7 +265,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             if (token !== scope()) return;
         }
         if (command?.state !== 'accepted_by_dsh') {
-            if (['rejected','failed'].includes(command?.state)) {core.sideCreateIntent=null;core.forgetMarker(intent.requestId);core.operation('旁聊未创建，请重试。');}
+            if (['rejected','failed'].includes(command?.state)) {core.sideCreateIntent=null;core.forgetMarker(intent.requestId);core.operation('旁聊未创建，请重试。',false,intent.requestId);}
             throw { code: command?.errorCode || 'NETWORK' };
         }
         if (token !== scope()) return;

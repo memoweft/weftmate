@@ -21,7 +21,7 @@ try{
       if(kind==='host_offline')uiCore.presence.failure({code:'HOST_OFFLINE'},{independent:true,cloudOffline:true});else uiCore.presence.failure({code:'NETWORK'});
       state.sharedRunning=true;status('主对话暂时无法读取，请重试');status('离线副本同步未完成，请稍后重试。');renderSharedConversation();$('toast').hidden=true;
     },{theme,kind});
-    await page.waitForTimeout(150);
+    await page.waitForTimeout(500);
     const result=await page.evaluate(()=>{
       const slot=document.querySelector('.composer-above-slot'),bar=document.querySelector('.presence-bar'),field=$('draft');
       return {width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth,slotHeight:slot.getBoundingClientRect().height,priority:slot.dataset.priority,visibleAbove:[...slot.querySelectorAll('[data-composer-above]')].filter(n=>!n.hidden&&getComputedStyle(n).display!=='none').length,
@@ -30,7 +30,7 @@ try{
     assert.equal(result.overflow,false);for(const button of result.buttons){assert.ok(button.rect.height>=40&&button.rect.height<=44);assert.ok(button.rect.right<=result.bar.right&&button.rect.left>=result.bar.left);}assert.equal(result.visibleAbove,1);assert.equal(result.priority,'connection');assert.equal(result.slotHeight,44);assert.equal(result.pendingCopies,1);assert.equal(result.status,'');assert.equal(result.readErrors,0);assert.ok(result.bar.bottom<=result.field.top);
     await page.screenshot({path:join(out,`android-package-${width}-${theme}-${kind}.png`)});checks.push({theme,kind,...result});
     if(kind==='host_offline'){
-      await page.evaluate(()=>uiCore.presence.success({runtime:'ready'}));await page.waitForTimeout(80);
+      await page.evaluate(()=>uiCore.presence.success({runtime:'ready'}));await page.waitForTimeout(500);
       const toast=await page.locator('#toast').boundingBox(),field=await page.locator('#draft').boundingBox();
       assert.ok(toast&&field&&toast.y+toast.height<field.y);
       await page.screenshot({path:join(out,`android-package-${width}-${theme}-recovered-toast.png`)});checks.push({width,theme,scene:'recovered-toast',toast,field});
