@@ -1,0 +1,30 @@
+✔ mobile generated assets match every canonical ui-core file byte for byte (180.6548ms)
+✔ check refuses changed, missing and unlisted copies; rebuild follows the source and removes stale files (281.251ms)
+✔ mobile check validates nested component syntax as well as generated source parity (2733.5189ms)
+✔ published mobile bundle includes the verified shared assets at their ui-core paths (2645.498ms)
+✔ publish command refuses stale generated assets before creating a release (4288.2583ms)
+✔ release records have valid dates, semantic versions and user-facing categories; generated records match source (14.4917ms)
+✔ update notice establishes a baseline, shows once per account/version and survives reload; rollback never repeats (2.5648ms)
+✔ update notice ignores host-published phone bundle and obtains installed desktop version (1.7382ms)
+✔ help search filters all words locally across title, group and body; blank restores all topics (1.4646ms)
+✔ every shortcut in the panel registry dispatches its own action with identical modifier matching; composition is ignored (1.8903ms)
+✔ mobile release notice reads account identity without refreshing the live conversation snapshot (1.7784ms)
+✔ approval shortcut names and number bindings derive from the same mode table without duplicate registration (1.2954ms)
+✔ D55 desktop/mobile/search and host agree on every priority including stopped (2.0709ms)
+✔ D55 observed terminal without an assistant message is unread and read snapshots clear it (2.3417ms)
+✔ D55 read covers messages before the tail but never consumes a terminal observed after its native snapshot (0.7334ms)
+✔ D55 pending native interactions update with account snapshots and disappear on answer, timeout or restart (0.7742ms)
+✔ D55 summary includes children beyond the first 100 rows and excludes archived/deleting sessions (3.0146ms)
+✔ D55 invalidate/forget/deletion cannot revive terminal facts and account summaries cover hidden pages (1.1951ms)
+✔ D55 restart finds a terminal behind a long current turn outside the list request (0.2679ms)
+✔ D55 native adapter backward pages recover the previous terminal behind 250 current tool calls (6.6313ms)
+✔ D55 real host API rebuilds outcome after restart, clears read and removes deleted/private-source status copies (2168.531ms)
+✔ D55 latest main read uses the existing metadata route, respects newer history and identity, and requires exact capability 1 (2.5908ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10247.2608
