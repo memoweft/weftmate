@@ -113,9 +113,9 @@
 test at apps\mobile-ui\tests\chat-interactions.test.mjs:708:30
 ✖ 100 growing snapshots follow monotonically at 60Hz (10.0176ms)
   AssertionError [ERR_ASSERTION]: manual scroll-back releases live follow
-  
+
   true !== false
-  
+
       at TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/mobile-ui/tests/chat-interactions.test.mjs:731:10)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1201:25)
@@ -134,9 +134,9 @@ test at apps\mobile-ui\tests\chat-interactions.test.mjs:708:30
 test at apps\mobile-ui\tests\chat-interactions.test.mjs:708:30
 ✖ 100 growing snapshots follow monotonically at 120Hz (8.8689ms)
   AssertionError [ERR_ASSERTION]: manual scroll-back releases live follow
-  
+
   true !== false
-  
+
       at TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/mobile-ui/tests/chat-interactions.test.mjs:731:10)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1201:25)
@@ -155,9 +155,9 @@ test at apps\mobile-ui\tests\chat-interactions.test.mjs:708:30
 test at apps\mobile-ui\tests\chat-interactions.test.mjs:708:30
 ✖ 100 growing snapshots follow monotonically at 180Hz (10.0927ms)
   AssertionError [ERR_ASSERTION]: manual scroll-back releases live follow
-  
+
   true !== false
-  
+
       at TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/mobile-ui/tests/chat-interactions.test.mjs:731:10)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1201:25)
@@ -176,9 +176,9 @@ test at apps\mobile-ui\tests\chat-interactions.test.mjs:708:30
 test at apps\mobile-ui\tests\chat-interactions.test.mjs:739:1
 ✖ manual scroll-back stops live follow but still reveals text, and a stale frame cannot revive it (7.8531ms)
   AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
-  
+
   true !== false
-  
+
       at TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/mobile-ui/tests/chat-interactions.test.mjs:745:56)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1201:25)
@@ -213,7 +213,7 @@ test at apps\mobile-ui\tests\visual-interactions.test.mjs:12:1
   [2m       - element is not visible[22m
   [2m     - retrying click action[22m
   [2m       - waiting 500ms[22m
-  
+
       at TestContext.<anonymous> (D:\AIProjects\WeftMate\Worktrees\w2\apps\mobile-ui\tests\visual-interactions.test.mjs:101:45) {
     name: 'TimeoutError'
   }

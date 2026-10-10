@@ -42,12 +42,13 @@
   "needsNativeVersion": false,
   "newRoutes": [],
   "cleanup": {
-    "emulatorStarted": false,
-    "remainingCount": 0,
-    "forcedStoppedCount": 0,
-    "dailyDataTouched": false,
-    "ownership": "creation time + executable + exact workspace/recorded canonical temp in command line; no parent PID matching",
     "forcedStopped": [],
-    "timestamp": "2026-10-10T19:00:27.3502115+08:00"
-  }
+    "dailyDataTouched": false,
+    "timestamp": "2026-10-10T19:03:51.3658782+08:00",
+    "ownership": "creation time + executable + exact workspace/recorded canonical temp in command line; no parent PID matching",
+    "remainingCount": 0,
+    "emulatorStarted": false,
+    "forcedStoppedCount": 0
+  },
+  "pullRequest": "https://github.com/memoweft/weftmate/pull/192"
 }
