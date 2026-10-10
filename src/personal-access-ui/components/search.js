@@ -5,7 +5,7 @@ globalThis.WeftUiComponents.factories.search = (core,ui) => {
     if(row.type==='actions') {
       const actions={new:()=>core.startNewConversation(),temporary:()=>core.startNewConversation(false,true),project:()=>ui.editProject(),
         settings:()=>ui.openSettings('general'),memory:()=>core.openMemory(),activity:()=>ui.openActivity(),goals:()=>ui.openGoals(),library:()=>ui.openLibrary(),
-        start:async()=>{await core.startNewConversation();ui.byId('message-text').value=row.query;ui.updateAvailability();ui.byId('message-text').focus();await core.sendDraft(row.query);}};
+        start:async()=>{const owner=core.state.ownerId,generation=core.state.identityGeneration;await core.startNewConversation();if(owner!==core.state.ownerId||generation!==core.state.identityGeneration)return;ui.byId('message-text').value=row.query;ui.updateAvailability();ui.byId('message-text').focus();await core.sendDraft(row.query);}};
       return actions[row.id]?.();
     }
     if(row.type==='chats')return ui.openActivitySource(row.source,'open_chat');

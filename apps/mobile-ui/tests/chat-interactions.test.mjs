@@ -95,6 +95,7 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
     requestAnimationFrame:fn=>{if(queueFrames){frames.push(fn);return frames.length}fn(now);return 0},ResizeObserver,console});
   Object.defineProperty(context,'WeftFormat',{get:()=>window.WeftFormat,set:value=>{window.WeftFormat=value},configurable:true});
   vm.runInContext(source,context);
+  const drawerBrand=new Node();drawerBrand.className='drawer-brand';document.getElementById('drawer').append(drawerBrand);
   const run=code=>vm.runInContext(code,context);
   const node=id=>document.getElementById(id);
   const flush=async()=>{for(let index=0;index<12;index++)await Promise.resolve()};

@@ -38,7 +38,7 @@ globalThis.WeftSearchView = {mount({core,open,menu,notice,mobile=false}) {
         const current=index++;option.onclick=()=>void activate(row);option.onpointermove=()=>{if(core.search.selected!==current){core.search.selected=current;select();}};
         const content=el('div','search-result-copy'),title=el('div','search-result-title');title.append(highlight(row.title,model.query.trim()));content.append(title);
         if(row.snippet){const snippet=el('div','search-result-snippet');snippet.append(highlight(row.snippet,model.query.trim()));content.append(snippet);}
-        const right=el('span','search-result-meta',(row.snippet?[row.projectName,meta(row.at)].filter(Boolean).join(' · '):meta(row.meta))||'');if(row.attention)right.textContent=row.pendingApprovalCount?'待审批':row.pendingQuestionCount?'待回答':'未读';
+        const right=el('span','search-result-meta',(row.snippet?meta(row.at):meta(row.meta))||'');if(row.attention)right.textContent=row.pendingApprovalCount?'待审批':row.pendingQuestionCount?'待回答':'未读';
         option.append(icon(row.icon),content,right);
         const end=el('div','search-result-end');
         if(row.type!=='actions'){const more=el('button','chat-icon-button search-result-more');more.type='button';more.setAttribute('aria-label',`操作 ${row.title}`);more.setAttribute('aria-haspopup','menu');more.append(icon('more'));more.onclick=event=>{event.stopPropagation();rowMenu(row,more);};end.append(more);}
