@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-10T16:14:41.9843075+08:00",
+  "startedAt": "2026-10-10T07:37:58.0611786Z",
+  "criteria": "creation after this package baseline fixture + executable path + command line containing this worktree or its recorded synthetic roots; no parent PID matching",
+  "stopped": [],
+  "stoppedCount": 0,
+  "remainingOwnedProcesses": [],
+  "recordedCoreProcessCount": 72,
+  "remainingRecordedCoreProcesses": [],
+  "emulatorStarted": false,
+  "realModelRequests": 0
+}
