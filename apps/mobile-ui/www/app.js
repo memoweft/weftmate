@@ -105,7 +105,7 @@ function mountMobileSearch(){
     if(row.type==='actions'){
       const actions={new:()=>selectConversation(null),temporary:()=>mobileNewTemporaryConversation(),settings:()=>page('settings'),memory:()=>page('memory'),
         activity:()=>page('activity'),goals:()=>page('goals'),library:()=>page('library'),
-        start:async()=>{await selectConversation(null);$('draft').value=row.query;updateComposer();$('draft').focus();await send();}};
+        start:async()=>{const owner=state.owner,epoch=state.authEpoch;await selectConversation(null);if(owner!==state.owner||epoch!==state.authEpoch)return;$('draft').value=row.query;updateComposer();$('draft').focus();await send();}};
       return actions[row.id]?.();
     }
     if(row.type==='chats')return openMobileLibrarySource(row.source);

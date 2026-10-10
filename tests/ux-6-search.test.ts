@@ -52,3 +52,14 @@ test('UX-6 invalid search parameters are rejected, deletion during reading does 
   const pending=chats.list('owner',new URLSearchParams({scope:'search',q:'纸船'}));while(!release)await wait(1);
   f.account.activity={generation:1};f.timeline.invalidate('owner',f.mainId);release();await assert.rejects(()=>pending,{code:'CURSOR_RESET_REQUIRED'});await f.timeline.close();
 });
+
+test('UX-6 an account switch during side creation cannot fill or send the old search phrase',async()=>{
+  let options:any,release:any;const noop=()=>{},node=()=>({append:noop,prepend:noop,setAttribute:noop,focus:noop,value:'新账号草稿'}),nodes=new Map<string,any>(),sent:string[]=[];
+  const context:any={WeftUiComponents:{factories:{}},weftmateDesktop:{},WeftIcons:{create:node},WeftSearchView:{mount:(value:any)=>{options=value;return {};}}};
+  runInNewContext(readFileSync('src/personal-access-ui/components/search.js','utf8'),context);
+  const core:any={state:{ownerId:'owner-a',identityGeneration:1,sessions:[]},selectSession:noop,selectMainChat:noop,
+    startNewConversation:()=>new Promise(done=>release=done),sendDraft:async(text:string)=>sent.push(text)};
+  const ui:any={resetIdentityControls:noop,toast:noop,element:node,updateAvailability:noop,byId:(id:string)=>{if(!nodes.has(id))nodes.set(id,node());return nodes.get(id);}};
+  context.WeftUiComponents.factories.search(core,ui).mountSearch();const work=options.open({type:'actions',id:'start',query:'旧账号的搜索句'});
+  core.state.ownerId='owner-b';core.state.identityGeneration++;release();await work;assert.deepEqual(sent,[]);assert.equal(nodes.get('message-text')?.value??'新账号草稿','新账号草稿');
+});
