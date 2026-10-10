@@ -7,8 +7,8 @@ test('defaults and relative paths use only the supplied cloud working directory'
   const config = loadConfig({}, '/tmp/cloud-fixture');
   assert.equal(config.port, 8787);
   assert.equal(config.host, '127.0.0.1');
-  assert.equal(config.databasePath, '/tmp/cloud-fixture/.runtime/cloud.sqlite');
-  assert.equal(config.mailDir, '/tmp/cloud-fixture/.runtime/mail-outbox');
+  assert.equal(config.databasePath, path.resolve('/tmp/cloud-fixture/.runtime/cloud.sqlite'));
+  assert.equal(config.mailDir, path.resolve('/tmp/cloud-fixture/.runtime/mail-outbox'));
   assert.equal(config.mailTransport, 'file');
 });
 
