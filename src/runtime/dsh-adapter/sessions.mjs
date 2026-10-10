@@ -130,7 +130,7 @@ function messageImages(message) {
 }
 
 /** Stable public timeline; private reasoning and injected messages stay private. */
-export function projectHistoryEvent(raw, call = null, contextTurn = null, closingTurn = null, inbox = null) {
+export function projectHistoryEvent(raw, call = null, contextTurn = null, closingTurn = null, inbox = null, includeThinking = false) {
   const event = raw?.event ?? raw
   const seq = event?.seq
   if (!Number.isSafeInteger(seq) || seq < 0) return null
@@ -151,7 +151,9 @@ export function projectHistoryEvent(raw, call = null, contextTurn = null, closin
     const message = event.data?.message ?? event.data
     const data = messageText(message)
     const images = messageImages(message)
-    if (data || images.length) projected = { seq, type: 'assistant.message', data: { ...(data ?? { text: '' }),
+    const modelThinking = includeThinking && Array.isArray(message?.content) ? message.content.filter(part => part?.type === 'reasoning' && typeof part.text === 'string').map(part => part.text).join('') : '';
+    if (data || images.length || modelThinking) projected = { seq, type: 'assistant.message', data: { ...(data ?? { text: '' }),
+      ...(modelThinking ? { modelThinking: safeHistoryText(modelThinking).text } : {}),
       ...(images.length ? { images } : {}),
       ...(Array.isArray(event.data?.memoryUsed) ? { memoryUsed: event.data.memoryUsed
         .filter(item => ['cognition', 'entity', 'relationship', 'event'].includes(item?.kind) &&
@@ -451,7 +453,7 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
         const previous = entries[i]?.event ?? entries[i]
         if (Number.isSafeInteger(previous.data?.turn)) { contextTurn = previous.data.turn; break }
       }
-      const event = projectHistoryEvent(entries[index], raw.type === 'tool/result' ? relatedCall(entries, index, cache) : null, contextTurn, raw.type === 'step/end' ? resolveStepEnd(entries, index, cache) : null, ['agent/inbox/spliced', 'step/start', 'step/end'].includes(raw.type) ? indexInboxTimeline(entries, cache, index) : null)
+      const event = projectHistoryEvent(entries[index], raw.type === 'tool/result' ? relatedCall(entries, index, cache) : null, contextTurn, raw.type === 'step/end' ? resolveStepEnd(entries, index, cache) : null, ['agent/inbox/spliced', 'step/start', 'step/end'].includes(raw.type) ? indexInboxTimeline(entries, cache, index) : null, options.includeThinking === true)
       const size = event ? Buffer.byteLength(JSON.stringify(event), 'utf8') : 0
       if (event && (events.length === limit || bytes + size > HISTORY_RESPONSE_BYTES_LIMIT)) { hasMore = true; break }
       scanned = raw.seq
