@@ -21,8 +21,10 @@ export async function pinnedBuild(worktree, roots = ['D:/AIProjects/Shared/Depen
 /** Uses the controller's deadline, log capture and owned-process cleanup. */
 export async function runVendorTests(run, worktree, out) {
   if (!existsSync(join(worktree, 'vendor/dsh-runtime/node_modules/@deepseek-ai/dsh/lib/bin.js'))) {
-    const checkout = await pinnedBuild(worktree);
-    await run('node', [join(worktree, 'scripts/vendor-dsh.mjs')], { name: 'vendor-assemble', env: checkout ? {WEFTMATE_DSH_CHECKOUT:checkout} : {} });
+    try {
+      const checkout = await pinnedBuild(worktree);
+      await run('node', [join(worktree, 'scripts/vendor-dsh.mjs')], { name: 'vendor-assemble', env: checkout ? {WEFTMATE_DSH_CHECKOUT:checkout} : {} });
+    } catch (error) { return {status:'environment',reason:`固定运行时准备失败，vendor 测试未运行：${error.message}`}; }
   }
   const report = join(out, 'vendor-test-results.json');
   const execution = await run('node', [join(worktree, '.github/scripts/ci-unit-tests.mjs'), 'vendor', '--report', report], { name: 'vendor-tests', allowFailure: true });
