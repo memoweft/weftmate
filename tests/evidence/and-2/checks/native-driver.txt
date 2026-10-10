@@ -1,0 +1,10 @@
+local fresh real login/send passed
+local synthetic host process stopped
+local host restart passed
+local background return passed
+local process reopen passed
+cloud fresh real login/send passed
+cloud synthetic host process stopped
+cloud host restart passed
+cloud background return passed
+cloud process reopen passed

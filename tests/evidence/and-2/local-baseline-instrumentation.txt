@@ -1,0 +1,19 @@
+
+com.memoweft.weftmate.mobile.AndroidLoginInstrumentedTest:
+Error in realLoginThenSendMainConversation(com.memoweft.weftmate.mobile.AndroidLoginInstrumentedTest):
+java.lang.AssertionError: Real login UI did not reach: state.loggedIn&&!document.body.classList.contains('cloud-auth-active'); "登录 WeftMate\n邮箱\n密码\n显示\n登录\n忘记密码？\n还没有账号？注册\n登录已失效，请重新登录。"
+	at com.memoweft.weftmate.mobile.AndroidLoginInstrumentedTest.wait(AndroidLoginInstrumentedTest.kt:33)
+	at com.memoweft.weftmate.mobile.AndroidLoginInstrumentedTest.realLoginThenSendMainConversation(AndroidLoginInstrumentedTest.kt:77)
+
+
+Time: 46.739
+There was 1 failure:
+1) realLoginThenSendMainConversation(com.memoweft.weftmate.mobile.AndroidLoginInstrumentedTest)
+java.lang.AssertionError: Real login UI did not reach: state.loggedIn&&!document.body.classList.contains('cloud-auth-active'); "登录 WeftMate\n邮箱\n密码\n显示\n登录\n忘记密码？\n还没有账号？注册\n登录已失效，请重新登录。"
+	at com.memoweft.weftmate.mobile.AndroidLoginInstrumentedTest.wait(AndroidLoginInstrumentedTest.kt:33)
+	at com.memoweft.weftmate.mobile.AndroidLoginInstrumentedTest.realLoginThenSendMainConversation(AndroidLoginInstrumentedTest.kt:77)
+
+FAILURES!!!
+Tests run: 1,  Failures: 1
+
+

@@ -166,6 +166,6 @@ internal class CloudAppLogin(private val secrets: SecureSettings, private val ap
     fun result(): HostIdentity {
         val value = JSONObject(secrets.appValue("result") ?: throw ApiFailure(401, "LOGIN_REQUIRED"))
         return HostIdentity(value.getString("origin"), value.getString("username"), value.getString("ownerId"),
-            value.getString("hostId"), value.getString("deviceId"), value.getString("cookie"), value.getString("csrf"))
+            value.getString("hostId"), value.getString("deviceId"), value.getString("cookie"), value.getString("csrf"), "cloud")
     }
 }

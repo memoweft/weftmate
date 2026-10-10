@@ -634,7 +634,7 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
         return identityFromAuth(origin, response)
     }
 
-    fun cloudIdentity(origin: String, response: HttpReply): HostIdentity = identityFromAuth(origin, response)
+    fun cloudIdentity(origin: String, response: HttpReply): HostIdentity = identityFromAuth(origin, response).copy(authSource = "cloud")
 
     private fun identityFromAuth(origin: String, response: HttpReply): HostIdentity {
         val cookie = response.cookie?.substringBefore(';') ?: throw ApiFailure(502, "COOKIE_MISSING")

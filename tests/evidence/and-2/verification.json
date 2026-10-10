@@ -1,0 +1,62 @@
+{
+  "baseCommit": "2a075c13c9f9a428c149d5831432a469e2d97b4f",
+  "required": {
+    "mode": "required",
+    "files": 272,
+    "exitCode": 0,
+    "passed": 1417,
+    "failed": 0,
+    "skipped": 14,
+    "failures": []
+  },
+  "vendor": {
+    "mode": "vendor",
+    "files": 28,
+    "exitCode": 0,
+    "passed": 203,
+    "failed": 0,
+    "skipped": 0,
+    "failures": []
+  },
+  "mobileInteractions": {
+    "passed": 115,
+    "failed": 0,
+    "skipped": 0
+  },
+  "relatedBridge": {
+    "passed": 10,
+    "failed": 0
+  },
+  "jvm": {
+    "passed": 61,
+    "failed": 0
+  },
+  "nativeInstrumentation": {
+    "runs": 4,
+    "failed": 0,
+    "skipped": 0
+  },
+  "authenticationMatrix": {
+    "passed": 8,
+    "failed": 0
+  },
+  "pairing": {
+    "realVisibleForm": true,
+    "state": {
+      "loggedIn": true,
+      "ownerPresent": true,
+      "connection": "connected",
+      "authEpoch": 4,
+      "mainChat": true,
+      "canSend": true
+    }
+  },
+  "typecheck": true,
+  "assembleDebug": true,
+  "assembleDebugAndroidTest": true,
+  "sharedAssets": true,
+  "newShellRequired": true,
+  "versionNumbersChanged": false,
+  "systemNavigationComplete": false,
+  "keyboardComplete": false
+}
