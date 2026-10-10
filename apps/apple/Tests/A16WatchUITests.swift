@@ -17,7 +17,12 @@ final class A16WatchUITests: XCTestCase {
         let strings=regex.matches(in:snapshot,range:NSRange(snapshot.startIndex...,in:snapshot)).map{String(snapshot[Range($0.range(at:1),in:snapshot)!])}
         let text=XCTAttachment(string:strings.joined(separator:"\n"));text.name="a16-watch-text";text.lifetime = .keepAlways;add(text)
         XCTAssertFalse(strings.contains{$0.contains("合成记录") || $0.contains("A16 合成临时正文")})
-        app.buttons["watchApprove"].firstMatch.tap()
+        let approve = app.buttons["watchApprove"].firstMatch
+        let enabled = XCTNSPredicateExpectation(predicate: NSPredicate(format:"enabled == true"), object: approve)
+        let ready = await XCTWaiter.fulfillment(of:[enabled],timeout:30)
+        XCTAssertEqual(ready,.completed)
+        guard ready == .completed else { throw NSError(domain:"A16WatchReachability",code:1) }
+        approve.tap()
         for _ in 0..<50{let report=try await get("/report");if (report["operations"] as? [[String:Any]])?.contains(where:{$0["kind"] as? String=="approval"})==true{return};_=try await get("/consume");try await Task.sleep(for:.milliseconds(200))}
         XCTFail("Original approval receipt not consumed by host")
     }

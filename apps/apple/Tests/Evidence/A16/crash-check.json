@@ -1,0 +1,22 @@
+{
+  "checkedAt": "2026-10-10T04:37:35.025287+00:00",
+  "baselineCount": 7,
+  "preservedPriorReports": [
+    "WeftMateMac-2026-10-09-053026.ips",
+    "WeftMateMac-2026-10-09-054057.ips",
+    "WeftMateMac-2026-10-09-100830.ips",
+    "WeftMateMac-2026-10-09-163024.ips",
+    "WeftMateMac-2026-10-09-163419.ips",
+    "WeftMateWatch-2026-10-09-081902.000.ips",
+    "WeftMateWatch-2026-10-09-081922.ips"
+  ],
+  "knownPriorA16CrashCount": 2,
+  "knownPriorA16Reports": [
+    "WeftMateMac-2026-10-09-163024.ips",
+    "WeftMateMac-2026-10-09-163419.ips"
+  ],
+  "resumeNewCount": 0,
+  "finalBuildNewCount": 0,
+  "newReports": [],
+  "method": "Compare names against the baseline taken at handover; no prior reports deleted. This baseline also covers the final build and its twenty launches."
+}

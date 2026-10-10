@@ -41,9 +41,9 @@ try:
     if name=='a16-watch-approval':shutil.copyfile(source,dest/'approval.png')
     if name=='a16-watch-text':
      index=a.evidence/'screenshot-text.json';data=json.loads(index.read_text());data['frames']=[f for f in data['frames']if f['surface']!='watch']+[{'surface':'watch','theme':'light','scene':'approval','text':source.read_text()}];index.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
- assert status==0 and summary['passedTests']==1 and summary['failedTests']==0 and summary['skippedTests']==0
  with urllib.request.urlopen(meta['driver']+'/report')as r:report=json.load(r)
  (dest/'host-receipts.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
+ assert status==0 and summary['passedTests']==1 and summary['failedTests']==0 and summary['skippedTests']==0
  print('PASS A16 paired Watch main approval projection',flush=True)
 finally:
  if child and child.poll()is None:
