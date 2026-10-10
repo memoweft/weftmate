@@ -28,7 +28,7 @@ globalThis.WeftUiComponents.factories.questions = (core, ui) => {
         const notice = entry.notice || entry.validation || (core.conversationTasks.entries.get(row.taskId)?.notice ? '原任务暂时无法核对，请重新核对。' : '') || (operation ? '正在提交回答…' : marker ? '上次回答尚未确认，请重新核对。' : '');
         bar.dataset.scope = JSON.stringify(context);
         WeftQuestionBar.paint(bar, { row, draft: core.questionDraft(context, row), remaining: pending.slice(1).reduce((n, entry) => n + entry.row.questions.length, 0),
-            retry: !!marker, locked: !!operation || !entry.authoritative || !!entry.notice || !!marker && !core.sameQuestion(marker, row), notice,
+            retry: !!marker, submitting: !!operation, locked: !!operation || !entry.authoritative || !!entry.notice || !!marker && !core.sameQuestion(marker, row), notice,
             current: () => core.approvalContextCurrent(context), focusComposer: () => ui.byId('message-text').focus({ preventScroll: true }),
             choose: (index, label, checked) => core.chooseQuestionOption(context, row, index, label, checked),
             custom: (index, text) => core.setQuestionCustom(context, row, index, text), submit: () => void core.submitQuestion(context, row),

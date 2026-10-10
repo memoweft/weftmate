@@ -594,9 +594,9 @@ function renderHome(){const target=$('home-conversations'),top=target.scrollTop;
     if(!state.loggedIn){const login=el('button','primary','登录或连接');login.addEventListener('click',()=>page('connect'));empty.append(login)}target.append(empty)}target.scrollTop=top;
 }
 
-async function refreshHome(){if(state.page!=='home'||!state.loggedIn||document.visibilityState==='hidden')return;
+async function refreshHome({dataLoaded=false}={}){if(state.page!=='home'||!state.loggedIn||document.visibilityState==='hidden')return;
   const owner=state.owner,epoch=state.authEpoch,generation=state.generation;
-  await Promise.all([listConversations(),listSharedSessions()]);
+  if(!dataLoaded)await Promise.all([listConversations(),listSharedSessions()]);
   if(state.page!=='home'||owner!==state.owner||epoch!==state.authEpoch||generation!==state.generation)return;
   await uiCore.mobileDecisions.refreshHomeApprovals();
   if(state.page!=='home'||owner!==state.owner||epoch!==state.authEpoch||generation!==state.generation)return;

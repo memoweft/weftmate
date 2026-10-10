@@ -135,3 +135,45 @@ test('M3-1 Android message-level status check reconciles the original pending re
   assert.ok(notices.some(text=>text.includes('电脑仍未确认这条请求')));assert.ok(!notices.includes('CHECK_FAILED'));
   assert.equal(state.sharedPending.requestId,pending.requestId);assert.ok(calls.includes('shared.outbox.reconcile'));assert.ok(!calls.includes('shared.send'));
 });
+
+ test('FX-20 initial connect and identity gates do not call recovery; transport failure does',async()=>{
+  for(const kind of ['connecting','login_required','approval_required']){
+    const f=fixture();let recoveries=0;if(kind!=='connecting')f.core.presence.authorization(kind);
+    f.core.startConnection(async()=>{recoveries++});await f.core.retryConnection();
+    assert.equal(recoveries,0,kind);assert.equal(f.requests.length,1);
+    f.core.connectionFailed({code:'NETWORK'});f.core.connectionSucceeded();await f.core.retryConnection();
+    assert.equal(recoveries,1);await f.core.retryConnection();assert.equal(recoveries,1);f.core.stopConnection();
+  }
+});
+
+test('FX-20 normal desktop entrance owns each startup data read once',async()=>{
+  const f=fixture(),counts:any={};const names=['refreshStatus','loadPersonalization','refreshActivity','refreshModels','refreshTasks','refreshHistory','refreshConversationTasks','restoreRequests','loadMessageModePreference'];
+  for(const name of names)f.core[name]=async(...args:any[])=>{counts[name]=(counts[name]||0)+1;if(name==='refreshTasks')assert.deepEqual(args,[false,false]);if(name==='refreshStatus')f.core.connectionSucceeded({runtime:'ready'});if(name==='loadMessageModePreference')await f.core.loadPersonalization();};
+  f.core.refreshSessions=async()=>{counts.refreshSessions=(counts.refreshSessions||0)+1;f.core.state.historyGeneration++;await f.core.refreshHistory();await f.core.refreshConversationTasks();};
+  await f.core.enterAssistant();for(const name of [...names,'refreshSessions'])assert.equal(counts[name],1,name);
+});
+test('FX-20 verified startup status schedules the next probe instead of rereading status',async()=>{
+  const f=fixture();f.core.connectionSucceeded({runtime:'ready'});let recovery=0;f.core.startConnection(async()=>{recovery++});
+  assert.equal(f.requests.length,0);assert.equal(f.c.next(),15000);await f.c.advance(15000);assert.equal(f.requests.length,1);assert.equal(recovery,0);f.core.stopConnection();
+});
+
+test('FX-20 login/approval/first connecting are silent; real network recovery toasts once and replays 90 exact chunks',async()=>{
+  const f=fixture(),toasts:string[]=[];
+  const element=()=>({dataset:{},setAttribute(){},append(){},prepend(){},addEventListener(){},remove(){}});
+  const context:any={document:{createElement:element,querySelectorAll:()=>[]}};
+  runInNewContext(readFileSync('src/personal-access-ui/components/presence.js','utf8'),context);
+  context.WeftPresenceView.mount({core:f.core,toast:(text:string)=>toasts.push(text)});
+  for(const kind of ['login_required','approval_required','connecting']){f.core.presence.authorization(kind);f.core.connectionSucceeded({runtime:'ready'});}assert.deepEqual(toasts,[]);
+  const chunks=Array.from({length:90},(_,n)=>({seq:n,type:'assistant.message',sessionId:'session',data:{text:`第${n}段\n`}}));
+  f.core.refreshConversationApprovals=f.core.refreshConversationQuestions=async()=>{};
+  f.core.appendHistory(chunks.slice(0,35));let recovered=0;f.core.startConnection(async()=>{recovered++;f.core.appendHistory(chunks);});
+  f.core.connectionNetwork(false);assert.equal(f.core.connectionView().kind,'network_unavailable');f.core.connectionNetwork(true);await f.core.retryConnection();
+  assert.equal(recovered,1);assert.equal(toasts.length,1);assert.equal(toasts[0],'连接已恢复，正在接续。');
+  assert.equal([...f.core.state.historyEvents.values()].map((event:any)=>event.data.text).join(''),chunks.map(event=>event.data.text).join(''));
+  assert.equal(f.core.state.historyEvents.size,90);await f.core.retryConnection();assert.equal(toasts.length,1);f.core.stopConnection();
+});
+test('FX-20 immutable event detail is read once per account/device and failed reads can retry',async()=>{
+  const f=fixture();await Promise.all([f.core.readTimelineDetail('session',1),f.core.readTimelineDetail('session',1)]);await f.core.readTimelineDetail('session',1);assert.equal(f.requests.length,1);
+  f.core.state.identityGeneration++;await f.core.readTimelineDetail('session',1);assert.equal(f.requests.length,2);
+  f.setTransport(()=>{throw Error('synthetic outage')});await assert.rejects(f.core.readTimelineDetail('session',2));f.setTransport(()=>({ok:true,status:200,json:async()=>({text:'detail'})}));await f.core.readTimelineDetail('session',2);assert.equal(f.requests.length,4);
+});
