@@ -10,7 +10,8 @@ foreach ($process in Get-CimInstance Win32_Process) {
     if ([IO.Path]::GetFileName($process.ExecutablePath) -notmatch '^(node|electron|python|python3|java|chrome|chrome-headless-shell|pwsh|powershell)\.exe$') { continue }
     $matchesRoot = $false
     foreach ($root in $roots) {
-        if ($process.CommandLine.Replace('\', '/').IndexOf($root.Replace('\', '/'), [StringComparison]::OrdinalIgnoreCase) -ge 0) { $matchesRoot = $true }
+        $rootPattern = [regex]::Escape($root.Replace('\', '/')) + '(?=[/\s"'']|$)'
+        if ([regex]::IsMatch($process.CommandLine.Replace('\', '/'), $rootPattern, [Text.RegularExpressions.RegexOptions]::IgnoreCase)) { $matchesRoot = $true }
     }
     if (!$matchesRoot -or $process.ProcessId -eq $PID) { continue }
     # Re-read to reject an exited/reused PID between enumeration and termination.
