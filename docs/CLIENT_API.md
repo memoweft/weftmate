@@ -1239,6 +1239,26 @@ Apple（苹果端）接线：新建入口发送 `/sessions/temporary`；侧栏/�
 
 桌面主进程、S3a 安卓后台与 Apple 本地通知消费同一 `Activity.notification`（转发载荷也保留全部决定字段），以账户 + activityId 去重；sound=false 时使用静默系统通知，notify=false 时只保留动态。Windows（微软桌面系统）页提供系统权限检查、`ms-settings:notifications` 深链和手动开启说明；未知权限不得声称已允许。Android（安卓）业务桥新增本节两条精确路径，需要新壳版本，由编排统一递增；本包不改版本号。S3a 的后台约15分钟以上延迟与 D41 边界不变；Apple D38 的 App（应用）连接 + 本地通知仍不代表 APNs（苹果推送服务）已接入。
 
+### 9.8.2 设备推送登记与 Android 本地送达（S3a，D25 / D41）
+
+`personalCapabilities.pushRegistration:1` 表示宿主支持设备登记。宿主 `GET/PUT/DELETE /personal/v1/push/registration`；云端 `GET/PUT/DELETE /personal/v1/cloud/auth/push/registration`。登记和撤销只作用于当前已认证设备，账户与设备标识来自认证上下文，不接受 `ownerId/accountId/deviceId`。宿主 GET 要求 `sessions:read`，写入要求 `account:manage`、原 CSRF（跨站请求伪造防护）；云端使用当前云账号的 DPoP（设备持钥证明）令牌与写入来源校验。
+
+PUT（登记 / 轮换）严格载荷为 `{platform:"android"|"ios"|"macos"|"watchos"|"windows",provider:string,token:string|null}`。`provider` 是小写登记名，`none` 时 `token` 必须为 null，其他提供方必须有非空令牌。响应 `{deviceId,registered,platform,provider,tokenPresent,configured,accepted,reason}` 不回显令牌；DELETE（撤销）移除登记。当前统一使用 `NoopPushProvider`，明确返回 `configured:false,accepted:false,reason:"PUSH_NOT_CONFIGURED"`，登记成功不等于推送可用。撤销设备删除宿主登记；云 schema（存储结构）8 的 `push_registrations` 对账户 / 设备外键级联删除，注销账号沿原事务删除，不保留令牌。
+
+宿主 `src/push/provider.mjs` 与独立云发布包 `services/cloud/src/push-provider.mjs` 的同契约 `PushProvider` 定义 `id`、`register(registration)`、`revoke(registration)`、`send(registration,payload)`。宿主可信接缝 `service.pushActivity(ownerId,eventId)` 只为仍需通知且未读的真实动态选择有效设备；云端 `cloudPush.send(accountId,payload)` 是内部接缝，没有匿名派发接口。以后接 FCM（Firebase 云消息）或厂商推送，需实现这四项、提供方配置 / 凭据、令牌失效反馈与轮换、认证宿主到云的派发接线；现实现不访问外部推送网络，也未引入 Google Play 服务依赖。
+
+提供方 `send` 的载荷只允许 `{eventId,type}`，不带标题、正文、摘要、会话片段、通知声音决定或审批参数。设备被唤醒后经已认证 / 固定证书的原同步通道读取 9.8 的当前动态和 9.8.1 的宿主决定；这是不让云与提供方看到内容的边界。网络回执 `accepted` 仅代表提供方受理，不能冒充设备显示或用户已读。
+
+Android（安卓）存活时沿现有认证轮询读取 `/activity/changes`，前台 / 后台共用同一消费器；进程被结束后，WorkManager（安卓后台任务库）以最短 15 分钟、联网约束尽力读取并补发未读事件。系统省电、后台限制、网络和强行停止会推迟或停止执行，**尽力而为，不保证及时；可能延迟约 15 分钟以上**。没有新增常驻前台服务，没有常驻通知，没有主动申请电池优化白名单。
+
+客户端严格使用 `notification.notify/sound`；缺字段不派发，勿扰与额度不在客户端重算。审批 / 待回答、任务、提醒、记忆、系统共五类，各有有声 / 静默渠道；系统关闭渠道仍优先。账户 + activityId 持久去重只存身份 / 游标 / 回执编号；已读、待办已处理、删除增量撤销可见通知。令牌、Cookie（会话凭据）和 CSRF 保留在原生密钥存储，不进入页面。此前本机回复 / 动作 / 同步错误只保留本机收件记录，不绕过宿主决定发系统通知。
+
+通知点击通过当前账户的 activityId 打开动态、还原全部筛选、翻页定位。审批按钮只引用原动态身份；执行前重新取当前原审批目标，复用 3.7 的请求编号与回执验证。Android 12+ 的通知动作要求解锁，旧版与新实例路径同时通过 Keyguard（设备锁屏）解锁后才提交；不接受外部应用伪造的通知动作。拒绝 / 失效 / 离线不声称批准成功，用户回动态核对后重试原回执。
+
+Android 13+ 首次实际需要通知时解释用途并请求系统权限；拒绝后动态仍可读，在「设置 → 通知」显示手动开启路径。此页读取本机权限、各渠道状态与后台限制，提供系统通知设置和应用后台设置跳转。测试按钮沿 POST `/settings/notifications/test` 生成宿主事实，再交真实 Android 通知通道；宿主成功回执仍不保证系统权限或实际显示成功。
+
+Apple（苹果端）交接：iPhone / Mac 订阅同一动态增量和宿主决定，Watch（手表）通过 iPhone 传递最小事件身份并在可认证时读取；`notify:false` 仅动态、`sound:false` 不附系统声音，不能按重要等级越过勿扰。以账户 + ID 持久去重 / 取消已读与删除项，点击定位动态或原对话；审批使用原目标、原请求与回执，锁定设备先解锁。iPhone / Mac 首次需求才申请本地通知权限，通知设置页显示本机系统状态；Watch 跟随 iPhone，不增加独立账号 / 设置。D38 免费签名阶段仅 App（应用）存活连接 + 本地通知，iOS 后台期限由系统决定，不宣称 APNs（苹果推送服务）或被杀后及时唤醒；付费计划后再实现提供方与 APNs 能力。本包未修改 `apps/apple`。
+
 ## 11. 记忆摄取健康与历史补整理（MEM-D）
 
 `GET /memory/status` 保留既有字段，新增可选 `pendingFormationCount`、`failedFormationCount`、`captureError` 和 `backfill`。`pendingBoundaryCount` 是宿主 outbox（持久待提交队列）条数，模型不可用时仍返回已知数量。`pendingFormationCount` 是 Core（记忆核心）已接受、尚在形成的作业数；两者不能混为已形成条数。`state=degraded` 也可表示正在整理，已有可用记忆继续沿 `capabilities.inject` 与原目的地权限使用。`reasonCode` 新增 `MEMORY_MODEL_WAITING`（切换中，等待原模型服务）、`MEMORY_FORMATION_PENDING`、`MEMORY_FORMATION_FAILED`；保留 `MEMORY_BUSY`、`MEMORY_MODEL_UNAVAILABLE` 与来源阻断原因。`GET /system.memory` 同步提供 `reasonCode,pendingBoundaryCount,pendingFormationCount,failedFormationCount`，供设置健康项显示。客户端必须区分正常、补交／形成中和暂停，不能把503当作空记忆。
@@ -1298,6 +1318,30 @@ D33：删除对话前取消该对话的原生安排、清除当前目标及管�
 账户沿第7节注册 / 登录 / 本地设置流程；称呼写 ST-1 的 `PATCH /settings/personalization {preferredName}`；模型沿 `/account/models/check`、保存回执与 `/settings/models`，中断后只保存非秘密请求编号并核对原回执；记忆沿第11节状态和只读补整理预览，不自动运行；导入入口置灰。连接手机沿第7节一次性二维码 / 配对码及设备允许 / 拒绝，不新建信任协议。一次性码持有与同账户验证是原扫码批准路径；无配对码的新设备仍须在已登录电脑上明确允许。
 
 Apple（苹果端）：Mac 执行宿主按本节读取安装进度并保存步骤，远程 iPhone / Mac 只接「连电脑」说明与现有扫码 / 批准流程；Watch（手表）不显示七步引导。文案与提供方获取密钥说明的中文来源为 `src/ui-core/onboarding-copy.js`，英文随 L10N-1 补齐。
+
+### 9.9 成果库（TB-3 正式，D33 / D43）
+
+`GET /status.personalCapabilities` 精确声明 `library:1,libraryPreview:1`；电脑具备原生打开适配时声明 `libraryDesktopActions:1`，否则为0。客户端按精确版本启用，不把字段存在当作支持。
+
+| 方法与路径 | 请求 | 响应 / 行为 |
+|---|---|---|
+| GET `/library` | `cursor?,limit?`（默认50，1–200）、`projectId?`、`type?`（document / spreadsheet / image / code / other）、`after?,before?`（时间字符串，按产出时间含边界）、`search?`（文件名包含匹配，忽略大小写，≤200字符） | 200 `{items,total,projects:[{id,name}],hasMore,nextCursor,revision}`，新到旧；游标签名绑定账户、筛选与成果修订。新增 / 删除途中继续旧页返回409 `CURSOR_RESET_REQUIRED`，重新读第一页。 |
+| GET `/library/{id}` | 无 | 200 `{item}`，补原生来源的 `seq,eventId`，打开来源时定位成果工具结果；后台子任务沿父任务的原生回执定位父工具步骤。 |
+| GET `/library/{id}/preview` | 无 | 200 `{item,kind,text?,contentType?,data?,reason?}`；kind=markdown / text / code / image / pdf / unsupported / missing。data为Base64（二进制文本编码），不含任意路径参数。文本≤128 KiB（千二进制字节）、光栅图片≤5 MiB（兆二进制字节）、PDF≤20 MiB；其它格式 / 超限保留索引，返回unsupported；超限reason=too_large。 |
+| POST `/library/{id}/open` | `{}` | 200 `{opened:true}`，用默认程序打开索引中的实际文件；仅桌面主进程可调用。 |
+| POST `/library/{id}/show` | `{}` | 200 `{opened:true}`，在文件夹中显示索引中的实际文件；仅桌面主进程可调用。 |
+
+`LibraryItem` 为 `{id,fileName,type,size,location,createdAt,modifiedAt,exists,projectId,projectName,source,previewPath,actions:{open,show}}`。id复用artifactId，source含 `chatId?,sessionId,taskId,messageId,turn,callId`；详情加 `seq,eventId`。messageId是原命令身份，seq/eventId是产出它的原生时间线条目，不能混用。项目是产出时所属项目；修改会话归属不重新归类旧文件。location为本账户已验证输出的原位置，供本人复制路径；只通过ID读取 / 打开，不提供路径读取或执行接口。远程网页不显示桌面打开 / 定位按钮。
+
+索引直接投影已有助手成果回执，覆盖主对话分段、旁聊、项目与后台子任务；同一原位置显示最新产出回执。原生文件仍留在原处，返回当前大小 / 修改时间；原文件移走、删除、换成链接或被其它文件替换时exists=false，界面写“已不在原位置”。不扫描账户外目录、不登记用户上传的输入附件。旧文本导出从已校验快照恢复为带真实文件名的输出文件，一次持久登记，之后移动不会重新生成；这些输出与可清理的对话快照分别保存。
+
+文本 / 图片 / PDF共用原有侧面板或手机全屏成果预览容器与安全文本呈现，PDF用隔离的Blob（内存文件）文档框架；SVG只作文本，不执行图片脚本。预览只读索引内普通文件，拒绝链接、身份替换和读取中增长超过上限。移动不报业务错误，文件不存在时返回missing；未登记、临时或已清理ID返回404 `NOT_FOUND`。
+
+MEM-2以执行回合冻结的记忆策略排除临时产出，混合旧来源无法确定时整体排除。D33删除 / 遗忘沿现有派生内容清理标记索引失效，删除原位置元数据；不删除用户原文件或已导出文件。清理前来源的迟到输出不能复活索引；原生正文是否保留仍按D33默认不勾的原话规则。账户切换、筛选换代的迟到页面 / 预览均丢弃。
+
+桌面操作复用 `wm:desktop:artifact`，渲染器只传ID与library-open / library-show。主进程核对登录并用宿主进程私有的 `X-WeftMate-Desktop` 标记及CSRF（跨站请求伪造防护）调用上述POST，再次核对账户、索引和文件存在状态；标记不发给网页、不持久保存。网页 / 手机即使有正常Cookie（会话凭据）和CSRF也返回403 `FORBIDDEN`，没有任意路径或任意程序启动口子。
+
+TB-4复用手机菜单 `page('library')` 与ui-core模型，不另建索引。安卓业务桥只加入成果列表 / 详情 / 预览的精确路径，拒绝open / show；需要新壳版本，由编排统一递增。本包不改变安卓版本号。Apple（苹果端）按上述能力和模型接线，Mac用本机原生动作，iPhone沿全屏预览与来源定位。
 
 
 ### FX-17：纠正形成状态与重试

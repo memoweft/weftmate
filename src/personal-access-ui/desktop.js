@@ -69,6 +69,9 @@
     picker?.remove(); picker = null; byId('conversation-resources')?.setAttribute('aria-expanded', 'false')
   }
   async function showPicker(trigger = byId('conversation-resources')) {
+    if (document.body.classList.contains('library-open') && preview?.libraryItems) {
+      WeftPopover.menu(trigger, preview.libraryItems.map(item => ({name:item.fileName,icon:'file',action:()=>preview.libraryOpen(item,trigger)}))); return
+    }
     if (picker) { hidePicker(); return }
     const menu = node('div', 'resource-picker'); menu.setAttribute('role', 'dialog'); menu.setAttribute('aria-label', '输出与来源')
     const close = node('button', 'button quiet small resource-picker-close', '关闭列表'); close.type = 'button'; close.addEventListener('click', hidePicker)
@@ -122,6 +125,7 @@
     preview.panel.hidden = false; document.body.classList.add('preview-open')
     if (opening) globalThis.WeftMotion?.reveal(preview.panel, '240ms')
     preview.active = key; preview.content = selected.content
+    selected.tab.scrollIntoView({ block: 'nearest', inline: 'nearest' })
     for (const [id, tab] of tabs) {
       tab.content.hidden = id !== key; tab.select.setAttribute('aria-selected', String(id === key)); tab.select.tabIndex = id === key ? 0 : -1
     }
@@ -152,6 +156,15 @@
     tabs.set(key, { tab, select, content }); selectTab(key, true)
     return { panel: preview.panel, content }
   }
+  function configureLibraryControls(header,tablist,add,expand,close) {
+    if(header.dataset.libraryControls)return;header.dataset.libraryControls='true'
+      const decorate = (button, id, name) => { button.replaceChildren(window.WeftIcons.create(id,16)); button.classList.add('library-icon'); button.title = name }
+      decorate(add,'plus','再打开一项'); add.setAttribute('aria-haspopup','menu'); decorate(expand,'expand','放大右侧面板'); decorate(close,'sidebar','收起右侧面板')
+      expand.addEventListener('click',()=>{const expanded=document.body.classList.contains('preview-expanded');decorate(expand,expanded?'collapse':'expand',expanded?'还原右侧面板':'放大右侧面板');expand.setAttribute('aria-label',expanded?'还原右侧面板':'放大右侧面板')})
+      const overflow = node('button','library-icon'); overflow.type='button'; overflow.title='更多预览标签'; overflow.setAttribute('aria-label','更多预览标签');overflow.setAttribute('aria-haspopup','menu');overflow.setAttribute('aria-expanded','false'); overflow.append(window.WeftIcons.create('chevron',16));
+      overflow.onclick=()=>WeftPopover.menu(overflow,[...tabs].map(([key,tab])=>({name:tab.select.textContent,icon:'file',action:()=>selectTab(key,true)})))
+      header.append(tablist,overflow,add,expand,close)
+  }
   function createPreview() {
     const panel = node('aside', 'timeline-preview'); panel.setAttribute('aria-label', '成果与来源预览')
     const resize = node('div', 'preview-resize'); resize.setAttribute('role', 'separator'); resize.setAttribute('aria-orientation', 'vertical'); resize.setAttribute('aria-label', '调整预览宽度'); resize.tabIndex = 0
@@ -162,7 +175,9 @@
     add.addEventListener('click', () => { void showPicker(add) })
     const expand = node('button', 'button quiet small', '放大'); expand.type = 'button'; expand.setAttribute('aria-label', '放大右侧面板'); expand.setAttribute('aria-pressed', 'false')
     expand.addEventListener('click', () => { const expanded = document.body.classList.toggle('preview-expanded'); expand.textContent = expanded ? '还原' : '放大'; expand.setAttribute('aria-pressed', String(expanded)) })
-    header.append(tablist, add, expand, close); panel.append(resize, header)
+    if (document.body.classList.contains('library-open')) {
+      configureLibraryControls(header,tablist,add,expand,close)
+    } else header.append(tablist, add, expand, close); panel.append(resize, header)
     globalThis.WeftUiLayout.mountPreview(panel)
     document.body.classList.add('preview-open')
     resize.setAttribute('aria-valuemin', '280'); resize.setAttribute('aria-valuemax', String(Math.round(window.innerWidth * .6)))
@@ -241,5 +256,5 @@
     })
     applyAppearance()
   }
-  window.WeftDesktop = { init, markdown, fileLabel, sessionGroup, sortSessions, toggleRail, openPreview, closePreview, showImage, openCollection, usageText, icon }
+  window.WeftDesktop = { configureLibraryPreview(items,open) { if(preview) { preview.libraryItems=items;preview.libraryOpen=open;const header=preview.panel.querySelector('.preview-heading');configureLibraryControls(header,preview.tablist,header.querySelector('.preview-add'),header.querySelector('[aria-label="放大右侧面板"]'),header.querySelector('[aria-label="收起右侧面板"]')); } }, init, markdown, fileLabel, sessionGroup, sortSessions, toggleRail, openPreview, closePreview, showImage, openCollection, usageText, icon }
 })()
