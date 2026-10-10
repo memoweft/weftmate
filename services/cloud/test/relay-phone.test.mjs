@@ -53,7 +53,18 @@ test('Relay phone first input and file task', {
       Object.defineProperty(globalThis, 'WeftUiCore', { configurable: true,
         get: () => value, set: module => {
           value = module; const create = module.create;
-          module.create = function(...args) { const core = create.apply(this, args); globalThis.__ciR1Core = core; return core; };
+          module.create = function(...args) {
+            const core = create.apply(this, args), initialize = core.initializeCloudAccount;
+            // The fixture supplies its approved session after normal startup. A
+            // still-pending cloud credential read may otherwise return to login
+            // after this injection, even though all business requests succeeded.
+            core.initializeCloudAccount = function(...input) {
+              const result = initialize.apply(this, input), load = core.load;
+              core.load = function(...params) { const pending = load.apply(this, params); globalThis.__ciR1Startup = pending; return pending; };
+              return result;
+            };
+            globalThis.__ciR1Core = core; return core;
+          };
         } });
     });
     const routeViolations = [], pageErrors = [];
@@ -105,6 +116,7 @@ test('Relay phone first input and file task', {
       await phone.waitForFunction(() => globalThis.__WeftUiStarted === true);
       await phone.getByRole('heading', { name: '登录 WeftMate', exact: true }).waitFor();
       await phone.evaluate(async () => {
+        await globalThis.__ciR1Startup;
         const response = await fetch('/personal/v1/auth/me'); if (!response.ok) throw new Error('approved host session missing');
         globalThis.__ciR1Core.acceptSession(await response.json());
         await Promise.race([globalThis.__ciR1Core.enterAssistant(), new Promise((_, reject) => setTimeout(() => reject(new Error('approved UI hydration timeout')), 20_000))]);
