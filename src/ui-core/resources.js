@@ -105,6 +105,7 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
         }
     }
     function updateFromCommand(command) {
+        if (['accepted_by_dsh','observed'].includes(command?.state)) messageBodies.delete(`${core.state.ownerId}:${command.requestId}`);
         const optimisticCreate = core.handleOptimisticCreation?.(command);
         core.reconcileOptimistic?.(command);
         core.finishAttachmentCommand(command);

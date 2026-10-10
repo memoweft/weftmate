@@ -343,7 +343,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         const row = { ownerId: core.state.ownerId, chatId: core.state.selectedChatId, requestId: attachments.length ? core.attachmentAttempt(core.attachmentDraftKey(), text, attachments).requestId : environment.crypto.randomUUID(), text, status: 'sending', files: attachments.map(item => item.file.name) };
         pending.set(row.requestId, row); notify(); effects.scrollToLatest();
         row.nativeFields = {chatId:row.chatId,text,requestId:row.requestId,modelProfileId:core.state.modelProfileId,intent:intent || core.composerInputMode(core.state.selectedSessionId),attachmentIds:attachments.map(item=>item.attachmentId)};
-        if(attachments.length && !environment.mobileState)row.attachmentSnapshot={drafts:[...attachments]};
+        if(attachments.length && !environment.mobileState)row.attachmentSnapshot={drafts:[...attachments],modelProfileId:row.nativeFields.modelProfileId};
         if(environment.mobileState && environment.logicalChats) {
             core.rememberMarker({requestId:row.requestId,kind:'chat.message'});
         }
@@ -352,7 +352,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
                 historyWindow.state.events.clear(); historyWindow.state.hasNewer = false;
                 await readPage({}, 'tail'); notify(); effects.scrollToLatest();
             }
-            const command = environment.mobileState ? await effects.sendMainNativeMessage(row.nativeFields) : attachments.length ? await core.sendDesktopMessageWithAttachments(text, row.requestId, intent,row.attachmentSnapshot)
+            const command = environment.mobileState ? await effects.sendMainNativeMessage(row.nativeFields) : attachments.length ? await core.sendDesktopMessageWithAttachments(text, row.requestId, row.nativeFields.intent,row.attachmentSnapshot)
                 : await core.submitCommand('chat.message', { chatId: row.chatId, text, modelProfileId: core.state.modelProfileId, mode: intent || core.composerInputMode(core.state.selectedSessionId) }, null, row.requestId);
             await checkMainRequest(row);
             await refreshHistory();

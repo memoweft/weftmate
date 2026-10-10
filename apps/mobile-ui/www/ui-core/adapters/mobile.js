@@ -11,7 +11,7 @@ globalThis.WeftUiCore.factories.mobile = (core, effects, environment) => {
     const linked=!!selectedBinding(), host=state.chatSource==='host'||linked, session=selectedSharedSession();
     const attachments=currentAttachments().length;
     const busy=host?!!state.sharedPending||!!state.linkedPending||state.sharedOutboxLoading||state.busy:state.busy;
-    const ready=(!!text.trim()||attachments>0)&&state.loggedIn&&(!host || core.state.online)&&!busy&&!state.modelSwitching&&!state.transitionPending&&
+    const ready=(!!text.trim()||attachments>0)&&state.loggedIn&&(!host || core.state.online&&!['restarting','unavailable'].includes(core.state.connection?.host?.runtime)&&core.state.capabilities?.chat?.available!==false)&&!busy&&!state.modelSwitching&&!state.transitionPending&&
       !state.restorePending&&!core.state.sessionSelecting&&!core.state.sideCreating&&(host?!!session?.sendAvailable:!state.sendUncertain)&&(!linked||attachments===0);
     return {ready, host, busy,
       processingHint:core.executionAccountHint() || (core.state.sessionSelecting?'正在打开对话…':host&&state.sharedRunning?core.processingLabel(session?.processing):''),

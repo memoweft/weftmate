@@ -318,7 +318,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         const boundSession = bound && core.state.sessions.find(item => item.sessionId === bound.sessionId);
         const phoneReady = core.state.online && !!core.state.ownerId && !!core.state.selectedPhoneConversationId && !core.state.phoneSending &&
             (bound ? boundSession?.sendAvailable === true : core.state.syncAvailable && !!core.state.device?.id);
-        const chat = core.state.online && core.state.capabilities?.chat?.available === true;
+        const chat = core.state.online && !['restarting','unavailable'].includes(core.state.connection?.host?.runtime) && core.state.capabilities?.chat?.available === true;
         const model = core.state.models.some(item => item.id === core.state.modelProfileId);
         const selected = core.state.sessions.find(item => item.sessionId === core.state.selectedSessionId);
         const canSendHere = selected?.sendAvailable === true || core.state.newConversation === true;
