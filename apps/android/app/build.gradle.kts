@@ -37,6 +37,8 @@ val checkMobileUiAssets by tasks.registering(Exec::class) {
 tasks.named("preBuild") { dependsOn(checkMobileUiAssets) }
 
 dependencies {
+    implementation("androidx.work:work-runtime:2.9.1")
+    testImplementation("org.json:json:20240303")
     implementation("org.bouncycastle:bcprov-jdk15to18:1.86")
     implementation("androidx.webkit:webkit:1.16.0")
     testImplementation("junit:junit:4.13.2")

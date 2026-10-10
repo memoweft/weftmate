@@ -1,4 +1,6 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+    <!-- These workers never promote to a foreground service. Remove the library's unused entry. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -29,6 +31,7 @@
         </activity>
         <service android:name=".SyncJobService" android:exported="false"
             android:permission="android.permission.BIND_JOB_SERVICE" />
+        <service android:name="androidx.work.impl.foreground.SystemForegroundService" tools:node="remove" />
         <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.composer-camera"
             android:exported="false" android:grantUriPermissions="true">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/composer_camera_paths" />
