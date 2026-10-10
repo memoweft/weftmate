@@ -1,3 +1,4 @@
+import { validateNotificationSettings } from './notification-policy.mjs';
 import { personalization } from './personalization.mjs';
 import { validateMemorySettings } from './temporary-chats.mjs';
 import { enterProfileWrite } from '../personal-backup/write-barrier.mjs';
@@ -84,6 +85,8 @@ export async function durableWrite(file, state, shouldCommit = () => true) {
 export function validateSingleStore(store) {
   if (!plainObject(store)) throw failure('STORE_CORRUPT', 500);
   validateChatIdentity(store);
+  if (store.notificationSettings !== undefined) { try { validateNotificationSettings(store.notificationSettings); } catch { throw failure('STORE_CORRUPT', 500); } }
+  if (store.notificationSettingsUpdatedAt !== undefined && !validTime(store.notificationSettingsUpdatedAt)) throw failure('STORE_CORRUPT', 500);
   if (store.personalization !== undefined) { try { personalization.validate(store.personalization); } catch { throw failure('STORE_CORRUPT', 500); } }
   if (store.personalizationUpdatedAt !== undefined && !validTime(store.personalizationUpdatedAt)) throw failure('STORE_CORRUPT', 500);
   if (store.messageBranches !== undefined && !plainObject(store.messageBranches)) throw failure('STORE_CORRUPT', 500);

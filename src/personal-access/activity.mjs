@@ -28,7 +28,7 @@ export function observeActivityEvents(account,sessionId,events,nextSeq,observeRe
       scan.executed=false;delete scan.summary;
     }
     if(observeReminders&&(event.type==='assistant.message'&&data.reminder || event.type==='user.message'&&data.reminder)){
-      putActivity(account,`reminder:${sessionId}:${data.messageId??data.id??event.seq}`,{at,type:'reminder.triggered',title:'提醒',summary:data.text,
+      putActivity(account,`reminder:${sessionId}:${data.messageId??data.id??event.seq}`,{at,type:'reminder.triggered',title:'提醒',summary:data.text,initiatedBy:data.initiatedBy==='assistant'?'assistant':'user',
         source:activitySource(account,sessionId,{seq:event.seq,...(data.messageId??data.id?{messageId:data.messageId??data.id}:{})}),actions:[open()],level:'important'});
     }
   }
@@ -65,7 +65,7 @@ export function createActivity(context) {
           }));
           if(context.backend.schedules){const notices=await context.backend.schedules({ownerId,sessionId,action:'notifications'});
             await context.serial(()=>context.mutate(ownerId,next=>{if(!next.sessions[sessionId]||next.sessions[sessionId].deleting||next.memoryCleanupPending||(next.activity?.generation??0)!==generation)return;
-              for(const notice of notices.items??[]){if(Object.values(next.activity?.items??{}).some(row=>row.type==='reminder.triggered'&&row.source.sessionId===sessionId&&row.source.messageId===notice.messageId))continue;putActivity(next,`reminder:${sessionId}:${notice.messageId??notice.id}`,{at:notice.createdAt,type:'reminder.triggered',title:notice.kind==='task'?'定时任务触发':'提醒',summary:notice.text,
+              for(const notice of notices.items??[]){if(Object.values(next.activity?.items??{}).some(row=>row.type==='reminder.triggered'&&row.source.sessionId===sessionId&&row.source.messageId===notice.messageId))continue;putActivity(next,`reminder:${sessionId}:${notice.messageId??notice.id}`,{at:notice.createdAt,type:'reminder.triggered',title:notice.kind==='task'?'定时任务触发':'提醒',summary:notice.text,initiatedBy:notice.initiatedBy==='assistant'?'assistant':'user',
                 source:activitySource(next,sessionId,{messageId:notice.messageId,scheduleId:notice.id,...(Number.isSafeInteger(notice.seq)?{seq:notice.seq}:{})}),actions:[{kind:'open_chat',label:'打开对话',target:activitySource(next,sessionId,{messageId:notice.messageId,...(Number.isSafeInteger(notice.seq)?{seq:notice.seq}:{})})}],level:'important'});}
             }));}
           await context.refreshToolApprovals(ownerId,sessionId);await context.syncUserQuestions(ownerId,sessionId);
@@ -91,7 +91,7 @@ export function createActivity(context) {
     })().finally(()=>flights.delete(ownerId));flights.set(ownerId,work);return work;
   }
   async function record(ownerId,input){
-    if(!ACTIVITY_TYPES.includes(input.type)||!input.key||!['memory.','system.'].some(prefix=>input.type.startsWith(prefix)))throw failure('INVALID_REQUEST');
+    if(!ACTIVITY_TYPES.includes(input.type)||!input.key|| ['system.dnd.summary','system.notification.test'].includes(input.type)|| (input.initiatedBy!==undefined&&!['user','assistant'].includes(input.initiatedBy)) ||!['memory.','system.','companion.'].some(prefix=>input.type.startsWith(prefix)))throw failure('INVALID_REQUEST');
     return context.serial(()=>context.mutate(ownerId,next=>putActivity(next,`${input.type}:${input.key}`,{...input,at:input.at??new Date(context.timestamp()).toISOString()})));
   }
   function counts(ownerId){return activityCounts(context.accountState(ownerId));}
