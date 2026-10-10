@@ -128,8 +128,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: memoweft/memoweft
-          # FX-17 correction-memory candidate; replace after Claude squash.
-          ref: 68d511fa8f1e17467b3f379246af5f585486f24f
+          # FX-18 formation recovery candidate; replace after Claude squash.
+          ref: c6d449ddd716b49de7a725b4d1f44a0e01bf4f8b
           path: memoweft-core
           persist-credentials: false
       - name: Setup Node
@@ -147,6 +147,6 @@ jobs:
           python -m pip install ./memoweft-core/py
           python -c "import sys; print('WEFTMATE_TEST_MEMOWEFT_PYTHON=' + sys.executable)" >> "$GITHUB_ENV"
       - name: Real Core memory lifecycle integration
-        run: node --test tests/personal-memory-observed.integration.test.ts tests/personal-memory-observed-outbox.test.ts tests/personal-memory-correction.integration.test.ts tests/personal-memory-freshness.integration.test.ts tests/personal-memory-confirmation.integration.test.ts tests/personal-memory-fx17.integration.test.ts
+        run: node --test tests/personal-memory-observed.integration.test.ts tests/personal-memory-observed-outbox.test.ts tests/personal-memory-correction.integration.test.ts tests/personal-memory-freshness.integration.test.ts tests/personal-memory-confirmation.integration.test.ts tests/personal-memory-fx17.integration.test.ts tests/personal-memory-fx18.integration.test.ts
         env:
           WEFTMATE_TEST_MEMOWEFT_SOURCE: ${{ github.workspace }}/memoweft-core/py/src

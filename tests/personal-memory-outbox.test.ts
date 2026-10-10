@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, mkdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
@@ -120,4 +120,31 @@ test('only the explicit Core hard-deleted-source code drops the original boundar
     assert.equal((await manager.status(owner)).discardedBoundaryCount, 1)
     assert.equal(attempts, 1, 'deleted origin is not retried after restart')
   } finally { await manager.close(); rmSync(root, { recursive: true, force: true }) }
+})
+
+
+test('FX-18 startup opens an existing world with an empty outbox, retrying an unavailable route without a UI request', async () => {
+  const root=mkdtempSync(join(tmpdir(),'personal-memory-fx18-startup-'))
+  const other='owner-00000000-0000-4000-8000-000000000002'
+  const data=join(root,'accounts',owner,'memory-home','memoweft')
+  mkdirSync(data,{recursive:true});writeFileSync(join(data,'memoweft.sqlite3'),'synthetic metadata-only fixture')
+  mkdirSync(join(root,'accounts',other),{recursive:true})
+  let available=false, closed=0
+  const initialized:string[]=[]
+  const rpcFactory=()=>({child:{},async request(method:string,params:any={}) {
+    if(method==='capabilities')return {protocol:'memoweft.dsh_rpc',protocol_version:2,schema_version:1,methods}
+    if(method==='initialize'){initialized.push(params.subject_id);return {runtime:{subject_id:params.subject_id,db_path:join(params.dsh_home,'memoweft','memoweft.sqlite3')},capabilities:{subject_id:params.subject_id,services:{command:{operations:[]}}}}}
+    if(method==='health')return {runtime:{subject_id:owner,route_ready:true}}
+    throw Error(`Unexpected RPC ${method}`)
+  },async close(){closed++}})
+  const manager=createPersonalMemoryManager({root,enabled:true,python:join(root,'python.exe'),pythonPath:root,
+    baseUrl:'http://127.0.0.1:54321/v1',model:'@current',credential:()=>available?'synthetic':null,rpcFactory})
+  try {
+    await new Promise(r=>setTimeout(r,100));assert.deepEqual(initialized,[])
+    available=true
+    const end=Date.now()+4000;while(!initialized.length&&Date.now()<end)await new Promise(r=>setTimeout(r,25))
+    assert.deepEqual(initialized,[owner])
+    await new Promise(r=>setTimeout(r,100));assert.deepEqual(initialized,[owner])
+  } finally {await manager.close();rmSync(root,{recursive:true,force:true})}
+  assert.equal(closed,1)
 })
