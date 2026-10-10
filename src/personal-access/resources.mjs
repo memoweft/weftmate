@@ -61,16 +61,34 @@ export async function conversationResources(context, account, sessionId, ownerId
     sources.push({ key: `tool:${tool}`, kind: 'tool', name: tool, uses: [use] });
     // Only expose call parameters. Raw output stays behind the existing detail endpoint.
     if (typeof context.backend.readEventDetail !== 'function') continue;
-    let args;
+    let args, browserResult;
     try { const detail = await context.callBackend(() => context.backend.readEventDetail({ sessionId, ownerId, seq: step.detailRef.seq }));
-      args = parsed(parsed(detail.text).arguments); } catch { continue; }
+      const data = parsed(detail.text);
+      args = parsed(data.arguments);
+      const texts = value => typeof value === 'string' ? [value] : Array.isArray(value) ? value.flatMap(texts)
+        : value?.type === 'text' ? [value.text] : value?.content ? texts(value.content) : [];
+      if (tool === 'browser') {
+        browserResult = texts(data.output).map(parsed).find(value => typeof value?.url === 'string');
+        if (browserResult?.capturedFragment) {
+          const capturedUrl = new URL(browserResult.url);
+          capturedUrl.hash = browserResult.capturedFragment;
+          browserResult = { ...browserResult, url: capturedUrl.href };
+        }
+      } else if (tool === 'web_fetch') {
+        // DSH's controlled fetch header identifies the final URL after redirects.
+        const rendered = texts(data.output).find(text => /^Fetched https?:\/\//.test(text));
+        const address = rendered?.match(/^Fetched (https?:\/\/\S+) \(HTTP \d+\)/)?.[1];
+        if (address) browserResult = { url: address, title: rendered.match(/\nTitle: ([^\n]+)/)?.[1] };
+      }
+    } catch { continue; }
     use.summary = describeUse(tool, args, step.summary);
+    if (tool === 'browser' && args.query) use.summary = `原文片段 · ${String(args.query).slice(0, 100)}`;
     const paths = [...strings(args.file_path), ...strings(args.path), ...strings(args.paths), ...strings(args.filePath)];
     for (const file of new Set(paths)) sources.push({ key: `file:${file}`, kind: 'file', name: file.split(/[\\/]/).at(-1), location: file,
       uses: [{ ...use, verb: /write|save|edit/i.test(tool) ? '写入' : '读取' }] });
-    for (const url of new Set([...strings(args.url), ...strings(args.urls)])) {
+    for (const url of new Set([...strings(args.url), ...strings(args.urls), ...strings(browserResult?.url)])) {
       try { if (!['http:', 'https:'].includes(new URL(url).protocol)) continue; } catch { continue; }
-      sources.push({ key: `webpage:${url}`, kind: 'webpage', name: url, url, uses: [use] });
+      sources.push({ key: `webpage:${url}`, kind: 'webpage', name: browserResult?.title || url, url, uses: [use] });
     }
   }
   return { outputs, sources, nextSeq: page.nextSeq, hasMore: page.hasMore };

@@ -1,0 +1,165 @@
+{
+  "method": "MiMo rubric judge; overlapping dimensions counted independently, repeated same claim deduplicated; omissions separate",
+  "input": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\tests\\evidence\\fact-1\\original\\mimo\\results.json",
+  "judgements": [
+    {
+      "id": "node24-1",
+      "documentSha256": "7b5b3a297ca830a34f446816ce61d839824085e678797b7115fc0e4128709239",
+      "durationMs": 16315,
+      "usage": {
+        "completion_tokens": 1098,
+        "prompt_tokens": 28554,
+        "total_tokens": 29652,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [
+          {
+            "claim": "24 的 `NODE_MODULE_VERSION` 已更新为 134（SEMVER-MAJOR 提交）[1]",
+            "reason": "已取回原文显示 24.0.0 的 SEMVER-MAJOR 提交为 \"src: update NODE_MODULE_VERSION to 137\"（#58070），134 是该页面中另一条 #55014 提交的旧记录，不是 24.0.0 的最终模块 ABI；断言与已取回依据冲突。"
+          },
+          {
+            "claim": "按 `NODE_MODULE_VERSION = 134` 重新编译 [1]",
+            "reason": "同上，24.0.0 的 NODE_MODULE_VERSION 实际为 137，134 无依据且与已取回原文冲突。"
+          },
+          {
+            "claim": "从 22 迁移时原生模块需要重编。",
+            "reason": "文档未区分 Node-API 稳定 ABI 扩展与直接依赖 V8/Node C++ API 的扩展；Node-API 扩展在所用版本被目标运行时支持且外部依赖兼容的前提下无需重编，此断言范围过宽。"
+          },
+          {
+            "claim": "**Windows 构建/打包链路**：确认已改用 ClangCL，MSVC 路径不再受支持 [1]",
+            "reason": "原文 \"ClangCL is now required to compile Node.js on Windows\" 限于编译 Node.js 本体；文档将其扩展到打包链路/自建场景，范围超出官方判据。"
+          },
+          {
+            "claim": "另外在 Windows 上**不再支持 MSVC，编译必须用 ClangCL**——这是对自建或打包场景最需要先确认的一条 [1]",
+            "reason": "同上，官方判据限定 ClangCL 要求仅针对 Windows 上编译 Node.js 本体，文档扩展到自建/打包场景，范围过宽。"
+          }
+        ],
+        "scope": [
+          {
+            "claim": "另外在 Windows 上**不再支持 MSVC，编译必须用 ClangCL**——这是对自建或打包场景最需要先确认的一条 [1]",
+            "reason": "官方原文仅说明编译 Node.js 本体需 ClangCL；文档将其表述为对自建或打包场景的通用要求，主语/适用范围被放大。"
+          },
+          {
+            "claim": "**Windows 构建/打包链路**：确认已改用 ClangCL，MSVC 路径不再受支持 [1]",
+            "reason": "同上，将仅适用于编译 Node.js 本体的 ClangCL 要求扩展到打包链路，范围错。"
+          },
+          {
+            "claim": "从 22 迁移时原生模块需要重编。",
+            "reason": "未区分 Node-API 稳定 ABI 扩展与直接依赖 V8/Node C++ API 的扩展，也未说明 Node-API 兼容以所用版本被目标运行时支持及外部依赖兼容为前提，断言范围过宽。"
+          }
+        ],
+        "number": [
+          {
+            "claim": "24 的 `NODE_MODULE_VERSION` 已更新为 134（SEMVER-MAJOR 提交）[1]",
+            "reason": "已取回原文明确为 \"src: update NODE_MODULE_VERSION to 137\"（#58070），134 错误。"
+          },
+          {
+            "claim": "按 `NODE_MODULE_VERSION = 134` 重新编译 [1]",
+            "reason": "同上，24.0.0 的 NODE_MODULE_VERSION 应为 137。"
+          }
+        ],
+        "uncertainty": {
+          "appropriate": false,
+          "issues": [
+            {
+              "claim": "22→24 之间各小版本是否回移了某些改动，未在官方资料中确认，需要逐版本核对发行说明。",
+              "reason": "该未确认声明本身恰当（确属未取回依据），但文档在 NODE_MODULE_VERSION 上已取回明确依据（137）却写出 134 并未标注不确定，属已取回明确依据却给出错误数字；此处仅就回移声明本身无问题，整体不确定性处理因 134 错误而不当。"
+            }
+          ]
+        },
+        "missing": [
+          "必须区分 Node-API 稳定 ABI 扩展与直接依赖 V8/Node C++ API 的扩展，并说明 Node-API 兼容以所用版本被目标运行时支持及外部依赖兼容为前提",
+          "ClangCL 要求应明确限于 Windows 编译 Node.js 本体，而非泛化到自建/打包场景",
+          "24.0.0 的 NODE_MODULE_VERSION 应为 137"
+        ],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": true,
+          "verbatimExcerpts": true,
+          "claimMapping": true,
+          "issues": [
+            "出处 [1] 中引用的 \"src: update NODE_MODULE_VERSION to 134\" 片段虽在页面中真实存在，但被用作 24.0.0 最终 ABI 的依据，属选择性引用导致误导；页面同时存在 \"update NODE_MODULE_VERSION to 137\" 的原文未被引用。"
+          ]
+        },
+        "selfCheckVisible": true
+      }
+    },
+    {
+      "id": "node24-2",
+      "documentSha256": "d399ca35c324eeba3ff51acf533d5e7bc9103716535b3fb32f4c32476a8acf47",
+      "durationMs": 16848,
+      "usage": {
+        "completion_tokens": 1208,
+        "prompt_tokens": 27420,
+        "total_tokens": 28628,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        }
+      },
+      "judgement": {
+        "unsupported": [
+          {
+            "claim": "`SlowBuffer` 运行时弃用（后续提交中并入 EOL 流程）",
+            "reason": "已取回的 24.0.0 原文仅显示 \"Runtime deprecation of SlowBuffer (#55175)\"；\"后续提交中并入 EOL 流程\"（对应 #58008 \"buffer: move SlowBuffer to EOL\"）虽在抓取片段中出现，但文档未给出该条的编号映射/引用，且该表述把两个不同提交混为一条，\"并入 EOL 流程\"的因果关系无直接原文支持。"
+          },
+          {
+            "claim": "`child_process` 的 `spawn` / `execFile` 传参方式**被弃用**（官方发布说明的弃用清单中明确列出该项）",
+            "reason": "原文为 \"Deprecation of passing args to spawn and execFile in child_process (#57199)\"，属弃用清单，但文档正文将其与\"运行时弃用/移除\"并列归入\"升级会直接遇到\"的警示清单，且未标明其为普通弃用（非 runtime deprecation），与同列表其他 runtime deprecation 条目混同，易误导为同等严重程度。"
+          },
+          {
+            "claim": "`fs.existsSync` 传入无效类型、`fs.F_OK`/`fs.R_OK`/`fs.W_OK`/`fs.X_OK`、`zlib` 类不用 `new` 等也出现在 24 的 semver-major 提交列表中 [1]",
+            "reason": "这些条目确在已取回的 semver-major 列表中，但文档将它们与\"弃用与移除\"标题下的条目并列，未区分\"deprecate\"与\"runtime deprecate\"，且 `fs.F_OK` 等为 runtime deprecate、`fs.existsSync` 为 deprecate，混列在同一\"需要警惕的弃用与移除\"节下，范围表述不够精确。"
+          }
+        ],
+        "scope": [
+          {
+            "claim": "Windows 上移除 MSVC 支持，自编译 Node 24 必须使用 ClangCL [1]。使用官方预编译安装包的用户不受影响；自己编译 Node 或维护原生模块构建链的团队需要更新工具链。",
+            "reason": "原文 \"ClangCL is now required to compile Node.js on Windows\" 仅限于编译 Node.js 本体；文档后半句将\"维护原生模块构建链的团队\"也纳入\"需要更新工具链\"的范围，超出原文限定（原生模块构建是否必须 ClangCL 无官方依据）。"
+          },
+          {
+            "claim": "意味着 **22 编译的原生扩展不能直接在 24 上加载，需要为 24 重新编译**（用 prebuild/`node-gyp` 等按目标版本重建）。",
+            "reason": "文档未区分 Node-API（稳定 ABI）扩展与直接依赖 V8/Node C++ API 的扩展；Node-API 扩展在 ABI 稳定范围内通常无需重编译，且兼容性还取决于所用 Node-API 版本被目标运行时支持及外部依赖兼容。文档的\"所有 22 编译的原生扩展都不能直接加载\"表述范围过宽。"
+          },
+          {
+            "claim": "重点是**原生模块**（需按新 ABI 137 重建）",
+            "reason": "同上，未区分 Node-API 稳定 ABI 扩展与直接依赖 V8/Node C++ API 的扩展，将\"需重建\"无差别施加于所有原生模块，范围过宽。"
+          }
+        ],
+        "number": [],
+        "uncertainty": {
+          "appropriate": false,
+          "issues": [
+            {
+              "claim": "22 的 134 未在本次抓取的片段中单独引用，如需精确引用请以 Node 22 对应发布说明为准。",
+              "reason": "实际抓取的 24.0.0 发布说明 semver-major 列表中已明确出现 \"src: update NODE_MODULE_VERSION to 134 (Michaël Zasso) #55014\"（该提交属于 24 分支的 semver-major 列表，反映 22→24 期间的版本号变更），文档声称\"未在本次抓取的片段中单独引用\"与已取回原文不符，属已取回明确依据却声称未确认。"
+            }
+          ]
+        },
+        "missing": [
+          "未引用 Node-API ABI 稳定性官方文档（https://nodejs.org/en/api/n-api.html#implications-of-abi-stability），未说明 Node-API 扩展与直接依赖 V8/Node C++ API 扩展的区分，以及 Node-API 兼容以所用版本被目标运行时支持及外部依赖兼容为前提",
+          "未引用 Node 22.0.0 官方发布说明（https://nodejs.org/en/blog/release/v22.0.0）作为 22 侧对照来源"
+        ],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": true,
+          "verbatimExcerpts": true,
+          "claimMapping": true,
+          "issues": [
+            "出处[3] 仅以文字说明形式给出，缺少标题+链接+访问时间+逐字短片段的完整出处要素",
+            "正文多处断言（如 Undici 7、assert.partialDeepStrictEqual、fetch 代理、SlowBuffer EOL、fs 相关条目）仅标注 [1]，未在出处[1]的逐字片段中给出对应原文，编号映射不完整"
+          ]
+        },
+        "selfCheckVisible": true
+      }
+    }
+  ]
+}

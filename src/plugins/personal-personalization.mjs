@@ -1,4 +1,5 @@
 import '../ui-core/personalization.js';
+import { groundedWritingGuidance, researchSelfCheckGuidance } from './grounded-writing.mjs';
 const webTools = new Set(['web_search', 'web_fetch', 'browser']);
 export function installPersonalization(ctx, policyFor) {
   const turns = new WeakMap();
@@ -24,7 +25,10 @@ export function installPersonalization(ctx, policyFor) {
     // Preset catalog must not advertise disabled tools, including previously loaded ones.
     if (settings.webSearch === false) for (const section of sections) if (section.name === 'weftmate:tools-catalog')
       section.text = section.text.split('\n').filter(line => ![...webTools].some(name => line.startsWith(name + ':'))).join('\n');
-    return { ...assembly, sections: [...sections, ...(text ? [{ name: 'weftmate:personalization', text }] : [])],
+    const researching = sections.some(section => section.name === 'weftmate:research-guidance');
+    return { ...assembly, sections: [...sections.filter(section => section.name !== 'weftmate:grounded-writing'),
+      ...(researching ? [{ name: 'weftmate:grounded-writing', text: groundedWritingGuidance + '\n' + researchSelfCheckGuidance(settings.researchSelfCheck !== false) }] : []),
+      ...(text ? [{ name: 'weftmate:personalization', text }] : [])],
       tools: settings.webSearch === false ? assembly.tools.filter(tool => !webTools.has(tool.name)) : assembly.tools };
   }, { global: true, prepend: true });
   ctx.on('tools/pre-execute', async (exec, next) => {

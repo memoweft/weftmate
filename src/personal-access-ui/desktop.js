@@ -26,11 +26,12 @@
     // Keep links and images in the workspace; never open a separate window.
     for (const link of content.querySelectorAll('a')) {
       link.removeAttribute('target')
-      link.addEventListener('click', e => {
+      link.addEventListener('click', async e => {
         e.preventDefault()
         let url
         try { url = new URL(link.getAttribute('href'), location.href) } catch { return }
         if (!['https:', 'http:'].includes(url.protocol)) return
+        if (await globalThis.WeftOpenCapturedSource?.(url.href, link)) return
         const target = openPreview(link.textContent || '网页', link, `url:${url.href}`, 'webpage')
         const description = node('p', 'muted', '查看网页地址，或让助手读取网页内容。')
         const address = node('input'); address.readOnly = true; address.value = url.href; address.setAttribute('aria-label', '网页地址')

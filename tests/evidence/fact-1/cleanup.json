@@ -1,0 +1,276 @@
+{
+  "checkedAt": "2026-10-10T05:44:52.8306992Z",
+  "processIdentityRules": [
+    "created after verified package start",
+    "executable path checked",
+    "command line contained this worktree/owned isolated root; no parent-PID filtering"
+  ],
+  "recordedCleanupProcesses": 42,
+  "recordedProcesses": [
+    {
+      "createdAt": "2026-10-10T10:44:02.436544+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-9fdeb337-f0f5-4f2f-8446-7da42141df40",
+      "pid": 50912,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "createdAt": "2026-10-10T10:44:02.682467+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-9fdeb337-f0f5-4f2f-8446-7da42141df40",
+      "pid": 50864,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "createdAt": "2026-10-10T10:44:02.686029+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-9fdeb337-f0f5-4f2f-8446-7da42141df40",
+      "pid": 57376,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "createdAt": "2026-10-10T10:44:07.498382+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-9fdeb337-f0f5-4f2f-8446-7da42141df40",
+      "pid": 49120,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "createdAt": "2026-10-10T10:44:10.128409+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-9fdeb337-f0f5-4f2f-8446-7da42141df40",
+      "pid": 44908,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "createdAt": "2026-10-10T10:50:40.426859+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-ada3c6fe-4d08-4aa5-9fdc-f1516fdf6886",
+      "pid": 34164,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "createdAt": "2026-10-10T10:50:40.696941+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-ada3c6fe-4d08-4aa5-9fdc-f1516fdf6886",
+      "pid": 47576,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "createdAt": "2026-10-10T10:50:40.702086+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-ada3c6fe-4d08-4aa5-9fdc-f1516fdf6886",
+      "pid": 29312,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "createdAt": "2026-10-10T10:50:46.374251+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-ada3c6fe-4d08-4aa5-9fdc-f1516fdf6886",
+      "pid": 60712,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "createdAt": "2026-10-10T10:50:48.640813+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-ada3c6fe-4d08-4aa5-9fdc-f1516fdf6886",
+      "pid": 52060,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "createdAt": "2026-10-10T10:55:39.318626+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-24a8597d-f22b-4dd0-896b-1f8f98ca8fa1",
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+      "pid": 37544
+    },
+    {
+      "createdAt": "2026-10-10T10:55:39.590837+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-24a8597d-f22b-4dd0-896b-1f8f98ca8fa1",
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+      "pid": 12856
+    },
+    {
+      "createdAt": "2026-10-10T10:55:39.593198+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-24a8597d-f22b-4dd0-896b-1f8f98ca8fa1",
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+      "pid": 49412
+    },
+    {
+      "createdAt": "2026-10-10T10:55:44.504238+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-24a8597d-f22b-4dd0-896b-1f8f98ca8fa1",
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+      "pid": 48420
+    },
+    {
+      "createdAt": "2026-10-10T10:57:07.885902+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-ab937eef-d8ae-40e1-9a5c-3a561bc5b809",
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+      "pid": 47316
+    },
+    {
+      "createdAt": "2026-10-10T10:57:08.125725+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-ab937eef-d8ae-40e1-9a5c-3a561bc5b809",
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+      "pid": 60660
+    },
+    {
+      "createdAt": "2026-10-10T10:57:08.131198+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-ab937eef-d8ae-40e1-9a5c-3a561bc5b809",
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+      "pid": 36332
+    },
+    {
+      "createdAt": "2026-10-10T10:57:13.33939+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-ab937eef-d8ae-40e1-9a5c-3a561bc5b809",
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+      "pid": 4480
+    },
+    {
+      "createdAt": "2026-10-10T10:57:15.815535+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-ab937eef-d8ae-40e1-9a5c-3a561bc5b809",
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+      "pid": 50524
+    },
+    {
+      "root": "C:\\Temp\\weftmate-fact1-c58d89dc-3e76-46e3-9040-cca76323b11f",
+      "createdAt": "2026-10-10T11:07:52.940386+08:00",
+      "pid": 54084,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "root": "C:\\Temp\\weftmate-fact1-c58d89dc-3e76-46e3-9040-cca76323b11f",
+      "createdAt": "2026-10-10T11:07:53.269576+08:00",
+      "pid": 56236,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "root": "C:\\Temp\\weftmate-fact1-c58d89dc-3e76-46e3-9040-cca76323b11f",
+      "createdAt": "2026-10-10T11:07:53.276591+08:00",
+      "pid": 58172,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "root": "C:\\Temp\\weftmate-fact1-c58d89dc-3e76-46e3-9040-cca76323b11f",
+      "createdAt": "2026-10-10T11:08:00.552669+08:00",
+      "pid": 55816,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "root": "C:\\Temp\\weftmate-fact1-32453ca3-ce97-4ece-8ea1-120b2180dc3f",
+      "createdAt": "2026-10-10T11:07:52.787498+08:00",
+      "pid": 54400,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "root": "C:\\Temp\\weftmate-fact1-32453ca3-ce97-4ece-8ea1-120b2180dc3f",
+      "createdAt": "2026-10-10T11:07:53.082327+08:00",
+      "pid": 13572,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "root": "C:\\Temp\\weftmate-fact1-32453ca3-ce97-4ece-8ea1-120b2180dc3f",
+      "createdAt": "2026-10-10T11:07:53.082704+08:00",
+      "pid": 58388,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "root": "C:\\Temp\\weftmate-fact1-32453ca3-ce97-4ece-8ea1-120b2180dc3f",
+      "createdAt": "2026-10-10T11:08:00.059737+08:00",
+      "pid": 45728,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "root": "C:\\Temp\\weftmate-fact1-32453ca3-ce97-4ece-8ea1-120b2180dc3f",
+      "createdAt": "2026-10-10T11:08:04.688831+08:00",
+      "pid": 40544,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "root": "C:\\Temp\\weftmate-fact1-d4639fa5-93d3-4c19-b0c5-3adfc5860d9e",
+      "createdAt": "2026-10-10T11:07:52.792504+08:00",
+      "pid": 32352,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "root": "C:\\Temp\\weftmate-fact1-d4639fa5-93d3-4c19-b0c5-3adfc5860d9e",
+      "createdAt": "2026-10-10T11:07:53.083302+08:00",
+      "pid": 28720,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "root": "C:\\Temp\\weftmate-fact1-d4639fa5-93d3-4c19-b0c5-3adfc5860d9e",
+      "createdAt": "2026-10-10T11:07:53.083649+08:00",
+      "pid": 12152,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "root": "C:\\Temp\\weftmate-fact1-d4639fa5-93d3-4c19-b0c5-3adfc5860d9e",
+      "createdAt": "2026-10-10T11:08:00.137849+08:00",
+      "pid": 60080,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+      "createdAt": "2026-10-10T10:44:42.248537+08:00",
+      "pid": 38356,
+      "root": "C:\\Temp\\weftmate-fact1-da977b43-ab99-4ffa-a7f4-9b820032657e"
+    },
+    {
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+      "createdAt": "2026-10-10T10:44:42.508581+08:00",
+      "pid": 41156,
+      "root": "C:\\Temp\\weftmate-fact1-da977b43-ab99-4ffa-a7f4-9b820032657e"
+    },
+    {
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+      "createdAt": "2026-10-10T10:44:42.511311+08:00",
+      "pid": 33912,
+      "root": "C:\\Temp\\weftmate-fact1-da977b43-ab99-4ffa-a7f4-9b820032657e"
+    },
+    {
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+      "createdAt": "2026-10-10T10:44:47.362349+08:00",
+      "pid": 3272,
+      "root": "C:\\Temp\\weftmate-fact1-da977b43-ab99-4ffa-a7f4-9b820032657e"
+    },
+    {
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe",
+      "createdAt": "2026-10-10T10:44:49.822684+08:00",
+      "pid": 60852,
+      "root": "C:\\Temp\\weftmate-fact1-da977b43-ab99-4ffa-a7f4-9b820032657e"
+    },
+    {
+      "createdAt": "2026-10-10T11:37:30.03641+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-a005538c-526b-4fdb-8ed3-53c99dfd017e",
+      "pid": 54912,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "createdAt": "2026-10-10T11:37:30.307693+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-a005538c-526b-4fdb-8ed3-53c99dfd017e",
+      "pid": 53480,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "createdAt": "2026-10-10T11:37:30.307759+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-a005538c-526b-4fdb-8ed3-53c99dfd017e",
+      "pid": 44052,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    },
+    {
+      "createdAt": "2026-10-10T11:37:34.695375+08:00",
+      "root": "C:\\Temp\\weftmate-fact1-a005538c-526b-4fdb-8ed3-53c99dfd017e",
+      "pid": 62376,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\node_modules\\electron\\dist\\electron.exe"
+    }
+  ],
+  "additionalOwnedProbeTermination": {
+    "pid": 59016,
+    "reason": "owned Electron readiness probe timeout",
+    "executable": "node_modules/electron/dist/electron.exe",
+    "script": "tests/integration/fact-1-anchor-browser.mjs"
+  },
+  "remainingOwnedProcesses": 0,
+  "lanLockReleased": true,
+  "dailyRuntimeUntouched": true,
+  "model8081RequestsObserved": false,
+  "modelOrigins": {
+    "https://api.xiaomimimo.com": 1572,
+    "loopback": 291
+  },
+  "modelIds": {
+    "mimo-v2.6-flash": 1572,
+    "local-quality": 291
+  },
+  "note": "计数为已记录停止/退出覆盖的独立进程，含探针超时；没有估算所有正常自行退出的子进程数量。"
+}
