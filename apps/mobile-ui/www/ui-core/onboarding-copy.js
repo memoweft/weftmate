@@ -15,6 +15,7 @@ globalThis.WeftOnboardingCopy = Object.freeze({
   additional: '补充服务地址（可选）', discoveryBusy: '正在寻找可用模型…', discoveryEmpty: '没有发现公开模型目录。请确认服务已启动，也可以填写地址后再试。', choose: '选择',
   localKeyHint: '没有设置密钥的本地服务可留空。', checkFirst: '请先测试连接并确认模型可用，再保存。', modelMissing: '还没有配置模型。可以跳过，回到聊天页后会提示设置。',
   memoryItems: [['会记住什么', '从普通对话里整理你的偏好、事实与决定，并保留来源。'], ['在哪里看', '在设置 → 记忆查看记住的内容和原话来源，也可以纠正。'], ['怎么忘', '在记忆页点「忘掉」；删除对话时，也可以选择忘掉它形成的记忆。'], ['这次别记', '新建临时对话，不形成新的记忆；已有记忆不会因此删除。']],
+  healthLabel: text => text.replaceAll('宿主', '电脑'),
   healthLoading: '正在检查记忆健康…', healthError: '记忆健康暂时无法读取，可以稍后在设置里重试。', backfill: '整理过去的对话', backfillHint: '发现可整理的旧对话。先查看用量估算，确认后才会运行。',
   importSoon: '导入历史 · 即将支持', pair: '生成二维码 / 配对码', pairLoading: '正在准备配对…', pairCode: '手机配对码', pairQr: '连接这台电脑的二维码', pairRefresh: '二维码短时有效；过期后重新生成即可。以后也可以在设置 → 设备连接。', pairOffline: '离线账户可在同一网络用账户密码连接；绑定云账号后，可以扫码并批准手机。', deviceSettings: '打开设备设置',
   samples: ['帮我整理一个文件夹，先看看里面有什么，再给出整理方案。', '帮我查一份资料，核对来源后写成文档。', '帮我设一个提醒，先问我提醒内容和时间。'],

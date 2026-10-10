@@ -321,14 +321,14 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       try { await client.configure(); } catch (error) {
         if (error.status === 404 || error.status === 401) {
           auth.localOnly = true;
-          if (await effects.startOnboarding?.(await core.api('/state'))) return;
+          if (environment.desktop && await effects.startOnboarding?.(await core.api('/state'))) return;
           if (core.state.setupGrant) return localLoad();
           try { core.acceptSession(await core.api('/me')); await core.enterAssistant(); return; } catch { /* no remembered legacy session */ }
           auth.error = '云服务尚未配置，请稍后重试。';
         } else auth.error = cloudError(error);
         core.show('login'); paint(); return;
       }
-      if (await effects.startOnboarding?.(await core.api('/state'))) return;
+      if (environment.desktop && await effects.startOnboarding?.(await core.api('/state'))) return;
       if (core.state.setupGrant) return localLoad();
       if (environment.nativeIdentity) {
         ownHost = { hostId: client.config.hostId, baseUrl: environment.hostOrigin };
