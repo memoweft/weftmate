@@ -49,6 +49,9 @@ test('reply evidence IPC accepts a known limit cause only with a failed bound te
   const limited = { ...unknown, status: 'failed', turn: 2,
     terminalAt: '2026-10-07T00:35:29.769Z', endReasonKind: 'max-tokens', toolSaveObserved: true }
   assert.deepEqual(await read(limited), limited)
+  const timed = { ...limited, startedAt: '2026-10-07T00:34:00.000Z' }
+  assert.deepEqual(await read(timed), timed)
+  assert.deepEqual(await read({ ...timed, startedAt: 'private content' }), unknown)
   assert.deepEqual(await read({ ...limited, endReasonKind: 'vendor-limit' }), unknown)
   assert.deepEqual(await read({ ...limited, status: 'completed' }), unknown)
   assert.deepEqual(await read({ ...limited, terminalAt: undefined }), unknown)

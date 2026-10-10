@@ -269,7 +269,7 @@ export function createTaskOperations(context) {
             Number.isSafeInteger(reported.turn) && validTime(reported.terminalAt)
             ? { endReasonKind: 'max-tokens' } : {}),
           ...(Number.isSafeInteger(reported.step) && reported.step >= 0 ? { step: reported.step } : {}),
-          ...Object.fromEntries(['observedAt', 'terminalAt', 'firstChunkAt', 'lastChunkAt']
+          ...Object.fromEntries(['startedAt', 'observedAt', 'terminalAt', 'firstChunkAt', 'lastChunkAt']
             .filter((key) => validTime(reported[key])).map((key) => [key, reported[key]])),
         };
       } catch { /* An unreadable native turn remains unconfirmed. */ }

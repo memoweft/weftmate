@@ -46,6 +46,7 @@ import { createHostRelay } from '../personal-relay/index.mjs';
 import { backupBeforeCloud } from '../personal-cloud/storage.mjs';
 import { createUsageStore } from './usage.mjs';
 import { createScheduleOperations } from './schedules.mjs';
+import { createGoalOperations } from './goals.mjs';
 import { createOfflineService } from '../personal-offline/index.mjs';
 import { reconcileChatIdentity, chatForSession } from './chat-identity.mjs';
 import { createTemporaryChats } from './temporary-chats.mjs';
@@ -138,6 +139,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     restoredCloudOwner: (issuer, sub) => Array.isArray(restoredCloudOwners) ? restoredCloudOwners.find(row => row.issuer === issuer && row.sub === sub && rootState.accounts[row.ownerId])?.ownerId : undefined,
     get usage() { return usage; },
     get scheduleOperations() { return scheduleOperations; },
+    get goalOperations() { return goalOperations; },
     get root() { return root; },
     get cloudIdentity() { return hostCloudIdentity; },
     get accountModelForProfile() { return accountModelForProfile; },
@@ -586,6 +588,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   }
 
   const scheduleOperations = createScheduleOperations(context);
+  const goalOperations = createGoalOperations(context);
   const activity = createActivity(context);
   const offline = await createOfflineService(context);
   const temporaryChats = createTemporaryChats(context);
@@ -609,7 +612,12 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       const account = accountState(ownerId);
       const pendingSegment = account.chatIdentity.chats[account.chatIdentity.mainChatId].relay?.sessionId;
       for (const sessionId of new Set([...Object.keys(account.sessions), ...(pendingSegment ? [pendingSegment] : [])])) {
-        const cleaned = await callBackend(() => backend.cleanupMemoryCopies({ sessionId, ownerId, sourceTexts, deleteConversationSnippets }));
+        const receiptIds = Object.values(account.commands).filter(row => row.sessionId === sessionId && sourceTexts.some(text => text && row.payload?.text?.includes(text))).map(row => row.receiptId).filter(Boolean);
+        const schedulesErased = backend.schedules ? await backend.schedules({ sessionId, ownerId, action: 'forget', receiptIds, sourceTexts }) : null;
+        const goalErased = backend.goals ? await backend.goals({ sessionId, ownerId, action: 'forget', receiptIds, sourceTexts }) : null;
+        const cleaned = await callBackend(() => backend.cleanupMemoryCopies({ sessionId, ownerId, sourceTexts, deleteConversationSnippets,
+          ...(schedulesErased?.removedNativeIds?.length ? { scheduleIds: schedulesErased.removedNativeIds } : {}),
+          ...(goalErased?.clearedGoalIds?.length ? { goalIds: goalErased.clearedGoalIds } : {}) }));
         if (cleaned?.forgottenSeqs?.length) await serial(() => mutate(ownerId, next => {
           const session = next.sessions[sessionId];
           if (session) session.forgottenSeqs = [...new Set([...(session.forgottenSeqs ?? []), ...cleaned.forgottenSeqs])];

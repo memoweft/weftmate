@@ -15,6 +15,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
           if(target.querySelector(`[data-formation-notice="${CSS.escape(issue.jobId)}"]`))continue;
           const hint=ui.element('div','memory-issue-bar');hint.dataset.formationNotice=issue.jobId;hint.setAttribute('role','status');hint.append(WeftIcons.create('warn',16),ui.element('span','',issue.intent==='correction'?'这条纠正没有生效':'这条记忆尚未形成'));
           const action=ui.element('button','message-action','查看');action.type='button';action.onclick=()=>core.openMemory();hint.append(action);target.append(hint);
+
         }
         node.hidden = status?.state !== 'unavailable';
         node.textContent = node.hidden ? '' : '记忆暂时不可用，普通对话已保存，恢复后会自动补交。';
@@ -111,7 +112,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         ]);
         for (const source of sources) {
             const row = ui.element('li', 'memory-source');
-            const currentness = currentnessLabels.get(source.currentnessState) ?? '来源状态待确认';
+            const currentness = source.relation === 'superseded_by' ? '取代这条理解的纠正原话' : currentnessLabels.get(source.currentnessState) ?? '来源状态待确认';
             const meta = ui.element('p', 'memory-source-meta', `${currentness}${source.recordedAt ? ` · 记录于 ${core.formatDate(source.recordedAt)}` : ''}`);
             const summary = ui.element('p', 'memory-source-summary', typeof source.summary === 'string' && source.summary.trim()
                 ? source.summary : source.contentAvailable === false ? '此来源当前不可读。' : '摘要当前不可用。');
@@ -260,7 +261,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         const cancelPreview=ui.element('button','button secondary small','取消'); cancelPreview.type='button';
         card.append(ui.element('h3','','整理过去的对话'),explanation,confirm,cancelPreview);
         let prepared = null, identity = null, job = null, busy = false;
-        resetIngestion = () => { prepared = null; identity = null; job = null; explanation.textContent = ''; progress.textContent = ''; card.hidden=true; preview.hidden=false; confirm.hidden = pause.hidden = cancel.hidden = true; health.textContent = '正在检查记忆健康…'; };
+        resetIngestion = () => { prepared = null; identity = null; job = null; delete health.dataset.signature; explanation.textContent = ''; progress.textContent = ''; card.hidden=true; preview.hidden=false; confirm.hidden = pause.hidden = cancel.hidden = true; health.textContent = '正在检查记忆健康…'; };
         ui.paintMemoryHealth = status => {
             WeftPopover.memoryHealth(health,status,{text:core.memoryHealthText(status),count:status?.formedMemoryCount??core.memory.totalCount,
               onSource:async id=>{ui.hideSettingsDialog();await core.selectSession(id)},

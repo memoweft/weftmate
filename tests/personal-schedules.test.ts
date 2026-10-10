@@ -14,6 +14,7 @@ import { createNativeScheduleManager, scheduleSourceReceipt } from '../src/perso
 import { nextCalendarInput, scheduleContent } from '../src/personal-access/schedules-calendar.mjs';
 import { createScheduleOperations } from '../src/personal-access/schedules.mjs';
 import { createPersonalAccessService } from '../src/personal-access/index.mjs';
+import { scheduledCommandSource } from '../src/personal-access/schedules-authorization.mjs';
 
 test('schedule creation binds the latest claimed steer without changing file-tool authorization', () => {
   const exec = { callId: 'schedule-call', agent: { session: { events: [
@@ -37,6 +38,29 @@ test('native local at handles zones, DST overlap/gap and weekly calendar keeps l
   const next = nextCalendarInput(repeat, 'America/New_York', Date.parse('2026-10-26T12:00:01Z'));
   assert.equal(native.createAtScheduleRecord('next', 'x', next, Date.parse('2026-10-26T12:00:01Z')).scheduledAt, '2026-11-02T13:00:00.000Z');
   assert.throws(() => scheduleContent(JSON.stringify({ weftmate: 1, kind: 'task', text: 'x', repeat: { kind: 'weekly', weekday: 9, time: '08:00:00' } })), { code: 'INVALID_REQUEST' });
+});
+
+test('native UI create/edit preserves stable id, pause and exact run receipts; forgetting preserves unrelated schedules', nativeFixture, async t => {
+  const f = await fixture(t);
+  const input = { requestId:'ui-create', sourceReceiptId:'ui-source', prompt:JSON.stringify({weftmate:1,kind:'reminder',text:'合成私有安排',repeat:{kind:'daily',time:'09:00:00'}}) };
+  const created = await f.manager.manage(f.agent,'create',undefined,input);
+  assert.deepEqual(await f.manager.manage(f.agent,'create',undefined,input),created);
+  assert.equal((await f.manager.manage(f.agent,'list')).items.length,1);
+  const id = created.item.id;
+  await f.manager.manage(f.agent,'pause',id);
+  const before = (await f.manager.manage(f.agent,'list')).items[0];
+  const edit = { ...input, requestId:'ui-edit', expectedRevision:before.revision, prompt:JSON.stringify({weftmate:1,kind:'reminder',text:'编辑合成安排',repeat:{kind:'monthly',day:1,time:'10:00:00'}}) };
+  const updated = await f.manager.manage(f.agent,'edit',id,edit);
+  assert.equal(updated.item.id,id);assert.equal(updated.item.state,'paused');assert.equal(updated.item.repeat.kind,'monthly');
+  assert.deepEqual(await f.manager.manage(f.agent,'edit',id,edit),updated);
+  await assert.rejects(f.manager.manage(f.agent,'edit',id,{...edit,requestId:'stale-edit'}),{status:409});
+  await f.manager.manage(f.agent,'run',id,{requestId:'run-once'});await f.manager.manage(f.agent,'run',id,{requestId:'run-once'});
+  assert.equal((await f.manager.manage(f.agent,'notifications')).items.length,1);
+  await f.manager.manage(f.agent,'create',undefined,{requestId:'unrelated',sourceReceiptId:'other',prompt:JSON.stringify({weftmate:1,kind:'reminder',text:'无关安排',repeat:{kind:'interval',seconds:300}})});
+  await f.restart();await f.manager.manage(f.agent,'forget',undefined,{receiptIds:['ui-source'],sourceTexts:[]});
+  assert.deepEqual((await f.manager.manage(f.agent,'list')).items.map((r:any)=>r.text),['无关安排']);
+  assert.equal((await f.manager.manage(f.agent,'notifications')).items.length,0);
+  await assert.rejects(f.manager.manage(f.agent,'create',undefined,input),{status:404});
 });
 
 async function fixture(t: any, timeZone = 'Asia/Shanghai') {
@@ -141,6 +165,15 @@ test('scheduled command inherits conversation owner, source authorization and cu
   assert.equal(account.commands[one.commandId].sourceAuthEpoch, 7);
   assert.equal(account.commands[one.commandId].payload.mode, 'queue');
   await assert.rejects(ops.handleRuntime({ ...input, sessionId: 'other' }), { code: 'SESSION_UNAVAILABLE' });
+  account.devices = { 'device-a': { authEpoch:7 } };
+  account.scheduleAuthorizations = { 'ui-main': {sessionId:'session-a',chatId:'chat-main',sourceDeviceId:'device-a',sourceAuthEpoch:7} };
+  const main = await ops.handleRuntime({...input,sourceReceiptId:'ui-main',deliveryId:'main-ui'});
+  const mainCommand = account.commands[main.commandId];assert.equal(mainCommand.kind,'chat.message');assert.equal(mainCommand.payload.chatId,'chat-main');
+  assert.equal(scheduledCommandSource(account,mainCommand),true);
+  assert.equal(scheduledCommandSource(account,{...mainCommand,kind:'session.message',sessionId:'next-main-segment'}),true,'a UI main schedule follows its logical main across native segment relay');
+  account.sessions['session-a'].projectId='project-p1';account.projects={'project-p1':{projectId:'project-p1',revision:3}};
+  const projectRun=await ops.handleRuntime({...input,deliveryId:'project-current'});
+  assert.equal(account.commands[projectRun.commandId].payload.projectId,'project-p1');assert.equal(account.commands[projectRun.commandId].payload.projectRevision,3);
 });
 
 test('authenticated schedule/notification contract enforces ownership, CSRF and exact actions', async t => {
@@ -189,6 +222,17 @@ test('authenticated schedule/notification contract enforces ownership, CSRF and 
   assert.equal((await request('/schedules/other/schedule-1/run', 'POST', {})).status, 404);
   assert.equal((await request(`${base}/run`, 'POST', { unknown: true })).status, 400);
   assert.equal((await request('/schedules?ownerId=other')).status, 400);
+  const uiSchedule = { requestId: 'ui-native-creation', sessionId: command.sessionId, text: '每天核对合成资料', kind: 'task', repeat: { kind: 'daily', time: '09:00:00' } };
+  assert.equal((await request('/schedules', 'POST', uiSchedule, false)).status, 403);
+  assert.equal((await request('/schedules', 'POST', { ...uiSchedule, sessionId: 'other' })).status, 404);
+  assert.equal((await request('/schedules', 'POST', { ...uiSchedule, ownerId: 'other' })).status, 400);
+  assert.equal((await request('/schedules', 'POST', uiSchedule)).status, 201);
+  assert.equal((await request('/schedules', 'POST', uiSchedule)).status, 201);
+  assert.equal((await request('/schedules', 'POST', { ...uiSchedule, text: '其他内容' })).status, 409);
+  assert.equal((await request(base, 'PATCH', { requestId: 'edit-native', text: '编辑合成安排', kind: 'reminder', expectedRevision: 1, repeat: { kind: 'weekly', weekday: 1, time: '08:00:00' } })).status, 200);
+  const status = (await request('/status')).body.personalCapabilities;
+  assert.equal(status.taskOverview, 1); assert.equal(status.scheduleEditing, 1); assert.equal(status.goals, 0);
+  assert.equal((await request('/tasks?ownerId=other')).status, 400);
   await request(`/sessions/${command.sessionId}/approval-mode`, 'PATCH', { mode: 'ask' });
   const source = await request('/commands', 'POST', { requestId: 'schedule-source', kind: 'session.message', targetDeviceId: hostId,
     sessionId: command.sessionId, text: '明天生成周报' });

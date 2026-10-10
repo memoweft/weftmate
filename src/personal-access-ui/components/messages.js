@@ -74,6 +74,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             if (event.type === 'user.message' && core.receiptIdPattern.test(event.data?.receiptId || ''))
                 row.dataset.receiptId = event.data.receiptId;
             row.dataset.seq = String(event.seq);
+            row.dataset.memorySession = event.sourceRef?.sessionId || sessionId;
             if (typeof event.data?.text === 'string' && event.data.text)
                 row.append(event.type === 'assistant.message' && window.WeftDesktop
                     ? window.WeftDesktop.markdown(event.data.text, 'message-text markdown-body') : ui.element('span', 'message-text', event.data.text));

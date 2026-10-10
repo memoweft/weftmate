@@ -1,0 +1,35 @@
+{
+  "corePR": "https://github.com/memoweft/memoweft/pull/99",
+  "weftmatePR": "https://github.com/memoweft/weftmate/pull/171",
+  "flower": {
+    "twoOldInvalid": true,
+    "oneLemonCurrent": true,
+    "unrelatedTurns": 34,
+    "restart": true,
+    "crossModel": "local-quality",
+    "onlySuccessorAdopted": true,
+    "evidence": "full-mimo/results.json"
+  },
+  "rejected": {
+    "health": true,
+    "activity": true,
+    "turnNotice": true,
+    "retry": true,
+    "sourcesBothEnds": true,
+    "evidence": "rejection-verified/results.json"
+  },
+  "regressions": {
+    "wang-post-merge": {
+      "passed": 8,
+      "total": 8
+    },
+    "alternate-final": {
+      "passed": 4,
+      "total": 4
+    },
+    "delayed-post-merge": {
+      "passed": 4,
+      "total": 4
+    }
+  }
+}
