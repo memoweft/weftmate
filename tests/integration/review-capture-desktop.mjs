@@ -82,7 +82,7 @@ for (const theme of ['light', 'dark']) {
     application=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:repository,args:[join(repository,'scripts/review-gallery/electron.mjs'),'--force-device-scale-factor=1'],env:{...env,REVIEW_ORIGIN:mainFixture.origin}});
     page=await application.firstWindow();page.setDefaultTimeout(30000);closing=false;
     await localUiSession(page,mainFixture.credentials,'Synthetic main gallery',{mainChat:true});
-    await shot('main-chat',async()=>{await button('WeftMate 主对话').click();await page.waitForFunction(()=>document.querySelector('#transcript .main-chat-row'));});
+    await shot('main-chat',async()=>{await button('WeftMate 主对话').click();await page.waitForFunction(()=>document.querySelector('#transcript .main-chat-row'));await button('搜索主对话').click();await page.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('合成');await page.getByRole('searchbox',{name:'主对话搜索关键词'}).press('Enter');await page.locator('mark').first().waitFor();});
     if (errors.length) throw Error('Desktop renderer or synthetic projection failed');
     console.log(`Desktop ${theme}: scene outcomes recorded.`);
   } finally {

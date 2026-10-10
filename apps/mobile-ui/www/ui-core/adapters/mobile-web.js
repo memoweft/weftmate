@@ -10,7 +10,7 @@ globalThis.WeftUiCore.createMobileWebBridge = () => {
   async function call(method,p={}) {
     if(method==='host.status')return request('/personal/v1/status');
     if(method==='host.business')return request(p.path,p.method,p.body);
-    if(method==='auth.me') {const value=await request('/personal/v1/auth/me');return {...value,...value.account,owner:value.account.ownerId,deviceId:value.device.id};}
+    if(method==='auth.me') {const value=await request('/personal/v1/auth/me');return {...value,...value.account,owner:value.account.ownerId,deviceId:value.device.id,connectionVerified:true};}
     if(method==='models.host'){const value=await request('/personal/v1/models');return {...value,models:value.models.map(row=>({...row,profileId:row.id,displayName:row.name}))};}
     if(method==='shared.sessions.list'){const value=await request('/personal/v1/sessions?archived=all');return {...value,source:'host',hostAvailable:true,sessions:value.sessions.map(row=>({...row,source:'host'}))};}
     if(method==='shared.projects.list')return request('/personal/v1/projects');
