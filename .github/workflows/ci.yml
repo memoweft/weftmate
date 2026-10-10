@@ -47,7 +47,7 @@ jobs:
         working-directory: services/cloud
         run: node --test test/*.test.mjs
 
-      - name: Release preflight
+      - name: Release dependency preflight (does not build a package)
         run: npm run release:preflight
 
       - name: Public repository hygiene

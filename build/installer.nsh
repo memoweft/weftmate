@@ -53,7 +53,7 @@ FunctionEnd
     StrCpy $1 "--delete-data"
   ${EndIf}
   ${IfNot} ${isUpdated}
-    ExecWait '"$INSTDIR\WeftMate.exe" --uninstall-cleanup $1' $0
+    ExecWait '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" --uninstall-cleanup $1' $0
     ${If} $0 != 0
       ${IfNot} ${Silent}
         MessageBox MB_ICONSTOP "清理未完成，数据已保留。请重新安装后从设置中删除。"

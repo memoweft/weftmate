@@ -2,6 +2,7 @@ scripts/vendor/qrcodegen.ts whitespace=-blank-at-eol
 scripts/vendor/qrcodegen.mjs whitespace=-blank-at-eol
 services/cloud/deploy/*.sh text eol=lf
 services/cloud/deploy/*.py text eol=lf
+patches/dsh/*.patch text eol=lf
 # Deterministic DS-1 generated files also stay LF on Windows checkouts.
 src/personal-access-ui/tokens.css text eol=lf
 apps/mobile-ui/www/tokens.css text eol=lf
