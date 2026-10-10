@@ -1,0 +1,100 @@
+{
+  "identityGeneration": 2,
+  "historyGeneration": 11,
+  "sessions": [
+    {
+      "title": "M3 接续验收",
+      "sessionId": "session-2dd6d500-01b0-40e3-afe8-eb62d0f4bdcb",
+      "chatId": "chat-b796708d-5152-4c20-86b7-3b3e3ad6c73c",
+      "archived": false
+    },
+    {
+      "title": "M3 接续验收",
+      "sessionId": "session-9e7124e3-d855-4281-9c37-4832c303cb8a",
+      "chatId": "chat-ec1b4385-0d7a-4e87-88f9-ab298abe0a55",
+      "archived": false
+    },
+    {
+      "title": "M3 接续验收",
+      "sessionId": "session-2d60eb77-fed0-4fe5-920e-051c13105ad7",
+      "chatId": "chat-bfd401d3-ea3e-4121-9e27-6eb151aec2bd",
+      "archived": false
+    },
+    {
+      "title": "WeftMate",
+      "sessionId": "session-9457e12e-9298-4443-998b-92b7172bc55a",
+      "chatId": "chat-519a6219-27f1-4126-8431-b2145856eb4f",
+      "archived": false
+    }
+  ],
+  "listed": [
+    {
+      "title": "M3 接续验收",
+      "sessionId": "session-2dd6d500-01b0-40e3-afe8-eb62d0f4bdcb"
+    },
+    {
+      "title": "M3 接续验收",
+      "sessionId": "session-9e7124e3-d855-4281-9c37-4832c303cb8a"
+    },
+    {
+      "title": "M3 接续验收",
+      "sessionId": "session-2d60eb77-fed0-4fe5-920e-051c13105ad7"
+    }
+  ],
+  "phone": [],
+  "selectedSessionId": "session-2dd6d500-01b0-40e3-afe8-eb62d0f4bdcb",
+  "selectedChatId": "chat-b796708d-5152-4c20-86b7-3b3e3ad6c73c",
+  "domRows": [
+    {
+      "label": "未分组"
+    },
+    {
+      "label": "M3 接续验收",
+      "row": "session-2dd6d500-01b0-40e3-afe8-eb62d0f4bdcb"
+    },
+    {
+      "label": "",
+      "row": "session-2dd6d500-01b0-40e3-afe8-eb62d0f4bdcb"
+    },
+    {
+      "label": "",
+      "row": "session-2dd6d500-01b0-40e3-afe8-eb62d0f4bdcb"
+    },
+    {
+      "label": "",
+      "row": "session-2dd6d500-01b0-40e3-afe8-eb62d0f4bdcb"
+    },
+    {
+      "label": "M3 接续验收",
+      "row": "session-9e7124e3-d855-4281-9c37-4832c303cb8a"
+    },
+    {
+      "label": "",
+      "row": "session-9e7124e3-d855-4281-9c37-4832c303cb8a"
+    },
+    {
+      "label": "",
+      "row": "session-9e7124e3-d855-4281-9c37-4832c303cb8a"
+    },
+    {
+      "label": "",
+      "row": "session-9e7124e3-d855-4281-9c37-4832c303cb8a"
+    },
+    {
+      "label": "M3 接续验收",
+      "row": "session-2d60eb77-fed0-4fe5-920e-051c13105ad7"
+    },
+    {
+      "label": "",
+      "row": "session-2d60eb77-fed0-4fe5-920e-051c13105ad7"
+    },
+    {
+      "label": "",
+      "row": "session-2d60eb77-fed0-4fe5-920e-051c13105ad7"
+    },
+    {
+      "label": "",
+      "row": "session-2d60eb77-fed0-4fe5-920e-051c13105ad7"
+    }
+  ]
+}

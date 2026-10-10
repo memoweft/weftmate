@@ -13,6 +13,14 @@ import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicReference
 
 class ApiFailure(val status: Int, val safeCode: String) : Exception(safeCode)
+
+/** Transport evidence stays separate from model, authorization and certificate errors. */
+internal fun connectionErrorCode(error: Exception, networkAvailable: Boolean): String? = when (error) {
+    is java.net.SocketTimeoutException -> if (networkAvailable) "TIMEOUT" else "NETWORK_UNAVAILABLE"
+    is java.net.ConnectException, is java.net.UnknownHostException, is java.net.SocketException ->
+        if (networkAvailable) "NETWORK" else "NETWORK_UNAVAILABLE"
+    else -> null
+}
 internal fun upstreamHttpStatus(error: Throwable): Int? =
     (error as? ApiFailure)?.takeIf { it.safeCode == "MODEL_UPSTREAM_ERROR" && it.status in 400..599 }?.status
 class SyncInterrupted : Exception()
@@ -200,7 +208,7 @@ class JsonHttp : SseTransport {
                 throw ApiFailure(499, "CANCELLED")
             connection.instanceFollowRedirects = false
             connection.requestMethod = method
-            connection.connectTimeout = 12_000
+            connection.connectTimeout = if (readTimeoutMs > 0) minOf(12_000, readTimeoutMs) else 12_000
             connection.readTimeout = readTimeoutMs
             connection.setRequestProperty("Accept", "application/json")
             for ((key, value) in headers) connection.setRequestProperty(key, value)
@@ -808,7 +816,7 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
         JSONObject().put("platform", "android").put("provider", "none").put("token", JSONObject.NULL), authWriteHeaders(host)).body
     fun status(host: HostIdentity): JSONObject {
         val result = http.request("${host.origin}/personal/v1/status", "GET",
-            headers = mapOf("Cookie" to host.cookie)).body
+            headers = mapOf("Cookie" to host.cookie), readTimeoutMs = 5_000).body
         if (result.optString("ownerId") != host.ownerId) throw ApiFailure(502, "ACCOUNT_IDENTITY_MISMATCH")
         return result
     }

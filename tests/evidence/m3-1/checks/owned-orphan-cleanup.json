@@ -1,0 +1,7 @@
+{
+  "reason": "Verification driver exited before finally; only its exact profile and executable were matched",
+  "terminated": 6,
+  "cutoff": "2026-10-10T13:59:49+08:00",
+  "profile": "weftmate-m31-M07XRP",
+  "at": "2026-10-10T14:04:30.6015899+08:00"
+}

@@ -22,5 +22,5 @@
 .offline-chat button:disabled{opacity:.5;cursor:default}
 .offline-chat :focus-visible,.offline-launcher:focus-visible{outline:2px solid var(--wm-color-brand-light);outline-offset:2px}
 .offline-launcher{position:fixed;right:var(--wm-space-16);top:var(--wm-space-16);z-index:var(--wm-z-popover,60);font-size:var(--wm-font-size-14)}
-.offline-notice{position:fixed;bottom:var(--wm-space-8);left:var(--wm-space-16);right:var(--wm-space-16);margin:0;text-align:center;color:var(--ink-secondary,var(--text));font-size:var(--wm-font-size-12);pointer-events:none}
+.offline-notice{position:static;margin:var(--wm-space-16);text-align:center;color:var(--ink-secondary,var(--text));font-size:var(--wm-font-size-12);pointer-events:none}
 .offline-notice[hidden]{display:none}
