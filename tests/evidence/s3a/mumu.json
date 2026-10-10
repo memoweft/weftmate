@@ -1,0 +1,109 @@
+{
+  "nativeAndroid": true,
+  "syntheticAccounts": true,
+  "checks": [
+    "permission-denied-settings-recovery",
+    "foreground-approval-task-reminder",
+    "notification-approve-original-receipt-host-continues",
+    "persistent-identity-dedup",
+    "read-and-handled-cancel",
+    "real-test-notification",
+    "five-categories-ten-channel-states",
+    "dnd-only-activity-no-sound",
+    "living-background-reminder-host-sound-false",
+    "no-persistent-notification",
+    "living-background-approval-task-reminder",
+    "killed-process-workmanager-adb-forced-job"
+  ],
+  "errors": [],
+  "reminder": {
+    "id": "activity-e3d8f1ce0b69fc5f326c1887b52f530542651bda09a298f39053fcd0783c5c0a",
+    "notification": {
+      "level": "important",
+      "type": "reminder.triggered",
+      "initiatedBy": "user",
+      "notify": true,
+      "sound": true,
+      "decision": "notify",
+      "reason": "allowed",
+      "decidedAt": "2026-10-10T02:58:00.710Z"
+    },
+    "read": false,
+    "state": "completed"
+  },
+  "deviceBeforeReminder": {
+    "activityDeliveryVersion": 1,
+    "systemAllowed": true,
+    "needsPermission": false,
+    "channels": [
+      {
+        "id": "weftmate-activity-approval-sound",
+        "name": "审批与待回答 · 有声",
+        "enabled": true,
+        "soundEnabled": true
+      },
+      {
+        "id": "weftmate-activity-approval-silent",
+        "name": "审批与待回答 · 静默",
+        "enabled": true,
+        "soundEnabled": false
+      },
+      {
+        "id": "weftmate-activity-task-sound",
+        "name": "任务 · 有声",
+        "enabled": true,
+        "soundEnabled": true
+      },
+      {
+        "id": "weftmate-activity-task-silent",
+        "name": "任务 · 静默",
+        "enabled": true,
+        "soundEnabled": false
+      },
+      {
+        "id": "weftmate-activity-reminder-sound",
+        "name": "提醒 · 有声",
+        "enabled": true,
+        "soundEnabled": true
+      },
+      {
+        "id": "weftmate-activity-reminder-silent",
+        "name": "提醒 · 静默",
+        "enabled": true,
+        "soundEnabled": false
+      },
+      {
+        "id": "weftmate-activity-memory-sound",
+        "name": "记忆 · 有声",
+        "enabled": true,
+        "soundEnabled": true
+      },
+      {
+        "id": "weftmate-activity-memory-silent",
+        "name": "记忆 · 静默",
+        "enabled": true,
+        "soundEnabled": false
+      },
+      {
+        "id": "weftmate-activity-system-sound",
+        "name": "系统 · 有声",
+        "enabled": true,
+        "soundEnabled": true
+      },
+      {
+        "id": "weftmate-activity-system-silent",
+        "name": "系统 · 静默",
+        "enabled": true,
+        "soundEnabled": false
+      }
+    ],
+    "backgroundRestricted": false,
+    "batteryOptimized": true,
+    "permissionAsked": true
+  },
+  "workManager": {
+    "jobId": "3",
+    "agedQaWorkSpec": true,
+    "timeliness": "best effort; real OS timing is not guaranteed, 15 minutes or longer"
+  }
+}

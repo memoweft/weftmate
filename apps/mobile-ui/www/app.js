@@ -111,7 +111,7 @@ async function goalsPage(target){
   try{const info=await uiCore.accessApi('/status');if(generation!==state.generation||owner!==state.owner||state.page!=='goals')return;uiCore.state.personalCapabilities=info.personalCapabilities??{};await uiCore.readGoals();clearInterval(goalsTimer);goalsTimer=setInterval(()=>{if(state.page==='goals'&&state.loggedIn&&document.visibilityState==='visible')void uiCore.readGoals();},6000);}
   catch(error){if(generation===state.generation)toast(safeError(error));}
 }
-let activityView=null,activityTimer=null,activityReturn=false;
+let activityView=null,activityTimer=null,activityReturn=false,notificationActivityId=null;
 async function activityPage(target){
   uiCore.syncMobileIdentity();
   activityView=WeftActivityView.mount({target,core:uiCore});activityView.render();
@@ -119,7 +119,10 @@ async function activityPage(target){
   try {const info=await uiCore.accessApi('/status');if(generation!==state.generation||owner!==state.owner)return;
     uiCore.state.personalCapabilities=info.personalCapabilities??{};
     if(uiCore.state.personalCapabilities.activity!==1){target.replaceChildren(document.createTextNode('这台电脑尚不支持动态。更新电脑上的 WeftMate 后重试。'));return;}
-    await uiCore.readActivity();clearInterval(activityTimer);activityTimer=setInterval(()=>{if(state.page==='activity'&&state.loggedIn&&document.visibilityState==='visible')void uiCore.refreshActivity();},6000);
+    await uiCore.setActivityFilter('all');
+    if(notificationActivityId){const id=notificationActivityId;while(state.page==='activity'&&owner===state.owner&&!uiCore.activity.items.some(row=>row.id===id)&&uiCore.activity.nextCursor)await uiCore.readActivity(true);
+      if(owner===state.owner&&state.page==='activity'){const row=target.querySelector(`[data-activity-id="${CSS.escape(id)}"]`);row?.scrollIntoView({block:'center'});row?.focus();notificationActivityId=null;}}
+    clearInterval(activityTimer);activityTimer=setInterval(()=>{if(state.page==='activity'&&state.loggedIn&&document.visibilityState==='visible')void uiCore.refreshActivity();},6000);
   }catch(error){if(generation===state.generation){uiCore.activity.error=safeError(error);activityView?.render();}}
 }
 
@@ -326,6 +329,9 @@ function processEvent(message){const {event,data}=message;if(state.page==='goals
     const label=state.artifactSaveLabel;state.artifactSaveLabel=null;if(label)label.textContent=data.status==='saved'?'已保存到手机并核对内容':
       data.status==='cancelled'?'已取消保存':'保存未完成，请重试';
   }
+  if(event==='navigation.activity'&&data.activityId){notificationActivityId=data.activityId;page('activity');}
+  if(event==='notifications.needed'){toast('开启系统通知后，可在应用外收到审批、任务结果和提醒。你可以随时在通知设置中关闭。');void call('notifications.requestPermission');}
+  if(event==='notifications.action'){toast(data.accepted?'已提交审批决定':'审批未提交，请在动态中核对并重试',!data.accepted);if(state.page==='activity')void uiCore.refreshActivity();}
   if(event==='notifications.permission'&&state.page==='notifications')page('notifications');
   if(event==='theme.system')state.nativeSystemDark=!!data.dark;
   if(event==='theme.system'&&state.appearance==='system'){
@@ -359,7 +365,7 @@ async function boot(){
     if(info.cloudApp){
       try{const appearance=await uiCore.mobileAppearance();if(typeof appearance.systemDark==='boolean')state.nativeSystemDark=appearance.systemDark;applyTheme(appearance.value)}catch{applyTheme('system')}
       await call('app.ready',{owner:state.owner||'',hasDraft:hasAnyDraft()});
-      await WeftMobileCloud.init();state.booted=true;return;
+      await WeftMobileCloud.init();state.booted=true;if(info.launchActivityId){notificationActivityId=info.launchActivityId;page('activity');}return;
     }
     showProfile({displayName:info.username||'本机个人空间'});
     // Restore the selected phone/new or host session before updateComposer can persist the
