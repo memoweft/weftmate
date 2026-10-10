@@ -1,0 +1,33 @@
+{
+  "synthetic": true,
+  "productionMobile": true,
+  "historyMessages": 10000,
+  "checks": [
+    "main-first",
+    "recent-tail",
+    "search-highlight-navigation",
+    "date-fold-unfold",
+    "side-reference-origin",
+    "draft-transfer",
+    "result-success-failure-stop-source",
+    "ux4-actions-preserved",
+    "web-side-send",
+    "both-themes-two-sizes",
+    "font130-no-overflow"
+  ],
+  "errors": [],
+  "performance": {
+    "tenThousandHeapBytes": 7889072,
+    "scroll": {
+      "durationMs": 60004.40000000596,
+      "frames": 11928,
+      "p95Ms": 5.099999999998545,
+      "maxMs": 25.099999999998545,
+      "maxRows": 22,
+      "longTasks": [],
+      "cacheRows": 1000,
+      "heapBytes": 12117584
+    },
+    "streamedUpdates": 74
+  }
+}
