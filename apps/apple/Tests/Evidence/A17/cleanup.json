@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "at": "2026-10-10T12:26:43.695657+00:00",
+  "shutdownAll": true,
+  "bootedDevices": [],
+  "ownWorkPackageProcesses": [],
+  "macCrashDialogLeftOpen": true,
+  "systemPermissionsChanged": false,
+  "unrelatedA13AppRestoredAfterOverbroadProcessMatch": true
+}

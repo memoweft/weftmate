@@ -1,0 +1,37 @@
+{
+  "at": "2026-10-10T12:22:15.331552+00:00",
+  "baselineReports": [
+    "WeftMateMac-2026-10-09-053026.ips",
+    "WeftMateMac-2026-10-09-054057.ips",
+    "WeftMateMac-2026-10-09-100830.ips",
+    "WeftMateMac-2026-10-09-163024.ips",
+    "WeftMateMac-2026-10-09-163419.ips",
+    "WeftMateWatch-2026-10-09-081902.000.ips",
+    "WeftMateWatch-2026-10-09-081922.ips"
+  ],
+  "finalBuildBaselineReports": [
+    "WeftMateMac-2026-10-09-053026.ips",
+    "WeftMateMac-2026-10-09-054057.ips",
+    "WeftMateMac-2026-10-09-100830.ips",
+    "WeftMateMac-2026-10-09-163024.ips",
+    "WeftMateMac-2026-10-09-163419.ips",
+    "WeftMateWatch-2026-10-09-081902.000.ips",
+    "WeftMateWatch-2026-10-09-081922.ips"
+  ],
+  "currentReports": [
+    "WeftMateMac-2026-10-09-053026.ips",
+    "WeftMateMac-2026-10-09-054057.ips",
+    "WeftMateMac-2026-10-09-100830.ips",
+    "WeftMateMac-2026-10-09-163024.ips",
+    "WeftMateMac-2026-10-09-163419.ips",
+    "WeftMateWatch-2026-10-09-081902.000.ips",
+    "WeftMateWatch-2026-10-09-081922.ips"
+  ],
+  "newReports": [],
+  "newCount": 0,
+  "finalBuildNewCount": 0,
+  "a17bInitialNewCount": 0,
+  "rootAndRetiredChecked": true,
+  "baselineReportsNowRetired": true,
+  "historicalPhoneAndRunnerReportsExcluded": true
+}

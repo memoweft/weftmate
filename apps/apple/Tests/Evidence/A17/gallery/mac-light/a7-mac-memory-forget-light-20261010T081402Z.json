@@ -1,0 +1,9 @@
+{
+  "platform": "mac",
+  "scene": "memory-forget",
+  "theme": "light",
+  "commit": "98a93b9044906c4d781a30e33d4d3ffe56121172",
+  "generatedAt": "2026-10-10T08:14:02.057Z",
+  "synthetic": true,
+  "source": "实际 Mac 原生 App 自身窗口；真实隔离 cloud main / 宿主，合成 DSH 日志与模型"
+}

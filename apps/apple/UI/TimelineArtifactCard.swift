@@ -17,21 +17,23 @@ struct TimelineArtifactCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
             WeftLabel(name, icon: "outputs").font(AppleTokens.Fonts.headline)
-            Text("\(entry.event.data["contentType"]?.string ?? "文件") · \(entry.event.data["size"]?.int ?? 0) 字节")
+            Text(Int64(entry.event.data["size"]?.int ?? 0).formatted(.byteCount(style: .file).locale(Locale(identifier: "zh_CN"))))
                 .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
             Text(entry.event.data["verification"]?["method"]?.string == "sha256_readback" && entry.event.data["verification"]?["status"]?.string == "observed" ? "已读回核验" : "仍待核验")
                 .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
             HStack {
                 Button("预览") { openPreview(entry.event) }.accessibilityIdentifier("previewArtifact.\(entry.seq)")
-                Button("保存") { Task { await prepare(); if file != nil { exporting = true } } }
-                Button("分享") { Task { await prepare(); if file != nil { sharing = true } } }
+                Menu {
+                    Button { Task { await prepare(); if file != nil { exporting = true } } } label: { Label("保存", image: "wm-download") }
+                    Button { Task { await prepare(); if file != nil { sharing = true } } } label: { Label("分享", image: "wm-share") }
+                } label: { WeftIcon("more") }.accessibilityLabel("成果操作").accessibilityIdentifier("artifactMenu.\(entry.seq)")
             }.buttonStyle(OutlineActionStyle()).disabled(loading || appModel.historyCachedAt != nil)
             if loading { ProgressView() }
             if let error { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
         }
         .padding(AppleTokens.Space.p14).background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r14))
         .fileExporter(isPresented: $exporting, item: file.map { AttachmentExport(file: $0) }, contentTypes: [.data], defaultFilename: name,
-            onCompletion: { result in if case .failure = result { error = "文件未保存，请重试。" } }, onCancellation: {})
+            onCompletion: { @Sendable result in Task { @MainActor in if case .failure = result { error = "文件未保存，请重试。" } } }, onCancellation: {})
         .popover(isPresented: $sharing) { if let file { ShareLink(item: file) { WeftLabel("分享文件", icon: "open") }.padding(AppleTokens.Space.p24) } }
         .onDisappear { cleanup() }
         .onChange(of: appModel.accountEpoch) { _, _ in cleanup() }

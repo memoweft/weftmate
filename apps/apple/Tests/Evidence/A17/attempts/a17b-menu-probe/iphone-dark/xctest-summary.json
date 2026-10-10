@@ -1,0 +1,18 @@
+{
+  "title": "Test - WeftMatePhone",
+  "result": "Failed",
+  "passedTests": 0,
+  "failedTests": 1,
+  "skippedTests": 0,
+  "totalTestCount": 1,
+  "testFailures": [
+    {
+      "failureText": "XCTAssertTrue failed",
+      "targetName": "WeftMatePhoneUITests",
+      "testIdentifier": 1,
+      "testIdentifierString": "A16ChatUITests/testDarkTemporaryMenuProbe()",
+      "testIdentifierURL": "test://com.apple.xcode/WeftMate/WeftMatePhoneUITests/A16ChatUITests/testDarkTemporaryMenuProbe",
+      "testName": "testDarkTemporaryMenuProbe()"
+    }
+  ]
+}

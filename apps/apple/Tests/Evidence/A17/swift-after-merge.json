@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "tests": 406,
+  "suites": 23,
+  "failed": 0,
+  "skipped": 0,
+  "liveCloudAndTLSFixture": true,
+  "jobs": 2,
+  "mergedMain": "36f44a267ce3d57b6e4006f9305213be48746cc5",
+  "at": "2026-10-10T12:09:57.480015+00:00"
+}
