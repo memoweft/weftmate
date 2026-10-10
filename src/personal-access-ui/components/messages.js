@@ -9,6 +9,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             bytes: new Uint8Array(await blob.arrayBuffer()), ownerId: core.state.ownerId }) : undefined,
         title: () => core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId)?.title });
     function clearHistoryView() {
+        globalThis.WeftContent?.closeGallery(false);
         ui.byId('transcript').replaceChildren();
     }
     function historyNotice(message) {
@@ -44,7 +45,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             if (node.dataset.signature === signature) continue;
             node.dataset.signature = signature; node.classList.toggle('is-sending', row.status === 'sending');
             node.classList.toggle('send-failed', row.status === 'failed');
-            node.replaceChildren(ui.element('div', 'message-text', row.text || '附件'));
+            node.replaceChildren(globalThis.WeftContent.create(row.text || '附件', 'message-text markdown-body'));
             if (row.files?.length) node.append(ui.element('small', 'message-task-label', row.files.join(' · ')));
             if (row.status !== 'accepted') {
                 const status = ui.element('small', 'message-task-label', row.status === 'failed' ? '发送未确认，草稿已保留' : '发送中');
@@ -63,7 +64,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
         for (const event of events) {
             if (!['user.message', 'assistant.message'].includes(event.type))
                 continue;
-            const images = event.type === 'user.message' && Array.isArray(event.data?.images) ? event.data.images : [];
+            const images = Array.isArray(event.data?.images) ? event.data.images : [];
             const files = event.type === 'user.message' && Array.isArray(event.data?.originalAttachments)
                 ? event.data.originalAttachments.map(core.normalizedOriginalFile).filter(Boolean) : [];
             const originalImages = event.type === 'user.message' ? core.unpreviewedOriginalImages(event) : [];
@@ -76,8 +77,8 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             row.dataset.seq = String(event.seq);
             row.dataset.memorySession = event.sourceRef?.sessionId || sessionId;
             if (typeof event.data?.text === 'string' && event.data.text)
-                row.append(event.type === 'assistant.message' && window.WeftDesktop
-                    ? window.WeftDesktop.markdown(event.data.text, 'message-text markdown-body') : ui.element('span', 'message-text', event.data.text));
+                row.append(window.WeftDesktop
+                    ? window.WeftDesktop.markdown(event.data.text, 'message-text markdown-body',{pages:[...(core.conversationTasks?.entries?.values()||[])].flatMap(entry=>entry.payload?.sources||[])}) : ui.element('span', 'message-text', event.data.text));
             if (images.length) {
                 const gallery = ui.element('div', 'synced-image-gallery');
                 const previewScope = { ownerId: core.state.ownerId, identityGeneration: core.state.identityGeneration,
@@ -102,7 +103,8 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
                     thumb.loading = 'lazy';
                     thumb.decoding = 'async';
                     button.append(thumb);
-                    button.addEventListener('click', () => ui.openPhoneImagePreview(url, name, button, previewScope));
+                    button.addEventListener('click', () => { if(previewScope.ownerId !== core.state.ownerId || previewScope.identityGeneration !== core.state.identityGeneration || previewScope.conversationId !== core.state.selectedSessionId)return; WeftContent.openGallery([...gallery.querySelectorAll('img')].map(img => ({url: img.src, name: img.parentElement.getAttribute('aria-label').replace('查看原图 ', '')})), [...gallery.children].indexOf(button), button); });
+                    thumb.addEventListener('error', () => { thumb.hidden = true; button.disabled = true; button.append(ui.element('span', 'image-unavailable', '图片加载失败')); });
                     gallery.append(button);
                 }
                 if (gallery.children.length) {
@@ -119,6 +121,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             if (originalImages.length)
                 ui.appendUnpreviewedOriginalImages(row, originalImages);
             if (event.type === 'assistant.message') {
+                appendMessageFiles(row,event.data.text);
                 globalThis.WeftModelThinking?.(core, row, event);
                 ui.appendReplyMemory(row, event);
             }
@@ -132,6 +135,14 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             else
                 list.append(row);
             row.dataset.memorySession=event.sourceRef?.sessionId||sessionId;
+            if(event.data.truncated && core.completeMessageEvent) {
+                const identity=core.state.identityGeneration,owner=core.state.ownerId;
+                const body=row.querySelector('.message-text');
+                void core.completeMessageEvent(sessionId,event).then(full=>{
+                    if(!body?.isConnected||identity!==core.state.identityGeneration||owner!==core.state.ownerId)return;
+                    WeftContent.update(body,full.data.text);const actual=body.closest('.message');if(actual){appendMessageFiles(actual,full.data.text);actual.querySelector('.truncated')?.remove();}
+                }).catch(()=>{});
+            }
             ui.messageActions?.bind(row, event, event.sourceRef?.sessionId || sessionId);
             if (incremental && events.length <= 20 && event.type === 'assistant.message') {
                 globalThis.WeftMotion?.reveal(row.querySelector('.message-text'), '160ms');
@@ -145,6 +156,11 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
         ui.renderTurnStatus();
         ui.renderConversationTasks();
         renderOptimisticMessages();
+    }
+    function appendMessageFiles(row,text) {
+        if(row.classList.contains('user'))return;
+        const registered=[...(core.timelineEventsForContext?.()||core.state.historyEvents?.values()||[])].filter(e=>e.type==='artifact.created').flatMap(e=>e.data?.artifacts||[e.data?.artifact||e.data]).filter(file=>file?.artifactId&&file.fileName&&text?.includes(file.fileName));
+        for(const file of registered){if([...row.querySelectorAll('.render-file-card')].some(card=>card.dataset.artifact===file.artifactId))continue;const card=WeftContent.fileCard(file,trigger=>ui.openTimelinePreview(core.conversationTaskContext(),`/library/${encodeURIComponent(file.artifactId)}/preview`,file.fileName));card.dataset.artifact=file.artifactId;row.append(card);}
     }
     function appendOriginalFiles(row, event) {
         const files = (Array.isArray(event.data?.originalAttachments) ? event.data.originalAttachments : [])

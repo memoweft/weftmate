@@ -210,7 +210,7 @@ function toast(text,issue=false,undo){const box=$('toast');clearTimeout(toast.ti
 function status(text,issue=false){const line=$('chat-status');line.textContent=issue?'':text;
   line.classList.remove('error');if(issue&&text)toast(text,true)}
 
-function closeImagePreview({restoreFocus=true}={}){const box=$('image-preview');if(box.hidden)return;
+function closeImagePreview({restoreFocus=true}={}){globalThis.WeftContent?.closeGallery(restoreFocus);const box=$('image-preview');if(box.hidden)return;
   if(restoreFocus&&box.classList.contains('closing'))return;
   clearTimeout(closeImagePreview.timer);
   const scope=state.previewScope,button=state.previewReturnFocus;
@@ -233,6 +233,7 @@ function openImagePreview(url,name,button,scope,{original=false,display=false,no
   if(!safe||!scope||state.page!=='chat'||source!==state.chatSource||state.transitionPending||
     scope.owner!==state.owner||scope.epoch!==state.authEpoch||scope.conversationId!==attachmentConversationId())return;
   closeImagePreview({restoreFocus:false});state.previewScope=scope;state.previewReturnFocus=button;
+  if(globalThis.WeftContent){const images=[...(button?.closest('.message-thumbnails,.synced-image-gallery,.message')?.querySelectorAll('img')||[])];const items=images.map(image=>({url:image.src,name:image.alt||name}));const index=images.findIndex(image=>image.parentElement===button);WeftContent.openGallery(items.length?items:[{url:safe,name}],Math.max(0,index),button);return;}
   $('image-preview-name').textContent=name;$('image-preview-image').src=safe;
   $('image-preview-image').alt=`${name} 的${original?'原图':display?'预览图':'缩略图'}`;
   $('image-preview-note').textContent=note|| (original?'原图':'旧图片仅保留缩略图');
@@ -436,7 +437,7 @@ function displayedPhoneMessage(text,images){const value=String(text||''),match=/
 function messageNode(role,text,thumbnails=[],scope=null,messageId=null){const item=el('article',`message ${role}`);if(role==='user'){
     const images=(Array.isArray(thumbnails)?thumbnails.slice(0,8):[]).map(image=>
       normalizedMessageThumbnail(image,scope,messageId)).filter(Boolean);
-    const display=displayedPhoneMessage(text,images);item.textContent=display.body;
+    const display=displayedPhoneMessage(text,images);item.append(globalThis.WeftContent ? WeftContent.create(display.body,'markdown') : el('span','',display.body));
     if(images.length){item.classList.add('message-has-images');if(!display.body&&!display.note)item.classList.add('message-image-only')}
     if(display.note)item.append(el('small','message-native-note',display.note));
     if(images.length&&scope){const gallery=el('div','message-thumbnails');
@@ -449,18 +450,11 @@ function messageNode(role,text,thumbnails=[],scope=null,messageId=null){const it
             attachmentId:image.attachmentId,messageId,note:image.syncStatus==='shared'?'原图已与同账户设备共享':
             image.syncStatus==='pending'?'原图正在同步':image.previewUrl?'这台手机保存的原图':'旧图片仅保留缩略图'}));gallery.append(preview)}
       item.append(gallery)}return item}
-  const frame=el('div','message-body');const content=el('div','markdown');
-  if(window.WeftFormat?.render){content.innerHTML=window.WeftFormat.render(text);enhanceMarkdown(content)}else content.textContent=text;
+  const frame=el('div','message-body');const content=globalThis.WeftContent?WeftContent.create(text,'markdown',{copy:copyText,openExternal:url=>{location.href=url}}):el('div','markdown',text);
   frame.append(content);const tools=el('div','message-tools');const copy=el('button','copy-button');copy.append(el('span','icon icon-copy'),el('span','','复制回复'));
   copy.addEventListener('click',()=>copyText(text));tools.append(copy);frame.append(tools);item.append(frame);return item}
 
-function enhanceMarkdown(content){for(const pre of content.querySelectorAll('pre')){const code=pre.querySelector('code');if(!code)continue;
-    const wrapper=el('div','code-block');const top=el('div','code-head');const language=([...code.classList].find(v=>v.startsWith('language-'))||'').replace('language-','')||'代码';
-    top.append(el('span','',language));const button=el('button','copy-button');button.append(el('span','icon icon-copy'),el('span','','复制代码'));
-    button.addEventListener('click',()=>copyText(code.textContent));top.append(button);pre.parentNode.insertBefore(wrapper,pre);wrapper.append(top,pre)}
-  for(const link of content.querySelectorAll('a')){link.rel='noopener noreferrer';
-    link.addEventListener('click',event=>{event.preventDefault();void openConversationResources(item=>item.url===link.href||item.location===link.href)})}
-}
+function enhanceMarkdown(content){if(globalThis.WeftContent)WeftContent.enhance(content,{copy:copyText,openExternal:url=>{location.href=url}});}
 
 async function copyText(text){try{await call('clipboard.copy',{text});toast('已复制')}catch{toast('复制未完成，请长按选择文字',true)}}
 

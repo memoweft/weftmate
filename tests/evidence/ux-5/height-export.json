@@ -1,0 +1,34 @@
+{
+  "mainHistoryMessages": 1000,
+  "originalTop": 96.0625,
+  "expandedTop": 96.0625,
+  "restoredTop": -511.9375,
+  "anchorJumpPx": 0,
+  "export": [
+    {
+      "theme": "light",
+      "width": 800,
+      "height": 333,
+      "corner": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "colored": 98458
+    },
+    {
+      "theme": "dark",
+      "width": 800,
+      "height": 333,
+      "corner": [
+        38,
+        39,
+        36,
+        255
+      ],
+      "colored": 98450
+    }
+  ],
+  "errors": []
+}

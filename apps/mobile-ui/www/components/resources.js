@@ -56,6 +56,7 @@ async function openTimelinePreview(context,read,title,artifact=null){if(!convers
   const view=showResourcePage(title,context),target=$('resource-content');
   target.append(el('p','muted','正在读取…'));
   const load=async()=>{try{const data=await read();if(state.resourceView!==view||!conversationTaskCurrent(context))return;
+    if(data.kind){clear(target);WeftContent.preview(target,data,{name:title,artifactId:artifact?.artifactId});return;}
     const text=data.text||data.preview?.text||data.source?.text||'暂时没有可预览内容';clear(target);
     const body=el('div','markdown resource-document');
     if(window.WeftFormat?.render){body.innerHTML=window.WeftFormat.render(text);enhanceMarkdown(body)}else body.textContent=text;

@@ -80,6 +80,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
                 const data = await core.readResource(path);
                 if (!core.conversationTaskCurrent(context) || !preview.content.isConnected)
                     return;
+                if(data.kind){preview.content.replaceChildren();WeftContent.preview(preview.content,data,{name:title,artifactId:data.item?.id,desktop:core.state.personalCapabilities?.libraryDesktopActions===1});return;}
                 const text = data.text || data.preview?.text || data.source?.text || '暂时没有可预览内容';
                 preview.content.replaceChildren();
                 const artifact = data.artifact || data.preview?.artifact;

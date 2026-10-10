@@ -1,0 +1,133 @@
+{
+  "checks": [
+    {
+      "surface": "desktop",
+      "theme": "light",
+      "markdown": true,
+      "userMarkdown": true,
+      "code": true,
+      "table": true,
+      "math": true,
+      "mermaid": true,
+      "gallery": true,
+      "files": true,
+      "officeFallback": true
+    },
+    {
+      "surface": "desktop",
+      "theme": "dark",
+      "markdown": true,
+      "userMarkdown": true,
+      "code": true,
+      "table": true,
+      "math": true,
+      "mermaid": true,
+      "gallery": true,
+      "files": true,
+      "officeFallback": true
+    },
+    {
+      "surface": "desktop",
+      "errors": 0
+    },
+    {
+      "surface": "mobile-web",
+      "theme": "light",
+      "markdown": true,
+      "userMarkdown": true,
+      "code": true,
+      "table": true,
+      "math": true,
+      "mermaid": true,
+      "gallery": true,
+      "files": true,
+      "officeFallback": true
+    },
+    {
+      "surface": "mobile-web",
+      "theme": "dark",
+      "markdown": true,
+      "userMarkdown": true,
+      "code": true,
+      "table": true,
+      "math": true,
+      "mermaid": true,
+      "gallery": true,
+      "files": true,
+      "officeFallback": true
+    },
+    {
+      "surface": "mobile-web",
+      "errors": 0
+    },
+    {
+      "surface": "android-ui",
+      "theme": "light",
+      "markdown": true,
+      "userMarkdown": true,
+      "code": true,
+      "table": true,
+      "math": true,
+      "mermaid": true,
+      "gallery": true,
+      "files": true,
+      "officeFallback": true
+    },
+    {
+      "surface": "android-ui",
+      "theme": "dark",
+      "markdown": true,
+      "userMarkdown": true,
+      "code": true,
+      "table": true,
+      "math": true,
+      "mermaid": true,
+      "gallery": true,
+      "files": true,
+      "officeFallback": true
+    },
+    {
+      "surface": "android-ui",
+      "errors": 0
+    }
+  ],
+  "errors": [],
+  "performance": [
+    {
+      "surface": "desktop",
+      "characters": 15480,
+      "codeBlocks": 20,
+      "tables": 5,
+      "initialMs": 17.799999982118607,
+      "updateMeanMs": 7.330000001192093,
+      "updateMaxMs": 9.199999988079071,
+      "heapBefore": 30372670,
+      "heapAfter": 32508610,
+      "stableCodeNode": true
+    },
+    {
+      "surface": "mobile-web",
+      "characters": 15480,
+      "codeBlocks": 20,
+      "tables": 5,
+      "initialMs": 14.799999982118607,
+      "updateMeanMs": 6.945000000298023,
+      "updateMaxMs": 8.299999982118607,
+      "heapBefore": 25405726,
+      "heapAfter": 28641966,
+      "stableCodeNode": true
+    },
+    {
+      "surface": "android-ui",
+      "characters": 15480,
+      "codeBlocks": 20,
+      "tables": 5,
+      "initialMs": 12,
+      "updateMeanMs": 5.445000003278255,
+      "updateMaxMs": 7.199999988079071,
+      "heapBefore": 24162142,
+      "heapAfter": 26712830,
+      "stableCodeNode": true
+    }
+  ]
+}

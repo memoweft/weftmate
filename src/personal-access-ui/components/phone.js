@@ -1,6 +1,7 @@
 /* Desktop phone component: paint data, bind controls, invoke shared actions. */
 globalThis.WeftUiComponents.factories.phone = (core, ui) => {
     function closePhoneImagePreview() {
+        globalThis.WeftContent?.closeGallery(false);
         if (!ui.phonePreview)
             return;
         const button = ui.phonePreview.returnFocus;
