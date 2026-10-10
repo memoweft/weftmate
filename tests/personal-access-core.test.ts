@@ -31,6 +31,20 @@ test('FX-19 receipt wait returns only durable completion, preserves retry identi
   }finally{release();await service?.close();rmSync(root,{recursive:true,force:true})}
 })
 
+test('FX-19 failure writing the final receipt never reports creation success and restart never replays it',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'personal-access-fx19-final-fault-')),f=fixture(),storePath=join(root,'store.json'),backup=join(root,'durable-before-fault.json');let service;
+  const create=f.backend.createSession;f.backend.createSession=async input=>{const value=await create(input);renameSync(storePath,backup);mkdirSync(storePath);return value};
+  try{
+    service=await createPersonalAccessService({root,port:0,backend:f.backend});let {origin,hostId}=await service.start();const device=await service.enrollDevice({name:'synthetic-fault'});
+    const body={requestId:'final-fault',kind:'session.create',targetDeviceId:hostId,modelProfileId:'local',waitForReceipt:true};
+    const result=await request(origin,device.token,'POST','/personal/v1/commands',body);assert.equal(result.status,202);assert.equal(result.body.command.state,'dispatching');assert.equal(f.calls.create,1);
+    assert.equal(ownerStore(JSON.parse(readFileSync(backup,'utf8'))).commands[result.body.command.commandId].state,'dispatching');
+    await service.close();rmSync(storePath,{recursive:true,force:true});renameSync(backup,storePath);
+    service=await createPersonalAccessService({root,port:0,backend:f.backend});({origin}=await service.start());
+    const retry=await request(origin,device.token,'POST','/personal/v1/commands',body);assert.equal(retry.body.command.state,'uncertain');assert.equal(f.calls.create,1);
+  }finally{await service?.close();rmSync(root,{recursive:true,force:true})}
+})
+
 function fixture() {
   const calls = { create: 0, message: 0, cancel: 0 }
 const events = new Map<string, Array<{ seq: number, type: string, data: object }>>()
