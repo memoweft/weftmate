@@ -11,6 +11,7 @@
 .message-versions { font-size:var(--wm-font-size-12); }
 .message-action-dialog { width:min(var(--wm-size-740),calc(100vw - 32px)); max-height:85dvh; overflow:auto; background:var(--surface); color:var(--ink); border:1px solid var(--line); border-radius:var(--wm-radius-16); padding:var(--wm-space-24); }
 .message-action-dialog::backdrop { background:var(--wm-color-desktop-scrim); }
+.message-action-dialog { max-height:min(85dvh,calc(100dvh - 2 * max(var(--safe-top,env(safe-area-inset-top,0px)),var(--safe-bottom,env(safe-area-inset-bottom,0px))) - var(--wm-space-32))); }
 .message-action-dialog h2 { font-size:var(--wm-font-size-18); padding-right:var(--wm-space-48); margin-bottom:var(--wm-space-16); }
 .message-dialog-close { position:absolute; right:var(--wm-space-16); top:var(--wm-space-16); }
 .message-action-dialog .muted, .message-action-status { font-size:var(--wm-font-size-13); margin-block:var(--wm-space-12); color:var(--ink-muted); }

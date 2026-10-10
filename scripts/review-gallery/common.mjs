@@ -36,6 +36,9 @@ export async function runScene({ page, out, platform, scene, theme, prepare, app
 }
 export async function capture(page, out, platform, scene, theme, application, screenshot) {
   await page.evaluate(() => document.fonts.ready);
+  if (platform === 'android' || platform === 'mobile-web') await page.evaluate(theme => {
+    if (typeof applyTheme === 'function') applyTheme(theme);
+  }, theme);
   await delay(350);
   await page.mouse.move(0, 0);
   const text = await page.locator('body').innerText();

@@ -1,4 +1,4 @@
-.offline-chat{position:relative;box-sizing:border-box;height:100%;min-height:100%;display:flex;flex-direction:column;background:var(--canvas,var(--bg));color:var(--ink,var(--text));padding:var(--wm-space-16);padding-bottom:env(safe-area-inset-bottom);gap:var(--wm-space-12)}
+.offline-chat{position:relative;box-sizing:border-box;height:100%;min-height:100%;display:flex;flex-direction:column;background:var(--canvas,var(--bg));color:var(--ink,var(--text));padding:var(--wm-space-16);padding-bottom:var(--safe-bottom, env(safe-area-inset-bottom, 0px));gap:var(--wm-space-12)}
 .offline-chat[hidden],.offline-launcher[hidden]{display:none}
 .offline-chat header{display:flex;flex-wrap:wrap;align-items:center;gap:var(--wm-space-12)}
 .offline-chat h1{font-size:var(--wm-font-size-18);margin:0;flex:1}
