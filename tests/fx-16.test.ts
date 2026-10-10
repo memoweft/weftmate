@@ -63,11 +63,12 @@ test('FX-16 Android session paging preserves the complete query through its busi
 });
 
 test('FX-16 native sidebar index builds once and follows live creation, status and deletion',async()=>{
-  const handlers=new Map<string,Function>(),live=new Map<string,any>(),agents=new Map<string,any>();let loads=0;
-  const ctx:any={get:(name:string)=>name==='sessions'?{get:(id:string)=>live.get(id)}:name==='agents'?{get:(id:string)=>agents.get(id)}:undefined,on:(name:string,fn:Function)=>handlers.set(name,fn)};
+  const handlers=new Map<string,Function>(),live=new Map<string,any>(),agents=new Map<string,any>();let loads=0,lookups=0;
+  const ctx:any={get:(name:string)=>name==='sessions'?{get:(id:string)=>{lookups++;return live.get(id);}}:name==='agents'?{get:(id:string)=>agents.get(id)}:undefined,on:(name:string,fn:Function)=>handlers.set(name,fn)};
   const read=nativeTimelineLog(ctx,{cache:false});
   const load=async()=>{loads++;return {items:Array.from({length:500},(_,i)=>({sessionId:'session-'+i,agentPreset:'personal-remote',running:false}))};};
   assert.equal((await read.listSessions(load)).items.length,500);await read.listSessions(load);assert.equal(loads,1);
+  lookups=0;assert.equal((await read.sessionSummary('session-250',load)).sessionId,'session-250');assert.equal(lookups,1);
   const session={id:'session-new',header:{agentPreset:'personal-remote'},events:[]};live.set(session.id,session);handlers.get('session/created')!(session);agents.set(session.id,{status:'running'});
   const next=(await read.listSessions(load)).items.find((row:any)=>row.sessionId===session.id);assert.equal(next.running,true);assert.equal(next.agentPreset,'personal-remote');
   read.removeSession(session.id);assert.equal((await read.listSessions(load)).items.length,500);assert.equal(loads,1);

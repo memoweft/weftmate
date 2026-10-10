@@ -376,6 +376,12 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
   const listNative = () => readLog?.listSessions
     ? readLog.listSessions(() => Promise.resolve(client.sessions.list({})).then(value => unwrap(value, 'list')))
     : Promise.resolve(client.sessions.list({})).then(value => unwrap(value, 'list'));
+  const ordinaryNative = async id => {
+    const item = readLog?.sessionSummary
+      ? await readLog.sessionSummary(id,()=>Promise.resolve(client.sessions.list({})).then(value=>unwrap(value,'list')))
+      : (await listNative())?.items?.find(item=>sessionIdOf(item)===id);
+    requireOrdinarySummary(item,id);return item;
+  };
   // Lazy call metadata index. Each visited source range is indexed once, including
   // parallel calls whose completion is far away from its start. No full-log fold.
   const callIndexes = new Map()
@@ -499,9 +505,7 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
 
     /** Identity recovery plus replay reconciliation input; no native resume RPC exists. */
     async resume(sessionId) {
-      const listed = await listNative()
-      const item = (Array.isArray(listed?.items) ? listed.items : []).find((candidate) => sessionIdOf(candidate) === sessionId)
-      requireOrdinarySummary(item, sessionId)
+      const item = await ordinaryNative(sessionId)
       if (lifecycle && item.agentPreset?.startsWith('personal-')) await lifecycle.resume(sessionId)
       const history = await unwrap(await client.sessions.history({ sessionId }), 'history')
       const historyEntries = Array.isArray(history?.events) ? history.events : []
@@ -515,9 +519,7 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
 
     async withLifecycle(sessionId, task) {
       if (lifecycle?.use) return lifecycle.use(sessionId, task)
-      const listed = await listNative()
-      const item = (listed?.items ?? []).find(item => sessionIdOf(item) === sessionId)
-      requireOrdinarySummary(item, sessionId)
+      const item = await ordinaryNative(sessionId)
       if (lifecycle && item.agentPreset?.startsWith('personal-')) {
         if (lifecycle.use) return lifecycle.use(sessionId, task)
         await lifecycle.resume(sessionId)
@@ -554,9 +556,7 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
     },
     async memoryBoundaries(sessionId, afterSeq = -1) {
       if (!Number.isSafeInteger(afterSeq) || afterSeq < -1) throw new TypeError('invalid memory cursor')
-      const listed = await listNative()
-      const item = (listed?.items ?? []).find(item => sessionIdOf(item) === sessionId)
-      requireOrdinarySummary(item, sessionId)
+      const item = await ordinaryNative(sessionId)
       const events = (await logFor(sessionId)).map(row => row.event ?? row)
       const session = { id: sessionId, header: { agentPreset: item.agentPreset }, events }
       const items = []
@@ -579,8 +579,7 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
           afterSeq !== undefined && (!Number.isSafeInteger(afterSeq) || afterSeq < -1) ||
           beforeSeq !== undefined && (!Number.isSafeInteger(beforeSeq) || beforeSeq < 0)) throw new TypeError('invalid history cursor')
       pageHistoryEvents([], afterSeq ?? -1, limit)
-      const listed = await listNative()
-      requireOrdinarySummary((listed?.items ?? []).find(item => sessionIdOf(item) === sessionId), sessionId)
+      await ordinaryNative(sessionId)
       if (readLog?.historyPage) {
         const page = await readLog.historyPage(sessionId, options, (entries, range) => projectedPage(sessionId, entries, range));
         if (page) return page;
@@ -590,8 +589,7 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
 
     async historyDetail(sessionId, seq) {
       if (!Number.isSafeInteger(seq) || seq < 0) throw new TypeError('invalid detail seq')
-      const listed = await listNative()
-      requireOrdinarySummary((listed?.items ?? []).find(item => sessionIdOf(item) === sessionId), sessionId)
+      await ordinaryNative(sessionId)
       const entries = await logFor(sessionId), index = lowerBound(entries, seq)
       const event = entries[index]?.event ?? entries[index]
       const messageType = event?.seq === seq ? projectHistoryEvent(event)?.type : null;
@@ -623,8 +621,7 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
 
     /** Internal binding evidence, excluding all tool/step/output payloads. */
     async sourceEvents(sessionId, { turn, receiptId } = {}) {
-      const listed = await listNative()
-      requireOrdinarySummary((listed?.items ?? []).find(item => sessionIdOf(item) === sessionId), sessionId)
+      await ordinaryNative(sessionId)
       const entries = await sourceLogFor(sessionId, { turn, receiptId })
       const range = sourceRange(entries, { turn, receiptId })
       return { current: range?.current === true, events: (range?.events ?? [])
