@@ -7,7 +7,7 @@
   function merge(rows) {
     const unique = new Map();
     for (const row of rows) if (!privateRow(row)) unique.set(row.key,row);
-    return [...unique.values()].sort((a,b) => Number(!!b.attention)-Number(!!a.attention) || Number(b.match==='title')-Number(a.match==='title') || stamp(b)-stamp(a) || a.key.localeCompare(b.key));
+    return [...unique.values()].sort((a,b) => Number(!!(b.needsAttention ?? b.attention))-Number(!!(a.needsAttention ?? a.attention)) || Number(b.match==='title')-Number(a.match==='title') || stamp(b)-stamp(a) || a.key.localeCompare(b.key));
   }
   globalThis.WeftUiCore.searchTypes = types;
   globalThis.WeftUiCore.mergeSearchRows = merge;
@@ -29,7 +29,7 @@
       try {env.storage.setItem(key(),JSON.stringify(recent));} catch {}
     }
     const chatRow = chat => ({...chat,type:'chats',id:chat.chatId??chat.sessionId,key:`chat:${chat.chatId??chat.sessionId}:${chat.eventId??'title'}`,
-      title:chat.title||'新旁聊',icon:'chat',sessionId:chat.activeSessionId??chat.sessionId,attention:!model.query.trim()&&(chat.unread===true||chat.pendingApprovalCount>0||chat.pendingQuestionCount>0),
+      title:chat.title||'新旁聊',icon:'chat',sessionId:chat.activeSessionId??chat.sessionId,needsAttention:!model.query.trim()&&(chat.unread===true||chat.attention==='approval'||chat.attention==='question'||chat.pendingApprovalCount>0||chat.pendingQuestionCount>0),
       meta:chat.projectName|| (chat.match==='content' ? chat.at : chat.updatedAt??chat.createdAt),source:{chatId:chat.chatId,chatKind:chat.kind,sessionId:chat.sourceRef?.sessionId??chat.activeSessionId??chat.sessionId,eventId:chat.eventId,seq:chat.sourceRef?.seq}});
     const projectRow = row => ({...row,type:'projects',id:row.projectId,key:`project:${row.projectId}`,title:row.name,icon:'folder',meta:'项目'});
     const libraryRow = row => ({...row,type:'library',key:`library:${row.id}`,title:row.fileName,icon:'file',meta:row.projectName||row.createdAt});
@@ -63,15 +63,16 @@
       if(!q){
         const mixed=groups.flatMap(group=>group.rows),byId=new Map(mixed.map(row=>[`${row.type}:${row.id}`,row]));
         const pending=(core.activity?.items??[]).filter(item=>item.state==='pending'&&!privateRow(item)&&['approval.pending','question.pending'].includes(item.type)).map(item=>{
-          const chat=[...(core.state.sessions??[]),core.state.mainChat].filter(Boolean).find(chat=>item.source?.chatId&&chat.chatId===item.source.chatId||item.source?.sessionId&&(chat.sessionId===item.source.sessionId||chat.activeSessionId===item.source.sessionId));
-          return chat?{...chatRow(chat),attention:true,pendingApprovalCount:item.type==='approval.pending'?1:0,pendingQuestionCount:item.type==='question.pending'?1:0}:null;}).filter(Boolean);
-        const attention=merge([...mixed.filter(row=>row.attention),...pending]);
+          const chat=mixed.find(row=>row.type==='chats'&&(item.source?.chatId&&row.chatId===item.source.chatId||item.source?.sessionId&&row.sessionId===item.source.sessionId)) || [...(core.state.sessions??[]),core.state.mainChat].filter(Boolean).find(chat=>item.source?.chatId&&chat.chatId===item.source.chatId||item.source?.sessionId&&(chat.sessionId===item.source.sessionId||chat.activeSessionId===item.source.sessionId));
+          if(chat&&Object.hasOwn(chat,'attention')&&!chat.attention)return null;
+          return chat?{...chatRow(chat),needsAttention:true,attention:chat.attention||(item.type==='approval.pending'?'approval':'question'),pendingApprovalCount:item.type==='approval.pending'?1:0,pendingQuestionCount:item.type==='question.pending'?1:0}:null;}).filter(Boolean);
+        const attention=merge([...mixed.filter(row=>row.needsAttention),...pending]);
         const resolved=await Promise.all(recent.slice(0,6).map(async item=>{
-          const present=byId.get(`${item.type}:${item.id}`);if(present)return {...present,at:item.at,attention:false};
-          try{if(item.type==='chats'){const data=await core.accessApi(`/chats/${encodeURIComponent(item.id)}`);return {...chatRow(data.chat),at:item.at,attention:false};}
-            if(item.type==='library'){const data=await core.accessApi(`/library/${encodeURIComponent(item.id)}`);return {...libraryRow(data.item),at:item.at,attention:false};}}catch{}return null;}));
+          const present=byId.get(`${item.type}:${item.id}`);if(present)return {...present,at:item.at,needsAttention:false};
+          try{if(item.type==='chats'){const data=await core.accessApi(`/chats/${encodeURIComponent(item.id)}`);return {...chatRow(data.chat),at:item.at,needsAttention:false};}
+            if(item.type==='library'){const data=await core.accessApi(`/library/${encodeURIComponent(item.id)}`);return {...libraryRow(data.item),at:item.at,needsAttention:false};}}catch{}return null;}));
         if(!valid())return;
-        const opened=resolved.filter(Boolean),recentRows=merge([...mixed.map(row=>({...row,attention:false})),...opened]);
+        const opened=resolved.filter(Boolean),recentRows=merge([...mixed.map(row=>({...row,needsAttention:false})),...opened]);
         model.groups=[...(attention.length?[{id:'attention',title:'需要关注',rows:attention.slice(0,5)}]:[]),{id:'recent',title:'最近使用',rows:recentRows.slice(0,4)}, {id:'actions',title:'操作',rows:actions()}];
       }else model.groups=groups.map(group=>({...group,allRows:group.rows,rows:model.expanded.has(group.id)?group.rows:group.rows.slice(0,3)}));
       if(q&&!model.groups.some(group=>group.rows.length)&&!model.error)model.groups=[{id:'empty',title:'',rows:actions(q)}];
