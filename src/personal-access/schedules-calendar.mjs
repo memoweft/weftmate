@@ -3,9 +3,10 @@ export function scheduleContent(prompt) {
   try {
     const value = JSON.parse(prompt);
     if (value?.weftmate === 1 && ['reminder', 'task'].includes(value.kind) && typeof value.text === 'string' && value.text.trim()) {
-      if (value.repeat !== undefined && (!['daily', 'weekly'].includes(value.repeat?.kind) ||
-          !/^(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/.test(value.repeat.time) ||
-          value.repeat.kind === 'weekly' && (!Number.isInteger(value.repeat.weekday) || value.repeat.weekday < 0 || value.repeat.weekday > 6))) throw failure('INVALID_REQUEST');
+      if (value.repeat !== undefined && (!['daily', 'weekly', 'monthly', 'interval'].includes(value.repeat?.kind) ||
+          (value.repeat.kind === 'interval' ? !Number.isSafeInteger(value.repeat.seconds) || value.repeat.seconds < 300 : !/^(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/.test(value.repeat.time)) ||
+          value.repeat.kind === 'weekly' && (!Number.isInteger(value.repeat.weekday) || value.repeat.weekday < 0 || value.repeat.weekday > 6) ||
+          value.repeat.kind === 'monthly' && (!Number.isInteger(value.repeat.day) || value.repeat.day < 1 || value.repeat.day > 31))) throw failure('INVALID_REQUEST');
       return { kind: value.kind, text: value.text.trim(), repeat: value.repeat ?? null };
     }
   } catch (error) { if (error.code) throw error; }
@@ -19,8 +20,8 @@ export function nextCalendarInput(repeat, timeZone, now, afterDate = null) {
   const date = new Date(`${parts.year}-${parts.month}-${parts.day}T00:00:00Z`);
   if (afterDate && afterDate > date.toISOString().slice(0, 10)) date.setTime(Date.parse(`${afterDate}T00:00:00Z`));
   const localTime = `${parts.hour}:${parts.minute}:${parts.second}`;
-  for (let day = 0; day <= 7; day++) {
-    if ((!afterDate || date.toISOString().slice(0, 10) > afterDate) && (repeat.kind === 'daily' || date.getUTCDay() === repeat.weekday) && (day > 0 || repeat.time > localTime)) {
+  for (let day = 0; day <= 62; day++) {
+    if ((!afterDate || date.toISOString().slice(0, 10) > afterDate) && (repeat.kind === 'daily' || repeat.kind === 'weekly' && date.getUTCDay() === repeat.weekday || repeat.kind === 'monthly' && date.getUTCDate() === repeat.day) && (day > 0 || repeat.time > localTime)) {
       return { date: date.toISOString().slice(0, 10), time: repeat.time, time_zone: timeZone };
     }
     date.setUTCDate(date.getUTCDate() + 1);

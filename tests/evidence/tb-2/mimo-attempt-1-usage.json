@@ -1,0 +1,71 @@
+{
+  "usage": [
+    {
+      "completion_tokens": 21,
+      "prompt_tokens": 2106,
+      "total_tokens": 2127,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1536
+      }
+    },
+    {
+      "completion_tokens": 22,
+      "prompt_tokens": 2193,
+      "total_tokens": 2215,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 2048
+      }
+    },
+    {
+      "completion_tokens": 83,
+      "prompt_tokens": 2750,
+      "total_tokens": 2833,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1984
+      }
+    },
+    {
+      "completion_tokens": 79,
+      "prompt_tokens": 2914,
+      "total_tokens": 2993,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 2688
+      }
+    },
+    {
+      "completion_tokens": 70,
+      "prompt_tokens": 3074,
+      "total_tokens": 3144,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 2880
+      }
+    },
+    {
+      "completion_tokens": 74,
+      "prompt_tokens": 3291,
+      "total_tokens": 3365,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 3072
+      }
+    }
+  ],
+  "note": "首次验收脚本误查未公开的payload字段而超时；模型已创建每天08:00规则，但用after_seconds把首次发生时间算成当地16:10。工具指引补明账户本地当前时间，并建议日历安排用原生at；下一轮同一句中文请求首次时间及重复规则均正确。两轮全部真实用量计入。"
+}
