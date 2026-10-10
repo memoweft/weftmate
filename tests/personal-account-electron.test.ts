@@ -109,7 +109,10 @@ test('local setup, same-account devices, password rotation and logout work in th
       headers: { cookie: created.cookie },
     })).json()
     assert.equal(capabilities.backend.capabilities.chat.available, false, 'blank profile has no usable model yet')
-    assert.equal(capabilities.backend.capabilities.desktopOpenApp.available, true, 'Windows desktop observer is available')
+    assert.equal(capabilities.backend.capabilities.desktopOpenApp.available, process.platform === 'win32',
+      'the Windows-only Notepad capability must be available on Windows and explicitly unavailable elsewhere')
+    assert.deepEqual(capabilities.backend.capabilities.desktopOpenApp.appIds, process.platform === 'win32' ? ['notepad'] : [])
+    if (process.platform !== 'win32') assert.equal(capabilities.backend.capabilities.desktopOpenApp.reasonCode, 'CAPABILITY_UNAVAILABLE')
 
     const second = await auth(first.origin, '/login', { method: 'POST', body: {
       username, password: oldPassword, deviceName: 'browser-b',

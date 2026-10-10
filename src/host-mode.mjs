@@ -104,6 +104,6 @@ export async function startPersonalHost({ startRuntime, migrateRoutes, hydrateBi
   let origin = assertLoopbackOrigin(await startRuntime());
   origin = assertLoopbackOrigin(await migrateRoutes(origin));
   await hydrateBindings();
-  log(`[weftmate] ✓ personal-host ready origin=${origin}`);
+  await log(`[weftmate] ✓ personal-host ready origin=${origin}`);
   return origin;
 }

@@ -1,25 +1,47 @@
-import { readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
+import { dirname, join, relative, resolve } from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+import ts from 'typescript'
 
-/** Stage the production plugins against the exact installed DSH instance. */
-export function stagePersonalPlugins(root: string) {
-  const file = join(root, 'weftmate-personal-desktop.mjs')
-  const vendor = pathToFileURL(join(process.cwd(), 'vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-tools/lib/index.js')).href
-  writeFileSync(file, readFileSync(join(process.cwd(), 'src/plugins/weftmate-personal-desktop.mjs'), 'utf8')
-    .replace("from '@deepseek-ai/dsh-tools'", `from '${vendor}'`)
-    .replace("from '@deepseek-ai/dsh-agent'", `from '${pathToFileURL(join(process.cwd(), "vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-agent/lib/index.js")).href}'`)
-    .replace("from '@deepseek-ai/dsh-plan-mode'", `from '${pathToFileURL(join(process.cwd(), 'vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-plan-mode/lib/index.js')).href}'`)
-    .replace("from './personal-approval-policy.mjs'", `from '${pathToFileURL(join(process.cwd(), 'src/plugins/personal-approval-policy.mjs')).href}'`)
-    .replace("from '@deepseek-ai/dsh-sandbox-policy'", `from '${pathToFileURL(join(process.cwd(), "vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-sandbox-policy/lib/index.js")).href}'`)
-    .replace("from './personal-web-fetch.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-web-fetch.mjs")).href}'`)
-    .replace(/from ['"](\.\/[^'"]+\.mjs)['"]/g, (_match, name) => `from '${pathToFileURL(join(process.cwd(), 'src/plugins', name)).href}'`)
-    .replace("from './personal-personalization.mjs'", `from '${pathToFileURL(join(process.cwd(), 'src/plugins/personal-personalization.mjs')).href}'`)
-    .replace("from './personal-native-files.mjs'", `from '${pathToFileURL(join(process.cwd(), 'src/plugins/personal-native-files.mjs')).href}'`)
-    .replace("from '../runtime/dsh-adapter/source-range.mjs'", `from '${pathToFileURL(join(process.cwd(), 'src/runtime/dsh-adapter/source-range.mjs')).href}'`))
-  const preset = join(root, 'preset.mjs')
-  writeFileSync(preset, readFileSync(join(process.cwd(), 'src/plugins/weftmate-personal-desktop-preset.mjs'), 'utf8')
-    .replace("from '@deepseek-ai/dsh-tools'", `from '${vendor}'`)
-    .replace(/from ['"](\.\/[^'"]+\.mjs)['"]/g, (_match, name) => `from '${pathToFileURL(name === './weftmate-personal-desktop.mjs' ? file : join(process.cwd(), 'src/plugins', name)).href}'`))
-  return { plugin: pathToFileURL(file).href, preset: pathToFileURL(preset).href }
+const repository = fileURLToPath(new URL('../../', import.meta.url))
+const vendorRequire = createRequire(join(repository, 'vendor/dsh-runtime/package.json'))
+
+/** Actual module syntax: static imports, re-exports and literal dynamic imports. */
+export function moduleSpecifiers(source: string) {
+  const parsed = ts.createSourceFile('fixture.mjs', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS)
+  const literals: ts.StringLiteralLike[] = []
+  function visit(node: ts.Node) {
+    if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier && ts.isStringLiteralLike(node.moduleSpecifier)) literals.push(node.moduleSpecifier)
+    if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword && node.arguments[0] && ts.isStringLiteralLike(node.arguments[0])) literals.push(node.arguments[0])
+    ts.forEachChild(node, visit)
+  }
+  visit(parsed)
+  return literals.map(node => ({ name: node.text, start: node.getStart(parsed), end: node.end }))
+}
+
+/** Stage the complete relative-import graph against one installed DSH instance. */
+export function stagePersonalPlugins(root: string, packageResolver = (name: string, source: string) =>
+  name.startsWith('@deepseek-ai/') ? vendorRequire.resolve(name) : createRequire(source).resolve(name)) {
+  const files = new Map<string, string>()
+  function stage(sourcePath: string): string {
+    sourcePath = resolve(sourcePath)
+    const existing = files.get(sourcePath)
+    if (existing) return existing
+    const target = join(root, relative(repository, sourcePath))
+    files.set(sourcePath, target) // Cycles share the same staged module.
+    let source = readFileSync(sourcePath, 'utf8')
+    for (const specifier of moduleSpecifiers(source).reverse()) {
+      let destination: string | undefined
+      if (specifier.name.startsWith('.')) destination = stage(resolve(dirname(sourcePath), specifier.name))
+      else if (!specifier.name.startsWith('node:') && !specifier.name.includes(':')) destination = packageResolver(specifier.name, sourcePath)
+      if (destination) source = source.slice(0, specifier.start) + JSON.stringify(pathToFileURL(destination).href) + source.slice(specifier.end)
+    }
+    mkdirSync(dirname(target), { recursive: true })
+    writeFileSync(target, source)
+    return target
+  }
+  const plugin = stage(join(repository, 'src/plugins/weftmate-personal-desktop.mjs'))
+  const preset = stage(join(repository, 'src/plugins/weftmate-personal-desktop-preset.mjs'))
+  return { plugin: pathToFileURL(plugin).href, preset: pathToFileURL(preset).href, files }
 }

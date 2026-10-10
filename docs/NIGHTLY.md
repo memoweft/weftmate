@@ -22,6 +22,12 @@ Windows 专用目录为 `D:\AIProjects\WeftMate\Worktrees\nightly`，Mac 为 `~/
 
 设备空闲时可用 `-DevicesOnly -Scene login` 做安卓单场景浅深冒烟；该模式不拍 Windows／网页，仍保留缺图报警。模拟器被占用时仍跳过，不因冒烟模式抢占资源。缺图／旧时间／失败注入可对已完成批次执行 `node scripts/nightly/validate-alerts.mjs --run <批次目录> --out <证据目录>`；脚本只修改临时副本。
 
+## 固定 DSH 测试
+
+准备完成后先执行 `node .github/scripts/ci-unit-tests.mjs vendor --report <批次目录>/vendor-test-results.json`，再拍各端界面。专用工作树首次没有 vendor（固定运行时依赖）时，运行 `scripts/vendor-dsh.mjs` 从本机既有、已编译且匹配产品 pin（固定版本）的 DSH 工作区装配；缺少构建或 pin 不一致直接生成失败批次，继续收集其他证据。不会把未执行测试记为通过，不使用真实模型或日用数据。
+
+`nightly-status.json` 的 `phases[name=vendor-tests].tests` 含通过、失败、跳过数和失败名单；`nightly-report.md` 有独立测试段落，失败标红并触发既有汇总报警。完整输出在 `logs/vendor-tests.log`。新步骤沿用整晚截止时间和进程清理，不改计划任务；可以用 `tests/nightly-vendor-tests.test.ts` 的合成成功／失败结果验证报告。
+
 ## 报告与报警
 
 报告根目录为 `D:\AIProjects\WeftMate\Runtime\Nightly\<本地日期>\`，不进入仓库。当天 `nightly-report.md` 指向最新审稿页；`latest.json` 指向最新批次。每次运行保存在独立批次目录，含 `gallery/index.html`、`gallery/manifest.json`、`nightly-report.md`、`nightly-status.json`、设备清理与通知回执。审稿页格式与 CI（持续集成）一致，每格标明拍摄时间、代码提交和来源。只保留今天及之前13天的日期目录，非日期目录不清理。

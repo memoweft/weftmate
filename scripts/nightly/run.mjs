@@ -98,6 +98,8 @@ try {
     await run('node', [join(worktree, 'node_modules/typescript/bin/tsc')], { name: 'typecheck' });
   });
   if (prepared) {
+    const vendorRunner = await import(pathToFileURL(join(engineScripts, 'vendor-tests.mjs')).href);
+    await phase('vendor-tests', [], () => vendorRunner.runVendorTests(run, worktree, out));
     const sceneArgs = value('--scene') ? ['--scene', value('--scene')] : [];
     await phase('windows', ['windows'], () => process.argv.includes('--devices-only') ? skip('设备专项，未拍') : run('node', [join(worktree, 'tests/integration/review-capture-desktop.mjs'), '--out', gallery, ...sceneArgs], { name: 'windows' }).then(() => null));
     await phase('mobile-web', ['mobile-web'], () => process.argv.includes('--devices-only') ? skip('设备专项，未拍') : run('node', [join(worktree, 'tests/integration/review-capture-mobile.mjs'), '--out', gallery, ...sceneArgs], { name: 'mobile-web' }).then(() => null));

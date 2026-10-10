@@ -39,6 +39,23 @@ test('personal host never reports ready after runtime or binding failure', async
   }
 })
 
+test('personal host waits for the ready diagnostic snapshot to commit', async () => {
+  let release!: () => void
+  const committed = new Promise<void>(resolve => { release = resolve })
+  let completed = false
+  const startup = startPersonalHost({
+    startRuntime: async () => 'http://127.0.0.1:51931',
+    migrateRoutes: async (origin: string) => origin,
+    hydrateBindings: async () => {},
+    log: async () => { await committed },
+  }).then(() => { completed = true })
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(completed, false, 'a pending snapshot must not publish completed startup')
+  release()
+  await startup
+  assert.equal(completed, true)
+})
+
 test('personal host accepts only an exact dynamic loopback origin', () => {
   assert.equal(assertLoopbackOrigin('http://127.0.0.1:51931'), 'http://127.0.0.1:51931')
   for (const value of ['http://localhost:51931', 'http://0.0.0.0:51931', 'https://127.0.0.1:51931',
