@@ -1,0 +1,13 @@
+✔ live snapshots keep native anchors, cumulative text, reasoning private and final text authoritative across tool steps (3.533ms)
+✔ stop/error snapshots settle without a live indicator, reconnect rebuilds exact text, retry replaces failed attempt (0.7204ms)
+✔ live snapshots have no separate erasure cache and D33 rejects forgotten provenance and deleting/cleanup accounts (0.3177ms)
+✔ logical client snapshot updates deduplicate, retain presentation identity, remove on final and reset on erasure (1.1906ms)
+✔ completion SSE decodes split Unicode frames, observes usage, parses short text/old JSON and aborts while reading (3.4715ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 166.8629

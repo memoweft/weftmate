@@ -45,7 +45,7 @@ globalThis.WeftUiCore.factories.mobileDecisions = (core, effects, environment) =
         sync();
         return mobile.loggedIn && !mobile.transitionPending && value.owner === mobile.owner &&
             value.epoch === mobile.authEpoch && value.generation === mobile.generation && value.page === mobile.page &&
-            (value.defaults || current(value));
+            (value.defaults || value.source === mobile.chatSource && value.sessionId === conversationTaskContext().sessionId && value.conversationId === conversationTaskContext().conversationId && value.deviceId === deviceId());
     }
     const family = question => question ? core.conversationQuestions : core.conversationApprovals;
     const resultMap = question => question ? readResults.questions : readResults.approvals;

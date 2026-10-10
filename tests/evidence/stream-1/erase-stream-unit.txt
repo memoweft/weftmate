@@ -1,0 +1,24 @@
+✔ source snippet cleanup survives restart, keeps its switch identity, and erases its own copy (1455.7435ms)
+✔ entity snippet opt-in follows related provenance when its direct source list is empty (1998.7727ms)
+✔ startup summary loads the latest history even when the activity scan already observed an older page (2.9408ms)
+✔ D33 cached forget: lists, search, pages, native index and restart cannot revive erased content (2246.0466ms)
+✔ D33 cached forget-title: lists, search, pages, native index and restart cannot revive erased content (1969.1499ms)
+✔ D33 cached delete: lists, search, pages, native index and restart cannot revive erased content (1748.4822ms)
+✔ D33 clears result, handoff, side creation copies and search generations without deleting the main identity (29.5988ms)
+✔ deleting one source invalidates dependent side references and leaves unrelated context intact (0.2787ms)
+✔ native forgetting shadows matching turns and mixed summaries in surface order, preserving unrelated originals (0.5232ms)
+✔ an in-flight index read cannot return pre-erasure content after invalidation (2.3448ms)
+✔ live snapshots keep native anchors, cumulative text, reasoning private and final text authoritative across tool steps (4.9657ms)
+✔ stop/error snapshots settle without a live indicator, reconnect rebuilds exact text, retry replaces failed attempt (1.858ms)
+✔ live snapshots have no separate erasure cache and D33 rejects forgotten provenance and deleting/cleanup accounts (0.8373ms)
+✔ logical client snapshot updates deduplicate, retain presentation identity, remove on final and reset on erasure (1.5155ms)
+✔ completion SSE decodes split Unicode frames, observes usage, parses short text/old JSON and aborts while reading (5.5616ms)
+✔ D33 snippet erasure removes packed native text/reasoning/tool deltas even when the phrase crosses chunk boundaries (35.9969ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6327.4932

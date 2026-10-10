@@ -1,0 +1,205 @@
+{
+  "syntheticAccounts": true,
+  "dailyEndpointsUsed": false,
+  "surfaces": {
+    "synthetic-desktop": {
+      "firstChunkToVisibleMs": 121,
+      "distinctLengths": 11,
+      "dotFrames": 472,
+      "fragmentFrames": 227,
+      "endDots": 0,
+      "longSamples": 0,
+      "longUpdateP95Ms": null,
+      "maximumVisibleLength": 769
+    },
+    "synthetic-phone": {
+      "firstChunkToVisibleMs": 83,
+      "distinctLengths": 12,
+      "dotFrames": 157,
+      "fragmentFrames": 81,
+      "endDots": 0,
+      "longSamples": 0,
+      "longUpdateP95Ms": null,
+      "maximumVisibleLength": 769
+    },
+    "mimo-long-final-desktop": {
+      "firstChunkToVisibleMs": 151,
+      "distinctLengths": 1252,
+      "dotFrames": 69781,
+      "fragmentFrames": 29696,
+      "endDots": 0,
+      "longSamples": 429,
+      "longUpdateP95Ms": 2.5,
+      "maximumVisibleLength": 15770
+    },
+    "mimo-long-final-phone": {
+      "firstChunkToVisibleMs": 147,
+      "distinctLengths": 1255,
+      "dotFrames": 21536,
+      "fragmentFrames": 9406,
+      "endDots": 0,
+      "longSamples": 432,
+      "longUpdateP95Ms": 2.199999988079071,
+      "maximumVisibleLength": 15770
+    }
+  },
+  "mimoUsage": {
+    "requests": 35,
+    "unknownRequests": 3,
+    "inputTokens": 167559,
+    "cachedInputTokens": 82880,
+    "outputTokens": 45453,
+    "cost": 0.1772426,
+    "scope": "Recorded MiMo requests only; synthetic model excluded. One earlier overwritten motion sample has unknown usage, and one test-hook 401 is listed separately."
+  },
+  "batches": [
+    {
+      "name": "synthetic",
+      "requests": 1,
+      "unknownRequests": 0,
+      "unpricedRequests": 0,
+      "inputTokens": 20,
+      "cachedInputTokens": 0,
+      "outputTokens": 10,
+      "cost": 0
+    },
+    {
+      "name": "mimo",
+      "requests": 12,
+      "unknownRequests": 2,
+      "unpricedRequests": 2,
+      "inputTokens": 5238,
+      "cachedInputTokens": 3456,
+      "outputTokens": 1876,
+      "cost": 0.00560312
+    },
+    {
+      "name": "mimo-long",
+      "requests": 1,
+      "unknownRequests": 0,
+      "unpricedRequests": 0,
+      "inputTokens": 2365,
+      "cachedInputTokens": 1600,
+      "outputTokens": 12068,
+      "cost": 0.024933
+    },
+    {
+      "name": "mimo-long-after",
+      "requests": 17,
+      "unknownRequests": 0,
+      "unpricedRequests": 0,
+      "inputTokens": 155231,
+      "cachedInputTokens": 76224,
+      "outputTokens": 20725,
+      "cost": 0.12198148
+    },
+    {
+      "name": "mimo-long-final",
+      "requests": 1,
+      "unknownRequests": 0,
+      "unpricedRequests": 0,
+      "inputTokens": 2270,
+      "cachedInputTokens": 0,
+      "outputTokens": 10651,
+      "cost": 0.023572
+    },
+    {
+      "name": "mimo-motion",
+      "requests": 1,
+      "unknownRequests": 0,
+      "unpricedRequests": 0,
+      "inputTokens": 2216,
+      "cachedInputTokens": 1600,
+      "outputTokens": 106,
+      "cost": 0.00086
+    }
+  ],
+  "unretainedAttempts": {
+    "motionSamplingRequests": 1,
+    "testCredentialHook401Requests": 1,
+    "note": "The first failed motion sampling attempt was overwritten before its token metadata was retained; do not claim zero cost. 401 was test instrumentation, not a product failure."
+  },
+  "completion": {
+    "samples": [
+      {
+        "draft": "请把刚才的整理建议",
+        "durationMs": 3847,
+        "completion": "按年份归档"
+      },
+      {
+        "draft": "把照片分类方案",
+        "durationMs": 4638,
+        "completion": "按主题与年份分层"
+      },
+      {
+        "draft": "请给证件备份",
+        "durationMs": 1868,
+        "completion": "扫描件加密存网盘"
+      },
+      {
+        "draft": "把命名规则",
+        "durationMs": 5023,
+        "completion": ""
+      },
+      {
+        "draft": "请把维护步骤",
+        "durationMs": 5016,
+        "completion": ""
+      },
+      {
+        "draft": "帮我把账单",
+        "durationMs": 4060,
+        "completion": "按月归档并扫描"
+      },
+      {
+        "draft": "请把这套方案",
+        "durationMs": 3637,
+        "completion": "按用途和风险分大类"
+      },
+      {
+        "draft": "把备份注意事项",
+        "durationMs": 1915,
+        "completion": ""
+      },
+      {
+        "draft": "请给我一份",
+        "durationMs": 3532,
+        "completion": "家庭资料整理清单"
+      },
+      {
+        "draft": "把刚才的例子",
+        "durationMs": 2053,
+        "completion": ""
+      }
+    ],
+    "count": 10,
+    "hits": 6,
+    "within1500Ms": 0,
+    "minMs": 1868,
+    "p50Ms": 3742.0,
+    "p95Ms": 5023,
+    "maxMs": 5023,
+    "meanMs": 3558.9,
+    "targetMet": false
+  },
+  "checks": {
+    "required-final": {
+      "mode": "required",
+      "files": 273,
+      "exitCode": 0,
+      "passed": 1422,
+      "failed": 0,
+      "skipped": 14,
+      "failures": []
+    },
+    "vendor-final": {
+      "mode": "vendor",
+      "files": 28,
+      "exitCode": 0,
+      "passed": 203,
+      "failed": 0,
+      "skipped": 0,
+      "failures": []
+    }
+  }
+}

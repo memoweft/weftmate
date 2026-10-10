@@ -80,12 +80,30 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
                 renderMainChat();
             }, 'chat-day-toggle'); action.setAttribute('aria-expanded', String(!spec.collapsed)); row.append(action);
         } else if (spec.kind === 'message') {
+            if (row.dataset.streamSeq === String(spec.event.data?.streamSeq) && row.dataset.streamSearch===core.state.chatWindow.search.query && Number.isSafeInteger(spec.event.data?.streamSeq) && row.querySelector('.message-text,.markdown')) {
+                row.classList.add('message','assistant');
+                row.setAttribute('aria-label',`助手消息：${Array.from(spec.event.data.text).slice(0,80).join('')}`);
+                row.dataset.seq = String(spec.event.sourceRef?.seq ?? spec.event.seq);
+                const body = row.querySelector('.message-text,.markdown');
+                if (spec.event.data.truncated && core.completeMessageEvent) {
+                    globalThis.WeftReplyMotion?.indicator(body,false);
+                    const identity=core.state.identityGeneration,owner=core.state.ownerId;
+                    void core.completeMessageEvent(spec.event.sourceRef?.sessionId || core.state.selectedSessionId,spec.event).then(full=>{
+                        if(body.isConnected && identity===core.state.identityGeneration && owner===core.state.ownerId)WeftContent.update(body,full.data.text,{streaming:false});
+                    }).catch(()=>{});
+                } else WeftContent.update(body, spec.event.data.text, { streaming: spec.event.data.streaming === true });
+                if (!spec.event.data.live) { if(core.supportsChat('sideChats'))row.weftOpenSideChat=()=>showSidePanel(spec.event); (ui.bindMainMessage || ui.messageActions?.bind)?.(row,spec.event); globalThis.WeftModelThinking?.(core,row,spec.event); ui.appendReplyMemory?.(row,spec.event); }
+                if(core.state.chatWindow.search.query.trim())highlight(row);
+                return;
+            }
             row.tabIndex=0;row.setAttribute('role','group');row.setAttribute('aria-label',`${spec.event.type==='user.message'?'我的消息':'助手消息'}：${Array.from(spec.event.data?.text||'附件').slice(0,80).join('')}`);
             const temporary = ui.element('ol'); ui.paintHistoryMessages([spec.event], temporary); const message = temporary.firstElementChild;
             row.replaceChildren(); if (message) { row.className += ' ' + message.className; row.append(...message.childNodes); }
+            if (Number.isSafeInteger(spec.event.data?.streamSeq)) row.dataset.streamSeq = String(spec.event.data.streamSeq);
+            row.dataset.streamSearch=core.state.chatWindow.search.query;
             row.dataset.memorySession=spec.event.sourceRef?.sessionId||'';
-            ui.bindMainMessage?.(row, spec.event);
-            const complete = !core.state.mainChat.running || spec.event.sourceRef?.sessionId !== core.state.mainChat.activeSessionId || spec.event.type === 'user.message' || spec.event.eventId !== rows.filter(item => item.kind === 'message').at(-1)?.key;
+            if (!spec.event.data?.live) ui.bindMainMessage?.(row, spec.event);
+            const complete = Number.isSafeInteger(spec.event.data?.streamSeq) ? spec.event.data.streaming !== true : !core.state.mainChat.running || spec.event.sourceRef?.sessionId !== core.state.mainChat.activeSessionId || spec.event.type === 'user.message' || spec.event.eventId !== rows.filter(item => item.kind === 'message').at(-1)?.key;
             if (complete && core.supportsChat('sideChats')) {
                 row.weftOpenSideChat = () => showSidePanel(spec.event);
                 if (!row.querySelector('.message-actions')) {
@@ -93,7 +111,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
                 menu.append(summary, button('从这里开旁聊', '从这里开旁聊', () => showSidePanel(spec.event))); (row.querySelector('.message-actions') || row).append(menu);
                 }
             }
-            globalThis.WeftReplyMotion?.indicator(row.querySelector('.message-text'),!complete && spec.event.type==='assistant.message');
+            globalThis.WeftReplyMotion?.indicator(row.querySelector('.message-text,.markdown'),!complete && spec.event.type==='assistant.message');
             if(complete)globalThis.WeftReplyMotion?.reveal(row.querySelector('.message-actions'),'arrival');
             highlight(row);
         } else if (spec.kind === 'result') {
@@ -127,6 +145,23 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         for (const state of expanded.get(spec.key) || []) { const detail = [...row.querySelectorAll('details')].find(detail => (detail.dataset.step || 'group') === state.key); if (detail) detail.open = state.open; }
         if (focus && !row.contains(document.activeElement)) ([...row.querySelectorAll('[aria-label]')].find(node => node.getAttribute('aria-label') === focusName) || row).focus({ preventScroll: true });
     }
+    function paintLiveChatMessages() {
+        if(!main()||core.state.chatWindow.search.query.trim())return false;
+        const live=core.mainChatDays().flatMap(group=>group.events).filter(event=>event.data?.live);
+        const keys=new Set(live.map(event=>event.presentationKey||event.eventId));
+        if(rows.some(spec=>spec.event?.data?.live&&!keys.has(spec.key)))return false;
+        for(const event of live){
+            const key=event.presentationKey||event.eventId,spec=rows.find(spec=>spec.key===key);
+            if(!spec)return false;
+            spec.event=event;const row=mounted.get(key);
+            if(row){
+                WeftContent.update(row.querySelector('.message-text,.markdown'),event.data.text,{streaming:event.data.streaming===true});
+                row.dataset.chatSignature=JSON.stringify([event,spec.collapsed,core.state.chatWindow.search.query,null]);
+            }
+        }
+        ui.conversationScroll?.follow(true);
+        return true;
+    }
     function renderMainChat() {
         if (!tools) return;
         tools.hidden = !main(); searchPanel.hidden = !main() || !searchPanel.open;
@@ -154,7 +189,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             if (group.collapsed) continue;
             const mapped = group.events.map((event, seq) => ({ ...event, seq, data: { ...event.data,
                 ...(event.data?.taskId?.startsWith('turn-') ? {taskId:`${event.sourceRef.sessionId}:${event.data.taskId}`} : {}) } })), projected = WeftUiCore.projectTimeline(mapped);
-            const specs = visible.map(event => ({ kind: event.type === 'side.result' ? 'result' : 'message', key: event.eventId, event, seq: mapped.find(item => item.eventId === event.eventId).seq, estimate: 100 }));
+            const specs = visible.map(event => ({ kind: event.type === 'side.result' ? 'result' : 'message', key: event.presentationKey || event.eventId, event, seq: mapped.find(item => item.eventId === event.eventId).seq, estimate: 100 }));
             for (const block of projected.groups) {
                 const end = projected.groups.find(next => next.seq > block.seq)?.seq ?? Infinity;
                 const events = mapped.filter(event => event.seq >= block.seq && event.seq < end && !['user.message', 'assistant.message', 'side.result'].includes(event.type));
@@ -163,7 +198,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             for (const event of projected.cards.filter(event => /^(artifact.|question.)/.test(event.type))) specs.push({ kind: 'progress', key: event.eventId, seq: event.seq, events: [event], estimate: 70 });
             rows.push(...specs.sort((a, b) => a.seq - b.seq));
         }
-        const activeEvents = [...core.state.chatWindow.events.values()].filter(event => event.sourceRef?.sessionId === core.state.mainChat.activeSessionId).sort((a,b)=>a.orderKey.localeCompare(b.orderKey));
+        const activeEvents = core.mainChatDays().flatMap(group=>group.events).filter(event => event.sourceRef?.sessionId === core.state.mainChat.activeSessionId).sort((a,b)=>a.orderKey.localeCompare(b.orderKey));
         const lastVisible = activeEvents.filter(event => /^(user.message|assistant.message|step.)/.test(event.type)).at(-1);
         if (core.state.mainChat.running && (!lastVisible || lastVisible.type === 'user.message' || lastVisible.type === 'step.completed')) rows.push({kind:'waiting',key:'main-waiting',text:core.processingStageLabel(core.state.mainChat.processing),estimate:40});
         for (const event of core.optimisticMessages()) rows.push({ kind: 'optimistic', key: event.requestId, event, estimate: 90 });
@@ -179,9 +214,9 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         if (!search.query) ui.historyNotice(core.state.chatWindow.indexState === 'building' ? '仍在整理历史，最近内容可以正常阅读。' : core.state.chatWindow.indexState === 'failed' ? '历史整理失败，请重新打开主对话。' : '');
     }
     function focusMainEvent(id) {
-        measureOffsets(); const index = rows.findIndex(row => row.key === id); if (index < 0) return;
+        measureOffsets(); const index = rows.findIndex(row => row.key === id || row.event?.eventId === id); if (index < 0) return;
         ui.conversationScroll?.hold(); box().scrollTop = listStart() + offsets[index]; renderVisible();
-        const row = mounted.get(id);row?.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});row?.focus({ preventScroll: true });
+        const row = mounted.get(rows[index].key);row?.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});row?.focus({ preventScroll: true });
     }
     function resetMainChatView() { generation++; rows = []; offsets = []; heights.clear(); expanded.clear(); mounted.clear(); top = bottom = null; observer?.disconnect(); list().classList.remove('is-main-chat'); list().setAttribute('aria-live','polite'); if (searchPanel) { searchPanel.querySelector('input').value = ''; searchPanel.querySelector('[role=status]').textContent = ''; } }
     function renderChatOrigin(chat) {
@@ -250,7 +285,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         ui.byId('jump-latest').addEventListener('click', () => { if (main() && core.state.chatWindow.hasNewer) void core.selectMainChat(); else if (main()) void core.markLatestChatRead?.(); });
         document.addEventListener('keydown', event => { if (event.key === 'Escape' && searchPanel.open) { searchPanel.open = false; searchPanel.hidden = true; void core.searchMainChat(''); } });
     }
-    return { mountMainChat, renderMainChat, focusMainEvent, resetMainChatView, renderChatOrigin, fixedPageNavigation: () => fixedNavigation,
+    return { mountMainChat, renderMainChat, paintLiveChatMessages, focusMainEvent, resetMainChatView, renderChatOrigin, fixedPageNavigation: () => fixedNavigation,
         mainChatAnchor: () => {const saved=rememberAnchor();const index=rows.findIndex(row=>row.key===saved?.key);const row=rows.slice(Math.max(0,index)).find(row=>row.event?.eventId||row.events?.length);return row?.event?.eventId||row?.events?.[0]?.eventId||null;},
         restoreMainChatDraft: text => { ui.byId('message-text').value = text; ui.updateAvailability(); },
         renderSessions: () => { original.renderSessions(); if (sidebar) { sidebar.hidden = !core.state.mainChat; const label = ui.byId('new-session'); label.childNodes.forEach(node => { if (node.nodeType === Node.TEXT_NODE) node.textContent = core.state.mainChat ? '新旁聊' : '新对话'; }); } renderMainChat(); },

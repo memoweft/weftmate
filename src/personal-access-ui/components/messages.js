@@ -64,10 +64,23 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
     }
     function paintHistoryMessages(events, targetList = null) {
         const list = targetList || ui.byId('transcript'), sessionId = events[0]?.sourceRef?.sessionId || core.state.selectedSessionId;
+        if (!targetList) {
+            const anchors=new Set([...core.state.historyEvents.values()].map(event=>String(event.data?.streamSeq ?? event.seq)));
+            for(const row of [...list.children])if(row.dataset.liveMessage==='true'&&!anchors.has(row.dataset.streamSeq))row.remove();
+        }
         const incremental = list.children.length > 0 && !core.state.olderLoading;
         for (const event of events) {
             if (!['user.message', 'assistant.message'].includes(event.type))
                 continue;
+            const streamSeq = event.data?.streamSeq;
+            const prior = Number.isSafeInteger(streamSeq) ? [...list.children].find(row => row.dataset.streamSeq === String(streamSeq)) : null;
+            if (prior) {
+                prior.dataset.seq = String(event.seq);
+                prior.dataset.liveMessage = String(event.data.live===true);
+                WeftContent.update(prior.querySelector('.message-text'), event.data.text, { streaming: event.data.streaming === true });
+                if (!event.data.live) { ui.messageActions?.bind(prior,event,sessionId); ui.appendReplyMemory(prior,event); globalThis.WeftModelThinking?.(core,prior,event); }
+                continue;
+            }
             const images = Array.isArray(event.data?.images) ? event.data.images : [];
             const files = event.type === 'user.message' && Array.isArray(event.data?.originalAttachments)
                 ? event.data.originalAttachments.map(core.normalizedOriginalFile).filter(Boolean) : [];
@@ -79,10 +92,12 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             if (event.type === 'user.message' && core.receiptIdPattern.test(event.data?.receiptId || ''))
                 row.dataset.receiptId = event.data.receiptId;
             row.dataset.seq = String(event.seq);
+            if (Number.isSafeInteger(streamSeq)) row.dataset.streamSeq = String(streamSeq);
+            if (event.data?.live) row.dataset.liveMessage = 'true';
             row.dataset.memorySession = event.sourceRef?.sessionId || sessionId;
             if (typeof event.data?.text === 'string' && event.data.text)
                 row.append(window.WeftDesktop
-                    ? window.WeftDesktop.markdown(event.data.text, 'message-text markdown-body',{pages:[...(core.conversationTasks?.entries?.values()||[])].flatMap(entry=>entry.payload?.sources||[])}) : ui.element('span', 'message-text', event.data.text));
+                    ? window.WeftDesktop.markdown(event.data.text, 'message-text markdown-body',{streaming:event.data.streaming===true,pages:[...(core.conversationTasks?.entries?.values()||[])].flatMap(entry=>entry.payload?.sources||[])}) : ui.element('span', 'message-text', event.data.text));
             if (images.length) {
                 const gallery = ui.element('div', 'synced-image-gallery');
                 const previewScope = { ownerId: core.state.ownerId, identityGeneration: core.state.identityGeneration,
@@ -125,6 +140,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             if (originalImages.length)
                 ui.appendUnpreviewedOriginalImages(row, originalImages);
             if (event.type === 'assistant.message') {
+                if (event.data?.live) globalThis.WeftContent?.update(row.querySelector('.message-text'),event.data.text,{streaming:event.data.streaming===true});
                 appendMessageFiles(row,event.data.text);
                 globalThis.WeftModelThinking?.(core, row, event);
                 ui.appendReplyMemory(row, event);
@@ -147,7 +163,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
                     WeftContent.update(body,full.data.text);const actual=body.closest('.message');if(actual){appendMessageFiles(actual,full.data.text);actual.querySelector('.truncated')?.remove();}
                 }).catch(()=>{});
             }
-            ui.messageActions?.bind(row, event, event.sourceRef?.sessionId || sessionId);
+            if (!event.data?.live) ui.messageActions?.bind(row, event, event.sourceRef?.sessionId || sessionId);
             if (incremental && events.length <= 20 && event.type === 'assistant.message') {
                 globalThis.WeftReplyMotion?.reveal(row.querySelector('.message-text'),'arrival');
                 globalThis.WeftReplyMotion?.reveal(row.querySelector('.message-actions'),'arrival');

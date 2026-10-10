@@ -3,7 +3,7 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
   if (!environment.mobileState) return {};
   const state = environment.mobileState;
   const sharedPhoneBinding = core.phoneBinding;
-  let historyScope = null;
+  let historyScope = null, loadedHistoryScope = null;
   function phoneBinding(conversationId = core.state.selectedPhoneConversationId) {
     // Native status marks an offline cached handoff as uncertain. The phone's
     // cached conversation still identifies its original session for reading.
@@ -57,11 +57,11 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
     const owner = state.owner, epoch = state.authEpoch, generation = state.sharedGeneration, sessionId = state.sharedSessionId;
     syncMobileIdentity(); core.state.online = true;
     state.sharedLoading = true; state.sharedError = '';
-    await core.refreshHistory(state.sharedNextSeq === -1);
+    await core.refreshHistory(loadedHistoryScope !== historyScope);
     if (!core.mobile.sharedViewCurrent(owner, epoch, generation, sessionId)) return;
     state.sharedEvents = [...core.state.historyEvents.values()].sort((a,b) => a.seq-b.seq);
     state.sharedNextSeq = core.state.afterSeq; state.sharedHasOlder = core.state.hasOlder;
-    state.sharedNextBeforeSeq = core.state.nextBeforeSeq; state.sharedLoading = false;
+    state.sharedNextBeforeSeq = core.state.nextBeforeSeq; state.sharedLoading = false; loadedHistoryScope = historyScope;
     await core.mobile.reconcileSharedDelivery();
     if (!core.mobile.sharedViewCurrent(owner, epoch, generation, sessionId)) return;
     effects.renderSharedConversation(); void effects.refreshConversationTasks();
