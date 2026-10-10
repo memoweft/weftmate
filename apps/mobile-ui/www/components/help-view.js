@@ -30,7 +30,7 @@ globalThis.WeftHelpView={mount({target,core,kind,back,run,mobile=false}){
         const article=el('article','release-entry'),top=el('div','release-heading'),body=el('div','release-body');
         const toggle=button(row.version,()=>{body.hidden=!body.hidden;toggle.setAttribute('aria-expanded',String(!body.hidden));},'release-toggle');toggle.append(WeftIcons.create('chevron',16));toggle.setAttribute('aria-expanded',String(index===0));
         body.id=`release-${row.version.replaceAll('.','-')}`;toggle.setAttribute('aria-controls',body.id);body.hidden=index!==0;top.append(toggle);
-        if(row.version===current.version)top.append(el('span','release-current','当前版本'));if(row.date){const d=row.date.split('-');top.append(el('time','release-date',`${Number(d[0])} 年 ${Number(d[1])} 月 ${Number(d[2])} 日`));}
+        if(row.version===current.version)toggle.append(el('span','release-current','当前版本'));if(row.date){const d=row.date.split('-');toggle.append(el('time','release-date',`${Number(d[0])} 年 ${Number(d[1])} 月 ${Number(d[2])} 日`));}
         for(const [key,label]of [['added','新增'],['improved','改进'],['fixed','修复']])if(row[key].length){const section=el('section');section.append(el('h3','',label));const list=el('ul');for(const text of row[key])list.append(el('li','',text));section.append(list);body.append(section);}
         if(!body.children.length)body.append(el('p','help-intro','这次更新的说明还在准备中。你仍然可以查看下方的近期更新。'));
         article.append(top,body);content.append(article);}

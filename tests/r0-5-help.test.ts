@@ -10,7 +10,7 @@ function fixture(){const context:any={WeftUiCore:{factories:{}}};for(const file 
 test('release records have valid dates, semantic versions and user-facing categories; generated records match source',()=>{
   const f=fixture(),expected=[];for(const file of readdirSync('docs/changelog').filter(file=>file.endsWith('.json'))){const record=validateRelease(JSON.parse(readFileSync(`docs/changelog/${file}`,'utf8')));for(const [audience,version]of Object.entries(record.versions)){const {versions,...body}=record;expected.push({...body,audience,version});}}
   const rows=JSON.parse(JSON.stringify(f.context.WeftUiCore.releaseNotes));assert.deepEqual(rows.sort((a:any,b:any)=>a.audience.localeCompare(b.audience)),expected.sort((a:any,b:any)=>a.audience.localeCompare(b.audience)));
-  const source=JSON.parse(readFileSync('docs/changelog/2026-10-10.json','utf8'));for(const mutation of [{date:'2026-02-30'},{versions:{desktop:'v1',mobile:'0.8.24'}},{added:['UX-6 improved search']},{fixed:['DSH updated']}])assert.throws(()=>validateRelease({...source,...mutation}));
+  const source=JSON.parse(readFileSync('docs/changelog/2026-10-10.json','utf8'));for(const mutation of [{date:'2026-02-30'},{versions:{desktop:'v1',mobile:'0.8.24'}},{added:['UX-6 improved search']},{added:['R0-5 completed']},{unknown:[]},{fixed:['DSH updated']}])assert.throws(()=>validateRelease({...source,...mutation}));
 });
 test('update notice establishes a baseline, shows once per account/version and survives reload; rollback never repeats',()=>{
   const f=fixture();assert.equal(f.core.observeRelease('1.0.0'),false);assert.equal(f.core.observeRelease('1.1.0'),true);assert.equal(f.core.observeRelease('1.1.0'),false);
