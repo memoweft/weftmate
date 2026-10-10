@@ -1,0 +1,15 @@
+{
+  "initialDisposition": "recapture",
+  "fullReviewDisposition": "fix",
+  "fixes": [
+    {
+      "id": "F1",
+      "issue": "Dark native time picker icon had low contrast",
+      "status": "resolved"
+    }
+  ],
+  "coverage": "requested screenshot gaps resolved",
+  "finalDisposition": "ship",
+  "scope": "listed F1 fix and evidence gaps; no physical screen reader or audio verification",
+  "documentation": "existing UI_SPEC and component/token system preserved"
+}

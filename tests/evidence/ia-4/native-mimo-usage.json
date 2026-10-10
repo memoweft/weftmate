@@ -1,0 +1,46 @@
+[
+  {
+    "completion_tokens": 7,
+    "prompt_tokens": 2113,
+    "total_tokens": 2120,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    }
+  },
+  {
+    "completion_tokens": 9,
+    "prompt_tokens": 2618,
+    "total_tokens": 2627,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens_details": {
+      "cached_tokens": 2112
+    }
+  },
+  {
+    "completion_tokens": 7,
+    "prompt_tokens": 2953,
+    "total_tokens": 2960,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens_details": {
+      "cached_tokens": 2560
+    }
+  },
+  {
+    "completion_tokens": 9,
+    "prompt_tokens": 3459,
+    "total_tokens": 3468,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens_details": {
+      "cached_tokens": 2560
+    }
+  }
+]

@@ -1,0 +1,42 @@
+{
+  "identityGeneration": 1,
+  "historyGeneration": 2,
+  "sessions": [
+    {
+      "title": "FX-9 手机办事",
+      "sessionId": "session-f825e087-86d0-43eb-9491-cb909baa3abe",
+      "chatId": "chat-b134a60e-da88-4421-b219-e1cc513ef201",
+      "archived": false
+    }
+  ],
+  "listed": [
+    {
+      "title": "FX-9 手机办事",
+      "sessionId": "session-f825e087-86d0-43eb-9491-cb909baa3abe"
+    }
+  ],
+  "phone": [],
+  "selectedSessionId": null,
+  "selectedChatId": "chat-960e6091-fe5f-4f99-b782-fe7158bb2268",
+  "domRows": [
+    {
+      "label": "未分组"
+    },
+    {
+      "label": "FX-9 手机办事",
+      "row": "session-f825e087-86d0-43eb-9491-cb909baa3abe"
+    },
+    {
+      "label": "",
+      "row": "session-f825e087-86d0-43eb-9491-cb909baa3abe"
+    },
+    {
+      "label": "",
+      "row": "session-f825e087-86d0-43eb-9491-cb909baa3abe"
+    },
+    {
+      "label": "",
+      "row": "session-f825e087-86d0-43eb-9491-cb909baa3abe"
+    }
+  ]
+}

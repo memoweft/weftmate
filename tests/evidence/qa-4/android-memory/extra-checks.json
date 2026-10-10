@@ -1,0 +1,34 @@
+[
+  {
+    "name": "light-settings-记忆",
+    "status": "passed",
+    "durationMs": 1567,
+    "page": "memory",
+    "text": "记忆\n\n查看当前账户的理解与来源；整理过去的对话，或在详情中纠正、停用与忘掉。\n\n显示当前账户的记忆快照；可用操作以当前服务能力与单条记忆状态为准。\n\n记忆正常\n\n整理过去的对话\n在当前类别的全部账户记忆中搜索\n记忆类别\n理解\n搜索\n刷新\n导出我的记忆 · JSON导出我的记忆 · Markdown\n\n当前账户还没有可显示的记忆。"
+  },
+  {
+    "name": "dark-settings-记忆",
+    "status": "passed",
+    "durationMs": 1623,
+    "page": "memory",
+    "text": "记忆\n\n查看当前账户的理解与来源；整理过去的对话，或在详情中纠正、停用与忘掉。\n\n显示当前账户的记忆快照；可用操作以当前服务能力与单条记忆状态为准。\n\n记忆正常\n\n整理过去的对话\n在当前类别的全部账户记忆中搜索\n记忆类别\n理解\n搜索\n刷新\n导出我的记忆 · JSON导出我的记忆 · Markdown\n\n当前账户还没有可显示的记忆。"
+  },
+  {
+    "name": "native-memory-backfill-preview",
+    "status": "passed",
+    "durationMs": 1802,
+    "preview": {
+      "ownerId": "owner-c5b25482-d428-472c-a3c1-fa2572d6213d",
+      "previewId": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "sessionCount": 0,
+      "turnCount": 0,
+      "estimatedUsage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "approximate": true
+      },
+      "job": null
+    },
+    "text": "记忆\n\n查看当前账户的理解与来源；整理过去的对话，或在详情中纠正、停用与忘掉。\n\n显示当前账户的记忆快照；可用操作以当前服务能力与单条记忆状态为准。\n\n记忆正常\n\n整理过去的对话\n\n统计失败，请检查连接后重试。\n\n在当前类别的全部账户记忆中搜索\n记忆类别\n理解\n搜索\n刷新\n导出我的记忆 · JSON导出我的记忆 · Markdown\n\n当前账户还没有可显示的记忆。"
+  }
+]

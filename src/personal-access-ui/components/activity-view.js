@@ -33,7 +33,8 @@ globalThis.WeftActivityView={mount({target,core,timeZone=()=>core.activity.timeZ
                 if(!item.read)actions.append(button('标为已读',()=>core.markActivityRead(item)));
                 for(const el of actions.children)el.disabled=model.busy.has(item.id);
                 const status=node('span','activity-state',item.state==='pending'?'待处理':item.state==='unavailable'?'已失效':item.type.startsWith('approval.')||item.type.startsWith('question.')?'已完成':'');
-                row.replaceChildren(heading,summary,status,actions);row.setAttribute('aria-label',`${item.read?'':'未读，'}${item.title}`);
+                const reason=node('small','muted',({dnd:'因勿扰未提醒',daily_limit:'已达每日主动提醒上限',type_disabled:'已设为只进动态'})[item.notification?.reason]||'');
+                row.replaceChildren(heading,summary,reason,status,actions);row.setAttribute('aria-label',`${item.read?'':'未读，'}${item.title}`);
             }
             days.get(date).append(row);
         }
