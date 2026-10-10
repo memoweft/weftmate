@@ -53,3 +53,13 @@ Windows 安装、更新、卸载、数据保留、诊断和恢复的当前边界
 - 构建 vendor 前，在 DSH 检出目录按文件名顺序执行 `git apply patches/dsh/*.patch`，再编译、再 `npm run vendor:dsh`。云端的「Pinned DSH vendor unit tests」就是这样做的，并把补丁内容的哈希计入编译缓存键。
 - 升级固定提交时，每个补丁要么已被上游吸收后删除，要么改名为新提交前缀并重新生成；不允许留下打不上的补丁。
 - 新增补丁必须同时有一条依赖它的测试（如 `tests/weftmate-conversation-surface.test.ts`），这样漏打补丁会在 vendor 测试里变红。
+
+Windows 新检出应在 checkout（源码检出）前关闭 `core.autocrlf`，保留上游文件与补丁的 LF（单字符换行）。否则 `git apply` 的上下文及上游 `patchedDependencies` 的锁定哈希都可能因换行转换失配。使用检出根声明的 `pnpm@11.7.0`，从该根运行 `corepack pnpm install --frozen-lockfile` 和 `corepack pnpm run build`；在 WeftMate 根加 `--dir` 不保证 Corepack（包管理器版本选择器）先选中上游声明的版本。
+
+## 包内容中的构建身份
+
+`verify-windows-package` 扫描 app.asar（应用归档）及 resources（松散资源目录），包括 `app.asar.unpacked`、DSH 的全部第三方依赖、配置与中继资源。自有代码、WeftMate 插件和配置拒绝任何 Windows 用户目录路径；第三方 `node_modules` 文件只拒绝当前构建机的用户目录、用户名、机器名与构建目录。身份每次从操作系统读取，不存仓库；失败只输出文件和违规类型，成功只输出零命中计数。源码映射、大文本与 UTF-16（双字节文本编码）配置均检查，不用文件白名单。
+
+没有裁剪 node-pty 的 `src/**` 或测试文件：分层检查允许上游作者的示例路径，同时仍检出该文件中夹带的本机身份。另一方案是在暂存时裁剪非运行时文件；node-pty 的 `main` 指向 `lib/index.js`，执行依赖 `lib` 与原生二进制而非 `src`。vendor 清单校验原始 tarball（依赖包归档）的哈希、闭包包集合及入口，所以只裁剪暂存副本不会改动清单哈希；但还需额外维护文件裁剪规则和依赖升级时的运行验证。本次选择保持已验证闭包完整，通过所有运行路径验收分层扫描方案。
+
+暂存排除 hoisted（平铺依赖）布局中的 pnpm 安装状态与缓存元数据：`node_modules/.bin`、`.pnpm`、`.modules.yaml`、`.pnpm-workspace-state-v1.json`。这些文件记录安装机绝对路径；真实入口为 `bin/dsh-web` 与包的 `main/exports`，原生绑定、源码、许可证及整个运行包集合保留。原始 vendor 与 tarball 哈希不改，暂存副本只移除安装管理文件。DSH 随仓库的 portable CSS module IDs（可移植样式模块标识）补丁将虚拟模块标识改成仓库相对路径，读取及 watch（构建变更监听）仍解析回物理源文件；修复编译器在输出注释中泄露绝对目录，新增固定 vendor 测试会拒绝漏打补丁的产物。
