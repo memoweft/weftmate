@@ -19,7 +19,7 @@ test('Relay phone first input and file task', {
   const evidence = resolve(process.env.WEFTMATE_RELAY_PHONE_REPORT ?? '.local/relay-phone'); await mkdir(evidence, { recursive: true });
   let infra, runtime, host, browser, phone;
   try {
-    infra = await relayFixture(t); const { f, root, frpDir, frontPort } = infra;
+    infra = await relayFixture(t, { liveClock: true }); const { f, root, frpDir, frontPort } = infra;
     assert.equal(frontPort, 443, 'this scenario must exercise the public 443 frontend');
     runtime = await phoneRuntime(root, runtimeLogs);
     host = await createPersonalAccessService({ root: join(root, 'host'), port: 0, backend: runtime.backend, uiHandler: servePersonalAccessUi,
@@ -28,7 +28,7 @@ test('Relay phone first input and file task', {
         connectAddress: '127.0.0.1', connectPort: frontPort, diagnostic: e => runtimeLogs.push(e.message) } });
     runtime.setHost(host); await runtime.start(); const started = await host.start();
     const direct = async (route, body, auth, method = body === undefined ? 'GET' : 'POST', headers = {}) => {
-      const response = await fetch(started.origin + '/personal/v1' + route, { method,
+      const response = await fetch(started.origin + '/personal/v1' + route, { method, signal: AbortSignal.timeout(15_000),
         headers: { origin: started.origin, 'content-type': 'application/json', ...(auth ? { cookie: auth.cookie, 'x-weftmate-csrf': auth.csrfToken } : {}), ...headers },
         body: body === undefined ? undefined : JSON.stringify(body) });
       return { status: response.status, data: await response.json(), cookie: response.headers.get('set-cookie')?.split(';')[0] };
@@ -79,7 +79,7 @@ test('Relay phone first input and file task', {
     assert.equal(selected.approval, 'pending'); await refresh(device, selected.resource);
     const phoneApi = async (route, body, method = body === undefined ? 'GET' : 'POST', headers = {}) => phone.evaluate(async ({ route, body, method, headers }) => {
       const me = await (await fetch('/personal/v1/auth/me')).json();
-      const response = await fetch('/personal/v1' + route, { method, headers: { 'content-type': 'application/json', 'x-weftmate-csrf': me.csrfToken ?? '', ...headers },
+      const response = await fetch('/personal/v1' + route, { method, signal: AbortSignal.timeout(15_000), headers: { 'content-type': 'application/json', 'x-weftmate-csrf': me.csrfToken ?? '', ...headers },
         body: body === undefined ? undefined : JSON.stringify(body) });
       return { status: response.status, data: await response.json() };
     }, { route, body, method, headers });
@@ -187,15 +187,20 @@ test('Relay phone first input and file task', {
     assert.equal(await runtime.readOutput(), runtime.content);
     const library = (await phoneApi('/library?search=result.txt')).data;
     const item = library.items.find(item => item.name === 'result.txt' || item.fileName === 'result.txt'); assert.ok(item, JSON.stringify(library));
+    assert.equal(item.source.sessionId, created.sessionId, 'library provenance must belong to this task');
+    assert.equal(item.source.callId, 'ci-r1-2', 'library record must come from the native write');
     const preview = (await phoneApi(`/library/${item.id}/preview`)).data;
     assert.ok(JSON.stringify(preview).includes(runtime.content.trim()), 'relay library preview does not match disk readback');
     const taskRequests = runtime.requests.filter(r => scenarioUserText(r.messages).startsWith('CI_R1_FILE_TASK'));
     assert.equal(taskRequests.length, 5, 'load/read/write/readback/finish must run once each');
+    const inputRead = taskRequests[2].messages.find(m => m.role === 'tool' && m.tool_call_id === 'ci-r1-1');
+    assert.ok(JSON.stringify(inputRead?.content).includes(runtime.content.trim()), 'native source read must reach the model before writing');
     assert.ok(taskRequests.at(-1).messages.filter(m => m.role === 'tool').some(m => JSON.stringify(m.content).includes(runtime.content.trim())), 'model did not read the native file result');
     assert.deepEqual(routeViolations, []); assert.deepEqual(pageErrors, []);
     assert.ok(report.requests.length > 0); assert.ok(report.requests.every(r => r.origin === base && r.port === '443'));
     report.fileTask = { completed: true, approvals: approvedIds.size, fileContent: runtime.content, libraryId: item.id, modelSteps: taskRequests.length };
     report.relay = { base, port: 443, realHAProxy: true, realFrp: true, tlsAtHost: true, directBrowserRequests: 0 };
+    await phone.getByText('CI_R1_FILE_TASK_COMPLETED', { exact: true }).waitFor();
     await phone.screenshot({ path: join(evidence, 'file-task-completed.png') }); report.passed = true;
   } catch (error) {
     report.passed = false; report.error = error.stack;

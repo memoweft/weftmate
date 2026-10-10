@@ -1,5 +1,4 @@
 /** Real production DSH/backend seam, with an isolated scripted HTTP model. */
-import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -86,6 +85,7 @@ export async function phoneRuntime(root, logs) {
     profiles: () => [profile], hasCredential: () => true, routeForProfile: () => ({ provider: 'relay-fixture' }),
     listSessions: () => gateway('/sessions'), resolveSession: async () => ({ profile }), ensureKnownSession: async () => {},
     gateway, queue: fn => fn(), bindSession: (id, profileId) => bindings.set(id, profileId),
+    getRuntimeId: () => runtime.currentPersonalRuntimeId(),
     sessionProfileId: id => bindings.get(id), sessionProfileIds: () => Object.fromEntries(bindings),
     replyEvidence: input => runtime.readPersonalReplyEvidence(input), sessionWorkspaceRoot: join(root, 'workspaces'),
     inferenceVerified: () => true,

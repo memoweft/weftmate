@@ -29,7 +29,7 @@ export function processChild(binary, args) {
   } };
 }
 
-export async function relayFixture(t) {
+export async function relayFixture(t, { liveClock = false } = {}) {
     const frontPort = Number(process.env.WEFTMATE_RELAY_FRONT_PORT ?? '443');
     const ports = {};
     for (const name of ['frps','https','control','content','plugin','api']) ports[name] = await freePort();
@@ -37,11 +37,15 @@ export async function relayFixture(t) {
       CLOUD_RELAY_FRPS_PORT: String(ports.frps), CLOUD_RELAY_FRPS_HTTPS_PORT: String(ports.https),
       CLOUD_RELAY_CONTROL_PORT: String(ports.control), CLOUD_RELAY_CONTENT_PORT: String(ports.content), CLOUD_RELAY_PLUGIN_PORT: String(ports.plugin) } });
     const root = await realpath(f.root), infra = path.join(root, 'infra'); await mkdir(infra);
+    // Identity tests normally control a frozen clock. This longer browser
+    // scenario needs real-time JWT/installation authentication throughout.
+    const clockTimer = liveClock ? setInterval(() => f.advance(Date.now() - f.now), 250) : null;
     const frpDir = process.env.WEFTMATE_FRP_DIR, haproxy = process.env.WEFTMATE_HAPROXY ?? 'haproxy';
     assert.ok(frpDir, 'official frp directory must be supplied');
     const procs = []; let apiTls;
     let closing;
     const close = () => closing ??= (async () => {
+      clearInterval(clockTimer);
       for (const proc of procs.reverse()) await proc.close();
       if (apiTls) await new Promise(r => { apiTls.close(r); apiTls.closeAllConnections(); });
       await f.identity.relay.close();
