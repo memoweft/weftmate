@@ -165,7 +165,10 @@ test('BK-1 portable restore keeps valid command receipts under the new installat
   const auth = await setup.json(), headers = { origin: started.origin, 'content-type': 'application/json', cookie: setup.headers.get('set-cookie').split(';')[0], 'x-weftmate-csrf': auth.csrfToken };
   const created = await fetch(`${started.origin}/personal/v1/commands`, { method: 'POST', headers, body: JSON.stringify({ requestId: 'portable-command', kind: 'session.create', targetDeviceId: started.hostId, modelProfileId: 'synthetic' }) });
   assert.equal(created.status, 202); const command = (await created.json()).command;
-  for (let i = 0; i < 50; i++) { const row = await (await fetch(`${started.origin}/personal/v1/commands/${command.commandId}`, { headers })).json(); if (row.command.state === 'accepted_by_dsh') break; await new Promise(resolve => setTimeout(resolve, 20)); }
+  // The snapshot must hold a settled receipt: closing while the command is still in flight records it as uncertain.
+  let accepted = false;
+  for (const deadline = Date.now() + 15000; !accepted && Date.now() < deadline;) { const row = await (await fetch(`${started.origin}/personal/v1/commands/${command.commandId}`, { headers })).json(); accepted = row.command.state === 'accepted_by_dsh'; if (!accepted) await new Promise(resolve => setTimeout(resolve, 20)); }
+  assert.equal(accepted, true, 'source command settles before the snapshot');
   await source.close(); const row = await snapshot(f), targetRoot = path.join(f.base, 'new-machine'); await mkdir(targetRoot);
   const target = await createPersonalAccessService({ root: path.join(targetRoot, 'personal-access'), port: 0, backend }); const targetHost = (await target.start()).hostId; await target.close();
   const control = path.join(targetRoot, 'personal-backup'); await mkdir(control);
