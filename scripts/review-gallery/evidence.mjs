@@ -5,6 +5,10 @@ import { catalog, repository, assertPublicText } from './common.mjs';
 // Explicit compatibility aliases for known synthetic device captures. Browser captures
 // and UI-3's machine-path-bearing shell evidence are deliberately not device evidence.
 const aliases = [];
+for (const theme of ['light', 'dark']) {
+  aliases.push({ platform: 'windows', scene: 'onboarding', theme, path: `tests/evidence/onb-1/desktop-welcome-${theme}.png` });
+  aliases.push({ platform: 'mobile-web', scene: 'onboarding', theme, path: `tests/evidence/onb-1/mobile-web-pair-waiting-${theme}.png` });
+}
 const add = (platform, directory, prefix, mapping, themes) => {
   for (const theme of themes) for (const [scene, suffix] of Object.entries(mapping)) {
     aliases.push({ platform, scene, theme, path: `${directory}/${prefix.replace('{theme}', theme)}${suffix}.png` });
