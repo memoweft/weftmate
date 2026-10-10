@@ -1,0 +1,45 @@
+{
+  "category": "memory",
+  "setup": {
+    "files": [],
+    "memories": [],
+    "devices": [
+      "隔离宿主、合成账号；不得访问日用数据"
+    ]
+  },
+  "timeoutSec": 900,
+  "id": "memory-05-confirmed-correction",
+  "title": "确认后一句纠正取代多条相关记忆",
+  "turns": [
+    {
+      "user": "我喝第903种花茶时偏好加一小撮肉桂粉。请提议以后喝这种茶时提醒我加肉桂粉。"
+    },
+    {
+      "user": "好，以后我喝第903种花茶时，就提醒我加一小撮肉桂粉。"
+    },
+    {
+      "user": "纠正一下，第903种花茶不加肉桂粉，改为加一片柠檬。",
+      "after": {
+        "newSession": true,
+        "waitMs": 1000
+      }
+    },
+    {
+      "user": "我喝第903种花茶加什么？不要调用工具。"
+    }
+  ],
+  "checks": [
+    {
+      "type": "reply_contains",
+      "text": "柠檬"
+    },
+    {
+      "type": "turn_status",
+      "status": "completed"
+    },
+    {
+      "type": "memory_used"
+    }
+  ],
+  "notes": "FX-17固定题。普通评测检查回答与采用；正式双旧项失效、单后继、两端来源和拒绝提示必须同时通过 tests/integration/fx17-correction-desktop.mjs 专项，不能仅凭近期原话答对判定完成。"
+}
