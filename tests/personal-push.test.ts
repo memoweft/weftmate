@@ -1,10 +1,23 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { readFile } from 'node:fs/promises';
+import { readFile, mkdtemp, mkdir, copyFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { pathToFileURL } from 'node:url';
 import { startTimelineCandidate } from './integration/timeline-ui-candidate.mjs';
 import { noPush, pushPayload, pushRegistration } from '../src/push/provider.mjs';
 import { sendHostPush } from '../src/personal-access/push.mjs';
+
+test('independent cloud release can load its provider seam without the host source tree', async t=>{
+  const root=await mkdtemp(join(tmpdir(),'weftmate-s3a-push-release-'));
+  t.after(()=>rm(root,{recursive:true,force:true}));
+  await mkdir(join(root,'src'));
+  for(const name of ['push.mjs','push-provider.mjs','security.mjs'])await copyFile(new URL(`../services/cloud/src/${name}`,import.meta.url),join(root,'src',name));
+  const module=await import(pathToFileURL(join(root,'src/push.mjs')).href);assert.equal(typeof module.cloudPush,'function');
+  const cloud=await import(pathToFileURL(join(root,'src/push-provider.mjs')).href);
+  assert.deepEqual(await cloud.noPush.send({}, {eventId:'activity-a',type:'task.completed'}),await noPush.send({}, {eventId:'activity-a',type:'task.completed'}));
+  assert.throws(()=>cloud.pushPayload({eventId:'activity-a',type:'task.completed',text:'private'}));
+});
 
 test('host forwarding uses only eligible account/device bindings and only event identity/type', async()=>{
   const sent:any[]=[];const provider={id:'synthetic',send:async(device:any,payload:any)=>{sent.push({device,payload});return {accepted:true};}};

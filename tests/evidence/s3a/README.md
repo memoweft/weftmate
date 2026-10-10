@@ -21,7 +21,7 @@ Android 原生消费器、Keystore（安卓密钥库）身份、原生网络、�
 ## 定向检查
 
 - Android JVM（Java 虚拟机）44/44，包括新通知决定 / 已读与处理 / 去重 / 五类十渠道 / 跨来源账户身份 / Worker（后台任务）凭据与重试 / 无提供方登记等 7 项；调试包、测试包构建通过。
-- 宿主动态 / 通知决定 / 推送15/15：103,680种宿主决定组合保留；设备登记、令牌轮换 / 撤销、私有载荷边界、有效设备派发、重启 / 删除与原审批等通过。
+- 宿主动态 / 通知决定 / 推送16/16：103,680种宿主决定组合保留；设备登记、令牌轮换 / 撤销、私有载荷边界、有效设备派发、独立云发布包加载、重启 / 删除与原审批等通过。
 - 云19/19：登记 DPoP（设备持钥证明）认证 / 隔离 / 不回显、设备撤权 / 账号注销级联清理、新 schema（存储结构）8、进程入口与既有账号生命周期回归通过。Windows（微软桌面系统）现有目录 `fsync`（同步落盘）不适用，因此使用现成 Ubuntu Node（JavaScript 运行时），未修改生产落盘逻辑。
 - 手机桥与生成资产 / 主对话12/12、`npm run typecheck` 通过；Impeccable（界面检查工具）机械检查0项。完整测试交 PR（拉取请求）CI（持续集成），最终结果由 Claude 查看。
 - 最终合并 manifest（应用清单）保留 WorkManager 需要的普通 `WAKE_LOCK`（唤醒锁）权限，移除库默认、未使用的 `FOREGROUND_SERVICE` 权限及 `SystemForegroundService`；本实现无常驻通知、前台服务、Google Play 服务或电池白名单请求。
@@ -37,3 +37,5 @@ Android 原生消费器、Keystore（安卓密钥库）身份、原生网络、�
 运行器：`tests/integration/s3a-mumu.mjs`、`s3a-mimo.mjs`、`s3a-ui.mjs`。只能在独占 MuMu 并装好独立包后运行；会清本包 QA 数据，不可改成日用包名。尺寸验证结束恢复原 MuMu 显示覆盖值；收尾卸载本包两个 APK（安卓安装包）并关闭本包启动的模拟器，不停止 MuMu 后台服务。
 
 系统边界参考：[Android 周期任务最短间隔与省电约束](https://developer.android.com/reference/androidx/work/PeriodicWorkRequest)、[Android 通知运行时权限](https://developer.android.com/develop/ui/views/notifications/notification-permission)。
+
+已合入最新主干的 UX-P1（界面打磨）、FX-17（记忆修正）与 TB-2（目标），保留双方能力及动态深链；合并后重新验证相关35项（另补独立发布加载1项）、JVM44项、原生 / Electron尺寸页与类型检查。STATE冲突使用指定 merge-state.py 处理，其他包行保持主干。
