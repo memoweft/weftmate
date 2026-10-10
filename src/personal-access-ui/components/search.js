@@ -4,7 +4,7 @@ globalThis.WeftUiComponents.factories.search = (core,ui) => {
   async function open(row) {
     if(row.type==='actions') {
       const actions={new:()=>core.startNewConversation(),temporary:()=>core.startNewConversation(false,true),project:()=>ui.editProject(),
-        settings:()=>ui.openSettings('general'),memory:()=>core.openMemory(),activity:()=>ui.openActivity(),goals:()=>ui.openGoals(),library:()=>ui.openLibrary(),
+        settings:()=>ui.openSettings('general'),memory:()=>core.openMemory(),activity:()=>ui.openActivity(),goals:()=>ui.openGoals(),library:()=>ui.openLibrary(),help:()=>ui.openHelp(),releases:()=>ui.openReleases(),shortcuts:()=>ui.openShortcuts(),
         start:async()=>{const owner=core.state.ownerId,generation=core.state.identityGeneration;await core.startNewConversation();if(owner!==core.state.ownerId||generation!==core.state.identityGeneration)return;ui.byId('message-text').value=row.query;ui.updateAvailability();ui.byId('message-text').focus();await core.sendDraft(row.query);}};
       return actions[row.id]?.();
     }

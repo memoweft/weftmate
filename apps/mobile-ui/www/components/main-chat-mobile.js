@@ -8,7 +8,7 @@
   for(const name of ['wheel','touchmove'])$('chat-scroll').addEventListener(name,()=>{scrollGestureAt=performance.now();},{passive:true});
   const oldAttachments = uiCore.currentAttachmentDrafts,oldPick=pickAttachment,oldModels=openModels,oldRemove=removeAttachment,oldSelectConversation=selectConversation;
   const ids = {'assistant-title':'header-title','message-text':'draft','session-list':'conversation-list','new-session':'home-new-chat','transcript':'main-chat-transcript'};
-  const intro = el('div','main-chat-intro'); intro.id = 'main-chat-intro'; intro.append(el('h1','','今天想做什么？'));
+  const intro = el('div','main-chat-intro'); intro.id = 'main-chat-intro'; intro.append(el('h1','','今天想做什么？'));const learn=el('button','secondary','了解更多');learn.type='button';learn.onclick=()=>page('help');intro.append(learn);
   const older = el('button','quiet','加载更早内容'); older.id='main-chat-load-older'; older.type='button'; older.onclick=()=>uiCore.loadOlderLogicalHistory();
   const transcript = el('ol','main-chat-transcript'); transcript.id='main-chat-transcript';
   const notice = el('p','main-chat-notice chat-read-notice'); notice.setAttribute('role','status');

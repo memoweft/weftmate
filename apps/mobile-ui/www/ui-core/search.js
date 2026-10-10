@@ -38,7 +38,8 @@
     function actions(q='') {
       const definitions = q ? [['start','新建旁聊并用这句话开始','compose']] : [
         ['new','新建旁聊','compose'],['temporary','新建临时对话','chat'],...(!env.mobileState&&(effects.canCreateSearchProject?.()??true)?[['project','新建项目','folder']]:[]),
-        ['settings','打开设置','settings'],['memory','打开记忆','memory'],['activity','打开动态','bell'],['goals','打开目标','chart'],['library','打开成果库','folder']];
+        ['settings','打开设置','settings'],['memory','打开记忆','memory'],['activity','打开动态','bell'],['goals','打开目标','chart'],['library','打开成果库','folder'],
+        ['help','帮助','info'],['releases','更新内容','sync'],...(!env.mobileState&&(env.desktop||!(globalThis.matchMedia?.('(max-width:720px)')?.matches))?[['shortcuts','快捷键一览','keyboard']]:[])];
       return definitions.map(([id,title,icon])=>({id,key:`action:${id}`,type:'actions',title,icon,query:q}));
     }
     async function readSearch() {

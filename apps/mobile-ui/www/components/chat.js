@@ -483,7 +483,7 @@ async function saveRenderedImage(url,name){const owner=state.owner,epoch=state.a
 
 async function copyText(text){try{await call('clipboard.copy',{text});toast('已复制')}catch{toast('复制未完成，请长按选择文字',true)}}
 
-function welcomeState(){const welcome=el('div','chat-intro');welcome.append(el('h1','','今天想做什么？'));return welcome;}
+function welcomeState(){const welcome=el('div','chat-intro');const learn=el('button','secondary','了解更多');learn.type='button';learn.onclick=()=>page('help');welcome.append(el('h1','','今天想做什么？'),learn);return welcome;}
 function showWelcome(){const content=$('chat-content');clear(content);content.append(welcomeState());}
 
 function timeLabel(value){return uiCore.dateText(value)}
