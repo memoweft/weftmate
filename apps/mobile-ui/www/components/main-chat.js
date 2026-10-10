@@ -93,6 +93,8 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
                 menu.append(summary, button('从这里开旁聊', '从这里开旁聊', () => showSidePanel(spec.event))); (row.querySelector('.message-actions') || row).append(menu);
                 }
             }
+            globalThis.WeftReplyMotion?.indicator(row.querySelector('.message-text'),!complete && spec.event.type==='assistant.message');
+            if(complete)globalThis.WeftReplyMotion?.reveal(row.querySelector('.message-actions'),'arrival');
             highlight(row);
         } else if (spec.kind === 'result') {
             const result = spec.event.data, state = { completed: '成功', failed: '失败', stopped: '停止' }[result.state] || '待核对';
@@ -106,9 +108,10 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             }
             highlight(row);
         } else if (spec.kind === 'waiting') {
-            row.classList.add('inline-waiting'); row.setAttribute('role','status'); row.replaceChildren(ui.element('span',core.state.online ? 'inline-progress-text is-running' : 'inline-progress-text',spec.text));
+            row.classList.add('inline-waiting'); row.setAttribute('role','status'); const text=row.querySelector('.inline-progress-text')||ui.element('span','inline-progress-text is-running');if(!text.parentNode)row.replaceChildren(text);if(globalThis.WeftReplyMotion)WeftReplyMotion.status(text,spec.text,core.state.online);else text.textContent=spec.text;
         } else if (spec.kind === 'optimistic') {
             row.classList.add('message', 'user'); row.replaceChildren(ui.element('span', 'message-text', spec.event.text || (spec.event.files || []).join('、') || '附件'), ui.element('small', 'message-task-label', spec.event.status === 'undelivered' ? '未送达' : ['failed','confirming'].includes(spec.event.status) ? '发送结果待核对，草稿已保留' : spec.event.status === 'accepted' ? '已发送' : '发送中'));
+            if(!row.dataset.motionSent){row.dataset.motionSent='true';requestAnimationFrame(()=>globalThis.WeftReplyMotion?.reveal(row,'send'));}
             if (['failed','confirming','undelivered'].includes(spec.event.status)) {
                 const retry = button(spec.event.status === 'undelivered' ? '重试发送' : '检查状态', '检查状态', () => core.retryMainRequest(spec.event.requestId));
                 retry.disabled = !!spec.event.retrying || !core.state.online;row.append(retry);

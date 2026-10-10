@@ -1,0 +1,16 @@
+✔ deletion removes disposed native subagent logs recursively while retaining independent forks (26.4075ms)
+✔ concurrent cold resumes share a native handle and model reads finish before forgetting disposes it (2.3396ms)
+✔ FX-16 selection locks text and attachments until draft restoration, then first input survives (3.8178ms)
+✔ FX-16 later selection wins and account boundary discards old restoration (1.924ms)
+✔ FX-16 list summaries do not read history per request and update from observed events (2.9143ms)
+✔ FX-16 Android session paging preserves the complete query through its business adapter (6.0044ms)
+✔ FX-16 native sidebar index builds once and follows live creation, status and deletion (3.4701ms)
+✔ FX-16 mobile components use defined script globals or exported browser globals (15967.5513ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16734.614

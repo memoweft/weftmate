@@ -3,11 +3,12 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { desktopScript, desktopScriptPaths } from './helpers/desktop-ui-source.mjs';
+import {uiCoreAssets} from '../src/ui-core/manifest.mjs';
 import {mkdtemp,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createPersonalAccessService} from '../src/personal-access/index.mjs';
-const source = desktopScriptPaths().filter(p=>p.startsWith('ui-core/')).map(desktopScript).join('\n;\n');
+const source = desktopScriptPaths().filter(p=>uiCoreAssets.some(name=>p===`ui-core/${name}`)).map(desktopScript).join('\n;\n');
 function clock() {
   let time=0,id=0;const tasks=new Map<number,{at:number,fn:Function}>();
   return {now:()=>time,setTimeout(fn:Function,ms:number){tasks.set(++id,{at:time+ms,fn});return id;},clearTimeout(id:number){tasks.delete(id);},

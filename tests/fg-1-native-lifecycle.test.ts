@@ -1,12 +1,44 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { registerHooks } from 'node:module';
-import { mkdtemp, mkdir, writeFile, stat, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, stat, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 const hooks=registerHooks({resolve(specifier,context,next){if(specifier==='@deepseek-ai/dsh-llm')return {url:'data:text/javascript,export const createUserMessage = value => value',shortCircuit:true};return next(specifier,context)}});
 const {nativeSessionLifecycle}=await import('../src/runtime/dsh-adapter/session-lifecycle.mjs');hooks.deregister();
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
+
+test('personal preset reuse follows file generations, concurrent ids and disposal; other presets resolve normally',async()=>{
+  const root=await mkdtemp(join(tmpdir(),'weftmate-fx19-presets-')),file=join(root,'composition.yaml');
+  let resolves=0,mounts=0,inherits=0,editDuringMount=false;
+  const agents=new Map(),sessions=new Map();
+  const presets={resolve:async(id)=>{resolves++;return {id,path:file}},
+    mount:async(scoped,id)=>{mounts++;scoped.preset=id;scoped.generation=await readFile(file,'utf8');if(editDuringMount){editDuringMount=false;await writeFile(file,'generation-edited-during-mount')}},
+    composeFrom:(scoped,source)=>{inherits++;Object.assign(scoped,source);return scoped.preset}};
+  const persistence={config:{root},inspect:async(id)=>({meta:{id,agentPreset:'personal-remote'}}),
+    locate:meta=>({kind:'jsonl',path:join(root,meta.id,'events')}),listSnapshots:async()=>[]};
+  const ctx={get:name=>({agents:{get:id=>agents.get(id)},sessions:{get:id=>sessions.get(id)},agentPresets:presets,sessionPersistence:persistence}[name]),
+    agents:{create:async({sessionId,meta,setup})=>{const scoped={on:()=>{}};await setup(scoped);
+      const session={id:sessionId,header:{id:sessionId,...meta}},agent={ctx:scoped,session};agents.set(sessionId,agent);sessions.set(sessionId,session);
+      await mkdir(join(root,sessionId));return {agent,dispose:async()=>{agents.delete(sessionId);sessions.delete(sessionId)}}}},sessions:{flush:async()=>{}}};
+  try{
+    await writeFile(file,'generation-one');const life=nativeSessionLifecycle(ctx);
+    await life.create({sessionId:'one',agentPreset:'personal-remote'});
+    await Promise.all(['two','three','four'].map(sessionId=>life.create({sessionId,agentPreset:'personal-remote'})));
+    assert.equal(resolves,1);assert.equal(mounts,1);assert.equal(inherits,3);
+    for(const id of ['one','two','three','four'])assert.equal(agents.get(id).ctx.generation,'generation-one');
+    await writeFile(file,'generation-two-longer');await life.create({sessionId:'five',agentPreset:'personal-remote'});
+    assert.equal(resolves,2);assert.equal(mounts,2);assert.equal(agents.get('five').ctx.generation,'generation-two-longer');
+    assert.equal(agents.get('one').ctx.generation,'generation-one');
+    await life.remove('five');await life.create({sessionId:'six',agentPreset:'personal-remote'});
+    assert.equal(mounts,3,'disposed composition source must never be reused');
+    await writeFile(file,'before-race');editDuringMount=true;await life.create({sessionId:'race',agentPreset:'personal-remote'});
+    await life.create({sessionId:'after-race',agentPreset:'personal-remote'});
+    assert.equal(agents.get('race').ctx.generation,'before-race');assert.equal(agents.get('after-race').ctx.generation,'generation-edited-during-mount');
+    const before=resolves;await life.create({sessionId:'custom-one',agentPreset:'standard'});await life.create({sessionId:'custom-two',agentPreset:'standard'});
+    assert.equal(resolves,before+2,'user-authored presets keep normal native discovery');
+  }finally{await rm(root,{recursive:true,force:true})}
+});
 
 test('deletion removes disposed native subagent logs recursively while retaining independent forks',async()=>{
   const root=await mkdtemp(join(tmpdir(),'weftmate-mem2-children-'));
