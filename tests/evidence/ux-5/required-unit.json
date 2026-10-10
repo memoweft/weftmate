@@ -1,0 +1,13 @@
+{
+  "tests": 1300,
+  "suites": 68,
+  "pass": 1288,
+  "fail": 0,
+  "cancelled": 0,
+  "skipped": 12,
+  "todo": 0,
+  "command": "node .github/scripts/ci-unit-tests.mjs required",
+  "durationMs": 1312661.3948,
+  "at": "2026-10-10T07:13:11.432680+00:00",
+  "selection": "same as CI Required unit tests; existing skips retained"
+}

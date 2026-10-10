@@ -4,17 +4,21 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#ffffff">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https: http://127.0.0.1:* http://localhost:*; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' blob: https: http://127.0.0.1:* http://localhost:*; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src blob:">
   <title>WeftMate</title>
   <link rel="icon" type="image/svg+xml" href="brand/color-light.svg">
   <link rel="icon" type="image/svg+xml" href="brand/color-dark.svg" media="(prefers-color-scheme: dark)">
   <link rel="stylesheet" href="tokens.css">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="katex.css">
+  <link rel="stylesheet" href="rendering.css">
+  <link rel="stylesheet" href="render-themes.css">
   <script defer src="vendor.js"></script>
   <script defer src="popovers.js"></script>
   <script defer src="icons.js"></script>
   <script defer src="conversation-scroll.js"></script>
   <script defer src="ui-core/store.js"></script>
+  <script defer src="ui-core/rendering.js"></script>
   <script defer src="ui-core/personalization.js"></script>
   <script defer src="ui-core/onboarding-copy.js"></script>
   <script defer src="ui-core/offline.js"></script>
@@ -75,6 +79,7 @@
   <script defer src="cloud-vendor.js"></script>
   <script defer src="cloud-login.js"></script>
   <script defer src="cloud-native.js"></script>
+  <script defer src="ui-core/next-suggestions.js"></script>
   <script defer src="app.js"></script>
   <script defer src="components/chat.js"></script>
   <script defer src="components/sessions.js"></script>
@@ -99,6 +104,8 @@
   <script defer src="components/cloud-account.js"></script>
   <link rel="stylesheet" href="cloud-account.css">
   <script src="composer-subtasks.js" defer></script>
+  <script src="next-suggestions.js" defer></script>
+  <link rel="stylesheet" href="next-suggestions.css">
   <link rel="stylesheet" href="composer-extras.css">
   <script defer src="components/main-chat-mobile.js"></script>
 </head>

@@ -1,0 +1,241 @@
+{
+  "oldRevision": "f787c3c",
+  "newRevision": "7543282d67aaef9b369fb1551e5bc8d5ed59163a",
+  "realDsh": true,
+  "syntheticModel": true,
+  "sessions": [
+    {
+      "id": "session-791c39e6-c502-4a01-a5c8-4a235d5db2e8",
+      "text": "QA5旧日用版本会话1：我偏好测试绿茶。",
+      "before": [
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-10T06:28:00.714Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-10T06:28:03.018Z",
+          "data": {
+            "taskId": "cmd-eafcbdd4-55b8-47f7-a2d5-4759cccdca05",
+            "turn": 1,
+            "receiptId": "c3e7a2f5-ab79-42c7-9dc4-f1fb66d3eaae",
+            "commandId": "cmd-eafcbdd4-55b8-47f7-a2d5-4759cccdca05",
+            "requestId": "b424baf3-5c29-4a05-a71e-cba6eef095d5",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-10T06:28:03.019Z",
+          "data": {
+            "text": "QA5旧日用版本会话1：我偏好测试绿茶。",
+            "receiptId": "c3e7a2f5-ab79-42c7-9dc4-f1fb66d3eaae"
+          }
+        },
+        {
+          "seq": 22,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:28:05.159Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 23,
+          "type": "task.ended",
+          "at": "2026-10-10T06:28:05.160Z",
+          "data": {
+            "taskId": "cmd-eafcbdd4-55b8-47f7-a2d5-4759cccdca05",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 24,
+            "receiptId": "c3e7a2f5-ab79-42c7-9dc4-f1fb66d3eaae",
+            "commandId": "cmd-eafcbdd4-55b8-47f7-a2d5-4759cccdca05",
+            "requestId": "b424baf3-5c29-4a05-a71e-cba6eef095d5",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 24,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:28:05.162Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "eventsRetained": true,
+      "searchHits": 1
+    },
+    {
+      "id": "session-7a68e6ea-86e8-47d7-bc86-e73d3fe04b59",
+      "text": "QA5旧日用版本会话2：我偏好测试绿茶。",
+      "before": [
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-10T06:28:22.501Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-10T06:28:24.457Z",
+          "data": {
+            "taskId": "cmd-73ecb925-d7aa-41ed-84ac-37e6f706cbd2",
+            "turn": 1,
+            "receiptId": "4c746e18-bb69-43b3-a480-d2f266127eaf",
+            "commandId": "cmd-73ecb925-d7aa-41ed-84ac-37e6f706cbd2",
+            "requestId": "ceb7b16f-e78e-41d5-90ad-bdaf5e6c793b",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:28:24.458Z",
+          "data": {
+            "text": "QA5旧日用版本会话2：我偏好测试绿茶。",
+            "receiptId": "4c746e18-bb69-43b3-a480-d2f266127eaf"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:28:26.338Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-286f6cb7c602be686326d45f4bf9336a2df19d95219762775ec8d097d2dadf58",
+                "kind": "cognition",
+                "summary": "用户QA5旧日用版本会话1：我偏好测试绿茶。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 24,
+          "type": "task.ended",
+          "at": "2026-10-10T06:28:26.339Z",
+          "data": {
+            "taskId": "cmd-73ecb925-d7aa-41ed-84ac-37e6f706cbd2",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 25,
+            "receiptId": "4c746e18-bb69-43b3-a480-d2f266127eaf",
+            "commandId": "cmd-73ecb925-d7aa-41ed-84ac-37e6f706cbd2",
+            "requestId": "ceb7b16f-e78e-41d5-90ad-bdaf5e6c793b",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:28:26.339Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "eventsRetained": true,
+      "searchHits": 1
+    },
+    {
+      "id": "session-ffd03176-386c-4871-8c75-431327540f22",
+      "text": "QA5旧日用版本会话3：我偏好测试绿茶。",
+      "before": [
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-10T06:28:42.276Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-10T06:28:43.530Z",
+          "data": {
+            "taskId": "cmd-a877aebe-475c-43e5-b15f-7e6fbff0589c",
+            "turn": 1,
+            "receiptId": "7afb0c14-8fa0-4efa-aa1e-b51dfb6780fc",
+            "commandId": "cmd-a877aebe-475c-43e5-b15f-7e6fbff0589c",
+            "requestId": "b2902fa1-cd54-4cc3-af7b-92d3bd4df8ff",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:28:43.531Z",
+          "data": {
+            "text": "QA5旧日用版本会话3：我偏好测试绿茶。",
+            "receiptId": "7afb0c14-8fa0-4efa-aa1e-b51dfb6780fc"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:28:45.253Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-286f6cb7c602be686326d45f4bf9336a2df19d95219762775ec8d097d2dadf58",
+                "kind": "cognition",
+                "summary": "用户QA5旧日用版本会话1：我偏好测试绿茶。"
+              },
+              {
+                "id": "cognition-e3bba9008187236f1515742b07bdaa35e3a5731617dcb118a38358f7ed3a2edf",
+                "kind": "cognition",
+                "summary": "用户QA5旧日用版本会话2：我偏好测试绿茶。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 24,
+          "type": "task.ended",
+          "at": "2026-10-10T06:28:45.254Z",
+          "data": {
+            "taskId": "cmd-a877aebe-475c-43e5-b15f-7e6fbff0589c",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 25,
+            "receiptId": "7afb0c14-8fa0-4efa-aa1e-b51dfb6780fc",
+            "commandId": "cmd-a877aebe-475c-43e5-b15f-7e6fbff0589c",
+            "requestId": "b2902fa1-cd54-4cc3-af7b-92d3bd4df8ff",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:28:45.255Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "eventsRetained": true,
+      "searchHits": 1
+    }
+  ],
+  "mainStatus": 200,
+  "mainKind": "main",
+  "passed": true
+}

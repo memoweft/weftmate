@@ -1,0 +1,217 @@
+{
+  "at": "2026-10-10T15:20:14.1738363+08:00",
+  "criteria": "creation after baseline start + executable path + command line containing this worktree or recorded QA5 temporary path; no parent-PID matching",
+  "extraStoppedNow": [
+    {
+      "ProcessId": 55636,
+      "Name": "node.exe",
+      "CreationDate": "2026-10-10T14:52:26.275965+08:00"
+    },
+    {
+      "ProcessId": 34992,
+      "Name": "node.exe",
+      "CreationDate": "2026-10-10T14:52:26.281989+08:00"
+    }
+  ],
+  "uniqueRecordedTerminations": 38,
+  "recordedTerminations": [
+    {
+      "ProcessId": 10464,
+      "Name": "WeftMate.exe",
+      "CreationDate": "2026-10-10T14:53:34.941702+08:00"
+    },
+    {
+      "ProcessId": 12868,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:14:24.034787+08:00"
+    },
+    {
+      "ProcessId": 14848,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:32:04.972809+08:00"
+    },
+    {
+      "ProcessId": 18308,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:16:18.518362+08:00"
+    },
+    {
+      "ProcessId": 20032,
+      "Name": "WeftMate.exe",
+      "CreationDate": "2026-10-10T14:53:34.550103+08:00"
+    },
+    {
+      "ProcessId": 20116,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:32:04.624653+08:00"
+    },
+    {
+      "ProcessId": 20888,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:33:36.966953+08:00"
+    },
+    {
+      "ProcessId": 27232,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:20:47.75632+08:00"
+    },
+    {
+      "ProcessId": 30308,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:14:19.088655+08:00"
+    },
+    {
+      "ProcessId": 34992,
+      "Name": "node.exe",
+      "CreationDate": "2026-10-10T14:52:26.281989+08:00"
+    },
+    {
+      "ProcessId": 35260,
+      "Name": "node.exe",
+      "CreationDate": "2026-10-10T14:21:11.281154+08:00"
+    },
+    {
+      "ProcessId": 36192,
+      "Name": "node.exe",
+      "CreationDate": "2026-10-10T14:14:16.109236+08:00"
+    },
+    {
+      "ProcessId": 36892,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:20:47.757769+08:00"
+    },
+    {
+      "ProcessId": 37168,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:14:26.533188+08:00"
+    },
+    {
+      "ProcessId": 37500,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:20:53.897555+08:00"
+    },
+    {
+      "ProcessId": 3944,
+      "Name": "node.exe",
+      "CreationDate": "2026-10-10T14:17:59.103458+08:00"
+    },
+    {
+      "ProcessId": 41324,
+      "Name": "WeftMate.exe",
+      "CreationDate": "2026-10-10T14:53:42.901279+08:00"
+    },
+    {
+      "ProcessId": 440,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:33:24.98047+08:00"
+    },
+    {
+      "ProcessId": 47112,
+      "Name": "WeftMate.exe",
+      "CreationDate": "2026-10-10T14:53:47.797975+08:00"
+    },
+    {
+      "ProcessId": 50588,
+      "Name": "node.exe",
+      "CreationDate": "2026-10-10T14:54:02.552709+08:00"
+    },
+    {
+      "ProcessId": 52304,
+      "Name": "node.exe",
+      "CreationDate": "2026-10-10T14:31:20.54883+08:00"
+    },
+    {
+      "ProcessId": 52876,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:32:13.285519+08:00"
+    },
+    {
+      "ProcessId": 52976,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:20:47.437447+08:00"
+    },
+    {
+      "ProcessId": 53788,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:32:04.964625+08:00"
+    },
+    {
+      "ProcessId": 55372,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:16:12.447248+08:00"
+    },
+    {
+      "ProcessId": 55636,
+      "Name": "node.exe",
+      "CreationDate": "2026-10-10T14:52:26.275965+08:00"
+    },
+    {
+      "ProcessId": 57204,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:20:49.341838+08:00"
+    },
+    {
+      "ProcessId": 57588,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:33:24.985458+08:00"
+    },
+    {
+      "ProcessId": 57836,
+      "Name": "node.exe",
+      "CreationDate": "2026-10-10T14:53:29.085588+08:00"
+    },
+    {
+      "ProcessId": 57860,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:33:26.273679+08:00"
+    },
+    {
+      "ProcessId": 59152,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:16:12.143165+08:00"
+    },
+    {
+      "ProcessId": 59364,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:33:24.698818+08:00"
+    },
+    {
+      "ProcessId": 60076,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:14:18.802535+08:00"
+    },
+    {
+      "ProcessId": 60328,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:32:07.116049+08:00"
+    },
+    {
+      "ProcessId": 61560,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:16:12.447864+08:00"
+    },
+    {
+      "ProcessId": 61960,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:14:19.088412+08:00"
+    },
+    {
+      "ProcessId": 6500,
+      "Name": "electron.exe",
+      "CreationDate": "2026-10-10T14:16:13.956975+08:00"
+    },
+    {
+      "ProcessId": 6764,
+      "Name": "WeftMate.exe",
+      "CreationDate": "2026-10-10T14:53:34.917249+08:00"
+    }
+  ],
+  "remainingOwnedProcesses": [],
+  "remainingRecordedCoreProcesses": [],
+  "backupCopiesRemaining": 0,
+  "privateSigningDirectoriesRemaining": 0,
+  "ownLanLockRemaining": false,
+  "emulatorStarted": false,
+  "emulatorStopped": false,
+  "syntheticDirectoryDeletionRejected": "Seven completed synthetic profile directories retained after automatic approval review rejected deletion: blocked by policy. No alternate deletion attempted."
+}

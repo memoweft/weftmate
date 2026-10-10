@@ -16,6 +16,7 @@
     { "id": "conversation", "label": "对话中 · 执行步骤", "unavailable": ["watch"] },
     { "id": "composer-menu", "label": "输入区 / 附件与深入思考", "unavailable": ["watch"] },
     { "id": "composer-context", "label": "输入区 / 上下文用量", "unavailable": ["watch"] },
+    { "id": "next-suggestions", "label": "输入区 / 下一步建议", "unavailable": ["iphone", "mac", "watch"] },
     { "id": "approval", "label": "审批卡" },
     { "id": "question", "label": "提问条", "unavailable": ["watch"] },
     { "id": "outputs-sources", "label": "输出与来源", "unavailable": ["watch"] },
@@ -27,6 +28,7 @@
     { "id": "main-chat", "label": "主对话 / 手机聊天选项卡与日期时间线", "unavailable": ["iphone", "mac", "watch"] },
     { "id": "activity", "label": "动态 / 提醒与待处理 / 手机选项卡", "unavailable": ["android", "iphone", "mac", "watch"] },
     { "id": "goals", "label": "目标 / 进行中、定时与长期 / 手机选项卡", "unavailable": ["android", "iphone", "mac", "watch"] },
+    { "id": "rendering", "label": "渲染样张 / 代码、表格、公式与图表", "unavailable": ["android", "iphone", "mac", "watch"] },
     { "id": "library", "label": "成果库 / 文件与预览 / 手机选项卡", "unavailable": ["android", "iphone", "mac", "watch"] }
   ]
 }

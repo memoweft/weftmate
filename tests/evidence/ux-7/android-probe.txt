@@ -1,0 +1,8 @@
+
+com.memoweft.weftmate.mobile.Ux7WebViewProbeTest:.
+
+Time: 11.978
+
+OK (1 test)
+
+

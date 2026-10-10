@@ -37,7 +37,9 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
     const scope = JSON.stringify([state.owner, state.authEpoch, state.sharedGeneration, state.sharedSessionId]);
     const changed = scope !== historyScope;
     if (changed) { historyScope = scope; core.state.historyGeneration++; }
-    if (changed || !core.state.historyInFlight && !core.state.olderLoading) {
+    // A DOM refresh can run after the core read settles but before the adapter
+    // publishes its new snapshot. Keep that result until the mobile read ends.
+    if (changed || !core.state.historyInFlight && !core.state.olderLoading && !state.sharedLoading && !state.sharedOlderLoading) {
       core.state.historyEvents = new Map(state.sharedEvents.map(event => [event.seq, event]));
       core.state.seenSeq = new Set(core.state.historyEvents.keys());
       core.state.afterSeq = state.sharedNextSeq;
@@ -138,7 +140,7 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
       effects.renderConversationList(); return;
     }
     if (state.logicalChats) { core.resetLogicalSession(); state.logicalChats = false; }
-  } catch (error) { if(state.logicalChats) { effects.status('主对话暂时无法读取，请重试');return; } /* Older native shells keep their existing list. */ }
+  } catch (error) { core.connectionFailed?.(error); if(state.logicalChats) { effects.status('主对话暂时无法读取，请重试');return; } /* Older native shells keep their existing list. */ }
   void refreshMobileMemoryAvailability();
   if (!core.state.models.length) void core.refreshThinkingModels().then(() => {
     if(owner===state.owner&&epoch===state.authEpoch)effects.updateComposer();

@@ -1,0 +1,27 @@
+{
+  "relay": {
+    "attemptedRunner": "runners/relay-task.mjs --phase relay-phone --visual-smoke",
+    "failedBeforeModelRequest": true,
+    "wslError": "Wsl/Service/CreateInstance/MountDisk/HCS/ERROR_PATH_NOT_FOUND",
+    "missingDisk": "D:/WSL/Ubuntu/ext4.vhdx",
+    "dockerFallbackProbe": "dockerDesktopLinuxEngine named pipe not found",
+    "nativeHaproxyAvailable": false,
+    "sharedEnvironmentModified": false,
+    "fullChainVerified": false
+  },
+  "android": {
+    "adbEndpointResponding": false,
+    "nativeEmulatorStarted": false,
+    "nativeEmulatorStopped": false,
+    "fallback": "Chromium running the baseline Android UI package and adapter; simulated host.business memory preview response",
+    "fallbackEvidence": "account/memory-and-account.json",
+    "nativePreviewVerified": false
+  },
+  "cleanupPolicyRejection": {
+    "action": "Remove seven completed synthetic temporary profile trees after exact-prefix and no-live-process checks",
+    "reason": "blocked by policy",
+    "affectedEvidenceRuns": ["correction", "erasure", "upgrade", "upgrade-fixture-attempt", "exit-first-crash", "exit-fixture-attempt", "exit-wrapper-fixture-attempt"],
+    "retriedViaOtherTool": false,
+    "privateBackupCopyCoveredByThisRejection": false
+  }
+}

@@ -55,7 +55,8 @@ test('numeric-only ledger survives reopen; price snapshots, unknown requests and
     assert.equal(f.store.summary('b', '2026-10', null, 'UTC').total.requests, 1);
     const reopened = await createUsageStore({ root: f.root, clock: () => Date.parse('2026-11-01T00:00:00Z') }); assert.deepEqual(reopened.summary('a', '2026-10', null, 'UTC'), summary);
     const saved = JSON.parse(await readFile(join(f.root, 'usage.json'), 'utf8'));
-    assert.deepEqual(Object.keys(saved.accounts.a.records[0]).sort(), ['at', 'cost', 'durationMs', 'price', 'profileId', 'requestId', 'sessionId', 'source', 'tokens']);
+    assert.deepEqual(Object.keys(saved.accounts.a.records[0]).sort(), ['at', 'category', 'cost', 'durationMs', 'price', 'profileId', 'requestId', 'sessionId', 'source', 'tokens']);
+    assert.ok(saved.accounts.a.records.every((row: any) => row.category === 'conversation'), 'classification is a fixed purpose, never prompt or response text');
 });
 test('Shanghai local midnight and month end use local dates while timestamps stay UTC', async t => {
     const f = await fixture(t);

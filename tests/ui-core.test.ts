@@ -4,7 +4,12 @@ import { runInNewContext } from 'node:vm'
 import test from 'node:test'
 import { contextUsage, createDshSessionAdapter } from '../src/runtime/dsh-adapter/sessions.mjs'
 import { desktopScript, desktopScriptPaths } from './helpers/desktop-ui-source.mjs'
-const paths = desktopScriptPaths().filter(path => path.startsWith('ui-core/'))
+import {uiCoreAssets,uiCorePresentationAssets} from '../src/ui-core/manifest.mjs'
+const featurePaths=new Set(uiCoreAssets.map(name=>`ui-core/${name}`))
+const browserPaths=desktopScriptPaths().filter(path=>path.startsWith('ui-core/'))
+assert.deepEqual(browserPaths.filter(path=>!featurePaths.has(path)),uiCorePresentationAssets.map(name=>`ui-core/${name}`),
+  'only the explicit shared presentation assets may sit outside the DOM-free feature layer')
+const paths = browserPaths.filter(path => featurePaths.has(path))
 const source = paths.map(desktopScript).join('\n;\n')
 const response = (body: object, status = 200) => ({ ok: status < 400, status, json: async () => body })
 function fixture(read: (path: string, options: any) => any = () => response({})) {
@@ -161,7 +166,7 @@ test('FX-11 progress counts actual activities and keeps internal names out of ru
 });
 
 test('running composer reports observed phases and hides them on an idle session without changing stop availability', () => {
-  const f = fixture(), session: any = f.core.state.sessions[0]
+  const f = fixture(), session: any = f.core.state.sessions[0];f.core.presence.success()
   session.running = true
   for (const [processing, label] of [
     [{ phase: 'memory' }, '正在读取记忆…'],
@@ -487,7 +492,7 @@ test('D36 account preferences survive recreation, isolate accounts and preserve 
 })
 
 test('D36 stage timer uses the latest persisted turn and omits unknown or future timestamps', () => {
-  const f = fixture(), now = Date.parse('2026-10-09T00:01:16Z');
+  const f = fixture(), now = Date.parse('2026-10-09T00:01:16Z');f.core.presence.success();
   const events = [{seq:1,type:'turn.started',at:'2026-10-09T00:00:00Z'}, {seq:4,type:'turn.started',at:'2026-10-09T00:01:00Z'}];
   assert.equal(f.core.processingStageLabel({phase:'loading',modelName:'Muse Q5'}, events, now),'正在加载模型 Muse Q5… 16 秒');
   assert.equal(f.core.processingStageLabel({phase:'reasoning'}, [], now),'正在思考…');

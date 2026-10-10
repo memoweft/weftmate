@@ -53,6 +53,7 @@ function memoryStatusText(memory=state.memory){if(state.transitionPending)return
   if(memory?.error)return memory.error;
   if(memory?.statusState==='disabled')return '当前账户尚未启用记忆服务。';
   if(memory?.statusState==='unavailable')return '当前账户的记忆服务暂不可用。';
+  if(memory?.statusState==='recovering')return '正在继续整理上次没做完的记忆';
   if(memory?.statusState==='degraded'&&memory.capabilities.inject===false)return '记忆可查看；当前模型记忆注入不可用。';
   if(memory?.statusState==='degraded')return '记忆服务部分可用；请留意服务端提供的状态说明。';
   if(memory?.statusState==='ready')return '显示当前账户的记忆快照；可用操作以当前服务能力与单条记忆状态为准。';

@@ -73,7 +73,7 @@ test('both production mount transports pass objects and protected writes through
   const core = context.WeftUiCore.create({ effects: new Proxy({}, {get:()=>()=>{}}), crypto:{randomUUID:()=> 'synthetic'},
     storage:{getItem:()=>null,setItem(){},removeItem(){}}, fetch:async (url: string,options: any) => {
       requests.push({ url, options }); return {ok:true,json:async()=>({})}; } });
-  core.state.csrfToken='synthetic-csrf';
+  core.state.csrfToken='synthetic-csrf';core.presence.success();
   assert.equal(core.processingLabel({phase:'retrying'}),'模型响应慢，正在重试…');
   for (const file of ['src/personal-access-ui/app.js','apps/mobile-ui/www/components/cloud-account.js']) {
     const source = readFileSync(new URL('../'+file,import.meta.url),'utf8');

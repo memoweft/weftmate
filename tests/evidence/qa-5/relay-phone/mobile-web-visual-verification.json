@@ -1,0 +1,19 @@
+{
+  "startedAt": "2026-10-10T06:12:09.473Z",
+  "realCloudEntrypoint": "services/cloud/src/main.mjs",
+  "realElectronEntrypoint": ".",
+  "sourceCommit": "7543282d67aaef9b369fb1551e5bc8d5ed59163a",
+  "phase": "relay-phone",
+  "baselineHost": false,
+  "steps": [],
+  "cloudTransport": "WSL Ubuntu",
+  "passed": false,
+  "error": "Command failed: wsl.exe -d Ubuntu --exec wslpath -a [local diagnostic path]",
+  "pageErrors": [],
+  "failedRequests": [],
+  "finishedAt": "2026-10-10T06:12:11.232Z",
+  "surface": "mobile-web",
+  "realNativeBridge": false,
+  "locators": "visible accessible names and roles",
+  "requests": []
+}
