@@ -211,6 +211,7 @@ class HybridActivity : Activity() {
             container.setOnApplyWindowInsetsListener { view, insets ->
                 val bars = insets.getInsets(WindowInsets.Type.systemBars())
                 val ime = insets.getInsets(WindowInsets.Type.ime())
+                if (::web.isInitialized) web.evaluateJavascript("window.dispatchEvent(new CustomEvent('weft-keyboard',{detail:{visible:${insets.isVisible(WindowInsets.Type.ime())}}}))", null)
                 val bottom = maxOf(bars.bottom, ime.bottom)
                 if (view.paddingLeft != bars.left || view.paddingTop != bars.top ||
                     view.paddingRight != bars.right || view.paddingBottom != bottom)
@@ -819,6 +820,10 @@ class HybridActivity : Activity() {
             }
             if (secrets.host() != host || accountEpoch.get() != requestEpoch) { vault.clear(); throw ApiFailure(403, "ACCOUNT_SWITCHED") }
             result
+        }
+        "app.exit" -> {
+            runOnUiThread { moveTaskToBack(true) }
+            JSONObject().put("backgrounded", true)
         }
         "app.ready" -> {
             ensureOpen()

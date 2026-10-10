@@ -8,10 +8,11 @@ const mobileMarkup = String.raw`
       <button id="conversation-usage" class="header-action" hidden>本对话用量</button>
       <button id="outputs-button" class="header-action" hidden>输出与来源</button>
       <button id="home-new-chat" class="icon-button" aria-label="新对话" hidden><span class="icon icon-compose"></span></button>
+      <button id="header-profile" class="icon-button header-profile" aria-label="个人资料与设置" hidden><span class="avatar">我</span></button>
 
     </header>
     <div id="drawer-scrim" class="scrim" hidden></div>
-    <nav id="drawer" class="drawer" aria-label="主导航">
+    <nav id="drawer" class="drawer" aria-label="主导航" inert>
       <div class="drawer-brand"><span class="logo" aria-label="WeftMate"></span><strong>WeftMate</strong><button id="drawer-close" class="icon-button" aria-label="关闭导航"><span class="icon icon-close"></span></button></div>
       <button class="nav-primary" data-action="new-chat"><span class="icon icon-compose"></span>新对话</button>
       <button class="nav-primary" data-action="temporary-chat">临时对话</button>
@@ -20,7 +21,7 @@ const mobileMarkup = String.raw`
       <div id="conversation-list" class="conversation-list" aria-label="最近对话" aria-live="polite"></div>
       <div class="drawer-section-label drawer-function-label">功能</div>
       <div class="drawer-links">
-        <button data-page="chat">对话</button><button data-page="activity">动态</button><button data-page="goals">目标</button><button data-page="library">成果库</button><button data-page="memory">记忆</button>
+        <button data-page="memory">记忆</button>
         <button data-page="capabilities">能力与扩展</button><button data-page="workspaces">项目与成果</button><button data-page="devices">设备</button>
         <button data-page="notifications">通知</button><button data-page="settings">设置</button>
       </div>

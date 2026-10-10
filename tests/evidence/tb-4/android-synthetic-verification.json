@@ -1,0 +1,39 @@
+{
+  "realAndroid": true,
+  "synthetic": true,
+  "packageName": "com.memoweft.weftmate.mobile.tb4qa",
+  "checks": [
+    "real-native-four-tabs-light-dark",
+    "original-goal-source-full-height",
+    "system-back-source-tab-main",
+    "real-system-keyboard-tabs-hidden",
+    "130-percent-system-font",
+    "landscape",
+    "real-native-offline-four-pages-light-dark"
+  ],
+  "keyboard": {
+    "shown": true,
+    "visual": 726.2745361328125,
+    "draft": {
+      "x": 20.772058486938477,
+      "y": 595.3554077148438,
+      "width": 523.9461059570312,
+      "height": 66.15196228027344,
+      "top": 595.3554077148438,
+      "right": 544.7181644439697,
+      "bottom": 661.5073699951172,
+      "left": 20.772058486938477
+    },
+    "dock": {
+      "x": 0,
+      "y": 579.5833129882812,
+      "width": 565.490234375,
+      "height": 146.69117736816406,
+      "top": 579.5833129882812,
+      "right": 565.490234375,
+      "bottom": 726.2744903564453,
+      "left": 0
+    }
+  },
+  "errors": []
+}
