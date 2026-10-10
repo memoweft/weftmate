@@ -1,0 +1,49 @@
+{
+  "at": "2026-10-10T13:27:56.040Z",
+  "reason": "QA6 fixture reload did not reselect its pending side chat; cancel only that synthetic task",
+  "before": {
+    "ownerId": "owner-9bc508d9-f571-46ed-a51f-554b982865c1",
+    "state": "degraded",
+    "version": "2.0.0",
+    "worldRevision": 2,
+    "capabilities": {
+      "list": true,
+      "source": true,
+      "inject": true,
+      "correct": true,
+      "mute": true,
+      "deleteEvidence": true,
+      "deleteWorldItem": true
+    },
+    "pendingBoundaryCount": 0,
+    "blockedBoundaryCount": 0,
+    "discardedBoundaryCount": 0,
+    "lastFailureCode": null,
+    "pendingFormationCount": 56,
+    "recoveringFormationCount": 0,
+    "failedFormationCount": 0,
+    "failedCorrectionCount": 0,
+    "formationIssues": [],
+    "reasonCode": "MEMORY_FORMATION_PENDING",
+    "backfill": null,
+    "captureError": null
+  },
+  "results": [
+    {
+      "sessionId": "session-626d970f-e7a7-4bdf-9f72-d70c7d90eedc",
+      "httpStatus": 202,
+      "command": {
+        "command": {
+          "commandId": "cmd-869bf7ca-5226-4c0b-8c59-d8af6308bc82",
+          "requestId": "f432ea1f-31a3-473b-82ec-265dc9e950c4",
+          "kind": "session.cancel",
+          "targetDeviceId": "host-ff1dc49d-5f22-487a-85f7-9885ab8c68af",
+          "state": "pending",
+          "createdAt": "2026-10-10T13:27:56.018Z",
+          "updatedAt": "2026-10-10T13:27:56.018Z",
+          "sessionId": "session-626d970f-e7a7-4bdf-9f72-d70c7d90eedc"
+        }
+      }
+    }
+  ]
+}

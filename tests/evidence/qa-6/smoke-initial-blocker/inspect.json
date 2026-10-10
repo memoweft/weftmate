@@ -1,0 +1,253 @@
+{
+  "text": "WeftMate\n搜索\nCtrl K\nWeftMate\n动态\n2\n目标\n成果库\n新旁聊\nCtrl N\n\n还没有普通对话。\n\n旁聊\n项目\n添加一个文件夹，开始项目对话。\nq\nqa5-bb66788b-f2d5-4b18-8f0e-755acc5b68e9\nWeftMate\n输出与来源\n今天准备收拾桌面资料，先给我两条简单建议，不用工具。\n发送结果待核对，草稿已保留\n检查状态\n\n请求未执行，请核对电脑状态。\n\n输入消息\n自动\nQA5 model",
+  "requests": [
+    {
+      "path": "/personal/v1/commands",
+      "duration": 1
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "duration": 1.2000000178813934
+    },
+    {
+      "path": "/personal/v1/commands",
+      "duration": 1
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "duration": 1.300000011920929
+    },
+    {
+      "path": "/personal/v1/commands",
+      "duration": 1
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "duration": 1.699999988079071
+    },
+    {
+      "path": "/personal/v1/commands",
+      "duration": 1.0999999940395355
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "duration": 1.600000023841858
+    },
+    {
+      "path": "/personal/v1/commands",
+      "duration": 1.0999999940395355
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "duration": 1.4000000059604645
+    },
+    {
+      "path": "/personal/v1/commands",
+      "duration": 1.0999999940395355
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "duration": 1.399999976158142
+    },
+    {
+      "path": "/personal/v1/commands",
+      "duration": 1.199999988079071
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "duration": 1.7000000178813934
+    },
+    {
+      "path": "/personal/v1/commands",
+      "duration": 1.199999988079071
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "duration": 1.5
+    },
+    {
+      "path": "/personal/v1/commands",
+      "duration": 1.0999999940395355
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "duration": 1.300000011920929
+    },
+    {
+      "path": "/personal/v1/commands",
+      "duration": 1.2999999821186066
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "duration": 1.300000011920929
+    }
+  ],
+  "/status": {
+    "status": 200,
+    "body": {
+      "state": "ready",
+      "origin": "http://127.0.0.1:62535",
+      "hostId": "host-bc626eca-dde0-4c69-8b0d-38026cef480b",
+      "relay": {
+        "state": "disabled",
+        "baseUrl": null
+      },
+      "ownerId": "owner-ea6919f2-358e-44c2-9c0d-f9355a792db6",
+      "deviceCount": 2,
+      "hostName": "DESKTOP-MG2ORKA",
+      "presence": {
+        "host": "online",
+        "bootId": "9230fee1-813c-4897-b26a-47bb9948b359",
+        "startedAt": "2026-10-10T13:02:23.549Z",
+        "authorization": "active",
+        "runtime": "ready",
+        "model": "available"
+      },
+      "personalCapabilities": {
+        "sessionStatus": 1,
+        "nextSuggestions": 1,
+        "library": 1,
+        "libraryPreview": 1,
+        "libraryDesktopActions": 1,
+        "taskOverview": 1,
+        "scheduleEditing": 1,
+        "goals": 1,
+        "activity": 1,
+        "activityChanges": 1,
+        "activityRead": 1,
+        "activityNotification": 1,
+        "notificationSettings": 1,
+        "pushRegistration": 1,
+        "temporaryChats": 1,
+        "chats": 1,
+        "chatTimeline": 1,
+        "chatSearch": 1,
+        "sideChats": 1,
+        "creationReceipt": 1,
+        "chatSend": 1,
+        "chatLifecycle": 1,
+        "chatResources": 1
+      },
+      "executionAccount": true,
+      "executionAccountName": null,
+      "sync": {
+        "available": true
+      },
+      "downloads": {
+        "android": false
+      },
+      "backend": {
+        "runtime": "ready",
+        "referenceScan": "ready",
+        "capabilities": {
+          "chat": {
+            "available": true,
+            "reasonCode": "INFERENCE_UNVERIFIED",
+            "inferenceVerified": false
+          },
+          "desktopOpenApp": {
+            "available": true,
+            "appIds": [
+              "notepad"
+            ]
+          },
+          "naturalLanguageDesktop": {
+            "available": true,
+            "inferenceVerified": false
+          }
+        },
+        "modules": {
+          "memory": "connected",
+          "mods": "unknown",
+          "tasks": "unknown",
+          "notifications": "unknown",
+          "workspaces": "unknown",
+          "capabilities": "unknown"
+        }
+      },
+      "memory": {
+        "state": "ready",
+        "inject": true,
+        "failedCorrectionCount": 0,
+        "formationIssues": []
+      },
+      "updates": {
+        "layers": [
+          {
+            "layer": "ui",
+            "currentVersion": "0.1.1-preview.1",
+            "availableVersion": null,
+            "status": "idle",
+            "channel": "preview"
+          },
+          {
+            "layer": "app",
+            "currentVersion": "0.1.1-preview.1",
+            "availableVersion": null,
+            "status": "disabled",
+            "channel": "preview"
+          },
+          {
+            "layer": "mobile-ui",
+            "currentVersion": null,
+            "availableVersion": null,
+            "status": "disabled",
+            "channel": "preview"
+          }
+        ]
+      },
+      "nativeMinimumVersions": {}
+    }
+  },
+  "/models": {
+    "status": 200,
+    "body": {
+      "models": [
+        {
+          "id": "private-model-8e73ccaf80efef183826d48b61d4fe12c4dbd5c2",
+          "name": "QA5 model",
+          "model": "qa5-model",
+          "configured": true,
+          "deepThinking": {
+            "supported": false
+          },
+          "routeFingerprint": null,
+          "location": "computer",
+          "source": "host",
+          "modelTier": "auto",
+          "sourceKind": "local",
+          "accountModelId": "account-model-68c3b67d-eec3-49d5-b234-9f0ecf6708a4",
+          "revision": 1
+        }
+      ]
+    }
+  },
+  "/settings/models": {
+    "status": 200,
+    "body": {
+      "backgroundModelProfileId": "private-model-8e73ccaf80efef183826d48b61d4fe12c4dbd5c2",
+      "defaultModelProfileId": null,
+      "currentChatModelProfileId": null
+    }
+  },
+  "/commands?limit=5": {
+    "status": 200,
+    "body": {
+      "commands": [
+        {
+          "commandId": "cmd-8e0b9231-1d64-460a-9ce8-8d818623b072",
+          "requestId": "182b040f-af48-46a7-979c-2616d30f9a57",
+          "kind": "chat.message",
+          "targetDeviceId": "host-bc626eca-dde0-4c69-8b0d-38026cef480b",
+          "state": "rejected",
+          "createdAt": "2026-10-10T13:02:58.805Z",
+          "updatedAt": "2026-10-10T13:02:58.805Z",
+          "chatId": "chat-c1ac1f5e-82e1-4f1e-a54d-ca04339eff87",
+          "errorCode": "BACKEND_UNAVAILABLE"
+        }
+      ],
+      "nextBefore": null,
+      "hasMore": false
+    }
+  }
+}

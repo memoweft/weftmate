@@ -1,0 +1,52 @@
+[
+  {
+    "antipattern": "broken-image",
+    "name": "Broken or placeholder image",
+    "description": "<img> tags with empty src, missing src, or placeholder values ship as broken-image boxes. Use real images, generated assets, or remove the tag.",
+    "severity": "warning",
+    "category": "quality",
+    "file": "D:\\AIProjects\\WeftMate\\Worktrees\\w5\\src\\personal-access-ui\\components\\cloud-settings.js",
+    "line": 11,
+    "snippet": "<img alt=\"一次性设备配对二维码\" id=\"cloud-pairing-qr\" hidden>"
+  },
+  {
+    "antipattern": "broken-image",
+    "name": "Broken or placeholder image",
+    "description": "<img> tags with empty src, missing src, or placeholder values ship as broken-image boxes. Use real images, generated assets, or remove the tag.",
+    "severity": "warning",
+    "category": "quality",
+    "file": "D:\\AIProjects\\WeftMate\\Worktrees\\w5\\src\\personal-access-ui\\components\\markup.js",
+    "line": 8,
+    "snippet": "<img id=\\\"rail-avatar-image\\\" alt=\\\"\\\" hidden>"
+  },
+  {
+    "antipattern": "broken-image",
+    "name": "Broken or placeholder image",
+    "description": "<img> tags with empty src, missing src, or placeholder values ship as broken-image boxes. Use real images, generated assets, or remove the tag.",
+    "severity": "warning",
+    "category": "quality",
+    "file": "D:\\AIProjects\\WeftMate\\Worktrees\\w5\\src\\personal-access-ui\\components\\markup.js",
+    "line": 13,
+    "snippet": "<img id=\\\"profile-avatar-image\\\" alt=\\\"头像预览\\\" width=\\\"64\\\" height=\\\"64\\\" hidden>"
+  },
+  {
+    "antipattern": "broken-image",
+    "name": "Broken or placeholder image",
+    "description": "<img> tags with empty src, missing src, or placeholder values ship as broken-image boxes. Use real images, generated assets, or remove the tag.",
+    "severity": "warning",
+    "category": "quality",
+    "file": "D:\\AIProjects\\WeftMate\\Worktrees\\w5\\src\\personal-access-ui\\components\\markup.js",
+    "line": 13,
+    "snippet": "<img id=\\\"other-device-qr\\\" alt=\\\"安卓下载页面二维码\\\" width=\\\"168\\\" height=\\\"168\\\">"
+  },
+  {
+    "antipattern": "broken-image",
+    "name": "Broken or placeholder image",
+    "description": "<img> tags with empty src, missing src, or placeholder values ship as broken-image boxes. Use real images, generated assets, or remove the tag.",
+    "severity": "warning",
+    "category": "quality",
+    "file": "D:\\AIProjects\\WeftMate\\Worktrees\\w5\\src\\personal-access-ui\\components\\markup.js",
+    "line": 13,
+    "snippet": "<img id=\\\"pairing-qr\\\" alt=\\\"一次性设备配对二维码\\\" width=\\\"280\\\" height=\\\"280\\\">"
+  }
+]

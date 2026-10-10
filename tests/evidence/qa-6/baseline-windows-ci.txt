@@ -1,0 +1,388 @@
+﻿2026-10-10T12:53:09.9318981Z Current runner version: '2.337.0'
+2026-10-10T12:53:09.9339214Z ##[group]Runner Image Provisioner
+2026-10-10T12:53:09.9339839Z Hosted Compute Agent
+2026-10-10T12:53:09.9340291Z Version: 20260901.588
+2026-10-10T12:53:09.9340801Z Commit: f88ec8081b781fac6c440065ac7ff9e710ce3d0b
+2026-10-10T12:53:09.9341343Z Build Date: 2026-09-01T19:56:44Z
+2026-10-10T12:53:09.9341877Z Worker ID: {9773d0dc-7a91-4837-ada3-4cc05e38f8e2}
+2026-10-10T12:53:09.9342502Z Azure Region: westus3
+2026-10-10T12:53:09.9342968Z ##[endgroup]
+2026-10-10T12:53:09.9343974Z ##[group]Operating System
+2026-10-10T12:53:09.9344460Z Microsoft Windows Server 2025
+2026-10-10T12:53:09.9344936Z 10.0.26100
+2026-10-10T12:53:09.9345388Z Datacenter
+2026-10-10T12:53:09.9345751Z ##[endgroup]
+2026-10-10T12:53:09.9346182Z ##[group]Runner Image
+2026-10-10T12:53:09.9346639Z Image: windows-2025-vs2026
+2026-10-10T12:53:09.9347554Z Version: 20260925.250.1
+2026-10-10T12:53:09.9348734Z Included Software: https://github.com/actions/runner-images/blob/win25-vs2026/20260925.250/images/windows/Windows2025-VS2026-Readme.md
+2026-10-10T12:53:09.9350035Z Image Release: https://github.com/actions/runner-images/releases/tag/win25-vs2026%2F20260925.250
+2026-10-10T12:53:09.9350826Z ##[endgroup]
+2026-10-10T12:53:09.9351716Z ##[group]GITHUB_TOKEN Permissions
+2026-10-10T12:53:09.9353210Z Contents: read
+2026-10-10T12:53:09.9353652Z Metadata: read
+2026-10-10T12:53:09.9354053Z Packages: read
+2026-10-10T12:53:09.9354450Z ##[endgroup]
+2026-10-10T12:53:09.9356057Z Secret source: Actions
+2026-10-10T12:53:09.9356719Z Cache mode: write
+2026-10-10T12:53:09.9357363Z Prepare workflow directory
+2026-10-10T12:53:09.9637492Z Prepare all required actions
+2026-10-10T12:53:09.9676791Z Getting action download info
+2026-10-10T12:53:10.2230963Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-10T12:53:10.4084890Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-10-10T12:53:10.7090109Z Complete job name: test (windows-latest)
+2026-10-10T12:53:10.9554206Z ##[group]Run actions/checkout@v4
+2026-10-10T12:53:10.9555524Z with:
+2026-10-10T12:53:10.9555839Z   repository: memoweft/weftmate
+2026-10-10T12:53:10.9558914Z   token: ***
+2026-10-10T12:53:10.9559222Z   ssh-strict: true
+2026-10-10T12:53:10.9559537Z   ssh-user: git
+2026-10-10T12:53:10.9559846Z   persist-credentials: true
+2026-10-10T12:53:10.9560201Z   clean: true
+2026-10-10T12:53:10.9560515Z   sparse-checkout-cone-mode: true
+2026-10-10T12:53:10.9560889Z   fetch-depth: 1
+2026-10-10T12:53:10.9561191Z   fetch-tags: false
+2026-10-10T12:53:10.9561511Z   show-progress: true
+2026-10-10T12:53:10.9561822Z   lfs: false
+2026-10-10T12:53:10.9562107Z   submodules: false
+2026-10-10T12:53:10.9562419Z   set-safe-directory: true
+2026-10-10T12:53:10.9562774Z   allow-unsafe-pr-checkout: false
+2026-10-10T12:53:10.9563307Z ##[endgroup]
+2026-10-10T12:53:11.0728333Z Syncing repository: memoweft/weftmate
+2026-10-10T12:53:11.0729667Z ##[group]Getting Git version info
+2026-10-10T12:53:11.0730198Z Working directory is 'D:\a\weftmate\weftmate'
+2026-10-10T12:53:11.1506062Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-10-10T12:53:12.2777216Z git version 2.55.0.windows.5
+2026-10-10T12:53:12.2815100Z ##[endgroup]
+2026-10-10T12:53:12.2831435Z Temporarily overriding HOME='D:\a\_temp\94f32a29-e260-4b0b-b28a-f4d63e13d72d' before making global git config changes
+2026-10-10T12:53:12.2832516Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-10T12:53:12.2839664Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\weftmate\weftmate
+2026-10-10T12:53:12.3405855Z Deleting the contents of 'D:\a\weftmate\weftmate'
+2026-10-10T12:53:12.3410533Z ##[group]Initializing the repository
+2026-10-10T12:53:12.3417387Z [command]"C:\Program Files\Git\bin\git.exe" init D:\a\weftmate\weftmate
+2026-10-10T12:53:12.5033303Z Initialized empty Git repository in D:/a/weftmate/weftmate/.git/
+2026-10-10T12:53:12.5073696Z [command]"C:\Program Files\Git\bin\git.exe" remote add origin https://github.com/memoweft/weftmate
+2026-10-10T12:53:12.5673504Z ##[endgroup]
+2026-10-10T12:53:12.5674490Z ##[group]Disabling automatic garbage collection
+2026-10-10T12:53:12.5680234Z [command]"C:\Program Files\Git\bin\git.exe" config --local gc.auto 0
+2026-10-10T12:53:12.5904911Z ##[endgroup]
+2026-10-10T12:53:12.5905834Z ##[group]Setting up auth
+2026-10-10T12:53:12.5914673Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-10T12:53:12.6139193Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-10T12:53:14.1629569Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-10T12:53:14.1858904Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-10T12:53:14.5871251Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-10T12:53:14.6101684Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-10T12:53:15.0243322Z [command]"C:\Program Files\Git\bin\git.exe" config --local http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
+2026-10-10T12:53:15.0493765Z ##[endgroup]
+2026-10-10T12:53:15.0494382Z ##[group]Fetching the repository
+2026-10-10T12:53:15.0504199Z [command]"C:\Program Files\Git\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +480d65e462652a3111d2b40e09f697b2f78b8f8e:refs/remotes/origin/main
+2026-10-10T12:53:23.0066214Z From https://github.com/memoweft/weftmate
+2026-10-10T12:53:23.0066920Z  * [new ref]         480d65e462652a3111d2b40e09f697b2f78b8f8e -> origin/main
+2026-10-10T12:53:23.0108784Z ##[endgroup]
+2026-10-10T12:53:23.0109305Z ##[group]Determining the checkout info
+2026-10-10T12:53:23.0111744Z ##[endgroup]
+2026-10-10T12:53:23.0120277Z [command]"C:\Program Files\Git\bin\git.exe" sparse-checkout disable
+2026-10-10T12:53:23.0472279Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all extensions.worktreeConfig
+2026-10-10T12:53:23.0715094Z ##[group]Checking out the ref
+2026-10-10T12:53:23.0723911Z [command]"C:\Program Files\Git\bin\git.exe" checkout --progress --force -B main refs/remotes/origin/main
+2026-10-10T12:53:24.4945416Z Updating files:  13% (2242/16908)
+2026-10-10T12:53:24.6119799Z Updating files:  14% (2368/16908)
+2026-10-10T12:53:24.6881688Z Updating files:  15% (2537/16908)
+2026-10-10T12:53:24.7987967Z Updating files:  16% (2706/16908)
+2026-10-10T12:53:24.9179857Z Updating files:  17% (2875/16908)
+2026-10-10T12:53:25.0581863Z Updating files:  18% (3044/16908)
+2026-10-10T12:53:25.1493181Z Updating files:  19% (3213/16908)
+2026-10-10T12:53:25.1699749Z Updating files:  20% (3382/16908)
+2026-10-10T12:53:25.2545591Z Updating files:  20% (3423/16908)
+2026-10-10T12:53:25.3612032Z Updating files:  21% (3551/16908)
+2026-10-10T12:53:25.3959302Z Updating files:  22% (3720/16908)
+2026-10-10T12:53:25.4177138Z Updating files:  23% (3889/16908)
+2026-10-10T12:53:25.4655462Z Updating files:  24% (4058/16908)
+2026-10-10T12:53:25.5123189Z Updating files:  25% (4227/16908)
+2026-10-10T12:53:26.0557741Z Updating files:  26% (4397/16908)
+2026-10-10T12:53:26.1235887Z Updating files:  27% (4566/16908)
+2026-10-10T12:53:26.1785342Z Updating files:  28% (4735/16908)
+2026-10-10T12:53:26.1817411Z Updating files:  29% (4904/16908)
+2026-10-10T12:53:26.2147934Z Updating files:  29% (4916/16908)
+2026-10-10T12:53:26.2761215Z Updating files:  30% (5073/16908)
+2026-10-10T12:53:26.3676453Z Updating files:  31% (5242/16908)
+2026-10-10T12:53:26.4536810Z Updating files:  32% (5411/16908)
+2026-10-10T12:53:26.5332168Z Updating files:  33% (5580/16908)
+2026-10-10T12:53:26.6715231Z Updating files:  34% (5749/16908)
+2026-10-10T12:53:26.8147819Z Updating files:  35% (5918/16908)
+2026-10-10T12:53:26.8967291Z Updating files:  36% (6087/16908)
+2026-10-10T12:53:27.3697392Z Updating files:  37% (6256/16908)
+2026-10-10T12:53:27.3872085Z Updating files:  37% (6382/16908)
+2026-10-10T12:53:27.4810258Z Updating files:  38% (6426/16908)
+2026-10-10T12:53:27.5709380Z Updating files:  39% (6595/16908)
+2026-10-10T12:53:27.6477348Z Updating files:  40% (6764/16908)
+2026-10-10T12:53:27.7453287Z Updating files:  41% (6933/16908)
+2026-10-10T12:53:27.8230232Z Updating files:  42% (7102/16908)
+2026-10-10T12:53:27.8971040Z Updating files:  43% (7271/16908)
+2026-10-10T12:53:27.9749142Z Updating files:  44% (7440/16908)
+2026-10-10T12:53:28.0449482Z Updating files:  45% (7609/16908)
+2026-10-10T12:53:28.1078254Z Updating files:  46% (7778/16908)
+2026-10-10T12:53:28.1727882Z Updating files:  47% (7947/16908)
+2026-10-10T12:53:28.1919019Z Updating files:  48% (8116/16908)
+2026-10-10T12:53:28.2521681Z Updating files:  48% (8165/16908)
+2026-10-10T12:53:28.3290102Z Updating files:  49% (8285/16908)
+2026-10-10T12:53:28.8299056Z Updating files:  50% (8454/16908)
+2026-10-10T12:53:29.0003556Z Updating files:  51% (8624/16908)
+2026-10-10T12:53:29.0518492Z Updating files:  52% (8793/16908)
+2026-10-10T12:53:29.1093577Z Updating files:  53% (8962/16908)
+2026-10-10T12:53:29.1884822Z Updating files:  54% (9131/16908)
+2026-10-10T12:53:29.2027317Z Updating files:  55% (9300/16908)
+2026-10-10T12:53:29.2547463Z Updating files:  55% (9333/16908)
+2026-10-10T12:53:29.3519548Z Updating files:  56% (9469/16908)
+2026-10-10T12:53:29.4231723Z Updating files:  57% (9638/16908)
+2026-10-10T12:53:29.5150912Z Updating files:  58% (9807/16908)
+2026-10-10T12:53:29.6237057Z Updating files:  59% (9976/16908)
+2026-10-10T12:53:29.7177108Z Updating files:  60% (10145/16908)
+2026-10-10T12:53:30.1455775Z Updating files:  61% (10314/16908)
+2026-10-10T12:53:30.2034824Z Updating files:  62% (10483/16908)
+2026-10-10T12:53:30.2435190Z Updating files:  62% (10606/16908)
+2026-10-10T12:53:30.3337274Z Updating files:  63% (10653/16908)
+2026-10-10T12:53:30.4467699Z Updating files:  64% (10822/16908)
+2026-10-10T12:53:30.5196976Z Updating files:  65% (10991/16908)
+2026-10-10T12:53:30.5943067Z Updating files:  66% (11160/16908)
+2026-10-10T12:53:30.6779741Z Updating files:  67% (11329/16908)
+2026-10-10T12:53:30.7322020Z Updating files:  68% (11498/16908)
+2026-10-10T12:53:30.7850314Z Updating files:  69% (11667/16908)
+2026-10-10T12:53:30.8641068Z Updating files:  70% (11836/16908)
+2026-10-10T12:53:30.9480342Z Updating files:  71% (12005/16908)
+2026-10-10T12:53:31.0096808Z Updating files:  72% (12174/16908)
+2026-10-10T12:53:31.0786308Z Updating files:  73% (12343/16908)
+2026-10-10T12:53:31.1333986Z Updating files:  74% (12512/16908)
+2026-10-10T12:53:31.2166825Z Updating files:  75% (12681/16908)
+2026-10-10T12:53:31.6770871Z Updating files:  75% (12792/16908)
+2026-10-10T12:53:31.7432787Z Updating files:  76% (12851/16908)
+2026-10-10T12:53:31.8192877Z Updating files:  77% (13020/16908)
+2026-10-10T12:53:31.8890195Z Updating files:  78% (13189/16908)
+2026-10-10T12:53:31.9603493Z Updating files:  79% (13358/16908)
+2026-10-10T12:53:32.0252160Z Updating files:  80% (13527/16908)
+2026-10-10T12:53:32.0904479Z Updating files:  81% (13696/16908)
+2026-10-10T12:53:32.1489930Z Updating files:  82% (13865/16908)
+2026-10-10T12:53:32.2146102Z Updating files:  83% (14034/16908)
+2026-10-10T12:53:32.2157102Z Updating files:  83% (14200/16908)
+2026-10-10T12:53:32.2917198Z Updating files:  84% (14203/16908)
+2026-10-10T12:53:32.3507734Z Updating files:  85% (14372/16908)
+2026-10-10T12:53:32.4282390Z Updating files:  86% (14541/16908)
+2026-10-10T12:53:32.4829889Z Updating files:  87% (14710/16908)
+2026-10-10T12:53:32.5948707Z Updating files:  88% (14880/16908)
+2026-10-10T12:53:33.0578436Z Updating files:  89% (15049/16908)
+2026-10-10T12:53:33.1334895Z Updating files:  90% (15218/16908)
+2026-10-10T12:53:33.1941391Z Updating files:  91% (15387/16908)
+2026-10-10T12:53:33.2211734Z Updating files:  92% (15556/16908)
+2026-10-10T12:53:33.3120372Z Updating files:  92% (15596/16908)
+2026-10-10T12:53:33.3774558Z Updating files:  93% (15725/16908)
+2026-10-10T12:53:33.4432957Z Updating files:  94% (15894/16908)
+2026-10-10T12:53:33.5165268Z Updating files:  95% (16063/16908)
+2026-10-10T12:53:33.5833170Z Updating files:  96% (16232/16908)
+2026-10-10T12:53:33.6193856Z Updating files:  97% (16401/16908)
+2026-10-10T12:53:33.6534702Z Updating files:  98% (16570/16908)
+2026-10-10T12:53:33.6886464Z Updating files:  99% (16739/16908)
+2026-10-10T12:53:33.6886818Z Updating files: 100% (16908/16908)
+2026-10-10T12:53:33.6887069Z Updating files: 100% (16908/16908), done.
+2026-10-10T12:53:33.7143741Z Switched to a new branch 'main'
+2026-10-10T12:53:33.7156631Z branch 'main' set up to track 'origin/main'.
+2026-10-10T12:53:33.7720581Z ##[endgroup]
+2026-10-10T12:53:33.7980538Z [command]"C:\Program Files\Git\bin\git.exe" log -1 --format=%H
+2026-10-10T12:53:33.8183527Z 480d65e462652a3111d2b40e09f697b2f78b8f8e
+2026-10-10T12:53:33.8555418Z ##[group]Run actions/setup-node@v4
+2026-10-10T12:53:33.8555684Z with:
+2026-10-10T12:53:33.8555850Z   node-version: 24
+2026-10-10T12:53:33.8556009Z   cache: npm
+2026-10-10T12:53:33.8556157Z   always-auth: false
+2026-10-10T12:53:33.8556323Z   check-latest: false
+2026-10-10T12:53:33.8558126Z   token: ***
+2026-10-10T12:53:33.8558277Z ##[endgroup]
+2026-10-10T12:53:33.9919830Z Found in cache @ C:\hostedtoolcache\windows\node\24.21.0\x64
+2026-10-10T12:53:33.9925976Z (node:3460) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-10T12:53:33.9926843Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-10T12:53:33.9929339Z ##[group]Environment details
+2026-10-10T12:53:40.4426711Z node: v24.21.0
+2026-10-10T12:53:40.4426954Z npm: 11.19.0
+2026-10-10T12:53:40.4427115Z yarn: 1.22.22
+2026-10-10T12:53:40.4427657Z ##[endgroup]
+2026-10-10T12:53:40.4910653Z [command]C:\Windows\system32\cmd.exe /D /S /C "C:\hostedtoolcache\windows\node\24.21.0\x64\npm.cmd config get cache"
+2026-10-10T12:53:40.9296740Z C:\npm\cache
+2026-10-10T12:53:41.2831551Z Cache hit for: node-cache-Windows-x64-npm-02467b499c15966cb0fe5d81bfe4b7841980fb1cb0e4bf7659638afe60d79eb9
+2026-10-10T12:53:41.2921435Z (node:3460) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-10T12:53:42.4332037Z Received 46078390 of 46078390 (100.0%), 47.6 MBs/sec
+2026-10-10T12:53:42.4334629Z Cache Size: ~44 MB (46078390 B)
+2026-10-10T12:53:42.4398462Z [command]"C:\Program Files\Git\usr\bin\tar.exe" -xf D:/a/_temp/fabd0b4f-b68f-4b5a-b65f-9976446c8864/cache.tzst -P -C D:/a/weftmate/weftmate --force-local --use-compress-program "zstd -d"
+2026-10-10T12:53:45.0546567Z Cache restored successfully
+2026-10-10T12:53:45.0585252Z Cache restored from key: node-cache-Windows-x64-npm-02467b499c15966cb0fe5d81bfe4b7841980fb1cb0e4bf7659638afe60d79eb9
+2026-10-10T12:53:45.0875126Z ##[group]Run npm ci
+2026-10-10T12:53:45.0875374Z [36;1mnpm ci[0m
+2026-10-10T12:53:45.1359496Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-10T12:53:45.1359805Z ##[endgroup]
+2026-10-10T12:53:48.6726423Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2026-10-10T12:53:48.7231313Z npm warn deprecated lodash.isequal@4.5.0: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
+2026-10-10T12:53:48.7446408Z npm warn deprecated rimraf@2.6.3: Rimraf versions prior to v4 are no longer supported
+2026-10-10T12:53:48.8203728Z npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-10-10T12:53:48.8228835Z npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-10-10T12:53:50.1767228Z npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-10-10T12:53:52.6736697Z 
+2026-10-10T12:53:52.6737532Z added 423 packages, and audited 424 packages in 7s
+2026-10-10T12:53:52.6737923Z 
+2026-10-10T12:53:52.6739995Z 86 packages are looking for funding
+2026-10-10T12:53:52.6741825Z   run `npm fund` for details
+2026-10-10T12:53:52.6751827Z 
+2026-10-10T12:53:52.6752296Z found 0 vulnerabilities
+2026-10-10T12:53:52.6764240Z npm warn install-scripts 3 packages have install scripts not yet covered by allowScripts:
+2026-10-10T12:53:52.6765361Z npm warn install-scripts   @root/acme@3.1.0 (postinstall: node scripts/postinstall)
+2026-10-10T12:53:52.6766288Z npm warn install-scripts   electron-winstaller@5.4.0 (install: node ./script/select-7z-arch.js)
+2026-10-10T12:53:52.6767249Z npm warn install-scripts   get-windows@9.3.0 (install: node-pre-gyp install --fallback-to-build)
+2026-10-10T12:53:52.6767855Z npm warn install-scripts
+2026-10-10T12:53:52.6768604Z npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+2026-10-10T12:53:56.8926327Z ##[group]Run npm run release:preflight
+2026-10-10T12:53:56.8926769Z [36;1mnpm run release:preflight[0m
+2026-10-10T12:53:56.8984610Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-10T12:53:56.8984891Z ##[endgroup]
+2026-10-10T12:53:57.5195954Z 
+2026-10-10T12:53:57.5196539Z > weftmate@0.1.0 release:preflight
+2026-10-10T12:53:57.5196931Z > node scripts/release-preflight.mjs
+2026-10-10T12:53:57.5197190Z 
+2026-10-10T12:53:58.2445904Z found 0 vulnerabilities
+2026-10-10T12:53:58.2624428Z Release preflight passed: no local dependencies or high-severity production advisories.
+2026-10-10T12:53:58.3414766Z ##[group]Run npm audit --audit-level=high --registry=https://registry.npmjs.org
+2026-10-10T12:53:58.3415324Z [36;1mnpm audit --audit-level=high --registry=https://registry.npmjs.org[0m
+2026-10-10T12:53:58.3469414Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-10T12:53:58.3469685Z ##[endgroup]
+2026-10-10T12:53:59.3738830Z found 0 vulnerabilities
+2026-10-10T12:53:59.4461886Z ##[group]Run node .github/scripts/dependency-smoke.mjs
+2026-10-10T12:53:59.4462472Z [36;1mnode .github/scripts/dependency-smoke.mjs[0m
+2026-10-10T12:53:59.4520341Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-10T12:53:59.4520666Z ##[endgroup]
+2026-10-10T12:53:59.8699034Z Dependency smoke passed: electron-builder @electron/get downloads through global-agent 4 loopback proxy.
+2026-10-10T12:54:00.0105463Z ##[group]Run node --test tests/apple-callback-isolation.test.mjs
+2026-10-10T12:54:00.0106162Z [36;1mnode --test tests/apple-callback-isolation.test.mjs[0m
+2026-10-10T12:54:00.0187874Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-10T12:54:00.0188266Z ##[endgroup]
+2026-10-10T12:54:00.4578899Z apps/apple/iOS/PairingScannerView.swift:70 dataScanner: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4583344Z apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/HealthKitReader.swift:93 detached: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4586490Z apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/HealthKitReader.swift:115 initialResultsHandler: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4589449Z apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/HealthKitReader.swift:129 HKSampleQuery: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4592388Z apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/NativeUpdates.swift:174 urlSession: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4597220Z apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PublicUpdates.swift:245 urlSession: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4599953Z apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/Transport.swift:43 urlSession: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4603772Z apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/Transport.swift:66 urlSession: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4606222Z apps/apple/UI/A16MacReview.swift:12 track: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4608380Z apps/apple/UI/AppleAppModel.swift:361 detached: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4610975Z apps/apple/UI/CloudBrowser.swift:30 ASWebAuthenticationSession: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4613323Z apps/apple/UI/ComposerMedia.swift:63 imagePickerController: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4615939Z apps/apple/UI/ConversationAttachmentView.swift:130 fileExporter: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4629495Z apps/apple/UI/ConversationAttachmentView.swift:161 detached: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4632150Z apps/apple/UI/ConversationAttachmentView.swift:167 detached: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4634601Z apps/apple/UI/ConversationView.swift:131 fileImporter: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4637469Z apps/apple/UI/ConversationView.swift:857 onScrollGeometryChange: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4641736Z apps/apple/UI/ExplicitReturnButton.swift:28 sizeThatFits: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4646068Z apps/apple/UI/MacSessionMenu.swift:110 menuNeedsUpdate: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4648469Z apps/apple/UI/MainChatPositionTracking.swift:38 addObserver: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4650836Z apps/apple/UI/MainChatPositionTracking.swift:82 observe: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4656972Z apps/apple/UI/MainChatView.swift:94 fileImporter: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4659288Z apps/apple/UI/MessageActionsPresentation.swift:70 fileExporter: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4661675Z apps/apple/UI/PhoneWatchTimelineBridge.swift:17 session: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4663765Z apps/apple/UI/ProjectsView.swift:21 begin: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4665838Z apps/apple/UI/TimelineArtifactCard.swift:35 fileExporter: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4667928Z apps/apple/watchOS/WatchHomeView.swift:26 session: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4670170Z apps/apple/watchOS/WatchHomeView.swift:30 sessionReachabilityDidChange: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4672953Z apps/apple/watchOS/WatchHomeView.swift:34 session: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4675104Z apps/apple/watchOS/WatchHomeView.swift:38 session: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4677493Z apps/apple/watchOS/WatchHomeView.swift:86 sendMessage: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4679207Z ✖ Apple reviewed callbacks retain their exact isolation boundary (92.416ms)
+2026-10-10T12:54:00.4680138Z ✔ new and changed background callback actor access fails review (2.116ms)
+2026-10-10T12:54:00.4680977Z ✔ comments and string braces cannot hide a callback boundary (0.2142ms)
+2026-10-10T12:54:00.4681770Z ✔ labelled actions and completions remain inside the reviewed boundary (0.415ms)
+2026-10-10T12:54:00.4770929Z ℹ tests 4
+2026-10-10T12:54:00.4771285Z ℹ suites 0
+2026-10-10T12:54:00.4771596Z ℹ pass 3
+2026-10-10T12:54:00.4771825Z ℹ fail 1
+2026-10-10T12:54:00.4772069Z ℹ cancelled 0
+2026-10-10T12:54:00.4772338Z ℹ skipped 0
+2026-10-10T12:54:00.4772572Z ℹ todo 0
+2026-10-10T12:54:00.4772892Z ℹ duration_ms 172.3069
+2026-10-10T12:54:00.4888760Z 
+2026-10-10T12:54:00.4889124Z ✖ failing tests:
+2026-10-10T12:54:00.4889300Z 
+2026-10-10T12:54:00.4889567Z test at tests\apple-callback-isolation.test.mjs:5:1
+2026-10-10T12:54:00.4890357Z ✖ Apple reviewed callbacks retain their exact isolation boundary (92.416ms)
+2026-10-10T12:54:00.4891392Z   Error: Command failed: C:\hostedtoolcache\windows\node\24.21.0\x64\node.exe apps/apple/Scripts/check_callback_isolation.mjs
+2026-10-10T12:54:00.4893169Z   apps/apple/iOS/PairingScannerView.swift:70 dataScanner: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4895705Z   apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/HealthKitReader.swift:93 detached: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4898423Z   apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/HealthKitReader.swift:115 initialResultsHandler: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4901209Z   apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/HealthKitReader.swift:129 HKSampleQuery: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4904115Z   apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/NativeUpdates.swift:174 urlSession: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4906805Z   apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PublicUpdates.swift:245 urlSession: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4909422Z   apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/Transport.swift:43 urlSession: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4912015Z   apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/Transport.swift:66 urlSession: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4914659Z   apps/apple/UI/A16MacReview.swift:12 track: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4917585Z   apps/apple/UI/AppleAppModel.swift:361 detached: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4920456Z   apps/apple/UI/CloudBrowser.swift:30 ASWebAuthenticationSession: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4922823Z   apps/apple/UI/ComposerMedia.swift:63 imagePickerController: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4924801Z   apps/apple/UI/ConversationAttachmentView.swift:130 fileExporter: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4926933Z   apps/apple/UI/ConversationAttachmentView.swift:161 detached: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4929357Z   apps/apple/UI/ConversationAttachmentView.swift:167 detached: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4931809Z   apps/apple/UI/ConversationView.swift:131 fileImporter: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4934209Z   apps/apple/UI/ConversationView.swift:857 onScrollGeometryChange: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4936548Z   apps/apple/UI/ExplicitReturnButton.swift:28 sizeThatFits: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4938827Z   apps/apple/UI/MacSessionMenu.swift:110 menuNeedsUpdate: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4941374Z   apps/apple/UI/MainChatPositionTracking.swift:38 addObserver: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4943940Z   apps/apple/UI/MainChatPositionTracking.swift:82 observe: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4946223Z   apps/apple/UI/MainChatView.swift:94 fileImporter: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4948542Z   apps/apple/UI/MessageActionsPresentation.swift:70 fileExporter: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4950989Z   apps/apple/UI/PhoneWatchTimelineBridge.swift:17 session: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4953199Z   apps/apple/UI/ProjectsView.swift:21 begin: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4955378Z   apps/apple/UI/TimelineArtifactCard.swift:35 fileExporter: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4958400Z   apps/apple/watchOS/WatchHomeView.swift:26 session: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4960758Z   apps/apple/watchOS/WatchHomeView.swift:30 sessionReachabilityDidChange: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4963076Z   apps/apple/watchOS/WatchHomeView.swift:34 session: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4965464Z   apps/apple/watchOS/WatchHomeView.swift:38 session: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4967662Z   apps/apple/watchOS/WatchHomeView.swift:86 sendMessage: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.
+2026-10-10T12:54:00.4968849Z   
+2026-10-10T12:54:00.4969179Z       at genericNodeError (node:internal/errors:986:15)
+2026-10-10T12:54:00.4969655Z       at wrappedFn (node:internal/errors:540:14)
+2026-10-10T12:54:00.4970120Z       at checkExecSyncError (node:child_process:942:11)
+2026-10-10T12:54:00.4970589Z       at execFileSync (node:child_process:978:15)
+2026-10-10T12:54:00.4971412Z       at TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/apple-callback-isolation.test.mjs:6:15)
+2026-10-10T12:54:00.4972179Z       at Test.runInAsyncScope (node:async_hooks:227:14)
+2026-10-10T12:54:00.4972668Z       at Test.run (node:internal/test_runner/test:1402:25)
+2026-10-10T12:54:00.4973187Z       at Test.start (node:internal/test_runner/test:1262:17)
+2026-10-10T12:54:00.4973820Z       at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+2026-10-10T12:54:00.4974340Z     status: 1,
+2026-10-10T12:54:00.4974586Z     signal: null,
+2026-10-10T12:54:00.5015095Z     output: [ null, 'CRASH-1: 49 callback sites reviewed, 31 failures\n', 'apps/apple/iOS/PairingScannerView.swift:70 dataScanner: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/Packages/WeftMateCore/Sources/WeftMateCore/HealthKitReader.swift:93 detached: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/Packages/WeftMateCore/Sources/WeftMateCore/HealthKitReader.swift:115 initialResultsHandler: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/Packages/WeftMateCore/Sources/WeftMateCore/HealthKitReader.swift:129 HKSampleQuery: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/Packages/WeftMateCore/Sources/WeftMateCore/NativeUpdates.swift:174 urlSession: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PublicUpdates.swift:245 urlSession: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/Packages/WeftMateCore/Sources/WeftMateCore/Transport.swift:43 urlSession: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/Packages/WeftMateCore/Sources/WeftMateCore/Transport.swift:66 urlSession: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/A16MacReview.swift:12 track: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/AppleAppModel.swift:361 detached: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/CloudBrowser.swift:30 ASWebAuthenticationSession: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/ComposerMedia.swift:63 imagePickerController: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/ConversationAttachmentView.swift:130 fileExporter: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/ConversationAttachmentView.swift:161 detached: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/ConversationAttachmentView.swift:167 detached: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/ConversationView.swift:131 fileImporter: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/ConversationView.swift:857 onScrollGeometryChange: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/ExplicitReturnButton.swift:28 sizeThatFits: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/MacSessionMenu.swift:110 menuNeedsUpdate: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/MainChatPositionTracking.swift:38 addObserver: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/MainChatPositionTracking.swift:82 observe: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/MainChatView.swift:94 fileImporter: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/MessageActionsPresentation.swift:70 fileExporter: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/PhoneWatchTimelineBridge.swift:17 session: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/ProjectsView.swift:21 begin: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/TimelineArtifactCard.swift:35 fileExporter: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/watchOS/WatchHomeView.swift:26 session: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/watchOS/WatchHomeView.swift:30 sessionReachabilityDidChange: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/watchOS/WatchHomeView.swift:34 session: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/watchOS/WatchHomeView.swift:38 session: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/watchOS/WatchHomeView.swift:86 sendMessage: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\n' ],
+2026-10-10T12:54:00.5047985Z     pid: 5592,
+2026-10-10T12:54:00.5048395Z     stdout: 'CRASH-1: 49 callback sites reviewed, 31 failures\n',
+2026-10-10T12:54:00.5087322Z     stderr: 'apps/apple/iOS/PairingScannerView.swift:70 dataScanner: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/Packages/WeftMateCore/Sources/WeftMateCore/HealthKitReader.swift:93 detached: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/Packages/WeftMateCore/Sources/WeftMateCore/HealthKitReader.swift:115 initialResultsHandler: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/Packages/WeftMateCore/Sources/WeftMateCore/HealthKitReader.swift:129 HKSampleQuery: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/Packages/WeftMateCore/Sources/WeftMateCore/NativeUpdates.swift:174 urlSession: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PublicUpdates.swift:245 urlSession: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/Packages/WeftMateCore/Sources/WeftMateCore/Transport.swift:43 urlSession: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/Packages/WeftMateCore/Sources/WeftMateCore/Transport.swift:66 urlSession: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/A16MacReview.swift:12 track: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/AppleAppModel.swift:361 detached: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/CloudBrowser.swift:30 ASWebAuthenticationSession: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/ComposerMedia.swift:63 imagePickerController: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/ConversationAttachmentView.swift:130 fileExporter: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/ConversationAttachmentView.swift:161 detached: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/ConversationAttachmentView.swift:167 detached: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/ConversationView.swift:131 fileImporter: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/ConversationView.swift:857 onScrollGeometryChange: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/ExplicitReturnButton.swift:28 sizeThatFits: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/MacSessionMenu.swift:110 menuNeedsUpdate: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/MainChatPositionTracking.swift:38 addObserver: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/MainChatPositionTracking.swift:82 observe: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/MainChatView.swift:94 fileImporter: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/MessageActionsPresentation.swift:70 fileExporter: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/PhoneWatchTimelineBridge.swift:17 session: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/ProjectsView.swift:21 begin: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/UI/TimelineArtifactCard.swift:35 fileExporter: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/watchOS/WatchHomeView.swift:26 session: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/watchOS/WatchHomeView.swift:30 sessionReachabilityDidChange: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/watchOS/WatchHomeView.swift:34 session: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/watchOS/WatchHomeView.swift:38 session: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\napps/apple/watchOS/WatchHomeView.swift:86 sendMessage: unreviewed callback or changed actor access; use a nonisolated @Sendable callback and explicitly hop to MainActor for UI state. Review and record the exact body with a reason.\n'
+2026-10-10T12:54:00.5121791Z   }
+2026-10-10T12:54:00.5831311Z ##[error]Process completed with exit code 1.
+2026-10-10T12:54:00.6005988Z ##[group]Run if [ "Windows" = "Linux" ]; then
+2026-10-10T12:54:00.6006327Z [36;1mif [ "Windows" = "Linux" ]; then[0m
+2026-10-10T12:54:00.6006651Z [36;1m  xvfb-run --auto-servernum node .github/scripts/ci-unit-tests.mjs known[0m
+2026-10-10T12:54:00.6006952Z [36;1melse[0m
+2026-10-10T12:54:00.6007142Z [36;1m  node .github/scripts/ci-unit-tests.mjs known[0m
+2026-10-10T12:54:00.6007371Z [36;1mfi[0m
+2026-10-10T12:54:00.6022069Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-10T12:54:00.6022385Z ##[endgroup]
+2026-10-10T12:54:00.8483238Z ### Unit tests (known)
+2026-10-10T12:54:00.8483615Z No known failures remain; no baseline tests to run.
+2026-10-10T12:54:00.8483826Z 
+2026-10-10T12:54:00.8790698Z Post job cleanup.
+2026-10-10T12:54:01.0168604Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-10-10T12:54:01.0378566Z git version 2.55.0.windows.5
+2026-10-10T12:54:01.0430305Z Temporarily overriding HOME='D:\a\_temp\c0f8f563-562e-48c7-abb7-4d56f285717f' before making global git config changes
+2026-10-10T12:54:01.0431363Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-10T12:54:01.0438878Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\weftmate\weftmate
+2026-10-10T12:54:01.0673361Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-10T12:54:01.0899275Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-10T12:54:01.5113414Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-10T12:54:01.5310746Z http.https://github.com/.extraheader
+2026-10-10T12:54:01.5346432Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all http.https://github.com/.extraheader
+2026-10-10T12:54:01.5591598Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-10T12:54:01.9880079Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-10T12:54:02.0179691Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-10T12:54:02.4468993Z Cleaning up orphan processes
+2026-10-10T12:54:02.4502346Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

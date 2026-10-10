@@ -1,0 +1,36 @@
+{
+  "memory": [
+    {
+      "run": "exit-formation-final",
+      "jobCount": 6,
+      "evidenceCount": 6,
+      "cognitionCount": 6,
+      "duplicateSources": 0,
+      "duplicateBoundaries": 0,
+      "jobStates": {
+        "applied": 6
+      },
+      "formationLastUserQuotes": [
+        {
+          "method": "tray",
+          "attempt": 1,
+          "retained": true
+        },
+        {
+          "method": "task-manager-force",
+          "attempt": 1,
+          "retained": true
+        },
+        {
+          "method": "logout-taskkill",
+          "attempt": 1,
+          "retained": true
+        }
+      ],
+      "expectedCompletedBoundaries": 6,
+      "passed": true
+    }
+  ],
+  "streamingMessages": [],
+  "passed": true
+}

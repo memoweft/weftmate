@@ -1,0 +1,16 @@
+import {readFileSync,writeFileSync,existsSync} from 'node:fs';
+import {join} from 'node:path';
+import {spawnSync} from 'node:child_process';
+import {createRequire} from 'node:module';
+import {inspectProjectRoot} from '../../../../src/personal-projects/index.mjs';
+import {chromium} from 'playwright';
+const base='tests/evidence/qa-6/supplement/',root=readFileSync(base+'run-root.txt','utf8').trim(),installed=readFileSync(base+'install-root.txt','utf8').trim();
+const folder=join(root,'QA6-project'),asar=join(installed,'Programs/resources/app.asar'),script=join(asar,'src/personal-projects/reader.ps1');
+const entries=createRequire(import.meta.url)('@electron/asar').listPackage(asar);
+const report={baseline:'480d65e4',syntheticFolder:true,scriptInsideAsar:entries.some(x=>x.replaceAll('\\','/').endsWith('/src/personal-projects/reader.ps1')),scriptIsOrdinaryOsFile:existsSync(script)};
+const source=await inspectProjectRoot(folder);report.sameFolderSourceInspectionPassed=!!source.rootIdentity&&!!source.rootFinalPath;
+const result=spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',script],{windowsHide:true,encoding:'utf8',input:JSON.stringify({action:'inspect',rootPath:folder})});
+report.externalPowerShellExit=result.status;report.externalPowerShellStderr=result.stderr;
+const port=readFileSync(join(root,'profile/DevToolsActivePort'),'utf8').split('\n')[0],browser=await chromium.connectOverCDP('http://127.0.0.1:'+port),page=browser.contexts()[0].pages().find(p=>p.url().includes('/personal/v1/ui'));
+report.nativeCreateRetry=await page.evaluate(async folder=>{try{return {ok:true,result:await weftmateDesktop.createFolderProject({requestId:crypto.randomUUID(),name:'QA6-project-repeat',rootPath:folder,permission:'write'})};}catch(e){return {ok:false,error:e.message};}},folder);
+await browser.close();writeFileSync('tests/evidence/qa-6/project-package-proof.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));

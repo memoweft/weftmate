@@ -1,0 +1,18 @@
+{
+  "startedAt": "2026-10-10T13:02:27.474Z",
+  "installed": true,
+  "checks": [
+    {
+      "name": "00-no-false-recovery",
+      "passed": true,
+      "durationMs": 1004
+    },
+    {
+      "name": "01-main-chat",
+      "passed": false,
+      "durationMs": 120307,
+      "error": "QA5_WAIT_TIMEOUT"
+    }
+  ],
+  "errors": []
+}
