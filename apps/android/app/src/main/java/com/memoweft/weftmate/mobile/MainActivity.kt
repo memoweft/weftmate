@@ -117,6 +117,8 @@ class MainActivity : Activity() {
     private var welcomeLayoutListener: ViewTreeObserver.OnGlobalLayoutListener? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        SystemBars.prepare(this, savedAppearance(this))
+        Weave.dark = resolvedAppearanceDark(savedAppearance(this), systemAppearanceDark())
         super.onCreate(savedInstanceState)
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
         store = LocalStore(this)
@@ -128,6 +130,7 @@ class MainActivity : Activity() {
                 val savedHost = secrets.host()
                 val savedModel = savedHost?.let { secrets.model(Endpoints.ownerKey(it.origin, it.ownerId)) }
                 runOnUiThread {
+                    if (isFinishing || isDestroyed) return@runOnUiThread
                     host = savedHost; model = savedModel
                     currentOwner = savedHost?.let { Endpoints.ownerKey(it.origin, it.ownerId) }
                     val backgroundSync = savedHost == null || SyncJobService.schedule(this)
@@ -149,6 +152,20 @@ class MainActivity : Activity() {
                 }
             } catch (_: Exception) { runOnUiThread { state("本机资料无法安全读取，请检查设备存储") } }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val dark = resolvedAppearanceDark(savedAppearance(this), systemAppearanceDark())
+        if (Weave.dark != dark && ::root.isInitialized) {
+            val draft = if (::composer.isInitialized) composer.text.toString() else ""
+            Weave.dark = dark
+            SystemBars.prepare(this, savedAppearance(this))
+            buildUi()
+            composer.setText(draft)
+            showTranscript()
+        }
+        SystemBars.apply(this, dark, savedAppearance(this))
     }
 
     override fun onDestroy() {
@@ -243,20 +260,8 @@ class MainActivity : Activity() {
     private fun buildWeaveUi() {
         root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(Weave.surface) }
         setContentView(root)
-        window.decorView.setBackgroundColor(Weave.surface)
-        window.statusBarColor = Weave.surface
-        window.navigationBarColor = Weave.surface
-        if (Build.VERSION.SDK_INT >= 30) window.decorView.windowInsetsController?.setSystemBarsAppearance(
-            android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or
-                android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
-            android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or
-                android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS)
-        else window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
-        if (Build.VERSION.SDK_INT >= 30) root.setOnApplyWindowInsetsListener { view, insets ->
-            val safe = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.ime())
-            view.setPadding(safe.left, safe.top, safe.right, safe.bottom)
-            insets
-        }
+        SystemBars.apply(this, Weave.dark, savedAppearance(this))
+        SystemBars.nativeInsets(root)
 
         val header = LinearLayout(this).apply {
             gravity = Gravity.CENTER_VERTICAL
