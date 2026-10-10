@@ -107,7 +107,7 @@ try {
   for(const theme of ['light','dark']){await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.screenshot({path:join(evidence,`desktop-menu-${theme}.png`)});}
   await page.keyboard.press('p');await until(async()=>(await api('/sessions')).body.sessions.find(s=>s.sessionId===A).pinned);
   await more().click();await page.keyboard.press('u');await until(async()=>(await api('/sessions')).body.sessions.find(s=>s.sessionId===A).unread);
-  await more().click();await page.getByRole('menuitem',{name:'标记为已读',exact:false}).click();await until(async()=>!(await api('/sessions')).body.sessions.find(s=>s.sessionId===A).unread);
+  await more().click();await page.getByRole('menuitemcheckbox',{name:'标记为已读',exact:false}).click();await until(async()=>!(await api('/sessions')).body.sessions.find(s=>s.sessionId===A).unread);
   await more().click();await page.keyboard.press('r');const rename=page.getByRole('textbox',{name:'重命名对话',exact:true});await rename.fill('取消改名');await rename.press('Escape');assert.equal((await api('/sessions')).body.sessions.find(s=>s.sessionId===A).title,title);
   await more().click();await page.keyboard.press('r');await rename.fill('合成分叉验收');await rename.press('Enter');await until(async()=>(await api('/sessions')).body.sessions.find(s=>s.sessionId===A).title==='合成分叉验收');
   await page.getByRole('button',{name:'合成分叉验收',exact:true}).click({button:'right'});await page.getByRole('menu',{name:'对话操作',exact:true}).waitFor();await page.keyboard.press('d');await page.getByRole('dialog',{name:'删除对话',exact:true}).waitFor();assert.equal(await page.getByRole('checkbox',{name:'同时忘掉从这段对话形成的记忆',exact:true}).isChecked(),false);await page.getByRole('button',{name:'取消',exact:true}).click();

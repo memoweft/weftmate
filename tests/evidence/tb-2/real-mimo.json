@@ -1,0 +1,86 @@
+{
+  "realElectron": true,
+  "fixedDsh": true,
+  "model": "mimo-v2.6-flash",
+  "checks": [
+    "natural-chinese-daily-reminder-native-create",
+    "goals-page-correct-local-rule"
+  ],
+  "schedule": {
+    "kind": "reminder",
+    "repeat": {
+      "kind": "daily",
+      "time": "08:00:00"
+    },
+    "timeZone": "Asia/Shanghai",
+    "nextRunAt": "2026-10-10T00:00:00.000Z"
+  },
+  "usage": [
+    {
+      "completion_tokens": 21,
+      "prompt_tokens": 2173,
+      "total_tokens": 2194,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1664
+      }
+    },
+    {
+      "completion_tokens": 22,
+      "prompt_tokens": 2260,
+      "total_tokens": 2282,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 2112
+      }
+    },
+    {
+      "completion_tokens": 102,
+      "prompt_tokens": 2817,
+      "total_tokens": 2919,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 2176
+      }
+    },
+    {
+      "completion_tokens": 95,
+      "prompt_tokens": 3000,
+      "total_tokens": 3095,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 2816
+      }
+    },
+    {
+      "completion_tokens": 91,
+      "prompt_tokens": 3176,
+      "total_tokens": 3267,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 2944
+      }
+    },
+    {
+      "completion_tokens": 41,
+      "prompt_tokens": 3408,
+      "total_tokens": 3449,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 3136
+      }
+    }
+  ]
+}

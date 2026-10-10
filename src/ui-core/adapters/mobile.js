@@ -2,7 +2,7 @@
 globalThis.WeftUiCore.factories.mobile = (core, effects, environment) => {
   if (!environment.mobileState) return {};
   const state = environment.mobileState;
-  const MEMORY_KINDS = {cognition:'理解',entity:'人物与对象',relationship:'关系',event:'共同经历'};
+  const MEMORY_KINDS = {all:'全部',cognition:'理解',entity:'人物与对象',relationship:'关系',event:'共同经历'};
   let requestSequence = 0;
   function composerState(text) {
     state.draft = text;
@@ -339,7 +339,7 @@ async function stop(){if(state.chatSource==='host'||selectedBinding()){
     finally{state.sharedStopping=false;if(sharedViewCurrent(owner,epoch,generation,sessionId))effects.scheduleSharedPoll()}return}
   try{await effects.nativeCall('chat.stop');effects.status('已请求停止，等待本轮状态')}catch(e){effects.status(effects.safeError(e),true)}}
 
-function emptyMemoryState(scope=''){return {scope,flow:0,view:'list',target:null,kind:'cognition',query:'',queryDraft:'',
+function emptyMemoryState(scope=''){return {scope,flow:0,view:'list',target:null,kind:'all',totalCount:null,query:'',queryDraft:'',
   statusState:'idle',reasonCode:'',capabilities:{list:false,source:false,inject:null},pendingBoundaryCount:null,blockedBoundaryCount:null,discardedBoundaryCount:null,lastFailureCode:'',
   statusWorldRevision:null,worldRevision:null,detailRevision:null,refreshOnReturn:false,boundOwnerId:null,boundScope:'',
   items:[],nextCursor:null,hasMore:false,loading:false,error:'',selectedItem:null,detail:null,sources:[],
@@ -384,7 +384,7 @@ function memoryRevisionMatches(value,memory=state.memory){return Number.isSafeIn
 
 function memoryPathEncode(value){return encodeURIComponent(value).replace(/%3A/gi,':').replace(/[!'()*]/g,c=>`%${c.charCodeAt(0).toString(16).toUpperCase()}`)}
 
-function memoryItemsPath(kind,query,after){try{const params=[`kind=${memoryPathEncode(kind)}`,'limit=20'];
+function memoryItemsPath(kind,query,after){try{const params=[`kind=${memoryPathEncode(kind)}`,'limit=20','includeSources=true'];
     if(query)params.push(`query=${memoryPathEncode(query)}`);if(after)params.push(`after=${memoryPathEncode(after)}`);
     const path=`/personal/v1/memory/items?${params.join('&')}`;return path.length<=512?path:null}catch{return null}}
 
@@ -442,13 +442,14 @@ async function loadMemoryItems(target,token,after,append){if(!memoryCurrent(toke
     if(!Number.isSafeInteger(result.worldRevision))throw new Error('MEMORY_INVALID_RESPONSE');
     if(append&&!memoryRevisionMatches(result,memory))throw new Error('MEMORY_REVISION_CHANGED');
     if(result.searchScope!=='account_snapshot'||!Array.isArray(result.items)||result.items.length>20||typeof result.hasMore!=='boolean'||
-      result.items.some(item=>!item||typeof item.id!=='string'||!item.id||item.kind!==memory.kind||typeof item.text!=='string'||
+      result.items.some(item=>!item||typeof item.id!=='string'||!item.id||!MEMORY_KINDS[item.kind]||item.kind==='all'||memory.kind!=='all'&&item.kind!==memory.kind||typeof item.text!=='string'||
         !Number.isSafeInteger(item.sourceCount)||item.sourceCount<0))
       throw new Error('MEMORY_INVALID_RESPONSE');
     if(result.hasMore&&(typeof result.nextCursor!=='string'||!result.nextCursor))throw new Error('MEMORY_INVALID_RESPONSE');
     if(!append)memory.worldRevision=result.worldRevision;
-    const prior=append?memory.items:[];const seen=new Set(prior.map(item=>item.id));
-    memory.items=[...prior,...result.items.filter(item=>!seen.has(item.id))];memory.nextCursor=result.hasMore?result.nextCursor:null;
+    const prior=append?memory.items:[];const seen=new Set(prior.map(item=>`${item.kind}:${item.id}`));
+    memory.items=[...prior,...result.items.filter(item=>!seen.has(`${item.kind}:${item.id}`))];memory.nextCursor=result.hasMore?result.nextCursor:null;
+    if(memory.kind==='all')memory.totalCount=Number.isSafeInteger(result.totalCount)?result.totalCount:null;
     memory.hasMore=result.hasMore;memory.loading=false;memory.error='';effects.renderMemoryList(target);
     if(!append&&memory.reopenAfterRefresh){const {kind,id}=memory.reopenAfterRefresh;
       memory.reopenAfterRefresh=null;const item=memory.items.find(value=>value.kind===kind&&value.id===id);
@@ -604,5 +605,10 @@ async function submitMemoryAction(operation,evidenceId=null,correction=''){const
       return}
     memory.receiptMessage='提交结果待确认，正在查询原请求回执；不会自动重发。';
     effects.renderMemoryDetail(memory.target,token);void reconcileMemoryMarker(marker)}}
-  return { mobile: { composerState, draftKey, sharedDraftKey, attachmentConversationId, attachmentKey, currentAttachments, selectionKey, chatSourceKey, savedSharedSelection, hasAnyDraft, sharedViewCurrent, trackSharedAcceptedTurn, waitForSharedTurn, acceptSharedCommand, reconcileSharedDelivery, loadSharedOutbox, checkSharedPending, listConversations, selectedSharedSession, selectedBinding, matchingOriginalHostModels, refreshHandoffModelName, refreshHandoff, loadLinkedHistory, acceptSend, newSharedRequestId, sendShared, sendLinked, send, stop, emptyMemoryState, memoryToken, memoryCurrent, memoryFailureText, memoryFail, memoryOwnerMatches, memoryRevisionMatches, memoryPathEncode, memoryItemsPath, memoryListAllowed, startMemorySnapshot, loadMemorySnapshot, loadMemoryItems, loadMemoryMore, memoryPathIdSupported, memoryMarkerKey, savedMemoryMarker, persistMemoryMarker, clearMemoryMarker, newMemoryRequestId, memoryActionAllowed, openMemoryDetail, loadMemoryDetail, memoryReceiptMessage, memoryReceiptRejected, handleMemoryReceipt, reconcileMemoryMarker, submitMemoryAction } };
+  async function retryMemoryFormation(jobId, requestId) {
+    const token=memoryToken();
+    await business({path:`/personal/v1/memory/formation/${memoryPathEncode(jobId)}/retry`,method:'POST',body:{requestId}});
+    if(memoryCurrent(token)) await startMemorySnapshot(state.memory.target,state.memory.kind,state.memory.query);
+  }
+  return { mobile: { retryMemoryFormation, composerState, draftKey, sharedDraftKey, attachmentConversationId, attachmentKey, currentAttachments, selectionKey, chatSourceKey, savedSharedSelection, hasAnyDraft, sharedViewCurrent, trackSharedAcceptedTurn, waitForSharedTurn, acceptSharedCommand, reconcileSharedDelivery, loadSharedOutbox, checkSharedPending, listConversations, selectedSharedSession, selectedBinding, matchingOriginalHostModels, refreshHandoffModelName, refreshHandoff, loadLinkedHistory, acceptSend, newSharedRequestId, sendShared, sendLinked, send, stop, emptyMemoryState, memoryToken, memoryCurrent, memoryFailureText, memoryFail, memoryOwnerMatches, memoryRevisionMatches, memoryPathEncode, memoryItemsPath, memoryListAllowed, startMemorySnapshot, loadMemorySnapshot, loadMemoryItems, loadMemoryMore, memoryPathIdSupported, memoryMarkerKey, savedMemoryMarker, persistMemoryMarker, clearMemoryMarker, newMemoryRequestId, memoryActionAllowed, openMemoryDetail, loadMemoryDetail, memoryReceiptMessage, memoryReceiptRejected, handleMemoryReceipt, reconcileMemoryMarker, submitMemoryAction } };
 };

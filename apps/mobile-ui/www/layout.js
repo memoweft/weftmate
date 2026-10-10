@@ -20,7 +20,7 @@ const mobileMarkup = String.raw`
       <div id="conversation-list" class="conversation-list" aria-label="最近对话" aria-live="polite"></div>
       <div class="drawer-section-label drawer-function-label">功能</div>
       <div class="drawer-links">
-        <button data-page="chat">对话</button><button data-page="activity">动态</button><button data-page="memory">记忆</button>
+        <button data-page="chat">对话</button><button data-page="activity">动态</button><button data-page="goals">目标</button><button data-page="memory">记忆</button>
         <button data-page="capabilities">能力与扩展</button><button data-page="workspaces">项目与成果</button><button data-page="devices">设备</button>
         <button data-page="notifications">通知</button><button data-page="settings">设置</button>
       </div>
@@ -56,7 +56,8 @@ const mobileMarkup = String.raw`
             <summary id="queued-count">排队中</summary>
             <div id="queued-cards" aria-label="排队任务"></div>
           </details>
-          <div id="composer-subtasks" class="composer-subtasks" hidden></div><div class="composer-card">
+          <div id="composer-subtasks" class="composer-subtasks" hidden></div><div id="chat-status" class="chat-status" role="status"></div>
+          <div class="composer-card">
             <textarea id="draft" rows="2" placeholder="和 WeftMate 聊聊…" aria-label="输入消息"></textarea>
             <div id="attachment-drafts" class="attachment-drafts" aria-label="待发送附件" hidden></div>
             <div class="composer-actions">
