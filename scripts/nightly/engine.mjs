@@ -22,6 +22,8 @@ if (resolve(context.worktree) !== resolve(join(scripts, '../..'))) throw Error('
 await mkdir(gallery, { recursive: true });
 await mkdir(join(out, 'logs'), { recursive: true });
 console.log(`Nightly ${runId}; reports: ${out}`);
+const cancelPoll = setInterval(() => { void readFile(join(out,'cancel.request')).then(() => { cancelled=true; for (const child of children) child.kill(); }).catch(()=>{}); },500);
+cancelPoll.unref();
 process.on('SIGINT', () => { cancelled = true; for (const child of children) child.kill(); });
 process.on('SIGTERM', () => { cancelled = true; for (const child of children) child.kill(); });
 
@@ -121,7 +123,7 @@ try {
         const packages = (await run(adb,['-s','127.0.0.1:7555','shell','pm','list','packages','weftmate'],{name:'android-packages'})).output;
         const processes = (await run(adb,['-s','127.0.0.1:7555','shell','ps','-A','-o','NAME'],{name:'android-processes'})).output;
         const instrumentation = (await run(adb,['-s','127.0.0.1:7555','shell','dumpsys','activity'],{name:'android-instrumentation'})).output;
-        const host = await run('pwsh',['-NoProfile','-Command', `[bool]@(Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -notin @($PID,${process.pid},${context.bootstrapPid}) -and $_.CommandLine -match 'review-capture-mobile[^\r\n]*--android|weftmateApplicationId|NightlyWebViewProbeTest|adb[^\r\n]*\bam\s+instrument|weftmate[^\r\n]*android[^\r\n]*(?:test|probe)' }).Count`], {name:'android-host-occupancy'});
+        const host = await run('pwsh',['-NoProfile','-Command', String.raw`[bool]@(Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -notin @($PID,${process.pid},${context.bootstrapPid}) -and $_.CommandLine -match 'review-capture-mobile[^\r\n]*--android|weftmateApplicationId|NightlyWebViewProbeTest|adb[^\r\n]*\bam\s+instrument|weftmate[^\r\n]*android[^\r\n]*(?:test|probe)' }).Count`], {name:'android-host-occupancy'});
         const reason = androidBusyReason(packages,processes,instrumentation,host.output.trim() === 'True' ? ['review-capture-mobile --android'] : []);
         cleanup.android = { ...cleanup.android, reusedEmulator:!!alreadyRunning, occupancyChecked:true, occupancyReason:reason || 'MuMu 锁已持有；设备无 WeftMate / UI 测试进程和活动仪器测试；Windows 无安卓测试命令' };
         return reason;
@@ -148,6 +150,7 @@ try {
   }
 } catch (error) { phases.push({ name: 'controller', status: 'failed', reason: error.message }); }
 finally {
+  clearInterval(cancelPoll);
   const cleanupStarted = Date.now();
   for (const child of children) child.kill();
   if (temp) {
