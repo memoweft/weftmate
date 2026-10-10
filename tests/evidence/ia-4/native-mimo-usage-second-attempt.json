@@ -1,0 +1,35 @@
+[
+  {
+    "completion_tokens": 7,
+    "prompt_tokens": 2114,
+    "total_tokens": 2121,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    }
+  },
+  {
+    "completion_tokens": 9,
+    "prompt_tokens": 2619,
+    "total_tokens": 2628,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens_details": {
+      "cached_tokens": 2112
+    }
+  },
+  {
+    "completion_tokens": 7,
+    "prompt_tokens": 2954,
+    "total_tokens": 2961,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens_details": {
+      "cached_tokens": 2560
+    }
+  }
+]

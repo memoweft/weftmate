@@ -64,6 +64,7 @@ class FakeElement {
     return child
   }
   after(...nodes: FakeElement[]) { const p = this.parentNode; if (!p) return; const i = p.children.indexOf(this); p.children.splice(i + 1, 0, ...nodes); for (const n of nodes) n.parentNode = p }
+  before(...nodes: FakeElement[]) { const p=this.parentNode;if(!p)return;const i=p.children.indexOf(this);p.children.splice(i,0,...nodes);for(const node of nodes)node.parentNode=p; }
   remove() { if (this.parentNode) this.parentNode.children = this.parentNode.children.filter((x) => x !== this); this.parentNode = null }
   setAttribute(name: string, value: string) { this.attributes.set(name, value) }
   getAttribute(name: string) { return this.attributes.get(name) ?? null }
@@ -251,7 +252,7 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
   }
   let readyListener: ((event?: any)=>unknown)|undefined;
   const document: any = { body: get('body'), documentElement: new FakeElement('html'), activeElement: null,
-    visibilityState: 'visible', getElementById: (id: string) => htmlIds.has(id) ? get(id) : null,
+    visibilityState: 'visible', getElementById: (id: string) => { if(htmlIds.has(id))return get(id);const find=(node:FakeElement):FakeElement|null=>node.id===id?node:node.children.map(find).find(Boolean)||null;return find(get('attachment-popover'))||find(get('body')); },
     createElement: (tag: string) => new FakeElement(tag),
     createTextNode: (text: string) => { const node = new FakeElement(); node.textContent = text; return node },
     querySelector: (selector: string) => selector === '[data-action="new-chat"]' ? newChat : selector === '[data-action="temporary-chat"]' ? temporaryChat : selector === '.brand strong' ? brandTitle : null,
@@ -271,7 +272,8 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
     } }
   runInNewContext(source, { document, window, localStorage: timers.localStorage, setTimeout: timers.setTimeout,
     clearTimeout: timers.clearTimeout, requestAnimationFrame: timers.requestAnimationFrame, URLSearchParams,
-    console, Intl, Date, Error, Map, Set, Promise, URL, crypto: webcrypto, AbortSignal, TextEncoder })
+    console, Intl, Date, Error, Map, Set, Promise, URL, crypto: webcrypto, AbortSignal, TextEncoder,
+    ResizeObserver:class { observe(){} unobserve(){} disconnect(){} } })
   readyListener?.({}); // Like deferred browser scripts, finish registering every component before DOMContentLoaded.
   return { get, nav, calls, businessPaths, deferred, storage, itemsByOwner, setDeferredOwner: (owner: string) => { deferOwner = owner },
     flushAnimationFrames() { for (const frame of animationFrames.splice(0)) frame(0) },

@@ -29,6 +29,7 @@ const androidBridge = WeftUiCore.createAndroidBridge({
   postMessage: window.weftNative?.postMessage ? message => window.weftNative.postMessage(message) : null,
   onEvent: message => processEvent(message),
 });
+const mobileWebBridge=window.weftNative?null:WeftUiCore.createMobileWebBridge();
 const mobileEffects = {
   syncActivityIdentity:()=>uiCore.syncMobileIdentity(),
   activityVisible:()=>state.page==='activity',
@@ -73,8 +74,8 @@ const mobileEffects = {
   paintHistoryMessages: events => { for (const event of events) trackSharedAcceptedTurn(event); },
   paintScreen: view => page(view === 'login' ? 'connect' : view),
 };
-const uiCore = WeftUiCore.create({ fetch: androidBridge.fetch, storage: localStorage,
-  crypto: globalThis.crypto, effects: mobileEffects, mobileState: state, attachmentDrafts });
+const uiCore = WeftUiCore.create({ fetch: mobileWebBridge?.fetch || androidBridge.fetch, storage: localStorage,
+  crypto: globalThis.crypto, effects: mobileEffects, mobileState: state, attachmentDrafts, logicalChats:true });
 uiCore.android = androidBridge;
 const mobileMessageActions = globalThis.WeftMessageActions?.create({core:uiCore, draft:()=>$('draft'),
   selectSession:async id=>{await listSharedSessions();await selectSharedSession(id)},
@@ -125,7 +126,7 @@ const receiptIdPattern=/^[A-Za-z0-9._:-]{1,160}$/;
 
 
 
-function call(method, params={}, timeoutMs=45000) { return androidBridge.call(method,params,timeoutMs); }
+function call(method, params={}, timeoutMs=45000) { return mobileWebBridge?mobileWebBridge.call(method,params):androidBridge.call(method,params,timeoutMs); }
 
 
 
@@ -252,7 +253,7 @@ function processEvent(message){const {event,data}=message;
     void renderConversation({silent:true});
   if(event==='account.transition'){
     closeResourcePage({restoreFocus:false});clearTimeout(state.homePollTimer);
-    if(data.pending){resetToolApprovals();resetToolQuestions();conversationTasks.entries.clear();conversationTasks.inFlight=null;}
+    if(data.pending){uiCore.resetLogicalSession?.();state.logicalChats=false;resetToolApprovals();resetToolQuestions();conversationTasks.entries.clear();conversationTasks.inFlight=null;}
     if(data.pending){closeImagePreview({restoreFocus:false});invalidateLiveProgress();stopSharedPoll();clearTimeout(state.linkedPollTimer);state.linkedPollTimer=null;state.handoffViews.clear();state.linkedEvents.clear();state.handoffModelNames.clear();state.handoffPickerOpen.clear();state.handoffSelections.clear();state.accountModelCredentialConflict=null;state.handoffModelLastCheck=0;state.linkedPending=null;state.sharedGeneration++;state.chatSource='phone';state.restorePending=false;state.sharedSessionId=null;state.sharedLoading=false;
       state.sharedSessions=[];state.sharedEvents=[];state.sharedPending=null;state.sharedOutboxLoading=false;state.sharedAwaiting=null;state.sharedChecking=null;state.sharedHostAvailable=false;
       state.conversations=[];state.artifactSaveRequest=null;state.artifactSaveLabel=null;renderConversationList();clear($('chat-content'));
@@ -328,7 +329,7 @@ function processEvent(message){const {event,data}=message;
 
 
 async function boot(){
-  if(!window.weftNative){applyTheme(localStorage.getItem('weftmate.mobile.theme') || 'system');state.booted=true;await WeftMobileCloud.init();return}
+  if(!window.weftNative){applyTheme(localStorage.getItem('weftmate.mobile.theme') || 'system');await WeftMobileCloud.init();state.booted=true;return}
   window.weftNative.onmessage=androidBridge.receive;
   try{await call('events.subscribe');const info=await call('app.bootstrap');
     state.loggedIn=info.loggedIn;state.username=info.username;state.owner=info.owner;state.deviceId=info.deviceId||'';state.model=info.model;
@@ -336,8 +337,8 @@ async function boot(){
     state.connection=info.loggedIn?'checking':'local';
     if(info.cloudApp){
       try{const appearance=await uiCore.mobileAppearance();if(typeof appearance.systemDark==='boolean')state.nativeSystemDark=appearance.systemDark;applyTheme(appearance.value)}catch{applyTheme('system')}
-      await call('app.ready',{owner:state.owner||'',hasDraft:hasAnyDraft()});state.booted=true;
-      await WeftMobileCloud.init();return;
+      await call('app.ready',{owner:state.owner||'',hasDraft:hasAnyDraft()});
+      await WeftMobileCloud.init();state.booted=true;return;
     }
     showProfile({displayName:info.username||'本机个人空间'});
     // Restore the selected phone/new or host session before updateComposer can persist the
@@ -353,8 +354,11 @@ async function boot(){
       await restoreSharedSelection(previousHost,state.owner,state.authEpoch)}
     else{loadDraft();if(state.conversationId){await renderConversation();void refreshHandoff(state.conversationId)}else showWelcome();void listSharedSessions()}
     try{const appearance=await uiCore.mobileAppearance();if(typeof appearance.systemDark==='boolean')state.nativeSystemDark=appearance.systemDark;applyTheme(appearance.value)}catch{applyTheme('system')}
-    await call('app.ready',{owner:state.owner||'',hasDraft:hasAnyDraft()});state.booted=true;
-    if(!info.launchConversationId)page('home');else updatePageHeader();
+    await call('app.ready',{owner:state.owner||'',hasDraft:hasAnyDraft()});
+    await listSharedSessions();
+    if(state.logicalChats && !info.launchConversationId)await uiCore.selectMainChat();
+    else if(!info.launchConversationId)page('home');else updatePageHeader();
+    state.booted=true;
     void resumeCloudLogin();void refreshCloudDevices();
     globalThis.WeftCloudMobile?.observe(refreshCloudDevices);
     if(info.notificationOtherAccount)toast('这条提醒属于另一账户，请切回对应账户查看');

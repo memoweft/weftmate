@@ -224,9 +224,11 @@ function closeImagePreview({restoreFocus=true}={}){const box=$('image-preview');
 
 function openImagePreview(url,name,button,scope,{original=false,display=false,note='',attachmentId=null,messageId=undefined,draft=false}={}){
   const source=scope?.source||'phone';
+  const logical=scope?.logicalSource,logicalEvent=logical&&uiCore.state.chatWindow?.events.get(logical.eventId);
+  if(logical&&(!uiCore.inMainChat?.()||logicalEvent?.sourceRef?.sessionId!==logical.sessionId||scope.conversationId!==uiCore.state.selectedChatId))return;
   const safe=source==='host'?(original||display)?(draft
     ?safeImagePreviewUrl(url,attachmentId,scope.conversationId,undefined,display)
-    :safeSessionPreviewUrl(url,attachmentId,scope.conversationId)):safeThumbnailDataUrl(url):
+    :safeSessionPreviewUrl(url,attachmentId,logical?.sessionId||scope.conversationId)):safeThumbnailDataUrl(url):
     (original||display)?safeImagePreviewUrl(url,attachmentId,scope?.conversationId,messageId,display):safeThumbnailDataUrl(url);
   if(!safe||!scope||state.page!=='chat'||source!==state.chatSource||state.transitionPending||
     scope.owner!==state.owner||scope.epoch!==state.authEpoch||scope.conversationId!==attachmentConversationId())return;
