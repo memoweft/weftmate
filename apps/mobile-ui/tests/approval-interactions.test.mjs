@@ -122,6 +122,8 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
     await page.evaluate(()=>Promise.allSettled(document.getAnimations().map(animation=>animation.finished)));
     for(const button of await card.locator('.approval-actions button').all()){const box=await button.boundingBox();assert.ok(box.height>=43.99,JSON.stringify(box))}
     await screenshot('03-three-buttons.png');
+    // A same-conversation refresh changes the captured view scope, not the pending native approval.
+    await page.evaluate(()=>{state.generation++;renderConversationApprovals();});
     await card.getByRole('button',{name:'批准',exact:true}).click();await page.waitForFunction(()=>fixture.approval.status==='answered');
     await card.waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>approvalRecord([...toolApprovals.sessions.get('s1').rows.values()][0])),'已允许 · 运行脚本');
     assert.equal(await card.isVisible(),false);await screenshot('04-resolved-line.png');

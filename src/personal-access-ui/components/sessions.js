@@ -4,6 +4,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
     let activeMenu, activeSubmenu;
     const collapsedProjects = new Set();
     let sidebarSignature;
+    const priorStatuses = new Map();
     let hoverCard, hoverTimer, hoverTrigger;
     function relativeActivity(value) {
         if (!value || !Number.isFinite(Date.parse(value))) return '未记录';
@@ -15,15 +16,18 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         return `${Math.floor(minutes / 1440)} 天前`;
     }
     function appendStatus(row, session) {
-        // D50: one visual slot. Running > unread; pinned / temporary live in the menu and accessible description.
+        const state = WeftUiCore.sessionStatus(session);
         const status = ui.element('span', 'session-status');
-        if (session.running || session.unread) {
-            const dot = ui.element('span', session.running ? 'session-running-dot' : 'session-unread-dot');
-            dot.setAttribute('aria-label', session.running ? '正在运行' : '未读'); status.append(dot);
+        if (state.rank) {
+            const dot = ui.element('span', state.kind === 'running' ? 'session-running-dot' : `session-unread-dot is-${state.kind}`);
+            dot.setAttribute('role','img'); dot.setAttribute('aria-label', state.label); status.dataset.tooltip = state.label; status.append(dot);
         }
+        const id = session.sessionId || row.dataset.statusKey;
+        if (id && priorStatuses.get(id) === 'running' && state.rank && state.kind !== 'running') status.classList.add('status-entering');
+        if (id) priorStatuses.set(id, state.kind);
         row.append(status);
-        const flags = [session.pinned && '已置顶', (session.temporary || session.memoryMode === 'off') && '临时对话'].filter(Boolean);
-        if (flags.length) row.firstElementChild.setAttribute('aria-description', flags.join('，'));
+        const flags = [state.label, session.pinned && '已置顶', (session.temporary || session.memoryMode === 'off') && '临时对话'].filter(Boolean);
+        if (flags.length) (row.tagName === 'BUTTON' ? row : row.firstElementChild).setAttribute('aria-description', flags.join('，'));
     }
     function closeHoverCard() {
         clearTimeout(hoverTimer); hoverTimer = null; hoverCard?.remove(); hoverCard = null;
@@ -68,6 +72,8 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
                 device.setAttribute('aria-label', session.hostId && session.hostId !== core.state.hostId ? '其它设备' : '这台电脑');
                 head.append(device, ui.element('span', 'session-hover-time', relativeActivity(details.activity))); hoverCard.append(head);
                 const project = core.state.projects?.find(item => item.projectId === session.projectId);
+                const state = WeftUiCore.sessionStatus(session);
+                if (state.label) hoverCard.append(ui.element('p', 'session-hover-state', state.label));
                 if (project) { const location = ui.element('p', 'session-hover-project'); location.append(WeftIcons.create('folder', 16), ui.element('span', '', project.name)); hoverCard.append(location); }
                 document.body.append(hoverCard); globalThis.WeftPopover.position(hoverCard, row, {side:'right'});
             }, 500);
@@ -162,7 +168,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             const title = ui.element('div', 'sidebar-project-heading');
             const toggle = ui.element('button', 'sidebar-project-toggle'); toggle.type = 'button'; toggle.setAttribute('aria-expanded', String(!collapsedProjects.has(project.projectId))); toggle.append(WeftIcons.create(collapsedProjects.has(project.projectId) ? 'folder' : 'folder-open', 16), ui.element('span', '', project.name));
             toggle.onclick = () => { collapsedProjects.has(project.projectId) ? collapsedProjects.delete(project.projectId) : collapsedProjects.add(project.projectId); renderSessions(); };
-            const add = ui.element('button', 'project-action'); add.type = 'button'; add.setAttribute('aria-label', `在项目 ${project.name} 新建对话`); add.append(WeftIcons.create('plus', 16)); add.disabled = !core.state.models.length; add.onclick = () => newProjectConversation(project, add); title.append(toggle, add);
+            const add = ui.element('button', 'project-action'); add.type = 'button'; add.setAttribute('aria-label', `在项目 ${project.name} 新建对话`); add.append(WeftIcons.create('plus', 16)); add.disabled = !core.state.models.length; add.onclick = () => newProjectConversation(project, add); title.append(toggle); if (collapsedProjects.has(project.projectId)) { title.dataset.statusKey = `project:${project.projectId}`; appendStatus(title, core.sidebarStatus('projects',project.projectId,sessions)); } title.append(add);
             const projectMenu = trigger => WeftPopover.openMenu(trigger, [
                 {name:'新建项目对话',icon:'compose',disabled:!core.state.models.length,action:()=>newProjectConversation(project, add)},
                 ...(canManageProjectFolders() ? [{name:'项目设置',icon:'settings',action:()=>editProject(project)},
@@ -352,7 +358,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         const signature = JSON.stringify([core.state.ownerId, core.state.identityGeneration, core.state.selectedSessionId,
             core.state.activeChatSource, core.state.selectedPhoneConversationId, core.state.models.length,
             core.state.projectCanManage, core.state.projectsError, core.state.sessions, core.state.projects,
-            core.state.sessionGroups, core.phoneConversations(), '',
+            core.state.sessionGroups, core.state.sessionStatusSummary, core.phoneConversations(), '',
             [...collapsedGroups], [...collapsedProjects], (core.state.projects || []).map(p => core.projectExpanded(p.projectId))]);
         // Live updates often repaint the same sidebar. Keep its hovered / focused
         // rows mounted so the half-second detail timer and keyboard path survive.
@@ -383,6 +389,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             if (groupId !== currentGroup) {
                 const heading = ui.element('li','session-group');const toggle=ui.element('button','session-group-toggle',group);toggle.type='button';toggle.setAttribute('aria-expanded',String(!collapsedGroups.has(groupId)));
                 toggle.onclick=()=>{collapsedGroups.has(groupId)?collapsedGroups.delete(groupId):collapsedGroups.add(groupId);renderSessions();};heading.append(toggle);
+                if (collapsedGroups.has(groupId)) { heading.dataset.statusKey = `group:${groupId}`; appendStatus(heading, core.sidebarStatus('groups',groupId,sessions.filter(row => (row.pinned ? 'pinned' : row.groupId || 'ungrouped') === groupId))); }
                 if(!['pinned','ungrouped'].includes(groupId)) {
                     const manage=ui.element('button','session-group-manage');manage.type='button';manage.setAttribute('aria-label',`管理分组 ${group}`);manage.append(globalThis.WeftIcons.create('more',16));
                     manage.onclick=()=>{editName('重命名分组',group,name=>core.sessionGroupAction('PATCH',groupId,name));};
@@ -418,8 +425,10 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
                 record.id === core.state.selectedPhoneConversationId ? 'is-current' : '');
             button.type = 'button';
             button.append(ui.element('span', 'session-title', core.phoneDisplayTitle(record)));
+            const native = core.state.sessions.find(session=>session.sessionId===core.phoneBinding(record.id)?.sessionId);
+            row.className = 'session-row'; if(native) { row.dataset.sessionId=native.sessionId; }
             button.addEventListener('click', () => { core.selectPhoneConversation(record.id); });
-            row.append(button);
+            row.append(button); appendStatus(row, native ?? record);
             list.append(row);
         }
         if (core.state.sessionListNextCursor || core.state.sessionListCursor) {
@@ -459,5 +468,5 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         archivedRedraw=draw;
     }
     let archivedRedraw;
-    return { canManageProjectFolders, editProject, paintSelectedSession, renderSessions, mountSessions, showSettingsArchived };
+    return { appendSessionStatus: appendStatus, canManageProjectFolders, editProject, paintSelectedSession, renderSessions, mountSessions, showSettingsArchived };
 };

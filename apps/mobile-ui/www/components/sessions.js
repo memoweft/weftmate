@@ -1,12 +1,19 @@
-// D50: drawer status uses one slot: running > unread > empty.
-// Pin and temporary mode remain available through the accessible title and long-press menu.
+// D55: the same native facts and priority as desktop and search.
+const mobileStatusStates = new Map();
+let mobileStatusScope;
 function mobileSessionStatus(button, session, running = session.running) {
-  const slot = el('span', 'mobile-session-status'); slot.setAttribute('aria-hidden', 'true');
-  if (running) { slot.classList.add('is-running'); button.setAttribute('aria-description', '正在运行'); }
-  else if (session.unread) { slot.classList.add('is-unread'); button.setAttribute('aria-description', '未读'); }
-  button.append(slot);
-  const details = [session.pinned ? '已置顶' : '', session.memoryMode === 'off' ? '临时对话' : ''].filter(Boolean).join(' · ');
-  if (details) { button.title = details; button.setAttribute('aria-description', [button.getAttribute('aria-description'), details].filter(Boolean).join(' · ')); }
+  const id=session.sessionId || session.binding?.sessionId || state.handoffViews.get(session.id)?.binding?.sessionId;
+  const native=state.sharedSessions.find(row=>row.sessionId===id);
+  const status = WeftUiCore.sessionStatus({...session,...native,running:!!running || !!native?.running});
+  const slot = el('span', 'mobile-session-status');
+  if (status.rank) {slot.classList.add(`is-${status.kind}`);slot.setAttribute('role','img');slot.setAttribute('aria-label',status.label);slot.dataset.tooltip=status.label;}
+  else slot.setAttribute('aria-hidden','true');
+  const scope=`${state.owner}:${state.authEpoch}`;if(scope!==mobileStatusScope){mobileStatusStates.clear();mobileStatusScope=scope;}
+  const key=`${id || session.id || button.dataset.statusKey}:${button.className}`;
+  if(mobileStatusStates.get(key)==='running'&&status.rank&&status.kind!=='running')slot.classList.add('status-entering');
+  mobileStatusStates.set(key,status.kind);button.append(slot);
+  const details=[status.label,session.pinned?'已置顶':'',session.memoryMode==='off'?'临时对话':''].filter(Boolean).join(' · ');
+  if(details){button.title=details;button.setAttribute('aria-description',details);}
 }
 function mobileLongPress(button, open, select) {
   let timer = null, pressed = false, origin;
@@ -43,10 +50,10 @@ function renderMobileProjects(target, filter = '') {
     const expanded = !collapsedMobileProjects.has(project.projectId) || !!filter;
     const row = el('div', 'mobile-project-heading');
     const toggle = el('button', 'mobile-project-toggle'); toggle.type = 'button'; toggle.setAttribute('aria-expanded', String(expanded));
-    toggle.setAttribute('aria-label', `${expanded ? '收起' : '展开'}项目 ${project.name}`);
+    toggle.setAttribute('aria-label', `${expanded ? '收起' : '展开'}项目 ${project.name}`); toggle.dataset.statusKey=`project:${project.projectId}`;
     const icon = el('img'); icon.src = expanded ? 'icons/folder-open.svg' : 'icons/folder.svg'; icon.alt = ''; toggle.append(icon, el('span', '', project.name));
     mobileLongPress(toggle, () => mobileProjectMenu(project), () => { collapsedMobileProjects.has(project.projectId) ? collapsedMobileProjects.delete(project.projectId) : collapsedMobileProjects.add(project.projectId); renderConversationList(); });
-    row.append(toggle); section.append(row);
+    if(!expanded)mobileSessionStatus(toggle,uiCore.sidebarStatus('projects',project.projectId,conversations)); row.append(toggle); section.append(row);
     if (expanded) {
       for (const session of filter || uiCore.projectExpanded(project.projectId) ? conversations : conversations.slice(0, 5)) {
         if (filter && !project.name.toLocaleLowerCase().includes(filter) && !(session.title || '新对话').toLocaleLowerCase().includes(filter)) continue;
@@ -517,7 +524,7 @@ function renderConversationList(){const target=$('conversation-list'),previousSc
   const entries=[...phone,...host].filter(item=>!filter||`${item.title} ${item.model||''} ${item.source==='phone'?'手机':'电脑'}`.toLocaleLowerCase().includes(filter));
   entries.sort((a,b)=>WeftUiCore.compareSessionGroups(a.record||{},b.record||{})||(Date.parse(b.createdAt)||0)-(Date.parse(a.createdAt)||0));let previousGroup;
   for(const item of entries.filter(item=>!item.record?.projectId)){const groupId=item.record?.pinned?'pinned':item.record?.groupId||'ungrouped',groupName=item.record?.pinned?'置顶':(uiCore.state.sessionGroups||[]).find(g=>g.id===groupId)?.name||'未分组';
-    if(groupId!==previousGroup){const toggle=el('button','session-group-toggle',groupName);toggle.setAttribute('aria-expanded',String(!collapsedMobileGroups.has(groupId)));toggle.onclick=()=>{collapsedMobileGroups.has(groupId)?collapsedMobileGroups.delete(groupId):collapsedMobileGroups.add(groupId);renderConversationList()};target.append(toggle);previousGroup=groupId;}
+    if(groupId!==previousGroup){const toggle=el('button','session-group-toggle',groupName);toggle.setAttribute('aria-label',groupName);toggle.dataset.statusKey=`group:${groupId}`;toggle.setAttribute('aria-expanded',String(!collapsedMobileGroups.has(groupId)));toggle.onclick=()=>{collapsedMobileGroups.has(groupId)?collapsedMobileGroups.delete(groupId):collapsedMobileGroups.add(groupId);renderConversationList()};if(collapsedMobileGroups.has(groupId))mobileSessionStatus(toggle,uiCore.sidebarStatus('groups',groupId,entries.filter(row=>(row.record?.pinned?'pinned':row.record?.groupId||'ungrouped')===groupId).map(row=>row.record)));target.append(toggle);previousGroup=groupId;}
     if(collapsedMobileGroups.has(groupId)&&!filter)continue;const selected=item.source==='phone'?state.chatSource==='phone'&&state.conversationId===item.id:
       state.chatSource==='host'&&state.sharedSessionId===item.id;
     const b=el('button','mobile-session-button'+(selected?' active':'')); b.type='button';
@@ -531,6 +538,11 @@ function renderConversationList(){const target=$('conversation-list'),previousSc
   renderMobileProjects(target,filter);
   if(!entries.length)target.append(el('p','muted',filter?'没有匹配的对话':state.loggedIn?'还没有对话':'登录后查看对话'));
   target.scrollTop=previousScroll;
+  const mainButton=document.querySelector('.rail-main-chat');
+  if(mainButton){mainButton.querySelector('.mobile-session-status')?.remove();mobileSessionStatus(mainButton,uiCore.state.sessionStatusSummary?.main ?? uiCore.state.mainChat ?? {});}
+  const tab=$('mobile-tab-chat');
+  if(tab){tab.setAttribute('aria-label','聊天');tab.removeAttribute('aria-description');tab.querySelector('.chat-attention-dot')?.remove();const attention=uiCore.state.sessionStatusSummary?.all?.attention || [...state.sharedSessions,uiCore.state.mainChat].filter(Boolean).find(row=>row.attention)?.attention;
+    if(attention){tab.setAttribute('aria-description',attention==='approval'?'等你批准':'等你回答');const dot=el('span','chat-attention-dot');dot.setAttribute('role','img');dot.setAttribute('aria-label',attention==='approval'?'等你批准':'等你回答');tab.append(dot);}}
   if(state.page==='home')renderHome();
 }
 
@@ -561,14 +573,12 @@ function renderHome(){const target=$('home-conversations'),top=target.scrollTop;
       date.toDateString()===today.toDateString()?'今天':date.toDateString()===new Date(today.getFullYear(),today.getMonth(),today.getDate()-1).toDateString()?'昨天':'更早':'会话';
     const section=item.record?.pinned?'置顶':(uiCore.state.sessionGroups||[]).find(g=>g.id===item.record?.groupId)?.name||'未分组';
     const sectionKey=item.record?.pinned?'pinned':item.record?.groupId||'ungrouped';
-    if(sectionKey!==lastGroup){const toggle=el('button','home-group session-group-toggle',section);toggle.type='button';toggle.setAttribute('aria-expanded',String(!collapsedMobileGroups.has(sectionKey)));toggle.onclick=()=>{collapsedMobileGroups.has(sectionKey)?collapsedMobileGroups.delete(sectionKey):collapsedMobileGroups.add(sectionKey);renderHome()};target.append(toggle);lastGroup=sectionKey}
+    if(sectionKey!==lastGroup){const toggle=el('button','home-group session-group-toggle',section);toggle.type='button';toggle.setAttribute('aria-label',section);toggle.dataset.statusKey=`group:${sectionKey}`;toggle.setAttribute('aria-expanded',String(!collapsedMobileGroups.has(sectionKey)));toggle.onclick=()=>{collapsedMobileGroups.has(sectionKey)?collapsedMobileGroups.delete(sectionKey):collapsedMobileGroups.add(sectionKey);renderHome()};if(collapsedMobileGroups.has(sectionKey))mobileSessionStatus(toggle,uiCore.sidebarStatus('groups',sectionKey,entries.filter(row=>(row.record?.pinned?'pinned':row.record?.groupId||'ungrouped')===sectionKey).map(row=>row.record)));target.append(toggle);lastGroup=sectionKey}
     if(collapsedMobileGroups.has(sectionKey)&&!filter)continue;
     const button=el('button','home-conversation');button.type='button';button.dataset.source=item.source;button.dataset.id=item.id;
     const copy=el('span','home-conversation-copy');copy.append(el('strong','',item.title));
     if(Number.isFinite(date.getTime()))copy.append(el('small','',timeLabel(item.at)));button.append(copy);
-    const needsApproval=pendingApprovalFor(item.sessionId);
-    if(needsApproval||item.running){const dot=el('span',`session-running-dot${needsApproval?' session-approval-dot':''}`);
-      dot.setAttribute('role','img');dot.setAttribute('aria-label',needsApproval?'待审批':'正在运行');button.append(dot)}
+    mobileSessionStatus(button,item.record || item,item.running);
     let timer=null,longPressed=false;
     if(item.source==='host'){
       button.addEventListener('pointerdown',()=>{longPressed=false;timer=setTimeout(()=>{longPressed=true;mobileSessionMenu(item.record)},500)});
