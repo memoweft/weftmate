@@ -1,0 +1,27 @@
+{
+  "realElectron": true,
+  "fixedDsh": true,
+  "syntheticAccount": true,
+  "checks": [
+    "native-multi-conversation-overview",
+    "native-targeted-stop-receipt",
+    "open-original-conversation",
+    "native-terminal-recent-seven-days",
+    "native-daily-weekly-once-create",
+    "native-edit-pause-run-resume",
+    "confirmed-native-delete",
+    "native-due-to-activity",
+    "native-goal-create-complete-archive",
+    "narrow-no-overflow",
+    "keyboard-form-open",
+    "native-waiting-approval-overview",
+    "native-background-job-stays-active",
+    "native-background-job-stop",
+    "d33-native-goal-schedule-cleanup-preserves-unrelated",
+    "d33-adapter-store-no-forgotten-content",
+    "temporary-task-schedule-goal-title-redaction",
+    "delete-clears-native-linked-items",
+    "renderer-zero-errors"
+  ],
+  "errors": []
+}

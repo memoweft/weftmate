@@ -4,6 +4,9 @@ import { join } from 'node:path'
 import { uiCoreAssets } from '../ui-core/manifest.mjs'
 
 const files = new Map([
+  ['/personal/v1/ui/goals.css', ['goals.css', 'text/css; charset=utf-8']],
+  ['/personal/v1/ui/components/goals-view.js', ['components/goals-view.js', 'text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/components/goals.js', ['components/goals.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/activity.css', ['activity.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/components/activity-view.js', ['components/activity-view.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/components/activity.js', ['components/activity.js', 'text/javascript; charset=utf-8']],

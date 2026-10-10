@@ -22,13 +22,13 @@ export async function until(check, timeout = 180000) {
   while (Date.now() < deadline) { const value = await check(); if (value) return value; await pause(200); }
   throw new Error('IA-2b isolated test timeout');
 }
-export async function harness(label, { memory = true, mainChat = false } = {}) {
+export async function harness(label, { memory = true, mainChat = false, provider = null } = {}) {
   const base = await mkdtemp(join(tmpdir(), `weftmate-ia-2b-${label}-`)), profile = join(base, 'profile');
   await mkdir(profile); await mkdir(evidence, { recursive: true });
   await writeFile(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
   const { stdout } = await run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
     "[Console]::Out.Write([Environment]::GetEnvironmentVariable('MIMO_API_KEY','Machine'))"], { windowsHide: true });
-  const key = stdout.trim(); assert.ok(key);
+  const key = provider?.key ?? stdout.trim(); assert.ok(key);
   const username = `ia-${randomUUID()}`, password = `synthetic-${randomUUID()}`;
   const backend = Object.fromEntries(['getStatus','listModels','preflight','createSession','sendMessage','cancelSession','readEvents','describeSession'].map(name => [name, async () => ({})]));
   const prep = await createPersonalAccessService({ root: join(profile, 'personal-access'), port: 0, backend });
@@ -88,7 +88,7 @@ export async function harness(label, { memory = true, mainChat = false } = {}) {
   try {
     await launch();
     const requestId = randomUUID();
-    assert.equal((await api('/account/models', { requestId, name: 'ia2b-mimo', baseUrl: 'https://api.xiaomimimo.com/v1', modelId: 'mimo-v2.6-flash', apiKey: key })).status, 202);
+    assert.equal((await api('/account/models', { requestId, name: 'ia2b-mimo', baseUrl: provider?.baseUrl ?? 'https://api.xiaomimimo.com/v1', modelId: provider?.modelId ?? 'mimo-v2.6-flash', apiKey: key })).status, 202);
     await until(async () => (await api(`/account/models/by-request/${requestId}`)).body.operation?.status === 'succeeded');
     const modelProfileId = (await api('/models')).body.models.find(row => row.name === 'ia2b-mimo').id;
     const hostId = (await api('/status')).body.hostId;

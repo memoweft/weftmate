@@ -80,7 +80,7 @@ export function nativeSessionLifecycle(ctx) {
       if (meta.agentPreset?.startsWith('personal-')) await ensure({ sessionId }, true)
       return task()
     }),
-    cleanupMemory: (sessionId, { sourceTexts = [], deleteConversationSnippets = false } = {}) => serial(sessionId, async () => {
+    cleanupMemory: (sessionId, { sourceTexts = [], deleteConversationSnippets = false, scheduleIds = [], goalIds = [] } = {}) => serial(sessionId, async () => {
       const persistence = ctx.get('sessionPersistence')
       const agent = ctx.get('agents')?.get(sessionId)
       if (agent && (agent.status !== 'idle' || agent.inbox?.hasPending)) {
@@ -92,7 +92,7 @@ export function nativeSessionLifecycle(ctx) {
       const forgottenSeqs = shadowForgottenSurface(handle.agent.session, sourceTexts, createUserMessage)
       await ctx.sessions.flush(handle.agent.session)
       await handle.dispose(); handles.delete(sessionId)
-      await eraseSessionMemoryArtifact(persistence, sessionId, { sourceTexts, deleteConversationSnippets })
+      await eraseSessionMemoryArtifact(persistence, sessionId, { sourceTexts, deleteConversationSnippets, scheduleIds, goalIds })
       await ctx.get('storageDomain')?.get('session_projcache')?.table('sessions').delete(sessionId)
       return { cleaned: true, forgottenSeqs }
     }),

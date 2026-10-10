@@ -48,6 +48,7 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
     return Object.values(rows).filter(row => row.state !== 'deleted').map(row => {
       const current = active.find(record => record.id === row.nativeId);
       return { id: row.id, nativeId: row.nativeId, text: row.text, kind: row.kind, timeZone: row.timeZone,
+        createdAt: row.createdAt, revision: row.revision ?? 1, lastResult: row.lastResult ?? null,
         repeat: row.repeat ?? (row.record.kind === 'every' ? { kind: 'interval', seconds: row.record.everySeconds } : null),
         state: row.state === 'paused' ? 'paused' : current ? 'scheduled' : row.state,
         nextRunAt: row.state === 'paused' ? null : current?.scheduledAt ?? null, lastRunAt: row.lastRunAt ?? null,
@@ -57,7 +58,7 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
   async function renew(agent, row) {
     const now = clock();
     let args;
-    if (row.repeat) {
+    if (row.repeat && row.repeat.kind !== 'interval') {
       let at = nextCalendarInput(row.repeat, row.timeZone, now);
       // A recurring local time may disappear at spring DST. Skip that calendar
       // occurrence instead of letting one rejected native at end the series.
@@ -86,12 +87,17 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
     const missed = !manual && clock() - Date.parse(occurrenceAt) >= 60000;
     const local = new Date(occurrenceAt).toLocaleString('zh-CN', { timeZone: row.timeZone });
     const text = `${missed ? `错过了 ${local} 的${row.kind === 'task' ? '定时任务' : '提醒'}，现在补${row.kind === 'task' ? '执行' : '提醒'}：` : row.kind === 'task' ? '定时任务：' : '提醒：'}${row.text}`;
-    if (row.kind === 'task') await request({ action: 'execute', sessionId: agent.id, text: `现在执行定时任务：${row.text}`, deliveryId, sourceReceiptId: row.sourceReceiptId });
+    const authorization = await request({ action: 'context', sessionId: agent.id });
+    if (row.kind === 'task') {
+      const accepted = await request({ action: 'execute', sessionId: agent.id, text: `现在执行定时任务：${row.text}`, deliveryId, sourceReceiptId: row.sourceReceiptId });
+      row.lastResult = { state: 'queued', commandId: accepted.commandId };
+    } else row.lastResult = { state: 'delivered' };
     const message = native.createUserMessage({ content: [{ type: 'text', text }], source: { kind: 'plugin', plugin: 'weftmate-reminder' } });
     const delivered = agent.session.append('user/message', message, { surfaceOp: 'append' });
     await ctx.sessions.flush(agent.session);
     const messageSeq = delivered?.seq ?? agent.session.events.findLast(event => event.type === 'user/message' && (event.data?.id ?? event.data?.message?.id) === message.id)?.seq;
     bucket(agent.id).notifications.push({ id: notificationId, text, kind: row.kind, scheduledAt: occurrenceAt,
+      scheduleId: row.id,
       createdAt: new Date(clock()).toISOString(), missed, messageId: message.id,
       ...(Number.isSafeInteger(messageSeq) ? { seq: messageSeq } : {}) });
     row.lastRunAt = new Date(clock()).toISOString();
@@ -109,7 +115,8 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
           ? native.resolveEveryOccurrence(row.record, dispatch.data.acceptedAt ? Date.parse(dispatch.data.acceptedAt) : clock()).occurrenceAt
           : (row.nextRecord ?? row.record).scheduledAt;
         await deliver(agent, row, occurrence, deliveryId);
-        if (row.repeat) {
+        if (row.state === 'deleted') { await save(); continue; }
+        if (row.repeat && row.repeat.kind !== 'interval') {
           if (!active.some(r => r.id === row.nativeId)) await renew(agent, row);
         } else if (row.record.kind === 'every') {
           const current = active.find(r => r.id === row.nativeId);
@@ -121,10 +128,53 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
       }
     });
   }
-  async function manage(agent, action, id) {
+  async function manage(agent, action, id, input = {}) {
     if (action === 'list') return { items: items(agent) };
     if (action === 'notifications') return { items: structuredClone(bucket(agent.id).notifications) };
     return serial(async () => {
+      const b = bucket(agent.id);
+      b.operations ??= {};
+      const fingerprint = JSON.stringify({ action, id, input });
+      if (input.requestId && b.operations[input.requestId]) {
+        const prior = b.operations[input.requestId];
+        if (prior.fingerprint !== fingerprint) throw Object.assign(new Error('REQUEST_CONFLICT'), { status: 409 });
+        return prior.result;
+      }
+      const done = async result => { if (input.requestId) b.operations[input.requestId] = { fingerprint, result }; await save(); return result; };
+      if (action === 'erase' || action === 'forget') {
+        const removed = new Set(), nativeIds = new Set();
+        for (const row of Object.values(b.items)) {
+          if (action === 'forget' && !input.receiptIds?.includes(row.sourceReceiptId) && !input.sourceTexts?.some(text => text && (row.text.includes(text) || text.includes(row.text)))) continue;
+          const current = folded(agent).find(r => r.id === row.nativeId);
+          if (current) requireSuccess(await call(agent, 'schedule_delete', { id: row.nativeId }));
+          removed.add(row.id); delete b.items[row.id];
+          for (const event of agent.session.events) if (event.type === 'schedule/change' && event.data.operation === 'create' && event.data.schedule?.prompt === row.prompt) nativeIds.add(event.data.schedule.id);
+          nativeIds.add(row.nativeId); nativeIds.add(row.record.id);
+        }
+        if (action === 'erase') delete state.sessions[agent.id];
+        else { b.notifications = b.notifications.filter(n => !removed.has(n.scheduleId) && !input.sourceTexts?.some(text => text && n.text.includes(text))); b.operations = {}; }
+        await save(); return { ok: true, removedIds: [...removed], removedNativeIds: [...nativeIds] };
+      }
+      if (action === 'create' || action === 'edit') {
+        const prior = action === 'edit' ? b.items[id] : null;
+        if (action === 'edit' && (!prior || prior.state === 'deleted')) throw Object.assign(new Error('NOT_FOUND'), { status: 404 });
+        if (prior && input.expectedRevision !== (prior.revision ?? 1)) throw Object.assign(new Error('REVISION_CHANGED'), { status: 409 });
+        const policy = await request({ action: 'context', sessionId: agent.id });
+        const content = scheduleContent(input.prompt);
+        const at = content.repeat?.kind === 'interval' ? null : input.at ?? nextCalendarInput(content.repeat, policy.timeZone, clock());
+        // Decode before removing the previous occurrence. DSH remains the time/DST authority.
+        if (at) native.createAtScheduleRecord('validate', input.prompt, at, clock());
+        const created = requireSuccess(await call(agent, 'schedule_create', { prompt: input.prompt, ...(at ? { at } : { every_seconds: content.repeat.seconds }) }));
+        const current = prior && folded(agent).find(r => r.id === prior.nativeId);
+        if (current) requireSuccess(await call(agent, 'schedule_delete', { id: prior.nativeId }));
+        const row = { ...prior, id: prior?.id ?? created.id, nativeId: created.id, prompt: input.prompt, ...content,
+          timeZone: policy.timeZone, record: created, nextRecord: created, state: 'scheduled',
+          sourceReceiptId: input.sourceReceiptId ?? prior?.sourceReceiptId, revision: (prior?.revision ?? 0) + 1,
+          createdAt: prior?.createdAt ?? new Date(clock()).toISOString() };
+        if (prior?.state === 'paused') { requireSuccess(await call(agent, 'schedule_delete', { id: created.id })); row.state = 'paused'; }
+        b.items[row.id] = row;
+        return done({ item: items(agent).find(r => r.id === row.id) });
+      }
       const row = bucket(agent.id).items[id];
       if (!row || row.state === 'deleted') throw Object.assign(new Error('NOT_FOUND'), { status: 404 });
       const current = folded(agent).find(r => r.id === row.nativeId);
@@ -134,7 +184,8 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
       } else if (action === 'resume') { if (row.state === 'paused') { row.record = row.nextRecord ?? row.record; await renew(agent, row); } }
       else if (action === 'run') await deliver(agent, row, new Date(clock()).toISOString(), `manual-${randomUUID()}`, true);
       else throw Object.assign(new Error('INVALID_REQUEST'), { status: 400 });
-      await save(); return { ok: true };
+      row.revision = (row.revision ?? 1) + 1;
+      return done({ ok: true });
     });
   }
   async function deleted(agent, nativeId) {

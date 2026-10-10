@@ -4,6 +4,7 @@ import { removeActivity } from './activity-store.mjs';
 /** Erasure owns all derived chat copies. Unknown/mixed provenance is discarded.
  * Source identities remain only as tombstones, never as a reconstruction source. */
 export function eraseChatCopies(account, { sessionId = null, forgotten = false } = {}) {
+  for (const [id, row] of Object.entries(account.scheduleAuthorizations ?? {})) if (!forgotten && row.sessionId === sessionId) delete account.scheduleAuthorizations[id];
   removeActivity(account, row => forgotten || row.source.sessionId === sessionId);
   if (account.activity) {
     account.activity.erasedBefore ??= {};
