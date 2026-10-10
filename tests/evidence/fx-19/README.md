@@ -65,3 +65,5 @@ HTTP（网页请求）等待选项在串行提交队列外等既有调度完成�
 使用 runners/native-live.mjs，FX19_COUNTS=100,500,2000、FX19_CREATES=20、FX19_SWITCHES=20、FX19_OUT指定输出。修改前从879c1bf4导出隔离源码，复用现有node_modules与vendor并设置FX19_REPOSITORY。手机专用设置FX19_PHONE=1；所有批次前台完成并写results后继续。runners/erasure.mjs与exit-smoke.mjs复用QA-5运行器，退出抽样设置FX19_EXIT_SMOKE=1。
 
 交付前已合入主线5024ea9e（UX-9）；最后的确定失败锁修复后，手机母版重新生成，UI57/57与类型检查通过。三规模性能主对照在主线UX-9合入之前完成；其新建旁聊的原生创建链与回执语义保留。
+
+推送前再合入6fe4de93（UX-6），STATE冲突由指定merge-state.py保留双方。完整必过单测仍为此前6f7abf90的1338/0/14；合入后另跑UI57/57、搜索／手机相关49/49及类型检查通过，未重跑18分钟全量。
