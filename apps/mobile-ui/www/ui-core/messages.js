@@ -38,17 +38,28 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
             .map((item) => [item.attachmentId, item]));
         return ids.map((id) => originals.get(id)).filter(Boolean);
     }
-    function appendHistory(events) {
+    function appendHistory(events, liveEvents, liveSeq) {
         const accepted = [];
         const sessionId = core.state.selectedSessionId;
+        if (liveSeq !== undefined && liveSeq < (core.state.liveMessageSeq ?? -1)) liveEvents = undefined;
+        if (liveEvents !== undefined) {
+            core.state.liveMessageSeq = liveSeq ?? core.state.liveMessageSeq;
+            for (const [seq, event] of core.state.historyEvents) if (event.data?.live) core.state.historyEvents.delete(seq);
+        }
         for (const event of events) {
             if (!Number.isSafeInteger(event?.seq) || core.state.seenSeq.has(event.seq))
                 continue;
             if (typeof event.sessionId === 'string' && event.sessionId !== sessionId)
                 continue;
             core.state.seenSeq.add(event.seq);
+            if (Number.isSafeInteger(event.data?.streamSeq)) core.state.historyEvents.delete(event.data.streamSeq);
             core.state.historyEvents.set(event.seq, event);
             accepted.push(event);
+        }
+        for (const event of liveEvents || []) {
+            if ([...core.state.historyEvents.values()].some(row => row.data?.streamSeq === event.seq && !row.data?.live)) continue;
+            const message = { ...event, type: 'assistant.message', data: { ...event.data, streamSeq: event.seq, live: true } };
+            core.state.historyEvents.set(event.seq, message); accepted.push(message);
         }
         const terminal = [...core.state.historyEvents.values()].filter(e => ['turn.started', 'turn.ended'].includes(e.type)).sort((a, b) => a.seq - b.seq).at(-1);
         if (terminal) {
@@ -72,6 +83,7 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
             core.state.historyHasMore = false;
             core.state.seenSeq.clear();
             core.state.historyEvents.clear();
+            core.state.liveMessageSeq = -1;
             core.state.nextBeforeSeq = null;
             core.state.hasOlder = false;
             core.state.olderLoading = false;
@@ -102,7 +114,7 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
                         core.state.hasOlder = page.hasOlder === true;
                         effects.renderOlderControl();
                     }
-                    core.appendHistory(page.events);
+                    core.appendHistory(page.events, page.liveEvents, page.liveSeq);
                     core.state.afterSeq = page.nextSeq;
                     if (!page.hasMore) {
                         effects.renderTurnStatus();

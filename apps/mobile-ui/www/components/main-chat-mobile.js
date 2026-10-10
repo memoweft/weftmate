@@ -20,7 +20,7 @@
     historyNotice:(text,kind='ordinary')=>{notice.dataset.noticeKind=kind;notice.textContent=text;notice.hidden=!text||kind==='read-failure'&&uiCore.connectionView().kind!=='online';},
     get conversationScroll(){return ensureConversationScroll();},
     paintHistoryMessages(events,target){for(const event of events){
-      const node=messageNode(event.type==='user.message'?'user':'assistant',event.data?.text||'');
+      const node=messageNode(event.type==='user.message'?'user':'assistant',event.data?.text||'',[],null,null,{streaming:event.data.streaming===true});
       node.classList.add('logical-message');node.dataset.eventId=event.eventId;
       const sessionId=event.sourceRef?.sessionId;
       for(const image of event.data?.images||[]) {

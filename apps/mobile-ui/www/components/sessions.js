@@ -110,7 +110,7 @@ function stopSharedPoll(){clearTimeout(state.sharedPollTimer);state.sharedPollTi
 
 function scheduleSharedPoll(){stopSharedPoll();if(state.chatSource!=='host'||state.page!=='chat'||document.visibilityState==='hidden'||!uiCore.state.online)return;
   state.sharedPollTimer=setTimeout(async()=>{if(state.chatSource!=='host'||state.page!=='chat')return;
-    await Promise.all([loadSharedHistory(),listSharedSessions()]);if(state.chatSource==='host')scheduleSharedPoll()},state.sharedRunning?3000:12000)}
+    await loadSharedHistory();if(!state.sharedRunning)void listSharedSessions();if(state.chatSource==='host')scheduleSharedPoll()},250)}
 
 function selectSharedSession(sessionId){uiCore.cancelNextSuggestions?.();if(!state.sharedSessions.some(item=>item.sessionId===sessionId))return;
   uiCore.syncMobileIdentity();void uiCore.updateSession(sessionId,{unread:false}).catch(error=>toast(safeError(error),true));
@@ -132,7 +132,8 @@ function waitForSharedTurn(...args){return uiCore.mobile.waitForSharedTurn(...ar
 
 function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='chat')return;
   uiCore.syncMobileIdentity();
-  const scroll=$('chat-scroll'),previousScroll=scroll.scrollTop,content=$('chat-content'),saved=retainTimeline(content);clear(content);
+  const scroll=$('chat-scroll'),previousScroll=scroll.scrollTop,content=$('chat-content'),saved=retainTimeline(content);
+  const messages=new Map([...content.children].filter(row=>row.dataset.nativeMessageKey).map(row=>[row.dataset.nativeMessageKey,row]));clear(content);
   const session=selectedSharedSession();updatePageHeader();olderControl(content);
   if (session?.memoryMode === 'off') {
     content.append(el('p', 'shared-notice', `临时对话 · 不会形成记忆，${session.autoDeleteDays === null ? '不自动删除' : (session.expiresAt ? Math.max(0, Math.ceil((Date.parse(session.expiresAt) - Date.now()) / 86400000)) : session.autoDeleteDays ?? 30) + ' 天后自动删除'}`));
@@ -148,7 +149,17 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
         originalFiles=event.type==='user.message'&&Array.isArray(event.data?.originalAttachments)?
           event.data.originalAttachments.map(normalizedSharedFile).filter(Boolean):[];
       if(typeof body==='string'&&body||images.length||originalFiles.length){
-        const row=messageNode(event.type==='user.message'?'user':'assistant',typeof body==='string'?body:'');
+        const key=String(event.data?.streamSeq ?? event.seq),prior=messages.get(key);
+        if(prior && event.type==='assistant.message' && !images.length) {
+          const target=prior.querySelector('.markdown');
+          if(!event.data.truncated)WeftContent.update(target,body,{streaming:event.data.streaming===true,copy:copyText,openExternal:url=>{location.href=url}});
+          else if(prior.dataset.seq!==String(event.seq))void uiCore.completeMessageEvent(state.sharedSessionId,event).then(full=>{if(target.isConnected)WeftContent.update(target,full.data.text,{streaming:false,copy:copyText,openExternal:url=>{location.href=url}});}).catch(()=>{});
+          if(!event.data.live && prior.dataset.seq!==String(event.seq)){mobileMessageActions?.bind(prior,event,state.sharedSessionId);appendRenderedFiles(prior,body);WeftModelThinking(uiCore,prior,event);}
+          prior.dataset.seq=String(event.seq);content.append(prior);continue;
+        }
+        const row=messageNode(event.type==='user.message'?'user':'assistant',typeof body==='string'?body:'',[],null,null,{streaming:event.data.streaming===true});
+        row.dataset.nativeMessageKey=key;row.dataset.seq=String(event.seq);
+        if(event.data?.live)row.querySelector('.message-tools')?.remove();
         if(event.type==='assistant.message'){WeftModelThinking(uiCore,row,event);const pages=[...(uiCore.conversationTasks?.entries?.values()||[])].flatMap(entry=>entry.payload?.sources||[]);globalThis.WeftContent?.enhance(row.querySelector('.markdown'),{pages,copy:copyText,openExternal:url=>{location.href=url}});}
         if(images.length){const gallery=el('div','message-thumbnails');let unavailable=0;
           const scope={owner:state.owner,epoch:state.authEpoch,source:'host',conversationId:state.sharedSessionId};
@@ -174,8 +185,8 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
     else if(event.type==='turn.ended'){lastTurn=event.data?.reason||'unknown';
       lastEndReasonKind=lastTurn==='error'&&event.data?.endReasonKind==='max-tokens'?'max-tokens':''}
   }
-  state.sharedRunning=lastTurn==='running'||!!session?.running;
-  const live=[...content.querySelectorAll('.message.assistant')].at(-1),lastUser=[...content.querySelectorAll('.message.user')].at(-1);if(live&&(!lastUser||Number(live.dataset.seq)>Number(lastUser.dataset.seq)))globalThis.WeftReplyMotion?.indicator(live.querySelector('.markdown'),state.sharedRunning&&uiCore.state.online);
+  state.sharedRunning=lastTurn ? lastTurn==='running' : !!session?.running;
+  const live=[...content.querySelectorAll('.message.assistant')].at(-1),lastUser=[...content.querySelectorAll('.message.user')].at(-1);if(live&&(!lastUser||Number(live.dataset.seq)>Number(lastUser.dataset.seq)))globalThis.WeftReplyMotion?.indicator(live.querySelector('.markdown'),state.sharedRunning&&uiCore.state.online&&state.sharedEvents.find(event=>String(event.seq)===live.dataset.seq)?.data?.streaming!==false);
   if(uiCore.state.online&&(lastTurn==='running'||state.sharedRunning))content.append(el('p','shared-turn-state reply-status',uiCore.state.online?'正在处理…':`${uiCore.connectionView().label} · 等待接续`));
   // Disconnected turns wait in the single connection row; retain their terminal
   // explanation in conversation content only after the computer is reachable.

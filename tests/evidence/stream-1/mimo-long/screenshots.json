@@ -1,0 +1,23 @@
+{
+  "originalPixels": true,
+  "selection": "beginning, middle and end; complete frame-by-frame measurements remain in results.json",
+  "kept": [
+    "desktop-frame-0041.png",
+    "desktop-frame-0054.png",
+    "desktop-frame-0066.png",
+    "desktop-frame-1265.png",
+    "desktop-frame-1274.png",
+    "desktop-frame-1285.png",
+    "desktop-frame-3505.png",
+    "desktop-frame-3514.png",
+    "desktop-frame-3523.png",
+    "phone-frame-0041.png",
+    "phone-frame-0054.png",
+    "phone-frame-0066.png",
+    "phone-frame-0080.png",
+    "phone-frame-0089.png",
+    "phone-frame-0098.png",
+    "phone-frame-0109.png",
+    "phone-frame-0118.png"
+  ]
+}

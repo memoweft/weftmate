@@ -11,6 +11,7 @@ import { createHash } from 'node:crypto'
 import { describeTool, toolArguments } from './timeline.mjs'
 import { sourceRange } from './source-range.mjs'
 import { claimedInputsAt, indexInboxTimeline, turnReceiptAt } from './inbox-timeline.mjs'
+import { liveMessages } from './live-messages.mjs'
 
 const SAFE_ERROR_CODES = new Set([
   'session-not-found',
@@ -153,6 +154,7 @@ export function projectHistoryEvent(raw, call = null, contextTurn = null, closin
     const images = messageImages(message)
     const modelThinking = includeThinking && Array.isArray(message?.content) ? message.content.filter(part => part?.type === 'reasoning' && typeof part.text === 'string').map(part => part.text).join('') : '';
     if (data || images.length || modelThinking) projected = { seq, type: 'assistant.message', data: { ...(data ?? { text: '' }),
+      ...(event.sourceEventSeqs?.length ? { streamSeq: event.sourceEventSeqs[0] } : {}),
       ...(modelThinking ? { modelThinking: safeHistoryText(modelThinking).text } : {}),
       ...(images.length ? { images } : {}),
       ...(Array.isArray(event.data?.memoryUsed) ? { memoryUsed: event.data.memoryUsed
@@ -590,9 +592,13 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
       await ordinaryNative(sessionId)
       if (readLog?.historyPage) {
         const page = await readLog.historyPage(sessionId, options, (entries, range) => projectedPage(sessionId, entries, range));
-        if (page) return page;
+        if (page) {
+          const entries = beforeSeq === undefined ? await logFor(sessionId) : [];
+          return { ...page, ...(beforeSeq === undefined ? { liveSeq: (entries.at(-1)?.event ?? entries.at(-1))?.seq ?? -1, liveEvents: liveMessages(entries, text => safeHistoryText(text, Infinity).text) } : {}) };
+        }
       }
-      return projectedPage(sessionId, await logFor(sessionId), options)
+      const entries = await logFor(sessionId);
+      return { ...projectedPage(sessionId, entries, options), ...(beforeSeq === undefined ? { liveSeq: (entries.at(-1)?.event ?? entries.at(-1))?.seq ?? -1, liveEvents: liveMessages(entries, text => safeHistoryText(text, Infinity).text) } : {}) };
     },
 
     async historyDetail(sessionId, seq) {
