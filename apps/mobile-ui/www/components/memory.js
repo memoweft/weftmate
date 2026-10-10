@@ -93,7 +93,14 @@ function memoryIngestionPanel(target){
   }
   async function refresh(){if(!memoryCurrent(token)||!section.isConnected||busy)return;
     try{const value=await business({path:'/personal/v1/memory/status',method:'GET'});if(memoryCurrent(token)&&section.isConnected){state.memory.healthStatus=value;paint(value)}}catch{if(memoryCurrent(token))health.textContent='记忆状态暂时无法读取，请刷新重试。';}}
-  actions.append(preview,pause,cancel);section.append(health,actions,card,progress);target.append(section);paint(state.memory.healthStatus);
+  const issues=el('div');
+  for(const issue of state.memory.healthStatus?.formationIssues??[]){
+    const detail=el('details');detail.append(el('summary','',issue.intent==='correction'?'有 1 条纠正没有生效':'有 1 条记忆没有形成'),el('p','',issue.text));
+    const requestId=newMemoryRequestId();
+    const retry=action('重试形成',async()=>{retry.disabled=true;try{await uiCore.mobile.retryMemoryFormation(issue.jobId,requestId)}catch{if(memoryCurrent(token)){message.textContent='重试未确认，请再次重试。';retry.disabled=false;}}},false);
+    detail.append(retry);issues.append(detail);
+  }
+  actions.append(preview,pause,cancel);section.append(health,issues,actions,card,progress);target.append(section);paint(state.memory.healthStatus);
   const poll=async()=>{if(!section.isConnected||!memoryCurrent(token))return;await refresh();setTimeout(poll,3000);};setTimeout(poll,3000);
 }
 
