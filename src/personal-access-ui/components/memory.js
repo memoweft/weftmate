@@ -8,7 +8,8 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             node.setAttribute('role', 'status'); node.setAttribute('aria-live', 'polite');
             ui.byId('connection-banner').after(node);
         }
-        for (const old of document.querySelectorAll('[data-formation-notice]')) old.remove();
+        const unresolved = new Set((status?.formationIssues ?? []).map(issue => issue.jobId));
+        for (const old of document.querySelectorAll('[data-formation-notice]')) if (!unresolved.has(old.dataset.formationNotice)) old.remove();
         for (const issue of status?.formationIssues ?? []) {
             const row = [...document.querySelectorAll('.message.user')].find(row => row.dataset.memorySession === issue.sessionId && row.textContent.includes(issue.text));
             if (!row) continue;
@@ -16,6 +17,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             for (let next = row.nextElementSibling; next && !next.classList.contains('user'); next = next.nextElementSibling) {
                 if (next.classList.contains('assistant')) { target = next; break; }
             }
+            if ([...target.querySelectorAll('[data-formation-notice]')].some(node => node.dataset.formationNotice === issue.jobId)) continue;
             const hint = ui.element('p', 'muted', issue.intent === 'correction' ? '这条纠正没有生效。' : '这条记忆尚未形成。');
             hint.dataset.formationNotice = issue.jobId; hint.setAttribute('role', 'status');
             const action = ui.element('button', 'button secondary small', '查看原话与重试'); action.type = 'button';

@@ -41,6 +41,8 @@ function boundary(text: string, sessionId: string) {
 test('FX-17 failed correction survives restart, annotates recall and retries one successor for two objects', { skip }, async () => {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), 'weftmate-fx17-test-')))
   let reject = true
+  let releaseCorrection: () => void = () => {}
+  const correctionGate = new Promise<void>(resolve => { releaseCorrection = resolve })
   const correction = '纠正一下，第903种花茶不加肉桂粉，改为加一片柠檬。'
   const errors: unknown[] = []
   const server = createServer(async (req, res) => {
@@ -48,6 +50,7 @@ test('FX-17 failed correction survives restart, annotates recall and retries one
       let body = ''; for await (const chunk of req) body += chunk
       const payload = JSON.parse(body).messages.map((m: any) => { try { return JSON.parse(m.content) } catch { return null } }).find((v: any) => v?.evidence)
       const e = payload.evidence[0], correcting = e.text === correction
+      if (correcting) await correctionGate
       const result = correcting && reject ? {schema_version:8,result:'cognitions',cognitions:[{invalid:true}]} : {
         schema_version:8,result:'cognitions',cognitions:correcting ? payload.current_cognitions.map((old: any) => ({
           action:'correct',target:'owner_self',statement_kind:'preference',formed_by:'stated',proposition:e.text,
@@ -66,7 +69,14 @@ test('FX-17 failed correction survives restart, annotates recall and retries one
   let manager=create()
   try {
     for (const [i,text] of ['我喝第903种花茶时偏好加一小撮肉桂粉。','以后我喝第903种花茶时，请提醒我加一小撮肉桂粉。',correction].entries()) {
-      await manager.ingest(owner,boundary(text,`fx17-${i}`)); await waitForFormation(manager)
+      await manager.ingest(owner,boundary(text,`fx17-${i}`))
+      if(text===correction){
+        const pending=await manager.recall(owner,{query:'我喝第903种花茶加什么？',sessionId:'while-forming'})
+        assert.match(pending.contextText,/已被用户纠正，待更新/)
+        assert.match(pending.contextText,/柠檬/)
+        releaseCorrection()
+      }
+      await waitForFormation(manager)
     }
     const status=await manager.status(owner)
     assert.equal(status.failedCorrectionCount,1);assert.equal(status.state,'degraded')
@@ -98,5 +108,5 @@ test('FX-17 failed correction survives restart, annotates recall and retries one
     const after=await manager.recall(owner,{query:'我喝第903种花茶加什么？',sessionId:'after-retry'})
     assert.equal(after.memories.length,1);assert.match(after.memories[0].summary,/柠檬/)
     assert.deepEqual(errors,[])
-  } finally {await manager.close();await new Promise<void>(resolve=>server.close(()=>resolve()));await rm(root,{recursive:true,force:true})}
+  } finally {releaseCorrection();await manager.close();await new Promise<void>(resolve=>server.close(()=>resolve()));await rm(root,{recursive:true,force:true})}
 })
