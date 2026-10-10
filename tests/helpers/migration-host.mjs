@@ -84,8 +84,7 @@ export async function migrationHost({ executable, source = resolve(process.env.F
     await h.launch();
     const requestId = randomUUID();
     const added = await h.api('/account/models',{requestId,name:'FX21 合成模型',baseUrl:`http://127.0.0.1:${server.address().port}/v1`,modelId:'synthetic-fx21',apiKey:'synthetic-fx21-key'});
-    assert.equal(added.status,202,JSON.stringify(added.body)+' :: '+h.stderr.join('').split(/?
-/).filter(line=>/weftmate|Error|error/.test(line)).slice(-12).join(' | ').slice(0,1800));
+    assert.equal(added.status,202,JSON.stringify(added.body)+' :: '+h.stderr.join('').split('\n').filter(line=>/weftmate|rror/.test(line)).slice(-12).join(' | ').slice(0,1800));
     await until(async () => (await h.api('/account/models/by-request/'+requestId)).body.operation?.status==='succeeded');
     h.modelId=(await h.api('/models')).body.models.find(m=>m.name==='FX21 合成模型').id;
     h.hostId=(await h.api('/status')).body.hostId;
