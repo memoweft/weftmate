@@ -1,0 +1,35 @@
+FAIL folder-picker-project locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('.folder-confirm') to be detached[22m
+[2m    63 × locator resolved to visible <section aria-label="在文件夹里工作" class="folder-confirm card" data-request-id="19cf4939-28d8-4c90-b117-5cc5291ab4bd" data-scope="owner-54724b5e-718b-4b94-b40e-49791b2c3f7b/1/session-ba53e8aa-eb09-4c3a-9628-14e3ef92480f/undefined/chat-4d6cfc66-872b-4dd3-8782-28bef9964f2d">…</section>[22m
+
+PASS activity-open
+FAIL desktop-project-approval-races locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: '批准', exact: true }) to be visible[22m
+
+FAIL phone-viewport-geometry Send button below phone viewport
+FAIL phone-project-approval-races locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: '批准', exact: true }) to be visible[22m
+
+PASS desktop-reject
+PASS phone-reject
+FAIL folder-real-drag locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('.folder-confirm') to be detached[22m
+[2m    64 × locator resolved to visible <section aria-label="在文件夹里工作" class="folder-confirm card" data-request-id="0669df2a-b2e2-46c8-b667-d82ecc721715" data-scope="owner-54724b5e-718b-4b94-b40e-49791b2c3f7b/1/session-e9d13851-3b7b-460e-955b-ab2f942ef60f/undefined/chat-05bb66e2-350f-40da-a7a8-3d43db4e3bf0">…</section>[22m
+
+FAIL reply-motion-long-stream No breathing dot observed during real MiMo stream
+FAIL reply-suggestions locator.waitFor: Timeout 12000ms exceeded.
+Call log:
+[2m  - waiting for locator('.next-suggestion-chip').first() to be visible[22m
+
+FAIL gray-completion-tab locator.waitFor: Timeout 12000ms exceeded.
+Call log:
+[2m  - waiting for locator('.composer-completion:not([hidden])') to be visible[22m
+
+PASS reduced-and-disabled
+PASS status-unread-seen
+PASS offline-draft-single-toast
+PASS light-settings-and-dark-search

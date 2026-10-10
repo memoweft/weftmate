@@ -1,0 +1,3015 @@
+{
+  "baseline": "480d65e462652a3111d2b40e09f697b2f78b8f8e",
+  "core": "233cc2f0b27a921a699a9c4c43b1a612375970f8",
+  "migrationAllowed": false,
+  "blockingIssues": [
+    "QA6-B01 first main-chat message rejected before native session creation",
+    "QA6-B02 installed project reader script remains inside app.asar"
+  ],
+  "performance": {
+    "metrics": {
+      "create": {
+        "p50": 301,
+        "p95": 405.5,
+        "max": 432.2999999821186,
+        "over1000": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "count": 20
+      },
+      "switch": {
+        "p50": 106.19999998807907,
+        "p95": 125.59999999403954,
+        "max": 150.19999998807907,
+        "over1000": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "count": 20
+      },
+      "sessions": {
+        "p50": 27.760200000000623,
+        "p95": 76.15230000000156,
+        "max": 83.67589999999836,
+        "over1000": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "count": 30
+      },
+      "chats": {
+        "p50": 38.47649999999703,
+        "p95": 81.77090000000317,
+        "max": 99.0038999999997,
+        "over1000": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "count": 30
+      }
+    },
+    "listCpuPercent": 96.14996181983891,
+    "cpuPercent": 90.16366741006705
+  },
+  "exitRecovery": [
+    {
+      "method": "tray",
+      "restartToProcessingMs": 6624,
+      "restartToHealthyMs": 6895,
+      "completedRetained": true,
+      "passed": true
+    },
+    {
+      "method": "task-manager-force",
+      "restartToProcessingMs": 5722,
+      "restartToHealthyMs": 5980,
+      "completedRetained": true,
+      "passed": true
+    },
+    {
+      "method": "logout-taskkill",
+      "restartToProcessingMs": 6786,
+      "restartToHealthyMs": 7043,
+      "completedRetained": true,
+      "passed": true
+    }
+  ],
+  "durability": {
+    "memory": [
+      {
+        "run": "exit-formation-final",
+        "jobCount": 6,
+        "evidenceCount": 6,
+        "cognitionCount": 6,
+        "duplicateSources": 0,
+        "duplicateBoundaries": 0,
+        "jobStates": {
+          "applied": 6
+        },
+        "formationLastUserQuotes": [
+          {
+            "method": "tray",
+            "attempt": 1,
+            "retained": true
+          },
+          {
+            "method": "task-manager-force",
+            "attempt": 1,
+            "retained": true
+          },
+          {
+            "method": "logout-taskkill",
+            "attempt": 1,
+            "retained": true
+          }
+        ],
+        "expectedCompletedBoundaries": 6,
+        "passed": true
+      }
+    ],
+    "streamingMessages": [],
+    "passed": true
+  },
+  "smoke": {
+    "elapsedMs": 1380974,
+    "checks": [
+      {
+        "name": "00-no-false-recovery",
+        "passed": true
+      },
+      {
+        "name": "01-main-chat",
+        "passed": false,
+        "error": "COMMAND_REJECTED:BACKEND_UNAVAILABLE"
+      },
+      {
+        "name": "02-preference",
+        "passed": true
+      },
+      {
+        "name": "03-side-recall",
+        "passed": true
+      },
+      {
+        "name": "04-correction",
+        "passed": true
+      },
+      {
+        "name": "12-rendering-motion",
+        "passed": true
+      },
+      {
+        "name": "13-suggestions",
+        "passed": false,
+        "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.next-suggestion-chip').first() to be visible\u001b[22m\n"
+      },
+      {
+        "name": "14-search-title-body-menu",
+        "passed": true
+      },
+      {
+        "name": "15-folder-project",
+        "passed": false,
+        "error": "locator.selectOption: Error: strict mode violation: getByLabel('文件权限', { exact: true }) resolved to 2 elements:\n    1) <select class=\"\" hidden=\"\" tabindex=\"-1\" aria-label=\"文件权限\" aria-hidden=\"true\">…</select> aka getByRole('region', { name: '在文件夹里工作' }).locator('select')\n    2) <button type=\"button\" role=\"combobox\" aria-label=\"文件权限\" aria-expanded=\"false\" aria-haspopup=\"listbox\" class=\"settings-select \" aria-controls=\"settings-options-439cb51c-22d7-47ac-b620-b39466c1ad34-list\">…</button> aka getByRole('combobox', { name: '文件权限' })\n\nCall log:\n\u001b[2m  - waiting for getByLabel('文件权限', { exact: true })\u001b[22m\n"
+      },
+      {
+        "name": "05-file-approval",
+        "passed": true
+      },
+      {
+        "name": "06-reminder-set",
+        "passed": true
+      },
+      {
+        "name": "07-personalization",
+        "passed": true
+      },
+      {
+        "name": "08-dark",
+        "passed": true
+      },
+      {
+        "name": "09-temporary",
+        "passed": true
+      },
+      {
+        "name": "10-phone-continue-approve",
+        "passed": false,
+        "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-session-id=\"session-b0dfb90d-ab0e-4ca5-9f1d-e4cf921e11f4\"] > button').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-description=\"已完成，未读\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    58 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n"
+      },
+      {
+        "name": "11-reminder-delivery",
+        "passed": true
+      },
+      {
+        "name": "22-drag-folder",
+        "passed": false,
+        "error": "locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.folder-confirm') to be visible\u001b[22m\n"
+      },
+      {
+        "name": "16-settings-categories",
+        "passed": true
+      },
+      {
+        "name": "17-reduce-motion-and-disable-suggestions",
+        "passed": false,
+        "error": "locator.selectOption: Error: strict mode violation: getByLabel('减少动态效果', { exact: true }) resolved to 2 elements:\n    1) <select hidden=\"\" tabindex=\"-1\" aria-hidden=\"true\" aria-label=\"减少动态效果\" class=\"reply-motion-select\">…</select> aka getByLabel('减少动态效果').first()\n    2) <button type=\"button\" role=\"combobox\" aria-label=\"减少动态效果\" aria-expanded=\"false\" aria-haspopup=\"listbox\" class=\"settings-select reply-motion-select\" aria-controls=\"settings-options-8e6c3f72-22b3-4b2d-888b-52b918517031-list\">…</button> aka getByRole('combobox', { name: '减少动态效果' })\n\nCall log:\n\u001b[2m  - waiting for getByLabel('减少动态效果', { exact: true })\u001b[22m\n"
+      },
+      {
+        "name": "18-page-动态",
+        "passed": false,
+        "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '动态', exact: true })\u001b[22m\n"
+      },
+      {
+        "name": "18-page-目标",
+        "passed": true
+      },
+      {
+        "name": "18-page-成果库",
+        "passed": true
+      },
+      {
+        "name": "19-offline-reconnect",
+        "passed": true
+      },
+      {
+        "name": "20-desktop-reject",
+        "passed": true
+      },
+      {
+        "name": "20-phone-reject",
+        "passed": false,
+        "error": "Expected values to be strictly equal:\n\n404 !== 200\n"
+      },
+      {
+        "name": "23-desktop-approval-races",
+        "passed": false,
+        "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '批准', exact: true }) to be visible\u001b[22m\n"
+      },
+      {
+        "name": "23-phone-approval-races",
+        "passed": false,
+        "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '批准', exact: true }) to be visible\u001b[22m\n"
+      },
+      {
+        "name": "21-responsive-light-dark",
+        "passed": true
+      },
+      {
+        "name": "daily-1",
+        "passed": true
+      },
+      {
+        "name": "daily-2",
+        "passed": true
+      },
+      {
+        "name": "daily-3",
+        "passed": true
+      },
+      {
+        "name": "daily-4",
+        "passed": true
+      },
+      {
+        "name": "daily-5",
+        "passed": true
+      },
+      {
+        "name": "daily-6",
+        "passed": true
+      },
+      {
+        "name": "daily-7",
+        "passed": true
+      },
+      {
+        "name": "daily-8",
+        "passed": true
+      },
+      {
+        "name": "daily-9",
+        "passed": true
+      },
+      {
+        "name": "daily-10",
+        "passed": true
+      },
+      {
+        "name": "daily-11",
+        "passed": true
+      },
+      {
+        "name": "daily-12",
+        "passed": true
+      },
+      {
+        "name": "daily-13",
+        "passed": true
+      },
+      {
+        "name": "daily-14",
+        "passed": true
+      },
+      {
+        "name": "daily-15",
+        "passed": true
+      },
+      {
+        "name": "daily-16",
+        "passed": true
+      },
+      {
+        "name": "daily-17",
+        "passed": true
+      },
+      {
+        "name": "daily-18",
+        "passed": true
+      },
+      {
+        "name": "daily-19",
+        "passed": true
+      },
+      {
+        "name": "daily-20",
+        "passed": true
+      },
+      {
+        "name": "daily-21",
+        "passed": true
+      },
+      {
+        "name": "daily-22",
+        "passed": true
+      },
+      {
+        "name": "daily-23",
+        "passed": true
+      },
+      {
+        "name": "daily-24",
+        "passed": true
+      },
+      {
+        "name": "daily-25",
+        "passed": true
+      },
+      {
+        "name": "daily-26",
+        "passed": true
+      },
+      {
+        "name": "daily-27",
+        "passed": true
+      },
+      {
+        "name": "daily-28",
+        "passed": true
+      },
+      {
+        "name": "daily-29",
+        "passed": true
+      },
+      {
+        "name": "daily-30",
+        "passed": true
+      },
+      {
+        "name": "daily-31",
+        "passed": true
+      },
+      {
+        "name": "daily-32",
+        "passed": true
+      },
+      {
+        "name": "daily-33",
+        "passed": true
+      },
+      {
+        "name": "daily-34",
+        "passed": true
+      },
+      {
+        "name": "daily-35",
+        "passed": true
+      },
+      {
+        "name": "daily-36",
+        "passed": true
+      },
+      {
+        "name": "daily-37",
+        "passed": true
+      },
+      {
+        "name": "daily-38",
+        "passed": true
+      },
+      {
+        "name": "daily-39",
+        "passed": true
+      },
+      {
+        "name": "daily-40",
+        "passed": true
+      },
+      {
+        "name": "daily-41",
+        "passed": true
+      },
+      {
+        "name": "daily-42",
+        "passed": true
+      },
+      {
+        "name": "daily-43",
+        "passed": true
+      },
+      {
+        "name": "daily-44",
+        "passed": true
+      },
+      {
+        "name": "daily-45",
+        "passed": true
+      },
+      {
+        "name": "daily-46",
+        "passed": true
+      },
+      {
+        "name": "daily-47",
+        "passed": true
+      },
+      {
+        "name": "daily-48",
+        "passed": true
+      },
+      {
+        "name": "daily-49",
+        "passed": true
+      },
+      {
+        "name": "daily-50",
+        "passed": true
+      },
+      {
+        "name": "daily-51",
+        "passed": true
+      },
+      {
+        "name": "daily-52",
+        "passed": true
+      },
+      {
+        "name": "daily-53",
+        "passed": true
+      },
+      {
+        "name": "daily-54",
+        "passed": true
+      }
+    ],
+    "errors": [],
+    "correctedPreferenceChecks": [
+      {
+        "name": "daily-1",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-3",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-5",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-7",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-9",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-11",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-13",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-15",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-17",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-19",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-21",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-23",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-25",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-27",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-29",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-31",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-33",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-35",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-37",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-39",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-41",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-43",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-45",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-47",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-49",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-51",
+        "apple": true,
+        "preferredName": true
+      },
+      {
+        "name": "daily-53",
+        "apple": true,
+        "preferredName": true
+      }
+    ]
+  },
+  "supplement": [
+    {
+      "name": "folder-picker-project",
+      "passed": false,
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.folder-confirm') to be detached\u001b[22m\n\u001b[2m    63 × locator resolved to visible <section aria-label=\"在文件夹里工作\" class=\"folder-confirm card\" data-request-id=\"19cf4939-28d8-4c90-b117-5cc5291ab4bd\" data-scope=\"owner-54724b5e-718b-4b94-b40e-49791b2c3f7b/1/session-ba53e8aa-eb09-4c3a-9628-14e3ef92480f/undefined/chat-4d6cfc66-872b-4dd3-8782-28bef9964f2d\">…</section>\u001b[22m\n"
+    },
+    {
+      "name": "activity-open",
+      "passed": true,
+      "opened": true
+    },
+    {
+      "name": "desktop-project-approval-races",
+      "passed": false,
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '批准', exact: true }) to be visible\u001b[22m\n"
+    },
+    {
+      "name": "phone-viewport-geometry",
+      "passed": false,
+      "error": "Send button below phone viewport"
+    },
+    {
+      "name": "phone-project-approval-races",
+      "passed": false,
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '批准', exact: true }) to be visible\u001b[22m\n"
+    },
+    {
+      "name": "desktop-reject",
+      "passed": true,
+      "ackMs": 2086,
+      "fileAbsent": true
+    },
+    {
+      "name": "phone-reject",
+      "passed": true,
+      "ackMs": 2551,
+      "fileAbsent": true
+    },
+    {
+      "name": "folder-real-drag",
+      "passed": false,
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.folder-confirm') to be detached\u001b[22m\n\u001b[2m    64 × locator resolved to visible <section aria-label=\"在文件夹里工作\" class=\"folder-confirm card\" data-request-id=\"0669df2a-b2e2-46c8-b667-d82ecc721715\" data-scope=\"owner-54724b5e-718b-4b94-b40e-49791b2c3f7b/1/session-e9d13851-3b7b-460e-955b-ab2f942ef60f/undefined/chat-05bb66e2-350f-40da-a7a8-3d43db4e3bf0\">…</section>\u001b[22m\n"
+    },
+    {
+      "name": "reply-motion-long-stream",
+      "passed": false,
+      "error": "No breathing dot observed during real MiMo stream"
+    },
+    {
+      "name": "reply-suggestions",
+      "passed": false,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.next-suggestion-chip').first() to be visible\u001b[22m\n"
+    },
+    {
+      "name": "gray-completion-tab",
+      "passed": false,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.composer-completion:not([hidden])') to be visible\u001b[22m\n"
+    },
+    {
+      "name": "reduced-and-disabled",
+      "passed": true,
+      "reduced": true,
+      "animations": [],
+      "suggestions": false
+    },
+    {
+      "name": "status-unread-seen",
+      "passed": true,
+      "unreadBefore": true,
+      "readAfter": true
+    },
+    {
+      "name": "offline-draft-single-toast",
+      "passed": true,
+      "draftPreserved": true,
+      "recoveryToasts": 1
+    },
+    {
+      "name": "light-settings-and-dark-search",
+      "passed": true,
+      "categories": [
+        "general",
+        "personalization",
+        "assistant",
+        "notifications",
+        "appearance",
+        "account",
+        "devices",
+        "usage",
+        "archived",
+        "models",
+        "approvals",
+        "memory",
+        "schedules",
+        "resources",
+        "system",
+        "backups",
+        "about"
+      ]
+    }
+  ],
+  "approvalRecheck": {
+    "startedAt": "2026-10-10T14:02:58.121Z",
+    "installed": true,
+    "fixtureCorrection": "No Escape in select: it cancels native tasks",
+    "checks": [
+      {
+        "surface": "desktop",
+        "decisions": [
+          {
+            "after": "reload",
+            "approvalId": "35d262da-9c17-40cc-bcdb-d834fa1dae45",
+            "ackMs": 284
+          },
+          {
+            "after": "switch",
+            "approvalId": "e7f7a735-895d-4422-9758-a9a77fa0a06a",
+            "ackMs": 286
+          },
+          {
+            "after": "reconnect",
+            "approvalId": "1a1bb332-eadf-4b22-988a-b7ab40c0b6fc",
+            "ackMs": 295
+          },
+          {
+            "after": "normal",
+            "approvalId": "034397dd-bb39-40ab-9290-3db25fc26d1d",
+            "ackMs": 288
+          },
+          {
+            "after": "normal",
+            "approvalId": "fc7fdefe-8fd6-4b0e-a1da-c1bb29054d9a",
+            "ackMs": 288
+          }
+        ],
+        "sessionId": "session-0b7d3761-66be-4856-be34-dd386799b210",
+        "passed": true
+      },
+      {
+        "surface": "phone",
+        "decisions": [
+          {
+            "after": "reload",
+            "approvalId": "149eb00b-2046-4a4a-98b8-39a735a3c3d5",
+            "ackMs": 292
+          },
+          {
+            "after": "switch",
+            "approvalId": "74a0037d-7aaf-4cc7-b7b6-6896de218264",
+            "ackMs": 361
+          },
+          {
+            "after": "reconnect",
+            "approvalId": "f724d3f3-fdc3-45d2-816a-6f52d5e0a02a",
+            "ackMs": 314
+          },
+          {
+            "after": "normal",
+            "approvalId": "e4320a19-7b93-4889-a779-2eec1966ed99",
+            "ackMs": 288
+          },
+          {
+            "after": "normal",
+            "approvalId": "4186407e-30af-4cff-ac4c-94bb3b3710fc",
+            "ackMs": 284
+          }
+        ],
+        "sessionId": "session-87a48183-b932-46ea-9584-4e8565514213",
+        "passed": true
+      }
+    ],
+    "posts": [
+      {
+        "path": "/personal/v1/sessions/session-0b7d3761-66be-4856-be34-dd386799b210/approvals/35d262da-9c17-40cc-bcdb-d834fa1dae45",
+        "status": 200,
+        "at": "2026-10-10T14:03:07.615Z"
+      },
+      {
+        "path": "/personal/v1/sessions/session-0b7d3761-66be-4856-be34-dd386799b210/approvals/e7f7a735-895d-4422-9758-a9a77fa0a06a",
+        "status": 200,
+        "at": "2026-10-10T14:03:10.178Z"
+      },
+      {
+        "path": "/personal/v1/sessions/session-0b7d3761-66be-4856-be34-dd386799b210/approvals/1a1bb332-eadf-4b22-988a-b7ab40c0b6fc",
+        "status": 200,
+        "at": "2026-10-10T14:03:28.294Z"
+      },
+      {
+        "path": "/personal/v1/sessions/session-0b7d3761-66be-4856-be34-dd386799b210/approvals/034397dd-bb39-40ab-9290-3db25fc26d1d",
+        "status": 200,
+        "at": "2026-10-10T14:03:40.102Z"
+      },
+      {
+        "path": "/personal/v1/sessions/session-0b7d3761-66be-4856-be34-dd386799b210/approvals/fc7fdefe-8fd6-4b0e-a1da-c1bb29054d9a",
+        "status": 200,
+        "at": "2026-10-10T14:03:44.069Z"
+      },
+      {
+        "path": "/personal/v1/sessions/session-87a48183-b932-46ea-9584-4e8565514213/approvals/149eb00b-2046-4a4a-98b8-39a735a3c3d5",
+        "status": 200,
+        "at": "2026-10-10T14:03:55.901Z"
+      },
+      {
+        "path": "/personal/v1/sessions/session-87a48183-b932-46ea-9584-4e8565514213/approvals/74a0037d-7aaf-4cc7-b7b6-6896de218264",
+        "status": 200,
+        "at": "2026-10-10T14:03:59.023Z"
+      },
+      {
+        "path": "/personal/v1/sessions/session-87a48183-b932-46ea-9584-4e8565514213/approvals/f724d3f3-fdc3-45d2-816a-6f52d5e0a02a",
+        "status": 200,
+        "at": "2026-10-10T14:04:15.446Z"
+      },
+      {
+        "path": "/personal/v1/sessions/session-87a48183-b932-46ea-9584-4e8565514213/approvals/e4320a19-7b93-4889-a779-2eec1966ed99",
+        "status": 200,
+        "at": "2026-10-10T14:04:18.364Z"
+      },
+      {
+        "path": "/personal/v1/sessions/session-87a48183-b932-46ea-9584-4e8565514213/approvals/4186407e-30af-4cff-ac4c-94bb3b3710fc",
+        "status": 200,
+        "at": "2026-10-10T14:04:21.597Z"
+      }
+    ],
+    "uiRecheck": {
+      "name": "short-natural-reply-motion",
+      "samples": [
+        {
+          "at": 1791641079782,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641079894,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 621.3333740234375
+        },
+        {
+          "at": 1791641080005,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 621.3333740234375
+        },
+        {
+          "at": 1791641080113,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 621.3333740234375
+        },
+        {
+          "at": 1791641080223,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 621.3333740234375
+        },
+        {
+          "at": 1791641080331,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 621.3333740234375
+        },
+        {
+          "at": 1791641080445,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641080554,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641080662,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641080772,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641080880,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641080988,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641081098,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641081208,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641081315,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641081423,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641081531,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641081641,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641081749,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641081858,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641081966,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641082073,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641082183,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641082291,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641082400,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641082510,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641082622,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641082739,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641082846,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641082953,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641083061,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641083172,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641083280,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641083393,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641083512,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641083618,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641083727,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641083834,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641083941,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641084050,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641084157,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641084264,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641084373,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641084489,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641084596,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641084705,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641084813,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641084922,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641085030,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641085139,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641085249,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641085357,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641085464,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641085573,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641085683,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641085791,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641085898,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641086006,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641086113,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641086220,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641086328,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641086439,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641086548,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641086658,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641086766,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641086874,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641086987,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641087112,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641087228,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641087344,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641087461,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641087576,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641087691,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641087805,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641087922,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641088039,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641088154,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641088260,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641088381,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641088488,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641088603,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641088720,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641088834,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641088950,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641089064,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641089179,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641089294,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641089412,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641089522,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641089639,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641089755,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641089874,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641089991,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641090105,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641090213,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641090320,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641090436,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641090554,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641090670,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641090785,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641090900,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641091016,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641091132,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641091252,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641091369,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641091490,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641091606,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641091722,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641091837,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641091952,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641092065,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641092181,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641092295,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641092410,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641092524,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641092640,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641092749,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641092864,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641092979,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641093095,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641093209,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641093324,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641093440,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641093555,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641093673,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641093783,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641093897,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641094004,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641094120,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641094244,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641094360,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641094477,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641094596,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641094713,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641094827,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641094948,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641095063,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641095181,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641095296,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641095413,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641095521,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641095640,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641095747,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641095871,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641095998,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        },
+        {
+          "at": 1791641096112,
+          "hidden": false,
+          "paused": false,
+          "reduced": false,
+          "dot": false,
+          "sheen": true,
+          "inputY": 699.3333740234375
+        }
+      ],
+      "completed": true,
+      "dotSeen": false,
+      "sheenSeen": true,
+      "suggestionFilledWithoutSend": false,
+      "completionAccepted": false
+    },
+    "finishedAt": "2026-10-10T14:05:14.257Z"
+  },
+  "migration": {
+    "backupReadOnly": true,
+    "sourceTaskUntouched": true,
+    "randomPort": true,
+    "publicOrigin": null,
+    "rehearsalAccountPassword": "temporary synthetic password on the copy only",
+    "paidModelRequests": 0,
+    "networkBoundary": "loopback only; 8081 and 18186 denied",
+    "originalFileCount": 66050,
+    "generatedModuleFallbackRecreated": true,
+    "legacyAccountChosen": true,
+    "accountProbeScope": "All stored account identities; synthetic local login aliases/passwords exist only on disposable copy. No account names, ids or private memory text exported.",
+    "accountIdentityRetained": true,
+    "prepareScript": true,
+    "rehearsalRefused": [
+      "Apply",
+      "Rollback"
+    ],
+    "sourceRuntimeReady": "ready",
+    "sourceVisibility": {
+      "accounts": [
+        {
+          "preStubHealth": {
+            "httpStatus": 200,
+            "normal": true,
+            "pendingBoundaryCount": 0
+          },
+          "stubSelectionHttp": 200,
+          "health": {
+            "httpStatus": 200,
+            "normal": true,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": 0,
+            "failedFormationCount": 0,
+            "reasonCode": null
+          },
+          "preview": {
+            "httpStatus": 200,
+            "sessionCount": 1,
+            "turnCount": 3,
+            "estimatedUsage": {
+              "inputTokens": 18108,
+              "outputTokens": 3000,
+              "approximate": true
+            }
+          },
+          "syntheticIndex": 0,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 3,
+          "conversationsVisible": true,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 200,
+              "count": 0,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 200,
+              "count": 0,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 200,
+              "count": 0,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        },
+        {
+          "preStubHealth": null,
+          "stubSelectionHttp": null,
+          "health": {
+            "httpStatus": 200,
+            "normal": false,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": null,
+            "failedFormationCount": null,
+            "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+          },
+          "preview": {
+            "httpStatus": 503,
+            "sessionCount": null,
+            "turnCount": null,
+            "estimatedUsage": null
+          },
+          "syntheticIndex": 1,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 0,
+          "conversationsVisible": false,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        },
+        {
+          "preStubHealth": null,
+          "stubSelectionHttp": null,
+          "health": {
+            "httpStatus": 200,
+            "normal": false,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": null,
+            "failedFormationCount": null,
+            "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+          },
+          "preview": {
+            "httpStatus": 503,
+            "sessionCount": null,
+            "turnCount": null,
+            "estimatedUsage": null
+          },
+          "syntheticIndex": 2,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 0,
+          "conversationsVisible": false,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        },
+        {
+          "preStubHealth": null,
+          "stubSelectionHttp": null,
+          "health": {
+            "httpStatus": 200,
+            "normal": false,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": null,
+            "failedFormationCount": null,
+            "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+          },
+          "preview": {
+            "httpStatus": 503,
+            "sessionCount": null,
+            "turnCount": null,
+            "estimatedUsage": null
+          },
+          "syntheticIndex": 3,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 0,
+          "conversationsVisible": false,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        }
+      ],
+      "conversationsVisible": true,
+      "memoryVisible": false
+    },
+    "installedRuntimeReady": true,
+    "localLogin": true,
+    "sameDataDirectory": true,
+    "installedVisibility": {
+      "accounts": [
+        {
+          "preStubHealth": {
+            "httpStatus": 200,
+            "normal": true,
+            "pendingBoundaryCount": 0
+          },
+          "stubSelectionHttp": 200,
+          "health": {
+            "httpStatus": 200,
+            "normal": true,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": 0,
+            "failedFormationCount": 0,
+            "reasonCode": null
+          },
+          "preview": {
+            "httpStatus": 200,
+            "sessionCount": 1,
+            "turnCount": 3,
+            "estimatedUsage": {
+              "inputTokens": 18108,
+              "outputTokens": 3000,
+              "approximate": true
+            }
+          },
+          "syntheticIndex": 0,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 3,
+          "conversationsVisible": true,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 200,
+              "count": 0,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 200,
+              "count": 0,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 200,
+              "count": 0,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        },
+        {
+          "preStubHealth": null,
+          "stubSelectionHttp": null,
+          "health": {
+            "httpStatus": 200,
+            "normal": false,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": null,
+            "failedFormationCount": null,
+            "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+          },
+          "preview": {
+            "httpStatus": 503,
+            "sessionCount": null,
+            "turnCount": null,
+            "estimatedUsage": null
+          },
+          "syntheticIndex": 1,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 0,
+          "conversationsVisible": false,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        },
+        {
+          "preStubHealth": null,
+          "stubSelectionHttp": null,
+          "health": {
+            "httpStatus": 200,
+            "normal": false,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": null,
+            "failedFormationCount": null,
+            "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+          },
+          "preview": {
+            "httpStatus": 503,
+            "sessionCount": null,
+            "turnCount": null,
+            "estimatedUsage": null
+          },
+          "syntheticIndex": 2,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 0,
+          "conversationsVisible": false,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        },
+        {
+          "preStubHealth": null,
+          "stubSelectionHttp": null,
+          "health": {
+            "httpStatus": 200,
+            "normal": false,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": null,
+            "failedFormationCount": null,
+            "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+          },
+          "preview": {
+            "httpStatus": 503,
+            "sessionCount": null,
+            "turnCount": null,
+            "estimatedUsage": null
+          },
+          "syntheticIndex": 3,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 0,
+          "conversationsVisible": false,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        }
+      ],
+      "conversationsVisible": true,
+      "memoryVisible": false
+    },
+    "verifyScript": true,
+    "components": {
+      "port": "random loopback, reachable",
+      "login": "copied owner with temporary local password, passed",
+      "memoryBridge": "isolated pinned Core against copied data; model traffic blocked",
+      "relay": "disabled for the offline rehearsal",
+      "certificate": "ACME disabled; existing certificate files preserved in the backup"
+    },
+    "startupFileChanges": {
+      "added": 739,
+      "removed": 32787,
+      "changed": 66
+    },
+    "sourceRollback": true,
+    "rollbackVisibility": {
+      "accounts": [
+        {
+          "preStubHealth": {
+            "httpStatus": 200,
+            "normal": true,
+            "pendingBoundaryCount": 0
+          },
+          "stubSelectionHttp": 200,
+          "health": {
+            "httpStatus": 200,
+            "normal": true,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": 0,
+            "failedFormationCount": 0,
+            "reasonCode": null
+          },
+          "preview": {
+            "httpStatus": 200,
+            "sessionCount": 1,
+            "turnCount": 3,
+            "estimatedUsage": {
+              "inputTokens": 18108,
+              "outputTokens": 3000,
+              "approximate": true
+            }
+          },
+          "syntheticIndex": 0,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 3,
+          "conversationsVisible": true,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 200,
+              "count": 0,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 200,
+              "count": 0,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 200,
+              "count": 0,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        },
+        {
+          "preStubHealth": null,
+          "stubSelectionHttp": null,
+          "health": {
+            "httpStatus": 200,
+            "normal": false,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": null,
+            "failedFormationCount": null,
+            "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+          },
+          "preview": {
+            "httpStatus": 503,
+            "sessionCount": null,
+            "turnCount": null,
+            "estimatedUsage": null
+          },
+          "syntheticIndex": 1,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 0,
+          "conversationsVisible": false,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        },
+        {
+          "preStubHealth": null,
+          "stubSelectionHttp": null,
+          "health": {
+            "httpStatus": 200,
+            "normal": false,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": null,
+            "failedFormationCount": null,
+            "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+          },
+          "preview": {
+            "httpStatus": 503,
+            "sessionCount": null,
+            "turnCount": null,
+            "estimatedUsage": null
+          },
+          "syntheticIndex": 2,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 0,
+          "conversationsVisible": false,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        },
+        {
+          "preStubHealth": null,
+          "stubSelectionHttp": null,
+          "health": {
+            "httpStatus": 200,
+            "normal": false,
+            "available": null,
+            "pendingBoundaryCount": 0,
+            "pendingFormationCount": null,
+            "failedFormationCount": null,
+            "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+          },
+          "preview": {
+            "httpStatus": 503,
+            "sessionCount": null,
+            "turnCount": null,
+            "estimatedUsage": null
+          },
+          "syntheticIndex": 3,
+          "loginStatus": 200,
+          "identityRetained": true,
+          "conversationCount": 0,
+          "conversationsVisible": false,
+          "memory": [
+            {
+              "kind": "entity",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "relationship",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            },
+            {
+              "kind": "cognition",
+              "httpStatus": 503,
+              "count": null,
+              "visible": false
+            }
+          ],
+          "memoryVisible": false
+        }
+      ],
+      "conversationsVisible": true,
+      "memoryVisible": false
+    },
+    "restoredCopy": {
+      "added": 0,
+      "removed": 0,
+      "changed": 0
+    },
+    "backupAfter": {
+      "added": 0,
+      "removed": 0,
+      "changed": 0
+    },
+    "hashesMatchAfterRehearsalRestore": true,
+    "profileLifecyclePassed": true,
+    "conversationCountsPreserved": true,
+    "syntheticLocalRouteForCoreHealth": true,
+    "localStubRejectedRequests": 0,
+    "cloudModelRequests": 0,
+    "previewOnly": true,
+    "backfillConfirmed": false,
+    "legacyMemoryHealthyAcrossPhases": true,
+    "passed": true,
+    "backupCopyDeleted": true,
+    "privateCopyDeletedBeforeSyntheticInference": true,
+    "modelTrafficScope": "cloudModelRequests=0 covers only the private backup rehearsal; the later independent synthetic account uses MiMo and records its own usage",
+    "syntheticApprovalRecheck": {
+      "performed": true,
+      "evidence": "../approval-recheck/results.json",
+      "usage": "../approval-recheck/usage.json"
+    }
+  },
+  "upgrade": {
+    "passed": true
+  },
+  "requiredTests": {
+    "tests": 1407,
+    "suites": 68,
+    "pass": 1393,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 14,
+    "todo": 0,
+    "duration_ms": 930665.211,
+    "command": "node .github/scripts/ci-unit-tests.mjs required",
+    "exitCode": 0
+  },
+  "usage": {
+    "model": "mimo-v2.6-flash",
+    "sources": [
+      {
+        "file": "smoke/usage.json",
+        "requests": 127,
+        "withUsage": 127,
+        "inputTokens": 477761,
+        "cachedInputTokens": 369280,
+        "outputTokens": 7469,
+        "totalTokens": 485230
+      },
+      {
+        "file": "supplement/usage.json",
+        "requests": 23,
+        "withUsage": 21,
+        "inputTokens": 89299,
+        "cachedInputTokens": 74816,
+        "outputTokens": 899,
+        "totalTokens": 90198
+      },
+      {
+        "file": "approval-recheck/usage.json",
+        "requests": 25,
+        "withUsage": 25,
+        "inputTokens": 94714,
+        "cachedInputTokens": 71424,
+        "outputTokens": 1745,
+        "totalTokens": 96459
+      }
+    ],
+    "requests": 175,
+    "withUsage": 173,
+    "missingUsage": 2,
+    "inputTokens": 661774,
+    "cachedInputTokens": 515520,
+    "outputTokens": 10113,
+    "totalTokens": 671887,
+    "notABillingStatement": true
+  },
+  "cleanup": {
+    "at": "2026-10-10T22:08:25.8825990+08:00",
+    "criteria": "creation after baseline start + executable path + command line containing this worktree or recorded QA6 temporary path; no parent-PID matching",
+    "extraStoppedNow": [],
+    "uniqueRecordedTerminations": 7,
+    "recordedTerminations": [
+      {
+        "ProcessId": 28296,
+        "Name": "node.exe",
+        "CreationDate": "2026-10-10T21:29:38.400146+08:00"
+      },
+      {
+        "ProcessId": 42396,
+        "Name": "WeftMate.exe",
+        "CreationDate": "2026-10-10T21:02:20.982817+08:00"
+      },
+      {
+        "ProcessId": 47508,
+        "Name": "WeftMate.exe",
+        "CreationDate": "2026-10-10T21:02:20.969093+08:00"
+      },
+      {
+        "ProcessId": 50992,
+        "Name": "WeftMate.exe",
+        "CreationDate": "2026-10-10T21:02:20.448265+08:00"
+      },
+      {
+        "ProcessId": 59188,
+        "Name": "WeftMate.exe",
+        "CreationDate": "2026-10-10T21:02:24.66675+08:00"
+      },
+      {
+        "ProcessId": 6012,
+        "Name": "WeftMate.exe",
+        "CreationDate": "2026-10-10T21:02:26.298091+08:00"
+      },
+      {
+        "ProcessId": 61416,
+        "Name": "node.exe",
+        "CreationDate": "2026-10-10T20:59:51.952015+08:00"
+      }
+    ],
+    "remainingOwnedProcesses": [],
+    "remainingRecordedCoreProcesses": [],
+    "backupCopiesRemaining": 0,
+    "privateSigningDirectoriesRemaining": 0,
+    "ownLanLockRemaining": false,
+    "emulatorStarted": false,
+    "emulatorStopped": false,
+    "deletedOwnedDirectories": [
+      "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa6-approval-recheck-AZRF1i",
+      "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa6-exit-formation-final-SipgGq",
+      "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa6-smoke-installed-nIXCec",
+      "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa6-smoke-T021Dd",
+      "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa6-smoke-gA4uzX",
+      "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa6-supplement-installed-hwM4UM",
+      "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa6-supplement-7ONfLp",
+      "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa6-upgrade-WGRx6d",
+      "C:\\weftmate-ci-CFDDlp"
+    ],
+    "directoryDeletionFailures": [],
+    "additionalCodeCleanupRejected": {
+      "reason": "blocked by policy; no more specific reason returned",
+      "action": "Remove exported old source and its dependency junctions, local diagnostics/public build key, and detached QA6 Core worktree",
+      "retained": [
+        ".local/qa-6/old-source",
+        ".local/qa-6/old-source.tar",
+        ".local/qa-6/old-assets.tar",
+        ".local/qa-6/keys.json",
+        ".local/qa-6/migration-private.txt",
+        "C:/Temp/weftmate-qa6-core"
+      ],
+      "privateBackupCopiesDeleted": true,
+      "privateSigningKeysDeleted": true,
+      "noAlternateDeletionAttempted": true
+    }
+  }
+}

@@ -1,0 +1,236 @@
+[
+  {
+    "seq": 4,
+    "type": "task.queued",
+    "at": "2026-10-10T13:06:27.174Z",
+    "data": {
+      "taskId": "cmd-7515ab9f-5275-4cc1-8b99-62cf78814855",
+      "receiptId": "aff0ff1d-a89a-4c16-8b0b-1f86654739bd",
+      "text": "我喝第951种花茶加什么？",
+      "commandId": "cmd-7515ab9f-5275-4cc1-8b99-62cf78814855",
+      "requestId": "8b5885f1-7831-4a47-9481-1a169c2d56d5"
+    }
+  },
+  {
+    "seq": 5,
+    "type": "turn.started",
+    "at": "2026-10-10T13:06:27.174Z",
+    "data": {
+      "turn": 1
+    }
+  },
+  {
+    "seq": 7,
+    "type": "task.started",
+    "at": "2026-10-10T13:06:27.230Z",
+    "data": {
+      "taskId": "cmd-7515ab9f-5275-4cc1-8b99-62cf78814855",
+      "turn": 1,
+      "receiptId": "aff0ff1d-a89a-4c16-8b0b-1f86654739bd",
+      "commandId": "cmd-7515ab9f-5275-4cc1-8b99-62cf78814855",
+      "requestId": "8b5885f1-7831-4a47-9481-1a169c2d56d5",
+      "turnTaskId": "turn-1"
+    }
+  },
+  {
+    "seq": 11,
+    "type": "user.message",
+    "at": "2026-10-10T13:06:27.230Z",
+    "data": {
+      "text": "我喝第951种花茶加什么？",
+      "receiptId": "aff0ff1d-a89a-4c16-8b0b-1f86654739bd"
+    }
+  },
+  {
+    "seq": 31,
+    "type": "assistant.message",
+    "at": "2026-10-10T13:06:30.540Z",
+    "data": {
+      "text": "加一片柠檬。",
+      "modelThinking": "The memory says: 用户喝第951种花茶喜欢加一片柠檬。",
+      "memoryUsed": [
+        {
+          "id": "cognition-64a55cfce5e04ecf4c110dbdd672e41d6de2c1721745ee56af332e9c0822ed69",
+          "kind": "cognition",
+          "summary": "用户喝第951种花茶喜欢加一片柠檬。"
+        }
+      ]
+    }
+  },
+  {
+    "seq": 32,
+    "type": "task.ended",
+    "at": "2026-10-10T13:06:30.540Z",
+    "data": {
+      "taskId": "cmd-7515ab9f-5275-4cc1-8b99-62cf78814855",
+      "turn": 1,
+      "reason": "completed",
+      "nativeTurnEndSeq": 33,
+      "receiptId": "aff0ff1d-a89a-4c16-8b0b-1f86654739bd",
+      "commandId": "cmd-7515ab9f-5275-4cc1-8b99-62cf78814855",
+      "requestId": "8b5885f1-7831-4a47-9481-1a169c2d56d5",
+      "turnTaskId": "turn-1"
+    }
+  },
+  {
+    "seq": 33,
+    "type": "turn.ended",
+    "at": "2026-10-10T13:06:30.551Z",
+    "data": {
+      "reason": "completed",
+      "turn": 1
+    }
+  },
+  {
+    "seq": 34,
+    "type": "task.queued",
+    "at": "2026-10-10T13:06:31.026Z",
+    "data": {
+      "taskId": "cmd-1e0d0cf2-f4f4-47c5-a7c9-12b355ba1d36",
+      "receiptId": "6d5d0da3-0b58-4622-a27e-4c4d7e12e9f3",
+      "text": "纠正一下，第951种花茶不加柠檬了，改为加一片苹果。",
+      "commandId": "cmd-1e0d0cf2-f4f4-47c5-a7c9-12b355ba1d36",
+      "requestId": "eafbb8fd-ebb6-442b-bb7a-461b279e5023"
+    }
+  },
+  {
+    "seq": 35,
+    "type": "turn.started",
+    "at": "2026-10-10T13:06:31.026Z",
+    "data": {
+      "turn": 2
+    }
+  },
+  {
+    "seq": 37,
+    "type": "task.started",
+    "at": "2026-10-10T13:06:31.130Z",
+    "data": {
+      "taskId": "cmd-1e0d0cf2-f4f4-47c5-a7c9-12b355ba1d36",
+      "turn": 2,
+      "receiptId": "6d5d0da3-0b58-4622-a27e-4c4d7e12e9f3",
+      "commandId": "cmd-1e0d0cf2-f4f4-47c5-a7c9-12b355ba1d36",
+      "requestId": "eafbb8fd-ebb6-442b-bb7a-461b279e5023",
+      "turnTaskId": "turn-2"
+    }
+  },
+  {
+    "seq": 38,
+    "type": "user.message",
+    "at": "2026-10-10T13:06:31.130Z",
+    "data": {
+      "text": "纠正一下，第951种花茶不加柠檬了，改为加一片苹果。",
+      "receiptId": "6d5d0da3-0b58-4622-a27e-4c4d7e12e9f3"
+    }
+  },
+  {
+    "seq": 64,
+    "type": "assistant.message",
+    "at": "2026-10-10T13:06:40.246Z",
+    "data": {
+      "text": "记下了，稍后整理进记忆：第951种花茶不加柠檬，改加一片苹果。",
+      "modelThinking": "User corrects preference: no lemon, add an apple slice. Acknowledge briefly; MemoWeft handles memory. No tools needed.",
+      "memoryUsed": []
+    }
+  },
+  {
+    "seq": 65,
+    "type": "task.ended",
+    "at": "2026-10-10T13:06:40.247Z",
+    "data": {
+      "taskId": "cmd-1e0d0cf2-f4f4-47c5-a7c9-12b355ba1d36",
+      "turn": 2,
+      "reason": "completed",
+      "nativeTurnEndSeq": 66,
+      "receiptId": "6d5d0da3-0b58-4622-a27e-4c4d7e12e9f3",
+      "commandId": "cmd-1e0d0cf2-f4f4-47c5-a7c9-12b355ba1d36",
+      "requestId": "eafbb8fd-ebb6-442b-bb7a-461b279e5023",
+      "turnTaskId": "turn-2"
+    }
+  },
+  {
+    "seq": 66,
+    "type": "turn.ended",
+    "at": "2026-10-10T13:06:40.247Z",
+    "data": {
+      "reason": "completed",
+      "turn": 2
+    }
+  },
+  {
+    "seq": 67,
+    "type": "task.queued",
+    "at": "2026-10-10T13:06:45.797Z",
+    "data": {
+      "taskId": "cmd-92d39abe-3553-4361-a483-e0474257713d",
+      "receiptId": "6fef9cfc-ee37-47c6-a3ad-2eaeec0e078c",
+      "text": "请输出一个简短 Markdown 样张，依次包含：三行 JavaScript 代码块、两行三列表格、独立公式 $$E=mc^2$$、mermaid flowchart TD 流程图 A[开始]-->B[完成]。四种都必须使用正确围栏，不用工具。",
+      "commandId": "cmd-92d39abe-3553-4361-a483-e0474257713d",
+      "requestId": "b45060c5-cb46-4de5-a206-627c3526c9c0"
+    }
+  },
+  {
+    "seq": 68,
+    "type": "turn.started",
+    "at": "2026-10-10T13:06:45.797Z",
+    "data": {
+      "turn": 3
+    }
+  },
+  {
+    "seq": 70,
+    "type": "task.started",
+    "at": "2026-10-10T13:06:45.843Z",
+    "data": {
+      "taskId": "cmd-92d39abe-3553-4361-a483-e0474257713d",
+      "turn": 3,
+      "receiptId": "6fef9cfc-ee37-47c6-a3ad-2eaeec0e078c",
+      "commandId": "cmd-92d39abe-3553-4361-a483-e0474257713d",
+      "requestId": "b45060c5-cb46-4de5-a206-627c3526c9c0",
+      "turnTaskId": "turn-3"
+    }
+  },
+  {
+    "seq": 71,
+    "type": "user.message",
+    "at": "2026-10-10T13:06:45.843Z",
+    "data": {
+      "text": "请输出一个简短 Markdown 样张，依次包含：三行 JavaScript 代码块、两行三列表格、独立公式 $$E=mc^2$$、mermaid flowchart TD 流程图 A[开始]-->B[完成]。四种都必须使用正确围栏，不用工具。",
+      "receiptId": "6fef9cfc-ee37-47c6-a3ad-2eaeec0e078c"
+    }
+  },
+  {
+    "seq": 113,
+    "type": "assistant.message",
+    "at": "2026-10-10T13:06:50.119Z",
+    "data": {
+      "text": "```javascript\nconst greeting = \"你好，世界\";\nconsole.log(greeting);\nexport default greeting;\n```\n\n| 名称 | 数量 | 备注 |\n| --- | --- | --- |\n| 花茶 | 951 | 加一片苹果 |\n| 绿茶 | 12 | 清饮 |\n\n$$E=mc^2$$\n\n```mermaid\nflowchart TD\n    A[开始] --> B[完成]\n```",
+      "modelThinking": "User wants a Markdown sample with: 3-line JS code block, 2-row 3-column table, standalone formula, mermaid flowchart. Need correct fences. Just output.",
+      "memoryUsed": []
+    }
+  },
+  {
+    "seq": 114,
+    "type": "task.ended",
+    "at": "2026-10-10T13:06:50.119Z",
+    "data": {
+      "taskId": "cmd-92d39abe-3553-4361-a483-e0474257713d",
+      "turn": 3,
+      "reason": "completed",
+      "nativeTurnEndSeq": 115,
+      "receiptId": "6fef9cfc-ee37-47c6-a3ad-2eaeec0e078c",
+      "commandId": "cmd-92d39abe-3553-4361-a483-e0474257713d",
+      "requestId": "b45060c5-cb46-4de5-a206-627c3526c9c0",
+      "turnTaskId": "turn-3"
+    }
+  },
+  {
+    "seq": 115,
+    "type": "turn.ended",
+    "at": "2026-10-10T13:06:50.119Z",
+    "data": {
+      "reason": "completed",
+      "turn": 3
+    }
+  }
+]

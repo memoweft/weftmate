@@ -1,0 +1,3 @@
+formation tray 1 true
+formation task-manager-force 1 true
+formation logout-taskkill 1 true

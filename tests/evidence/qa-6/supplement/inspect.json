@@ -1,0 +1,240 @@
+{
+  "text": "WeftMate\n搜索\nCtrl K\nWeftMate\n动态\n12\n目标\n成果库\n新旁聊\nCtrl N\n\n旁聊\n未分组\n请连续输出60条编号的合成收\n新对话\n请读取项目中的source.txt，把原\n项目\n添加一个文件夹，开始项目对话。\nq\nqa5-2468b731-31c4-48c5-a48e-8d61ecebf82e\n请连续输出60条编号的合成收\n输出与来源\n本对话用量\n相关上下文尚未带入\n\n请连续输出60条编号的合成收纳建议，每条15个字。不要工具，不要省略。\n\n正在思考… 191 秒\n输入消息\n自动\nQA5 model",
+  "requests": [],
+  "/memory/status": {
+    "status": 200,
+    "body": {
+      "ownerId": "owner-54724b5e-718b-4b94-b40e-49791b2c3f7b",
+      "state": "ready",
+      "version": "2.0.0",
+      "worldRevision": 0,
+      "capabilities": {
+        "list": true,
+        "source": true,
+        "inject": true,
+        "correct": true,
+        "mute": true,
+        "deleteEvidence": true,
+        "deleteWorldItem": true
+      },
+      "pendingBoundaryCount": 0,
+      "blockedBoundaryCount": 0,
+      "discardedBoundaryCount": 0,
+      "lastFailureCode": null,
+      "pendingFormationCount": 0,
+      "recoveringFormationCount": 0,
+      "failedFormationCount": 0,
+      "failedCorrectionCount": 0,
+      "formationIssues": [],
+      "backfill": null,
+      "captureError": null
+    }
+  },
+  "/sessions?limit=100": {
+    "status": 200,
+    "body": {
+      "sessions": [
+        {
+          "sessionId": "session-ffa4f449-43da-461b-b3c4-d906685c0250",
+          "hostId": "host-47f2cf3c-57bb-484c-a58e-9635dcee9143",
+          "archived": false,
+          "modelProfileId": "private-model-cd4a88387fb98240ec4a89a75c534281a51cfa35",
+          "title": "请连续输出60条编号的合成收",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "attention": null,
+          "lastOutcome": null,
+          "updatedAt": "2026-10-10T13:34:35.428Z",
+          "groupId": null,
+          "running": true,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 0,
+            "contextWindow": 131072
+          },
+          "processing": {
+            "phase": "reasoning",
+            "modelName": "QA5 model"
+          },
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-e9d13851-3b7b-460e-955b-ab2f942ef60f",
+          "hostId": "host-47f2cf3c-57bb-484c-a58e-9635dcee9143",
+          "archived": false,
+          "modelProfileId": "private-model-cd4a88387fb98240ec4a89a75c534281a51cfa35",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "attention": null,
+          "lastOutcome": null,
+          "updatedAt": "2026-10-10T13:34:04.852Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-ba53e8aa-eb09-4c3a-9628-14e3ef92480f",
+          "hostId": "host-47f2cf3c-57bb-484c-a58e-9635dcee9143",
+          "archived": false,
+          "modelProfileId": "private-model-cd4a88387fb98240ec4a89a75c534281a51cfa35",
+          "title": "请读取项目中的source.txt，把原",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": true,
+          "attention": null,
+          "lastOutcome": "completed",
+          "updatedAt": "2026-10-10T13:34:04.550Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 5709,
+            "contextWindow": 131072
+          },
+          "deepThinking": false,
+          "sendAvailable": true
+        }
+      ],
+      "groups": [],
+      "snapshotAt": "2026-10-10T13:37:46.707Z",
+      "statusSummary": {
+        "main": {
+          "attention": null,
+          "running": true,
+          "unread": false,
+          "lastOutcome": null
+        },
+        "all": {
+          "attention": null,
+          "running": true,
+          "unread": false,
+          "lastOutcome": null
+        },
+        "projects": {},
+        "groups": {
+          "ungrouped": {
+            "attention": null,
+            "running": true,
+            "unread": false,
+            "lastOutcome": null
+          }
+        }
+      },
+      "hasMore": false,
+      "nextCursor": null
+    }
+  },
+  "/projects": {
+    "status": 200,
+    "body": {
+      "projects": [],
+      "canManage": true
+    }
+  },
+  "/commands?limit=5": {
+    "status": 200,
+    "body": {
+      "commands": [
+        {
+          "commandId": "cmd-00020f34-ba65-4ed4-864d-118a5fa266bd",
+          "requestId": "d43558b0-8590-46b1-8fef-3cf12842a279",
+          "kind": "session.message",
+          "targetDeviceId": "host-47f2cf3c-57bb-484c-a58e-9635dcee9143",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-10T13:34:35.340Z",
+          "updatedAt": "2026-10-10T13:34:35.395Z",
+          "sessionId": "session-ffa4f449-43da-461b-b3c4-d906685c0250",
+          "intent": "queue",
+          "taskLabel": "请连续输出60条编号的合成收纳建议，每条15个字。不要工具，不要省略。",
+          "receiptId": "ac3d5e23-b098-4bbe-84da-c2f59c306ce5"
+        },
+        {
+          "commandId": "cmd-bf53c3e0-3f3d-440f-8c07-60fabf2ff40e",
+          "requestId": "3496a332-f18a-4fce-a74b-39932a77c636",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-47f2cf3c-57bb-484c-a58e-9635dcee9143",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-10T13:34:04.817Z",
+          "updatedAt": "2026-10-10T13:34:04.852Z",
+          "sessionId": "session-e9d13851-3b7b-460e-955b-ab2f942ef60f",
+          "chatId": "chat-05bb66e2-350f-40da-a7a8-3d43db4e3bf0",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-5c7a72f6-1ec2-4d2b-937c-2931dcf8dee8",
+          "requestId": "e486de1d-e747-4ac8-bd6b-509b86c68d49",
+          "kind": "session.message",
+          "targetDeviceId": "host-47f2cf3c-57bb-484c-a58e-9635dcee9143",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-10T13:33:59.851Z",
+          "updatedAt": "2026-10-10T13:33:59.913Z",
+          "sessionId": "session-ba53e8aa-eb09-4c3a-9628-14e3ef92480f",
+          "intent": "queue",
+          "taskLabel": "请写入 C:/Users/yun/AppData/Local/Temp/weftmate-qa6-supplement-7ONfLp/QA6-p…",
+          "receiptId": "08ea2f78-88a2-43f1-b49c-35432ca7ab11"
+        },
+        {
+          "commandId": "cmd-b971aba7-5c93-4999-8f37-a41ef7bd46ee",
+          "requestId": "933da987-9aee-442a-ab68-f8bd460cd7b9",
+          "kind": "session.message",
+          "targetDeviceId": "host-47f2cf3c-57bb-484c-a58e-9635dcee9143",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-10T13:33:54.077Z",
+          "updatedAt": "2026-10-10T13:33:54.151Z",
+          "sessionId": "session-ba53e8aa-eb09-4c3a-9628-14e3ef92480f",
+          "intent": "queue",
+          "taskLabel": "请写入 C:/Users/yun/AppData/Local/Temp/weftmate-qa6-supplement-7ONfLp/QA6-p…",
+          "receiptId": "cf4143b9-9719-4aff-a572-eaa9c296c119"
+        },
+        {
+          "commandId": "cmd-f13a789d-719f-4475-8d62-0a4cf48aec49",
+          "requestId": "artifact-edf486eadca02d5a6574e21e94e0af594411773d3e522519",
+          "kind": "desktop.write_artifact",
+          "targetDeviceId": "host-47f2cf3c-57bb-484c-a58e-9635dcee9143",
+          "state": "observed",
+          "createdAt": "2026-10-10T13:33:19.945Z",
+          "updatedAt": "2026-10-10T13:33:21.148Z",
+          "sessionId": "session-ba53e8aa-eb09-4c3a-9628-14e3ef92480f",
+          "taskId": "cmd-03f21756-5038-4098-a1f7-795e9d6b14d1",
+          "artifactId": "artifact-44402a86-313a-49d5-ba0d-1f8e66c03b4c",
+          "fileName": "phone-output.txt",
+          "contentType": "text/plain; charset=utf-8",
+          "size": 19,
+          "sha256": "3a4541e0e740cad75b55bdb8a560505feb2351f2726a1821f9b3afd03a611a32",
+          "verification": {
+            "status": "observed",
+            "method": "sha256_readback",
+            "observedAt": "2026-10-10T13:33:21.148Z"
+          }
+        }
+      ],
+      "nextBefore": "cmd-f13a789d-719f-4475-8d62-0a4cf48aec49",
+      "hasMore": true
+    }
+  }
+}

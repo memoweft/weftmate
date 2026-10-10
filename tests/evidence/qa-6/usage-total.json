@@ -1,0 +1,40 @@
+{
+  "model": "mimo-v2.6-flash",
+  "sources": [
+    {
+      "file": "smoke/usage.json",
+      "requests": 127,
+      "withUsage": 127,
+      "inputTokens": 477761,
+      "cachedInputTokens": 369280,
+      "outputTokens": 7469,
+      "totalTokens": 485230
+    },
+    {
+      "file": "supplement/usage.json",
+      "requests": 23,
+      "withUsage": 21,
+      "inputTokens": 89299,
+      "cachedInputTokens": 74816,
+      "outputTokens": 899,
+      "totalTokens": 90198
+    },
+    {
+      "file": "approval-recheck/usage.json",
+      "requests": 25,
+      "withUsage": 25,
+      "inputTokens": 94714,
+      "cachedInputTokens": 71424,
+      "outputTokens": 1745,
+      "totalTokens": 96459
+    }
+  ],
+  "requests": 175,
+  "withUsage": 173,
+  "missingUsage": 2,
+  "inputTokens": 661774,
+  "cachedInputTokens": 515520,
+  "outputTokens": 10113,
+  "totalTokens": 671887,
+  "notABillingStatement": true
+}
