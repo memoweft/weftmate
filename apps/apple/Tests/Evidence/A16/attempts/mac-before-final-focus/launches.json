@@ -1,0 +1,146 @@
+{
+  "launches": [
+    {
+      "launch": 1,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "d52c35406dded4e39e06443a26a9a693921c705081567e7815a6b3131362dd7e",
+      "seconds": 9.7
+    },
+    {
+      "launch": 2,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "cd8ef20cb0e5356b2b4f21783d2d63f1475cb2181529fa5cf16f9d61ba1943ef",
+      "seconds": 9.68
+    },
+    {
+      "launch": 3,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "47fe3d06d4575edb08e99ac113b84838e960abf882f90d283b9aede6aeb317bd",
+      "seconds": 9.72
+    },
+    {
+      "launch": 4,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "e037e6c9536093302ffbbeccd3a79ed925265421fcd6453eb4a6023317cc31bf",
+      "seconds": 9.65
+    },
+    {
+      "launch": 5,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "fed06dfa13f90e9aac9626dda28d6cb68c0e411a1144b7e17020891e78a60230",
+      "seconds": 9.39
+    },
+    {
+      "launch": 6,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "324c12fe5c548b180d9f84b36ae8aad4ba804ae7eeb8c4acc7af06f6a13dc200",
+      "seconds": 9.8
+    },
+    {
+      "launch": 7,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "47fe3d06d4575edb08e99ac113b84838e960abf882f90d283b9aede6aeb317bd",
+      "seconds": 9.54
+    },
+    {
+      "launch": 8,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "e037e6c9536093302ffbbeccd3a79ed925265421fcd6453eb4a6023317cc31bf",
+      "seconds": 9.88
+    },
+    {
+      "launch": 9,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "fed06dfa13f90e9aac9626dda28d6cb68c0e411a1144b7e17020891e78a60230",
+      "seconds": 10.36
+    },
+    {
+      "launch": 10,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "f2e129694ef6aac72892fcb67c09c1801282f5d52cc7c427fcd9a4f4b2e8d974",
+      "seconds": 9.73
+    },
+    {
+      "launch": 11,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "47fe3d06d4575edb08e99ac113b84838e960abf882f90d283b9aede6aeb317bd",
+      "seconds": 9.28
+    },
+    {
+      "launch": 12,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "e037e6c9536093302ffbbeccd3a79ed925265421fcd6453eb4a6023317cc31bf",
+      "seconds": 10.03
+    },
+    {
+      "launch": 13,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "fed06dfa13f90e9aac9626dda28d6cb68c0e411a1144b7e17020891e78a60230",
+      "seconds": 9.96
+    },
+    {
+      "launch": 14,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "a53fdab630fd04e65862d38267a1d7fdb1e3e006143ae6adb6c249d032594c18",
+      "seconds": 9.55
+    },
+    {
+      "launch": 15,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "d52c35406dded4e39e06443a26a9a693921c705081567e7815a6b3131362dd7e",
+      "seconds": 9.83
+    },
+    {
+      "launch": 16,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "e037e6c9536093302ffbbeccd3a79ed925265421fcd6453eb4a6023317cc31bf",
+      "seconds": 9.97
+    },
+    {
+      "launch": 17,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "b79c23ed4373f2fc3f61b0f6390721518bcfeb5ac2f3dea741e759984d807a50",
+      "seconds": 9.68
+    },
+    {
+      "launch": 18,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "cd8ef20cb0e5356b2b4f21783d2d63f1475cb2181529fa5cf16f9d61ba1943ef",
+      "seconds": 9.74
+    },
+    {
+      "launch": 19,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "b79c23ed4373f2fc3f61b0f6390721518bcfeb5ac2f3dea741e759984d807a50",
+      "seconds": 10.07
+    },
+    {
+      "launch": 20,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "ee909139bfab7c960fa6959f90f0e15cabb0772943d7a6a1ae2f93e9ef4c1c0b",
+      "seconds": 10.14
+    }
+  ],
+  "passed": true,
+  "binarySHA256": "c6159470a3f1d97b56622e3725bdd2b840c98f7fdb1e411667444af58f8f8f8e"
+}

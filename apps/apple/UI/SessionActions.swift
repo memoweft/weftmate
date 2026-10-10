@@ -7,7 +7,9 @@ struct SessionActions: View {
     var onSelect: () -> Void = {}
     var onDelete: (() -> Void)?
     var body: some View {
-        if conversation.sessionId != nil {
+        if !conversation.isMainChat, conversation.sessionId != nil {
+            if app.mainChat.capabilities.supports("temporaryChats") { TemporaryChatMenu(app: app, conversation: conversation) }
+
             ForEach(SessionMenuAction.allCases, id: \.self) { action in
                 if action == .project {
                     Menu("移至项目") {
@@ -44,7 +46,7 @@ struct SessionActions: View {
                         .disabled(app.lifecycleBusy || (action == .fork && conversation.running))
                         .accessibilityIdentifier("sessionAction." + action.rawValue)
                         #if os(macOS)
-                        .buttonStyle(.plain).foregroundStyle(action == .delete ? Weave.danger : Weave.ink)
+                        .foregroundStyle(action == .delete ? Weave.danger : Weave.ink)
                         #endif
                 }
             }
@@ -234,5 +236,14 @@ struct ArchivedSessionsView: View {
         }.background(Weave.canvas).task { await app.refresh() }.accessibilityElement(children: .contain).accessibilityIdentifier("archivedSessions")
         // The settings scene or phone settings sheet owns this confirmation.
         .sheet(item: Binding(get: { app.deletionInSettings ? app.deletionCandidate : nil }, set: { app.deletionCandidate = $0 })) { _ in SessionDeleteSheet(app: app) }
+    }
+}
+
+/// A sheet contains controls, unlike an AppKit/UIKit context menu that draws its own rows.
+struct SessionMenuRowStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label.frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, AppleTokens.Space.p12).frame(minHeight: AppleTokens.Space.p44)
+            .background(configuration.isPressed ? Weave.line : Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r10))
     }
 }

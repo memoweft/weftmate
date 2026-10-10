@@ -1,0 +1,6 @@
+{
+  "process": "isolated WeftMateMac Debug app",
+  "signal": "SIGSEGV",
+  "appFrame": "GeometryReader closure in MainChatEventPosition.body",
+  "resolution": "Explicit nonisolated Sendable pure geometry closure; keep per-pixel reading anchor outside Published presentation state; rerun full native flow"
+}

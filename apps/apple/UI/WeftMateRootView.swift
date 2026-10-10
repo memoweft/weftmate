@@ -79,6 +79,11 @@ struct WeftMateRootView: View {
                     FileHandle.standardOutput.write(Data(("A5_CAPTURE_FAILED:authentication: " + (model.authError ?? "no session") + "\n").utf8))
                     Darwin.exit(1)
                 }
+                if ProcessInfo.processInfo.arguments.contains("--a16-driver") {
+                    do { try await A16MacReview.runPersistent(model) }
+                    catch { try? await A10MacReview.capture("failure", identifier: "weftmateRoot"); FileHandle.standardOutput.write(Data(("A5_CAPTURE_FAILED:" + String(describing: error) + "\n").utf8)); Darwin.exit(1) }
+                    Darwin.exit(0)
+                }
                 if ProcessInfo.processInfo.arguments.contains("--a15-driver") {
                     do { try await A15MacReview.run(model) { openWindow(id: "settings") } }
                     catch { try? await A10MacReview.capture("failure", identifier: "weftmateRoot"); FileHandle.standardOutput.write(Data(("A5_CAPTURE_FAILED:" + String(describing: error) + "\n").utf8)); Darwin.exit(1) }
@@ -226,7 +231,7 @@ struct MacWorkspace: View {
             let args = ProcessInfo.processInfo.arguments
             guard args.contains("--ui-testing"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1) else { return }
             switch args[index + 1] {
-            case "a15-all", "a11-all", "a11-remote": break
+            case "a16-all", "a15-all", "a11-all", "a11-remote": break
             case "memory", "memory-forget": selected = .memory
             case "appearance", "usage":
                 model.settingsRoute = .init(categoryID: args[index + 1]); openWindow(id: "settings")
@@ -240,7 +245,13 @@ struct MacWorkspace: View {
             }
         }
         #endif
-        .onChange(of: model.openedSessionID) { _, id in if let id { selected = .conversation(id) } }
+        .task(id: model.conversations.first(where: \.isMainChat)?.id) {
+            if selected == nil, let main = model.conversations.first(where: \.isMainChat) { selected = .conversation(main.id) }
+        }
+        .onChange(of: model.openedSessionID) { _, id in
+            guard let id else { return }; let epoch = model.accountEpoch
+            Task { if let resolved = await model.resolveOpenedConversation(id), model.accountEpoch == epoch, model.openedSessionID == id { selected = .conversation(resolved) } }
+        }
         .onChange(of: selected) { _, selection in
             if case .conversation = selection {} else { model.closeConversation() }
         }
@@ -248,6 +259,12 @@ struct MacWorkspace: View {
 
     private var sidebar: some View {
         VStack(spacing: AppleTokens.Space.p0) {
+            if let main = model.conversations.first(where: \.isMainChat) {
+                Button { selected = .conversation(main.id) } label: {
+                    HStack { BrandMark(size: AppleTokens.Space.p24); Text("WeftMate").font(AppleTokens.Fonts.body.weight(.medium)); Spacer() }
+                        .padding(AppleTokens.Space.p12).background(selected == .conversation(main.id) ? Weave.accentSoft : Weave.soft)
+                }.buttonStyle(.plain).accessibilityIdentifier("mainChat.navigation").accessibilityValue(selected == .conversation(main.id) ? "已选择" : "")
+            }
             HStack(spacing: AppleTokens.Space.p7) {
                 WeftIcon("search").foregroundStyle(Weave.muted)
                 TextField("搜索对话", text: $search)
@@ -258,12 +275,14 @@ struct MacWorkspace: View {
             .background(Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r8))
             .padding(.horizontal, AppleTokens.Space.p16).padding(.top, AppleTokens.Space.p12)
 
+            if !model.conversations.contains(where: \.isMainChat) {
             HStack(spacing: AppleTokens.Space.p10) {
                 BrandMark(size: 30)
                 Text("WeftMate").font(AppleTokens.Fonts.title3.weight(.semibold)).tracking(-0.5)
                 Spacer()
             }.padding(.horizontal, AppleTokens.Space.p18).padding(.top, AppleTokens.Space.p18).padding(.bottom, AppleTokens.Space.p14)
 
+            }
             List(selection: $selected) {
                 if let error = model.lifecycleError { InlineNotice(message: error, isError: true) }
                 ConversationListContent(model: model, search: $search)
@@ -318,7 +337,9 @@ struct MacWorkspace: View {
         switch selected {
         case .conversation(let id):
             if let conversation = model.conversations.first(where: { $0.id == id }) {
-                ConversationView(model: model, conversation: conversation).id(conversation.id + (conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) ?? "") + model.accountEpoch.uuidString)
+                if conversation.isMainChat { MainChatView(app: model) } else {
+                ConversationView(model: model, conversation: conversation).id(conversation.id + (conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) ?? "") + model.accountEpoch.uuidString + String(conversation.chatContentRevision ?? 0))
+                }
             } else {
                 WelcomeView(model: model)
             }
@@ -340,6 +361,62 @@ struct PhoneWorkspace: View {
     @State private var path: [String] = []
     var body: some View {
         NavigationStack(path: $path) {
+            Group {
+                if model.conversations.contains(where: \.isMainChat) {
+                    MainChatView(app: model)
+                        .toolbar { ToolbarItem(placement: .navigation) { NavigationLink(value: "a16-side-list") { WeftLabel("旁聊与项目", icon: "sidebar") }.accessibilityIdentifier("mainChat.sideList") } }
+                } else { sideList }
+            }
+                .navigationDestination(for: String.self) { id in
+                    if id == "a16-side-list" { sideList }
+                    else if let conversation = model.conversations.first(where: { $0.id == id }) {
+                        if conversation.isMainChat { MainChatView(app: model) } else {
+                        ConversationView(model: model, conversation: conversation).id(conversation.id + (conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) ?? "") + model.accountEpoch.uuidString + String(conversation.chatContentRevision ?? 0))
+                        }
+                    } else {
+                        EmptyState(symbol: "chat", title: "会话已变更", message: "返回会话列表后刷新。")
+                    }
+                }
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        PhoneAccountMenu(model: model)
+                    }
+                    ToolbarItem(placement: .primaryAction) {
+                        Button { Task { await model.refresh() } } label: {
+                            WeftLabel("刷新会话", icon: "sync")
+                        }.disabled(model.refreshing)
+                    }
+                }
+                .refreshable { await model.refresh() }
+                .accessibilityElement(children: .contain)
+        }
+        .onChange(of: model.openedSessionID) { _, id in
+            guard let id else { return }; let epoch = model.accountEpoch
+            Task { if let resolved = await model.resolveOpenedConversation(id), model.accountEpoch == epoch, model.openedSessionID == id { path = model.conversations.first(where: { $0.id == resolved })?.isMainChat == true ? [] : [resolved] } }
+        }
+        #if DEBUG
+        .task {
+            let args = ProcessInfo.processInfo.arguments
+            if args.contains("--ui-testing"), let index = args.firstIndex(of: "--a12-live-session"), args.indices.contains(index + 1) {
+                for _ in 0..<100 {
+                    if let row = model.conversations.first(where: { $0.sessionId == args[index + 1] }) { path = [row.id]; break }
+                    try? await Task.sleep(for: .milliseconds(100))
+                }
+            }
+        }
+        #endif
+        .onChange(of: model.renamingSessionID) { _, id in if id != nil { path = [] } }
+        .environmentObject(health)
+        .task(id: "\(model.accountEpoch)-\(scenePhase)-\(model.session?.verification.rawValue ?? "none")") {
+            guard scenePhase == .active else { return }
+            while !Task.isCancelled {
+                await health.activate(app: model)
+                do { try await Task.sleep(for: .seconds(900)) } catch { return }
+            }
+        }
+    }
+
+    private var sideList: some View {
                 List {
                     if let error = model.lifecycleError { InlineNotice(message: error, isError: true) }
                     ConversationListContent(model: model, search: $search)
@@ -379,47 +456,7 @@ struct PhoneWorkspace: View {
                 .searchable(text: $search, prompt: "搜索对话")
                 .navigationTitle("WeftMate")
                 .navigationBarTitleDisplayMode(.inline)
-                .navigationDestination(for: String.self) { id in
-                    if let conversation = model.conversations.first(where: { $0.id == id }) {
-                        ConversationView(model: model, conversation: conversation).id(conversation.id + (conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) ?? "") + model.accountEpoch.uuidString)
-                    } else {
-                        EmptyState(symbol: "chat", title: "会话已变更", message: "返回会话列表后刷新。")
-                    }
-                }
-                .toolbar {
-                    ToolbarItem(placement: .primaryAction) {
-                        PhoneAccountMenu(model: model)
-                    }
-                    ToolbarItem(placement: .primaryAction) {
-                        Button { Task { await model.refresh() } } label: {
-                            WeftLabel("刷新会话", icon: "sync")
-                        }.disabled(model.refreshing)
-                    }
-                }
-                .refreshable { await model.refresh() }
-                .accessibilityIdentifier("conversationList")
-        }
-        .onChange(of: model.openedSessionID) { _, id in if let id { path = [id] } }
-        #if DEBUG
-        .task {
-            let args = ProcessInfo.processInfo.arguments
-            if args.contains("--ui-testing"), let index = args.firstIndex(of: "--a12-live-session"), args.indices.contains(index + 1) {
-                for _ in 0..<100 {
-                    if let row = model.conversations.first(where: { $0.sessionId == args[index + 1] }) { path = [row.id]; break }
-                    try? await Task.sleep(for: .milliseconds(100))
-                }
-            }
-        }
-        #endif
-        .onChange(of: model.renamingSessionID) { _, id in if id != nil { path = [] } }
-        .environmentObject(health)
-        .task(id: "\(model.accountEpoch)-\(scenePhase)-\(model.session?.verification.rawValue ?? "none")") {
-            guard scenePhase == .active else { return }
-            while !Task.isCancelled {
-                await health.activate(app: model)
-                do { try await Task.sleep(for: .seconds(900)) } catch { return }
-            }
-        }
+                .accessibilityElement(children: .contain).accessibilityIdentifier("conversationList")
     }
 
     private var filteredConversations: [WeftMateCore.ConversationSummary] {
