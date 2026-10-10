@@ -11,6 +11,7 @@
     "native-edit-pause-run-resume",
     "confirmed-native-delete",
     "native-due-to-activity",
+    "native-scheduled-task-result-activity-and-exact-run-replay",
     "native-goal-create-complete-archive",
     "narrow-no-overflow",
     "keyboard-form-open",

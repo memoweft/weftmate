@@ -49,12 +49,12 @@ globalThis.WeftGoalsView={mount({target,core,openSource}){
         };
         sections[kind==='schedule'?'schedules':'goals'].header.after(form);name.focus();
     }
-    sections.schedules.header.append(button('新建定时任务',()=>showForm('schedule')));sections.goals.header.append(button('新建长期目标',()=>showForm('goal')));
+    const newSchedule=button('新建定时任务',()=>showForm('schedule')),newGoal=button('新建长期目标',()=>showForm('goal'));sections.schedules.header.append(newSchedule);sections.goals.header.append(newGoal);
     const open=row=>openSource(row.source??{sessionId:row.sessionId});
     function taskRow(row){const item=el('article','goals-row');item.setAttribute('aria-label',row.title);item.append(el('h3','',row.title),el('p','goals-meta',`${row.conversationTitle} · ${stateNames[row.status]??'处理中'} · ${row.startedAt?'已运行':'已等待'} ${Math.floor(row.elapsedSeconds/60)} 分 ${row.elapsedSeconds%60} 秒`),el('p','',row.step));
         const actions=el('div','goals-actions');actions.append(button('打开对话与步骤',()=>open(row)));if(row.canStop){const stop=button('停止',()=>core.stopOverviewTask(row));stop.disabled=core.goalsPage.busy.has(row.taskId);actions.append(stop);}item.append(actions);return item;}
     function render(){
-        const model=core.goalsPage;const next=JSON.stringify([model.tasks,model.recent,model.schedules,model.goals,model.errors,[...model.busy]]);if(signature===next)return;signature=next;
+        const model=core.goalsPage;newSchedule.disabled=model.loading||core.state.personalCapabilities?.scheduleEditing!==1;newGoal.disabled=model.loading||core.state.personalCapabilities?.goals!==1;const next=JSON.stringify([model.loading,model.tasks,model.recent,model.schedules,model.goals,model.errors,[...model.busy]]);if(signature===next)return;signature=next;
         const focused=document.activeElement,focusedLabel=focused?.textContent,focusedRow=focused?.closest('article')?.getAttribute('aria-label');
         for(const [key,{list}]of Object.entries(sections)){list.replaceChildren();if(model.errors[key]){const error=el('p','muted',model.errors[key]);error.setAttribute('role','alert');list.append(error);continue;}
             const rows=key==='tasks'?model.tasks:model[key];if(!rows.length)list.append(el('p','goals-empty',model.loading?'正在读取…':{tasks:'现在没有进行中的任务。',schedules:'还没有安排。可在这里新建，也可以在对话里说“每天早上 8 点提醒我喝水”。',goals:'还没有长期目标。把想持续推进的事关联到一个对话。'}[key]));

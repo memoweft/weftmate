@@ -1222,7 +1222,7 @@ Windows（视窗系统）程序与远程手机网页、Android（安卓）界面
 | POST `/goals/{sessionId}/complete` | `{requestId,ref:{id,revision}}` | 200 `{ref}`；原生完成、解除继续执行状态 |
 | POST `/goals/{sessionId}/archive` | 同complete | 200 `{archived:true,ref}`；原生clear（清除当前目标），从当前目标列表移出，保留原对话及原生历史；没有另造归档目标执行机制 |
 
-`TaskOverview`：`{taskId,source,title,conversationTitle,status,createdAt,startedAt,finishedAt,elapsedSeconds,step,canStop}`。`source`沿9.8含`sessionId/chatId/chatKind/projectId/taskId`等原身份。状态为 `running/queued/approval/question/stopping/unconfirmed/completed/failed/stopped`；`startedAt`不可核实时为null，界面称等待时间。当前步骤来自原执行状态，以可读动作呈现；后台作业仍在运行或效果未确认时不进入最近完成。停止仍为3.7原 `/tasks/{taskId}/stop` 请求与原回执，打开仍为原对话 / 时间线；停止期间原任务实际完成就显示已完成，不冒称已停止。完成 / 失败 / 停止的动态继续使用TB-1原事件与activityId（动态标识符），不重复发通知。
+`TaskOverview`：`{taskId,source,title,conversationTitle,status,createdAt,startedAt,finishedAt,elapsedSeconds,step,canStop}`。`source`沿9.8含`sessionId/chatId/chatKind/projectId/taskId`等原身份。状态为 `running/queued/approval/question/stopping/unconfirmed/completed/failed/stopped`；`startedAt`来自实际原生turn/start（回合开始）时间，原Task.replyEvidence兼容增加该可选字段；不可核实时为null，界面称等待时间。当前步骤来自原执行状态，以可读动作呈现；后台作业仍在运行或效果未确认时不进入最近完成。停止仍为3.7原 `/tasks/{taskId}/stop` 请求与原回执，打开仍为原对话 / 时间线；停止期间原任务实际完成就显示已完成，不冒称已停止。完成 / 失败 / 停止的动态继续使用TB-1原事件与activityId（动态标识符），不重复发通知。
 
 `at={date:"YYYY-MM-DD",time:"HH:mm:ss"}`，时区由账户 `/settings/usage.timeZone`确定，拒绝客户端传其他时区。`repeat`为3.18的daily / weekly / monthly日历规则或 `{kind:"interval",seconds:整数且≥300}`。不传`at`时取账户时区下一次日历发生时间；固定间隔由原生every_seconds（间隔秒数）调度。原生校验真实日期、未来时间与夏令时，非法时间拒绝；不先删除旧安排再校验新时间。新字段 `Schedule.createdAt/revision/lastResult/temporary`：`revision`用于编辑比较；`lastResult`为null、`{state:"delivered"}`，或 `{state:"queued|completed|failed|stopped",commandId}`；定时执行受理不等于任务已完成，完成状态取原任务动态事实。提醒及定时触发继续进入9.8动态与原系统通知。
 
