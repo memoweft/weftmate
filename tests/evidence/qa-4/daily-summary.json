@@ -1,0 +1,76 @@
+{
+  "daily-synthetic": {
+    "ordinarySessions": 13,
+    "temporarySessions": 1,
+    "ordinaryTurns": 50,
+    "delivery": {
+      "expectedOrdinary": 50,
+      "delivered": 44,
+      "missing": 6,
+      "missingIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "temporaryEvidence": 0,
+      "temporaryContext": 0,
+      "temporaryFormal": 0,
+      "explicitlyForgottenIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "unintendedMissing": 0,
+      "historicallyDelivered": 50
+    },
+    "normalHealth": true,
+    "outbox": 0,
+    "pendingFormation": 0,
+    "currentFormalRows": 42,
+    "slowSwitches": 7,
+    "formationCausedModelSwitches": 0,
+    "http503": 1
+  },
+  "daily-mimo": {
+    "ordinarySessions": 8,
+    "temporarySessions": 1,
+    "ordinaryTurns": 22,
+    "delivery": {
+      "expectedOrdinary": 22,
+      "delivered": 17,
+      "missing": 5,
+      "missingIndices": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "temporaryEvidence": 0,
+      "temporaryContext": 0,
+      "temporaryFormal": 0,
+      "explicitlyForgottenIndices": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "unintendedMissing": 0,
+      "historicallyDelivered": 22
+    },
+    "normalHealth": true,
+    "outbox": 0,
+    "pendingFormation": 0,
+    "currentFormalRows": 15,
+    "slowSwitches": 0,
+    "formationCausedModelSwitches": 0,
+    "http503": 0
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "correctionEvidenceIds": [
+    "6a8ed466-14d8-476f-b84d-bd14d989fcdd"
+  ],
+  "jobs": [
+    {
+      "job_id": "memory-world-job-a8a2ddd134046fa0b949f4965f5e723664e6da64f44884a7b9d5489706913daa",
+      "job_schema_version": 1,
+      "boundary_event_id": "weftmate-turn-boundary-v1:718d79562814b01796888531058d428f:5d26454074a34d307100e175108201863a8539c516fa36878b958609e8626210",
+      "boundary_payload_hash": "5d26454074a34d307100e175108201863a8539c516fa36878b958609e8626210",
+      "boundary_schema_version": 1,
+      "provider_name": "memoweft",
+      "parent_session_id": "session-113de3ba-15cf-4a44-ac1b-fb97de76be43",
+      "result_session_id": "session-113de3ba-15cf-4a44-ac1b-fb97de76be43",
+      "boundary_mode": "in_place",
+      "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-113de3ba-15cf-4a44-ac1b-fb97de76be43\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-113de3ba-15cf-4a44-ac1b-fb97de76be43\",\"subject_id\":\"owner-ded1ce5b-717c-411a-ad63-e141061a582b\"}",
+      "formal_target_hash": "e716059bd30dc65f3ba48082d1d6c3de6c89d0ca6599bd6efc937f37f0bbe987",
+      "subject_id": "owner-ded1ce5b-717c-411a-ad63-e141061a582b",
+      "host_id": "weftmate:dsh",
+      "evidence_ids_json": "[\"6a8ed466-14d8-476f-b84d-bd14d989fcdd\"]",
+      "state": "no_change",
+      "attempts": 1,
+      "next_attempt_at": null,
+      "claim_owner": null,
+      "claim_token": null,
+      "claimed_at": "2026-10-09T23:32:40.264Z",
+      "lease_expires_at": null,
+      "heartbeat_at": "2026-10-09T23:32:40.273Z",
+      "fencing_generation": 1,
+      "model_dispatch_started_at": null,
+      "model_completed_at": "2026-10-09T23:32:51.414Z",
+      "model_task": "memory_world",
+      "model_provider": null,
+      "model_name": "daily-local",
+      "model_usage_json": "{\"completion_tokens\":337,\"completion_tokens_details\":{\"reasoning_tokens\":0},\"prompt_tokens\":9045,\"prompt_tokens_details\":{\"cached_tokens\":8192},\"total_tokens\":9382}",
+      "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"correct\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u7ea0\\u6b63\\u4e00\\u4e0b\\uff0c\\u7b2c903\\u79cd\\u82b1\\u8336\\u4e0d\\u52a0\\u8089\\u6842\\u7c89\\uff0c\\u6539\\u4e3a\\u52a0\\u4e00\\u7247\\u67e0\\u6aac\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"6a8ed466-14d8-476f-b84d-bd14d989fcdd\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"corrects_cognition_id\\\":\\\"cognition-4b9c7cca4f548223ec445d8dc8231f2bf48947a381e35dc5b47c7edebf4c10c8\\\"},{\\\"action\\\":\\\"correct\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u7ea0\\u6b63\\u4e00\\u4e0b\\uff0c\\u7b2c903\\u79cd\\u82b1\\u8336\\u4e0d\\u52a0\\u8089\\u6842\\u7c89\\uff0c\\u6539\\u4e3a\\u52a0\\u4e00\\u7247\\u67e0\\u6aac\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"6a8ed466-14d8-476f-b84d-bd14d989fcdd\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"corrects_cognition_id\\\":\\\"cognition-e67b5eb9d1e8106c1d9f18c55156a49294189361eb4d2d3c1f5848d85515c673\\\"}]}\",\"finish_reason\":\"stop\",\"formation_rewrite\":{\"error\":{\"code\":\"topic_name_not_in_span\",\"instruction\":\"Rewrite the complete interpretation JSON once. Fix the reported compiler error; every cognition must include a nonempty proposition and valid supports. Copy names, forms of address, numbers and dates exactly from user evidence. Never invent facts. For a confirmed decision, omit entity/topic/perspective_holder fields; keep assistant_claim verbatim from context and the user's confirmation support. The compiler derives the situational topic. If the user explicitly restated the decision, use stated with the user's full sentence_id and include assistant_claim.\"},\"final_error\":\"duplicate_cognition_in_batch\",\"first_result\":{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"correct\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u7ea0\\u6b63\\u4e00\\u4e0b\\uff0c\\u7b2c903\\u79cd\\u82b1\\u8336\\u4e0d\\u52a0\\u8089\\u6842\\u7c89\\uff0c\\u6539\\u4e3a\\u52a0\\u4e00\\u7247\\u67e0\\u6aac\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"6a8ed466-14d8-476f-b84d-bd14d989fcdd\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"corrects_cognition_id\\\":\\\"cognition-4b9c7cca4f548223ec445d8dc8231f2bf48947a381e35dc5b47c7edebf4c10c8\\\",\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u559d\\u7b2c903\\u79cd\\u82b1\\u8336\\\",\\\"kind\\\":\\\"topic\\\",\\\"aliases\\\":[\\\"\\u7b2c903\\u79cd\\u82b1\\u8336\\\"]}},{\\\"action\\\":\\\"correct\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u7ea0\\u6b63\\u4e00\\u4e0b\\uff0c\\u7b2c903\\u79cd\\u82b1\\u8336\\u4e0d\\u52a0\\u8089\\u6842\\u7c89\\uff0c\\u6539\\u4e3a\\u52a0\\u4e00\\u7247\\u67e0\\u6aac\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"6a8ed466-14d8-476f-b84d-bd14d989fcdd\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"corrects_cognition_id\\\":\\\"cognition-e67b5eb9d1e8106c1d9f18c55156a49294189361eb4d2d3c1f5848d85515c673\\\",\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u559d\\u7b2c903\\u79cd\\u82b1\\u8336\\\",\\\"kind\\\":\\\"topic\\\",\\\"aliases\\\":[\\\"\\u7b2c903\\u79cd\\u82b1\\u8336\\\"]}}]}\",\"finish_reason\":\"stop\",\"model\":\"daily-local\",\"usage\":{\"completion_tokens\":395,\"completion_tokens_details\":{\"reasoning_tokens\":0},\"prompt_tokens\":8227,\"prompt_tokens_details\":{\"cached_tokens\":4416},\"total_tokens\":8622}},\"state\":\"completed\"},\"model\":\"daily-local\",\"usage\":{\"completion_tokens\":337,\"completion_tokens_details\":{\"reasoning_tokens\":0},\"prompt_tokens\":9045,\"prompt_tokens_details\":{\"cached_tokens\":8192},\"total_tokens\":9382}}",
+      "model_result_hash": "7ce9f8ed05d5a94f64f860ef14a83f4f4fbcff10f7ce812e334adc975db938d6",
+      "world_result_json": "{\"reason\":\"duplicate_cognition_in_batch\",\"schema_version\":1,\"state\":\"no_change\"}",
+      "result_hash": "1df4920f28f657a3452b5da58571ae37e41280b943b10f335a5a7af01f4bbc38",
+      "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T23:31:47.396Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:718d79562814b01796888531058d428f:5d26454074a34d307100e175108201863a8539c516fa36878b958609e8626210\",\"evidence_count\":1,\"evidence_manifest_hash\":\"2d91710a19e222bc5e6447e8daf01d7fe330556ca87ef820f7e85d0b23f646b4\",\"formal_target_hash\":\"e716059bd30dc65f3ba48082d1d6c3de6c89d0ca6599bd6efc937f37f0bbe987\",\"job_id\":\"memory-world-job-a8a2ddd134046fa0b949f4965f5e723664e6da64f44884a7b9d5489706913daa\",\"job_state\":\"pending\",\"payload_hash\":\"5d26454074a34d307100e175108201863a8539c516fa36878b958609e8626210\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+      "delivery_receipt_hash": "b7c3045d5bee94d9d09530a754b95583b8bc721548edc80010bd0e203c83af3d",
+      "created_at": "2026-10-09T23:31:47.396Z",
+      "completed_at": "2026-10-09T23:32:51.421Z",
+      "last_error_type": null,
+      "terminal_state": "no_change",
+      "terminal_detail": null
+    }
+  ]
+}

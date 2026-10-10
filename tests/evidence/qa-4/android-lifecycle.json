@@ -1,0 +1,10 @@
+{
+  "preexistingPlayerProcesses": 0,
+  "startedByQa4": true,
+  "instance": 0,
+  "startedAt": "2026-10-10T07:48:13.7695025+08:00",
+  "existingServicesUntouched": true,
+  "shutdownRequestedAt": "2026-10-10T07:52:11.0092519+08:00",
+  "secondLaunchAt": "2026-10-10T08:23:48.0728372+08:00",
+  "secondShutdownRequestedAt": "2026-10-10T08:27:20.1457649+08:00"
+}
