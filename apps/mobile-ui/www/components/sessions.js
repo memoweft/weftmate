@@ -424,9 +424,13 @@ function mobileSessionMenu(session,confirming=false){
     else {
       const toggle = add('此对话不形成记忆', async () => { await uiCore.updateSession(session.sessionId, {memoryMode:session.memoryMode === 'off' ? 'on' : 'off'}); toast('从下一回合生效。之前形成的记忆保留，可去记忆页遗忘。'); });
       toggle.setAttribute('role', 'switch'); toggle.setAttribute('aria-checked', String(session.memoryMode === 'off'));
+      const markChoice=(button,checked)=>{const mark=WeftIcons.create('allow',16);mark.classList.add('session-menu-check');mark.style.visibility=checked?'visible':'hidden';button.append(mark)};markChoice(toggle,session.memoryMode==='off');
       const recall = add('使用已有记忆', () => uiCore.updateSession(session.sessionId, {recallEnabled: session.recallEnabled === false}));
       recall.setAttribute('role', 'switch'); recall.setAttribute('aria-checked', String(session.recallEnabled !== false));
-      if (session.memoryMode === 'off') for (const days of [1,7,30,null]) add(days === null ? '不自动删除' : `${days} 天后自动删除`, () => uiCore.updateSession(session.sessionId, {autoDeleteDays:days}));
+      markChoice(recall,session.recallEnabled!==false);
+      if (session.memoryMode === 'off') { const submenu=el('details','session-retention-menu'),summary=el('summary','session-menu-item',`自动删除：${session.autoDeleteDays===null?'不自动删除':(session.autoDeleteDays??30)+' 天'}`);submenu.append(summary);
+        const choices=el('div');choices.setAttribute('role','menu');choices.setAttribute('aria-label','自动删除期限');
+        for(const days of [1,7,30,null]){const option=el('button','session-menu-item',days===null?'不自动删除':`${days} 天后自动删除`);option.type='button';option.setAttribute('role','menuitemradio');option.setAttribute('aria-checked',String((session.autoDeleteDays??(session.autoDeleteDays===null?null:30))===days));const dot=el('span','session-menu-radio');dot.setAttribute('aria-hidden','true');option.append(dot);option.onclick=()=>{void run(option,()=>uiCore.updateSession(session.sessionId,{autoDeleteDays:days}))};choices.append(option)}submenu.append(choices);dialog.append(submenu); }
     }
     for(const item of WeftUiCore.sessionMenuItems(session))add(item.label,actions[item.id],item.danger,item.separator);
   }

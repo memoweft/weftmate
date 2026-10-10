@@ -123,19 +123,19 @@ export async function handlePersonalMemoryHttp({ manager, ownerId, request, path
     return { status: 200, body: forgetPreviewView(result) };
   }
   if (method === 'GET' && path === '/personal/v1/memory/items') {
-    if ([...url.searchParams.keys()].some((key) => !['kind', 'query', 'limit', 'after'].includes(key))) {
+    if ([...url.searchParams.keys()].some((key) => !['kind', 'query', 'limit', 'after', 'includeSources'].includes(key))) {
       throw failure('INVALID_REQUEST');
     }
     const kind = url.searchParams.get('kind') ?? 'cognition';
     const rawQuery = url.searchParams.get('query') ?? '';
     const query = rawQuery.normalize('NFKC').trim().toLocaleLowerCase();
     const limit = Number(url.searchParams.get('limit') ?? '50');
-    if (!KINDS.has(kind) || rawQuery.length > 120 || !Number.isInteger(limit) || limit < 1 || limit > 50) {
+    if (!(KINDS.has(kind) || kind === 'all') || rawQuery.length > 120 || !Number.isInteger(limit) || limit < 1 || limit > 50 || url.searchParams.has('includeSources') && url.searchParams.get('includeSources') !== 'true') {
       throw failure('INVALID_REQUEST');
     }
-    const result = await manager.query(ownerId, 'query_world', {
-      operation: 'list', object_kind: kind, include_history: true,
-    });
+    const snapshots = await Promise.all([...(kind === 'all' ? KINDS : [kind])].map(object_kind => manager.query(ownerId, 'query_world', {operation:'list',object_kind,include_history:true})));
+    const result = {world_revision:snapshots[0]?.world_revision,items:snapshots.flatMap(snapshot => snapshot.items ?? [])};
+    if (snapshots.some(snapshot => !Array.isArray(snapshot.items) || snapshot.world_revision !== result.world_revision)) throw failure('MEMORY_REVISION_CHANGED',409);
     if (!record(result) || !safeNumber(result.world_revision) || !Array.isArray(result.items) ||
         result.items.length > MAX_SNAPSHOT_ITEMS ||
         Buffer.byteLength(JSON.stringify(result), 'utf8') > MAX_SNAPSHOT_BYTES) {
@@ -146,14 +146,25 @@ export async function handlePersonalMemoryHttp({ manager, ownerId, request, path
       const fullText = item?.value?.content ?? item?.value?.canonical_name;
       return typeof fullText === 'string' && fullText.normalize('NFKC').toLocaleLowerCase().includes(query);
     }).map(itemView);
+    if (kind === 'all') items.sort((a,b) => b.updatedAt.localeCompare(a.updatedAt) || a.kind.localeCompare(b.kind) || a.id.localeCompare(b.id));
     const offset = cursor(url.searchParams.get('after'), ownerId, kind, query, result.world_revision);
     if (offset > items.length) throw failure('INVALID_REQUEST');
     const page = items.slice(offset, offset + limit);
+    if (url.searchParams.get('includeSources') === 'true') {
+      let jobs;
+      try { jobs = await manager.query(ownerId,'query_jobs',{operation:'list'}); } catch { /* Older Core versions may lack the job ledger. */ }
+      if (jobs && jobs.world_revision !== result.world_revision) throw failure('MEMORY_REVISION_CHANGED',409);
+      for (const item of page) {
+        const raw = result.items.find(value => value.object_kind === item.kind && value.item_id === item.id);
+        const evidence = new Set((raw?.provenance ?? []).filter(source => !['evidence_deleted','evidence_missing','evidence_subject_mismatch'].includes(source.currentness_state)).map(source => source.evidence_id));
+        item.sourceConversationIds = [...new Set((jobs?.jobs ?? []).filter(job => job.acceptance?.evidence_ids?.some(id => evidence.has(id))).map(job => job.acceptance.parent_session_id).filter(id => typeof id === 'string' && /^[A-Za-z0-9_.:-]{1,160}$/.test(id)))];
+      }
+    }
     const hasMore = offset + page.length < items.length;
     const nextCursor = hasMore ? Buffer.from(JSON.stringify({ ownerId, kind, query,
       worldRevision: result.world_revision, offset: offset + page.length })).toString('base64url') : null;
     return { status: 200, body: { items: page, worldRevision: result.world_revision,
-      nextCursor, hasMore, searchScope: 'account_snapshot' } };
+      nextCursor, hasMore, searchScope: 'account_snapshot', totalCount:result.items.length } };
   }
   if (method === 'GET' && path === '/personal/v1/memory/export') {
     keys(Object.fromEntries(url.searchParams), ['format']);

@@ -111,6 +111,7 @@ try {
         mainFixture=await startMainChatCandidate(300,{logicalMobile:true});if(android)await android.reverse(new URL(mainFixture.mobileUrl).port);await mainPage.goto(mainFixture.mobileUrl);
         await mainPage.getByRole('button',{name:'搜索主对话',exact:true}).waitFor();await mainPage.waitForFunction(()=>document.querySelector('.main-chat-row'));
         await mainPage.evaluate(theme=>applyTheme(theme),theme);
+        await mainPage.getByRole('button',{name:'搜索主对话',exact:true}).click();await mainPage.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('合成');await mainPage.getByRole('searchbox',{name:'主对话搜索关键词'}).press('Enter');await mainPage.locator('mark').first().waitFor();
       },mainPage);
       if (errors.length) throw Error('Mobile renderer failed');
       console.log(`Mobile ${theme}: scene outcomes recorded.`);

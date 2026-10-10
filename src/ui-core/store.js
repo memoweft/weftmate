@@ -25,7 +25,7 @@
                 avatarChecking: false, avatarObjectUrl: null,
                 profileFetchGeneration: 0, deviceFetchGeneration: 0, pendingDeviceFetchGeneration: 0, deviceEditing: null, deviceNotice: '', cachedDevices: [] };
             const memory = { viewGeneration: 0, entryGeneration: 0, queryGeneration: 0, selectedGeneration: 0, operationGeneration: 0,
-                status: null, items: [], revision: null, cursor: null, hasMore: false, query: '', kind: 'cognition',
+                status: null, items: [], revision: null, cursor: null, hasMore: false, query: '', kind: 'all', totalCount:null,
                 selected: null, sources: [], mode: 'detail', drafts: new Map(), activeOperation: null,
                 unresolvedMarker: null, cleanupMarker: null, cleanupRetrying: false, receiptNotice: null };
             const conversationTasks = { ownerId: null, identity: -1, generation: 0, entries: new Map(), inFlight: null };

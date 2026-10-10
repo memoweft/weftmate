@@ -58,11 +58,11 @@ try{
   for(let n=0;n<30;n++) {let start=performance.now();await fixture.request(`/chats/${main.chatId}/search?q=${encodeURIComponent('纸船')}`);searches.push(performance.now()-start);
     start=performance.now();await fixture.request(`/chats/${main.chatId}/locate?date=${new Date(Date.now()-6*86400000).toLocaleDateString('en-CA',{timeZone:'Asia/Shanghai'})}`);dates.push(performance.now()-start);}
   report.performance.searchHttp={samples:searches,p95Ms:percentile(searches),budgetMs:500};report.performance.dateHttp={samples:dates,p95Ms:percentile(dates),budgetMs:300};
-  await button(page,'搜索主对话').click();await page.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('纸船');await button(page,'查找').click();
+  await button(page,'搜索主对话').click();await page.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('纸船');await page.getByRole('searchbox',{name:'主对话搜索关键词'}).press('Enter');
   await page.waitForFunction(()=>document.querySelector('#transcript mark'));await shot('desktop-light-search');
   await button(page,'下一条搜索结果').click();await button(page,'上一条搜索结果').click();
   await button(page,'关闭主对话搜索').click();
-  await button(page,'搜索主对话').click();await page.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('合成旁聊');await button(page,'查找').click();
+  await button(page,'搜索主对话').click();await page.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('合成旁聊');await page.getByRole('searchbox',{name:'主对话搜索关键词'}).press('Enter');
   await page.waitForFunction(()=>{const box=document.querySelector('#chat-scroll').getBoundingClientRect();return [...document.querySelectorAll('#transcript .side-result mark')].some(mark=>{const rect=mark.getBoundingClientRect();return rect.top>=box.top&&rect.bottom<=box.bottom;});});await shot('desktop-light-result-search');await button(page,'关闭主对话搜索').click();
   await button(page,'跳到日期').click();const date=new Date(Date.now()-6*86400000).toLocaleDateString('en-CA',{timeZone:'Asia/Shanghai'});
   await page.getByRole('textbox',{name:'跳到日期',exact:true}).fill(date);
@@ -70,7 +70,7 @@ try{
   await button(page,`${dateLabel}，收起`).waitFor();await shot('desktop-light-date');
   await button(page,`${dateLabel}，收起`).click();await page.getByRole('button',{name:new RegExp(`^${dateLabel} · \\d+ 条，展开$`)}).waitFor();await shot('desktop-light-folded');
   await page.getByRole('button',{name:new RegExp(`^${dateLabel} · \\d+ 条，展开$`)}).click();
-  const menu=page.getByLabel('消息菜单',{exact:true}).first();await menu.click();await button(page,'从这里开旁聊').first().click();
+  const sourceMessage=page.getByRole('group',{name:/^我的消息：/}).first();await sourceMessage.focus();const menu=sourceMessage.getByLabel('消息菜单',{exact:true});await menu.click();await button(page,'从这里开旁聊').first().click();
   await page.getByRole('textbox',{name:'旁聊名称'}).fill('合成旁聊：纸船核对');await page.getByRole('textbox',{name:'旁聊第一句话'}).fill('请核对纸船');
   await button(page,'确认开旁聊').click();await page.getByRole('dialog',{name:'开旁聊',exact:true}).waitFor({state:'hidden'});await page.getByText('相关上下文尚未带入',{exact:true}).waitFor();
   assert.equal(await page.locator('#message-text').inputValue(),'请核对纸船');await shot('desktop-light-side-origin');
