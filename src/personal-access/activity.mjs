@@ -45,6 +45,8 @@ export function observeActivityEvents(account,sessionId,events,nextSeq,observeRe
 export function createActivity(context) {
   const flights=new Map(), bootId=randomUUID();let timer,closed=false;
   async function refresh(ownerId){
+    if(context.dataControls?.isLocked(ownerId))return;
+    const ownerAccount=context.accountState(ownerId);if(ownerAccount.account===null && !Object.keys(ownerAccount.sessions).length)return;
     if(flights.has(ownerId))return flights.get(ownerId);
     const work=(async()=>{
       const account=context.accountState(ownerId);if(account.memoryCleanupPending)return;
@@ -125,7 +127,7 @@ export function createActivity(context) {
   async function handleHttp(request,response,url,ownerId,deviceId){
     if(!/^\/personal\/v1\/activity(?:\/|$)/.test(url.pathname))return false;
     const write=request.method!=='GET';context.authenticate(request,write?'commands:write':'sessions:read');
-    await refresh(ownerId);
+    if(!context.dataControls?.isLocked(ownerId)) await refresh(ownerId);
     const authorize=()=>{const current=context.authenticate(request,write?'commands:write':'sessions:read');if(current.ownerId!==ownerId||current.deviceId!==deviceId)throw failure('UNAUTHORIZED',401);};authorize();
     const path=url.pathname.slice('/personal/v1/activity'.length), account=context.accountState(ownerId),state=activityState(account);
     const reply=value=>{authorize();context.json(response,200,value);return true;};

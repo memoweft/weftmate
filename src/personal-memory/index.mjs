@@ -1,6 +1,6 @@
 import { enterProfileWrite } from '../personal-backup/write-barrier.mjs';
 import { lstat, open, readFile, readdir, rename, rm } from 'node:fs/promises';
-import { randomUUID } from 'node:crypto';
+import { randomUUID,createHash } from 'node:crypto';
 import path from 'node:path';
 import { ensurePrivateDirectory, ensurePrivateFile } from '../private-host-storage.mjs';
 import { MemoWeftRpc } from './rpc.mjs';
@@ -45,6 +45,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   }
   const healthStore = createPersonalHealthStore({ root, onChange: flushObserved });
   const entries = new Map();
+  const erasingOwners=new Set();
   const failures = new Map();
   const boundaryFailures = new Map();
   const flushFlights = new Map();
@@ -295,12 +296,18 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     const existing = entries.get(ownerId);
     let selected = null;
     if (sessionId !== null || !existing?.ready || !existing.rpc.child) {
-      try { selected = await resolveProcessingRoute(ownerId, sessionId); }
+      try { selected = erasingOwners.has(ownerId) ? {baseUrl,model:'@current',credential:null,modelTier:'local',sessionScoped:false,key:'erased-read-only',readOnly:true} : await resolveProcessingRoute(ownerId, sessionId); }
       catch (cause) {
+        // A freshly erased account has no model settings or credentials. Core
+        // still opens the genuinely empty store for read-only list/search/export.
+        const marker = sessionId === null && await readFile(path.join(root,'accounts',ownerId,'data-erased.json'),'utf8').then(JSON.parse).catch(()=>null);
+        if (marker?.ownerId === ownerId) selected = {baseUrl,model:'@current',credential:null,modelTier:'local',sessionScoped:false,key:'erased-read-only',readOnly:true};
+        else {
         if (sessionId !== null && existing && existing.active === 0 && !(retainLocalWorker && existing.modelTier === 'local')) {
           entries.delete(ownerId); await existing.rpc.close().catch(() => {});
         }
         throw cause;
+        }
       }
     }
     if (existing?.ready && existing.rpc.child &&
@@ -332,7 +339,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       }
       const initialized = await rpc.request('initialize', {
         session_id: 'weftmate-personal-host', dsh_home: home, subject_id: ownerId,
-        platform: 'dsh', model_tier: selected.modelTier, lang: 'zh', auto_route: true,
+        platform: 'dsh', model_tier: selected.modelTier, lang: 'zh', auto_route: !selected.readOnly,
         model_api_key: selected.credential,
       });
       if (initialized?.runtime?.subject_id !== ownerId ||
@@ -444,6 +451,52 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
 
   return {
     enabled,
+    async markAccountErased(ownerId) {
+      owner(ownerId); await ensurePrivateDirectory(path.join(root,'accounts',ownerId));
+      const { durableWrite } = await import('../personal-access/store.mjs');
+      await durableWrite(path.join(root,'accounts',ownerId,'data-erased.json'),{version:1,ownerId});
+    },
+    accountDataRoot: ownerId => path.join(root, 'accounts', owner(ownerId)),
+    portableExport(ownerId) { return withOwner(ownerId, entry => entry.rpc.request('portable_export', {})); },
+    async eraseAccount(ownerId, progress = () => {}) {
+      owner(ownerId); await startup;
+      erasingOwners.add(ownerId);
+      try {
+      await this.invalidateOwnerRoute(ownerId);
+      clearTimeout(retryTimers.get(ownerId)); retryTimers.delete(ownerId);
+      await flushFlights.get(ownerId)?.catch(() => {});
+      await queueOutbox(ownerId, async () => { const state = await readOutbox(ownerId); state.items = []; await writeOutbox(ownerId, state); });
+      if (!enabled) return { erased: true, disabled: true };
+      const eraseItem=async(kind,targetId)=>{
+        const commandId=`account-erase-${createHash('sha256').update(`${ownerId}\0${kind}\0${targetId}`).digest('hex').slice(0,48)}`;
+        let result;try{result=await withOwner(ownerId,entry=>entry.rpc.request('query_command_receipt',{command_id:commandId}));}catch(cause){if(cause.code!=='command_receipt_not_found')throw cause;}
+        if(!result){const revision=await withOwner(ownerId,entry=>entry.rpc.request('query_world',{operation:'revision'}));result=await withOwner(ownerId,entry=>entry.rpc.request('submit_command',{command:{schema_version:1,command_id:commandId,subject_id:ownerId,actor:`weftmate:${ownerId}`,expected_world_revision:revision.world_revision,submitted_at:new Date().toISOString(),operation:kind==='evidence'?'delete_evidence':'delete_world_item',target_kind:kind,target_id:targetId,payload:{}}}));}
+        if((result.receipt ?? result).storage_cleanup?.state==='pending')result=await withOwner(ownerId,entry=>entry.rpc.request('retry_delete_storage_cleanup',{command_id:commandId}));
+        const receipt=result.receipt ?? result;if(!['applied','no_change'].includes(receipt.result_state)||receipt.storage_cleanup?.state==='pending')throw error('MEMORY_DELETE_CONFLICT');
+      };
+      for (const requestId of await journal.deletionRequestIds(ownerId)) {
+        let previous;try {previous=await this.receiptByRequest(ownerId,requestId);}catch(cause){if(cause.code!=='command_receipt_not_found')throw cause;}
+        if ((previous?.receipt ?? previous)?.storage_cleanup?.state === 'pending') {
+          const retried=await this.retryCleanupByRequest(ownerId,requestId);
+          if((retried.receipt ?? retried).storage_cleanup?.state==='pending')throw error('MEMORY_DELETE_CONFLICT');
+        }
+      }
+      const evidence = await withOwner(ownerId, entry => entry.rpc.request('query_evidence', { operation: 'list' }));
+      for (const item of evidence.evidence ?? []) {
+        await eraseItem('evidence',item.evidence_id);
+        progress({ category: 'memory', completed: 1 });
+      }
+      for (const kind of ['cognition','entity','relationship','event']) {
+        const world = await withOwner(ownerId, entry => entry.rpc.request('query_world', { operation: 'list', object_kind: kind, include_history: true }));
+        for (const item of world.items ?? []) {
+          await eraseItem(kind,item.item_id);
+        }
+      }
+      await this.invalidateOwnerRoute(ownerId);
+      boundaryFailures.delete(ownerId); homePromises.delete(ownerId); startupWorlds.delete(ownerId);
+      return { erased: true };
+      } finally {erasingOwners.delete(ownerId);}
+    },
     flushPending,
     async acceptedBoundaryIds(ownerId) {
       return withOwner(ownerId, async entry => entry.capabilities?.methods?.includes('query_jobs')
@@ -670,6 +723,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     },
     async ingest(ownerId, boundary, { offline = false, defer = false } = {}) {
       owner(ownerId);
+      await rm(path.join(root,'accounts',ownerId,'data-erased.json'),{force:true});
       if (!enabled) throw error('MEMORY_DISABLED');
       if (!boundary || typeof boundary !== 'object' || Array.isArray(boundary) ||
           typeof boundary.event_id !== 'string' || !/^[A-Za-z0-9._:-]{1,180}$/.test(boundary.event_id) ||

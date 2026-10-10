@@ -1,0 +1,11 @@
+{
+  "realCore": true,
+  "syntheticAccounts": 2,
+  "randomPort": true,
+  "portableV4ImportValidation": true,
+  "formalErase": true,
+  "emptyEvidenceAndWorld": true,
+  "emptyRecall": true,
+  "restartEmpty": true,
+  "otherAccountUnchanged": true
+}
