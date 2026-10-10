@@ -265,8 +265,35 @@ def main():
         status.update(status='failed', reason=reason)
     finally:
         signal.alarm(0)
+        for signum in [signal.SIGTERM, signal.SIGHUP, signal.SIGINT]:
+            signal.signal(signum, signal.SIG_IGN)
         for child in reversed(processes):
             stop(child)
+        # Interrupted Swift capture helpers may leave their native app alive.
+        # 4c requires start time + executable + this run's command path, not PPID.
+        rows = subprocess.check_output(['ps', '-axo', 'pid=,lstart=,comm=,args='], text=True)
+        for line in rows.splitlines():
+            parts = line.strip().split(None, 7)
+            if len(parts) != 8:
+                continue
+            pid, date_parts, executable, command = parts[0], parts[1:6], parts[6], parts[7]
+            try:
+                created = datetime.strptime(' '.join(date_parts), '%a %b %d %H:%M:%S %Y').timestamp()
+            except ValueError:
+                continue
+            if created < int(started) or Path(executable).name not in ['WeftMateMac', 'node', 'xcodebuild', 'swift-frontend', 'swiftc']:
+                continue
+            if not any(str(path) in command for path in [root, tree]):
+                continue
+            # Re-read the complete identity immediately before sending SIGTERM.
+            current = subprocess.run(['ps', '-p', pid, '-o', 'pid=,lstart=,comm=,args='], capture_output=True, text=True)
+            if current.stdout.strip() != line.strip():
+                continue
+            try:
+                os.kill(int(pid), signal.SIGTERM)
+                cleanup['processesStopped'] += 1
+            except ProcessLookupError:
+                pass
         if owned_lock:
             active = booted()
             # Global shutdown only while every booted device belongs to this run.

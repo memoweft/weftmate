@@ -9,7 +9,9 @@ param(
     # Validation before merge: use the current package commit in both dedicated trees.
     [switch]$Candidate,
     [switch]$SkipApple,
-    [switch]$SkipAndroid
+    [switch]$SkipAndroid,
+    [switch]$DevicesOnly,
+    [string]$Scene
 )
 $ErrorActionPreference = 'Stop'
 $repository = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
@@ -19,6 +21,8 @@ $arguments = @($runner, '--repository', $repository, '--worktree', $Worktree, '-
 if ($Candidate) { $arguments += '--candidate' }
 if ($SkipApple) { $arguments += '--skip-apple' }
 if ($SkipAndroid) { $arguments += '--skip-android' }
+if ($DevicesOnly) { $arguments += '--devices-only' }
+if ($Scene) { $arguments += @('--scene', $Scene) }
 # Node owns the deadline, phase logs, finally cleanup and report even after a failure.
 & node @arguments
 exit $LASTEXITCODE
