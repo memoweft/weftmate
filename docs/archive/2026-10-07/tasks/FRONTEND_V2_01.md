@@ -36,7 +36,7 @@
 
 本轮结果：主助手组合 `mods-integration-host`、`mod-project-runtime`、`dsh-web-profile`、`preview-mod-projects`、`v2-shell-client`、`mods-integration-client`、`settings-ui-contract` 共 102/102 通过；`npm run typecheck`、两份插件语法检查与差异空白检查通过。后端新增正式维护预设的 SDK 窄初始化，初始化元数据首次落盘，ready 在需求/owner 完成后写入；故障恢复测试清空内存后重新 open，保留同项目/需求。前端实际回归纠正了 native-only 目录选择与绕过 SessionRuntime 创建会话的两个错误，最终使用正式目录浏览和 SessionRuntime.create → agentPresets.select → noteAgentPreset/open。
 
-隔离真实页面使用 `scripts/preview-mod-projects.mjs` 与临时目录 `C:\Users\yun\AppData\Local\Temp\weftmate-mod-project-preview-JkpttR`；实际通过项目新建/工作区绑定、Mod 维护预设、可输入/发送到无密钥回放适配器、回复/刷新/同目录重启历史恢复。SDK 完整执行与恢复由正式 Context/Session/ToolRuntime 测试证明；未进行真实模型创建业务 Mod。启动期直接执行 SDK 的额外探针因生命周期等待不可用，未保留、未计为通过。具体 Mod 行的已有维护会话导航和管理入口有代码/行为测试，未取得该行的完整独立页面实点证据。
+隔离真实页面使用 `scripts/preview-mod-projects.mjs` 与临时目录 `C:\Users\<user>\AppData\Local\Temp\weftmate-mod-project-preview-JkpttR`；实际通过项目新建/工作区绑定、Mod 维护预设、可输入/发送到无密钥回放适配器、回复/刷新/同目录重启历史恢复。SDK 完整执行与恢复由正式 Context/Session/ToolRuntime 测试证明；未进行真实模型创建业务 Mod。启动期直接执行 SDK 的额外探针因生命周期等待不可用，未保留、未计为通过。具体 Mod 行的已有维护会话导航和管理入口有代码/行为测试，未取得该行的完整独立页面实点证据。
 
 用户重启后试用：① 项目组 `＋` 选择测试文件夹，应出现项目并进入普通对话；② Mod 组 `＋` 应显示对应工作区与“Mod 开发维护”，可以输入；③ 提交实际创建需求，应使用受限 SDK 完成当前会话绑定，不能再建议调用不可见的 mod_project；④ 原已报错的维护会话可继续提出创建需求，不需要删除历史；⑤ 具体 Mod 行进入其已有维护会话，管理按钮打开当前会话可访问的 Mods。新建 Mod 前至少需有一个普通工作区；无工作区会显示明确提示。现用应用未激活本轮代码，需正常托盘退出重启，不能强杀正在执行的任务。等待云验证，不继续扩大任务。
 

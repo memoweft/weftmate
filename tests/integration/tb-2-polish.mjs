@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Production Electron window and mobile bundle; synthetic account, random ports, no model. */
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
@@ -11,6 +13,7 @@ import { localUiSession } from '../helpers/local-ui-session.mjs';
 
 const root=resolve(import.meta.dirname,'../..'),out=join(root,'tests/evidence/tb-2/polish');await mkdir(out,{recursive:true});
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const report={realElectron:true,noModel:true,syntheticAccounts:true,randomPorts:true,checks:[],screenshots:[],errors:[]};
 const choose=async(page,form,name,value)=>{await form.getByRole('combobox',{name,exact:true}).click();await page.getByRole('option',{name:value,exact:true}).click();};
 const more=async(page,row,name)=>{await row.getByRole('button',{name:/更多操作/}).click();if(name)await page.getByRole('menuitem',{name,exact:true}).click();};

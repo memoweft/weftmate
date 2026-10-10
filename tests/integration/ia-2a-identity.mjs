@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** IA-2.1: isolated Electron host, pinned DSH, synthetic MiMo conversation. */
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
@@ -29,6 +31,7 @@ try {
 } finally { await prep.close(); }
 const env = { ...process.env };
 for (const name of Object.keys(env)) if (name.startsWith('WEFTMATE_') || name.startsWith('MEMOWEFT_') || ['ELECTRON_RUN_AS_NODE', 'MIMO_API_KEY', 'MODEL_SWITCH_UNIFIED_KEY'].includes(name)) delete env[name];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 env.WEFTMATE_BASELINE_TRACE = join(base, 'requests.jsonl');
 let app, page, launched = 0;
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));

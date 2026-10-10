@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Bounded isolated host for manually observing the desktop ordinary-file candidate. */
 import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';

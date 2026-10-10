@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict'
 import { createHash, randomUUID } from 'node:crypto'
 import { createServer } from 'node:http'
-import { mkdtempSync, readFileSync, readdirSync } from 'node:fs'
+import { mkdtempSync, readFileSync, readdirSync, realpathSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs'
@@ -11,7 +11,9 @@ import { createDshSessionAdapter } from '../../src/runtime/dsh-adapter/sessions.
 const hash = value => createHash('sha256').update(value).digest('hex')
 const ok = value => ({ result: { ok: true, value } })
 export async function startTimelineCandidate(options = {}) {
-  const root = mkdtempSync(join(tmpdir(), 'weftmate-m0-3-')); let events = [];
+  process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
+  // Private storage deliberately rejects aliases (including Windows 8.3 TEMP).
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'weftmate-m0-3-'))); let events = [];
   const dailySessions = new Map(), questionFrames = []; let relayPending = false;
   let sessionId, taskId, running = true, artifact, service, questionFrame, setupComplete = false, processing = {phase: 'loading', modelName: '合成模型'}
   let contextUsage=options.composer?{usedTokens:713000,contextWindow:828000}:null;

@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
 import { createRequire } from 'node:module';
@@ -18,6 +20,7 @@ const memoryManager={enabled:true,peek:()=> 'ready',status:async()=>({state:'rea
 const actions=[],fixture=await startTimelineCandidate({logicalMobile:true,interactive:true,daily:true,inlineProgress:true,historyCount:0,memoryManager,libraryNativeActions:async(action,file)=>actions.push({action,file})});
 const profile=await mkdtemp(join(tmpdir(),'weftmate-tb-3-desktop-')),files=await mkdtemp(join(tmpdir(),'weftmate-tb-3-files-'));
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 Object.assign(env,{REVIEW_PROFILE:profile,REVIEW_THEME:'light',REVIEW_ORIGIN:fixture.origin,REVIEW_LIBRARY_TOKEN:fixture.libraryDesktopToken});
 let app,browser;const report={realElectron:true,checks:[],errors:[]};
 const png=(()=>{

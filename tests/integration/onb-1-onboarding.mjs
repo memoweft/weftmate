@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
 import { createRequire } from 'node:module';
@@ -18,6 +20,7 @@ const mobilePages=[];
 const email=`onb-${randomUUID()}@example.com`, password=`Synthetic-${randomUUID()}!`;
 const report={startedAt:new Date().toISOString(),steps:[],realElectron:true,paidUsage:[]};
 const cleanEnvironment=()=>{const env={...process.env};for(const key of Object.keys(env))if(key.startsWith('WEFTMATE_')||key.startsWith('MEMOWEFT_')||key==='ELECTRON_RUN_AS_NODE')delete env[key];return env;};
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const sleep=ms=>new Promise(done=>setTimeout(done,ms));
 async function until(check,message='Condition timeout',ms=60000){const deadline=Date.now()+ms;while(Date.now()<deadline){const value=await check();if(value)return value;await sleep(150);}throw Error(message);}
 async function freePort(){const s=createServer();await new Promise(done=>s.listen(0,'127.0.0.1',done));const port=s.address().port;await new Promise(done=>s.close(done));return port;}

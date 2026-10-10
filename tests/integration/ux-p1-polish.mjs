@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** UX-P1: production Electron shell and phone assets, isolated synthetic API. */
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
@@ -12,6 +14,7 @@ const root=resolve(import.meta.dirname,'../..'), out=join(root,'tests/evidence/u
 const phase=process.argv.includes('--before')?'before':'after';
 await mkdir(out,{recursive:true});
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 let f,app,browser,profile;const errors=[],checks=[];
 const b=(p,name)=>p.getByRole('button',{name,exact:true}).filter({visible:true});
 const wait=ms=>new Promise(r=>setTimeout(r,ms));

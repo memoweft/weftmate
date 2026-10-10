@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Frozen MF-2 cases on real Electron/DSH/Core. Synthetic accounts only. */
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
@@ -54,6 +56,7 @@ async function one(testCase) {
   writeFileSync(config, JSON.stringify({ python, pythonPath: core, baseUrl: 'http://127.0.0.1:1/v1', model: '@current', authRef: 'mf2-pending' }));
   const env = { ...process.env };
   for (const k of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_)/.test(k) || ['ELECTRON_RUN_AS_NODE', 'MIMO_API_KEY', 'MODEL_SWITCH_UNIFIED_KEY'].includes(k)) delete env[k];
+  env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
   env.WEFTMATE_BASELINE_TRACE = join(root, 'requests.jsonl');
   env.WEFTMATE_BASELINE_MEMORY_TRACE = join(root, 'memory-requests.jsonl');
   env.WEFTMATE_BASELINE_RECALL_TRACE = join(root, 'recall.jsonl');

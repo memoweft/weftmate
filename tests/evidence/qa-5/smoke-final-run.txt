@@ -14,7 +14,7 @@ node:internal/child_process:1143
   spawnargs: [
     '/S',
     '/currentuser',
-    '/D=C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa5-smoke-installed-ipHnkF\\Programs'
+    '/D=C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-qa5-smoke-installed-ipHnkF\\Programs'
   ],
   error: [Circular *1],
   status: null,

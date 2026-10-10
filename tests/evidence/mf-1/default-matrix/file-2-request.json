@@ -11,7 +11,7 @@
     },
     {
       "role": "user",
-      "content": "Windows desktop and Android automation are available through weftmod and weftmod_script. Load these tools when needed; their full workflow guidance follows after loading.\nCurrent workspace: C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-pf1-O3lfD4\\workspace."
+      "content": "Windows desktop and Android automation are available through weftmod and weftmod_script. Load these tools when needed; their full workflow guidance follows after loading.\nCurrent workspace: C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-pf1-O3lfD4\\workspace."
     },
     {
       "role": "user",

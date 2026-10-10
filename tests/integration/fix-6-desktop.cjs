@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 // Instrument the real application entry; no replacement window or desktop bridge.
 const { app, BrowserWindow, Notification } = require('electron');
 app.setAppPath(require('node:path').resolve(__dirname, '../..'));

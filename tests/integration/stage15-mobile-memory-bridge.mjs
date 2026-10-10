@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Explicit isolated Android WebView bridge acceptance against real account-scoped MemoWeft Core. */
 import assert from 'node:assert/strict';
 import { execFile, execFileSync } from 'node:child_process';

@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Supplement baseline: serve original HEAD presentation, never edit/revert sources. */
 import {_electron,chromium} from 'playwright';
 import {execFileSync} from 'node:child_process';
@@ -17,6 +19,7 @@ try{
  for(let n=0;n<100&&cmd.state!=='accepted_by_dsh';n++){await new Promise(r=>setTimeout(r,20));cmd=(await f.request(`/commands/${cmd.commandId}`)).command}f.seedMainHistory(cmd.sessionId,3200);f.progress.finish('completed');
  const original=path=>execFileSync('git',['show',`${ref}:${path}`],{cwd:root,encoding:'utf8',maxBuffer:4*1024*1024});
  profile=await mkdtemp(join(tmpdir(),'weftmate-ux-p1-baseline-'));const env={...process.env};delete env.ELECTRON_RUN_AS_NODE;
+ env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
  app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:root,args:['scripts/review-gallery/electron.mjs','--force-device-scale-factor=1'],env:{...env,REVIEW_PROFILE:profile,REVIEW_ORIGIN:f.origin,REVIEW_THEME:'light'}});
  const p=await app.firstWindow();p.setDefaultTimeout(15000);
  for(const name of ['main-chat.css','styles.css','components/main-chat.js'])await p.route('**/personal/v1/ui/'+name,r=>r.fulfill({body:original('src/personal-access-ui/'+name),contentType:name.endsWith('css')?'text/css':'text/javascript'}));

@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
 import { createRequire } from 'node:module';
@@ -11,6 +13,7 @@ const start=Date.now();let now=start;
 const f=await startTimelineCandidate({interactive:true,inlineProgress:true,composer:true,historyCount:0,clock:()=>now,baseTime:start-10000});
 const profile=await mkdtemp(join(tmpdir(),'weftmate-st6-electron-'));
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 let app,browser;const report={realElectron:true,syntheticClock:true,checks:[],errors:[]};
 const wait=async fn=>{const end=Date.now()+30000;while(Date.now()<end){if(await fn())return;await new Promise(r=>setTimeout(r,100));}throw Error('ST-6 timeout');};
 async function settings(page,surface){

@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Real NSIS install + packaged Electron/DSH + range downloads + native rollback; synthetic account only. */
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
@@ -38,6 +40,7 @@ const feedDir = join(root, 'feed'); await mkdir(feedDir);
 const privateKey = await readFile(join(repository, '.local/r0-1/private.pem'), 'utf8');
 const env = { ...process.env };
 for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_|ELECTRON_RUN_AS_NODE|MIMO_API_KEY|MODEL_SWITCH_UNIFIED_KEY)/.test(key)) delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 env.LOCALAPPDATA = join(root, 'Local'); await mkdir(env.LOCALAPPDATA);
 let application, page, log = '', held, completed = false;
 const transfers = [], report = { syntheticAccount: true, realNsis: true, realElectron: true, realDsh: true, paidModelRequests: 0 };

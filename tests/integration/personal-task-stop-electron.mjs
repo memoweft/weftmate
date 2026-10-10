@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Opt-in isolated Electron + pinned DSH exact-stop acceptance with a synthetic model. */
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
