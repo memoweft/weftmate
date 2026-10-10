@@ -50,7 +50,7 @@ const resultIDs=resultRows.map(x=>x.eventId);
 const oldDay=tail.items.find(x=>x.at && x.at.slice(0,10)!==new Date().toISOString().slice(0,10))?.at.slice(0,10);
 let search=await api('/chats/'+main.chatId+'/search?q='+encodeURIComponent('A16查找纸船')+'&limit=100');
 const assistantSearch=await api('/chats/'+main.chatId+'/search?q='+encodeURIComponent('合成记录 9501')+'&limit=100');
-const ready={secondSearchEventID:search.hits[1]?.eventId,assistantEventID:assistantSearch.hits[0]?.eventId,seedTemporarySessionID:seedTemporary.sessionId,host:started.origin,mainChatID:main.chatId,sessionID:mainCommand.sessionId,oldDay,searchDay:new Date(now-500*1800000).toISOString().slice(0,10),searchEventID:search.hits[0]?.eventId,resultIDs,sides,historyCount:10000};
+const ready={tailAssistantEventID:tail.items.findLast(x=>x.type==="assistant.message")?.eventId,secondSearchEventID:search.hits[1]?.eventId,assistantEventID:assistantSearch.hits[0]?.eventId,seedTemporarySessionID:seedTemporary.sessionId,host:started.origin,mainChatID:main.chatId,sessionID:mainCommand.sessionId,oldDay,searchDay:new Date(now-500*1800000).toISOString().slice(0,10),searchEventID:search.hits[0]?.eventId,resultIDs,sides,historyCount:10000};
 const metrics=[];let measurementActive=false;
 const driver=createServer(async(req,res)=>{try{
  const path=new URL(req.url,'http://localhost').pathname;

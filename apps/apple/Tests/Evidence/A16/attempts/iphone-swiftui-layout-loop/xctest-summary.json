@@ -1,0 +1,18 @@
+{
+  "title": "Test - WeftMatePhone",
+  "result": "Failed",
+  "passedTests": 0,
+  "failedTests": 1,
+  "skippedTests": 0,
+  "totalTestCount": 1,
+  "testFailures": [
+    {
+      "failureText": "Failed to application com.weftmate.apple.weftmatephone is not running",
+      "targetName": "WeftMatePhoneUITests",
+      "testIdentifier": 1,
+      "testIdentifierString": "A16ChatUITests/testLightMainChat()",
+      "testIdentifierURL": "test://com.apple.xcode/WeftMate/WeftMatePhoneUITests/A16ChatUITests/testLightMainChat",
+      "testName": "testLightMainChat()"
+    }
+  ]
+}

@@ -24,12 +24,14 @@ import WeftMateCore
 }
 @MainActor enum A16MacReview {
     private struct Failure: Error { let step: String }
+    private static var systemSaveContentCaptured = false
     private static var reviewTask: Task<Void, Error>?
     static func runPersistent(_ app: AppleAppModel) async throws {
         if let reviewTask { try await reviewTask.value; return }
         let task = Task<Void, Error> { @MainActor in
             do { try await run(app); Darwin.exit(0) }
             catch {
+                for panel in NSApplication.shared.windows.compactMap({ $0 as? NSSavePanel }) where panel.isVisible && panel.directoryURL?.lastPathComponent.hasPrefix("A16-export-") != true { panel.cancel(nil) }
                 captureVisible("failure")
                 FileHandle.standardOutput.write(Data(("A5_CAPTURE_FAILED:" + String(describing: error) + "\n").utf8))
                 Darwin.exit(1)
@@ -190,6 +192,26 @@ import WeftMateCore
             try await choose(observer, id: "mainChat.messageMenu." + assistant, title: "导出")
             try await until("Export preview save control") { NSApplication.shared.windows.contains { $0.isVisible && A10MacReview.findButton("保存 Markdown", in: $0) != nil } }
             captureVisible("export-preview")
+            if let window = NSApplication.shared.windows.first(where: { $0.isVisible && A10MacReview.findButton("保存 Markdown", in: $0) != nil }), let save = A10MacReview.findButton("保存 Markdown", in: window) { try A10MacReview.pressNode(save, id: "export.save") }
+            try await until("Synthetic native save panel") { NSApplication.shared.windows.contains { $0 is NSSavePanel && $0.isVisible } }
+            guard let panel = NSApplication.shared.windows.compactMap({ $0 as? NSSavePanel }).first(where: \.isVisible) else { throw Failure(step: "Native save panel missing") }
+            guard let root = app.assistantStateDirectory else { panel.cancel(nil); throw Failure(step: "Synthetic export directory unavailable") }
+            let folder = root.appendingPathComponent("A16-export-review")
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            panel.directoryURL = folder
+            try await Task.sleep(for: .milliseconds(500))
+            guard panel.directoryURL?.lastPathComponent == "A16-export-review" else { panel.cancel(nil); throw Failure(step: "Export dialog did not stay in synthetic directory") }
+            do {
+                try await until("Native save field rendered") { A13MacReview.texts().contains { $0.contains("WeftMate-reply") } }
+                try await Task.sleep(for: .milliseconds(500))
+                captureVisible("export-save-panel"); systemSaveContentCaptured = true
+            } catch {
+                // The remote system file-service AX/pixels are outside this own-window harness.
+                // Record the unverified visual boundary; never change global privacy settings.
+                FileHandle.standardOutput.write(Data("A16_STEP:system-save-content-not-captured\n".utf8))
+            }
+            panel.cancel(nil)
+            try await Task.sleep(for: .milliseconds(500))
             if let window = NSApplication.shared.windows.first(where: { $0.isVisible && A10MacReview.findButton("取消", in: $0) != nil }), let cancel = A10MacReview.findButton("取消", in: window) { try A10MacReview.pressNode(cancel, id: "export.cancel") }
             try await Task.sleep(for: .milliseconds(500))
         }
@@ -242,7 +264,7 @@ import WeftMateCore
             else if let number = value as? Int { metrics[key] = .number(Double(number)) }
         }
         let report: [String: JSONValue] = ["passed": .bool(true), "nativeOwnAX": .bool(true), "xcuITest": .bool(false),
-            "globalPermissionsRequested": .bool(false), "syntheticOnly": .bool(true), "historyCount": .number(10000), "performance": .object(metrics)]
+            "systemSavePanelContentCaptured": .bool(systemSaveContentCaptured), "globalPermissionsRequested": .bool(false), "syntheticOnly": .bool(true), "historyCount": .number(10000), "performance": .object(metrics)]
         let bytes = try JSONEncoder().encode(report)
         FileHandle.standardOutput.write(Data("A10_REPORT:".utf8) + bytes + Data("\n".utf8))
         FileHandle.standardOutput.write(Data("A16_STEP:report-written\n".utf8))

@@ -19,6 +19,22 @@ final class A16ChatUITests: XCTestCase {
         let strings=regex.matches(in:snapshot,range:NSRange(snapshot.startIndex...,in:snapshot)).map{String(snapshot[Range($0.range(at:1),in:snapshot)!])}
         let text=XCTAttachment(string:strings.joined(separator:"\n"));text.name="a16-text-"+scene+"-"+theme;text.lifetime = .keepAlways;add(text)
     }
+    @MainActor func testExportPanel() async throws {
+        continueAfterFailure=false;let ready=try await get("/ready") as! [String:Any]
+        let app=XCUIApplication();app.launchArguments=["--ui-testing","--ui-testing-namespace","a16-export-"+UUID().uuidString,"--a5-local-server","--a5-theme","light","--server-url",ready["host"] as! String,"--a16-driver",ProcessInfo.processInfo.environment["WEFTMATE_A16_DRIVER"]!]
+        app.launch();defer{app.terminate()}
+        try tap(element(app,"mainChat.latest"))
+        let reply=element(app,"mainChat.event."+(ready["tailAssistantEventID"] as! String))
+        for _ in 0..<4 { if reply.isHittable { break };app.scrollViews.firstMatch.swipeDown() }
+        reply.press(forDuration:1);try tap(app.buttons["导出"].firstMatch)
+        XCTAssertTrue(element(app,"message.exportPreview").waitForExistence(timeout:15))
+        try tap(element(app,"保存 Markdown"))
+        XCTAssertTrue(app.buttons["保存"].waitForExistence(timeout:15));keep(app,"export-save-panel","light")
+        // Opening is the assertion here. The system file-service Cancel action is
+        // separately documented as unverified on this SDK's unstable remote AX tree.
+        app.terminate(); app.launch()
+        XCTAssertTrue(element(app,"mainChat.latest").waitForExistence(timeout:30))
+    }
     @MainActor func testLightMainChat() async throws {try await run("light")}
     @MainActor func testDarkMainChat() async throws {try await run("dark")}
     @MainActor func testScrollSmoke() async throws {
@@ -89,7 +105,12 @@ final class A16ChatUITests: XCTestCase {
             for label in ["复制", "有用", "没用", "重新生成", "导出", "引用"] { XCTAssertTrue(app.buttons[label].firstMatch.exists) }
             try tap(app.buttons["导出"].firstMatch)
             XCTAssertTrue(element(app,"message.exportPreview").waitForExistence(timeout:10));keep(app,"export-preview",theme)
-            try tap(app.buttons["取消"].firstMatch)
+            try tap(element(app,"保存 Markdown"))
+            XCTAssertTrue(app.buttons["保存"].waitForExistence(timeout:15));keep(app,"export-save-panel",theme)
+            // Restore only this isolated app after capturing the system file service;
+            // do not count restart as a successful system Cancel or file write.
+            app.terminate(); app.launch()
+            XCTAssertTrue(element(app,"mainChat.latest").waitForExistence(timeout:30))
         }
         // Returning to the root and refreshing reads the host's tail, including real result cards.
         try tap(element(app,"mainChat.latest"))
@@ -109,7 +130,13 @@ final class A16ChatUITests: XCTestCase {
         if let approval=(report["approvals"] as? [[String:Any]])?.first(where:{$0["resolved"] as? Bool==false})?["id"] as? String{
             try tap(element(app,"approveOnce."+approval));_=try await get("/consume")
         }
-        try tap(element(app,"mainChat.plus"));try tap(app.buttons["mainChat.temporary"].firstMatch)
+        try tap(element(app,"mainChat.plus"))
+        let temporaryAction = app.buttons["mainChat.temporary"].firstMatch
+        XCTAssertTrue(temporaryAction.waitForExistence(timeout:10))
+        // UIKit's menu activation point can refer to its presenting control on this
+        // simulator. Target the center of the resolved, named menu item's own frame.
+        print("A16_TEMPORARY_MENU_FRAME", temporaryAction.frame)
+        temporaryAction.coordinate(withNormalizedOffset: CGVector(dx:0.5,dy:0.5)).tap()
         XCTAssertTrue(element(app,"temporaryChat.title").waitForExistence(timeout:30));XCTAssertTrue(element(app,"temporaryChat.composer").exists);keep(app,"temporary",theme)
         try tap(element(app,"conversationMenu"));let memory=element(app,"temporaryChat.memory"),recall=element(app,"temporaryChat.recall")
         XCTAssertTrue(memory.waitForExistence(timeout:10));XCTAssertEqual(memory.value as? String,"1");XCTAssertEqual(recall.value as? String,"1");keep(app,"temporary-menu",theme)

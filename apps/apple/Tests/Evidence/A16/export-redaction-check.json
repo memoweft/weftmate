@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "cases": 6,
+  "method": "Execute the actual redacted function extracted from the Swift source with Foundation, using synthetic inputs only",
+  "sourceFunctionSHA256": "191d2a3751b6d058d8713636238ce195cb115c9074827448b3df613ec66796ef",
+  "checks": [
+    "unquoted credential",
+    "quoted JSON credential",
+    "Bearer value",
+    "synthetic macOS home path",
+    "synthetic Windows home path",
+    "ordinary prose preserved"
+  ]
+}
