@@ -15,6 +15,7 @@ async function start() {
   candidate = await startTimelineCandidate({ historyCount: 0, interactive: true, riskApproval: true, baseTime: Date.now() - 80000 })
   application = await _electron.launch({ executablePath, args: ['tests/integration/desktop-ui-1.cjs', candidate.origin + '/personal/v1/ui/'], cwd: root, env })
   const page = await application.firstWindow(); page.setDefaultTimeout(25000)
+  await page.route('**/personal/v1/ui/app.js',async route=>{const response=await route.fetch();await route.fulfill({response,body:(await response.text()).replace('const core = globalThis.WeftUiCore.create','const core = globalThis.__uiTestCore = globalThis.WeftUiCore.create')});});
   page.on('pageerror', error => errors.push(error.message))
   await localUiSession(page, candidate.credentials)
   await page.getByRole('button', { name: '停止回复', exact: true }).waitFor()
@@ -63,9 +64,10 @@ try {
     await page.getByRole('button', { name: '批准', exact: true }).click()
     await page.getByRole('region', { name: '待批准操作' }).waitFor({ state: 'hidden' })
     await page.getByRole('region', { name: '待回答问题' }).waitFor()
+    await page.evaluate(()=>{const c=globalThis.__uiTestCore,send=c.submitQuestion;globalThis.__questionSubmitTrace=[];c.submitQuestion=(context,row)=>{const entry=c.conversationQuestions.entries.get(row.questionRpcId);__questionSubmitTrace.push({current:c.approvalContextCurrent(context),operation:c.conversationQuestions.operations.has(row.questionRpcId),authoritative:entry?.authoritative,notice:entry?.notice,status:entry?.row.status,same:c.sameQuestion(entry?.row,row),source:!!c.approvalSource(entry?.row,true),draft:c.questionDraft(context,row)});return send(context,row);};});
     await page.getByRole('radio', { name: '简要报告', exact: true }).click()
     await page.getByRole('button', { name: '提交回答', exact: true }).click()
-    await page.getByRole('region', { name: '待回答问题' }).waitFor({ state: 'hidden' })
+    try{await page.getByRole('region', { name: '待回答问题' }).waitFor({ state: 'hidden' })}catch(error){console.error('Question submit trace:',JSON.stringify(await page.evaluate(()=>__questionSubmitTrace)));throw error}
     await candidate.complete(true)
     await page.getByRole('button', { name: /^项目进度报告(?:\s|$)/ }).click()
     await page.getByText('报告已保存，测试全部通过。', { exact: true }).waitFor()
