@@ -1,10 +1,18 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { catalog, repository, outDirectory, commit, assertPublicText } from './common.mjs';
+import { catalog, repository, outDirectory, commit, assertPublicText, option } from './common.mjs';
 import { collectEvidence } from './evidence.mjs';
 const out = outDirectory(), generatedAt = new Date().toISOString();
 await mkdir(out, { recursive: true });
-const rows = await collectEvidence(out);
+const rows = await collectEvidence(out, { includeRepositoryEvidence: !process.argv.includes('--fresh-only') });
+const outcomesFile = option('--outcomes');
+if (outcomesFile) {
+  const outcomes = JSON.parse(await readFile(outcomesFile, 'utf8'));
+  for (const row of rows) {
+    const outcome = outcomes.find(item => item.platform === row.platform && item.scene === row.scene && item.theme === row.theme);
+    if (outcome && !row.path) Object.assign(row, outcome);
+  }
+}
 const failures = rows.filter(row => row.status === 'failed');
 const escape = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 for (const row of rows) if (row.path) row.dataUrl = `data:image/png;base64,${(await readFile(row.path)).toString('base64')}`;

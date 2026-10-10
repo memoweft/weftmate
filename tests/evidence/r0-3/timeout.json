@@ -1,0 +1,23 @@
+{
+  "generatedAt": "2026-10-10T00:42:56.327Z",
+  "configuredMinutes": 1,
+  "durationSeconds": 65.812,
+  "phase": {
+    "name": "mobile-web",
+    "platforms": [
+      "mobile-web"
+    ],
+    "status": "failed",
+    "reason": "mobile-web 超时（整晚截止时间或本命令时限）",
+    "seconds": 14.052
+  },
+  "cleanup": {
+    "windows": {
+      "count": 0,
+      "killed": []
+    },
+    "android": null,
+    "apple": null
+  },
+  "passed": true
+}
