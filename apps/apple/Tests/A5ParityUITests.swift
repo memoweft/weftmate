@@ -42,6 +42,46 @@ final class A5ParityUITests: XCTestCase {
         XCTAssertEqual(XCTWaiter.wait(for:[cleared],timeout:20),.completed)
     }
     @MainActor func testLightParityFlowAndGallery() async throws { try await run(theme:"light",behavior:true) }
+    @MainActor func testNightlyLightGallery() async throws { try await nightlyGallery("light") }
+    @MainActor func testNightlyDarkGallery() async throws { try await nightlyGallery("dark") }
+    @MainActor private func nightlyGallery(_ theme: String) async throws {
+        let ready = try await get("/ready"), ids = try await get("/a5/ids")
+        let app = XCUIApplication(), namespace = "nightly-" + UUID().uuidString
+        defer { app.terminate() }
+        for scene in ["login", "sessions", "conversation", "approval", "question", "outputs-sources", "memory", "appearance", "general", "usage", "onboarding", "session-menu", "composer-context", "composer-menu"] {
+            app.terminate()
+            app.launchArguments = ["--ui-testing", "--ui-testing-namespace", namespace, "--a5-theme", theme, "--server-url", ready["host"] as! String, "--s1c-cloud-url", ready["cloud"] as! String]
+            app.launchArguments += scene == "login" ? ["--lg2-cloud"] : ["--a5-local-server", "--a10-ephemeral-credentials"]
+            app.launch()
+            if scene == "login" { try expect(app.staticTexts["登录 WeftMate"]) }
+            else {
+                try expect(app.descendants(matching: .any)["conversationList"].firstMatch)
+                if ["conversation", "approval", "question", "outputs-sources", "session-menu", "composer-context", "composer-menu"].contains(scene) {
+                    try row(app, ids["review"] as! String)
+                    try expect(app.buttons["openConversationResources"])
+                    if scene == "approval" { let control = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "approveOnce.")).firstMatch; reveal(app, control); try expect(control) }
+                    if scene == "question" { let control = app.staticTexts["报告要采用哪种格式？"]; reveal(app, control); try expect(control) }
+                    if scene == "outputs-sources" { try tap(app, "openConversationResources"); try expect(app.staticTexts["输出内容"]) }
+                    if scene == "session-menu" { try tap(app, "对话菜单"); try expect(app.buttons["归档"]) }
+                    if scene == "composer-context" { try tap(app, "contextUsage"); try expect(app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "背景信息窗口")).firstMatch) }
+                    if scene == "composer-menu" { try tap(app, "addAttachmentButton"); try expect(app.buttons["composer.file"]) }
+                } else if scene != "sessions" {
+                    try tap(app, "phoneAccountMenu")
+                    if scene == "memory" { try tap(app, "phoneMenu.memory"); try expect(app.staticTexts["我的记忆"]) }
+                    else {
+                        try tap(app, "phoneMenu.settings")
+                        let category = scene == "onboarding" ? "devices" : scene
+                        let control = app.buttons["settingsCategory." + category]; reveal(app, control); try expect(control); control.tap()
+                        try expect(app.descendants(matching: .any)["settingsPage." + category].firstMatch)
+                    }
+                }
+            }
+            try await Task.sleep(for: .milliseconds(400))
+            let timestamp = ISO8601DateFormatter().string(from: Date())
+            keep(app, scene, theme)
+            let meta = XCTAttachment(string: timestamp); meta.name = "nightly-time-iphone-" + scene + "-" + theme; meta.lifetime = .keepAlways; add(meta)
+        }
+    }
     @MainActor func testDarkGallery() async throws { try await run(theme:"dark",behavior:false) }
     @MainActor func testFocusedDeletionOption() async throws {
         _ = try await get("/a5/setup");_ = try await get("/bootstrap")

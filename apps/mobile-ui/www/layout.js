@@ -56,7 +56,8 @@ const mobileMarkup = String.raw`
             <summary id="queued-count">排队中</summary>
             <div id="queued-cards" aria-label="排队任务"></div>
           </details>
-          <div id="composer-subtasks" class="composer-subtasks" hidden></div><div class="composer-card">
+          <div id="composer-subtasks" class="composer-subtasks" hidden></div><div id="chat-status" class="chat-status" role="status"></div>
+          <div class="composer-card">
             <textarea id="draft" rows="2" placeholder="和 WeftMate 聊聊…" aria-label="输入消息"></textarea>
             <div id="attachment-drafts" class="attachment-drafts" aria-label="待发送附件" hidden></div>
             <div class="composer-actions">

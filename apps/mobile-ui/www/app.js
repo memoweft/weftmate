@@ -430,7 +430,7 @@ function renderPage(name){const target=$('page-content');clear(target);if(name!=
 
 
 
-const MEMORY_KINDS={cognition:'理解',entity:'人物与对象',relationship:'关系',event:'共同经历'};
+const MEMORY_KINDS={all:'全部',cognition:'理解',entity:'人物与对象',relationship:'关系',event:'共同经历'};
 
 
 

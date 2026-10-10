@@ -23,4 +23,23 @@ export function desktopHtml() {
   return html().replace(/<body>\s*<\/body>/, `<body>${context.document.body.innerHTML}</body>`);
 }
 
+/** Give fake DOMs the production parents; assertions remain based on names/roles. */
+export function mountDesktopTestTree(document, get) {
+  const parents = [document.body];
+  for (const match of desktopHtml().matchAll(/<\/?([a-z][\w-]*)\b([^>]*)>/gi)) {
+    const [, tag, attributes] = match;
+    if (match[0].startsWith('</')) {
+      const index = parents.findLastIndex(node => node.tagName === tag.toUpperCase());
+      if (index > 0) parents.length = index;
+      continue;
+    }
+    const id = /\bid="([^"]+)"/.exec(attributes)?.[1];
+    const node = id ? get(id) : document.createElement(tag);
+    node.tagName = tag.toUpperCase(); node.root = false;
+    for (const attribute of attributes.matchAll(/([\w-]+)="([^"]*)"/g)) node.setAttribute(attribute[1], attribute[2]);
+    parents.at(-1).append(node);
+    if (!/^(area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)$/i.test(tag)) parents.push(node);
+  }
+}
+
 

@@ -247,6 +247,8 @@ M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在�
 
 `kind` 为 `cognition / entity / relationship / event`；下表均有顶层 `ownerId`。写入体 ≤12 KiB，`expectedWorldRevision` 是非负安全整数。
 
+UX-P1 增补：列表 `GET /memory/items` 可显式传 `kind=all`，合并四类同一账户、同一 `worldRevision` 的记忆，按更新时间倒序、类型与标识稳定排序；任何类型版本变化返回 409 `MEMORY_REVISION_CHANGED`，不返回混合快照。省略 `kind` 仍默认 `cognition`。列表新增 `totalCount`（查询前该类型或全部类型的总记录数）；显式 `includeSources=true` 时每项新增 `sourceConversationIds:string[]`，通过本账户原生记忆任务账本的证据 ID 对应来源 `sessionId`。已删除、缺失或归属不匹配的来源不产生对话链接；旧 Core（记忆核心）缺少任务账本或旧证据没有映射时返回空数组，仍可打开既有来源详情，不猜测来源。分页游标继续绑定账户、类型、搜索词与版本；`kind=all` 只用于列表，不用于单项路径。
+
 | 方法与路径 | 请求参数/体 | 响应示例 / 状态 | 主要领域错误 | 使用端 |
 |---|---|---|---|---|
 | GET `/memory/status` | 无 | 200 `{"state":"disabled","worldRevision":null,"capabilities":{"list":false,"source":false,"correct":false,"mute":false,"inject":false,"deleteEvidence":false,"deleteWorldItem":false}}` | 内存服务错误；未配置仍200 | 桌、手、安、苹 |
@@ -1294,3 +1296,14 @@ MEM-2以执行回合冻结的记忆策略排除临时产出，混合旧来源无
 桌面操作复用 `wm:desktop:artifact`，渲染器只传ID与library-open / library-show。主进程核对登录并用宿主进程私有的 `X-WeftMate-Desktop` 标记及CSRF（跨站请求伪造防护）调用上述POST，再次核对账户、索引和文件存在状态；标记不发给网页、不持久保存。网页 / 手机即使有正常Cookie（会话凭据）和CSRF也返回403 `FORBIDDEN`，没有任意路径或任意程序启动口子。
 
 TB-4复用手机菜单 `page('library')` 与ui-core模型，不另建索引。安卓业务桥只加入成果列表 / 详情 / 预览的精确路径，拒绝open / show；需要新壳版本，由编排统一递增。本包不改变安卓版本号。Apple（苹果端）按上述能力和模型接线，Mac用本机原生动作，iPhone沿全屏预览与来源定位。
+
+
+### FX-17：纠正形成状态与重试
+
+`GET /memory/status` 增加可选 `failedCorrectionCount` 与 `formationIssues`。后者每项为 `{jobId,evidenceId,sessionId,text,intent,createdAt}`，`intent` 为 `correction` 或 `remember`。仅包含本账户可读、明确纠正／要求记住但形成被拒绝的原话；`no_change` 不再自动等同健康。重试中的作业计入既有 `pendingFormationCount`，成功或原话撤回后不再列入失败项。`GET /status.memory` 与 `/system.memory` 同样可带上述两字段。客户端应在对应回合下提示未生效，并在记忆健康处展开原话。
+
+新增 `POST /memory/formation/{jobId}/retry`，请求 `{requestId}`（非空字符串，最多128字符），返回202与原生形成回执（包含 `job_id,original_job_id`）。复用同一 `requestId` 核对不确定请求；明确发起另一轮重试使用新ID（标识）。权限为 `account:manage`，沿用同源与CSRF（跨站请求伪造防护）校验。宿主只调用Core（记忆核心）原生重处理，不直接改库，也不把202描述为形成成功。仍失败的重试可再次重试。
+
+动态复用 `memory.report` 类型，显示“有 1 条纠正没有生效”，动作 `view_memory` 打开原话与重试入口；重新处理后更新该条状态。来源接口 `sources[].relation` 可为 `superseded_by`，表示取代该旧理解的纠正原话，原来源不覆盖。
+
+Windows（视窗系统）与远程网页已有健康、动态、对应回合提示及重试。安卓界面包新增健康展开与重试，沿用现有记忆业务路由，不需要新增原生权限／版本号；Apple（苹果客户端）需接上述可选字段和重试路径，旧客户端可忽略。后台异步形成时，助手只确认“我记下了，稍后整理进记忆”；只有实际形成结果才能支持完成声明。
