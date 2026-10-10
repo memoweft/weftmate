@@ -198,7 +198,7 @@ export function createArtifactOperations(context) {
           ...(projectSession || browserSession ? { sourceReceiptId: receiptId, sourceSnapshotIds } : {}),
           toolSource: { sessionId, turn, callId, sourceCommandId: source.commandId },
           libraryProjectId: source.payload.projectId ?? null,
-          libraryPrivate: next.sessions[sessionId]?.memoryTurns?.[turn]?.ingest === false || next.sessions[sessionId]?.memoryMode === 'off' || next.sessions[sessionId]?.temporary === true,
+          libraryPrivate: !(next.sessions[sessionId]?.memoryTurns?.[turn]?.ingest ?? (next.sessions[sessionId]?.memoryMode !== 'off' && next.sessions[sessionId]?.temporary !== true)),
           state: 'dispatching', createdAt: now, updatedAt: now };
         return commandId;
       }));

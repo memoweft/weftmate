@@ -8,6 +8,18 @@ const additions = new WeakMap();
 const fileDigest = async file => { const hash=createHash('sha256'); for await(const chunk of createReadStream(file))hash.update(chunk); return hash.digest('hex'); };
 const fileKey = file => process.platform === 'win32' ? file.toLowerCase() : file;
 
+/** Keep the original native grant while an asynchronous child outlives the parent turn.
+ * Registration still verifies that receipt, owner and task in the host. */
+export function createNativeFileProvenance(resolveIdentity) {
+  const inherited = new WeakMap();
+  return {
+    inherit(agent, dispatch) {
+      inherited.set(agent, Object.freeze({ ...(inherited.get(dispatch.agent) ?? resolveIdentity(dispatch)) }));
+    },
+    identity(exec) { return inherited.get(exec.agent) ?? resolveIdentity(exec); },
+  };
+}
+
 /** Creation provenance survives turns/restarts in the native artifact results. */
 export function conversationCreatedFiles(session) {
   const files = new Set();
