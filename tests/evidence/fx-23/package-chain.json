@@ -1,0 +1,113 @@
+{
+  "synthetic": true,
+  "testIdentity": "fx23qa",
+  "realModelRequests": 0,
+  "dailyDataAccessed": false,
+  "defaultMode": {
+    "passed": true,
+    "checks": [
+      "fresh-main-created-and-replied",
+      "native-folder-picker-substitute-registered-project",
+      "native-project-read-and-approved-write",
+      "native-conversation-export-written",
+      "assistant-switch-size-and-save-toast"
+    ],
+    "nativeBindingLoaded": true,
+    "approvalCount": 2,
+    "readProof": true,
+    "desktop480": {
+      "bottom": 759.3333740234375,
+      "height": 780,
+      "pageHeight": 780
+    },
+    "durationSeconds": 150.369,
+    "buildSeconds": 116.928
+  },
+  "installedMode": {
+    "passed": true,
+    "checks": [
+      "fresh-main-created-and-replied",
+      "native-folder-picker-substitute-registered-project",
+      "native-project-read-and-approved-write",
+      "native-conversation-export-written",
+      "assistant-switch-size-and-save-toast"
+    ],
+    "nativeBindingLoaded": true,
+    "approvalCount": 2,
+    "readProof": true,
+    "desktop480": {
+      "bottom": 759.3333740234375,
+      "height": 780,
+      "pageHeight": 780
+    },
+    "durationSeconds": 188.442,
+    "installerSha256": "8627b884749665185f461c63b0b22f48c97068965e8f702f51eeb788db886c2b",
+    "installationRegistered": true,
+    "uninstalled": true,
+    "installationRegistrationRemoved": true
+  },
+  "packageCheck": {
+    "schemaVersion": 1,
+    "installer": {
+      "file": "WeftMate-Setup-0.1.1-preview.21.exe",
+      "bytes": 184442210,
+      "sha256": "d49e8b15233c27ebda62aad57bfc6c67a106fb353850d05d4feffcd9d8e186c2"
+    },
+    "appArchive": {
+      "entries": 5336,
+      "directories": 794,
+      "links": 0,
+      "scannedTextFiles": 4493,
+      "scannedBinaryFiles": 49,
+      "forbiddenEntries": 0,
+      "unsafeLinks": 0
+    },
+    "vendor": {
+      "packageVersion": "0.1.0-rc.5",
+      "commit": "47f943859bef60e4160492346772ded9b24f765a",
+      "closureCount": 197,
+      "carriedButNotMounted": 0,
+      "manifestSha256": "eab20512be3df600d6294516f9722c6b57d8ce820a80cd987b7d82a9dced2a3d",
+      "scannedTextFiles": 32792,
+      "reparsePoints": 0
+    },
+    "looseResources": {
+      "scannedTextFiles": 32801,
+      "scannedBinaryFiles": 168
+    },
+    "boundaries": {
+      "developmentPaths": 0,
+      "buildMachineIdentityHits": 0,
+      "userDataFiles": 0,
+      "dogfoodOrRepositoryTests": 0,
+      "credentialsFiles": 0
+    }
+  },
+  "required": {
+    "mode": "required",
+    "files": 274,
+    "exitCode": 0,
+    "passed": 1424,
+    "failed": 0,
+    "skipped": 14,
+    "failures": []
+  },
+  "vendor": {
+    "mode": "vendor",
+    "files": 29,
+    "exitCode": 0,
+    "passed": 204,
+    "failed": 0,
+    "skipped": 0,
+    "failures": []
+  },
+  "additional": {
+    "packagePolicyTests": 9,
+    "upstreamCssTests": 14,
+    "nightlyTests": 12,
+    "webInteractionTests": 109,
+    "releaseNoteTests": 12,
+    "publicIdentityHits": 0,
+    "typecheck": true
+  }
+}
