@@ -12,4 +12,6 @@
 .presence-action:active { background:var(--accent-soft); }
 .presence-action:focus-visible { outline:var(--wm-space-2) solid var(--accent); outline-offset:var(--wm-space-2); }
 .presence-action:disabled { color:var(--ink-muted,var(--muted)); cursor:default; }
+.presence-recovery { display:block; margin-block-end:var(--wm-space-8); color:var(--ink-secondary,var(--muted)); font-size:var(--wm-font-size-14); }
+.presence-recovery[hidden] { display:none; }
 @media (max-width:720px) { .presence-action { min-height:var(--wm-space-44); } .presence-bar { gap:var(--wm-space-8); } }

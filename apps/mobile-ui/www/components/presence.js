@@ -15,7 +15,8 @@ globalThis.WeftPresenceView = {
         });
         offline.addEventListener('click', () => core.openOfflineMode?.());
         actions.append(retry, offline); bar.append(copy, actions); composerTarget?.prepend(bar);
-        let disconnected = false, lastKind;
+        const recovery = make('span', 'presence-recovery', '连接已恢复，正在接续。');recovery.hidden=true;recovery.setAttribute('role','status');composerTarget?.prepend(recovery);
+        let disconnected = false, lastKind, recoveryTimer;
         const paint = value => {
             badge.dataset.state = bar.dataset.state = value.kind;
             badge.title = value.label; badge.setAttribute('aria-label', value.label);
@@ -27,11 +28,12 @@ globalThis.WeftPresenceView = {
                 : model ? '电脑在线，模型暂不可用：可以继续写草稿、查看已有内容，请在设置中检查模型后重试。' : value.description;
             retry.textContent = value.kind === 'login_required' ? '重新登录' : value.kind === 'approval_required' ? '查看设备' : '重试';
             offline.hidden = value.kind !== 'host_offline' || typeof core.openOfflineMode !== 'function';
+            if(value.kind!=='online'){clearTimeout(recoveryTimer);recovery.hidden=true;}
             if (value.kind !== 'online' && (value.failures > 0 || value.kind !== 'connecting')) disconnected = true;
-            else if (disconnected && lastKind && lastKind !== 'online') { disconnected = false; toast('连接已恢复，正在接续。'); }
+            else if (disconnected && lastKind && lastKind !== 'online') { disconnected = false;recovery.hidden=false;clearTimeout(recoveryTimer);recoveryTimer=setTimeout(()=>recovery.hidden=true,3000); }
             lastKind = value.kind;
         };
         const unsubscribe = core.observeConnection(paint); paint(core.connectionView());
-        return { paint, close() { unsubscribe(); badge.remove(); bar.remove(); } };
+        return { paint, close() { clearTimeout(recoveryTimer);unsubscribe(); badge.remove(); bar.remove();recovery.remove(); } };
     },
 };

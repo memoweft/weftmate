@@ -14,11 +14,11 @@ function clock() {
     next:()=>tasks.size ? [...tasks.values()].sort((a,b)=>a.at-b.at)[0].at-time : undefined,
     async advance(ms:number){time+=ms;for(const [id,task]of [...tasks])if(task.at<=time){tasks.delete(id);task.fn();}for(let n=0;n<20;n++)await Promise.resolve();}};
 }
-function fixture() {
+function fixture(extra:any={}) {
   const c=clock(),requests:any[]=[],values=new Map();let transport:any=()=>({ok:true,status:200,json:async()=>({presence:{runtime:'ready'},ownerId:'owner',hostId:'host'})});
   const context:any={AbortSignal,URL,URLSearchParams,TextEncoder,Blob,Intl,setTimeout,clearTimeout,setInterval,clearInterval};runInNewContext(source,context);
   const effects=new Proxy({readMessageDraft:()=> '合成原文'},{get:(o:any,k)=>o[k]||(()=>{})});
-  const core=context.WeftUiCore.create({effects,clock:c,now:c.now,random:()=>1,fetch:async(path:any,options:any)=>{requests.push({path,options});return transport(path,options);},crypto:{randomUUID:()=> 'request-original'},storage:{getItem:(k:any)=>values.get(k)||null,setItem:(k:any,v:any)=>values.set(k,v),removeItem:(k:any)=>values.delete(k)}});
+  const core=context.WeftUiCore.create({effects,clock:c,now:c.now,random:()=>1,fetch:async(path:any,options:any)=>{requests.push({path,options});return transport(path,options);},crypto:{randomUUID:()=> 'request-original'},storage:{getItem:(k:any)=>values.get(k)||null,setItem:(k:any,v:any)=>values.set(k,v),removeItem:(k:any)=>values.delete(k)},...extra});
   Object.assign(core.state,{identityGeneration:1,ownerId:'owner',account:{ownerId:'owner'},csrfToken:'synthetic',hostId:'host',online:true,selectedSessionId:'session',selectedChatId:'chat',activeChatSource:'desktop',personalCapabilities:{chatSend:1},modelProfileId:'model',models:[{id:'model'}],mainChat:{chatId:'chat',activeSessionId:'session',sendAvailable:true}});
   core.refreshTasks=async()=>{};core.refreshLogicalHistory=async()=>{};
   return {core,c,requests,api:context.WeftUiCore,setTransport:(fn:Function)=>transport=fn};
@@ -94,4 +94,18 @@ test('M3-1 real status and sync distinguish model outage, runtime restart and re
     assert.equal((await read('/status')).body.presence.runtime,'restarting');release();assert.equal((await pending).status,200);
     const revoked=await fetch(origin+'/personal/v1/auth/devices/'+auth.device.id,{method:'DELETE',headers:{origin,cookie,'content-type':'application/json','x-weftmate-csrf':auth.csrfToken},body:'{}'});assert.equal(revoked.status,200);assert.equal((await read('/status')).status,401);
   } finally {await service?.close();await rm(root,{recursive:true,force:true});}
+});
+test('M3-1 native adoption finishes before shared acceptance can launch authenticated device reads',async()=>{
+  const f=fixture();runInNewContext(readFileSync('src/ui-core/adapters/android-bridge.js','utf8'),{WeftUiCore:f.api,URL,setTimeout,clearTimeout});let adopted=false,release:Function=()=>{},accepted=0;
+  const pending=f.api.adoptMobileHostSession(async(method:string)=>{assert.equal(method,'cloud.adopt');await new Promise(r=>release=r);adopted=true;return {owner:'native-owner'};},()=>{assert.equal(adopted,true);accepted++;},{});
+  assert.equal(accepted,0);release();await pending;assert.equal(accepted,1);
+  await assert.rejects(f.api.adoptMobileHostSession(async()=>{throw Error('LOGIN_REQUIRED');},()=>{assert.fail('Failed adoption cannot accept an unauthenticated session');},{}));
+});
+test('M3-1 native cached offline reads cannot reset independent reconnect failures or claim online',async()=>{
+  const f=fixture();f.core.presence.failure({code:'NETWORK'});f.setTransport(()=>({ok:true,status:200,json:async()=>({source:'host',hostAvailable:false,cached:true,sessions:[]})}));
+  await f.core.accessApi('/sessions');assert.equal(f.core.connectionView().kind,'connecting');assert.equal(f.core.connectionView().failures,1);
+});
+test('M3-1 native local activity facts are not connectivity proof and a new failure advances the pending status probe',async()=>{
+  const f=fixture({nativeMobile:true});f.core.startConnection(async()=>{});await f.core.retryConnection();assert.equal(f.c.next(),15000);f.core.connectionFailed({code:'NETWORK'});assert.equal(f.c.next(),1000);
+  f.setTransport(()=>({ok:true,status:200,json:async()=>({commands:[]})}));await f.core.accessApi('/commands');assert.equal(f.core.connectionView().kind,'connecting');f.core.stopConnection();
 });

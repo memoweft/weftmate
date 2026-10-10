@@ -1,6 +1,6 @@
 /* Compose shared auth actions with phone presentation and platform transport. */
 (() => {
-  let core, forms, settings, native, initialized = false;
+  let core, forms, settings, native, initialized = false, nativeAdoption;
   const noop = () => {};
   const byId = id => document.getElementById(id);
   const element = (tag, className = '', text = '') => { const node = document.createElement(tag); node.className = className; node.textContent = text; return node; };
@@ -26,7 +26,7 @@
   }
   async function enterAssistant() {
     core.state.cloudAuth.mode = 'authenticated';
-    const account = native ? await call('cloud.adopt') : { ...core.state.account, owner: core.state.account.ownerId, deviceId: core.state.device.id, connectionVerified: true };
+    const account = native ? await nativeAdoption : { ...core.state.account, owner: core.state.account.ownerId, deviceId: core.state.device.id, connectionVerified: true };
     state.authEpoch++; state.loggedIn = true; state.username = account.username; state.owner = account.owner || account.ownerId || '';
     state.deviceId = account.deviceId || account.device?.id || ''; state.profile = account; state.connection = account.connectionVerified === false ? 'checking' : 'connected';
     resetMemoryForAuthBoundary('请重新读取当前账户的记忆。'); showProfile(account);
@@ -96,7 +96,15 @@
     }, { get: (target, key) => target[key] || noop });
     core = WeftUiCore.create({ effects, ...transport, hostOrigin, initialPairing, crypto: globalThis.crypto, storage: localStorage,
       cloudVendor: WeftCloudVendor, desktop: false, bindDesktop: false, deviceType: native ? 'android' : 'web', deviceName: identity.deviceName });
-    const accept = core.acceptSession; core.acceptSession = payload => { accept(payload); };
+    const accept = core.acceptSession;
+    core.acceptSession = payload => {
+      if (!native) return accept(payload);
+      // Shared acceptance starts authenticated device reads. Kotlin must first
+      // adopt the successfully exchanged host cookie, or those reads report a
+      // spurious LOGIN_REQUIRED and expire the new cloud login.
+      nativeAdoption = WeftUiCore.adoptMobileHostSession(call, accept, payload);
+      return nativeAdoption;
+    };
     const clear = core.clearSession; core.clearSession = () => { clear(); clearIdentity(); };
     core.enterAssistant = enterAssistant;
     core.authBase = hostOrigin + '/personal/v1/auth'; core.accessBase = hostOrigin + '/personal/v1';

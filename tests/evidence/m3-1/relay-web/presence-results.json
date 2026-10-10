@@ -1,0 +1,23 @@
+{
+  "checks": [
+    {
+      "name": "Actual HAProxy termination during fixed DSH stream",
+      "passed": true,
+      "modelGenerations": 1,
+      "segments": 90,
+      "exactReply": true,
+      "uniqueSeq": 7
+    },
+    {
+      "name": "Host content listener close/start preserves original native stream",
+      "passed": true,
+      "scope": "HTTP host restart; runtime process stays alive",
+      "segments": 90
+    }
+  ],
+  "fixedDsh": true,
+  "realElectron": true,
+  "fullRelay": true,
+  "randomPorts": true,
+  "syntheticAccount": true
+}

@@ -46,7 +46,8 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         const identityAtStart = core.state.csrfToken;
         try {
             const value = await core.requestJson(`${core.accessBase}${path}`, options);
-            if (core.state.csrfToken === identityAtStart && identityAtStart)
+            const reachable = !environment.nativeMobile || path === '/status' || value.hostAvailable === true || value.connectionVerified === true;
+            if (reachable && core.state.csrfToken === identityAtStart && identityAtStart && value.hostAvailable !== false && value.cached !== true && value.connectionVerified !== false)
                 core.setOnline(true);
             return value;
         }
