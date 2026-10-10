@@ -153,7 +153,7 @@ struct MainChatView: View {
                             if expanded { model.window.expandedDays.remove(day) } else { model.window.expandedDays.insert(day) }
                         } label: {
                             HStack { WeftIcon(expanded ? "chevron" : "right", size: AppleTokens.Space.p16); Text(day); Spacer(); Text(model.dayCounts[day].map { "\($0) 条" } ?? "本页 \(rows.count) 条") }
-                                .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).frame(minHeight: AppleTokens.Space.p44)
+                                .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).frame(minHeight: AppleTokens.Space.p44).contentShape(Rectangle())
                         }.buttonStyle(.plain).accessibilityIdentifier("mainChat.day." + day).accessibilityValue(expanded ? "已展开" : "已折叠")
                         if expanded {
                             ForEach(rows) { event in

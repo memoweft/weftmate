@@ -1,0 +1,18 @@
+{
+  "title": "Test - WeftMatePhone",
+  "result": "Failed",
+  "passedTests": 0,
+  "failedTests": 1,
+  "skippedTests": 0,
+  "totalTestCount": 1,
+  "testFailures": [
+    {
+      "failureText": "Failed to get matching snapshot: No matches found for Elements matching predicate '\"刷新会话\" IN identifiers' from input {(\n    Button, identifier: 'BackButton', label: 'WeftMate'\n)}",
+      "targetName": "WeftMatePhoneUITests",
+      "testIdentifier": 1,
+      "testIdentifierString": "A16ChatUITests/testLightMainChat()",
+      "testIdentifierURL": "test://com.apple.xcode/WeftMate/WeftMatePhoneUITests/A16ChatUITests/testLightMainChat",
+      "testName": "testLightMainChat()"
+    }
+  ]
+}

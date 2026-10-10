@@ -185,26 +185,164 @@
     {
       "surface": "iphone",
       "theme": "light",
+      "scene": "temporary-expired",
+      "text": "WeftMate\nWeftMate\nWeftMate\nwm-chat\n会话已变更\n返回会话列表后刷新。\nWeftMate\nWeftMate"
+    },
+    {
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "temporary-recall-off",
+      "text": "WeftMate\nWeftMate\n关闭弹出式窗口\nWeftMate\n临时对话\n对话菜单\n对话菜单\nwm-more\n输出与来源\n输出与来源\nwm-outputs\n账户菜单\n账户菜单\nwm-account\n刷新记录\n临时对话 · 不会形成记忆，7 天后自动删除\nwm-chat\n还没有消息\n说说你想完成什么。\n垂直滚动条, 1页\n垂直滚动条, 1页\n水平滚动条, 1页\n添加附件\nwm-plus\n审批模式\nwm-approval-small\n自动\nwm-chevron-small\n模型选择\n合成模型\nwm-chevron-small\n语音输入\nwm-mic-small\n发送\nwm-send\n临时对话 · 不会形成记忆，7 天后自动删除\n关闭弹出式窗口\n表单控制柄\n此对话不形成记忆\n此对话不形成记忆\n使用已有记忆\n使用已有记忆\n自动删除\n自动删除\n设置从新回合生效；过去形成的记忆可到记忆页遗忘。\n置顶\n标记为未读\n重命名\n分叉\n移至项目\n移至项目\n移至分组\n移至分组\n归档\n删除\n本对话用量\n完成\n垂直滚动条, 2页\n垂直滚动条, 2页\nWeftMate\nWeftMate"
+    },
+    {
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "temporary-expiry",
+      "text": "WeftMate\nWeftMate\n关闭弹出式窗口\nWeftMate\n临时对话\n对话菜单\n对话菜单\nwm-more\n输出与来源\n输出与来源\nwm-outputs\n账户菜单\n账户菜单\nwm-account\n刷新记录\n临时对话 · 不会形成记忆，30 天后自动删除\nwm-chat\n还没有消息\n说说你想完成什么。\n垂直滚动条, 1页\n垂直滚动条, 1页\n水平滚动条, 1页\n添加附件\nwm-plus\n审批模式\nwm-approval-small\n自动\nwm-chevron-small\n模型选择\n合成模型\nwm-chevron-small\n语音输入\nwm-mic-small\n发送\nwm-send\n临时对话 · 不会形成记忆，30 天后自动删除\n关闭弹出式窗口\n表单控制柄\n此对话不形成记忆\n此对话不形成记忆\n使用已有记忆\n使用已有记忆\n自动删除\n自动删除\n设置从新回合生效；过去形成的记忆可到记忆页遗忘。\n置顶\n标记为未读\n重命名\n分叉\n移至项目\n移至项目\n移至分组\n移至分组\n归档\n删除\n本对话用量\n完成\n垂直滚动条, 2页\n垂直滚动条, 2页\n1 天\n7 天\n30 天\n已选择\n不自动删除\n垂直滚动条, 1页\n水平滚动条, 1页\n垂直滚动条, 1页\n水平滚动条, 1页\nWeftMate\nWeftMate"
+    },
+    {
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "temporary-menu",
+      "text": "WeftMate\nWeftMate\n关闭弹出式窗口\nWeftMate\n临时对话\n对话菜单\n对话菜单\nwm-more\n输出与来源\n输出与来源\nwm-outputs\n账户菜单\n账户菜单\nwm-account\n刷新记录\n临时对话 · 不会形成记忆，30 天后自动删除\nwm-chat\n还没有消息\n说说你想完成什么。\n垂直滚动条, 1页\n垂直滚动条, 1页\n水平滚动条, 1页\n添加附件\nwm-plus\n审批模式\nwm-approval-small\n自动\nwm-chevron-small\n模型选择\n合成模型\nwm-chevron-small\n语音输入\nwm-mic-small\n发送\nwm-send\n临时对话 · 不会形成记忆，30 天后自动删除\n关闭弹出式窗口\n表单控制柄\n此对话不形成记忆\n此对话不形成记忆\n使用已有记忆\n使用已有记忆\n自动删除\n自动删除\n设置从新回合生效；过去形成的记忆可到记忆页遗忘。\n置顶\n标记为未读\n重命名\n分叉\n移至项目\n移至项目\n移至分组\n移至分组\n归档\n删除\n本对话用量\n完成\n垂直滚动条, 2页\n垂直滚动条, 2页\nWeftMate\nWeftMate"
+    },
+    {
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "temporary",
+      "text": "WeftMate\nWeftMate\nWeftMate\n临时对话\n对话菜单\n对话菜单\nwm-more\n输出与来源\n输出与来源\nwm-outputs\n账户菜单\n账户菜单\nwm-account\n刷新记录\n临时对话 · 不会形成记忆，30 天后自动删除\nwm-chat\n还没有消息\n说说你想完成什么。\n垂直滚动条, 1页\n垂直滚动条, 1页\n水平滚动条, 1页\n添加附件\nwm-plus\n审批模式\nwm-approval-small\n自动\nwm-chevron-small\n模型选择\n模型\nwm-chevron-small\n语音输入\nwm-mic-small\n发送\nwm-send\n临时对话 · 不会形成记忆，30 天后自动删除\n正在核对原会话和模型…\nWeftMate\nWeftMate"
+    },
+    {
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "approval",
+      "text": "WeftMate\nWeftMate\n旁聊与项目\nWeftMate\n账户菜单\n账户菜单\nwm-account\n刷新会话\n跳日期\nwm-clock\n跳日期\n搜索\nwm-search\n搜索\n输出与来源\nwm-outputs\n查找\n上一条\nwm-back\n1/2\n下一条\nwm-right\n运行命令 npm run release\nwm-right-small\n运行命令 npm run release\n成功 · 已完成：合成任务完成。\nwm-allow\n成功 · 已完成：合成任务完成。\nwm-right\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-warn\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-right\n停止 · 已停止：已停止当前任务。\nwm-stop\n停止 · 已停止：已停止当前任务。\nwm-right\n垂直滚动条, 8页\n垂直滚动条, 8页\n回到底部\n要运行命令：npm run verify，审批详情\nwm-right-small\n要运行命令：npm run verify\n批准\n拒绝\n还有 1 个待批准\n水平滚动条, 1页\n添加\nwm-plus\n合成模型\n停止\nwm-stop\n键入预测字词\nI\nThe\nI’m\nPadding-Left\nPadding-Right\nPadding-Left\nPadding-Right\nPadding-Left\nPadding-Right\nQ\nW\nE\nR\nT\nY\nU\nI\nO\nP\nA\nS\nD\nF\nG\nH\nJ\nK\nL\nshift\nZ\nX\nC\nV\nB\nN\nM\ndelete\nnumbers\nEmoji\n \nreturn\n下一个键盘\n听写\n听写\nWeftMate\nWeftMate"
+    },
+    {
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "sent",
+      "text": "WeftMate\nWeftMate\n旁聊与项目\nWeftMate\n账户菜单\n账户菜单\nwm-account\n刷新会话\n跳日期\nwm-clock\n跳日期\n搜索\nwm-search\n搜索\n输出与来源\nwm-outputs\n查找\n上一条\nwm-back\n1/2\n下一条\nwm-right\nA8_WAIT 合成主对话任务\n读取文件\nwm-right-small\n读取文件\n运行命令 npm test\nwm-right-small\n运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n调用扩展服务\nwm-right-small\n调用扩展服务\n运行命令 npm run verify\nwm-right-small\n运行命令 npm run verify\n垂直滚动条, 10页\n垂直滚动条, 10页\n回到底部\n要运行命令：npm run verify，审批详情\nwm-right-small\n要运行命令：npm run verify\n批准\n拒绝\n还有 1 个待批准\nA16-synthetic.txt\n移除\n水平滚动条, 1页\n添加\nwm-plus\n合成模型\n核对原请求\n继续原请求\n待核对\n发送\nwm-send\n键入预测字词\n“A”\nAnd\nAre\nPadding-Left\nPadding-Right\nPadding-Left\nPadding-Right\nPadding-Left\nPadding-Right\nQ\nW\nE\nR\nT\nY\nU\nI\nO\nP\nA\nS\nD\nF\nG\nH\nJ\nK\nL\nshift\nZ\nX\nC\nV\nB\nN\nM\ndelete\nnumbers\nEmoji\n \nreturn\n下一个键盘\n听写\n听写\nWeftMate\nWeftMate"
+    },
+    {
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "result-opened",
+      "text": "WeftMate\nWeftMate\nWeftMate\n合成旁聊 completed\n对话菜单\n对话菜单\nwm-more\n输出与来源\n输出与来源\nwm-outputs\n账户菜单\n账户菜单\nwm-account\n刷新记录\n相关上下文尚未带入\nA8_WAIT 合成旁聊任务 completed\n读取了 1 个文件、已运行 1 个命令\n读取了 1 个文件、已运行 1 个命令\nwm-right-small\n资料已经核对，接下来搜索并运行检查。\n搜索了 1 次\n搜索了 1 次\nwm-right-small\n合成任务完成。\n垂直滚动条, 1页\n垂直滚动条, 1页\n水平滚动条, 1页\n添加附件\nwm-plus\n审批模式\nwm-approval-small\n自动\nwm-chevron-small\n模型选择\n合成模型\nwm-chevron-small\n语音输入\nwm-mic-small\n发送\nwm-send\nWeftMate\nWeftMate"
+    },
+    {
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "returned-source",
+      "text": "WeftMate\nWeftMate\n旁聊与项目\nWeftMate\n账户菜单\n账户菜单\nwm-account\n刷新会话\n跳日期\nwm-clock\n跳日期\n搜索\nwm-search\n搜索\n输出与来源\nwm-outputs\n查找\n上一条\nwm-back\n1/2\n下一条\nwm-right\n合成记录 9495：用于日期、搜索与滚动验证。\n合成记录 9496：用于日期、搜索与滚动验证。\n合成记录 9497：用于日期、搜索与滚动验证。\n合成记录 9498：用于日期、搜索与滚动验证。\n合成记录 9499：用于日期、搜索与滚动验证。\nA16查找纸船 9500：用于日期、搜索与滚动验证。\n合成记录 9501：用于日期、搜索与滚动验证。\n合成记录 9502：用于日期、搜索与滚动验证。\n合成记录 9503：用于日期、搜索与滚动验证。\n合成记录 9504：用于日期、搜索与滚动验证。\n合成记录 9505：用于日期、搜索与滚动验证。\n合成记录 9506：用于日期、搜索与滚动验证。\n合成记录 9507：用于日期、搜索与滚动验证。\n合成记录 9508：用于日期、搜索与滚动验证。\n合成记录 9509：用于日期、搜索与滚动验证。\n合成记录 9510：用于日期、搜索与滚动验证。\n垂直滚动条, 12页\n垂直滚动条, 12页\n回到底部\n要运行命令：npm run verify，审批详情\nwm-right-small\n要运行命令：npm run verify\n批准\n拒绝\n还有 1 个待批准\n水平滚动条, 1页\n添加\nwm-plus\n合成模型\n停止\nwm-stop\nWeftMate\nWeftMate"
+    },
+    {
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "side-source",
+      "text": "WeftMate\nWeftMate\nWeftMate\n合成对话\n对话菜单\n对话菜单\nwm-more\n输出与来源\n输出与来源\nwm-outputs\n账户菜单\n账户菜单\nwm-account\n刷新记录\n返回来源消息\nwm-back\n返回来源消息\n相关上下文尚未带入\nwm-chat\n还没有消息\n说说你想完成什么。\n垂直滚动条, 1页\n垂直滚动条, 1页\n水平滚动条, 1页\n添加附件\nwm-plus\n审批模式\nwm-approval-small\n自动\nwm-chevron-small\n模型选择\n模型\nwm-chevron-small\n语音输入\nwm-mic-small\n发送\nwm-send\n正在核对原会话和模型…\nWeftMate\nWeftMate"
+    },
+    {
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "search-next",
+      "text": "WeftMate\nWeftMate\n旁聊与项目\nWeftMate\n账户菜单\n账户菜单\nwm-account\n刷新会话\n跳日期\nwm-clock\n跳日期\n搜索\nwm-search\n搜索\n输出与来源\nwm-outputs\n查找\n上一条\nwm-back\n2/2\n下一条\nwm-right\n合成记录 9518：用于日期、搜索与滚动验证。\n合成记录 9519：用于日期、搜索与滚动验证。\nA16查找纸船 9520：用于日期、搜索与滚动验证。\n合成记录 9521：用于日期、搜索与滚动验证。\n合成记录 9522：用于日期、搜索与滚动验证。\n合成记录 9523：用于日期、搜索与滚动验证。\n垂直滚动条, 51页\n垂直滚动条, 51页\n回到底部\n要运行命令：npm run verify，审批详情\nwm-right-small\n要运行命令：npm run verify\n批准\n拒绝\n还有 1 个待批准\n水平滚动条, 1页\n添加\nwm-plus\n合成模型\n停止\nwm-stop\n键入预测字词\n“A”\nAnd\nAre\nPadding-Left\nQ\nW\nE\nR\nT\nY\nU\nI\nO\nP\nPadding-Right\nPadding-Left\nA\nS\nD\nF\nG\nH\nJ\nK\nL\nPadding-Right\nshift\nPadding-Left\nZ\nX\nC\nV\nB\nN\nM\nPadding-Right\ndelete\nnumbers\nEmoji\n \nreturn\n下一个键盘\n听写\n听写\nWeftMate\nWeftMate"
+    },
+    {
+      "surface": "iphone",
+      "theme": "light",
+      "scene": "search-first",
+      "text": "WeftMate\nWeftMate\n旁聊与项目\nWeftMate\n账户菜单\n账户菜单\nwm-account\n刷新会话\n跳日期\nwm-clock\n跳日期\n搜索\nwm-search\n搜索\n输出与来源\nwm-outputs\n查找\n上一条\nwm-back\n1/2\n下一条\nwm-right\n合成记录 9498：用于日期、搜索与滚动验证。\n合成记录 9499：用于日期、搜索与滚动验证。\nA16查找纸船 9500：用于日期、搜索与滚动验证。\n合成记录 9501：用于日期、搜索与滚动验证。\n合成记录 9502：用于日期、搜索与滚动验证。\n合成记录 9503：用于日期、搜索与滚动验证。\n垂直滚动条, 27页\n垂直滚动条, 27页\n回到底部\n要运行命令：npm run verify，审批详情\nwm-right-small\n要运行命令：npm run verify\n批准\n拒绝\n还有 1 个待批准\n水平滚动条, 1页\n添加\nwm-plus\n合成模型\n停止\nwm-stop\n键入预测字词\n“A”\nAnd\nAre\nPadding-Left\nQ\nW\nE\nR\nT\nY\nU\nI\nO\nP\nPadding-Right\nPadding-Left\nA\nS\nD\nF\nG\nH\nJ\nK\nL\nPadding-Right\nshift\nPadding-Left\nZ\nX\nC\nV\nB\nN\nM\nPadding-Right\ndelete\nnumbers\nEmoji\n \nreturn\n下一个键盘\n听写\n听写\nWeftMate\nWeftMate"
+    },
+    {
+      "surface": "iphone",
+      "theme": "light",
       "scene": "expanded-day",
-      "text": "WeftMate\nWeftMate\n旁聊与项目\nWeftMate\n账户菜单\n账户菜单\nwm-account\n刷新会话\n跳日期\nwm-clock\n跳日期\n搜索\nwm-search\n搜索\n输出与来源\nwm-outputs\n查看更早记录\n2026-10-08、48 条\nwm-right-small\n2026-10-08\n48 条\n2026-10-09、48 条\nwm-right-small\n2026-10-09\n48 条\n2026-10-10、19 条\nwm-chevron-small\n2026-10-10\n19 条\n合成记录 9999：用于日期、搜索与滚动验证。\nA8_WAIT 合成主对话任务\n读取文件\nwm-right-small\n读取文件\n运行命令 npm test\nwm-right-small\n运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n调用扩展服务\nwm-right-small\n调用扩展服务\n运行命令 npm run verify\nwm-right-small\n运行命令 npm run verify\n运行命令 npm run release\nwm-right-small\n运行命令 npm run release\n成功 · 已完成：合成任务完成。\nwm-allow\n成功 · 已完成：合成任务完成。\nwm-right\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-warn\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-right\n停止 · 已停止：已停止当前任务。\nwm-stop\n停止 · 已停止：已停止当前任务。\nwm-right\n垂直滚动条, 2页\n垂直滚动条, 2页\n回到底部\n要运行命令：npm run verify，审批详情\nwm-right-small\n要运行命令：npm run verify\n批准\n拒绝\n还有 1 个待批准\n水平滚动条, 1页\n添加\nwm-plus\n合成模型\n停止\nwm-stop\nWeftMate\nWeftMate"
+      "text": "WeftMate\nWeftMate\n旁聊与项目\nWeftMate\n账户菜单\n账户菜单\nwm-account\n刷新会话\n跳日期\nwm-clock\n跳日期\n搜索\nwm-search\n搜索\n输出与来源\nwm-outputs\n查看更早记录\n2026-10-08、48 条\nwm-chevron-small\n2026-10-08\n48 条\n合成记录 9918：用于日期、搜索与滚动验证。\n合成记录 9919：用于日期、搜索与滚动验证。\n合成记录 9920：用于日期、搜索与滚动验证。\n合成记录 9921：用于日期、搜索与滚动验证。\n合成记录 9922：用于日期、搜索与滚动验证。\n合成记录 9923：用于日期、搜索与滚动验证。\n合成记录 9924：用于日期、搜索与滚动验证。\n合成记录 9925：用于日期、搜索与滚动验证。\n合成记录 9926：用于日期、搜索与滚动验证。\n合成记录 9927：用于日期、搜索与滚动验证。\n合成记录 9928：用于日期、搜索与滚动验证。\n合成记录 9929：用于日期、搜索与滚动验证。\n合成记录 9930：用于日期、搜索与滚动验证。\n合成记录 9931：用于日期、搜索与滚动验证。\n垂直滚动条, 6页\n垂直滚动条, 6页\n回到底部\n要运行命令：npm run verify，审批详情\nwm-right-small\n要运行命令：npm run verify\n批准\n拒绝\n还有 1 个待批准\n水平滚动条, 1页\n添加\nwm-plus\n合成模型\n停止\nwm-stop\nWeftMate\nWeftMate"
     },
     {
       "surface": "iphone",
       "theme": "light",
       "scene": "date-located",
-      "text": "WeftMate\nWeftMate\n旁聊与项目\nWeftMate\n账户菜单\n账户菜单\nwm-account\n刷新会话\n跳日期\nwm-clock\n跳日期\n搜索\nwm-search\n搜索\n输出与来源\nwm-outputs\n查看更早记录\n2026-10-08、48 条\nwm-right-small\n2026-10-08\n48 条\n2026-10-09、48 条\nwm-right-small\n2026-10-09\n48 条\n2026-10-10、19 条\nwm-chevron-small\n2026-10-10\n19 条\n合成记录 9999：用于日期、搜索与滚动验证。\nA8_WAIT 合成主对话任务\n读取文件\nwm-right-small\n读取文件\n运行命令 npm test\nwm-right-small\n运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n调用扩展服务\nwm-right-small\n调用扩展服务\n运行命令 npm run verify\nwm-right-small\n运行命令 npm run verify\n运行命令 npm run release\nwm-right-small\n运行命令 npm run release\n成功 · 已完成：合成任务完成。\nwm-allow\n成功 · 已完成：合成任务完成。\nwm-right\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-warn\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-right\n停止 · 已停止：已停止当前任务。\nwm-stop\n停止 · 已停止：已停止当前任务。\nwm-right\n垂直滚动条, 2页\n垂直滚动条, 2页\n回到底部\n要运行命令：npm run verify，审批详情\nwm-right-small\n要运行命令：npm run verify\n批准\n拒绝\n还有 1 个待批准\n水平滚动条, 1页\n添加\nwm-plus\n合成模型\n停止\nwm-stop\nWeftMate\nWeftMate"
+      "text": "WeftMate\nWeftMate\n旁聊与项目\nWeftMate\n账户菜单\n账户菜单\nwm-account\n刷新会话\n跳日期\nwm-clock\n跳日期\n搜索\nwm-search\n搜索\n输出与来源\nwm-outputs\n查看更早记录\n2026-10-08、48 条\nwm-right-small\n2026-10-08\n48 条\n2026-10-09、48 条\nwm-right-small\n2026-10-09\n48 条\n2026-10-10、20 条\nwm-chevron-small\n2026-10-10\n20 条\n合成记录 9998：用于日期、搜索与滚动验证。\n合成记录 9999：用于日期、搜索与滚动验证。\nA8_WAIT 合成主对话任务\n读取文件\nwm-right-small\n读取文件\n运行命令 npm test\nwm-right-small\n运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n调用扩展服务\nwm-right-small\n调用扩展服务\n运行命令 npm run verify\nwm-right-small\n运行命令 npm run verify\n运行命令 npm run release\nwm-right-small\n运行命令 npm run release\n成功 · 已完成：合成任务完成。\nwm-allow\n成功 · 已完成：合成任务完成。\nwm-right\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-warn\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-right\n停止 · 已停止：已停止当前任务。\nwm-stop\n停止 · 已停止：已停止当前任务。\nwm-right\n垂直滚动条, 3页\n垂直滚动条, 3页\n回到底部\n要运行命令：npm run verify，审批详情\nwm-right-small\n要运行命令：npm run verify\n批准\n拒绝\n还有 1 个待批准\n水平滚动条, 1页\n添加\nwm-plus\n合成模型\n停止\nwm-stop\nWeftMate\nWeftMate"
     },
     {
       "surface": "iphone",
       "theme": "light",
       "scene": "native-date-picker",
-      "text": "WeftMate\nWeftMate\n旁聊与项目\nWeftMate\n账户菜单\n账户菜单\nwm-account\n刷新会话\n跳日期\nwm-clock\n跳日期\n搜索\nwm-search\n搜索\n输出与来源\nwm-outputs\n查看更早记录\n2026-10-08、48 条\nwm-right-small\n2026-10-08\n48 条\n2026-10-09、48 条\nwm-right-small\n2026-10-09\n48 条\n2026-10-10、19 条\nwm-chevron-small\n2026-10-10\n19 条\n合成记录 9999：用于日期、搜索与滚动验证。\nA8_WAIT 合成主对话任务\n读取文件\nwm-right-small\n读取文件\n运行命令 npm test\nwm-right-small\n运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n调用扩展服务\nwm-right-small\n调用扩展服务\n运行命令 npm run verify\nwm-right-small\n运行命令 npm run verify\n运行命令 npm run release\nwm-right-small\n运行命令 npm run release\n成功 · 已完成：合成任务完成。\nwm-allow\n成功 · 已完成：合成任务完成。\nwm-right\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-warn\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-right\n停止 · 已停止：已停止当前任务。\nwm-stop\n停止 · 已停止：已停止当前任务。\nwm-right\n垂直滚动条, 2页\n垂直滚动条, 2页\n回到底部\n要运行命令：npm run verify，审批详情\nwm-right-small\n要运行命令：npm run verify\n批准\n拒绝\n还有 1 个待批准\n水平滚动条, 1页\n添加\nwm-plus\n合成模型\n停止\nwm-stop\n关闭弹出式窗口\n选择日期\n月\n上个月\n下个月\n显示年份选择器\n2026年10月\n10月1日 星期四\n1\n10月2日 星期五\n2\n10月3日 星期六\n3\n10月4日 星期日\n4\n10月5日 星期一\n5\n10月6日 星期二\n6\n10月7日 星期三\n7\n10月8日 星期四\n8\n10月9日 星期五\n9\n今天, 10月10日 星期六\n10\n10月11日 星期日\n11\n10月12日 星期一\n12\n10月13日 星期二\n13\n10月14日 星期三\n14\n10月15日 星期四\n15\n10月16日 星期五\n16\n10月17日 星期六\n17\n10月18日 星期日\n18\n10月19日 星期一\n19\n10月20日 星期二\n20\n10月21日 星期三\n21\n10月22日 星期四\n22\n10月23日 星期五\n23\n10月24日 星期六\n24\n10月25日 星期日\n25\n10月26日 星期一\n26\n10月27日 星期二\n27\n10月28日 星期三\n28\n10月29日 星期四\n29\n10月30日 星期五\n30\n10月31日 星期六\n31\n跳到这一天\nWeftMate\nWeftMate"
+      "text": "WeftMate\nWeftMate\n旁聊与项目\nWeftMate\n账户菜单\n账户菜单\nwm-account\n刷新会话\n跳日期\nwm-clock\n跳日期\n搜索\nwm-search\n搜索\n输出与来源\nwm-outputs\n查看更早记录\n2026-10-08、48 条\nwm-right-small\n2026-10-08\n48 条\n2026-10-09、48 条\nwm-right-small\n2026-10-09\n48 条\n2026-10-10、20 条\nwm-chevron-small\n2026-10-10\n20 条\n合成记录 9998：用于日期、搜索与滚动验证。\n合成记录 9999：用于日期、搜索与滚动验证。\nA8_WAIT 合成主对话任务\n读取文件\nwm-right-small\n读取文件\n运行命令 npm test\nwm-right-small\n运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n调用扩展服务\nwm-right-small\n调用扩展服务\n运行命令 npm run verify\nwm-right-small\n运行命令 npm run verify\n运行命令 npm run release\nwm-right-small\n运行命令 npm run release\n成功 · 已完成：合成任务完成。\nwm-allow\n成功 · 已完成：合成任务完成。\nwm-right\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-warn\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-right\n停止 · 已停止：已停止当前任务。\nwm-stop\n停止 · 已停止：已停止当前任务。\nwm-right\n垂直滚动条, 3页\n垂直滚动条, 3页\n回到底部\n要运行命令：npm run verify，审批详情\nwm-right-small\n要运行命令：npm run verify\n批准\n拒绝\n还有 1 个待批准\n水平滚动条, 1页\n添加\nwm-plus\n合成模型\n停止\nwm-stop\n关闭弹出式窗口\n选择日期\n月\n上个月\n下个月\n显示年份选择器\n2026年10月\n10月1日 星期四\n1\n10月2日 星期五\n2\n10月3日 星期六\n3\n10月4日 星期日\n4\n10月5日 星期一\n5\n10月6日 星期二\n6\n10月7日 星期三\n7\n10月8日 星期四\n8\n10月9日 星期五\n9\n今天, 10月10日 星期六\n10\n10月11日 星期日\n11\n10月12日 星期一\n12\n10月13日 星期二\n13\n10月14日 星期三\n14\n10月15日 星期四\n15\n10月16日 星期五\n16\n10月17日 星期六\n17\n10月18日 星期日\n18\n10月19日 星期一\n19\n10月20日 星期二\n20\n10月21日 星期三\n21\n10月22日 星期四\n22\n10月23日 星期五\n23\n10月24日 星期六\n24\n10月25日 星期日\n25\n10月26日 星期一\n26\n10月27日 星期二\n27\n10月28日 星期三\n28\n10月29日 星期四\n29\n10月30日 星期五\n30\n10月31日 星期六\n31\n跳到这一天\nWeftMate\nWeftMate"
     },
     {
       "surface": "iphone",
       "theme": "light",
       "scene": "first-screen",
-      "text": "WeftMate\nWeftMate\n旁聊与项目\nWeftMate\n账户菜单\n账户菜单\nwm-account\n刷新会话\n跳日期\nwm-clock\n跳日期\n搜索\nwm-search\n搜索\n输出与来源\nwm-outputs\n查看更早记录\n2026-10-08、48 条\nwm-right-small\n2026-10-08\n48 条\n2026-10-09、48 条\nwm-right-small\n2026-10-09\n48 条\n2026-10-10、19 条\nwm-chevron-small\n2026-10-10\n19 条\n合成记录 9999：用于日期、搜索与滚动验证。\nA8_WAIT 合成主对话任务\n读取文件\nwm-right-small\n读取文件\n运行命令 npm test\nwm-right-small\n运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n调用扩展服务\nwm-right-small\n调用扩展服务\n运行命令 npm run verify\nwm-right-small\n运行命令 npm run verify\n运行命令 npm run release\nwm-right-small\n运行命令 npm run release\n成功 · 已完成：合成任务完成。\nwm-allow\n成功 · 已完成：合成任务完成。\nwm-right\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-warn\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-right\n停止 · 已停止：已停止当前任务。\nwm-stop\n停止 · 已停止：已停止当前任务。\nwm-right\n垂直滚动条, 2页\n垂直滚动条, 2页\n回到底部\n要运行命令：npm run verify，审批详情\nwm-right-small\n要运行命令：npm run verify\n批准\n拒绝\n还有 1 个待批准\n水平滚动条, 1页\n添加\nwm-plus\n合成模型\n停止\nwm-stop\nWeftMate\nWeftMate"
+      "text": "WeftMate\nWeftMate\n旁聊与项目\nWeftMate\n账户菜单\n账户菜单\nwm-account\n刷新会话\n跳日期\nwm-clock\n跳日期\n搜索\nwm-search\n搜索\n输出与来源\nwm-outputs\n查看更早记录\n2026-10-08、48 条\nwm-right-small\n2026-10-08\n48 条\n2026-10-09、48 条\nwm-right-small\n2026-10-09\n48 条\n2026-10-10、20 条\nwm-chevron-small\n2026-10-10\n20 条\n合成记录 9998：用于日期、搜索与滚动验证。\n合成记录 9999：用于日期、搜索与滚动验证。\nA8_WAIT 合成主对话任务\n读取文件\nwm-right-small\n读取文件\n运行命令 npm test\nwm-right-small\n运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n调用扩展服务\nwm-right-small\n调用扩展服务\n运行命令 npm run verify\nwm-right-small\n运行命令 npm run verify\n运行命令 npm run release\nwm-right-small\n运行命令 npm run release\n成功 · 已完成：合成任务完成。\nwm-allow\n成功 · 已完成：合成任务完成。\nwm-right\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-warn\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-right\n停止 · 已停止：已停止当前任务。\nwm-stop\n停止 · 已停止：已停止当前任务。\nwm-right\n垂直滚动条, 3页\n垂直滚动条, 3页\n回到底部\n要运行命令：npm run verify，审批详情\nwm-right-small\n要运行命令：npm run verify\n批准\n拒绝\n还有 1 个待批准\n水平滚动条, 1页\n添加\nwm-plus\n合成模型\n停止\nwm-stop\nWeftMate\nWeftMate"
+    },
+    {
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "approval",
+      "text": "WeftMate\nWeftMate\n旁聊与项目\nWeftMate\n账户菜单\n账户菜单\nwm-account\n刷新会话\n跳日期\nwm-clock\n跳日期\n搜索\nwm-search\n搜索\n输出与来源\nwm-outputs\n查找\n上一条\nwm-back\n1/2\n下一条\nwm-right\n2026-10-08、48 条\nwm-right-small\n2026-10-08\n48 条\n2026-10-09、48 条\nwm-right-small\n2026-10-09\n48 条\n2026-10-10、20 条\nwm-chevron-small\n2026-10-10\n20 条\n合成记录 9998：用于日期、搜索与滚动验证。\n合成记录 9999：用于日期、搜索与滚动验证。\nA8_WAIT 合成主对话任务\n读取文件\nwm-right-small\n读取文件\n运行命令 npm test\nwm-right-small\n运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n调用扩展服务\nwm-right-small\n调用扩展服务\n运行命令 npm run verify\nwm-right-small\n运行命令 npm run verify\n运行命令 npm run release\nwm-right-small\n运行命令 npm run release\n成功 · 已完成：合成任务完成。\nwm-allow\n成功 · 已完成：合成任务完成。\nwm-right\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-warn\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-right\n垂直滚动条, 3页\n垂直滚动条, 3页\n回到底部\n要运行命令：npm run verify，审批详情\nwm-right-small\n要运行命令：npm run verify\n批准\n拒绝\n还有 1 个待批准\n水平滚动条, 1页\n添加\nwm-plus\n合成模型\n停止\nwm-stop\n取消\n最近项目\n图标\n取消\n搜索\n搜索\n垂直滚动条, 1页\n垂直滚动条, 1页\n垂直滚动条, 1页\n水平滚动条, 1页\n垂直滚动条, 1页\n水平滚动条, 1页\n时钟\n无最近项目\n最近打开的文稿将在此处显示。\n标签页栏\n最近项目\n时钟\n共享\n共享文件夹\n浏览\n移动\nWeftMate\nWeftMate"
+    },
+    {
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "sent",
+      "text": "WeftMate\nWeftMate\n旁聊与项目\nWeftMate\n账户菜单\n账户菜单\nwm-account\n刷新会话\n跳日期\nwm-clock\n跳日期\n搜索\nwm-search\n搜索\n输出与来源\nwm-outputs\n查找\n上一条\nwm-back\n1/2\n下一条\nwm-right\n2026-10-08、48 条\nwm-right-small\n2026-10-08\n48 条\n2026-10-09、48 条\nwm-right-small\n2026-10-09\n48 条\n2026-10-10、20 条\nwm-chevron-small\n2026-10-10\n20 条\n合成记录 9998：用于日期、搜索与滚动验证。\n合成记录 9999：用于日期、搜索与滚动验证。\nA8_WAIT 合成主对话任务\n读取文件\nwm-right-small\n读取文件\n运行命令 npm test\nwm-right-small\n运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n调用扩展服务\nwm-right-small\n调用扩展服务\n运行命令 npm run verify\nwm-right-small\n运行命令 npm run verify\n运行命令 npm run release\nwm-right-small\n运行命令 npm run release\n成功 · 已完成：合成任务完成。\nwm-allow\n成功 · 已完成：合成任务完成。\nwm-right\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-warn\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-right\n垂直滚动条, 3页\n垂直滚动条, 3页\n回到底部\n要运行命令：npm run verify，审批详情\nwm-right-small\n要运行命令：npm run verify\n批准\n拒绝\n还有 1 个待批准\n水平滚动条, 1页\n添加\nwm-plus\n合成模型\n停止\nwm-stop\n取消\n最近项目\n图标\n取消\n搜索\n搜索\n垂直滚动条, 1页\n垂直滚动条, 1页\n垂直滚动条, 1页\n水平滚动条, 1页\n垂直滚动条, 1页\n水平滚动条, 1页\n时钟\n无最近项目\n最近打开的文稿将在此处显示。\n标签页栏\n最近项目\n时钟\n共享\n共享文件夹\n浏览\n移动\nWeftMate\nWeftMate"
+    },
+    {
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "result-opened",
+      "text": "WeftMate\nWeftMate\nWeftMate\n合成旁聊 completed\n对话菜单\n对话菜单\nwm-more\n输出与来源\n输出与来源\nwm-outputs\n账户菜单\n账户菜单\nwm-account\n刷新记录\n相关上下文尚未带入\nA8_WAIT 合成旁聊任务 completed\n读取了 1 个文件、已运行 1 个命令\n读取了 1 个文件、已运行 1 个命令\nwm-right-small\n资料已经核对，接下来搜索并运行检查。\n搜索了 1 次\n搜索了 1 次\nwm-right-small\n合成任务完成。\n垂直滚动条, 1页\n垂直滚动条, 1页\n水平滚动条, 1页\n添加附件\nwm-plus\n审批模式\nwm-approval-small\n自动\nwm-chevron-small\n模型选择\n合成模型\nwm-chevron-small\n语音输入\nwm-mic-small\n发送\nwm-send\nWeftMate\nWeftMate"
+    },
+    {
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "returned-source",
+      "text": "WeftMate\nWeftMate\n旁聊与项目\nWeftMate\n账户菜单\n账户菜单\nwm-account\n刷新会话\n跳日期\nwm-clock\n跳日期\n搜索\nwm-search\n搜索\n输出与来源\nwm-outputs\n查找\n上一条\nwm-back\n1/2\n下一条\nwm-right\n合成记录 9495：用于日期、搜索与滚动验证。\n合成记录 9496：用于日期、搜索与滚动验证。\n合成记录 9497：用于日期、搜索与滚动验证。\n合成记录 9498：用于日期、搜索与滚动验证。\n合成记录 9499：用于日期、搜索与滚动验证。\nA16查找纸船 9500：用于日期、搜索与滚动验证。\n合成记录 9501：用于日期、搜索与滚动验证。\n合成记录 9502：用于日期、搜索与滚动验证。\n合成记录 9503：用于日期、搜索与滚动验证。\n合成记录 9504：用于日期、搜索与滚动验证。\n合成记录 9505：用于日期、搜索与滚动验证。\n合成记录 9506：用于日期、搜索与滚动验证。\n合成记录 9507：用于日期、搜索与滚动验证。\n合成记录 9508：用于日期、搜索与滚动验证。\n合成记录 9509：用于日期、搜索与滚动验证。\n合成记录 9510：用于日期、搜索与滚动验证。\n垂直滚动条, 12页\n垂直滚动条, 12页\n回到底部\n要运行命令：npm run verify，审批详情\nwm-right-small\n要运行命令：npm run verify\n批准\n拒绝\n还有 1 个待批准\n水平滚动条, 1页\n添加\nwm-plus\n合成模型\n停止\nwm-stop\nWeftMate\nWeftMate"
+    },
+    {
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "side-source",
+      "text": "WeftMate\nWeftMate\nWeftMate\n合成对话\n对话菜单\n对话菜单\nwm-more\n输出与来源\n输出与来源\nwm-outputs\n账户菜单\n账户菜单\nwm-account\n刷新记录\n返回来源消息\nwm-back\n返回来源消息\n相关上下文尚未带入\nwm-chat\n还没有消息\n说说你想完成什么。\n垂直滚动条, 1页\n垂直滚动条, 1页\n水平滚动条, 1页\n添加附件\nwm-plus\n审批模式\nwm-approval-small\n自动\nwm-chevron-small\n模型选择\n模型\nwm-chevron-small\n语音输入\nwm-mic-small\n发送\nwm-send\n正在核对原会话和模型…\nWeftMate\nWeftMate"
+    },
+    {
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "search-next",
+      "text": "WeftMate\nWeftMate\n旁聊与项目\nWeftMate\n账户菜单\n账户菜单\nwm-account\n刷新会话\n跳日期\nwm-clock\n跳日期\n搜索\nwm-search\n搜索\n输出与来源\nwm-outputs\n查找\n上一条\nwm-back\n2/2\n下一条\nwm-right\n合成记录 9518：用于日期、搜索与滚动验证。\n合成记录 9519：用于日期、搜索与滚动验证。\nA16查找纸船 9520：用于日期、搜索与滚动验证。\n合成记录 9521：用于日期、搜索与滚动验证。\n合成记录 9522：用于日期、搜索与滚动验证。\n合成记录 9523：用于日期、搜索与滚动验证。\n垂直滚动条, 51页\n垂直滚动条, 51页\n回到底部\n要运行命令：npm run verify，审批详情\nwm-right-small\n要运行命令：npm run verify\n批准\n拒绝\n还有 1 个待批准\n水平滚动条, 1页\n添加\nwm-plus\n合成模型\n停止\nwm-stop\n键入预测字词\n“A”\nAnd\nAre\nPadding-Left\nQ\nW\nE\nR\nT\nY\nU\nI\nO\nP\nPadding-Right\nPadding-Left\nA\nS\nD\nF\nG\nH\nJ\nK\nL\nPadding-Right\nshift\nPadding-Left\nZ\nX\nC\nV\nB\nN\nM\nPadding-Right\ndelete\nnumbers\nEmoji\n \nreturn\n下一个键盘\n听写\n听写\nWeftMate\nWeftMate"
+    },
+    {
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "search-first",
+      "text": "WeftMate\nWeftMate\n旁聊与项目\nWeftMate\n账户菜单\n账户菜单\nwm-account\n刷新会话\n跳日期\nwm-clock\n跳日期\n搜索\nwm-search\n搜索\n输出与来源\nwm-outputs\n查找\n上一条\nwm-back\n1/2\n下一条\nwm-right\n合成记录 9498：用于日期、搜索与滚动验证。\n合成记录 9499：用于日期、搜索与滚动验证。\nA16查找纸船 9500：用于日期、搜索与滚动验证。\n合成记录 9501：用于日期、搜索与滚动验证。\n合成记录 9502：用于日期、搜索与滚动验证。\n合成记录 9503：用于日期、搜索与滚动验证。\n垂直滚动条, 27页\n垂直滚动条, 27页\n回到底部\n要运行命令：npm run verify，审批详情\nwm-right-small\n要运行命令：npm run verify\n批准\n拒绝\n还有 1 个待批准\n水平滚动条, 1页\n添加\nwm-plus\n合成模型\n停止\nwm-stop\n键入预测字词\n“A”\nAnd\nAre\nPadding-Left\nQ\nW\nE\nR\nT\nY\nU\nI\nO\nP\nPadding-Right\nPadding-Left\nA\nS\nD\nF\nG\nH\nJ\nK\nL\nPadding-Right\nshift\nPadding-Left\nZ\nX\nC\nV\nB\nN\nM\nPadding-Right\ndelete\nnumbers\nEmoji\n \nreturn\n下一个键盘\n听写\n听写\nWeftMate\nWeftMate"
+    },
+    {
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "expanded-day",
+      "text": "WeftMate\nWeftMate\n旁聊与项目\nWeftMate\n账户菜单\n账户菜单\nwm-account\n刷新会话\n跳日期\nwm-clock\n跳日期\n搜索\nwm-search\n搜索\n输出与来源\nwm-outputs\n查看更早记录\n2026-10-08、48 条\nwm-chevron-small\n2026-10-08\n48 条\n合成记录 9918：用于日期、搜索与滚动验证。\n合成记录 9919：用于日期、搜索与滚动验证。\n合成记录 9920：用于日期、搜索与滚动验证。\n合成记录 9921：用于日期、搜索与滚动验证。\n合成记录 9922：用于日期、搜索与滚动验证。\n合成记录 9923：用于日期、搜索与滚动验证。\n合成记录 9924：用于日期、搜索与滚动验证。\n合成记录 9925：用于日期、搜索与滚动验证。\n合成记录 9926：用于日期、搜索与滚动验证。\n合成记录 9927：用于日期、搜索与滚动验证。\n合成记录 9928：用于日期、搜索与滚动验证。\n合成记录 9929：用于日期、搜索与滚动验证。\n合成记录 9930：用于日期、搜索与滚动验证。\n合成记录 9931：用于日期、搜索与滚动验证。\n垂直滚动条, 6页\n垂直滚动条, 6页\n回到底部\n要运行命令：npm run verify，审批详情\nwm-right-small\n要运行命令：npm run verify\n批准\n拒绝\n还有 1 个待批准\n水平滚动条, 1页\n添加\nwm-plus\n合成模型\n停止\nwm-stop\nWeftMate\nWeftMate"
+    },
+    {
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "date-located",
+      "text": "WeftMate\nWeftMate\n旁聊与项目\nWeftMate\n账户菜单\n账户菜单\nwm-account\n刷新会话\n跳日期\nwm-clock\n跳日期\n搜索\nwm-search\n搜索\n输出与来源\nwm-outputs\n查看更早记录\n2026-10-08、48 条\nwm-right-small\n2026-10-08\n48 条\n2026-10-09、48 条\nwm-right-small\n2026-10-09\n48 条\n2026-10-10、20 条\nwm-chevron-small\n2026-10-10\n20 条\n合成记录 9998：用于日期、搜索与滚动验证。\n合成记录 9999：用于日期、搜索与滚动验证。\nA8_WAIT 合成主对话任务\n读取文件\nwm-right-small\n读取文件\n运行命令 npm test\nwm-right-small\n运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n调用扩展服务\nwm-right-small\n调用扩展服务\n运行命令 npm run verify\nwm-right-small\n运行命令 npm run verify\n运行命令 npm run release\nwm-right-small\n运行命令 npm run release\n成功 · 已完成：合成任务完成。\nwm-allow\n成功 · 已完成：合成任务完成。\nwm-right\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-warn\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-right\n停止 · 已停止：已停止当前任务。\nwm-stop\n停止 · 已停止：已停止当前任务。\nwm-right\n垂直滚动条, 3页\n垂直滚动条, 3页\n回到底部\n要运行命令：npm run verify，审批详情\nwm-right-small\n要运行命令：npm run verify\n批准\n拒绝\n还有 1 个待批准\n水平滚动条, 1页\n添加\nwm-plus\n合成模型\n停止\nwm-stop\nWeftMate\nWeftMate"
+    },
+    {
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "native-date-picker",
+      "text": "WeftMate\nWeftMate\n旁聊与项目\nWeftMate\n账户菜单\n账户菜单\nwm-account\n刷新会话\n跳日期\nwm-clock\n跳日期\n搜索\nwm-search\n搜索\n输出与来源\nwm-outputs\n查看更早记录\n2026-10-08、48 条\nwm-right-small\n2026-10-08\n48 条\n2026-10-09、48 条\nwm-right-small\n2026-10-09\n48 条\n2026-10-10、20 条\nwm-chevron-small\n2026-10-10\n20 条\n合成记录 9998：用于日期、搜索与滚动验证。\n合成记录 9999：用于日期、搜索与滚动验证。\nA8_WAIT 合成主对话任务\n读取文件\nwm-right-small\n读取文件\n运行命令 npm test\nwm-right-small\n运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n调用扩展服务\nwm-right-small\n调用扩展服务\n运行命令 npm run verify\nwm-right-small\n运行命令 npm run verify\n运行命令 npm run release\nwm-right-small\n运行命令 npm run release\n成功 · 已完成：合成任务完成。\nwm-allow\n成功 · 已完成：合成任务完成。\nwm-right\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-warn\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-right\n停止 · 已停止：已停止当前任务。\nwm-stop\n停止 · 已停止：已停止当前任务。\nwm-right\n垂直滚动条, 3页\n垂直滚动条, 3页\n回到底部\n要运行命令：npm run verify，审批详情\nwm-right-small\n要运行命令：npm run verify\n批准\n拒绝\n还有 1 个待批准\n水平滚动条, 1页\n添加\nwm-plus\n合成模型\n停止\nwm-stop\n关闭弹出式窗口\n选择日期\n月\n上个月\n下个月\n显示年份选择器\n2026年10月\n10月1日 星期四\n1\n10月2日 星期五\n2\n10月3日 星期六\n3\n10月4日 星期日\n4\n10月5日 星期一\n5\n10月6日 星期二\n6\n10月7日 星期三\n7\n10月8日 星期四\n8\n10月9日 星期五\n9\n今天, 10月10日 星期六\n10\n10月11日 星期日\n11\n10月12日 星期一\n12\n10月13日 星期二\n13\n10月14日 星期三\n14\n10月15日 星期四\n15\n10月16日 星期五\n16\n10月17日 星期六\n17\n10月18日 星期日\n18\n10月19日 星期一\n19\n10月20日 星期二\n20\n10月21日 星期三\n21\n10月22日 星期四\n22\n10月23日 星期五\n23\n10月24日 星期六\n24\n10月25日 星期日\n25\n10月26日 星期一\n26\n10月27日 星期二\n27\n10月28日 星期三\n28\n10月29日 星期四\n29\n10月30日 星期五\n30\n10月31日 星期六\n31\n跳到这一天\nWeftMate\nWeftMate"
+    },
+    {
+      "surface": "iphone",
+      "theme": "dark",
+      "scene": "first-screen",
+      "text": "WeftMate\nWeftMate\n旁聊与项目\nWeftMate\n账户菜单\n账户菜单\nwm-account\n刷新会话\n跳日期\nwm-clock\n跳日期\n搜索\nwm-search\n搜索\n输出与来源\nwm-outputs\n查看更早记录\n2026-10-08、48 条\nwm-right-small\n2026-10-08\n48 条\n2026-10-09、48 条\nwm-right-small\n2026-10-09\n48 条\n2026-10-10、20 条\nwm-chevron-small\n2026-10-10\n20 条\n合成记录 9998：用于日期、搜索与滚动验证。\n合成记录 9999：用于日期、搜索与滚动验证。\nA8_WAIT 合成主对话任务\n读取文件\nwm-right-small\n读取文件\n运行命令 npm test\nwm-right-small\n运行命令 npm test\n资料已经核对，接下来搜索并运行检查。\n调用扩展服务\nwm-right-small\n调用扩展服务\n运行命令 npm run verify\nwm-right-small\n运行命令 npm run verify\n运行命令 npm run release\nwm-right-small\n运行命令 npm run release\n成功 · 已完成：合成任务完成。\nwm-allow\n成功 · 已完成：合成任务完成。\nwm-right\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-warn\n失败 · 执行失败：合成检查失败，请检查输入文件。\nwm-right\n停止 · 已停止：已停止当前任务。\nwm-stop\n停止 · 已停止：已停止当前任务。\nwm-right\n垂直滚动条, 3页\n垂直滚动条, 3页\n回到底部\n要运行命令：npm run verify，审批详情\nwm-right-small\n要运行命令：npm run verify\n批准\n拒绝\n还有 1 个待批准\n水平滚动条, 1页\n添加\nwm-plus\n合成模型\n停止\nwm-stop\nWeftMate\nWeftMate"
     }
   ]
 }
