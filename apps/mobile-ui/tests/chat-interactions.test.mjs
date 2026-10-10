@@ -88,7 +88,7 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
   const saved=new Map(Object.entries(storage));
   const localStorage={setItem(key,value){saved.set(key,String(value))},removeItem(key){saved.delete(key)},
     getItem(key){return saved.get(key)??null},key(index){return [...saved.keys()][index]??null},get length(){return saved.size}};
-  const context=vm.createContext({document,window,innerHeight:window.innerHeight,localStorage,URL,AbortSignal,crypto:globalThis.crypto,
+  const context=vm.createContext({document,window,innerHeight:window.innerHeight,localStorage,URL,AbortSignal,crypto:globalThis.crypto,performance:{now:()=>now},
     // Page refresh intervals are tracked separately from the controlled send/retry clock.
     setInterval:(fn,delay)=>{const id=`interval-${++nextInterval}`;intervals.set(id,{fn,delay});return id},clearInterval:id=>intervals.delete(id),
     setTimeout:(fn,delay)=>{const id=++nextTimer;timers.set(id,{fn,delay,due:now+delay});return id},clearTimeout:id=>timers.delete(id),
@@ -785,6 +785,7 @@ for(const hz of [60,120,180])test(`100 growing snapshots follow monotonically at
   assert.ok(box.scrollWrites<=frameCount+1,'at most one scroll write per animation frame');
   box._scrollTop-=1.4;h.run('handleChatScroll()');
   assert.equal(h.run('state.scrollPinned'),true,'a rounded delayed programmatic event stays pinned');
+  for(const handler of box.listeners.get('wheel')||[])handler({deltaY:-60});
   box.scrollTop=box.scrollHeight-box.clientHeight-60;h.run('handleChatScroll()');
   assert.equal(h.run('state.scrollPinned'),false,'manual scroll-back releases live follow');
   const writes=box.scrollWrites;
@@ -794,12 +795,22 @@ for(const hz of [60,120,180])test(`100 growing snapshots follow monotonically at
   assert.equal(stableNode.textContent,'x'.repeat(500)+' more');
 });
 
+test('MOB-P1 blank shared chat welcomes; hidden-only history and loading retain distinct states',()=>{
+ const h=harness();h.run('state.loggedIn=true;state.owner="owner";state.page="chat";state.chatSource="host";state.sharedSessionId="session-1";state.sharedHostAvailable=true;state.sharedEvents=[];state.sharedLoading=false;state.sharedHasOlder=false;state.sharedError="";state.sharedPending=null;renderSharedConversation()');
+ assert.match(h.node('chat-content').textContent,/今天想做什么/);assert.doesNotMatch(h.node('chat-content').textContent,/没有可显示/);
+ h.run('state.sharedEvents=[{seq:0,type:"turn.completed",data:{}}];renderSharedConversation()');
+ assert.match(h.node('chat-content').textContent,/没有可显示的文字记录/);assert.doesNotMatch(h.node('chat-content').textContent,/今天想做什么/);
+ h.run('state.sharedEvents=[];state.sharedLoading=true;renderSharedConversation()');assert.match(h.node('chat-content').textContent,/正在读取电脑会话/);assert.doesNotMatch(h.node('chat-content').textContent,/今天想做什么/);
+ h.run('state.sharedLoading=false;state.sharedHasOlder=true;renderSharedConversation()');assert.match(h.node('chat-content').textContent,/没有可显示的文字记录/);assert.doesNotMatch(h.node('chat-content').textContent,/今天想做什么/);
+});
+
 test('manual scroll-back stops live follow but still reveals text, and a stale frame cannot revive it',()=>{
   const h=harness({queueFrames:true});
   h.run('state.page="chat";state.chatSource="phone";state.busy=true;state.conversationId="c1";state.scrollPinned=true');
   const box=h.node('chat-scroll');box.scrollHeight=1200;box.clientHeight=200;box.scrollTop=800;
   h.run('processEvent({event:"chat.progress",data:{conversationId:"c1",text:"first complete thought"}})');
   h.flushFrame();h.flushFrame();
+  for(const handler of box.listeners.get('wheel')||[])handler({deltaY:-500});
   box.scrollTop=300;h.run('handleChatScroll()');assert.equal(h.run('state.scrollPinned'),false);
   const writes=box.scrollWrites;
   for(let i=0;i<4;i++)h.flushFrame();

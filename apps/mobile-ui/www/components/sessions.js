@@ -175,7 +175,11 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
   else if(uiCore.state.online&&lastTurn&&lastTurn!=='completed')content.append(el('p','shared-turn-state',lastTurn==='error'&&lastEndReasonKind==='max-tokens'
     ?'本轮因输出限制结束，可继续对话。':{
       aborted:'电脑回合已停止',error:'电脑回合未完成',blocked:'电脑回合等待处理',unknown:'电脑那边的进度还没确认'}[lastTurn]||'电脑那边的进度还没确认'));
-  if(!state.sharedEvents.length&&!state.sharedError)content.append(el('p','muted',state.sharedLoading?'正在读取电脑会话…':'这段会话还没有可显示的文字记录'));
+  if(!state.sharedError&&!content.querySelector('.message')){
+    if(state.sharedLoading)content.append(el('p','muted','正在读取电脑会话…'));
+    else if(!state.sharedEvents.length&&!state.sharedHasOlder&&!state.sharedPending&&!uiCore.optimisticMessages().length)content.append(welcomeState());
+    else if(state.sharedEvents.length||state.sharedHasOlder)content.append(el('p','muted','这段会话还没有可显示的文字记录'));
+  }
   content.append(...saved);renderTimeline();if(!uiCore.state.online)for(const progress of content.querySelectorAll('.inline-progress-text')){progress.textContent=`${uiCore.connectionView().label} · 等待接续`;progress.classList.remove('is-running')}renderConversationTasks();renderOptimisticMessages();updateComposer();if(state.scrollPinned)scrollBottom();else scroll.scrollTop=previousScroll;}
 
 function renderOptimisticMessages(){if(state.chatSource!=='host'||state.page!=='chat')return;
@@ -526,6 +530,7 @@ function renderConversationList(){const target=$('conversation-list'),previousSc
 function updatePageHeader(){const home=state.page==='home',chat=state.page==='chat';
   $('menu-button').hidden=!home;$('page-back').hidden=home;$('home-new-chat').hidden=!home;
   $('outputs-button').hidden=!chat;
+  $('conversation-more').hidden=!chat;
   const title=chat?(state.chatSource==='host'?selectedSharedSession()?.title:state.conversations.find(item=>item.id===state.conversationId)?.title):null;
   $('header-subtitle').hidden=true;
   const pageTitle=mobileSettingsRegistry.get(state.page)?.name||({goals:'目标',library:'成果库',activity:'动态',memory:'记忆',settings:'设置',sync:'离线与同步',updates:'更新',connect:'连接电脑',password:'修改密码',capabilities:'能力与扩展',workspaces:'项目与成果'}[state.page])||'WeftMate';

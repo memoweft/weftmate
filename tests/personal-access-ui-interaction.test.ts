@@ -83,6 +83,7 @@ class Element {
   append(...children: Element[]) { for (const child of children) child.parentNode = this; this.children.push(...children) }
   prepend(...children: Element[]) { for (const child of children) child.parentNode = this; this.children.unshift(...children) }
   replaceChildren(...children: Element[]) { for (const child of [...this.children]) child.remove(); this.children = []; this.append(...children) }
+  cloneNode(deep = false) { const copy=new Element(this.id,this.tagName);copy.ownerDocument=this.ownerDocument;copy.hidden=this.hidden;copy.disabled=this.disabled;copy.value=this.value;copy.textContent=this.textContent;copy.className=this.className;copy.src=this.src;copy.attributes=new Map(this.attributes);copy.dataset={...this.dataset};if(deep)copy.append(...this.children.map(child=>child.cloneNode(true)));return copy }
   setAttribute(name: string, value: string) { this.attributes.set(name, value) }
   getAttribute(name: string) { return this.attributes.get(name) ?? null }
   removeAttribute(name: string) { this.attributes.delete(name); if (name === 'src') this.src = '' }

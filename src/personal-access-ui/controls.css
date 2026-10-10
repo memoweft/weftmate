@@ -7,6 +7,27 @@
 .icon-button:active { background:var(--accent-soft); }
 .icon-button:focus-visible { outline:var(--wm-space-2) solid var(--accent); outline-offset:var(--wm-space-2); }
 .icon-button:disabled { opacity:.5; cursor:not-allowed; }
+/* Programmatic menu focus must not inherit Chromium's keyboard heuristic. */
+:is(button,a,summary,[role=button]):focus:not(:focus-visible),
+:root[data-input-modality=pointer] :is(button,a,summary,[role=button]):focus { outline:none; }
+.chat-intro,.main-chat-intro { margin:max(var(--wm-space-30),15vh) 0 var(--wm-space-24);text-align:center; }
+.chat-intro h1,.main-chat-intro h1 { margin:var(--wm-space-8) 0;font-size:var(--wm-font-size-28);font-weight:500;letter-spacing:-.025em; }
+/* Closed process groups use one compact gap; prose keeps its paragraph rhythm. */
+:is(.timeline-entry:has(> .execution-block:not([open])),.thinking-only:not(.main-chat-row):has(> .model-thinking:not([open]))) { padding:0;margin-block:0; }
+:is(.timeline-entry:has(> .execution-block:not([open])),.thinking-only:not(.main-chat-row):has(> .model-thinking:not([open]))) + :is(.timeline-entry:has(> .execution-block:not([open])),.thinking-only:not(.main-chat-row):has(> .model-thinking:not([open]))) { margin-top:var(--wm-space-8); }
+.transcript > :is(.timeline-entry:has(> .execution-block:not([open])),.thinking-only:not(.main-chat-row):has(> .model-thinking:not([open]))) + :is(.timeline-entry:has(> .execution-block:not([open])),.thinking-only:not(.main-chat-row):has(> .model-thinking:not([open]))) { margin-top:calc(var(--wm-space-8) - var(--wm-space-26)); }
+:is(.main-chat-row:has(> .chat-progress .execution-block:not([open])):not(:has(.execution-block[open])),.main-chat-row.thinking-only:has(> .model-thinking:not([open]))) {padding-block:0;}
+:is(.main-chat-row:has(> .chat-progress .execution-block:not([open])):not(:has(.execution-block[open])),.main-chat-row.thinking-only:has(> .model-thinking:not([open]))) + :is(.main-chat-row:has(> .chat-progress .execution-block:not([open])):not(:has(.execution-block[open])),.main-chat-row.thinking-only:has(> .model-thinking:not([open]))) {padding-top:var(--wm-space-8);}
+.thinking-only > .model-thinking:not([open]) {margin:0;}
+.thinking-only > .message-actions {display:none;}
+.phone-conversation-more,.phone-header-profile { display:none; }
+.activity-open .phone-conversation-more,.goals-open .phone-conversation-more,.library-open .phone-conversation-more {display:none!important;}
+@media(max-width:640px) {
+  :root:not([data-native-platform]) .assistant-topbar :is(.phone-conversation-more,.phone-header-profile) { display:inline-flex;width:var(--wm-space-44);min-height:var(--wm-space-44); }
+  .phone-header-profile .rail-avatar {width:var(--wm-space-32);height:var(--wm-space-32);}
+  :root:not([data-native-platform]) .assistant-topbar :is(#conversation-resources,.usage-title-button) { display:none!important; }
+  .assistant-topbar .assistant-heading { flex:1;min-width:0; }
+}
 @supports (-webkit-appearance: none) {
   * { scrollbar-width:auto!important; scrollbar-color:auto!important; }
   ::-webkit-scrollbar { width:var(--wm-space-8); height:var(--wm-space-8); }

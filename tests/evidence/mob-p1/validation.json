@@ -1,0 +1,54 @@
+{
+  "timestamp": "2026-10-10T19:00:30.908774+08:00",
+  "requiredCommand": "node .github/scripts/ci-unit-tests.mjs required",
+  "required": {
+    "tests": 1372,
+    "pass": 1358,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 14
+  },
+  "cloudAndMobileCommand": "node --test tests/personal-cloud-web.test.ts apps/mobile-ui/tests/cloud-login.test.mjs apps/mobile-ui/tests/chat-interactions.test.mjs apps/mobile-ui/tests/visual-interactions.test.mjs",
+  "cloudAndMobile": {
+    "tests": 102,
+    "pass": 102,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "related": {
+    "tests": 15,
+    "pass": 15,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "desktopFixtureRegression": {
+    "tests": 62,
+    "pass": 62,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "typecheck": true,
+  "mobileBuildCheck": true,
+  "uiCoreAssets": 46,
+  "screenshotsBefore": 200,
+  "screenshotsAfter": 304,
+  "layoutAndInteractionChecks": 80,
+  "pageErrors": 0,
+  "modelRequests": 0,
+  "systemBarsVerified": false,
+  "needsNativeVersion": false,
+  "newRoutes": [],
+  "cleanup": {
+    "forcedStopped": [],
+    "dailyDataTouched": false,
+    "timestamp": "2026-10-10T19:03:51.3658782+08:00",
+    "ownership": "creation time + executable + exact workspace/recorded canonical temp in command line; no parent PID matching",
+    "remainingCount": 0,
+    "emulatorStarted": false,
+    "forcedStoppedCount": 0
+  },
+  "pullRequest": "https://github.com/memoweft/weftmate/pull/192"
+}
