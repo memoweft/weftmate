@@ -1,0 +1,26 @@
+{
+  "generatedAt": "2026-10-10T01:45:13.803Z",
+  "sourceCommit": "bf06adadddd7ea4c10eacdf7f0e4efcfff33098d",
+  "sourceDurationSeconds": 182.814,
+  "deletedImage": "missing alarm passed",
+  "oldTimestamp": "stale alarm passed",
+  "sceneFailure": "failed alarm passed",
+  "productionReportUntouched": true,
+  "injectedAlerts": [
+    {
+      "cell": "windows/login/light",
+      "kind": "missing",
+      "message": "待补"
+    },
+    {
+      "cell": "windows/sessions/light",
+      "kind": "stale",
+      "message": "超过 24 小时未更新或拍摄时间无效"
+    },
+    {
+      "cell": "windows/approval/dark",
+      "kind": "failed",
+      "message": "人为注入：该格定位失败"
+    }
+  ]
+}

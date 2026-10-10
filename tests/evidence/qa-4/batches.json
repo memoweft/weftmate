@@ -1,0 +1,231 @@
+{
+  "startedAt": "2026-10-09T23:11:26.098Z",
+  "batches": [
+    {
+      "name": "daily-synthetic",
+      "startedAt": "2026-10-09T23:11:26.101Z",
+      "args": [
+        "tests/evidence/qa-4/runners/daily.mjs",
+        "--faults",
+        "--restart",
+        "--slow-switch",
+        "--verify",
+        "--groups",
+        "7",
+        "--turns",
+        "6",
+        "--out",
+        "tests/evidence/qa-4/daily-synthetic"
+      ],
+      "pid": 46832,
+      "exitCode": 1,
+      "finishedAt": "2026-10-09T23:27:44.505Z"
+    },
+    {
+      "name": "daily-mimo",
+      "startedAt": "2026-10-09T23:27:44.505Z",
+      "args": [
+        "tests/evidence/qa-4/runners/daily.mjs",
+        "--model",
+        "mimo",
+        "--faults",
+        "--restart",
+        "--verify",
+        "--groups",
+        "3",
+        "--turns",
+        "5",
+        "--out",
+        "tests/evidence/qa-4/daily-mimo"
+      ],
+      "pid": 35912,
+      "exitCode": 1,
+      "finishedAt": "2026-10-09T23:30:27.808Z"
+    },
+    {
+      "name": "backfill",
+      "startedAt": "2026-10-09T23:30:27.809Z",
+      "args": [
+        "tests/evidence/qa-4/runners/daily.mjs",
+        "--backfill",
+        "--verify",
+        "--groups",
+        "3",
+        "--turns",
+        "2",
+        "--out",
+        "tests/evidence/qa-4/backfill"
+      ],
+      "pid": 44620,
+      "exitCode": 0,
+      "finishedAt": "2026-10-09T23:31:23.703Z"
+    },
+    {
+      "name": "wang-eight",
+      "startedAt": "2026-10-09T23:31:23.703Z",
+      "args": [
+        "tests/integration/m2-exit-desktop.mjs",
+        "--model",
+        "mimo",
+        "--eight-only",
+        "--recall-trace",
+        "--memory-core-source",
+        "C:/Temp/weftmate-mem-d-core/py/src",
+        "--lock-owner",
+        "QA-4",
+        "--out",
+        "tests/evidence/qa-4/wang-eight"
+      ],
+      "pid": 40916,
+      "exitCode": 0,
+      "finishedAt": "2026-10-09T23:34:57.933Z"
+    },
+    {
+      "name": "offline-transport-proof",
+      "startedAt": "2026-10-09T23:34:57.934Z",
+      "args": [
+        "tests/evidence/qa-4/runners/offline-transport-proof.mjs"
+      ],
+      "pid": 51160,
+      "exitCode": 0,
+      "finishedAt": "2026-10-09T23:35:00.869Z"
+    },
+    {
+      "name": "project-dialog",
+      "startedAt": "2026-10-09T23:35:00.870Z",
+      "args": [
+        "tests/evidence/qa-4/runners/project-dialog.mjs"
+      ],
+      "pid": 38576,
+      "exitCode": 0,
+      "finishedAt": "2026-10-09T23:35:12.544Z"
+    },
+    {
+      "name": "ia-3-main-chat",
+      "startedAt": "2026-10-09T23:35:12.545Z",
+      "args": [
+        "tests/evidence/qa-4/runners/ia-3-main-chat.mjs"
+      ],
+      "pid": 5476,
+      "exitCode": 0,
+      "finishedAt": "2026-10-09T23:37:31.634Z"
+    },
+    {
+      "name": "ia-3-controls",
+      "startedAt": "2026-10-09T23:37:31.634Z",
+      "args": [
+        "tests/evidence/qa-4/runners/ia-3-controls.mjs"
+      ],
+      "pid": 48868,
+      "exitCode": 0,
+      "finishedAt": "2026-10-09T23:37:47.769Z"
+    },
+    {
+      "name": "ux-2-sidebar-account",
+      "startedAt": "2026-10-09T23:37:47.769Z",
+      "args": [
+        "tests/evidence/qa-4/runners/ux-2-sidebar-account.mjs"
+      ],
+      "pid": 24524,
+      "exitCode": 1,
+      "finishedAt": "2026-10-09T23:38:03.676Z"
+    },
+    {
+      "name": "ux-3-composer-menu",
+      "startedAt": "2026-10-09T23:38:03.676Z",
+      "args": [
+        "tests/evidence/qa-4/runners/ux-3-composer-menu.mjs"
+      ],
+      "pid": 24856,
+      "exitCode": 0,
+      "finishedAt": "2026-10-09T23:38:21.019Z"
+    },
+    {
+      "name": "stream-timeout",
+      "startedAt": "2026-10-09T23:38:21.019Z",
+      "args": [
+        "--test",
+        "tests/integration/model-stream-timeout.ts"
+      ],
+      "pid": 43852,
+      "exitCode": 0,
+      "finishedAt": "2026-10-09T23:38:27.826Z"
+    },
+    {
+      "name": "motion",
+      "startedAt": "2026-10-09T23:38:27.827Z",
+      "args": [
+        "--test",
+        "tests/personal-desktop-motion.test.ts"
+      ],
+      "pid": 48936,
+      "exitCode": 0,
+      "finishedAt": "2026-10-09T23:39:40.606Z"
+    },
+    {
+      "name": "web-document",
+      "startedAt": "2026-10-09T23:39:40.607Z",
+      "args": [
+        "tests/evidence/qa-4/runners/m1.mjs",
+        "--mimo",
+        "--mimo-machine",
+        "--only",
+        "action-02-web-document",
+        "--memory-core-source",
+        "C:/Temp/weftmate-mem-d-core/py/src"
+      ],
+      "pid": 40704,
+      "exitCode": 1,
+      "finishedAt": "2026-10-09T23:39:41.105Z"
+    },
+    {
+      "name": "mobile-web",
+      "startedAt": "2026-10-09T23:39:41.106Z",
+      "args": [
+        "tests/evidence/qa-4/runners/android-all.mjs",
+        "--phase",
+        "mobile-web",
+        "--visual-smoke"
+      ],
+      "pid": 53856,
+      "exitCode": 1,
+      "finishedAt": "2026-10-09T23:40:28.080Z"
+    },
+    {
+      "name": "relay-phone",
+      "startedAt": "2026-10-09T23:40:28.080Z",
+      "args": [
+        "tests/evidence/qa-4/runners/relay-task.mjs",
+        "--phase",
+        "relay-phone",
+        "--visual-smoke"
+      ],
+      "pid": 54144,
+      "exitCode": 1,
+      "finishedAt": "2026-10-09T23:41:19.228Z"
+    },
+    {
+      "name": "build-installed",
+      "startedAt": "2026-10-09T23:41:19.229Z",
+      "args": [
+        "tests/evidence/qa-4/runners/build-installed.mjs"
+      ],
+      "pid": 48440,
+      "exitCode": 0,
+      "finishedAt": "2026-10-09T23:44:06.398Z"
+    },
+    {
+      "name": "migration",
+      "startedAt": "2026-10-09T23:44:06.399Z",
+      "args": [
+        "tests/evidence/qa-4/runners/migration.mjs",
+        "D:/AIProjects/WeftMate/Runtime/Backups/pre-upgrade-20261009b/personal-account-20260926",
+        ".local/qa-4/releases"
+      ],
+      "pid": 46344,
+      "exitCode": 0,
+      "finishedAt": "2026-10-09T23:53:28.843Z"
+    }
+  ],
+  "finishedAt": "2026-10-09T23:53:28.844Z"
+}

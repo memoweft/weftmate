@@ -1,0 +1,4 @@
+import {registerHooks} from 'node:module';
+import {readFileSync} from 'node:fs';
+registerHooks({load(url,context,next){if(url.endsWith('/src/personal-relay/index.mjs')){const source=readFileSync(new URL(url),'utf8').replace('return { binary: env.WEFTMATE_FRPC_FILE,','return { connectAddress: "127.0.0.1", connectPort: Number(env.QA3_RELAY_PORT), binary: env.WEFTMATE_FRPC_FILE,');return {format:'module',source,shortCircuit:true};}return next(url,context);}});
+await import('../../../../tests/integration/personal-baseline-bootstrap.mjs');

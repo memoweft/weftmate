@@ -9,6 +9,8 @@ contextBridge.exposeInMainWorld('weftmateDesktop', {
   setUpdateChannel: channel => ipcRenderer.invoke('wm:desktop:update-channel', channel),
   restartForUpdate: () => ipcRenderer.invoke('wm:desktop:update-restart'),
   openLogs: () => ipcRenderer.invoke('wm:desktop:open-logs'),
+  notificationPermission: () => ipcRenderer.invoke('wm:desktop:notification-permission'),
+  openNotificationSettings: () => ipcRenderer.invoke('wm:desktop:notification-settings'),
   settings: () => ipcRenderer.invoke('wm:desktop:settings'),
   pickProjectFolder: () => ipcRenderer.invoke('wm:desktop:project-folder'),
   identity: () => ipcRenderer.invoke('wm:desktop:identity'),

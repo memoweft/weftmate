@@ -43,7 +43,7 @@ const files = new Map([
   ['/personal/v1/ui/components/schedules.js', ['components/schedules.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/components/usage.js', ['components/usage.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/usage.css', ['usage.css', 'text/css; charset=utf-8']],
-  ...['components/question-bar.js', 'components/personalization.js', 'components/settings-controls.js', 'components/settings-navigation.js'].map(name => [`/personal/v1/ui/${name}`, [name, 'text/javascript; charset=utf-8']]),
+  ...['components/notifications.js', 'components/question-bar.js', 'components/personalization.js', 'components/settings-controls.js', 'components/settings-navigation.js'].map(name => [`/personal/v1/ui/${name}`, [name, 'text/javascript; charset=utf-8']]),
   ['/personal/v1/ui/personalization.css', ['personalization.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/settings.css', ['settings.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/components/settings.js', ['components/settings.js', 'text/javascript; charset=utf-8']],
