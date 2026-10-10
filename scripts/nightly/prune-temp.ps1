@@ -23,10 +23,17 @@ foreach ($root in $Roots) {
         $total++
         if ($worktrees | Where-Object { $_ -ieq $dir.FullName }) { $worktree++; continue }
         if ($dir.CreationTime -ge $cutoff -or $dir.LastWriteTime -ge $cutoff) { $recent++; continue }
-        $forward = $dir.FullName -replace '\\', '/'
-        if ($commandLines.IndexOf($dir.FullName, [StringComparison]::OrdinalIgnoreCase) -ge 0 -or
-            $commandLines.IndexOf($forward, [StringComparison]::OrdinalIgnoreCase) -ge 0) { $inUse++; continue }
-        $selected += @{ directory = $dir; root = [IO.Path]::GetFullPath($root) }
+        # PowerShell expands Windows 8.3 components during enumeration, while
+        # a process can still name this directory through the supplied TEMP root.
+        $references = @($dir.FullName, (Join-Path $root $dir.Name))
+        $used = $false
+        foreach ($reference in $references) {
+            $forward = $reference -replace '\\', '/'
+            if ($commandLines.IndexOf($reference, [StringComparison]::OrdinalIgnoreCase) -ge 0 -or
+                $commandLines.IndexOf($forward, [StringComparison]::OrdinalIgnoreCase) -ge 0) { $used = $true; break }
+        }
+        if ($used) { $inUse++; continue }
+        $selected += @{ directory = $dir; root = [IO.Path]::GetFullPath((Get-Item -LiteralPath $root).FullName) }
     }
 }
 $deleted = 0; $failed = 0

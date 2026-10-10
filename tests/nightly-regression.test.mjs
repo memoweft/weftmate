@@ -126,7 +126,9 @@ test('synthetic artifact write is observed before exposing its task approval', a
 });
 
 test('temp pruning removes only stale unused weftmate-* directories and never follows a junction', { skip: process.platform !== 'win32' }, async () => {
-  const root = await realpath(await mkdtemp(join(tmpdir(), 'nightly-prune-root-')));
+  // Keep the caller's spelling of TEMP: the script must protect active roots
+  // even when Windows enumerates a different (expanded 8.3) spelling.
+  const root = await mkdtemp(join(tmpdir(), 'nightly-prune-root-'));
   const outside = await realpath(await mkdtemp(join(tmpdir(), 'nightly-prune-outside-')));
   const script = join(process.cwd(), 'scripts/nightly/prune-temp.ps1');
   const ps = (command, options = {}) => execFileSync('pwsh', ['-NoProfile', '-Command', command], { encoding: 'utf8', ...options });
@@ -151,6 +153,15 @@ test('temp pruning removes only stale unused weftmate-* directories and never fo
     const run = extra => JSON.parse(execFileSync('pwsh', ['-NoProfile', '-File', script, '-Hours', '48', '-Roots', root, ...extra], { encoding: 'utf8' }).trim().split(/\r?\n/).pop());
     const preview = run([]);
     assert.deepEqual([preview.applied, preview.found, preview.selected, preview.deleted, preview.keptRecent, preview.keptInUse], [false, 3, 1, 0, 1, 1]);
+    // Reproduce the cloud's exact mismatch: the enumerator exposes a native
+    // path while CIM retains the supplied root alias. Keep the real holder
+    // above as the end-to-end in-use check; this harness isolates alias handling.
+    const alias = join(root, 'alias'), harness = join(root, 'alias-preview.ps1');
+    ps(`New-Item -ItemType Junction -Path '${alias}' -Target '${root}' | Out-Null`);
+    await writeFile(harness, `param($Script,$AliasRoot,$NativeRoot)\n$ErrorActionPreference='Stop'\nfunction Get-CimInstance { [pscustomobject]@{CommandLine="pwsh # $(Join-Path $AliasRoot 'weftmate-in-use')"} }\nfunction Get-ChildItem { param($LiteralPath,[switch]$Directory,$Filter,[switch]$Force,$ErrorAction) Microsoft.PowerShell.Management\\Get-ChildItem -LiteralPath $NativeRoot -Directory -Filter 'weftmate-*' -Force }\n& $Script -Roots $AliasRoot -Hours 48\n`);
+    const aliased = JSON.parse(execFileSync('pwsh', ['-NoProfile', '-File', harness, script, alias, root], {encoding:'utf8', windowsHide:true}).trim().split(/\r?\n/).pop());
+    assert.deepEqual([aliased.applied, aliased.found, aliased.selected, aliased.deleted, aliased.keptRecent, aliased.keptInUse], [false, 3, 1, 0, 1, 1]);
+    await rm(alias);
     await access(join(root, 'weftmate-old'));
     const applied = run(['-Apply']);
     assert.deepEqual([applied.applied, applied.selected, applied.deleted, applied.failed], [true, 1, 1, 0]);
