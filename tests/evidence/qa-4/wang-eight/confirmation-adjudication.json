@@ -1,0 +1,33 @@
+{
+  "rawReportUnmodified": true,
+  "originalAutomaticChecks": {
+    "03": {
+      "person": true,
+      "relationship": true,
+      "evaluation": true,
+      "decision": false,
+      "personSource": true,
+      "relationshipSource": true,
+      "evaluationSource": true,
+      "decisionSource": true
+    },
+    "04": {
+      "newSession": true,
+      "changedModel": true,
+      "completed": true,
+      "replyName": true,
+      "formalMemoryAdopted": false
+    }
+  },
+  "confirmedObjectId": "cognition-c26d1e25ed8346c0dcb93af69073fb678807fe6df6799917efd16098dd15b44f",
+  "storedText": "以后如果遇到需要组队打游戏或者相关的场景，我可以提醒用户找他。",
+  "formedBy": "confirmed",
+  "current": true,
+  "assistantProposalSource": true,
+  "userConfirmationSource": true,
+  "sameFormalObjectUsedAfterModelSwitch": true,
+  "actualReplyNamesPerson": true,
+  "reason": "Original regex requires 王小明 in stored object text; confirmed text uses 他 with the unambiguous named assistant proposal attached. Both formation and adoption are proven by the same durable object ID, not just a correct reply.",
+  "rawEightStepPassed": 6,
+  "evidenceAdjudicatedEightStepPassed": 8
+}

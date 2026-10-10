@@ -1,0 +1,1224 @@
+{
+  "startedAt": "2026-10-09T23:43:47.014Z",
+  "realCloudEntrypoint": "services/cloud/src/main.mjs",
+  "realElectronEntrypoint": ".",
+  "sourceCommit": "b64378a9d46b85d24c4f8ae8c9853006ae7784c9",
+  "phase": "relay-phone-final",
+  "baselineHost": false,
+  "steps": [
+    "Real cloud entrypoint health",
+    "Mobile registration, real file mail, sixty-second resend deadline and bundled legal reading",
+    "Real desktop approves the waiting phone and recipient imports trusted host delivery",
+    "Settings device directory sees real desktop, connects through hosts/connect and adopts real host session",
+    "Real cloud entrypoint health",
+    "Real desktop approves the waiting phone and recipient imports trusted host delivery"
+  ],
+  "cloudTransport": "WSL Ubuntu",
+  "visualChecks": [
+    {
+      "name": "login",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "login",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "waiting",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "waiting",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "devices",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "devices",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    }
+  ],
+  "httpErrors": [
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 401,
+      "code": "INVALID_CREDENTIALS"
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 404,
+      "code": "NOT_FOUND"
+    }
+  ],
+  "cookieDiagnostics": [
+    {
+      "name": "wm_cloud_interaction",
+      "domain": "127.0.0.1",
+      "path": "/personal/v1/cloud"
+    },
+    {
+      "name": "wm_cloud_interaction.sig",
+      "domain": "127.0.0.1",
+      "path": "/personal/v1/cloud"
+    },
+    {
+      "name": "wm_cloud_session",
+      "domain": "127.0.0.1",
+      "path": "/personal/v1/cloud"
+    },
+    {
+      "name": "wm_cloud_session.sig",
+      "domain": "127.0.0.1",
+      "path": "/personal/v1/cloud"
+    },
+    {
+      "name": "wm_personal_session",
+      "domain": "127.0.0.1",
+      "path": "/personal/v1"
+    }
+  ],
+  "relayProbe": {
+    "status": 200
+  },
+  "relay": {
+    "state": "online",
+    "realFrp": true,
+    "realHAProxy": true,
+    "syntheticCAOnly": true,
+    "cloudHTTPFixtureCookieTransport": "process cookie jar; cloud identity signatures and relay host requests unchanged",
+    "randomFrontPort": true,
+    "identity": "fresh real cloud login at exact registered relay origin; desktop approved relay browser",
+    "requests": [
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/tokens.css"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/styles.css"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/native-desktop.css"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/offline.css"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/usage.css"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/backup.css"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/settings.css"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/main-chat.css"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/composer-extras.css"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/popovers.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/conversation-scroll.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/store.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/offline.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/offline.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/auth.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/shell.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/settings.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/backup.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/account.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/memory.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/attachments.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/sessions.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/messages.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/approvals.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/tasks.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/questions.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/resources.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/phone.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/composer.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/timeline-model.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/subtasks.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/appearance.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/settings-registry.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/client.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/cloud-auth.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/cloud-account.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/usage.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/update.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/schedules.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/chat-window.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/main-chat.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/markup.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/layout.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/format-vendor.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/icons.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/motion.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/desktop.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/steps.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/artifacts.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/timeline.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/cloud-vendor.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/cloud-login.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/cloud-ui.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/native-desktop.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/context.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/auth.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/shell.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/composer.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/messages.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/resources.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/sessions.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/approvals.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/usage.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/schedules.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/settings.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/backup.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/settings-controls.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/settings-navigation.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/account.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/cloud-settings.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/memory.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/attachments.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/question-bar.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/questions.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/tasks.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/phone.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/main-chat.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/app.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/composer-subtasks.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/icons.svg"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/cloud/config"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/favicon.svg"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/brand/color-light.svg"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/auth/authorization"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/auth/login"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/auth/device/confirm"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/auth/authorization/resume"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/oidc/token"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/oidc/jwks"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/hosts/connect"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/oidc/token"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/oidc/jwks"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/auth/cloud-nonce"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/auth/cloud-session"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/devices"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/hosts/connect"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/auth/cloud-nonce"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/auth/cloud-session"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/cloud/devices/pending"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/models"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/settings/models"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats/chat-dff9036d-0e15-4c1e-ac71-2bd30ef72e60/events"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/sessions"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/projects"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/commands"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats/chat-dff9036d-0e15-4c1e-ac71-2bd30ef72e60/changes"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/usage"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/sync/events"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/cloud/devices/pending"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/tokens.css"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/styles.css"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/native-desktop.css"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/offline.css"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/usage.css"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/backup.css"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/settings.css"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/main-chat.css"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/composer-extras.css"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/popovers.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/conversation-scroll.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/store.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/offline.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/offline.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/auth.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/shell.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/settings.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/backup.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/account.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/memory.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/attachments.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/sessions.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/messages.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/approvals.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/tasks.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/questions.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/resources.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/phone.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/composer.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/timeline-model.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/subtasks.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/appearance.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/settings-registry.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/client.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/cloud-auth.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/cloud-account.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/usage.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/update.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/schedules.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/chat-window.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/ui-core/main-chat.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/markup.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/layout.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/format-vendor.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/icons.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/motion.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/desktop.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/steps.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/artifacts.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/timeline.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/cloud-vendor.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/cloud-login.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/cloud-ui.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/native-desktop.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/context.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/auth.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/shell.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/composer.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/messages.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/resources.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/sessions.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/approvals.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/usage.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/schedules.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/settings.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/backup.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/settings-controls.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/settings-navigation.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/account.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/cloud-settings.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/memory.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/attachments.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/question-bar.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/questions.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/tasks.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/phone.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/components/main-chat.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/app.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/composer-subtasks.js"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/icons.svg"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/cloud/config"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/hosts/connect"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/auth/cloud-nonce"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/favicon.svg"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/auth/cloud-session"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/cloud/devices/pending"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/models"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/settings/models"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/ui/brand/color-light.svg"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats/chat-dff9036d-0e15-4c1e-ac71-2bd30ef72e60/events"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/sessions"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/projects"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/commands"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats/chat-dff9036d-0e15-4c1e-ac71-2bd30ef72e60/changes"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/usage"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/sync/events"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/cloud/devices/pending"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/models"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/settings/models"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/sessions"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/projects"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/commands"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats/chat-dff9036d-0e15-4c1e-ac71-2bd30ef72e60/changes"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/usage"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/sync/events"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/models"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/settings/models"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/sessions"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/projects"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/commands"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats/chat-dff9036d-0e15-4c1e-ac71-2bd30ef72e60/changes"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/usage"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/sync/events"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/cloud/devices/pending"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/models"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/settings/models"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/sessions"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/projects"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/commands"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats/chat-dff9036d-0e15-4c1e-ac71-2bd30ef72e60/changes"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/usage"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/sync/events"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/status"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/models"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/settings/models"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/sessions"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/projects"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/commands"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats/chat-dff9036d-0e15-4c1e-ac71-2bd30ef72e60/changes"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/chats/main"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/usage"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/sync/events"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/cloud/devices/pending"
+      },
+      {
+        "host": "h-413aad4960167a193cc24a116c14f88f.hosts.example.com",
+        "path": "/personal/v1/offline/sync"
+      },
+      {
+        "host": "127.0.0.1",
+        "path": "/personal/v1/cloud/devices"
+      }
+    ]
+  },
+  "executionOwner": {
+    "executionAccount": true,
+    "session": "session-a69537b4-65e8-42d5-8451-4821e18a5c7c",
+    "approvalMode": {
+      "status": 200,
+      "body": {
+        "mode": "ask",
+        "allowedCategories": []
+      }
+    }
+  },
+  "passed": false,
+  "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'FX-9 手机办事', exact: true })\u001b[22m\n",
+  "pageErrors": [],
+  "failedRequests": [
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    }
+  ]
+}
