@@ -60,11 +60,11 @@ export function createActivity(context) {
           const afterSeq=context.accountState(ownerId).activity?.sources[sessionId]?.afterSeq??-1;
           const page=await context.callBackend(()=>context.backend.readEvents({ownerId,sessionId,afterSeq,limit:200}));
           if(!Array.isArray(page.events)||!Number.isSafeInteger(page.nextSeq)||page.nextSeq<afterSeq)throw failure('BACKEND_UNAVAILABLE',503);
-          await context.serial(()=>context.mutate(ownerId,next=>observeActivityEvents(next,sessionId,page.events.map(event=>context.publicHistoryEvent(ownerId,sessionId,event)),page.nextSeq,!context.backend.schedules),()=>{
+          if (page.nextSeq > afterSeq || page.events.length) await context.serial(()=>context.mutate(ownerId,next=>observeActivityEvents(next,sessionId,page.events.map(event=>context.publicHistoryEvent(ownerId,sessionId,event)),page.nextSeq,!context.backend.schedules),()=>{
             const live=context.accountState(ownerId);if(!live.sessions[sessionId]||live.sessions[sessionId].deleting||live.memoryCleanupPending||(live.activity?.generation??0)!==generation)throw failure('SOURCE_UNAVAILABLE',404);
           }));
           if(context.backend.schedules){const notices=await context.backend.schedules({ownerId,sessionId,action:'notifications'});
-            await context.serial(()=>context.mutate(ownerId,next=>{if(!next.sessions[sessionId]||next.sessions[sessionId].deleting||next.memoryCleanupPending||(next.activity?.generation??0)!==generation)return;
+            if (notices.items?.length) await context.serial(()=>context.mutate(ownerId,next=>{if(!next.sessions[sessionId]||next.sessions[sessionId].deleting||next.memoryCleanupPending||(next.activity?.generation??0)!==generation)return;
               for(const notice of notices.items??[]){if(Object.values(next.activity?.items??{}).some(row=>row.type==='reminder.triggered'&&row.source.sessionId===sessionId&&row.source.messageId===notice.messageId))continue;putActivity(next,`reminder:${sessionId}:${notice.messageId??notice.id}`,{at:notice.createdAt,type:'reminder.triggered',title:notice.kind==='task'?'定时任务触发':'提醒',summary:notice.text,
                 source:activitySource(next,sessionId,{messageId:notice.messageId,scheduleId:notice.id,...(Number.isSafeInteger(notice.seq)?{seq:notice.seq}:{})}),actions:[{kind:'open_chat',label:'打开对话',target:activitySource(next,sessionId,{messageId:notice.messageId,...(Number.isSafeInteger(notice.seq)?{seq:notice.seq}:{})})}],level:'important'});}
             }));}

@@ -3045,6 +3045,8 @@ async function bootstrap() {
     routeForProfile,
     listSessions: listSharedSessionsForReferenceGuard,
     resolveSession: resolveKnownSession,
+    sessionProfileId: sessionId => settingsMod.sessionModelBinding(sessionId),
+    sessionProfileIds: () => Object.fromEntries(Object.entries(settingsMod.snapshotSettings().sessionBindings ?? {}).map(([id,binding]) => [id,binding.profileId])),
     ensureKnownSession,
     gateway: stageOneGateway,
     queue: enqueueRouteMutation,

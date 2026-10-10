@@ -1,4 +1,5 @@
 import { resolve } from 'node:path';
+import { createHash } from 'node:crypto';
 import { createHistoryCache } from './history-cache.mjs';
 
 /** Read the native immutable log without cloning it or activating an agent.
@@ -6,6 +7,25 @@ import { createHistoryCache } from './history-cache.mjs';
  * persistence.inspect uses DSH's revision-aware prepared-session cache instead.
  */
 export function nativeTimelineLog(ctx, { cache = true } = {}) {
+  const index = new Map(), changed = new Map(); let initialized;
+  const summary = (session, prior = {}) => ({ ...prior, sessionId:session.id,
+    agentPreset:session.header.agentPreset, ...(session.header.origin ? {origin:session.header.origin} : {}),
+    ...(session.header.parentSession ? {parentSessionId:session.header.parentSession} : {}),
+    title:ctx.get('sessionTitle')?.get(session)?.title ?? prior.title ?? '新对话',
+    running:ctx.get('agents')?.get(session.id)?.status === 'running',
+    projections:ctx.get('sessionProjections')?.snapshot(session) ?? prior.projections });
+  ctx.on?.('session/created', session => { const row=summary(session);index.set(session.id,row);changed.set(session.id,row); });
+  ctx.on?.('session/disposed', session => { const row=index.get(session.id);if(row){row.running=false;changed.set(session.id,row);} });
+  const listSessions = async load => {
+    initialized ||= Promise.resolve().then(load).then(value => {
+      for (const row of value.items ?? []) index.set(row.sessionId,row);
+      for (const [id,row] of changed) row ? index.set(id,row) : index.delete(id);
+    }).catch(error => { initialized=null;throw error; });
+    await initialized;
+    const rows=[];
+    for (const [id,row] of index) { const live=ctx.get('sessions')?.get(id);rows.push(live ? summary(live,row) : row); }
+    return {items:rows};
+  };
   const read = async (sessionId) => {
     const live = ctx.get('sessions')?.get(sessionId)
     if (live) return live.events
@@ -13,14 +33,18 @@ export function nativeTimelineLog(ctx, { cache = true } = {}) {
     if (!persistence) throw Object.assign(new Error('session not found'), { code: 'session-not-found' })
     return (await persistence.inspect(sessionId)).events
   }
+  read.listSessions=listSessions;
+  read.removeSession=id=>{index.delete(id);changed.set(id,null);};
   const persistence = ctx.get('sessionPersistence');
   if (!cache || !persistence?.config?.root || !persistence.listSnapshots) return read;
   const history = createHistoryCache({ file: resolve(persistence.config.root, '..', 'weftmate-history.sqlite'), readNative: read,
     async source(id) {
       const live = ctx.get('sessions')?.get(id);
-      if (live) await ctx.sessions.flush(live);
-      const snapshot = (await persistence.listSnapshots()).find(row => row.header.id === id);
-      return snapshot ? { revision: String(snapshot.revision), ...(live ? { events: live.events } : {}) } : null;
+      const artifact = live ? {meta:live.header,events:live.events} : await persistence.inspect(id);
+      // Native inspection owns decoding/recovery. Hash this one immutable source
+      // instead of listing/stat-ing every stored session for each history page.
+      const revision=createHash('sha256').update(JSON.stringify(artifact)).digest('hex');
+      return {revision,events:artifact.events};
     } });
   read.historyPage = (id, options, project) => history.read(id, options, project);
   read.invalidate = id => history.invalidate(id);

@@ -195,6 +195,10 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get hashWork() { return hashWork; },
     set hashQueue(value) { hashQueue = value; },
     get hostOwner() { return hostOwner; },
+    executionAccountName: () => {
+      const name = rootState.accounts[executionOwnerId()]?.account?.displayName;
+      return typeof name === 'string' && !name.includes('@') ? name : '原账号';
+    },
     get interactionRequestIdUsed() { return interactionRequestIdUsed; },
     get json() { return json; },
     get localTurnState() { return localTurnState; },
@@ -267,6 +271,12 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get verifyToolResult() { return verifyToolResult; },
   };
   const sessions = createSessionOperations(context);
+  const readNativeEvents = backend.readEvents.bind(backend);
+  backend = { ...backend, async readEvents(input) {
+    const page = await readNativeEvents(input);
+    if (input.ownerId && Array.isArray(page?.events)) sessions.observe(input.ownerId,input.sessionId,page.events);
+    return page;
+  } };
   const chats = createChatOperations(context);
   const chatTimeline = createChatTimeline(context);
   const sideChats = createSideChats(context);
@@ -608,6 +618,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       const pendingSegment = account.chatIdentity.chats[account.chatIdentity.mainChatId].relay?.sessionId;
       for (const sessionId of new Set([...Object.keys(account.sessions), ...(pendingSegment ? [pendingSegment] : [])])) {
         const cleaned = await callBackend(() => backend.cleanupMemoryCopies({ sessionId, ownerId, sourceTexts, deleteConversationSnippets }));
+        sessions.invalidate(ownerId,sessionId);
         if (cleaned?.forgottenSeqs?.length) await serial(() => mutate(ownerId, next => {
           const session = next.sessions[sessionId];
           if (session) session.forgottenSeqs = [...new Set([...(session.forgottenSeqs ?? []), ...cleaned.forgottenSeqs])];
@@ -671,6 +682,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       temporaryChats.start();
       await memoryIngestion.start();
       activity.start();
+      for (const ownerId of Object.keys(rootState.accounts)) void sessions.initialize(ownerId);
       hostCloudIdentity?.start();
       hostRelay?.start(origin);
       for (const [ownerId, account] of Object.entries(rootState.accounts)) {
