@@ -6,6 +6,12 @@ import { join } from 'node:path';
 import { DshWebRuntime } from '../../../src/dsh-web-runtime.ts';
 import { createPersonalAccessBackend } from '../../../src/personal-access-backend.mjs';
 
+export function scenarioUserText(messages) {
+  return messages.filter(m => m.role === 'user').map(m => typeof m.content === 'string' ? m.content
+    : (m.content ?? []).filter(p => p.type === 'text').map(p => p.text).join(''))
+    .findLast(text => /^CI_R1_(?:FIRST_INPUT_|FILE_TASK)/.test(text)) ?? '';
+}
+
 export async function phoneRuntime(root, logs) {
   const project = join(root, 'project'); await mkdir(project);
   const input = join(project, 'input.txt'), output = join(project, 'result.txt');
@@ -16,9 +22,17 @@ export async function phoneRuntime(root, logs) {
     if (req.url !== '/v1/chat/completions') { res.writeHead(404).end(); return; }
     let raw = ''; req.on('data', chunk => raw += chunk);
     req.on('end', () => {
-      const body = JSON.parse(raw); requests.push(body);
-      const user = body.messages.findLast(m => m.role === 'user');
-      const isTask = JSON.stringify(user?.content).includes('CI_R1_FILE_TASK');
+      const body = JSON.parse(raw);
+      // Native title generation may share this provider. It is a separate,
+      // non-tool request and must not advance the scripted task or send count.
+      if (!body.tools?.length) {
+        const message = { role: 'assistant', content: '合成对话' };
+        res.setHeader('content-type', 'application/json');
+        res.end(JSON.stringify({ id: 'synthetic-title', object: 'chat.completion', choices: [{ index: 0, message, finish_reason: 'stop' }], usage: { prompt_tokens: 10, completion_tokens: 4, total_tokens: 14 } }));
+        return;
+      }
+      requests.push(body);
+      const isTask = scenarioUserText(body.messages).startsWith('CI_R1_FILE_TASK');
       const calls = body.messages.flatMap(m => m.tool_calls ?? []);
       const step = calls.filter(c => c.id.startsWith('ci-r1-')).length;
       const tools = [
@@ -53,6 +67,7 @@ export async function phoneRuntime(root, logs) {
       throw new Error('Unexpected native action: ' + request.action);
     },
     personalConversationContextHandler: request => host.getConversationContext(request),
+    personalScheduleHandler: request => host.handleScheduleRuntime(request),
     personalApprovalRuntimeClosedHandler: ({ runtimeId }) => host?.invalidateToolApprovals({ runtimeId, outcome: 'unavailable', reasonCode: 'RUNTIME_UNAVAILABLE' }),
     log: line => logs.push(line),
   });

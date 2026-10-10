@@ -9,7 +9,7 @@ import { relayFixture, waitFor } from './relay-fixture.mjs';
 import { registration, appDevice, control, refresh, proof } from './app-helpers.mjs';
 import { createPersonalAccessService } from '../../../src/personal-access/index.mjs';
 import { servePersonalAccessUi } from '../../../src/personal-access-ui/index.mjs';
-import { phoneRuntime } from './relay-phone-runtime.mjs';
+import { phoneRuntime, scenarioUserText } from './relay-phone-runtime.mjs';
 
 const pause = ms => new Promise(r => setTimeout(r, ms));
 test('Relay phone first input and file task', {
@@ -129,7 +129,7 @@ test('Relay phone first input and file task', {
       }, 'first send did not complete');
       const events = (await phoneApi(`/sessions/${session.sessionId}/events?limit=100`)).data.events;
       assert.equal(events.filter(e => e.type === 'user.message' && e.data?.text === text).length, 1, 'first input sent more than once');
-      assert.equal(runtime.requests.filter(r => JSON.stringify(r.messages.findLast(m => m.role === 'user')?.content).includes(text)).length, 1, 'model turn duplicated');
+      assert.equal(runtime.requests.filter(r => scenarioUserText(r.messages) === text).length, 1, 'model turn duplicated');
       report.switches.push({ iteration: i, sessionId: session.sessionId, historyDelayMs: 2000, delayedRequests: delayed.count, lostCharacters: 0, sends: 1 });
       delayed = null;
     }
@@ -163,7 +163,7 @@ test('Relay phone first input and file task', {
     const item = library.items.find(item => item.name === 'result.txt' || item.fileName === 'result.txt'); assert.ok(item, JSON.stringify(library));
     const preview = (await phoneApi(`/library/${item.id}/preview`)).data;
     assert.ok(JSON.stringify(preview).includes(runtime.content.trim()), 'relay library preview does not match disk readback');
-    const taskRequests = runtime.requests.filter(r => JSON.stringify(r.messages.findLast(m => m.role === 'user')?.content).includes('CI_R1_FILE_TASK'));
+    const taskRequests = runtime.requests.filter(r => scenarioUserText(r.messages).startsWith('CI_R1_FILE_TASK'));
     assert.equal(taskRequests.length, 4, 'read/write/readback/finish must run once each');
     assert.ok(taskRequests.at(-1).messages.filter(m => m.role === 'tool').some(m => JSON.stringify(m.content).includes(runtime.content.trim())), 'model did not read the native file result');
     assert.deepEqual(routeViolations, []); assert.deepEqual(pageErrors, []);
