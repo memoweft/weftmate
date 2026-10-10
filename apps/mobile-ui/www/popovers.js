@@ -211,7 +211,10 @@
     for (const entry of entries) {
       const item = document.createElement('button'); item.type = 'button';
       item.className = `session-menu-item${entry.danger ? ' danger' : ''}`;
-      item.textContent = entry.name; item.setAttribute('role', 'menuitem'); item.disabled = !!entry.disabled;
+      if (entry.icon) { item.append(globalThis.WeftIcons.create(entry.icon,16)); item.classList.add('session-menu-item-with-icon'); }
+      const label = document.createElement('span'); label.textContent = entry.name; item.append(label);
+      if (entry.description) { item.title = entry.description; const description = document.createElement('small'); description.className = 'session-menu-description'; description.textContent = entry.description; label.append(description); }
+      item.setAttribute('aria-label',entry.name); if(entry.description)item.setAttribute('aria-description',entry.description); item.setAttribute('role', 'menuitem'); item.disabled = !!entry.disabled;
       item.onclick = () => { close(); Promise.resolve().then(entry.action).catch(onError); }; box.append(item);
     }
     box.onkeydown = event => {
