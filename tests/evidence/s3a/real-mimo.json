@@ -1,0 +1,77 @@
+{
+  "realElectron": true,
+  "realAndroid": true,
+  "fixedDsh": true,
+  "model": "mimo-v2.6-flash",
+  "checks": [
+    "real-model-native-one-minute-reminder",
+    "living-background-real-native-reminder",
+    "host-decision-exact",
+    "single-native-notification-no-persistent-item",
+    "system-notification-click-opens-exact-activity"
+  ],
+  "activity": {
+    "id": "activity-a379f70f8e001214f7b54c6122b7af205111eb0f9e010b54f9b011d816c0e98c",
+    "type": "reminder.triggered",
+    "at": "2026-10-10T02:45:42.079Z",
+    "notification": {
+      "level": "important",
+      "type": "reminder.triggered",
+      "initiatedBy": "user",
+      "notify": true,
+      "sound": true,
+      "decision": "notify",
+      "reason": "allowed",
+      "decidedAt": "2026-10-10T02:45:42.253Z"
+    }
+  },
+  "schedule": {
+    "id": "schedule-1"
+  },
+  "usage": [
+    {
+      "completion_tokens": 21,
+      "prompt_tokens": 2140,
+      "total_tokens": 2161,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1536
+      }
+    },
+    {
+      "completion_tokens": 22,
+      "prompt_tokens": 2228,
+      "total_tokens": 2250,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 2112
+      }
+    },
+    {
+      "completion_tokens": 54,
+      "prompt_tokens": 2785,
+      "total_tokens": 2839,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 2048
+      }
+    },
+    {
+      "completion_tokens": 63,
+      "prompt_tokens": 2970,
+      "total_tokens": 3033,
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 2752
+      }
+    }
+  ]
+}

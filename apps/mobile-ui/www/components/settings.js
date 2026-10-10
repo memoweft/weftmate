@@ -46,7 +46,7 @@ function connectionLabel(){return {connected:'电脑连接正常',checking:'已�
 
 const mobileSettingsRegistry = WeftUiCore.settingsRegistry({
   archived: target => archivedSettingsPage(target),
-  notifications: target => {target.append(heading('通知'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftNotificationsView(uiCore,body,{permissionState:()=>call('notifications.state'),requestPermission:()=>call('notifications.requestPermission')})},
+  notifications: target => {target.append(heading('通知'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftNotificationsView(uiCore,body,{permissionState:()=>call('notifications.state'),requestPermission:()=>call('notifications.requestPermission'),openSettings:()=>call('notifications.openSettings'),openBatterySettings:()=>call('notifications.openBatterySettings'),poll:()=>call('notifications.poll')})},
   personalization: target => {target.append(heading('个性化'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftPersonalizationView(uiCore,body,'personalization')},
   assistant: target => {target.append(heading('助手'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftPersonalizationView(uiCore,body,'assistant')},
   general: target => generalSettingsPage(target), appearance: target => appearancePage(target),

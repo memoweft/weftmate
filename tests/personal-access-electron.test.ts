@@ -1,24 +1,37 @@
 import assert from 'node:assert/strict'
 import { spawn, type ChildProcess } from 'node:child_process'
-import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import test from 'node:test'
+import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../src/host-mode.mjs'
 
 const repository = fileURLToPath(new URL('../', import.meta.url))
 const launcher = join(repository, 'scripts', 'run-personal-host.mjs')
+
+function assertNoOwnedProcesses(profile: string) {
+  if (process.platform !== 'win32') return
+  const script = `$profile = '${profile.replaceAll("'", "''")}'; @(Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -and $_.Name -match '^(node|electron|python|python3)\\.exe$' -and $_.CommandLine -and $_.CommandLine.Contains($profile) } | Select-Object -ExpandProperty ProcessId) | ConvertTo-Json -Compress`
+  const processes = execFileSync('pwsh', ['-NoProfile', '-Command', script], { encoding: 'utf8' }).trim()
+  assert.ok(processes === '' || processes === '[]', 'no host, DSH or memory process may retain the isolated profile')
+}
 
 test('two local devices use the same attached empty session across a real Electron restart', { timeout: 120_000 }, async () => {
   const parent = mkdtempSync(join(tmpdir(), 'weftmate-access-electron-'))
   const profile = join(parent, 'profile')
   const processes: ChildProcess[] = []
+  const outputs = new Map<ChildProcess, () => string>()
   const launch = async () => {
+    const env = { ...process.env }
+    for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_|ELECTRON_RUN_AS_NODE)/.test(key)) delete env[key]
     const child = spawn(process.execPath, [launcher, '--user-data-dir', profile, '--access-port', '0'], {
-      cwd: repository, stdio: ['pipe', 'pipe', 'pipe'],
+      cwd: repository, env, stdio: ['pipe', 'pipe', 'pipe'],
     })
     processes.push(child)
     let output = ''
+    outputs.set(child, () => output)
     const listeners = new Set<() => void>()
     for (const stream of [child.stdout, child.stderr]) stream?.on('data', (chunk) => {
       output += String(chunk)
@@ -49,7 +62,7 @@ test('two local devices use the same attached empty session across a real Electr
       child.once('close', (code) => { clearTimeout(timer); resolve(code) })
     })
     child.stdin?.write('q\n')
-    assert.equal(await closed, 0)
+    assert.equal(await closed, 0, outputs.get(child)?.().slice(-4000))
   }
   const command = async (host: Awaited<ReturnType<typeof launch>>, value: object, pattern: RegExp) => {
     const start = host.output().length
@@ -98,8 +111,10 @@ test('two local devices use the same attached empty session across a real Electr
     await command(first, { action: 'device.revoke', deviceId: enrolledA[1] }, /revoked deviceId=/)
     assert.equal((await fetch(`${first.access}/personal/v1/status`, { headers: headersA })).status, 401)
     assert.equal((await fetch(`${first.access}/personal/v1/status`, { headers: headersB })).status, 200)
-    await new Promise((resolve) => setTimeout(resolve, 1_000)) // rc.5 asynchronously persists an empty session.
+    // Quit immediately: native DSH disposal must drain the write-behind session.
     await stop(first.child)
+    assert.equal(first.output().includes('native shutdown timed out'), false, 'native persistence must confirm before process-tree cleanup')
+    assertNoOwnedProcesses(profile)
 
     const second = await launch()
     assert.equal((await fetch(`${second.access}/personal/v1/status`, { headers: headersA })).status, 401)
@@ -111,6 +126,9 @@ test('two local devices use the same attached empty session across a real Electr
     await stop(second.child)
     const state = JSON.parse(readFileSync(join(profile, 'dsh-home', 'weftmate-host-state.json'), 'utf8'))
     assert.deepEqual(state.personalAccess, { enabled: true, state: 'stopped', origin: null })
+    assert.equal(state.runtime.state, 'stopped')
+    assert.equal(existsSync(join(profile, 'dsh-home', 'weftmate-host-state.json.tmp')), false)
+    assertNoOwnedProcesses(profile)
   } finally {
     for (const child of processes) {
       if (child.exitCode === null && child.signalCode === null) {
@@ -119,7 +137,55 @@ test('two local devices use the same attached empty session across a real Electr
     }
     if (processes.every((child) => child.exitCode !== null || child.signalCode !== null)
       && existsSync(parent) && dirname(realpathSync(parent)) === realpathSync(tmpdir())) {
-      rmSync(parent, { recursive: true, force: true })
+      rmSync(parent, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
     }
+  }
+})
+
+test('window close stays in tray and tray exit drains the final Electron snapshot', { timeout: 60_000 }, async () => {
+  const { _electron } = await import('playwright')
+  const profile = mkdtempSync(join(tmpdir(), 'weftmate-tray-exit-'))
+  writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT))
+  const env = { ...process.env }
+  for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_|ELECTRON_RUN_AS_NODE)/.test(key)) delete env[key]
+  let application: Awaited<ReturnType<typeof _electron.launch>> | undefined
+  try {
+    application = await _electron.launch({ args: ['.', `--user-data-dir=${profile}`, '--personal-host', '--access-port=0'], cwd: repository, env })
+    const page = await application.firstWindow()
+    await page.waitForURL(/\/personal\/v1\/ui(?:\/|#|$)/)
+    const child = application.process()
+    await application.evaluate(({ Tray }) => {
+      const original = Tray.prototype.setContextMenu
+      Tray.prototype.setContextMenu = function (menu) {
+        ;(globalThis as any).maint1TrayMenu = menu
+        return original.call(this, menu)
+      }
+    })
+    const closed = new Promise<void>(resolve => child.once('close', () => resolve()))
+    await application.evaluate(({ BrowserWindow }) => {
+      const window = BrowserWindow.getAllWindows().find(window => window.getTitle() === 'WeftMate')!
+      window.close()
+      if (window.isDestroyed() || window.isVisible()) throw new Error('window close must hide to tray')
+    })
+    const stateFile = join(profile, 'dsh-home', 'weftmate-host-state.json')
+    assert.equal(JSON.parse(readFileSync(stateFile, 'utf8')).personalAccess.state, 'listening')
+    // Exercise the actual tray menu callback, including isQuitting and before-quit.
+    await application.evaluate(async () => {
+      // The desktop status poll refreshes the real tray menu every second.
+      for (let i = 0; i < 50 && !(globalThis as any).maint1TrayMenu; i++) await new Promise(resolve => setTimeout(resolve, 100))
+      const exit = (globalThis as any).maint1TrayMenu?.items.find((item: any) => item.label === '退出')
+      if (!exit) throw new Error('real tray exit callback was not captured')
+      setTimeout(() => { exit.click(); exit.click() }, 0)
+    })
+    await closed
+    assert.equal(child.exitCode, 0)
+    application = undefined
+    assert.deepEqual(JSON.parse(readFileSync(stateFile, 'utf8')).personalAccess, { enabled: true, state: 'stopped', origin: null })
+    assert.equal(existsSync(`${stateFile}.tmp`), false)
+    assert.equal(readdirSync(join(profile, 'dsh-home', 'profiles', 'weftmate')).some(file => file.startsWith('.weftmate-secure-snapshot-')), false)
+    assertNoOwnedProcesses(profile)
+  } finally {
+    await application?.close()
+    rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
   }
 })
