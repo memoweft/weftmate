@@ -75,7 +75,6 @@ const mobileMarkup = String.raw`
             <span id="attachment-pick-label"></span>
             <button id="attachment-pick-cancel" type="button">取消等待</button>
           </div>
-          <div id="chat-status" class="chat-status" role="status"></div>
         </div>
         <div id="model-popover" class="popover" hidden><h3>选择模型</h3><div id="model-options"></div><button data-page="models">配置自定义模型</button></div>
         <div id="attachment-popover" class="popover attachment-popover" role="menu" aria-label="添加附件" hidden>

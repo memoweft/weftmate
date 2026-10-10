@@ -152,10 +152,13 @@
       copyButton.setAttribute('aria-label', event.type === 'user.message' ? '复制消息' : '复制回复'); bar.append(copyButton);
       if (event.type === 'user.message') {
         copyButton.replaceWith(button('复制消息','copy',()=>void guarded(()=>copyMessage('plain'))));
-        const time=el('time','message-time');time.dateTime=new Date(event.at || event.time || event.createdAt || Date.now()).toISOString();bar.prepend(time);
+        const time=el('time','message-time'), recorded=new Date(event.at || event.time || event.createdAt || NaN);
+        if (Number.isFinite(recorded.getTime())) time.dateTime=recorded.toISOString();
+        else time.textContent='时间未记录';
+        bar.prepend(time);
         const captured=identity();
         const stamp = zone => {
-          if (identity() !== captured) return;
+          if (identity() !== captured || !time.dateTime) return;
           const date=new Date(time.dateTime), today=new Date();
           const day=value=>new Intl.DateTimeFormat('en-CA',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit'}).format(value);
           time.textContent=new Intl.DateTimeFormat('zh-CN',{timeZone:zone,hour:'numeric',minute:'2-digit',hourCycle:'h23',...(day(date)===day(today)?{}:{year:'numeric',month:'numeric',day:'numeric'})}).format(date);

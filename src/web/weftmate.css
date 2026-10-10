@@ -57,7 +57,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .approval div{display:flex;gap:6px;flex:none}
 .composer{width:min(840px,calc(100% - 48px));margin:0 auto 18px;border:1px solid var(--line);border-radius:15px;background:var(--raised);box-shadow:var(--shadow);padding:10px;transition:border-color var(--ease),background var(--ease),box-shadow var(--ease)}
 .composer:focus-within{border-color:var(--focus)}
-.composer textarea{width:100%;min-height:48px;max-height:180px;resize:vertical;color:var(--text);background:transparent;border:0;outline:0;padding:3px;font-size:15px;line-height:1.5}
+.composer textarea{width:100%;min-height:48px;max-height:180px;resize:none;overflow:auto;color:var(--text);background:transparent;border:0;outline:0;padding:3px;font-size:15px;line-height:1.5}
 .composer textarea::placeholder{color:var(--faint)}
 .composer-footer{display:flex;align-items:center;gap:6px;padding-top:7px;border-top:1px solid var(--line)}
 .composer-model{color:var(--muted);font-size:12px;padding-left:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

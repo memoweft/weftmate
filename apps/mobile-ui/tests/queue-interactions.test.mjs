@@ -17,6 +17,7 @@ test('UI-3m named controls preserve intent, edit/cancel races and latest output 
       const fixture=window.fixture={requests:[],mode:'auto',race:false,events:[{seq:1,type:'task.started',data:{taskId:'cmd-root',text:'当前任务'}}],next:2};
       window.weftNative={postMessage(json){const request=JSON.parse(json);fixture.requests.push(request);const {method,params}=request;let result={},error;
         if(method==='app.bootstrap')result={loggedIn:false};
+        if(method==='models.host')result={models:[{profileId:'synthetic',displayName:'合成模型',configured:true}]};
         if(method==='settings.appearance')result={value:'light'};
         if(method==='attachments.list')result={attachments:[]};
         if(method==='shared.outbox.list')result={source:'host',commands:[]};

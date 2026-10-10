@@ -50,10 +50,10 @@ try{
   const output=p.getByRole('button',{name:new RegExp(artifact.fileName)}).filter({visible:true});if(await output.count()){await output.first().click();await capture(p,'electron-480',t,'output-preview');await p.keyboard.press('Escape');}await p.keyboard.press('Escape');}
  browser=await chromium.launch({channel:'chrome',headless:true});
  for(const size of [{width:360,height:780},{width:390,height:844}]){
-  const page=await browser.newPage({viewport:size,isMobile:true,hasTouch:true});page.setDefaultTimeout(12000);page.on('pageerror',e=>errors.push(e.message));await page.goto(f.mobileUrl);await page.waitForFunction(()=>state.booted);await page.getByRole('button',{name:'打开导航',exact:true}).click();await page.getByRole('button',{name:/^项目进度报告/}).last().click();await page.evaluate(()=>closeDrawer());
-  for(const t of ['light','dark']){await page.evaluate(t=>applyTheme(t),t);const s='android-bundle-'+size.width;
+  const page=await browser.newPage({viewport:size,isMobile:true,hasTouch:true});page.setDefaultTimeout(12000);page.on('pageerror',e=>errors.push(e.message));await page.route('**/bridge',async r=>{const input=r.request().postDataJSON();if(input.method==='host.status')return r.fulfill({json:{result:await f.request('/status')}});await r.fallback();});await page.goto(f.mobileUrl);await page.waitForFunction(()=>state.booted);await page.evaluate(async id=>{await selectSharedSession(id);closeDrawer()},f.sessionId);
+  for(const t of ['light','dark']){await page.evaluate(async id=>{await selectSharedSession(id);page('chat');closeDrawer()},f.sessionId);await page.evaluate(t=>applyTheme(t),t);const s='android-bundle-'+size.width;
    await capture(page,s,t,'side-completed');await b(page,'添加图片或文件').click();await capture(page,s,t,'attachment-menu');await page.keyboard.press('Escape');
-   await page.evaluate(()=>page('activity'));await capture(page,s,t,'activity');
+   await page.evaluate(()=>page('activity'));await capture(page,s,t,'activity');await page.evaluate(()=>page('goals'));await wait(200);await capture(page,s,t,'goals');
    await page.evaluate(()=>page('things'));await capture(page,s,t,'things');
    await page.evaluate(()=>page('home'));await capture(page,s,t,'projects-list');
    await page.evaluate(()=>{page('chat');state.sharedHostAvailable=false;updateComposer();status('电脑离线，只能聊天和使用记忆。',true)});await capture(page,s,t,'computer-offline','电脑离线');

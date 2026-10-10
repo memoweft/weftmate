@@ -170,7 +170,10 @@
       if (goalsControl) selected?.scrollIntoView({block:'nearest'});
     }
     trigger.onclick = () => menu.hidden ? open() : close(true);
-    trigger.onkeydown = event => { if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) { event.preventDefault(); open(event.key === 'ArrowUp'); } };
+    trigger.onkeydown = event => {
+      if (event.key === 'Escape' && !menu.hidden) { event.preventDefault(); event.stopPropagation(); close(true); return; }
+      if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) { event.preventDefault(); open(event.key === 'ArrowUp'); }
+    };
     menu.onkeydown = event => {
       if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(true); }
       if (event.key === 'Tab') { close(); trigger.focus(); }
@@ -196,12 +199,13 @@
     const bind = () => document.querySelectorAll('select').forEach(bindSettingsSelect);
     bind(); new MutationObserver(records => { if (records.some(record => [...record.addedNodes].some(node => node.matches?.('select') || node.querySelector?.('select')))) bind(); }).observe(document.body, { childList: true, subtree: true });
   });
-  function openMenu(trigger, entries, { label = trigger.getAttribute('aria-label'), onClose } = {}) {
+  function openMenu(trigger, entries, { label = trigger.getAttribute('aria-label'), onClose, onSelect } = {}) {
     const menu = document.createElement('div'); menu.className = 'wm-menu';
     menu.setAttribute('role', 'menu'); menu.setAttribute('aria-label', label || '操作');
     let child, closed = false;
     const close = (focus = true) => {
       if (closed) return; closed = true; child?.close(false);
+      active.get(menu)?.observer?.disconnect(); active.delete(menu);
       document.removeEventListener('pointerdown', outside); menu.remove();
       trigger.setAttribute('aria-expanded', 'false'); onClose?.();
       if (focus && trigger.isConnected) trigger.focus({preventScroll:true});
@@ -220,8 +224,8 @@
       const activate = async () => {
         if (entry.children) {
           child?.close(false); const values=await entry.children(); if (closed || !item.isConnected) return;
-          child=openMenu(item,values,{label:entry.name}); item.setAttribute('aria-expanded','true');
-        } else { close(false); await entry.action?.(item); }
+          child=openMenu(item,values,{label:entry.name,onSelect:()=>{close();onSelect?.();}}); item.setAttribute('aria-expanded','true');
+        } else { close(); onSelect?.(); await entry.action?.(item); }
       };
       item.addEventListener('click', () => void activate());
       item.addEventListener('keydown', event => {if (entry.children && event.key==='ArrowRight') {event.preventDefault();void activate();}});
