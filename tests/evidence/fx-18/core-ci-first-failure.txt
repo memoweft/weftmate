@@ -1,0 +1,24 @@
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	﻿2026-10-10T07:50:31.1776195Z ##[group]Run uv run mypy --strict src tests
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-10T07:50:31.1776606Z ^[[36;1muv run mypy --strict src tests^[[0m
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-10T07:50:31.1841027Z shell: /usr/bin/bash -e {0}
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-10T07:50:31.1841313Z env:
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-10T07:50:31.1841606Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-10T07:50:31.1841964Z   UV_PYTHON: 3.11
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-10T07:50:31.1842240Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-10T07:50:31.1842554Z ##[endgroup]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-10T07:50:38.0123966Z tests/test_formation_restart.py:21: error: Function is missing a return type annotation  [no-untyped-def]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-10T07:50:38.0125294Z tests/test_formation_restart.py:40: error: Module has no attribute "_base_executable"  [attr-defined]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-10T07:50:38.0126314Z tests/test_formation_restart.py:43: error: Item "None" of "IO[Any] | None" has no attribute "readline"  [union-attr]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-10T07:50:38.0127480Z tests/test_formation_restart.py:48: error: Item "None" of "IO[Any] | None" has no attribute "close"  [union-attr]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-10T07:50:38.0128849Z tests/test_formation_restart.py:50: error: Returning Any from function declared to return "str"  [no-any-return]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-10T07:50:38.0130140Z tests/test_formation_restart.py:54: error: Function is missing a return type annotation  [no-untyped-def]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-10T07:50:38.0131578Z tests/test_formation_restart.py:72: error: Function is missing a return type annotation  [no-untyped-def]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-10T07:50:38.0132363Z tests/test_formation_restart.py:94: error: Function is missing a return type annotation  [no-untyped-def]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-10T07:50:38.0133126Z tests/test_formation_restart.py:105: error: Function is missing a type annotation  [no-untyped-def]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-10T07:50:38.0133859Z tests/test_formation_restart.py:114: error: Function is missing a type annotation  [no-untyped-def]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-10T07:50:38.0134650Z tests/test_formation_restart.py:142: error: Function is missing a return type annotation  [no-untyped-def]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-10T07:50:38.0135363Z tests/test_formation_restart.py:156: error: Function is missing a return type annotation  [no-untyped-def]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-10T07:50:38.0136038Z tests/test_formation_restart.py:159: error: Module has no attribute "_base_executable"  [attr-defined]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-10T07:50:38.0136716Z tests/test_formation_restart.py:170: error: Function is missing a return type annotation  [no-untyped-def]
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-10T07:50:39.9003944Z Found 14 errors in 1 file (checked 222 source files)
+Python parity (uv · pytest + mypy)	Types (mypy --strict)	2026-10-10T07:50:39.9219862Z ##[error]Process completed with exit code 1.

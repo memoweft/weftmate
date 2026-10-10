@@ -1,0 +1,170 @@
+{
+  "memory": [
+    {
+      "run": "exit-matrix",
+      "jobCount": 36,
+      "evidenceCount": 36,
+      "cognitionCount": 36,
+      "duplicateSources": 0,
+      "duplicateBoundaries": 0,
+      "jobStates": {
+        "applied": 36
+      },
+      "formationLastUserQuotes": [
+        {
+          "method": "tray",
+          "attempt": 1,
+          "retained": true
+        },
+        {
+          "method": "tray",
+          "attempt": 2,
+          "retained": true
+        },
+        {
+          "method": "tray",
+          "attempt": 3,
+          "retained": true
+        },
+        {
+          "method": "task-manager-force",
+          "attempt": 1,
+          "retained": true
+        },
+        {
+          "method": "task-manager-force",
+          "attempt": 2,
+          "retained": true
+        },
+        {
+          "method": "task-manager-force",
+          "attempt": 3,
+          "retained": true
+        },
+        {
+          "method": "logout-taskkill",
+          "attempt": 1,
+          "retained": true
+        },
+        {
+          "method": "logout-taskkill",
+          "attempt": 2,
+          "retained": true
+        },
+        {
+          "method": "logout-taskkill",
+          "attempt": 3,
+          "retained": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "run": "exit-formation-final",
+      "jobCount": 18,
+      "evidenceCount": 18,
+      "cognitionCount": 18,
+      "duplicateSources": 0,
+      "duplicateBoundaries": 0,
+      "jobStates": {
+        "applied": 18
+      },
+      "formationLastUserQuotes": [
+        {
+          "method": "tray",
+          "attempt": 1,
+          "retained": true
+        },
+        {
+          "method": "tray",
+          "attempt": 2,
+          "retained": true
+        },
+        {
+          "method": "tray",
+          "attempt": 3,
+          "retained": true
+        },
+        {
+          "method": "task-manager-force",
+          "attempt": 1,
+          "retained": true
+        },
+        {
+          "method": "task-manager-force",
+          "attempt": 2,
+          "retained": true
+        },
+        {
+          "method": "task-manager-force",
+          "attempt": 3,
+          "retained": true
+        },
+        {
+          "method": "logout-taskkill",
+          "attempt": 1,
+          "retained": true
+        },
+        {
+          "method": "logout-taskkill",
+          "attempt": 2,
+          "retained": true
+        },
+        {
+          "method": "logout-taskkill",
+          "attempt": 3,
+          "retained": true
+        }
+      ],
+      "passed": true
+    }
+  ],
+  "streamingMessages": [
+    {
+      "method": "tray",
+      "attempt": 1,
+      "retained": true
+    },
+    {
+      "method": "tray",
+      "attempt": 2,
+      "retained": true
+    },
+    {
+      "method": "tray",
+      "attempt": 3,
+      "retained": false
+    },
+    {
+      "method": "task-manager-force",
+      "attempt": 1,
+      "retained": true
+    },
+    {
+      "method": "task-manager-force",
+      "attempt": 2,
+      "retained": true
+    },
+    {
+      "method": "task-manager-force",
+      "attempt": 3,
+      "retained": true
+    },
+    {
+      "method": "logout-taskkill",
+      "attempt": 1,
+      "retained": true
+    },
+    {
+      "method": "logout-taskkill",
+      "attempt": 2,
+      "retained": true
+    },
+    {
+      "method": "logout-taskkill",
+      "attempt": 3,
+      "retained": true
+    }
+  ],
+  "passed": false
+}
