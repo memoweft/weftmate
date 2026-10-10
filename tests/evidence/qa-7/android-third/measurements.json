@@ -1,0 +1,257 @@
+{
+  "fixture": "Real local native auth and host business calls; app.bootstrap cloudApp=false selects the local-account UI lifecycle; UI owner uses the real offline.identity ownerId to avoid mixing Kotlin storage scope with API owner identity. Cloud login not covered.",
+  "rows": [
+    {
+      "file": "main-light.png",
+      "scene": "main",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "light",
+        "viewport": {
+          "width": 565,
+          "height": 1005,
+          "dpr": 1.274999976158142
+        },
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 810.183837890625,
+          "width": 565.490234375,
+          "height": 194.52206420898438,
+          "top": 810.183837890625,
+          "right": 565.490234375,
+          "bottom": 1004.7059020996094,
+          "left": 0
+        },
+        "search": [],
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "text": "WeftMate",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "class": "mobile-session-status",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "bodyHeight": 1005
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          254.72413793103448,
+          254.72413793103448,
+          254.72413793103448
+        ],
+        "header": [
+          253,
+          253,
+          253
+        ],
+        "delta": 1.7241379310344769,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "drawer-status-dots-light.png",
+      "scene": "drawer-status-dots",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "light",
+        "viewport": {
+          "width": 565,
+          "height": 1005,
+          "dpr": 1.274999976158142
+        },
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 810.183837890625,
+          "width": 565.490234375,
+          "height": 194.52206420898438,
+          "top": 810.183837890625,
+          "right": 565.490234375,
+          "bottom": 1004.7059020996094,
+          "left": 0
+        },
+        "search": [],
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "text": "WeftMate",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "class": "mobile-session-status",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "bodyHeight": 1005
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          164.82758620689654,
+          167.82758620689654,
+          173.82758620689654
+        ],
+        "header": [
+          164,
+          167,
+          173
+        ],
+        "delta": 0.8275862068965409,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "data-storage-light.png",
+      "scene": "data-storage",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "light",
+        "viewport": {
+          "width": 565,
+          "height": 1005,
+          "dpr": 1.274999976158142
+        },
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "search": [],
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "text": "WeftMate",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "class": "mobile-session-status",
+            "text": "",
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "bodyHeight": 1005
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    }
+  ],
+  "errors": [
+    {
+      "scene": "search",
+      "theme": "light",
+      "error": "locator.click: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#mobile-search-entry')\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-label=\"搜索\" class=\"search-entry\" aria-haspopup=\"dialog\" id=\"mobile-search-entry\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    23 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n"
+    },
+    {
+      "scene": "more",
+      "theme": "light",
+      "error": "locator.click: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#conversation-more')\u001b[22m\n\u001b[2m    - locator resolved to <button aria-label=\"对话操作\" class=\"icon-button\" aria-haspopup=\"menu\" id=\"conversation-more\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    23 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n"
+    },
+    {
+      "fatal": "locator.click: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#draft')\u001b[22m\n\u001b[2m    - locator resolved to <textarea rows=\"1\" disabled id=\"draft\" aria-label=\"输入消息\" placeholder=\"这段会话仅可查看\"></textarea>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not stable\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    4 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n\u001b[2m    19 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n"
+    }
+  ]
+}

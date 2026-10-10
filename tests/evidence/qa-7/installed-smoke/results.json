@@ -1,0 +1,176 @@
+{
+  "synthetic": true,
+  "realMain": true,
+  "pinnedDsh": true,
+  "realInstall": false,
+  "checks": [
+    "fresh-main-created-and-replied",
+    "native-folder-picker-substitute-registered-project",
+    "native-project-read-and-approved-write",
+    "native-conversation-export-written",
+    "assistant-switch-size-and-save-toast"
+  ],
+  "packaged": {
+    "isPackaged": true,
+    "appPath": "C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-qa7-install-IVrul0\\Programs\\resources\\app.asar"
+  },
+  "folderCommands": [
+    {
+      "kind": "chat.message",
+      "state": "pending"
+    },
+    {
+      "kind": "chat.message",
+      "state": "pending"
+    },
+    {
+      "kind": "chat.message",
+      "state": "pending"
+    },
+    {
+      "kind": "chat.message",
+      "state": "accepted_by_dsh"
+    },
+    {
+      "kind": "session.side.create",
+      "state": "pending"
+    },
+    {
+      "kind": "session.side.create",
+      "state": "pending"
+    },
+    {
+      "kind": "session.side.create",
+      "state": "accepted_by_dsh"
+    },
+    {
+      "kind": "session.create",
+      "state": "pending"
+    },
+    {
+      "kind": "session.create",
+      "state": "pending"
+    },
+    {
+      "kind": "session.create",
+      "state": "pending"
+    },
+    {
+      "kind": "session.create",
+      "state": "pending"
+    },
+    {
+      "kind": "session.create",
+      "state": "accepted_by_dsh"
+    },
+    {
+      "kind": "session.message",
+      "state": "pending"
+    },
+    {
+      "kind": "session.message",
+      "state": "pending"
+    },
+    {
+      "kind": "session.message",
+      "state": "pending"
+    },
+    {
+      "kind": "session.message",
+      "state": "pending"
+    },
+    {
+      "kind": "session.message",
+      "state": "pending"
+    },
+    {
+      "kind": "session.message",
+      "state": "accepted_by_dsh"
+    }
+  ],
+  "main": {
+    "chatId": "chat-629f58de-ca83-4534-a4d3-22ca8a6f698e",
+    "sessionId": "session-bd06f98c-b185-45b8-a382-3c6ff98a809b",
+    "reply": "主对话首条消息成功，合成回复。"
+  },
+  "project": {
+    "name": "synthetic-project",
+    "permission": "read-only"
+  },
+  "approvals": [
+    "21b310a9-83c3-4562-86a1-1bb627393e01",
+    "2dbdb323-c37d-4762-b3bb-88756b1877c4"
+  ],
+  "readProof": true,
+  "switches": [
+    {
+      "width": 44,
+      "height": 26
+    },
+    {
+      "width": 44,
+      "height": 26
+    },
+    {
+      "width": 44,
+      "height": 26
+    },
+    {
+      "width": 44,
+      "height": 26
+    }
+  ],
+  "desktop480": {
+    "bottom": 759.3333740234375,
+    "height": 780,
+    "pageHeight": 780
+  },
+  "passed": true,
+  "modelCalls": [
+    {
+      "stream": true,
+      "toolResponses": []
+    },
+    {
+      "stream": true,
+      "toolResponses": []
+    },
+    {
+      "stream": true,
+      "toolResponses": [
+        {
+          "content": "{\"loaded\":[\"read\",\"write\"]}"
+        }
+      ]
+    },
+    {
+      "stream": true,
+      "toolResponses": [
+        {
+          "content": "{\"loaded\":[\"read\",\"write\"]}"
+        },
+        {
+          "content": "<path>C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-fx21-wVwBQl\\synthetic-project\\brief.md</path>\n<type>file</type>\n<content>\n1: FX21 synthetic project file\n\n(End of file - total 1 lines)\n</content>"
+        }
+      ]
+    },
+    {
+      "stream": true,
+      "toolResponses": [
+        {
+          "content": "{\"loaded\":[\"read\",\"write\"]}"
+        },
+        {
+          "content": "<path>C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-fx21-wVwBQl\\synthetic-project\\brief.md</path>\n<type>file</type>\n<content>\n1: FX21 synthetic project file\n\n(End of file - total 1 lines)\n</content>"
+        },
+        {
+          "content": "<path>C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-fx21-wVwBQl\\synthetic-project\\approved.md</path>\n<type>file</type>\n<content>\nCreated file\n</content>{\"artifact\":{\"taskId\":\"cmd-28a175d8-052d-4137-9356-0b4ea3384ba1\",\"artifactId\":\"artifact-9d68e9f6-da3c-4a18-84d1-258895af2c86\",\"fileName\":\"approved.md\",\"contentType\":\"text/plain; charset=utf-8\",\"size\":28,\"sha256\":\"ca1e3c188b81dba2447c0d51777b8ba76a6387668ed78fac6ab2b2cfdb18de43\",\"state\":\"observed\"},\"createdFilePath\":\"C:\\Users\\<user>\\\\AppData\\\\Local\\\\Temp\\\\weftmate-fx21-wVwBQl\\\\synthetic-project\\\\approved.md\"}"
+        }
+      ]
+    },
+    {
+      "stream": true,
+      "toolResponses": []
+    }
+  ]
+}

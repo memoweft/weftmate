@@ -1,0 +1,297 @@
+{
+  "/auth/login": {
+    "status": 200,
+    "body": {
+      "account": {
+        "username": "fx21-cffb8756-e38f-473d-b416-9cf648f4e82a",
+        "displayName": "fx21-cffb8756-e38f-473d-b416-9cf648f4e82a",
+        "avatar": null,
+        "profileRevision": 0,
+        "ownerId": "owner-17e929e8-39e6-447a-b023-b4647dd3cb9e"
+      },
+      "device": {
+        "id": "device-3328fd7a-4e24-4104-9ec0-fd8e7840aada",
+        "name": "FX21 synthetic desktop",
+        "expiresAt": "2026-11-09T16:39:26.537Z"
+      }
+    }
+  },
+  "/auth/me": {
+    "status": 200,
+    "body": {
+      "account": {
+        "username": "fx21-cffb8756-e38f-473d-b416-9cf648f4e82a",
+        "displayName": "fx21-cffb8756-e38f-473d-b416-9cf648f4e82a",
+        "avatar": null,
+        "profileRevision": 0,
+        "ownerId": "owner-17e929e8-39e6-447a-b023-b4647dd3cb9e"
+      },
+      "device": {
+        "id": "device-3328fd7a-4e24-4104-9ec0-fd8e7840aada",
+        "name": "FX21 synthetic desktop",
+        "expiresAt": "2026-11-09T16:39:26.537Z"
+      }
+    }
+  },
+  "/status": {
+    "status": 200,
+    "body": {
+      "state": "ready",
+      "origin": "http://127.0.0.1:63625",
+      "hostId": "host-766247ef-7d26-4bf4-b3b5-69c22e72bd1c",
+      "relay": {
+        "state": "disabled",
+        "baseUrl": null
+      },
+      "ownerId": "owner-17e929e8-39e6-447a-b023-b4647dd3cb9e",
+      "deviceCount": 3,
+      "hostName": "<host>",
+      "presence": {
+        "host": "online",
+        "bootId": "58294c92-1670-4222-9fca-a088ecf8a9cf",
+        "startedAt": "2026-10-10T16:39:21.655Z",
+        "authorization": "active",
+        "runtime": "ready",
+        "model": "available"
+      },
+      "personalCapabilities": {
+        "sessionStatus": 1,
+        "nextSuggestions": 1,
+        "library": 1,
+        "libraryPreview": 1,
+        "libraryDesktopActions": 1,
+        "taskOverview": 1,
+        "scheduleEditing": 1,
+        "goals": 1,
+        "activity": 1,
+        "activityChanges": 1,
+        "activityRead": 1,
+        "activityNotification": 1,
+        "notificationSettings": 1,
+        "pushRegistration": 1,
+        "temporaryChats": 1,
+        "chats": 1,
+        "chatTimeline": 1,
+        "chatSearch": 1,
+        "sideChats": 1,
+        "creationReceipt": 1,
+        "chatSend": 1,
+        "chatLifecycle": 1,
+        "chatResources": 1
+      },
+      "executionAccount": true,
+      "executionAccountName": null,
+      "sync": {
+        "available": true
+      },
+      "downloads": {
+        "android": false
+      },
+      "backend": {
+        "runtime": "ready",
+        "referenceScan": "ready",
+        "capabilities": {
+          "chat": {
+            "available": true,
+            "reasonCode": "INFERENCE_UNVERIFIED",
+            "inferenceVerified": false
+          },
+          "desktopOpenApp": {
+            "available": true,
+            "appIds": [
+              "notepad"
+            ]
+          },
+          "naturalLanguageDesktop": {
+            "available": true,
+            "inferenceVerified": false
+          }
+        },
+        "modules": {
+          "memory": "disabled",
+          "mods": "unknown",
+          "tasks": "unknown",
+          "notifications": "unknown",
+          "workspaces": "unknown",
+          "capabilities": "unknown"
+        }
+      },
+      "memory": {
+        "state": "disabled",
+        "inject": false,
+        "failedCorrectionCount": 0,
+        "formationIssues": []
+      },
+      "updates": {
+        "layers": [
+          {
+            "layer": "ui",
+            "currentVersion": "0.1.1-preview.7",
+            "availableVersion": null,
+            "status": "idle",
+            "channel": "preview"
+          },
+          {
+            "layer": "app",
+            "currentVersion": "0.1.1-preview.7",
+            "availableVersion": null,
+            "status": "disabled",
+            "channel": "preview"
+          },
+          {
+            "layer": "mobile-ui",
+            "currentVersion": null,
+            "availableVersion": null,
+            "status": "disabled",
+            "channel": "preview"
+          }
+        ]
+      },
+      "nativeMinimumVersions": {}
+    }
+  },
+  "/chats/main": {
+    "status": 200,
+    "body": {
+      "chat": {
+        "chatId": "chat-1585aca6-8fdc-4541-8cb6-036e45b7569c",
+        "kind": "main",
+        "revision": 4,
+        "contentRevision": 1,
+        "activeSegmentId": "segment-ea64cdb1-ad6f-454a-874f-e8f55a2ee0f6",
+        "activeSessionId": "session-5e1de65e-1a23-4170-8d6d-7518fde0a023",
+        "deepThinking": false,
+        "timeZone": "Asia/Shanghai",
+        "temporary": false,
+        "hasTemporaryContent": false,
+        "memoryMode": "on",
+        "recallEnabled": true,
+        "autoDeleteDays": 30,
+        "expiresAt": null,
+        "parent": null,
+        "pinned": true,
+        "unread": false,
+        "attention": null,
+        "lastOutcome": "completed",
+        "updatedAt": "2026-10-10T16:39:25.556Z",
+        "groupId": null,
+        "title": "WeftMate",
+        "archived": false,
+        "projectId": null,
+        "modelProfileId": "private-model-6c5b404f8c27035614273d41ed09d12692a84980",
+        "running": false,
+        "sendAvailable": true,
+        "taskAvailable": true,
+        "contextUsage": {
+          "usedTokens": 32,
+          "contextWindow": 32768
+        }
+      }
+    }
+  },
+  "/models": {
+    "status": 200,
+    "body": {
+      "models": [
+        {
+          "id": "private-model-6c5b404f8c27035614273d41ed09d12692a84980",
+          "name": "FX21 合成模型",
+          "model": "synthetic-fx21",
+          "configured": true,
+          "deepThinking": {
+            "supported": false
+          },
+          "routeFingerprint": null,
+          "location": "computer",
+          "source": "host",
+          "modelTier": "auto",
+          "sourceKind": "local",
+          "accountModelId": "account-model-fb1d34d8-289a-4f14-b1b2-67451e80f41a",
+          "revision": 1
+        }
+      ]
+    }
+  },
+  "core": {
+    "owner": true,
+    "capabilities": {
+      "sessionStatus": 1,
+      "nextSuggestions": 1,
+      "library": 1,
+      "libraryPreview": 1,
+      "libraryDesktopActions": 1,
+      "taskOverview": 1,
+      "scheduleEditing": 1,
+      "goals": 1,
+      "activity": 1,
+      "activityChanges": 1,
+      "activityRead": 1,
+      "activityNotification": 1,
+      "notificationSettings": 1,
+      "pushRegistration": 1,
+      "temporaryChats": 1,
+      "chats": 1,
+      "chatTimeline": 1,
+      "chatSearch": 1,
+      "sideChats": 1,
+      "creationReceipt": 1,
+      "chatSend": 1,
+      "chatLifecycle": 1,
+      "chatResources": 1
+    },
+    "connection": {
+      "kind": "online",
+      "failures": 0,
+      "firstFailureAt": null,
+      "lastFailureAt": null,
+      "attempt": 0,
+      "host": {
+        "host": "online",
+        "bootId": "58294c92-1670-4222-9fca-a088ecf8a9cf",
+        "startedAt": "2026-10-10T16:39:21.655Z",
+        "authorization": "active",
+        "runtime": "ready",
+        "model": "available"
+      },
+      "label": "在线",
+      "description": "",
+      "canSend": true
+    },
+    "mainChat": {
+      "chatId": "chat-1585aca6-8fdc-4541-8cb6-036e45b7569c",
+      "kind": "main",
+      "revision": 4,
+      "contentRevision": 1,
+      "activeSegmentId": "segment-ea64cdb1-ad6f-454a-874f-e8f55a2ee0f6",
+      "activeSessionId": "session-5e1de65e-1a23-4170-8d6d-7518fde0a023",
+      "deepThinking": false,
+      "timeZone": "Asia/Shanghai",
+      "temporary": false,
+      "hasTemporaryContent": false,
+      "memoryMode": "on",
+      "recallEnabled": true,
+      "autoDeleteDays": 30,
+      "expiresAt": null,
+      "parent": null,
+      "pinned": true,
+      "unread": false,
+      "attention": null,
+      "lastOutcome": "completed",
+      "updatedAt": "2026-10-10T16:39:25.556Z",
+      "groupId": null,
+      "title": "WeftMate",
+      "archived": false,
+      "projectId": null,
+      "modelProfileId": "private-model-6c5b404f8c27035614273d41ed09d12692a84980",
+      "running": false,
+      "sendAvailable": true,
+      "taskAvailable": true,
+      "contextUsage": {
+        "usedTokens": 32,
+        "contextWindow": 32768
+      }
+    },
+    "csrf": true
+  },
+  "body": "WeftMate\nf\n今天\n\n合成新账号第一句话\n\n主对话首条消息成功，合成回复。\n\n输入消息\n自动\nFX21 合成模型"
+}

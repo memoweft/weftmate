@@ -1,0 +1,194 @@
+{
+  "state": {
+    "owner": "a360169d392adbc4e9999a3776ec53f09a077ea98fd4d7b98cd1450823e4770c",
+    "loggedIn": true,
+    "connection": "connected",
+    "authEpoch": 1
+  },
+  "core": {
+    "owner": "a360169d392adbc4e9999a3776ec53f09a077ea98fd4d7b98cd1450823e4770c",
+    "device": {
+      "id": "device-316f6e23-30cb-4443-893a-4f5f638b81e2"
+    },
+    "csrf": true,
+    "capabilities": {
+      "sessionStatus": 1,
+      "nextSuggestions": 0,
+      "library": 1,
+      "libraryPreview": 1,
+      "libraryDesktopActions": 0,
+      "taskOverview": 1,
+      "scheduleEditing": 1,
+      "goals": 1,
+      "activity": 1,
+      "activityChanges": 1,
+      "activityRead": 1,
+      "activityNotification": 1,
+      "notificationSettings": 1,
+      "pushRegistration": 1,
+      "temporaryChats": 1,
+      "chats": 1,
+      "chatTimeline": 1,
+      "chatSearch": 1,
+      "sideChats": 1,
+      "creationReceipt": 1,
+      "chatSend": 1,
+      "chatLifecycle": 1,
+      "chatResources": 1
+    }
+  },
+  "auth.me": {
+    "device": {
+      "id": "device-316f6e23-30cb-4443-893a-4f5f638b81e2",
+      "name": "隔离测试浏览器",
+      "expiresAt": "2026-11-09T16:47:06.122Z"
+    },
+    "deviceId": "device-316f6e23-30cb-4443-893a-4f5f638b81e2",
+    "displayName": "隔离测试账号",
+    "connectionVerified": true,
+    "owner": "a360169d392adbc4e9999a3776ec53f09a077ea98fd4d7b98cd1450823e4770c"
+  },
+  "host.status": {
+    "state": "ready",
+    "origin": "http://127.0.0.1:64838",
+    "hostId": "host-8cdce8b6-2bcc-481e-a0ae-dc5d4539a1b5",
+    "relay": {
+      "state": "disabled",
+      "baseUrl": null
+    },
+    "ownerId": "owner-0ea05f27-31d4-4de2-bd1d-a5b16131b699",
+    "deviceCount": 2,
+    "hostName": "<host>",
+    "presence": {
+      "host": "online",
+      "bootId": "a17ae0dd-ffb7-4013-be8b-4a2ce9456168",
+      "startedAt": "2026-10-10T16:47:04.862Z",
+      "authorization": "active",
+      "runtime": "ready",
+      "model": "available"
+    },
+    "personalCapabilities": {
+      "sessionStatus": 1,
+      "nextSuggestions": 0,
+      "library": 1,
+      "libraryPreview": 1,
+      "libraryDesktopActions": 0,
+      "taskOverview": 1,
+      "scheduleEditing": 1,
+      "goals": 1,
+      "activity": 1,
+      "activityChanges": 1,
+      "activityRead": 1,
+      "activityNotification": 1,
+      "notificationSettings": 1,
+      "pushRegistration": 1,
+      "temporaryChats": 1,
+      "chats": 1,
+      "chatTimeline": 1,
+      "chatSearch": 1,
+      "sideChats": 1,
+      "creationReceipt": 1,
+      "chatSend": 1,
+      "chatLifecycle": 1,
+      "chatResources": 1
+    },
+    "executionAccount": true,
+    "executionAccountName": null,
+    "sync": {
+      "available": true
+    },
+    "downloads": {
+      "android": false
+    },
+    "backend": {
+      "runtime": "ready",
+      "referenceScan": "ready",
+      "capabilities": {
+        "chat": {
+          "available": true,
+          "inferenceVerified": false
+        },
+        "desktopOpenApp": {
+          "available": false,
+          "appIds": []
+        },
+        "naturalLanguageDesktop": {
+          "available": false
+        }
+      },
+      "modules": {
+        "memory": "disabled",
+        "mods": "unknown",
+        "tasks": "unknown",
+        "notifications": "unknown",
+        "workspaces": "unknown",
+        "capabilities": "unknown"
+      }
+    },
+    "memory": {
+      "state": "disabled",
+      "inject": false,
+      "failedCorrectionCount": 0,
+      "formationIssues": []
+    },
+    "updates": {
+      "layers": [
+        {
+          "layer": "ui",
+          "currentVersion": null,
+          "status": "unknown"
+        },
+        {
+          "layer": "app",
+          "currentVersion": "0.1.0",
+          "status": "disabled"
+        },
+        {
+          "layer": "mobile-ui",
+          "currentVersion": null,
+          "status": "disabled",
+          "channel": "stable"
+        }
+      ]
+    },
+    "nativeMinimumVersions": {}
+  },
+  "offline.identity": {
+    "ownerId": "owner-0ea05f27-31d4-4de2-bd1d-a5b16131b699",
+    "hostId": "host-8cdce8b6-2bcc-481e-a0ae-dc5d4539a1b5",
+    "deviceId": "device-b102455d-3e1c-4ebb-889a-b9ce27dcd942",
+    "origin": "http://127.0.0.1:64838"
+  },
+  "main": {
+    "chat": {
+      "chatId": "chat-214af64d-2dba-432f-bd1b-b4a895f98bea",
+      "kind": "main",
+      "revision": 4,
+      "contentRevision": 1,
+      "activeSegmentId": "segment-a3bac9bf-8b23-49f5-872c-5da0db73ff7c",
+      "activeSessionId": "session-9faa2435-806d-4d07-abf9-0a5c049b3b2f",
+      "deepThinking": false,
+      "timeZone": "Asia/Shanghai",
+      "temporary": false,
+      "hasTemporaryContent": false,
+      "memoryMode": "on",
+      "recallEnabled": true,
+      "autoDeleteDays": 30,
+      "expiresAt": null,
+      "parent": null,
+      "pinned": true,
+      "unread": false,
+      "attention": null,
+      "lastOutcome": null,
+      "updatedAt": "2026-10-10T16:47:07.284Z",
+      "groupId": null,
+      "title": "WeftMate",
+      "archived": false,
+      "projectId": null,
+      "modelProfileId": "local",
+      "running": false,
+      "sendAvailable": true,
+      "taskAvailable": true
+    }
+  }
+}

@@ -1,0 +1,29 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.9/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Task :app:checkMobileUiAssets FAILED
+file:///D:/AIProjects/WeftMate/Worktrees/w5/apps/mobile-ui/src/build-ui-core.mjs:67
+  if (problems.length) throw new Error(`ui-core assets: ${problems.join('; ')}; run npm run build in apps/mobile-ui`);
+                             ^
+
+Error: ui-core assets: differs release-notes.js; run npm run build in apps/mobile-ui
+    at checkUiCoreAssets (file:///D:/AIProjects/WeftMate/Worktrees/w5/apps/mobile-ui/src/build-ui-core.mjs:67:30)
+    at async checkMobileUi (file:///D:/AIProjects/WeftMate/Worktrees/w5/apps/mobile-ui/src/check.mjs:18:3)
+    at async file:///D:/AIProjects/WeftMate/Worktrees/w5/apps/mobile-ui/src/check.mjs:29:57
+
+Node.js v24.15.0
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:checkMobileUiAssets'.
+> Process 'command 'node'' finished with non-zero exit value 1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 18s
+1 actionable task: 1 executed
