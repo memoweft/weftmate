@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { spawn, type ChildProcess } from 'node:child_process'
 import { existsSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
-import { execFileSync } from 'node:child_process'
+import { windowsProfileProcesses } from './helpers/windows-profile-processes.mjs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -13,9 +13,7 @@ const launcher = join(repository, 'scripts', 'run-personal-host.mjs')
 
 function assertNoOwnedProcesses(profile: string) {
   if (process.platform !== 'win32') return
-  const script = `$profile = '${profile.replaceAll("'", "''")}'; @(Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -and $_.Name -match '^(node|electron|python|python3)\\.exe$' -and $_.CommandLine -and $_.CommandLine.Contains($profile) } | Select-Object -ExpandProperty ProcessId) | ConvertTo-Json -Compress`
-  const processes = execFileSync('pwsh', ['-NoProfile', '-Command', script], { encoding: 'utf8' }).trim()
-  assert.ok(processes === '' || processes === '[]', 'no host, DSH or memory process may retain the isolated profile')
+  assert.deepEqual(windowsProfileProcesses(profile),[], 'no host, DSH or memory process may retain the isolated profile')
 }
 
 test('two local devices use the same attached empty session across a real Electron restart', { timeout: 120_000 }, async () => {

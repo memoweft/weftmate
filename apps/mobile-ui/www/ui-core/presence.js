@@ -64,6 +64,7 @@
                     // Bypass accessApi: this is an independent probe, not another chat/replica request.
                     status = await core.requestJson(core.accessBase + '/status', { timeoutMs: 5000 });
                     if (!current()) return;
+                    core.state.hostStatusSnapshot={payload:status,at:Date.now(),identity};
                     const wasDisconnected = needsRecovery;
                     needsRecovery = false;
                     model.success(status.presence || { runtime: status.backend?.runtime === 'unavailable' ? 'unavailable' : 'ready' });
@@ -92,7 +93,7 @@
                 running = null;
                 if (!current() && active) { schedule(0);return; }
                 if (current() && active && !['login_required', 'approval_required'].includes(model.view().kind))
-                    schedule(model.view().kind === 'online' ? background ? 60000 : 15000 : model.delay(background));
+                    schedule(background ? Math.max(core.polling.background,model.view().kind === 'online' ? 0 : model.delay(true)) : model.view().kind === 'online' ? core.polling.presence : model.delay(false));
             });
             return running;
         }
@@ -104,9 +105,10 @@
             connectionFailed: error => { const previous=model.view().kind;model.failure(error);if(active&&!running&&(timer===null||previous==='online'&&model.view().kind!=='online'))schedule(model.delay(background)); },
             connectionReady: () => model.view().canSend,
             retryConnection,
-            startConnection: callback => { active = true; recover = callback || recover; if (model.view().kind === 'online' && !needsRecovery) schedule(background ? 60000 : 15000); else void retryConnection(); },
+            startConnection: callback => { active = true; recover = callback || recover; if (model.view().kind === 'online' && !needsRecovery) schedule(background ? core.polling.background : core.polling.presence); else void retryConnection(); },
             stopConnection: () => { active = false; needsRecovery = false; generation++; clear(); },
-            connectionVisibility: hidden => { background = hidden; if (!hidden) { clear(); void retryConnection(); } else schedule(60000); },
+            connectionVisibility: hidden => { const changed=background!==hidden;background = hidden;core.state.background=hidden;
+                if (!hidden) { if(!changed)return;clear();void retryConnection();void effects.foregroundRestored?.(); } else {core.historyWaitAbort?.abort();schedule(core.polling.background);} },
             connectionNetwork: online => { model.network(online); if (online) { clear(); void retryConnection(); } else schedule(60000); },
         };
     };

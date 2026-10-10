@@ -42,10 +42,18 @@
     globalThis.WeftPresenceView.mount({core, badgeTarget:ui.byId('assistant-connection'),
         composerTarget:ui.byId('message-form').parentElement, toast:ui.toast,
         openLogin:()=>core.startCloudJourney(), openDevices:()=>{core.openAccount();ui.openSettings('devices');}});
-    document.addEventListener('visibilitychange',()=>core.connectionVisibility(document.visibilityState==='hidden'));
+    let nativeHidden=false;
+    document.addEventListener('visibilitychange',()=>core.connectionVisibility(nativeHidden||document.visibilityState==='hidden'));
+    native?.onVisibility(hidden=>{nativeHidden=hidden;core.connectionVisibility(hidden||document.visibilityState==='hidden');});
+    ui.foregroundRestored=async()=>{await core.refreshAssistantOverview();await core.refreshHistory();await core.refreshConversationFacts(true);
+        if(ui.activityVisible?.())await core.refreshActivity();
+        if(document.body.classList.contains('goals-open'))await core.readGoals();
+        if(document.body.classList.contains('library-open'))await core.readLibrary();};
+    const restoreForeground=ui.foregroundRestored;
+    ui.foregroundRestored=async()=>{await restoreForeground();await document.querySelector('[data-category="data"]')?.dataView?.refresh();};
     window.addEventListener('offline',()=>core.connectionNetwork(false));
     window.addEventListener('online',()=>core.connectionNetwork(true));
-    window.addEventListener('focus',()=>core.connectionVisibility(false));
+    window.addEventListener('focus',()=>core.connectionVisibility(nativeHidden||document.visibilityState==='hidden'));
     globalThis.__WeftUiStarted = true;
     if (!native && globalThis.navigator?.serviceWorker) void globalThis.navigator.serviceWorker.register('/personal/v1/ui/offline-worker.js').catch(() => {});
     if (globalThis.indexedDB && globalThis.matchMedia?.('(max-width: 720px)')?.matches) globalThis.WeftOfflineView?.mount({ core, desktop: !!native,

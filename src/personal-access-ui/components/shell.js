@@ -237,16 +237,16 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
             await core.offlineConnectionRestored?.();
         });
         core.state.refreshTimer = setInterval(() => {
-            if (document.visibilityState === 'visible')
-                void core.refreshAssistant();
-        }, 6000);
+            if (document.visibilityState === 'visible' && core.foreground() && core.state.currentView === 'assistant')
+                void core.refreshAssistantOverview();
+        }, core.polling.overview);
         let lastLiveRead=0;
         core.state.liveRefreshTimer = setInterval(() => {
-            if (document.visibilityState === 'visible' && (core.state.personalCapabilities?.replyStreaming===1 && (core.mainReplyActive?.() || core.state.turnStatus==='running' || (core.state.selectedChatId||core.state.selectedSessionId)&&Date.now()-lastLiveRead>=1000) || core.state.unresolvedSubmission ||
+            if (document.visibilityState === 'visible' && core.foreground() && core.state.currentView === 'assistant' && !ui.byId('conversation-pane').hidden && (core.state.personalCapabilities?.replyStreaming===1 && (core.mainReplyActive?.() || core.state.turnStatus==='running' || (core.state.selectedChatId||core.state.selectedSessionId)&&Date.now()-lastLiveRead>=core.polling.idle) || core.state.unresolvedSubmission ||
                 core.state.submitting || core.conversationRunning(core.state.selectedSessionId) ||
                 core.optimisticMessages().some(row => ['sending', 'accepted'].includes(row.status))))
                 {lastLiveRead=Date.now();void core.refreshLiveConversation().catch(() => {});}
-        }, 250);
+        }, core.polling.stream);
     }
     function showRegistration() {
         ui.byId('setup-title').textContent = core.state.setupGrant ? '设置这台电脑的原账户' : '注册新账户';
@@ -433,13 +433,13 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         });
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible' && !ui.byId('assistant-view').hidden)
-                void core.refreshAssistant();
+                void core.refreshAssistantOverview();
             else if (document.visibilityState === 'visible' && !ui.byId('memory-view').hidden)
                 void core.openMemory();
         });
         window.addEventListener('online', () => {
             if (!ui.byId('assistant-view').hidden)
-                void core.refreshAssistant();
+                void core.refreshAssistantOverview();
         });
         window.addEventListener('hashchange', () => {
             const grant = ui.takeSetupGrant();
@@ -455,9 +455,9 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
             } });
         void core.load();
         setInterval(() => {
-            if (core.state.account && document.visibilityState === 'visible')
+            if (core.state.account && document.visibilityState === 'visible' && core.foreground())
                 void core.refreshPendingDevices();
-        }, 15000);
+        }, core.polling.presence);
     }
     return { paintConnection, paintOperation, approvalModeReadFailed, closeModelMenu, openModelMenu, stopVoiceInput, startVoiceInput, takeSetupGrant, errorAt, toast, clearPasswords, setBusy, updateAvailability, startAssistantRefresh, showRegistration, cancelCloudLogin, resetAccountControls, resetIdentityControls, resetConversationControls, closeAccountMenu, stopCloudPairing, paintScreen, mountShell };
 };

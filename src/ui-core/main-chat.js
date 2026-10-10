@@ -6,6 +6,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         'sendDraft', 'optimisticMessages', 'observeOptimistic', 'composerState', 'attachmentDraftKey', 'loadConversationResources', 'clearSession'].map(key => [key, core[key]]));
     const historyWindow = globalThis.WeftUiCore.ChatWindow.create();
     const pending = new Map(), drafts = new Map();
+    let sideWaitScope,sideWaitCursor,sideWaitRevision=0,sideWaitRead;
     let selectionGeneration = 0;
     core.state.chatWindow = historyWindow.state;
     const supports = name => core.state.personalCapabilities?.[name] === 1;
@@ -13,6 +14,8 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
     const scope = () => `${core.state.identityGeneration}:${core.state.ownerId}:${core.state.historyGeneration}:${core.state.selectedChatId}`;
     const notify = () => { effects.renderMainChat?.(); effects.renderOlderControl(); effects.updateAvailability(); };
     function clearLogical(purge = false) {
+        core.historyWaitAbort?.abort();
+        sideWaitScope=null;sideWaitCursor=null;sideWaitRevision=0;
         if (purge) {
             for (const row of pending.values()) {
                 if (row.status === 'accepted' && drafts.get(row.chatId) === row.text) drafts.set(row.chatId,'');
@@ -187,14 +190,37 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         }
         notify();
     }
-    async function refreshHistory(reset = false) {
-        if (!inMain()) return legacy.refreshHistory(reset, true);
+    async function refreshHistory(reset = false, waitForChange = false) {
+        if (!inMain()) {
+            if(waitForChange&&core.canWaitForReply()&&core.state.selectedChatId&&!core.conversationRunning(core.state.selectedSessionId)&&core.state.turnStatus!=='running'&&!reset){
+                if(sideWaitRead)return sideWaitRead;
+                const token=scope(),chatId=core.state.selectedChatId,controller=new AbortController();core.historyWaitAbort=controller;
+                const run=(async()=>{
+                    if(sideWaitScope!==token||!sideWaitCursor){const page=await core.readChatEvents(chatId,{limit:1});if(token!==scope())return;
+                        sideWaitScope=token;sideWaitCursor=page.syncCursor;sideWaitRevision=page.liveRevision??0;}
+                    const page=await core.readChatChanges(chatId,sideWaitCursor,200,{ms:core.replyWaitMilliseconds(),liveRevision:sideWaitRevision,signal:controller.signal});
+                    if(token!==scope()||controller.signal.aborted)return;sideWaitCursor=page.nextCursor;sideWaitRevision=page.liveRevision;
+                    await legacy.refreshHistory(false,true);
+                })().catch(error=>{if(error.code==='CURSOR_RESET_REQUIRED'){sideWaitCursor=null;}else if(error.code!=='ABORTED')core.connectionFailed?.(error);})
+                    .finally(()=>{if(core.historyWaitAbort===controller)core.historyWaitAbort=null;sideWaitRead=null;});
+                sideWaitRead=run;return run;
+            }
+            if(sideWaitRead){core.historyWaitAbort?.abort();await sideWaitRead;}
+            return legacy.refreshHistory(reset,true);
+        }
         if (!supports('chatTimeline')) return;
         if (reset || !historyWindow.state.syncCursor) { if (reset) clearLogical(true); return readPage({}, 'tail'); }
-        if (core.mainChatRefreshing) return;
+        if (core.mainChatRefreshing) {
+            if(!waitForChange&&core.historyWaitAbort){core.historyWaitAbort.abort();await core.mainChatRefreshPromise;return refreshHistory(reset,false);}
+            return core.mainChatRefreshPromise;
+        }
+        let release;core.mainChatRefreshPromise=new Promise(resolve=>release=resolve);
         core.mainChatRefreshing = true; const token = scope(), generation = historyWindow.state.generation;
         try {
-            const page = await core.readChatChanges(core.state.selectedChatId, historyWindow.state.syncCursor, 200);
+            const waiting=waitForChange&&core.canWaitForReply()&&(!core.mainReplyActive()||!(historyWindow.state.liveEvents||[]).length)&&!core.state.submitting&&!core.state.unresolvedSubmission;
+            const controller=waiting?new AbortController():null;if(controller)core.historyWaitAbort=controller;
+            const page = await core.readChatChanges(core.state.selectedChatId, historyWindow.state.syncCursor, 200,
+                controller?{ms:core.replyWaitMilliseconds(),liveRevision:historyWindow.state.liveRevision??0,signal:controller.signal}:undefined);
             if (token !== scope() || generation !== historyWindow.state.generation) return;
             if (historyWindow.state.contentRevision !== page.contentRevision) { clearLogical(true); notify(); return readPage({}, 'tail'); }
             historyWindow.state.anchorId=effects.mainChatAnchor?.() || null;
@@ -203,12 +229,12 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             if(before!==JSON.stringify(historyWindow.ordered())){
                 if(!(page.upserts?.length||page.removals?.length)){if(effects.paintLiveChatMessages?.()!==true)effects.renderMainChat?.();}else notify();
             }
-            if(environment.mobileState) await Promise.all([core.refreshConversationTasks(),core.refreshConversationApprovals(),core.refreshConversationQuestions()]);
+            if(page.upserts?.length||page.removals?.length)void core.refreshConversationFacts?.();
         await reconcileMainRequests();
-            const main = await core.readMainChat(); if (token === scope()) { const changed=JSON.stringify(core.state.mainChat)!==JSON.stringify(main.chat);installMain(main.chat);if(changed)notify(); }
+            if(page.upserts?.length||page.removals?.length){const main = await core.readMainChat(); if (token === scope()) { const changed=JSON.stringify(core.state.mainChat)!==JSON.stringify(main.chat);installMain(main.chat);if(changed)notify(); }}
         } catch (error) {
             if (token === scope() && generation === historyWindow.state.generation && error.code === 'CURSOR_RESET_REQUIRED') { clearLogical(true); notify(); await readPage({}, 'tail'); }
-        } finally { core.mainChatRefreshing = false; }
+        } finally { core.mainChatRefreshing = false;core.historyWaitAbort=null;release(); }
     }
     async function loadOlderHistory(direction = 'older') {
         if (!inMain()) return legacy.loadOlderHistory(true);
@@ -376,7 +402,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             const command = environment.mobileState ? await effects.sendMainNativeMessage(row.nativeFields) : attachments.length ? await core.sendDesktopMessageWithAttachments(text, row.requestId, row.nativeFields.intent,row.attachmentSnapshot)
                 : await core.submitCommand('chat.message', { chatId: row.chatId, text, modelProfileId: core.state.modelProfileId, mode: intent || core.composerInputMode(core.state.selectedSessionId) }, null, row.requestId);
             await checkMainRequest(row);
-            await refreshHistory();
+            await refreshHistory(false,true);
         } catch { row.status = 'confirming'; } finally { notify(); }
     }
     function observeOptimistic(events) {

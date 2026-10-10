@@ -83,7 +83,11 @@ export function createChatTimeline(context) {
     if (index.retired) throw failure('CURSOR_RESET_REQUIRED', 409);
     if (!Array.isArray(page?.events) || !Number.isSafeInteger(page.nextSeq)) throw failure('BACKEND_UNAVAILABLE', 503);
     for (const event of page.events) put(index, segment, event);
-    if (options.beforeSeq === undefined) { index.live.set(segment.sessionId, { segment, events: context.publicLiveEvents?.(index.ownerId,segment.sessionId,page.liveEvents ?? []) ?? [] }); index.liveRevision++; }
+    if (options.beforeSeq === undefined) {
+      const events=context.publicLiveEvents?.(index.ownerId,segment.sessionId,page.liveEvents ?? []) ?? [];
+      if(JSON.stringify(index.live.get(segment.sessionId)?.events??[])!==JSON.stringify(events))index.liveRevision++;
+      index.live.set(segment.sessionId,{segment,events,seq:page.liveSeq??page.nextSeq});
+    }
     return page;
   }
   function liveEvents(index) {
@@ -226,6 +230,13 @@ export function createChatTimeline(context) {
     async lastOrderKey(ownerId, chatId) {
       const index = current(ownerId, chatId);
       return serial(index, async () => { await seed(index); await refresh(index); return index.ordered.findLast(row => !row.product)?.orderKey ?? '!'; });
+    },
+    async waitForChange(ownerId,chatId,revision,timeoutMs,signal){
+      const index=current(ownerId,chatId),controller=new AbortController(),abort=()=>controller.abort();signal?.addEventListener('abort',abort,{once:true});
+      const timer=setTimeout(abort,timeoutMs);
+      try {await Promise.race([context.waitAccountChange(revision,controller.signal),
+        ...[...index.live].map(([sessionId,row])=>context.backend.waitForEvents({sessionId,seq:row.seq,timeoutMs,signal:controller.signal}))]);}
+      finally{clearTimeout(timer);controller.abort();signal?.removeEventListener('abort',abort);}
     },
     async query(ownerId, chatId, action, params) {
       const keys = { events: ['before','after','around','limit'], changes: ['cursor','limit'],

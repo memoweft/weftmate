@@ -74,10 +74,11 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
         if(accepted.some(event=>!event.data?.live)||removedLive||accepted.some(event=>!previousLive.has(event.seq)))effects.updateAvailability();
         if (accepted.some(event => ['approval.requested', 'approval.resolved', 'question.asked', 'question.answered'].includes(event.type)))
             void Promise.all([core.refreshConversationApprovals(), core.refreshConversationQuestions()]).catch(() => {});
+        if (core.state.personalCapabilities?.replyStreaming===1 && accepted.some(event => !event.data?.live && /^(user\.|turn\.|task\.|step\.|tool\.|approval\.|question\.|artifact\.)/.test(event.type))) void core.refreshConversationFacts?.();
         return accepted.length>0||removedLive;
     }
-    async function refreshHistory(reset = false, legacy = false) {
-        if (!legacy && core.refreshLogicalHistory) return core.refreshLogicalHistory(reset);
+    async function refreshHistory(reset = false, legacy = false, waitForChange = false) {
+        if (!legacy && core.refreshLogicalHistory) return core.refreshLogicalHistory(reset,waitForChange);
         const sessionId = core.state.selectedSessionId;
         if (core.state.activeChatSource !== 'desktop' || !sessionId || !core.state.online)
             return;

@@ -1,0 +1,12 @@
+{
+  "mode": "vendor",
+  "files": 28,
+  "exitCode": 1,
+  "passed": 201,
+  "failed": 1,
+  "skipped": 0,
+  "failures": [
+    "真实 Core RPC：capability、精确 history、启动对账、完整 capture 与 stale model 过滤往返",
+    "two local devices use the same attached empty session across a real Electron restart"
+  ]
+}

@@ -71,6 +71,6 @@ globalThis.WeftLibraryView={mount({target,core,desktop=false,openPreview,copyPat
             const actions=node('div','library-row-actions');appendActions(actions,item);row.append(open,info,actions);row.onclick=event=>{if(!event.target.closest('button'))open.click();};list.append(row);
         }
     }
-    const autoRefresh=setInterval(()=>{if(target.isConnected&&!target.hidden&&document.visibilityState==='visible')void core.readLibrary();},6000);
+    const autoRefresh=setInterval(()=>{if(target.isConnected&&!target.hidden&&document.visibilityState==='visible'&&core.foreground())void core.readLibrary();},core.polling.overview);
     return {render,preview,deactivate(){previewEpoch++;clearTimeout(searchTimer);WeftPopover.closeMenu();},dispose(){previewEpoch++;clearTimeout(searchTimer);clearInterval(autoRefresh);WeftPopover.closeMenu();},focus(){title.focus();}};
 }};

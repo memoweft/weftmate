@@ -1,0 +1,10 @@
+✔ two local devices use the same attached empty session across a real Electron restart (20944.4625ms)
+✔ window close stays in tray and tray exit drains the final Electron snapshot (9776.8445ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 30817.2465

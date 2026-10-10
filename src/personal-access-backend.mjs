@@ -494,6 +494,10 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       if (!Number.isSafeInteger(afterSeq) || afterSeq < -1) fail('INVALID_COMMAND')
       return gateway(`/sessions/${encodeURIComponent(sessionId)}/memory-boundaries?afterSeq=${afterSeq}`)
     },
+    async waitForEvents({sessionId,seq,timeoutMs,signal}) {
+      requireRuntime();if(!idPattern.test(sessionId)||!Number.isInteger(seq)||seq< -1)fail('INVALID_COMMAND');
+      return gateway(`/sessions/${encodeURIComponent(sessionId)}/history?limit=1&waitMs=${timeoutMs}&waitSeq=${seq}`,{signal});
+    },
     async readEvents({ sessionId, afterSeq, beforeSeq, limit = 50 }) {
       requireRuntime()
       if (typeof sessionId !== 'string' || !idPattern.test(sessionId)

@@ -271,6 +271,16 @@ export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagn
           { receiptId, ...(turn === null ? {} : { turn: Number(turn) }) }))
       }
       if (action === 'history' && req.method === 'GET') {
+        if(requestUrl.searchParams.has('waitMs')){
+          const ms=Number(requestUrl.searchParams.get('waitMs')),seq=Number(requestUrl.searchParams.get('waitSeq'));
+          if(!Number.isInteger(ms)||ms<1||ms>30000||!Number.isInteger(seq)||seq< -1)throw new TypeError('invalid history wait');
+          // Validate/read the native session before holding a response.
+          const snapshot=await sessions.historyPage(sessionId,{limit:1});
+          if((snapshot.liveSeq??snapshot.nextSeq)<=seq&&readLog?.waitForChange){
+            const controller=new AbortController(),abort=()=>controller.abort();res.on('close',abort);
+            try{await readLog.waitForChange(sessionId,seq,ms,controller.signal);}finally{res.off('close',abort);}
+          }
+        }
         const afterRaw = requestUrl.searchParams.get('afterSeq')
         const beforeRaw = requestUrl.searchParams.get('beforeSeq')
         const limitRaw = requestUrl.searchParams.get('limit') ?? '50'

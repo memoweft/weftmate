@@ -88,6 +88,7 @@ globalThis.WeftDataView = (core, target, { toast = () => {}, desktop = !!globalT
         toast(op.kind==='delete'?'数据已删除，重新开始':'本机账户已注销'); globalThis.location.reload();
     }
     async function refresh(force = false) {
+        if(document.visibilityState==='hidden'||core.foreground?.()===false)return;
         const ticket = ++generation; clearTimeout(timer);
         try { if (trackedOperation && desktop && globalThis.weftmateDesktop?.dataOperation) { const native=await globalThis.weftmateDesktop.dataOperation(trackedOperation); if(native && ['close-account','delete'].includes(native.kind)) { operation=native; if(operation.state==='completed'){paint();return;} } } if (force) await core.scanData(); const value = await core.readData(); if (!current() || ticket !== generation) return;
             desktop = value.desktop && !!globalThis.weftmateDesktop; snapshot = value.statistics; operation = value.operation; canManage = value.canManage; accountName = value.accountName; error.textContent = ''; paint();
