@@ -1,0 +1,13 @@
+✔ mobile generated assets match every canonical ui-core file byte for byte (226.6962ms)
+✔ check refuses changed, missing and unlisted copies; rebuild follows the source and removes stale files (263.0522ms)
+✔ mobile check validates nested component syntax as well as generated source parity (2962.4346ms)
+✔ published mobile bundle includes the verified shared assets at their ui-core paths (2560.3397ms)
+✔ publish command refuses stale generated assets before creating a release (4494.3011ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10661.6696

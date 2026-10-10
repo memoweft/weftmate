@@ -10,6 +10,16 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 const source = ['cloud-auth.js', 'cloud-account.js'].map(file => readFileSync(new URL('../src/ui-core/' + file, import.meta.url), 'utf8')).join('\n;\n')
+test('M3-1 delayed credential reads remain inside refresh rotation when host and presence requests overlap',async()=>{
+  const context:any={WeftUiCore:{factories:{}},URL,btoa,atob,TextEncoder,TextDecoder};runInNewContext(source,context);
+  let record:any={refreshToken:'synthetic-0',sub:'synthetic-owner',cloud:{expiresAt:0}},reads=0,releaseRead:Function=()=>{},releaseToken:Function=()=>{};
+  const delayedRead=new Promise(r=>releaseRead=r),delayedToken=new Promise(r=>releaseToken=r),used:string[]=[];
+  const client:any=new context.WeftUiCore.CloudAuthClient({host:'https://host.example.com',now:()=>10000,credentials:async(_key:string,value:any)=>{if(value)record=structuredClone(value);return structuredClone(record);}});
+  client.base='https://control.example.com';client.config={clientId:'synthetic'};client.tokenId='synthetic';
+  client.saved=async()=>{const snapshot=structuredClone(record);if(++reads===2)await delayedRead;return snapshot;};
+  client.verify=async()=>{};client.token=async(form:any)=>{used.push(form.refresh_token);assert.equal(form.refresh_token,record.refreshToken,'never replay a consumed rotating token');if(used.length===1)await delayedToken;return {access_token:'access-'+used.length,refresh_token:'synthetic-'+used.length,expires_in:60};};
+  const host=client.access(client.base+'/hosts/host');for(let n=0;n<5;n++)await Promise.resolve();const presence=client.access();releaseToken();await host;releaseRead();await presence;assert.deepEqual(used,['synthetic-0','synthetic-1']);assert.equal(record.refreshToken,'synthetic-2');
+});
 const signing = await jose.generateKeyPair('RS256', { extractable: true })
 const publicJwk = { ...await jose.exportJWK(signing.publicKey), kid: 'synthetic-signing', alg: 'RS256', use: 'sig' }
 const issuer = 'https://api.example.com/personal/v1/cloud/oidc', base = issuer.replace('/oidc', '')

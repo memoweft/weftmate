@@ -136,26 +136,26 @@
     }
     async saved() { if (!this.config) await this.configure(); return this.credentials(this.tokenId); }
     async access(audience = this.base) {
-      const saved = await this.saved();
-      if (!saved) fail('CLOUD_TOKEN_INVALID');
-      const field = audience === this.base ? 'cloud' : 'host';
-      if (saved[field]?.audience === audience || field === 'cloud') {
-        if (saved[field]?.expiresAt > this.now() + 30000) return saved[field].token;
-      }
-      // One queue per client prevents rotation races between directory and host refresh.
+      // Include the credential read in the existing rotation queue. A slow
+      // IndexedDB/native read can otherwise return a consumed refresh token
+      // after a previous refresh has finished and cleared the queue.
       if (this.refreshing) { await this.refreshing; return this.access(audience); }
       const generation = this.generation;
       this.refreshing = (async () => {
+        const saved = await this.saved();
+        if (!saved) fail('CLOUD_TOKEN_INVALID');
+        const field = audience === this.base ? 'cloud' : 'host';
+        if ((saved[field]?.audience === audience || field === 'cloud') && saved[field]?.expiresAt > this.now() + 30000) return saved[field].token;
         const fresh = await this.token({ grant_type: 'refresh_token', client_id: this.config.clientId, refresh_token: saved.refreshToken, resource: audience });
         await this.verify(fresh, { audience, sub: saved.sub });
         if (generation !== this.generation) fail('CLOUD_TOKEN_INVALID');
         if (!fresh.refresh_token) fail('CLOUD_TOKEN_INVALID');
         await this.credentials(this.tokenId, { ...saved, refreshToken: fresh.refresh_token,
           [field]: { token: fresh.access_token, audience, expiresAt: this.now() + fresh.expires_in * 1000 } });
+        return fresh.access_token;
       })();
       const current = this.refreshing;
-      try { await current; } finally { if (this.refreshing === current) this.refreshing = null; }
-      return (await this.saved())[field].token;
+      try { return await current; } finally { if (this.refreshing === current) this.refreshing = null; }
     }
     async name(deviceName) {
       const previous = this.refreshing;
