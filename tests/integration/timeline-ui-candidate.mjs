@@ -13,7 +13,7 @@ const ok = value => ({ result: { ok: true, value } })
 export async function startTimelineCandidate(options = {}) {
   process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
   // Private storage deliberately rejects aliases (including Windows 8.3 TEMP).
-  const root = realpathSync(mkdtempSync(join(tmpdir(), 'weftmate-m0-3-'))); let events = [];
+  const root = realpathSync(mkdtempSync(join(process.env.RUNNER_TEMP || tmpdir(), 'weftmate-m0-3-'))); let events = [];
   const dailySessions = new Map(), questionFrames = []; let relayPending = false;
   let sessionId, taskId, running = true, artifact, service, questionFrame, setupComplete = false, processing = {phase: 'loading', modelName: '合成模型'}
   let contextUsage=options.composer?{usedTokens:713000,contextWindow:828000}:null;

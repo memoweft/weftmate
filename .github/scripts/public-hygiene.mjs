@@ -8,14 +8,18 @@ import { pathToFileURL } from 'node:url';
 export const publicUserNames = new Set(['<user>', 'runneradmin', 'runner', 'public', 'default', 'default user', 'all users']);
 export function identityFindings(text) {
   const findings = [];
-  const paths = /[A-Za-z]:[\\/]+Users[\\/]+(<[^>\r\n]+>|[A-Za-z0-9_.@-]+(?: +[A-Za-z0-9_.@-]+)*)/gi;
+  const paths = /[A-Za-z]:[\\/]+Users[\\/]+(<[^>\r\n]+>|[^\\/\r\n"'`<>:]+)/gi;
   for (const match of text.matchAll(paths)) {
-    if (!publicUserNames.has(match[1].toLowerCase())) findings.push('Windows user directory');
+    if (!publicUserNames.has(match[1].trim().toLowerCase())) findings.push('Windows user directory');
   }
   if (/\b(?:DESKTOP-[A-Z0-9]{7}|LAPTOP-[A-Z0-9]{8})\b/.test(text)) findings.push('default machine name');
   return [...new Set(findings)];
 }
 export function textFile(bytes) {
+  if (bytes[0] === 0xff && bytes[1] === 0xfe || bytes[0] === 0xfe && bytes[1] === 0xff) {
+    try { return new TextDecoder(bytes[0] === 0xff ? 'utf-16le' : 'utf-16be', {fatal:true}).decode(bytes); }
+    catch { return null; }
+  }
   if (bytes.includes(0)) return null;
   try { return new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
   catch { return null; }

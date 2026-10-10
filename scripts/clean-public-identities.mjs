@@ -12,11 +12,14 @@ for (const file of new Set(repositoryFiles())) {
   if (source === null) continue;
   // Preserve JSON escaping: literal paths use one backslash, JSON paths two.
   const next = source.replace(userPath, (_, separator) => {
-    const slash = separator.includes('\\\\') || (separator.includes('/') && /\.jsonl?$/.test(file)) ? '\\\\' : '\\';
+    const slash = separator.includes('\\\\') || (separator.includes('/') && /\.(?:jsonl?|[cm]?js|tsx?)$/.test(file)) ? '\\\\' : '\\';
     return `C:${slash}Users${slash}<user>`;
   }).replace(host, '<host>');
   if (next === source) continue;
   if (file.endsWith('.json')) { JSON.parse(next); jsonChecked++; }
-  writeFileSync(file, next); changed++;
+  if (bytes[0] === 0xff && bytes[1] === 0xfe) writeFileSync(file, Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(next, 'utf16le')]));
+  else if (bytes[0] === 0xfe && bytes[1] === 0xff) writeFileSync(file, Buffer.concat([Buffer.from([0xfe, 0xff]), Buffer.from(next, 'utf16le').swap16()]));
+  else writeFileSync(file, bytes.subarray(0, 3).equals(Buffer.from([0xef, 0xbb, 0xbf])) ? '\uFEFF' + next : next);
+  changed++;
 }
 console.log(JSON.stringify({changed, jsonChecked}));
