@@ -43,6 +43,10 @@
   --wm-color-scrollbar-light-hover: #929ba9;
   --wm-color-scrollbar-dark: #59616e;
   --wm-color-scrollbar-dark-hover: #7b8697;
+  --wm-color-attention-light: #B85B00;
+  --wm-color-attention-dark: #FFA544;
+  --wm-color-failure-light: #C93648;
+  --wm-color-failure-dark: #FF7182;
   --wm-space-1: 1px;
   --wm-space-2: 2px;
   --wm-space-3: 3px;
@@ -156,6 +160,7 @@
   --wm-duration-exit: 120ms;
   --wm-duration-stagger: 24ms;
   --wm-duration-staggerLimit: 60ms;
+  --wm-duration-status: 150ms;
   --wm-easing-standard: ease;
   --wm-easing-smooth: ease-in-out;
   --wm-easing-desktop: cubic-bezier(.16,1,.3,1);

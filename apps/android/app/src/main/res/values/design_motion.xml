@@ -16,6 +16,7 @@
     <integer name="wm_duration_exit">120</integer>
     <integer name="wm_duration_stagger">24</integer>
     <integer name="wm_duration_staggerLimit">60</integer>
+    <integer name="wm_duration_status">150</integer>
     <string name="wm_easing_standard" translatable="false">ease</string>
     <string name="wm_easing_smooth" translatable="false">ease-in-out</string>
     <string name="wm_easing_desktop" translatable="false">cubic-bezier(.16,1,.3,1)</string>

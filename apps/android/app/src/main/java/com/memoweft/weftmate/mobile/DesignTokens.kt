@@ -89,4 +89,5 @@ object DesignTokens {
     const val durationExit = 120L
     const val durationStagger = 24L
     const val durationStaggerLimit = 60L
+    const val durationStatus = 150L
 }

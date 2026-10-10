@@ -946,3 +946,29 @@ details[open] > summary > .progress-chevron { transform: rotate(0deg); }
 
 .session-list .session-row > button:first-child:focus-visible, .session-list .sidebar-project-toggle:focus-visible { outline:none; }
 .session-row:has(> button:first-child:focus-visible), .sidebar-project-heading:has(.sidebar-project-toggle:focus-visible) { box-shadow:inset 0 0 0 var(--wm-space-2) var(--accent); }
+
+/* D55: one status slot, theme-aware semantic colors, brief terminal entrance. */
+:root { --session-attention:var(--wm-color-attention-light); --session-failure:var(--wm-color-failure-light); --session-completed:var(--wm-color-brand-light); }
+:root[data-theme="dark"] { --session-attention:var(--wm-color-attention-dark); --session-failure:var(--wm-color-failure-dark); --session-completed:var(--wm-color-brand-dark); }
+.session-unread-dot { background:var(--session-completed); }
+.session-unread-dot.is-approval,.session-unread-dot.is-question { background:var(--session-attention); }
+.session-unread-dot.is-failed { background:var(--session-failure); }
+.session-status .session-running-dot { flex:none; margin:0; width:var(--wm-space-14); height:var(--wm-space-14); border:var(--wm-space-2) solid var(--line); border-top-color:var(--ink-secondary); border-radius:var(--wm-radius-circle); background:transparent; animation:sidebar-spin var(--wm-duration-working) linear infinite; }
+.status-entering .session-unread-dot { animation:session-status-enter var(--wm-duration-status) ease-out; }
+@keyframes session-status-enter { from { opacity:0; } to { opacity:1; } }
+.session-group-toggle { display:flex; align-items:center; }
+.session-group .session-status { margin-inline-start:auto; }
+.rail-main-chat .session-status { margin-inline-start:auto; }
+.session-hover-state { color:var(--ink-secondary); margin:var(--wm-space-8) 0 0; }
+.chat-attention-dot { display:inline-block; flex:none; width:var(--wm-space-6); height:var(--wm-space-6); border-radius:var(--wm-radius-circle); background:var(--session-attention); }
+@media(prefers-reduced-motion:reduce) { .status-entering .session-unread-dot,.session-status .session-running-dot { animation:none; } }
+
+@media(hover:hover) and (pointer:fine) {
+ .session-row:hover .session-status,.session-row:focus-within .session-status { display:flex; }
+ .session-row .session-status { order:3; }
+ .session-row .session-quick-action { order:2; }
+}
+.session-status[data-tooltip],.mobile-session-status[data-tooltip] { position:relative; }
+.session-status[data-tooltip]:hover:after,.session-status[data-tooltip]:focus-visible:after { content:attr(data-tooltip); position:absolute; bottom:calc(100% + var(--wm-space-8)); right:0; z-index:30; padding:var(--wm-space-6) var(--wm-space-10); border-radius:var(--wm-radius-8); background:var(--wm-color-tooltip-background); color:var(--wm-color-on-action); white-space:nowrap; font-size:var(--wm-font-size-12); pointer-events:none; }
+
+.session-group .session-status,.sidebar-project-heading .session-status { order:3; }

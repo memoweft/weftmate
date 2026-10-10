@@ -22,7 +22,7 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
       core.state.executionAccount = undefined;core.state.executionAccountName = undefined;core.state.sessionSelecting=false;core.resetLogicalSession?.();
       core.state.models = [];core.state.modelsKnown=false;
       core.state.modelProfileId = null;
-      core.state.sessionGroups = []; core.state.projects = []; core.state.projectCanManage = false; core.state.projectsError = '';
+      core.state.sessionStatusSummary = null; core.state.sessionGroups = []; core.state.projects = []; core.state.projectCanManage = false; core.state.projectsError = '';
     }
     Object.assign(core.state, {
       ownerId: state.owner || null, account: state.loggedIn ? { ownerId: state.owner, username: state.username } : null,
@@ -147,6 +147,7 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
   }).catch(() => {});
   try{const result=await core.accessApi('/sessions?archived=all');if(owner!==state.owner||epoch!==state.authEpoch||generation!==state.sharedGeneration)return;
     core.state.sessionGroups = result.groups || [];
+    core.state.sessionStatusSummary = result.statusSummary ?? null;
     void core.refreshSessionProjects().then(() => {
       if (owner === state.owner && epoch === state.authEpoch && generation === state.sharedGeneration) effects.renderConversationList();
     });
