@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url'
 import { writeFile, copyFile } from 'node:fs/promises'
 import { rootCertificates } from 'node:tls'
 import { downloadFrp } from './download-frp.mjs'
+import { stageRuntimeEntry } from './windows-package-policy.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(here, '..')
@@ -66,7 +67,7 @@ await cp(runtime, stage, {
   dereference: false,
   filter: (source) => {
     const rel = relative(runtime, source).split(sep).join('/')
-    return rel !== 'tarballs' && !rel.startsWith('tarballs/')
+    return stageRuntimeEntry(rel)
   },
 })
 console.log(`[stage-dsh-runtime] staged verified vendor runtime -> ${stage}`)

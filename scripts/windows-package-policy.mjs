@@ -1,4 +1,5 @@
 import { isAbsolute, parse, relative, resolve, sep } from 'node:path'
+import { homedir, hostname, userInfo } from 'node:os'
 
 export const CANDIDATE_VERSION_RE = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)-[a-z][a-z0-9-]*\.(?:0|[1-9]\d*)$/i
 
@@ -42,7 +43,66 @@ export function forbiddenArchiveEntry(entry) {
 }
 
 export function containsDevelopmentPath(text) {
-  const value = String(text)
+  const value = normalizePackagedText(text)
   return /D:[\\/]AIProjects[\\/](?:WeftMate[\\/]Repository|Shared[\\/]Dependencies)/i.test(value)
     || /[A-Za-z]:[\\/]+Users[\\/]+(?:<user>|[^\\/\r\n"\x27<>]+)(?:[\\/]|$)/i.test(value)
+}
+
+export function stageRuntimeEntry(entry) {
+  const path = String(entry).replaceAll('\\', '/')
+  if (path === 'tarballs' || path.startsWith('tarballs/')) return false
+  // Hoisted vendor packages are physical directories. These generated pnpm
+  // files are install/cache state and machine-specific command shims, not the
+  // runtime entrypoints (bin/dsh-web and each package's main/exports).
+  return !/(?:^|\/)node_modules\/(?:\.bin|\.pnpm)(?:\/|$)/.test(path)
+    && !/(?:^|\/)node_modules\/(?:\.modules\.yaml|\.pnpm-workspace-state-v1\.json)$/.test(path)
+}
+
+// Compare literal paths, JSON escapes and forward slashes with the same policy.
+function normalizePackagedText(text) {
+  return String(text).replace(/\\+/g, '/').toLowerCase()
+}
+
+export function buildMachineIdentity() {
+  return { home: homedir(), username: userInfo().username, hostname: hostname(), roots: [process.cwd(), process.env.WEFTMATE_DSH_CHECKOUT].filter(Boolean) }
+}
+
+export function containsBuildMachineIdentity(text, identity = buildMachineIdentity()) {
+  const value = normalizePackagedText(text)
+  // Preserve the pre-existing source-checkout rule across every dependency.
+  if (/D:[\/]AIProjects[\/](?:WeftMate[\/]Repository|Shared[\/]Dependencies)/i.test(value)) return true
+  for (const path of [identity.home, ...(identity.roots ?? [])].filter(Boolean)) {
+    if (value.includes(normalizePackagedText(path))) return true
+  }
+  // Names are tokens: a short username must not match inside unrelated words.
+  for (const name of [identity.username, identity.hostname].filter(Boolean)) {
+    const escaped = String(name).toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    if (new RegExp(`(?<![\\p{L}\\p{N}_-])${escaped}(?![\\p{L}\\p{N}_-])`, 'u').test(value)) return true
+  }
+  return false
+}
+
+export function isThirdPartyPackageFile(file) {
+  const parts = String(file).replaceAll('\\', '/').replace(/^\/+/, '').split('/')
+  const index = parts.lastIndexOf('node_modules')
+  if (index < 0) return false
+  // WeftMate plugins remain first party even when mounted as packages.
+  const name = parts[index + 1] ?? ''
+  return !/^(@weftmate|weftmate(?:-|$))/i.test(name)
+}
+
+export function packagedTextViolation(text, file, identity = buildMachineIdentity()) {
+  if (containsBuildMachineIdentity(text, identity)) return 'build-machine-identity'
+  if (!isThirdPartyPackageFile(file) && containsDevelopmentPath(text)) return 'development-path'
+  return null
+}
+
+export function redactBuildMachineIdentity(text, identity = buildMachineIdentity()) {
+  let value = String(text)
+  for (const [name, replacement] of [[identity.username, '<user>'], [identity.hostname, '<host>']]) {
+    if (!name) continue
+    const escaped = String(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    value = value.replace(new RegExp(`(?<![\\p{L}\\p{N}_-])${escaped}(?![\\p{L}\\p{N}_-])`, 'giu'), replacement)
+  }
+  return value
 }

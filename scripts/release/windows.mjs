@@ -8,6 +8,7 @@ import { rootCertificates } from 'node:tls';
 import { downloadFrp } from '../download-frp.mjs';
 import { packageRelease } from './package.mjs';
 import { keyId, signingKeyFromEnvironment, compareVersions } from '../../src/personal-update/manifest.mjs';
+import { verifyWindowsPackage } from '../verify-windows-package.mjs';
 
 export function assertReleaseVersion(version, channel) {
   compareVersions(version, '0.0.0');
@@ -45,9 +46,11 @@ export async function buildWindowsRelease(options) {
   await writeFile(join(relay, 'transport-ca.pem'), rootCertificates.join('\n') + '\n');
   const identity = options['test-identity'];
   if (identity && !/^[a-z0-9]+$/.test(identity)) throw new Error('Invalid test identity');
+  if (options['isolate-test-executable'] === 'true' && !identity) throw new Error('An isolated test executable requires a test identity');
   const config = { ...pkg.build, extraMetadata: { version, ...(identity ? { name: `weftmate-${identity}`, desktopAppId: `com.memoweft.weftmate.${identity}`, desktopIdentity: `WeftMate ${identity}` } : {}) },
     extraResources: [{ from: stage, to: '', filter: ['dsh-runtime/**/*', 'relay/**/*'] }, { from: keysFile, to: 'update-trusted-keys.json' }],
     ...(identity ? { appId: `com.memoweft.weftmate.${identity}`, nsis: { ...pkg.build.nsis, shortcutName: `WeftMate ${identity}`, uninstallDisplayName: `WeftMate ${identity}`, createDesktopShortcut: false } } : {}),
+    ...(options['isolate-test-executable'] === 'true' ? { executableName: `WeftMate-${identity}` } : {}),
     directories: { ...pkg.build.directories, output: join(output, 'build') },
     publish: { provider: 'generic', url: `https://weftmate.com/updates/windows/x64/${channel}/`, channel: channel === 'stable' ? 'latest' : 'preview' } };
   if (options['test-bad-main'] === 'true') {
@@ -58,7 +61,9 @@ export async function buildWindowsRelease(options) {
   }
   const configFile = join(output, 'builder.json'); await writeFile(configFile, JSON.stringify(config, null, 2));
   run('node_modules/electron-builder/out/cli/cli.js', ['--win', '--publish', 'never', '--config', configFile]);
-  run('scripts/verify-windows-package.mjs', ['--unpacked', join(output, 'build/win-unpacked'), '--installer', join(output, 'build', `WeftMate-Setup-${version}.exe`)]);
+  const packageCheck = await verifyWindowsPackage({ unpacked: join(output, 'build/win-unpacked'), installer: join(output, 'build', `WeftMate-Setup-${version}.exe`) });
+  await writeFile(join(output, 'package-check.json'), JSON.stringify(packageCheck, null, 2));
+  console.log(JSON.stringify(packageCheck, null, 2));
   const upload = join(output, 'upload/updates/windows/x64', channel);
   const releaseNotes = options.notes ? await readFile(resolve(options.notes), 'utf8') : '';
   const previous = options.previous ? JSON.parse(await readFile(resolve(options.previous), 'utf8')) : null;
@@ -79,5 +84,5 @@ export async function buildWindowsRelease(options) {
     dataIncluded: false, releaseNotesIncluded: !!releaseNotes, preservePreviousArtifacts: true };
   await writeFile(join(output, 'release.json'), JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report, null, 2));
-  return report;
+  return { ...report, packageCheck };
 }
