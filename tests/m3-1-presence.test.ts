@@ -36,6 +36,11 @@ test('M3-1 burst requests count once; only three spaced failures plus independen
   await f.c.advance(1000);m.failure({code:'NETWORK'},{independent:true});assert.equal(m.view().kind,'connecting');await f.c.advance(1000);m.failure({code:'NETWORK'});assert.equal(m.view().kind,'connecting');m.failure({code:'NETWORK'},{independent:true});assert.equal(m.view().kind,'host_offline');m.success();assert.equal(m.view().failures,0);
   m.failure({code:'HOST_OFFLINE'},{independent:true,cloudOffline:true});assert.equal(m.view().kind,'host_offline');
 });
+test('M3-1 a reachable relay returning host-listener 503 needs repeated independent status probes; a model 503 stays online',async()=>{
+  const f=fixture();f.core.presence.success();f.core.connectionFailed({code:'SERVICE_UNAVAILABLE',status:503});assert.equal(f.core.connectionView().kind,'online');
+  f.setTransport(()=>({ok:false,status:503,json:async()=>({error:{code:'MODEL_UNAVAILABLE'}})}));await f.core.retryConnection();assert.equal(f.core.connectionView().kind,'online');
+  f.setTransport(()=>({ok:false,status:503,json:async()=>({error:{code:'SERVICE_UNAVAILABLE'}})}));await f.core.retryConnection();assert.equal(f.core.connectionView().kind,'connecting');await f.c.advance(1000);await f.core.retryConnection();assert.equal(f.core.connectionView().kind,'connecting');await f.c.advance(1000);await f.core.retryConnection();assert.equal(f.core.connectionView().kind,'host_offline');
+});
 test('M3-1 synthetic clock drives exponential backoff, background cap and immediate foreground/network retries',async()=>{
   const f=fixture();let recoveries=0;f.setTransport(()=>{throw Error('synthetic network');});f.core.startConnection(async()=>{recoveries++;});await f.core.retryConnection();assert.equal(f.c.next(),1000);
   await f.c.advance(1000);assert.equal(f.c.next(),2000);await f.c.advance(2000);assert.equal(f.c.next(),4000);

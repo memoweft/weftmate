@@ -69,7 +69,12 @@
                 } catch (error) {
                     if (!current()) return;
                     if (authState(error)) { model.authorization(authState(error)); return; }
-                    if (!transportFailure(error)) return;
+                    // The relay TLS endpoint may still answer while its host
+                    // content listener is down. Only the independent status
+                    // probe interprets this transport-level 503 as unreachable.
+                    const probeFailure = error.status === 503 && ['SERVICE_UNAVAILABLE','SERVICE_CLOSING','HOST_UNAVAILABLE'].includes(error.code)
+                        ? {code:'HOST_UNAVAILABLE',status:503} : error;
+                    if (!transportFailure(probeFailure)) return;
                     let cloudOffline = false;
                     try {
                         const cloud = await core.probeCloudPresence?.();
@@ -79,7 +84,7 @@
                         if (!current()) return;
                         if (authState(cloudError)) { model.authorization(authState(cloudError)); return; }
                     }
-                    model.failure(error, { independent: true, cloudOffline });
+                    model.failure(probeFailure, { independent: true, cloudOffline });
                 }
             })().catch(() => {}).finally(() => {
                 running = null;
