@@ -209,12 +209,12 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         if(groupsOnly === 'retention') {
             for (const days of [1,7,30,null]) action(days===null?'不自动删除':`${days} 天后自动删除`,async()=>{await core.updateSession(session.sessionId,{autoDeleteDays:days});closeMenu();paintSelectedSession(core.state.selectedSessionId);},{role:'menuitemradio',checked:(session.autoDeleteDays ?? (session.autoDeleteDays === null ? null : 30)) === days});
         } else if(groupsOnly === 'project') {
-            for (const project of core.state.projects.filter(project => !project.revoked)) action(project.name, async () => { await core.updateSession(session.sessionId, { projectId: project.projectId }); closeMenu(); await core.refreshSessions(); if (core.state.selectedSessionId === session.sessionId) paintSelectedSession(session.sessionId); });
-            action('移出项目', async () => { await core.updateSession(session.sessionId, { projectId: null }); closeMenu(); await core.refreshSessions(); });
+            for (const project of core.state.projects.filter(project => !project.revoked)) action(project.name, async () => { await core.updateSession(session.sessionId, { projectId: project.projectId }); closeMenu(); await core.refreshSessions(); if (core.state.selectedSessionId === session.sessionId) paintSelectedSession(session.sessionId); },{role:'menuitemradio',checked:session.projectId===project.projectId});
+            action('移出项目', async () => { await core.updateSession(session.sessionId, { projectId: null }); closeMenu(); await core.refreshSessions(); },{role:'menuitemradio',checked:!session.projectId});
         } else if(groupsOnly){
-            for(const group of core.state.sessionGroups || []) action(group.name,async()=>{await core.updateSession(session.sessionId,{groupId:group.id});closeMenu();});
+            for(const group of core.state.sessionGroups || []) action(group.name,async()=>{await core.updateSession(session.sessionId,{groupId:group.id});closeMenu();},{role:'menuitemradio',checked:session.groupId===group.id});
             action('新建分组…',()=>{closeMenu();editName('新建分组','',async name=>{const result=await core.sessionGroupAction('POST',null,name);if(result)await core.updateSession(session.sessionId,{groupId:result.group.id});});},{separator:true});
-            action('移出分组',async()=>{await core.updateSession(session.sessionId,{groupId:null});closeMenu();});
+            action('移出分组',async()=>{await core.updateSession(session.sessionId,{groupId:null});closeMenu();},{role:'menuitemradio',checked:!session.groupId});
             action('管理分组',()=>{closeMenu();manageGroups();});
         }else{
             const runs={project:()=>sessionMenu(session,menu.querySelector('[data-project-menu]'),'project'),pin:async()=>{await core.updateSession(session.sessionId,{pinned:!session.pinned});closeMenu();},unread:async()=>{await core.updateSession(session.sessionId,{unread:!session.unread});closeMenu();},
