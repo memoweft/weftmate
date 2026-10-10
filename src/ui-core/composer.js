@@ -324,7 +324,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         const canSendHere = selected?.sendAvailable === true || core.state.newConversation === true;
         const attachmentCount = phoneChat ? 0 : core.currentAttachmentDrafts().length;
         const attachmentBusy = !!core.state.attachmentUpload;
-        const messageDisabled = phoneChat ? !phoneReady || !!pendingPhone || !!recovery : !chat || !model || !canSendHere || attachmentBusy;
+        const messageDisabled = phoneChat ? !core.state.ownerId || !!pendingPhone || !!recovery : !core.state.account || !model || !canSendHere || attachmentBusy;
         const running = phoneChat ? boundSession?.running === true : conversationRunning(core.state.selectedSessionId);
         const blockedDesktop = core.desktopBlocker();
         const hint = phoneChat && bound ? core.state.phoneSendNotice || '' : phoneChat

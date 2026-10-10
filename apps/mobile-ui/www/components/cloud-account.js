@@ -13,6 +13,7 @@
     state.page = waiting ? 'cloud-wait' : 'login';
   }
   function clearIdentity() {
+    uiCore.stopConnection();
     state.authEpoch++; state.loggedIn = false; state.owner = ''; state.username = ''; state.deviceId = '';
     state.sharedSessions = []; state.sharedEvents = []; state.conversations = []; state.conversationId = null;
     state.sharedSessionId = null; state.profile = null; state.connection = 'local';
@@ -36,6 +37,7 @@
       state.sharedSessions = result.sessions || []; state.sharedHostAvailable = true;
     }
     await listSharedSessions();
+    startMobileConnection();
     if(state.logicalChats)await uiCore.selectMainChat();else page('home');
   }
   async function scanPairing() {
@@ -108,10 +110,15 @@
     choose.addEventListener('click', () => { page('devices'); }); byId('cloud-wait-view').append(choose);
     const redeem = core.cloudRedeemPairing; core.cloudRedeemPairing = async input => { const result = await redeem(input); core.state.cloudAuth.mode = 'authenticated'; return result; };
     globalThis.WeftMobileCloud.core = core;
+    uiCore.probeCloudPresence=()=>core.probeCloudPresence();
+    core.connectionView=()=>uiCore.connectionView();
+    core.observeConnection=listener=>uiCore.observeConnection(listener);
+    core.retryConnection=()=>uiCore.retryConnection();
     globalThis.WeftOfflineView?.mount({ core, nativeCall: native ? call : null,
       openConversation: () => page('chat'),
       identity: async () => native ? call('offline.identity') : core.cloudOfflineIdentity(),
       host: (path, body) => core.accessApi(path, { method: 'POST', body, protectedWrite: true }) });
+    uiCore.openOfflineMode=()=>core.openOfflineMode?.();
     await core.load();
   }
   function route(name) {

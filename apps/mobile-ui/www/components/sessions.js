@@ -101,7 +101,7 @@ async function mobileSessionProjects(session) {
 /* Mobile sessions presentation and named ui-core actions. */
 function stopSharedPoll(){clearTimeout(state.sharedPollTimer);state.sharedPollTimer=null}
 
-function scheduleSharedPoll(){stopSharedPoll();if(state.chatSource!=='host'||state.page!=='chat'||document.visibilityState==='hidden')return;
+function scheduleSharedPoll(){stopSharedPoll();if(state.chatSource!=='host'||state.page!=='chat'||document.visibilityState==='hidden'||!uiCore.state.online)return;
   state.sharedPollTimer=setTimeout(async()=>{if(state.chatSource!=='host'||state.page!=='chat')return;
     await Promise.all([loadSharedHistory(),listSharedSessions()]);if(state.chatSource==='host')scheduleSharedPoll()},state.sharedRunning?3000:12000)}
 

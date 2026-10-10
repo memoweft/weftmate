@@ -314,6 +314,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     if (url.includes('/account/models/') && options.method && options.method !== 'GET')
       return Promise.resolve(reply(config.accountModelWrite?.(url, options) ?? { error: { code: 'NOT_FOUND' } },
         config.accountModelWrite ? 200 : 404))
+    if (url.endsWith('/settings/personalization')) return Promise.resolve(reply({}));
     if (url.endsWith('/models')) return Promise.resolve(reply({ models: config.modelCatalog ??
       [{ id: 'model-test', name: 'Synthetic', configured: true }] }))
     if (/\/sessions\/[^/]+\/metadata$/.test(url) && options.method === 'PATCH') return Promise.resolve(reply(JSON.parse(options.body)))
@@ -1152,13 +1153,14 @@ test('terminal-output-limit desktop offline session selection and account reset 
   assert.match(page.get('timeline-status').textContent, /长度限制/)
   config.statusOffline = true
   page.tick()
-  for (let attempt = 0; attempt < 20 && page.get('connection-banner').hidden; attempt++) await flush()
-  assert.equal(page.get('connection-banner').hidden, false)
+  for (let attempt = 0; attempt < 20 && page.core.state.online; attempt++) await flush()
+  assert.equal(page.core.state.online, false)
+  assert.match(page.core.connectionView().description, /正在连接/)
   const [a, b] = [page.getByRole('button',{name:'A'}),page.getByRole('button',{name:'B'})]
   b.fire('click')
   assert.equal(page.get('timeline-status').textContent, '', 'selection clears even when refreshHistory exits before its reset branch')
   config.statusOffline = false
-  page.tick()
+  await page.core.retryConnection()
   for (let attempt = 0; attempt < 20; attempt++) await flush()
   a.fire('click')
   for (let attempt = 0; attempt < 20 && !page.get('timeline-status').textContent.includes('长度限制'); attempt++) await flush()

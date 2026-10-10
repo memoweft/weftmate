@@ -115,7 +115,10 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
             catch (error) {
                 if (!stillCurrent())
                     return;
-                if (error.code === 'NETWORK')
+                if (error.code === 'CURSOR_RESET_REQUIRED' || error.status === 409) {
+                    await core.refreshHistory(true, true);
+                }
+                else if (error.code === 'NETWORK')
                     effects.historyNotice('连接中断，稍后将从原位置续读。');
                 else if (error.code !== 'UNAUTHORIZED')
                     effects.historyNotice('历史暂时无法读取，请稍后重试。');

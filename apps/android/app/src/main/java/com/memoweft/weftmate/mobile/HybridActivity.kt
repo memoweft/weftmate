@@ -588,7 +588,8 @@ class HybridActivity : Activity() {
         is ApiFailure -> error.safeCode.takeIf { it.matches(Regex("[A-Z_0-9]{1,64}")) } ?: "SERVICE_UNAVAILABLE"
         is ModelNotCompleted -> error.code
         is ModelCancelled -> "CANCELLED"
-        else -> "OPERATION_FAILED"
+        else -> connectionErrorCode(error,
+            (getSystemService(android.net.ConnectivityManager::class.java)?.activeNetwork != null)) ?: "OPERATION_FAILED"
     }
 
     private fun uiState(state: UiBundleState) = JSONObject().put("activeVersion", state.version)
