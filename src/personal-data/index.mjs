@@ -37,8 +37,8 @@ export function createDataControls(context) {
       try {
         op.result = await work(op, op.controller.signal);
         if (['clean','delete'].includes(op.kind)) await scan(owner, op.controller.signal);
-        op.state = 'completed';
         if (context.rootState.accounts[owner]?.account && op.kind !== 'scan') await event(owner, op.kind === 'export' ? '全部数据已导出' : op.kind === 'delete' ? '本账户数据已删除' : op.kind === 'close-account' ? '本机账户已移除' : '数据操作已完成', op.category, '完成');
+        erasing.delete(owner);op.state = 'completed';
       } catch (error) {
         op.state = op.controller.signal.aborted ? 'cancelled' : 'failed'; op.error = { code: error.code || 'STORAGE_UNAVAILABLE', category: op.category };
         if (context.rootState.accounts[owner]) await event(owner, '数据操作未完成', op.category, op.state === 'cancelled' ? '已取消' : '可重试').catch(() => {});
@@ -99,6 +99,9 @@ export function createDataControls(context) {
   async function* entries(owner, signal, op) {
     const state = context.accountState(owner), excluded = new Set(Object.entries(state.sessions).filter(([, row]) => hasPrivateContent(row) || row.deleting).map(([id]) => id));
     const exportedAttachments=new Set(), exportName=value=>path.basename(value).replace(/[<>:"|?*\x00-\x1f]/g,'_');
+    for(const row of Object.values(state.chatIdentity?.segments ?? {}))if(excluded.has(row.sessionId))excluded.add(row.chatId);
+    const hasMemoryFile=await lstat(path.join(accountRoot(owner),'memory-home','memoweft','memoweft.sqlite3')).catch(error=>{if(error.code==='ENOENT')return null;throw error;});
+    if(hasMemoryFile && !context.memoryManager?.enabled)throw failure('MEMORY_DELETE_UNAVAILABLE',503);
     yield { name: 'README.md', content: '# WeftMate 全部数据\n\nconversations：可读对话与结构化消息。\nmemory：MemoWeft Portable v4 记忆包。\nfiles：成果与附件原件。\nsettings：个性化与账户设置（不含密码）。\nusage：数值用量账本。\nmanifest.json：版本、排除类别及每个文件的大小和 SHA-256。manifest.sha256 校验清单。\n\n本地包未加密，请保存在可信磁盘。临时对话、已遗忘内容、凭据、其他账户和旧备份不在包内。项目原件仍留原处；有登记的成果会复制一份。旧备份和已经导出的文件需在原位置自行删除。\n', category: 'files' };
     for (const [sessionId, session] of Object.entries(state.sessions)) {
       if (excluded.has(sessionId)) continue;
@@ -107,7 +110,11 @@ export function createDataControls(context) {
       while (true) {
         const page = await context.backend.readEvents({ ownerId: owner, sessionId, afterSeq, limit: 200 });
         // Only visible user/assistant text. Tool parameters, injected context and thinking can contain credentials.
-        messages.push(...(page.events ?? []).filter(row => ['user.message','assistant.message'].includes(row.type) && !session.forgottenSeqs?.includes(row.seq)).map(row => ({ seq: row.seq, type: row.type, at: row.at, text: row.data?.text ?? '', attachments: row.data?.attachments ?? [] })));
+        for(const row of page.events ?? [])if(['user.message','assistant.message'].includes(row.type) && !session.forgottenSeqs?.includes(row.seq)){
+          let text=row.data?.text ?? '';
+          if(row.data?.truncated){if(!context.backend.readEventDetail)throw failure('BACKEND_UNAVAILABLE',503);const detail=await context.backend.readEventDetail({sessionId,seq:row.seq,ownerId:owner});if(detail.type!==row.type||typeof detail.text!=='string'||detail.truncated)throw failure('BACKEND_UNAVAILABLE',503);text=detail.text;}
+          signal.throwIfAborted();messages.push({seq:row.seq,type:row.type,at:row.at,text,attachments:row.data?.attachments ?? [],originalAttachments:row.data?.originalAttachments ?? []});op.completed=(op.completed ?? 0)+1;
+        }
         signal.throwIfAborted(); if (!page.hasMore) break;
         if (page.nextSeq <= afterSeq) throw failure('MEMORY_RESPONSE_INVALID', 503); afterSeq = page.nextSeq;
       }
@@ -115,11 +122,19 @@ export function createDataControls(context) {
       yield { name: `conversations/${sessionId}.md`, content: [`# ${session.title || '对话'}`, ...messages.map(row => `\n## ${row.type === 'user.message' ? '我' : 'WeftMate'}\n\n${row.text}`)].join('\n'), category: 'conversations' };
       for (const message of messages) for (const attachment of message.attachments) {
         if (!context.backend.readAttachment) continue;
+        if(!(attachment.id ?? attachment.attachmentId)?.startsWith('sha256:'))continue;
         const attachmentKey=`${sessionId}/${attachment.id ?? attachment.attachmentId}`;if(exportedAttachments.has(attachmentKey))continue;exportedAttachments.add(attachmentKey);
         const original = await context.backend.readAttachment({ sessionId, ownerId: owner, attachmentId: attachment.id ?? attachment.attachmentId });
         if (original?.bytes) yield { name: `files/attachments/${sessionId}/${exportName((attachment.id ?? attachment.attachmentId) + '-' + (attachment.name || 'image'))}`, chunks: [original.bytes], category: 'files' };
       }
     }
+    const workspace=context.backend.accountWorkspaceRoot?.(owner);
+    if(workspace){await assertAccountPath(path.dirname(context.root),workspace);for(const file of await accountFiles(workspace,workspace,signal)){
+      const relative=path.relative(workspace,file.path).replaceAll('\\','/'),folder=relative.split('/')[0];
+      if(excluded.has(folder)||!Object.keys(state.sessions).includes(folder)&&!Object.values(state.sessions).some(row=>row.workspaceChatId===folder)&&!state.chatIdentity?.chats?.[folder])continue;
+      if(/(?:^|\/)(?:\.env(?:\.|$)|credentials?(?:\.|$)|vault(?:\.|$))|\.(?:pem|key|p12|pfx|enc)$/i.test(relative))continue;
+      yield {name:`files/workspaces/${relative}`,chunks:createReadStream(file.path,{signal}),category:'files'};
+    }}
     op.category = 'memory';
     if (context.memoryManager?.enabled) yield { name: 'memory/portable-v4.json', content: await context.memoryManager.portableExport(owner), category: 'memory' };
     const syncEvents = []; let syncAfter=0;
@@ -134,6 +149,8 @@ export function createDataControls(context) {
     settings.profile={username:state.account.username,displayName:state.account.displayName,avatar:state.account.avatar};
     yield { name: 'settings/settings.json', content: settings, category: 'memory' };
     yield { name: 'usage/ledger.json', content: context.usage.exportAccount(owner), category: 'memory' };
+    const healthFile=path.join(accountRoot(owner),'health','daily-summaries.json');await assertAccountPath(accountRoot(owner),healthFile);
+    const health=await readFile(healthFile,'utf8').catch(error=>{if(error.code==='ENOENT')return null;throw error;});if(health)yield{name:'health/daily-summaries.json',content:JSON.parse(health),category:'memory'};
     let cursor;
     do {
       const params = new URLSearchParams({ limit: '200', ...(cursor ? { cursor } : {}) }), page = await context.library.list(owner, params);
@@ -163,8 +180,10 @@ export function createDataControls(context) {
   }
   async function erase(owner, kind, op, signal) {
     let state = context.accountState(owner);const inventory = await sources(owner,{signal});
-    for (const source of inventory) if (source.path) await accountFiles(source.accountRoot, source.path, signal);
-    signal.throwIfAborted(); erasing.add(owner);
+    for (const source of inventory) if (source.path) {op.category=source.category;await accountFiles(source.accountRoot, source.path, signal);}
+    const hasMemoryFile=await lstat(path.join(accountRoot(owner),'memory-home','memoweft','memoweft.sqlite3')).catch(error=>{if(error.code==='ENOENT')return null;throw error;});
+    if(hasMemoryFile && (!context.memoryManager?.enabled || typeof context.memoryManager.eraseAccount!=='function')){op.category='memory';throw failure('MEMORY_DELETE_UNAVAILABLE',503);}
+    signal.throwIfAborted(); op.committed=true;erasing.add(owner);
     await context.serial(() => context.mutate(owner, next => {
       next.dataErasure = { operationId: op.id, kind, startedAt: new Date(context.timestamp()).toISOString() };
       if (next.memoryBackfillJob) next.memoryBackfillJob.state = 'cancelled';
@@ -192,6 +211,7 @@ export function createDataControls(context) {
     for (const deviceId of Object.keys(state.devices)) if (deviceId !== op.deviceId) await context.cloudIdentity?.revokeLocalDevice(owner, deviceId);
     await context.cloudIdentity?.eraseLocalAccount?.(owner, kind === 'close-account', op.deviceId);
     op.category = 'memory'; await context.usage.eraseAccount(owner);
+    await context.memoryManager?.markAccountErased(owner);
     const profileIds = Object.values(state.accountModels ?? {}).flatMap(row => Object.values(row.revisions ?? {}).map(revision => revision.profileId));
     const stageRefs=Object.values(state.modelOperations ?? {}).map(row=>row.stageRef).filter(Boolean);
     if (profileIds.length || stageRefs.length) await context.accountModelManager.disable({ownerId:owner,profileIds,stageRefs});
@@ -221,6 +241,7 @@ export function createDataControls(context) {
       context.sharedAttachmentStores.set(owner, await createSharedAttachmentStore({ root: path.join(context.syncRoot(owner), 'shared-attachments') }));
     }
     return { deleted: true, requiresLogin: kind === 'close-account', onboarding: true,
+      cloudDeletionSafe: !!context.cloudIdentity && !Object.entries(context.rootState.accounts).some(([id,row])=>id!==owner&&row.account!==null),
       cloud: context.cloudIdentity ? '本机绑定已撤销；云账号身份需通过账户页输入密码注销，未执行前邮箱与云身份仍保留。' : '没有云端绑定。',
       external: '程序、其他账户、项目原件、整机备份及已经导出的外部文件保留。其他设备下次连接时清理离线副本。' };
   }

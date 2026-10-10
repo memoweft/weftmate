@@ -9,7 +9,7 @@ globalThis.WeftDataView = (core, target, { toast = () => {}, desktop = !!globalT
     const accounting=node('p','muted data-accounting');
     const error = node('p','form-error'); error.setAttribute('role','alert'); progress.setAttribute('role','status'); progress.setAttribute('aria-live','polite');
     header.append(measured,refreshButton); bar.setAttribute('role','img');
-    const exportButton = button('导出全部数据', () => perform(() => core.exportAllData()), 'secondary');
+    const exportButton = button('导出全部数据', () => perform(() => core.exportAllData(undefined,desktop)), 'secondary');
     actions.append(node('h2','','带走你的数据'),node('p','muted',desktop ? '选择保存位置。对话、记忆、成果、附件、设置与用量一起导出；不包含密钥和临时对话。' : '请在电脑上导出。可在这里发起，电脑确认并保存后会通知你。'),exportButton);
     const danger = node('section','data-danger'); danger.append(node('h2','','危险操作'),node('p','muted','删除无法撤销。建议先导出；程序、其他账户和项目原件会保留。'));
     const deleteButton = button('删除本账户的全部数据', () => confirmDanger('delete'), 'danger'), closeButton = button('注销账号', () => confirmDanger('close-account'), 'danger'); danger.append(deleteButton,closeButton);
@@ -36,7 +36,7 @@ globalThis.WeftDataView = (core, target, { toast = () => {}, desktop = !!globalT
         box.append(rows,node('p','muted','还包括设置、用量和设备上的离线副本。其他设备下次连接时退出并清理；电脑无法擦除关机设备、整机备份或你已导出的文件。项目原始文件只解除登记。'));
         if (kind === 'close-account') box.append(node('p','muted','本机账户与设备绑定一并移除。若使用云账号，还需在账户页输入密码完成云身份注销；未完成前云端邮箱与身份仍保留。'));
         if (kind === 'close-account' && desktop && core.state.cloudAuth?.mode === 'authenticated') { const passwordLabel=node('label','','云账号密码'), passwordInput=node('input'); passwordInput.type='password'; passwordInput.autocomplete='current-password'; passwordInput.setAttribute('aria-label','云账号密码'); passwordInput.addEventListener('input',()=>{cloudPassword=passwordInput.value;}); passwordLabel.append(passwordInput); box.append(passwordLabel); }
-        box.append(button('先导出全部数据',async () => { box.close(); await perform(() => core.exportAllData()); }));
+        box.append(button('先导出全部数据',async () => { box.close(); await perform(() => core.exportAllData(undefined,desktop)); }));
         const label = node('label','','输入账户名确认'), input = node('input'); input.setAttribute('aria-label','输入账户名确认'); input.autocomplete = 'off'; label.append(input); box.append(label);
         const next = button('继续',() => {
             box.close(); const final = dialog('最后确认'); final.append(node('p','',`确定${kind === 'delete' ? '删除' : '注销'}「${accountName}」？删除开始后无法恢复。${desktop ? '' : '还需要在电脑上再次确认。'}`));
@@ -64,13 +64,13 @@ globalThis.WeftDataView = (core, target, { toast = () => {}, desktop = !!globalT
         if (!canManage) progress.append(node('p','muted','当前账户或设备只可查看。请由这台电脑的账户所有者管理数据。'));
         if (operation?.state === 'pending_confirmation') {
             progress.append(node('p','',desktop ? '另一设备请求数据操作，请在这台电脑核对。' : '已请求电脑确认。可以在确认前取消。'));
-            if (desktop) progress.append(button('核对并确认',() => operation.kind === 'export' ? perform(() => core.exportAllData(operation.id)) : confirmDanger(operation.kind,operation.id)));
+            if (desktop) progress.append(button('核对并确认',() => operation.kind === 'export' ? perform(() => core.exportAllData(operation.id,desktop)) : confirmDanger(operation.kind,operation.id)));
         }
         if (operation?.state === 'running') progress.append(node('p','',`${operation.kind === 'scan' ? '正在统计' : operation.kind === 'export' ? '正在导出' : operation.kind === 'clean' ? '正在清理' : '正在删除'}${snapshot?.categories.find(row=>row.id===operation.category)?.name || '账户数据'}…${operation.bytes ? ` ${core.dataSize(operation.bytes)}` : ''}`));
         if (operation?.canCancel) progress.append(button('取消操作',() => perform(() => core.cancelData(operation.id))));
         if (operation?.state === 'failed') {
             const category = snapshot?.categories.find(row=>row.id===operation.error?.category)?.name || '账户数据';
-            progress.append(node('p','form-error',`${category}未完成。已完成的删除不能恢复；修复原因后可重试。${operation.error?.code === 'DATA_PATH_OUTSIDE_ACCOUNT' ? '发现文件链接指向账户外，已拒绝删除。' : ''}`),button('重试',() => operation.kind === 'scan' ? refresh(true) : operation.kind === 'export' ? perform(() => core.exportAllData()) : operation.kind === 'clean' ? perform(() => core.cleanData(operation.category,true)) : confirmDanger(operation.kind)));
+            progress.append(node('p','form-error',`${category}未完成。已完成的删除不能恢复；修复原因后可重试。${operation.error?.code === 'DATA_PATH_OUTSIDE_ACCOUNT' ? '发现文件链接指向账户外，已拒绝删除。' : ''}`),button('重试',() => operation.kind === 'scan' ? refresh(true) : operation.kind === 'export' ? perform(() => core.exportAllData(undefined,desktop)) : operation.kind === 'clean' ? perform(() => core.cleanData(operation.category,true)) : confirmDanger(operation.kind)));
         }
         if (operation?.state === 'completed' && operation.kind === 'export' && desktop) progress.append(button('在文件夹中显示',() => core.showDataExport(operation.id)));
         if (operation?.state === 'completed' && completionId !== operation.id) {
@@ -82,13 +82,14 @@ globalThis.WeftDataView = (core, target, { toast = () => {}, desktop = !!globalT
     }
     async function finishDeletion(op) {
         await core.clearLocalData(initialIdentity);
+        if (op.kind === 'close-account' && cloudPassword && op.result?.cloudDeletionSafe === false) { cloudPassword=undefined; error.replaceChildren(node('span','','本机账户已注销。本机还有其他账户；现有云注销会移除宿主路由和成员连接，因此云端身份保留。请在账户页单独处理云端身份。')); return; }
         if (op.kind === 'close-account' && cloudPassword) { try { await core.cloudDeleteAccount(cloudPassword,{prepareBackup:false}); cloudPassword=undefined; } catch { error.replaceChildren(node('span','','本机数据已删除，云账号注销未完成。检查密码与连接后重试；未完成前云端邮箱与身份仍保留。'),button('重试云账号注销',()=>finishDeletion(op))); return; } }
         toast(op.kind==='delete'?'数据已删除，重新开始':'本机账户已注销'); globalThis.location.reload();
     }
     async function refresh(force = false) {
         const ticket = ++generation; clearTimeout(timer);
         try { if (trackedOperation && desktop && globalThis.weftmateDesktop?.dataOperation) { const native=await globalThis.weftmateDesktop.dataOperation(trackedOperation); if(native && ['close-account','delete'].includes(native.kind)) { operation=native; if(operation.state==='completed'){paint();return;} } } if (force) await core.scanData(); const value = await core.readData(); if (!current() || ticket !== generation) return;
-            snapshot = value.statistics; operation = value.operation; canManage = value.canManage; accountName = value.accountName; error.textContent = ''; paint();
+            desktop = value.desktop && !!globalThis.weftmateDesktop; snapshot = value.statistics; operation = value.operation; canManage = value.canManage; accountName = value.accountName; error.textContent = ''; paint();
             timer = setTimeout(() => { if (current() && !target.hidden && !target.closest('[hidden]')) void refresh(); }, ['running','pending_confirmation'].includes(operation?.state) ? 700 : 5000);
         } catch { if (!current() || ticket !== generation) return; total.textContent='占用暂时无法读取'; error.replaceChildren(node('span','','检查电脑连接后重试。'),button('重试',() => refresh())); }
     }
