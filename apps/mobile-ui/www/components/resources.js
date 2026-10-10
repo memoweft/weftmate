@@ -42,7 +42,7 @@ function showResourcePage(title,context,trigger=document.activeElement){
   const previous=state.resourceView;
   const view={context,trigger:previous?.trigger||trigger,scrollTop:previous?.scrollTop??$('chat-scroll').scrollTop,
     scrollPinned:previous?.scrollPinned??state.scrollPinned};state.resourceView=view;state.scrollPinned=false;
-  $('resource-page').hidden=false;$('resource-title').textContent=title;clear($('resource-content'));
+  $('resource-page').hidden=false;$('resource-back').setAttribute('aria-label',context?.kind==='library'?'返回成果库':'返回对话');$('resource-title').textContent=title;clear($('resource-content'));
   $('resource-content').scrollTop=0;$('main').setAttribute('inert','');document.querySelector('.topbar')?.setAttribute('inert','');
   $('chat-page').setAttribute('inert','');globalThis.WeftMobileMotion?.push($('resource-page'),false,'240ms');$('resource-back').focus({preventScroll:true});return view;
 }

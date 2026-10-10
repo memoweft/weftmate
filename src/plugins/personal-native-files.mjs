@@ -1,9 +1,11 @@
 import { createHash } from 'node:crypto';
-import { lstat, readdir, readFile, realpath } from 'node:fs/promises';
+import { lstat, readdir, realpath } from 'node:fs/promises';
 import path from 'node:path';
+import { createReadStream } from 'node:fs';
 import { executionDirectory } from './personal-project-context.mjs';
 import { shellScriptInvocations, scriptWriteTargets } from './personal-write-targets.mjs';
 const additions = new WeakMap();
+const fileDigest = async file => { const hash=createHash('sha256'); for await(const chunk of createReadStream(file))hash.update(chunk); return hash.digest('hex'); };
 const fileKey = file => process.platform === 'win32' ? file.toLowerCase() : file;
 
 /** Creation provenance survives turns/restarts in the native artifact results. */
@@ -39,7 +41,7 @@ export async function snapshotFiles(directory) {
         try {
           const stat = await lstat(file);
           files.set(fileKey(file), { filePath: file, size: stat.size, mtimeMs: stat.mtimeMs,
-            sha256: createHash('sha256').update(await readFile(file)).digest('hex') });
+            sha256: await fileDigest(file) });
         } catch (error) { if (error.code !== 'ENOENT') throw error; }
       }
     }
@@ -64,7 +66,7 @@ async function snapshotFor(exec, scriptFiles) {
     try {
       const stat = await lstat(file);
       if (stat.isFile()) files.set(fileKey(await realpath(file)), { filePath: file, size: stat.size, mtimeMs: stat.mtimeMs,
-        sha256: createHash('sha256').update(await readFile(file)).digest('hex') });
+        sha256: await fileDigest(file) });
     } catch (error) { if (error.code !== 'ENOENT') throw error; }
   }
   return files;
@@ -73,8 +75,7 @@ async function snapshotFor(exec, scriptFiles) {
 /** Keep the native outcome and add host-owned references to files it changed. */
 export async function trackNativeFiles(bridge, exec, next, identity) {
   const cwd = executionDirectory(exec.agent?.session);
-  if (exec.agent?.session?.header?.origin === 'subagent' ||
-      exec.agent?.session?.header?.agentPreset !== 'personal-remote' || !cwd) return next();
+  if (exec.agent?.session?.header?.agentPreset !== 'personal-remote' || !cwd) return next();
   // Compare the same selected script outputs on both sides. A script can
   // change its own source; that must not turn an unobserved existing output
   // into a claimed creation after execution.

@@ -4,6 +4,8 @@ import { join } from 'node:path'
 import { uiCoreAssets } from '../ui-core/manifest.mjs'
 
 const files = new Map([
+  ['/personal/v1/ui/library.css', ['library.css', 'text/css; charset=utf-8']],
+  ...['components/library-view.js','components/library.js'].map(name => [`/personal/v1/ui/${name}`, [name, 'text/javascript; charset=utf-8']]),
   ...['components/onboarding.js'].map(name => [`/personal/v1/ui/${name}`, [name, 'text/javascript; charset=utf-8']]),
   ['/personal/v1/ui/onboarding.css', ['onboarding.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/activity.css', ['activity.css', 'text/css; charset=utf-8']],
@@ -88,7 +90,7 @@ export function setPersonalAccessUiResourceReader(reader) { verifiedResource = r
 
 const securityHeaders = {
   'cache-control': 'no-store',
-  'content-security-policy': "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self' https:; img-src 'self' data: blob:; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'",
+  'content-security-policy': "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self' https:; img-src 'self' data: blob:; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; frame-src blob:",
   'referrer-policy': 'no-referrer',
   'x-content-type-options': 'nosniff',
   'x-frame-options': 'DENY',

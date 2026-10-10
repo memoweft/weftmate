@@ -1,0 +1,87 @@
+import assert from 'node:assert/strict';
+import { _electron, chromium } from 'playwright';
+import { createRequire } from 'node:module';
+import { mkdtemp,mkdir,writeFile,readFile,rename,rm } from 'node:fs/promises';
+import { deflateSync } from 'node:zlib';
+import { tmpdir } from 'node:os';
+import { join,resolve } from 'node:path';
+import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
+import { localUiSession } from '../helpers/local-ui-session.mjs';
+const repo=resolve(import.meta.dirname,'../..'),out=join(repo,'tests/evidence/tb-3');await mkdir(out,{recursive:true});
+let forgotten=0;
+const memoryManager={enabled:true,peek:()=> 'ready',status:async()=>({state:'ready',capabilities:{deleteEvidence:true}}),
+  query:async(_owner,operation)=>operation==='query_jobs'?{jobs:[]}:operation==='preview_forget'?{world_revision:1,evidence_ids:['synthetic-tb3-evidence']}:{world_revision:1},
+  submitCommand:async()=>{forgotten++;return {result_state:'applied',after_revision:2,storage_cleanup:{state:'complete'}};},
+  receiptByRequest:async()=>{throw Object.assign(new Error('command_receipt_not_found'),{code:'command_receipt_not_found'});},
+  retryCleanupByRequest:async()=>({result_state:'applied',storage_cleanup:{state:'complete'}}),
+  eraseConversationContext:async()=>({result_state:'applied',storage_cleanup:{state:'complete'},erased_evidence_count:0})};
+const actions=[],fixture=await startTimelineCandidate({interactive:true,daily:true,inlineProgress:true,historyCount:0,memoryManager,libraryNativeActions:async(action,file)=>actions.push({action,file})});
+const profile=await mkdtemp(join(tmpdir(),'weftmate-tb-3-desktop-')),files=await mkdtemp(join(tmpdir(),'weftmate-tb-3-files-'));
+const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+Object.assign(env,{REVIEW_PROFILE:profile,REVIEW_THEME:'light',REVIEW_ORIGIN:fixture.origin,REVIEW_LIBRARY_TOKEN:fixture.libraryDesktopToken});
+let app,browser;const report={realElectron:true,checks:[],errors:[]};
+const png=(()=>{
+  const crc=bytes=>{let value=0xffffffff;for(const byte of bytes){value^=byte;for(let i=0;i<8;i++)value=value&1?0xedb88320^(value>>>1):value>>>1;}return (value^0xffffffff)>>>0;};
+  const chunk=(type,data)=>{const name=Buffer.from(type),length=Buffer.alloc(4),sum=Buffer.alloc(4);length.writeUInt32BE(data.length);sum.writeUInt32BE(crc(Buffer.concat([name,data])));return Buffer.concat([length,name,data,sum]);};
+  const width=240,height=160,header=Buffer.alloc(13),pixels=Buffer.alloc((width*3+1)*height);header.writeUInt32BE(width);header.writeUInt32BE(height,4);header[8]=8;header[9]=2;
+  for(let y=0;y<height;y++)for(let x=0;x<width;x++){const p=y*(width*3+1)+1+x*3;pixels[p]=65+Math.round(x/width*70);pixels[p+1]=125+Math.round(y/height*50);pixels[p+2]=150+Math.round(x/width*30);}
+  return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),chunk('IHDR',header),chunk('IDAT',deflateSync(pixels)),chunk('IEND',Buffer.alloc(0))]);
+})();
+const pdf=(()=>{const stream='BT /F1 24 Tf 72 720 Td (Synthetic weekend report) Tj 0 -50 Td /F1 14 Tf (Clean the study. Take a walk.) Tj ET';
+  const objects=['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>','<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`];
+  let text='%PDF-1.4\n',offsets=[0];for(const [i,body]of objects.entries()){offsets.push(Buffer.byteLength(text));text+=`${i+1} 0 obj\n${body}\nendobj\n`;}
+  const xref=Buffer.byteLength(text);text+=`xref\n0 ${objects.length+1}\n0000000000 65535 f \n`+offsets.slice(1).map(offset=>String(offset).padStart(10,'0')+' 00000 n \n').join('');text+=`trailer\n<< /Size ${objects.length+1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;return Buffer.from(text);
+})();
+try{
+  for(const [name,content]of [['周末计划.md','# 周末计划\n\n- 整理书房\n- 出门散步\n'],['费用.csv','项目,金额\n文具,28\n'],['整理.py','print("hello")\n'],['配色.png',png],['资料.zip',Buffer.from([0,1,2,3])],['周末报告.pdf',pdf]]){const file=join(files,name);await writeFile(file,content);await fixture.registerOutput(file);}
+  await fixture.progress.artifact();fixture.progress.finish();
+  const secondSource=await fixture.newOutputSource('整理后台资料');await writeFile(join(files,'后台资料.txt'),'Background synthetic output');await fixture.registerOutput(join(files,'后台资料.txt'),secondSource);fixture.finishOutputSource(secondSource);
+  const project=(await fixture.request('/projects',{requestId:'tb3-project',name:'周末预算',rootPath:files,permission:'write'})).project;
+  const projectSource=await fixture.newOutputSource('整理项目预算',project.projectId);await writeFile(join(files,'项目预算.csv'),'项目,金额\n交通,60');await fixture.registerOutput(join(files,'项目预算.csv'),projectSource);fixture.finishOutputSource(projectSource);
+  const listing=await fixture.request('/library');assert.equal(listing.items.length,9);assert.equal((await fixture.request(`/library?projectId=${project.projectId}`)).items.length,1);report.checks.push('multiple-conversations-background-and-project-provenance');assert.equal(listing.items.find(i=>i.fileName==='配色.png').type,'image');
+  const first=await fixture.request('/library?limit=2');assert.equal(first.items.length,2);assert.ok(first.hasMore);assert.equal((await fixture.request('/library?limit=2&cursor='+encodeURIComponent(first.nextCursor))).items.length,2);
+  report.checks.push('all-native-types-indexed','signed-pagination');
+  app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:repo,args:[join(repo,'scripts/review-gallery/electron.mjs'),'--force-device-scale-factor=1'],env,timeout:90000});
+  const page=await app.firstWindow();page.setDefaultTimeout(30000);page.on('pageerror',e=>report.errors.push(e.message));await localUiSession(page,fixture.credentials,'TB-3 synthetic',{mainChat:true});
+  await page.getByRole('button',{name:'WeftMate 主对话',exact:true}).waitFor();await page.waitForTimeout(400);
+  await page.getByRole('button',{name:'成果库',exact:true}).click();await page.getByRole('heading',{name:'成果库',exact:true}).waitFor();await page.getByRole('button',{name:'预览 周末计划.md',exact:true}).waitFor();
+  await page.screenshot({animations:'disabled',path:join(out,'desktop-light-list.png')});
+  await page.getByRole('searchbox',{name:'搜索文件名',exact:true}).focus();await page.keyboard.press('Tab');assert.equal(await page.getByRole('combobox',{name:'按项目筛选',exact:true}).evaluate(el=>el.matches(':focus-visible')),true);await page.screenshot({animations:'disabled',path:join(out,'desktop-light-keyboard-focus.png')});
+  await page.getByRole('button',{name:'网格视图',exact:true}).click();await page.screenshot({animations:'disabled',path:join(out,'desktop-light-grid.png')});await page.getByRole('button',{name:'列表视图',exact:true}).click();
+  for(const theme of ['light','dark']){
+    await page.evaluate(theme=>{document.documentElement.dataset.theme=theme;localStorage.setItem('weftmate.desktop.appearance.v1',JSON.stringify({theme,accent:'neutral',fontSize:'15'}));},theme);
+    await page.screenshot({animations:'disabled',path:join(out,`desktop-${theme}-list.png`)});await page.getByRole('button',{name:'网格视图',exact:true}).click();await page.screenshot({animations:'disabled',path:join(out,`desktop-${theme}-grid.png`)});await page.getByRole('button',{name:'列表视图',exact:true}).click();
+    await page.getByRole('combobox',{name:'按项目筛选',exact:true}).click();await page.screenshot({animations:'disabled',path:join(out,`desktop-${theme}-project-open.png`)});await page.keyboard.press('Escape');
+    await page.getByRole('combobox',{name:'按时间筛选',exact:true}).click();await page.screenshot({animations:'disabled',path:join(out,`desktop-${theme}-time-open.png`)});await page.keyboard.press('Escape');
+    await page.getByRole('button',{name:'预览 周末报告.pdf',exact:true}).click();await page.getByTitle('预览 周末报告.pdf',{exact:true}).waitFor();await page.waitForTimeout(600);await page.screenshot({animations:'disabled',path:join(out,`desktop-${theme}-pdf.png`)});await page.getByRole('button',{name:'收起右侧面板',exact:true}).click();
+    await page.getByRole('button',{name:'预览 周末计划.md',exact:true}).click();await page.getByRole('heading',{name:'周末计划',exact:true}).waitFor();await page.locator('.library-surface').evaluate(el=>el.scrollTop=0);await page.screenshot({animations:'disabled',path:join(out,`desktop-${theme}-markdown.png`)});await page.getByRole('button',{name:'收起右侧面板',exact:true}).click();
+  }
+  await page.getByRole('button',{name:'图片',exact:true}).click();await page.getByText('1 个文件',{exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:/^预览 /}).count(),1);await page.getByRole('button',{name:'预览 配色.png',exact:true}).click();await page.getByRole('img',{name:'配色.png',exact:true}).waitFor();await page.screenshot({animations:'disabled',path:join(out,'desktop-dark-image.png')});await page.getByRole('button',{name:'收起右侧面板',exact:true}).click();
+  await page.getByRole('button',{name:'全部',exact:true}).focus();await page.keyboard.press('Enter');await page.getByRole('searchbox',{name:'搜索文件名',exact:true}).fill('费用');await page.getByRole('button',{name:'预览 费用.csv',exact:true}).waitFor();await page.getByText('1 个文件',{exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:/^预览 /}).count(),1);
+  await page.getByRole('searchbox',{name:'搜索文件名',exact:true}).fill('');await page.getByRole('button',{name:'预览 周末计划.md',exact:true}).waitFor();report.checks.push('filter-search-keyboard','image-markdown-pdf-preview');
+  const markdownRow=page.getByRole('article').filter({has:page.getByRole('button',{name:'预览 周末计划.md',exact:true})});
+  await markdownRow.getByRole('button',{name:'打开',exact:true}).click();await markdownRow.getByRole('button',{name:'在文件夹中显示',exact:true}).click();
+  await page.waitForTimeout(300);assert.deepEqual(actions.map(row=>row.action),['open','show']);assert.ok(actions.every(row=>row.file===join(files,'周末计划.md')));report.checks.push('desktop-id-only-actions-original-path');
+  const exportLocation=listing.items.find(row=>row.fileName==='合成验收报告.md').location;assert.ok(exportLocation.endsWith('合成验收报告.md'));
+  const item=listing.items.find(row=>row.fileName==='周末计划.md'),detail=await fixture.request(`/library/${item.id}`);assert.ok(Number.isSafeInteger(detail.item.source.seq));
+  await markdownRow.getByRole('button',{name:'打开来源对话',exact:true}).click();await page.locator(`#transcript [data-seq="${detail.item.source.seq}"]`).waitFor();
+  await page.waitForFunction(seq=>Number(document.activeElement?.dataset.seq)===seq,detail.item.source.seq);report.checks.push('source-native-artifact-message-focused');
+  await rename(join(files,'周末计划.md'),join(files,'已移动.md'));await page.getByRole('button',{name:'成果库',exact:true}).click();await page.getByText('已不在原位置',{exact:true}).waitFor();report.checks.push('moved-original-marked');await markdownRow.scrollIntoViewIfNeeded();assert.equal(await markdownRow.getByRole('button',{name:'打开',exact:true}).isDisabled(),true);await page.screenshot({animations:'disabled',path:join(out,'desktop-missing-disabled.png')});
+  await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setContentSize(480,600));await page.locator('.library-surface').evaluate(el=>el.scrollTop=0);await page.screenshot({animations:'disabled',path:join(out,'desktop-narrow.png')});assert.ok(await page.locator('.library-surface').evaluate(el=>el.scrollWidth<=el.clientWidth));
+  browser=await chromium.launch({channel:'msedge',headless:true});const phone=await browser.newPage({viewport:{width:390,height:844}});phone.on('pageerror',e=>report.errors.push(e.message));
+  await phone.goto(fixture.mobileUrl);await phone.waitForFunction(()=>state.booted&&state.loggedIn);await phone.getByRole('button',{name:'打开导航',exact:true}).click();await phone.getByRole('button',{name:'成果库',exact:true}).click();await phone.getByRole('button',{name:'预览 费用.csv',exact:true}).waitFor();
+  for(const theme of ['light','dark']){
+    await phone.evaluate(theme=>{document.documentElement.dataset.theme=theme;document.getElementById('generic-page').scrollTop=0;},theme);await phone.screenshot({animations:'disabled',path:join(out,`mobile-${theme}-list.png`)});
+    for(const name of ['按项目筛选','按时间筛选']){await phone.getByRole('combobox',{name,exact:true}).click();await phone.screenshot({animations:'disabled',path:join(out,`mobile-${theme}-${name==='按项目筛选'?'project':'time'}-open.png`)});await phone.keyboard.press('Escape');}
+    await phone.getByRole('button',{name:'预览 费用.csv',exact:true}).click();await phone.getByText('项目,金额\n文具,28',{exact:false}).waitFor();await phone.screenshot({animations:'disabled',path:join(out,`mobile-${theme}-preview.png`)});await phone.getByRole('button',{name:'返回成果库',exact:true}).click();await phone.getByRole('dialog').filter({has:phone.locator('#resource-title')}).waitFor({state:'hidden'});
+  }
+  assert.equal(await phone.getByRole('button',{name:'在文件夹中显示',exact:true}).count(),0);
+  await phone.getByRole('article').filter({has:phone.getByRole('button',{name:'预览 费用.csv',exact:true})}).getByRole('button',{name:'打开来源对话',exact:true}).click();
+  const csv=listing.items.find(i=>i.fileName==='费用.csv'),csvDetail=await fixture.request(`/library/${csv.id}`);await phone.locator(`[data-seq="${csvDetail.item.source.seq}"]`).waitFor();report.checks.push('mobile-list-preview-source','mobile-no-desktop-actions');
+  await phone.getByRole('button',{name:'返回',exact:true}).click();await phone.getByRole('button',{name:'打开导航',exact:true}).click();await phone.getByRole('button',{name:'成果库',exact:true}).click();await phone.setViewportSize({width:360,height:780});await phone.screenshot({animations:'disabled',path:join(out,'mobile-360.png')});assert.ok(await phone.locator('#page-content').evaluate(el=>el.scrollWidth<=el.clientWidth));report.checks.push('narrow-480-mobile-390-and-360-no-overflow');
+  await fixture.request(`/sessions/${fixture.sessionId}/metadata`,{memoryMode:'off'},'PATCH');const secret=join(files,'临时资料.md');await writeFile(secret,'PRIVATE-TEMPORARY');await fixture.registerOutput(secret);assert.equal((await fixture.request('/library')).items.some(row=>row.fileName==='临时资料.md'),false);report.checks.push('temporary-output-excluded');
+  await fixture.request(`/sessions/${fixture.sessionId}`,{forgetMemories:true,deleteConversationSnippets:true,memoryWorldRevision:1},'DELETE');assert.equal(forgotten,1);assert.equal((await fixture.request('/library')).items.length,2);assert.match(await readFile(exportLocation,'utf8'),/合成验收报告/);await writeFile(join(files,'迟到资料.md'),'Late synthetic output');await assert.rejects(fixture.registerOutput(join(files,'迟到资料.md')));assert.equal((await fixture.request('/library')).items.length,2);report.checks.push('forget-clears-related-index-preserves-named-exports-and-rejects-deleted-source');await fixture.request(`/sessions/${secondSource.sessionId}`,{},'DELETE');await fixture.request(`/sessions/${projectSource.sessionId}`,{},'DELETE');assert.equal((await fixture.request('/library')).items.length,0);assert.equal(await readFile(join(files,'已移动.md'),'utf8'),'# 周末计划\n\n- 整理书房\n- 出门散步\n');report.checks.push('delete-index-only-user-files-preserved');
+  await page.getByRole('button',{name:'刷新',exact:true}).click();await page.getByText(/还没有成果/).waitFor();await page.screenshot({animations:'disabled',path:join(out,'desktop-empty.png')});
+  assert.deepEqual(report.errors,[]);await writeFile(join(out,'verification.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));
+}catch(error){await writeFile(join(out,'failure.json'),JSON.stringify({message:error.message,report},null,2));throw error;}
+finally{await app?.close();await browser?.close();await fixture.close();await rm(profile,{recursive:true,force:true});await rm(files,{recursive:true,force:true});}

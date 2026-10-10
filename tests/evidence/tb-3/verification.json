@@ -1,0 +1,20 @@
+{
+  "realElectron": true,
+  "checks": [
+    "multiple-conversations-background-and-project-provenance",
+    "all-native-types-indexed",
+    "signed-pagination",
+    "filter-search-keyboard",
+    "image-markdown-pdf-preview",
+    "desktop-id-only-actions-original-path",
+    "source-native-artifact-message-focused",
+    "moved-original-marked",
+    "mobile-list-preview-source",
+    "mobile-no-desktop-actions",
+    "narrow-480-mobile-390-and-360-no-overflow",
+    "temporary-output-excluded",
+    "forget-clears-related-index-preserves-named-exports-and-rejects-deleted-source",
+    "delete-index-only-user-files-preserved"
+  ],
+  "errors": []
+}

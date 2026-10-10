@@ -5,6 +5,15 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @Test fun libraryOnlyReadsIndexedOutputRoutes() {
+        assertTrue(validBusinessPath("/personal/v1/library?type=image&search=%E5%9B%BE&cursor=" + "a".repeat(800)))
+        assertTrue(validBusinessPath("/personal/v1/library/artifact-one"))
+        assertTrue(validBusinessPath("/personal/v1/library/artifact-one/preview"))
+        for (path in listOf("/personal/v1/library/artifact-one/open", "/personal/v1/library/artifact-one/show",
+            "/personal/v1/library/../preview", "/personal/v1/library/artifact%2Fone/preview", "/personal/v1/library/file/raw"))
+            assertFalse(path, validBusinessPath(path))
+    }
+
     @Test fun notificationsUseOnlyExactAccountSettingsRoutes() {
         assertTrue(validBusinessPath("/personal/v1/settings/notifications"))
         assertTrue(validBusinessPath("/personal/v1/settings/notifications/test"))
