@@ -1,18 +1,18 @@
 # WeftMate 夜间回归报告
 
-提交：`427fea6c6db12e2ab4cc63a7828b4ffe539858d6`
-开始：2026-10-10T00:44:13.625Z
-结束：2026-10-10T00:46:38.512Z
-耗时：150.5 秒
+提交：`bf06adadddd7ea4c10eacdf7f0e4efcfff33098d`
+开始：2026-10-10T01:41:43.184Z
+结束：2026-10-10T01:44:40.022Z
+耗时：182.8 秒
 
-结果：报警（88 项）
+结果：报警（90 项）
 [打开本轮审稿页](gallery-conversation-light.png)
 
 | 端 | 本轮新拍 / 应拍 | 此端尚无 |
 |---|---:|---:|
 | windows | 32 / 32 | 0 |
 | mobile-web | 32 / 32 | 0 |
-| android | 0 / 28 | 4 |
+| android | 0 / 30 | 2 |
 | iphone | 0 / 28 | 4 |
 | mac | 0 / 28 | 4 |
 | watch | 0 / 2 | 30 |
@@ -21,11 +21,11 @@
 
 | 批次 | 结果 | 秒 | 原因 |
 |---|---|---:|---|
-| prepare | passed | 6.2 |  |
-| windows | passed | 41.8 |  |
-| mobile-web | passed | 60.4 |  |
+| prepare | passed | 9.3 |  |
+| windows | passed | 60.0 |  |
+| mobile-web | passed | 67.0 |  |
 | apple | skipped | 0.2 | 被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达） |
-| android | skipped | 33.0 | 被占用，未拍（已有 WeftMate 测试包） |
+| android | skipped | 36.6 | 被占用，未拍（已有 WeftMate 测试包） |
 
 ## 报警
 
@@ -115,6 +115,8 @@
 - iphone/session-menu/dark：failed · 被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）
 - mac/session-menu/light：failed · 被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）
 - mac/session-menu/dark：failed · 被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）
+- android/main-chat/light：failed · 被占用，未拍（已有 WeftMate 测试包）
+- android/main-chat/dark：failed · 被占用，未拍（已有 WeftMate 测试包）
 - apple：skipped · 被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）
 - android：skipped · 被占用，未拍（已有 WeftMate 测试包）
 
@@ -122,16 +124,16 @@
 
 阈值：8.00%；每个像素任一 RGBA 通道变化超过 24 才计入。尺寸变化计 100%。
 
+- mobile-web/activity/light：1.29%
+- mobile-web/main-chat/light：1.07%
 - mobile-web/activity/dark：0.08%
-- mobile-web/activity/light：0.07%
-- windows/activity/dark：0.02%
-- windows/activity/light：0.02%
-- windows/question/light：0.00%
-- windows/question/dark：0.00%
-- mobile-web/question/light：0.00%
+- windows/activity/light：0.03%
+- windows/activity/dark：0.03%
+- windows/main-chat/light：0.00%
 - windows/onboarding/light：0.00%
 - windows/onboarding/dark：0.00%
 - mobile-web/onboarding/light：0.00%
+- mobile-web/onboarding/dark：0.00%
 
 ## 清理
 

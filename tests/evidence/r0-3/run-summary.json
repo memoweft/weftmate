@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-10T00:46:38.512Z",
+  "generatedAt": "2026-10-10T01:44:40.022Z",
   "counts": {
     "windows": {
       "expected": 32,
@@ -12,9 +12,9 @@
       "unavailable": 0
     },
     "android": {
-      "expected": 28,
+      "expected": 30,
       "captured": 0,
-      "unavailable": 4
+      "unavailable": 2
     },
     "iphone": {
       "expected": 28,
@@ -465,6 +465,16 @@
       "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
     },
     {
+      "cell": "android/main-chat/light",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
+      "cell": "android/main-chat/dark",
+      "kind": "failed",
+      "message": "被占用，未拍（已有 WeftMate 测试包）"
+    },
+    {
       "cell": "apple",
       "kind": "skipped",
       "message": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）"
@@ -477,388 +487,388 @@
   ],
   "differences": [
     {
-      "cell": "mobile-web/activity/dark",
-      "ratio": 0.0007868513792684409,
-      "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
-    },
-    {
       "cell": "mobile-web/activity/light",
-      "ratio": 0.0007291286912139992,
+      "ratio": 0.012881273544780653,
       "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
-      "cell": "windows/activity/dark",
-      "ratio": 0.00015625,
+      "cell": "mobile-web/main-chat/light",
+      "ratio": 0.010724267833272573,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
+    },
+    {
+      "cell": "mobile-web/activity/dark",
+      "ratio": 0.0008081176327621825,
+      "dimensionsChanged": false,
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/activity/light",
-      "ratio": 0.000153125,
+      "ratio": 0.0003,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
-      "cell": "windows/question/light",
-      "ratio": 0.000020833333333333333,
+      "cell": "windows/activity/dark",
+      "ratio": 0.000259375,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "9cddc6a7ba0d668f6101ffa639059a7e1daccc02"
     },
     {
-      "cell": "windows/question/dark",
-      "ratio": 0.000020833333333333333,
+      "cell": "windows/main-chat/light",
+      "ratio": 0.0000020833333333333334,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
-    },
-    {
-      "cell": "mobile-web/question/light",
-      "ratio": 0.0000030380362133916637,
-      "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/onboarding/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/onboarding/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "9cddc6a7ba0d668f6101ffa639059a7e1daccc02"
     },
     {
       "cell": "mobile-web/onboarding/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "mobile-web/onboarding/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/login/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/login/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "mobile-web/login/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "mobile-web/login/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/sessions/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/sessions/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "9cddc6a7ba0d668f6101ffa639059a7e1daccc02"
     },
     {
       "cell": "mobile-web/sessions/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "mobile-web/sessions/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/conversation/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/conversation/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "9cddc6a7ba0d668f6101ffa639059a7e1daccc02"
     },
     {
       "cell": "mobile-web/conversation/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "mobile-web/conversation/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/composer-menu/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/composer-menu/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "9cddc6a7ba0d668f6101ffa639059a7e1daccc02"
     },
     {
       "cell": "mobile-web/composer-menu/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "mobile-web/composer-menu/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/composer-context/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/composer-context/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "9cddc6a7ba0d668f6101ffa639059a7e1daccc02"
     },
     {
       "cell": "mobile-web/composer-context/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "mobile-web/composer-context/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/approval/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/approval/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "9cddc6a7ba0d668f6101ffa639059a7e1daccc02"
     },
     {
       "cell": "mobile-web/approval/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "mobile-web/approval/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
+    },
+    {
+      "cell": "windows/question/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
+    },
+    {
+      "cell": "windows/question/dark",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "9cddc6a7ba0d668f6101ffa639059a7e1daccc02"
+    },
+    {
+      "cell": "mobile-web/question/light",
+      "ratio": 0,
+      "dimensionsChanged": false,
+      "previousCommit": "d5aba8c8a153eb66f2c48dde186897440d539518"
     },
     {
       "cell": "mobile-web/question/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/outputs-sources/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/outputs-sources/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "9cddc6a7ba0d668f6101ffa639059a7e1daccc02"
     },
     {
       "cell": "mobile-web/outputs-sources/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "mobile-web/outputs-sources/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/memory/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/memory/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "9cddc6a7ba0d668f6101ffa639059a7e1daccc02"
     },
     {
       "cell": "mobile-web/memory/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "mobile-web/memory/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/appearance/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/appearance/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "9cddc6a7ba0d668f6101ffa639059a7e1daccc02"
     },
     {
       "cell": "mobile-web/appearance/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "mobile-web/appearance/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/general/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/general/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "9cddc6a7ba0d668f6101ffa639059a7e1daccc02"
     },
     {
       "cell": "mobile-web/general/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "mobile-web/general/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/usage/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/usage/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "9cddc6a7ba0d668f6101ffa639059a7e1daccc02"
     },
     {
       "cell": "mobile-web/usage/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "mobile-web/usage/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/session-menu/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/session-menu/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "9cddc6a7ba0d668f6101ffa639059a7e1daccc02"
     },
     {
       "cell": "mobile-web/session-menu/light",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "mobile-web/session-menu/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
-    },
-    {
-      "cell": "windows/main-chat/light",
-      "ratio": 0,
-      "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "windows/main-chat/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "794d42d67dbef026c3f3edb44cb4e49fe0b6ea9a"
-    },
-    {
-      "cell": "mobile-web/main-chat/light",
-      "ratio": 0,
-      "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     },
     {
       "cell": "mobile-web/main-chat/dark",
       "ratio": 0,
       "dimensionsChanged": false,
-      "previousCommit": "815b92bab8bbe6119a0ea403e356c7d4d5d1830d"
+      "previousCommit": "d269e37d76ba89273811f28f4e0d6f6775b1e4df"
     }
   ],
   "phases": [
@@ -866,7 +876,7 @@
       "name": "prepare",
       "platforms": [],
       "status": "passed",
-      "seconds": 6.184
+      "seconds": 9.269
     },
     {
       "name": "windows",
@@ -874,7 +884,7 @@
         "windows"
       ],
       "status": "passed",
-      "seconds": 41.808
+      "seconds": 59.968
     },
     {
       "name": "mobile-web",
@@ -882,7 +892,7 @@
         "mobile-web"
       ],
       "status": "passed",
-      "seconds": 60.443
+      "seconds": 66.998
     },
     {
       "name": "apple",
@@ -893,7 +903,7 @@
       ],
       "status": "skipped",
       "reason": "被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）",
-      "seconds": 0.202
+      "seconds": 0.21
     },
     {
       "name": "android",
@@ -902,12 +912,12 @@
       ],
       "status": "skipped",
       "reason": "被占用，未拍（已有 WeftMate 测试包）",
-      "seconds": 33.03
+      "seconds": 36.601
     }
   ],
-  "commit": "427fea6c6db12e2ab4cc63a7828b4ffe539858d6",
-  "startedAt": "2026-10-10T00:44:13.625Z",
-  "durationSeconds": 150.524,
+  "commit": "bf06adadddd7ea4c10eacdf7f0e4efcfff33098d",
+  "startedAt": "2026-10-10T01:41:43.184Z",
+  "durationSeconds": 182.814,
   "cleanup": {
     "windows": {
       "killed": [],
@@ -919,11 +929,11 @@
     "apple": null
   },
   "baseline": "previous local run",
-  "endToEndSeconds": 157.797,
+  "endToEndSeconds": 190.124,
   "notification": {
-    "requestedAt": "2026-10-10T00:46:51.4221183Z",
-    "alerts": 88,
+    "alerts": 90,
     "channel": "Windows NotifyIcon balloon",
+    "requestedAt": "2026-10-10T01:44:53.3085804Z",
     "supported": true
   }
 }
