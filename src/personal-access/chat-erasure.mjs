@@ -1,12 +1,27 @@
 import { digest } from './common.mjs';
+import { removeActivity } from './activity-store.mjs';
 
 /** Erasure owns all derived chat copies. Unknown/mixed provenance is discarded.
  * Source identities remain only as tombstones, never as a reconstruction source. */
 export function eraseChatCopies(account, { sessionId = null, forgotten = false } = {}) {
+  removeActivity(account, row => forgotten || row.source.sessionId === sessionId);
+  if (account.activity) {
+    account.activity.erasedBefore ??= {};
+    for (const id of Object.keys(account.sessions)) if (forgotten || id === sessionId) account.activity.erasedBefore[id] = new Date().toISOString();
+    for (const [id, scan] of Object.entries(account.activity.sources)) if (forgotten || id === sessionId) {
+      delete scan.summary; scan.executed = false;
+      delete scan.terminals;
+    }
+  }
   const touches = refs => forgotten || refs?.some(ref => ref.sessionId === sessionId);
   const changed = new Set();
   const identity = account.chatIdentity;
   const sourceChatId = identity?.segments[identity.sessionSegments[sessionId]]?.chatId;
+  for (const [requestId, operation] of Object.entries(account.messageBranches ?? {})) {
+    const branch = operation.response;
+    if (forgotten || [branch.sessionId, branch.sourceSessionId, branch.inputSourceSessionId].includes(sessionId))
+      delete account.messageBranches[requestId];
+  }
   for (const operation of Object.values(account.chatOperations ?? {})) {
     const snapshot = operation.response?.chat;
     if (!snapshot) continue;

@@ -1,3 +1,4 @@
+import { personalization } from './personalization.mjs';
 import { validateMemorySettings } from './temporary-chats.mjs';
 import { enterProfileWrite } from '../personal-backup/write-barrier.mjs';
 import { validateChatIdentity } from './chat-identity.mjs';
@@ -83,6 +84,20 @@ export async function durableWrite(file, state, shouldCommit = () => true) {
 export function validateSingleStore(store) {
   if (!plainObject(store)) throw failure('STORE_CORRUPT', 500);
   validateChatIdentity(store);
+  if (store.personalization !== undefined) { try { personalization.validate(store.personalization); } catch { throw failure('STORE_CORRUPT', 500); } }
+  if (store.personalizationUpdatedAt !== undefined && !validTime(store.personalizationUpdatedAt)) throw failure('STORE_CORRUPT', 500);
+  if (store.messageBranches !== undefined && !plainObject(store.messageBranches)) throw failure('STORE_CORRUPT', 500);
+  for (const [requestId, operation] of Object.entries(store.messageBranches ?? {})) {
+    const branch = operation?.response;
+    if (!REQUEST_ID.test(requestId) || !plainObject(operation) || !/^[a-f0-9]{64}$/.test(operation.fingerprint ?? '') ||
+        !plainObject(branch) || operation.ordinal !== undefined && (!Number.isSafeInteger(operation.ordinal) || operation.ordinal < 1) ||
+        ![branch.sessionId, branch.sourceSessionId, branch.inputSourceSessionId, branch.groupId].every(validId) ||
+        !REQUEST_ID.test(branch.sendRequestId ?? '') || !['edit', 'regenerate'].includes(branch.action) ||
+        !Number.isSafeInteger(branch.sourceSeq) || branch.sourceSeq < 0 || !Number.isSafeInteger(branch.userSeq) || branch.userSeq < 0 ||
+        !Number.isSafeInteger(branch.seedThroughSeq) || branch.seedThroughSeq < -1 || typeof branch.text !== 'string' ||
+        !MODEL_PROFILE_ID.test(branch.modelProfileId ?? '') || Object.values(store.commands).some(command => command.requestId === requestId))
+      throw failure('STORE_CORRUPT', 500);
+  }
   if (store.defaultApprovalMode !== undefined && !APPROVAL_MODES.includes(store.defaultApprovalMode)) throw failure('STORE_CORRUPT', 500);
   for (const session of Object.values(store.sessions ?? {})) {
     if (!plainObject(session)) throw failure('STORE_CORRUPT', 500);
@@ -603,6 +618,10 @@ export function validateSingleStore(store) {
 }
 
 export function validateStore(store) {
+  if (store?.onboarding !== undefined && (!plainObject(store.onboarding) ||
+      !['welcome', 'account', 'model', 'memory', 'import', 'phone', 'first'].includes(store.onboarding.step) ||
+      typeof store.onboarding.completed !== 'boolean' || typeof store.onboarding.started !== 'boolean' ||
+      store.onboarding.ownerId !== undefined && !validId(store.onboarding.ownerId))) throw failure('STORE_CORRUPT', 500);
   if (!plainObject(store) || store.version !== VERSION || !validId(store.hostId) ||
       !validId(store.legacyOwnerId) || !plainObject(store.accounts) ||
       !Object.hasOwn(store.accounts, store.legacyOwnerId) ||

@@ -2,7 +2,7 @@
 globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
     const original = Object.fromEntries(['renderSessions', 'paintSelectedSession', 'renderOlderControl', 'renderOptimisticMessages', 'renderConversationTasks', 'renderTurnStatus', 'beginOlderHistory', 'restoreOlderHistoryPosition', 'scrollToLatest', 'renderTimeline'].map(key => [key, ui[key]]));
     const heights = new Map(), expanded = new Map(), mounted = new Map();
-    let rows = [], offsets = [], frame = null, anchor = null, observer, sidebar, tools, searchPanel, origin, top, bottom, generation = 0;
+    let rows = [], offsets = [], frame = null, anchor = null, observer, sidebar, tools, searchPanel, origin, top, bottom, generation = 0, fixedNavigation;
     const box = () => ui.byId('chat-scroll'), list = () => ui.byId('transcript');
     const listStart = () => list().getBoundingClientRect().top - box().getBoundingClientRect().top + box().scrollTop;
     const main = () => core.inMainChat?.() === true;
@@ -184,7 +184,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         ui.byId('session-rail').querySelector('.rail-top').before(sidebar);
         const heading = ui.element('div', 'rail-side-heading', '旁聊'); ui.byId('session-list').before(heading);
         // TB-4 owns the future fixed pages; retain the explicit extension point hidden.
-        const future = ui.element('nav'); future.hidden = true; future.setAttribute('aria-label', '动态、目标与成果库'); sidebar.after(future);
+        const future = ui.element('nav'); fixedNavigation = future; future.hidden = true; future.setAttribute('aria-label', '动态、目标与成果库'); sidebar.after(future);
         tools = ui.element('div', 'main-chat-tools'); tools.hidden = true;
         tools.append(button('搜索', '搜索主对话', () => { searchPanel.open = !searchPanel.open; searchPanel.hidden = !searchPanel.open; if (searchPanel.open) searchPanel.querySelector('input').focus(); }),
             button('日期', '跳到日期', () => { const date = tools.querySelector('input'); date.hidden = !date.hidden; if (!date.hidden) { date.focus(); date.showPicker?.(); } }));
@@ -217,7 +217,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         ui.byId('jump-latest').addEventListener('click', () => { if (main() && core.state.chatWindow.hasNewer) void core.selectMainChat(); });
         document.addEventListener('keydown', event => { if (event.key === 'Escape' && searchPanel.open) { searchPanel.open = false; searchPanel.hidden = true; void core.searchMainChat(''); } });
     }
-    return { mountMainChat, renderMainChat, focusMainEvent, resetMainChatView, renderChatOrigin,
+    return { mountMainChat, renderMainChat, focusMainEvent, resetMainChatView, renderChatOrigin, fixedPageNavigation: () => fixedNavigation,
         mainChatAnchor: () => {const saved=rememberAnchor();const index=rows.findIndex(row=>row.key===saved?.key);const row=rows.slice(Math.max(0,index)).find(row=>row.event?.eventId||row.events?.length);return row?.event?.eventId||row?.events?.[0]?.eventId||null;},
         restoreMainChatDraft: text => { ui.byId('message-text').value = text; ui.updateAvailability(); },
         renderSessions: () => { original.renderSessions(); if (sidebar) { sidebar.hidden = !core.state.mainChat; const label = ui.byId('new-session'); label.childNodes.forEach(node => { if (node.nodeType === Node.TEXT_NODE) node.textContent = core.state.mainChat ? '新旁聊' : '新对话'; }); } renderMainChat(); },

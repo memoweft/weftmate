@@ -30,6 +30,14 @@ const androidBridge = WeftUiCore.createAndroidBridge({
   onEvent: message => processEvent(message),
 });
 const mobileEffects = {
+  syncActivityIdentity:()=>uiCore.syncMobileIdentity(),
+  activityVisible:()=>state.page==='activity',
+  renderActivity:()=>{if(state.page==='activity')activityView?.render();},
+  async prepareActivityApproval(target){activityReturn=true;await selectSharedSession(target.sessionId);},
+  activityActionFinished:()=>{if(activityReturn){activityReturn=false;page('activity');}},
+  openActivitySource:target=>selectSharedSession(target.sessionId),
+  openActivityMemory:()=>page('memory'),
+  openActivitySettings:()=>page('about'),
   nativeCall: (...args) => call(...args),
   readMessageDraft: () => $('draft').value,
   clearMessageDraft: () => { $('draft').value = ''; },
@@ -68,9 +76,31 @@ const mobileEffects = {
 const uiCore = WeftUiCore.create({ fetch: androidBridge.fetch, storage: localStorage,
   crypto: globalThis.crypto, effects: mobileEffects, mobileState: state, attachmentDrafts });
 uiCore.android = androidBridge;
+const mobileMessageActions = globalThis.WeftMessageActions?.create({core:uiCore, draft:()=>$('draft'),
+  selectSession:async id=>{await listSharedSessions();await selectSharedSession(id)},
+  copy: text=>call('clipboard.copy',{text}), save:async(blob,name)=>{
+    const bytes=new Uint8Array(await blob.arrayBuffer());let binary='';for(const byte of bytes)binary+=String.fromCharCode(byte);
+    return call('conversation.export',{name,contentType:blob.type.startsWith('image/')?'image/png':'text/markdown',data:btoa(binary)},120000);
+  }, notice:message=>toast(message), events:()=>state.sharedEvents,sessionId:()=>state.sharedSessionId,
+  title:()=>state.chatSource==='phone'?state.conversations.find(row=>row.id===state.conversationId)?.title:selectedSharedSession()?.title,
+  localEvents:async id=>{const result=await call('conversations.messages',{conversationId:id});return [
+    ...result.messages.map(message=>({type:message.role==='user'?'user.message':'assistant.message',data:{text:message.text,
+      originalAttachments:(message.thumbnails||[]).map(image=>({name:image.name||'图片'}))}})),
+    ...(result.receipts||[]).map(receipt=>({type:'step.completed',data:{summary:uiCore.interfaceText(receipt.summary),toolName:receipt.toolName}}))];}});
 const conversationTasks=uiCore.mobileDecisions.tasks;
 const toolApprovals=uiCore.mobileDecisions.approvals;
 const toolQuestions=uiCore.mobileDecisions.questions;
+let activityView=null,activityTimer=null,activityReturn=false;
+async function activityPage(target){
+  uiCore.syncMobileIdentity();
+  activityView=WeftActivityView.mount({target,core:uiCore});activityView.render();
+  const generation=state.generation,owner=state.owner;
+  try {const info=await uiCore.accessApi('/status');if(generation!==state.generation||owner!==state.owner)return;
+    uiCore.state.personalCapabilities=info.personalCapabilities??{};
+    if(uiCore.state.personalCapabilities.activity!==1){target.replaceChildren(document.createTextNode('这台电脑尚不支持动态。更新电脑上的 WeftMate 后重试。'));return;}
+    await uiCore.readActivity();clearInterval(activityTimer);activityTimer=setInterval(()=>{if(state.page==='activity'&&state.loggedIn&&document.visibilityState==='visible')void uiCore.refreshActivity();},6000);
+  }catch(error){if(generation===state.generation){uiCore.activity.error=safeError(error);activityView?.render();}}
+}
 
 
 
@@ -130,6 +160,7 @@ function call(method, params={}, timeoutMs=45000) { return androidBridge.call(me
 
 
 function page(name){
+  if(name!=='activity'){if(activityTimer)clearInterval(activityTimer);activityTimer=null;activityView=null;}
   if(name==='memory')state.settingsChild=true;
   $('cloud-auth-page')?.classList.remove('active'); $('cloud-settings-page')?.classList.remove('active');
   workspaceNotices.clear();
@@ -143,7 +174,7 @@ function page(name){
   if(previousPage!==name)globalThis.WeftMobileMotion?.push($(name==='chat'?'chat-page':name==='home'?'home-page':'generic-page'),name==='home'||name==='settings'&&previousPage!=='settings');
   $('conversation-usage').hidden=!(name==='chat' && state.loggedIn && (state.sharedSessionId || uiCore.mobile?.selectedBinding()?.sessionId));
   $('header-subtitle').textContent=name==='chat'?'同一个助手，接着聊。':{
-    schedules:'提醒与定时任务',about:'关于',general:'常规',approvals:'审批',resources:'资料访问',usage:'用量',memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',settings:'设置',
+    activity:'动态',schedules:'提醒与定时任务',about:'关于',general:'常规',personalization:'个性化',assistant:'助手',approvals:'审批',resources:'资料访问',usage:'用量',memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',settings:'设置',
     account:'账户',password:'修改密码',models:'对话模型',sync:'离线与同步',appearance:'外观',updates:'更新',connect:'连接电脑'
   }[name]||name;
   document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('current',b.dataset.page===name));
@@ -207,6 +238,7 @@ function page(name){
 
 
 function processEvent(message){const {event,data}=message;
+  if(event==='conversation.exported')toast(data.saved?'对话已保存':'导出未完成，请重试',!data.saved);
   if(event==='cloud.callback')void resumeCloudLogin();if(event==='chat.started'){
     invalidateLiveProgress();
     if(state.activeSend)acceptSend(state.activeSend,data.conversationId,data.turnId);
@@ -342,7 +374,8 @@ window.addEventListener('unhandledrejection',reportBootFailure);
 
 
 
-function renderPage(name){const target=$('page-content');clear(target);if(name!=='settings')$('generic-page').scrollTop=0;const category=mobileSettingsRegistry.get(name);if(category)return category.mount(target);switch(name){
+function renderPage(name){const target=$('page-content');clear(target);if(name!=='activity')target.classList.remove('activity-page');if(name!=='settings')$('generic-page').scrollTop=0;const category=mobileSettingsRegistry.get(name);if(category)return category.mount(target);switch(name){
+  case 'activity':return activityPage(target);
   case 'usage':return usagePage(target, state.usageSessionId || '');
   case 'memory':return memoryPage(target);
   case 'capabilities':return capabilitiesPage(target);
@@ -510,7 +543,7 @@ const approvalRequestPattern=/^[A-Za-z0-9_.:-]{1,128}$/;
 
 
 
-function handleBack(){if(!$('resource-page').hidden){closeResourcePage();return}
+function handleBack(){if(mobileMessageActions?.dismiss())return;if(!$('resource-page').hidden){closeResourcePage();return}
   if(!$('image-preview').hidden){closeImagePreview();return}
   if(approvalModeState.confirmation){closeApprovalRisk();return}if(approvalModeState.menu){closeApprovalModeMenu({restoreFocus:true});return}
   if(state.attachmentMenu){closeAttachmentMenu({restoreFocus:true});return}if(state.attachmentPick){cancelAttachmentPick({announce:true});return}if(state.menu){closeModelMenu();$('model-button').focus();return}

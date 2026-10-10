@@ -9,6 +9,7 @@ import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { mobileBridge } from '../../scripts/review-gallery/mobile-bridge.mjs';
 import { repository, outDirectory, runScene, catalog } from '../../scripts/review-gallery/common.mjs';
 const assets = join(repository, 'apps/mobile-ui/www'), out = outDirectory();
+const sceneIndex = process.argv.indexOf('--scene'), onlyScene = sceneIndex < 0 ? null : process.argv[sceneIndex + 1];
 const server = createServer(async (req, res) => {
   try {
     const path = new URL(req.url, 'http://localhost').pathname;
@@ -54,6 +55,7 @@ try {
       const report = async () => { await home(); await conversation('整理项目进展').click(); };
       const settings = async () => { await home(); await button('设置与账户').click(); };
       const preparations = {
+        onboarding: async () => { await settings(); await button(/^设备 /).click(); await page.getByRole('heading', { name: '连接你的电脑', exact: true }).waitFor(); },
         sessions: home,
         'composer-menu': async()=>{await report();await button('添加图片或文件').click();await page.getByRole('menu',{name:'添加附件'}).waitFor();await page.getByRole('menuitem',{name:'相机'}).waitFor();},
         'composer-context': async()=>{await report();await button('背景信息窗口：86% 已用').click();await page.getByRole('tooltip').waitFor();},
@@ -62,11 +64,11 @@ try {
         approval: async () => { await home(); await conversation('整理临时文件').click(); await button('批准').waitFor(); },
         memory: async () => { await home(); await button('打开导航').click(); await button('记忆').click(); await button(/使用中文说明/).waitFor(); },
         appearance: async () => { await settings(); await button(/^外观 /).click(); await button(new RegExp(`^${theme === 'dark' ? '深色' : '浅色'}`)).click(); },
-        general: async () => { await settings(); await button(/^常规 /).click(); await page.getByRole('combobox', { name: '回复进行中时发送的消息', exact: true }).waitFor(); },
+        general: async () => { await settings(); await button(/^助手/).click(); await page.getByRole('combobox', { name: '回复进行中时发送的消息', exact: true }).waitFor(); },
         usage: async () => { await settings(); await button(/^用量 /).click(); await page.getByRole('heading', { name: '用量与费用', exact: true }).waitFor(); await button('刷新用量').waitFor(); },
         'session-menu': async () => { await home(); await page.getByRole('main').getByRole('button', { name: '更多操作 整理项目进展', exact: true }).click(); await page.getByRole('dialog', { name: '对话操作', exact: true }).waitFor(); await button('归档').waitFor(); await button('删除').waitFor(); },
       };
-      for (const scene of catalog.scenes.filter(row => !['login', 'question','main-chat'].includes(row.id))) await shot(scene.id, preparations[scene.id]);
+      for (const scene of catalog.scenes.filter(row => !['login', 'question','main-chat','activity'].includes(row.id) && (!onlyScene || row.id === onlyScene))) await shot(scene.id, preparations[scene.id]);
       // FE-1a's real question projection supplies the missing FE-1b question fixture.
       const questionPage = await context.newPage(); questionPage.setDefaultTimeout(30000);
       await questionPage.route('**/bridge', async route => {
@@ -74,6 +76,12 @@ try {
         if (body.method === 'settings.appearance') return route.fulfill({ json: { result: { value: theme } } });
         await route.continue();
       });
+      await shot('activity', async () => {
+        await candidate.recordActivity({key:'gallery-paused',type:'memory.paused',title:'记忆已暂停',summary:'记忆暂时无法更新，可在记忆页查看状态。',level:'normal'});
+        await questionPage.goto(candidate.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);
+        await questionPage.getByRole('button',{name:'打开导航',exact:true}).click();await questionPage.getByRole('button',{name:'动态',exact:true}).click();
+        await questionPage.getByRole('heading',{name:'动态',exact:true}).waitFor();await questionPage.getByText('记忆已暂停',{exact:true}).waitFor();
+      },questionPage);
       await shot('question', async () => {
         await questionPage.goto(candidate.mobileUrl);
         await questionPage.waitForFunction(() => state.booted && state.page === 'home');

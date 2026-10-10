@@ -1,0 +1,12 @@
+{
+  "reason": "Behavior passed; Electron nativeTheme alone did not change Playwright renderer color-scheme. Captures corrected in final run.",
+  "usage": {
+    "requests": 1,
+    "unknownRequests": 0,
+    "unpricedRequests": 0,
+    "inputTokens": 2108,
+    "cachedInputTokens": 1664,
+    "outputTokens": 3,
+    "cost": 0.00048328
+  }
+}

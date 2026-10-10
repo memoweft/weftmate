@@ -4,6 +4,13 @@ import { join } from 'node:path'
 import { uiCoreAssets } from '../ui-core/manifest.mjs'
 
 const files = new Map([
+  ...['components/onboarding.js'].map(name => [`/personal/v1/ui/${name}`, [name, 'text/javascript; charset=utf-8']]),
+  ['/personal/v1/ui/onboarding.css', ['onboarding.css', 'text/css; charset=utf-8']],
+  ['/personal/v1/ui/activity.css', ['activity.css', 'text/css; charset=utf-8']],
+  ['/personal/v1/ui/components/activity-view.js', ['components/activity-view.js', 'text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/components/activity.js', ['components/activity.js', 'text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/message-actions.js', ['message-actions.js', 'text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/message-actions.css', ['message-actions.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/components/main-chat.js', ['components/main-chat.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/main-chat.css', ['main-chat.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/composer-subtasks.js', ['composer-subtasks.js', 'text/javascript; charset=utf-8']],
@@ -32,7 +39,8 @@ const files = new Map([
   ['/personal/v1/ui/components/schedules.js', ['components/schedules.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/components/usage.js', ['components/usage.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/usage.css', ['usage.css', 'text/css; charset=utf-8']],
-  ...['components/question-bar.js', 'components/settings-controls.js', 'components/settings-navigation.js'].map(name => [`/personal/v1/ui/${name}`, [name, 'text/javascript; charset=utf-8']]),
+  ...['components/question-bar.js', 'components/personalization.js', 'components/settings-controls.js', 'components/settings-navigation.js'].map(name => [`/personal/v1/ui/${name}`, [name, 'text/javascript; charset=utf-8']]),
+  ['/personal/v1/ui/personalization.css', ['personalization.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/settings.css', ['settings.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/components/settings.js', ['components/settings.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/components/account.js', ['components/account.js', 'text/javascript; charset=utf-8']],
