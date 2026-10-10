@@ -1,0 +1,15 @@
+{
+  "pf2MedianSeconds": 120.316,
+  "targetSeconds": 168.4424,
+  "originalPromptUnmodified": true,
+  "serialMiMoSamplesSeconds": [
+    278.428,
+    327.747
+  ],
+  "serialMedianSeconds": 303.0875,
+  "increasePercent": 151.90955483892412,
+  "targetMet": false,
+  "fixedTopicCompletedMedianSeconds": 188.312,
+  "fixedTopicBeforeCompletedMedianSeconds": 98.01650000000001,
+  "note": "两轮原题在本包其他 MiMo 生成任务结束后串行运行；均各遇到一次约90秒流空闲取消/重试，仍计入总耗时。其他工作包/提供方负载没有控制。"
+}

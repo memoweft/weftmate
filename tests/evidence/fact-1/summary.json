@@ -1,0 +1,1106 @@
+{
+  "generatedAt": "2026-10-10T05:41:51.319Z",
+  "rows": [
+    {
+      "phase": "before",
+      "topic": "node24",
+      "repeat": 1,
+      "taskStatus": "passed",
+      "documentPresent": true,
+      "completed": true,
+      "seconds": 64.06,
+      "unsupported": 1,
+      "scope": 1,
+      "number": 0,
+      "inappropriateUncertainty": 0,
+      "missing": 1,
+      "citations": {
+        "titlesAndLinks": true,
+        "accessTimes": false,
+        "verbatimExcerpts": true,
+        "claimMapping": false,
+        "issues": [
+          "缺少真实访问时间",
+          "正文关键断言未见编号映射到文末来源条目"
+        ]
+      },
+      "nativeAudit": {
+        "rows": [],
+        "lastSaveSeq": 754,
+        "beforeFinalSave": false
+      },
+      "evidence": "before/mimo",
+      "adjudication": "原稿把 ClangCL 要求扩大到依赖 MSVC 的项目和非 Node-API 扩展，属于同一范围错误（在多个句子重复仅计一次）。未给出具体 ABI 常量不是数字错误：changelog 含中间递增，未读版本标签常量时保留未确认合理。保留必含数字缺失。"
+    },
+    {
+      "phase": "before",
+      "topic": "node-dep0190",
+      "repeat": 1,
+      "taskStatus": "passed",
+      "documentPresent": true,
+      "completed": true,
+      "seconds": 128.361,
+      "unsupported": 0,
+      "scope": 2,
+      "number": 0,
+      "inappropriateUncertainty": 0,
+      "missing": 0,
+      "citations": {
+        "titlesAndLinks": true,
+        "accessTimes": false,
+        "verbatimExcerpts": false,
+        "claimMapping": false,
+        "issues": [
+          "来源列表只有标题与链接，缺少真实访问时间。",
+          "缺少逐字短片段（正文中的“原文”引用与实际取回原文不一致，且来源区未附逐字片段）。",
+          "正文关键断言（触发条件、弃用阶段、v23.11.0/v22.15.0 文档级引入、发布说明条目、DEP0196 对比等）没有编号映射到来源条目。"
+        ]
+      },
+      "nativeAudit": {
+        "rows": [],
+        "lastSaveSeq": 970,
+        "beforeFinalSave": false
+      },
+      "evidence": "before/mimo",
+      "adjudication": "同一 shell 条件遗漏的三处重复合为一项；v24.0.0 标签原文确实只写 shell:true，引用该版本原句不算伪造。最新 v24 文档还列 shell 路径，因此「唯一」过窄。另独立一项为错误声称 node_modules 默认不警告：v24.0.0 文档把 Runtime 定义为 all code；作者混用 Application 类型。官方依据：https://raw.githubusercontent.com/nodejs/node/v24.0.0/doc/api/deprecations.md 。"
+    },
+    {
+      "phase": "before",
+      "topic": "python312",
+      "repeat": 1,
+      "taskStatus": "passed",
+      "documentPresent": true,
+      "completed": true,
+      "seconds": 77.116,
+      "unsupported": 0,
+      "scope": 0,
+      "number": 0,
+      "inappropriateUncertainty": 0,
+      "missing": 0,
+      "citations": {
+        "titlesAndLinks": true,
+        "accessTimes": false,
+        "verbatimExcerpts": true,
+        "claimMapping": false,
+        "issues": [
+          "缺少真实访问时间",
+          "正文关键断言未见编号映射到文末来源"
+        ]
+      },
+      "nativeAudit": {
+        "rows": [],
+        "lastSaveSeq": 745,
+        "beforeFinalSave": false
+      },
+      "evidence": "before/mimo"
+    },
+    {
+      "phase": "before",
+      "topic": "typescript50",
+      "repeat": 1,
+      "taskStatus": "passed",
+      "documentPresent": true,
+      "completed": true,
+      "seconds": 100.11,
+      "unsupported": 0,
+      "scope": 0,
+      "number": 0,
+      "inappropriateUncertainty": 0,
+      "missing": 0,
+      "citations": {
+        "titlesAndLinks": true,
+        "accessTimes": false,
+        "verbatimExcerpts": true,
+        "claimMapping": false,
+        "issues": [
+          "来源列表缺少真实访问时间",
+          "正文关键断言未见编号映射到来源条目"
+        ]
+      },
+      "nativeAudit": {
+        "rows": [],
+        "lastSaveSeq": 727,
+        "beforeFinalSave": false
+      },
+      "evidence": "before/mimo",
+      "adjudication": "新实现不兼容 emitDecoratorMetadata、旧模式保留，以及旧参数装饰器存在，均获官方材料支持；带「依赖这些元数据」条件的迁移建议是合理推论。不能把不是逐字原句或 Handbook 称谓不精确当成技术范围错误。"
+    },
+    {
+      "phase": "before",
+      "topic": "react19",
+      "repeat": 1,
+      "taskStatus": "passed",
+      "documentPresent": true,
+      "completed": true,
+      "seconds": 119.455,
+      "unsupported": 1,
+      "scope": 1,
+      "number": 0,
+      "inappropriateUncertainty": 0,
+      "missing": 0,
+      "citations": {
+        "titlesAndLinks": true,
+        "accessTimes": false,
+        "verbatimExcerpts": false,
+        "claimMapping": false,
+        "issues": [
+          "来源列表缺少真实访问时间",
+          "来源列表缺少逐字短片段引用",
+          "正文关键断言缺少编号映射到来源条目"
+        ]
+      },
+      "nativeAudit": {
+        "rows": [],
+        "lastSaveSeq": 1151,
+        "beforeFinalSave": false
+      },
+      "evidence": "before/mimo",
+      "adjudication": "将类组件 ref 描述为 this.props.ref 与官方「不作为 props 传递，引用实例」相矛盾。其余关于新函数组件不再需要 forwardRef 的合理归纳和已读取移除列表，不计错误。"
+    },
+    {
+      "phase": "before",
+      "topic": "http-redirects",
+      "repeat": 1,
+      "taskStatus": "passed",
+      "documentPresent": true,
+      "completed": true,
+      "seconds": 384.94,
+      "unsupported": 1,
+      "scope": 1,
+      "number": 0,
+      "inappropriateUncertainty": 0,
+      "missing": 0,
+      "citations": {
+        "titlesAndLinks": true,
+        "accessTimes": false,
+        "verbatimExcerpts": true,
+        "claimMapping": false,
+        "issues": [
+          "来源列表缺少真实访问时间",
+          "正文关键断言未见编号映射到来源条目"
+        ]
+      },
+      "nativeAudit": {
+        "rows": [],
+        "lastSaveSeq": 3296,
+        "beforeFinalSave": false
+      },
+      "evidence": "before/mimo",
+      "adjudication": "完整 pwsh 结果实际读取了 RFC 15.4/303/307/308，旧评分漏掉这类原文。保留「唯一常用转换型」的无依据排他表述，以及把禁止更改方法扩大成规范强制请求体原样重发的一项。原稿没有实际未确认声明，不重复计入该维度。"
+    },
+    {
+      "phase": "before",
+      "topic": "node24",
+      "repeat": 2,
+      "taskStatus": "failed",
+      "documentPresent": false,
+      "completed": false,
+      "seconds": 84.542,
+      "unsupported": null,
+      "scope": null,
+      "number": null,
+      "inappropriateUncertainty": null,
+      "missing": null,
+      "citations": null,
+      "nativeAudit": {
+        "rows": [],
+        "lastSaveSeq": -1,
+        "beforeFinalSave": false
+      },
+      "evidence": "before/mimo"
+    },
+    {
+      "phase": "before",
+      "topic": "node-dep0190",
+      "repeat": 2,
+      "taskStatus": "passed",
+      "documentPresent": true,
+      "completed": true,
+      "seconds": 95.923,
+      "unsupported": 2,
+      "scope": 1,
+      "number": 0,
+      "inappropriateUncertainty": 0,
+      "missing": 0,
+      "citations": {
+        "titlesAndLinks": true,
+        "accessTimes": false,
+        "verbatimExcerpts": false,
+        "claimMapping": false,
+        "issues": [
+          "来源列表只有标题与链接，缺少真实访问时间",
+          "缺少逐字短片段（如 DEP0190 原文 \"When an args array is passed to child_process.execFile or child_process.spawn with the option { shell: true }...\"）",
+          "正文关键断言（触发条件、Runtime 类型、24.0.0 引入、PR #57199 等）没有编号映射到来源条目"
+        ]
+      },
+      "nativeAudit": {
+        "rows": [],
+        "lastSaveSeq": 791,
+        "beforeFinalSave": false
+      },
+      "evidence": "before/mimo"
+    },
+    {
+      "phase": "before",
+      "topic": "python312",
+      "repeat": 2,
+      "taskStatus": "passed",
+      "documentPresent": true,
+      "completed": true,
+      "seconds": 46.181,
+      "unsupported": 0,
+      "scope": 0,
+      "number": 0,
+      "inappropriateUncertainty": 0,
+      "missing": 0,
+      "citations": {
+        "titlesAndLinks": true,
+        "accessTimes": false,
+        "verbatimExcerpts": true,
+        "claimMapping": false,
+        "issues": [
+          "文末来源列出标题与链接，但缺少真实访问时间",
+          "正文关键断言未见编号映射到文末引用"
+        ]
+      },
+      "nativeAudit": {
+        "rows": [],
+        "lastSaveSeq": 602,
+        "beforeFinalSave": false
+      },
+      "evidence": "before/mimo",
+      "adjudication": "复核原稿、官方 PEP/venv/What’s New 原文，轻量隔离、可重建、激活后 pip 安装是受原文支持的归纳，不要求中文逐字翻译。旧评分还把自称「不计」的正确条目放进错误数组。"
+    },
+    {
+      "phase": "before",
+      "topic": "typescript50",
+      "repeat": 2,
+      "taskStatus": "passed",
+      "documentPresent": true,
+      "completed": true,
+      "seconds": 60.806,
+      "unsupported": 1,
+      "scope": 0,
+      "number": 0,
+      "inappropriateUncertainty": 0,
+      "missing": 0,
+      "citations": {
+        "titlesAndLinks": true,
+        "accessTimes": false,
+        "verbatimExcerpts": true,
+        "claimMapping": false,
+        "issues": [
+          "来源列表缺少真实访问时间",
+          "正文关键断言未编号映射到文末引用（如 Stage 3、求值顺序、export 位置等断言无编号对应）"
+        ]
+      },
+      "nativeAudit": {
+        "rows": [],
+        "lastSaveSeq": 779,
+        "beforeFinalSave": false
+      },
+      "evidence": "before/mimo",
+      "adjudication": "移除原评分对明确放在「旧装饰器」段落的求值顺序误报。保留原稿额外断言「旧实现没有」export 后装饰位置的排他比较，提供的来源没有直接支持这一旧模式限制。"
+    },
+    {
+      "phase": "before",
+      "topic": "react19",
+      "repeat": 2,
+      "taskStatus": "passed",
+      "documentPresent": true,
+      "completed": true,
+      "seconds": 124.996,
+      "unsupported": 0,
+      "scope": 0,
+      "number": 0,
+      "inappropriateUncertainty": 0,
+      "missing": 0,
+      "citations": {
+        "titlesAndLinks": true,
+        "accessTimes": false,
+        "verbatimExcerpts": true,
+        "claimMapping": false,
+        "issues": [
+          "缺少真实访问时间",
+          "正文关键断言缺少编号映射"
+        ]
+      },
+      "nativeAudit": {
+        "rows": [],
+        "lastSaveSeq": 935,
+        "beforeFinalSave": false
+      },
+      "evidence": "before/mimo"
+    },
+    {
+      "phase": "before",
+      "topic": "http-redirects",
+      "repeat": 2,
+      "taskStatus": "failed",
+      "documentPresent": false,
+      "completed": false,
+      "seconds": 49.233,
+      "unsupported": null,
+      "scope": null,
+      "number": null,
+      "inappropriateUncertainty": null,
+      "missing": null,
+      "citations": null,
+      "nativeAudit": {
+        "rows": [],
+        "lastSaveSeq": -1,
+        "beforeFinalSave": false
+      },
+      "evidence": "before/mimo"
+    },
+    {
+      "phase": "after",
+      "topic": "node24",
+      "repeat": 1,
+      "taskStatus": "passed",
+      "documentPresent": true,
+      "completed": true,
+      "seconds": 461.366,
+      "unsupported": 0,
+      "scope": 0,
+      "number": 0,
+      "inappropriateUncertainty": 0,
+      "missing": 0,
+      "citations": {
+        "titlesAndLinks": true,
+        "accessTimes": true,
+        "verbatimExcerpts": true,
+        "claimMapping": true,
+        "issues": []
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 521,
+            "text": "草稿断言: 24.0.0 于 2025-05-06 发布并为当时 Current | 出处[1]原文: \"Node.js 24.0.0 (Current)\" / \"Date: 2025-05-06\" | 原文主体: v24.0.0 发布页标题与日期 | 草稿主体: Node.js 24.0.0 发布日期与状态 | 条件/例外: 无 | 数字: 2025-05-06 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 22.0.0 于 2024-04-24 发布，2024-10 进入 LTS | 出处[2]原文: \"Date: 2024-04-24\" / \"2024-10-22, Node.js 22 (Jod) entered LTS\" | 原文主体: v22.0.0 发布页 | 草稿主体: Node.js 22.0.0 发布日期与 LTS 节点 | 条件/例外: LTS 日期为发布页所载计划生效记录 | 数字: 2024-04-24、2024-10-22 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 24 起 Windows 上编译 Node.js 本身移除 MSVC 支持、ClangCL 成为必需 | 出处[1]原文: \"Starting with Node.js 24, support for MSVC has been removed, and ClangCL is now required to compile Node.js on Windows.\" | 原文主体: 编译 Node.js on Windows | 草稿主体: 编译 Node.js 本身在 Windows 需 ClangCL | 条件/例外: 仅限编译 Node.js 本身；不得扩大为原生扩展必须用 ClangCL（n-api 页面未给出该要求） | 数字: 无 | 结论: 一致（草稿保留限定语）"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 22 系列在 Windows 上引入 C++20 编译支持 | 出处[2]原文: \"build: compile with C++20 support on Windows (StefanStojanovic)\" | 原文主体: v22.0.0 变更条目（构建） | 草稿主体: Node.js 22.0.0 Windows 构建引入 C++20 | 条件/例外: 指 Node.js 自身构建的编译标准 | 数字: C++20 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 24.0.0 升级 V8 至 13.6、npm 至 11 | 出处[1]原文: \"the upgrade of the V8 JavaScript engine to version 13.6 and npm to version 11\" | 原文主体: v24.0.0 高亮 | 草稿主体: 24.0.0 引擎与 npm 版本 | 条件/例外: 无 | 数字: 13.6、11 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 22.0.0 的 V8 为 12.4.254.14 | 出处[2]原文: \"V8 12.4.254.14\" | 原文主体: v22.0.0 高亮 | 草稿主体: 22.0.0 V8 版本 | 条件/例外: 无 | 数字: 12.4.254.14 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 24 中 AsyncLocalStorage 默认使用 AsyncContextFrame、URLPattern 全局可用 | 出处[1]原文: \"The AsyncLocalStorage API now uses AsyncContextFrame by default, and URLPattern is available globally.\" | 原文主体: v24.0.0 行为变化 | 草稿主体: 24.0.0 运行时行为变化 | 条件/例外: 无 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: Node-API 提供 ABI 稳定性保证 | 出处[3]原文: \"Although Node-API provides an ABI stability guarantee...\" | 原文主体: Node-API | 草稿主体: Node-API | 条件/例外: 同句并列 other parts of Node.js do not | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: node.h 等非 Node-API 部分不提供跨大版本 ABI 稳定保证 | 出处[3]原文: \"none of the following APIs provide an ABI stability guarantee across major versions:\"（列 #include <node.h> 等） | 原文主体: node.h/node_buffer.h/node_version.h/node_object_wrap.h 等及外部库 | 草稿主体: 直接包含这些头文件的原生扩展 | 条件/例外: 还包括 addon 使用的外部库可能无保证 | 数字: 无 | 结论: 一致（草稿带上\"外部库同样需自行确认\"）"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 仅用 Node-API 且所用外部库提供类似保证，扩展才能跨大版本 ABI 兼容；stable Node-API addons 可免重编译加载 | 出处[3]原文: \"Thus, for an addon to remain ABI-compatible across Node.js major versions, it must use Node-API exclusively by restricting itself to using\" + \"and by checking, for all external libraries that it uses, that the external library makes ABI stability guarantees similar to Node-API.\" | 原文主体: 单个 addon 的跨大版本兼容条件 | 草稿主体: 原生扩展 | 条件/例外: 必须 exclusively 使用 Node-api.h 且外部库需有类似保证；与\"普通模块不兼容\"规则同段并存 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 普通（非 Node-API）原生模块的 ABI 不跨 Node.js 大版本，24 与 22 大版本不同故需按构建链重编译 | 出处[1][2]原文: 各页 SEMVER-MAJOR \"src: update NODE_MODULE_VERSION to ...\" 条目 | 原文主体: 两版本均为 SEMVER-MAJOR 且递增 NODE_MODULE_VERSION | 草稿主体: 普通原生模块跨 22/24 需重编译（ABI 变更） | 条件/例外: stable Node-API addons 例外，须与规则同句并存 | 数字: 见下行 | 结论: 一致"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 22.0.0 发布时 NODE_MODULE_VERSION 升至 127、24.0.0 升至 137 | 出处[2]原文: \"[582ff5037c] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 127 (Michaël Zasso) #52465\"（v22.0.0 页所列最终项，其后无更高值）；出处[1]原文: \"[f26cab1b85] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 137 (Michaël Zasso) #58070\"（v24.0.0 页所列最终项，其后无更高值；24.0.0 内另见 134 为较早条目） | 原文主体: 各自 release 页 SEMVER-MAJOR 列表 | 草稿主体: 22.0.0=127、24.0.0=137 | 条件/例外: 以发布页所列本版本最终 update 条目为准 | 数字: 127、137（页面另列 122/124/126 与 134 为同版本内演进） | 结论: 一致（134/126 等为过程值，草稿仅取各 release 最终值）"
+          },
+          {
+            "seq": 521,
+            "text": "草稿断言: 22 支持 require() ESM 图、WebSocket 默认启用 | 出处[2]原文: \"lib: enable WebSocket by default (Aras Abbasi) #51594\"（require ESM 见同页 require(esm) 条目） | 原文主体: v22.0.0 变更 | 草稿主体: Node.js 22 运行时 | 条件/例外: require() ESM 图按发布页措辞限定为 supported | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 22.0.0 于 2024-04-24 发布，2024-10 进入 LTS | 出处[2]原文: \"Date: 2024-04-24\" / \"2024-10-22, Node.js 22 (Jod) entered LTS\" | 原文主体: v22.0.0 发布页 | 草稿主体: Node.js 22.0.0 发布日期与 LTS 节点 | 条件/例外: LTS 日期为发布页所载记录 | 数字: 2024-04-24、2024-10-22 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 24 起 Windows 编译 Node.js 本身移除 MSVC、ClangCL 必需 | 出处[1]原文: \"Starting with Node.js 24, support for MSVC has been removed, and ClangCL is now required to compile Node.js on Windows.\" | 原文主体: 编译 Node.js on Windows | 草稿主体: 编译 Node.js 本身在 Windows 需 ClangCL | 条件/例外: 仅限编译 Node.js 本身，未扩大为原生扩展要求（草稿第 8、16 行明确保留此限定） | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 22 在 Windows 引入 C++20 编译支持 | 出处[2]原文: \"build: compile with C++20 support on Windows (StefanStojanovic)\" | 原文主体: v22.0.0 构建条目 | 草稿主体: Node.js 22 Windows 构建 C++20 | 条件/例外: 指 Node.js 自身构建 | 数字: C++20 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 24.0.0 V8 13.6、npm 11 | 出处[1]原文: \"the upgrade of the V8 JavaScript engine to version 13.6 and npm to version 11\" | 原文主体: v24.0.0 高亮 | 草稿主体: 24.0.0 引擎与 npm | 条件/例外: 无 | 数字: 13.6、11 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 22.0.0 V8 12.4.254.14 | 出处[2]原文: \"V8 12.4.254.14\" | 原文主体: v22.0.0 高亮 | 草稿主体: 22.0.0 V8 版本 | 条件/例外: 无 | 数字: 12.4.254.14 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 24 中 ALS 默认 AsyncContextFrame、URLPattern 全局可用 | 出处[1]原文: \"The AsyncLocalStorage API now uses AsyncContextFrame by default, and URLPattern is available globally.\" | 原文主体: v24.0.0 行为变化 | 草稿主体: 24.0.0 运行时行为 | 条件/例外: 无 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: Node-API 提供 ABI 稳定保证，其他部分不提供 | 出处[3]原文: \"Although Node-API provides an ABI stability guarantee, other parts of Node.js do not, and any external libraries used from the addon may not.\" | 原文主体: Node-API | 草稿主体: Node-API（草稿第 12 行原样并列 other parts 不提供） | 条件/例外: 同句并存 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: node.h 等及外部库无跨大版本 ABI 保证 | 出处[3]原文: \"none of the following APIs provide an ABI stability guarantee across major versions:\"（列 #include <node.h> 等） | 原文主体: node.h/node_buffer.h/node_version.h/node_object_wrap.h 及外部库 | 草稿主体: 直接包含这些头的扩展（草稿含\"外部库也可能没有保证\"） | 条件/例外: 保留 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 仅用 Node-API 且外部库有类似保证才可跨大版本 ABI 兼容 | 出处[3]原文: \"it must use Node-API exclusively by restricting itself to using\" + \"the external library makes ABI stability guarantees similar to Node-API\" | 原文主体: 单个 addon 跨大版本兼容条件 | 草稿主体: 原生扩展（草稿第 14 行与\"普通模块不兼容\"规则同段并存） | 条件/例外: exclusively + 外部库类似保证 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 普通原生模块 ABI 不跨大版本，22→24 需重编译，stable Node-API 例外 | 出处[3]及[1][2] SEMVER-MAJOR 条目 | 原文主体: 各版本 NODE_MODULE_VERSION 递增 | 草稿主体: 普通模块跨 22/24 需重编译 | 条件/例外: 草稿第 25 行同句给出 stable Node-API 例外 | 数字: 见下行 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 22.0.0=127、24.0.0=137 | 出处[2]原文: \"[582ff5037c] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 127 (Michaël Zasso) #52465\"（该页最终项）；出处[1]原文: \"[f26cab1b85] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 137 (Michaël Zasso) #58070\"（该页最终项） | 原文主体: 各 release 页 SEMVER-MAJOR 列表 | 草稿主体: 22.0.0=127、24.0.0=137 | 条件/例外: 以发布页最终 update 条目为准，134/126/124/122 为过程值未采用 | 数字: 127、137 | 结论: 一致"
+          },
+          {
+            "seq": 1025,
+            "text": "草稿断言: 22 默认启用 WebSocket、require() 支持加载 ESM | 出处[2]原文: \"lib: enable WebSocket by default (Aras Abbasi) #51594\" | 原文主体: v22.0.0 变更 | 草稿主体: Node.js 22 运行时 | 条件/例外: require(esm) 按发布页 supported 措辞限定 | 数字: 无 | 结论: 一致"
+          }
+        ],
+        "lastSaveSeq": 973,
+        "beforeFinalSave": true
+      },
+      "evidence": "anchored/mimo-node"
+    },
+    {
+      "phase": "after",
+      "topic": "node-dep0190",
+      "repeat": 1,
+      "taskStatus": "passed",
+      "documentPresent": true,
+      "completed": true,
+      "seconds": 354.511,
+      "unsupported": 0,
+      "scope": 0,
+      "number": 0,
+      "inappropriateUncertainty": 0,
+      "missing": 0,
+      "citations": {
+        "titlesAndLinks": true,
+        "accessTimes": true,
+        "verbatimExcerpts": true,
+        "claimMapping": true,
+        "issues": []
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 941,
+            "text": "草稿断言: DEP0190 类型为 Runtime 弃用 | 出处[1]原文: \"Type: Runtime\" | 原文主体: DEP0190 | 草稿主体: DEP0190 | 条件/例外: 无 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 941,
+            "text": "草稿断言: 触发条件为给 execFile 或 spawn 传入 args 数组且 shell 为 true 或 '/path/to/shell'，值不转义仅按空格分隔可致 shell 注入 | 出处[1]原文: \"When an args array is passed to child_process.execFile or child_process.spawn with the option { shell: true } or { shell: '/path/to/shell' }, the values are not escaped, only space-separated, which can lead to shell injection.\" | 原文主体: execFile/spawn 传 args 数组 + shell 选项 | 草稿主体: 同一 | 条件/例外: 必须同时满足 args 数组与 shell 选项 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 941,
+            "text": "草稿断言: v24.0.0 中该项为 Runtime 弃用（PR #57199），v23.11.0/v22.15.0 中为 Documentation-only（PR #57389） | 出处[3]原文: \"- version: v24.0.0 ... description: Runtime deprecation.\" 与 \"- version: - v23.11.0 - v22.15.0 ... description: Documentation-only deprecation.\" | 原文主体: DEP0190 History YAML | 草稿主体: 同一 | 条件/例外: 版本对应关系须保留 | 数字: v24.0.0 / v23.11.0 / v22.15.0 / #57199 / #57389 | 结论: 一致"
+          },
+          {
+            "seq": 941,
+            "text": "草稿断言: Node.js 24.0.0 于 2025-05-06 发布（Current），发布说明含 \"Deprecation of passing args to spawn and execFile in child_process (#57199)\" | 出处[2]原文: \"2025-05-06, Version 24.0.0 (Current)\" 与 \"Deprecation of passing args to spawn and execFile in child_process (#57199)\" | 原文主体: Node.js v24.0.0 发布博客 | 草稿主体: 同一 | 条件/例外: 无 | 数字: 2025-05-06 / 24.0.0 / #57199 | 结论: 一致"
+          },
+          {
+            "seq": 941,
+            "text": "草稿断言: Runtime 弃用影响所有代码；--throw-deprecation 会抛错，--pending-deprecation 会对 node_modules 代码也发出警告 | 出处[1]原文: \"Runtime (all code)\"、\"When the --throw-deprecation command-line flag is used, a Runtime deprecation will cause an error to be thrown.\"、\"When --pending-deprecation is used, warnings will also be emitted for code loaded from node_modules.\" | 原文主体: 弃用类型总说明（Runtime） | 草稿主体: 同一 | 条件/例外: --pending-deprecation 行为属文档总述而非 DEP0190 单独条目，草稿须注明是通用说明 | 数字: 无 | 结论: 已修正（将该建议写为弃用类型通用说明）"
+          },
+          {
+            "seq": 941,
+            "text": "草稿断言: v24.0.0 标签源文档正文只写 { shell: true }，latest-v24.x 文档正文含 { shell: '/path/to/shell' } | 出处[3]原文: \"with the option { shell: true }\" ；出处[1]原文: \"{ shell: true } or { shell: '/path/to/shell' }\" | 原文主体: 两处正文措辞不同 | 草稿主体: 触发条件引用 [1] 完整措辞，History 版本引用 [3] | 条件/例外: 不用 [3] 正文单独支撑 shell 路径形式 | 数字: 无 | 结论: 已修正（分列引用）"
+          }
+        ],
+        "lastSaveSeq": 1277,
+        "beforeFinalSave": true
+      },
+      "evidence": "anchored/mimo-node"
+    },
+    {
+      "phase": "after",
+      "topic": "node24",
+      "repeat": 2,
+      "taskStatus": "passed",
+      "documentPresent": true,
+      "completed": true,
+      "seconds": 136.562,
+      "unsupported": 0,
+      "scope": 0,
+      "number": 0,
+      "inappropriateUncertainty": 0,
+      "missing": 0,
+      "citations": {
+        "titlesAndLinks": true,
+        "accessTimes": true,
+        "verbatimExcerpts": true,
+        "claimMapping": true,
+        "issues": []
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 337,
+            "text": "证据: v24 MSVC→ClangCL | 草稿断言: Node.js 24 起移除 MSVC 支持，Windows 上编译 Node.js 需要 ClangCL | 出处[1]原文: \"Starting with Node.js 24, support for MSVC has been removed, and ClangCL is now required to compile Node.js on Windows.\" | 原文主体: 编译 Node.js 本身 (compile Node.js on Windows) | 草稿主体: 同（构建 Node.js 核心） | 条件/例外: 指构建 Node.js 本体，不等同于禁止使用兼容包装库编写插件 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 337,
+            "text": "证据: v22 C++20 | 草稿断言: Node.js 22.0.0 起 Windows 构建改用 C++20 | 出处[2]原文: \"[2b1e7c2fcb] - (SEMVER-MAJOR) build: compile with C++20 support on Windows (StefanStojanovic) #52465\" | 原文主体: Windows 上以 C++20 支持进行编译（build 项） | 草稿主体: 同 | 条件/例外: 针对构建工具链的 SEMVER-MAJOR 变更 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 337,
+            "text": "证据: NODE_MODULE_VERSION 137 | 草稿断言: Node.js 24 将 NODE_MODULE_VERSION 更新为 137 | 出处[1]原文: \"[f26cab1b85] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 137 (Michaël Zasso) #58070\" | 原文主体: src: update NODE_MODULE_VERSION to 137（v24.0.0 与 v22 两份发布说明的改动列表） | 草稿主体: Node.js 24 的 NODE_MODULE_VERSION=137 | 条件/例外: 该行位于 v24.0.0 release notes 的 Notable Changes 列表中 | 数字: 137 | 结论: 一致"
+          },
+          {
+            "seq": 337,
+            "text": "证据: NODE_MODULE_VERSION 137 vs 127 | 草稿断言: Node.js 22 为 127，24 为 137，二者不兼容 | 出处[2]原文: \"[582ff5037c] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 127 (Michaël Zasso) #52465\" | 原文主体: v22.0.0 发布说明中 update NODE_MODULE_VERSION to 127 | 草稿主体: 22→127、24→137 | 条件/例外: 127 行同在 v22.0.0 release notes 改动列表中 | 数字: 127, 137 | 结论: 一致"
+          },
+          {
+            "seq": 337,
+            "text": "证据: 非 Node-API 无 ABI 保证 | 草稿断言: 除 Node-API 外，node.h/uv.h/v8.h 相关 API 跨大版本不保证 ABI 稳定 | 出处[3]原文: \"Although Node-API provides an ABI stability guarantee, other parts of Node.js do not, and any external libraries used from the addon may not.\" | 原文主体: Node.js 其余部分及插件所用外部库 | 草稿主体: 同 | 条件/例外: 明确列出 node.h、uv.h、v8.h 均不提供跨大版本 ABI 稳定保证 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 337,
+            "text": "证据: Node-API 兼容条件 | 草稿断言: 想跨大版本保持 ABI 兼容，插件必须只使用 Node-API（node_api.h）并确认外部库有同等保证 | 出处[3]原文: \"for an addon to remain ABI-compatible across Node.js major versions, it must use Node-API exclusively by restricting itself to using #include <node_api.h> ... and by checking, for all external libraries that it uses, that the external library makes ABI stability guarantees similar to Node-API.\" | 原文主体: addon 保持跨大版本 ABI 兼容的条件 | 草稿主体: 同 | 条件/例外: 必须排除 node.h/uv.h/v8.h，并检查外部库保证 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 337,
+            "text": "证据: Node-API 目标 | 草稿断言: Node-API 使为一个大版本编译的模块可在后续大版本上不重新编译运行 | 出处[3]原文: \"allow modules compiled for one major version to run on later major versions of Node.js without recompilation\" | 原文主体: Node-API 的设计目标 | 草稿主体: 同 | 条件/例外: 前提是仅用 Node-API；不代表非 Node-API 原生模块免重编译 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 337,
+            "text": "证据: V8/npm 版本 | 草稿断言: Node.js 24 升级 V8 13.6、npm 11 | 出处[1]原文: \"the upgrade of the V8 JavaScript engine to version 13.6 and npm to version 11\" | 原文主体: Node.js 24 的发布亮点 | 草稿主体: 同 | 条件/例外: 无 | 数字: 13.6, 11 | 结论: 一致"
+          }
+        ],
+        "lastSaveSeq": 809,
+        "beforeFinalSave": true
+      },
+      "evidence": "anchored/mimo-node"
+    },
+    {
+      "phase": "after",
+      "topic": "node-dep0190",
+      "repeat": 2,
+      "taskStatus": "failed",
+      "documentPresent": false,
+      "completed": false,
+      "seconds": 280.889,
+      "unsupported": null,
+      "scope": null,
+      "number": null,
+      "inappropriateUncertainty": null,
+      "missing": null,
+      "citations": null,
+      "nativeAudit": {
+        "rows": [],
+        "lastSaveSeq": -1,
+        "beforeFinalSave": false
+      },
+      "evidence": "anchored/mimo-node"
+    },
+    {
+      "phase": "after",
+      "topic": "python312",
+      "repeat": 1,
+      "taskStatus": "passed",
+      "documentPresent": true,
+      "completed": true,
+      "seconds": 187.319,
+      "unsupported": 0,
+      "scope": 0,
+      "number": 0,
+      "inappropriateUncertainty": 0,
+      "missing": 0,
+      "citations": {
+        "titlesAndLinks": true,
+        "accessTimes": true,
+        "verbatimExcerpts": true,
+        "claimMapping": true,
+        "issues": []
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 127,
+            "text": "草稿断言: Python 3.12 于 2023-10-02 发布 | 出处[1]原文: \"Python 3.12 was released on October 2, 2023.\" | 原文主体: Python 3.12 | 草稿主体: Python 3.12 | 条件/例外: 无 | 数字: 2023-10-02 | 结论: 一致"
+          },
+          {
+            "seq": 127,
+            "text": "草稿断言: 3.12 按 PEP 632 移除标准库 distutils，setuptools 第三方仍提供 distutils | 出处[1]原文: \"PEP 632: Remove the distutils package. ... The third-party Setuptools package continues to provide distutils\" | 原文主体: 标准库中的 distutils | 草稿主体: 标准库中的 distutils | 条件/例外: setuptools 仍提供 | 数字: PEP 632 | 结论: 一致"
+          },
+          {
+            "seq": 127,
+            "text": "草稿断言: venv 创建的环境默认不再预装 setuptools，distutils/setuptools/pkg_resources/easy_install 默认不可用，需 pip install setuptools | 出处[1]原文: \"Do not pre-install setuptools in virtual environments created with venv. This means that distutils, setuptools, pkg_resources, and easy_install will no longer available by default; to access these run pip install setuptools\" | 原文主体: venv 创建的虚拟环境 | 草稿主体: venv 创建的虚拟环境 | 条件/例外: 需在已激活环境运行 pip install setuptools | 数字: gh-95299 | 结论: 一致"
+          },
+          {
+            "seq": 550,
+            "text": "草稿断言: 3.12 按 PEP 632 移除标准库 distutils，setuptools 第三方仍提供 distutils | 出处[1]原文: \"PEP 632: Remove the distutils package. ... The third-party Setuptools package continues to provide distutils, if you still require it in Python 3.12 and beyond.\" | 原文主体: 标准库中的 distutils | 草稿主体: 标准库中的 distutils | 条件/例外: setuptools 仍提供 | 数字: PEP 632 | 结论: 一致"
+          },
+          {
+            "seq": 550,
+            "text": "草稿断言: venv 创建的环境默认不再预装 setuptools，distutils/setuptools/pkg_resources/easy_install 默认不可用，需 pip install setuptools | 出处[1]原文: \"Do not pre-install setuptools in virtual environments created with venv. This means that distutils, setuptools, pkg_resources, and easy_install will no longer available by default; to access these run pip install setuptools in the activated virtual environment.\" | 原文主体: venv 创建的虚拟环境 | 草稿主体: venv 创建的虚拟环境 | 条件/例外: 需在已激活环境运行 pip install setuptools | 数字: gh-95299 | 结论: 一致"
+          },
+          {
+            "seq": 550,
+            "text": "草稿断言: PEP 684 为子解释器提供各自独立 GIL，3.12 中仅能通过 C-API 使用，Python API 预计 3.13 | 出处[1]原文: \"PEP 684 introduces a per-interpreter GIL, so that sub-interpreters may now be created with a unique GIL per interpreter. ... This is currently only available through the C-API, though a Python API is anticipated for 3.13.\" | 原文主体: sub-interpreters（子解释器） | 草稿主体: 子解释器；不宣称取消全局 GIL | 条件/例外: 仅 C-API 可用，Python API 预计 3.13 | 数字: PEP 684、3.13 | 结论: 一致"
+          }
+        ],
+        "lastSaveSeq": 1026,
+        "beforeFinalSave": true
+      },
+      "evidence": "inline/mimo-languages"
+    },
+    {
+      "phase": "after",
+      "topic": "typescript50",
+      "repeat": 1,
+      "taskStatus": "passed",
+      "documentPresent": true,
+      "completed": true,
+      "seconds": 203.073,
+      "unsupported": 1,
+      "scope": 1,
+      "number": 0,
+      "inappropriateUncertainty": 0,
+      "missing": 0,
+      "citations": {
+        "titlesAndLinks": true,
+        "accessTimes": true,
+        "verbatimExcerpts": true,
+        "claimMapping": true,
+        "issues": []
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 263,
+            "text": "证据[1] TS 5.0: 草稿断言: 未开 experimentalDecorators 时，5.0 起装饰器成为新代码的有效语法 | 出处[1]原文: “without the flag, decorators will now be valid syntax for all new code” | 原文主体: 未开启该标志时的装饰器语法有效性 | 草稿主体: 同一 | 条件/例外: 指“without the flag”；旧实现仍由该标志保留 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 263,
+            "text": "证据[1] TS 5.0: 草稿断言: experimentalDecorators 将继续存在 | 出处[1]原文: “--experimentalDecorators will continue to exist for the foreseeable future” | 原文主体: experimentalDecorators 标志未来仍存在 | 草稿主体: 同一 | 条件/例外: “for the foreseeable future” | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 263,
+            "text": "证据[1] TS 5.0: 草稿断言: 两种模式的类型检查与代码 emit 不同 | 出处[1]原文: “Outside of --experimentalDecorators, they will be type-checked and emitted differently.” / “The type-checking rules and emit are sufficiently different” | 原文主体: 新装饰器在标志之外的类型检查与 emit | 草稿主体: 新旧两套模式整体 | 条件/例外: 不等于“所有生成代码均不同”，仅官方称规则与 emit 差异足够大 | 数字: 无 | 结论: 已修正（保留官方限定）"
+          },
+          {
+            "seq": 263,
+            "text": "证据[1] TS 5.0: 草稿断言: 旧装饰器函数可原样复用于新提案 | 出处[1]原文: “any existing decorator functions are not likely to do so” | 原文主体: 现有装饰器函数不太可能同时支持两种行为 | 草稿主体: 反向断言与原文冲突 | 条件/例外: 官方仅说“可编写同时兼容两者的装饰器”，且现有函数“not likely” | 数字: 无 | 结论: 已修正（改为不可默认原样迁移）"
+          },
+          {
+            "seq": 263,
+            "text": "证据[1] TS 5.0: 草稿断言: 新提案不兼容 emitDecoratorMetadata，且不允许参数装饰器 | 出处[1]原文: “This new decorators proposal is not compatible with --emitDecoratorMetadata, and it does not allow decorating parameters.” | 原文主体: 新装饰器提案 | 草稿主体: 同一 | 条件/例外: 仅描述新提案；不反推旧实现的功能范围 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 263,
+            "text": "证据[2] TSConfig: 草稿断言: emitDecoratorMetadata 是 Language and Environment 选项，可生成 design:* 元数据 | 出处[2]原文: “Language and Environment” 含 “emitDecoratorMetadata”；示例为 “__metadata(\\\"design:type\\\", Function)” 等 | 原文主体: emitDecoratorMetadata 选项及输出示例 | 草稿主体: 同一 | 条件/例外: 示例发生在该页展示的编译输出语境，未据此扩展到新提案可用性 | 数字: design:type/paramtypes/returntype | 结论: 一致"
+          },
+          {
+            "seq": 263,
+            "text": "证据[1] TS 5.0: 草稿断言: 参数装饰器在 --experimentalDecorators 下仍受官方讨论 | 出处[1]原文: “More Accurate Type-Checking for Parameter Decorators in Constructors Under --experimentalDecorators” | 原文主体: 构造函数参数装饰器类型检查 | 草稿主体: 旧实现仍可使用参数装饰器 | 条件/例外: 属类型检查准确性改进，不反推新提案支持参数装饰 | 数字: 无 | 结论: 一致"
+          }
+        ],
+        "lastSaveSeq": 713,
+        "beforeFinalSave": true
+      },
+      "evidence": "inline/mimo-languages",
+      "adjudication": "「标准 ECMAScript 装饰器提案」仍明确叫提案，并非断言已定稿；有依赖元数据条件的建议与旧参数装饰器推论有依据，不计错误。真实剩余问题是「旧代码若迁移，需要一并调整位置」：新语法仍允许 export 前的位置，不能无条件要求改动。"
+    },
+    {
+      "phase": "after",
+      "topic": "python312",
+      "repeat": 2,
+      "taskStatus": "passed",
+      "documentPresent": true,
+      "completed": true,
+      "seconds": 36.316,
+      "unsupported": 0,
+      "scope": 0,
+      "number": 0,
+      "inappropriateUncertainty": 0,
+      "missing": 0,
+      "citations": {
+        "titlesAndLinks": true,
+        "accessTimes": true,
+        "verbatimExcerpts": true,
+        "claimMapping": true,
+        "issues": []
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 208,
+            "text": "草稿断言: Python 3.12 发布于 2023-10-02 | 出处[1]原文: \"Python 3.12 was released on October 2, 2023.\" | 原文主体: Python 3.12 | 草稿主体: Python 3.12 | 条件/例外: 无 | 数字: 2023-10-02 | 结论: 一致"
+          },
+          {
+            "seq": 208,
+            "text": "草稿断言: 3.12 标准库移除 distutils，setuptools 仍提供 distutils | 出处[1]原文: \"Remove the distutils package. The third-party Setuptools package continues to provide distutils\" | 原文主体: 标准库 distutils / 第三方 Setuptools | 草稿主体: 同 | 条件/例外: 需要时用 Setuptools，非 stdlib | 数字: PEP 632 | 结论: 一致"
+          },
+          {
+            "seq": 208,
+            "text": "草稿断言: 3.12 venv 不再预装 setuptools，默认无 distutils/setuptools/pkg_resources/easy_install | 出处[1]原文: \"Do not pre-install setuptools in virtual environments created with venv\" | 原文主体: venv 创建的虚拟环境 | 草稿主体: 同 | 条件/例外: 激活后 pip install setuptools 可装回 | 数字: gh-95299 | 结论: 一致"
+          },
+          {
+            "seq": 208,
+            "text": "草稿断言: GIL 变化是每解释器唯一 GIL，3.12 仅 C-API 可用，Python API 预期 3.13 | 出处[1]原文: \"This is currently only available through the C-API, though a Python API is anticipated for 3.13.\" | 原文主体: sub-interpreters | 草稿主体: 同 | 条件/例外: 不改变常规线程程序语义 | 数字: PEP 684 | 结论: 一致"
+          }
+        ],
+        "lastSaveSeq": 592,
+        "beforeFinalSave": true
+      },
+      "evidence": "inline/mimo-languages"
+    },
+    {
+      "phase": "after",
+      "topic": "typescript50",
+      "repeat": 2,
+      "taskStatus": "passed",
+      "documentPresent": true,
+      "completed": true,
+      "seconds": 188.312,
+      "unsupported": 0,
+      "scope": 0,
+      "number": 0,
+      "inappropriateUncertainty": 0,
+      "missing": 0,
+      "citations": {
+        "titlesAndLinks": true,
+        "accessTimes": true,
+        "verbatimExcerpts": true,
+        "claimMapping": true,
+        "issues": []
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 348,
+            "text": "草稿断言: TypeScript 5.0 新装饰器是标准 Stage 3 提案，默认成为新代码有效语法 | 出处[1]原文: “decorators will now be valid syntax for all new code” | 原文主体: 不使用 --experimentalDecorators 时的新装饰器 | 草稿主体: TS 5.0 新装饰器 | 条件/例外: 启用 --experimentalDecorators 时仍走旧实现 | 数字: 5.0 | 结论: 一致"
+          },
+          {
+            "seq": 348,
+            "text": "草稿断言: 旧实验性装饰器实现长期存在且始终需显式编译器选项，TS 5.0 后仍会保留 | 出处[1]原文: “always required an opt-in compiler flag called --experimentalDecorators” / “will continue to exist for the foreseeable future” | 原文主体: 旧提案与 --experimentalDecorators | 草稿主体: 旧实现及迁移边界 | 条件/例外: 可预见未来保留，不等于推荐新增代码继续使用 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 348,
+            "text": "草稿断言: 新旧实现的类型检查与 emit 差异足以令既有装饰器函数通常不能直接兼容 | 出处[1]原文: “The type-checking rules and emit are sufficiently different that ... any existing decorator functions are not likely to do so.” | 原文主体: 既有装饰器函数 | 草稿主体: 迁移边界 | 条件/例外: 装饰器本身可以写成同时支持新旧行为，但既有实现通常不会这样做 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 348,
+            "text": "草稿断言: 新提案不支持 emitDecoratorMetadata，也不允许装饰参数 | 出处[1]原文: “does not support emitDecoratorMetadata, and it does not allow decorating parameters” | 原文主体: 当时的 stage-3 新装饰器提案 | 草稿主体: 非 --experimentalDecorators 的新实现 | 条件/例外: 原文补注未来 ECMAScript 提案可能弥合差距；不把限制扩大到全部元数据或装饰器库 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 348,
+            "text": "草稿断言: emitDecoratorMetadata 属于传统实验性功能，会注入设计时类型信息 | 出处[2]原文: “inject design-time type information using the @Reflect.metadata decorator” / “Decorator metadata is an experimental feature” | 原文主体: TypeScript 旧装饰器文档中的装饰器元数据 | 草稿主体: emitDecoratorMetadata 的用途 | 条件/例外: 明示 experimental 且可能有破坏性变更；依赖 reflect-metadata 运行时导入 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 348,
+            "text": "草稿断言: 参数装饰器是旧实验性实现接受的装饰目标，新实现不允许装饰参数 | 出处[2]原文: “class declaration, method, accessor, property, or parameter” | 原文主体: 旧实验性 stage 2 装饰器可附着位置 | 草稿主体: 参数装饰器及新旧差异 | 条件/例外: 旧文档注明 Stage 3 支持自 TS 5.0 起可用；新实现限制以出处[1]为准 | 数字: 5.0 | 结论: 一致"
+          },
+          {
+            "seq": 348,
+            "text": "草稿断言: 只要不开启 --experimentalDecorators，装饰器按新规则检查和 emit | 出处[1]原文: “Outside of --experimentalDecorators, they will be type-checked and emitted differently.” | 原文主体: 不启用旧选项的装饰器 | 草稿主体: 新实现判定 | 条件/例外: 开启选项则仍为旧规则 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 348,
+            "text": "草稿断言: 同一声明不能混用 export 前后两种装饰器书写位置 | 出处[1]原文: “mixing the two styles is not allowed.” | 原文主体: 新装饰器与 export/export default 的位置组合 | 草稿主体: 新语法书写约束 | 条件/例外: 单独使用任一风格均可 | 数字: 无 | 结论: 一致"
+          }
+        ],
+        "lastSaveSeq": 764,
+        "beforeFinalSave": true
+      },
+      "evidence": "inline/mimo-languages"
+    },
+    {
+      "phase": "after",
+      "topic": "react19",
+      "repeat": 1,
+      "taskStatus": "passed",
+      "documentPresent": true,
+      "completed": true,
+      "seconds": 68.807,
+      "unsupported": 0,
+      "scope": 0,
+      "number": 0,
+      "inappropriateUncertainty": 0,
+      "missing": 0,
+      "citations": {
+        "titlesAndLinks": true,
+        "accessTimes": true,
+        "verbatimExcerpts": true,
+        "claimMapping": true,
+        "issues": []
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 412,
+            "text": "草稿断言: React 19 中函数组件可把 ref 当普通 prop 接收 | 出处[1]原文: Starting in React 19, you can now access ref as a prop for function components | 原文主体: 函数组件 | 草稿主体: 函数组件 | 条件/例外: 类组件例外另列 | 数字: React 19 | 结论: 一致"
+          },
+          {
+            "seq": 412,
+            "text": "草稿断言: 新函数组件不再需要 forwardRef，但 19 年并非已删除 | 出处[1]原文: New function components will no longer need forwardRef ... In future versions we will deprecate and remove forwardRef | 原文主体: 新函数组件未来计划弃用并移除 | 草稿主体: React 19 的现状 | 条件/例外: 是未来版本的计划，不是 19 已删除 | 数字: 无 | 结论: 已修正为“不再必需、未来才弃用移除”"
+          },
+          {
+            "seq": 412,
+            "text": "草稿断言: 传给类组件的 ref 不会作为 prop 传入，因为 ref 指向组件实例 | 出处[1]原文: refs passed to classes are not passed as props since they reference the component instance | 原文主体: 传给 classes 的 refs | 草稿主体: 类组件 | 条件/例外: 仅说明不作为 prop | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 412,
+            "text": "草稿断言: ref 回调可返回清理函数，卸载时 React 调用它，适用于 DOM、类组件 ref 和 useImperativeHandle | 出处[1]原文: When the component unmounts, React will call the cleanup function returned from the ref callback. This works for DOM refs, refs to class components, and useImperativeHandle | 原文主体: 返回清理函数的 ref 回调 | 草稿主体: 同 | 条件/例外: 返回清理函数时跳过以 null 调用；未来才弃用 null 方式 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 412,
+            "text": "草稿断言: forwardRef 不在 React 19 移除的弃用 API 列表中 | 出处[2]原文: Removed deprecated React APIs 下仅列 propTypes/DefaultProps、Legacy Context、string refs、Module pattern factories、React.createFactory 等 | 原文主体: 19 移除项 | 草稿主体: 同 | 条件/例外: 列表不含 forwardRef | 数字: 无 | 结论: 一致"
+          }
+        ],
+        "lastSaveSeq": 658,
+        "beforeFinalSave": true
+      },
+      "evidence": "inline/mimo-web"
+    },
+    {
+      "phase": "after",
+      "topic": "react19",
+      "repeat": 2,
+      "taskStatus": "passed",
+      "documentPresent": true,
+      "completed": true,
+      "seconds": 127.633,
+      "unsupported": 0,
+      "scope": 0,
+      "number": 0,
+      "inappropriateUncertainty": 0,
+      "missing": 0,
+      "citations": {
+        "titlesAndLinks": true,
+        "accessTimes": true,
+        "verbatimExcerpts": true,
+        "claimMapping": true,
+        "issues": []
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 321,
+            "text": "草稿断言: React 19 中函数组件可直接把 ref 当 prop 访问 | 出处[1]原文: \"Starting in React 19, you can now access ref as a prop for function components\" | 原文主体: 函数组件(function components)在 React 19 | 草稿主体: React 19 函数组件可直接收 ref prop | 条件/例外: 仅针对函数组件 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 321,
+            "text": "草稿断言: 新函数组件不再需要 forwardRef，但 19 尚未删除 forwardRef，只是未来版本将弃用并移除 | 出处[1]原文: \"New function components will no longer need forwardRef... In future versions we will deprecate and remove forwardRef.\" | 原文主体: new function components 不再需要 forwardRef；deprecate and remove 发生在 future versions | 草稿主体: forwardRef 在 19 未被删除，仅不再被需要，未来版本才弃用移除 | 条件/例外: codemod 会自动更新组件；删除是将来时 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 321,
+            "text": "草稿断言: ref 回调可返回清理函数，卸载时 React 会调用它，适用于 DOM refs、类组件实例 refs 和 useImperativeHandle | 出处[1]原文: \"We now support returning a cleanup function from ref callbacks\" + \"This works for DOM refs, refs to class components, and useImperativeHandle.\" | 原文主体: ref callbacks 的清理函数；三类 ref 均适用 | 草稿主体: 同原文 | 条件/例外: 若返回清理函数，React 不再以 null 调用该 ref（旧行为是传 null） | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 321,
+            "text": "草稿断言: 传给类的 ref 不作为 prop 传入，因为它们引用组件实例 | 出处[1]原文: \"refs passed to classes are not passed as props since they reference the component instance.\" | 原文主体: 传给 classes 的 refs | 草稿主体: 类组件不会收到 ref prop | 条件/例外: 原因是 ref 指向组件实例 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 321,
+            "text": "草稿断言: ref 回调返回其他值会被 TypeScript 拒绝，需避免隐式返回 | 出处[1]原文: \"returning anything else from a ref callback will now be rejected by TypeScript\" | 原文主体: ref callback 返回其他值 → TypeScript 报错 | 草稿主体: 同原文 | 条件/例外: 修复方式是去掉隐式返回，可用 no-implicit-ref-callback-return codemod | 数字: 无 | 结论: 一致"
+          }
+        ],
+        "lastSaveSeq": 683,
+        "beforeFinalSave": true
+      },
+      "evidence": "inline/mimo-web"
+    },
+    {
+      "phase": "after",
+      "topic": "http-redirects",
+      "repeat": 1,
+      "taskStatus": "passed",
+      "documentPresent": true,
+      "completed": true,
+      "seconds": 495.996,
+      "unsupported": 0,
+      "scope": 0,
+      "number": 0,
+      "inappropriateUncertainty": 0,
+      "missing": 0,
+      "citations": {
+        "titlesAndLinks": true,
+        "accessTimes": true,
+        "verbatimExcerpts": true,
+        "claimMapping": true,
+        "issues": []
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 1548,
+            "text": "草稿断言: 301/308永久、302/307临时 | 出处原文: \"assigned a new permanent URI\"(301,308) / \"resides temporarily under a different URI\"(302,307) | 原文主体: 目标资源 target resource | 草稿主体: 301/308永久、302/307临时 | 条件/例外: 无 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1548,
+            "text": "草稿断言: 303是间接响应、不按永久/临时划分 | 出处原文: \"indirect response\" | 原文主体: 303 重定向到不同资源提供间接响应 | 草稿主体: 303 | 条件/例外: 草稿已说明不属永久/临时轴 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1548,
+            "text": "草稿断言: 301/302 POST改GET是MAY可非必须、不想要时分别用308/307 | 出处原文: \"a user agent MAY change the request method from POST to GET for the subsequent request ... 308/307 ... can be used instead\" | 原文主体: a user agent 后续请求 | 草稿主体: 用户代理自动重定向时 | 条件/例外: 针对 subsequent request；历史原因注 | 数字: 无 | 结论: 一致（草稿保留\"后续请求\"与\"出于历史原因\"）"
+          },
+          {
+            "seq": 1548,
+            "text": "草稿断言: 303引导GET或HEAD且适用任意方法 | 出处原文: \"a GET or HEAD request if using HTTP\" / \"applicable to any HTTP method\" | 原文主体: user agent can perform retrieval request | 草稿主体: 用户代理发起GET/HEAD检索 | 条件/例外: if using HTTP；primarily用于POST输出重定向 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1548,
+            "text": "草稿断言: 307 MUST NOT改方法 | 出处原文: \"the user agent MUST NOT change the request method if it performs an automatic redirection to that URI\" | 原文主体: user agent 自动重定向 | 草稿主体: 自动重定向时必须保持原方法 | 条件/例外: 条件在自动重定向到该URI时 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1548,
+            "text": "草稿断言: 308节内无POST改GET条款，与§15.4 method-preserving历史一致 | 出处原文: \"307 ... and 308 ... method-preserving redirects\" | 原文主体: 307/308被加入表示保持方法 | 草稿主体: 308不作改写 | 条件/例外: 308节内确无改方法条款（已读全文L8-L14） | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1548,
+            "text": "草稿断言: 308 might not be recognized everywhere | 出处原文: \"much younger (June 2014) ... might not be recognized everywhere\" | 原文主体: this status code(308) | 草稿主体: 308出现较晚可能不被识别 | 条件/例外: June 2014 | 数字: 2014 | 结论: 一致"
+          },
+          {
+            "seq": 1548,
+            "text": "草稿断言: 自动重定向MAY、非安全方法需谨慎、按语义改方法、改GET/HEAD后移除内容头部 | 出处原文: \"MAY automatically redirect\" / \"care for methods not known to be safe\" / \"Change the request method according to ... if applicable.\" / \"remove content-specific header fields\" | 原文主体: user agent 通用规则 | 草稿主体: 通用规则 | 条件/例外: if applicable；列举头部含but not limited to | 数字: 无 | 结论: 一致"
+          }
+        ],
+        "lastSaveSeq": 1517,
+        "beforeFinalSave": false
+      },
+      "evidence": "anchored/mimo-http"
+    },
+    {
+      "phase": "after",
+      "topic": "http-redirects",
+      "repeat": 2,
+      "taskStatus": "passed",
+      "documentPresent": true,
+      "completed": true,
+      "seconds": 422.684,
+      "unsupported": 0,
+      "scope": 0,
+      "number": 0,
+      "inappropriateUncertainty": 0,
+      "missing": 0,
+      "citations": {
+        "titlesAndLinks": true,
+        "accessTimes": true,
+        "verbatimExcerpts": true,
+        "claimMapping": true,
+        "issues": []
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 719,
+            "text": "草稿断言: 301、308 为永久重定向 | 出处[1][2]原文: \"new permanent URI and any future references ... ought to use one of the enclosed URIs\" | 原文主体: 301/308 状态码本身 | 草稿主体: 301、308 | 条件/例外: 无 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 719,
+            "text": "草稿断言: 302、307 为临时重定向 | 出处[1][3]原文: \"resides temporarily under a different URI\" | 原文主体: 302/307 | 草稿主体: 302、307 | 条件/例外: 无 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 719,
+            "text": "草稿断言: 303 不表示永久/临时，指向提供间接响应的另一资源 | 出处[4]原文: \"redirecting the user agent to a different resource ... indirect response to the original request\" | 原文主体: 303 | 草稿主体: 303 | 条件/例外: 可用 GET/HEAD 检索请求 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 719,
+            "text": "草稿断言: POST 在 301/302 上自动重定向改成 GET 是「可以」(MAY)非必须 | 出处[1][2][3]原文: \"a user agent MAY change the request method from POST to GET\" | 原文主体: user agent 对 301/302 的 POST 后续请求 | 草稿主体: POST 自动重定向 | 条件/例外: 历史原因；不想要则用 308/307 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 719,
+            "text": "草稿断言: 307 自动重定向不得改方法 | 出处[1]原文: \"the user agent MUST NOT change the request method\" (§15.4.8) | 原文主体: user agent 对 307 | 草稿主体: 307 | 条件/例外: 仅 307 条文明文 MUST NOT | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 719,
+            "text": "草稿断言: 308 保留方法（不改 POST→GET）| 出处[1]原文: \"307 ... and 308 ... were later added to unambiguously indicate method-preserving redirects\" | 原文主体: 307/308 为方法保留重定向 | 草稿主体: 308 | 条件/例外: 依据 §15.4 Note（308 节未单独写 MUST NOT）| 数字: 无 | 结论: 一致（以 Note 支撑）"
+          },
+          {
+            "seq": 719,
+            "text": "草稿断言: 303 用于 POST 结果转到另一资源，转成检索请求 | 出处[4]原文: \"primarily used to allow the output of a POST action to redirect ... A user agent can perform a retrieval request (a GET or HEAD request if using HTTP)\" | 原文主体: 303 适用于任何方法、主要为 POST 输出 | 草稿主体: 303 → GET/HEAD | 条件/例外: 仅 HTTP 下 GET/HEAD | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 719,
+            "text": "草稿断言: 自动重定向对非安全方法需谨慎 | 出处[1]原文: \"Automatic redirection needs to be done with care for methods not known to be safe\" | 原文主体: user agent 自动重定向 | 草稿主体: 安全提示 | 条件/例外: 无 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 719,
+            "text": "草稿断言: 301/308 启发式可缓存 | 出处[1]原文: \"A 301 response is heuristically cacheable\" / \"A 308 response is heuristically cacheable\" | 原文主体: 301/308 | 草稿主体: 301、308 | 条件/例外: 除非方法定义或显式缓存控制另有说明 | 数字: 无 | 结论: 一致"
+          }
+        ],
+        "lastSaveSeq": 1160,
+        "beforeFinalSave": true
+      },
+      "evidence": "anchored/mimo-http"
+    }
+  ],
+  "summary": {
+    "before": {
+      "runs": 12,
+      "delivered": 10,
+      "scored": 10,
+      "unsupported": 6,
+      "scope": 6,
+      "number": 0,
+      "inappropriateUncertainty": 0,
+      "missing": 1,
+      "deliveredMedianSeconds": 98.01650000000001,
+      "maxSeconds": 384.94
+    },
+    "after": {
+      "runs": 12,
+      "delivered": 11,
+      "scored": 11,
+      "unsupported": 1,
+      "scope": 1,
+      "number": 0,
+      "inappropriateUncertainty": 0,
+      "missing": 0,
+      "deliveredMedianSeconds": 188.312,
+      "maxSeconds": 495.996
+    }
+  },
+  "pairedSummary": {
+    "pairs": 9,
+    "before": {
+      "unsupported": 4,
+      "scope": 5,
+      "number": 0,
+      "inappropriateUncertainty": 0
+    },
+    "after": {
+      "unsupported": 1,
+      "scope": 1,
+      "number": 0,
+      "inappropriateUncertainty": 0
+    }
+  },
+  "usage": {
+    "upstreamRequests": 1572,
+    "knownUsage": 1553,
+    "missingUsage": 19,
+    "input": 15910115,
+    "cachedInput": 9255744,
+    "output": 1265743,
+    "judgeRequests": 47,
+    "judgeInput": 1648265,
+    "judgeOutput": 29115,
+    "totalKnownInput": 17558380,
+    "totalKnownOutput": 1294858
+  },
+  "scoring": "MiMo rubric judge; manually reviewed exceptions in adjudication.json take precedence. Missing documents and failed judges are unknown, not zero."
+}

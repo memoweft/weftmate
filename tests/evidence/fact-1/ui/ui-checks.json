@@ -1,0 +1,150 @@
+{
+  "checks": [
+    {
+      "name": "desktop-light-document",
+      "width": 1200,
+      "overflow": false,
+      "preview": true
+    },
+    {
+      "name": "desktop-dark-document",
+      "width": 1200,
+      "overflow": false,
+      "preview": true
+    },
+    {
+      "name": "desktop-light-source-open",
+      "width": 1200,
+      "overflow": false,
+      "preview": true
+    },
+    {
+      "name": "desktop-dark-source-open",
+      "width": 1200,
+      "overflow": false,
+      "preview": true
+    },
+    {
+      "name": "desktop-light-assistant-settings",
+      "width": 1200,
+      "overflow": false,
+      "preview": false
+    },
+    {
+      "name": "desktop-dark-assistant-settings",
+      "width": 1200,
+      "overflow": false,
+      "preview": false
+    },
+    {
+      "name": "desktop-480-light-document",
+      "width": 480,
+      "overflow": false,
+      "preview": true
+    },
+    {
+      "name": "desktop-480-dark-document",
+      "width": 480,
+      "overflow": false,
+      "preview": true
+    },
+    {
+      "name": "desktop-480-light-source-open",
+      "width": 480,
+      "overflow": false,
+      "preview": true
+    },
+    {
+      "name": "desktop-480-dark-source-open",
+      "width": 480,
+      "overflow": false,
+      "preview": true
+    },
+    {
+      "name": "desktop-480-light-assistant-settings",
+      "width": 480,
+      "overflow": false,
+      "preview": false
+    },
+    {
+      "name": "desktop-480-dark-assistant-settings",
+      "width": 480,
+      "overflow": false,
+      "preview": false
+    },
+    {
+      "name": "mobile-360-light-document",
+      "width": 360,
+      "overflow": false,
+      "preview": true
+    },
+    {
+      "name": "mobile-360-dark-document",
+      "width": 360,
+      "overflow": false,
+      "preview": true
+    },
+    {
+      "name": "mobile-360-light-source-open",
+      "width": 360,
+      "overflow": false,
+      "preview": true
+    },
+    {
+      "name": "mobile-360-dark-source-open",
+      "width": 360,
+      "overflow": false,
+      "preview": true
+    },
+    {
+      "name": "mobile-360-light-assistant-settings",
+      "width": 360,
+      "overflow": false,
+      "preview": false
+    },
+    {
+      "name": "mobile-360-dark-assistant-settings",
+      "width": 360,
+      "overflow": false,
+      "preview": false
+    },
+    {
+      "name": "mobile-390-light-document",
+      "width": 390,
+      "overflow": false,
+      "preview": true
+    },
+    {
+      "name": "mobile-390-dark-document",
+      "width": 390,
+      "overflow": false,
+      "preview": true
+    },
+    {
+      "name": "mobile-390-light-source-open",
+      "width": 390,
+      "overflow": false,
+      "preview": true
+    },
+    {
+      "name": "mobile-390-dark-source-open",
+      "width": 390,
+      "overflow": false,
+      "preview": true
+    },
+    {
+      "name": "mobile-390-light-assistant-settings",
+      "width": 390,
+      "overflow": false,
+      "preview": false
+    },
+    {
+      "name": "mobile-390-dark-assistant-settings",
+      "width": 390,
+      "overflow": false,
+      "preview": false
+    }
+  ],
+  "errors": [],
+  "realElectron": true
+}
