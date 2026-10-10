@@ -71,7 +71,7 @@ class Element {
   focusOptions: { preventScroll?: boolean } | undefined
   scrollTop = 0
   decodeHandler: (() => Promise<void>) | null = null
-  classList = { add() {}, remove() {}, toggle() {} }
+  classList = { add() {}, remove() {}, toggle() {}, contains: (value: string) => this.className.split(/\s+/).includes(value) }
   constructor(id = '', tagName = 'div') { this.id = id; this.tagName = tagName.toUpperCase() }
   addEventListener(name: string, listener: (event: any) => unknown) {
     this.listeners.set(name, [...(this.listeners.get(name) ?? []), listener])
@@ -608,6 +608,8 @@ test('switching sessions aborts a late original upload and keeps the file only i
   page.getByRole('button',{name:'A'}).fire('click')
   for (let attempt = 0; attempt < 20 && page.get('assistant-title').textContent !== 'A'; attempt++) await flush()
   assert.equal(page.get('attachment-draft-list').children.length, 1)
+  // The title updates before async history/draft restoration completes.
+  for (let attempt = 0; attempt < 20 && page.get('send-message').disabled; attempt++) await flush()
   assert.equal(page.get('send-message').disabled, false)
 })
 

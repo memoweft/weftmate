@@ -1,0 +1,55 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.9/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Warning: SDK processing. This version only understands SDK XML versions up to 3 but an SDK XML file of version 4 was encountered. This can happen if you use versions of Android Studio and the command-line tools that were released at different times.
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+
+> Task :app:checkMobileUiAssets
+[mobile-ui] checked ui-core copies and 77 JavaScript files
+
+> Task :app:preBuild
+> Task :app:preDebugBuild
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:preDebugUnitTestBuild
+> Task :app:javaPreCompileDebugUnitTest UP-TO-DATE
+
+> Task :app:compileDebugKotlin
+w: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt:177:60 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt:211:20 'fun setDecorFitsSystemWindows(p0: Boolean): Unit' is deprecated. Deprecated in Java.
+w: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt:676:16 'var statusBarColor: Int' is deprecated. Deprecated in Java.
+w: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt:677:16 'var navigationBarColor: Int' is deprecated. Deprecated in Java.
+w: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt:1115:17 Condition is always 'true'.
+w: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt:2036:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Please add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/MainActivity.kt:121:60 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/MainActivity.kt:166:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Please add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/MainActivity.kt:247:16 'var statusBarColor: Int' is deprecated. Deprecated in Java.
+w: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/MainActivity.kt:248:16 'var navigationBarColor: Int' is deprecated. Deprecated in Java.
+w: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/MainActivity.kt:254:31 'var systemUiVisibility: Int' is deprecated. Deprecated in Java.
+w: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/MainActivity.kt:254:57 'static field SYSTEM_UI_FLAG_LIGHT_STATUS_BAR: Int' is deprecated. Deprecated in Java.
+w: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/MainActivity.kt:254:97 'static field SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR: Int' is deprecated. Deprecated in Java.
+w: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/MainActivity.kt:787:80 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+
+> Task :app:compileDebugJavaWithJavac
+> Task :app:processDebugJavaRes UP-TO-DATE
+> Task :app:bundleDebugClassesToRuntimeJar
+> Task :app:bundleDebugClassesToCompileJar
+> Task :app:compileDebugUnitTestKotlin
+> Task :app:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :app:processDebugUnitTestJavaRes UP-TO-DATE
+> Task :app:testDebugUnitTest
+
+BUILD SUCCESSFUL in 20s
+25 actionable tasks: 7 executed, 18 up-to-date

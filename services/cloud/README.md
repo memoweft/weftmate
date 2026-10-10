@@ -13,7 +13,7 @@ npm test
 npm start
 ```
 
-默认监听 `127.0.0.1:8787`，健康检查 `GET /healthz` 返回 `{"status":"ok","service":"weftmate-cloud","schemaVersion":6}`。Ctrl+C / SIGTERM 关闭中继入口、HTTP 和数据库。默认 issuer 为 `http://localhost:8787/personal/v1/cloud/oidc`，账号交互须通过这个 origin 访问。随机端口测试先分配端口再配置 issuer；`CLOUD_PORT=0` 只用于健康检查启动测试，账号登录须配置实际公开端口。
+默认监听 `127.0.0.1:8787`，健康检查 `GET /healthz` 返回 `{"status":"ok","service":"weftmate-cloud","schemaVersion":8}`。Ctrl+C / SIGTERM 关闭中继入口、HTTP 和数据库。默认 issuer 为 `http://localhost:8787/personal/v1/cloud/oidc`，账号交互须通过这个 origin 访问。随机端口测试先分配端口再配置 issuer；`CLOUD_PORT=0` 只用于健康检查启动测试，账号登录须配置实际公开端口。
 
 配置只读环境变量，不自动加载 `.env`。可复制 `.env.example` 到被忽略的 `.env`，使用 `node --env-file=.env src/main.mjs`。没有登记客户端时仍可注册/验证，但不能开始 OIDC 授权；不会默认开放生产 redirect URI。
 
@@ -89,3 +89,5 @@ Mac Node 24.21.0 本地 30/30 通过，独立依赖审计 0 漏洞。[Linux Clou
 真实 DNS 在部署包接 `createIdentity({relayDns:{present,cleanup}})`；宿主安装签名只允许自己 `_acme-challenge` 的 TXT 值，不接受指定记录名/类型/zone，默认 DNS_NOT_CONFIGURED。安装证书、私钥与 DNS key 不进 Git。
 
 `npm test` 当前常规 cloud 测试 36/36（全链路 E2E 默认显式跳过）；`.github/workflows/relay.yml` 下载已校验的官方 frp，单独跑实际 TCP 443 全链路，不使用用户运行数据。Mac 相同链路在 18443 通过，示例域名全部用 --resolve / 测试连接地址覆盖；见 `../../src/personal-relay/README.md`。
+
+S3a：schema（存储结构）8 新增 `push_registrations`，当前 DPoP（设备持钥证明）身份绑定登记 / 轮换 / 撤销，设备撤销与账号注销级联删除。`/personal/v1/cloud/auth/push/registration` 响应不回显令牌；共享 PushProvider（推送提供方接口）当前明确未配置。未来派发只接受 `{eventId,type}`，不向云或提供方传正文；方法和接线见 CLIENT_API 9.8.2。生产升级需运行现有迁移流程，未部署。

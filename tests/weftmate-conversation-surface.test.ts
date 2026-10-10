@@ -3,7 +3,6 @@ import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 
 const client = readFileSync(new URL('../src/plugins/weftmate-client/client.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
-const vendorConversation = readFileSync(new URL('../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-client-ui-conversation/lib/client.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
 
 describe('WeftMate conversation workspace surface', () => {
   it('styles only stable official DSH conversation structure', () => {
@@ -23,6 +22,7 @@ describe('WeftMate conversation workspace surface', () => {
   });
 
   it('groups the official hero controls and official input in one vendor-owned layout seam', () => {
+    const vendorConversation = readFileSync(new URL('../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-client-ui-conversation/lib/client.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
     const start = vendorConversation.indexOf('const composerBar =');
     const end = vendorConversation.indexOf('const phase =', start);
     const source = vendorConversation.slice(start, end);

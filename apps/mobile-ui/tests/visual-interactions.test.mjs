@@ -40,8 +40,9 @@ test('UI-2 mobile home, themes, progressive detail, full-screen sources, drafts 
           approve:[{seq:1,type:'user.message',at:now,data:{text:'整理临时文件，删除之前让我确认。'}},{seq:2,type:'approval.requested',at:now,data:{approvalId:approval.approvalId,taskId:'cmd-demo',summary:approval.reason}},
             {seq:3,type:'assistant.message',at:now,data:{text:'这三个文件已经不再使用。确认后，我会继续整理。'}}]}};
       window.weftNative={postMessage(json){const request=JSON.parse(json),{method,params}=request,f=window.fixture;f.requests.push(request);let result={},error;
-        if(method==='app.bootstrap')result={loggedIn:true,username:'界面测试',owner:'synthetic-ui2',deviceId:'synthetic-phone',busy:false};
+        if(method==='app.bootstrap')result={loggedIn:true,username:'界面测试',owner:'synthetic-ui2',deviceId:'synthetic-phone',busy:false,model:{source:'phone',displayName:'合成模型'}};
         if(method==='settings.appearance'){if(params.value)f.appearance=params.value;result={value:f.appearance}}
+        if(method==='models.host')result={models:[{profileId:'synthetic',displayName:'合成模型',configured:true}]};
         if(method==='auth.me')result={displayName:'界面测试',connectionVerified:true};
         if(method==='conversations.list')result={conversations:[{id:'phone-local',title:'随手记下的想法',createdAt:now}]};
         if(method==='conversations.messages')result={messages:[{role:'user',text:'记下这个想法。'}],receipts:[]};

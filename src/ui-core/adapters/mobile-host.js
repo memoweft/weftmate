@@ -19,7 +19,7 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
     }
     if (core.state.ownerId !== (state.owner || null)) {
       core.state.executionAccount = undefined;core.state.executionAccountName = undefined;core.state.sessionSelecting=false;core.resetLogicalSession?.();
-      core.state.models = [];
+      core.state.models = [];core.state.modelsKnown=false;
       core.state.modelProfileId = null;
       core.state.sessionGroups = []; core.state.projects = []; core.state.projectCanManage = false; core.state.projectsError = '';
     }

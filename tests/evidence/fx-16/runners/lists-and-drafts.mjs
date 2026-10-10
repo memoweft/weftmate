@@ -8,17 +8,18 @@ import {tmpdir} from 'node:os';
 import {resolve,join} from 'node:path';
 import {startTimelineCandidate} from './candidate.mjs';
 import {localUiSession} from '../../../../tests/helpers/local-ui-session.mjs';
-const out=resolve('tests/evidence/fx-16'),pause=ms=>new Promise(r=>setTimeout(r,ms));
+const out=resolve(process.env.FX16_DRAFT_OUT||'tests/evidence/fx-16'),pause=ms=>new Promise(r=>setTimeout(r,ms));
 const p95=values=>[...values].sort((a,b)=>a-b)[Math.ceil(values.length*.95)-1];
 const report={startedAt:new Date().toISOString(),syntheticRecords:true,realPersonalApi:true,realElectron:true,budgets:{listP95Ms:150,createInputP95Ms:1000},populations:[],drafts:[]};
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
 let f,app,browser,profile;
 const save=()=>writeFile(join(out,'lists-and-drafts.json'),JSON.stringify(report,null,2));
 try{
+ await mkdir(out,{recursive:true});
  f=await startTimelineCandidate({daily:true,sidebar:true,logicalMobile:true,interactive:true,inlineProgress:true,historyCount:0});
  profile=await mkdtemp(join(tmpdir(),'weftmate-fx16-ui-'));
  browser=await chromium.launch();
- for(const count of [500,2000]){
+ for(const count of process.env.FX16_MERGE_RECHECK ? [500] : [500,2000]){
   await f.seedPopulation(count);
   const times={sessions:[],chats:[]};
   for(let n=0;n<30;n++)for(const route of ['sessions','chats']){const t=performance.now();const result=await f.request('/'+route+'?archived=all&limit=100');times[route].push(performance.now()-t);assert.equal((result.sessions||result.items).length,100);assert.equal(result.hasMore,true);}
@@ -47,7 +48,7 @@ try{
     const target=surface==='electron'?page:await browser.newPage({viewport:{width,height}});
     if(surface!=='electron') {await target.goto(f.origin+'/personal/v1/ui');await localUiSession(target,f.credentials,'FX16 synthetic phone',{mainChat:true});await target.waitForFunction(()=>globalThis.__WeftUiStarted===true);await target.locator('#session-list [data-session-id]').first().waitFor({state:'attached'});}
     const select=async()=>{f.setHistoryDelay(2000);const row=target.locator('#session-list [data-session-id] > button').first();await row.waitFor({state:'attached'});if(!await row.isVisible())await target.getByRole('button',{name:'切换会话侧栏',exact:true}).click();await row.click();};
-    if(surface==='electron'){
+    if(surface==='electron'&&!process.env.FX16_MERGE_RECHECK){
      await target.route('**/ui-core/main-chat.js',route=>route.fulfill({status:200,contentType:'text/javascript',body:oldSource}));await target.reload();await target.locator('#assistant-view').waitFor();await target.locator('#session-list [data-session-id]').first().waitFor();
      f.setHistoryDelay(2000);await target.locator('#session-list [data-session-id] > button').first().click();
      const draft=target.locator('#message-text');await draft.fill('QA4_B01_SYNTHETIC_'.repeat(7));const entered=await draft.inputValue();await pause(2300);const retained=await draft.inputValue();

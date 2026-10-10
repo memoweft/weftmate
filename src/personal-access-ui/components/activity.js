@@ -19,7 +19,7 @@ globalThis.WeftUiComponents.factories.activity=(core,ui)=>{
         view=WeftActivityView.mount({target:panel,core});badge();
         document.addEventListener('weftmate:fixed-page',event=>{if(event.detail!=='activity')close();});
         document.addEventListener('weftmate:activity',event=>void open(event.detail));
-    },openActivity:open,renderActivity(){badge();if(opened)view?.render();},renderActivityBadge:badge,activityVisible:()=>opened,
+    },closeFixedPage:close,openActivity:open,renderActivity(){badge();if(opened)view?.render();},renderActivityBadge:badge,activityVisible:()=>opened,
     async prepareActivityApproval(target){preparing=true;try{await core.selectSession(target.sessionId);}finally{preparing=false;}},
     async openActivitySource(target,kind){close();if(core.state.currentView!=='assistant')await core.enterAssistant();if(target.chatId&&core.readChat){const chat=(await core.readChat(target.chatId)).chat;if(chat.kind==='main')await core.selectMainChat(target.eventId);else await core.selectSession(target.sessionId??chat.activeSessionId);}else await core.selectSession(target.sessionId);
         if(!core.inMainChat?.()&&Number.isSafeInteger(target.seq)){while(core.state.hasOlder&&!core.state.historyEvents.has(target.seq))await core.loadOlderHistory();const row=ui.byId('transcript').querySelector(`[data-detail-seq="${target.seq}"], [data-seq="${target.seq}"]`);if(row){row.tabIndex=-1;row.scrollIntoView({block:'center'});row.focus();}}

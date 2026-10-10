@@ -1,4 +1,6 @@
+import { createLibrary } from './library.mjs';
 import { finalizeNotifications } from './notification-settings.mjs';
+import { sendHostPush } from './push.mjs';
 import { accountPersonalization } from './personalization.mjs';
 import { createMemoryIngestion } from './memory-ingestion.mjs';
 import { modelTierFor } from '../model-tier.ts';
@@ -78,7 +80,7 @@ export { uniqueSessionOwner } from './store.mjs';
 export async function createPersonalAccessService({ root, port, backend, uiHandler, androidPackagePath = null,
   mobileUiDir = null, mobileUiTrustedKeys = null, hostVersion = '0.1.0', sharedProfileIsFormal = () => false, memoryManager = null,
   allowedOrigins = [], trustedProxy = false, clock = Date.now, verifyToolResult = null,
-  browserReader = null, accountModelManager = null, systemManager = null, cloudIdentity = null, relay = null, backupManager = null, updateStatus = null, nativeMinimumVersions = {} }) {
+  browserReader = null, accountModelManager = null, systemManager = null, cloudIdentity = null, relay = null, backupManager = null, updateStatus = null, nativeMinimumVersions = {}, libraryNativeActions = null }) {
   if (typeof root !== 'string' || !path.isAbsolute(root) ||
       !Number.isInteger(port) || port < 0 || port > 65535 || !plainObject(backend) ||
       (uiHandler !== undefined && typeof uiHandler !== 'function') ||
@@ -126,6 +128,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   // Accessors preserve the original service's live state across module boundaries.
   const context = {
     get activity() { return activity; },
+    get library() { return library; },
+    get libraryDesktopToken() { return libraryDesktopToken; },
     ownerIds: () => Object.keys(rootState.accounts),
     get chats() { return chats; },
     get chatTimeline() { return chatTimeline; },
@@ -419,6 +423,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     return { version: SINGLE_ACCOUNT_VERSION, hostId: rootState.hostId, ownerId, ...account };
   };
   const healthStore = memoryManager?.healthStore ?? createPersonalHealthStore({ root, clock });
+  const libraryDesktopToken = randomUUID();
+  const library = createLibrary(context, libraryNativeActions);
   const artifactStore = createPersonalArtifactStore(path.join(root, 'artifacts'));
   const executionOwnerId = () => rootState.executionOwnerId ?? rootState.legacyOwnerId;
   const hostOwner = (ownerId) => ownerId === executionOwnerId();
@@ -560,6 +566,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     assertCurrent();
     for (const [accountOwnerId, account] of Object.entries(next.accounts)) {
       reconcileChatIdentity(account, next.hostId, new Date(timestamp()).toISOString());
+      for (const device of Object.values(account.devices)) if (device.revoked) delete device.push;
       reconcileActivity(account);
       finalizeNotifications(account, timestamp(), usage.settings(accountOwnerId).timeZone);
       for (const [conversationId, binding] of Object.entries(account.conversationBindings ?? {})) {
@@ -608,6 +615,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const temporaryChats = createTemporaryChats(context);
   const memoryIngestion = createMemoryIngestion(context);
   const service = {
+    pushActivity: (ownerId, eventId) => sendHostPush(context, ownerId, eventId),
     recordActivity: activity.record,
     captureMemoryTurn: memoryIngestion.capture,
     memoryTurnPolicy: temporaryChats.policy,
@@ -800,6 +808,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     submitToolDesktop: commands.submitToolDesktop,
     submitToolArtifact: artifacts.submitToolArtifact,
     registerNativeFile: artifacts.registerNativeFile,
+    libraryDesktopToken,
     browse: nativeBrowser.browse,
     close() {
       if (closePromise) return closePromise;
