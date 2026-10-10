@@ -75,26 +75,7 @@
       const link = el('a'); const url = URL.createObjectURL(blob); link.href = url; link.download = name;
       document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
-    function exportCanvas(markdown, theme) {
-      const styles = getComputedStyle(document.documentElement), canvas = el('canvas');
-      const font = styles.getPropertyValue('--wm-font-family-body').trim() || 'sans-serif';
-      const size = parseInt(styles.getPropertyValue('--wm-font-size-16')) || 16;
-      const padding = parseInt(styles.getPropertyValue('--wm-space-32')) || 32;
-      canvas.width = 780; const ctx = canvas.getContext('2d'); ctx.font = `${size}px ${font}`;
-      const lines = [];
-      for (const paragraph of WeftUiCore.messagePlainText(markdown).split('\n')) {
-        let line = ''; for (const char of paragraph) { if (ctx.measureText(line + char).width > canvas.width - padding * 2) { lines.push(line); line = ''; } line += char; }
-        lines.push(line);
-      }
-      const height = Math.ceil(size * 1.8), max = 30000;
-      if (lines.length * height + padding * 2 > max) throw new Error('这段对话超过单张长图尺寸，请导出完整文字文件');
-      canvas.height = lines.length * height + padding * 2;
-      const light = theme === 'light', color = name => styles.getPropertyValue(name).trim();
-      ctx.fillStyle = color(light ? '--wm-color-white' : '--wm-color-code-canvas'); ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = color(light ? '--wm-color-fallback-ink' : '--wm-color-code-ink'); ctx.font = `${size}px ${font}`;
-      lines.forEach((line, index) => ctx.fillText(line, padding, padding + size + index * height));
-      canvas.setAttribute('aria-label', `${light ? '浅色' : '深色'}长图预览`); return canvas;
-    }
+    function exportCanvas(markdown, theme) { return WeftContent.exportCanvas(markdown, theme); }
     async function exportConversation(id, trigger, local = false) {
       const captured = identity(), dialog = modal('分享 / 导出对话', trigger);
       const status = el('p', 'message-action-status', '正在读取完整对话…'); status.setAttribute('role', 'status'); dialog.append(status);
@@ -106,9 +87,11 @@
       const preview = el('div', 'message-export-preview'); preview.setAttribute('role', 'region'); preview.setAttribute('aria-label', '导出预览');
       const submit = button('导出文件', null, () => {}); let markdown, canvas;
       submit.classList.add('message-action-primary');
-      const render = () => {
+      let exportRevision = 0;
+      const render = async () => {
+        const revision = ++exportRevision; submit.disabled = true;
         markdown = core.messageExport(loaded, title?.() || 'WeftMate 对话', tools.checked); preview.replaceChildren(); canvas = null;
-        try { if (format.value === 'markdown') preview.append(el('pre', '', markdown)); else { canvas = exportCanvas(markdown, format.value); preview.append(canvas); }
+        try { if (format.value === 'markdown') preview.append(el('pre', '', markdown)); else { const result = await exportCanvas(markdown, format.value); if(revision!==exportRevision || !dialog.isConnected)return; canvas = result; preview.append(canvas); }
           submit.disabled = false; status.textContent = '已隐藏凭据与本机路径。请核对预览；附件只列名称，不嵌入原件。';
         } catch (error) { submit.disabled = true; status.textContent = error.message; }
       };

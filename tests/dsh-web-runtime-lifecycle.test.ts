@@ -190,6 +190,8 @@ describe('DshWebRuntime lifecycle fences（阶段 0）', () => {
     const start = web.start()
     const rejectedStart = assert.rejects(start, /DshWebRuntime is closed/)
     const rootPid = Number(await waitForFile(rootPidFile))
+    // Observe the expected rejection before close can settle startup; keep every lifecycle assertion.
+    const rejectedStart = assert.rejects(start, /DshWebRuntime is closed/)
     const closeA = web.close()
     const closeB = web.close()
     assert.strictEqual(closeA, closeB)

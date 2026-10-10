@@ -287,7 +287,10 @@ export function createPersonalDesktop({ libraryDesktopToken = null, origin, setu
   win.webContents.on('did-finish-load', () => { clientReady = true; if (pendingConversation) show(); });
   win.webContents.on('page-title-updated', event => { event.preventDefault(); win.setTitle('WeftMate'); });
   win.webContents.on('will-navigate', (event, url) => { if (url !== uiUrl) event.preventDefault(); });
-  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  win.webContents.setWindowOpenHandler(({url}) => {
+    try { const target = new URL(url); if (['http:', 'https:'].includes(target.protocol) && !target.username && !target.password) void shell.openExternal(target.href); } catch {}
+    return { action: 'deny' };
+  });
   const updatePalette = () => {
     if (!win.isDestroyed() && process.platform === 'win32') {
       win.setTitleBarOverlay(resolvedPalette ?? palette());

@@ -171,7 +171,9 @@ test('memory page keeps scripts external and uses only the candidate static publ
   assert.match(html, /id="memory-view"/)
   assert.match(html, /id="memory-detail-dialog"/)
   assert.doesNotMatch(html, /<script(?![^>]*src=)/i)
-  assert.match(publisher, /default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'/)
+  assert.match(publisher, /default-src 'none'; script-src 'self'; style-src 'self';/)
+  assert.match(publisher, /connect-src 'self'/)
+  assert.doesNotMatch(publisher, /script-src[^;]*unsafe-inline/)
 })
 
 test('memory view preserves chat draft and discards a successful response for another cookie owner', async () => {

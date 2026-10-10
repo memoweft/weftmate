@@ -1,0 +1,170 @@
+{
+  "startedAt": "2026-10-10T06:15:34.710Z",
+  "realElectron": true,
+  "realCore": true,
+  "syntheticModel": true,
+  "rows": [
+    {
+      "state": "idle",
+      "method": "tray",
+      "attempt": 1,
+      "startedAt": "2026-10-10T06:15:34.710Z",
+      "completedEventCount": 3,
+      "sessionId": "session-0046f6a1-2bf2-4f93-995e-e38a81e70819",
+      "mainPid": 50484,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-2d06efb0-3bbd-4f60-8d42-cb45d47924aa",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 1,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "idle",
+      "method": "tray",
+      "attempt": 2,
+      "startedAt": "2026-10-10T06:15:50.355Z",
+      "completedEventCount": 3,
+      "sessionId": "session-4c23f8b2-9d64-43c5-8692-30cc91f94b1a",
+      "mainPid": 38028,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-2d06efb0-3bbd-4f60-8d42-cb45d47924aa",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 2,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "idle",
+      "method": "tray",
+      "attempt": 3,
+      "startedAt": "2026-10-10T06:16:06.189Z",
+      "completedEventCount": 3,
+      "sessionId": "session-27af9e38-1497-4ec7-952a-f616756d3794",
+      "mainPid": 44976,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-2d06efb0-3bbd-4f60-8d42-cb45d47924aa",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 3,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "idle",
+      "method": "task-manager-force",
+      "attempt": 1,
+      "startedAt": "2026-10-10T06:16:22.233Z",
+      "completedEventCount": 3,
+      "sessionId": "session-aa4f3531-a36f-4213-af7b-e81d84fcbe81",
+      "mainPid": 8744,
+      "forceAccepted": true,
+      "residualProcesses": [
+        {
+          "ProcessId": 59152,
+          "Name": "electron.exe",
+          "CreationDate": "/Date(1791612972143)/"
+        },
+        {
+          "ProcessId": 55372,
+          "Name": "electron.exe",
+          "CreationDate": "/Date(1791612972447)/"
+        },
+        {
+          "ProcessId": 61560,
+          "Name": "electron.exe",
+          "CreationDate": "/Date(1791612972447)/"
+        },
+        {
+          "ProcessId": 6500,
+          "Name": "electron.exe",
+          "CreationDate": "/Date(1791612973956)/"
+        },
+        {
+          "ProcessId": 18308,
+          "Name": "electron.exe",
+          "CreationDate": "/Date(1791612978518)/"
+        }
+      ],
+      "tmpAfterExit": [],
+      "error": "electron.launch: WebSocket error: read ECONNRESET\nCall log:\n\u001b[2m  - <launching> \"D:\\AIProjects\\WeftMate\\Worktrees\\w5\\node_modules\\electron\\dist\\electron.exe\" \"--inspect=0\" \"--remote-debugging-port=0\" \"D:\\AIProjects\\WeftMate\\Worktrees\\w5\\tests\\integration\\m2-exit-bootstrap.mjs\" \"--user-data-dir=C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa5-exit-matrix-h69fJ5\\profile\" \"--personal-host\" \"--access-port=0\" \"--personal-memory-config=C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa5-exit-matrix-h69fJ5\\memory.json\"\u001b[22m\n\u001b[2m  - <launched> pid=49572\u001b[22m\n\u001b[2m  - [pid=49572][out]\u001b[22m\n\u001b[2m  - [pid=49572][err] Debugger listening on ws://127.0.0.1:64809/e7ad20d8-3980-4611-82ec-0bc46cd65924\u001b[22m\n\u001b[2m  - [pid=49572][err] For help, see: https://nodejs.org/learn/getting-started/debugging\u001b[22m\n\u001b[2m  - <ws connecting> ws://127.0.0.1:64809/e7ad20d8-3980-4611-82ec-0bc46cd65924\u001b[22m\n\u001b[2m  - <ws connected> ws://127.0.0.1:64809/e7ad20d8-3980-4611-82ec-0bc46cd65924\u001b[22m\n\u001b[2m  - [pid=49572][err] Debugger attached.\u001b[22m\n\u001b[2m  - <ws disconnected> ws://127.0.0.1:64809/e7ad20d8-3980-4611-82ec-0bc46cd65924 code=1005 reason=\u001b[22m\n\u001b[2m  - [pid=49572][err]\u001b[22m\n\u001b[2m  - [pid=49572][err] DevTools listening on ws://127.0.0.1:64812/devtools/browser/8ace5830-2cea-47e0-a4f5-f3aac63b8fc3\u001b[22m\n\u001b[2m  - <ws connecting> ws://127.0.0.1:64812/devtools/browser/8ace5830-2cea-47e0-a4f5-f3aac63b8fc3\u001b[22m\n\u001b[2m  - <ws error> ws://127.0.0.1:64812/devtools/browser/8ace5830-2cea-47e0-a4f5-f3aac63b8fc3 error read ECONNRESET\u001b[22m\n\u001b[2m  - <ws connect error> ws://127.0.0.1:64812/devtools/browser/8ace5830-2cea-47e0-a4f5-f3aac63b8fc3 read ECONNRESET\u001b[22m\n\u001b[2m  - <ws disconnected> ws://127.0.0.1:64812/devtools/browser/8ace5830-2cea-47e0-a4f5-f3aac63b8fc3 code=1006 reason=\u001b[22m\n\u001b[2m  - [pid=49572] <kill>\u001b[22m\n\u001b[2m  - [pid=49572] <will force kill>\u001b[22m\n\u001b[2m  - [pid=49572] <process did exit: exitCode=0, signal=null>\u001b[22m\n\u001b[2m  - [pid=49572] starting temporary directories cleanup\u001b[22m\n\u001b[2m  - [pid=49572] finished temporary directories cleanup\u001b[22m\n\n    at async h.launch (D:\\AIProjects\\WeftMate\\Worktrees\\w5\\tests\\evidence\\qa-5\\runners\\harness.mjs:44:9)\n    at async file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/evidence/qa-5/runners/exit-matrix.mjs:33:4",
+      "passed": false
+    }
+  ],
+  "finishedAt": "2026-10-10T06:16:29.928Z",
+  "passed": false
+}

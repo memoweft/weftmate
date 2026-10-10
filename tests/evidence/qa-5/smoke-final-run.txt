@@ -1,0 +1,28 @@
+node:internal/child_process:1143
+    result.error = new ErrnoException(result.error, 'spawnSync ' + options.file);
+                   ^
+
+<ref *1> Error: spawnSync D:\AIProjects\WeftMate\Worktrees\w5\.local\qa-5\releases\0.1.1-preview.1\build\WeftMate-Setup-0.1.1-preview.1.exe ETIMEDOUT
+    at Object.spawnSync (node:internal/child_process:1143:20)
+    at spawnSync (node:child_process:911:24)
+    at execFileSync (node:child_process:954:15)
+    at file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/evidence/qa-5/runners/smoke.mjs:13:1 {
+  errno: -4039,
+  code: 'ETIMEDOUT',
+  syscall: 'spawnSync D:\\AIProjects\\WeftMate\\Worktrees\\w5\\.local\\qa-5\\releases\\0.1.1-preview.1\\build\\WeftMate-Setup-0.1.1-preview.1.exe',
+  path: 'D:\\AIProjects\\WeftMate\\Worktrees\\w5\\.local\\qa-5\\releases\\0.1.1-preview.1\\build\\WeftMate-Setup-0.1.1-preview.1.exe',
+  spawnargs: [
+    '/S',
+    '/currentuser',
+    '/D=C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa5-smoke-installed-ipHnkF\\Programs'
+  ],
+  error: [Circular *1],
+  status: null,
+  signal: 'SIGTERM',
+  output: [ null, Buffer(0) [Uint8Array] [], Buffer(0) [Uint8Array] [] ],
+  pid: 36056,
+  stdout: Buffer(0) [Uint8Array] [],
+  stderr: Buffer(0) [Uint8Array] []
+}
+
+Node.js v24.15.0

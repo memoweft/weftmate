@@ -1,0 +1,546 @@
+{
+  "startedAt": "2026-10-10T06:34:43.579Z",
+  "realElectron": true,
+  "realCore": true,
+  "syntheticModel": true,
+  "rows": [
+    {
+      "state": "formation",
+      "method": "logout-taskkill",
+      "attempt": 1,
+      "startedAt": "2026-10-10T06:34:43.579Z",
+      "completedEventCount": 6,
+      "completedEvents": [
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-10T06:34:47.209Z",
+          "data": {
+            "text": "我偏好第1种合成茶用白色杯子。",
+            "receiptId": "ae75ae02-95a6-46b1-a61d-054487243789"
+          }
+        },
+        {
+          "seq": 22,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:34:47.730Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 24,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:34:47.740Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        },
+        {
+          "seq": 31,
+          "type": "user.message",
+          "at": "2026-10-10T06:34:50.748Z",
+          "data": {
+            "text": "我偏好第1种合成茶加两片柠檬。",
+            "receiptId": "ad942bf6-7d5b-4c92-a68b-f89e52fdb160"
+          }
+        },
+        {
+          "seq": 39,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:34:50.827Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-b5a3431d48f009c9b854ea414c579d7daf53c61fa147f10fe6e6114d8f0bf3ab",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 41,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:34:50.835Z",
+          "data": {
+            "reason": "completed",
+            "turn": 2
+          }
+        }
+      ],
+      "sessionId": "session-288ff5ac-7a4f-4e2b-afed-f680dd554562",
+      "pendingBefore": {
+        "ownerId": "owner-5538f0ce-0aea-4f45-a4a6-7b3132bd7d91",
+        "state": "degraded",
+        "version": "2.0.0",
+        "worldRevision": 1,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 1,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "reasonCode": "MEMORY_FORMATION_PENDING",
+        "backfill": null,
+        "captureError": null
+      },
+      "mainPid": 24116,
+      "launcherPid": 37328,
+      "nonForceAccepted": true,
+      "forceAccepted": true,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "healthImmediatelyAfterRestart": {
+        "ownerId": "owner-5538f0ce-0aea-4f45-a4a6-7b3132bd7d91",
+        "state": "degraded",
+        "version": "2.0.0",
+        "worldRevision": 1,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 1,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "reasonCode": "MEMORY_FORMATION_PENDING",
+        "backfill": null,
+        "captureError": null
+      },
+      "health": {
+        "ownerId": "owner-5538f0ce-0aea-4f45-a4a6-7b3132bd7d91",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 2,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "healthRecoveryMs": 283737,
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "formation",
+      "method": "logout-taskkill",
+      "attempt": 2,
+      "startedAt": "2026-10-10T06:39:52.726Z",
+      "completedEventCount": 6,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:39:53.253Z",
+          "data": {
+            "text": "我偏好第2种合成茶用白色杯子。",
+            "receiptId": "8b4c93eb-dffe-487b-8f23-cfd1567c86f0"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:39:53.489Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-b5a3431d48f009c9b854ea414c579d7daf53c61fa147f10fe6e6114d8f0bf3ab",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-2318d069242b9a0200996da9d60cf87f24e2c2dffdfd3e1a87d15f30165681d5",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶加两片柠檬。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:39:53.491Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        },
+        {
+          "seq": 32,
+          "type": "user.message",
+          "at": "2026-10-10T06:39:55.592Z",
+          "data": {
+            "text": "我偏好第2种合成茶加两片柠檬。",
+            "receiptId": "195afeb3-c7ef-4947-a3a6-d9ff2e49568f"
+          }
+        },
+        {
+          "seq": 40,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:39:55.671Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-2318d069242b9a0200996da9d60cf87f24e2c2dffdfd3e1a87d15f30165681d5",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶加两片柠檬。"
+              },
+              {
+                "id": "cognition-bcf6e2744088a2eea4c609296363680f57b3a8b58c35f5c328c4caa825cb45ad",
+                "kind": "cognition",
+                "summary": "用户偏好第2种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-b5a3431d48f009c9b854ea414c579d7daf53c61fa147f10fe6e6114d8f0bf3ab",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 42,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:39:55.676Z",
+          "data": {
+            "reason": "completed",
+            "turn": 2
+          }
+        }
+      ],
+      "sessionId": "session-c51cfcf6-539e-400e-bdd8-d9a7e04aa0fb",
+      "pendingBefore": {
+        "ownerId": "owner-5538f0ce-0aea-4f45-a4a6-7b3132bd7d91",
+        "state": "degraded",
+        "version": "2.0.0",
+        "worldRevision": 3,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 1,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "reasonCode": "MEMORY_FORMATION_PENDING",
+        "backfill": null,
+        "captureError": null
+      },
+      "mainPid": 53372,
+      "launcherPid": 54488,
+      "nonForceAccepted": true,
+      "forceAccepted": true,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "healthImmediatelyAfterRestart": {
+        "ownerId": "owner-5538f0ce-0aea-4f45-a4a6-7b3132bd7d91",
+        "state": "degraded",
+        "version": "2.0.0",
+        "worldRevision": 3,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 1,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "reasonCode": "MEMORY_FORMATION_PENDING",
+        "backfill": null,
+        "captureError": null
+      },
+      "health": {
+        "ownerId": "owner-5538f0ce-0aea-4f45-a4a6-7b3132bd7d91",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 4,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "healthRecoveryMs": 274507,
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "formation",
+      "method": "logout-taskkill",
+      "attempt": 3,
+      "startedAt": "2026-10-10T06:44:59.872Z",
+      "completedEventCount": 6,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:45:00.376Z",
+          "data": {
+            "text": "我偏好第3种合成茶用白色杯子。",
+            "receiptId": "8947e042-ada0-4c72-a682-aded478d5d1e"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:45:00.613Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-b5a3431d48f009c9b854ea414c579d7daf53c61fa147f10fe6e6114d8f0bf3ab",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-bcf6e2744088a2eea4c609296363680f57b3a8b58c35f5c328c4caa825cb45ad",
+                "kind": "cognition",
+                "summary": "用户偏好第2种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-2318d069242b9a0200996da9d60cf87f24e2c2dffdfd3e1a87d15f30165681d5",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶加两片柠檬。"
+              },
+              {
+                "id": "cognition-d4c41b5ad78c87ba0ba3b02ed6bccde2f41e3b443d08ce26e207dec168e220d4",
+                "kind": "cognition",
+                "summary": "用户偏好第2种合成茶加两片柠檬。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:45:00.618Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        },
+        {
+          "seq": 32,
+          "type": "user.message",
+          "at": "2026-10-10T06:45:02.842Z",
+          "data": {
+            "text": "我偏好第3种合成茶加两片柠檬。",
+            "receiptId": "a17f4c65-ad8e-436a-8e74-1d60d649ef13"
+          }
+        },
+        {
+          "seq": 40,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:45:02.895Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-2318d069242b9a0200996da9d60cf87f24e2c2dffdfd3e1a87d15f30165681d5",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶加两片柠檬。"
+              },
+              {
+                "id": "cognition-d4c41b5ad78c87ba0ba3b02ed6bccde2f41e3b443d08ce26e207dec168e220d4",
+                "kind": "cognition",
+                "summary": "用户偏好第2种合成茶加两片柠檬。"
+              },
+              {
+                "id": "cognition-0aaf9643fdcc42b6092685e0a711e017053eb0ddfd215938716b198470ca1f72",
+                "kind": "cognition",
+                "summary": "用户偏好第3种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-b5a3431d48f009c9b854ea414c579d7daf53c61fa147f10fe6e6114d8f0bf3ab",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-bcf6e2744088a2eea4c609296363680f57b3a8b58c35f5c328c4caa825cb45ad",
+                "kind": "cognition",
+                "summary": "用户偏好第2种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 42,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:45:02.896Z",
+          "data": {
+            "reason": "completed",
+            "turn": 2
+          }
+        }
+      ],
+      "sessionId": "session-657ea03a-de8f-47e0-b357-779e09bdc171",
+      "pendingBefore": {
+        "ownerId": "owner-5538f0ce-0aea-4f45-a4a6-7b3132bd7d91",
+        "state": "degraded",
+        "version": "2.0.0",
+        "worldRevision": 5,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 1,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "reasonCode": "MEMORY_FORMATION_PENDING",
+        "backfill": null,
+        "captureError": null
+      },
+      "mainPid": 64108,
+      "launcherPid": 64024,
+      "nonForceAccepted": true,
+      "forceAccepted": true,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "healthImmediatelyAfterRestart": {
+        "ownerId": "owner-5538f0ce-0aea-4f45-a4a6-7b3132bd7d91",
+        "state": "degraded",
+        "version": "2.0.0",
+        "worldRevision": 5,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 1,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "reasonCode": "MEMORY_FORMATION_PENDING",
+        "backfill": null,
+        "captureError": null
+      },
+      "health": {
+        "ownerId": "owner-5538f0ce-0aea-4f45-a4a6-7b3132bd7d91",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 6,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "healthRecoveryMs": 280000,
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    }
+  ],
+  "finishedAt": "2026-10-10T06:50:08.955Z",
+  "passed": true
+}

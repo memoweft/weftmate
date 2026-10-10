@@ -1,11 +1,13 @@
 /** Static, public account shell. All account data comes from authenticated API calls. */
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { uiCoreAssets } from '../ui-core/manifest.mjs'
+import { uiCoreBrowserAssets as uiCoreAssets } from '../ui-core/manifest.mjs'
+import renderAssets from './render-assets.json' with {type: 'json'};
 
 const files = new Map([
   ['/personal/v1/ui/folder-choice.js', ['folder-choice.js','text/javascript; charset=utf-8']],
   ['/personal/v1/ui/folder-choice.css', ['folder-choice.css','text/css; charset=utf-8']],
+  ...renderAssets.map(name => [`/personal/v1/ui/${name}`, [name, name.endsWith('.css') ? 'text/css; charset=utf-8' : name.endsWith('.woff2') ? 'font/woff2' : name.endsWith('.woff') ? 'font/woff' : name.endsWith('.ttf') ? 'font/ttf' : 'text/javascript; charset=utf-8']]),
   ['/personal/v1/ui/library.css', ['library.css', 'text/css; charset=utf-8']],
   ...['components/library-view.js','components/library.js'].map(name => [`/personal/v1/ui/${name}`, [name, 'text/javascript; charset=utf-8']]),
   ['/personal/v1/ui/goals.css', ['goals.css', 'text/css; charset=utf-8']],
@@ -97,7 +99,7 @@ export function setPersonalAccessUiResourceReader(reader) { verifiedResource = r
 
 const securityHeaders = {
   'cache-control': 'no-store',
-  'content-security-policy': "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self' https:; img-src 'self' data: blob:; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; frame-src blob:",
+  'content-security-policy': "default-src 'none'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; font-src 'self'; connect-src 'self' https: blob:; img-src 'self' data: blob:; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; frame-src blob:",
   'referrer-policy': 'no-referrer',
   'x-content-type-options': 'nosniff',
   'x-frame-options': 'DENY',

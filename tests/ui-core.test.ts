@@ -4,7 +4,12 @@ import { runInNewContext } from 'node:vm'
 import test from 'node:test'
 import { contextUsage, createDshSessionAdapter } from '../src/runtime/dsh-adapter/sessions.mjs'
 import { desktopScript, desktopScriptPaths } from './helpers/desktop-ui-source.mjs'
-const paths = desktopScriptPaths().filter(path => path.startsWith('ui-core/'))
+import {uiCoreAssets,uiCorePresentationAssets} from '../src/ui-core/manifest.mjs'
+const featurePaths=new Set(uiCoreAssets.map(name=>`ui-core/${name}`))
+const browserPaths=desktopScriptPaths().filter(path=>path.startsWith('ui-core/'))
+assert.deepEqual(browserPaths.filter(path=>!featurePaths.has(path)),uiCorePresentationAssets.map(name=>`ui-core/${name}`),
+  'only the explicit shared presentation assets may sit outside the DOM-free feature layer')
+const paths = browserPaths.filter(path => featurePaths.has(path))
 const source = paths.map(desktopScript).join('\n;\n')
 const response = (body: object, status = 200) => ({ ok: status < 400, status, json: async () => body })
 function fixture(read: (path: string, options: any) => any = () => response({})) {

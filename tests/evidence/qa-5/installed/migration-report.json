@@ -1,0 +1,628 @@
+{
+  "backupReadOnly": true,
+  "sourceTaskUntouched": true,
+  "randomPort": true,
+  "publicOrigin": null,
+  "rehearsalAccountPassword": "temporary synthetic password on the copy only",
+  "paidModelRequests": 0,
+  "networkBoundary": "loopback only; 8081 and 18186 denied",
+  "originalFileCount": 66050,
+  "generatedModuleFallbackRecreated": true,
+  "legacyAccountChosen": true,
+  "accountProbeScope": "All stored account identities; synthetic local login aliases/passwords exist only on disposable copy. No account names, ids or private memory text exported.",
+  "accountIdentityRetained": true,
+  "prepareScript": true,
+  "rehearsalRefused": [
+    "Apply",
+    "Rollback"
+  ],
+  "sourceRuntimeReady": "ready",
+  "sourceVisibility": {
+    "accounts": [
+      {
+        "preStubHealth": null,
+        "stubSelectionHttp": null,
+        "health": {
+          "httpStatus": 200,
+          "normal": true,
+          "available": null,
+          "pendingBoundaryCount": 0,
+          "pendingFormationCount": 0,
+          "failedFormationCount": 0,
+          "reasonCode": null
+        },
+        "preview": {
+          "httpStatus": 200,
+          "sessionCount": 1,
+          "turnCount": 3,
+          "estimatedUsage": {
+            "inputTokens": 18108,
+            "outputTokens": 3000,
+            "approximate": true
+          }
+        },
+        "syntheticIndex": 0,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationCount": 3,
+        "conversationsVisible": true,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 200,
+            "count": 0,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 200,
+            "count": 0,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 200,
+            "count": 0,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
+      },
+      {
+        "preStubHealth": null,
+        "stubSelectionHttp": null,
+        "health": {
+          "httpStatus": 200,
+          "normal": false,
+          "available": null,
+          "pendingBoundaryCount": 0,
+          "pendingFormationCount": null,
+          "failedFormationCount": null,
+          "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+        },
+        "preview": {
+          "httpStatus": 503,
+          "sessionCount": null,
+          "turnCount": null,
+          "estimatedUsage": null
+        },
+        "syntheticIndex": 1,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationCount": 0,
+        "conversationsVisible": false,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
+      },
+      {
+        "preStubHealth": null,
+        "stubSelectionHttp": null,
+        "health": {
+          "httpStatus": 200,
+          "normal": false,
+          "available": null,
+          "pendingBoundaryCount": 0,
+          "pendingFormationCount": null,
+          "failedFormationCount": null,
+          "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+        },
+        "preview": {
+          "httpStatus": 503,
+          "sessionCount": null,
+          "turnCount": null,
+          "estimatedUsage": null
+        },
+        "syntheticIndex": 2,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationCount": 0,
+        "conversationsVisible": false,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
+      },
+      {
+        "preStubHealth": null,
+        "stubSelectionHttp": null,
+        "health": {
+          "httpStatus": 200,
+          "normal": false,
+          "available": null,
+          "pendingBoundaryCount": 0,
+          "pendingFormationCount": null,
+          "failedFormationCount": null,
+          "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+        },
+        "preview": {
+          "httpStatus": 503,
+          "sessionCount": null,
+          "turnCount": null,
+          "estimatedUsage": null
+        },
+        "syntheticIndex": 3,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationCount": 0,
+        "conversationsVisible": false,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
+      }
+    ],
+    "conversationsVisible": true,
+    "memoryVisible": false
+  },
+  "installedRuntimeReady": true,
+  "localLogin": true,
+  "sameDataDirectory": true,
+  "installedVisibility": {
+    "accounts": [
+      {
+        "preStubHealth": null,
+        "stubSelectionHttp": null,
+        "health": {
+          "httpStatus": 200,
+          "normal": true,
+          "available": null,
+          "pendingBoundaryCount": 0,
+          "pendingFormationCount": 0,
+          "failedFormationCount": 0,
+          "reasonCode": null
+        },
+        "preview": {
+          "httpStatus": 200,
+          "sessionCount": 1,
+          "turnCount": 3,
+          "estimatedUsage": {
+            "inputTokens": 18108,
+            "outputTokens": 3000,
+            "approximate": true
+          }
+        },
+        "syntheticIndex": 0,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationCount": 3,
+        "conversationsVisible": true,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 200,
+            "count": 0,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 200,
+            "count": 0,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 200,
+            "count": 0,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
+      },
+      {
+        "preStubHealth": null,
+        "stubSelectionHttp": null,
+        "health": {
+          "httpStatus": 200,
+          "normal": false,
+          "available": null,
+          "pendingBoundaryCount": 0,
+          "pendingFormationCount": null,
+          "failedFormationCount": null,
+          "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+        },
+        "preview": {
+          "httpStatus": 503,
+          "sessionCount": null,
+          "turnCount": null,
+          "estimatedUsage": null
+        },
+        "syntheticIndex": 1,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationCount": 0,
+        "conversationsVisible": false,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
+      },
+      {
+        "preStubHealth": null,
+        "stubSelectionHttp": null,
+        "health": {
+          "httpStatus": 200,
+          "normal": false,
+          "available": null,
+          "pendingBoundaryCount": 0,
+          "pendingFormationCount": null,
+          "failedFormationCount": null,
+          "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+        },
+        "preview": {
+          "httpStatus": 503,
+          "sessionCount": null,
+          "turnCount": null,
+          "estimatedUsage": null
+        },
+        "syntheticIndex": 2,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationCount": 0,
+        "conversationsVisible": false,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
+      },
+      {
+        "preStubHealth": null,
+        "stubSelectionHttp": null,
+        "health": {
+          "httpStatus": 200,
+          "normal": false,
+          "available": null,
+          "pendingBoundaryCount": 0,
+          "pendingFormationCount": null,
+          "failedFormationCount": null,
+          "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+        },
+        "preview": {
+          "httpStatus": 503,
+          "sessionCount": null,
+          "turnCount": null,
+          "estimatedUsage": null
+        },
+        "syntheticIndex": 3,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationCount": 0,
+        "conversationsVisible": false,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
+      }
+    ],
+    "conversationsVisible": true,
+    "memoryVisible": false
+  },
+  "verifyScript": true,
+  "components": {
+    "port": "random loopback, reachable",
+    "login": "copied owner with temporary local password, passed",
+    "memoryBridge": "isolated pinned Core against copied data; model traffic blocked",
+    "relay": "disabled for the offline rehearsal",
+    "certificate": "ACME disabled; existing certificate files preserved in the backup"
+  },
+  "startupFileChanges": {
+    "added": 693,
+    "removed": 32787,
+    "changed": 63
+  },
+  "sourceRollback": true,
+  "rollbackVisibility": {
+    "accounts": [
+      {
+        "preStubHealth": null,
+        "stubSelectionHttp": null,
+        "health": {
+          "httpStatus": 200,
+          "normal": true,
+          "available": null,
+          "pendingBoundaryCount": 0,
+          "pendingFormationCount": 0,
+          "failedFormationCount": 0,
+          "reasonCode": null
+        },
+        "preview": {
+          "httpStatus": 200,
+          "sessionCount": 1,
+          "turnCount": 3,
+          "estimatedUsage": {
+            "inputTokens": 18108,
+            "outputTokens": 3000,
+            "approximate": true
+          }
+        },
+        "syntheticIndex": 0,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationCount": 3,
+        "conversationsVisible": true,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 200,
+            "count": 0,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 200,
+            "count": 0,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 200,
+            "count": 0,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
+      },
+      {
+        "preStubHealth": null,
+        "stubSelectionHttp": null,
+        "health": {
+          "httpStatus": 200,
+          "normal": false,
+          "available": null,
+          "pendingBoundaryCount": 0,
+          "pendingFormationCount": null,
+          "failedFormationCount": null,
+          "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+        },
+        "preview": {
+          "httpStatus": 503,
+          "sessionCount": null,
+          "turnCount": null,
+          "estimatedUsage": null
+        },
+        "syntheticIndex": 1,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationCount": 0,
+        "conversationsVisible": false,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
+      },
+      {
+        "preStubHealth": null,
+        "stubSelectionHttp": null,
+        "health": {
+          "httpStatus": 200,
+          "normal": false,
+          "available": null,
+          "pendingBoundaryCount": 0,
+          "pendingFormationCount": null,
+          "failedFormationCount": null,
+          "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+        },
+        "preview": {
+          "httpStatus": 503,
+          "sessionCount": null,
+          "turnCount": null,
+          "estimatedUsage": null
+        },
+        "syntheticIndex": 2,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationCount": 0,
+        "conversationsVisible": false,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
+      },
+      {
+        "preStubHealth": null,
+        "stubSelectionHttp": null,
+        "health": {
+          "httpStatus": 200,
+          "normal": false,
+          "available": null,
+          "pendingBoundaryCount": 0,
+          "pendingFormationCount": null,
+          "failedFormationCount": null,
+          "reasonCode": "MEMORY_MODEL_UNAVAILABLE"
+        },
+        "preview": {
+          "httpStatus": 503,
+          "sessionCount": null,
+          "turnCount": null,
+          "estimatedUsage": null
+        },
+        "syntheticIndex": 3,
+        "loginStatus": 200,
+        "identityRetained": true,
+        "conversationCount": 0,
+        "conversationsVisible": false,
+        "memory": [
+          {
+            "kind": "entity",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          },
+          {
+            "kind": "relationship",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          },
+          {
+            "kind": "cognition",
+            "httpStatus": 503,
+            "count": null,
+            "visible": false
+          }
+        ],
+        "memoryVisible": false
+      }
+    ],
+    "conversationsVisible": true,
+    "memoryVisible": false
+  },
+  "restoredCopy": {
+    "added": 0,
+    "removed": 0,
+    "changed": 0
+  },
+  "backupAfter": {
+    "added": 0,
+    "removed": 0,
+    "changed": 0
+  },
+  "hashesMatchAfterRehearsalRestore": true,
+  "profileLifecyclePassed": true,
+  "conversationCountsPreserved": true,
+  "syntheticLocalRouteForCoreHealth": false,
+  "localStubRejectedRequests": 0,
+  "cloudModelRequests": 0,
+  "previewOnly": true,
+  "backfillConfirmed": false,
+  "legacyMemoryHealthyAcrossPhases": true,
+  "passed": true,
+  "backupCopyDeleted": true
+}
