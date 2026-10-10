@@ -298,7 +298,7 @@ async function sendLinked(options={}){if(core.state.sessionSelecting||core.state
   }catch(error){if(current())effects.status(error?.message==='TIMEOUT'?'发送结果待核对；原请求编号已保留':effects.safeError(error),true)}
   finally{if(state.owner===owner&&state.authEpoch===epoch){state.linkedPending=null;effects.updateComposer()}}}
 
-async function send(options={}){if(state.chatSource==='host')return sendShared(options);
+async function send(options={}){if(core.folderMutationPending?.())return;if(state.chatSource==='host')return sendShared(options);
   if(selectedBinding())return sendLinked(options);
   const text=effects.readMessageDraft().trim(),items=[...currentAttachments()];if((!text&&!items.length)||state.busy||state.sendUncertain)return;
   if(text.length>16384){effects.status('消息过长，请缩短后发送',true);return}
@@ -389,7 +389,7 @@ function memoryItemsPath(kind,query,after){try{const params=[`kind=${memoryPathE
     const path=`/personal/v1/memory/items?${params.join('&')}`;return path.length<=512?path:null}catch{return null}}
 
 function memoryListAllowed(memory=state.memory){return !!memory?.boundOwnerId&&memory.boundScope===memory.scope&&memory.capabilities.list===true&&
-  ['ready','degraded'].includes(memory.statusState)}
+  ['ready','recovering','degraded'].includes(memory.statusState)}
 
 function startMemorySnapshot(target,kind,query){if(!Object.hasOwn(MEMORY_KINDS,kind)){return}
   if(typeof query!=='string'||[...query].length>120){const memory=state.memory;memory.error='搜索内容最多120个字符，请缩短后重试。';memory.loading=false;effects.renderMemoryList(target);return}
@@ -408,11 +408,11 @@ async function loadMemorySnapshot(target,token){try{
       memoryFail(token,new Error(profile?.connectionVerified===false?'MEMORY_CONNECTION_UNVERIFIED':'MEMORY_OWNER_MISMATCH'),target);return}
     const statusResult=await business({path:'/personal/v1/memory/status',method:'GET'});
     if(!memoryCurrent(token))return;
-    const canList=statusResult&&['ready','degraded'].includes(statusResult.state)&&statusResult.capabilities?.list===true;
+    const canList=statusResult&&['ready','recovering','degraded'].includes(statusResult.state)&&statusResult.capabilities?.list===true;
     if(typeof statusResult?.ownerId!=='string'||!statusResult.ownerId||!Object.hasOwn(statusResult,'worldRevision')||
       !(statusResult.worldRevision===null||Number.isSafeInteger(statusResult.worldRevision))||
       (canList&&!Number.isSafeInteger(statusResult.worldRevision))||
-      !['ready','degraded','disabled','unavailable'].includes(statusResult.state)||!statusResult.capabilities||typeof statusResult.capabilities!=='object'){
+      !['ready','recovering','degraded','disabled','unavailable'].includes(statusResult.state)||!statusResult.capabilities||typeof statusResult.capabilities!=='object'){
       throw new Error('MEMORY_INVALID_RESPONSE')}
   const memory=state.memory;memory.healthStatus=statusResult;memory.boundOwnerId=statusResult.ownerId;memory.boundScope=token.scope;
     memory.statusWorldRevision=statusResult.worldRevision;memory.worldRevision=null;memory.statusState=statusResult.state;memory.reasonCode=statusResult.reasonCode||'';

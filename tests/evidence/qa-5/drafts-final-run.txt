@@ -1,0 +1,28 @@
+500 0 606.4424999999974
+500 1 540.7755000000034
+500 2 503.3778999999995
+500 3 449.05979999999545
+500 4 711.8954000000012
+500 5 761.0031000000017
+500 6 679.7685000000056
+500 7 629.8919999999998
+500 8 589.1608999999953
+500 9 614.204899999997
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+false !== true
+
+    at file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/evidence/qa-5/runners/drafts.mjs:59:27 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.15.0

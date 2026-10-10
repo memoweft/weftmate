@@ -1,0 +1,1684 @@
+{
+  "startedAt": "2026-10-10T06:21:27.745Z",
+  "realElectron": true,
+  "realCore": true,
+  "syntheticModel": true,
+  "rows": [
+    {
+      "state": "idle",
+      "method": "tray",
+      "attempt": 1,
+      "startedAt": "2026-10-10T06:21:27.745Z",
+      "completedEventCount": 3,
+      "completedEvents": [
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-10T06:21:30.134Z",
+          "data": {
+            "text": "我偏好第1种合成茶用白色杯子。",
+            "receiptId": "5539bf19-be25-40ba-a0c2-63f272d7d340"
+          }
+        },
+        {
+          "seq": 22,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:21:30.506Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 24,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:21:30.510Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "sessionId": "session-eaa0220e-1889-484c-8acf-98c5fd0b4ded",
+      "mainPid": 53760,
+      "launcherPid": 47040,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-bc0f3509-0572-4feb-9937-6904904348a8",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 1,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "idle",
+      "method": "tray",
+      "attempt": 2,
+      "startedAt": "2026-10-10T06:21:56.331Z",
+      "completedEventCount": 3,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:21:57.428Z",
+          "data": {
+            "text": "我偏好第2种合成茶用白色杯子。",
+            "receiptId": "b58032f3-d844-448e-b5ba-146c3798de77"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:21:57.729Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-126b45331370663b722023a18e3bb61b157470a3a5a08a4ddab9c1a9dbe31493",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:21:57.733Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "sessionId": "session-7f1e2618-5cca-494d-b795-b035c9b49a2e",
+      "mainPid": 40544,
+      "launcherPid": 58416,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-bc0f3509-0572-4feb-9937-6904904348a8",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 2,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "idle",
+      "method": "tray",
+      "attempt": 3,
+      "startedAt": "2026-10-10T06:22:18.373Z",
+      "completedEventCount": 3,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:22:18.921Z",
+          "data": {
+            "text": "我偏好第3种合成茶用白色杯子。",
+            "receiptId": "f8894d91-de0c-42bf-acf4-2f6bd434eba6"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:22:19.109Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-126b45331370663b722023a18e3bb61b157470a3a5a08a4ddab9c1a9dbe31493",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-7323774eac08fdfc28becfb0e97d9a8aebfec14b97b9472f6a4ad90fcc8196d0",
+                "kind": "cognition",
+                "summary": "用户偏好第2种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:22:19.111Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "sessionId": "session-d9cc71cf-0065-4485-bc16-d23f41c15491",
+      "mainPid": 34932,
+      "launcherPid": 50928,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-bc0f3509-0572-4feb-9937-6904904348a8",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 3,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "idle",
+      "method": "task-manager-force",
+      "attempt": 1,
+      "startedAt": "2026-10-10T06:22:44.179Z",
+      "completedEventCount": 3,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:22:45.018Z",
+          "data": {
+            "text": "我偏好第4种合成茶用白色杯子。",
+            "receiptId": "703668c0-e054-45dd-b503-2eb66de025e6"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:22:45.311Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-126b45331370663b722023a18e3bb61b157470a3a5a08a4ddab9c1a9dbe31493",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-7323774eac08fdfc28becfb0e97d9a8aebfec14b97b9472f6a4ad90fcc8196d0",
+                "kind": "cognition",
+                "summary": "用户偏好第2种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-a332378bf7cee2c9e142a9a4a4c7de0a45ccffedd303d0c5c31ae528f0004158",
+                "kind": "cognition",
+                "summary": "用户偏好第3种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:22:45.313Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "sessionId": "session-929507e1-34df-497c-90d9-2fbd5f0714fc",
+      "mainPid": 22600,
+      "launcherPid": 49820,
+      "forceAccepted": true,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-bc0f3509-0572-4feb-9937-6904904348a8",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 4,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "idle",
+      "method": "task-manager-force",
+      "attempt": 2,
+      "startedAt": "2026-10-10T06:23:10.878Z",
+      "completedEventCount": 3,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:23:11.549Z",
+          "data": {
+            "text": "我偏好第5种合成茶用白色杯子。",
+            "receiptId": "a643544a-0921-4f5c-9004-f08d7b322c5e"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:23:12.110Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-126b45331370663b722023a18e3bb61b157470a3a5a08a4ddab9c1a9dbe31493",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-7323774eac08fdfc28becfb0e97d9a8aebfec14b97b9472f6a4ad90fcc8196d0",
+                "kind": "cognition",
+                "summary": "用户偏好第2种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-a332378bf7cee2c9e142a9a4a4c7de0a45ccffedd303d0c5c31ae528f0004158",
+                "kind": "cognition",
+                "summary": "用户偏好第3种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-d23d5057ba931d0d0a1a0f6db3889814091f745ab8038a515f40e753011aca5d",
+                "kind": "cognition",
+                "summary": "用户偏好第4种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:23:12.128Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "sessionId": "session-6520fa98-f5e8-43dc-b776-0c7b410a0547",
+      "mainPid": 39708,
+      "launcherPid": 61392,
+      "forceAccepted": true,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-bc0f3509-0572-4feb-9937-6904904348a8",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 5,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "idle",
+      "method": "task-manager-force",
+      "attempt": 3,
+      "startedAt": "2026-10-10T06:24:01.525Z",
+      "completedEventCount": 3,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:24:02.060Z",
+          "data": {
+            "text": "我偏好第6种合成茶用白色杯子。",
+            "receiptId": "58dbc316-4574-4811-bb83-083e4ea860e6"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:24:02.244Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-126b45331370663b722023a18e3bb61b157470a3a5a08a4ddab9c1a9dbe31493",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-7323774eac08fdfc28becfb0e97d9a8aebfec14b97b9472f6a4ad90fcc8196d0",
+                "kind": "cognition",
+                "summary": "用户偏好第2种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-a332378bf7cee2c9e142a9a4a4c7de0a45ccffedd303d0c5c31ae528f0004158",
+                "kind": "cognition",
+                "summary": "用户偏好第3种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-be9703c6d0fafb121d0d89029b222728a0a1aed9dba9b3045ab7f73e0d6df94e",
+                "kind": "cognition",
+                "summary": "用户偏好第5种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-d23d5057ba931d0d0a1a0f6db3889814091f745ab8038a515f40e753011aca5d",
+                "kind": "cognition",
+                "summary": "用户偏好第4种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:24:02.245Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "sessionId": "session-0cee4586-2720-4c8a-880d-40912ae9596e",
+      "mainPid": 59060,
+      "launcherPid": 56860,
+      "forceAccepted": true,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-bc0f3509-0572-4feb-9937-6904904348a8",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 6,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "idle",
+      "method": "logout-taskkill",
+      "attempt": 1,
+      "startedAt": "2026-10-10T06:24:20.787Z",
+      "completedEventCount": 3,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:24:21.317Z",
+          "data": {
+            "text": "我偏好第7种合成茶用白色杯子。",
+            "receiptId": "4aee028f-4e51-4780-95f3-5fdba52ee3ae"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:24:21.554Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-044e664c6974494bfdf973bd6e1569bf604864a002ec30bc7d5343a7a9d25088",
+                "kind": "cognition",
+                "summary": "用户偏好第6种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-126b45331370663b722023a18e3bb61b157470a3a5a08a4ddab9c1a9dbe31493",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-7323774eac08fdfc28becfb0e97d9a8aebfec14b97b9472f6a4ad90fcc8196d0",
+                "kind": "cognition",
+                "summary": "用户偏好第2种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-a332378bf7cee2c9e142a9a4a4c7de0a45ccffedd303d0c5c31ae528f0004158",
+                "kind": "cognition",
+                "summary": "用户偏好第3种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-be9703c6d0fafb121d0d89029b222728a0a1aed9dba9b3045ab7f73e0d6df94e",
+                "kind": "cognition",
+                "summary": "用户偏好第5种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:24:21.561Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "sessionId": "session-77ebe1ec-2ed5-48c1-825d-d46ef7942d5a",
+      "mainPid": 48540,
+      "launcherPid": 43236,
+      "nonForceAccepted": true,
+      "forceAccepted": true,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-bc0f3509-0572-4feb-9937-6904904348a8",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 7,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "idle",
+      "method": "logout-taskkill",
+      "attempt": 2,
+      "startedAt": "2026-10-10T06:24:44.727Z",
+      "completedEventCount": 3,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:24:45.335Z",
+          "data": {
+            "text": "我偏好第8种合成茶用白色杯子。",
+            "receiptId": "755f490b-1183-426f-8837-01eb6043a365"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:24:45.663Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-044e664c6974494bfdf973bd6e1569bf604864a002ec30bc7d5343a7a9d25088",
+                "kind": "cognition",
+                "summary": "用户偏好第6种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-126b45331370663b722023a18e3bb61b157470a3a5a08a4ddab9c1a9dbe31493",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-3ca12d71e3089452fa719dbe29e8a66558493fcf119c9ab862e41d33bef7de4d",
+                "kind": "cognition",
+                "summary": "用户偏好第7种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-7323774eac08fdfc28becfb0e97d9a8aebfec14b97b9472f6a4ad90fcc8196d0",
+                "kind": "cognition",
+                "summary": "用户偏好第2种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-a332378bf7cee2c9e142a9a4a4c7de0a45ccffedd303d0c5c31ae528f0004158",
+                "kind": "cognition",
+                "summary": "用户偏好第3种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:24:45.673Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "sessionId": "session-dbc46ff4-ba7b-4fca-bfcf-4253c5c4adf6",
+      "mainPid": 8288,
+      "launcherPid": 58300,
+      "nonForceAccepted": true,
+      "forceAccepted": true,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-bc0f3509-0572-4feb-9937-6904904348a8",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 8,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "idle",
+      "method": "logout-taskkill",
+      "attempt": 3,
+      "startedAt": "2026-10-10T06:25:10.845Z",
+      "completedEventCount": 3,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:25:11.531Z",
+          "data": {
+            "text": "我偏好第9种合成茶用白色杯子。",
+            "receiptId": "5029a3c4-b4ee-4672-b2c5-8cd8eba7a345"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:25:11.787Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-044e664c6974494bfdf973bd6e1569bf604864a002ec30bc7d5343a7a9d25088",
+                "kind": "cognition",
+                "summary": "用户偏好第6种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-126b45331370663b722023a18e3bb61b157470a3a5a08a4ddab9c1a9dbe31493",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-3ca12d71e3089452fa719dbe29e8a66558493fcf119c9ab862e41d33bef7de4d",
+                "kind": "cognition",
+                "summary": "用户偏好第7种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-48b2d879da75fc43a391cbb4eb0ec47410ffc2a23bcbf1f7362a524179e98f86",
+                "kind": "cognition",
+                "summary": "用户偏好第8种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-7323774eac08fdfc28becfb0e97d9a8aebfec14b97b9472f6a4ad90fcc8196d0",
+                "kind": "cognition",
+                "summary": "用户偏好第2种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:25:11.789Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "sessionId": "session-97802d9d-956b-472e-b612-7ec3240e67ce",
+      "mainPid": 33376,
+      "launcherPid": 36608,
+      "nonForceAccepted": true,
+      "forceAccepted": true,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-bc0f3509-0572-4feb-9937-6904904348a8",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 9,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "chat",
+      "method": "tray",
+      "attempt": 1,
+      "startedAt": "2026-10-10T06:25:32.227Z",
+      "completedEventCount": 3,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:25:32.770Z",
+          "data": {
+            "text": "我偏好第10种合成茶用白色杯子。",
+            "receiptId": "0f0557d0-76e3-46a7-818f-08daa00ea00a"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:25:32.953Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-044e664c6974494bfdf973bd6e1569bf604864a002ec30bc7d5343a7a9d25088",
+                "kind": "cognition",
+                "summary": "用户偏好第6种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-06548034a39f35cf7e55ea53a5bdcaa2d300507007dee45e6f93ac94ae0dc7b4",
+                "kind": "cognition",
+                "summary": "用户偏好第9种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-126b45331370663b722023a18e3bb61b157470a3a5a08a4ddab9c1a9dbe31493",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-3ca12d71e3089452fa719dbe29e8a66558493fcf119c9ab862e41d33bef7de4d",
+                "kind": "cognition",
+                "summary": "用户偏好第7种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-48b2d879da75fc43a391cbb4eb0ec47410ffc2a23bcbf1f7362a524179e98f86",
+                "kind": "cognition",
+                "summary": "用户偏好第8种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:25:32.955Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "sessionId": "session-147c29d6-83a5-4fe9-bdd9-4d14dfe51b07",
+      "mainPid": 48004,
+      "launcherPid": 49588,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-bc0f3509-0572-4feb-9937-6904904348a8",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 10,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "chat",
+      "method": "tray",
+      "attempt": 2,
+      "startedAt": "2026-10-10T06:25:50.500Z",
+      "completedEventCount": 3,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:25:51.446Z",
+          "data": {
+            "text": "我偏好第11种合成茶用白色杯子。",
+            "receiptId": "d44d6cdd-eec3-401c-a88c-117a4281ab0f"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:25:51.836Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-044e664c6974494bfdf973bd6e1569bf604864a002ec30bc7d5343a7a9d25088",
+                "kind": "cognition",
+                "summary": "用户偏好第6种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-06548034a39f35cf7e55ea53a5bdcaa2d300507007dee45e6f93ac94ae0dc7b4",
+                "kind": "cognition",
+                "summary": "用户偏好第9种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-126b45331370663b722023a18e3bb61b157470a3a5a08a4ddab9c1a9dbe31493",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-3ca12d71e3089452fa719dbe29e8a66558493fcf119c9ab862e41d33bef7de4d",
+                "kind": "cognition",
+                "summary": "用户偏好第7种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-48b2d879da75fc43a391cbb4eb0ec47410ffc2a23bcbf1f7362a524179e98f86",
+                "kind": "cognition",
+                "summary": "用户偏好第8种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:25:51.838Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "sessionId": "session-50e59a44-c8dc-4775-8311-9a5ad0427e1d",
+      "mainPid": 30564,
+      "launcherPid": 17904,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-bc0f3509-0572-4feb-9937-6904904348a8",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 11,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "chat",
+      "method": "tray",
+      "attempt": 3,
+      "startedAt": "2026-10-10T06:26:24.493Z",
+      "completedEventCount": 3,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:26:24.924Z",
+          "data": {
+            "text": "我偏好第12种合成茶用白色杯子。",
+            "receiptId": "cbfa9ebc-1fe0-4b70-bf31-215cf612c113"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:26:25.210Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-044e664c6974494bfdf973bd6e1569bf604864a002ec30bc7d5343a7a9d25088",
+                "kind": "cognition",
+                "summary": "用户偏好第6种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-06548034a39f35cf7e55ea53a5bdcaa2d300507007dee45e6f93ac94ae0dc7b4",
+                "kind": "cognition",
+                "summary": "用户偏好第9种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-126b45331370663b722023a18e3bb61b157470a3a5a08a4ddab9c1a9dbe31493",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-3ca12d71e3089452fa719dbe29e8a66558493fcf119c9ab862e41d33bef7de4d",
+                "kind": "cognition",
+                "summary": "用户偏好第7种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-48b2d879da75fc43a391cbb4eb0ec47410ffc2a23bcbf1f7362a524179e98f86",
+                "kind": "cognition",
+                "summary": "用户偏好第8种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:26:25.212Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "sessionId": "session-b6a2303f-7ed8-4c25-a6a3-66b4de5ea56d",
+      "mainPid": 32128,
+      "launcherPid": 50592,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-bc0f3509-0572-4feb-9937-6904904348a8",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 12,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "chat",
+      "method": "task-manager-force",
+      "attempt": 1,
+      "startedAt": "2026-10-10T06:26:46.786Z",
+      "completedEventCount": 3,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:26:47.284Z",
+          "data": {
+            "text": "我偏好第13种合成茶用白色杯子。",
+            "receiptId": "677e33ff-e7c4-4c3c-b82b-979e9ce5ece9"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:26:47.432Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-044e664c6974494bfdf973bd6e1569bf604864a002ec30bc7d5343a7a9d25088",
+                "kind": "cognition",
+                "summary": "用户偏好第6种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-06548034a39f35cf7e55ea53a5bdcaa2d300507007dee45e6f93ac94ae0dc7b4",
+                "kind": "cognition",
+                "summary": "用户偏好第9种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-126b45331370663b722023a18e3bb61b157470a3a5a08a4ddab9c1a9dbe31493",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-3ca12d71e3089452fa719dbe29e8a66558493fcf119c9ab862e41d33bef7de4d",
+                "kind": "cognition",
+                "summary": "用户偏好第7种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-48b2d879da75fc43a391cbb4eb0ec47410ffc2a23bcbf1f7362a524179e98f86",
+                "kind": "cognition",
+                "summary": "用户偏好第8种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:26:47.434Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "sessionId": "session-89d6e02f-dc97-408a-aa8c-8e2db5ed959f",
+      "mainPid": 43408,
+      "launcherPid": 44268,
+      "forceAccepted": true,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-bc0f3509-0572-4feb-9937-6904904348a8",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 13,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "chat",
+      "method": "task-manager-force",
+      "attempt": 2,
+      "startedAt": "2026-10-10T06:27:10.459Z",
+      "completedEventCount": 3,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:27:11.001Z",
+          "data": {
+            "text": "我偏好第14种合成茶用白色杯子。",
+            "receiptId": "2686d26e-61c1-48d7-979c-009b538c5c0f"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:27:11.218Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-044e664c6974494bfdf973bd6e1569bf604864a002ec30bc7d5343a7a9d25088",
+                "kind": "cognition",
+                "summary": "用户偏好第6种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-06548034a39f35cf7e55ea53a5bdcaa2d300507007dee45e6f93ac94ae0dc7b4",
+                "kind": "cognition",
+                "summary": "用户偏好第9种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-126b45331370663b722023a18e3bb61b157470a3a5a08a4ddab9c1a9dbe31493",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-3ca12d71e3089452fa719dbe29e8a66558493fcf119c9ab862e41d33bef7de4d",
+                "kind": "cognition",
+                "summary": "用户偏好第7种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-48b2d879da75fc43a391cbb4eb0ec47410ffc2a23bcbf1f7362a524179e98f86",
+                "kind": "cognition",
+                "summary": "用户偏好第8种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:27:11.222Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "sessionId": "session-a4db6c6c-923c-49b5-86f7-13f65015367a",
+      "mainPid": 54084,
+      "launcherPid": 47824,
+      "forceAccepted": true,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-bc0f3509-0572-4feb-9937-6904904348a8",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 14,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "chat",
+      "method": "task-manager-force",
+      "attempt": 3,
+      "startedAt": "2026-10-10T06:27:32.192Z",
+      "completedEventCount": 3,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:27:32.713Z",
+          "data": {
+            "text": "我偏好第15种合成茶用白色杯子。",
+            "receiptId": "e1dbb9fd-5c6a-4e5b-86f3-68d87af2b575"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:27:32.864Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-044e664c6974494bfdf973bd6e1569bf604864a002ec30bc7d5343a7a9d25088",
+                "kind": "cognition",
+                "summary": "用户偏好第6种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-06548034a39f35cf7e55ea53a5bdcaa2d300507007dee45e6f93ac94ae0dc7b4",
+                "kind": "cognition",
+                "summary": "用户偏好第9种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-126b45331370663b722023a18e3bb61b157470a3a5a08a4ddab9c1a9dbe31493",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-3ca12d71e3089452fa719dbe29e8a66558493fcf119c9ab862e41d33bef7de4d",
+                "kind": "cognition",
+                "summary": "用户偏好第7种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-48b2d879da75fc43a391cbb4eb0ec47410ffc2a23bcbf1f7362a524179e98f86",
+                "kind": "cognition",
+                "summary": "用户偏好第8种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:27:32.867Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "sessionId": "session-a416c7ce-e459-40c6-9153-864877e863ed",
+      "mainPid": 58228,
+      "launcherPid": 49876,
+      "forceAccepted": true,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-bc0f3509-0572-4feb-9937-6904904348a8",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 15,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "chat",
+      "method": "logout-taskkill",
+      "attempt": 1,
+      "startedAt": "2026-10-10T06:28:01.157Z",
+      "completedEventCount": 3,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:28:02.400Z",
+          "data": {
+            "text": "我偏好第16种合成茶用白色杯子。",
+            "receiptId": "10f5593f-738c-41c2-8465-429d8a6e2636"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:28:02.895Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-044e664c6974494bfdf973bd6e1569bf604864a002ec30bc7d5343a7a9d25088",
+                "kind": "cognition",
+                "summary": "用户偏好第6种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-06548034a39f35cf7e55ea53a5bdcaa2d300507007dee45e6f93ac94ae0dc7b4",
+                "kind": "cognition",
+                "summary": "用户偏好第9种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-126b45331370663b722023a18e3bb61b157470a3a5a08a4ddab9c1a9dbe31493",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-3ca12d71e3089452fa719dbe29e8a66558493fcf119c9ab862e41d33bef7de4d",
+                "kind": "cognition",
+                "summary": "用户偏好第7种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-40d9e6ef68fbf0628da2969f1db0f4121c91475bdff0bf5f62fd5bd7401b2244",
+                "kind": "cognition",
+                "summary": "用户偏好第15种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:28:02.901Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "sessionId": "session-b4e74c55-0ff3-43b5-b064-4bab5c75a0c0",
+      "mainPid": 54080,
+      "launcherPid": 60756,
+      "nonForceAccepted": true,
+      "forceAccepted": true,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-bc0f3509-0572-4feb-9937-6904904348a8",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 16,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "chat",
+      "method": "logout-taskkill",
+      "attempt": 2,
+      "startedAt": "2026-10-10T06:28:35.989Z",
+      "completedEventCount": 3,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:28:37.129Z",
+          "data": {
+            "text": "我偏好第17种合成茶用白色杯子。",
+            "receiptId": "1fc1ec21-8608-43bd-8ff9-1d6739cf0c8f"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:28:37.747Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-044e664c6974494bfdf973bd6e1569bf604864a002ec30bc7d5343a7a9d25088",
+                "kind": "cognition",
+                "summary": "用户偏好第6种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-06548034a39f35cf7e55ea53a5bdcaa2d300507007dee45e6f93ac94ae0dc7b4",
+                "kind": "cognition",
+                "summary": "用户偏好第9种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-07de06f920b0bcffba54cf78ef21ed718275e42924583793da124a74faf62d20",
+                "kind": "cognition",
+                "summary": "用户偏好第16种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-126b45331370663b722023a18e3bb61b157470a3a5a08a4ddab9c1a9dbe31493",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-3ca12d71e3089452fa719dbe29e8a66558493fcf119c9ab862e41d33bef7de4d",
+                "kind": "cognition",
+                "summary": "用户偏好第7种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:28:37.760Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "sessionId": "session-4cb5d276-c1b9-44c3-8532-58401e73abf5",
+      "mainPid": 12024,
+      "launcherPid": 50324,
+      "nonForceAccepted": true,
+      "forceAccepted": true,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-bc0f3509-0572-4feb-9937-6904904348a8",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 17,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "chat",
+      "method": "logout-taskkill",
+      "attempt": 3,
+      "startedAt": "2026-10-10T06:29:07.815Z",
+      "completedEventCount": 3,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:29:08.682Z",
+          "data": {
+            "text": "我偏好第18种合成茶用白色杯子。",
+            "receiptId": "bd705d71-bd5c-4b07-b69c-2554e532d659"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:29:08.919Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-044e664c6974494bfdf973bd6e1569bf604864a002ec30bc7d5343a7a9d25088",
+                "kind": "cognition",
+                "summary": "用户偏好第6种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-06548034a39f35cf7e55ea53a5bdcaa2d300507007dee45e6f93ac94ae0dc7b4",
+                "kind": "cognition",
+                "summary": "用户偏好第9种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-07de06f920b0bcffba54cf78ef21ed718275e42924583793da124a74faf62d20",
+                "kind": "cognition",
+                "summary": "用户偏好第16种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-126b45331370663b722023a18e3bb61b157470a3a5a08a4ddab9c1a9dbe31493",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-3ca12d71e3089452fa719dbe29e8a66558493fcf119c9ab862e41d33bef7de4d",
+                "kind": "cognition",
+                "summary": "用户偏好第7种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:29:08.921Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "sessionId": "session-6adc7cc2-7834-47ea-8878-0814c2038a16",
+      "mainPid": 38828,
+      "launcherPid": 60392,
+      "nonForceAccepted": true,
+      "forceAccepted": true,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-bc0f3509-0572-4feb-9937-6904904348a8",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 18,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "formation",
+      "method": "tray",
+      "attempt": 1,
+      "startedAt": "2026-10-10T06:29:52.865Z"
+    }
+  ]
+}

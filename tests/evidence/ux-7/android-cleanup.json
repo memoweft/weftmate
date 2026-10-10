@@ -1,0 +1,11 @@
+{
+  "packageRemoved": true,
+  "instrumentationPackageRemoved": true,
+  "forwardRemoved": true,
+  "reverseRemoved": true,
+  "probePassed": true,
+  "emulatorClosed": true,
+  "oldOrphanTestPackagesPreserved": 3,
+  "initialObserverHangProcessesStopped": 10,
+  "remainingUiRunnerProcesses": 0
+}

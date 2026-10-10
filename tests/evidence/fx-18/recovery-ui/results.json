@@ -1,0 +1,39 @@
+{
+  "realElectron": true,
+  "realCore": true,
+  "syntheticModel": true,
+  "shots": [
+    "desktop-1120-light.png",
+    "desktop-1120-dark.png",
+    "desktop-480-light.png",
+    "desktop-480-dark.png"
+  ],
+  "status": {
+    "ownerId": "owner-1f4c5c36-5f4c-470b-bb1f-d01df22ee8c1",
+    "state": "recovering",
+    "version": "2.0.0",
+    "worldRevision": 0,
+    "capabilities": {
+      "list": true,
+      "source": true,
+      "inject": true,
+      "correct": true,
+      "mute": true,
+      "deleteEvidence": true,
+      "deleteWorldItem": true
+    },
+    "pendingBoundaryCount": 0,
+    "blockedBoundaryCount": 0,
+    "discardedBoundaryCount": 0,
+    "lastFailureCode": null,
+    "pendingFormationCount": 1,
+    "recoveringFormationCount": 1,
+    "failedFormationCount": 0,
+    "failedCorrectionCount": 0,
+    "formationIssues": [],
+    "reasonCode": "MEMORY_FORMATION_RECOVERING",
+    "backfill": null,
+    "captureError": null
+  },
+  "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#memory-health').getByText('正在继续整理上次没做完的记忆', { exact: true }) to be visible\u001b[22m\n\n    at openMemory (D:\\AIProjects\\WeftMate\\Worktrees\\w5\\tests\\evidence\\fx-18\\runners\\recovery-ui.mjs:15:173)\n    at async file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/evidence/fx-18/runners/recovery-ui.mjs:24:118"
+}

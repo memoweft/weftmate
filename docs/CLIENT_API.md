@@ -99,7 +99,7 @@
 | DELETE `/auth/devices/{deviceId}` | 无；客户端可发 `{}`；撤销当前设备会清 Cookie | 200 `{"revoked":true}` | 404 `NOT_FOUND` | 桌、手、安 |
 | GET `/status` | 无 | 200 `{"ownerId":"owner-…","hostId":"host-…","sync":{"available":true},"downloads":{"android":true},"backend":{"runtime":"ready","referenceScan":"ready","capabilities":{"chat":{"available":true}},"modules":{"memory":"connected"}}}` | 后端错误 | 桌、手、安、苹 |
 
-`backend.capabilities` 还含 `desktopOpenApp,naturalLanguageDesktop`；`modules` 含 `memory,mods,tasks,notifications,workspaces,capabilities`。这些是能力/状态字段，不代表存在同名 HTTP 路由。FX-9 增加可选 `executionAccount:boolean`，表示当前账号是否为这台电脑的执行账号；`false` 时仅可聊天，界面须说明不能操作电脑或读取原账号资料。旧宿主缺字段时按既有能力投影处理。FX-16 增加可选 `executionAccountName:string|null`：非执行账号只收到执行账号昵称；昵称为邮箱时返回「原账号」，不返回登录邮箱、身份或凭据。
+`backend.capabilities` 还含 `desktopOpenApp,naturalLanguageDesktop`；`modules` 含 `memory,mods,tasks,notifications,workspaces,capabilities`。这些是能力/状态字段，不代表存在同名 HTTP 路由。UX-9 增加可选 `hostName:string`，用于已授权客户端显示执行电脑名称；旧宿主缺失时显示「电脑」。FX-9 增加可选 `executionAccount:boolean`，表示当前账号是否为这台电脑的执行账号；`false` 时仅可聊天，界面须说明不能操作电脑或读取原账号资料。旧宿主缺字段时按既有能力投影处理。FX-16 增加可选 `executionAccountName:string|null`：非执行账号只收到执行账号昵称；昵称为邮箱时返回「原账号」，不返回登录邮箱、身份或凭据。
 
 ### 3.3 会话列表与管理（12）
 
@@ -327,7 +327,7 @@ MS-1 增加 `POST /account/models/check`：Cookie（浏览器会话凭据）及 
 | GET `/workspaces/browser` | 无 | 200 `{"available":true,"hostId":"host-…","workspaceKind":"browser"}`；可有 `reasonCode` | — | 桌、手、安 |
 | POST `/workspaces/browser/sessions` | `requestId,modelProfileId`；宿主所有者 | 202 `{"command":Command}` | 503 `BROWSER_UNAVAILABLE / BROWSER_CLEANUP_FAILED`；422 `MODEL_UNAVAILABLE` | 桌、手、安 |
 
-D37 项目实体公开字段为 `projectId,name,instructions,permission,revision,revoked,createdAt,revokedAt?`。`rootPath`、目录身份与内部密钥仅保存在电脑；项目、会话与手机列表均不回传目录路径。新界面创建显式传 `permission:"write"`；旧 POST 省略权限保持只读。
+D37 项目实体公开字段为 `projectId,name,instructions,permission,revision,revoked,createdAt,revokedAt?`。`rootPath`、目录身份与内部密钥仅保存在电脑；项目、会话与手机列表不回传完整目录路径。UX-9 项目公开对象增加 `pathHint:string`（路径末两级，以 ` / ` 分隔），用于选择电脑文件夹；它不是可访问路径。Windows 原生选择桥在本机可信上下文中可取得完整路径、匹配已有项目、显示文件夹及创建项目；原生创建仍调用现有 POST，并只接受系统选择框或真实拖放得到且绑定当前账号的路径。网页发送任意 `rootPath` 返回 403 `PROJECT_NATIVE_SELECTION_REQUIRED`。既有受信任 API / Mac 宿主调用保持兼容。输入区确认卡显式默认 `permission:"read-only"`；原项目编辑界面仍可显式选择权限，旧 POST 省略权限保持只读。
 
 | 路由 | 请求 | 响应 / 行为 | 错误 | 客户端 |
 |---|---|---|---|---|
@@ -1261,6 +1261,8 @@ Apple（苹果端）交接：iPhone / Mac 订阅同一动态增量和宿主决�
 
 ## 11. 记忆摄取健康与历史补整理（MEM-D）
 
+FX-18：`GET /memory/status` 和 `GET /system.memory` 增加可选 `recoveringFormationCount`；`state` 增加 `recovering`（继续整理中），对应 `reasonCode=MEMORY_FORMATION_RECOVERING`。只在确实回收了上次中断的作业、模型可用且没有其他失败时使用；已有列表、来源及注入能力仍按 `capabilities` 判断。完成后计数归零并恢复 `ready`，真实失败仍为 `degraded`。设置与动态显示“正在继续整理上次没做完的记忆”；动态使用既有 `memory.report` 类型；这是无需用户处理的信息（待办状态为 `completed`），整理完成时更新同一条动态的文案。无新增路由或权限，Apple 客户端需识别新增状态。
+
 `GET /memory/status` 保留既有字段，新增可选 `pendingFormationCount`、`failedFormationCount`、`captureError` 和 `backfill`。`pendingBoundaryCount` 是宿主 outbox（持久待提交队列）条数，模型不可用时仍返回已知数量。`pendingFormationCount` 是 Core（记忆核心）已接受、尚在形成的作业数；两者不能混为已形成条数。`state=degraded` 也可表示正在整理，已有可用记忆继续沿 `capabilities.inject` 与原目的地权限使用。`reasonCode` 新增 `MEMORY_MODEL_WAITING`（切换中，等待原模型服务）、`MEMORY_FORMATION_PENDING`、`MEMORY_FORMATION_FAILED`；保留 `MEMORY_BUSY`、`MEMORY_MODEL_UNAVAILABLE` 与来源阻断原因。`GET /system.memory` 同步提供 `reasonCode,pendingBoundaryCount,pendingFormationCount,failedFormationCount`，供设置健康项显示。客户端必须区分正常、补交／形成中和暂停，不能把503当作空记忆。
 
 | 接口 | 请求与结果 |
@@ -1353,3 +1355,20 @@ TB-4复用手机菜单 `page('library')` 与ui-core模型，不另建索引。�
 动态复用 `memory.report` 类型，显示“有 1 条纠正没有生效”，动作 `view_memory` 打开原话与重试入口；重新处理后更新该条状态。来源接口 `sources[].relation` 可为 `superseded_by`，表示取代该旧理解的纠正原话，原来源不覆盖。
 
 Windows（视窗系统）与远程网页已有健康、动态、对应回合提示及重试。安卓界面包新增健康展开与重试，沿用现有记忆业务路由，不需要新增原生权限／版本号；Apple（苹果客户端）需接上述可选字段和重试路径，旧客户端可忽略。后台异步形成时，助手只确认“我记下了，稍后整理进记忆”；只有实际形成结果才能支持完成声明。
+
+## 12. UX-7 下一步建议（D51，能力版本 1）
+
+`GET /status.personalCapabilities.nextSuggestions` 精确为 `1` 时可调用；旧宿主没有该能力时客户端隐藏建议。账户设置沿 `GET/PATCH /settings/personalization` 增加 `nextSuggestionsEnabled:boolean`，默认 `true`，逐字段同步；关闭立即取消所有本账户正在生成的建议，宿主不再发建议模型请求。客户端身份变化丢弃迟到结果。
+
+| 路由 | 请求 | 响应与语义 |
+|---|---|---|
+| POST `/sessions/{id}/suggestions` | `{requestId,kind:"replies"\|"completion",draft?:string}`；`completion`需要非空草稿，最多4,000 Unicode（统一字符编码）码点；`replies`有草稿则直接空结果。无查询参数 | 200 `{requestId,suggestions:string[],completion:string}`。回复建议0–3条、每条最多24码点；补全最多40码点、不换行，只返回后半句。需要当前账户会话绑定、`commands:write`与原Cookie / CSRF校验。不存在 / 已归档 / 删除中会话404。 |
+| DELETE `/sessions/{id}/suggestions?requestId=…` | 可选原请求ID，无正文；只有此查询键，最多一次 | 200 `{cancelled:true}`；立即AbortController（请求中止控制器）中止本设备该会话匹配的模型请求。省略ID取消本设备该会话请求；旧ID不会取消新请求，另一设备不能用此接口取消本设备请求。 |
+
+同一账户 / 会话的新建议请求替换旧请求，没有持久回执或重试语义。断开HTTP（超文本传输协议）响应也真实中止模型请求；客户端开始输入、发送、切换时立即终止当前fetch（网络请求）并按原ID取消。宿主新消息与账户开关变更会同步取消，原生会话运行状态变化也取消。回复建议只接受最新正常完成的回合，运行中 / 已停止 / 出错 / 无模型均为空；输入补全350ms防抖，输入法组合时不生成。
+
+生成跟随当前会话模型，不用账户另选的记忆后台模型。短上下文为最近六条可见用户 / 助手消息，用户最多600码点、助手最多1,000码点摘要片段；遗忘原话、工具、隐藏思考不入输入。普通输出160词元、5秒总超时；已声明的提供方思考模式降为最轻。OpenAI推理格式沿现有声明用low（低强度）、不发temperature（采样温度），优先读取原生精确模型声明：没有low而只允许更强思考时直接放弃，明确无思考模型不传effort（推理强度）；总completion（完成）预算1,024词元包含隐藏推理；仍只接受短JSON（结构化数据）结果，不保证每个推理模型都在5秒内给出建议。单槽走机会式租约：忙 / 有任务等待 / 正在切换立即放弃，无排队和重试；前台到来立即中止真实上游。本机建议另读ModelSwitcher（本机模型代理）的活动 / 排队 / 维护计数，旧代理或直接llama服务用同址`/slots?fail_on_no_slot=1`确认唯一槽空闲；忙、503或状态不明确均不给建议。宿主内部预留为原子操作；独立外部客户端在状态读完后抢先请求仍存在竞争窗口，旧ModelSwitcher没有原子机会式入口，本包没有修改日用代理，因此不能保证这类跨客户端竞争永不进入上游代理队列。失败返回空结果，不影响连接状态和正常对话。
+
+建议正文与请求草稿仅在请求和界面内存中，不写command（命令）、历史、MemoWeft evidence（记忆证据）、导出或离线副本。临时对话正常可用；真正接受后仍只是草稿，用户发送后才成为用户消息。用量沿数值账本计入总额并新增 `/usage.categories:[{category,...total}]`；`category="next-suggestions"`单列两类建议，旧账本默认`conversation`。仅成功取得空闲租约、即将发真实请求才开始计数；取消且提供方不返回用量时沿既有unknownRequests（未知用量请求）报告，不编造词元。
+
+Android（安卓）精确业务路由已登记，**需要新壳版本**，由编排统一递增；本包不更改版本号。Apple（苹果端）新增以上POST / DELETE、能力版本、账户开关与用量类别，保持同样优先级、键盘 / 触屏接受、真实取消和暂态边界；Watch（手表）不增加建议输入界面。

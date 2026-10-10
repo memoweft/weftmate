@@ -1,0 +1,73 @@
+{
+  "realAndroid": true,
+  "synthetic": true,
+  "modelRequests": 0,
+  "packageName": "com.memoweft.weftmate.mobile.ux7qa",
+  "versionCode": 34,
+  "versionName": "0.8.21",
+  "nativeSuggestionsRoute": true,
+  "cancellationRoute": true,
+  "rows": [
+    {
+      "theme": "light",
+      "scene": "replies-1",
+      "screenshot": "android-native-light-replies-1.png",
+      "metrics": {
+        "overflow": false,
+        "chipHeight": 40,
+        "priority": "suggestions"
+      }
+    },
+    {
+      "theme": "light",
+      "scene": "replies-2",
+      "screenshot": "android-native-light-replies-2.png",
+      "metrics": {
+        "overflow": false,
+        "chipHeight": 40,
+        "priority": "suggestions"
+      }
+    },
+    {
+      "theme": "light",
+      "scene": "replies-3",
+      "screenshot": "android-native-light-replies-3.png",
+      "metrics": {
+        "overflow": false,
+        "chipHeight": 40,
+        "priority": "suggestions"
+      }
+    },
+    {
+      "theme": "dark",
+      "scene": "replies-1",
+      "screenshot": "android-native-dark-replies-1.png",
+      "metrics": {
+        "overflow": false,
+        "chipHeight": 40,
+        "priority": "suggestions"
+      }
+    },
+    {
+      "theme": "dark",
+      "scene": "replies-2",
+      "screenshot": "android-native-dark-replies-2.png",
+      "metrics": {
+        "overflow": false,
+        "chipHeight": 40,
+        "priority": "suggestions"
+      }
+    },
+    {
+      "theme": "dark",
+      "scene": "replies-3",
+      "screenshot": "android-native-dark-replies-3.png",
+      "metrics": {
+        "overflow": false,
+        "chipHeight": 40,
+        "priority": "suggestions"
+      }
+    }
+  ],
+  "errors": []
+}

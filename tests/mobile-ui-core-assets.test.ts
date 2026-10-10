@@ -6,7 +6,7 @@ import test from 'node:test'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { fileURLToPath } from 'node:url'
-import { uiCoreAssets } from '../src/ui-core/manifest.mjs'
+import { uiCoreBrowserAssets as uiCoreAssets } from '../src/ui-core/manifest.mjs'
 import { buildUiCoreAssets, checkUiCoreAssets, uiCoreSourceDir } from '../apps/mobile-ui/src/build-ui-core.mjs'
 import { checkMobileUi } from '../apps/mobile-ui/src/check.mjs'
 import { publishMobileUi } from '../src/personal-access/mobile-ui-release.mjs'
@@ -101,13 +101,20 @@ test('publish command refuses stale generated assets before creating a release',
     'src/personal-access-ui/conversation-scroll.js', 'apps/mobile-ui/www/conversation-scroll.js', 'src/personal-access-ui/components/main-chat.js', 'apps/mobile-ui/www/components/main-chat.js',
     'src/personal-access-ui/message-actions.js', 'src/personal-access-ui/message-actions.css', 'apps/mobile-ui/www/message-actions.js', 'apps/mobile-ui/www/message-actions.css',
     'src/personal-access-ui/icons.js', 'apps/mobile-ui/www/icons.js',
+    'src/personal-access-ui/next-suggestions.js', 'src/personal-access-ui/next-suggestions.css', 'apps/mobile-ui/www/next-suggestions.js', 'apps/mobile-ui/www/next-suggestions.css',
     'src/personal-access-ui/controls.css', 'apps/mobile-ui/www/controls.css',
+    'src/personal-access-ui/folder-choice.js','src/personal-access-ui/folder-choice.css','apps/mobile-ui/www/folder-choice.js','apps/mobile-ui/www/folder-choice.css',
+    'src/personal-access-ui/rendering.css','apps/mobile-ui/www/rendering.css','src/personal-access-ui/katex.css','apps/mobile-ui/www/katex.css',
     'docs/legal/terms-zh.md', 'docs/legal/privacy-zh.md', 'apps/mobile-ui/www/legal/terms-zh.txt', 'apps/mobile-ui/www/legal/privacy-zh.txt']) {
     const destination = path.join(isolatedRepository, name)
     await mkdir(path.dirname(destination), { recursive: true })
     await copyFile(path.join(repository, name), destination)
   }
   const wwwDir = path.join(isolatedRepository, 'apps', 'mobile-ui', 'www')
+  await copyFile(path.join(repository,'src/personal-access-ui/render-assets.json'),path.join(isolatedRepository,'src/personal-access-ui/render-assets.json'))
+  for(const name of JSON.parse(await readFile(path.join(repository,'src/personal-access-ui/render-assets.json'),'utf8'))){
+    for(const prefix of ['src/personal-access-ui','apps/mobile-ui/www']){const target=path.join(isolatedRepository,prefix,name);await mkdir(path.dirname(target),{recursive:true});await copyFile(path.join(repository,prefix,name),target);}
+  }
   const targetDir = path.join(wwwDir, 'ui-core')
   await mkdir(path.join(wwwDir, 'components'), { recursive: true })
   await copyFile(path.join(repository, 'src/personal-access-ui/components/question-bar.js'), path.join(wwwDir, 'components/question-bar.js'))

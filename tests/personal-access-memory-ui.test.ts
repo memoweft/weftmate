@@ -171,7 +171,9 @@ test('memory page keeps scripts external and uses only the candidate static publ
   assert.match(html, /id="memory-view"/)
   assert.match(html, /id="memory-detail-dialog"/)
   assert.doesNotMatch(html, /<script(?![^>]*src=)/i)
-  assert.match(publisher, /default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'/)
+  assert.match(publisher, /default-src 'none'; script-src 'self'; style-src 'self';/)
+  assert.match(publisher, /connect-src 'self'/)
+  assert.doesNotMatch(publisher, /script-src[^;]*unsafe-inline/)
 })
 
 test('memory view preserves chat draft and discards a successful response for another cookie owner', async () => {
@@ -213,8 +215,10 @@ test('memory view preserves chat draft and discards a successful response for an
     setAttribute(name: string, value: string) { this.attributes.set(name, value) }
     getAttribute(name: string) { return this.attributes.get(name) ?? null }
     removeAttribute() {}
-    querySelectorAll() { return [] }
-    querySelector() { return null }
+    get firstElementChild() { return this.children[0] || null }
+    querySelectorAll(selector: string): Node[] { const all = this.children.flatMap(child => [child, ...child.querySelectorAll('*')]); return selector === '*' ? all : all.filter(child => selector.startsWith('#') ? child.id === selector.slice(1) : child.tagName === selector.toUpperCase()) }
+    querySelector(selector: string) { return this.querySelectorAll(selector)[0] || null }
+    closest(selector: string): Node | null { for(let parent: Node | null = this; parent; parent = parent.parentNode) if(selector.startsWith('#') ? parent.id === selector.slice(1) : parent.tagName === selector.toUpperCase()) return parent; return null }
     focus() {}
     showModal() { this.open = true }
     close() { this.open = false }

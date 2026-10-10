@@ -105,7 +105,7 @@ function scheduleSharedPoll(){stopSharedPoll();if(state.chatSource!=='host'||sta
   state.sharedPollTimer=setTimeout(async()=>{if(state.chatSource!=='host'||state.page!=='chat')return;
     await Promise.all([loadSharedHistory(),listSharedSessions()]);if(state.chatSource==='host')scheduleSharedPoll()},state.sharedRunning?3000:12000)}
 
-function selectSharedSession(sessionId){if(!state.sharedSessions.some(item=>item.sessionId===sessionId))return;
+function selectSharedSession(sessionId){uiCore.cancelNextSuggestions?.();if(!state.sharedSessions.some(item=>item.sessionId===sessionId))return;
   uiCore.syncMobileIdentity();void uiCore.updateSession(sessionId,{unread:false}).catch(error=>toast(safeError(error),true));
   const listed=state.sharedSessions.find(item=>item.sessionId===sessionId);
   const linked=state.conversations.find(item=>item.id===listed?.conversationId||item.binding?.sessionId===sessionId||
@@ -138,12 +138,12 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
   else if(!state.sharedHostAvailable)content.append(el('div','shared-notice','电脑暂不可达。已读取的内容仅供查看，新消息可能进入待核对状态。'));
   let lastTurn='',lastEndReasonKind='';for(const event of state.sharedEvents){
     if(event.type==='user.message'||event.type==='assistant.message'){
-      const body=event.data?.text,images=event.type==='user.message'&&Array.isArray(event.data?.images)?event.data.images:[],
+      const body=event.data?.text,images=Array.isArray(event.data?.images)?event.data.images:[],
         originalFiles=event.type==='user.message'&&Array.isArray(event.data?.originalAttachments)?
           event.data.originalAttachments.map(normalizedSharedFile).filter(Boolean):[];
       if(typeof body==='string'&&body||images.length||originalFiles.length){
         const row=messageNode(event.type==='user.message'?'user':'assistant',typeof body==='string'?body:'');
-        if(event.type==='assistant.message')WeftModelThinking(uiCore,row,event);
+        if(event.type==='assistant.message'){WeftModelThinking(uiCore,row,event);const pages=[...(uiCore.conversationTasks?.entries?.values()||[])].flatMap(entry=>entry.payload?.sources||[]);globalThis.WeftContent?.enhance(row.querySelector('.markdown'),{pages,copy:copyText,openExternal:url=>{location.href=url}});}
         if(images.length){const gallery=el('div','message-thumbnails');let unavailable=0;
           const scope={owner:state.owner,epoch:state.authEpoch,source:'host',conversationId:state.sharedSessionId};
           for(const image of images){const url=['image/png','image/jpeg','image/webp','image/gif'].includes(image?.contentType)
@@ -161,9 +161,9 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
         if(originalFiles.length)appendSharedFiles(row,event,state.sharedSessionId);
         if(event.type==='user.message'&&receiptIdPattern.test(event.data?.receiptId||''))row.dataset.receiptId=event.data.receiptId;
         if(event.type==='user.message'&&uiCore.messageTaskLabel(event))row.append(el('small','message-state',uiCore.messageTaskLabel(event)));
-        row.dataset.seq=String(event.seq);content.append(row);
+        row.dataset.seq=String(event.seq);content.append(row);appendRenderedFiles(row,body);
         row.querySelector('.message-tools')?.remove(); mobileMessageActions?.bind(row,event,state.sharedSessionId);
-        if(event.data?.truncated)content.append(el('p','message-state','这条电脑消息仅显示前一部分'))}}
+        if(event.data?.truncated){const note=el('p','message-state','正在读取完整消息…');row.append(note);const owner=state.owner,epoch=state.authEpoch,sessionId=state.sharedSessionId;uiCore.syncMobileIdentity();void uiCore.completeMessageEvent(sessionId,event).then(full=>{if(!row.isConnected||owner!==state.owner||epoch!==state.authEpoch||sessionId!==state.sharedSessionId)return;WeftContent.update(row.querySelector('.markdown'),full.data.text,{copy:copyText,openExternal:url=>{location.href=url},downloadImage:globalThis.weftNative?saveRenderedImage:undefined});note.remove();appendRenderedFiles(row,full.data.text);}).catch(()=>{if(note.isConnected)note.textContent='完整消息暂时无法读取，请重新打开对话。';});}}}
     else if(event.type==='turn.started'){lastTurn='running';lastEndReasonKind=''}
     else if(event.type==='turn.ended'){lastTurn=event.data?.reason||'unknown';
       lastEndReasonKind=lastTurn==='error'&&event.data?.endReasonKind==='max-tokens'?'max-tokens':''}
@@ -229,10 +229,10 @@ async function renderConversation({silent=false}={}){if(state.page!=='chat')retu
         if(event.type!=='user.message'&&event.type!=='assistant.message')continue;
         const body=event.data?.text;if(typeof body!=='string'||!body.trim())continue;
         const row=messageNode(event.type==='user.message'?'user':'assistant',body);
-        if(event.type==='assistant.message')WeftModelThinking(uiCore,row,event);
+        if(event.type==='assistant.message'){WeftModelThinking(uiCore,row,event);const pages=[...(uiCore.conversationTasks?.entries?.values()||[])].flatMap(entry=>entry.payload?.sources||[]);globalThis.WeftContent?.enhance(row.querySelector('.markdown'),{pages,copy:copyText,openExternal:url=>{location.href=url}});}
         if(event.type==='user.message'&&receiptIdPattern.test(event.data?.receiptId||''))row.dataset.receiptId=event.data.receiptId;
         if(event.type==='user.message'&&uiCore.messageTaskLabel(event))row.append(el('small','message-state',uiCore.messageTaskLabel(event)));
-        row.dataset.seq=String(event.seq);content.append(row);
+        row.dataset.seq=String(event.seq);content.append(row);appendRenderedFiles(row,body);
         row.querySelector('.message-tools')?.remove();mobileMessageActions?.bind(row,event,binding.sessionId);
       }
       const late=result.messages.filter(m=>Number.isSafeInteger(m.serverSeq)&&
@@ -298,6 +298,7 @@ function renderLiveProgress(){if(state.page!=='chat'||state.chatSource!=='phone'
     const body=el('div','message-body');body.append(el('div','markdown live-progress-text'),el('p','message-state'));
     node.append(body);content.append(node)}
   const text=node.querySelector('.live-progress-text'),phase=node.querySelector('.message-state');
+  if(globalThis.WeftContent){WeftContent.update(text,state.progressText,{copy:copyText,openExternal:url=>{location.href=url},downloadImage:globalThis.weftNative?saveRenderedImage:undefined});text.hidden=!state.progressText;phase.textContent=phaseLabel(state.phase);if(state.scrollPinned)scrollBottom();return;}
   if(!text._liveTextNode){text._liveTextNode=document.createTextNode('');text.append(text._liveTextNode)}
   const shown=text._liveTextNode.data,target=state.progressText;
   if(!target.startsWith(shown)||(globalThis.WeftMobileMotion?.reduced()??window.matchMedia('(prefers-reduced-motion: reduce)').matches)){
@@ -307,6 +308,10 @@ function renderLiveProgress(){if(state.page!=='chat'||state.chatSource!=='phone'
   if(phase.textContent!==label)phase.textContent=label;
   if(state.scrollPinned){if((globalThis.WeftMobileMotion?.reduced()??window.matchMedia('(prefers-reduced-motion: reduce)').matches))scrollBottom();
     else scheduleLiveMotion()}}
+
+function appendRenderedFiles(row,text){if(row.classList.contains('user')||!globalThis.WeftContent)return;
+  const files=state.sharedEvents.filter(e=>e.type==='artifact.created').flatMap(e=>e.data?.artifacts||[e.data?.artifact||e.data]).filter(file=>file?.artifactId&&file.fileName&&text?.includes(file.fileName));
+  for(const file of files){if([...row.querySelectorAll('.render-file-card')].some(card=>card.dataset.artifact===file.artifactId))continue;const card=WeftContent.fileCard(file,button=>{const context=conversationTaskContext();uiCore.syncMobileIdentity();void openTimelinePreview(context,()=>uiCore.readResource(`/library/${encodeURIComponent(file.artifactId)}/preview`),file.fileName,file);});card.dataset.artifact=file.artifactId;row.append(card);}}
 
 function toolLabel(name){return uiCore.toolLabel(name)}
 

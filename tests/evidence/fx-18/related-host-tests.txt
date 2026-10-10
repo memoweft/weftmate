@@ -1,0 +1,22 @@
+✔ mobile generated assets match every canonical ui-core file byte for byte (457.379ms)
+✔ check refuses changed, missing and unlisted copies; rebuild follows the source and removes stale files (715.2773ms)
+✔ mobile check validates nested component syntax as well as generated source parity (5244.7624ms)
+✔ published mobile bundle includes the verified shared assets at their ui-core paths (5756.06ms)
+✔ publish command refuses stale generated assets before creating a release (6951.1603ms)
+✔ isolated synthetic memory HTTP contract keeps owners, cursors and receipts separate (9521.2061ms)
+✔ memory page keeps scripts external and uses only the candidate static publisher (3.5363ms)
+✔ memory view preserves chat draft and discards a successful response for another cookie owner (136.378ms)
+✔ activity uses stable native identities, redacts temporary task/approval/question content before persistence and prevents erasure replay (6.629ms)
+✔ approval status updates keep one activity, native response identity and increment attention without preserving forgotten body (1.2824ms)
+✔ native terminal task waits for background effects and shares the IA-3 result activity identity (0.7309ms)
+✔ activity HTTP snapshots, filtered all-read, version conflicts, restart, native actions and deletion changes (7254.7ms)
+✔ MEM-D formation pending does not masquerade as pause; model unavailability creates one event per real transition (6504.605ms)
+✔ FX-18 recovered memory appears as one quiet progress event and completes without a pause (4957.3234ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 19279.5433

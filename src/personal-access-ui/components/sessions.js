@@ -86,7 +86,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         for (const event of ['pointerup', 'pointercancel', 'pointermove']) main.addEventListener(event, () => clearTimeout(longPress));
         main.addEventListener('click', event => { if (pressed) { event.preventDefault(); event.stopImmediatePropagation(); pressed = false; } }, true);
     }
-    const canManageProjectFolders = () => core.state.projectCanManage && (!!globalThis.weftmateDesktop || !(globalThis.matchMedia?.('(max-width: 719px)')?.matches ?? false));
+    const canManageProjectFolders = () => core.state.projectCanManage && !!globalThis.weftmateDesktop;
     function projectError(error) {
         return { PROJECT_REVISION_CHANGED: '项目已在其他设备更新，请关闭并重新打开设置。',
             SESSION_BUSY: '项目对话仍在运行，请结束后再修改项目。', PROJECT_UNSAFE_PATH: '文件夹不可用，请选择本机已有文件夹。' }[error?.code] || core.failureMessage(error);
@@ -112,13 +112,13 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         const name = ui.element('input'); name.value = project?.name || ''; name.required = true; name.maxLength = 80;
         if (!project) {
             body.append(ui.element('p', 'muted', '一个项目对应电脑上的一个文件夹。项目对话默认在这里读写文件和运行命令。'));
-            folder = field('电脑上的文件夹', ui.element('input')); folder.required = true; folder.placeholder = '输入完整文件夹路径'; folder.autocomplete = 'off';
+            folder = field('电脑上的文件夹', ui.element('input')); folder.required = true; folder.readOnly = true; folder.placeholder = '请用系统选择文件夹'; folder.autocomplete = 'off';
             const suggestName = () => { if (!name.value) name.value = folder.value.replace(/[\\/]+$/, '').split(/[\\/]/).pop() || ''; };
             folder.addEventListener('change', suggestName);
             if (globalThis.weftmateDesktop?.pickProjectFolder) {
                 const choose = ui.element('button', 'button secondary', '选择文件夹…'); choose.type = 'button';
-                choose.onclick = async () => { try { const path = await globalThis.weftmateDesktop.pickProjectFolder(); if (path) { folder.value = path; suggestName(); } }
-                    catch { notice.textContent = '无法打开系统选择框，请输入文件夹路径。'; } }; body.append(choose);
+                choose.onclick = async () => { try { const identity = core.state.identityGeneration, path = await globalThis.weftmateDesktop.pickProjectFolder(); if (path && identity === core.state.identityGeneration) { folder.value = path; suggestName(); const choice=await globalThis.weftmateDesktop.inspectProjectFolder(path);if(choice.warning){notice.textContent=choice.warning;permission.value='read-only';permission.dispatchEvent(new Event('weft:sync'));} } }
+                    catch { notice.textContent = '无法打开系统选择框，请重试。'; } }; body.append(choose);
             }
         }
         field('项目名称', name);
@@ -134,8 +134,10 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         footer.append(cancel, save); form.append(body, footer); dialog.append(form);
         const requestId = crypto.randomUUID();
         form.onsubmit = async event => { event.preventDefault(); save.disabled = true; notice.textContent = '';
-            try { await core.saveProject(project, { name: name.value.trim().normalize('NFC'), instructions: instructions.value, permission: permission.value,
-                ...(!project ? { requestId, rootPath: folder.value.trim() } : {}) }); dialog.close(); }
+            try { const fields={name:name.value.trim().normalize('NFC'),instructions:instructions.value,permission:permission.value};
+                if(project)await core.saveProject(project,fields);
+                else await globalThis.weftmateDesktop.createFolderProject({...fields,requestId,rootPath:folder.value.trim()});
+                await core.refreshSessionProjects();ui.renderSessions();dialog.close(); }
             catch (error) { notice.textContent = projectError(error); } finally { save.disabled = false; } };
         dialog.onclose = () => dialog.remove(); document.body.append(dialog); globalThis.WeftPopover.bindSettingsSelect(permission); dialog.showModal(); (folder || name).focus();
     }

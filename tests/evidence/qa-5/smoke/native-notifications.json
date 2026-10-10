@@ -1,0 +1,62 @@
+{
+  "nativeElectronEvents": true,
+  "preserveOriginalShow": true,
+  "events": [
+    {
+      "event": "show",
+      "title": "需要审批",
+      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/a.txt\"}",
+      "at": "2026-10-10T06:57:56.221Z"
+    },
+    {
+      "event": "show",
+      "title": "需要审批",
+      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/b.txt\"}",
+      "at": "2026-10-10T06:57:58.435Z"
+    },
+    {
+      "event": "show",
+      "title": "需要审批",
+      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/index.md\"}",
+      "at": "2026-10-10T06:58:09.617Z"
+    },
+    {
+      "event": "show",
+      "title": "请整理这个合成文件夹 C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-f",
+      "body": "已完成 · 点开查看结果",
+      "at": "2026-10-10T06:58:12.963Z"
+    },
+    {
+      "event": "show",
+      "title": "请在2分钟后提醒我站起来活动，提醒内容为QA5日用冒烟活动。",
+      "body": "已完成 · 点开查看结果",
+      "at": "2026-10-10T06:58:21.268Z"
+    },
+    {
+      "event": "show",
+      "title": "需要审批",
+      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：write {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/phone.txt\",\"content\":\"Q",
+      "at": "2026-10-10T06:59:30.713Z"
+    },
+    {
+      "event": "show",
+      "title": "需要审批",
+      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/phone.txt\"}",
+      "at": "2026-10-10T06:59:37.599Z"
+    },
+    {
+      "event": "show",
+      "title": "请在C:/Users/yun/AppData/Local/Temp/weftmate-qa5-smoke-dXOckU/synthetic-folder/pho",
+      "body": "已完成 · 点开查看结果",
+      "at": "2026-10-10T06:59:43.356Z"
+    },
+    {
+      "event": "show",
+      "title": "提醒",
+      "body": "提醒：QA5日用冒烟活动：站起来活动",
+      "at": "2026-10-10T07:00:20.245Z"
+    }
+  ],
+  "installedAt": "2026-10-10T06:56:55.426Z",
+  "finishedAt": "2026-10-10T07:00:22.594Z"
+}

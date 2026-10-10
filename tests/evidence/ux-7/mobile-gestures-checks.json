@@ -1,0 +1,134 @@
+{
+  "synthetic": true,
+  "modelRequests": 0,
+  "checks": [
+    {
+      "surface": "mobile-web",
+      "width": 390,
+      "theme": "light",
+      "gesture": "gray-click",
+      "screenshot": "mobile-web-390-light-completion-gray-click.png",
+      "accepted": true
+    },
+    {
+      "surface": "mobile-web",
+      "width": 390,
+      "theme": "light",
+      "gesture": "swipe",
+      "screenshot": "mobile-web-390-light-completion-swipe.png",
+      "accepted": true
+    },
+    {
+      "surface": "mobile-web",
+      "width": 390,
+      "theme": "dark",
+      "gesture": "gray-click",
+      "screenshot": "mobile-web-390-dark-completion-gray-click.png",
+      "accepted": true
+    },
+    {
+      "surface": "mobile-web",
+      "width": 390,
+      "theme": "dark",
+      "gesture": "swipe",
+      "screenshot": "mobile-web-390-dark-completion-swipe.png",
+      "accepted": true
+    },
+    {
+      "surface": "android-bundle",
+      "width": 390,
+      "theme": "light",
+      "gesture": "gray-click",
+      "screenshot": "android-bundle-390-light-completion-gray-click.png",
+      "accepted": true
+    },
+    {
+      "surface": "android-bundle",
+      "width": 390,
+      "theme": "light",
+      "gesture": "swipe",
+      "screenshot": "android-bundle-390-light-completion-swipe.png",
+      "accepted": true
+    },
+    {
+      "surface": "android-bundle",
+      "width": 390,
+      "theme": "dark",
+      "gesture": "gray-click",
+      "screenshot": "android-bundle-390-dark-completion-gray-click.png",
+      "accepted": true
+    },
+    {
+      "surface": "android-bundle",
+      "width": 390,
+      "theme": "dark",
+      "gesture": "swipe",
+      "screenshot": "android-bundle-390-dark-completion-swipe.png",
+      "accepted": true
+    },
+    {
+      "surface": "mobile-web",
+      "width": 360,
+      "theme": "light",
+      "gesture": "gray-click",
+      "screenshot": "mobile-web-360-light-completion-gray-click.png",
+      "accepted": true
+    },
+    {
+      "surface": "mobile-web",
+      "width": 360,
+      "theme": "light",
+      "gesture": "swipe",
+      "screenshot": "mobile-web-360-light-completion-swipe.png",
+      "accepted": true
+    },
+    {
+      "surface": "mobile-web",
+      "width": 360,
+      "theme": "dark",
+      "gesture": "gray-click",
+      "screenshot": "mobile-web-360-dark-completion-gray-click.png",
+      "accepted": true
+    },
+    {
+      "surface": "mobile-web",
+      "width": 360,
+      "theme": "dark",
+      "gesture": "swipe",
+      "screenshot": "mobile-web-360-dark-completion-swipe.png",
+      "accepted": true
+    },
+    {
+      "surface": "android-bundle",
+      "width": 360,
+      "theme": "light",
+      "gesture": "gray-click",
+      "screenshot": "android-bundle-360-light-completion-gray-click.png",
+      "accepted": true
+    },
+    {
+      "surface": "android-bundle",
+      "width": 360,
+      "theme": "light",
+      "gesture": "swipe",
+      "screenshot": "android-bundle-360-light-completion-swipe.png",
+      "accepted": true
+    },
+    {
+      "surface": "android-bundle",
+      "width": 360,
+      "theme": "dark",
+      "gesture": "gray-click",
+      "screenshot": "android-bundle-360-dark-completion-gray-click.png",
+      "accepted": true
+    },
+    {
+      "surface": "android-bundle",
+      "width": 360,
+      "theme": "dark",
+      "gesture": "swipe",
+      "screenshot": "android-bundle-360-dark-completion-swipe.png",
+      "accepted": true
+    }
+  ]
+}

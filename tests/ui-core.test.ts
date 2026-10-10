@@ -4,7 +4,12 @@ import { runInNewContext } from 'node:vm'
 import test from 'node:test'
 import { contextUsage, createDshSessionAdapter } from '../src/runtime/dsh-adapter/sessions.mjs'
 import { desktopScript, desktopScriptPaths } from './helpers/desktop-ui-source.mjs'
-const paths = desktopScriptPaths().filter(path => path.startsWith('ui-core/'))
+import {uiCoreAssets,uiCorePresentationAssets} from '../src/ui-core/manifest.mjs'
+const featurePaths=new Set(uiCoreAssets.map(name=>`ui-core/${name}`))
+const browserPaths=desktopScriptPaths().filter(path=>path.startsWith('ui-core/'))
+assert.deepEqual(browserPaths.filter(path=>!featurePaths.has(path)),uiCorePresentationAssets.map(name=>`ui-core/${name}`),
+  'only the explicit shared presentation assets may sit outside the DOM-free feature layer')
+const paths = browserPaths.filter(path => featurePaths.has(path))
 const source = paths.map(desktopScript).join('\n;\n')
 const response = (body: object, status = 200) => ({ ok: status < 400, status, json: async () => body })
 function fixture(read: (path: string, options: any) => any = () => response({})) {
@@ -692,4 +697,12 @@ test('MS-1 saved default selects the next new conversation without rebinding the
   f.core.startNewConversation();
   assert.equal(f.core.state.modelProfileId, 'cloud');
   assert.equal(f.core.state.sessions[0].modelProfileId, 'local');
+});
+
+test('UX-9 folder registration keeps editing available but blocks a send until project selection is ready',async()=>{
+ const f=fixture(),reply=deferred();f.core.refreshSessionProjects=async()=>{};
+ const registration=f.core.registerFolderChoice(()=>reply.promise,{});
+ assert.equal(f.core.composerState('合成草稿').messageDisabled,false);assert.equal(f.core.composerState('合成草稿').sendDisabled,true);
+ await f.core.sendDraft('合成草稿');assert.equal(f.requests.length,0);
+ reply.resolve({project:{projectId:'project-synthetic'}});await registration;assert.equal(f.core.composerState('合成草稿').sendDisabled,false);
 });

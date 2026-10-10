@@ -18,12 +18,23 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
     set data(value){this._data=value;if(this.parent)this.parent.textContent=value}
     appendData(value){this.data+=value}
   }
+  const dialogs=[];
   class Node{
     constructor(id=''){this.id=id;this.value='';this.textContent='';this.hidden=false;this.disabled=false;this.style={setProperty(){}};this.attrs={};this.children=[];this.dataset={};this.listeners=new Map();
       this._scrollTop=0;this.scrollWrites=0;this.scrollHistory=[];this.scrollHeight=0;this.clientHeight=0;
       this.classList={values:new Set(),add:v=>this.classList.values.add(v),remove:v=>this.classList.values.delete(v),
         toggle:(v,on)=>{if(on===undefined)on=!this.classList.values.has(v);on?this.classList.values.add(v):this.classList.values.delete(v)},
         contains:v=>this.classList.values.has(v)};}
+    get textContent(){return this._text||this.children?.map(child=>child.textContent??child.data??String(child)).join('')||''}
+    set textContent(value){this._text=String(value??'');for(const child of this.children||[])child.parent=null;this.children=[];}
+    get innerHTML(){return this._html||this.children.map(child=>child.outerHTML||child.textContent||'').join('')}
+    set innerHTML(value){this._html=value;this.replaceChildren();const match=/^<p>([\s\S]*)<\/p>$/.exec(value.trim());if(match){const child=new Node();child.tagName='p';child.textContent=match[1];this.append(child);}}
+    get outerHTML(){return '<'+this.tagName+'>'+this.textContent+'</'+this.tagName+'>'}
+    get parentElement(){return this.parent||null}
+    get isConnected(){return this.id==='body'||htmlIds.has(this.id)||!!this.parent?.isConnected}
+    showModal(){this.open=true;}
+    close(){this.open=false;this.fire('close');}
+    replaceWith(...children){if(!this.parent)return;const parent=this.parent,index=parent.children.indexOf(this);parent.children.splice(index,1,...children);for(const child of children)child.parent=parent;this.parent=null;}
     get scrollTop(){return this._scrollTop}
     set scrollTop(value){this._scrollTop=value;this.scrollWrites++;this.scrollHistory.push(value)}
     append(...children){for(const child of children)if(child instanceof Node||child instanceof TextNode){child.remove?.();child.parent=this;}
@@ -39,16 +50,16 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
       if(index<0)this.children.push(child);else this.children.splice(index,0,child)}
     before(...children){if(!this.parent)return;const i=this.parent.children.indexOf(this);this.parent.children.splice(i,0,...children);for(const child of children)child.parent=this.parent}
     after(...children){if(!this.parent)return;const i=this.parent.children.indexOf(this);this.parent.children.splice(i+1,0,...children);for(const child of children)child.parent=this.parent}
-    replaceChildren(...children){this.children=[];this.append(...children)}
+    replaceChildren(...children){for(const child of this.children)child.parent=null;this.children=[];this._text="";this._html="";this.append(...children)}
     remove(){if(this.parent)this.parent.children=this.parent.children.filter(child=>child!==this)}
     setAttribute(key,value){this.attrs[key]=value}
     getAttribute(key){return this.attrs[key]??null}
-    removeAttribute(key){delete this.attrs[key];if(key==='id')this.id='';}
+    removeAttribute(key){delete this.attrs[key];if(key==='id')this.id='';if(key==='src')this.src='';}
     cloneNode(deep=false){const copy=new Node(this.id);copy.tagName=this.tagName;copy.className=this.className;copy.attrs={...this.attrs};copy.textContent=this.textContent;copy.hidden=this.hidden;if(deep)copy.append(...this.children.map(child=>child instanceof Node?child.cloneNode(true):child instanceof TextNode?new TextNode(child.data):child));return copy;}
     getBoundingClientRect(){return {top:500,height:132}}
     focus(){document.activeElement=this}
     addEventListener(event,handler){this.listeners.set(event,[...(this.listeners.get(event)||[]),handler])}
-    fire(event){for(const handler of this.listeners.get(event)||[])handler({target:this})}
+    fire(event){for(const handler of this.listeners.get(event)||[])handler({target:this,currentTarget:this,preventDefault(){},stopPropagation(){}})}
     querySelector(selector){if(selector===this.tagName||selector==='[role=status]'&&this.attrs.role==='status'||selector.startsWith('.')&&this.className?.split(' ').includes(selector.slice(1)))return this;
       for(const child of this.children){const found=child.querySelector?.(selector);if(found)return found}return null}
     querySelectorAll(selector){const all=this.children.flatMap(child=>[child,...(child.querySelectorAll?.(selector)||[])]);return all.filter(node=>selector==='[data-question-control]'?node.dataset?.questionControl:selector===node.tagName||selector.startsWith('.')&&node.className?.split(' ').includes(selector.slice(1)))}
@@ -58,8 +69,8 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
       if(id==='live-progress')return nodes.get('chat-content')?.children.find(child=>child.id==='live-progress')||null;
       if(!htmlIds.has(id)){const find=node=>node.id===id?node:node.children.map(child=>child instanceof Node?find(child):null).find(Boolean);return [...nodes.values()].map(find).find(Boolean)||null;}
       if(!nodes.has(id)){const node=new Node(id);
-        if(['approval-bar','question-bar','toast','attachment-drafts','attachment-popover','model-popover','image-preview','resource-page'].includes(id))node.hidden=true;nodes.set(id,node)}return nodes.get(id)},
-    createElement:tagName=>{const node=new Node();node.tagName=tagName;return node},createTextNode:value=>new TextNode(value),
+        if(['approval-bar','question-bar','toast','attachment-drafts','attachment-popover','model-popover','image-preview','resource-page'].includes(id))node.hidden=true;nodes.set(id,node);if(['pick-camera','pick-image','pick-file','pick-thinking'].includes(id))document.getElementById('attachment-popover').append(node)}return nodes.get(id)},
+    createElement:tagName=>{const node=new Node();node.tagName=tagName;if(tagName==='dialog')dialogs.push(node);return node},createTextNode:value=>new TextNode(value),
     addEventListener:(event,handler)=>{if(event==='DOMContentLoaded')domReady=handler},
     querySelectorAll:()=>[],querySelector:selector=>selector==='.session-menu[role=menu]'?document.body.children.find(node=>node.className==='session-menu'&&node.attrs?.role==='menu')||null:new Node()};
   const bridge=[];
@@ -82,6 +93,7 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
     setInterval:(fn,delay)=>{const id=`interval-${++nextInterval}`;intervals.set(id,{fn,delay});return id},clearInterval:id=>intervals.delete(id),
     setTimeout:(fn,delay)=>{const id=++nextTimer;timers.set(id,{fn,delay,due:now+delay});return id},clearTimeout:id=>timers.delete(id),
     requestAnimationFrame:fn=>{if(queueFrames){frames.push(fn);return frames.length}fn(now);return 0},ResizeObserver,console});
+  Object.defineProperty(context,'WeftFormat',{get:()=>window.WeftFormat,set:value=>{window.WeftFormat=value},configurable:true});
   vm.runInContext(source,context);
   const run=code=>vm.runInContext(code,context);
   const node=id=>document.getElementById(id);
@@ -91,7 +103,12 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
   const advance=ms=>{now+=ms;while(true){const due=[...timers].find(([,timer])=>timer.due<=now);if(!due)break;
     timers.delete(due[0]);due[1].fn()}};
   const flushFrame=()=>{now+=frameMs;const callbacks=frames.splice(0);for(const callback of callbacks)callback(now)};
-  return {run,node,timers,bridge,flush,reply,advance,frames,flushFrame,document,storage:saved,domReady:()=>domReady(),observed:()=>observed};
+  const gallery=()=>dialogs.findLast(dialog=>dialog.className?.includes('render-gallery'));
+  const previewImage=()=>gallery()?.querySelector('img')||node('image-preview-image');
+  const previewNote=()=>gallery()?.querySelector('.render-gallery-note')||node('image-preview-note');
+  const previewTitle=()=>gallery()?.querySelector('h2')||node('image-preview-name');
+  const previewVisible=()=>!!gallery()?.open;
+  return {run,node,gallery,previewImage,previewNote,previewTitle,previewVisible,timers,bridge,flush,reply,advance,frames,flushFrame,document,storage:saved,domReady:()=>domReady(),observed:()=>observed};
 }
 
 test('real HTML IDs support bootstrap and ResizeObserver without app.failed',async()=>{
@@ -449,12 +466,12 @@ test('host draft preview uses its session-scoped attachment-UUID original instea
   const trigger=h.node('attachment-drafts').children[0].children.find(node=>node.className==='attachment-preview-trigger');
   assert.equal(trigger.children[0].src,displayUrl);
   trigger.fire('click');
-  assert.equal(h.node('image-preview-image').src,previewUrl);
-  assert.match(h.node('image-preview-image').alt,/原图/);
-  assert.equal(h.node('image-preview-note').textContent,'待发送原图');
+  assert.equal(h.previewImage().src,previewUrl);
+  assert.match(h.previewImage().alt,/原图/);
+  assert.equal(h.previewNote().textContent,'待发送原图');
   h.run('handleBack()');h.advance(160);
   h.run(`state.sharedSessionId="session-00000000-0000-4000-8000-000000000099"`);
-  trigger.fire('click');assert.equal(h.node('image-preview').hidden,true,'another session cannot reopen the draft');
+  trigger.fire('click');assert.equal(!h.previewVisible(),true,'another session cannot reopen the draft');
 });
 
 test('draft display URL stays inside its owner and conversation and falls back for old data',()=>{
@@ -517,8 +534,8 @@ test('shared history previews only the exact session media URL and preserves tex
   assert.equal(gallery.children[0].children[0].loading,'lazy');
   assert.equal(gallery.children[0].children[0].decoding,'async');
   assert.match(user.children.find(item=>item.className==='message-attachment-note').textContent,/1 张历史图片暂无法预览/);
-  gallery.children[0].fire('click');assert.equal(h.node('image-preview-image').src,valid);
-  h.run('handleBack()');h.advance(160);assert.equal(h.node('image-preview').hidden,true);
+  gallery.children[0].fire('click');assert.equal(h.previewImage().src,valid);
+  h.run('handleBack()');h.advance(160);assert.equal(!h.previewVisible(),true);
   assert.equal(h.run(`safeSessionPreviewUrl("${valid}?token=x","${id}","session-one")`),null);
   assert.equal(h.run(`safeSessionPreviewUrl("${valid.replace('session-one','session-two')}","${id}","session-one")`),null);
   assert.equal(h.run(`safeSessionPreviewUrl("${valid.replace(id,`sha256:${'e'.repeat(64)}`)}","${id}","session-one")`),null);
@@ -636,29 +653,19 @@ test('assistant messages and live progress use content alignment without per-mes
   assert.equal(progress.children[0].className,'message-body');
 });
 
-test('burst streaming renders once per frame without parsing Markdown until the final saved message',async()=>{
+test('burst streaming coalesces Markdown updates to one frame and preserves the live content container',async()=>{
   const h=harness({queueFrames:true});
-  h.run('state.page="chat";state.chatSource="phone";state.busy=true;state.conversationId="c1";renderCalls=0;markdownCalls=0;const originalProgress=renderLiveProgress;renderLiveProgress=()=>{renderCalls++;return originalProgress()};window.WeftFormat={render:()=>{markdownCalls++;return "<p>saved</p>"}}');
+  h.run('state.page="chat";state.chatSource="phone";state.busy=true;state.conversationId="c1";renderCalls=0;markdownCalls=0;const originalProgress=renderLiveProgress;renderLiveProgress=()=>{renderCalls++;return originalProgress()};window.WeftFormat={render:text=>{markdownCalls++;return "<p>"+text+"</p>"}}');
   for(let i=1;i<=100;i++)h.run(`processEvent({event:"chat.progress",data:{conversationId:"c1",text:"${'x'.repeat(i)}"}})`);
   assert.equal(h.frames.length,1);assert.equal(h.run('renderCalls'),0);assert.equal(h.run('markdownCalls'),0);
-  h.flushFrame();const progress=h.node('live-progress');
-  assert.equal(h.run('renderCalls'),1);assert.equal(h.run('markdownCalls'),0);
-  const text=progress.querySelector('.live-progress-text');
-  assert.equal(text.textContent.length,0);
-  const stableTextNode=text._liveTextNode;
-  const lengths=[];for(let i=0;i<8&&h.frames.length;i++){h.flushFrame();lengths.push(text.textContent.length)}
-  assert.ok(lengths[0]>0&&lengths[0]<100);
-  assert.ok(lengths[1]>lengths[0]&&lengths[1]<100);
-  assert.equal(lengths.at(-1),100);
+  h.flushFrame();const progress=h.node('live-progress'),text=progress.querySelector('.live-progress-text');
+  assert.equal(h.run('renderCalls'),1);assert.equal(h.run('markdownCalls'),1);assert.equal(text.textContent,'x'.repeat(100));
   assert.equal(progress.querySelector('.message-state').textContent,'正在回复…');
   for(let i=101;i<=150;i++)h.run(`processEvent({event:"chat.progress",data:{conversationId:"c1",text:"${'x'.repeat(i)}"}})`);
-  h.flushFrame();assert.equal(h.node('live-progress'),progress);
-  assert.equal(h.run('renderCalls'),2);assert.equal(text._liveTextNode,stableTextNode);
-  for(let i=0;i<8&&h.frames.length;i++)h.flushFrame();
-  assert.equal(text.textContent.length,150);
+  h.flushFrame();assert.equal(h.node('live-progress'),progress);assert.equal(progress.querySelector('.live-progress-text'),text);
+  assert.equal(h.run('renderCalls'),2);assert.equal(h.run('markdownCalls'),2);assert.equal(text.textContent,'x'.repeat(150));
   h.run('state.busy=false;call=async()=>({messages:[{role:"assistant",text:"**saved**"}],receipts:[],turnStatus:"completed"})');
-  await h.run('renderConversation()');assert.equal(h.run('markdownCalls'),1);
-  assert.equal(h.node('live-progress'),null);
+  await h.run('renderConversation()');assert.equal(h.run('markdownCalls'),3);assert.equal(h.node('live-progress'),null);
 });
 
 test('streaming preserves scroll-back and ignores a queued frame after the turn ends',()=>{
@@ -685,10 +692,10 @@ test('live follow moves directly to the bottom and never pulls upward as content
   h.run('state.page="chat";state.chatSource="phone";state.busy=true;state.conversationId="c1";state.scrollPinned=true');
   const box=h.node('chat-scroll');box.scrollHeight=1000;box.clientHeight=200;box.scrollTop=600;
   h.run('processEvent({event:"chat.progress",data:{conversationId:"c1",text:"A long answer that grows"}})');
-  h.flushFrame();assert.equal(box.scrollTop,600);
+  h.flushFrame();assert.equal(box.scrollTop,800);
   h.flushFrame();assert.equal(box.scrollTop,800);
   const first=box.scrollTop;h.run('handleChatScroll()');assert.equal(h.run('state.scrollPinned'),true);
-  box.scrollHeight=1100;h.flushFrame();assert.equal(box.scrollTop,900);
+  box.scrollHeight=1100;h.run('renderLiveProgress()');h.flushFrame();assert.equal(box.scrollTop,900);
   for(let i=0;i<32&&h.frames.length;i++)h.flushFrame();
   assert.equal(box.scrollTop,900);
   assert.ok(box.scrollHistory.every((value,index,history)=>index===0||value>=history[index-1]));
@@ -705,14 +712,14 @@ for(const hz of [60,120,180])test(`100 growing snapshots follow monotonically at
   for(let i=1;i<=100;i++){
     h.run(`processEvent({event:"chat.progress",data:{conversationId:"c1",text:"${'x'.repeat(i*5)}"}})`);
     h.flushFrame();frameCount++;
-    const node=h.node('live-progress')?.querySelector('.live-progress-text')?._liveTextNode;
+    const node=h.node('live-progress')?.querySelector('.live-progress-text');
     if(node){if(!stableNode)stableNode=node;else assert.equal(node,stableNode)}
     h.flushFrame();frameCount++;
     assert.ok(box.scrollHistory.every((value,index,history)=>index===0||value>=history[index-1]));
     h.run('handleChatScroll()');assert.equal(h.run('state.scrollPinned'),true);
   }
   for(let i=0;i<20&&h.frames.length;i++){h.flushFrame();frameCount++}
-  assert.equal(stableNode.data,'x'.repeat(500));
+  assert.equal(stableNode.textContent,'x'.repeat(500));
   assert.equal(box.scrollTop,box.scrollHeight-box.clientHeight);
   assert.ok(box.scrollWrites<=frameCount+1,'at most one scroll write per animation frame');
   box._scrollTop-=1.4;h.run('handleChatScroll()');
@@ -723,7 +730,7 @@ for(const hz of [60,120,180])test(`100 growing snapshots follow monotonically at
   h.run('processEvent({event:"chat.progress",data:{conversationId:"c1",text:"'+ 'x'.repeat(500)+' more"}})');
   for(let i=0;i<20&&h.frames.length;i++)h.flushFrame();
   assert.equal(box.scrollWrites,writes);
-  assert.equal(stableNode.data,'x'.repeat(500)+' more');
+  assert.equal(stableNode.textContent,'x'.repeat(500)+' more');
 });
 
 test('manual scroll-back stops live follow but still reveals text, and a stale frame cannot revive it',()=>{
@@ -770,21 +777,21 @@ test('native draft thumbnail opens a full-screen preview and Back restores the s
   assert.match(styles,/\.attachment-image-draft\{[^}]*width:88px;height:88px/);
   assert.match(styles,/\.attachment-thumb\{[^}]*width:100%;height:100%;[^}]*object-fit:cover/);
   assert.match(styles,/\.attachment-image-draft \.attachment-remove\{[^}]*width:44px;height:44px/);
-  trigger.fire('click');assert.equal(h.node('image-preview').hidden,false);
-  assert.equal(h.node('image-preview-image').src,url);
-  assert.equal(h.node('image-preview-name').textContent,'sample.jpg');
-  h.run('handleBack()');assert.equal(h.node('image-preview').classList.contains('closing'),true);
-  h.advance(160);assert.equal(h.node('image-preview').hidden,true);
+  trigger.fire('click');assert.equal(!h.previewVisible(),false);
+  assert.equal(h.previewImage().src,url);
+  assert.equal(h.previewTitle().textContent,'sample.jpg · 1 / 1');
+  h.run('handleBack()');assert.equal(h.previewVisible(),false);
+  h.advance(160);assert.equal(!h.previewVisible(),true);
   assert.equal(h.document.activeElement,trigger);
-  h.run('state.conversationId="c2"');trigger.fire('click');assert.equal(h.node('image-preview').hidden,true);
+  h.run('state.conversationId="c2"');trigger.fire('click');assert.equal(!h.previewVisible(),true);
 });
 
 test('image preview closes immediately when reduced motion is requested',()=>{
   const h=harness({reduced:true});const url='data:image/jpeg;base64,AA==';
   h.run(`state.owner="A";state.conversationId="c1";openImagePreview("${url}","sample.jpg",null,{owner:"A",epoch:0,conversationId:"c1"})`);
-  assert.equal(h.node('image-preview').hidden,false);
-  h.run('handleBack()');assert.equal(h.node('image-preview').hidden,true);
-  assert.equal(h.node('image-preview-image').src,'');
+  assert.equal(!h.previewVisible(),false);
+  h.run('handleBack()');assert.equal(!h.previewVisible(),true);
+  assert.equal(h.previewImage().src,'');
 });
 
 test('persisted user images render without filename, remain phone-scoped, and close on account change',async()=>{
@@ -796,9 +803,9 @@ test('persisted user images render without filename, remain phone-scoped, and cl
   assert.ok(gallery);assert.equal(gallery.children.length,1);
   assert.equal(gallery.children[0].children.length,1);
   assert.equal(user.children.some(child=>child.className==='message-attachment-note'),false);
-  const preview=gallery.children[0];preview.fire('click');assert.equal(h.node('image-preview').hidden,false);
+  const preview=gallery.children[0];preview.fire('click');assert.equal(!h.previewVisible(),false);
   h.run('resetMemoryForAuthBoundary=()=>{};processEvent({event:"account.transition",data:{pending:true}})');
-  assert.equal(h.node('image-preview').hidden,true);assert.equal(h.node('image-preview-image').src,'');
+  assert.equal(!h.previewVisible(),true);assert.equal(h.previewImage().src,'');
   assert.equal(h.node('chat-content').children.length,0);
 });
 
@@ -809,7 +816,7 @@ test('late phone message projection cannot restore another account thumbnail aft
   h.reply(0,{messages:[{id:'old',role:'user',text:'A private',thumbnails:[{attachmentId:'a',name:'A.jpg',thumbnailDataUrl:'data:image/jpeg;base64,AA=='}]}],receipts:[],turnStatus:'completed'});
   await loading;
   assert.equal(h.node('chat-content').children.length,0);
-  assert.equal(h.node('image-preview').hidden,true);
+  assert.equal(!h.previewVisible(),true);
 });
 
 test('phone message keeps real text and file names while omitting image labels and status',()=>{
@@ -822,7 +829,7 @@ test('phone message keeps real text and file names while omitting image labels a
   assert.equal(image.children.find(child=>child.className==='message-thumbnails').children[0].children.length,1);
   assert.equal(image.children.some(child=>child.className==='message-attachment-note'),false);
   const mixed=h.run(`messageNode("user","Summarize both\\n[本机附件：sample.png、notes.txt；跨端暂不可见]",[{attachmentId:"a1",name:"sample.png",thumbnailDataUrl:"${url}"}],${scope})`);
-  assert.equal(mixed.textContent,'Summarize both');
+  assert.equal(mixed.querySelector('.markdown').textContent,'Summarize both');
   const note=mixed.children.find(child=>child.className==='message-native-note');
   assert.match(note.textContent,/notes\.txt/);assert.doesNotMatch(note.textContent,/跨端暂不可见/);
   assert.equal(mixed.children.some(child=>child.className==='message-attachment-note'),false);
@@ -859,9 +866,9 @@ test('shared phone image opens its scoped original without visible sync status',
   assert.equal(trigger.children[0].src,displayUrl,'chat uses the bounded display image');
   assert.equal(trigger.children[0].loading,'lazy');
   assert.equal(trigger.children[0].decoding,'async');
-  trigger.fire('click');assert.equal(h.node('image-preview-image').src,previewUrl);
-  assert.match(h.node('image-preview-image').alt,/原图/);
-  assert.match(h.node('image-preview-note').textContent,/已与同账户设备共享/);
+  trigger.fire('click');assert.equal(h.previewImage().src,previewUrl);
+  assert.match(h.previewImage().alt,/原图/);
+  assert.match(h.previewNote().textContent,/已与同账户设备共享/);
   const pending=h.run(`messageNode("user","照片",[{attachmentId:"${id}",name:"原图.png",thumbnailDataUrl:"data:image/png;base64,AA==",syncStatus:"pending"}],${scope},"${messageId}")`);
   assert.equal(pending.children.some(child=>child.className==='message-attachment-note'),false);
   assert.equal(pending.children.find(child=>child.className==='message-thumbnails').children[0].children.length,1);
