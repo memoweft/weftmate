@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -17,8 +17,8 @@ export async function until(fn, timeout = 45000) {
   while (Date.now() < end) { const value = await fn(); if (value) return value; await new Promise(r => setTimeout(r, 100)); }
   throw new Error('MIGRATION_SMOKE_TIMEOUT');
 }
-export async function migrationHost({ executable, source = resolve(process.env.FX21_SOURCE || '.'), old = false } = {}) {
-  const root = mkdtempSync(join(tmpdir(), 'weftmate-fx21-')), profile = join(root, 'profile');
+export async function migrationHost({ executable, source = resolve(process.env.FX21_SOURCE || '.'), old = false, tempRoot = tmpdir() } = {}) {
+  const root = realpathSync.native(mkdtempSync(join(tempRoot, 'weftmate-fx21-'))), profile = join(root, 'profile');
   mkdirSync(profile); writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
   const h = { root, profile, app: null, requests: [], source, executable, old };
   const server = createServer(async (req, res) => {

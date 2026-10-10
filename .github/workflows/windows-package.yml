@@ -1,0 +1,105 @@
+name: Windows packaged application
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+concurrency:
+  group: windows-package-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  package:
+    name: Windows package and startup smoke
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      WEFTMATE_TEST_HOST_NAME: synthetic-host
+    steps:
+      # Upstream patchedDependencies hashes and carried git patches require LF.
+      - name: Preserve source and patch line endings
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Read production DSH pin
+        run: |
+          node --input-type=module -e "import fs from 'node:fs'; const p=JSON.parse(fs.readFileSync('tests/contract/dsh-pin.json')); fs.appendFileSync(process.env.GITHUB_ENV, 'DSH_PIN='+p.commit+'\n');"
+      - uses: actions/checkout@v4
+        with:
+          repository: deepseek-ai/deepseek-harness
+          ref: ${{ env.DSH_PIN }}
+          path: .local/package-dsh
+          persist-credentials: false
+      - name: Apply carried DSH patches
+        shell: bash
+        working-directory: .local/package-dsh
+        run: |
+          set -euo pipefail
+          for patch in "$GITHUB_WORKSPACE"/patches/dsh/*.patch; do
+            git apply --whitespace=nowarn "$patch"
+          done
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - name: Cache pinned Windows DSH compilation
+        id: dsh-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .local/package-dsh/node_modules
+            .local/package-dsh/packages/*/*/lib
+            .local/package-dsh/vendor/*/lib
+            .local/package-dsh/apps/*/lib
+            .local/package-dsh/apps/web/dist
+            .local/package-dsh/native/landlock-run/lib
+          key: package-dsh-patched-windows-node24-${{ env.DSH_PIN }}-${{ hashFiles('patches/dsh/*.patch') }}-v1
+      - name: Link pinned DSH workspace dependencies
+        working-directory: .local/package-dsh
+        run: pnpm install --frozen-lockfile
+      - name: Compile pinned DSH
+        if: steps.dsh-cache.outputs.cache-hit != 'true'
+        working-directory: .local/package-dsh
+        run: pnpm run build
+      - name: Save compiled fixture before package assertions
+        if: steps.dsh-cache.outputs.cache-hit != 'true'
+        timeout-minutes: 2
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .local/package-dsh/node_modules
+            .local/package-dsh/packages/*/*/lib
+            .local/package-dsh/vendor/*/lib
+            .local/package-dsh/apps/*/lib
+            .local/package-dsh/apps/web/dist
+            .local/package-dsh/native/landlock-run/lib
+          key: package-dsh-patched-windows-node24-${{ env.DSH_PIN }}-${{ hashFiles('patches/dsh/*.patch') }}-v1
+      - name: Assemble and verify pinned vendor
+        run: |
+          npm run vendor:dsh
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run vendor:verify
+        env:
+          WEFTMATE_DSH_CHECKOUT: ${{ github.workspace }}/.local/package-dsh
+      - name: Package policy regression tests
+        run: node --test tests/windows-package-policy.test.ts tests/verify-windows-package.test.ts
+      # Builds NSIS + win-unpacked, verifies archive and loose resources, then
+      # drives the real packaged Electron/main/DSH with synthetic local models.
+      # No system install registration or published artifact; keys are temporary.
+      - name: Build, inspect package contents and start real application
+        run: node scripts/nightly/installed-smoke.mjs --out .local/package-smoke
+      - name: Record package gate timings
+        if: always()
+        run: |
+          node --input-type=module -e "import fs from 'node:fs'; const f='.local/package-smoke/results.json'; if(fs.existsSync(f)){const r=JSON.parse(fs.readFileSync(f));fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, JSON.stringify({passed:r.passed,buildSeconds:r.buildSeconds,durationSeconds:r.durationSeconds,checks:r.checks,identityHits:r.packageCheck?.boundaries.buildMachineIdentityHits},null,2)+'\n');}"
+      - name: Upload sanitized smoke diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-package-smoke
+          path: .local/package-smoke
+          retention-days: 7
+          if-no-files-found: warn
