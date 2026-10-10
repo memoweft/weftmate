@@ -5,7 +5,7 @@ globalThis.WeftUiCore.factories.data = (core,effects,environment) => {
         readData: () => request(''), readDataOperation: () => request('/operations'),
         scanData: () => request('/scan', {}), cleanData: (category, confirm) => request('/clean', { category, confirm }),
         cancelData: id => request('/cancel', { id }),
-        async exportAllData(id) { if (globalThis.weftmateDesktop?.exportAllData) return globalThis.weftmateDesktop.exportAllData(id); return request('/export', {}); },
+        async exportAllData(id,local=true) { if (local && globalThis.weftmateDesktop?.exportAllData) return globalThis.weftmateDesktop.exportAllData(id); return request('/export', {}); },
         deleteAllData: (kind, accountName, id) => request(id ? '/confirm' : '/' + kind, { ...(id ? { id } : {}), accountName, confirm: true }),
         showDataExport: id => globalThis.weftmateDesktop?.showDataExport(id),
         async clearLocalData(owner=core.state.ownerId) {

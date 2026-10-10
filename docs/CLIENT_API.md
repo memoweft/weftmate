@@ -1398,12 +1398,12 @@ Android（安卓）精确业务路由已登记，**需要新壳版本**，由编
 
 `operation={id,kind,state,category,bytes,completed,createdAt,error?,result?,canCancel}`。`state=running/pending_confirmation/completed/cancelled/failed`。失败保留类别及安全错误码；重新发起会重试剩余内容。电脑私有桥凭证由主进程加入，远程不能提交宿主保存路径或绕过二次确认。
 
-`statistics={measuredAt,durationMs,categories,totalBytes,accounting}`，类别为对话、记忆、成果与附件原件、缩略图缓存、离线副本、日志、备份、临时文件。每类含`id,name,icon,description,bytes,files,cleanable?,pureCache?`。文件按逻辑长度统计；共享账户／用量JSON（结构化数据）按本账户序列化字节归属；不包含数据库空页、整机日志、外部项目原件和整机备份，界面显示该边界。统计在 Worker（后台工作线程）执行，取消终止遍历。
+`statistics={measuredAt,durationMs,categories,totalBytes,accounting}`，类别为对话、记忆、成果与附件原件、缩略图缓存、离线副本、日志、备份、临时文件。每类含`id,name,icon,description,bytes,files,cleanable?,pureCache?`。文件按逻辑长度统计；共享账户／用量JSON（结构化数据）按本账户序列化字节归属；包含账号库文件中的空页，不包含磁盘分配的额外空间、整机日志、外部项目原件和整机备份，界面显示该边界。统计在 Worker（后台工作线程）执行，取消终止遍历。
 
-导出文件夹含 `README.md`、`conversations/*.md/*.json`、`memory/portable-v4.json`（Core正式Portable v4）、`files/results/`、`files/uploads/`、`files/attachments/`、`settings/settings.json`、`usage/ledger.json`、`manifest.json` 与 `manifest.sha256`。清单沿BK-1逐文件大小／SHA-256（安全哈希）和版本／排除项；临时目录原子发布，取消移除未完成包。模型凭据／密码／云令牌／设备私钥／浏览器登录／其他账户／旧备份排除；临时对话和已遗忘正式记忆排除。包未加密。
+导出文件夹含 `README.md`、`conversations/*.md/*.json`、`memory/portable-v4.json`（Core正式Portable v4）、`files/results/`、`files/uploads/`、`files/attachments/`、`files/workspaces/`（非私密对话的工作副本，排除凭据文件）、`health/daily-summaries.json`（已有健康摘要）、`settings/settings.json`、`usage/ledger.json`、`manifest.json` 与 `manifest.sha256`。清单沿BK-1逐文件大小／SHA-256（安全哈希）和版本／排除项；临时目录原子发布，取消移除未完成包。模型凭据／密码／云令牌／设备私钥／浏览器登录／其他账户／旧备份排除；临时对话和已遗忘正式记忆排除。包未加密。
 
 删除先检查本账户各持久化分区的实际路径与子路径（包括原有账号专属工作目录／原生日志），拒绝越界和目录链接；停止任务，走DSH（助手运行时）正式会话删除及Core（记忆核心）正式删除命令和存储擦除，再清账号副本／索引／设置／用量。失败保留删除标记，阻止继续写入并可重试；程序、其他账户和项目原始文件不删除。新会话与首次引导重新开始。被撤销设备下次连接时清离线副本，不能远程擦除关机设备／用户已导出文件／整机旧备份。清理只删缩略图、明确到期的副本JSON、七天前日志／一天前临时文件，不删除原件。
 
-注销在本机删除之上清本机账户与本账户云绑定。已登录云账户的电脑确认页收当次密码，用既有7.9云接口删除云身份；密码只留当次页面内存，失败明确保留邮箱／云身份并提供重试。本机应急登录没有云授权时须在账户页重新登录云身份完成7.9，不能把本机解绑称为云端注销。桌面原生桥保留该操作的内容无关回执供注销后的进度读取；其他账号不能读取。动态新增`system.data.operation`，只记类别、结果与操作入口。
+注销在本机删除之上清本机账户与本账户云绑定。已登录云账户的电脑确认页收当次密码；本机没有其他注册账户时用既有7.9云接口删除云身份。该接口也移除本账户拥有的宿主路由／成员连接；本机仍有其他账户时保留云身份并明确说明，避免更改其他账户连接；密码只留当次页面内存，失败明确保留邮箱／云身份并提供重试。本机应急登录没有云授权时须在账户页重新登录云身份完成7.9，不能把本机解绑称为云端注销。桌面原生桥保留该操作的内容无关回执供注销后的进度读取；其他账号不能读取。动态新增`system.data.operation`，只记类别、结果与操作入口。
 
 Android（安卓）白名单与JVM（Java虚拟机）测试同步上述精确路径；需要新壳版本，由编排统一版本号。Apple（苹果端）接线清单：设置注册表增加同序分类；接全部路径与后台轮询／取消；Mac系统保存框与完成定位；iPhone远程发起并等待Mac／电脑确认；输入账户名与最后确认、云密码仅当次内存；删除／注销清当前账户本机缓存及加密离线副本，Watch随iPhone撤销；跨账号迟到响应丢弃；浅深／窄窗／系统栏及读屏确认。Apple源码本包未改。

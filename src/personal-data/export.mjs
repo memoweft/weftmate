@@ -17,7 +17,7 @@ export async function exportAccountFolder({ destination, entries, signal, progre
     for await (const entry of entries) {
       signal?.throwIfAborted(); await validate();
       const name = entry.name;
-      if (!name || name.includes('\\') || name.includes(':') || name.startsWith('/') || name.split('/').some(part => !part || part === '.' || part === '..') || !included(name)) throw dataError('DATA_EXPORT_INVALID_PATH');
+      if (!name || name.includes('\\') || name.includes(':') || name.startsWith('/') || name.split('/').some(part => !part || part === '.' || part === '..') || !included(entry.category==='files'?`workspace/${name}`:name)) throw dataError('DATA_EXPORT_INVALID_PATH');
       const target = path.join(stage, name); await mkdir(path.dirname(target), { recursive: true, mode: 0o700 });
       const hash = createHash('sha256'); let size = 0;
       const handle = await open(target, 'wx', 0o600);
