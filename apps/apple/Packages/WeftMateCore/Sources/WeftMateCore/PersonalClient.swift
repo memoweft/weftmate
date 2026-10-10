@@ -9,6 +9,8 @@ private struct Credential: Codable, Sendable {
 }
 private struct DevicesReply: Decodable { let devices: [DeviceRecord] }
 private struct RemoteSession: Decodable {
+    let temporary: Bool?; let memoryMode: String?; let recallEnabled: Bool?; let autoDeleteDays: Int?; let expiresAt: String?; let hasTemporaryContent: Bool?
+    var temporaryState: TemporaryChatState { .init(temporary: temporary ?? false, memoryMode: memoryMode ?? "on", recallEnabled: recallEnabled ?? true, autoDeleteDays: autoDeleteDays, expiresAt: expiresAt, hasTemporaryContent: hasTemporaryContent ?? false) }
     let hostId: String?; let updatedAt: String?
     let projectId: String?; let projectName: String?; let projectNotice: String?; let taskAvailable: Bool?
     let contextUsage: ConversationContextUsage?; let processing: ConversationProcessing?
@@ -399,9 +401,106 @@ public actor PersonalClient {
         return try decode(response.body)
     }
 
+    public func chatIDForNativeSession(_ sessionID: String) async throws -> String {
+        struct Reply: Decodable { let chatId: String }
+        let reply: Reply = try await parityRequest(path: "/sessions/\(try checkedID(sessionID))/chat")
+        _ = try checkedID(reply.chatId); return reply.chatId
+    }
+    public func chatCapabilities() async throws -> ChatCapabilities {
+        ChatCapabilities(try await nativeUpdateStatus().personalCapabilities ?? [:])
+    }
+    public func logicalChat(id: String? = nil) async throws -> LogicalChat {
+        struct Reply: Decodable { let chat: LogicalChat }
+        let reply: Reply = try await parityRequest(path: id.map { "/chats/\(try checkedID($0))" } ?? "/chats/main")
+        return reply.chat
+    }
+    private func chatPath(_ id: String, _ suffix: String, _ query: [String: String] = [:]) throws -> String {
+        var c = URLComponents(); c.queryItems = query.sorted { $0.key < $1.key }.map { URLQueryItem(name: $0.key, value: $0.value) }
+        return "/chats/\(try checkedID(id))/" + suffix + (c.percentEncodedQuery.map { "?" + $0 } ?? "")
+    }
+    public func chatPage(id: String, before: String? = nil, after: String? = nil, around: String? = nil) async throws -> ChatPage {
+        try SharedValidation.require([before, after, around].compactMap { $0 }.count <= 1)
+        var q = ["limit": "100"]; q["before"] = before; q["after"] = after; q["around"] = around
+        let page: ChatPage = try await parityRequest(path: chatPath(id, "events", q))
+        guard page.items.allSatisfy({ $0.chatId == id }), page.items.count <= 100 else { throw APIFailure.identityMismatch }
+        return page
+    }
+    public func chatChanges(id: String, cursor: String) async throws -> ChatChanges {
+        let page: ChatChanges = try await parityRequest(path: chatPath(id, "changes", ["cursor": cursor, "limit": "100"]))
+        guard page.upserts.allSatisfy({ $0.chatId == id }) else { throw APIFailure.identityMismatch }; return page
+    }
+    public func chatSearch(id: String, query: String, cursor: String? = nil) async throws -> ChatSearchPage {
+        var q = ["q": query, "limit": "100"]; q["cursor"] = cursor
+        return try await parityRequest(path: chatPath(id, "search", q))
+    }
+    public func chatDates(id: String, from: String, to: String) async throws -> ChatDates {
+        try await parityRequest(path: chatPath(id, "dates", ["from": from, "to": to]))
+    }
+    public func chatLocate(id: String, date: String) async throws -> ChatLocate {
+        try await parityRequest(path: chatPath(id, "locate", ["date": date]))
+    }
+    public func chatResources(id: String, cursor: String? = nil) async throws -> ChatResourcePage {
+        var q = ["limit": "100"]; q["cursor"] = cursor
+        return try await parityRequest(path: chatPath(id, "resources", q))
+    }
+    public func patchChat(id: String, revision: Int, fields: [String: JSONValue], requestID: String) async throws -> LogicalChat {
+        var body = fields; body["requestId"] = .string(requestID); body["expectedRevision"] = .number(Double(revision))
+        struct Reply: Decodable { let chat: LogicalChat }
+        let reply: Reply = try await parityRequest(path: "/chats/\(try checkedID(id))/metadata", method: "PATCH", body: JSONEncoder().encode(body))
+        guard reply.chat.id == id else { throw APIFailure.identityMismatch }; return reply.chat
+    }
+    /// Query the original request first; an uncertain transport never creates a new identity.
+    public func logicalCommand(request: JSONValue, temporary: Bool = false, submit: Bool = false) async throws -> LogicalCommand? {
+        let (auth, generation) = try snapshot()
+        guard let requestID = request["requestId"]?.string, SharedValidation.request(requestID) else { throw APIFailure.invalidResponse }
+        if let target = request["targetDeviceId"]?.string, target != auth.session.hostId { throw APIFailure.identityMismatch }
+        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
+        let payload = try encoder.encode(request)
+        let endpoint = temporary ? "/sessions/temporary" : "/commands"
+        try retainSharedIntent(requestID: requestID, payload: payload, endpoint: endpoint)
+        let key = "\(generation)|\(requestID)"
+        guard sharedOperations.insert(key).inserted else { throw APIFailure.server(status: 409, code: "REQUEST_IN_PROGRESS") }
+        defer { sharedOperations.remove(key) }
+        try await verify(auth, generation)
+        struct Reply: Decodable { let command: LogicalCommand }
+        let reply: Reply
+        do { reply = try await parityRequest(path: "/commands/by-request/\(try checkedID(requestID))") }
+        catch APIFailure.server(404, _) {
+            guard submit else { return nil }
+            reply = try await parityRequest(path: endpoint, method: "POST", body: payload)
+        }
+        try check(generation); try reply.command.validate(request: request, hostID: auth.session.hostId); return reply.command
+    }
+    public func uploadChatAttachment(_ metadata: OriginalAttachment, file: URL, chatID: String, requestID: String) async throws {
+        try AttachmentLimits.validate(staged: [metadata], originals: nil, messageID: nil)
+        let path = try attachmentPath("/chats/\(try checkedID(chatID))/attachments/" + metadata.id, query: ["requestId": requestID, "name": metadata.name])
+        let response = try await uploadAttachment(path: path, metadata: metadata, file: file)
+        struct Reply: Decodable { let attachment: OriginalAttachment }
+        let reply: Reply = try decode(response.body)
+        guard reply.attachment == metadata else { throw APIFailure.identityMismatch }
+    }
+    public func discardSessionCache(_ id: String, conversationID: String) { timelinePages[id] = nil; timelineMessageIDs[id] = nil; historyCache[conversationID] = nil }
+
     public func conversations(includeArchived: Bool = false) async throws -> [ConversationSummary] {
         let (auth, generation) = try snapshot()
         try await verify(auth, generation)
+        let capabilities = try await chatCapabilities()
+        if capabilities.timeline {
+            let main = try await logicalChat()
+            // FX-14/A15 activity and execution-host metadata remain native facts. The logical Chat schema does not supply them.
+            let native: SessionsReply = try await authorized(auth, generation, path: includeArchived ? "/sessions?archived=all" : "/sessions")
+            let bySession = Dictionary(uniqueKeysWithValues: native.sessions.map { ($0.sessionId, $0) })
+            var rows = [main.summary], cursor: String? = nil
+            repeat {
+                var query = ["kind": "side", "archived": includeArchived ? "all" : "false", "limit": "200"]; query["cursor"] = cursor
+                let page: ChatList = try await parityRequest(path: attachmentPath("/chats", query: query))
+                rows += page.items.map { chat in
+                    let source = chat.activeSessionId.flatMap { bySession[$0] }
+                    return chat.summary(hostID: source?.hostId ?? auth.session.hostId, updatedAt: source?.updatedAt)
+                }; cursor = page.hasMore ? page.nextCursor : nil
+            } while cursor != nil
+            try check(generation); summaries = rows; return rows
+        }
         let events = try await readSync(auth, generation)
         let host: SessionsReply = try await authorized(auth, generation, path: includeArchived ? "/sessions?archived=all" : "/sessions")
         guard host.sessions.count <= 20_000, host.sessions.allSatisfy({ validID($0.sessionId) }),
@@ -416,13 +515,13 @@ public actor PersonalClient {
             guard bound.count <= 1 else { throw APIFailure.invalidResponse }
             let session = bound.first
             rows.append(.init(id: id, title: session?.title ?? title, conversationId: id, sessionId: session?.sessionId,
-                running: session?.running ?? false, sendAvailable: false, originalModelLabel: nil, archived: session?.archived ?? false, pinned: session?.pinned ?? false, unread: session?.unread ?? false, groupId: session?.groupId, contextUsage: session?.contextUsage, processing: session?.processing, projectId: session?.projectId, projectName: session?.projectName, projectNotice: session?.projectNotice, taskAvailable: session?.taskAvailable, hostId: session?.hostId, updatedAt: session?.updatedAt))
+                running: session?.running ?? false, sendAvailable: false, originalModelLabel: nil, archived: session?.archived ?? false, pinned: session?.pinned ?? false, unread: session?.unread ?? false, groupId: session?.groupId, contextUsage: session?.contextUsage, processing: session?.processing, projectId: session?.projectId, projectName: session?.projectName, projectNotice: session?.projectNotice, taskAvailable: session?.taskAvailable, hostId: session?.hostId, updatedAt: session?.updatedAt, temporaryState: session?.temporaryState ?? .init()))
         }
         for session in host.sessions where session.conversationId == nil || grouped[session.conversationId!] == nil {
             rows.append(.init(id: session.conversationId ?? session.sessionId,
                 title: session.title.isEmpty ? "电脑会话" : session.title, conversationId: session.conversationId,
                 sessionId: session.sessionId, running: session.running, sendAvailable: false,
-                originalModelLabel: session.modelProfileId, archived: session.archived ?? false, pinned: session.pinned ?? false, unread: session.unread ?? false, groupId: session.groupId, contextUsage: session.contextUsage, processing: session.processing, projectId: session.projectId, projectName: session.projectName, projectNotice: session.projectNotice, taskAvailable: session.taskAvailable, hostId: session.hostId, updatedAt: session.updatedAt))
+                originalModelLabel: session.modelProfileId, archived: session.archived ?? false, pinned: session.pinned ?? false, unread: session.unread ?? false, groupId: session.groupId, contextUsage: session.contextUsage, processing: session.processing, projectId: session.projectId, projectName: session.projectName, projectNotice: session.projectNotice, taskAvailable: session.taskAvailable, hostId: session.hostId, updatedAt: session.updatedAt, temporaryState: session.temporaryState))
         }
         try check(generation)
         syncEvents = events

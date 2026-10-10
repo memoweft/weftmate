@@ -1,0 +1,6 @@
+{
+  "phase": "Return to main after closing temporary menu",
+  "status": "Harness did not produce completion within observed interval; isolated child group stopped",
+  "fix": "Measure main scrolling before switching to temporary chat, then finish directly after menu verification",
+  "passed": false
+}

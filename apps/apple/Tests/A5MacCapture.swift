@@ -46,6 +46,7 @@ import Security
         if let driver = CommandLine.arguments.dropFirst(7).first(where: { $0.hasPrefix("a13-driver=") }) { app.arguments?.append(contentsOf: ["--a13-driver", String(driver.dropFirst("a13-driver=".count))]) }
         if let driver = CommandLine.arguments.dropFirst(7).first(where: { $0.hasPrefix("a14-driver=") }) { app.arguments?.append(contentsOf: ["--a14-driver", String(driver.dropFirst("a14-driver=".count))]) }
         if let driver = CommandLine.arguments.dropFirst(7).first(where: { $0.hasPrefix("a15-driver=") }) { app.arguments?.append(contentsOf: ["--a15-driver", String(driver.dropFirst("a15-driver=".count)), "--a15-synthetic-media"]) }
+        if let driver = CommandLine.arguments.dropFirst(7).first(where: { $0.hasPrefix("a16-driver=") }) { app.arguments?.append(contentsOf: ["--a16-driver", String(driver.dropFirst("a16-driver=".count))]) }
         let output = Pipe(); app.standardOutput = output; app.standardError = output
         try app.run()
         defer {
@@ -65,6 +66,10 @@ import Security
             while let newline = pending.firstIndex(of: 10) {
                 let line = String(decoding: pending[..<newline], as: UTF8.self)
                 pending.removeSubrange(...newline)
+                if scene == "a16-all", line.hasPrefix("A10_REPORT:") {
+                    try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
+                    try Data(line.dropFirst("A10_REPORT:".count).utf8).write(to: destination.appendingPathComponent("native-report.json"))
+                }
                 if line.hasPrefix("A14_SCAN:") {
                     try Data(line.dropFirst("A14_SCAN:".count).utf8).write(to: destination.appendingPathComponent("storage-scan.json"))
                 }
@@ -73,8 +78,8 @@ import Security
                     let entry = try JSONSerialization.jsonObject(with: Data(line.dropFirst("A13_TEXT:".count).utf8)) as! [String: Any]
                     try JSONSerialization.data(withJSONObject: entry, options: [.prettyPrinted, .sortedKeys]).write(to: destination.appendingPathComponent((entry["scene"] as! String) + "-text.json"))
                 }
-                if line.hasPrefix("A14_DEBUG:") || line.hasPrefix("A11_STEP:") || line.hasPrefix("A13_NATIVE:") || line.hasPrefix("A13_RESPONDER:") || line.hasPrefix("A13_KEY_STATE:") { FileHandle.standardOutput.write(Data((line + "\n").utf8)) }
-                if ["a15-all", "a14-all", "a13-all", "a10-all", "a11-all", "a11-remote", "a12-login"].contains(scene), line.hasPrefix("A10_CAPTURE:") {
+                if line.hasPrefix("A16_STEP:") || line.hasPrefix("A14_DEBUG:") || line.hasPrefix("A11_STEP:") || line.hasPrefix("A13_NATIVE:") || line.hasPrefix("A13_RESPONDER:") || line.hasPrefix("A13_KEY_STATE:") { FileHandle.standardOutput.write(Data((line + "\n").utf8)) }
+                if ["a16-all", "a15-all", "a14-all", "a13-all", "a10-all", "a11-all", "a11-remote", "a12-login"].contains(scene), line.hasPrefix("A10_CAPTURE:") {
                     let parts = line.split(separator: ":", maxSplits: 2)
                     guard parts.count == 3, let png = Data(base64Encoded: String(parts[2])) else { throw CocoaError(.fileReadCorruptFile) }
                     try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
@@ -84,7 +89,7 @@ import Security
             }
         }
         app.waitUntilExit()
-        if ["a15-all", "a14-all", "a13-all", "a10-all", "a11-all", "a11-remote", "a12-login"].contains(scene), let text = String(data: bytes, encoding: .utf8), app.terminationStatus == 0 {
+        if ["a16-all", "a15-all", "a14-all", "a13-all", "a10-all", "a11-all", "a11-remote", "a12-login"].contains(scene), let text = String(data: bytes, encoding: .utf8), app.terminationStatus == 0 {
             try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
             for line in text.split(separator: "\n") where line.hasPrefix("A10_CAPTURE:") {
                 let parts = line.split(separator: ":", maxSplits: 2)

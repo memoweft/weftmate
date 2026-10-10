@@ -51,6 +51,7 @@ public struct TimelinePage: Codable, Equatable, Sendable {
     public let nextBeforeSeq: Int?
     public let hasOlder: Bool?
     public let latestSeq: Int?
+    public var cacheAllowed: Bool? = nil
     public static func query(beforeSeq: Int?, afterSeq: Int?, limit: Int) throws -> String {
         guard (1...200).contains(limit), beforeSeq == nil || afterSeq == nil,
               beforeSeq.map({ (0...SharedValidation.maximumSequence).contains($0) }) ?? true,

@@ -47,7 +47,7 @@ struct ConversationRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppleTokens.Space.p5) {
             HStack(alignment: .firstTextBaseline, spacing: AppleTokens.Space.p8) {
-                Text(conversation.title.isEmpty ? "未命名对话" : conversation.title)
+                Text((conversation.temporaryState.notice().isEmpty ? "" : "临时对话 · ") + (conversation.title.isEmpty ? "未命名对话" : conversation.title))
                     .font(AppleTokens.Fonts.body.weight(.medium)).foregroundStyle(selected ? Weave.onAccent : Weave.ink).lineLimit(2)
                 if conversation.pinned { WeftIcon("pin", size: 16).foregroundStyle(selected ? Weave.onAccent : Weave.muted) }
                 if conversation.unread { Text("未读").font(AppleTokens.Fonts.caption).foregroundStyle(selected ? Weave.onAccent : Weave.accent) }
@@ -236,6 +236,9 @@ struct ConversationView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: AppleTokens.Space.p22) {
+                    SideChatSourceView(app: model, conversation: conversation)
+                    if !conversation.temporaryState.notice().isEmpty { Text(conversation.temporaryState.notice()).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("temporaryChat.title") }
+
                     if model.timeline.hasOlder {
                         Button(model.olderBusy ? "正在读取…" : "读取更早的记录") {
                             // Keep the current named record in view when earlier history is prepended.
@@ -307,6 +310,9 @@ struct ConversationView: View {
                         .buttonStyle(OutlineActionStyle()).padding(AppleTokens.Space.p12).accessibilityIdentifier("returnToBottom")
                 }
             }
+            .onChange(of: model.sourceMessageTarget) { _, seq in
+                if let seq { follow.userScrolled(distanceFromBottom: 100); proxy.scrollTo("event-\(seq)", anchor: .center) }
+            }
             .onChange(of: visibleMessageID) { _, value in
                 if value == "older", !model.olderBusy, !model.historyBusy { Task { await readOlder(proxy: proxy) } }
             }
@@ -334,32 +340,22 @@ struct ConversationView: View {
             }
         }
         .background(Weave.surface)
-        .navigationTitle(conversation.title.isEmpty ? "对话" : conversation.title)
+        .navigationTitle(conversation.temporaryState.notice().isEmpty ? (conversation.title.isEmpty ? "对话" : conversation.title) : "临时对话")
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button { showingSessionActions.toggle() } label: { WeftIcon("more") }.accessibilityLabel("对话菜单")
+                Button { showingSessionActions.toggle() } label: { WeftIcon("more") }.accessibilityLabel("对话菜单").accessibilityIdentifier("conversationMenu")
                     .sheet(isPresented: $showingSessionActions, onDismiss: {
                         if deleteAfterActions { deleteAfterActions = false; model.askToDelete(conversation) }
                         if usageAfterActions { usageAfterActions = false; showingUsage = true }
                     }) {
-                        VStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
-                            SessionActions(app: model, conversation: conversation, onSelect: { showingSessionActions = false },
-                                onDelete: { deleteAfterActions = true; showingSessionActions = false })
-                            Button("本对话用量") {
-                                #if os(macOS)
-                                showingSessionActions = false
-                                model.settingsRoute = .usage(sessionID: conversation.sessionId); openWindow(id: "settings")
-                                #else
-                                usageAfterActions = true; showingSessionActions = false
-                                #endif
-                            }.accessibilityIdentifier("conversationUsage")
-                        }.font(AppleTokens.Fonts.body).padding(AppleTokens.Space.p18)
-                            #if os(iOS)
-                            .presentationDetents([.medium])
-                            #endif
+                        #if os(iOS)
+                        ScrollView { sessionMenuContent }.presentationDetents([.medium, .large])
+                        #else
+                        sessionMenuContent
+                        #endif
                     }
             }
             ToolbarItem(placement: .primaryAction) {
@@ -420,6 +416,22 @@ struct ConversationView: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("conversationDetail")
+    }
+
+    private var sessionMenuContent: some View {
+                        VStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
+                            SessionActions(app: model, conversation: conversation, onSelect: { showingSessionActions = false },
+                                onDelete: { deleteAfterActions = true; showingSessionActions = false })
+                            Button("本对话用量") {
+                                #if os(macOS)
+                                showingSessionActions = false
+                                model.settingsRoute = .usage(sessionID: conversation.sessionId); openWindow(id: "settings")
+                                #else
+                                usageAfterActions = true; showingSessionActions = false
+                                #endif
+                            }.accessibilityIdentifier("conversationUsage")
+                            Button("完成") { showingSessionActions = false }.accessibilityIdentifier("closeSessionActions")
+                        }.font(AppleTokens.Fonts.body).padding(AppleTokens.Space.p18)
     }
 
     private func readOlder(proxy: ScrollViewProxy) async {
@@ -578,6 +590,13 @@ struct ConversationView: View {
                 }
                 HStack(spacing: AppleTokens.Space.p4) {
                     Menu {
+                        if model.mainChat.capabilities.supports("sideChats") {
+                            Button("开旁聊") { Task { await model.mainChat.createSide(sourceConversation: conversation) } }
+                                .disabled(conversation.temporaryState.hasTemporaryContent)
+                        }
+                        if model.mainChat.capabilities.supports("temporaryChats") {
+                            Button("这次别记") { Task { await model.mainChat.createSide(temporary: true, sourceConversation: conversation) } }
+                        }
                         #if os(macOS)
                         Button("添加文件") { importScope = model.uxScope; importingAttachments = true }.accessibilityIdentifier("composer.file")
                         Button("区域截图") { addNativeMedia(screenshot: true) }.accessibilityIdentifier("composer.screenshot")
@@ -666,6 +685,7 @@ struct ConversationView: View {
             .background(Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r16))
             .overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r16).strokeBorder(Weave.line))
 
+            if !conversation.temporaryState.notice().isEmpty { Text(conversation.temporaryState.notice()).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("temporaryChat.composer") }
             if let attachmentInputError { Text(attachmentInputError).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
             if let error = model.draftError {
                 InlineNotice(message: error, isError: true).accessibilityIdentifier("draftStorageError")
@@ -815,6 +835,11 @@ struct MessageView: View {
         .padding(.vertical, AppleTokens.Space.p2)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("message.\(message.id)")
+        .contextMenu {
+            if let conversation = model.selectedConversation, model.mainChat.capabilities.supports("sideChats"), !conversation.temporaryState.hasTemporaryContent {
+                Button("开旁聊") { Task { await model.mainChat.createSideFromMessage(message, conversation: conversation) } }
+            }
+        }
     }
 }
 

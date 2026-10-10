@@ -7,7 +7,9 @@ struct SessionActions: View {
     var onSelect: () -> Void = {}
     var onDelete: (() -> Void)?
     var body: some View {
-        if conversation.sessionId != nil {
+        if !conversation.isMainChat, conversation.sessionId != nil {
+            if app.mainChat.capabilities.supports("temporaryChats") { TemporaryChatMenu(app: app, conversation: conversation) }
+
             ForEach(SessionMenuAction.allCases, id: \.self) { action in
                 if action == .project {
                     Menu("移至项目") {
