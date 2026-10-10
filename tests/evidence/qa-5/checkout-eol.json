@@ -1,0 +1,5 @@
+{
+  "file": "apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/OperationNames.swift",
+  "reason": "working checkout retained CRLF despite existing eol=lf; content equals baseline after LF normalization",
+  "productDiff": false
+}

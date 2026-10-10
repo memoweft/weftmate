@@ -1,0 +1,21 @@
+{
+  "observedAt": "2026-10-10T06:33:21Z",
+  "method": "Read-only SQLite queries against synthetic QA5 profiles, while both restarted hosts reported MEMORY_FORMATION_PENDING; no database mutation",
+  "scope": "Diagnostic observations from the early 180-second-wait batches. Final nine scenarios independently measured eventual recovery with a seven-minute observation timeout.",
+  "jobs": [
+    {
+      "run": "exit-matrix preliminary formation scenario",
+      "state": "processing",
+      "attempts": 1,
+      "createdAt": "2026-10-10T06:29:57.068Z",
+      "leaseExpiresAt": "2026-10-10T06:34:57.132Z"
+    },
+    {
+      "run": "exit-formation-final preliminary scenario",
+      "state": "processing",
+      "attempts": 1,
+      "createdAt": "2026-10-10T06:31:53.204Z",
+      "leaseExpiresAt": "2026-10-10T06:36:53.272Z"
+    }
+  ]
+}

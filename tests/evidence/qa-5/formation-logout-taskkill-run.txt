@@ -1,0 +1,3 @@
+formation logout-taskkill 1 true
+formation logout-taskkill 2 true
+formation logout-taskkill 3 true

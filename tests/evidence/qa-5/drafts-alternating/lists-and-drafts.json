@@ -1,0 +1,280 @@
+{
+  "startedAt": "2026-10-10T06:42:28.340Z",
+  "syntheticRecords": true,
+  "realPersonalApi": true,
+  "realElectron": true,
+  "budgets": {
+    "listP95Ms": 150,
+    "createInputP95Ms": 1000
+  },
+  "populations": [
+    {
+      "count": 500,
+      "sessionsP95Ms": 40.49490000000014,
+      "chatsP95Ms": 11.345800000000054,
+      "createInputP95Ms": 448.57090000000244,
+      "renderedRows": 100,
+      "listSamples": {
+        "sessions": [
+          42.17079999999987,
+          4.533600000000206,
+          5.86010000000033,
+          3.9666000000001986,
+          5.718999999999596,
+          5.5612999999998465,
+          4.171200000000226,
+          7.780999999999949,
+          4.67489999999998,
+          4.00630000000001,
+          7.933100000000195,
+          4.828300000000127,
+          3.5716999999999643,
+          40.49490000000014,
+          3.8793000000000575,
+          5.2784999999998945,
+          3.3951999999999316,
+          3.923999999999978,
+          7.701000000000022,
+          4.078500000000076,
+          3.6086999999997715,
+          4.832699999999932,
+          4.242499999999836,
+          3.761399999999867,
+          4.057400000000143,
+          3.3595000000000255,
+          3.860500000000229,
+          3.801300000000083,
+          3.6610999999998057,
+          3.8884000000002743
+        ],
+        "chats": [
+          8.302499999999782,
+          5.160199999999804,
+          6.0591999999996915,
+          11.345800000000054,
+          6.836999999999989,
+          9.300000000000182,
+          4.665899999999965,
+          4.414299999999912,
+          4.222500000000309,
+          14.682000000000244,
+          4.970499999999902,
+          7.425500000000284,
+          4.14469999999983,
+          5.547599999999875,
+          5.248099999999795,
+          4.008400000000165,
+          6.594700000000103,
+          4.389400000000023,
+          5.8508999999999105,
+          6.849999999999909,
+          4.8858000000000175,
+          4.71309999999994,
+          4.998499999999694,
+          4.873800000000301,
+          4.386899999999969,
+          3.7060999999998785,
+          4.236599999999726,
+          4.515599999999722,
+          4.033300000000054,
+          5.484299999999621
+        ]
+      },
+      "createSamples": [
+        448.57090000000244,
+        415.85849999999846,
+        421.29629999999815,
+        414.91189999999915,
+        442.71700000000055,
+        420.70070000000123,
+        391.1985999999997,
+        438.58720000000176,
+        420.78129999999874,
+        444.72360000000117
+      ]
+    }
+  ],
+  "drafts": [
+    {
+      "attempt": 1,
+      "surface": "electron",
+      "width": 1200,
+      "height": 800,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "firstInputSendEnabled": true
+    },
+    {
+      "attempt": 2,
+      "surface": "electron",
+      "width": 1200,
+      "height": 800,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "firstInputSendEnabled": true
+    },
+    {
+      "attempt": 3,
+      "surface": "electron",
+      "width": 1200,
+      "height": 800,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "firstInputSendEnabled": true
+    },
+    {
+      "attempt": 4,
+      "surface": "electron",
+      "width": 1200,
+      "height": 800,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "firstInputSendEnabled": true
+    },
+    {
+      "attempt": 5,
+      "surface": "electron",
+      "width": 1200,
+      "height": 800,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "firstInputSendEnabled": true
+    },
+    {
+      "attempt": 6,
+      "surface": "electron",
+      "width": 1200,
+      "height": 800,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "firstInputSendEnabled": true
+    },
+    {
+      "attempt": 7,
+      "surface": "electron",
+      "width": 1200,
+      "height": 800,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "firstInputSendEnabled": true
+    },
+    {
+      "attempt": 8,
+      "surface": "electron",
+      "width": 1200,
+      "height": 800,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "firstInputSendEnabled": true
+    },
+    {
+      "attempt": 9,
+      "surface": "electron",
+      "width": 1200,
+      "height": 800,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "firstInputSendEnabled": true
+    },
+    {
+      "attempt": 10,
+      "surface": "electron",
+      "width": 1200,
+      "height": 800,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "firstInputSendEnabled": true
+    },
+    {
+      "attempt": 1,
+      "surface": "phone-web",
+      "width": 390,
+      "height": 844,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "firstInputSendEnabled": true
+    },
+    {
+      "attempt": 2,
+      "surface": "phone-web",
+      "width": 390,
+      "height": 844,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "firstInputSendEnabled": true
+    },
+    {
+      "attempt": 3,
+      "surface": "phone-web",
+      "width": 390,
+      "height": 844,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "firstInputSendEnabled": true
+    },
+    {
+      "attempt": 4,
+      "surface": "phone-web",
+      "width": 390,
+      "height": 844,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "firstInputSendEnabled": true
+    },
+    {
+      "attempt": 5,
+      "surface": "phone-web",
+      "width": 390,
+      "height": 844,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "firstInputSendEnabled": true
+    },
+    {
+      "attempt": 6,
+      "surface": "phone-web",
+      "width": 390,
+      "height": 844,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "firstInputSendEnabled": true
+    },
+    {
+      "attempt": 7,
+      "surface": "phone-web",
+      "width": 390,
+      "height": 844,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "firstInputSendEnabled": true
+    },
+    {
+      "attempt": 8,
+      "surface": "phone-web",
+      "width": 390,
+      "height": 844,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "firstInputSendEnabled": true
+    },
+    {
+      "attempt": 9,
+      "surface": "phone-web",
+      "width": 390,
+      "height": 844,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "firstInputSendEnabled": true
+    },
+    {
+      "attempt": 10,
+      "surface": "phone-web",
+      "width": 390,
+      "height": 844,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "firstInputSendEnabled": true
+    }
+  ],
+  "cleaned": true
+}
