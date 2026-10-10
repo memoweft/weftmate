@@ -1,0 +1,12 @@
+✔ Apple operation names are generated from the shared ui-core tables (41.6227ms)
+✔ Apple authored Swift/resources and captured synthetic native text contain no internal metadata names (53.7155ms)
+✔ Swift copy scanner rejects visible names and permits wire keys and identifiers (0.3264ms)
+✔ A13 keeps every required native scene in both Mac/iPhone themes plus Watch approval (0.5815ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 325.0262

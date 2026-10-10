@@ -1,0 +1,21 @@
+{
+  "startedAt": "2026-10-10T01:28:50.974Z",
+  "realCloudEntrypoint": "services/cloud/src/main.mjs",
+  "realElectronEntrypoint": ".",
+  "sourceCommit": "a086c3964d84906cfb0228f332b1f16ef3fac009",
+  "phase": "relay-phone",
+  "baselineHost": false,
+  "steps": [
+    "Real cloud entrypoint health"
+  ],
+  "cloudTransport": "WSL Ubuntu",
+  "passed": false,
+  "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('heading', { name: '登录 WeftMate', exact: true }) to be visible\u001b[22m\n",
+  "pageErrors": [],
+  "failedRequests": [
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    }
+  ]
+}

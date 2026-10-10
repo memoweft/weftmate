@@ -1,0 +1,152 @@
+{
+  "method": "MiMo rubric judge; overlapping dimensions counted independently, repeated same claim deduplicated; omissions separate",
+  "input": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\tests\\evidence\\fact-1\\anchored\\mimo-http\\results.json",
+  "judgements": [
+    {
+      "id": "http-redirects-1",
+      "documentSha256": "48be226c4eebbf36ca623fb1457fe28893defbc39948ffb4ef5c859a2c41187b",
+      "durationMs": 4423,
+      "usage": {
+        "completion_tokens": 56,
+        "prompt_tokens": 23928,
+        "total_tokens": 23984,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [],
+        "scope": [],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": true,
+          "verbatimExcerpts": true,
+          "claimMapping": true,
+          "issues": []
+        }
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 1570,
+            "text": "草稿断言: 301/308永久、302/307临时 | 出处原文: \"assigned a new permanent URI\"(301,308) / \"resides temporarily under a different URI\"(302,307) | 原文主体: 目标资源 target resource | 草稿主体: 301/308永久、302/307临时 | 条件/例外: 无 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1570,
+            "text": "草稿断言: 303是间接响应、不按永久/临时划分 | 出处原文: \"indirect response\" | 原文主体: 303 重定向到不同资源提供间接响应 | 草稿主体: 303 | 条件/例外: 草稿已说明不属永久/临时轴 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1570,
+            "text": "草稿断言: 301/302 POST改GET是MAY可非必须、不想要时分别用308/307 | 出处原文: \"a user agent MAY change the request method from POST to GET for the subsequent request ... 308/307 ... can be used instead\" | 原文主体: a user agent 后续请求 | 草稿主体: 用户代理自动重定向时 | 条件/例外: 针对 subsequent request；历史原因注 | 数字: 无 | 结论: 一致（草稿保留\"后续请求\"与\"出于历史原因\"）"
+          },
+          {
+            "seq": 1570,
+            "text": "草稿断言: 303引导GET或HEAD且适用任意方法 | 出处原文: \"a GET or HEAD request if using HTTP\" / \"applicable to any HTTP method\" | 原文主体: user agent can perform retrieval request | 草稿主体: 用户代理发起GET/HEAD检索 | 条件/例外: if using HTTP；primarily用于POST输出重定向 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1570,
+            "text": "草稿断言: 307 MUST NOT改方法 | 出处原文: \"the user agent MUST NOT change the request method if it performs an automatic redirection to that URI\" | 原文主体: user agent 自动重定向 | 草稿主体: 自动重定向时必须保持原方法 | 条件/例外: 条件在自动重定向到该URI时 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1570,
+            "text": "草稿断言: 308节内无POST改GET条款，与§15.4 method-preserving历史一致 | 出处原文: \"307 ... and 308 ... method-preserving redirects\" | 原文主体: 307/308被加入表示保持方法 | 草稿主体: 308不作改写 | 条件/例外: 308节内确无改方法条款（已读全文L8-L14） | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1570,
+            "text": "草稿断言: 308 might not be recognized everywhere | 出处原文: \"much younger (June 2014) ... might not be recognized everywhere\" | 原文主体: this status code(308) | 草稿主体: 308出现较晚可能不被识别 | 条件/例外: June 2014 | 数字: 2014 | 结论: 一致"
+          },
+          {
+            "seq": 1570,
+            "text": "草稿断言: 自动重定向MAY、非安全方法需谨慎、按语义改方法、改GET/HEAD后移除内容头部 | 出处原文: \"MAY automatically redirect\" / \"care for methods not known to be safe\" / \"Change the request method according to ... if applicable.\" / \"remove content-specific header fields\" | 原文主体: user agent 通用规则 | 草稿主体: 通用规则 | 条件/例外: if applicable；列举头部含but not limited to | 数字: 无 | 结论: 一致"
+          }
+        ],
+        "lastSaveSeq": 1517,
+        "beforeFinalSave": false
+      }
+    },
+    {
+      "id": "http-redirects-2",
+      "documentSha256": "65eadd8f513171264819378d8cea9073e3ffd6374081a2e1e32668566db379d0",
+      "durationMs": 5997,
+      "usage": {
+        "completion_tokens": 56,
+        "prompt_tokens": 12570,
+        "total_tokens": 12626,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [],
+        "scope": [],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": true,
+          "verbatimExcerpts": true,
+          "claimMapping": true,
+          "issues": []
+        }
+      },
+      "nativeAudit": {
+        "rows": [
+          {
+            "seq": 1220,
+            "text": "草稿断言: 301、308 为永久重定向 | 出处[1][2]原文: \"new permanent URI and any future references ... ought to use one of the enclosed URIs\" | 原文主体: 301/308 状态码本身 | 草稿主体: 301、308 | 条件/例外: 无 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1220,
+            "text": "草稿断言: 302、307 为临时重定向 | 出处[1][3]原文: \"resides temporarily under a different URI\" | 原文主体: 302/307 | 草稿主体: 302、307 | 条件/例外: 无 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1220,
+            "text": "草稿断言: 303 不表示永久/临时，指向提供间接响应的另一资源 | 出处[4]原文: \"redirecting the user agent to a different resource ... indirect response to the original request\" | 原文主体: 303 | 草稿主体: 303 | 条件/例外: 可用 GET/HEAD 检索请求 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1220,
+            "text": "草稿断言: POST 在 301/302 上自动重定向改成 GET 是「可以」(MAY)非必须 | 出处[1][2][3]原文: \"a user agent MAY change the request method from POST to GET\" | 原文主体: user agent 对 301/302 的 POST 后续请求 | 草稿主体: POST 自动重定向 | 条件/例外: 历史原因；不想要则用 308/307 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1220,
+            "text": "草稿断言: 307 自动重定向不得改方法 | 出处[1]原文: \"the user agent MUST NOT change the request method\" (§15.4.8) | 原文主体: user agent 对 307 | 草稿主体: 307 | 条件/例外: 仅 307 条文明文 MUST NOT | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1220,
+            "text": "草稿断言: 308 保留方法（不改 POST→GET）| 出处[1]原文: \"307 ... and 308 ... were later added to unambiguously indicate method-preserving redirects\" | 原文主体: 307/308 为方法保留重定向 | 草稿主体: 308 | 条件/例外: 依据 §15.4 Note（308 节未单独写 MUST NOT）| 数字: 无 | 结论: 一致（以 Note 支撑）"
+          },
+          {
+            "seq": 1220,
+            "text": "草稿断言: 303 用于 POST 结果转到另一资源，转成检索请求 | 出处[4]原文: \"primarily used to allow the output of a POST action to redirect ... A user agent can perform a retrieval request (a GET or HEAD request if using HTTP)\" | 原文主体: 303 适用于任何方法、主要为 POST 输出 | 草稿主体: 303 → GET/HEAD | 条件/例外: 仅 HTTP 下 GET/HEAD | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1220,
+            "text": "草稿断言: 自动重定向对非安全方法需谨慎 | 出处[1]原文: \"Automatic redirection needs to be done with care for methods not known to be safe\" | 原文主体: user agent 自动重定向 | 草稿主体: 安全提示 | 条件/例外: 无 | 数字: 无 | 结论: 一致"
+          },
+          {
+            "seq": 1220,
+            "text": "草稿断言: 301/308 启发式可缓存 | 出处[1]原文: \"A 301 response is heuristically cacheable\" / \"A 308 response is heuristically cacheable\" | 原文主体: 301/308 | 草稿主体: 301、308 | 条件/例外: 除非方法定义或显式缓存控制另有说明 | 数字: 无 | 结论: 一致"
+          }
+        ],
+        "lastSaveSeq": 1160,
+        "beforeFinalSave": true
+      }
+    }
+  ]
+}

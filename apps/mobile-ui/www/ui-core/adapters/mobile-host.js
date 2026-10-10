@@ -18,6 +18,7 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
       return;
     }
     if (core.state.ownerId !== (state.owner || null)) {
+      core.state.executionAccount = undefined;core.state.executionAccountName = undefined;core.state.sessionSelecting=false;core.resetLogicalSession?.();
       core.state.models = [];core.state.modelsKnown=false;
       core.state.modelProfileId = null;
       core.state.sessionGroups = []; core.state.projects = []; core.state.projectCanManage = false; core.state.projectsError = '';
@@ -122,6 +123,7 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
     if (owner !== state.owner || epoch !== state.authEpoch) return;
     const exact = ['chats','chatTimeline','chatSearch','chatSend','sideChats','chatResources'].every(key => status.personalCapabilities?.[key] === 1);
     core.state.personalCapabilities = status.personalCapabilities || {};
+    core.state.executionAccount = status.executionAccount;core.state.executionAccountName = status.executionAccountName;
     core.state.hostId = status.hostId;
     core.state.capabilities = status.backend?.capabilities || null;
     if (environment.logicalChats && exact) {

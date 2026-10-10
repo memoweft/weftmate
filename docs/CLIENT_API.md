@@ -99,13 +99,13 @@
 | DELETE `/auth/devices/{deviceId}` | 无；客户端可发 `{}`；撤销当前设备会清 Cookie | 200 `{"revoked":true}` | 404 `NOT_FOUND` | 桌、手、安 |
 | GET `/status` | 无 | 200 `{"ownerId":"owner-…","hostId":"host-…","sync":{"available":true},"downloads":{"android":true},"backend":{"runtime":"ready","referenceScan":"ready","capabilities":{"chat":{"available":true}},"modules":{"memory":"connected"}}}` | 后端错误 | 桌、手、安、苹 |
 
-`backend.capabilities` 还含 `desktopOpenApp,naturalLanguageDesktop`；`modules` 含 `memory,mods,tasks,notifications,workspaces,capabilities`。这些是能力/状态字段，不代表存在同名 HTTP 路由。FX-9 增加可选 `executionAccount:boolean`，表示当前账号是否为这台电脑的执行账号；`false` 时仅可聊天，界面须说明不能操作电脑或读取原账号资料。旧宿主缺字段时按既有能力投影处理。
+`backend.capabilities` 还含 `desktopOpenApp,naturalLanguageDesktop`；`modules` 含 `memory,mods,tasks,notifications,workspaces,capabilities`。这些是能力/状态字段，不代表存在同名 HTTP 路由。FX-9 增加可选 `executionAccount:boolean`，表示当前账号是否为这台电脑的执行账号；`false` 时仅可聊天，界面须说明不能操作电脑或读取原账号资料。旧宿主缺字段时按既有能力投影处理。FX-16 增加可选 `executionAccountName:string|null`：非执行账号只收到执行账号昵称；昵称为邮箱时返回「原账号」，不返回登录邮箱、身份或凭据。
 
 ### 3.3 会话列表与管理（12）
 
 | 方法与路径 | 请求参数/体 | 响应示例 / 状态 | 主要领域错误 | 使用端 |
 |---|---|---|---|---|
-| GET `/sessions` | 可选单值 `archived=false`（默认）、`true`（仅归档）、`all`（全部）；无列表分页/搜索参数 | 200 `{"sessions":[{"sessionId":"session-…","title":"资料整理","running":true,"sendAvailable":true,"archived":false,"modelProfileId":"local","processing":{"phase":"queued","ahead":1,"modelName":"Muse Q5"}}],"snapshotAt":"2026-10-09T00:00:00.000Z"}` | 后端整体失败/单会话降级 | 桌、手、安、苹 |
+| GET `/sessions` | 可选单值 `archived=false`（默认）、`true`（仅归档）、`all`（全部）；FX-16 增加 `limit`（1–200，新客户端请求100；省略时保留旧客户端完整枚举）、`cursor`（前页最后一项的会话 ID）、`q`（标题搜索，最多256字符） | 200 `{"sessions":[{"sessionId":"session-…","title":"资料整理","running":true,"sendAvailable":true,"archived":false,"modelProfileId":"local","processing":{"phase":"queued","ahead":1,"modelName":"Muse Q5"}}],"snapshotAt":"2026-10-09T00:00:00.000Z"}` | 后端整体失败/单会话降级 | 桌、手、安、苹 |
 | PATCH `/sessions/{sessionId}/metadata` | `pinned?,unread?,title?,groupId?,projectId?`，至少一项；布尔值、非空标题≤256字符；groupId为本账号分组ID或null | 200 `{sessionId,pinned?,unread?,title?,groupId?,readMessageSeq?}`；原生 `sessionTitle.rename` 写用户标题，停止自动标题覆盖；手动已读记录最新助手消息水位 | 400 INVALID_REQUEST；404 SESSION_UNAVAILABLE / NOT_FOUND；409 SESSION_BUSY | 桌、手、安、苹 |
 | POST `/sessions/{sessionId}/fork` | 空对象 `{}`；原对话须空闲 | 201 `{sessionId,title}`；原生 DSH（助手运行时）事件种子及 parentSession 分叉谱系创建可继续的独立对话，标题加「（分叉）」；复制独立工作目录与经验，继承模型、分组或项目绑定；项目文件夹不复制，普通对话复制独立工作目录；不复制 MemoWeft（记忆核心）的记忆来源/绑定，原对话不变 | 404 SESSION_UNAVAILABLE；409 SESSION_BUSY；503 BACKEND_UNAVAILABLE | 桌、手、安、苹 |
 | POST `/sessions/{sessionId}/message-branches` | `{requestId,seq,action:"edit"\|"regenerate",modelProfileId?}`；`seq` 是原生用户 / 助手消息锚点；仅本人可写的空闲旁聊 | 201 `{sessionId,title,modelProfileId,sendRequestId,text,groupId,action,sourceSessionId,sourceSeq,inputSourceSessionId,userSeq,seedThroughSeq,attachments?,originalAttachments?,attachmentMessageId?}`；原生事件种子在对应用户消息的回合开始前截断，旧回复及后续回合不进入新版本；`text` 是原始用户输入，编辑时由客户端替换。仅创建分支，尚未发起推理 | 409 SESSION_BUSY / SESSION_READ_ONLY / MAIN_CHAT_PROTECTED / REQUEST_CONFLICT；404 SOURCE_UNAVAILABLE / SESSION_UNAVAILABLE；422 MODEL_UNAVAILABLE | 桌、手、安、苹（重新生成） |
@@ -127,7 +127,7 @@ UX-4 的有用 / 没用反馈仅存当前设备、当前账号的本机记录（
 
 普通会话与项目 / 浏览器 / 接管会话均返回已绑定的 `modelProfileId`；旧会话无法确定时可为 `null`。A5 修复普通会话曾漏掉该既有字段、导致 Apple 无法确认原模型的问题。
 
-UX-2：`GET /sessions` 的可用会话另返回执行电脑的 `hostId`，以及可选 `updatedAt`（ISO 8601 时间）。`updatedAt` 取最近已读取历史事件的 `at` 与原会话登记时间中较新者；无有效时间则省略，不以请求或重命名时间伪造活动。项目列表按它倒序默认展示最近 5 条；旧宿主缺字段时客户端保留稳定顺序并显示暂无活动记录。账户菜单读取既有 `/settings/usage` 的统计时区，再读取同一时区的 `/usage`；以 `budget.effectiveLimit`（包含本月临时额度）与该完整月份金额计算上限余量，无上限显示金额与请求数，不新增用量接口。
+UX-2：`GET /sessions` 的可用会话另返回执行电脑的 `hostId`，以及可选 `updatedAt`（ISO 8601 时间）。`updatedAt` 取最近已读取历史事件的 `at` 与原会话登记时间中较新者；FX-16 启动时在后台逐会话构建一次只含消息水位与活动时间的内存索引，所有原生历史读取增量维护索引，列表请求不读取历史。元数据（置顶、已读、标题、分组）每次覆盖当前持久值；删除会话或清理记忆副本使对应条目失效，关闭宿主终止启动扫描，重启重建。Gateway（网关）的原生描述使用 DSH（助手运行时）的首次列表与 `session/created` / `session/disposed` 事件维护索引，每次投影当前原生 Agent（执行代理）状态与原生 projections（派生视图）；会话删除同步移除，运行时重启重建。历史缓存通过原生 `sessionPersistence.inspect` 检查单一来源的内容摘要，不为每页历史扫描全部会话文件。模型绑定一次读取非敏感配置快照，避免每个会话重复读盘。原生描述按账号合并批量读取，共享250毫秒缓存；新增会话立即失效，原生离线或描述失败不沿用旧成功结果。无有效时间则省略，不以请求或重命名时间伪造活动。项目列表按它倒序默认展示最近 5 条；旧宿主缺字段时客户端保留稳定顺序并显示暂无活动记录。账户菜单读取既有 `/settings/usage` 的统计时区，再读取同一时区的 `/usage`；以 `budget.effectiveLimit`（包含本月临时额度）与该完整月份金额计算上限余量，无上限显示金额与请求数，不新增用量接口。
 
 运行中的会话可另带 `processing:{phase,modelName?,ahead?}`：`phase` 为 `memory`（宿主正在读取记忆）、`queued`（宿主推理队列）、`loading`（本机 ModelSwitcher〔模型切换代理〕实测正在切换）、`waiting`（已开始模型请求，尚无内容）、`reasoning`（收到模型思考片段）、`answering`（收到文字片段）、`retrying`（原生流空闲超时后正在重试，客户端显示“模型响应慢，正在重试…”）。`ahead` 仅在 `queued` 时表示该请求前面的实际请求数，其他阶段省略；`modelName` 为当前模型显示名称。无可观测阶段时省略 `processing`，客户端显示普通等待提示，不推测加载或思考。结束后不返回阶段；旧客户端可忽略新增字段。
 
@@ -135,7 +135,7 @@ UX-2：`GET /sessions` 的可用会话另返回执行电脑的 `hostId`，以及
 
 普通对话以 DSH（助手运行时）原生 `cwd` 绑定宿主数据目录内按账号散列 / 会话 ID 隔离的工作目录。脚本与笔记默认在这里，回到原会话沿用同一目录及原生上下文；`经验.md` 存在时作为本对话资料读取。压缩仍由既有原生摘要保留方法、脚本路径、命令与踩坑记录。项目的用户目录不属于对话删除范围。
 
-项目会话可带 `projectId,projectRevision,projectName,projectRevoked`，移动或移除后可带 `projectNotice`（可显示的目录变更提示），浏览器会话带 `workspaceKind:"browser"`，共享会话带 `conversationId`。无法描述的会话返回 `title:"",running:false,sendAvailable:false,unavailable:true`。`sendAvailable` 是可发送权限，不是「当前空闲」；列表置顶项优先，同层按既有会话顺序；客户端按分组折叠显示，未分组在下。列表响应增加 `groups:[{id,name}]`，每会话增加 `pinned,unread,groupId` 及可选 `parentSessionId`；旧客户端可忽略。助手新消息水位超过已读水位时自动未读，打开对话由客户端 PATCH（部分更新）`unread:false` 自动已读；手动 `unread:true` 保留到下次打开/手动已读。分组与元数据持久保存且账号隔离，所有写操作沿用现有 `commands:write`、Cookie（会话凭据）/设备授权与 CSRF（跨站请求伪造防护）；已归档列表只在设置 → 已归档呈现，支持客户端标题搜索、恢复和既有删除确认。Android（安卓）原生 code23 起支持本节新增元数据、分组与分叉路由；新版界面包最低原生 code23，旧壳保留原版界面。创建走 `/commands`，没有 POST `/sessions`。FX-9 会话增加可选 `taskAvailable:boolean`；`false` 表示受限聊天会话不提供任务详情、任务控制与执行审批，客户端不轮询其 `/tasks/{id}`。发送是否已受理仍以原 `/commands/by-request/{requestId}` 回执和匹配 `receiptId` 的会话记录判定，与任务详情读取分开。缺字段沿用旧行为。
+项目会话可带 `projectId,projectRevision,projectName,projectRevoked`，移动或移除后可带 `projectNotice`（可显示的目录变更提示），浏览器会话带 `workspaceKind:"browser"`，共享会话带 `conversationId`。无法描述的会话返回 `title:"",running:false,sendAvailable:false,unavailable:true`。`sendAvailable` 是可发送权限，不是「当前空闲」；列表置顶项优先，同层按既有会话顺序；客户端按分组折叠显示，未分组在下。列表响应增加 `groups:[{id,name}]`，每会话增加 `pinned,unread,groupId` 及可选 `parentSessionId`；旧客户端可忽略。FX-16 列表响应增加 `hasMore,nextCursor`，页内保持置顶优先和最近已观察到的活动顺序；会话无数量限制，客户端以每页100项浏览并向宿主搜索全部标题。游标锚点被删除时返回 `CURSOR_RESET_REQUIRED`。助手新消息水位超过已读水位时自动未读，打开对话由客户端 PATCH（部分更新）`unread:false` 自动已读；手动 `unread:true` 保留到下次打开/手动已读。分组与元数据持久保存且账号隔离，所有写操作沿用现有 `commands:write`、Cookie（会话凭据）/设备授权与 CSRF（跨站请求伪造防护）；已归档列表只在设置 → 已归档呈现，支持客户端标题搜索、恢复和既有删除确认。FX-16 的分页 / 全量标题搜索沿既有 `host.business` 接口，需要同步更新原生壳的 `/sessions` 查询路径校验；本包不递增版本号，由合并发布统一调整界面包最低壳版本。Android（安卓）原生 code23 起支持本节新增元数据、分组与分叉路由；新版界面包最低原生 code23，旧壳保留原版界面。创建走 `/commands`，没有 POST `/sessions`。FX-9 会话增加可选 `taskAvailable:boolean`；`false` 表示受限聊天会话不提供任务详情、任务控制与执行审批，客户端不轮询其 `/tasks/{id}`。发送是否已受理仍以原 `/commands/by-request/{requestId}` 回执和匹配 `receiptId` 的会话记录判定，与任务详情读取分开。缺字段沿用旧行为。
 
 UI-P4：每会话可选只读 `contextUsage:{usedTokens,contextWindow}`。`usedTokens` 是 DSH（助手运行时）原生 `contextPressure.projectedTokens`（缺失时用 `pressureTokens`）的当前上下文占用，会随压缩及有效上下文增减；不是请求用量的累加。`contextWindow` 来自原生最新 `request/context` 上限，缺失为 `null`。宿主未提供有效占用时省略整个字段，旧客户端可忽略；客户端未知上限不计算比例，不能用计费用量或默认模型容量伪造圆环。Android（安卓）现有宿主会话透传保留此字段，不新增原生业务路径。
 
@@ -468,7 +468,7 @@ MS-1：`defaultModelProfileId` 按账户保存，用于新对话；已有对话�
 
 - `preferredName:""`（80 字）、`bio:""`（500 字）、`tone:"natural"`（`natural|concise|detailed|formal|casual`）、`toneInstructions:""`（500 字）。
 - `fixedInstructions:""`（4,000 字）；`useWritingStyle:false`、`writingStyle:""`（1,000 字）。长度按 Unicode（统一字符编码）码点计算，空文本合法；提炼结果可通过 PATCH 编辑／清空，清除不删除任何聊天记录。
-- `webSearch:true`、`verbosity:"medium"`（`short|medium|thorough`）、`thinkingDisplay:"collapsed"`（`collapsed|expanded|hidden`）、`defaultDeepThinking:false`、`messageMode:"queue"`（`queue|steer`）。
+- `webSearch:true`、`researchSelfCheck:true`（FACT-1，查资料成文前核对关键断言；关闭仍须给出处及未确认说明）、`verbosity:"medium"`（`short|medium|thorough`）、`thinkingDisplay:"collapsed"`（`collapsed|expanded|hidden`）、`defaultDeepThinking:false`、`messageMode:"queue"`（`queue|steer`）。
 
 服务端串行合并字段，冲突按最后一次成功写入为准；`updatedAt` 为宿主保存时间，旧账户无已保存设置时为 `null` 并返回默认值。旧本设备的 D36 引导偏好在首次读取时迁入未配置账户；以后账户值优先。客户端仅成功回执后显示「已同步」，读取／保存失败保留可重试状态，切账户丢弃迟到回执。
 

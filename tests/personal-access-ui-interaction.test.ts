@@ -608,6 +608,8 @@ test('switching sessions aborts a late original upload and keeps the file only i
   page.getByRole('button',{name:'A'}).fire('click')
   for (let attempt = 0; attempt < 20 && page.get('assistant-title').textContent !== 'A'; attempt++) await flush()
   assert.equal(page.get('attachment-draft-list').children.length, 1)
+  // The title updates before async history/draft restoration completes.
+  for (let attempt = 0; attempt < 20 && page.get('send-message').disabled; attempt++) await flush()
   assert.equal(page.get('send-message').disabled, false)
 })
 

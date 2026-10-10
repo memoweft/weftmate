@@ -1,0 +1,107 @@
+{
+  "method": "MiMo rubric judge; overlapping dimensions counted independently, repeated same claim deduplicated; omissions separate",
+  "input": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\tests\\evidence\\fact-1\\anchored\\lan\\results.json",
+  "judgements": [
+    {
+      "id": "node24-1",
+      "documentSha256": "b36e11cbc0f693a47f32e32c94e189d46dc87d68755bf29c1039f0c60d58a30a",
+      "durationMs": 9125,
+      "usage": {
+        "completion_tokens": 572,
+        "prompt_tokens": 147550,
+        "total_tokens": 148122,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [
+          {
+            "claim": "这意味着在 Windows 上自行编译 Node.js 或相关原生构建时，必须使用 ClangCL，MSVC 已不再受支持。",
+            "reason": "官方原文仅说明 \"ClangCL is now required to compile Node.js on Windows\"，即限于编译 Node.js 本体；文档将其扩大到\"相关原生构建\"（原生扩展），无官方依据。"
+          },
+          {
+            "claim": "使用 Node-API 的模块可通过 `node_api.h` 在 22 → 24 之间保持 ABI 稳定；若依赖 Node.js C++ API、libuv 或 V8 头文件，则必须重新编译，且 `NODE_MODULE_VERSION` 变化会导致旧编译的 `.node` 文件无法加载。",
+            "reason": "官方 n-api 文档明确指出 Node-API 兼容的前提还包括外部依赖需提供类似 ABI 稳定保证（\"and by checking, for all external libraries that it uses, that the external library makes ABI stability guarantees similar to Node-API\"），且所用 Node-API 版本需被目标运行时支持；文档的\"可保持 ABI 稳定\"表述未包含这些前提条件。"
+          },
+          {
+            "claim": "在 Windows 上构建 Node.js 或相关依赖时，升级到 ClangCL 工具链，停止使用 MSVC。",
+            "reason": "官方原文仅要求编译 Node.js 本体使用 ClangCL，未对\"相关依赖\"（如原生扩展）作此要求，属范围扩大。"
+          }
+        ],
+        "scope": [
+          {
+            "claim": "这意味着在 Windows 上自行编译 Node.js 或相关原生构建时，必须使用 ClangCL，MSVC 已不再受支持。",
+            "reason": "ClangCL 要求限于 Windows 编译 Node.js 本体，文档扩展到\"相关原生构建\"，适用范围错误。"
+          },
+          {
+            "claim": "在 Windows 上构建 Node.js 或相关依赖时，升级到 ClangCL 工具链，停止使用 MSVC。",
+            "reason": "同上，将 ClangCL 要求扩展到\"相关依赖\"，超出官方适用范围。"
+          }
+        ],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [
+          "未明确区分 Node-API 稳定 ABI 扩展与直接依赖 V8/Node C++ API 的扩展这一必含要点的完整表述（文档有引用相关原文，但未在正文中明确作为分类说明）",
+          "未说明 Node-API 兼容以所用 Node-API 版本被目标运行时支持及外部依赖兼容为前提"
+        ],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": true,
+          "verbatimExcerpts": true,
+          "claimMapping": true,
+          "issues": []
+        }
+      },
+      "nativeAudit": {
+        "rows": [],
+        "lastSaveSeq": 6415,
+        "beforeFinalSave": false
+      }
+    },
+    {
+      "id": "node-dep0190-1",
+      "documentSha256": "d336d54ab6794f6c2fad0df74484bd5c430022f87009d221573f93ec44e9d433",
+      "durationMs": 35138,
+      "usage": {
+        "completion_tokens": 56,
+        "prompt_tokens": 113169,
+        "total_tokens": 113225,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [],
+        "scope": [],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": true,
+          "verbatimExcerpts": true,
+          "claimMapping": true,
+          "issues": []
+        }
+      },
+      "nativeAudit": {
+        "rows": [],
+        "lastSaveSeq": 7662,
+        "beforeFinalSave": false
+      }
+    }
+  ]
+}
