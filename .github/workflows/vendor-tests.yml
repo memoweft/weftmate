@@ -91,6 +91,10 @@ jobs:
       - name: Assemble and verify pinned vendor
         run: |
           npm run vendor:dsh
+          # The release assembler intentionally ignores install scripts. Linux
+          # node-pty has no shipped binary; rebuild this pinned native dependency
+          # in the generated runtime before executing the real smoke check.
+          npm rebuild --prefix vendor/dsh-runtime node-pty
           npm run vendor:verify
         env:
           WEFTMATE_DSH_CHECKOUT: ${{ github.workspace }}/.local/relay-dsh
