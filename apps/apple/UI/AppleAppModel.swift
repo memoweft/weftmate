@@ -358,7 +358,7 @@ extension AppleAppModel {
         loadingAttachments.insert(key)
         defer { if accountEpoch == epoch { loadingAttachments.remove(key) } }
         do {
-            let prepared = try await Task.detached { () throws -> [ConversationAttachmentDraft] in
+            let prepared = try await Task.detached { @Sendable () throws -> [ConversationAttachmentDraft] in
                 var drafts: [ConversationAttachmentDraft] = []
                 do { for file in files { drafts.append(try .prepare(file: file)) }; return drafts }
                 catch { drafts.forEach { $0.removeTemporaryFiles() }; throw error }
@@ -1011,6 +1011,9 @@ final class AppleAppModel: ObservableObject {
 
     @Published var deletionInSettings = false
     @Published var sessionMenuCandidate: ConversationSummary?
+    #if os(iOS)
+    @Published var temporaryExpiryCandidate: ConversationSummary?
+    #endif
     @Published var deletionCandidate: ConversationSummary?
     @Published var forgetConversationMemories = false
     @Published var lifecycleBusy = false
@@ -1038,15 +1041,17 @@ final class AppleAppModel: ObservableObject {
                     running: old.running, sendAvailable: !archived && old.sendAvailable, originalModelLabel: old.originalModelLabel, archived: archived, pinned: old.pinned, unread: old.unread, groupId: old.groupId, projectId: old.projectId, projectName: old.projectName, projectNotice: old.projectNotice, taskAvailable: old.taskAvailable, hostId: old.hostId, updatedAt: old.updatedAt, chatId: old.chatId, chatKind: old.chatKind, chatContentRevision: old.chatContentRevision, temporaryState: old.temporaryState)
             }
             if selectedConversation?.id == conversation.id { selectedConversation = conversations.first { $0.id == conversation.id } }
-            if archived {
-                archiveUndo = conversation
+            if archived { archiveUndo = conversation }
+            else if archiveUndo?.id == conversation.id { archiveUndo = nil }
+            await refresh()
+            // Give the user the full undo interval after controls become enabled.
+            if archived, actionEpoch == epoch, archiveUndo?.id == conversation.id {
                 let undoToken = UUID(); archiveUndoToken = undoToken
                 DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
                     guard let self, actionEpoch == self.epoch, self.archiveUndoToken == undoToken else { return }
                     self.archiveUndo = nil
                 }
-            } else if archiveUndo?.id == conversation.id { archiveUndo = nil }
-            await refresh()
+            }
         } catch { if actionEpoch == epoch { lifecycleError = "归档状态未更新，请重试。" } }
     }
     func deleteConversation() async {
@@ -1565,6 +1570,7 @@ final class AppleAppModel: ObservableObject {
             taskControlSessions = try await client.taskControlSessionIDs(includeArchived: true)
             guard actionEpoch == epoch else { return }
             conversations = result
+            if let candidate = sessionMenuCandidate { sessionMenuCandidate = result.first { $0.id == candidate.id } }
             for row in result where !row.temporaryState.cacheAllowed { await clearLocalHistory(row) }
             if let selectedConversation {
                 if let updated = result.first(where: { $0.id == selectedConversation.id }) {
@@ -2133,6 +2139,9 @@ final class AppleAppModel: ObservableObject {
         subtaskStepTarget = nil; thinking = .init(); thinkingConversation = nil; thinkingError = nil; archiveUndo = nil; hoveredSession = nil; expandedProjectRows = []; projectThinking = false; projectCreatedSessionID = nil
         projects = []; projectCanManage = false; projectsError = nil; projectEditor = nil; projectConversation = nil; projectModels = []; projectBusy = false; projectError = nil; executionAccount = nil; sessionProjectNotices = [:]; collapsedProjects = []
         sessionGroups = []; collapsedSessionGroups = []; openedSessionID = nil; renamingSessionID = nil; groupCandidate = nil; sessionMenuCandidate = nil; deletionInSettings = false; conversationForget = .init(); conversationPreviewToken = UUID(); conversationPreviewLoading = false; deletionCandidate = nil; forgetConversationMemories = false; lifecycleBusy = false; lifecycleError = nil
+        #if os(iOS)
+        temporaryExpiryCandidate = nil
+        #endif
         queueNotice = nil; queueBusy = []; queueCancelRequests = [:]; canceledQueuedTasks = []
         attachmentDrafts.values.flatMap { $0 }.forEach { $0.removeTemporaryFiles() }
         attachmentDrafts = [:]; attachmentAttempts = [:]; attachmentMessageIDs = [:]; attachmentSessionIDs = [:]

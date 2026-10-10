@@ -16,6 +16,7 @@
     <integer name="wm_duration_exit">120</integer>
     <integer name="wm_duration_stagger">24</integer>
     <integer name="wm_duration_staggerLimit">60</integer>
+    <integer name="wm_duration_status">150</integer>
     <integer name="wm_duration_replyFragment">120</integer>
     <integer name="wm_duration_replyChange">150</integer>
     <integer name="wm_duration_replyScroll">160</integer>

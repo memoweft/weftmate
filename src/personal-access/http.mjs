@@ -805,7 +805,7 @@ export function createHttpHandler(context) {
         return context.json(response, 200, {
           ...context.service.status(ownerId), hostName:hostname(),
           presence: presence(backendStatus),
-          personalCapabilities: { nextSuggestions: typeof context.backend.modelCompletion === 'function' ? 1 : 0, library: 1, libraryPreview: 1, libraryDesktopActions: context.library.desktopAvailable ? 1 : 0, taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, pushRegistration: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, creationReceipt: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
+          personalCapabilities: { sessionStatus: 1, nextSuggestions: typeof context.backend.modelCompletion === 'function' ? 1 : 0, library: 1, libraryPreview: 1, libraryDesktopActions: context.library.desktopAvailable ? 1 : 0, taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, pushRegistration: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, creationReceipt: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
           executionAccount: context.hostOwner(ownerId),
           executionAccountName: context.hostOwner(ownerId) ? null : context.executionAccountName(),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
@@ -1352,11 +1352,14 @@ export function createHttpHandler(context) {
                 described.agentPreset === 'personal-shared-chat' &&
                 context.modelVisible(ownerId, state.sessions[sessionId].modelProfileId))),
             });
-          } catch { sessions.push({ sessionId, title: '', running: false, sendAvailable: false, unavailable: true }); }
+          } catch { const live = context.accountState(ownerId).sessions[sessionId]; sessions.push({ sessionId, title: '', attention: null, lastOutcome: null,
+            ...(live && !live.deleting ? await context.sessionOperations.summary(ownerId,sessionId) : {}),
+            running: false, sendAvailable: false, unavailable: true }); }
         }
         sessions.sort((a, b) => Number(b.pinned) - Number(a.pinned));
         const hasMore = offset + limit < ids.length;
         return context.json(response, 200, { sessions, groups: Object.values(state.sessionGroups ?? {}), snapshotAt,
+          statusSummary: await context.sessionOperations.statusSummary(ownerId,descriptions),
           hasMore, nextCursor: hasMore ? selectedIds.at(-1) : null });
       }
       const groupMatch = /^\/personal\/v1\/session-groups(?:\/([A-Za-z0-9_-]+))?$/.exec(pathname);

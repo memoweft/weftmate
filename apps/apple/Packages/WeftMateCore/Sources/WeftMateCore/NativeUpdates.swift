@@ -171,6 +171,6 @@ public final class NativeUpdateFetcher: NSObject, URLSessionTaskDelegate, @unche
         guard (response as? HTTPURLResponse)?.statusCode == 200, response.url == url, data.count <= 1_048_576 else { throw NativeUpdateFailure.network }
         return data
     }
-    public func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+    public nonisolated func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
                            newRequest request: URLRequest, completionHandler: @escaping @Sendable (URLRequest?) -> Void) { completionHandler(nil) }
 }

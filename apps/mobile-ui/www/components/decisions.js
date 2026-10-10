@@ -134,8 +134,12 @@ function approvalMeaning(row,cache,attempt){if(attempt?.busy)return '正在提�
   if(row.outcome==='unavailable')return '此次审批已失效，请核对原任务。';
   return row.outcome==='allowed-once'?'执行端已处理本次允许；任务结果仍以执行记录为准。':'执行端已处理本次拒绝。'}
 
-function fillApprovalCard(card,row,context,cache){const attempt=approvalAttempt(context,row);
-  const signature=JSON.stringify([row,cache.error,attempt?.busy,attempt?.unknown,attempt?.checked]);if(card.dataset.signature===signature)return;
+function fillApprovalCard(card,row,context,cache){card.decisionContext=context;const attempt=approvalAttempt(context,row);
+  if(attempt?.busy&&card.dataset.approvalId===row.approvalId){
+    for(const button of card.querySelectorAll('button'))button.disabled=true;
+    const message=card.querySelector('.approval-status');if(message){message.textContent=approvalMeaning(row,cache,attempt);message.hidden=false}return;
+  }
+  const signature=WeftQuestionBar.signatureOf([row,cache.error,attempt?.busy,attempt?.unknown,attempt?.checked]);if(card.dataset.signature===signature)return;
   const focused=document.activeElement,focusChoice=focused?.dataset?.approvalChoice;
   const hadFocus=focusChoice&&focused.parent===card.querySelector('.approval-actions')||focused?.closest?.('.tool-approval')===card;
   const resolving=card.dataset.approvalId&&!card.classList.contains('is-resolved')&&row.status!=='pending';
@@ -164,16 +168,16 @@ function fillApprovalCard(card,row,context,cache){const attempt=approvalAttempt(
       button.addEventListener('pointerdown',()=>{button.dataset.restoreFocus=document.activeElement===$('draft')?'1':'0'});
       button.addEventListener('pointercancel',()=>{delete button.dataset.restoreFocus});
       button.addEventListener('click',()=>{const restoreFocus=button.dataset.restoreFocus==='1';delete button.dataset.restoreFocus;
-        if(approvalViewCurrent(context))void handler(restoreFocus)});controls.append(button)};
+        const fresh=approvalContext(),shown=card.decisionContext||context;if(approvalViewCurrent(fresh)&&fresh.owner===shown.owner&&fresh.epoch===shown.epoch&&fresh.sessionId===shown.sessionId&&fresh.generation===shown.generation&&fresh.page===shown.page)void handler(restoreFocus,fresh)});controls.append(button)};
     if(row.status==='pending'&&!cache.error&&(!attempt?.unknown||attempt.checked)){
       if(attempt?.unknown)add(attempt.outcome==='allowed-once'?(attempt.scope==='conversation-category'?'重试总是允许此类':'重试允许一次'):'重试拒绝',attempt.outcome,
-        restoreFocus=>decideToolApproval(row,attempt.outcome,context,restoreFocus,attempt.scope),attempt.outcome==='allowed-once');
-      else{add('批准','allowed-once',restoreFocus=>decideToolApproval(row,'allowed-once',context,restoreFocus),true);
-        add('总是允许此类','conversation-category',restoreFocus=>decideToolApproval(row,'allowed-once',context,restoreFocus,'conversation-category'));
+        (restoreFocus,fresh)=>decideToolApproval(row,attempt.outcome,fresh,restoreFocus,attempt.scope),attempt.outcome==='allowed-once');
+      else{add('批准','allowed-once',(restoreFocus,fresh)=>decideToolApproval(row,'allowed-once',fresh,restoreFocus),true);
+        add('总是允许此类','conversation-category',(restoreFocus,fresh)=>decideToolApproval(row,'allowed-once',fresh,restoreFocus,'conversation-category'));
         const always=controls.children[1];card.querySelector('.approval-detail')?.append(always);
         always.disabled=!approvalRiskCategories(row).length;
         always.title=approvalRiskCategories(row).length?'仅允许这段对话后续的同类操作':'这次审批未提供风险类别，可选择允许一次';
-        add('拒绝','rejected',restoreFocus=>decideToolApproval(row,'rejected',context,restoreFocus))}}
+        add('拒绝','rejected',(restoreFocus,fresh)=>decideToolApproval(row,'rejected',fresh,restoreFocus))}}
     if(cache.error||attempt?.unknown)add('检查审批状态','check',()=>refreshToolApprovals(context,{force:true}));
     card.append(controls);
     const parameters=card.querySelector('.approval-detail');
@@ -183,6 +187,7 @@ function fillApprovalCard(card,row,context,cache){const attempt=approvalAttempt(
 
 function renderConversationApprovals(){const context=approvalContext(),bar=$('approval-bar');
   if(!bar)return;
+  if(WeftQuestionBar.retainInteraction(bar,renderConversationApprovals))return;
   const cache=approvalViewCurrent(context)&&approvalScopeCurrent(context)?toolApprovals.sessions.get(context.sessionId):null;
   const rows=cache?[...cache.rows.values()].filter(row=>row.status==='pending'&&relatedTaskApproval(conversationTasks.entries.get(row.taskId)?.task,row))
     .sort((a,b)=>a.createdAt.localeCompare(b.createdAt)||a.approvalId.localeCompare(b.approvalId)):[];
@@ -227,7 +232,7 @@ function renderConversationQuestions(){
   const row=pending[0],attempt=questionAttempt(context,row),draft=questionDraft(context,row);
   bar.dataset.scope=JSON.stringify(context);
   WeftQuestionBar.paint(bar,{row,draft,remaining:pending.slice(1).reduce((n,row)=>n+row.questions.length,0),
-    retry:!!attempt?.unknown,locked:!!attempt?.busy||!!cache.error||!!attempt?.unknown&&!attempt.checked,
+    submitting:!!attempt?.busy,retry:!!attempt?.unknown,locked:!!attempt?.busy||!!cache.error||!!attempt?.unknown&&!attempt.checked,
     notice:attempt?.busy?'正在提交回答…':cache.error||attempt?.unknown?questionMeaning(row,cache,attempt):'',
     current:()=>approvalViewCurrent(context),focusComposer:()=>$('draft').focus({preventScroll:true}),
     choose:(index,label,checked)=>uiCore.mobileDecisions.chooseOption(context,row,index,label,checked),custom:(index,text)=>uiCore.mobileDecisions.setCustom(context,row,index,text),

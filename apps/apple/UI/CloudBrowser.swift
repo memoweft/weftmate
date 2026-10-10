@@ -28,7 +28,7 @@ final class CloudBrowser: NSObject, ASWebAuthenticationPresentationContextProvid
         #endif
         return try await withCheckedThrowingContinuation { continuation in
             let authentication = ASWebAuthenticationSession(url: authorization.url,
-                callbackURLScheme: URL(string: authorization.configuration.redirectURI)?.scheme) { [weak self] url, error in
+                callbackURLScheme: URL(string: authorization.configuration.redirectURI)?.scheme) { @Sendable [weak self] url, error in
                 Task { @MainActor in
                     self?.session = nil
                     if let url { continuation.resume(returning: url) }

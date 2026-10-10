@@ -49,12 +49,13 @@ globalThis.WeftDataView = (core, target, { toast = () => {}, desktop = !!globalT
         const running = ['running','pending_confirmation'].includes(operation?.state);
         refreshButton.disabled = exportButton.disabled = deleteButton.disabled = closeButton.disabled = running || !canManage;
         total.textContent = snapshot ? `本账户共占用 ${core.dataSize(snapshot.totalBytes)}` : '正在统计本账户占用…';
-        measured.textContent = snapshot ? `${Math.max(0,Math.floor((Date.now()-Date.parse(snapshot.measuredAt))/60000))} 分钟前统计` : '后台统计中，可以继续使用界面。';
+        const measuredMinutes = snapshot ? Math.max(0,Math.floor((Date.now()-Date.parse(snapshot.measuredAt))/60000)) : 0;
+        measured.textContent = snapshot ? (measuredMinutes < 1 ? '刚刚统计' : `${measuredMinutes} 分钟前统计`) : '后台统计中，可以继续使用界面。';
         accounting.textContent=snapshot?.accounting || '';
         list.replaceChildren(); bar.replaceChildren();
         if (snapshot) for (const row of snapshot.categories) {
             const line = node('div','settings-row data-category'), icon = WeftIcons.create(row.icon,20), info = node('div','settings-row-copy'), controls = node('div','data-row-controls');
-            info.append(node('strong','',row.name),node('p','muted',row.description)); controls.append(node('span','data-size',core.dataSize(row.bytes)));
+            info.append(node('strong','',row.name),node('p','muted',row.description)); if (row.bytes) { const legend = node('span',`data-legend data-${row.id}`); legend.setAttribute('aria-hidden','true'); controls.append(legend); } controls.append(node('span','data-size',core.dataSize(row.bytes)));
             if (row.cleanable) { const clean = button('清理',() => row.pureCache ? perform(() => core.cleanData(row.id,false)) : confirmClean(row)); clean.disabled = running || !canManage || !row.bytes; controls.append(clean); }
             line.append(icon,info,controls); list.append(line);
             if (row.bytes) { const segment = node('span',`data-storage-segment data-${row.id}`); segment.style.flexGrow = String(row.bytes / Math.max(1,snapshot.totalBytes)); segment.title = `${row.name} ${core.dataSize(row.bytes)}`; bar.append(segment); }
