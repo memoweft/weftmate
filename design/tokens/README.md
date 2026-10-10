@@ -114,6 +114,8 @@
 
 UI-P1 桌面在现有 `fast / base / 160ms / 240ms` 上接入 180 / 200 / 160 / 240 毫秒动效，曲线统一使用 `desktop`。新增 `exit` 为 120 毫秒退出，`stagger` 为新步骤 24 毫秒错开，`staggerLimit` 把错开总延迟限制为 60 毫秒，因此完整步骤序列最多 240 毫秒。系统减少动态效果时跳过动画；这些新增常量同步生成到各端，但手机与 Apple 未在本包消费新动效。详见 [UI-P1 证据](../../tests/evidence/ui-p1/README.md)。
 
+UX-8 共用回复动效新增 `replyFragment`（120 毫秒）、`replyChange`（150 毫秒）、`replyScroll`（160 毫秒），复用 `working` 的 1.8 秒周期；位移沿 `space-2 / space-8`。微光使用五段静态渐变遮罩，`replySweep` 的 `steps(7,end)`（分段缓动）在各 243 毫秒淡亮 / 淡出区间约每秒更新 29 次，不移动遮罩或文字；呼吸沿 `smooth`，其它过渡沿 `desktop`。全部令牌生成到手机、Android（安卓）和 Apple（苹果）清单；减少动态效果与页面 / 原生窗口隐藏会暂停或取消动画。详见 [UX-8 证据](../../tests/evidence/ux-8/README.md)。
+
 ## Apple 原生接入（DS-1b）
 
 `apps/apple/Scripts/generate_project.py` 把 `design/tokens/generated/apple/DesignTokens.swift` 作为三个原生 App 的共享编译源，工程不复制它，也不手改生成文件。先在根目录运行 `npm run tokens:generate`，新增工程源文件时再运行 `python3 apps/apple/Scripts/generate_project.py`；两者可重复生成，`--check` 校验 Swift 与 JSON 和其他平台产物。

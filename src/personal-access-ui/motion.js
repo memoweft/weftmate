@@ -15,7 +15,7 @@
   function cancel(element) { owners.get(element)?.cancel(); }
   function play(element, frames, name = 'fast', index = 0, cleanup) {
     cancel(element);
-    if (preference.matches || !element?.isConnected || !element.animate) { cleanup?.(); return; }
+    if ((globalThis.WeftReplyMotion?.reduced ?? preference.matches) || (globalThis.WeftReplyMotion?.paused ?? document.hidden) || !element?.isConnected || !element.animate) { cleanup?.(); return; }
     const animation = element.animate(frames, timing(name, index));
     owners.set(element, animation); active.add(animation);
     const done = () => { active.delete(animation); if (owners.get(element) === animation) owners.delete(element); cleanup?.(); };
@@ -28,7 +28,7 @@
   // Keep an inert visual copy outside layout, then remove the real content immediately.
   // Never retain active buttons, duplicate accessible names, or postpone the next action.
   function snapshot(element) {
-    if (preference.matches || !element?.isConnected || element.hidden) return;
+    if ((globalThis.WeftReplyMotion?.reduced ?? preference.matches) || (globalThis.WeftReplyMotion?.paused ?? document.hidden) || !element?.isConnected || element.hidden) return;
     const rect = element.getBoundingClientRect();
     if (!rect.width || !rect.height || rect.bottom < 0 || rect.top > innerHeight) return;
     const copy = element.cloneNode(true);
@@ -69,5 +69,6 @@
     reveal(element, name);
   }
   preference.addEventListener('change', () => { if (preference.matches) for (const animation of [...active]) animation.cancel(); });
+  addEventListener('weft-reply-motion-change', () => { for (const animation of [...active]) { if (globalThis.WeftReplyMotion?.reduced) animation.cancel(); else if ((globalThis.WeftReplyMotion?.paused ?? document.hidden)) animation.pause(); else animation.play(); } });
   globalThis.WeftMotion = { reveal, snapshot, dismiss, remove, hide, details, changed, cancel, listLimit };
 })();
