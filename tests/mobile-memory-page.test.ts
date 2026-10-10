@@ -76,7 +76,8 @@ class FakeElement {
   contains(value: FakeElement) { return value === this || this.children.some((child) => child.contains(value)) }
   querySelector(selector: string): FakeElement | null {
     const matches = (node: FakeElement) => selector.startsWith('.') ? node.classList.contains(selector.slice(1)) :
-      selector.startsWith('#') ? node.id === selector.slice(1) : false
+      selector.startsWith('#') ? node.id === selector.slice(1) :
+      selector === '[role=status]' ? node.getAttribute('role') === 'status' : node.tagName === selector.toUpperCase()
     return this.children.find(matches) ?? this.children.map((child) => child.querySelector(selector)).find(Boolean) ?? null
   }
   querySelectorAll() { return [] as FakeElement[] }

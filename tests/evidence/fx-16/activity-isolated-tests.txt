@@ -1,0 +1,13 @@
+✔ activity uses stable native identities, redacts temporary task/approval/question content before persistence and prevents erasure replay (3.6188ms)
+✔ approval status updates keep one activity, native response identity and increment attention without preserving forgotten body (0.5544ms)
+✔ native terminal task waits for background effects and shares the IA-3 result activity identity (0.336ms)
+✔ activity HTTP snapshots, filtered all-read, version conflicts, restart, native actions and deletion changes (3446.5307ms)
+✔ MEM-D formation pending does not masquerade as pause; model unavailability creates one event per real transition (3797.3479ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7478.9278

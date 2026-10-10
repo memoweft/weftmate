@@ -1,0 +1,41 @@
+{
+  "total": {
+    "requests": 8,
+    "returnedUsage": 8,
+    "missingUsage": 0,
+    "inputTokens": 22458,
+    "cachedInputTokens": 16768,
+    "outputTokens": 438
+  },
+  "groups": [
+    {
+      "source": "desktop\\requests.jsonl",
+      "requests": 0
+    },
+    {
+      "source": "desktop-final\\requests.jsonl",
+      "requests": 0
+    },
+    {
+      "source": "desktop-verified\\requests.jsonl",
+      "requests": 0
+    },
+    {
+      "source": "native-live\\requests.jsonl",
+      "requests": 0
+    },
+    {
+      "source": "native-population\\requests.jsonl",
+      "requests": 0
+    },
+    {
+      "source": "relay-phone-accepted\\requests.jsonl",
+      "requests": 4
+    },
+    {
+      "source": "relay-phone-release\\requests.jsonl",
+      "requests": 4
+    }
+  ],
+  "method": "Actual MiMo upstream responses, deduplicated provider trace; daily single-slot proxy counted from direct upstream request records. Includes failed attempts, excludes synthetic/LAN. Missing usage is not zero usage. No price or bill inferred."
+}

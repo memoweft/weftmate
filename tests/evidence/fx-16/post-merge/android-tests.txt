@@ -1,0 +1,195 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.9/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Warning: SDK processing. This version only understands SDK XML versions up to 3 but an SDK XML file of version 4 was encountered. This can happen if you use versions of Android Studio and the command-line tools that were released at different times.
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+
+> Task :app:checkMobileUiAssets
+[mobile-ui] checked ui-core copies and 77 JavaScript files
+
+> Task :app:preBuild
+> Task :app:preDebugBuild
+> Task :app:generateDebugBuildConfig
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:checkDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:mergeDebugResources
+> Task :app:processDebugMainManifest
+> Task :app:processDebugManifest
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:preDebugUnitTestBuild
+> Task :app:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :app:processDebugManifestForPackage
+> Task :app:processDebugResources
+
+> Task :app:compileDebugKotlin FAILED
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt:509:84 Unresolved reference 'openPinnedConnection'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt:526:25 Argument type mismatch: actual type is 'R', but 'K' was expected.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt:526:48 Overload resolution ambiguity between candidates:
+fun File.bufferedReader(charset: Charset = ..., bufferSize: Int = ...): BufferedReader
+fun InputStream.bufferedReader(charset: Charset = ...): BufferedReader
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt:526:65 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt:526:65 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T : Closeable?, R> T.use(block: (T) -> R): R
+    [R|Contract description]
+     <
+        CallsInPlace(block, EXACTLY_ONCE)
+    >
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt:526:71 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt:529:51 Unresolved reference 'readLine'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt:534:44 Argument type mismatch: actual type is 'kotlin.Unit', but 'K' was expected.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt:713:17 Unresolved reference 'modelRouteFingerprint'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt:1514:69 Unresolved reference 'CLOUD_CALLBACK'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt:1515:14 Unresolved reference 'put'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt:1534:58 Unresolved reference 'CLOUD_CALLBACK'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt:1847:59 Unresolved reference 'supportsAttachmentImage'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt:2088:25 Unresolved reference 'selectPreferredRefreshRate'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt:2105:14 Unresolved reference 'cloudCallbackMatches'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt:2169:24 Unresolved reference 'artifactSaveMimeType'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:160:18 Unresolved reference 'isChatCatalogModel'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:188:35 Unresolved reference 'openPinnedConnection'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:213:25 Argument type mismatch: actual type is 'R?', but 'K?' was expected.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:213:33 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:213:33 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T : Closeable?, R> T.use(block: (T) -> R): R
+    [R|Contract description]
+     <
+        CallsInPlace(block, EXACTLY_ONCE)
+    >
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:213:39 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:217:36 Unresolved reference 'read'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:219:43 'operator' modifier is required on 'FirNamedFunctionSymbol kotlin/compareTo' in 'compareTo'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:223:18 Argument type mismatch: actual type is 'kotlin.ByteArray', but 'K' was expected.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:236:35 Unresolved reference 'openPinnedConnection'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:257:53 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:257:53 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T : Closeable?, R> T.use(block: (T) -> R): R
+    [R|Contract description]
+     <
+        CallsInPlace(block, EXACTLY_ONCE)
+    >
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:257:59 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:261:43 Unresolved reference 'read'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:263:51 'operator' modifier is required on 'FirNamedFunctionSymbol kotlin/compareTo' in 'compareTo'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:268:28 Unresolved reference 'size'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:272:13 Argument type mismatch: actual type is 'R', but 'K' was expected.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:272:36 Overload resolution ambiguity between candidates:
+fun File.bufferedReader(charset: Charset = ..., bufferSize: Int = ...): BufferedReader
+fun InputStream.bufferedReader(charset: Charset = ...): BufferedReader
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:272:67 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:272:67 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T : Closeable?, R> T.use(block: (T) -> R): R
+    [R|Contract description]
+     <
+        CallsInPlace(block, EXACTLY_ONCE)
+    >
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:272:73 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:280:41 Unresolved reference 'read'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:292:51 'return' is prohibited here.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:303:5 Missing return statement.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:319:35 Unresolved reference 'openPinnedConnection'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:344:25 Argument type mismatch: actual type is 'R?', but 'K?' was expected.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:344:33 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:344:33 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T : Closeable?, R> T.use(block: (T) -> R): R
+    [R|Contract description]
+     <
+        CallsInPlace(block, EXACTLY_ONCE)
+    >
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:344:39 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:348:39 Unresolved reference 'read'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:350:47 'operator' modifier is required on 'FirNamedFunctionSymbol kotlin/compareTo' in 'compareTo'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:354:18 Argument type mismatch: actual type is 'kotlin.ByteArray', but 'K' was expected.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:371:14 Unresolved reference 'openPinnedConnection'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:385:36 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:385:36 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T : Closeable?, R> T.use(block: (T) -> R): R
+    [R|Contract description]
+     <
+        CallsInPlace(block, EXACTLY_ONCE)
+    >
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:385:42 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:388:39 Unresolved reference 'read'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:390:47 'operator' modifier is required on 'FirNamedFunctionSymbol kotlin/compareTo' in 'compareTo'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:404:14 Unresolved reference 'openPinnedConnection'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:419:36 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:419:36 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T : Closeable?, R> T.use(block: (T) -> R): R
+    [R|Contract description]
+     <
+        CallsInPlace(block, EXACTLY_ONCE)
+    >
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:419:42 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:423:38 Unresolved reference 'read'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:450:14 Unresolved reference 'openPinnedConnection'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:478:25 Argument type mismatch: actual type is 'R?', but 'K?' was expected.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:478:33 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:478:33 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T : Closeable?, R> T.use(block: (T) -> R): R
+    [R|Contract description]
+     <
+        CallsInPlace(block, EXACTLY_ONCE)
+    >
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:478:39 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:482:39 Unresolved reference 'read'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:484:47 'operator' modifier is required on 'FirNamedFunctionSymbol kotlin/compareTo' in 'compareTo'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:488:18 Argument type mismatch: actual type is 'kotlin.ByteArray', but 'K' was expected.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:506:14 Unresolved reference 'openPinnedConnection'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:534:21 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:534:21 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T : Closeable?, R> T.use(block: (T) -> R): R
+    [R|Contract description]
+     <
+        CallsInPlace(block, EXACTLY_ONCE)
+    >
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:534:27 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:537:39 Unresolved reference 'read'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:539:49 'operator' modifier is required on 'FirNamedFunctionSymbol kotlin/compareTo' in 'compareTo'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:560:14 Unresolved reference 'openPinnedConnection'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:577:36 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:577:36 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T : Closeable?, R> T.use(block: (T) -> R): R
+    [R|Contract description]
+     <
+        CallsInPlace(block, EXACTLY_ONCE)
+    >
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:577:42 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:580:39 Unresolved reference 'read'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:582:47 'operator' modifier is required on 'FirNamedFunctionSymbol kotlin/compareTo' in 'compareTo'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:583:39 'return' is prohibited here.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:958:91 Unresolved reference 'openPinnedConnection'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:969:29 Argument type mismatch: actual type is 'R?', but 'K?' was expected.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:969:53 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:969:59 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:971:39 Unresolved reference 'read'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:973:22 Argument type mismatch: actual type is 'kotlin.ByteArray', but 'K' was expected.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:979:36 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:979:36 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T : Closeable?, R> T.use(block: (T) -> R): R
+    [R|Contract description]
+     <
+        CallsInPlace(block, EXACTLY_ONCE)
+    >
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:979:42 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:982:35 Unresolved reference 'read'.
+e: file:///D:/AIProjects/WeftMate/Worktrees/w2/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt:984:40 'operator' modifier is required on 'FirNamedFunctionSymbol kotlin/compareTo' in 'compareTo'.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 14s
+18 actionable tasks: 11 executed, 7 up-to-date
