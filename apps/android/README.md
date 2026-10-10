@@ -1,6 +1,6 @@
 # WeftMate Android 客户端
 
-当前壳 **0.8.26 / code39**：ST-4 原生业务路由放行「数据与存储」的 `/personal/v1/data` 及其统计 / 清理 / 导出 / 删除 / 注销 / 操作状态路径（精确匹配、无查询参数）。上一版 0.8.25 / code38：AND-1 系统栏沉浸与页面主题回报。包含这些能力的界面包最低原生 code39。
+当前壳 **0.8.27 / code40**：AND-2 记住登录来源（本地账号 / 云账号）——用「电脑账户与连接」表单登录的本地账号不再被当成云账号恢复而显示「登录已失效」；短暂提示显示在顶栏下方、不遮标题。上一版 0.8.26 / code39：ST-4 放行「数据与存储」路由。包含这些能力的界面包最低原生 code40。
 
 TB-4 当前壳 **0.8.20 / code33**：底部四选项卡配合——根聊天页返回键退到后台（`app.exit` → `moveTaskToBack`）、输入法可见状态事件（`weft-keyboard`）；业务路由白名单放行目标页的 `/schedules…` 与 `/goals…`。含底部选项卡的界面包最低原生 code33。
 
@@ -141,3 +141,22 @@ MEM-2壳 **0.8.13 / code26** 增加临时对话业务路由 `/sessions/temporary
 `settings.appearance` 新增可选 `effectiveDark` 布尔报告；原偏好三态和账户存储方式继续使用。报告、偏好读取和保存均在界面线程完成，不排在网络请求之后。登录进入、注销、切号、系统外观变化和前台恢复读取实际页面偏好；栏图标跟随实际已绘制主题。`R.color.wm_web_surface_*` 和原生兼容页面的表面色都由手机表面令牌生成，不再保留手抄的网页表面色。
 
 夜间合成传输由测试 APK（安卓安装包）把页面实际主题送入同一个原生控制器；截屏前等待主题回执，检查整屏顶部色差。真实消息桥另由 AND-1 独立包验证。命令与覆盖限制见 [AND-1 证据](../../tests/evidence/and-1/README.md)。
+
+## AND-2：本地登录恢复与原生发送回归
+
+本地账户登录与云登录分别保存 `HostIdentity.authSource`。主界面启动时，本地会话先经原生 `auth.me` 核验并恢复；云会话继续使用云刷新凭据、宿主交换和设备批准。既有账户 / 设备归属不变，旧存储根据已有云凭据判断来源。需要随界面包发布新壳，本工作包不改版本号。
+
+`AndroidLoginInstrumentedTest.realLoginThenSendMainConversation` 是 opt-in（显式启用）原生仪器化冒烟：独立包 `com.memoweft.weftmate.mobile.lg1bqa`，本地场景点击原生备用页的实际登录控件，云场景提交内置界面的实际登录表单并验证合成邮箱验证码；随后都必须在主对话点击发送并看到持久合成回复。没有写入 `state.loggedIn`、替换 `app.bootstrap` 或替换业务桥。
+
+在仓库根目录先构建独立 APK，再运行可重复的完整驱动：
+
+```powershell
+. D:/AIProjects/AIGame/Repository/runtime/toolchains/activate-android.ps1
+npm ci --prefix services/cloud --ignore-scripts --no-audit --no-fund
+gradle -p apps/android --offline '-PweftmateApplicationId=com.memoweft.weftmate.mobile.lg1bqa' :app:assembleDebug :app:assembleDebugAndroidTest :app:testDebugUnitTest --console=plain
+node tests/integration/and-2-android.mjs
+```
+
+驱动使用仓库合成云身份服务、随机端口与临时目录，不需要真实模型或本人账号。覆盖两条登录路径的首次安装、杀进程重开、后台返回、真实宿主进程退出后重启，并检查配对表单和原生整屏。宿主业务请求经透明的本机传输门转发；停止真实宿主后，门仅将连接拒绝报告为 `HOST_UNAVAILABLE`，避免 Windows ADB reverse（安卓端口反向映射）在目标监听消失时卡住。身份、业务内容和持久回复全部来自实际宿主服务。
+
+可用 `AND2_ADB` 指定 SDK 的 `adb.exe`，用 `AND2_ADB_PORT` 指定本包独立 ADB server（调试桥服务）端口；整个运行须使用同一版本的 ADB。结束只卸载本驱动安装的包及移除自己的端口映射，不调整模拟器主题、导航或输入法设置。原始图、系统栏数值与限制见 [AND-2 证据](../../tests/evidence/and-2/README.md)。

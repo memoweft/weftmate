@@ -1,0 +1,23 @@
+✔ a native batch uses its real RPC ID, saves a stable answer, and sends the answer exactly once (2294.0607ms)
+✔ answer validation preserves native single, multi and free-text semantics and exact batch order (2585.271ms)
+✔ questions fail closed for missing or forged source, body fields, CSRF and another account (5007.8674ms)
+✔ a live reconnect retains one exact batch, while a native outside answer supplies no invented portal answer (2077.0394ms)
+✔ native not-pending and uncertain response receipts stay truthful and never resend saved answers (4440.8686ms)
+✔ runtime replacement seals registrations already awaiting describe and leaves the new child batch untouched (2008.8228ms)
+✔ a native outside answer or lost own ACK never attributes the portal answer to native consumption (5845.0389ms)
+✔ native terminal evidence arriving during registration cannot recreate a historical pending batch (1751.0508ms)
+✔ task stop and service restart leave old batches unavailable and reject late answers (1971.5417ms)
+✔ answer IDs collide in both directions with commands, task stops and approval decisions (2057.2176ms)
+✔ question information remains available to clarify an uncertain execution without lifting its guard (1828.2375ms)
+✔ revoked source credentials and a changed model destination cannot receive late information answers (4514.3171ms)
+✔ shared-chat session scope still exposes no question channel (2465.6229ms)
+✔ a reconnect snapshot gap cannot seal an existing question or cause a duplicate native answer (2211.3891ms)
+✔ backend snapshots and responses capture the parent generation before awaits and discard replacements (1.4205ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 41323.5586

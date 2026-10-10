@@ -1,0 +1,2107 @@
+{
+  "package": "com.memoweft.weftmate.mobile.lg1bqa",
+  "realNativeTransport": true,
+  "syntheticHostName": "synthetic-host",
+  "modelRequests": 0,
+  "matrix": [
+    {
+      "mode": "local",
+      "scenario": "fresh-install",
+      "nativeSmoke": {
+        "mode": "local",
+        "passed": true,
+        "realLogin": true,
+        "mainSendReply": true
+      },
+      "state": {
+        "loggedIn": true,
+        "ownerPresent": true,
+        "connection": "connected",
+        "authEpoch": 1,
+        "mainChat": true,
+        "canSend": true
+      }
+    },
+    {
+      "mode": "local",
+      "scenario": "host-restart",
+      "draftRetained": true,
+      "identityRetained": true,
+      "state": {
+        "loggedIn": true,
+        "ownerPresent": true,
+        "connection": "connected",
+        "authEpoch": 1,
+        "mainChat": true,
+        "canSend": true
+      }
+    },
+    {
+      "mode": "local",
+      "scenario": "background-return",
+      "identityRetained": true,
+      "state": {
+        "loggedIn": true,
+        "ownerPresent": true,
+        "connection": "connected",
+        "authEpoch": 1,
+        "mainChat": true,
+        "canSend": true
+      }
+    },
+    {
+      "mode": "local",
+      "scenario": "process-reopen",
+      "state": {
+        "loggedIn": true,
+        "ownerPresent": true,
+        "connection": "connected",
+        "authEpoch": 1,
+        "mainChat": true,
+        "canSend": true
+      },
+      "hostReceivedMessages": 5
+    },
+    {
+      "mode": "cloud",
+      "scenario": "fresh-install",
+      "nativeSmoke": {
+        "mode": "cloud",
+        "passed": true,
+        "realLogin": true,
+        "mainSendReply": true
+      },
+      "state": {
+        "loggedIn": true,
+        "ownerPresent": true,
+        "connection": "connected",
+        "authEpoch": 2,
+        "mainChat": true,
+        "canSend": true
+      }
+    },
+    {
+      "mode": "cloud",
+      "scenario": "host-restart",
+      "draftRetained": true,
+      "identityRetained": true,
+      "state": {
+        "loggedIn": true,
+        "ownerPresent": true,
+        "connection": "connected",
+        "authEpoch": 4,
+        "mainChat": true,
+        "canSend": true
+      }
+    },
+    {
+      "mode": "cloud",
+      "scenario": "background-return",
+      "identityRetained": true,
+      "state": {
+        "loggedIn": true,
+        "ownerPresent": true,
+        "connection": "connected",
+        "authEpoch": 4,
+        "mainChat": true,
+        "canSend": true
+      }
+    },
+    {
+      "mode": "cloud",
+      "scenario": "process-reopen",
+      "state": {
+        "loggedIn": true,
+        "ownerPresent": true,
+        "connection": "connected",
+        "authEpoch": 3,
+        "mainChat": true,
+        "canSend": true
+      },
+      "hostReceivedMessages": 6
+    }
+  ],
+  "screens": [
+    {
+      "file": "local-offline-light.png",
+      "scene": "offline",
+      "mode": "local",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "light",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "light",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 744.1299438476562,
+          "width": 565.490234375,
+          "height": 190.51470947265625,
+          "top": 744.1299438476562,
+          "right": 565.490234375,
+          "bottom": 934.6446533203125,
+          "left": 0
+        },
+        "toast": null,
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "label": "WeftMate 主对话",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "class": "mobile-session-status",
+            "label": null,
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ]
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "local-offline-dark.png",
+      "scene": "offline",
+      "mode": "local",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "dark",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": false,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "dark",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 744.1299438476562,
+          "width": 565.490234375,
+          "height": 190.51470947265625,
+          "top": 744.1299438476562,
+          "right": 565.490234375,
+          "bottom": 934.6446533203125,
+          "left": 0
+        },
+        "toast": null,
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "label": "WeftMate 主对话",
+            "color": "rgb(38, 39, 35)"
+          },
+          {
+            "class": "mobile-session-status",
+            "label": null,
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ]
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "local-recovered-light.png",
+      "scene": "recovered",
+      "mode": "local",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "light",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "light",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 744.1299438476562,
+          "width": 565.490234375,
+          "height": 190.51470947265625,
+          "top": 744.1299438476562,
+          "right": 565.490234375,
+          "bottom": 934.6446533203125,
+          "left": 0
+        },
+        "toast": {
+          "x": 23.995098114013672,
+          "y": 96.311279296875,
+          "width": 517.5,
+          "height": 47.990196228027344,
+          "top": 96.311279296875,
+          "right": 541.4950981140137,
+          "bottom": 144.30147552490234,
+          "left": 23.995098114013672
+        },
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "label": "WeftMate 主对话",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "class": "mobile-session-status",
+            "label": null,
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ]
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "local-recovered-dark.png",
+      "scene": "recovered",
+      "mode": "local",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "dark",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": false,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "dark",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 744.1299438476562,
+          "width": 565.490234375,
+          "height": 190.51470947265625,
+          "top": 744.1299438476562,
+          "right": 565.490234375,
+          "bottom": 934.6446533203125,
+          "left": 0
+        },
+        "toast": {
+          "x": 23.995098114013672,
+          "y": 96.311279296875,
+          "width": 517.5,
+          "height": 47.990196228027344,
+          "top": 96.311279296875,
+          "right": 541.4950981140137,
+          "bottom": 144.30147552490234,
+          "left": 23.995098114013672
+        },
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "label": "WeftMate 主对话",
+            "color": "rgb(38, 39, 35)"
+          },
+          {
+            "class": "mobile-session-status",
+            "label": null,
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ]
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "cloud-login-light.png",
+      "scene": "login",
+      "mode": "cloud",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "light",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "light",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "toast": null,
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": []
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "cloud-login-dark.png",
+      "scene": "login",
+      "mode": "cloud",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "dark",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": false,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "dark",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "toast": null,
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": []
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "cloud-main-light.png",
+      "scene": "main",
+      "mode": "cloud",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "light",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "light",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 744.1299438476562,
+          "width": 565.490234375,
+          "height": 190.51470947265625,
+          "top": 744.1299438476562,
+          "right": 565.490234375,
+          "bottom": 934.6446533203125,
+          "left": 0
+        },
+        "toast": null,
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "label": "WeftMate 主对话",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "class": "mobile-session-status",
+            "label": null,
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ]
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "cloud-drawer-status-dots-light.png",
+      "scene": "drawer-status-dots",
+      "mode": "cloud",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "light",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "light",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 744.1299438476562,
+          "width": 565.490234375,
+          "height": 190.51470947265625,
+          "top": 744.1299438476562,
+          "right": 565.490234375,
+          "bottom": 934.6446533203125,
+          "left": 0
+        },
+        "toast": null,
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "label": "WeftMate 主对话",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "class": "mobile-session-status is-completed",
+            "label": "已完成，未读",
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ]
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          221.15833333333333,
+          221.48333333333332,
+          222.11388888888888
+        ],
+        "header": [
+          221.15833333333333,
+          221.48333333333332,
+          222.11388888888888
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "cloud-fullscreen-search-light.png",
+      "scene": "fullscreen-search",
+      "mode": "cloud",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "light",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "light",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 818.186279296875,
+          "width": 565.490234375,
+          "height": 186.5196075439453,
+          "top": 818.186279296875,
+          "right": 565.490234375,
+          "bottom": 1004.7058868408203,
+          "left": 0
+        },
+        "toast": null,
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "label": "WeftMate 主对话",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "class": "mobile-session-status",
+            "label": null,
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ]
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "cloud-top-more-menu-light.png",
+      "scene": "top-more-menu",
+      "mode": "cloud",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "light",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "light",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 744.1299438476562,
+          "width": 565.490234375,
+          "height": 190.51470947265625,
+          "top": 744.1299438476562,
+          "right": 565.490234375,
+          "bottom": 934.6446533203125,
+          "left": 0
+        },
+        "toast": null,
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "label": "WeftMate 主对话",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "class": "mobile-session-status",
+            "label": null,
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ]
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "cloud-data-storage-light.png",
+      "scene": "data-storage",
+      "mode": "cloud",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "light",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "light",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "toast": null,
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "label": "WeftMate 主对话",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "class": "mobile-session-status",
+            "label": null,
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ]
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "cloud-data-storage-toast-light.png",
+      "scene": "data-storage-toast",
+      "mode": "cloud",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "light",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "light",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "toast": {
+          "x": 23.995098114013672,
+          "y": 96.311279296875,
+          "width": 517.5,
+          "height": 47.990196228027344,
+          "top": 96.311279296875,
+          "right": 541.4950981140137,
+          "bottom": 144.30147552490234,
+          "left": 23.995098114013672
+        },
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "label": "WeftMate 主对话",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "class": "mobile-session-status",
+            "label": null,
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ]
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "cloud-composer-focused-without-ime-light.png",
+      "scene": "composer-focused-without-ime",
+      "mode": "cloud",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "light",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "light",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 818.186279296875,
+          "width": 565.490234375,
+          "height": 186.5196075439453,
+          "top": 818.186279296875,
+          "right": 565.490234375,
+          "bottom": 1004.7058868408203,
+          "left": 0
+        },
+        "toast": null,
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "label": "WeftMate 主对话",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "class": "mobile-session-status",
+            "label": null,
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ]
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "cloud-main-dark.png",
+      "scene": "main",
+      "mode": "cloud",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "dark",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": false,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "dark",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 744.1299438476562,
+          "width": 565.490234375,
+          "height": 190.51470947265625,
+          "top": 744.1299438476562,
+          "right": 565.490234375,
+          "bottom": 934.6446533203125,
+          "left": 0
+        },
+        "toast": null,
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "label": "WeftMate 主对话",
+            "color": "rgb(38, 39, 35)"
+          },
+          {
+            "class": "mobile-session-status",
+            "label": null,
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ]
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "cloud-drawer-status-dots-dark.png",
+      "scene": "drawer-status-dots",
+      "mode": "cloud",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "dark",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": false,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "dark",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 744.1299438476562,
+          "width": 565.490234375,
+          "height": 190.51470947265625,
+          "top": 744.1299438476562,
+          "right": 565.490234375,
+          "bottom": 934.6446533203125,
+          "left": 0
+        },
+        "toast": null,
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "label": "WeftMate 主对话",
+            "color": "rgb(38, 39, 35)"
+          },
+          {
+            "class": "mobile-session-status",
+            "label": null,
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ]
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          31.761111111111113,
+          34.09722222222222,
+          33.388888888888886
+        ],
+        "header": [
+          31.761111111111113,
+          34.09722222222222,
+          33.388888888888886
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "cloud-fullscreen-search-dark.png",
+      "scene": "fullscreen-search",
+      "mode": "cloud",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "dark",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": false,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "dark",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 818.186279296875,
+          "width": 565.490234375,
+          "height": 186.5196075439453,
+          "top": 818.186279296875,
+          "right": 565.490234375,
+          "bottom": 1004.7058868408203,
+          "left": 0
+        },
+        "toast": null,
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "label": "WeftMate 主对话",
+            "color": "rgb(38, 39, 35)"
+          },
+          {
+            "class": "mobile-session-status",
+            "label": null,
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ]
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          47,
+          49,
+          43
+        ],
+        "header": [
+          47,
+          49,
+          43
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "cloud-top-more-menu-dark.png",
+      "scene": "top-more-menu",
+      "mode": "cloud",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "dark",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": false,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "dark",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 744.1299438476562,
+          "width": 565.490234375,
+          "height": 190.51470947265625,
+          "top": 744.1299438476562,
+          "right": 565.490234375,
+          "bottom": 934.6446533203125,
+          "left": 0
+        },
+        "toast": null,
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "label": "WeftMate 主对话",
+            "color": "rgb(38, 39, 35)"
+          },
+          {
+            "class": "mobile-session-status",
+            "label": null,
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ]
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "cloud-data-storage-dark.png",
+      "scene": "data-storage",
+      "mode": "cloud",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "dark",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": false,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "dark",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "toast": null,
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "label": "WeftMate 主对话",
+            "color": "rgb(38, 39, 35)"
+          },
+          {
+            "class": "mobile-session-status",
+            "label": null,
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ]
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "cloud-data-storage-toast-dark.png",
+      "scene": "data-storage-toast",
+      "mode": "cloud",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "dark",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": false,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "dark",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "toast": {
+          "x": 23.995098114013672,
+          "y": 96.311279296875,
+          "width": 517.5,
+          "height": 47.990196228027344,
+          "top": 96.311279296875,
+          "right": 541.4950981140137,
+          "bottom": 144.30147552490234,
+          "left": 23.995098114013672
+        },
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "label": "WeftMate 主对话",
+            "color": "rgb(38, 39, 35)"
+          },
+          {
+            "class": "mobile-session-status",
+            "label": null,
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ]
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "cloud-composer-focused-without-ime-dark.png",
+      "scene": "composer-focused-without-ime",
+      "mode": "cloud",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "dark",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": false,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "dark",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 818.186279296875,
+          "width": 565.490234375,
+          "height": 186.5196075439453,
+          "top": 818.186279296875,
+          "right": 565.490234375,
+          "bottom": 1004.7058868408203,
+          "left": 0
+        },
+        "toast": null,
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "label": "WeftMate 主对话",
+            "color": "rgb(38, 39, 35)"
+          },
+          {
+            "class": "mobile-session-status",
+            "label": null,
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ]
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "cloud-offline-light.png",
+      "scene": "offline",
+      "mode": "cloud",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "light",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "light",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 744.1299438476562,
+          "width": 565.490234375,
+          "height": 190.51470947265625,
+          "top": 744.1299438476562,
+          "right": 565.490234375,
+          "bottom": 934.6446533203125,
+          "left": 0
+        },
+        "toast": null,
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "label": "WeftMate 主对话",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "class": "mobile-session-status",
+            "label": null,
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ]
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "cloud-offline-dark.png",
+      "scene": "offline",
+      "mode": "cloud",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "dark",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": false,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "dark",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 744.1299438476562,
+          "width": 565.490234375,
+          "height": 190.51470947265625,
+          "top": 744.1299438476562,
+          "right": 565.490234375,
+          "bottom": 934.6446533203125,
+          "left": 0
+        },
+        "toast": null,
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "label": "WeftMate 主对话",
+            "color": "rgb(38, 39, 35)"
+          },
+          {
+            "class": "mobile-session-status",
+            "label": null,
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ]
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "cloud-recovered-light.png",
+      "scene": "recovered",
+      "mode": "cloud",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "light",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "light",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 744.1299438476562,
+          "width": 565.490234375,
+          "height": 190.51470947265625,
+          "top": 744.1299438476562,
+          "right": 565.490234375,
+          "bottom": 934.6446533203125,
+          "left": 0
+        },
+        "toast": {
+          "x": 23.995098114013672,
+          "y": 96.311279296875,
+          "width": 517.5,
+          "height": 47.990196228027344,
+          "top": 96.311279296875,
+          "right": 541.4950981140137,
+          "bottom": 144.30147552490234,
+          "left": 23.995098114013672
+        },
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "label": "WeftMate 主对话",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "class": "mobile-session-status",
+            "label": null,
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ]
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    },
+    {
+      "file": "cloud-recovered-dark.png",
+      "scene": "recovered",
+      "mode": "cloud",
+      "systemTheme": "Night mode: no",
+      "pageTheme": "dark",
+      "osVersion": "15",
+      "navigationVisible": false,
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": false,
+        "width": 720,
+        "height": 1280
+      },
+      "dom": {
+        "theme": "dark",
+        "dpr": 1.274999976158142,
+        "width": 565,
+        "height": 1005,
+        "topbar": {
+          "x": 0,
+          "y": 24.3137264251709,
+          "width": 565.490234375,
+          "height": 60,
+          "top": 24.3137264251709,
+          "right": 565.490234375,
+          "bottom": 84.3137264251709,
+          "left": 0
+        },
+        "composer": {
+          "x": 0,
+          "y": 744.1299438476562,
+          "width": 565.490234375,
+          "height": 190.51470947265625,
+          "top": 744.1299438476562,
+          "right": 565.490234375,
+          "bottom": 934.6446533203125,
+          "left": 0
+        },
+        "toast": {
+          "x": 23.995098114013672,
+          "y": 96.311279296875,
+          "width": 517.5,
+          "height": 47.990196228027344,
+          "top": 96.311279296875,
+          "right": 541.4950981140137,
+          "bottom": 144.30147552490234,
+          "left": 23.995098114013672
+        },
+        "safeTop": "max(0px,24.3137px)",
+        "statusDots": [
+          {
+            "class": "rail-main-chat is-current",
+            "label": "WeftMate 主对话",
+            "color": "rgb(38, 39, 35)"
+          },
+          {
+            "class": "mobile-session-status",
+            "label": null,
+            "color": "rgba(0, 0, 0, 0)"
+          }
+        ]
+      },
+      "difference": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "iconsMatch": true
+    }
+  ],
+  "instrumentation": [
+    {
+      "passed": true,
+      "log": "\r\ncom.memoweft.weftmate.mobile.AndroidLoginInstrumentedTest:.\r\n\r\nTime: 15.402\r\n\r\nOK (1 test)\r\n\r\n\r\n"
+    },
+    {
+      "passed": true,
+      "log": "\r\ncom.memoweft.weftmate.mobile.Lg1bWebViewProbeTest:.\r\n\r\nTime: 1.981\r\n\r\nOK (1 test)\r\n\r\n\r\n"
+    },
+    {
+      "passed": true,
+      "log": "\r\ncom.memoweft.weftmate.mobile.AndroidLoginInstrumentedTest:.\r\n\r\nTime: 55.871\r\n\r\nOK (1 test)\r\n\r\n\r\n"
+    },
+    {
+      "passed": true,
+      "log": "\r\ncom.memoweft.weftmate.mobile.Lg1bWebViewProbeTest:.\r\n\r\nTime: 1.979\r\n\r\nOK (1 test)\r\n\r\n\r\n"
+    }
+  ],
+  "avd": {
+    "emulatorInstalled": false,
+    "configuredAvd": false,
+    "navigationSupplement": false
+  },
+  "pairing": {
+    "realVisibleForm": true,
+    "state": {
+      "loggedIn": true,
+      "ownerPresent": true,
+      "connection": "connected",
+      "authEpoch": 4,
+      "mainChat": true,
+      "canSend": true
+    }
+  },
+  "keyboardGaps": [
+    {
+      "theme": "light",
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": true,
+        "width": 720,
+        "height": 1280
+      },
+      "request": {
+        "requested": true,
+        "windowFocused": true,
+        "editorFocused": true
+      },
+      "defaultInputMethod": "com.sohu.inputmethod.sogou.chuizi/com.sohu.inputmethod.sogou.SogouIME",
+      "showImeWithHardKeyboard": "0",
+      "reason": "Error: Current IME did not expose visible keyboard"
+    },
+    {
+      "theme": "dark",
+      "native": {
+        "statusHeight": 31,
+        "navigationHeight": 0,
+        "imeHeight": 0,
+        "darkStatusIcons": false,
+        "width": 720,
+        "height": 1280
+      },
+      "request": {
+        "requested": true,
+        "windowFocused": true,
+        "editorFocused": true
+      },
+      "defaultInputMethod": "com.sohu.inputmethod.sogou.chuizi/com.sohu.inputmethod.sogou.SogouIME",
+      "showImeWithHardKeyboard": "0",
+      "reason": "Error: Current IME did not expose visible keyboard"
+    }
+  ],
+  "authenticationPassed": true,
+  "keyboardComplete": false,
+  "systemNavigationComplete": false
+}

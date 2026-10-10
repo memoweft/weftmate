@@ -4,6 +4,18 @@ import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 const source = readFileSync(new URL('../src/ui-core/adapters/android-bridge.js', import.meta.url), 'utf8');
 function context() { const scope = { globalThis: null, URL, setTimeout, clearTimeout, WeftUiCore: {} }; scope.globalThis = scope; vm.runInNewContext(source, scope); return scope.WeftUiCore; }
+
+test('remembered native local session is verified before acceptance without a cloud adoption or refresh', async () => {
+  const calls = [], accepted = [], payload = {account:{ownerId:'native-scope',username:'Synthetic'},device:{id:'native-device'},csrfToken:'native-managed'};
+  const result = await context().restoreMobileHostSession({fetch:async path=>{calls.push(path);return {ok:true,status:200,json:async()=>payload};},call:async()=>{throw Error('Local login must not adopt a cloud result');}},value=>accepted.push(value));
+  assert.equal(result,payload);assert.deepEqual(accepted,[payload]);assert.deepEqual(calls,['/personal/v1/auth/me']);
+});
+
+test('revoked native local session is refused before accepting identity', async () => {
+  let accepted=false;
+  await assert.rejects(context().restoreMobileHostSession({fetch:async()=>({ok:false,status:401,json:async()=>({error:{code:'UNAUTHORIZED'}})})},()=>accepted=true),error=>error.code==='UNAUTHORIZED'&&error.status===401);
+  assert.equal(accepted,false);
+});
 test('mobile app transport keeps platform key operations native and uses only opaque refresh handles', async () => {
   const methods = [];
   const bridge = { call: async (method, params) => { methods.push({ method, params });

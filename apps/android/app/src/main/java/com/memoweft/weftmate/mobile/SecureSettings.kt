@@ -13,10 +13,14 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
 data class HostIdentity(val origin: String, val username: String, val ownerId: String,
-    val hostId: String, val deviceId: String, val cookie: String, val csrf: String)
+    val hostId: String, val deviceId: String, val cookie: String, val csrf: String,
+    val authSource: String = "local")
 data class ModelSettings(val endpoint: String, val modelId: String, val apiKey: String,
     val displayName: String = modelId)
 data class ModelImportResult(val status: String, val model: ModelSettings? = null)
+
+internal fun hostAuthenticationSource(body: JSONObject, hasCloudCredentials: Boolean): String =
+    body.optString("authSource").ifBlank { if (hasCloudCredentials) "cloud" else "local" }
 
 /** Passwords never enter preferences. The credential blobs are AES-GCM encrypted with an AndroidKeyStore key. */
 class SecureSettings(context: Context, storageName: String = "private-settings", keyAlias: String = "weftmate-mobile-v1") {
@@ -78,6 +82,7 @@ class SecureSettings(context: Context, storageName: String = "private-settings",
         val body = JSONObject().put("origin", value.origin).put("username", value.username)
             .put("ownerId", value.ownerId).put("hostId", value.hostId)
             .put("deviceId", value.deviceId).put("cookie", value.cookie).put("csrf", value.csrf)
+            .put("authSource", value.authSource)
         check(prefs.edit().putString("host", encrypt(body.toString())).commit())
     }
 
@@ -86,7 +91,9 @@ class SecureSettings(context: Context, storageName: String = "private-settings",
         val body = JSONObject(decrypt(raw))
         return HostIdentity(body.getString("origin"), body.getString("username"),
             body.getString("ownerId"), body.getString("hostId"), body.getString("deviceId"),
-            body.getString("cookie"), body.getString("csrf"))
+            body.getString("cookie"), body.getString("csrf"), hostAuthenticationSource(body,
+                JSONObject(appValue("credentials") ?: "{}").keys().asSequence().any { it.startsWith("app-tokens:") }
+                    || !cloudValue("tokens").isNullOrBlank()))
     }
 
     @Synchronized fun clearHost() { captureLegacyOwner(); ensureMigrated(); check(prefs.edit().remove("host").commit()) }
