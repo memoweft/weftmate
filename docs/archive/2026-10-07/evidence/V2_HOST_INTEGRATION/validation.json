@@ -60,7 +60,7 @@
       51971
     ]
   },
-  "retainedTemporaryRoot": "C:/Users/yun/AppData/Local/Temp/weftmate-v2-seam-20260915",
+  "retainedTemporaryRoot": "C:\\Users\\<user>/AppData/Local/Temp/weftmate-v2-seam-20260915",
   "sourceSHA256": {
     "src/main.mjs": "c21e84212fe880020b764dd188a7246714c02885b28b700190a51f8512188d7f",
     "src/dsh-surface-preload.cjs": "b674ebf0e082a4fd94af553ee5196f5a63762aa7a6070e7a55ff4f48ea1b5c33",

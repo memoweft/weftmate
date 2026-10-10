@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Independent final bad-version trial; no manual recovery or callback substitution. */
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
@@ -19,6 +21,7 @@ await mkdir(profile); await mkdir(feedDir); await mkdir(evidence,{recursive:true
 await writeFile(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const env={...process.env,LOCALAPPDATA:join(root,'Local')}; await mkdir(env.LOCALAPPDATA);
 for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_|ELECTRON_RUN_AS_NODE|MIMO_API_KEY|MODEL_SWITCH_UNIFIED_KEY)/.test(key))delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 let application, page, log='';
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function until(check,timeout=720000){const deadline=Date.now()+timeout;while(Date.now()<deadline){const value=await check();if(value)return value;await pause(300);}throw new Error('Rollback trial timed out');}

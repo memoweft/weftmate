@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Electron helper invoked by ds-1-compare.mjs. */
 const {app,nativeImage}=require('electron');
 const fs=require('node:fs'),path=require('node:path');

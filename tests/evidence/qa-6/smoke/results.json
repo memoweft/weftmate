@@ -168,7 +168,7 @@
       },
       "notifications": [
         {
-          "title": "请整理这个合成文件夹 C:/Users/yun/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-f",
+          "title": "请整理这个合成文件夹 C:\\Users\\<user>/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-f",
           "body": "已完成 · 点开查看结果",
           "at": 1791637686401
         },
@@ -1034,7 +1034,7 @@
   },
   "notifications": [
     {
-      "title": "请整理这个合成文件夹 C:/Users/yun/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-f",
+      "title": "请整理这个合成文件夹 C:\\Users\\<user>/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-f",
       "body": "已完成 · 点开查看结果",
       "at": 1791637686401
     },
@@ -1049,23 +1049,23 @@
       "at": 1791637813685
     },
     {
-      "title": "请写入 C:/Users/yun/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-folder/d",
+      "title": "请写入 C:\\Users\\<user>/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-folder/d",
       "body": "已完成 · 点开查看结果",
       "at": 1791637882401
     },
     {
       "title": "需要审批",
-      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：write {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-folder/desktop-race.txt\",\"cont",
+      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：write {\"file_path\":\"C:\\Users\\<user>/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-folder/desktop-race.txt\",\"cont",
       "at": 1791637902554
     },
     {
-      "title": "请写入 C:/Users/yun/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-folder/d",
+      "title": "请写入 C:\\Users\\<user>/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-folder/d",
       "body": "已完成 · 点开查看结果",
       "at": 1791638513125
     },
     {
       "title": "需要审批",
-      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：write {\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-folder/phone-race.txt\",\"conten",
+      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：write {\"file_path\":\"C:\\Users\\<user>/AppData/Local/Temp/weftmate-qa6-smoke-T021Dd/synthetic-folder/phone-race.txt\",\"conten",
       "at": 1791638516542
     }
   ],

@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
@@ -43,6 +45,7 @@ export async function harness(label, { memory = true, mainChat = false, provider
   await writeFile(config, JSON.stringify({ python, pythonPath: core, baseUrl: 'http://127.0.0.1:1/v1', model: '@current', authRef: 'ia2b-mimo' }));
   const env = { ...process.env };
   for (const name of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_)/.test(name) || ['ELECTRON_RUN_AS_NODE','MIMO_API_KEY','MODEL_SWITCH_UNIFIED_KEY'].includes(name)) delete env[name];
+  env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
   env.WEFTMATE_BASELINE_TRACE = join(base, 'requests.jsonl');
   let app, page, launches = 0;
   async function api(path, body, method = body === undefined ? 'GET' : 'POST') {

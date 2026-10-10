@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Real production Electron window, isolated profile and synthetic API data.
  * Layout/confirmation coverage only; no memory formation or deletion claim. */
 import assert from 'node:assert/strict';
@@ -18,6 +20,7 @@ const root = mkdtempSync(join(tmpdir(), 'weftmate-fix7-'));
 writeFileSync(join(root, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const env = { ...process.env };
 for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_)/.test(key) || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const baseline = '2a6aa9f7ad9fa02d77883940a32eb7083fae8641';
 const oldAssets = new Map(['native-desktop.css', 'native-desktop.js', 'popovers.js', 'components/settings-navigation.js', 'components/shell.js'].map(name => [name.split('/').at(-1),
   execFileSync('git', ['show', `${baseline}:src/personal-access-ui/${name}`], { cwd: repository, encoding: 'utf8' })]));

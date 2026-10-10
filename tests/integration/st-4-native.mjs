@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
 import { execFileSync } from 'node:child_process';
@@ -36,6 +38,7 @@ const register=await fetch(prepared.origin+'/personal/v1/auth/register',{method:
 const bRoot=join(profile,'personal-access','accounts',b);await mkdir(bRoot,{recursive:true});await writeFile(join(bRoot,'untouched.txt'),'Synthetic B remains unchanged');
 const hash=async file=>createHash('sha256').update(await readFile(file)).digest('hex');const bHash=await hash(join(bRoot,'untouched.txt'));
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];env.WEFTMATE_BASELINE_TRACE=join(root,'requests.jsonl');
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 let app,page,hostLog='';
 async function until(check,ms=60000){const end=Date.now()+ms;while(Date.now()<end){const value=await check();if(value)return value;await new Promise(r=>setTimeout(r,150));}throw Error('ST4 native timeout');}
 async function api(path,body,method=body?'POST':'GET'){return page.evaluate(async({path,body,method})=>{const auth=await(await fetch('/personal/v1/auth/me')).json();return window.weftmateDesktop.fetchPersonal(location.origin+'/personal/v1'+path,{method,headers:{'content-type':'application/json','x-weftmate-csrf':auth.csrfToken},body:body?JSON.stringify(body):undefined},crypto.randomUUID());},{path,body,method});}

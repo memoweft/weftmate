@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** UI-P5: production Electron shell and phone pages; isolated synthetic accounts. */
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
@@ -13,6 +15,7 @@ const root = resolve(import.meta.dirname, '../..'), evidence = join(root, 'tests
 mkdirSync(evidence, { recursive: true });
 const env = { ...process.env }, errors = [], checks = [];
 for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_)/.test(key) || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 for (const theme of ['light', 'dark']) {
   const fixture = await startTimelineCandidate({ historyCount: 0, interactive: true, inlineProgress: true, composer: true, windowChrome:true, appearanceTheme:theme, baseTime: Date.now() - 15000 });
   await fixture.request(`/sessions/${fixture.sessionId}/approval-mode`, { mode: 'allow-all' }, 'PATCH');

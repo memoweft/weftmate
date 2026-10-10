@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, readFile, rm, access } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, rm, access, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { deflateSync } from 'node:zlib';
@@ -125,8 +125,8 @@ test('synthetic artifact write is observed before exposing its task approval', a
 });
 
 test('temp pruning removes only stale unused weftmate-* directories and never follows a junction', { skip: process.platform !== 'win32' }, async () => {
-  const root = await mkdtemp(join(tmpdir(), 'nightly-prune-root-'));
-  const outside = await mkdtemp(join(tmpdir(), 'nightly-prune-outside-'));
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'nightly-prune-root-')));
+  const outside = await realpath(await mkdtemp(join(tmpdir(), 'nightly-prune-outside-')));
   const script = join(process.cwd(), 'scripts/nightly/prune-temp.ps1');
   const ps = (command, options = {}) => execFileSync('pwsh', ['-NoProfile', '-Command', command], { encoding: 'utf8', ...options });
   let holder;
@@ -141,8 +141,12 @@ test('temp pruning removes only stale unused weftmate-* directories and never fo
     for (const name of ['weftmate-old', 'weftmate-in-use', 'other-old'])
       ps(`$d = Get-Item -LiteralPath '${join(root, name)}'; $d.CreationTime = ${old}; $d.LastWriteTime = ${old}`);
     const { spawn } = await import('node:child_process');
-    holder = spawn('pwsh', ['-NoProfile', '-Command', `Start-Sleep 60 # ${join(root, 'weftmate-in-use')}`], { stdio: 'ignore' });
-    await new Promise(done => setTimeout(done, 1500));
+    holder = spawn('pwsh', ['-NoProfile', '-Command', `Write-Output 'ready'; Start-Sleep 60 # ${join(root, 'weftmate-in-use')}`], { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+    await new Promise((done, reject) => {
+      holder.stdout.once('data', bytes => bytes.toString().trim() === 'ready' ? done() : reject(Error('unexpected holder output')));
+      holder.once('error', reject);
+      holder.once('exit', code => reject(Error(`holder exited before pruning: ${code}`)));
+    });
     const run = extra => JSON.parse(execFileSync('pwsh', ['-NoProfile', '-File', script, '-Hours', '48', '-Roots', root, ...extra], { encoding: 'utf8' }).trim().split(/\r?\n/).pop());
     const preview = run([]);
     assert.deepEqual([preview.applied, preview.found, preview.selected, preview.deleted, preview.keptRecent, preview.keptInUse], [false, 3, 1, 0, 1, 1]);
@@ -153,7 +157,10 @@ test('temp pruning removes only stale unused weftmate-* directories and never fo
     for (const kept of ['weftmate-recent', 'weftmate-in-use', 'other-old']) await access(join(root, kept, 'nested', 'file.txt'));
     assert.equal(await readFile(join(outside, 'keep.txt'), 'utf8'), 'outside data');
   } finally {
-    holder?.kill();
+    if (holder && holder.exitCode === null) {
+      const exited = new Promise(done => holder.once('exit', done));
+      holder.kill(); await exited;
+    }
     await rm(root, { recursive: true, force: true }); await rm(outside, { recursive: true, force: true });
   }
 });

@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 // Private backup diagnostics: never export account identifiers, names, text or credentials.
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
@@ -59,6 +61,7 @@ try {
     pythonPath: process.env.WEFTMATE_TEST_MEMOWEFT_SOURCE, baseUrl: 'http://127.0.0.1:1/v1', model: '@current', authRef: 'fx15-unavailable' }));
   const env = { ...process.env, NODE_OPTIONS: `--require=${join(repository, 'tests/integration/r0-1-offline.cjs')}` };
   for (const name of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_|MIMO_API_KEY|MODEL_SWITCH_UNIFIED_KEY|ELECTRON_RUN_AS_NODE)/.test(name)) delete env[name];
+  env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
   env.WEFTMATE_BASELINE_TRACE = join(root, 'trace.jsonl');
   app = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'),
     args: [join(repository, 'tests/integration/m2-exit-bootstrap.mjs'), `--user-data-dir=${profile}`,

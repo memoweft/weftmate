@@ -6,7 +6,7 @@
     "data": {
       "taskId": "cmd-6f1f3782-d9a7-4dfe-b6af-9636df3ca5ea",
       "receiptId": "b37bbc0d-445e-4f6a-9998-d82e8820395e",
-      "text": "请直接使用 write 首次创建 C:/Users/yun/AppData/Local/Temp/weftmate-fx11-KrEF8W/ordinary-first.txt，内容只写 FX11_ORDINARY_FIRST，再用 read 读回核验。不要使用命令工具写文件，不要读取其他文件；如果 write 报错就停止，不要重试。",
+      "text": "请直接使用 write 首次创建 C:\\Users\\<user>/AppData/Local/Temp/weftmate-fx11-KrEF8W/ordinary-first.txt，内容只写 FX11_ORDINARY_FIRST，再用 read 读回核验。不要使用命令工具写文件，不要读取其他文件；如果 write 报错就停止，不要重试。",
       "commandId": "cmd-6f1f3782-d9a7-4dfe-b6af-9636df3ca5ea",
       "requestId": "cd9cdf4e-c6ab-44e4-bf0a-c6b798c4c695"
     }
@@ -37,7 +37,7 @@
     "type": "user.message",
     "at": "2026-10-09T12:04:01.341Z",
     "data": {
-      "text": "请直接使用 write 首次创建 C:/Users/yun/AppData/Local/Temp/weftmate-fx11-KrEF8W/ordinary-first.txt，内容只写 FX11_ORDINARY_FIRST，再用 read 读回核验。不要使用命令工具写文件，不要读取其他文件；如果 write 报错就停止，不要重试。",
+      "text": "请直接使用 write 首次创建 C:\\Users\\<user>/AppData/Local/Temp/weftmate-fx11-KrEF8W/ordinary-first.txt，内容只写 FX11_ORDINARY_FIRST，再用 read 读回核验。不要使用命令工具写文件，不要读取其他文件；如果 write 报错就停止，不要重试。",
       "receiptId": "b37bbc0d-445e-4f6a-9998-d82e8820395e"
     }
   },
@@ -105,7 +105,7 @@
       "stepId": "call_927509e9918142978ba5ca6c",
       "toolName": "write",
       "turn": 1,
-      "summary": "[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：write\n{\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-fx11-KrEF8W/ordinary-first.txt\",\"content\":\"FX11_ORDINARY_FIRST\"}",
+      "summary": "[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：write\n{\"file_path\":\"C:\\Users\\<user>/AppData/Local/Temp/weftmate-fx11-KrEF8W/ordinary-first.txt\",\"content\":\"FX11_ORDINARY_FIRST\"}",
       "detailRef": {
         "seq": 73
       }
@@ -180,7 +180,7 @@
       "stepId": "call_61ce169ce554454ea914fd79",
       "toolName": "read",
       "turn": 1,
-      "summary": "[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read\n{\"file_path\":\"C:/Users/yun/AppData/Local/Temp/weftmate-fx11-KrEF8W/ordinary-first.txt\"}",
+      "summary": "[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：read\n{\"file_path\":\"C:\\Users\\<user>/AppData/Local/Temp/weftmate-fx11-KrEF8W/ordinary-first.txt\"}",
       "detailRef": {
         "seq": 105
       }
@@ -224,7 +224,7 @@
     "type": "assistant.message",
     "at": "2026-10-09T12:04:24.451Z",
     "data": {
-      "text": "已完成：用 write 首次创建了 `C:/Users/yun/AppData/Local/Temp/weftmate-fx11-KrEF8W/ordinary-first.txt`（内容 `FX11_ORDINARY_FIRST`，19 字节），并用 read 读回核验，内容一致。"
+      "text": "已完成：用 write 首次创建了 `C:\\Users\\<user>/AppData/Local/Temp/weftmate-fx11-KrEF8W/ordinary-first.txt`（内容 `FX11_ORDINARY_FIRST`，19 字节），并用 read 读回核验，内容一致。"
     }
   },
   {

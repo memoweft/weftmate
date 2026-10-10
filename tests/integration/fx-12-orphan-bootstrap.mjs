@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Production desktop + access service, synthetic native session state only. */
 import { app, session } from 'electron';
 import { readFileSync } from 'node:fs';

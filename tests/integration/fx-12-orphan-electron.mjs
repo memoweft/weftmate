@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
@@ -14,6 +16,7 @@ const output = join(repository, 'tests/evidence/fx-12');
 await mkdir(output, { recursive: true });
 const env = { ...process.env, FX12_PROFILE: root };
 for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key === 'ELECTRON_RUN_AS_NODE' || /API_KEY|MODEL_SWITCH_UNIFIED_KEY/.test(key)) delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 if (baseline) {
   const file = 'src/personal-access/tasks.mjs';
   env.FX12_BASELINE = join(root, 'baseline.json');

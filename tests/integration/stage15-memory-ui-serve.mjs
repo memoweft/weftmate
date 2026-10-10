@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Explicit 20-minute isolated Core host for a manually observed desktop/Android memory UI pass. */
 import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';

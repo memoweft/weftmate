@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
 import { createRequire } from 'node:module';
@@ -8,6 +10,7 @@ import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 const root=resolve(import.meta.dirname,'../..'),evidence=join(root,'tests/evidence/ux-3');mkdirSync(evidence,{recursive:true});
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const checks=[],errors=[];
 for(const theme of ['light','dark']){
  const fixture=await startTimelineCandidate({inlineProgress:true,interactive:true,composer:true,composerMenu:true,historyCount:0,baseTime:Date.now()-15000});

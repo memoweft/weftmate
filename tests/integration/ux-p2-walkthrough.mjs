@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** UX-P2: isolated synthetic host, production Electron and both phone transports. */
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
