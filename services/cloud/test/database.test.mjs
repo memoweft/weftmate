@@ -6,9 +6,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openDatabase, migrate } from '../src/database.mjs';
 
-async function fixture(t) {
+async function fixture(t, close = () => {}) {
   const root = await mkdtemp(path.join(tmpdir(), 'weftmate-cloud-db-'));
-  t.after(() => rm(root, { recursive: true, force: true }));
+  t.after(async () => { close(); await rm(root, { recursive: true, force: true }); });
   return root;
 }
 
@@ -34,12 +34,12 @@ test('initialization is durable, idempotent, and enables SQLite foreign keys/WAL
 });
 
 test('new migration applies once; a failing migration rolls back schema and history together', async (t) => {
-  const root = await fixture(t);
+  let database;
+  const root = await fixture(t, () => database?.close());
   const migrationsDir = path.join(root, 'migrations');
   await mkdir(migrationsDir);
   await writeFile(path.join(migrationsDir, '001-first.sql'), 'CREATE TABLE original (value TEXT);');
-  const { database } = await openDatabase(path.join(root, 'cloud.sqlite'), { migrationsDir });
-  t.after(() => database.close());
+  ({ database } = await openDatabase(path.join(root, 'cloud.sqlite'), { migrationsDir }));
   await writeFile(path.join(migrationsDir, '002-next.sql'), 'CREATE TABLE next (value TEXT); INSERT INTO next VALUES (\'kept\');');
   assert.equal(await migrate(database, migrationsDir), 2);
   assert.equal(await migrate(database, migrationsDir), 2);
@@ -51,14 +51,14 @@ test('new migration applies once; a failing migration rolls back schema and hist
 });
 
 test('edited applied migrations and older releases cannot silently open a newer schema', async (t) => {
-  const root = await fixture(t);
+  let database;
+  const root = await fixture(t, () => database?.close());
   const migrationsDir = path.join(root, 'migrations');
   await mkdir(migrationsDir);
   const first = path.join(migrationsDir, '001-foundation.sql');
   const source = await readFile(fileURLToPath(new URL('../migrations/001-foundation.sql', import.meta.url)), 'utf8');
   await writeFile(first, source);
-  const { database } = await openDatabase(path.join(root, 'cloud.sqlite'), { migrationsDir });
-  t.after(() => database.close());
+  ({ database } = await openDatabase(path.join(root, 'cloud.sqlite'), { migrationsDir }));
   await writeFile(first, `${source}\n-- changed\n`);
   await assert.rejects(migrate(database, migrationsDir), /history differs/);
   await writeFile(first, source);

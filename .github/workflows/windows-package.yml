@@ -44,6 +44,9 @@ jobs:
       - uses: pnpm/action-setup@v4
         with:
           version: 11.7.0
+      # Keep this list in step with vendor-tests.yml: the launcher entry package
+      # (native/landlock-run/packages/entry) compiles into its own lib directory, and
+      # a cache hit skips compilation, so a missing path only fails on later runs.
       - name: Cache pinned Windows DSH compilation
         id: dsh-cache
         uses: actions/cache/restore@v4
@@ -64,11 +67,6 @@ jobs:
         if: steps.dsh-cache.outputs.cache-hit != 'true'
         working-directory: .local/package-dsh
         run: pnpm run build
-      # Root build skips Linux native tools on Windows, but the shipping closure
-      # still imports their portable JavaScript entry. No Linux binary is built.
-      - name: Compile portable Landlock JavaScript entry
-        working-directory: .local/package-dsh/native/landlock-run/packages/entry
-        run: pnpm run build:js
       - name: Save compiled fixture before package assertions
         if: steps.dsh-cache.outputs.cache-hit != 'true'
         timeout-minutes: 2

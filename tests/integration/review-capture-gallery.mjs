@@ -58,3 +58,5 @@ await writeFile(join(out, 'verification.json'), JSON.stringify({ generatedAt: ne
 console.log(`Gallery verification passed (${checks.length} viewport/theme combinations; ${summary.captured} synthetic captures, ${summary.failed} failed).`);
 
 assert.equal(summary.exceedsHalf, false, `More than half of capture scenes failed (${summary.failed}/${summary.attempted})`);
+
+for (const theme of catalog.themes) assert.ok(manifest.records.some(row => row.platform === 'mobile-web' && row.scene === 'outputs-sources' && row.theme === theme && row.file && row.status !== 'failed'), `mobile-web/outputs-sources/${theme} must be captured`);
