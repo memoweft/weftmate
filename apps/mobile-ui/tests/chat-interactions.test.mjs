@@ -94,6 +94,8 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
     setTimeout:(fn,delay)=>{const id=++nextTimer;timers.set(id,{fn,delay,due:now+delay});return id},clearTimeout:id=>timers.delete(id),
     requestAnimationFrame:fn=>{if(queueFrames){frames.push(fn);return frames.length}fn(now);return 0},ResizeObserver,console});
   Object.defineProperty(context,'WeftFormat',{get:()=>window.WeftFormat,set:value=>{window.WeftFormat=value},configurable:true});
+  // The drawer markup owns the new-chat group; the main-chat entry mounts in front of it.
+  const drawerNew=new Node();drawerNew.className='drawer-new-group';document.getElementById('drawer').append(drawerNew);
   vm.runInContext(source,context);
   const drawerBrand=new Node();drawerBrand.className='drawer-brand';document.getElementById('drawer').append(drawerBrand);
   const run=code=>vm.runInContext(code,context);
