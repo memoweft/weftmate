@@ -9,7 +9,7 @@
     {id:'folders',group:'电脑与手机',title:'选择文件夹与审批模式',text:'在电脑侧栏新建项目并选择文件夹，就能围绕这里的文件工作。输入框的审批模式决定助手动手前要不要先问你。',action:'approvals',tryLabel:'查看审批设置'},
     {id:'continue',group:'电脑与手机',title:'手机上接着电脑的任务',text:'登录同一个账户，在设置的设备页连接自己的电脑。打开原对话，就能继续交代事情、查看结果或批准操作。',action:'devices',tryLabel:'连接设备'},
     {id:'offline',group:'电脑与手机',title:'离线时能做什么',text:'电脑不在线时，手机可以用已配置的模型聊天和已保存的记忆；电脑文件暂时无法操作。需要电脑执行的事，请等连接恢复后再发送。',action:'devices',tryLabel:'查看连接状态'},
-    {id:'data',group:'数据',title:'数据在哪里，怎么导出',text:'对话、记忆和文件保存在自己的设备上。对话菜单可以导出这段对话；电脑设置里的备份与恢复可以备份或恢复本机数据。',action:'backups',tryLabel:'打开备份设置'},
+    {id:'data',group:'数据',title:'数据在哪里，怎么导出',text:'对话、记忆和文件保存在自己的设备上。对话菜单可以导出这段对话；设置里的「数据与存储」可以看各类占了多少空间、一键导出全部数据、清理缓存。',action:'data',tryLabel:'打开数据与存储'},
   ];
   const filterHelp=query=>{const words=String(query||'').trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);return topics.filter(row=>words.every(word=>`${row.group} ${row.title} ${row.text}`.toLocaleLowerCase().includes(word)));};
   globalThis.WeftUiCore.helpTopics=Object.freeze(topics.map(Object.freeze));
