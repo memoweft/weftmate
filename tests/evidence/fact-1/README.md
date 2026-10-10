@@ -7,7 +7,7 @@ PR（拉取请求）：[#176](https://github.com/memoweft/weftmate/pull/176)，�
 - 关键断言以编号对应文末「出处」：标题链接、实际访问时间与短原文；没有依据时要求写「未在官方资料中确认」。
 - 助手设置 `researchSelfCheck` 默认开启、按账户保存、下一回合生效。最终实现使用 DSH（助手运行时）原生 `todo_write`，核对草稿/原文主体、条件与例外、数字和判定；关闭只跳过额外核对，仍要求出处。没有答案后处理改写。
 - 修复 PF-2 的实际桥接遗漏：`query` 未传到宿主，`sourcePath`、原文片段和预览截断字段也被丢弃。继续使用原生 `web_fetch` / `browser`、工具历史与压缩；压缩保存短证据及已完成状态。
-- 网页 URL（网页地址）锚点可选择指定章节。RFC 9110 后段原来落在 256 KiB 捕获上限外；现在在不提高上限的情况下捕获目标章节。真实程序读取得到 13,770 字节的 RFC 15.4 和 888 字节的 Node-API 兼容边界，见 [原生读取](anchor-reader.json)。
+- 网页 URL（网页地址）锚点可选择指定章节。RFC 9110 后段原来落在 256 KiB 捕获上限外；现在在不提高上限的情况下捕获目标章节。真实程序读取得到 13,770 字节的 RFC 15.4 和 888 字节的 Node-API（稳定扩展接口）兼容边界，见 [原生读取](anchor-reader.json)。
 - 出处链接在既有「输出与来源」面板打开冻结原文，优先匹配具体章节，支持重定向后的来源；不展示内部存档路径/工具续读指令。开关、原文面板和窄窗标题栏修复均在真实程序验证，无新页面或新客户端权限。
 
 行为约定：[GROUNDED_WRITING](../../../docs/GROUNDED_WRITING.md)。唯一外部契约增加是既有 `/settings/personalization` 的可选布尔字段；不需要新手机壳。
@@ -53,9 +53,9 @@ LAN（局域网）只用 `local-quality`，原子占锁，整批后释放。最�
 
 ## 检查、界面与复现
 
-定向单元/集成测试见 [final-tests.txt](final-tests.txt)、[跟进检查](final-followup-tests.txt)；类型检查见 [typecheck.txt](typecheck.txt)。完整测试交 CI（持续集成），最后状态由 Claude 查看，不等待它结束。
+定向单元/集成测试 **119/119 通过**，见 [final-tests.txt](final-tests.txt)、[跟进检查](final-followup-tests.txt)；类型检查见 [typecheck.txt](typecheck.txt)。完整测试交 CI（持续集成），最后状态由 Claude 查看，不等待它结束。
 
-最终界面是 `serial-performance/mimo/` 的 **24 张**打开状态截图：真实 Electron（桌面程序框架）1200×800 / 480×780，手机网页 360×780 / 390×844，浅/深两种主题。页面错误 0、横向溢出 0，开关实际关闭/恢复并核对服务端保存；[前端清单](ui-review.json)、[交互检查](serial-performance/mimo/ui-checks.json)。`ui/before/` 与其他阶段失败记录不是最终截图。参考图仅本机查看，未进仓库。
+最终界面是合入最新主干、重启隔离宿主后 `post-merge-ui/` 的 **24 张**打开状态截图：真实 Electron（桌面程序框架）1200×800 / 480×780，手机网页 360×780 / 390×844，浅/深两种主题。页面错误 0、横向溢出 0，开关实际关闭/恢复并核对服务端保存；[前端清单](ui-review.json)、[交互检查](post-merge-ui/ui-checks.json)。`ui/before/` 与其他阶段失败记录不是最终截图。参考图仅本机查看，未进仓库。
 
 ```powershell
 node tests/integration/fact-1.mjs --phase before --model mimo --repeat 2
@@ -74,3 +74,5 @@ node tests/integration/fact-1-report.mjs
 实验阶段保留于 `pilot/`、`pilot-2/`、`after/`、`final/`、`original/`、`review/`、`review-original/`、`acceptance/`、`inline-pilot/`：包括插件资源复制遗漏、桥接遗漏、独立核对成本过高、未预期审批、章节未读取和超时。名称中的 final/acceptance 是当时阶段名，最终对照只使用上面明确列出的集合，未选择性删除失败样本。
 
 4c 清理与公开扫描见 [cleanup.json](cleanup.json)、[public-scan.json](public-scan.json)。只结束本包创建且同时符合时间、可执行路径、工作树/隔离目录条件的进程；日用程序、模型服务和其他工作包均未操作。
+
+最终界面复验复用已经完成的合成模型会话与原文存档，只读取历史和切换设置，没有请求新推理。宿主重启后原文与成果仍可预览。

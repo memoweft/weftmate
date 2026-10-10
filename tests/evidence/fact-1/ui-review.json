@@ -1,5 +1,5 @@
 {
-  "canonicalScreenshots": "serial-performance/mimo/",
+  "canonicalScreenshots": "post-merge-ui/",
   "realElectron": true,
   "mobileWebSizes": [
     "360x780",
@@ -24,5 +24,7 @@
     "7": "对照本机 ref-products/codex-desktop-3.png 的助手配置层级；参考图未复制入仓库。",
     "8": "成果预览、原文面板、助手设置均有浅深打开状态截图。",
     "9": "最终截图集通过目视复核；ui/before 与其他阶段失败记录不冒充最终截图。"
-  }
+  },
+  "hostRestartedAfterLatestMainMerge": true,
+  "noNewInferenceForUi": true
 }
