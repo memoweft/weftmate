@@ -1,0 +1,5 @@
+{
+  "passed": false,
+  "phase": "Completion report produced inside retained review task, but retired SwiftUI parent did not exit app",
+  "fix": "Retained own-app task exits after report; parent saves report immediately when read"
+}

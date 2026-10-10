@@ -1,0 +1,8 @@
+{
+  "process": "isolated WeftMateMac Debug app",
+  "signal": "SIGSEGV",
+  "topFrame": "SerialExecutor.isMainExecutor",
+  "appFrame": "nested GeometryReader closure in MainChatView.timeline",
+  "personalData": false,
+  "resolution": "Move event-coordinate measurement into a separate view that captures a stable event ID; rerun native scroll"
+}

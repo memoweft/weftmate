@@ -1,0 +1,5 @@
+{
+  "status": "Native scroll completed after the geometry fix, but final AX sheet-close action interrupted the review completion",
+  "fix": "Record completion with verified temporary menu visible; capture parent closes app and isolated profile",
+  "passed": false
+}
