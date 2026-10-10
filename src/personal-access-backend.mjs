@@ -60,11 +60,10 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
   }
   const requireSession = async (id, ownerId) => {
     if (typeof id !== 'string' || !idPattern.test(id)) fail('SESSION_UNAVAILABLE')
-    const listed = await listSessions().catch(() => { fail('SESSION_UNAVAILABLE') })
-    const current = listed?.items?.find((item) => item.sessionId === id)
-    if (!current) fail('SESSION_UNAVAILABLE')
+    const current = await gateway(`/sessions/${encodeURIComponent(id)}`).catch(() => { fail('SESSION_UNAVAILABLE') })
+    if (current?.sessionId !== id) fail('SESSION_UNAVAILABLE')
     if (current.agentPreset !== presetForOwner(ownerId)) fail('SESSION_READ_ONLY')
-    try { return await resolveSession(id) }
+    try { return await resolveSession(id, { items: [current] }) }
     catch { fail('SESSION_UNAVAILABLE') }
   }
   const describeItem = async (item, sessionSnapshot, bindings) => {
@@ -187,12 +186,13 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         const cwd = project?.rootPath ?? (sessionWorkspaceRoot
           ? sessionWorkspace(sessionWorkspaceRoot, ownerId ?? 'fixture', workspaceChatId ?? sessionId) : undefined)
         if (cwd && !project) await mkdir(cwd, { recursive: true, mode: 0o700 })
-        const exists = workspaceChatId && (await listSessions()).items?.some(item => item.sessionId === sessionId);
+        const exists = workspaceChatId && await gateway(`/sessions/${encodeURIComponent(sessionId)}`).then(item => item?.sessionId === sessionId,
+          error => { if (['session-not-found', 'SESSION_UNAVAILABLE'].includes(error?.code)) return false; throw error; });
         const created = exists ? { sessionId } : await gateway('/sessions', { method: 'POST',
           body: JSON.stringify({ sessionId, agentPreset: preset, ...(cwd ? { cwd } : {}) }) })
         if (created?.sessionId !== sessionId) fail('SESSION_UNAVAILABLE')
-        const listed = await listSessions()
-        if (!listed?.items?.some((item) => item.sessionId === sessionId && item.agentPreset === preset)) {
+        const current = await gateway(`/sessions/${encodeURIComponent(sessionId)}`)
+        if (current?.sessionId !== sessionId || current.agentPreset !== preset) {
           fail('SESSION_READ_ONLY')
         }
         bindSession(sessionId, profile.id)
@@ -480,13 +480,13 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
     },
     async describeSession(sessionId) {
       requireRuntime()
-      const listed = await listSessions()
-      const item = listed.items.find((row) => row.sessionId === sessionId)
-      if (!item) fail('SESSION_UNAVAILABLE')
-      return describeItem(item, listed)
+      const item = await gateway(`/sessions/${encodeURIComponent(sessionId)}`)
+      if (item?.sessionId !== sessionId) fail('SESSION_UNAVAILABLE')
+      return describeItem(item, { items: [item] })
     },
     async describeSessions(sessionIds) {
       requireRuntime()
+      if (sessionIds.length === 1) return [await this.describeSession(sessionIds[0])]
       const listed = await listSessions(), requested = new Set(sessionIds)
       const bindings = sessionProfileIds?.();
       return Promise.all(listed.items.filter(item => requested.has(item.sessionId)).map(item => describeItem(item, listed, bindings)))

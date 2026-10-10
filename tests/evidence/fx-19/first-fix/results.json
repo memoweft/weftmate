@@ -1,0 +1,13 @@
+{
+  "runnerPid": 62944,
+  "startedAt": "2026-10-10T08:50:42.180Z",
+  "realMain": true,
+  "realDsh": true,
+  "syntheticModel": true,
+  "checks": [],
+  "errors": [],
+  "requestCount": 715,
+  "fatal": "page.waitForFunction: Timeout 30000ms exceeded.",
+  "cleaned": true,
+  "root": "removed isolated FX14 profile"
+}
