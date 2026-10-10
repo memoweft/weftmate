@@ -1,0 +1,13 @@
+{
+  "runnerPid": 51772,
+  "startedAt": "2026-10-10T09:09:22.245Z",
+  "sourceVersion": "879c1bf4-before",
+  "realMain": true,
+  "realDsh": true,
+  "syntheticModel": true,
+  "checks": [],
+  "errors": [],
+  "fatal": "electronApplication.firstWindow: Target page, context or browser has been closed",
+  "cleaned": true,
+  "root": "removed isolated FX19 profile"
+}
