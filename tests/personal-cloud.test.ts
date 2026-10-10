@@ -19,7 +19,7 @@ async function fixture(t: any, { fresh = false } = {}) {
   const jwk = { ...await exportJWK(signing.publicKey), kid: 'test-cloud-key', alg: 'RS256', use: 'sig' }
   const claims = new Map<string, any>()
   let interrupted = false
-  let revocationResponse: (() => Promise<{ events: any[], watermark: number }>) | undefined
+  let revocationResponse: (() => Promise<{ events: any[], watermark: number, status?: number }>) | undefined
   let cloudOrigin: string, issuer: string, cloudBase: string
   const cloud = createServer(async (req, res) => {
     if (req.url?.endsWith('/jwks')) { res.end(JSON.stringify({ keys: [jwk] })); return }
@@ -36,7 +36,9 @@ async function fixture(t: any, { fresh = false } = {}) {
       res.end('{"confirmed":true}'); return
     }
     if (req.url?.endsWith('/hosts/revocations')) {
-      const eventToken = await new SignJWT(revocationResponse ? await revocationResponse() : { events: [], watermark: 0 })
+      const response = revocationResponse ? await revocationResponse() : { events: [], watermark: 0 };
+      if (response.status && response.status >= 400) { res.writeHead(response.status); res.end('{}'); return }
+      const eventToken = await new SignJWT({ events: response.events, watermark: response.watermark })
         .setProtectedHeader({ alg: 'RS256', typ: 'wm-cloud-revocations+jwt', kid: jwk.kid })
         .setIssuer(issuer).setAudience(`${cloudBase}/hosts/${hostId}`).setIssuedAt().setExpirationTime('300s').sign(signing.privateKey)
       res.end(JSON.stringify({ eventToken })); return
@@ -347,7 +349,7 @@ test('local device revoke closes active responses; signed cloud epoch/device rev
 })
 
 
-test('a revocation sync requested during an older response fetches the new epoch before returning', { timeout: 30_000 }, async t => {
+async function assertFreshOverlappingRevocation(t: any, oldStatus = 200) {
   const f = await fixture(t);
   await f.bind();
   const key = await generateKeyPair('ES256'), token = await f.access('cloud-a', 'phone', key);
@@ -360,18 +362,24 @@ test('a revocation sync requested during an older response fetches the new epoch
   const started = new Promise<void>(resolve => { entered = resolve });
   const released = new Promise<void>(resolve => { release = resolve });
   f.onRevocations(async () => {
-    if (++calls === 1) { entered(); await released; return { events: [], watermark: 0 }; }
+    if (++calls === 1) { entered(); await released; return { events: [], watermark: 0, status: oldStatus }; }
     return { events: [{ seq: 1, kind: 'epoch', sub: 'cloud-a', epoch: 1 }], watermark: 1 };
   });
   const older = f.service.syncCloudRevocations();
+  const priorResult = older.then(() => null, (error: any) => error);
   await started;
   const newer = f.service.syncCloudRevocations();
   release();
-  await Promise.all([older, newer]);
+  const [priorError] = await Promise.all([priorResult, newer]);
+  if (oldStatus >= 400) assert.equal(priorError.code, 'CLOUD_UNAVAILABLE');
+  else assert.equal(priorError, null);
   assert.equal(calls, 2);
   assert.equal((await f.requests('GET', '/sessions', undefined, session)).status, 401);
   assert.equal((await f.requests('GET', '/auth/me', undefined, f.a)).status, 200);
-});
+}
+
+test('a revocation sync requested during an older response fetches the new epoch before returning', { timeout: 30_000 }, t => assertFreshOverlappingRevocation(t));
+test('a new revocation sync reads fresh membership even if the older sync failed', { timeout: 30_000 }, t => assertFreshOverlappingRevocation(t, 503));
 
 test('cloud initialization backs up legacy v1 before existing migration and preserves old host/owner IDs and legal Bearer access', async t => {
   const f = await fixture(t)

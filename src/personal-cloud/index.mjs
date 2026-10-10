@@ -147,7 +147,9 @@ export async function createHostCloudIdentity(context, options) {
   }
   async function syncRevocations() {
     if (syncing) {
-      await syncing;
+      // A login-status write in the older sync can fail after the account was
+      // deleted. This caller still needs its own authoritative membership read.
+      try { await syncing; } catch {}
       // That response may have been captured before this caller's revocation.
       // Fetch a fresh authoritative snapshot even when the outbox is empty.
       return syncRevocations();
