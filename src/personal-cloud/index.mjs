@@ -531,6 +531,17 @@ export async function createHostCloudIdentity(context, options) {
     }
   }
   return { browserConfiguration: () => ({ issuer: config.issuer }),
+    async eraseLocalAccount(ownerId, removeBinding, keepDeviceId) {
+      await edit(next => {
+        const bindings = new Set(Object.entries(next.bindings).filter(([,row])=>row.ownerId===ownerId).map(([id])=>id));
+        for (const [id,row] of Object.entries(next.sessions)) if (bindings.has(row.bindingKey) && (removeBinding || id !== keepDeviceId)) delete next.sessions[id];
+        const keepTrust = next.sessions[keepDeviceId]?.trustId;
+        for (const [id,row] of Object.entries(next.devices)) if (row.ownerId===ownerId && (removeBinding || id!==keepTrust)) delete next.devices[id];
+        for (const [id,row] of Object.entries(next.pairings)) if (row.ownerId===ownerId) delete next.pairings[id];
+        if (removeBinding) for (const id of bindings) { delete next.bindings[id]; delete next.epochs[id]; }
+      });
+      closeInvalidResponses();
+    },
     offlineDeviceId(ownerId, deviceId) {
       if (context.accountState(ownerId).devices[deviceId]?.authKind !== 'cloud') return deviceId;
       assertSession(ownerId, deviceId);

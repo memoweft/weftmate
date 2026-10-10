@@ -1,0 +1,9 @@
+{
+  "bytes": 2147483648,
+  "fileCount": 50000,
+  "durationMs": 6416,
+  "eventLoopP99Ms": 20,
+  "parentTimerTicks": 570,
+  "sparse": false,
+  "randomPortNotNeeded": true
+}
