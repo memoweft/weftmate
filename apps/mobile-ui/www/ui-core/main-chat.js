@@ -110,7 +110,11 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         notify();
         if (supports('chatTimeline')) await readPage(anchor ? { around: anchor } : {}, 'tail');
         else effects.historyNotice('这台电脑尚不支持主对话历史，请更新电脑程序。');
-        if (anchor) effects.focusMainEvent?.(anchor); else effects.scrollToLatest();
+        if (anchor) {
+            const event = historyWindow.state.events.get(anchor);
+            if (event) { historyWindow.state.expanded.add(globalThis.WeftUiCore.ChatWindow.day(event.at,historyWindow.state.timeZone)); notify(); }
+            effects.focusMainEvent?.(anchor);
+        } else effects.scrollToLatest();
         void Promise.all([core.refreshConversationTasks(), core.refreshConversationApprovals(), core.refreshConversationQuestions()]).catch(() => {});
         if (core.state.selectedSessionId) void core.refreshApprovalMode(core.state.selectedSessionId);
     }

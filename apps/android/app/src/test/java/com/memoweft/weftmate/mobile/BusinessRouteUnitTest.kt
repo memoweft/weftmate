@@ -5,6 +5,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @Test fun accountSearchReusesTheExactChatListRoute() {
+        assertTrue(validBusinessPath("/personal/v1/chats?scope=search&q=%E7%BA%B8%E8%88%B9&limit=200"))
+        assertTrue(validBusinessPath("/personal/v1/chats?scope=search&cursor=chat-search-next&limit=200"))
+        assertFalse(validBusinessPath("/personal/v1/search"))
+        assertFalse(validBusinessPath("/personal/v1/chats?scope=search&q=<script>"))
+        assertFalse(validBusinessPath("/personal/v1/chats/../search"))
+    }
     @Test fun sessionPagingAndEncodedSearchUseTheExistingBusinessTransport() {
         assertTrue(validBusinessPath("/personal/v1/sessions?archived=all&limit=100&cursor=session-next&q=%E7%BA%B8"))
         assertTrue(validBusinessPath("/personal/v1/sessions?q=" + "%E7%BA%B8".repeat(256)))

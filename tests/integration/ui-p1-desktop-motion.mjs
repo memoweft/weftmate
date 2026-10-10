@@ -172,9 +172,11 @@ try {
       await page.waitForTimeout(240);
       await page.getByRole('button', { name: '收起右侧面板', exact: true }).evaluate(button => button.click());
     });
-    const search = page.getByRole('searchbox', { name: '搜索会话', exact: true });
+    if (phase !== 'before') await page.getByRole('button',{name:'搜索',exact:true}).click();
+    const search = phase === 'before' ? page.getByRole('searchbox', { name: '搜索会话', exact: true }) : page.getByRole('combobox',{name:'搜索内容',exact:true});
     await frames(phase, 'session-list', () => search.fill('项目'));
     await search.fill('');
+    if (phase !== 'before') { await page.getByRole('button',{name:'关闭搜索',exact:true}).click();await page.getByRole('dialog',{name:'搜索',exact:true}).waitFor({state:'hidden'}); }
     await page.getByRole('button', { name: '合成空白对话', exact: true }).click();
     await frames(phase, 'session-switch', async () => { await page.getByRole('button', { name: /^项目进度报告(?:\s|$)/ }).evaluate(button => button.click()); await page.getByRole('button', { name: phase === 'before' ? '允许一次' : '批准', exact: true }).waitFor(); });
     await page.getByRole('button', { name: '账户菜单' }).click();

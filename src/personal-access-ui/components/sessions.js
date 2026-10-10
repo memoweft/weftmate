@@ -350,7 +350,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         const signature = JSON.stringify([core.state.ownerId, core.state.identityGeneration, core.state.selectedSessionId,
             core.state.activeChatSource, core.state.selectedPhoneConversationId, core.state.models.length,
             core.state.projectCanManage, core.state.projectsError, core.state.sessions, core.state.projects,
-            core.state.sessionGroups, core.phoneConversations(), ui.byId('session-search').value,
+            core.state.sessionGroups, core.phoneConversations(), '',
             [...collapsedGroups], [...collapsedProjects], (core.state.projects || []).map(p => core.projectExpanded(p.projectId))]);
         // Live updates often repaint the same sidebar. Keep its hovered / focused
         // rows mounted so the half-second detail timer and keyboard path survive.
@@ -367,7 +367,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         const linkedSessionIds = new Set(phone.map((record) => core.phoneBinding(record.id)?.sessionId).filter(Boolean));
 
         ui.byId('sessions-status').textContent = '';
-        const query = (ui.byId('session-search').value || '').normalize('NFKC').trim().toLocaleLowerCase();
+        const query = ('' || '').normalize('NFKC').trim().toLocaleLowerCase();
         let currentGroup = null, matches = 0;
         const sessions = core.sessionList().filter(session => !session.projectId);
         for (const session of globalThis.WeftUiCore.sortSessions(sessions).sort(globalThis.WeftUiCore.compareSessionGroups)) {
@@ -434,8 +434,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         else globalThis.WeftMotion?.cancel(list);
     }
     function mountSessions() {
-        let searchTimer;
-        ui.byId('session-search').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>core.searchSessions?.(ui.byId('session-search').value).catch(error=>ui.byId('sessions-status').textContent=core.failureMessage(error)),200);});
+
         ui.byId('load-older').addEventListener('click', () => { void core.loadOlderHistory(); });
         const create=ui.byId('new-session'),temporary=ui.byId('new-temporary-session'),group=ui.element('div','rail-new-group');create.before(group);group.append(create);
         const toggle=ui.element('button','rail-new-dropdown');toggle.type='button';toggle.setAttribute('aria-label','选择新对话类型');toggle.setAttribute('aria-haspopup','menu');toggle.setAttribute('aria-expanded','false');toggle.append(WeftIcons.create('chevron',16));group.append(toggle);
