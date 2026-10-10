@@ -13,7 +13,7 @@
 .folder-confirm input {width:100%;}.folder-confirm .dialog-footer {padding:var(--wm-space-12) 0 0;display:flex;gap:var(--wm-space-8);flex-wrap:wrap;}
 .folder-path {overflow-wrap:anywhere;font-size:var(--wm-font-size-12);color:var(--muted);margin-block:var(--wm-space-6);}
 .folder-warning {color:var(--danger);font-size:var(--wm-font-size-12);}
-.folder-start[hidden],.folder-current[hidden],.folder-first-hint[hidden] {display:none;}
+.folder-start[hidden],.folder-current[hidden],.folder-first-hint[hidden],.folder-add[hidden] {display:none;}
 
 .folder-confirm {max-width:calc(var(--wm-space-40) * 15);}.folder-confirm form {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--wm-space-8) var(--wm-space-12);}
 .folder-confirm .project-field {margin:0;gap:var(--wm-space-6);}.folder-confirm .field-help,.folder-confirm .form-error,.folder-confirm .dialog-footer {grid-column:1/-1;}
