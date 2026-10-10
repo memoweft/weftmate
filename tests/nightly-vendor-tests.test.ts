@@ -32,10 +32,12 @@ test('nightly vendor step records passes and failures and makes failed assertion
       for (const name of summary.failures) assert.ok(text.includes(`- 🔴 ${name}`))
     }
     await assert.rejects(runVendorTests(async () => ({ code: 1 }), worktree, join(out, 'missing')), /未生成测试结果/)
-    await assert.rejects(runVendorTests(async (_command: string, _args: string[], options: any) => {
+    const unavailable = await runVendorTests(async (_command: string, _args: string[], options: any) => {
       assert.equal(options.name, 'vendor-assemble')
       throw Error('synthetic missing pinned build')
-    }, join(out, 'unbuilt'), out), /missing pinned build/)
+    }, join(out, 'unbuilt'), out)
+    assert.equal(unavailable.status,'environment'); assert.match(unavailable.reason,/missing pinned build/)
+    assert.equal((await inspect([],{phases:[{name:'vendor-tests',...unavailable}]})).alerts.length,1)
   } finally { await rm(out, { recursive: true, force: true }) }
 })
 
