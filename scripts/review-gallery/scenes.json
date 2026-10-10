@@ -27,6 +27,7 @@
     { "id": "main-chat", "label": "主对话 / 手机聊天选项卡与日期时间线", "unavailable": ["iphone", "mac", "watch"] },
     { "id": "activity", "label": "动态 / 提醒与待处理 / 手机选项卡", "unavailable": ["android", "iphone", "mac", "watch"] },
     { "id": "goals", "label": "目标 / 进行中、定时与长期 / 手机选项卡", "unavailable": ["android", "iphone", "mac", "watch"] },
+    { "id": "rendering", "label": "渲染样张 / 代码、表格、公式与图表", "unavailable": ["android", "iphone", "mac", "watch"] },
     { "id": "library", "label": "成果库 / 文件与预览 / 手机选项卡", "unavailable": ["android", "iphone", "mac", "watch"] }
   ]
 }
