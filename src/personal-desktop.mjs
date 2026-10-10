@@ -287,7 +287,7 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
         const key = `${me.account?.ownerId}:${item.id}`;
         if (activityNotified.has(key) || item.notification.notify === false || item.notification.level === 'silent' || stopped || !Notification.isSupported()) continue;
         const notification = new Notification({ title: `WeftMate · ${item.title}`, body: item.summary, icon: notificationIcon,
-          silent: item.notification.sound !== true });
+          silent: typeof item.notification.sound === 'boolean' ? !item.notification.sound : item.notification.level !== 'important' });
         notifications.add(notification); activityNotifications.set(item.id, notification);
         notification.on('click', () => show({ activityId: item.id, sessionId: item.source.sessionId }));
         notification.on('close', () => { notifications.delete(notification); if (activityNotifications.get(item.id) === notification) activityNotifications.delete(item.id); });
