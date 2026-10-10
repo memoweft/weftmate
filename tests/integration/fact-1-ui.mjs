@@ -4,19 +4,24 @@ import { join } from 'node:path';
 import { writeFileSync } from 'node:fs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 
-export async function verifyFactUi({app,page,api,results,evidence,credentials}) {
+export async function verifyFactUi({app,page,api,results,evidence,credentials,observeOnly=false}) {
   const result=results.find(r=>r.topicId==='node24'&&r.document),sessionId=result.turns.at(-1).sessionId;
   const errors=[],checks=[];let browser;
+  const selectedPages = new WeakSet();
   const activePreview=p=>p.locator('.preview-content:visible');
   async function select(p) {
+    if (selectedPages.has(p)) return;
     if(p===page) await app.evaluate(({BrowserWindow},id)=>BrowserWindow.getAllWindows().find(w=>/personal\/v1\/ui/.test(w.webContents.getURL()))?.webContents.send('wm:desktop:conversation',id),sessionId);
     else {
       await p.evaluate(async id=>{const s=await(await fetch('/personal/v1/status')).json();localStorage.setItem(`weftmate:last-session:v1:${s.ownerId}`,id);},sessionId);
       await p.reload();
     }
-    await p.getByRole('button',{name:'说明.md',exact:true}).first().waitFor();
+    await p.getByRole('button',{name:/^(说明\.md|打开成果)$/}).first().waitFor();
+    selectedPages.add(p);
   }
   async function screenshot(p,name) {
+    // Let the shared 160 ms theme-color transition settle before contrast QA.
+    await p.waitForTimeout(200);
     await p.screenshot({path:join(evidence,name+'.png')});
     const layout=await p.evaluate(()=>({width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth,
       preview:!!document.querySelector('.preview-content:not([hidden])')}));
@@ -24,7 +29,7 @@ export async function verifyFactUi({app,page,api,results,evidence,credentials}) 
   }
   async function source(p,surface) {
     await select(p);
-    await p.getByRole('button',{name:'说明.md',exact:true}).first().click();
+    await p.getByRole('button',{name:/^(说明\.md|打开成果)$/}).first().click();
     await activePreview(p).getByRole('link',{name:/Node.*24|24.*Node/}).first().waitFor();
     for(const theme of ['light','dark']) {
       await p.evaluate(t=>document.documentElement.dataset.theme=t,theme);
@@ -33,7 +38,7 @@ export async function verifyFactUi({app,page,api,results,evidence,credentials}) 
     await activePreview(p).getByRole('link',{name:/Node.*24|24.*Node/}).first().click();
     await activePreview(p).locator('details[open] pre').first().waitFor();
     await p.waitForFunction(()=>[...document.querySelectorAll('.preview-content:not([hidden]) pre')].some(n=>/ClangCL|NODE_MODULE_VERSION|13\.6/.test(n.textContent)));
-    assert.ok((await activePreview(p).innerText()).includes('原文片段')||(await activePreview(p).innerText()).includes('Accessed:'));
+    assert.ok((await activePreview(p).innerText()).includes('原文片段')||(await activePreview(p).innerText()).includes('访问时间：'));
     for(const theme of ['light','dark']) {
       await p.evaluate(t=>document.documentElement.dataset.theme=t,theme);
       await screenshot(p,`${surface}-${theme}-source-open`);
@@ -47,10 +52,12 @@ export async function verifyFactUi({app,page,api,results,evidence,credentials}) 
     else {await p.getByRole('combobox',{name:'设置分类',exact:true}).click();await p.getByRole('option',{name:'设置 · 助手',exact:true}).click();}
     const toggle=p.getByRole('switch',{name:'成文前核对事实',exact:true});await toggle.waitFor();
     assert.equal(await toggle.isChecked(),true);
-    await toggle.uncheck();await p.getByText('已同步 · 从下一次回复开始生效',{exact:true}).filter({visible:true}).waitFor();
-    assert.equal((await api('/settings/personalization')).body.settings.researchSelfCheck,false);
-    await toggle.check();await p.getByText('已同步 · 从下一次回复开始生效',{exact:true}).filter({visible:true}).waitFor();
-    assert.equal((await api('/settings/personalization')).body.settings.researchSelfCheck,true);
+    if(!observeOnly) {
+      await toggle.uncheck();await p.getByText('已同步 · 从下一次回复开始生效',{exact:true}).filter({visible:true}).waitFor();
+      assert.equal((await api('/settings/personalization')).body.settings.researchSelfCheck,false);
+      await toggle.check();await p.getByText('已同步 · 从下一次回复开始生效',{exact:true}).filter({visible:true}).waitFor();
+      assert.equal((await api('/settings/personalization')).body.settings.researchSelfCheck,true);
+    }
     await toggle.focus();
     for(const theme of ['light','dark']){await p.evaluate(t=>document.documentElement.dataset.theme=t,theme);await screenshot(p,`${surface}-${theme}-assistant-settings`);}
     await p.keyboard.press('Escape');

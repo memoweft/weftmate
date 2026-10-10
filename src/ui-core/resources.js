@@ -7,7 +7,12 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
         const data = parse(raw), outputs = collect(data?.output);
         return outputs.map(text => {
             const source = parse(text);
-            if (!source?.url || typeof source.text !== 'string') return text;
+            if (!source?.url || typeof source.text !== 'string') {
+                const capture = text.match(/^Fetched[^\n]*\n\nTitle: ([^\n]+)\nURL: ([^\n]+)\nAccessed: ([^\n]+)\n([\s\S]*)$/);
+                if (!capture) return text;
+                const body = capture[4].replace(/\n\n(?:\[Partial page: segment |Captured source: |\(Content truncated\.)[\s\S]*$/, '');
+                return `访问时间：${capture[3]}\n\n${body}${body !== capture[4] ? '\n\n[仅显示已读取的部分原文]' : ''}`;
+            }
             return [source.title, source.url, source.capturedAt ? `访问时间：${source.capturedAt}` : '',
                 source.query ? `原文片段 · ${source.query}` : '', source.text,
                 source.captureTruncated || source.previewTruncated || source.truncated ? '[仅显示已读取的部分原文]' : ''].filter(Boolean).join('\n\n');

@@ -66,4 +66,7 @@ test('browser query evidence appears under its actual source URL without exposin
   assert.equal((await api.capturedSourceForUrl(source.url+'#section')).name,source.title);
   assert.equal(await api.capturedSourceForUrl('https://other.example/release'),null);
   assert.ok(!api.capturedSourceText(raw).includes('toolCallId'));
+  const fetched=JSON.stringify({output:[{type:'text',text:'Fetched https://example.org (HTTP 200)\n\nTitle: Official\nURL: https://example.org\nAccessed: 2026-10-10T00:00:00Z\nExact original paragraph.\n\nCaptured source: C:/synthetic/cache.txt. Use grep/read.'}]});
+  assert.match(api.capturedSourceText(fetched),/Exact original paragraph/);
+  assert.doesNotMatch(api.capturedSourceText(fetched),/cache.txt|Use grep/);
 });
