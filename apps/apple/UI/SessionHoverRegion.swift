@@ -43,8 +43,10 @@ struct SessionHoverOverlay: ViewModifier {
 /// Native mouse tracking leaves hit testing and keyboard focus with the session's controls.
 struct SessionHoverRegion: NSViewRepresentable {
     let changed: (Bool) -> Void
-    func makeNSView(context: Context) -> Region { let view = Region(); view.changed = changed; return view }
-    func updateNSView(_ view: Region, context: Context) { view.changed = changed }
+    let identifier: String?
+    init(identifier: String? = nil, changed: @escaping (Bool) -> Void) { self.identifier = identifier; self.changed = changed }
+    func makeNSView(context: Context) -> Region { let view = Region(); view.changed = changed; view.identifier = identifier.map { NSUserInterfaceItemIdentifier(rawValue: $0) }; return view }
+    func updateNSView(_ view: Region, context: Context) { view.changed = changed; view.identifier = identifier.map { NSUserInterfaceItemIdentifier(rawValue: $0) } }
     final class Region: NSView {
         var changed: (Bool) -> Void = { _ in }
         override func hitTest(_ point: NSPoint) -> NSView? { nil }

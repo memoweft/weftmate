@@ -60,6 +60,10 @@ public actor LocalTimelineCache {
         let meta = Metadata(account: account, hostID: hostID, sessionID: sessionID, nextSeq: window.nextSeq, cachedAt: Date())
         try write(JSONEncoder().encode(meta), file: location.appendingPathComponent("metadata.json"))
     }
+    public func remove(account: LocalAccountScope, hostID: String, sessionID: String) throws {
+        let location = folder(account, hostID, sessionID)
+        if FileManager.default.fileExists(atPath: location.path) { try FileManager.default.removeItem(at: location) }
+    }
     private func write(_ bytes: Data, file: URL) throws {
         try bytes.write(to: file, options: .atomic)
         try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: file.path)

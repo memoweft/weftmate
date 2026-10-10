@@ -108,12 +108,18 @@ public struct ConversationSummary: Identifiable, Sendable, Equatable {
     public let taskAvailable: Bool?
     public let hostId: String?
     public let updatedAt: String?
+    public let chatId: String?
+    public let chatKind: String?
+    public let chatContentRevision: Int?
+    public let temporaryState: TemporaryChatState
+    public var isMainChat: Bool { chatKind == "main" }
     public init(id: String, title: String, conversationId: String?, sessionId: String?, running: Bool,
-                sendAvailable: Bool, originalModelLabel: String?, archived: Bool = false, pinned: Bool = false, unread: Bool = false, groupId: String? = nil, contextUsage: ConversationContextUsage? = nil, processing: ConversationProcessing? = nil, projectId: String? = nil, projectName: String? = nil, projectNotice: String? = nil, taskAvailable: Bool? = nil, hostId: String? = nil, updatedAt: String? = nil) {
+                sendAvailable: Bool, originalModelLabel: String?, archived: Bool = false, pinned: Bool = false, unread: Bool = false, groupId: String? = nil, contextUsage: ConversationContextUsage? = nil, processing: ConversationProcessing? = nil, projectId: String? = nil, projectName: String? = nil, projectNotice: String? = nil, taskAvailable: Bool? = nil, hostId: String? = nil, updatedAt: String? = nil, chatId: String? = nil, chatKind: String? = nil, chatContentRevision: Int? = nil, temporaryState: TemporaryChatState = .init()) {
         self.id = id; self.title = title; self.conversationId = conversationId; self.sessionId = sessionId
         self.running = running; self.sendAvailable = sendAvailable; self.originalModelLabel = originalModelLabel; self.archived = archived
         self.pinned = pinned; self.unread = unread; self.groupId = groupId; self.contextUsage = contextUsage; self.processing = processing
         self.projectId = projectId; self.projectName = projectName; self.projectNotice = projectNotice; self.taskAvailable = taskAvailable; self.hostId = hostId; self.updatedAt = updatedAt
+        self.chatId = chatId; self.chatKind = chatKind; self.chatContentRevision = chatContentRevision; self.temporaryState = temporaryState
     }
 
 }

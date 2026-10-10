@@ -1,0 +1,25 @@
+{
+  "source": "Generated Icons.xcassets; WeftIcon is accessibilityHidden",
+  "identifiers": {
+    "wm-allow-small": 2,
+    "wm-deny-small": 2,
+    "wm-plus": 71,
+    "wm-more-small": 1,
+    "wm-chat": 12,
+    "wm-more": 12,
+    "wm-outputs": 42,
+    "wm-account": 42,
+    "wm-approval-small": 12,
+    "wm-chevron-small": 68,
+    "wm-mic-small": 12,
+    "wm-send": 13,
+    "wm-clock": 36,
+    "wm-search": 44,
+    "wm-right-small": 160,
+    "wm-allow": 16,
+    "wm-right": 62,
+    "wm-warn": 16,
+    "wm-stop": 45,
+    "wm-back": 16
+  }
+}
