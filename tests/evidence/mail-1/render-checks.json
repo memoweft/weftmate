@@ -1,0 +1,3009 @@
+{
+  "screenshots": 32,
+  "copies": [
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "reset",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "reset",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "reset",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "reset",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "device",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "device",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "device",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "device",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "email",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "email",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "email",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "email",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 360,
+      "variant": "blocked-image",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 360,
+      "variant": "no-style",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 480,
+      "variant": "normal",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 390,
+      "variant": "normal",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 360,
+      "variant": "blocked-image",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 360,
+      "variant": "no-style",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 480,
+      "variant": "normal",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 390,
+      "variant": "normal",
+      "selected": "012345",
+      "clipboard": "012345"
+    },
+    {
+      "name": "device-long",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "selected": "012345",
+      "clipboard": "012345"
+    }
+  ],
+  "contrasts": [
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.27
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.69
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 14.98
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.27
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.69
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 14.98
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.9
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.85
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 12.3
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.9
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.85
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 12.3
+    },
+    {
+      "name": "reset",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.27
+    },
+    {
+      "name": "reset",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.69
+    },
+    {
+      "name": "reset",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 14.98
+    },
+    {
+      "name": "reset",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.27
+    },
+    {
+      "name": "reset",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.69
+    },
+    {
+      "name": "reset",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 14.98
+    },
+    {
+      "name": "reset",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.9
+    },
+    {
+      "name": "reset",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.85
+    },
+    {
+      "name": "reset",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 12.3
+    },
+    {
+      "name": "reset",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.9
+    },
+    {
+      "name": "reset",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.85
+    },
+    {
+      "name": "reset",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 12.3
+    },
+    {
+      "name": "device",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.27
+    },
+    {
+      "name": "device",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.69
+    },
+    {
+      "name": "device",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 14.98
+    },
+    {
+      "name": "device",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.27
+    },
+    {
+      "name": "device",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.69
+    },
+    {
+      "name": "device",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 14.98
+    },
+    {
+      "name": "device",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.9
+    },
+    {
+      "name": "device",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.85
+    },
+    {
+      "name": "device",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 12.3
+    },
+    {
+      "name": "device",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.9
+    },
+    {
+      "name": "device",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.85
+    },
+    {
+      "name": "device",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 12.3
+    },
+    {
+      "name": "email",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.27
+    },
+    {
+      "name": "email",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.69
+    },
+    {
+      "name": "email",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 14.98
+    },
+    {
+      "name": "email",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.27
+    },
+    {
+      "name": "email",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.69
+    },
+    {
+      "name": "email",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 14.98
+    },
+    {
+      "name": "email",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.9
+    },
+    {
+      "name": "email",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.85
+    },
+    {
+      "name": "email",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 12.3
+    },
+    {
+      "name": "email",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.9
+    },
+    {
+      "name": "email",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.85
+    },
+    {
+      "name": "email",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 12.3
+    },
+    {
+      "name": "password-changed",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.27
+    },
+    {
+      "name": "password-changed",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.69
+    },
+    {
+      "name": "password-changed",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 14.98
+    },
+    {
+      "name": "password-changed",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.27
+    },
+    {
+      "name": "password-changed",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.69
+    },
+    {
+      "name": "password-changed",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 14.98
+    },
+    {
+      "name": "password-changed",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.9
+    },
+    {
+      "name": "password-changed",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.85
+    },
+    {
+      "name": "password-changed",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 12.3
+    },
+    {
+      "name": "password-changed",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.9
+    },
+    {
+      "name": "password-changed",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.85
+    },
+    {
+      "name": "password-changed",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 12.3
+    },
+    {
+      "name": "email-changed",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.27
+    },
+    {
+      "name": "email-changed",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.69
+    },
+    {
+      "name": "email-changed",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 14.98
+    },
+    {
+      "name": "email-changed",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.27
+    },
+    {
+      "name": "email-changed",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.69
+    },
+    {
+      "name": "email-changed",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 14.98
+    },
+    {
+      "name": "email-changed",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.9
+    },
+    {
+      "name": "email-changed",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.85
+    },
+    {
+      "name": "email-changed",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 12.3
+    },
+    {
+      "name": "email-changed",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.9
+    },
+    {
+      "name": "email-changed",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.85
+    },
+    {
+      "name": "email-changed",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 12.3
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 360,
+      "variant": "blocked-image",
+      "target": "body",
+      "ratio": 7.27
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 360,
+      "variant": "blocked-image",
+      "target": "muted",
+      "ratio": 5.69
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 360,
+      "variant": "blocked-image",
+      "target": "heading",
+      "ratio": 14.98
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 360,
+      "variant": "no-style",
+      "target": "body",
+      "ratio": 7.27
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 360,
+      "variant": "no-style",
+      "target": "muted",
+      "ratio": 5.69
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 360,
+      "variant": "no-style",
+      "target": "heading",
+      "ratio": 14.98
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 480,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.27
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 480,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.69
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 480,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 14.98
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 390,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.27
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 390,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.69
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 390,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 14.98
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 360,
+      "variant": "blocked-image",
+      "target": "body",
+      "ratio": 7.9
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 360,
+      "variant": "blocked-image",
+      "target": "muted",
+      "ratio": 5.85
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 360,
+      "variant": "blocked-image",
+      "target": "heading",
+      "ratio": 12.3
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 360,
+      "variant": "no-style",
+      "target": "body",
+      "ratio": 7.27
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 360,
+      "variant": "no-style",
+      "target": "muted",
+      "ratio": 5.69
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 360,
+      "variant": "no-style",
+      "target": "heading",
+      "ratio": 14.98
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 480,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.9
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 480,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.85
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 480,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 12.3
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 390,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.9
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 390,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.85
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 390,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 12.3
+    },
+    {
+      "name": "device-long",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "target": "body",
+      "ratio": 7.9
+    },
+    {
+      "name": "device-long",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "target": "muted",
+      "ratio": 5.85
+    },
+    {
+      "name": "device-long",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "target": "heading",
+      "ratio": 12.3
+    }
+  ],
+  "requests": [
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "reset",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "reset",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "reset",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "reset",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "device",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "device",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "device",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "device",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "email",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "email",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "email",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "email",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "password-changed",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "password-changed",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "password-changed",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "password-changed",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "email-changed",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "email-changed",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "email-changed",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "email-changed",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 360,
+      "variant": "blocked-image",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "blocked"
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 360,
+      "variant": "no-style",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 480,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 390,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 360,
+      "variant": "blocked-image",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "blocked"
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 360,
+      "variant": "no-style",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 480,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 390,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    },
+    {
+      "name": "device-long",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "url": "https://api.weftmate.com/assets/mail/weftmate-mark.png",
+      "action": "local-fixture"
+    }
+  ],
+  "rows": [
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "screenshot": "screenshots/register-light-640.png",
+      "documentWidth": 640,
+      "card": {
+        "x": 40,
+        "y": 32,
+        "width": 560,
+        "height": 426.375
+      },
+      "logo": {
+        "x": 77,
+        "y": 69,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 77,
+        "y": 153,
+        "width": 486,
+        "height": 33.75
+      },
+      "code": {
+        "x": 77,
+        "y": 255.5,
+        "width": 486,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(250, 249, 247)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(255, 255, 255)"
+      },
+      "body": {
+        "foreground": "rgb(87, 87, 82)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(103, 103, 98)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "screenshot": "screenshots/register-light-360.png",
+      "documentWidth": 360,
+      "card": {
+        "x": 16,
+        "y": 16,
+        "width": 328,
+        "height": 427.125
+      },
+      "logo": {
+        "x": 41,
+        "y": 41,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 41,
+        "y": 125,
+        "width": 278,
+        "height": 33.75
+      },
+      "code": {
+        "x": 41,
+        "y": 252.25,
+        "width": 278,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(250, 249, 247)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(255, 255, 255)"
+      },
+      "body": {
+        "foreground": "rgb(87, 87, 82)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(103, 103, 98)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "screenshot": "screenshots/register-dark-640.png",
+      "documentWidth": 640,
+      "card": {
+        "x": 40,
+        "y": 32,
+        "width": 560,
+        "height": 426.375
+      },
+      "logo": {
+        "x": 77,
+        "y": 69,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 77,
+        "y": 153,
+        "width": 486,
+        "height": 33.75
+      },
+      "code": {
+        "x": 77,
+        "y": 255.5,
+        "width": 486,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(32, 33, 31)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(38, 39, 36)"
+      },
+      "body": {
+        "foreground": "rgb(187, 189, 180)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(160, 163, 151)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(232, 233, 227)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "screenshot": "screenshots/register-dark-360.png",
+      "documentWidth": 360,
+      "card": {
+        "x": 16,
+        "y": 16,
+        "width": 328,
+        "height": 427.125
+      },
+      "logo": {
+        "x": 41,
+        "y": 41,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 41,
+        "y": 125,
+        "width": 278,
+        "height": 33.75
+      },
+      "code": {
+        "x": 41,
+        "y": 252.25,
+        "width": 278,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(32, 33, 31)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(38, 39, 36)"
+      },
+      "body": {
+        "foreground": "rgb(187, 189, 180)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(160, 163, 151)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(232, 233, 227)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "reset",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "screenshot": "screenshots/reset-light-640.png",
+      "documentWidth": 640,
+      "card": {
+        "x": 40,
+        "y": 32,
+        "width": 560,
+        "height": 451.125
+      },
+      "logo": {
+        "x": 77,
+        "y": 69,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 77,
+        "y": 153,
+        "width": 486,
+        "height": 33.75
+      },
+      "code": {
+        "x": 77,
+        "y": 280.25,
+        "width": 486,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(250, 249, 247)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(255, 255, 255)"
+      },
+      "body": {
+        "foreground": "rgb(87, 87, 82)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(103, 103, 98)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "reset",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "screenshot": "screenshots/reset-light-360.png",
+      "documentWidth": 360,
+      "card": {
+        "x": 16,
+        "y": 16,
+        "width": 328,
+        "height": 427.125
+      },
+      "logo": {
+        "x": 41,
+        "y": 41,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 41,
+        "y": 125,
+        "width": 278,
+        "height": 33.75
+      },
+      "code": {
+        "x": 41,
+        "y": 252.25,
+        "width": 278,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(250, 249, 247)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(255, 255, 255)"
+      },
+      "body": {
+        "foreground": "rgb(87, 87, 82)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(103, 103, 98)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "reset",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "screenshot": "screenshots/reset-dark-640.png",
+      "documentWidth": 640,
+      "card": {
+        "x": 40,
+        "y": 32,
+        "width": 560,
+        "height": 451.125
+      },
+      "logo": {
+        "x": 77,
+        "y": 69,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 77,
+        "y": 153,
+        "width": 486,
+        "height": 33.75
+      },
+      "code": {
+        "x": 77,
+        "y": 280.25,
+        "width": 486,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(32, 33, 31)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(38, 39, 36)"
+      },
+      "body": {
+        "foreground": "rgb(187, 189, 180)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(160, 163, 151)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(232, 233, 227)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "reset",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "screenshot": "screenshots/reset-dark-360.png",
+      "documentWidth": 360,
+      "card": {
+        "x": 16,
+        "y": 16,
+        "width": 328,
+        "height": 427.125
+      },
+      "logo": {
+        "x": 41,
+        "y": 41,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 41,
+        "y": 125,
+        "width": 278,
+        "height": 33.75
+      },
+      "code": {
+        "x": 41,
+        "y": 252.25,
+        "width": 278,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(32, 33, 31)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(38, 39, 36)"
+      },
+      "body": {
+        "foreground": "rgb(187, 189, 180)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(160, 163, 151)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(232, 233, 227)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "device",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "screenshot": "screenshots/device-light-640.png",
+      "documentWidth": 640,
+      "card": {
+        "x": 40,
+        "y": 32,
+        "width": 560,
+        "height": 524.625
+      },
+      "logo": {
+        "x": 77,
+        "y": 69,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 77,
+        "y": 153,
+        "width": 486,
+        "height": 33.75
+      },
+      "code": {
+        "x": 77,
+        "y": 353.75,
+        "width": 486,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(250, 249, 247)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(255, 255, 255)"
+      },
+      "body": {
+        "foreground": "rgb(87, 87, 82)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(103, 103, 98)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "device",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "screenshot": "screenshots/device-light-360.png",
+      "documentWidth": 360,
+      "card": {
+        "x": 16,
+        "y": 16,
+        "width": 328,
+        "height": 550.125
+      },
+      "logo": {
+        "x": 41,
+        "y": 41,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 41,
+        "y": 125,
+        "width": 278,
+        "height": 33.75
+      },
+      "code": {
+        "x": 41,
+        "y": 375.25,
+        "width": 278,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(250, 249, 247)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(255, 255, 255)"
+      },
+      "body": {
+        "foreground": "rgb(87, 87, 82)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(103, 103, 98)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "device",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "screenshot": "screenshots/device-dark-640.png",
+      "documentWidth": 640,
+      "card": {
+        "x": 40,
+        "y": 32,
+        "width": 560,
+        "height": 524.625
+      },
+      "logo": {
+        "x": 77,
+        "y": 69,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 77,
+        "y": 153,
+        "width": 486,
+        "height": 33.75
+      },
+      "code": {
+        "x": 77,
+        "y": 353.75,
+        "width": 486,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(32, 33, 31)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(38, 39, 36)"
+      },
+      "body": {
+        "foreground": "rgb(187, 189, 180)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(160, 163, 151)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(232, 233, 227)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "device",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "screenshot": "screenshots/device-dark-360.png",
+      "documentWidth": 360,
+      "card": {
+        "x": 16,
+        "y": 16,
+        "width": 328,
+        "height": 550.125
+      },
+      "logo": {
+        "x": 41,
+        "y": 41,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 41,
+        "y": 125,
+        "width": 278,
+        "height": 33.75
+      },
+      "code": {
+        "x": 41,
+        "y": 375.25,
+        "width": 278,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(32, 33, 31)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(38, 39, 36)"
+      },
+      "body": {
+        "foreground": "rgb(187, 189, 180)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(160, 163, 151)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(232, 233, 227)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "email",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "screenshot": "screenshots/email-light-640.png",
+      "documentWidth": 640,
+      "card": {
+        "x": 40,
+        "y": 32,
+        "width": 560,
+        "height": 451.125
+      },
+      "logo": {
+        "x": 77,
+        "y": 69,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 77,
+        "y": 153,
+        "width": 486,
+        "height": 33.75
+      },
+      "code": {
+        "x": 77,
+        "y": 280.25,
+        "width": 486,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(250, 249, 247)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(255, 255, 255)"
+      },
+      "body": {
+        "foreground": "rgb(87, 87, 82)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(103, 103, 98)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "email",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "screenshot": "screenshots/email-light-360.png",
+      "documentWidth": 360,
+      "card": {
+        "x": 16,
+        "y": 16,
+        "width": 328,
+        "height": 451.875
+      },
+      "logo": {
+        "x": 41,
+        "y": 41,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 41,
+        "y": 125,
+        "width": 278,
+        "height": 33.75
+      },
+      "code": {
+        "x": 41,
+        "y": 277,
+        "width": 278,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(250, 249, 247)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(255, 255, 255)"
+      },
+      "body": {
+        "foreground": "rgb(87, 87, 82)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(103, 103, 98)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "email",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "screenshot": "screenshots/email-dark-640.png",
+      "documentWidth": 640,
+      "card": {
+        "x": 40,
+        "y": 32,
+        "width": 560,
+        "height": 451.125
+      },
+      "logo": {
+        "x": 77,
+        "y": 69,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 77,
+        "y": 153,
+        "width": 486,
+        "height": 33.75
+      },
+      "code": {
+        "x": 77,
+        "y": 280.25,
+        "width": 486,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(32, 33, 31)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(38, 39, 36)"
+      },
+      "body": {
+        "foreground": "rgb(187, 189, 180)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(160, 163, 151)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(232, 233, 227)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "email",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "screenshot": "screenshots/email-dark-360.png",
+      "documentWidth": 360,
+      "card": {
+        "x": 16,
+        "y": 16,
+        "width": 328,
+        "height": 451.875
+      },
+      "logo": {
+        "x": 41,
+        "y": 41,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 41,
+        "y": 125,
+        "width": 278,
+        "height": 33.75
+      },
+      "code": {
+        "x": 41,
+        "y": 277,
+        "width": 278,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(32, 33, 31)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(38, 39, 36)"
+      },
+      "body": {
+        "foreground": "rgb(187, 189, 180)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(160, 163, 151)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(232, 233, 227)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "password-changed",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "screenshot": "screenshots/password-changed-light-640.png",
+      "documentWidth": 640,
+      "card": {
+        "x": 40,
+        "y": 32,
+        "width": 560,
+        "height": 374.125
+      },
+      "logo": {
+        "x": 77,
+        "y": 69,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 77,
+        "y": 153,
+        "width": 486,
+        "height": 33.75
+      },
+      "code": null,
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(250, 249, 247)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(255, 255, 255)"
+      },
+      "body": {
+        "foreground": "rgb(87, 87, 82)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(103, 103, 98)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": null
+    },
+    {
+      "name": "password-changed",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "screenshot": "screenshots/password-changed-light-360.png",
+      "documentWidth": 360,
+      "card": {
+        "x": 16,
+        "y": 16,
+        "width": 328,
+        "height": 396.3125
+      },
+      "logo": {
+        "x": 41,
+        "y": 41,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 41,
+        "y": 125,
+        "width": 278,
+        "height": 33.75
+      },
+      "code": null,
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(250, 249, 247)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(255, 255, 255)"
+      },
+      "body": {
+        "foreground": "rgb(87, 87, 82)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(103, 103, 98)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": null
+    },
+    {
+      "name": "password-changed",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "screenshot": "screenshots/password-changed-dark-640.png",
+      "documentWidth": 640,
+      "card": {
+        "x": 40,
+        "y": 32,
+        "width": 560,
+        "height": 374.125
+      },
+      "logo": {
+        "x": 77,
+        "y": 69,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 77,
+        "y": 153,
+        "width": 486,
+        "height": 33.75
+      },
+      "code": null,
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(32, 33, 31)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(38, 39, 36)"
+      },
+      "body": {
+        "foreground": "rgb(187, 189, 180)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(160, 163, 151)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(232, 233, 227)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": null
+    },
+    {
+      "name": "password-changed",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "screenshot": "screenshots/password-changed-dark-360.png",
+      "documentWidth": 360,
+      "card": {
+        "x": 16,
+        "y": 16,
+        "width": 328,
+        "height": 396.3125
+      },
+      "logo": {
+        "x": 41,
+        "y": 41,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 41,
+        "y": 125,
+        "width": 278,
+        "height": 33.75
+      },
+      "code": null,
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(32, 33, 31)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(38, 39, 36)"
+      },
+      "body": {
+        "foreground": "rgb(187, 189, 180)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(160, 163, 151)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(232, 233, 227)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": null
+    },
+    {
+      "name": "email-changed",
+      "theme": "light",
+      "width": 640,
+      "variant": "normal",
+      "screenshot": "screenshots/email-changed-light-640.png",
+      "documentWidth": 640,
+      "card": {
+        "x": 40,
+        "y": 32,
+        "width": 560,
+        "height": 374.125
+      },
+      "logo": {
+        "x": 77,
+        "y": 69,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 77,
+        "y": 153,
+        "width": 486,
+        "height": 33.75
+      },
+      "code": null,
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(250, 249, 247)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(255, 255, 255)"
+      },
+      "body": {
+        "foreground": "rgb(87, 87, 82)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(103, 103, 98)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": null
+    },
+    {
+      "name": "email-changed",
+      "theme": "light",
+      "width": 360,
+      "variant": "normal",
+      "screenshot": "screenshots/email-changed-light-360.png",
+      "documentWidth": 360,
+      "card": {
+        "x": 16,
+        "y": 16,
+        "width": 328,
+        "height": 371.5625
+      },
+      "logo": {
+        "x": 41,
+        "y": 41,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 41,
+        "y": 125,
+        "width": 278,
+        "height": 33.75
+      },
+      "code": null,
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(250, 249, 247)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(255, 255, 255)"
+      },
+      "body": {
+        "foreground": "rgb(87, 87, 82)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(103, 103, 98)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": null
+    },
+    {
+      "name": "email-changed",
+      "theme": "dark",
+      "width": 640,
+      "variant": "normal",
+      "screenshot": "screenshots/email-changed-dark-640.png",
+      "documentWidth": 640,
+      "card": {
+        "x": 40,
+        "y": 32,
+        "width": 560,
+        "height": 374.125
+      },
+      "logo": {
+        "x": 77,
+        "y": 69,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 77,
+        "y": 153,
+        "width": 486,
+        "height": 33.75
+      },
+      "code": null,
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(32, 33, 31)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(38, 39, 36)"
+      },
+      "body": {
+        "foreground": "rgb(187, 189, 180)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(160, 163, 151)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(232, 233, 227)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": null
+    },
+    {
+      "name": "email-changed",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "screenshot": "screenshots/email-changed-dark-360.png",
+      "documentWidth": 360,
+      "card": {
+        "x": 16,
+        "y": 16,
+        "width": 328,
+        "height": 371.5625
+      },
+      "logo": {
+        "x": 41,
+        "y": 41,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 41,
+        "y": 125,
+        "width": 278,
+        "height": 33.75
+      },
+      "code": null,
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(32, 33, 31)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(38, 39, 36)"
+      },
+      "body": {
+        "foreground": "rgb(187, 189, 180)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(160, 163, 151)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(232, 233, 227)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": null
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 360,
+      "variant": "blocked-image",
+      "screenshot": "screenshots/register-light-360-blocked-image.png",
+      "documentWidth": 360,
+      "card": {
+        "x": 16,
+        "y": 16,
+        "width": 328,
+        "height": 427.125
+      },
+      "logo": {
+        "x": 41,
+        "y": 41,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": false,
+      "title": {
+        "x": 41,
+        "y": 125,
+        "width": 278,
+        "height": 33.75
+      },
+      "code": {
+        "x": 41,
+        "y": 252.25,
+        "width": 278,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(250, 249, 247)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(255, 255, 255)"
+      },
+      "body": {
+        "foreground": "rgb(87, 87, 82)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(103, 103, 98)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 360,
+      "variant": "no-style",
+      "screenshot": "screenshots/register-light-360-no-style.png",
+      "documentWidth": 360,
+      "card": {
+        "x": 24,
+        "y": 32,
+        "width": 312,
+        "height": 451.125
+      },
+      "logo": {
+        "x": 61,
+        "y": 69,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 61,
+        "y": 153,
+        "width": 238,
+        "height": 33.75
+      },
+      "code": {
+        "x": 61,
+        "y": 280.25,
+        "width": 238,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(250, 249, 247)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(255, 255, 255)"
+      },
+      "body": {
+        "foreground": "rgb(87, 87, 82)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(103, 103, 98)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 480,
+      "variant": "normal",
+      "screenshot": "screenshots/register-light-480.png",
+      "documentWidth": 480,
+      "card": {
+        "x": 16,
+        "y": 16,
+        "width": 448,
+        "height": 427.125
+      },
+      "logo": {
+        "x": 41,
+        "y": 41,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 41,
+        "y": 125,
+        "width": 398,
+        "height": 33.75
+      },
+      "code": {
+        "x": 41,
+        "y": 252.25,
+        "width": 398,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(250, 249, 247)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(255, 255, 255)"
+      },
+      "body": {
+        "foreground": "rgb(87, 87, 82)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(103, 103, 98)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "register",
+      "theme": "light",
+      "width": 390,
+      "variant": "normal",
+      "screenshot": "screenshots/register-light-390.png",
+      "documentWidth": 390,
+      "card": {
+        "x": 16,
+        "y": 16,
+        "width": 358,
+        "height": 427.125
+      },
+      "logo": {
+        "x": 41,
+        "y": 41,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 41,
+        "y": 125,
+        "width": 308,
+        "height": 33.75
+      },
+      "code": {
+        "x": 41,
+        "y": 252.25,
+        "width": 308,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(250, 249, 247)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(255, 255, 255)"
+      },
+      "body": {
+        "foreground": "rgb(87, 87, 82)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(103, 103, 98)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 360,
+      "variant": "blocked-image",
+      "screenshot": "screenshots/register-dark-360-blocked-image.png",
+      "documentWidth": 360,
+      "card": {
+        "x": 16,
+        "y": 16,
+        "width": 328,
+        "height": 427.125
+      },
+      "logo": {
+        "x": 41,
+        "y": 41,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": false,
+      "title": {
+        "x": 41,
+        "y": 125,
+        "width": 278,
+        "height": 33.75
+      },
+      "code": {
+        "x": 41,
+        "y": 252.25,
+        "width": 278,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(32, 33, 31)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(38, 39, 36)"
+      },
+      "body": {
+        "foreground": "rgb(187, 189, 180)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(160, 163, 151)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(232, 233, 227)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 360,
+      "variant": "no-style",
+      "screenshot": "screenshots/register-dark-360-no-style.png",
+      "documentWidth": 360,
+      "card": {
+        "x": 24,
+        "y": 32,
+        "width": 312,
+        "height": 451.125
+      },
+      "logo": {
+        "x": 61,
+        "y": 69,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 61,
+        "y": 153,
+        "width": 238,
+        "height": 33.75
+      },
+      "code": {
+        "x": 61,
+        "y": 280.25,
+        "width": 238,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(250, 249, 247)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(255, 255, 255)"
+      },
+      "body": {
+        "foreground": "rgb(87, 87, 82)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(103, 103, 98)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 480,
+      "variant": "normal",
+      "screenshot": "screenshots/register-dark-480.png",
+      "documentWidth": 480,
+      "card": {
+        "x": 16,
+        "y": 16,
+        "width": 448,
+        "height": 427.125
+      },
+      "logo": {
+        "x": 41,
+        "y": 41,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 41,
+        "y": 125,
+        "width": 398,
+        "height": 33.75
+      },
+      "code": {
+        "x": 41,
+        "y": 252.25,
+        "width": 398,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(32, 33, 31)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(38, 39, 36)"
+      },
+      "body": {
+        "foreground": "rgb(187, 189, 180)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(160, 163, 151)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(232, 233, 227)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "register",
+      "theme": "dark",
+      "width": 390,
+      "variant": "normal",
+      "screenshot": "screenshots/register-dark-390.png",
+      "documentWidth": 390,
+      "card": {
+        "x": 16,
+        "y": 16,
+        "width": 358,
+        "height": 427.125
+      },
+      "logo": {
+        "x": 41,
+        "y": 41,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 41,
+        "y": 125,
+        "width": 308,
+        "height": 33.75
+      },
+      "code": {
+        "x": 41,
+        "y": 252.25,
+        "width": 308,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(32, 33, 31)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(38, 39, 36)"
+      },
+      "body": {
+        "foreground": "rgb(187, 189, 180)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(160, 163, 151)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(232, 233, 227)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    },
+    {
+      "name": "device-long",
+      "theme": "dark",
+      "width": 360,
+      "variant": "normal",
+      "screenshot": null,
+      "documentWidth": 360,
+      "card": {
+        "x": 16,
+        "y": 16,
+        "width": 328,
+        "height": 624.375
+      },
+      "logo": {
+        "x": 41,
+        "y": 41,
+        "width": 56,
+        "height": 56
+      },
+      "logoLoaded": true,
+      "title": {
+        "x": 41,
+        "y": 125,
+        "width": 278,
+        "height": 33.75
+      },
+      "code": {
+        "x": 41,
+        "y": 449.5,
+        "width": 278,
+        "height": 45
+      },
+      "canvas": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(32, 33, 31)"
+      },
+      "cardColors": {
+        "foreground": "rgb(39, 39, 36)",
+        "background": "rgb(38, 39, 36)"
+      },
+      "body": {
+        "foreground": "rgb(187, 189, 180)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "muted": {
+        "foreground": "rgb(160, 163, 151)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "heading": {
+        "foreground": "rgb(232, 233, 227)",
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "codeFont": "36px"
+    }
+  ]
+}
