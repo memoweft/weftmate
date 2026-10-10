@@ -1651,14 +1651,14 @@ test at tests\mobile-ui-core-assets.test.ts:89:1
   file:///C:/weftmate-ci-WpdQt3/mobile-ui-core-assets-ZDPBBq/repository/apps/mobile-ui/src/build-ui-core.mjs:66
     if (problems.length) throw new Error(`ui-core assets: ${problems.join('; ')}; run npm run build in apps/mobile-ui`);
                                ^
-  
+
   Error: ui-core assets: differs controls.css; run npm run build in apps/mobile-ui
       at checkUiCoreAssets (file:///C:/weftmate-ci-WpdQt3/mobile-ui-core-assets-ZDPBBq/repository/apps/mobile-ui/src/build-ui-core.mjs:66:30)
       at async checkMobileUi (file:///C:/weftmate-ci-WpdQt3/mobile-ui-core-assets-ZDPBBq/repository/apps/mobile-ui/src/check.mjs:18:3)
       at async file:///C:/weftmate-ci-WpdQt3/mobile-ui-core-assets-ZDPBBq/repository/scripts/build-mobile-ui.mjs:24:41
-  
+
   Node.js v24.15.0
-  
+
       at genericNodeError (node:internal/errors:985:15)
       at wrappedFn (node:internal/errors:539:14)
       at ChildProcess.exithandler (node:child_process:417:12)
