@@ -70,7 +70,7 @@
 
 交付前按CI（持续集成）同一命令`node .github/scripts/ci-unit-tests.mjs required`完整复验：**1317项、1305通过、0失败、12项沿用条件跳过**，耗时1214.173秒。第一遍35个失败已定位修复：手机独立脚本拼接边界、发布夹具漏新资产、生命周期预期拒绝过晚处理、数值账本新增固定类别；Apple生成文件按既有LF规则重新生成，未修改生成比较断言。没有删除用例、增加skip（跳过）或放宽保护断言；账本键集合加入固定类别并补类别值断言。最新外部忙观测与宿主相关39/39、最新取消 / 路由25/25、实际导出5/5、手机夹具37/37、账本 / 生命周期 / Apple26/26定向通过（有重叠，不相加）。`npm run typecheck`与`node --check src/main.mjs`通过，Android路由14/14、独立原生探针1/1。详见[验证数字](validation.json)。
 
-4c清理：**已清理进程10**（首轮观察器两次挂起各5个），最终三重条件核对需额外强制终止0、残留0；本包安卓应用 / 调试映射已移除，MuMu关闭，原三个孤儿测试APK保留。见[进程清理](cleanup.json)、[安卓清理](android-cleanup.json)。公开凭据与参照图扫描见[扫描](public-scan.json)。GitHub检查结果随PR更新。
+4c清理：**已清理进程10**（首轮观察器两次挂起各5个），最终三重条件核对需额外强制终止0、残留0；本包安卓应用 / 调试映射已移除，MuMu关闭，原三个孤儿测试APK保留。见[进程清理](cleanup.json)、[安卓清理](android-cleanup.json)。公开凭据与参照图扫描见[扫描](public-scan.json)。已推送并开 [PR #185](https://github.com/memoweft/weftmate/pull/185)，最新GitHub结果见[PR检查](https://github.com/memoweft/weftmate/pull/185/checks)。没有合并或正式部署。
 
 OpenAI推理请求沿原生精确effort（推理等级）声明使用最轻模式，省略不兼容温度、使用`max_completion_tokens`包含隐藏推理的1,024词元预算；只允许强思考的模型直接放弃。协议映射已单测，真实质量仅实测MiMo，不承诺所有推理模型都能在5秒内生成可见JSON。[OpenAI Chat Completions（聊天补全）官方字段参考](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create)、[推理预算官方说明](https://developers.openai.com/api/docs/guides/reasoning)。
 
