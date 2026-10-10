@@ -1,5 +1,16 @@
 /* Shared sessions state, data and actions. Presentation is supplied through named effects. */
+globalThis.WeftUiCore.sessionStatus = row => {
+    if (row?.attention === 'approval') return {kind:'approval',label:'等你批准',rank:5};
+    if (row?.attention === 'question') return {kind:'question',label:'等你回答',rank:4};
+    if (row?.running) return {kind:'running',label:'正在运行',rank:3};
+    if (row?.unread) return row.lastOutcome === 'failed' ? {kind:'failed',label:'失败',rank:2} : {kind:'completed',label:'已完成，未读',rank:1};
+    return {kind:'empty',label:'',rank:0};
+};
+globalThis.WeftUiCore.aggregateSessionStatus = rows => rows.reduce((best,row) => globalThis.WeftUiCore.sessionStatus(row).rank > globalThis.WeftUiCore.sessionStatus(best).rank ? row : best, null) || {};
 globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
+    function sidebarStatus(kind, id, rows) {
+        return core.state.sessionStatusSummary?.[kind]?.[id] ?? globalThis.WeftUiCore.aggregateSessionStatus(rows);
+    }
     const expansionKey = projectId => `weftmate-project-expanded:${core.state.ownerId}:${projectId}`;
     const expandedProjects = new Map();
     function projectExpanded(projectId) {
@@ -27,6 +38,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         const payload = await core.accessApi('/sessions?archived=all');
         if (identity !== core.state.identityGeneration) return;
         core.state.sessions = Array.isArray(payload.sessions) ? payload.sessions : [];
+        core.state.sessionStatusSummary = payload.statusSummary ?? null;
         core.state.sessionSnapshotAt = payload.snapshotAt ?? null;
         core.state.sessionGroups = payload.groups || [];
         await refreshSessionProjects();
@@ -185,6 +197,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
     }
     async function updateSession(sessionId, patch) {
         const identity = core.state.identityGeneration;
+        const statusChanged = typeof patch.unread === 'boolean' && core.state.sessions.some(row => row.sessionId === sessionId && row.unread !== patch.unread);
         const result = await core.accessApi(`/sessions/${encodeURIComponent(sessionId)}/metadata`, { method: 'PATCH', body: patch, protectedWrite: true });
         if (identity !== core.state.identityGeneration) return false;
         for (const item of core.state.sessions) if (item.sessionId === sessionId) Object.assign(item, result);
@@ -192,6 +205,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         effects.renderSessions();
         effects.updateAvailability();
         if (environment.mobileState) for (const item of environment.mobileState.sharedSessions) if (item.sessionId === sessionId) Object.assign(item, result);
+        if (statusChanged && core.state.sessionStatusSummary) await core.refreshSessions();
         return result;
     }
     async function sessionGroupAction(method, groupId, name) {
@@ -242,7 +256,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         effects.renderSessions(); effects.updateAvailability();
         return result;
     }
-    return { folderMutationPending, registerFolderChoice, partitionFolderDrop, folderPreference, rememberFolder, dismissFolderHint, currentFolderProject, defaultFolderProject, folderChoiceBusy, chooseFolderProject, createTemporaryConversation, projectExpanded, setProjectExpanded, projectConversations, sessionHoverDetails, refreshSessionProjects, saveProject, removeProject, createProjectConversation, refreshSessions, sessionList, updateSession, sessionGroupAction, forkSession, archiveSession, previewSessionForget, deleteSession, sessionLifecycleMessage };
+    return { sidebarStatus, folderMutationPending, registerFolderChoice, partitionFolderDrop, folderPreference, rememberFolder, dismissFolderHint, currentFolderProject, defaultFolderProject, folderChoiceBusy, chooseFolderProject, createTemporaryConversation, projectExpanded, setProjectExpanded, projectConversations, sessionHoverDetails, refreshSessionProjects, saveProject, removeProject, createProjectConversation, refreshSessions, sessionList, updateSession, sessionGroupAction, forkSession, archiveSession, previewSessionForget, deleteSession, sessionLifecycleMessage };
 };
 globalThis.WeftUiCore.sessionMenuItems = session => [
     {id:'pin',label:session.pinned?'取消置顶':'置顶',key:'P'},
