@@ -1,0 +1,25 @@
+{
+  "realElectron": true,
+  "results": [
+    {
+      "url": "https://www.rfc-editor.org/rfc/rfc9110.html#section-15.4",
+      "capturedFragment": "section-15.4",
+      "durationMs": 8191,
+      "bytes": 13770,
+      "requiredPhrase": "MUST NOT change the request method",
+      "phrasePresent": true,
+      "partialPage": true,
+      "firstParagraph": "15.4. Redirection 3xx\n\nThe 3xx (Redirection) class of status code indicates that further action needs to be taken by the user agent in order to fulfill the request. There are several types of redirects:\n\nRedirects that indicate this resource might be available at a different URI, as provided by the "
+    },
+    {
+      "url": "https://nodejs.org/api/n-api.html#implications-of-abi-stability",
+      "capturedFragment": "implications-of-abi-stability",
+      "durationMs": 7940,
+      "bytes": 888,
+      "requiredPhrase": "external libraries",
+      "phrasePresent": true,
+      "partialPage": true,
+      "firstParagraph": "Implications of ABI stability\n#\n\n\n\nAlthough Node-API provides an ABI stability guarantee, other parts of Node.js do not, and any external libraries used from the addon may not. In particular, none of the following APIs provide an ABI stability guarantee across major versions:\n\nthe Node.js C++ APIs a"
+    }
+  ]
+}

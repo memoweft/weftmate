@@ -2,7 +2,7 @@
 (() => {
   const limits = Object.freeze({ preferredName: 80, bio: 500, toneInstructions: 500, fixedInstructions: 4000, writingStyle: 1000 });
   const defaults = Object.freeze({ preferredName: '', bio: '', tone: 'natural', toneInstructions: '', fixedInstructions: '',
-    useWritingStyle: false, writingStyle: '', webSearch: true, verbosity: 'medium', thinkingDisplay: 'collapsed', defaultDeepThinking: false, messageMode: 'queue' });
+    useWritingStyle: false, writingStyle: '', webSearch: true, researchSelfCheck: true, verbosity: 'medium', thinkingDisplay: 'collapsed', defaultDeepThinking: false, messageMode: 'queue' });
   const tones = { natural: '自然、亲切', concise: '简洁、直接', detailed: '详细、耐心', formal: '正式、严谨', casual: '轻松、随和' };
   const verbosity = { short: '简短，优先给结论，只补充必要解释', medium: '适中，给出结论和有用的说明', thorough: '详尽，充分说明依据、步骤和必要的例子' };
   function validate(patch) {

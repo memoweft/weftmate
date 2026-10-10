@@ -1,0 +1,23 @@
+✔ fact evaluation cannot use a generated document or model query as official evidence (1.5988ms)
+✔ an explicit section anchor captures late original text without raising page bounds or executing the fragment (2.171ms)
+✔ managed-child browser IPC preserves query, exact excerpts, capture time and recovery path (8.5299ms)
+✔ research self-check defaults on, follows the account turn snapshot, and off retains evidence rules (0.8598ms)
+✔ browser query evidence appears under its actual source URL without exposing raw text in the list (4.8824ms)
+✔ conversation resources project files, webpages and tools without returning raw output or other sessions (3.7776ms)
+✔ resource projection keeps a tool record when detail is unavailable and rejects a stalled page (0.8396ms)
+✔ output list keeps the latest named export even when records arrive out of order or an old status updates later (0.5229ms)
+✔ resource call summaries describe scripts, named files and connector searches without exposing raw code or output (0.7352ms)
+✔ resources HTTP API requires account session ownership, validates cursors and preserves incremental pagination (2322.0771ms)
+✔ native web fetch returns the first segment and a continuation without eagerly reading unrelated sections (1.5824ms)
+✔ a complete short page and a capture limit preserve their distinct truncation facts (0.8886ms)
+✔ native web fetch supplies delegated personal sessions, excludes other presets and propagates cancellation (0.6215ms)
+✔ a completely captured requested section is not falsely reported as an incomplete fetch (0.2897ms)
+✔ native preview retains a full local capture, exact segment recovery and session ownership (42.9591ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2708.1767

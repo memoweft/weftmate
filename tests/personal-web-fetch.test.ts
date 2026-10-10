@@ -22,7 +22,7 @@ test('native web fetch returns the first segment and a continuation without eage
   assert.equal(result.url, 'https://example.org/final')
   assert.equal(result.statusCode, 206)
   assert.equal(result.truncated, true)
-  assert.ok(result.body.content.startsWith('A\n\n[Partial page:'))
+  assert.ok(result.body.content.startsWith('Title: https://example.org/final\nURL: https://example.org/final\nAccessed: unknown\nA\n\n[Partial page:'))
   assert.match(result.body.content, /snapshotId="capture-one", segmentIndex=1\.\.2/)
   assert.match(result.body.content, /Release notes\nDependencies/)
   assert.equal(frames.length, 1)
@@ -34,7 +34,7 @@ test('a complete short page and a capture limit preserve their distinct truncati
   const provider = personalWebFetchProvider({ request: async () => ({ text: 'complete page',
     url: 'https://example.org', segmentCount: 1, httpStatus: 200, captureTruncated }) }, () => ({}), () => ({}))
   assert.deepEqual(await provider.fetch({ url: 'https://example.org' }), {
-    url: 'https://example.org', statusCode: 200, body: { kind: 'text', content: 'complete page' }, truncated: false,
+    url: 'https://example.org', statusCode: 200, body: { kind: 'text', content: 'Title: https://example.org\nURL: https://example.org\nAccessed: unknown\ncomplete page' }, truncated: false,
   })
   captureTruncated = true
   assert.equal((await provider.fetch({ url: 'https://example.org' })).truncated, true)
@@ -57,3 +57,14 @@ test('native web fetch supplies delegated personal sessions, excludes other pres
   controller.abort()
   await assert.rejects(provider.fetch({ url: 'https://example.org' }, controller.signal), { name: 'AbortError' })
 })
+
+test('a completely captured requested section is not falsely reported as an incomplete fetch', async () => {
+  const page:any={text:'All requested section text.',title:'Reference',url:'https://example.org/reference',
+    capturedAt:'2026-10-10T00:00:00Z',capturedFragment:'rule',requestedSectionComplete:true,
+    segmentCount:1,httpStatus:200,captureTruncated:true};
+  const provider=personalWebFetchProvider({request:async()=>page},()=>({}),()=>({}));
+  const complete=await provider.fetch({url:page.url+'#rule'});
+  assert.equal(complete.truncated,false);assert.match(complete.body.content,/Captured requested section #rule/);
+  page.previewTruncated=true;
+  assert.equal((await provider.fetch({url:page.url+'#rule'})).truncated,true);
+});
