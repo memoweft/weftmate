@@ -1,4 +1,4 @@
-import { readFile, writeFile, readdir, stat, rm } from 'node:fs/promises';
+import { readFile, writeFile, readdir, lstat, rm } from 'node:fs/promises';
 import { join, resolve, sep } from 'node:path';
 import { inflateSync } from 'node:zlib';
 import { catalog } from '../review-gallery/common.mjs';
@@ -95,7 +95,7 @@ export async function retention(root, now = new Date()) {
   for (const entry of await readdir(root, { withFileTypes: true })) {
     if (!entry.isDirectory() || !/^\d{4}-\d{2}-\d{2}$/.test(entry.name) || entry.name >= cutoffDate) continue;
     const target = resolve(root, entry.name);
-    if (!target.startsWith(resolve(root) + sep) || (await stat(target)).isSymbolicLink()) throw Error('Retention target escaped report root');
+    if (!target.startsWith(resolve(root) + sep) || (await lstat(target)).isSymbolicLink()) throw Error('Retention target escaped report root');
     await rm(target, { recursive: true }); removed.push(entry.name);
   }
   return removed;

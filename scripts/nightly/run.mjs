@@ -75,7 +75,6 @@ try {
     const dirty = (await run('git', ['status', '--porcelain'], { name: 'worktree-status' })).output.trim();
     if (dirty) throw Error('专用回归工作树存在未提交修改，保留并退出');
     await run('git', ['checkout', '--detach', sourceCommit], { name: 'checkout' });
-    await run('node', [join(worktree, 'scripts/build-mobile-ui.mjs')], { name: 'build-mobile' });
     // npm ci only if the exact lockfile changed. Local dependencies are not shared
     // with developer trees and never point to another package's node_modules.
     const lock = await readFile(join(worktree, 'package-lock.json'), 'utf8');
@@ -86,6 +85,7 @@ try {
     }
     await run('node', [join(worktree, 'node_modules/electron/install.js')], { name: 'electron-install' });
     await run('node', [join(worktree, 'node_modules/playwright/cli.js'), 'install', 'chromium'], { name: 'chromium-install' });
+    await run('node', [join(worktree, 'scripts/build-mobile-ui.mjs'), '--output-dir', join(temp, 'mobile-release')], { name: 'build-mobile' });
     await run('node', [join(worktree, 'node_modules/typescript/bin/tsc')], { name: 'typecheck' });
   });
   if (prepared) {
@@ -159,7 +159,9 @@ finally {
     await writeFile(join(reports, date, 'nightly-report.md'), (await readFile(join(out, 'nightly-report.md'), 'utf8')).replace('(gallery/index.html)', `(${runId}/gallery/index.html)`));
     await writeFile(join(reports, date, 'latest.json'), JSON.stringify({ runId, gallery: `${runId}/gallery/index.html`, report: `${runId}/nightly-report.md` }) + '\n');
     if (result.alerts.length) {
-      const electron = join(worktree, 'node_modules/electron/dist/electron.exe');
+      let electron = join(worktree, 'node_modules/electron/dist/electron.exe');
+      try { await readFile(join(worktree, 'node_modules/electron/path.txt')); }
+      catch { electron = join(repository, 'node_modules/electron/dist/electron.exe'); }
       await run(electron, [join(scripts, 'notify.mjs'), join(out, 'nightly-status.json'), join(out, 'notification-profile'), join(out, 'notification.json')], { cwd: repository, name: 'notification', allowFailure: true, limit: 10000 }).catch(() => {});
     }
     await retention(reports);
