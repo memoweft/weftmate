@@ -1,0 +1,9 @@
+{
+  "platform": "mac",
+  "scene": "session-menu",
+  "theme": "light",
+  "commit": "f14c33befbb9b4febb104765a64445a47e4ed72a",
+  "generatedAt": "2026-10-10T05:45:08.333Z",
+  "synthetic": true,
+  "source": "实际 Mac 原生 App 自身窗口；真实隔离 cloud main / 宿主，合成 DSH 日志与模型"
+}

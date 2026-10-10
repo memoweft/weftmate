@@ -1,0 +1,216 @@
+{
+  "launches": [
+    {
+      "launch": 1,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "daf8ff1cd148fcaf1b3fe645861045098afc036d42556b21bae4120d314cf068",
+      "seconds": 12.03
+    },
+    {
+      "launch": 2,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "0cb5c2d3b0a73abf3349baa509b2e65e5ed48502b8307c2141aa9e3385819f59",
+      "seconds": 13.75
+    },
+    {
+      "launch": 3,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "fc96df512349273fab556e9f3299b43dcd1c04e2d0bec83056cd622835d45016",
+      "seconds": 12.1
+    },
+    {
+      "launch": 4,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "9fa1c1137f376af96df6d69c71a9132b19f560fc85b8c9b870bf4f3d3724b737",
+      "seconds": 11.83
+    },
+    {
+      "launch": 5,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "c48d61d012087af1167d08d5cd4316c6c8a20d5ee2364d1b6992eeda6b3f43c9",
+      "seconds": 13.89
+    },
+    {
+      "launch": 6,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "a71a4022db6c7ca4f9969467741944064b4829817d1925cd518128c47ed156b5",
+      "seconds": 10.63
+    },
+    {
+      "launch": 7,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "903ebb7c8823dedc523e1b5bb44e08308479aa2c2cb23115d7f5d4af73f1171a",
+      "seconds": 10.69
+    },
+    {
+      "launch": 8,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "5938b5c920554e3a18e4d1b42fafa91f57986e887215d5dbc4e937e14fe91d72",
+      "seconds": 10.86
+    },
+    {
+      "launch": 9,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "fc96df512349273fab556e9f3299b43dcd1c04e2d0bec83056cd622835d45016",
+      "seconds": 10.57
+    },
+    {
+      "launch": 10,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "3208aeb9573adbb8633950b65249b2179b19c6c048318388ab57d5c299aa8e0a",
+      "seconds": 11.02
+    },
+    {
+      "launch": 11,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "37e67bd24e520cb388add0659b978e42255016bd82e2c7613a9500f20fb56513",
+      "seconds": 10.6
+    },
+    {
+      "launch": 12,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "0cb5c2d3b0a73abf3349baa509b2e65e5ed48502b8307c2141aa9e3385819f59",
+      "seconds": 10.94
+    },
+    {
+      "launch": 13,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "795c8415c667ba97d1a2d9f40a7e194fc8efa273ab36c4453216746cc07fc192",
+      "seconds": 10.84
+    },
+    {
+      "launch": 14,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "428dec80602582d23d09b2434b6d0b692e18fcd097668f45980aea13ba18e04b",
+      "seconds": 11.27
+    },
+    {
+      "launch": 15,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "9925eed59f015c7dd14fa973e54ea75e6a2c7ab37da439437df9b4056a0dcdef",
+      "seconds": 10.61
+    },
+    {
+      "launch": 16,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "7f534ece978ce071d15b63fd7018b4296b4a03a6031d2cbb997655d63cf98c6b",
+      "seconds": 10.93
+    },
+    {
+      "launch": 17,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "bcf11262322281627399733ab77b13c3fb27d3262a5e979e39119bcab4044fe4",
+      "seconds": 10.13
+    },
+    {
+      "launch": 18,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "58d9b54194f94f5c8598c6bd6cb00a1f7bec59c56add5f833474967548503d60",
+      "seconds": 10.55
+    },
+    {
+      "launch": 19,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "6ef1b5d881b9cfdbf5cf4e977e36a53bc9fa4189e6914f66b0015559fd8a2efb",
+      "seconds": 11.27
+    },
+    {
+      "launch": 20,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "638f83e89359681d748740dccec30e9c8222ae2880f2658c2af21f08947ed486",
+      "seconds": 10.77
+    },
+    {
+      "launch": 21,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "3a4b4c768a8051f6fa869260282af8209ac169ee100b6b2a40aebfa3aa24ed7a",
+      "seconds": 10.74
+    },
+    {
+      "launch": 22,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "a04b76fddd2b181881178ce086de6fef9c2cd3d1fe0b63ba54b5a3ed296f6cf2",
+      "seconds": 10.39
+    },
+    {
+      "launch": 23,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "438a53cc4425d9f5eadeb4eb921adbcedceac17e46c81a5619a2300075800e76",
+      "seconds": 10.05
+    },
+    {
+      "launch": 24,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "58d9b54194f94f5c8598c6bd6cb00a1f7bec59c56add5f833474967548503d60",
+      "seconds": 10.5
+    },
+    {
+      "launch": 25,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "8734506fb59f0c1045e0578f384d85c0f77ebd81ff62bd90b12d685c9d514e26",
+      "seconds": 11.45
+    },
+    {
+      "launch": 26,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "5938b5c920554e3a18e4d1b42fafa91f57986e887215d5dbc4e937e14fe91d72",
+      "seconds": 9.97
+    },
+    {
+      "launch": 27,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "4dbd36dfcb92e48ddf22d82a4a43b9db5964e8a8cc5da3d7afae53e6aafdfa67",
+      "seconds": 10.22
+    },
+    {
+      "launch": 28,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "99fc3323276b274799ffa4258ae272dcb4ac4b904c8109c55ed0a01e40ab022c",
+      "seconds": 10.43
+    },
+    {
+      "launch": 29,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "63e795bcf96378ae21ba6292ca988454f05052a7389d14c9b02cfad7025ce16a",
+      "seconds": 9.85
+    },
+    {
+      "launch": 30,
+      "exitCode": 0,
+      "ownWindowPNG": true,
+      "windowSHA256": "06585b835ee8fc0a131a326162d489b0e637cf1effa6dc47bef44536bbcc3a00",
+      "seconds": 10.53
+    }
+  ],
+  "passed": true,
+  "binarySHA256": "00b537b0f1ee27ca8bd4834c67b794dbdcc6ee83108c2b777256bf97881b1502"
+}

@@ -1,0 +1,30 @@
+{
+  "syntheticOnly": true,
+  "source": "Native accessibility text captured alongside original screenshots",
+  "frames": [
+    {
+      "surface": "mac",
+      "theme": "light",
+      "scene": "hover-details",
+      "text": "WeftMate\n交代一个目标，或聊聊今天想做的事。\n从这里开始\n刷新\n动态\n发送\n合成模型\n合成项目\n合成项目对话 0\n合成项目对话 1\n合成项目对话 2\n合成项目对话 3\n合成项目对话 4\n合成项目对话 5\n合成项目对话 6\n回到底部\n已关闭\n已展开\n已收起\n已选择\n归档\n成果库\n搜索\n搜索对话\n收起\n整理项目资料\n未分组\n未读\n模型\n正在处理\n添加\n目标\n置顶\n账户菜单\n跳日期\n输出与来源\n边栏\n项目、在电脑上创建"
+    },
+    {
+      "surface": "mac",
+      "theme": "light",
+      "scene": "recent-five",
+      "text": "WeftMate\n交代一个目标，或聊聊今天想做的事。\n从这里开始\n刷新\n动态\n发送\n合成模型\n合成项目\n合成项目对话 2\n合成项目对话 3\n合成项目对话 4\n合成项目对话 5\n合成项目对话 6\n回到底部\n已展开\n已收起\n已选择\n成果库\n搜索\n搜索对话\n整理项目资料\n更多（2）\n未分组\n未读\n模型\n正在处理\n添加\n目标\n账户菜单\n跳日期\n输出与来源\n边栏\n项目、在电脑上创建"
+    },
+    {
+      "surface": "mac",
+      "theme": "light",
+      "scene": "project-hover",
+      "text": "WeftMate\n交代一个目标，或聊聊今天想做的事。\n从这里开始\n刷新\n动态\n发送\n合成模型\n合成项目\n合成项目对话 2\n合成项目对话 3\n合成项目对话 4\n合成项目对话 5\n合成项目对话 6\n回到底部\n在项目 合成项目 新建对话\n已展开\n已收起\n已选择\n成果库\n搜索\n搜索对话\n整理项目资料\n更多（2）\n未分组\n未读\n模型\n正在处理\n添加\n目标\n账户菜单\n跳日期\n输出与来源\n边栏\n项目、在电脑上创建\n项目设置 合成项目"
+    },
+    {
+      "surface": "mac",
+      "theme": "light",
+      "scene": "project-expanded",
+      "text": "WeftMate\n交代一个目标，或聊聊今天想做的事。\n从这里开始\n刷新\n动态\n发送\n合成模型\n合成项目\n合成项目对话 0\n合成项目对话 1\n合成项目对话 2\n合成项目对话 3\n合成项目对话 4\n合成项目对话 5\n合成项目对话 6\n回到底部\n在项目 合成项目 新建对话\n已展开\n已收起\n已选择\n成果库\n搜索\n搜索对话\n收起\n整理项目资料\n未分组\n未读\n模型\n正在处理\n添加\n目标\n账户菜单\n跳日期\n输出与来源\n边栏\n项目、在电脑上创建\n项目设置 合成项目"
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "syntheticOnly": true,
+  "realPersonalHTTPHost": true,
+  "historyCount": 10000,
+  "compiledDSH": false,
+  "operations": [
+    {
+      "kind": "send",
+      "sessionId": "session-d866db66-66c4-4289-b8b7-7060b4bd87f7",
+      "text": "A8_WAIT 合成主对话任务",
+      "mode": "queue",
+      "receiptId": "6e5d280c-359f-4ef2-b09e-be0a943c4d07"
+    },
+    {
+      "kind": "started",
+      "sessionId": "session-d866db66-66c4-4289-b8b7-7060b4bd87f7",
+      "text": "A8_WAIT 合成主对话任务",
+      "receiptId": "6e5d280c-359f-4ef2-b09e-be0a943c4d07"
+    },
+    {
+      "kind": "send",
+      "sessionId": "session-7a0f4ac2-dc62-4234-aec8-89691ae88d62",
+      "text": "A8_WAIT 合成旁聊任务 completed",
+      "mode": "steer",
+      "receiptId": "c4812088-9c29-43d0-b7ae-23ebe302ba77"
+    },
+    {
+      "kind": "started",
+      "sessionId": "session-7a0f4ac2-dc62-4234-aec8-89691ae88d62",
+      "text": "A8_WAIT 合成旁聊任务 completed",
+      "receiptId": "c4812088-9c29-43d0-b7ae-23ebe302ba77"
+    },
+    {
+      "kind": "send",
+      "sessionId": "session-858d5438-dc6c-4e0b-9b9b-0ee8fb6cfb36",
+      "text": "A8_WAIT 合成旁聊任务 error",
+      "mode": "steer",
+      "receiptId": "96f49419-8ee3-47b9-b4b8-a656d4150d39"
+    },
+    {
+      "kind": "started",
+      "sessionId": "session-858d5438-dc6c-4e0b-9b9b-0ee8fb6cfb36",
+      "text": "A8_WAIT 合成旁聊任务 error",
+      "receiptId": "96f49419-8ee3-47b9-b4b8-a656d4150d39"
+    },
+    {
+      "kind": "send",
+      "sessionId": "session-6f80ef5a-0204-49b2-be5e-d17786e7329e",
+      "text": "A8_WAIT 合成旁聊任务 aborted",
+      "mode": "steer",
+      "receiptId": "8bb25ac9-957e-4640-8965-1b6d246ee03e"
+    },
+    {
+      "kind": "started",
+      "sessionId": "session-6f80ef5a-0204-49b2-be5e-d17786e7329e",
+      "text": "A8_WAIT 合成旁聊任务 aborted",
+      "receiptId": "8bb25ac9-957e-4640-8965-1b6d246ee03e"
+    },
+    {
+      "kind": "send",
+      "sessionId": "session-9cfe3059-15d7-4864-9c27-856039e592e7",
+      "text": "A8_WAIT A16 合成临时正文只留在临时旁聊",
+      "mode": "steer",
+      "receiptId": "6cffe352-a73b-4de6-ae04-473f0792a17b"
+    },
+    {
+      "kind": "started",
+      "sessionId": "session-9cfe3059-15d7-4864-9c27-856039e592e7",
+      "text": "A8_WAIT A16 合成临时正文只留在临时旁聊",
+      "receiptId": "6cffe352-a73b-4de6-ae04-473f0792a17b"
+    }
+  ],
+  "approvals": [
+    {
+      "id": "88bad836-cacf-4cbe-9427-a65dad2218c2",
+      "resolved": false
+    },
+    {
+      "id": "0d93133f-185a-4fbe-aaaa-133f876a0ccc",
+      "resolved": false
+    }
+  ],
+  "metrics": [],
+  "requests": [],
+  "resultStates": [
+    {
+      "eventId": "event-result-8020f82113fe5a6cf5c7fdb9746d86d06cc03c88",
+      "state": "completed"
+    },
+    {
+      "eventId": "event-result-7315111d7841e952cc0f9fc665235597a5537b07",
+      "state": "failed"
+    },
+    {
+      "eventId": "event-result-a452ac47f18c375299aef9cbad9ed7c4781cf9f9",
+      "state": "stopped"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "state": "empty",
+  "theme": "light",
+  "platform": "iphone",
+  "syntheticOnly": true,
+  "realPersonalHTTPHost": true,
+  "largeText": false,
+  "allStates": false,
+  "panels": true
+}

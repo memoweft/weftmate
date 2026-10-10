@@ -54,7 +54,7 @@ import WeftMateCore
         try await Task.sleep(for: .milliseconds(500))
         captureVisible(name)
     }
-    static func captureVisible(_ name: String) {
+    static func captureVisible(_ name: String, single: Bool = false) {
         typealias Images = @convention(c) (CGRect, CFArray, UInt32) -> Unmanaged<CGImage>?
         guard let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "CGWindowListCreateImageFromArray") else { return }
         // AppKit menu windows are not included in NSApplication.windows. Capture only
@@ -64,14 +64,21 @@ import WeftMateCore
             .map { ($0[kCGWindowNumber as String] as? Int).flatMap(UnsafeRawPointer.init(bitPattern:)) }
         let array = CFArrayCreate(kCFAllocatorDefault, &ids, ids.count, nil)!
         guard let image = unsafeBitCast(symbol, to: Images.self)(.null, array, 1)?.takeRetainedValue(), let png = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) else { return }
+        if single {
+            FileHandle.standardOutput.write(Data(("LG2_CAPTURE:" + png.base64EncodedString() + "\n").utf8))
+            if let data = try? JSONSerialization.data(withJSONObject: ["scene": name, "text": A13MacReview.texts().joined(separator: "\n")]) {
+                FileHandle.standardOutput.write(Data(("A17_TEXT:" + String(decoding: data, as: UTF8.self) + "\n").utf8))
+            }
+            return
+        }
         FileHandle.standardOutput.write(Data(("A10_CAPTURE:" + name + ":" + png.base64EncodedString() + "\n").utf8))
         if let data = try? JSONSerialization.data(withJSONObject:["scene":name,"text":A13MacReview.texts().joined(separator:"\n")]) {
             FileHandle.standardOutput.write(Data(("A13_TEXT:"+String(decoding:data,as:UTF8.self)+"\n").utf8))
         }
     }
-    private static func press(_ id: String) async throws {
+    static func press(_ id: String) async throws {
         FileHandle.standardOutput.write(Data(("A16_STEP:" + id + "\n").utf8))
-        let titles = ["mainChat.date": "跳日期", "mainChat.search": "搜索", "mainChat.find": "查找", "mainChat.latest": "回到底部", "mainChat.next": "下一条", "mainChat.previous": "上一条", "mainChat.plus": "添加", "mainChat.send": "发送", "conversationMenu": "对话菜单", "closeSessionActions": "完成"]
+        let titles = ["mainChat.date": "跳日期", "mainChat.search": "搜索", "mainChat.find": "查找", "mainChat.latest": "回到底部", "mainChat.next": "下一条", "mainChat.previous": "上一条", "mainChat.plus": "添加", "mainChat.send": "发送", "conversationMenu": "对话菜单", "closeSessionActions": "完成", "defaultApprovalMode": "默认审批模式", "approvalMode": "审批模式"]
         var named: NSObject?
         if let title = titles[id] ?? (id.hasPrefix("mainChat.messageMenu.") ? "消息操作" : nil) {
             for window in NSApplication.shared.windows where window.isVisible { if let node = A10MacReview.findButton(title, in: window) { named = node; break } }
@@ -79,17 +86,18 @@ import WeftMateCore
         if let node = named { try A10MacReview.pressNode(node, id: id) }
         else { try await A10MacReview.press(id) }
         try await Task.sleep(for: .milliseconds(300))
-        if id == "conversationMenu", A10MacReview.control("closeSessionActions") == nil, let node = named {
-            let selector = NSSelectorFromString("accessibilityFrame")
-            typealias Frame = @convention(c) (AnyObject, Selector) -> CGRect
-            guard node.responds(to: selector), let window = NSApplication.shared.windows.first(where: { $0.isVisible && A10MacReview.find("conversationDetail", in: $0) != nil }) else { throw Failure(step: "Native menu frame") }
-            let frame = unsafeBitCast(node.method(for: selector), to: Frame.self)(node, selector)
-            let point = window.convertPoint(fromScreen: CGPoint(x: frame.midX, y: frame.midY))
-            for type in [NSEvent.EventType.leftMouseDown, .leftMouseUp] {
-                if let event = NSEvent.mouseEvent(with: type, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1) { window.sendEvent(event) }
-            }
-            try await Task.sleep(for: .milliseconds(500))
-        }
+
+    }
+    private static func nativeClick(_ id: String) async throws {
+        let node = try await A10MacReview.wait(id), selector = NSSelectorFromString("accessibilityFrame")
+        typealias Frame = @convention(c) (AnyObject, Selector) -> CGRect
+        guard node.responds(to: selector), let window = NSApplication.shared.windows.first(where: { $0.isVisible && A10MacReview.find(id, in: $0) != nil }) else { throw Failure(step: "Native click frame: " + id) }
+        let rect = unsafeBitCast(node.method(for: selector), to: Frame.self)(node, selector)
+        let point = window.convertPoint(fromScreen: CGPoint(x: rect.midX, y: rect.midY))
+        guard let down = NSEvent.mouseEvent(with: .leftMouseDown, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1),
+              let up = NSEvent.mouseEvent(with: .leftMouseUp, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 0) else { throw Failure(step: "Native mouse event") }
+        NSApplication.shared.postEvent(up, atStart: false); window.sendEvent(down)
+        try await Task.sleep(for: .milliseconds(400))
     }
     private static func choose(_ observer: A16MenuObserver,id: String,title: String) async throws {
         observer.menu=nil; try await press(id)
@@ -145,13 +153,23 @@ import WeftMateCore
         NSApplication.shared.setActivationPolicy(.regular);NSApplication.shared.activate(ignoringOtherApps:true)
         let ready=try await driver("/ready"),model=app.mainChat,main=ready["mainChatID"] as! String
         _=try await A10MacReview.wait("mainChat")
+        for window in NSApplication.shared.windows where window.isVisible && A10MacReview.find("mainChat", in: window) != nil { window.setContentSize(NSSize(width: 1080, height: 760)) }
+        try await Task.sleep(for: .milliseconds(400))
         try await until("Main body tail") { !model.window.events.isEmpty }
         guard model.window.events.count <= 1000,app.conversations.first?.isMainChat==true else{throw Failure(step:"Main identity or bounded window")}
         try await capture("first-screen")
         if let window = NSApplication.shared.windows.first(where: { $0.isVisible && A10MacReview.find("mainChat", in: $0) != nil }) {
             let original = window.frame
-            window.setContentSize(NSSize(width: 640, height: 720))
+            window.setContentSize(NSSize(width: 480, height: 720))
             try await capture("narrow-window")
+            let toggle = try await A10MacReview.wait("macSidebarToggle")
+            try await nativeClick("macSidebarToggle")
+            let valueSelector = NSSelectorFromString("accessibilityValue")
+            if toggle.responds(to: valueSelector) { FileHandle.standardOutput.write(Data(("A16_STEP:sidebar-value=" + String(describing: toggle.perform(valueSelector)?.takeUnretainedValue()) + "\n").utf8)) }
+            _ = try await A10MacReview.wait("compactSidebar")
+            try await capture("narrow-sidebar")
+            try await nativeClick("macSidebarToggle")
+            try await until("Compact sidebar dismissed") { A10MacReview.control("compactSidebar") == nil }
             window.setFrame(original, display: true)
         }
         try await press("mainChat.resources")
@@ -202,7 +220,7 @@ import WeftMateCore
             try await Task.sleep(for: .milliseconds(500))
             guard panel.directoryURL?.lastPathComponent == "A16-export-review" else { panel.cancel(nil); throw Failure(step: "Export dialog did not stay in synthetic directory") }
             do {
-                try await until("Native save field rendered") { A13MacReview.texts().contains { $0.contains("WeftMate-reply") } }
+                try await until("Native save field rendered") { A13MacReview.texts(in: panel).contains { $0.contains("WeftMate-reply") } }
                 try await Task.sleep(for: .milliseconds(500))
                 captureVisible("export-save-panel"); systemSaveContentCaptured = true
             } catch {
@@ -239,20 +257,44 @@ import WeftMateCore
         try await choose(observer,id:"mainChat.plus",title:"这次别记")
         _=try await A10MacReview.wait("temporaryChat.title");_=try await A10MacReview.wait("temporaryChat.composer")
         try await capture("temporary",root:"conversationDetail")
+        observer.menu = nil
         try await press("conversationMenu")
-        _=try await A10MacReview.wait("temporaryChat.memory");_=try await A10MacReview.wait("temporaryChat.recall")
+        try await until("Native conversation menu") { observer.menu?.items.contains { $0.title == "此对话不形成记忆" } == true }
+        guard let rootMenu = observer.menu,
+              rootMenu.items.first(where: { $0.title == "此对话不形成记忆" })?.state == .on,
+              rootMenu.items.first(where: { $0.title == "使用已有记忆" })?.state == .on,
+              !rootMenu.items.contains(where: { $0.title == "完成" }) else { throw Failure(step: "Native temporary check states") }
         try await capture("temporary-menu",root:"conversationDetail")
         guard let current=app.selectedConversation,!current.temporaryState.cacheAllowed,current.temporaryState.memoryMode=="off",current.temporaryState.recallEnabled,current.temporaryState.autoDeleteDays==30 else{throw Failure(step:"Temporary default policy")}
-        // Actual native menu radio state is captured before the asynchronous host acknowledgement.
-        observer.menu = nil
-        try await press("temporaryChat.expiryMenu")
-        try await until("Native deletion deadline radio menu") { observer.menu?.items.contains { $0.title == "30 天" } == true }
-        guard let menu = observer.menu, let current = menu.items.first(where: { $0.title == "30 天" }), current.state == .on,
+        guard let item = rootMenu.items.first(where: { $0.title.hasPrefix("自动删除") }), let menu = item.submenu else { throw Failure(step: "Native deadline submenu") }
+        guard let current = menu.items.first(where: { $0.title == "30 天" }), current.state == .on,
               let seven = menu.items.firstIndex(where: { $0.title == "7 天" }) else { throw Failure(step: "Deadline current radio selection") }
+        // Open the native submenu through its AX action before capturing it.
+        item.accessibilityPerformPress()
+        try await Task.sleep(for: .milliseconds(500))
         try await capture("temporary-expiry",root:"conversationDetail")
-        menu.performActionForItem(at: seven); menu.cancelTrackingWithoutAnimation()
+        menu.performActionForItem(at: seven); menu.cancelTrackingWithoutAnimation(); rootMenu.cancelTrackingWithoutAnimation()
         try await until("Seven day host acknowledgement") { app.selectedConversation?.temporaryState.autoDeleteDays == 7 }
         try await capture("temporary-seven-days", root:"conversationDetail")
+        // A17: every new native submenu and destructive confirmation is captured open.
+        for (title, scene) in [("移至项目", "move-project-menu"), ("移至分组", "move-group-menu")] {
+            observer.menu = nil; try await press("conversationMenu")
+            try await until("Native submenu " + title) { observer.menu?.items.contains { $0.title == title } == true }
+            guard let parent = observer.menu, let item = parent.items.first(where: { $0.title == title }), let submenu = item.submenu else { throw Failure(step: title) }
+            item.accessibilityPerformPress(); try await Task.sleep(for: .milliseconds(400))
+            try await capture(scene, root: "conversationDetail")
+            submenu.cancelTrackingWithoutAnimation(); parent.cancelTrackingWithoutAnimation()
+        }
+        observer.menu = nil; try await press("conversationMenu")
+        try await until("Native delete item") { observer.menu?.items.contains { $0.title == "删除" } == true }
+        guard let deletionMenu = observer.menu, let deletionIndex = deletionMenu.items.firstIndex(where: { $0.title == "删除" }) else { throw Failure(step: "Delete action") }
+        deletionMenu.performActionForItem(at: deletionIndex); deletionMenu.cancelTrackingWithoutAnimation()
+        _ = try await A10MacReview.wait("confirmDeleteConversation")
+        try await capture("delete-confirmation", root: "confirmDeleteConversation")
+        guard let confirmation = NSApplication.shared.windows.first(where: { $0.isVisible && A10MacReview.find("confirmDeleteConversation", in: $0) != nil }),
+              let cancel = A10MacReview.findButton("取消", in: confirmation) else { throw Failure(step: "Delete confirmation cancel") }
+        try A10MacReview.pressNode(cancel, id: "delete.cancel")
+        try await until("Delete cancelled") { app.deletionCandidate == nil }
         // Close only the app's own sheet through its existing close action.
         // Finish with the verified menu visible. AppKit's AX close action retires the
         // SwiftUI review task on this SDK; the parent closes the isolated app after the report.
