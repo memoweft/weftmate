@@ -1,0 +1,13 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+electronApplication.firstWindow: Timeout 30000ms exceeded while waiting for event "window"
+    at h.launch (D:\AIProjects\WeftMate\Worktrees\w5\tests\evidence\qa-5\runners\harness.mjs:49:22)
+    at async harness (D:\AIProjects\WeftMate\Worktrees\w5\tests\evidence\qa-5\runners\harness.mjs:55:2)
+    at async file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/evidence/qa-5/runners/smoke.mjs:18:9 {
+  log: [],
+  name: 'TimeoutError'
+}
+
+Node.js v24.15.0

@@ -1,0 +1,84 @@
+[vendor-verify] manifest: 197 包, dsh 0.1.0-rc.5 @ 47f9438
+[vendor-verify] 已装配 tarball sha256 全部一致；非当前平台 optional 包按 manifest 合法跳过
+[vendor-verify] node_modules 闭包版本与内部包集合全部一致（195 个安装包）
+[vendor-verify] 当前平台合法跳过的 optional 包：@deepseek-ai/node-addon-landlock-run-linux-arm64, @deepseek-ai/node-addon-landlock-run-linux-x64
+[vendor-verify] 包 main / exports 默认入口检查通过
+[vendor-verify] @deepseek-ai 单实例检查通过（195 个包，无嵌套重复副本）
+[vendor-verify] 闭包无 dsh-* 源码（编译产物纯净）；上游自带 src 的工具族（审计）：cordis, cordis-plugin-group, cordis-plugin-hmr, cordis-plugin-include, cordis-plugin-loader, cordis-plugin-timer, cosmokit, node-addon-landlock-run, schemastery
+[vendor-verify] carriedButNotMounted：(无)
+[vendor-verify] 官方 web 冒烟通过：http://127.0.0.1:56365（__DSH_BOOT__ 引导图 + profile 写入 + 插件 bundle 200 + @weftmate/client 行/bundle 200 + 宿主插件状态接缝 200）
+[vendor-verify] 全部通过
+[stage-dsh-runtime] staged verified vendor runtime -> D:\AIProjects\WeftMate\Worktrees\w5\.local\qa-5\releases\0.1.1-preview.1\stage\dsh-runtime
+  • electron-builder  version=26.15.3 os=10.0.26200
+  • loaded configuration  file=D:\AIProjects\WeftMate\Worktrees\w5\.local\qa-5\releases\0.1.1-preview.1\builder.json
+  • executing @electron/rebuild  electronVersion=43.7.8 arch=x64 buildFromSource=false workspaceRoot=D:\AIProjects\WeftMate\Worktrees\w5 projectDir=./ appDir=./
+  • installing native dependencies  arch=x64
+  • preparing       moduleName=get-windows arch=x64
+  • finished        moduleName=get-windows arch=x64
+  • completed installing native dependencies
+  • packaging       platform=win32 arch=x64 electron=43.7.8 appOutDir=.local\qa-5\releases\0.1.1-preview.1\build\win-unpacked
+  • downloaded      label=electron progress=100%
+  • downloaded electron zip extracted successfully  output=D:\AIProjects\WeftMate\Worktrees\w5\.local\qa-5\releases\0.1.1-preview.1\build\win-unpacked
+  • searching for node modules  pm=npm searchDir=D:\AIProjects\WeftMate\Worktrees\w5
+  • duplicate dependency references  dependencies=["ajv@8.20.0","express@5.3.0","mime-types@3.0.2","debug@4.4.3","http-errors@2.0.1","iconv-lite@0.7.3","on-finished@2.4.1","qs@6.16.0","raw-body@3.0.2","type-is@2.1.0","debug@4.4.3","debug@4.4.3","on-finished@2.4.1","get-intrinsic@1.3.0","call-bind-apply-helpers@1.0.2","call-bind-apply-helpers@1.0.2","es-object-atoms@1.1.2","call-bound@1.0.4","get-intrinsic@1.3.0","side-channel-map@1.0.1","debug@4.4.3","debug@4.4.3","http-errors@2.0.1","mime-types@3.0.2","on-finished@2.4.1","send@1.2.1","mime-types@3.0.2","http-errors@2.0.1","@root/csr@0.8.1","@root/x509@0.7.2","@root/asn1@1.0.2","@root/x509@0.7.2","debug@4.4.3","debug@4.4.3","debug@4.4.3","https-proxy-agent@7.0.6","debug@4.4.3","cross-spawn@7.0.6","strip-ansi@7.2.0","strip-ansi@6.0.1","strip-ansi@6.0.1","string-width@5.1.2","strip-ansi@7.2.0","minipass-flush@1.0.7","minipass-pipeline@1.2.4","ssri@12.0.0","tar@7.5.22","encoding@0.1.13","minizlib@3.1.0","negotiator@1.1.0","nopt@8.1.0","tar@7.5.22"]
+  • updating asar integrity executable resource  executablePath=.local\qa-5\releases\0.1.1-preview.1\build\win-unpacked\WeftMate.exe
+  • signing with signtool.exe  path=.local\qa-5\releases\0.1.1-preview.1\build\win-unpacked\resources\relay\frpc.exe
+  • signing with signtool.exe  path=.local\qa-5\releases\0.1.1-preview.1\build\win-unpacked\resources\dsh-runtime\node_modules\node-pty\third_party\conpty\1.23.251008001\win10-x64\OpenConsole.exe
+  • signing with signtool.exe  path=.local\qa-5\releases\0.1.1-preview.1\build\win-unpacked\resources\dsh-runtime\node_modules\node-pty\third_party\conpty\1.23.251008001\win10-arm64\OpenConsole.exe
+  • signing with signtool.exe  path=.local\qa-5\releases\0.1.1-preview.1\build\win-unpacked\resources\dsh-runtime\node_modules\node-pty\prebuilds\win32-x64\winpty-agent.exe
+  • signing with signtool.exe  path=.local\qa-5\releases\0.1.1-preview.1\build\win-unpacked\resources\dsh-runtime\node_modules\node-pty\prebuilds\win32-x64\conpty\OpenConsole.exe
+  • signing with signtool.exe  path=.local\qa-5\releases\0.1.1-preview.1\build\win-unpacked\resources\dsh-runtime\node_modules\node-pty\prebuilds\win32-arm64\winpty-agent.exe
+  • signing with signtool.exe  path=.local\qa-5\releases\0.1.1-preview.1\build\win-unpacked\resources\dsh-runtime\node_modules\node-pty\prebuilds\win32-arm64\conpty\OpenConsole.exe
+  • signing with signtool.exe  path=.local\qa-5\releases\0.1.1-preview.1\build\win-unpacked\resources\dsh-runtime\node_modules\@vscode\ripgrep-win32-x64\bin\rg.exe
+  • signing with signtool.exe  path=.local\qa-5\releases\0.1.1-preview.1\build\win-unpacked\WeftMate.exe
+  • building        target=nsis file=.local\qa-5\releases\0.1.1-preview.1\build\WeftMate-Setup-0.1.1-preview.1.exe archs=x64 oneClick=false perMachine=false
+  • signing with signtool.exe  path=.local\qa-5\releases\0.1.1-preview.1\build\WeftMate-Setup-0.1.1-preview.1.__uninstaller.exe
+  • signing with signtool.exe  path=.local\qa-5\releases\0.1.1-preview.1\build\WeftMate-Setup-0.1.1-preview.1.exe
+  • building block map  blockMapFile=.local\qa-5\releases\0.1.1-preview.1\build\WeftMate-Setup-0.1.1-preview.1.exe.blockmap
+{
+  "schemaVersion": 1,
+  "installer": {
+    "file": "WeftMate-Setup-0.1.1-preview.1.exe",
+    "bytes": 174346178,
+    "sha256": "5e330cc19e4cff3301ea6ded8559640078a898f141cc3dd9231e3adcbc96389a"
+  },
+  "appArchive": {
+    "entries": 5377,
+    "directories": 794,
+    "links": 0,
+    "scannedTextFiles": 3164,
+    "forbiddenEntries": 0,
+    "unsafeLinks": 0
+  },
+  "vendor": {
+    "packageVersion": "0.1.0-rc.5",
+    "commit": "47f943859bef60e4160492346772ded9b24f765a",
+    "closureCount": 197,
+    "carriedButNotMounted": 0,
+    "manifestSha256": "abbfb6d1143dd17aa7ef6f68eb4eabea0029befa5895d272df9e18bb72c1a090",
+    "scannedTextFiles": 22384,
+    "reparsePoints": 0
+  },
+  "boundaries": {
+    "developmentPaths": 0,
+    "userDataFiles": 0,
+    "dogfoodOrRepositoryTests": 0,
+    "credentialsFiles": 0
+  }
+}
+{
+  "version": "0.1.1-preview.1",
+  "channel": "preview",
+  "tag": "v0.1.1-preview.1",
+  "upload": "D:\\AIProjects\\WeftMate\\Worktrees\\w5\\.local\\qa-5\\releases\\0.1.1-preview.1\\upload\\updates\\windows\\x64\\preview",
+  "uploaded": false,
+  "authenticode": false,
+  "authenticodeStatus": "NotSigned",
+  "source": {
+    "gitHead": "7543282d67aaef9b369fb1551e5bc8d5ed59163a",
+    "dirty": true
+  },
+  "dataIncluded": false,
+  "releaseNotesIncluded": false,
+  "preservePreviousArtifacts": true
+}
