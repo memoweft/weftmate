@@ -694,7 +694,7 @@ function handleBack(){if(document.querySelector('.session-menu[role=menu]')){Wef
   if(window.weftNative)void call('app.exit').catch(error=>toast(safeError(error)));}
 document.addEventListener('DOMContentLoaded',()=>{
   $('menu-button').addEventListener('click',openDrawer);$('drawer-close').addEventListener('click',closeDrawer);$('drawer-scrim').addEventListener('click',closeDrawer);
-  $('page-back').addEventListener('click',handleBack);
+  $('page-back').addEventListener('click',()=>{if(state.page==='chat'&&!state.logicalChats&&!state.tabSource)page('home');else handleBack()});
   $('header-profile').addEventListener('click',()=>page('settings'));
   $('generic-page').addEventListener('scroll',()=>{if(['activity','goals','library'].includes(state.page))mobileTabScroll.set(state.page,$('generic-page').scrollTop);},{passive:true});
   document.querySelector('[data-action="temporary-chat"]').addEventListener('click', () => { void mobileNewTemporaryConversation(); });
