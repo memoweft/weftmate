@@ -1,0 +1,32 @@
+{
+  "syntheticIdentity": "fx21qa",
+  "temporarySigningPrivateKeyDeleted": true,
+  "sourceBeforeCommit": {
+    "gitHead": "086f52d4800cbd9d24842938f3849080a96a5812",
+    "dirty": true
+  },
+  "installerSignedWithWindowsCertificate": false,
+  "noUpload": true,
+  "packagedPaths": {
+    "status": 0,
+    "files": [
+      {
+        "file": "src/personal-relay/sidecar.mjs",
+        "bytes": 1033
+      },
+      {
+        "file": "src/pets/hatch-mcp-server.mjs",
+        "bytes": 2388
+      },
+      {
+        "file": "src/dsh-carrier-preload.cjs",
+        "bytes": 906
+      },
+      {
+        "file": "src/personal-projects/reader.ps1",
+        "bytes": 14665
+      }
+    ],
+    "error": ""
+  }
+}

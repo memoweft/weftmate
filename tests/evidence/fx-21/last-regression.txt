@@ -1,0 +1,16 @@
+✔ wrapped native missing session allows creation and all single lookups retain missing semantics (2.3055ms)
+✔ native server errors and transport failures cannot create a missing-looking main session (0.8431ms)
+✔ mobile generated assets match every canonical ui-core file byte for byte (202.4847ms)
+✔ check refuses changed, missing and unlisted copies; rebuild follows the source and removes stale files (279.7109ms)
+✔ mobile check validates nested component syntax as well as generated source parity (2522.9889ms)
+✔ published mobile bundle includes the verified shared assets at their ui-core paths (2460.7974ms)
+✔ publish command refuses stale generated assets before creating a release (4800.9133ms)
+✔ side result copy shows one truthful state and readable tool descriptions for stored and new cards (2.7231ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10406.2689

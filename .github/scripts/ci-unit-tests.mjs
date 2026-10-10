@@ -38,6 +38,9 @@ const args = ['--test', '--test-concurrency=1'];
 if (mode === 'required') {
   const excluded = [...exceptions.knownFailures, ...suite.tests, ...platformTests];
   if (excluded.length) args.push(`--test-skip-pattern=${pattern(excluded)}`);
+} else if (mode === 'vendor') {
+  // Vendor inherits no known-failure exemptions; only tests this platform cannot execute are skipped.
+  if (platformTests.length) args.push(`--test-skip-pattern=${pattern(platformTests)}`);
 } else if (mode === 'known') {
   args.push(`--test-name-pattern=${pattern(exceptions.knownFailures)}`);
 }

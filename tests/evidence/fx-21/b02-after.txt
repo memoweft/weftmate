@@ -1,0 +1,11 @@
+✔ bundled project reader runs from a real ASAR without extracting an executable script (1459.5516ms)
+✔ Windows project reader holds exact root and reads bounded UTF-8 source (2243.5452ms)
+✔ Windows project reader rejects changed roots, changed files, links, ADS and bad UTF-8 (2918.0499ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5250.5439

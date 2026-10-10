@@ -1,0 +1,250 @@
+[
+  {
+    "size": {
+      "width": 390,
+      "height": 844
+    },
+    "theme": "light",
+    "keyboard": false,
+    "height": 844,
+    "pageHeight": 844,
+    "layoutHeight": 844,
+    "send": {
+      "x": 325,
+      "y": 695,
+      "width": 44,
+      "height": 44,
+      "top": 695,
+      "right": 369,
+      "bottom": 739,
+      "left": 325
+    },
+    "tabs": {
+      "x": 0,
+      "y": 759,
+      "width": 390,
+      "height": 69,
+      "top": 759,
+      "right": 390,
+      "bottom": 828,
+      "left": 0
+    }
+  },
+  {
+    "size": {
+      "width": 390,
+      "height": 844
+    },
+    "theme": "light",
+    "keyboard": true,
+    "height": 544,
+    "pageHeight": 844,
+    "layoutHeight": 844,
+    "send": {
+      "x": 325,
+      "y": 468,
+      "width": 44,
+      "height": 44,
+      "top": 468,
+      "right": 369,
+      "bottom": 512,
+      "left": 325
+    },
+    "tabs": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0,
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    }
+  },
+  {
+    "size": {
+      "width": 390,
+      "height": 844
+    },
+    "theme": "dark",
+    "keyboard": false,
+    "height": 844,
+    "pageHeight": 844,
+    "layoutHeight": 844,
+    "send": {
+      "x": 325,
+      "y": 695,
+      "width": 44,
+      "height": 44,
+      "top": 695,
+      "right": 369,
+      "bottom": 739,
+      "left": 325
+    },
+    "tabs": {
+      "x": 0,
+      "y": 759,
+      "width": 390,
+      "height": 69,
+      "top": 759,
+      "right": 390,
+      "bottom": 828,
+      "left": 0
+    }
+  },
+  {
+    "size": {
+      "width": 390,
+      "height": 844
+    },
+    "theme": "dark",
+    "keyboard": true,
+    "height": 544,
+    "pageHeight": 844,
+    "layoutHeight": 844,
+    "send": {
+      "x": 325,
+      "y": 468,
+      "width": 44,
+      "height": 44,
+      "top": 468,
+      "right": 369,
+      "bottom": 512,
+      "left": 325
+    },
+    "tabs": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0,
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    }
+  },
+  {
+    "size": {
+      "width": 360,
+      "height": 780
+    },
+    "theme": "light",
+    "keyboard": false,
+    "height": 780,
+    "pageHeight": 780,
+    "layoutHeight": 780,
+    "send": {
+      "x": 295,
+      "y": 631,
+      "width": 44,
+      "height": 44,
+      "top": 631,
+      "right": 339,
+      "bottom": 675,
+      "left": 295
+    },
+    "tabs": {
+      "x": 0,
+      "y": 695,
+      "width": 360,
+      "height": 69,
+      "top": 695,
+      "right": 360,
+      "bottom": 764,
+      "left": 0
+    }
+  },
+  {
+    "size": {
+      "width": 360,
+      "height": 780
+    },
+    "theme": "light",
+    "keyboard": true,
+    "height": 480,
+    "pageHeight": 780,
+    "layoutHeight": 780,
+    "send": {
+      "x": 295,
+      "y": 404,
+      "width": 44,
+      "height": 44,
+      "top": 404,
+      "right": 339,
+      "bottom": 448,
+      "left": 295
+    },
+    "tabs": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0,
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    }
+  },
+  {
+    "size": {
+      "width": 360,
+      "height": 780
+    },
+    "theme": "dark",
+    "keyboard": false,
+    "height": 780,
+    "pageHeight": 780,
+    "layoutHeight": 780,
+    "send": {
+      "x": 295,
+      "y": 631,
+      "width": 44,
+      "height": 44,
+      "top": 631,
+      "right": 339,
+      "bottom": 675,
+      "left": 295
+    },
+    "tabs": {
+      "x": 0,
+      "y": 695,
+      "width": 360,
+      "height": 69,
+      "top": 695,
+      "right": 360,
+      "bottom": 764,
+      "left": 0
+    }
+  },
+  {
+    "size": {
+      "width": 360,
+      "height": 780
+    },
+    "theme": "dark",
+    "keyboard": true,
+    "height": 480,
+    "pageHeight": 780,
+    "layoutHeight": 780,
+    "send": {
+      "x": 295,
+      "y": 404,
+      "width": 44,
+      "height": 44,
+      "top": 404,
+      "right": 339,
+      "bottom": 448,
+      "left": 295
+    },
+    "tabs": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0,
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    }
+  }
+]

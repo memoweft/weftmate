@@ -13,6 +13,13 @@
     return color;
   }
   globalThis.WeftSystemBars = { sync };
+  const viewport = () => {
+    const vv = globalThis.visualViewport, root = globalThis.document?.documentElement;
+    if (root && vv && vv.scale === 1) root.style.setProperty('--viewport-height', `${vv.height}px`);
+  };
+  globalThis.visualViewport?.addEventListener('resize', viewport);
+  globalThis.addEventListener?.('resize', viewport);
+  viewport();
   if (globalThis.MutationObserver && globalThis.document?.documentElement) {
     new MutationObserver(() => sync()).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-accent'] });
     document.addEventListener('DOMContentLoaded', () => sync());

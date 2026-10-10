@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "installer": {
+    "file": "WeftMate-Setup-0.1.1-preview.21.exe",
+    "bytes": 184261187,
+    "sha256": "aa4575895976d29fb3cb37f4086523b3a2184958f0afab77fafe7e4f7a5dd2ca"
+  },
+  "appArchive": {
+    "entries": 5367,
+    "directories": 801,
+    "links": 0,
+    "scannedTextFiles": 3143,
+    "forbiddenEntries": 0,
+    "unsafeLinks": 0
+  },
+  "vendor": {
+    "packageVersion": "0.1.0-rc.5",
+    "commit": "47f943859bef60e4160492346772ded9b24f765a",
+    "closureCount": 197,
+    "carriedButNotMounted": 0,
+    "manifestSha256": "abbfb6d1143dd17aa7ef6f68eb4eabea0029befa5895d272df9e18bb72c1a090",
+    "scannedTextFiles": 22384,
+    "reparsePoints": 0
+  },
+  "boundaries": {
+    "developmentPaths": 0,
+    "userDataFiles": 0,
+    "dogfoodOrRepositoryTests": 0,
+    "credentialsFiles": 0
+  }
+}
