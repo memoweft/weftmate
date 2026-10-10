@@ -160,6 +160,18 @@ def main():
         if error:
             raise error
 
+    def capture_failure(platform, scene, theme, exc):
+        reason = str(exc)
+        status.update(status='failed')
+        status.setdefault('failures', []).append(platform + '/' + scene + '/' + theme + ': ' + reason)
+        status['reason'] = '; '.join(status['failures'])
+        name = 'review-' + platform + '-' + scene + '-' + theme
+        (gallery / (name + '.json')).write_text(json.dumps({
+            'platform': platform, 'scene': scene, 'theme': theme,
+            'status': 'failed', 'reason': reason, 'commit': args.commit,
+            'generatedAt': iso(), 'synthetic': True,
+        }, ensure_ascii=False))
+
     def alarm(signum, frame):
         raise TimeoutError('整晚总时长超时或控制端已停止')
     for signum in [signal.SIGALRM, signal.SIGTERM, signal.SIGHUP, signal.SIGINT]:
@@ -226,13 +238,20 @@ def main():
                 for scene in native_scenes:
                     image = root / ('mac-' + scene + '-' + theme + '.png')
                     native_scene = {'general': 'settings-general', 'onboarding': 'settings-devices'}.get(scene, scene)
-                    run([capture, executable, image, native_scene, theme, ready['host'], ready['cloud'], 'ephemeral'], 'mac-' + scene + '-' + theme)
-                    captured_at = datetime.fromtimestamp(image.stat().st_mtime, timezone.utc).isoformat().replace('+00:00', 'Z')
-                    save(image, 'mac', scene, theme, captured_at, 'native own-window AX (A10/A15 runner) + synthetic host')
+                    try:
+                        run([capture, executable, image, native_scene, theme, ready['host'], ready['cloud'], 'ephemeral'], 'mac-' + scene + '-' + theme)
+                        captured_at = datetime.fromtimestamp(image.stat().st_mtime, timezone.utc).isoformat().replace('+00:00', 'Z')
+                        save(image, 'mac', scene, theme, captured_at, 'native own-window AX (A10/A15 runner) + synthetic host')
+                    except RuntimeError as exc:
+                        capture_failure('mac', scene, theme, exc)
                 run(['xcrun', 'simctl', 'boot', phone], 'phone-boot')
                 run(['xcrun', 'simctl', 'bootstatus', phone, '-b'], 'phone-ready')
                 try:
                     test('WeftMatePhone', phone, 'A5ParityUITests/testNightly' + theme.title() + 'Gallery', {'WEFTMATE_A5_DRIVER': driver}, 'iphone-' + theme)
+                except RuntimeError as exc:
+                    status.update(status='failed')
+                    status.setdefault('failures', []).append(str(exc))
+                    status['reason'] = '; '.join(status['failures'])
                 finally:
                     run(['xcrun', 'simctl', 'shutdown', phone], 'phone-shutdown', check=False)
             finally:
@@ -244,6 +263,8 @@ def main():
                 run([capture, executable, folder, 'a15-all', theme, ready['host'], ready['host'], 'ephemeral', 'a15-driver=' + info['driver']], 'mac-a15-' + theme)
                 captured_at = datetime.fromtimestamp((folder / 'plus-menu.png').stat().st_mtime, timezone.utc).isoformat().replace('+00:00', 'Z')
                 save(folder / 'plus-menu.png', 'mac', 'composer-menu', theme, captured_at, 'A15 native own-window AX + synthetic host')
+            except RuntimeError as exc:
+                capture_failure('mac', 'composer-menu', theme, exc)
             finally:
                 stop(child)
         pair = run(['xcrun', 'simctl', 'pair', watch, phone], 'pair').strip()
@@ -260,6 +281,10 @@ def main():
                 run(['xcrun', 'simctl', 'boot', watch], 'watch-boot')
                 run(['xcrun', 'simctl', 'bootstatus', watch, '-b'], 'watch-ready')
                 test('WeftMateWatch', watch, 'A13WatchUITests/testNightly' + theme.title() + 'Approval', {'WEFTMATE_A12_DRIVER': info['driver']}, 'watch-' + theme)
+            except RuntimeError as exc:
+                status.update(status='failed')
+                status.setdefault('failures', []).append(str(exc))
+                status['reason'] = '; '.join(status['failures'])
             finally:
                 for device in [watch, phone]:
                     if device in booted():

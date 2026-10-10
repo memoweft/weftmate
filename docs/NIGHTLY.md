@@ -1,6 +1,6 @@
 # 五端夜间回归（R0-3）
 
-Windows 主控每轮刷新专用 Git worktree（独立工作树）到 `origin/main`，构建后依次拍摄真实 Electron（桌面程序框架）、390×844 手机网页、Mac 原生窗口、iPhone、配对 Apple Watch 和 MuMu（安卓模拟器）。全部使用合成账号、合成模型目录与执行夹具、随机端口和临时数据；不连接真实模型，不访问日用宿主。审稿场景与浅深主题沿用 `scripts/review-gallery/scenes.json`，不使用仓库历史截图补位。
+Windows 主控每轮刷新专用 Git worktree（独立工作树）到 `origin/main`，构建后先拍真实 Electron（桌面程序框架）、390×844 手机网页与 MuMu（安卓模拟器），再拍 Mac 原生窗口、iPhone 和配对 Apple Watch；避免 Apple 长批次耗尽安卓的执行时间。全部使用合成账号、合成模型目录与执行夹具、随机端口和临时数据；不连接真实模型，不访问日用宿主。审稿场景与浅深主题沿用 `scripts/review-gallery/scenes.json`，不使用仓库历史截图补位。
 
 ## 手动运行
 
@@ -44,9 +44,9 @@ Mac 子进程显式补 PATH（命令搜索路径） `/opt/homebrew/bin`、`/usr/
 
 ## 互斥、停止与清理
 
-夜间批次原子获取报告根目录的 `nightly.lock`，同机重入立即退出。设备运行前检查 Orchestrator（工作包编排目录）的 `lan.lock`、原子 `mumu.lock`，Mac 检查是否有开发包在用（正在运行的 `codex -m` 进程或 `xcodebuild`）、已启动模拟器与原子目录锁 `nightly.lock`。Mac 已有模拟器或任一锁存在时写「被占用，未拍」，保留他人的资源，不等待、不抢占、不删除开发锁。已启动 MuMu 可以复用：持有 `mumu.lock` 后，检查设备进程无运行中的 WeftMate／UI（界面）测试、无活动 instrumentation（仪器测试），Windows 无安卓构建／测试命令；构建后再查一次。正式包和其它已安装但未运行的包仅列清单，不卸载；预先已装 nightly 独立包则跳过。无法核实占用就失败，不猜空闲。不改系统主题、输入法或模拟器设置，不关闭复用的模拟器。
+夜间批次原子获取报告根目录的 `nightly.lock`，同机重入立即退出。设备运行前检查 Orchestrator（工作包编排目录）的 `lan.lock`、原子 `mumu.lock`，Mac 检查是否有开发包在用（正在运行的 `codex -m` 进程或 `xcodebuild`）、已启动模拟器与原子目录锁 `nightly.lock`。Mac 已有模拟器或任一锁存在时写「被占用，未拍」，保留他人的资源，不等待、不抢占、不删除开发锁。已启动 MuMu 可以复用：持有 `mumu.lock` 后，检查设备进程无运行中的 WeftMate／UI（界面）测试、无活动 instrumentation（仪器测试），Windows 无安卓构建／测试命令；构建后再查一次。正式包和其它已安装但未运行的包仅列清单，不卸载；预先已装 nightly 独立包则跳过。无法核实占用就失败，不猜空闲。不改系统主题、输入法或模拟器设置，不关闭复用的模拟器。拍图始终留在真实 HybridActivity（安卓网页容器）的 appassets（内置资源）来源，合成桥接在 Node（运行时）侧切换夹具，遵守原生导航限制；不把 WebView（网页视图）导航到被原生安全策略拒绝的随机 HTTP 页面。
 
-Mac 使用 A10／A15 App 自有 AX（辅助功能控件树）运行器，不依赖失败的 Mac XCUITest（Apple 原生界面测试）自动化初始化；iPhone 和 Watch 使用 XCUITest。编译 `-jobs 2`，关闭并行测试。iPhone 独立阶段只启动一台；Watch 阶段仅启动本次创建的配对手机和手表，这是 WatchConnectivity（手机手表通信）的必要伴随设备。用完关闭并删除本次创建的设备；只有所有启动设备均属于本轮时才允许 `shutdown all`。
+Mac 使用 A10／A15 App 自有 AX（辅助功能控件树）运行器，不依赖失败的 Mac XCUITest（Apple 原生界面测试）自动化初始化；iPhone 和 Watch 使用 XCUITest；某个主题或端的真实断言失败保留红灯及已拍图片，继续独立的其它主题／端，不因一处失败取消整批余项。编译 `-jobs 2`，关闭并行测试。iPhone 独立阶段只启动一台；Watch 阶段仅启动本次创建的配对手机和手表，这是 WatchConnectivity（手机手表通信）的必要伴随设备。用完关闭并删除本次创建的设备；只有所有启动设备均属于本轮时才允许 `shutdown all`。
 
 手动运行按 `Ctrl+C` 停止。控制端默认90分钟总时限，Mac 同时设置本机截止时间，SSH（安全远程连接）中断也会执行清理。所有结束路径汇总报告；Windows 进程兜底清理同时核对创建时间、可执行文件与命令行中的本包目录，并重读进程身份避免进程编号复用。MuMu 只在本轮从关闭状态启动后才关闭；仅卸载本轮装入的独立包，撤销本轮端口映射，不停止后台服务。
 

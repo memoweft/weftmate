@@ -9,9 +9,9 @@ export const key = row => `${row.platform}/${row.scene}/${row.theme}`;
 export const expectedPhases = [
   { name:'prepare', platforms:[] }, { name:'vendor-tests', platforms:[] },
   { name:'installed-smoke', platforms:[] }, { name:'windows', platforms:['windows'] },
-  { name:'mobile-web', platforms:['mobile-web'] }, { name:'apple', platforms:[] },
+  { name:'mobile-web', platforms:['mobile-web'] }, { name:'android', platforms:['android'] }, { name:'apple', platforms:[] },
   { name:'mac', platforms:['mac'] }, { name:'iphone', platforms:['iphone'] }, { name:'watch', platforms:['watch'] },
-  { name:'android', platforms:['android'] }, { name:'cleanup', platforms:[] },
+  { name:'cleanup', platforms:[] },
 ];
 export function completePhases(phases = []) {
   const failure = phases.find(p => p.status === 'failed' || p.status === 'environment');
@@ -124,14 +124,14 @@ export async function report(out, options) {
     const applicable = records.filter(r=>phase.platforms.includes(r.platform) && !catalog.scenes.find(s=>s.id===r.scene).unavailable?.includes(r.platform));
     phase.captures = { captured:applicable.filter(r=>r.path && r.status !== 'failed').length, expected:applicable.length, failed:applicable.filter(r=>r.status === 'failed').length };
     if (phase.derived && phase.captures.captured) {
-      const interrupted=options.phases.find(p=>p.name==='apple').status === 'failed';
+      const interrupted=options.phases.find(p=>p.name==='apple').status === 'failed' && phase.captures.captured < phase.captures.expected;
       Object.assign(phase,{status:interrupted?'failed':'passed', reason:interrupted?phase.reason:''});
     } else if (phase.derived && phase.status === 'passed') Object.assign(phase,{status:'not-run',reason:'Apple 批次未产生此端截图'});
     if (phase.status === 'passed' && phase.captures.failed) Object.assign(phase,{status:'failed',reason:`${phase.captures.failed} 格场景失败，见报警清单`});
   }
   for (const row of records) if (!row.path && row.status !== 'failed' && !catalog.scenes.find(s => s.id === row.scene).unavailable?.includes(row.platform)) {
     const phase = options.phases.find(p => p.platforms?.includes(row.platform));
-    if (phase && phase.status !== 'passed') Object.assign(row, { status: phase.status === 'failed' ? 'failed' : 'not-run', reason: phase.reason || '阶段未产生此格截图', synthetic: true, commit: options.commit, generatedAt: new Date().toISOString() });
+    if (phase && phase.status !== 'passed') Object.assign(row, { status: 'not-run', reason: phase.reason || '阶段未产生此格截图', synthetic: true, commit: options.commit, generatedAt: new Date().toISOString() });
   }
   const result = await inspect(records, options);
   const summary = { notRunStages: options.phases.filter(p => ['not-run','skipped','environment'].includes(p.status)).length,

@@ -96,23 +96,6 @@ try {
     const sceneArgs = value('--scene') ? ['--scene', value('--scene')] : [];
     await phase('windows', ['windows'], () => process.argv.includes('--devices-only') ? skip('设备专项，未拍') : run('node', [join(worktree, 'tests/integration/review-capture-desktop.mjs'), '--out', gallery, ...sceneArgs], { name: 'windows' }).then(() => null));
     await phase('mobile-web', ['mobile-web'], () => process.argv.includes('--devices-only') ? skip('设备专项，未拍') : run('node', [join(worktree, 'tests/integration/review-capture-mobile.mjs'), '--out', gallery, ...sceneArgs], { name: 'mobile-web' }).then(() => null));
-    await phase('apple', ['mac', 'iphone', 'watch'], async () => {
-      if (process.argv.includes('--skip-apple')) return skip('主动跳过，未拍');
-      if (await isLocked('lan.lock')) return skip('被占用，未拍（LAN 锁）');
-      const check = await run('ssh', ['-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10', mac, '! pgrep -f "codex -m" >/dev/null && ! pgrep -x xcodebuild >/dev/null && test ! -d ~/.weftmate-orchestrator/nightly.lock && test -z "$(xcrun simctl list devices booted | grep Booted)"'], { name: 'apple-idle', allowFailure: true, limit: 20000 });
-      if (check.code !== 0) return skip('被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）');
-      const bundle = join(temp, 'candidate.bundle');
-      if (process.argv.includes('--candidate')) await run('git', ['bundle', 'create', bundle, 'HEAD'], { cwd: repository, name: 'candidate-bundle' });
-      const remoteRoot = `.weftmate-orchestrator/nightly-${runId}`;
-      await run('ssh', ['-o', 'BatchMode=yes', mac, `mkdir -p ~/${remoteRoot}`], { name: 'apple-directory' });
-      await run('scp', [join(engineScripts, 'apple.py'), `${mac}:${remoteRoot}/apple.py`], { name: 'apple-script' });
-      if (process.argv.includes('--candidate')) await run('scp', [bundle, `${mac}:${remoteRoot}/candidate.bundle`], { name: 'apple-bundle' });
-      await run('ssh', ['-o', 'BatchMode=yes', mac, `python3 ~/${remoteRoot}/apple.py --run-id ${runId} --commit ${sourceCommit} --seconds ${Math.max(30, Math.floor((deadline - Date.now()) / 1000) - 30)}${process.argv.includes('--candidate') ? ' --candidate' : ''}`], { name: 'apple' });
-      await run('scp', ['-r', `${mac}:${remoteRoot}/gallery/.`, gallery], { name: 'apple-evidence' });
-      cleanup.apple = JSON.parse((await run('ssh', ['-o', 'BatchMode=yes', mac, `cat ~/${remoteRoot}/cleanup.json`], { name: 'apple-cleanup-read' })).output);
-      const status = JSON.parse((await run('ssh', ['-o', 'BatchMode=yes', mac, `cat ~/${remoteRoot}/status.json`], { name: 'apple-status' })).output);
-      return status;
-    });
     await phase('android', ['android'], async () => {
       if (process.argv.includes('--skip-android')) return skip('主动跳过，未拍');
       if (await isLocked('lan.lock') || !await takeLock('mumu.lock')) return skip('被占用，未拍（LAN / MuMu 锁）');
@@ -146,6 +129,23 @@ try {
       const occupied = await assess(); if (occupied) return skip('被占用，未拍（'+occupied+'）');
       await run('node', [join(worktree, 'tests/integration/review-capture-mobile.mjs'), '--android', '--out', gallery, '--state', join(out, 'android-state.json'), ...sceneArgs], { name: 'android' });
       cleanup.android = { ...cleanup.android, ...JSON.parse(await readFile(join(out, 'android-cleanup.json'), 'utf8')) };
+    });
+    await phase('apple', ['mac', 'iphone', 'watch'], async () => {
+      if (process.argv.includes('--skip-apple')) return skip('主动跳过，未拍');
+      if (await isLocked('lan.lock')) return skip('被占用，未拍（LAN 锁）');
+      const check = await run('ssh', ['-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10', mac, '! pgrep -f "codex -m" >/dev/null && ! pgrep -x xcodebuild >/dev/null && test ! -d ~/.weftmate-orchestrator/nightly.lock && test -z "$(xcrun simctl list devices booted | grep Booted)"'], { name: 'apple-idle', allowFailure: true, limit: 20000 });
+      if (check.code !== 0) return skip('被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）');
+      const bundle = join(temp, 'candidate.bundle');
+      if (process.argv.includes('--candidate')) await run('git', ['bundle', 'create', bundle, 'HEAD'], { cwd: repository, name: 'candidate-bundle' });
+      const remoteRoot = `.weftmate-orchestrator/nightly-${runId}`;
+      await run('ssh', ['-o', 'BatchMode=yes', mac, `mkdir -p ~/${remoteRoot}`], { name: 'apple-directory' });
+      await run('scp', [join(engineScripts, 'apple.py'), `${mac}:${remoteRoot}/apple.py`], { name: 'apple-script' });
+      if (process.argv.includes('--candidate')) await run('scp', [bundle, `${mac}:${remoteRoot}/candidate.bundle`], { name: 'apple-bundle' });
+      await run('ssh', ['-o', 'BatchMode=yes', mac, `python3 ~/${remoteRoot}/apple.py --run-id ${runId} --commit ${sourceCommit} --seconds ${Math.max(30, Math.floor((deadline - Date.now()) / 1000) - 30)}${process.argv.includes('--candidate') ? ' --candidate' : ''}`], { name: 'apple' });
+      await run('scp', ['-r', `${mac}:${remoteRoot}/gallery/.`, gallery], { name: 'apple-evidence' });
+      cleanup.apple = JSON.parse((await run('ssh', ['-o', 'BatchMode=yes', mac, `cat ~/${remoteRoot}/cleanup.json`], { name: 'apple-cleanup-read' })).output);
+      const status = JSON.parse((await run('ssh', ['-o', 'BatchMode=yes', mac, `cat ~/${remoteRoot}/status.json`], { name: 'apple-status' })).output);
+      return status;
     });
   }
 } catch (error) { phases.push({ name: 'controller', status: 'failed', reason: error.message }); }
