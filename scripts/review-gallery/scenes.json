@@ -24,7 +24,7 @@
     { "id": "general", "label": "设置 / 助手与运行中消息", "unavailable": ["watch"] },
     { "id": "usage", "label": "设置 → 用量", "unavailable": ["watch"] },
     { "id": "session-menu", "label": "对话归档 / 删除菜单", "unavailable": ["watch"] },
-    { "id": "main-chat", "label": "主对话 / 日期时间线", "unavailable": ["iphone", "mac", "watch"] },
+    { "id": "main-chat", "label": "主对话 / 单行搜索与日期时间线", "unavailable": ["iphone", "mac", "watch"] },
     { "id": "activity", "label": "动态 / 提醒与待处理", "unavailable": ["android", "iphone", "mac", "watch"] }
   ]
 }

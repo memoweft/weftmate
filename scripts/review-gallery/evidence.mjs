@@ -6,6 +6,10 @@ import { catalog, repository, assertPublicText } from './common.mjs';
 // and UI-3's machine-path-bearing shell evidence are deliberately not device evidence.
 const aliases = [];
 for (const theme of ['light', 'dark']) {
+  aliases.push({platform:'windows',scene:'memory',theme,path:`tests/evidence/ux-p1/after-06-desktop-${theme}.png`});
+  aliases.push({platform:'windows',scene:'onboarding',theme,path:`tests/evidence/ux-p1/after-11-desktop-${theme}.png`});
+  aliases.push({platform:'mobile-web',scene:'main-chat',theme,path:`tests/evidence/ux-p1/after-14-web-390-${theme}.png`});
+  aliases.push({platform:'android',scene:'main-chat',theme,path:`tests/evidence/ux-p1/after-14-android-native-${theme}.png`});
   aliases.push({ platform: 'windows', scene: 'onboarding', theme, path: `tests/evidence/onb-1/desktop-welcome-${theme}.png` });
   aliases.push({ platform: 'mobile-web', scene: 'onboarding', theme, path: `tests/evidence/onb-1/mobile-web-pair-waiting-${theme}.png` });
 }
