@@ -14,18 +14,15 @@ import { createLatestFileWriter } from './latest-file-writer.mjs';
 import { join } from 'node:path';
 import { validArtifactFileName } from './personal-artifacts/index.mjs';
 import { windowIcon, notificationIcon } from './app-icons.mjs';
+import { nativeEventNotification } from './personal-access/notification-content.mjs';
 
-export function desktopNotification(event) {
-  if (event.type === 'assistant.message' && event.data?.reminder) return { title: '提醒与定时任务', body: event.data.text };
-  if (event.type === 'approval.requested') return { title: '需要审批', body: '打开对话查看并决定是否允许。' };
-  if (event.type === 'question.asked') return { title: '需要回答', body: '打开对话补充信息。' };
-  if (event.type === 'turn.ended' && event.data?.reason === 'completed') return { title: '任务完成', body: '打开对话查看结果。' };
-  return null;
+export function desktopNotification(event, taskTitle) {
+  return nativeEventNotification(event, taskTitle);
 }
 
-export function desktopNotificationOptions(event) {
-  const message = desktopNotification(event);
-  return message && { ...message, icon: notificationIcon, title: `WeftMate · ${message.title}` };
+export function desktopNotificationOptions(event, taskTitle) {
+  const message = desktopNotification(event, taskTitle);
+  return message && { ...message, icon: notificationIcon };
 }
 
 export function restoreDesktopBounds(saved, displays) {
@@ -292,7 +289,7 @@ export function createPersonalDesktop({ libraryDesktopToken = null, origin, setu
       for (const item of current.items) {
         const key = `${me.account?.ownerId}:${item.id}`;
         if (activityNotified.has(key) || item.notification.notify === false || item.notification.level === 'silent' || stopped || !Notification.isSupported()) continue;
-        const notification = new Notification({ title: `WeftMate · ${item.title}`, body: item.summary, icon: notificationIcon,
+        const notification = new Notification({ title: item.notification.title ?? item.title, body: item.notification.body ?? item.summary, icon: notificationIcon,
           silent: typeof item.notification.sound === 'boolean' ? !item.notification.sound : item.notification.level !== 'important' });
         notifications.add(notification); activityNotifications.set(item.id, notification);
         notification.on('click', () => show({ activityId: item.id, sessionId: item.source.sessionId }));
@@ -334,9 +331,9 @@ export function createPersonalDesktop({ libraryDesktopToken = null, origin, setu
             const reminderKey = `${me.account?.ownerId}:${row.sessionId}:${event.seq}`;
             const reminder = event.type === 'assistant.message' && event.data?.reminder;
             if (reminder && reminderNotified.has(reminderKey)) continue;
-            const message = (reminder || last !== undefined || initialized) && desktopNotification(event);
+            const message = (reminder || last !== undefined || initialized) && desktopNotification(event, row.title);
             if (!message || stopped || !Notification.isSupported()) continue;
-            const notification = new Notification(desktopNotificationOptions(event));
+            const notification = new Notification(desktopNotificationOptions(event, row.title));
             notifications.add(notification);
             notification.on('click', () => show(row.sessionId));
             notification.on('close', () => notifications.delete(notification));
