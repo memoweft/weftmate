@@ -1,0 +1,7 @@
+{
+  "passed": false,
+  "cause": "SwiftUI per-row geometry preference layout loop during native scrolling; app terminated by this runner after diagnosis, not a crash. Replaced with native scroll position observers.",
+  "newCrashReports": 0,
+  "followUp": "Native coordinate observation alone did not resolve the later scroll loop. The final revision also removes per-scroll-phase SwiftUI state writes and fixes intrinsic row sizing; a short search-to-tail scroll regression is run before the complete light/dark flows.",
+  "finalApproach": "The final app renders its bounded (maximum 1000-event) page with stable day stacks and native position observation. Full validation keeps all 24 XCUITest gestures and one in-app frame/memory sampler; the extra XCTest scroll/memory profiler is not layered on top."
+}
