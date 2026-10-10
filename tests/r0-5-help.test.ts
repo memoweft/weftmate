@@ -32,6 +32,12 @@ test('every shortcut in the panel registry dispatches its own action with identi
     if(row.mod)assert.equal(registry.dispatch({...event,ctrlKey:false,metaKey:true},actions),true);}
   const source=readFileSync('src/personal-access-ui/components/help-view.js','utf8');assert.match(source,/for\(const row of WeftShortcuts.rows\)/);assert.match(source,/line.dataset.shortcutId=row.id/);
 });
+test('mobile release notice reads account identity without refreshing the live conversation snapshot',()=>{
+  const f=fixture(),mobile={loggedIn:true,owner:'mobile-a',authEpoch:3};let syncs=0;f.core.syncMobileIdentity=()=>{syncs++;throw new Error('Notice must not sync history');};
+  const helper=f.context.WeftUiCore.factories.help(f.core,{}, {storage:f.storage,mobileState:mobile});
+  assert.equal(helper.observeRelease('1.0.0'),false);assert.equal(helper.observeRelease('1.1.0'),true);assert.equal(syncs,0);assert.equal(helper.releaseIdentity().ownerId,'mobile-a');
+  mobile.owner='mobile-b';mobile.authEpoch++;assert.equal(helper.observeRelease('1.1.0'),false);assert.equal(helper.releaseIdentity().identityGeneration,4);assert.equal(syncs,0);
+});
 test('approval shortcut names and number bindings derive from the same mode table without duplicate registration',()=>{
   const {context}=fixture(),registry=context.WeftShortcuts,modes=[['auto','自动（推荐）'],['ask','每次询问'],['accept-edits','自动接受文件修改'],['plan','先出计划'],['allow-all','全部允许']];
   registry.registerApprovalModes(modes);registry.registerApprovalModes(modes);

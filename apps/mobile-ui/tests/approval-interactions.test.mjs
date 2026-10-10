@@ -121,7 +121,7 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
     await page.evaluate(()=>Promise.allSettled(document.getAnimations().map(animation=>animation.finished)));
     for(const button of await card.locator('.approval-actions button').all()){const box=await button.boundingBox();assert.ok(box.height>=43.99,JSON.stringify(box))}
     await screenshot('03-three-buttons.png');
-    await card.getByRole('button',{name:'批准',exact:true}).click();await page.waitForFunction(()=>fixture.approval.status==='answered',null,{polling:50});
+    await card.getByRole('button',{name:'批准',exact:true}).click();await page.waitForFunction(()=>fixture.approval.status==='answered');
     await card.waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>approvalRecord([...toolApprovals.sessions.get('s1').rows.values()][0])),'已允许 · 运行脚本');
     assert.equal(await card.isVisible(),false);await screenshot('04-resolved-line.png');
     assert.equal(await page.evaluate(()=>fixture.requests.filter(r=>r.method==='shared.approvals.decide').at(-1).params.scope),'once');
