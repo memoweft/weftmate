@@ -187,8 +187,8 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         registry = globalThis.WeftUiCore.settingsRegistry({
             data: ({target}) => globalThis.WeftDataView(core,target,{toast:ui.toast}),
             notifications: () => globalThis.WeftNotificationsView(core, panels.get('notifications'), {toast:ui.toast}),
-            personalization: () => globalThis.WeftPersonalizationView(core, panels.get('personalization'), 'personalization'),
-            assistant: () => globalThis.WeftPersonalizationView(core, panels.get('assistant'), 'assistant'),
+            personalization: () => globalThis.WeftPersonalizationView(core, panels.get('personalization'), 'personalization', {toast:ui.toast}),
+            assistant: () => globalThis.WeftPersonalizationView(core, panels.get('assistant'), 'assistant', {toast:ui.toast}),
             account: () => { ui.selectCloudSettings?.('account'); ui.paintCloudSettings?.(); },
             devices: () => { ui.selectCloudSettings?.('devices'); ui.paintCloudSettings?.(); },
             memory: () => { if (core.state.currentView !== 'memory') void core.openMemory(); },

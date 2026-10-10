@@ -60,9 +60,22 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
     if (!found) fail('MODEL_UNAVAILABLE')
     return found
   }
+  // stageOneGateway preserves native errors inside BACKEND_UNAVAILABLE. Only
+  // an explicit missing-session answer permits creation; transport/5xx errors
+  // must retain their unavailability rather than masquerading as missing data.
+  const readSession = async (id, optional = false) => {
+    try { return await gateway(`/sessions/${encodeURIComponent(id)}`) }
+    catch (error) {
+      const missing = error?.code === 'session-not-found' || error?.code === 'SESSION_UNAVAILABLE'
+        || error?.nativeStatus === 404 && error?.nativeCode === 'session-not-found';
+      if (!missing) throw error;
+      if (optional) return null;
+      fail('SESSION_UNAVAILABLE');
+    }
+  }
   const requireSession = async (id, ownerId) => {
     if (typeof id !== 'string' || !idPattern.test(id)) fail('SESSION_UNAVAILABLE')
-    const current = await gateway(`/sessions/${encodeURIComponent(id)}`).catch(() => { fail('SESSION_UNAVAILABLE') })
+    const current = await readSession(id)
     if (current?.sessionId !== id) fail('SESSION_UNAVAILABLE')
     if (current.agentPreset !== presetForOwner(ownerId)) fail('SESSION_READ_ONLY')
     try { return await resolveSession(id, { items: [current] }) }
@@ -196,12 +209,11 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         const cwd = project?.rootPath ?? (sessionWorkspaceRoot
           ? sessionWorkspace(sessionWorkspaceRoot, ownerId ?? 'fixture', workspaceChatId ?? sessionId) : undefined)
         if (cwd && !project) await mkdir(cwd, { recursive: true, mode: 0o700 })
-        const exists = workspaceChatId && await gateway(`/sessions/${encodeURIComponent(sessionId)}`).then(item => item?.sessionId === sessionId,
-          error => { if (['session-not-found', 'SESSION_UNAVAILABLE'].includes(error?.code)) return false; throw error; });
+        const exists = workspaceChatId && (await readSession(sessionId, true))?.sessionId === sessionId;
         const created = exists ? { sessionId } : await gateway('/sessions', { method: 'POST',
           body: JSON.stringify({ sessionId, agentPreset: preset, ...(cwd ? { cwd } : {}) }) })
         if (created?.sessionId !== sessionId) fail('SESSION_UNAVAILABLE')
-        const current = await gateway(`/sessions/${encodeURIComponent(sessionId)}`)
+        const current = await readSession(sessionId)
         if (current?.sessionId !== sessionId || current.agentPreset !== preset) {
           fail('SESSION_READ_ONLY')
         }
@@ -498,7 +510,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
     },
     async describeSession(sessionId) {
       requireRuntime()
-      const item = await gateway(`/sessions/${encodeURIComponent(sessionId)}`)
+      const item = await readSession(sessionId)
       if (item?.sessionId !== sessionId) fail('SESSION_UNAVAILABLE')
       return describeItem(item, { items: [item] })
     },

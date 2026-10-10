@@ -1,0 +1,44 @@
+[
+  {
+    "size": {
+      "width": 390,
+      "height": 844
+    },
+    "theme": "light",
+    "keyboard": false,
+    "extras": false,
+    "height": 844,
+    "layoutHeight": 844,
+    "pageHeight": 912,
+    "send": {
+      "x": 329,
+      "y": 847,
+      "width": 36,
+      "height": 44,
+      "top": 847,
+      "right": 365,
+      "bottom": 891,
+      "left": 329
+    },
+    "composer": {
+      "x": 0,
+      "y": 742,
+      "width": 390,
+      "height": 170,
+      "top": 742,
+      "right": 390,
+      "bottom": 912,
+      "left": 0
+    },
+    "shell": {
+      "x": 0,
+      "y": 68,
+      "width": 390,
+      "height": 844,
+      "top": 68,
+      "right": 390,
+      "bottom": 912,
+      "left": 0
+    }
+  }
+]

@@ -1,0 +1,101 @@
+{
+  "baseline": "086f52d4",
+  "changedProductFiles": [
+    {
+      "path": "apps/mobile-ui/www/components/main-chat.js",
+      "sha256": "3b73578622456d98c9e65f674be2e74ccab58f4c4746d5ec4d54d60ac3218e0f"
+    },
+    {
+      "path": "apps/mobile-ui/www/components/personalization.js",
+      "sha256": "7636a230d96ded8338a0f6a40ff6147863853856788c14c816f0f77d9ef0fcea"
+    },
+    {
+      "path": "apps/mobile-ui/www/components/settings.js",
+      "sha256": "35b641c170e8179e78d33dc91b8e3d7c35c8fc405a37ea63a71ca76e6f444710"
+    },
+    {
+      "path": "apps/mobile-ui/www/controls.css",
+      "sha256": "c5f6f41df126ca0919583871c839941241df6cc729cc83aed5448ae7596ec42c"
+    },
+    {
+      "path": "apps/mobile-ui/www/personalization.css",
+      "sha256": "eadfb1a2d509c18a59c7a551a79b56d2b6f2ff184b4f31075a43eb8ad3039b1f"
+    },
+    {
+      "path": "apps/mobile-ui/www/system-bars.js",
+      "sha256": "1fa9334c47a2972f8fb3cac0b37d5e44be157020751f7a5bd0c0540b595209a1"
+    },
+    {
+      "path": "apps/mobile-ui/www/ui-core/release-notes.js",
+      "sha256": "228cb8f6249fe9288e830f27088f151081cdad0e54f98db9ef676319fad149a0"
+    },
+    {
+      "path": "apps/mobile-ui/www/ui-core/timeline-model.js",
+      "sha256": "443fa6a489fde153b73e5abf618d3b86a934d2a9e4d8d4042019d5f6ce5a659e"
+    },
+    {
+      "path": "src/personal-access-backend.mjs",
+      "sha256": "79586ce52c499febc2ee37adf3dde1f7db4a40158106dee661170ab1b8244134"
+    },
+    {
+      "path": "src/personal-access-ui/components/main-chat.js",
+      "sha256": "3b73578622456d98c9e65f674be2e74ccab58f4c4746d5ec4d54d60ac3218e0f"
+    },
+    {
+      "path": "src/personal-access-ui/components/personalization.js",
+      "sha256": "7636a230d96ded8338a0f6a40ff6147863853856788c14c816f0f77d9ef0fcea"
+    },
+    {
+      "path": "src/personal-access-ui/components/search.js",
+      "sha256": "f025fd20279c9e4a7b143d0882faaeed681f6068b9ed03c74935bb2222224ac1"
+    },
+    {
+      "path": "src/personal-access-ui/components/settings-navigation.js",
+      "sha256": "a18d39d352c849c4e68787c655969616fd5e116ce5eec2abfff5cc6d5c1b6b87"
+    },
+    {
+      "path": "src/personal-access-ui/controls.css",
+      "sha256": "c5f6f41df126ca0919583871c839941241df6cc729cc83aed5448ae7596ec42c"
+    },
+    {
+      "path": "src/personal-access-ui/native-desktop.css",
+      "sha256": "2985b81f51802fb5137fdacb75256ca6a8f5ba1559c6ff261e7d23cc1ce1aaeb"
+    },
+    {
+      "path": "src/personal-access-ui/personalization.css",
+      "sha256": "eadfb1a2d509c18a59c7a551a79b56d2b6f2ff184b4f31075a43eb8ad3039b1f"
+    },
+    {
+      "path": "src/personal-access-ui/settings.css",
+      "sha256": "a0109b01143a265eba1dfdeced1e4ccc414563535f626d06b3a1402b1bdda84c"
+    },
+    {
+      "path": "src/personal-access-ui/styles.css",
+      "sha256": "034b85077efc4ae616c8c36d5096b11e22fe6362bf1998ab94e6788a3c3ebf19"
+    },
+    {
+      "path": "src/personal-access-ui/system-bars.js",
+      "sha256": "1fa9334c47a2972f8fb3cac0b37d5e44be157020751f7a5bd0c0540b595209a1"
+    },
+    {
+      "path": "src/personal-access/side-chats.mjs",
+      "sha256": "a2b28911bc49f3cb8f0a3c0212445e6274a94a13b3d4199a89f18055e49b9120"
+    },
+    {
+      "path": "src/personal-projects/index.mjs",
+      "sha256": "d53ec634fded1af58d2200a6b6f5c5ad6cc342ef5ef690568f7d72816c0e630d"
+    },
+    {
+      "path": "src/personal-projects/reader.ps1",
+      "sha256": "dd84ffab4e1f5a32a113d40f97ba6bb5c8cf7bff9cb1c70c9091bc8a111139f6"
+    },
+    {
+      "path": "src/ui-core/release-notes.js",
+      "sha256": "228cb8f6249fe9288e830f27088f151081cdad0e54f98db9ef676319fad149a0"
+    },
+    {
+      "path": "src/ui-core/timeline-model.js",
+      "sha256": "443fa6a489fde153b73e5abf618d3b86a934d2a9e4d8d4042019d5f6ce5a659e"
+    }
+  ]
+}

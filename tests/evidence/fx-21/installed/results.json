@@ -1,0 +1,178 @@
+{
+  "synthetic": true,
+  "realMain": true,
+  "pinnedDsh": true,
+  "realInstall": true,
+  "checks": [
+    "fresh-main-created-and-replied",
+    "native-folder-picker-substitute-registered-project",
+    "native-project-read-and-approved-write",
+    "native-conversation-export-written",
+    "assistant-switch-size-and-save-toast"
+  ],
+  "installerSha256": "aa4575895976d29fb3cb37f4086523b3a2184958f0afab77fafe7e4f7a5dd2ca",
+  "packaged": {
+    "isPackaged": true,
+    "appPath": "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-fx21-install-UiuCpl\\installed\\resources\\app.asar"
+  },
+  "folderCommands": [
+    {
+      "kind": "chat.message",
+      "state": "pending"
+    },
+    {
+      "kind": "chat.message",
+      "state": "pending"
+    },
+    {
+      "kind": "chat.message",
+      "state": "pending"
+    },
+    {
+      "kind": "chat.message",
+      "state": "dispatching"
+    },
+    {
+      "kind": "chat.message",
+      "state": "accepted_by_dsh"
+    },
+    {
+      "kind": "session.side.create",
+      "state": "pending"
+    },
+    {
+      "kind": "session.side.create",
+      "state": "accepted_by_dsh"
+    },
+    {
+      "kind": "session.create",
+      "state": "pending"
+    },
+    {
+      "kind": "session.create",
+      "state": "pending"
+    },
+    {
+      "kind": "session.create",
+      "state": "pending"
+    },
+    {
+      "kind": "session.create",
+      "state": "dispatching"
+    },
+    {
+      "kind": "session.create",
+      "state": "accepted_by_dsh"
+    },
+    {
+      "kind": "session.message",
+      "state": "pending"
+    },
+    {
+      "kind": "session.message",
+      "state": "pending"
+    },
+    {
+      "kind": "session.message",
+      "state": "pending"
+    },
+    {
+      "kind": "session.message",
+      "state": "pending"
+    },
+    {
+      "kind": "session.message",
+      "state": "pending"
+    },
+    {
+      "kind": "session.message",
+      "state": "accepted_by_dsh"
+    }
+  ],
+  "main": {
+    "chatId": "chat-4cd21299-f1f9-484b-8708-0194db760b59",
+    "sessionId": "session-a1641b14-284f-42a9-8146-9c04d0e1afc6",
+    "reply": "主对话首条消息成功，合成回复。"
+  },
+  "project": {
+    "name": "synthetic-project",
+    "permission": "read-only"
+  },
+  "approvals": [
+    "df43aa4b-7f77-4af9-9800-3c6f367cde71",
+    "04576d16-62ec-4506-b1e3-33b446496eab"
+  ],
+  "readProof": true,
+  "switches": [
+    {
+      "width": 44,
+      "height": 26
+    },
+    {
+      "width": 44,
+      "height": 26
+    },
+    {
+      "width": 44,
+      "height": 26
+    },
+    {
+      "width": 44,
+      "height": 26
+    }
+  ],
+  "desktop480": {
+    "bottom": 759.3333740234375,
+    "height": 780,
+    "pageHeight": 780
+  },
+  "passed": true,
+  "modelCalls": [
+    {
+      "stream": true,
+      "toolResponses": []
+    },
+    {
+      "stream": true,
+      "toolResponses": []
+    },
+    {
+      "stream": true,
+      "toolResponses": [
+        {
+          "content": "{\"loaded\":[\"read\",\"write\"]}"
+        }
+      ]
+    },
+    {
+      "stream": true,
+      "toolResponses": [
+        {
+          "content": "{\"loaded\":[\"read\",\"write\"]}"
+        },
+        {
+          "content": "<path>C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-fx21-cbXphc\\synthetic-project\\brief.md</path>\n<type>file</type>\n<content>\n1: FX21 synthetic project file\n\n(End of file - total 1 lines)\n</content>"
+        }
+      ]
+    },
+    {
+      "stream": true,
+      "toolResponses": [
+        {
+          "content": "{\"loaded\":[\"read\",\"write\"]}"
+        },
+        {
+          "content": "<path>C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-fx21-cbXphc\\synthetic-project\\brief.md</path>\n<type>file</type>\n<content>\n1: FX21 synthetic project file\n\n(End of file - total 1 lines)\n</content>"
+        },
+        {
+          "content": "<path>C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-fx21-cbXphc\\synthetic-project\\approved.md</path>\n<type>file</type>\n<content>\nCreated file\n</content>{\"artifact\":{\"taskId\":\"cmd-5d0352f9-8685-4189-bd37-b0ae95c8ae6b\",\"artifactId\":\"artifact-288a3302-78ef-4593-8c53-3599063a78cc\",\"fileName\":\"approved.md\",\"contentType\":\"text/plain; charset=utf-8\",\"size\":28,\"sha256\":\"ca1e3c188b81dba2447c0d51777b8ba76a6387668ed78fac6ab2b2cfdb18de43\",\"state\":\"observed\"},\"createdFilePath\":\"C:\\\\Users\\\\yun\\\\AppData\\\\Local\\\\Temp\\\\weftmate-fx21-cbXphc\\\\synthetic-project\\\\approved.md\"}"
+        }
+      ]
+    },
+    {
+      "stream": true,
+      "toolResponses": []
+    }
+  ],
+  "uninstalled": true
+}

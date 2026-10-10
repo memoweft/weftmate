@@ -1,0 +1,14 @@
+{
+  "explicitlyTerminatedOwnedEarlyFixture": 2,
+  "remainingOwnedProcesses": [],
+  "installedSmokeUninstalled": true,
+  "temporarySigningPrivateKeysDeleted": true,
+  "buildTreesKeptLocalAfterApprovalRejection": [
+    "tests/evidence/fx-21/installed/release",
+    "C:/Temp/weftmate-fx21-release",
+    "C:/Temp/weftmate-fx21-final",
+    "C:/Temp/weftmate-fx21-current"
+  ],
+  "didNotOperateDailyData": true,
+  "didNotStartEmulator": true
+}

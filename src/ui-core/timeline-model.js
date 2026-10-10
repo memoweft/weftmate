@@ -31,6 +31,19 @@
         return text.replace(/(?:执行工具|调用工具)(?:[:：]\s*|\s+)([A-Za-z][A-Za-z0-9_.:-]*)/g, (_, name) => toolLabel(name))
             .replace(/Weave\s*组件(?![.\w])/gi, '界面扩展');
     }
+    function sideResultText(result) {
+        let label = {completed:'已完成',failed:'执行失败',stopped:'已停止'}[result.state] || '待核对';
+        let text = String(result.summary || '').replace(/`+/g, '');
+        const prefixes = /^(?:(?:成功|已完成|完成|已停止|停止|执行失败|失败|已拒绝|拒绝)\s*[：:·，,。]?\s*)+/.exec(text)?.[0] || '';
+        if (result.state === 'completed' && /已停止|停止/.test(prefixes)) label = '已停止';
+        if (result.state === 'completed' && /已拒绝|拒绝/.test(prefixes)) label = '已拒绝';
+        text = text.replace(/(?<![./\\])\b[A-Za-z][\w]*\b(?![./\\])/g, name => Object.hasOwn(toolLabels,name) ? toolLabel(name) : name);
+        // Older stored cards contain stacked status prefixes. The native state
+        // owns the single displayed status, while the rest remains the summary.
+        text = text.replace(/^(?:(?:成功|已完成|完成|已停止|停止|执行失败|失败|已拒绝|拒绝)\s*[：:·，,。]?\s*)+/, '').trim();
+        return text ? `${label} · ${Array.from(text).slice(0,160).join('')}` : label;
+    }
+    globalThis.WeftUiCore.sideResultText = sideResultText;
     function readableParameters(value) {
         if (Array.isArray(value)) return value.map(readableParameters);
         if (!value || typeof value !== 'object') return value;

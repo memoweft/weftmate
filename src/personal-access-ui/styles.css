@@ -972,10 +972,16 @@ details[open] > summary > .progress-chevron { transform: rotate(0deg); }
 .session-status[data-tooltip]:hover:after,.session-status[data-tooltip]:focus-visible:after { content:attr(data-tooltip); position:absolute; bottom:calc(100% + var(--wm-space-8)); right:0; z-index:30; padding:var(--wm-space-6) var(--wm-space-10); border-radius:var(--wm-radius-8); background:var(--wm-color-tooltip-background); color:var(--wm-color-on-action); white-space:nowrap; font-size:var(--wm-font-size-12); pointer-events:none; }
 
 .session-group .session-status,.sidebar-project-heading .session-status { order:3; }
-/* Mobile remote browsing: safe areas include Safari notches and the home indicator. */
+/* The remote workspace fills the visual viewport, including keyboard resize. */
+html:not(.weftmate-desktop) .assistant-active .page { height:var(--viewport-height,100dvh); min-height:0; overflow:hidden; }
+html:not(.weftmate-desktop) .assistant-active .main { min-height:0; }
+html:not(.weftmate-desktop) .assistant-active .assistant-shell { height:var(--viewport-height,100dvh); }
+:root { --safe-top:max(env(safe-area-inset-top,0px),var(--native-safe-top,0px)); --safe-right:max(env(safe-area-inset-right,0px),var(--native-safe-right,0px)); --safe-bottom:max(env(safe-area-inset-bottom,0px),var(--native-safe-bottom,0px)); --safe-left:max(env(safe-area-inset-left,0px),var(--native-safe-left,0px)); }
+/* Safe areas belong to the shell once, not to its composer as well. */
 @media(max-width:640px){
   body{background:var(--surface)}
-  .assistant-shell{padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);background:var(--surface)}
+  .assistant-shell{padding:var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);background:var(--surface)}
+  .assistant-main{height:auto;min-height:0}
   .composer-area{padding-bottom:var(--wm-space-12)}
   .session-rail{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px)}
   .timeline-preview{padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}

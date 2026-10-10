@@ -130,3 +130,21 @@ $sourceTask = 'D:\AIProjects\WeftMate\Repository\scripts\run-personal-host-task.
 签名流水线需要固定发布者身份、证书链到 Windows 受信 CA、SHA-256 签名与可信时间戳，以及只在本人或 CI（持续集成）机密环境可用的硬件 / 云签名凭据。electron-builder 可接 Azure 签名配置或 `signtoolOptions`；本包使用未签名测试包。签名新文件仍可能出现信誉提示，不能承诺签名即消除警告。[微软 SmartScreen 信誉说明](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/smartscreen-reputation)
 
 未签名安装包通常显示未知发布者和“Windows 已保护你的电脑”；受管理电脑或 Smart App Control（智能应用控制）可能直接阻止。过渡期只交付官方来源的有限试用包，同时提供完整 SHA-256 与公开构建版本；用户自行核对来源后，若系统允许，可选择“更多信息 → 仍要运行”。不关闭安全保护、不自动点击安全提示、不把自签证书作为面向公众的替代。准备向其他用户正式分发前，优先解决可信签名身份。
+
+
+## 安装目录冒烟回归
+
+夜间回归的 `installed-smoke` 阶段从当前源码构建独立 `fx21qa` 身份的 NSIS（Windows 安装器），默认启动其 `win-unpacked` 中的真实程序。它使用合成账号、合成模型、随机端口、临时数据；通过真实 `src/main.mjs` 网关创建主会话、添加合成项目文件夹、执行原生文件读取和审批后写入、导出实际主对话记录。系统选择 / 保存对话框只替换返回值，不操作桌面。失败使夜间阶段失败，原始结果在 `installed-smoke/results.json`。
+
+```powershell
+# 夜间同一路径：构建后直接验证安装目录，不登记系统安装项。
+node scripts/nightly/installed-smoke.mjs --out .local/installed-smoke
+# 本机真实安装 / 卸载验收：使用独立身份和临时安装目录。
+node scripts/nightly/installed-smoke.mjs --install --out .local/installed-smoke-installed
+# 复用已构建的独立测试安装器；不可传本人正式安装器。
+node scripts/nightly/installed-smoke.mjs --install --installer <fx21qa安装包绝对路径> --out .local/installed-smoke-installed
+```
+
+临时签名私钥在构建结束即删除；程序关闭后卸载测试安装，删除合成数据。`--build-root` 可指定短的私有构建输出路径，`--prebuilt-stage` 可复用已经验证的 DSH（助手运行时）暂存目录，避免重复复制依赖。安装使用 `--updated /S /currentuser` 阻止安装器自行启动默认配置；只由测试运行器用随机端口配置启动程序。
+
+项目读取器直接从应用归档读取脚本到进程内存，通过私有标准输入管道把固定脚本与 JSON（结构化数据）请求分开传给系统 PowerShell（命令解释器）。不解包到应用数据目录，不按用户可替换的脚本路径执行，也不把文件路径或名称拼成可执行命令。应用归档采用与程序代码相同的发布完整性边界；不声称可防止已经能替换整个程序的同一用户恶意进程。
