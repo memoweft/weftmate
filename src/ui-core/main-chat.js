@@ -48,6 +48,18 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         if (chat.activeSessionId) core.state.sessions.push({ ...chat, kind: 'main', sessionId: chat.activeSessionId, title: 'WeftMate', taskAvailable: true });
         if (inMain()) core.state.selectedSessionId = chat.activeSessionId;
     }
+    let readingLatest = false;
+    async function markLatestChatRead() {
+        if (!inMain() || !supports('sessionStatus') || historyWindow.state.hasNewer || !core.state.mainChat.unread || readingLatest) return;
+        const token = scope(), chat = core.state.mainChat; readingLatest = true;
+        try {
+            const result = await core.accessApi(`/chats/${encodeURIComponent(chat.chatId)}/metadata`, {method:'PATCH',protectedWrite:true,
+                body:{requestId:environment.crypto.randomUUID(),expectedRevision:chat.revision,unread:false}});
+            if (scope() !== token) return;
+            installMain(result.chat); await refreshSessions();
+        } catch { /* A stale revision/connection preserves unread until the next latest-position read. */ }
+        finally { readingLatest = false; }
+    }
     async function refreshSessions() {
         if (!supports('chats')) return legacy.refreshSessions(true);
         const identity = core.state.identityGeneration;
@@ -78,6 +90,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         // composer compares newer native turn events against this clock so a
         // sidebar poll is not a prerequisite for showing the stop button.
         core.state.sessionSnapshotAt = sessions.snapshotAt ?? null;
+        core.state.sessionStatusSummary = sessions.statusSummary ?? chats.statusSummary ?? null;
         const bySession = new Map(core.state.chats.map(chat => [chat.activeSessionId, chat]));
         const selected = core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId);
         core.state.sessions = (sessions.sessions || []).map(row => ({ ...row, ...bySession.get(row.sessionId) }));
@@ -114,7 +127,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             const event = historyWindow.state.events.get(anchor);
             if (event) { historyWindow.state.expanded.add(globalThis.WeftUiCore.ChatWindow.day(event.at,historyWindow.state.timeZone)); notify(); }
             effects.focusMainEvent?.(anchor);
-        } else effects.scrollToLatest();
+        } else { effects.scrollToLatest(); void markLatestChatRead(); }
         void Promise.all([core.refreshConversationTasks(), core.refreshConversationApprovals(), core.refreshConversationQuestions()]).catch(() => {});
         if (core.state.selectedSessionId) void core.refreshApprovalMode(core.state.selectedSessionId);
     }
@@ -397,7 +410,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         } while (cursor);
         return { outputs: core.deduplicateOutputs([...outputs.values()]), sources: [...sources.values()] };
     }
-    return { cancelSessionSelection, pageSessions, searchSessions, supportsChat: supports, inMainChat: inMain, refreshLogicalSessions: refreshSessions, selectLogicalSession: selectSession, selectMainChat, refreshLogicalHistory: refreshHistory, loadOlderLogicalHistory: loadOlderHistory, jumpChatDate, searchMainChat, moveSearchHit,
+    return { markLatestChatRead, cancelSessionSelection, pageSessions, searchSessions, supportsChat: supports, inMainChat: inMain, refreshLogicalSessions: refreshSessions, selectLogicalSession: selectSession, selectMainChat, refreshLogicalHistory: refreshHistory, loadOlderLogicalHistory: loadOlderHistory, jumpChatDate, searchMainChat, moveSearchHit,
         mainChatDays: () => historyWindow.days(), expandChatDay: date => { historyWindow.state.expanded.add(date); notify(); }, openSideChat,
         startChatConversation: () => supports('sideChats') && core.state.mainChat ? openSideChat({ entry: 'composer', ...((core.currentFolderProject?.() || core.defaultFolderProject?.()) ? {parent:{kind:'project',id:(core.currentFolderProject?.() || core.defaultFolderProject()).projectId}} : {}) }).catch(error => effects.toast(core.failureMessage(error))) : (core.state.selectedChatId = null, legacy.startNewConversation(true)),
         sendMainDraft: sendDraft, observeMainOptimistic: observeOptimistic, mainComposerState: composerState, loadMainResources: loadConversationResources,
@@ -408,6 +421,6 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             pending.set(row.requestId,{...row,ownerId:core.state.ownerId,text:row.text||'',status:row.state==='accepted'?'accepted':'failed',receiptId:row.command?.receiptId});
         } observeOptimistic(historyWindow.ordered());notify(); },
         mainAttachmentDraftKey: id => inMain() ? `${core.state.ownerId}|${core.state.mainChat.chatId}` : legacy.attachmentDraftKey(id, true),
-        resetLogicalSession: () => { selectionGeneration++;core.state.sessionSelecting=false;core.state.sideCreating=null;core.state.sessionListCursor=null;core.state.chatListCursor=null;core.state.sessionListQuery='';core.state.sessionListGeneration=(core.state.sessionListGeneration||0)+1;historyWindow.reset();core.resourceCache=null;effects.resetMainChatView?.(); pending.clear(); drafts.clear(); core.state.mainChat = null; core.state.selectedChatId = null; core.state.chats = []; }
+        resetLogicalSession: () => { selectionGeneration++;core.state.sessionSelecting=false;core.state.sideCreating=null;core.state.sessionListCursor=null;core.state.chatListCursor=null;core.state.sessionListQuery='';core.state.sessionListGeneration=(core.state.sessionListGeneration||0)+1;historyWindow.reset();core.resourceCache=null;effects.resetMainChatView?.(); pending.clear(); drafts.clear(); core.state.mainChat = null; core.state.selectedChatId = null; core.state.chats = []; core.state.sessionStatusSummary = null; }
     };
 };

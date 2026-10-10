@@ -1,0 +1,1 @@
+[mobile-ui] active uiVersion=0.8.25 assetBase=/personal/v1/app/assets/bfa950f70ee7182dd5fb906ac9227655eee2276fb85e1ca88d1991957f777d26/

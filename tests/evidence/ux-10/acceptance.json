@@ -1,0 +1,209 @@
+{
+  "synthetic": true,
+  "modelRequests": 0,
+  "shots": [
+    "electron-1200-light-all-statuses.png",
+    "electron-1200-light-hover-card.png",
+    "electron-1200-light-status-tooltip.png",
+    "electron-1200-light-collapsed-aggregates.png",
+    "electron-1200-light-search-statuses.png",
+    "electron-480-light-all-statuses.png",
+    "electron-1200-dark-all-statuses.png",
+    "electron-1200-dark-hover-card.png",
+    "electron-1200-dark-status-tooltip.png",
+    "electron-1200-dark-collapsed-aggregates.png",
+    "electron-1200-dark-search-statuses.png",
+    "electron-480-dark-all-statuses.png",
+    "electron-1200-dark-transition-0ms.png",
+    "electron-1200-dark-transition-60ms.png",
+    "electron-1200-dark-transition-150ms.png",
+    "electron-1200-dark-run-completed.png",
+    "electron-1200-dark-reduced-motion.png",
+    "electron-1200-dark-read-cleared.png",
+    "electron-1200-dark-approval-cleared.png",
+    "phone-web-390-light-drawer.png",
+    "phone-web-390-light-collapsed-aggregates.png",
+    "phone-web-390-light-search-statuses.png",
+    "phone-web-390-light-chat-tab-attention.png",
+    "phone-web-390-dark-drawer.png",
+    "phone-web-390-dark-collapsed-aggregates.png",
+    "phone-web-390-dark-search-statuses.png",
+    "phone-web-390-dark-chat-tab-attention.png",
+    "phone-web-360-light-drawer.png",
+    "phone-web-360-light-collapsed-aggregates.png",
+    "phone-web-360-light-search-statuses.png",
+    "phone-web-360-light-chat-tab-attention.png",
+    "phone-web-360-dark-drawer.png",
+    "phone-web-360-dark-collapsed-aggregates.png",
+    "phone-web-360-dark-search-statuses.png",
+    "phone-web-360-dark-chat-tab-attention.png",
+    "android-bundle-390-light-drawer.png",
+    "android-bundle-390-light-collapsed-aggregates.png",
+    "android-bundle-390-light-search-statuses.png",
+    "android-bundle-390-light-chat-tab-attention.png",
+    "android-bundle-390-dark-drawer.png",
+    "android-bundle-390-dark-collapsed-aggregates.png",
+    "android-bundle-390-dark-search-statuses.png",
+    "android-bundle-390-dark-chat-tab-attention.png",
+    "android-bundle-360-light-drawer.png",
+    "android-bundle-360-light-collapsed-aggregates.png",
+    "android-bundle-360-light-search-statuses.png",
+    "android-bundle-360-light-chat-tab-attention.png",
+    "android-bundle-360-dark-drawer.png",
+    "android-bundle-360-dark-collapsed-aggregates.png",
+    "android-bundle-360-dark-search-statuses.png",
+    "android-bundle-360-dark-chat-tab-attention.png"
+  ],
+  "checks": [
+    {
+      "kind": "completed",
+      "attention": null,
+      "lastOutcome": "completed",
+      "unread": true,
+      "running": false
+    },
+    {
+      "kind": "failed",
+      "attention": null,
+      "lastOutcome": "failed",
+      "unread": true,
+      "running": false
+    },
+    {
+      "kind": "stopped",
+      "attention": null,
+      "lastOutcome": "stopped",
+      "unread": true,
+      "running": false
+    },
+    {
+      "kind": "empty",
+      "attention": null,
+      "lastOutcome": null,
+      "unread": false,
+      "running": false
+    },
+    {
+      "kind": "running",
+      "attention": null,
+      "lastOutcome": null,
+      "unread": false,
+      "running": true
+    },
+    {
+      "kind": "question",
+      "attention": "question",
+      "lastOutcome": null,
+      "unread": false,
+      "running": true
+    },
+    {
+      "kind": "approval",
+      "attention": "approval",
+      "lastOutcome": null,
+      "unread": false,
+      "running": true
+    },
+    {
+      "kind": "approval",
+      "attention": "approval",
+      "lastOutcome": null,
+      "unread": false,
+      "running": true
+    },
+    {
+      "mainLatestReadCleared": true
+    },
+    {
+      "surface": "electron",
+      "theme": "light",
+      "kind": "completed",
+      "label": "已完成，未读"
+    },
+    {
+      "surface": "electron",
+      "theme": "light",
+      "kind": "failed",
+      "label": "失败"
+    },
+    {
+      "surface": "electron",
+      "theme": "light",
+      "kind": "stopped",
+      "label": "已完成，未读"
+    },
+    {
+      "surface": "electron",
+      "theme": "light",
+      "kind": "empty",
+      "label": ""
+    },
+    {
+      "surface": "electron",
+      "theme": "light",
+      "kind": "running",
+      "label": "正在运行"
+    },
+    {
+      "surface": "electron",
+      "theme": "light",
+      "kind": "question",
+      "label": "等你回答"
+    },
+    {
+      "surface": "electron",
+      "theme": "light",
+      "kind": "approval",
+      "label": "等你批准"
+    },
+    {
+      "surface": "electron",
+      "theme": "dark",
+      "kind": "completed",
+      "label": "已完成，未读"
+    },
+    {
+      "surface": "electron",
+      "theme": "dark",
+      "kind": "failed",
+      "label": "失败"
+    },
+    {
+      "surface": "electron",
+      "theme": "dark",
+      "kind": "stopped",
+      "label": "已完成，未读"
+    },
+    {
+      "surface": "electron",
+      "theme": "dark",
+      "kind": "empty",
+      "label": ""
+    },
+    {
+      "surface": "electron",
+      "theme": "dark",
+      "kind": "running",
+      "label": "正在运行"
+    },
+    {
+      "surface": "electron",
+      "theme": "dark",
+      "kind": "question",
+      "label": "等你回答"
+    },
+    {
+      "surface": "electron",
+      "theme": "dark",
+      "kind": "approval",
+      "label": "等你批准"
+    },
+    {
+      "transition": {
+        "duration": 150,
+        "fromNativeUpdate": true
+      }
+    }
+  ],
+  "errors": []
+}
