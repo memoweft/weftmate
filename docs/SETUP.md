@@ -99,7 +99,7 @@ $adb = 'D:\Software\MuMuPlayer\nx_main\adb.exe'
 | `vendor` | 有预构建固定 DSH 的本机、每晚 Windows 回归、独立 Linux `Pinned DSH vendor unit tests` job（任务） | 运行 [.github/vendor-test-suite.json](../.github/vendor-test-suite.json) 中原110条用例所在26个完整文件，并恢复 `weftmod-service.test.ts` 整文件；所有兄弟用例也运行，不使用名称跳过。缺少 vendor 或提交与 pin（固定版本）不符直接报错。 |
 | `known` | 普通 CI 中非阻塞观察，也可本机定位 | 只运行例外清单中的已知产品失败；当前清单为空，报告零项，不会误触发全仓库自动发现。 |
 
-固定 DSH 云端构建复用 Relay（中继）任务的公开固定提交、pnpm（依赖管理器）锁文件和按 Linux / Node 24 / 提交缓存的编译产物。Relay 缓存没有 Linux 原生启动器，发货装配会触发上游 prepack（打包前校验）；新增 `musl-tools` 编译 `native/landlock-run` 的 `build:native`，二进制另按固定提交缓存。缓存命中仍执行 `pnpm install --frozen-lockfile` 重新连接工作区，然后 `npm run vendor:dsh`、`npm run vendor:verify`，以 Xvfb（虚拟显示服务）运行真实 Electron（桌面程序框架）集成用例。20分钟总时限；测试失败阻塞，不设非阻塞兜底。实际耗时与本包 CI 结果见 TEST-1 交付报告。
+固定 DSH 云端构建复用 Relay（中继）任务的公开固定提交、pnpm（依赖管理器）锁文件和按 Linux / Node 24 / 提交缓存的编译产物。Relay 缓存没有 Linux 原生启动器，发货装配会触发上游 prepack（打包前校验）；新增 `musl-tools` 编译 `native/landlock-run` 的 `build:native`，二进制另按固定提交缓存。缓存命中仍执行 `pnpm install --frozen-lockfile` 重新连接工作区，然后 `npm run vendor:dsh`；装配禁用安装脚本，Linux另用 `npm rebuild --prefix vendor/dsh-runtime node-pty` 编译固定终端依赖，再 `npm run vendor:verify`，以 Xvfb（虚拟显示服务）运行真实 Electron（桌面程序框架）集成用例。20分钟总时限；测试失败阻塞，不设非阻塞兜底。实际耗时与本包 CI 结果见 TEST-1 交付报告。
 
 ```powershell
 # 本机已有固定 vendor
